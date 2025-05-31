@@ -19,6 +19,7 @@ from crewai_tools import (
     FirecrawlScrapeWebsiteTool,
     FirecrawlSearchTool,
     SerperDevTool,
+    TavilySearchTool,
     YoutubeVideoSearchTool,
 )
 from dotenv import load_dotenv
@@ -27,25 +28,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-news_tool = SerperDevTool(
-    n_results=25, save_file=True, search_type="news", country="fr"
-)
-search_tool = SerperDevTool(
-    n_results=25, save_file=True, search_type="search", country="fr"
-)
-search_tool2 = FirecrawlSearchTool(limit=25, country="fr", save_file=True)
-# search_tool3 = DuckDuckGoSearchRun(max_results=25,country="fr",save_file=True) - removed incompatible tool
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=25, country="fr", save_file=True)
-youtube_tool = YoutubeVideoSearchTool()
 directory_search_tool = DirectorySearchTool(directory="./search_results")
+news_tool = SerperDevTool(n_results=25, save_file=True, search_type="news")
+scrape_tool = FirecrawlScrapeWebsiteTool(limit=25, save_file=True)
+search_tool = SerperDevTool(n_results=25, save_file=True, search_type="search")
+search_tool2 = FirecrawlSearchTool(limit=25, save_file=True)
+search_tool3 = TavilySearchTool(max_results=25)
+youtube_tool = YoutubeVideoSearchTool()
 
 # Tools for cryptocurrency research and analysis
 tools = [
     directory_search_tool,
-    search_tool2,
-    search_tool,
     news_tool,
     scrape_tool,
+    search_tool,
+    search_tool2,
+    search_tool3,
     youtube_tool,
 ]
 
@@ -199,7 +197,6 @@ class CryptoCrew:
         """
         return Task(
             config=self.tasks_config["research_synthesis_task"],
-            output_file="crypto_unicorn_investment_thesis.html",
         )
 
     @crew

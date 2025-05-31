@@ -26,24 +26,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize research tools
-news_tool = SerperDevTool(
-    n_results=25, save_file=True, search_type="news", country="fr"
-)
-search_tool = SerperDevTool(
-    n_results=25, save_file=True, search_type="search", country="fr"
-)
-search_tool2 = FirecrawlSearchTool(limit=25, country="fr", save_file=True)
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=25, country="fr", save_file=True)
-youtube_tool = YoutubeVideoSearchTool()
 directory_search_tool = DirectorySearchTool(directory="./search_results")
+news_tool = SerperDevTool(n_results=25, save_file=True, search_type="news")
+scrape_tool = FirecrawlScrapeWebsiteTool(limit=25, save_file=True)
+search_tool = SerperDevTool(n_results=25, save_file=True, search_type="search")
+search_tool2 = FirecrawlSearchTool(limit=25, save_file=True)
+youtube_tool = YoutubeVideoSearchTool()
 
 # Tools for financial research and analysis
 tools = [
     directory_search_tool,
-    search_tool2,
-    search_tool,
     news_tool,
     scrape_tool,
+    search_tool,
+    search_tool2,
     youtube_tool,
 ]
 
@@ -135,7 +131,6 @@ class ReportCrew:
         return Task(
             config=self.tasks_config["portfolio_allocation_task"],
             agent=self.portfolio_allocator,
-            context=[self.integration_analysis_task],
         )
 
     @task
@@ -148,7 +143,6 @@ class ReportCrew:
         return Task(
             config=self.tasks_config["risk_assessment_task"],
             agent=self.risk_manager,
-            context=[self.portfolio_allocation_task],
         )
 
     @task
@@ -161,12 +155,7 @@ class ReportCrew:
         return Task(
             config=self.tasks_config["final_report_task"],
             agent=self.investment_reporter,
-            context=[
-                self.integration_analysis_task,
-                self.portfolio_allocation_task,
-                self.risk_assessment_task,
-            ],
-            output_file=self.tasks_config["final_report_task"]["output_file"],  # type: ignore[index]
+
         )
 
     @crew

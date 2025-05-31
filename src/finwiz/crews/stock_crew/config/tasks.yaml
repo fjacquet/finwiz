@@ -124,4 +124,4 @@ research_synthesis_task:
     🔮 Future outlook
     Include today's date ({full_date}) prominently in your report.
   agent: research_director
-  output_file: "stock_unicorn_investment_thesis.html"
+  output_file: "report/stock_unicorn_investment_recommendations.html"

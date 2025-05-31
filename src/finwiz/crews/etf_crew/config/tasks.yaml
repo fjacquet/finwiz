@@ -131,4 +131,4 @@ research_synthesis_task:
     🔮 Future outlook
     Include today's date ({full_date}) prominently in your report.
   agent: research_director
-  output_file: "etf_investment_recommendations.html"
+  output_file: "report/etf_investment_recommendations.html"

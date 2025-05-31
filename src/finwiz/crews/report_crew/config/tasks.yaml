@@ -102,4 +102,4 @@ final_report_task:
     The report must be detailed, not summarized, with proven links to real investment products.
     Use professional formatting with clear sections, tables, and visual elements.
   agent: investment_reporter
-  output_file: "finwiz_monthly_investment_plan.html"
+  output_file: "report/finwiz_monthly_investment_plan.html"
