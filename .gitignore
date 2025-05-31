@@ -8,3 +8,5 @@ search_indexed/
 *.txt
 
 db/
+uv.lock
+agentops.log
