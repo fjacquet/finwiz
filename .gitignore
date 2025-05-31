@@ -1,0 +1,10 @@
+.env
+__pycache__/
+lib/
+.DS_Store
+search_results/
+search_indexed/
+*.html
+*.txt
+
+db/

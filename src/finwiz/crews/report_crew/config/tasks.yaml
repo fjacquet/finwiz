@@ -1,0 +1,105 @@
+integration_analysis_task:
+  description: >
+    Analyze and integrate the investment recommendations from the Stock, ETF, and Crypto Crews.
+    Focus on:
+    1. Identifying the strongest investment opportunities across all asset classes
+    2. Evaluating the quality and consistency of recommendations across crews
+    3. Assessing the reliability of each recommendation based on supporting evidence
+    4. Comparing similar recommendations across different crews for consensus signals
+    5. Highlighting unique investment opportunities with strong potential
+    Today is {full_date}, it's day {current_day} of month {current_month} in year {current_year}.
+    IMPORTANT: Ensure all recommendations reference real financial instruments with accurate ticker symbols.
+    Do not use illustrative examples or add "(Illustrative)" disclaimers.
+  expected_output: >
+    A detailed HTML analysis of the top investment opportunities across stocks, ETFs, and cryptocurrencies.
+    The analysis must include:
+    - Comparative assessment of each recommendation's strength and evidence
+    - Cross-referenced opportunities that appear in multiple crew recommendations
+    - Evaluation of data quality and recommendation reliability
+    - All financial instruments must be real with accurate ticker symbols and verifiable data
+    Use emojis for categorization:
+    🔍 Analysis strength
+    📊 Data quality
+    ⭐ Recommendation strength
+    🌐 Cross-crew consensus
+  agent: financial_integration_analyst
+
+portfolio_allocation_task:
+  description: >
+    Create an optimal portfolio allocation strategy with a monthly investment budget of 1000 CHF.
+    Based on the integrated analysis of recommendations, develop a detailed allocation plan that:
+    1. Distributes the 1000 CHF monthly investment across stocks, ETFs, and cryptocurrencies
+    2. Prioritizes investments based on risk-adjusted return potential
+    3. Creates appropriate diversification across asset classes and within each asset class
+    4. Considers liquidity needs and transaction costs
+    5. Provides specific allocation amounts (in CHF) for each recommended investment
+    IMPORTANT: All recommendations must be implementable with real financial instruments.
+    Provide specific ticker symbols and exact allocation amounts that sum to exactly 1000 CHF.
+  expected_output: >
+    A comprehensive HTML portfolio allocation strategy that includes:
+    - Exact CHF allocation for each recommended investment (totaling 1000 CHF)
+    - Percentage breakdown across asset classes (stocks, ETFs, cryptocurrencies)
+    - Specific investment vehicles with real ticker symbols
+    - Rationale for each allocation decision
+    - Implementation guidance including recommended brokers/platforms
+    Use emojis for better visualization:
+    💰 Allocation amount (CHF)
+    📊 Portfolio percentage
+    📈 Expected return
+    ⚖️ Risk assessment
+    🔄 Rebalancing guidance
+  agent: portfolio_allocator
+
+risk_assessment_task:
+  description: >
+    Conduct a comprehensive risk assessment of the proposed portfolio allocation.
+    Evaluate:
+    1. Individual investment risks for each recommended financial instrument
+    2. Aggregate portfolio risk metrics (volatility, drawdown potential, etc.)
+    3. Correlation between different investments and asset classes
+    4. Specific risk factors for each asset class (market risk, interest rate risk, etc.)
+    5. Strategies to mitigate identified risks while maintaining return potential
+    Base your assessment on market conditions as of {full_date}.
+    IMPORTANT: All risk metrics must be based on real historical data for the recommended investments.
+  expected_output: >
+    A detailed HTML risk assessment report that includes:
+    - Risk profile for each recommended investment
+    - Aggregate portfolio risk metrics with visual representations
+    - Correlation matrix for portfolio components
+    - Specific risk mitigation strategies
+    - Scenario analysis for different market conditions
+    All assessments must use verifiable data for the recommended financial instruments.
+    Use emojis for risk categorization:
+    🔴 High risk factors
+    🟡 Medium risk factors
+    🟢 Low risk factors
+    🛡️ Risk mitigation strategies
+    📉 Drawdown scenarios
+  agent: risk_manager
+
+final_report_task:
+  description: >
+    Create a comprehensive investment report that synthesizes all analyses into a detailed,
+    actionable investment plan with a 1000 CHF monthly budget. The report should:
+    1. Summarize the strongest investment opportunities across all asset classes
+    2. Present the optimized portfolio allocation with exact CHF amounts
+    3. Detail the risk assessment and mitigation strategies
+    4. Provide step-by-step implementation instructions
+    5. Include monitoring guidance and rebalancing criteria
+    IMPORTANT: The report must be evidence-based with links to verifiable sources for all claims.
+    Use only real financial instruments with accurate ticker symbols. The total allocation
+    must equal exactly 1000 CHF per month.
+  expected_output: >
+    A professional, comprehensive HTML investment report titled "FinWiz Monthly Investment Plan: 1000 CHF Allocation Strategy"
+    that includes:
+    - Executive summary of investment recommendations
+    - Detailed portfolio allocation with exact CHF amounts
+    - Evidence-based justification for each investment
+    - Risk assessment and mitigation strategies
+    - Step-by-step implementation guide
+    - Monitoring framework with specific metrics
+    - References and sources for all data
+    The report must be detailed, not summarized, with proven links to real investment products.
+    Use professional formatting with clear sections, tables, and visual elements.
+  agent: investment_reporter
+  output_file: "finwiz_monthly_investment_plan.html"

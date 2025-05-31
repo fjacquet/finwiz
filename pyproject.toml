@@ -1,0 +1,82 @@
+[project]
+name = "finwiz"
+version = "0.1.0"
+description = "finwiz using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "crewai[tools]>=0.120.1,<1.0.0",
+    "firecrawl-py>=2.7.1",
+    "serpapi>=0.1.5",
+]
+
+[project.scripts]
+kickoff = "finwiz.main:kickoff"
+run_crew = "finwiz.main:kickoff"
+plot = "finwiz.main:plot"
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.4.8,<1.0.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "flow"
+
+[tool.ruff]
+# Same as Black.
+line-length = 88
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable Pyflakes and pycodestyle rules by default.
+# Flake8-compatible list of codes to enable/disable.
+select = ["E", "F", "W", "I", "UP", "ANN", "D"]
+ignore = ["ANN101", "ANN102", "ANN401", "D203", "D212"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, format code snippets in docstrings.
+docstring-code-format = true
+# Line endings: "auto" | "lf" | "crlf"
+line-ending = "auto"

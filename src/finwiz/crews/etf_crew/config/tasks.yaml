@@ -1,0 +1,134 @@
+market_analysis_task:
+  description: >
+    Conduct a comprehensive market analysis to identify the top 25 high-potential
+    ETFs for investment. Focus on:
+    1. Current market trends and emerging sectors with strong growth potential
+    2. Macro-economic factors influencing ETF performance
+    3. Analysis of sector rotation and thematic opportunities
+    4. Regional and global market dynamics affecting ETF returns
+    5. Historical performance patterns that indicate future growth potential
+    Today is {full_date}, it's day {current_day} of month {current_month} in year {current_year}.
+    Ensure your analysis reflects the latest market conditions as of {timestamp}.
+    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. 
+    Do not use illustrative or hypothetical examples.
+  expected_output: >
+    A detailed HTML report identifying the top 25 promising ETF investment opportunities,
+    including market analysis, sector trends, and growth potential for each ETF.
+    Each ETF must include its actual ticker symbol and verifiable performance data.
+    Use emojis to highlight key points:
+    📈 Growth trends
+    🔍 Market opportunities
+    🌐 Global factors
+    🚀 High-potential ETFs
+    📊 Performance metrics
+    Include today's date ({full_date}) in your report.
+  agent: market_analyst
+
+etf_evaluation_task:
+  description: >
+    For each of the 25 promising ETFs identified by the Market Analyst, conduct a
+    thorough technical evaluation. Assess:
+    1. ETF structure, holdings, and weighting methodology
+    2. Expense ratio and cost efficiency compared to peers
+    3. Tracking error and index replication quality
+    4. Liquidity and trading volume analysis
+    5. Fund issuer reputation and fund management quality
+    Your evaluation should consider ETF performance data up to {timestamp}.
+    IMPORTANT: Provide actual, verifiable data for each ETF.
+     Do not use hypothetical examples or add "(Illustrative)" disclaimers.
+  expected_output: >
+    An HTML technical assessment report for each ETF, rating their structural
+    quality, cost efficiency, and operational effectiveness. All data must be accurate and
+    verifiable for real ETFs with their actual ticker symbols. Use emojis for
+    technical ratings:
+    ⚙️ ETF structure
+    💰 Expense ratio
+    📊 Tracking accuracy
+    💧 Liquidity profile
+    👨‍💼 Fund management
+    Include today's date ({full_date}) in your report.
+  agent: etf_specialist
+
+risk_assessment_task:
+  description: >
+    Evaluate the potential risks associated with each ETF investment opportunity.
+    Focus on:
+    1. Volatility metrics and historical drawdowns
+    2. Concentration risks within the ETF holdings
+    3. Liquidity risks during market stress scenarios
+    4. Counterparty and structural risks
+    5. Regulatory and tax considerations
+    Consider all risk factors known as of {timestamp} and use {current_year} regulatory standards.
+    IMPORTANT: Use accurate risk metrics based on real historical data.
+     Do not use hypothetical scenarios or add "(Illustrative)" disclaimers.
+  expected_output: >
+    A comprehensive HTML risk profile for each ETF, with risk ratings in each
+    category and overall investment risk assessment. All assessments must be based on
+    verifiable data for real ETFs with their actual ticker symbols. Use emojis for risk levels:
+    📉 Volatility risk
+    🧮 Concentration risk
+    💧 Liquidity risk
+    ⚖️ Regulatory concerns
+    ⚠️ Overall risk rating
+    Include today's date ({full_date}) in your report.
+  agent: risk_assessor
+
+investment_strategy_task:
+  description: >
+    Develop strategic investment recommendations for each promising ETF. Include:
+    1. Optimal entry price points and target valuation
+    2. Position sizing recommendations based on risk/reward profile
+    3. Time horizon for expected returns
+    4. Portfolio allocation strategy and diversification considerations
+    5. Risk management tactics specific to each ETF
+    Base your recommendations on market conditions as of {full_date}.
+    IMPORTANT: Provide specific, actionable recommendations for real ETFs 
+    with their actual ticker symbols.
+    Do not use hypothetical scenarios or add "(Illustrative)" disclaimers.
+  expected_output: >
+    Detailed HTML investment strategy for each ETF, including specific price
+    targets, position sizing, time horizons, and expected return calculations.
+    All recommendations must be for real ETFs with their actual ticker symbols.
+    Use emojis for investment strategy components:
+    💲 Entry points
+    📊 Position sizing
+    ⏱️ Time horizon
+    📈 Target returns
+    🔄 Portfolio allocation
+    Include today's date ({full_date}) in your report.
+  agent: investment_strategist
+
+research_synthesis_task:
+  description: >
+    Review all analyses from the specialist team and synthesize the findings
+    into a comprehensive investment thesis for the most promising ETFs.
+    Ensure that:
+    1. All key findings from market, technical, risk, and investment
+     analyses are incorporated
+    2. ETFs are ranked by overall investment potential
+    3. Clear rationales are provided for why each ETF is recommended
+    4. Specific investment amounts and expected returns are detailed
+    5. A cohesive timeline for investment and monitoring is established
+    This report should be current as of {timestamp} and provide guidance 
+    for the {current_year}-{current_year+1} investment horizon.
+    IMPORTANT: Present only real ETFs with their actual ticker symbols. 
+    Do not use hypothetical examples
+    or add "(Illustrative)" disclaimers. From the initial 25 ETFs analyzed,
+    identify the top 10 with the highest potential.
+  expected_output: >
+    A comprehensive HTML investment thesis document that presents the top
+    ETF investment opportunities, with detailed reasoning, investment guidelines,
+    and expected outcomes. The document should be actionable and provide clear
+    guidance for winning in the ETF market. All recommendations must be for real ETFs
+    with their actual ticker symbols and verifiable data. 
+    The document should be actionable and provide clear
+    guidance for winning in the ETF market. Use emojis for better visualization:
+    🏆 Top ranked ETFs
+    💰 Investment amounts
+    📈 Expected returns
+    ⚖️ Risk/reward analysis
+    ⏱️ Investment timeline
+    🔮 Future outlook
+    Include today's date ({full_date}) prominently in your report.
+  agent: research_director
+  output_file: "etf_investment_recommendations.html"
