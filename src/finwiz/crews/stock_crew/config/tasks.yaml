@@ -1,127 +1,142 @@
-market_analysis_task:
+market_technical_analysis_task:
   description: >
-    Conduct a comprehensive market analysis to identify the top 25 emerging
-    stock projects with potential to become unicorns (projects
-    valued at $1B+). Focus on:
-    1. Current market trends and emerging sectors in the stock space
-    2. Projects with strong growth metrics but still under mainstream radar
-    3. Market sentiment analysis and adoption potential
-    4. Historical patterns that indicate potential for exponential growth
+    Conduct a comprehensive market and technical analysis to identify and evaluate the top 10 emerging
+    stocks with potential to become unicorns (projects valued at $1B+). Focus on:
+    1. Market Analysis:
+       a. Current market trends and emerging sectors in the stock space
+       b. Projects with strong growth metrics but still under mainstream radar
+       c. Market sentiment analysis and adoption potential
+       d. Historical patterns that indicate potential for exponential growth
+    2. Technical Evaluation:
+       a. Financial fundamentals and business model analysis
+       b. Growth scalability and operational efficiency
+       c. Management team expertise and corporate governance
+       d. Technology innovations and competitive advantages
+       e. Balance sheet strength and financial risk assessment
     Today is {full_date}, it's day {current_day} of month {current_month} in year {current_year}.
     Ensure your analysis reflects the latest market conditions as of {timestamp}.
-    IMPORTANT: Use only real, existing stocks with accurate ticker symbols. Do not use illustrative or hypothetical examples.
+    IMPORTANT: Use only real, existing stocks with accurate ticker symbols. 
+    Do not use illustrative or hypothetical examples.
   expected_output: >
-    A detailed HTML report identifying the top 25 promising stocks
-    with unicorn potential, including market analysis, growth metrics, and
-    financial indicators for each stock. Each stock must include its actual
-    ticker symbol and verifiable performance data. Use emojis to highlight key points:
+    A comprehensive HTML with emojis report identifying and evaluating the top 10 promising stocks
+    with unicorn potential, including both market analysis and technical assessment for each stock. 
+    Each stock must include its actual ticker symbol and verifiable performance and financial data. 
+    Use emojis to highlight key points:
     📈 Growth metrics
     🔍 Market trends
     🌐 Adoption indicators
     🚀 Potential unicorns
-    Include today's date ({full_date}) in your report.
-  agent: market_analyst
-
-technical_evaluation_task:
-  description: >
-    For each of the 25 promising stocks identified by the
-    Market Analyst, conduct a thorough technical evaluation. Assess:
-    1. Financial fundamentals and business model analysis
-    2. Growth scalability and operational efficiency
-    3. Management team expertise and corporate governance
-    4. Technology innovations and competitive advantages
-    5. Balance sheet strength and financial risk assessment
-    IMPORTANT: Provide actual, verifiable data for each stock. Do not use hypothetical examples or add "(Illustrative)" disclaimers.
-    Your evaluation should consider technical developments up to {timestamp}.
-  expected_output: >
-    An HTML technical assessment report for each stock, rating their financial
-    fundamentals, highlighting competitive advantages, and identifying operational
-    strengths and weaknesses. All data must be accurate and
-    verifiable for real stocks with their actual ticker symbols. Use emojis for technical ratings:
     📊 Financial fundamentals
     📈 Growth scalability
     👨‍💼 Management team
     💡 Innovation factor
     💰 Balance sheet strength
     Include today's date ({full_date}) in your report.
-  agent: technical_analyst
+  agent: market_technical_analyst
+  output_file: "report/stock_market_technical_analysis.html"
 
-risk_assessment_task:
+investment_risk_strategy_task:
   description: >
-    Evaluate the potential risks associated with each stock
-    identified. Focus on:
-    1. Regulatory challenges and compliance status in major markets
-    2. Financial stability and debt structure risks
-    3. Valuation risks (P/E ratio, revenue concentration, growth sustainability)
-    4. Competitive threats and market positioning
-    5. Management and corporate governance risks
-    IMPORTANT: Use accurate risk metrics based on real historical data. Do not use hypothetical scenarios or add "(Illustrative)" disclaimers.
-    Consider all risk factors known as of {timestamp} and use {current_year} regulatory standards.
+    Evaluate risks and develop investment strategies for each of the 10 stocks. Focus on:
+    1. Risk Assessment:
+       a. Regulatory challenges and compliance status in major markets
+       b. Financial stability and debt structure risks
+       c. Valuation risks (P/E ratio, revenue concentration, growth sustainability)
+       d. Competitive threats and market positioning
+       e. Management and corporate governance risks
+    2. Investment Strategy:
+       a. Optimal entry price points and target valuation
+       b. Position sizing recommendations based on risk/reward profile
+       c. Time horizon for expected returns
+       d. Portfolio allocation strategy and diversification considerations
+       e. Risk management tactics specific to each stock
+    Consider all factors known as of {timestamp} and use {current_year} regulatory standards.
+    Base your investment recommendations on current market conditions as of {full_date}.
+    IMPORTANT: Use accurate metrics based on real historical data and provide specific, actionable
+    recommendations for real stocks with their actual ticker symbols.
+    Do not use hypothetical scenarios or add "(Illustrative)" disclaimers.
   expected_output: >
-    A comprehensive HTML risk profile for each stock, with risk
-    ratings in each category and overall investment risk assessment. All assessments must be based on
-    verifiable data for real stocks with their actual ticker symbols. Use emojis for risk levels:
+    A comprehensive HTML with emojis risk assessment and investment strategy report for each stock,
+    including risk ratings, investment recommendations, specific price targets, position sizing,
+    time horizons, and expected return calculations. All assessments and recommendations
+    must be based on verifiable data for real stocks with their actual ticker symbols.
+    Use emojis to categorize information:
     ⚖️ Regulatory risks
     💵 Financial stability risks
     📈 Valuation risks
     🥊 Competitive threats
     👥 Team/governance risks
     ⚠️ Overall risk rating
-    Include today's date ({full_date}) in your report.
-  agent: risk_assessor
-
-investment_strategy_task:
-  description: >
-    Develop strategic investment recommendations for each promising
-    stock. Include:
-    1. Optimal entry price points and target valuation
-    2. Position sizing recommendations based on risk/reward profile
-    3. Time horizon for expected unicorn status achievement
-    4. Portfolio allocation strategy and diversification considerations
-    5. Risk management tactics specific to each stock
-    Base your recommendations on market conditions as of {full_date}.
-    IMPORTANT: Provide specific, actionable recommendations for real stocks with their actual ticker symbols.
-    Do not use hypothetical scenarios or add "(Illustrative)" disclaimers.
-  expected_output: >
-    Detailed HTML investment strategy for each stock, including
-    specific price targets, position sizing, time horizons, and expected
-    return calculations. All recommendations must be for real stocks with their actual ticker symbols
-    and verifiable data. Use emojis for investment strategy components:
     💲 Entry points
     📊 Position sizing
     ⏱️ Time horizon
     📈 Target valuation
     🔄 Portfolio allocation
     Include today's date ({full_date}) in your report.
-  agent: investment_strategist
+  agent: investment_risk_analyst
+  output_file: "report/stock_investment_risk_strategy.html"
 
 research_synthesis_task:
   description: >
-    Review all analyses from the specialist team and synthesize the findings
-    into a comprehensive investment thesis for each potential stock unicorn.
+    Review all analyses and synthesize the findings into a focused investment thesis for the 10 stocks.
     Ensure that:
-    1. All key findings from market, technical, risk, and investment analyses are incorporated
-    2. Projects are ranked by overall investment potential
-    3. Clear rationales are provided for why each project could achieve unicorn status
-    4. Specific investment amounts and expected returns are detailed
-    5. A cohesive timeline for investment and monitoring is established
+    1. Key findings from all analyses are incorporated concisely
+    2. Stocks are clearly ranked by investment potential
+    3. Specific investment rationales and expected returns are provided
+    4. A brief timeline for investment and monitoring is included
     This report should be current as of {timestamp} and provide guidance for the {current_year}-{current_year+1} investment horizon.
-    IMPORTANT: Present only real stocks with their actual ticker symbols. Do not use hypothetical examples
-    or add "(Illustrative)" disclaimers. From the initial 25 stocks analyzed, identify the top 10 with the highest potential.
+    
+    IMPORTANT REQUIREMENTS:
+    1. Present only real stocks with their actual ticker symbols. No hypothetical examples
+       or "(Illustrative)" disclaimers.
+    2. Generate TWO outputs:
+       a. A human-readable HTML report (for display)
+       b. A structured JSON file (for data consumption by the Report Crew)
+    
+    For the JSON output:
+    1. Use the JSONOutputTool specifically to generate the JSON
+    2. Save it to "report/stock_unicorn_investment_recommendations.json"
+    3. Include the following structure:
+    {
+      "crew_type": "stock",
+      "analysis_date": "{full_date}",
+      "recommendations": [
+        {
+          "ticker": "[SYMBOL]",
+          "name": "[COMPANY NAME]",
+          "action": "buy|sell|hold",
+          "price": [CURRENT_PRICE],
+          "currency": "CHF",
+          "allocation": [RECOMMENDED_ALLOCATION],
+          "rationale": "[INVESTMENT_RATIONALE]",
+          "risk_level": "low|medium|high",
+          "expected_return": "[PERCENTAGE]",
+          "timeframe": "[TIME_PERIOD]"
+        }
+      ],
+      "tickers_analyzed": ["[SYMBOL1]", "[SYMBOL2]", ...]
+    }
   expected_output: >
-    A comprehensive HTML investment thesis document that presents the top
-    stock investment opportunities, with detailed reasoning,
-    investment guidelines, and expected outcomes. All recommendations must be for real stocks
-    with their actual ticker symbols and verifiable data. The document should be
-    actionable and provide clear guidance for winning in the stock
-    market. Use emojis for better visualization:
-    🏆 Top ranked stocks
-    💸 Expected ROI
-    📊 Investment allocation
-    📍 Action steps
-    📈 Monitoring metrics
+    TWO outputs are required:
+    
+    1. HTML OUTPUT: A comprehensive HTML with emojis investment thesis document that presents the top
+       stock investment opportunities, with detailed reasoning,
+       investment guidelines, and expected outcomes. All recommendations must be for real stocks
+       with their actual ticker symbols and verifiable data. The document should be
+       actionable and provide clear guidance for winning in the stock
+       market. Use emojis for better visualization:
+       🏆 Top ranked stocks
+       💸 Expected ROI
+       📊 Investment allocation
+       📍 Action steps
+       📈 Monitoring metrics
+    
+    2. JSON OUTPUT: A structured JSON file containing all recommendations in a machine-readable format,
+       including ticker symbols, company names, current prices, recommended allocations, rationales,
+       risk levels, expected returns, and timeframes. This will be used by the Report Crew for portfolio integration.
     ⏱️ Investment timeline
     🔮 Future outlook
     Include today's date ({full_date}) prominently in your report.
   agent: research_director
   output_file: "report/stock_unicorn_investment_recommendations.html"
+  json_output_file: "report/stock_unicorn_investment_recommendations.json"

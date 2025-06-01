@@ -1,105 +1,94 @@
-integration_analysis_task:
+integration_portfolio_task:
   description: >
-    Analyze and integrate the investment recommendations from the Stock, ETF, and Crypto Crews.
+    Analyze, integrate, and allocate investments across asset classes with a monthly budget of 1000 CHF.
+    IMPORTANT: You must ONLY use the information provided in the stock_result, etf_result, and crypto_result inputs.
+    DO NOT conduct any additional web searches or external research.
+    
     Focus on:
-    1. Identifying the strongest investment opportunities across all asset classes
-    2. Evaluating the quality and consistency of recommendations across crews
-    3. Assessing the reliability of each recommendation based on supporting evidence
-    4. Comparing similar recommendations across different crews for consensus signals
-    5. Highlighting unique investment opportunities with strong potential
+    1. Analysis and Integration:
+       a. FIRST check for JSON files (.json) for each crew's output, which contain structured data
+          - Look for files like stock_unicorn_investment_recommendations.json, etc.
+          - Use the JSONParserTool to extract structured data from these files
+       b. If JSON is not available, fall back to parsing HTML content using HTMLParserTool
+       c. Identify the strongest investment opportunities across all asset classes
+       d. Evaluate the quality and consistency of recommendations
+       e. Compare similar recommendations for consensus signals
+       f. Highlight unique opportunities with strong potential
+    2. Portfolio Allocation:
+       a. Distribute the 1000 CHF across stocks, ETFs, and cryptocurrencies
+       b. Prioritize investments based on potential return
+       c. Create appropriate diversification across asset classes
+       d. Provide specific allocation amounts (in CHF) for each investment
+    
     Today is {full_date}, it's day {current_day} of month {current_month} in year {current_year}.
     IMPORTANT: Ensure all recommendations reference real financial instruments with accurate ticker symbols.
-    Do not use illustrative examples or add "(Illustrative)" disclaimers.
+    No hypothetical examples or "(Illustrative)" disclaimers. Allocation amounts must sum to exactly 1000 CHF.
   expected_output: >
-    A detailed HTML analysis of the top investment opportunities across stocks, ETFs, and cryptocurrencies.
-    The analysis must include:
-    - Comparative assessment of each recommendation's strength and evidence
-    - Cross-referenced opportunities that appear in multiple crew recommendations
-    - Evaluation of data quality and recommendation reliability
-    - All financial instruments must be real with accurate ticker symbols and verifiable data
+    A comprehensive HTML with emojis analysis and allocation plan that includes:
+    - Assessment of the best investment opportunities across stocks, ETFs, and cryptocurrencies
+    - Cross-referenced opportunities that appear in multiple recommendations
+    - Exact CHF allocation for each investment (totaling 1000 CHF)
+    - Breakdown across asset classes and rationale for allocation decisions
+    - All financial instruments with accurate ticker symbols and verifiable data
     Use emojis for categorization:
     🔍 Analysis strength
-    📊 Data quality
     ⭐ Recommendation strength
     🌐 Cross-crew consensus
-  agent: financial_integration_analyst
-
-portfolio_allocation_task:
-  description: >
-    Create an optimal portfolio allocation strategy with a monthly investment budget of 1000 CHF.
-    Based on the integrated analysis of recommendations, develop a detailed allocation plan that:
-    1. Distributes the 1000 CHF monthly investment across stocks, ETFs, and cryptocurrencies
-    2. Prioritizes investments based on risk-adjusted return potential
-    3. Creates appropriate diversification across asset classes and within each asset class
-    4. Considers liquidity needs and transaction costs
-    5. Provides specific allocation amounts (in CHF) for each recommended investment
-    IMPORTANT: All recommendations must be implementable with real financial instruments.
-    Provide specific ticker symbols and exact allocation amounts that sum to exactly 1000 CHF.
-  expected_output: >
-    A comprehensive HTML portfolio allocation strategy that includes:
-    - Exact CHF allocation for each recommended investment (totaling 1000 CHF)
-    - Percentage breakdown across asset classes (stocks, ETFs, cryptocurrencies)
-    - Specific investment vehicles with real ticker symbols
-    - Rationale for each allocation decision
-    - Implementation guidance including recommended brokers/platforms
-    Use emojis for better visualization:
     💰 Allocation amount (CHF)
     📊 Portfolio percentage
     📈 Expected return
-    ⚖️ Risk assessment
-    🔄 Rebalancing guidance
-  agent: portfolio_allocator
+    ⚖️ Risk level
+  agent: financial_integration_analyst
+  output_file: "report/integrated_portfolio_analysis.html"
 
-risk_assessment_task:
+risk_final_report_task:
   description: >
-    Conduct a comprehensive risk assessment of the proposed portfolio allocation.
-    Evaluate:
-    1. Individual investment risks for each recommended financial instrument
-    2. Aggregate portfolio risk metrics (volatility, drawdown potential, etc.)
-    3. Correlation between different investments and asset classes
-    4. Specific risk factors for each asset class (market risk, interest rate risk, etc.)
-    5. Strategies to mitigate identified risks while maintaining return potential
-    Base your assessment on market conditions as of {full_date}.
-    IMPORTANT: All risk metrics must be based on real historical data for the recommended investments.
+    Assess risks and create a final actionable investment report with a 1000 CHF monthly budget.
+    IMPORTANT: You must ONLY use the information provided in the previous task's output and the original
+    stock_result, etf_result, and crypto_result inputs. DO NOT conduct any additional web searches
+    or external research.
+    
+    Focus on:
+    1. Data Consumption:
+       a. PRIORITIZE using structured JSON data when available:
+          - Use JSONParserTool to extract data from JSON files (like stock_unicorn_investment_recommendations.json)
+          - This provides more accurate and complete information for your analysis
+       b. Fall back to HTML parsing only when JSON data is not available
+       c. Combine with the previous task's output for a complete picture
+    
+    2. Risk Assessment:
+       a. Key risks specific to each asset class and individual investment based on the information provided
+       b. Correlation risks within the portfolio
+       c. Timing risks based on current market conditions mentioned in the crew reports
+       d. Practical mitigation strategies for identified risks
+    
+    3. Final Report Creation:
+       a. Synthesize all analyses into a coherent investment plan
+       b. Present the strongest investment opportunities across asset classes
+       c. Show the portfolio allocation with exact CHF amounts
+       d. Provide clear implementation guidance
+    
+    IMPORTANT: Risk assessments must be evidence-based for each real financial instrument.
+    Include only real financial instruments with accurate ticker symbols, implementable with 
+    a 1000 CHF monthly budget. Information must be current as of {timestamp}.
   expected_output: >
-    A detailed HTML risk assessment report that includes:
-    - Risk profile for each recommended investment
-    - Aggregate portfolio risk metrics with visual representations
-    - Correlation matrix for portfolio components
-    - Specific risk mitigation strategies
-    - Scenario analysis for different market conditions
-    All assessments must use verifiable data for the recommended financial instruments.
-    Use emojis for risk categorization:
-    🔴 High risk factors
-    🟡 Medium risk factors
-    🟢 Low risk factors
+    A comprehensive HTML with emojis investment report titled "FinWiz Integrated Investment Plan" that includes:
+    - Executive Summary
+    - Investment Recommendations (with ticker symbols)
+    - Portfolio Allocation (with exact CHF amounts)
+    - Detailed Risk Assessment including:
+      * Key risk factors for each investment
+      * Overall portfolio risk analysis
+      * Risk ratings and practical mitigation strategies
+    - Implementation Guide
+    Use emojis for clarity and risk visualization:
+    🚨 High risk factors
+    ⚠️ Medium risk factors
+    ✅ Low risk factors
     🛡️ Risk mitigation strategies
-    📉 Drawdown scenarios
+    📊 Portfolio breakdown
+    💰 Investment amounts
+    🏆 Top opportunities
+    Include today's date ({full_date}) prominently in your report.
   agent: risk_manager
-
-final_report_task:
-  description: >
-    Create a comprehensive investment report that synthesizes all analyses into a detailed,
-    actionable investment plan with a 1000 CHF monthly budget. The report should:
-    1. Summarize the strongest investment opportunities across all asset classes
-    2. Present the optimized portfolio allocation with exact CHF amounts
-    3. Detail the risk assessment and mitigation strategies
-    4. Provide step-by-step implementation instructions
-    5. Include monitoring guidance and rebalancing criteria
-    IMPORTANT: The report must be evidence-based with links to verifiable sources for all claims.
-    Use only real financial instruments with accurate ticker symbols. The total allocation
-    must equal exactly 1000 CHF per month.
-  expected_output: >
-    A professional, comprehensive HTML investment report titled "FinWiz Monthly Investment Plan: 1000 CHF Allocation Strategy"
-    that includes:
-    - Executive summary of investment recommendations
-    - Detailed portfolio allocation with exact CHF amounts
-    - Evidence-based justification for each investment
-    - Risk assessment and mitigation strategies
-    - Step-by-step implementation guide
-    - Monitoring framework with specific metrics
-    - References and sources for all data
-    The report must be detailed, not summarized, with proven links to real investment products.
-    Use professional formatting with clear sections, tables, and visual elements.
-  agent: investment_reporter
-  output_file: "report/finwiz_monthly_investment_plan.html"
+  output_file: "report/finwiz_risk_investment_plan.html"

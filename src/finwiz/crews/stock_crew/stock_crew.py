@@ -15,10 +15,18 @@ from crewai_tools import (
     FirecrawlScrapeWebsiteTool,
     FirecrawlSearchTool,
     SerperDevTool,
-    TavilySearchTool,
+    # TavilySearchTool,
     YoutubeVideoSearchTool,
 )
 from dotenv import load_dotenv
+
+from finwiz.tools.finance_tools import get_data_output_tools
+from finwiz.tools.yahoo_finance_tool import (
+    YahooFinanceCompanyInfoTool,
+    YahooFinanceHistoryTool,
+    YahooFinanceNewsTool,
+    YahooFinanceTickerInfoTool,
+)
 
 # Removed incompatible LangChain tool
 
@@ -27,12 +35,20 @@ load_dotenv()
 # Initialize research tools
 
 directory_search_tool = DirectorySearchTool(directory="./search_results")
-news_tool = SerperDevTool(n_results=25, save_file=True, search_type="news")
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=25, save_file=True)
-search_tool = SerperDevTool(n_results=25, save_file=True, search_type="search")
-search_tool2 = FirecrawlSearchTool(limit=25, save_file=True)
-search_tool3 = TavilySearchTool(max_results=25)
+news_tool = SerperDevTool(n_results=10, save_file=True, search_type="news")
+scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=True)
+search_tool = SerperDevTool(n_results=10, save_file=True, search_type="search")
+search_tool2 = FirecrawlSearchTool(limit=10, save_file=True)
+# search_tool3 = TavilySearchTool(max_results=25)
+
+yahoo_ticker_tool = YahooFinanceTickerInfoTool()
+yahoo_history_tool = YahooFinanceHistoryTool()
+yahoo_compinfo_tool = YahooFinanceCompanyInfoTool()
+yahoo_news_tool = YahooFinanceNewsTool()
 youtube_tool = YoutubeVideoSearchTool()
+
+# Get JSON output tools
+json_tools = get_data_output_tools()
 
 # Tools for stock research and analysis
 tools = [
@@ -41,8 +57,13 @@ tools = [
     scrape_tool,
     search_tool,
     search_tool2,
-    search_tool3,
+    # search_tool3,
+    yahoo_ticker_tool,
+    yahoo_history_tool,
+    yahoo_compinfo_tool,
+    yahoo_news_tool,
     youtube_tool,
+    *json_tools,  # Add JSON output tools
 ]
 
 
@@ -59,67 +80,43 @@ class StockCrew:
     tasks: list[Task]
 
     @agent
-    def market_analyst(self) -> Agent:
+    def market_technical_analyst(self) -> Agent:
         """
-        Create a Market Analyst agent.
+        Create a Market & Technical Analyst agent.
 
-        Analyzes overall market trends, sector performance, and economic
-        indicators relevant to stock investments.
+        This agent analyzes stock market trends and evaluates technical aspects
+        of company financials to identify high-potential investment opportunities.
         """
         return Agent(
-            config=self.agents_config["market_analyst"],  # type: ignore[index]
+            config=self.agents_config["market_technical_analyst"],  # type: ignore[index]
             verbose=True,
             tools=tools,
             reasoning=True,
-            max_reasoning_steps=5,
+            memory=True,
+            cache=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_reasoning_steps=3,
         )
 
     @agent
-    def technical_analyst(self) -> Agent:
+    def investment_risk_analyst(self) -> Agent:
         """
-        Create a Fundamental Analyst agent.
+        Create an Investment & Risk Analyst agent.
 
-        Focuses on evaluating specific companies, their financial health,
-        stock performance, and valuation.
+        This agent assesses risks and develops investment strategies for stocks,
+        balancing risk factors with return potential.
         """
         return Agent(
-            config=self.agents_config["technical_analyst"],  # type: ignore[index]
+            config=self.agents_config["investment_risk_analyst"],  # type: ignore[index]
             verbose=True,
             tools=tools,
             reasoning=True,
-            max_reasoning_steps=5,
-        )
-
-    @agent
-    def risk_assessor(self) -> Agent:
-        """
-        Create a Risk Assessor agent.
-
-        Evaluates risks associated with potential stock investments,
-        considering market, company-specific, and economic risks.
-        """
-        return Agent(
-            config=self.agents_config["risk_assessor"],  # type: ignore[index]
-            verbose=True,
-            tools=tools,
-            reasoning=True,
-            max_reasoning_steps=5,
-        )
-
-    @agent
-    def investment_strategist(self) -> Agent:
-        """
-        Create an Investment Strategist agent.
-
-        Develops stock investment strategies, including asset allocation
-        and portfolio construction, based on research findings.
-        """
-        return Agent(
-            config=self.agents_config["investment_strategist"],  # type: ignore[index]
-            verbose=True,
-            tools=tools,
-            reasoning=True,
-            max_reasoning_steps=5,
+            memory=True,
+            cache=True,
+            allow_delegation=False,
+            respect_context_window=True,
+            max_reasoning_steps=3,
         )
 
     @agent
@@ -127,75 +124,60 @@ class StockCrew:
         """
         Create a Research Director agent.
 
-        Oversees the stock research process, ensures quality of analysis,
-        and synthesizes final investment recommendations.
+        This agent oversees the entire research process and synthesizes all findings
+        into comprehensive stock investment recommendations.
         """
         return Agent(
             config=self.agents_config["research_director"],  # type: ignore[index]
             verbose=True,
             tools=tools,
             reasoning=True,
+            memory=True,
+            cache=True,
+            allow_delegation=False,
+            respect_context_window=True,
             max_reasoning_steps=5,
         )
 
     @task
-    def market_analysis_task(self) -> Task:
+    def market_technical_analysis_task(self) -> Task:
         """
-        Define the task for the Market Analyst.
+        Define the market and technical analysis task.
 
-        Researches stock market trends, identifies promising sectors,
-        and selects potential companies for deeper analysis.
+        This task involves researching stock market trends and conducting in-depth
+        financial analysis of companies, focusing on identifying promising stocks
+        and evaluating their fundamentals, valuation, and growth prospects.
         """
         return Task(
-            config=self.tasks_config["market_analysis_task"],  # type: ignore[index]
+            config=self.tasks_config["market_technical_analysis_task"],  # type: ignore[index]
+            async_execution=False,
         )
 
     @task
-    def technical_evaluation_task(self) -> Task:
+    def investment_risk_strategy_task(self) -> Task:
         """
-        Define the task for the Fundamental Analyst.
+        Define the investment risk and strategy task.
 
-        Conducts detailed evaluations of selected stocks, including
-        financial statement analysis, valuation, and growth prospects.
+        This task involves evaluating potential risks of the selected stocks
+        and developing comprehensive investment strategies, including risk assessment,
+        entry points, position sizing, and expected returns.
         """
         return Task(
-            config=self.tasks_config["technical_evaluation_task"],  # type: ignore[index]
-        )
-
-    @task
-    def risk_assessment_task(self) -> Task:
-        """
-        Define the task for the Risk Assessor.
-
-        Analyzes risk profiles of chosen stocks and develops risk
-        mitigation strategies.
-        """
-        return Task(
-            config=self.tasks_config["risk_assessment_task"],  # type: ignore[index]
-        )
-
-    @task
-    def investment_strategy_task(self) -> Task:
-        """
-        Define the task for the Investment Strategist.
-
-        Formulates a comprehensive stock investment strategy based on all
-        gathered insights.
-        """
-        return Task(
-            config=self.tasks_config["investment_strategy_task"],  # type: ignore[index]
+            config=self.tasks_config["investment_risk_strategy_task"],  # type: ignore[index]
+            async_execution=False,
         )
 
     @task
     def research_synthesis_task(self) -> Task:
         """
-        Define the task for the Research Director.
+        Define the research synthesis task.
 
-        Compiles all stock research findings into a detailed and
-        actionable investment thesis report.
+        This task involves compiling all analyses and recommendations into a final
+        stock investment report with clear, actionable insights.
         """
         return Task(
             config=self.tasks_config["research_synthesis_task"],  # type: ignore[index]
+            async_execution=False,
         )
 
     @crew
@@ -208,13 +190,7 @@ class StockCrew:
         return Crew(
             agents=self.agents,  # Automatically created by the @agent decorator
             tasks=self.tasks,  # Automatically created by the @task decorator
-            process=Process.hierarchical,
-            manager_llm="gpt-4.1-mini",
+            process=Process.sequential,
             verbose=True,
-            memory=True,
-            allow_delegation=True,
-            allow_termination=True,
-            cache=True,
-            respect_context_window=True,
-            max_retries=3,
+            max_retries=10,
         )

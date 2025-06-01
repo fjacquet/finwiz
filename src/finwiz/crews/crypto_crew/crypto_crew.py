@@ -19,32 +19,49 @@ from crewai_tools import (
     FirecrawlScrapeWebsiteTool,
     FirecrawlSearchTool,
     SerperDevTool,
-    TavilySearchTool,
+    # TavilySearchTool,
     YoutubeVideoSearchTool,
 )
 from dotenv import load_dotenv
+
+from finwiz.tools.finance_tools import get_data_output_tools
+from finwiz.tools.yahoo_finance_tool import (
+    YahooFinanceHistoryTool,
+    YahooFinanceNewsTool,
+    YahooFinanceTickerInfoTool,
+)
 
 # Removed incompatible LangChain tool
 
 load_dotenv()
 
 directory_search_tool = DirectorySearchTool(directory="./search_results")
-news_tool = SerperDevTool(n_results=25, save_file=True, search_type="news")
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=25, save_file=True)
-search_tool = SerperDevTool(n_results=25, save_file=True, search_type="search")
-search_tool2 = FirecrawlSearchTool(limit=25, save_file=True)
-search_tool3 = TavilySearchTool(max_results=25)
+news_tool = SerperDevTool(n_results=10, save_file=True, search_type="news")
+scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=True)
+search_tool = SerperDevTool(n_results=10, save_file=True, search_type="search")
+search_tool2 = FirecrawlSearchTool(limit=10, save_file=True)
+# search_tool3 = TavilySearchTool(max_results=25)
+yahoo_ticker_tool = YahooFinanceTickerInfoTool()
+yahoo_history_tool = YahooFinanceHistoryTool()
+yahoo_news_tool = YahooFinanceNewsTool()
 youtube_tool = YoutubeVideoSearchTool()
 
-# Tools for cryptocurrency research and analysis
+# Get JSON output tools
+json_tools = get_data_output_tools()
+
+# Tools for crypto research and analysis
 tools = [
     directory_search_tool,
     news_tool,
     scrape_tool,
     search_tool,
     search_tool2,
-    search_tool3,
+    # search_tool3,
+    yahoo_ticker_tool,
+    yahoo_history_tool,
+    yahoo_news_tool,
     youtube_tool,
+    *json_tools,  # Add JSON output tools
 ]
 
 
@@ -62,67 +79,43 @@ class CryptoCrew:
     tasks: list[Task]
 
     @agent
-    def market_analyst(self) -> Agent:
+    def market_technical_analyst(self) -> Agent:
         """
-        Create a Market Analyst agent.
+        Create a Market & Technical Analyst agent.
 
-        Responsible for analyzing market trends, sentiment, and news
-        related to cryptocurrencies.
+        This agent analyzes cryptocurrency market trends and evaluates technical aspects
+        of blockchain projects to identify high-potential investment opportunities.
         """
         return Agent(
-            config=self.agents_config["market_analyst"],
+            config=self.agents_config["market_technical_analyst"],
             verbose=True,
             tools=tools,
             reasoning=True,
-            max_reasoning_steps=5,
+            memory=True,
+            cache=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_reasoning_steps=3,
         )
 
     @agent
-    def technical_analyst(self) -> Agent:
+    def investment_risk_analyst(self) -> Agent:
         """
-        Create a Technical Analyst agent.
+        Create an Investment & Risk Analyst agent.
 
-        Focused on evaluating the technical aspects of cryptocurrencies,
-        including blockchain technology, tokenomics, and whitepapers.
+        This agent assesses risks and develops investment strategies for cryptocurrency
+        projects, balancing risk factors with return potential.
         """
         return Agent(
-            config=self.agents_config["technical_analyst"],
+            config=self.agents_config["investment_risk_analyst"],
             verbose=True,
             tools=tools,
             reasoning=True,
-            max_reasoning_steps=5,
-        )
-
-    @agent
-    def risk_assessor(self) -> Agent:
-        """
-        Create a Risk Assessor agent.
-
-        Dedicated to identifying and evaluating potential risks
-        associated with cryptocurrency investments.
-        """
-        return Agent(
-            config=self.agents_config["risk_assessor"],
-            verbose=True,
-            tools=tools,
-            reasoning=True,
-            max_reasoning_steps=5,
-        )
-
-    @agent
-    def investment_strategist(self) -> Agent:
-        """
-        Create an Investment Strategist agent.
-
-        Formulates investment strategies based on the analyses from
-        other agents.
-        """
-        return Agent(
-            config=self.agents_config["investment_strategist"],
-            verbose=True,
-            tools=tools,
-            reasoning=True,
-            max_reasoning_steps=5,
+            memory=True,
+            cache=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_reasoning_steps=3,
         )
 
     @agent
@@ -130,73 +123,60 @@ class CryptoCrew:
         """
         Create a Research Director agent.
 
-        Responsible for overseeing the research process, ensuring quality,
-        and synthesizing the final investment thesis.
+        This agent oversees the entire research process and synthesizes all findings
+        into comprehensive cryptocurrency investment recommendations.
         """
         return Agent(
             config=self.agents_config["research_director"],
             verbose=True,
             tools=tools,
             reasoning=True,
-            max_reasoning_steps=5,
+            memory=True,
+            cache=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_reasoning_steps=3,
         )
 
     @task
-    def market_analysis_task(self) -> Task:
+    def market_technical_analysis_task(self) -> Task:
         """
-        Define the task for the Market Analyst.
+        Define the market and technical analysis task.
 
-        Conduct comprehensive market research and identify promising
-        cryptocurrency sectors or projects.
+        This task involves researching cryptocurrency market trends and conducting
+        in-depth technical evaluation of projects, focusing on both market potential
+        and technical innovation.
         """
         return Task(
-            config=self.tasks_config["market_analysis_task"],
+            config=self.tasks_config["market_technical_analysis_task"],
+            async_execution=False,
         )
 
     @task
-    def technical_evaluation_task(self) -> Task:
+    def investment_risk_strategy_task(self) -> Task:
         """
-        Define the task for the Technical Analyst.
+        Define the investment risk and strategy task.
 
-        Perform an in-depth technical review of selected cryptocurrencies.
+        This task involves evaluating potential risks of the selected cryptocurrencies
+        and developing comprehensive investment strategies, including risk assessment,
+        entry points, position sizing, and expected returns.
         """
         return Task(
-            config=self.tasks_config["technical_evaluation_task"],
-        )
-
-    @task
-    def risk_assessment_task(self) -> Task:
-        """
-        Define the task for the Risk Assessor.
-
-        Evaluate the risks associated with the identified cryptocurrency
-        investment opportunities.
-        """
-        return Task(
-            config=self.tasks_config["risk_assessment_task"],
-        )
-
-    @task
-    def investment_strategy_task(self) -> Task:
-        """
-        Define the task for the Investment Strategist.
-
-        Develop a detailed investment plan, including allocation and
-        potential returns.
-        """
-        return Task(
-            config=self.tasks_config["investment_strategy_task"],
+            config=self.tasks_config["investment_risk_strategy_task"],
+            async_execution=False,
         )
 
     @task
     def research_synthesis_task(self) -> Task:
         """
-        Define the task for the Research Director.
+        Define the research synthesis task.
 
-        Compile all findings into a final, actionable investment thesis report.
+        This task involves compiling all analyses and recommendations into a final
+        cryptocurrency investment report with clear, actionable insights.
         """
         return Task(
             config=self.tasks_config["research_synthesis_task"],
+            async_execution=False,
         )
 
     @crew
@@ -210,15 +190,7 @@ class CryptoCrew:
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
-            process=Process.hierarchical,
-            manager_llm="gpt-4.1-mini",
+            process=Process.sequential,
             verbose=True,
-            memory=True,
-            cache=True,
-            respect_context_window=True,
-            max_retries=3,
-            allow_delegation=True,
-            allow_termination=True,
-            # Can be changed to Process.hierarchical
-            # if a more complex workflow is needed
+            max_retries=10,
         )

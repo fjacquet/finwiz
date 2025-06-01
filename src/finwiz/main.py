@@ -22,7 +22,7 @@ from datetime import datetime
 from typing import Any
 
 # import agentops  # Disabled to avoid instrumentation errors
-from crewai.flow import Flow, listen, start
+from crewai.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 
 from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
@@ -71,6 +71,15 @@ class CryptoFlow(Flow[CryptoState]):
             "timestamp": today.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
+    @start()
+    def check_stock(self) -> None:
+        """Initiate the stock analysis crew."""
+        result = StockCrew().crew().kickoff(inputs=self.inputs)
+        # Use dictionary access since the state is a dict during flow execution
+        if isinstance(self.state, dict):
+            self.state["stock_result"] = result.raw
+        else:
+            self.state.stock_result = result.raw
 
     @start()
     def check_etf(self) -> None:
@@ -82,7 +91,7 @@ class CryptoFlow(Flow[CryptoState]):
         else:
             self.state.etf_result = result.raw
 
-    @listen(check_etf)
+    @start()
     def check_crypto(self) -> None:
         """Initiate the cryptocurrency analysis crew."""
         result = CryptoCrew().crew().kickoff(inputs=self.inputs)
@@ -92,18 +101,10 @@ class CryptoFlow(Flow[CryptoState]):
         else:
             self.state.crypto_result = result.raw
 
-    @listen(check_crypto)
-    def check_stock(self) -> None:
-        """Initiate the stock analysis crew."""
-        result = StockCrew().crew().kickoff(inputs=self.inputs)
-        # Use dictionary access since the state is a dict during flow execution
-        if isinstance(self.state, dict):
-            self.state["stock_result"] = result.raw
-        else:
-            self.state.stock_result = result.raw
 
 
-    @listen(check_stock)
+
+    @listen(and_(check_stock,check_etf,check_crypto))
     def report(self) -> None:
         """Generate a consolidated report after all analyses are complete."""
         report_inputs = self.inputs.copy()

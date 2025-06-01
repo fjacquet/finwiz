@@ -6,7 +6,6 @@ Investment Strategist, Research Director) and their tasks to identify
 high-potential ETFs and provide detailed investment recommendations.
 """
 
-
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
@@ -15,10 +14,18 @@ from crewai_tools import (
     FirecrawlScrapeWebsiteTool,
     FirecrawlSearchTool,
     SerperDevTool,
-    TavilySearchTool,
+    # TavilySearchTool,
     YoutubeVideoSearchTool,
 )
 from dotenv import load_dotenv
+
+from finwiz.tools.finance_tools import get_data_output_tools
+from finwiz.tools.yahoo_finance_tool import (
+    YahooFinanceETFHoldingsTool,
+    YahooFinanceHistoryTool,
+    YahooFinanceNewsTool,
+    YahooFinanceTickerInfoTool,
+)
 
 # Removed incompatible LangChain tool
 
@@ -27,12 +34,19 @@ load_dotenv()
 
 # Initialize research tools
 directory_search_tool = DirectorySearchTool(directory="./search_results")
-news_tool = SerperDevTool(n_results=25, save_file=True, search_type="news")
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=25, save_file=True)
-search_tool = SerperDevTool(n_results=25, save_file=True, search_type="search")
-search_tool2 = FirecrawlSearchTool(limit=25, save_file=True)
-search_tool3 = TavilySearchTool(max_results=25)
+news_tool = SerperDevTool(n_results=10, save_file=True, search_type="news")
+scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=True)
+search_tool = SerperDevTool(n_results=10, save_file=True, search_type="search")
+search_tool2 = FirecrawlSearchTool(limit=10, save_file=True)
+# search_tool3 = TavilySearchTool(max_results=25)
+yahoo_ticker_tool = YahooFinanceTickerInfoTool()
+yahoo_history_tool =  YahooFinanceHistoryTool()
+yahoo_etf_tool = YahooFinanceETFHoldingsTool()
+yahoo_news_tool = YahooFinanceNewsTool()
 youtube_tool = YoutubeVideoSearchTool()
+
+# Get JSON output tools
+json_tools = get_data_output_tools()
 
 # Tools for ETF research and analysis
 tools = [
@@ -41,10 +55,14 @@ tools = [
     scrape_tool,
     search_tool,
     search_tool2,
-    search_tool3,
+    # search_tool3,
+    yahoo_etf_tool,
+    yahoo_history_tool,
+    yahoo_news_tool,
+    yahoo_ticker_tool,
     youtube_tool,
+    *json_tools,  # Add JSON output tools
 ]
-
 
 @CrewBase
 class EtfCrew:
@@ -59,64 +77,43 @@ class EtfCrew:
     tasks: list[Task]
 
     @agent
-    def market_analyst(self) -> Agent:
+    def market_etf_analyst(self) -> Agent:
         """
-        Create a Market Analyst agent.
+        Create a Market & ETF Structure Analyst agent.
 
-        Analyzes broad market conditions and trends relevant to ETF investments.
+        This agent analyzes market conditions and evaluates ETF compositions
+        to identify high-potential exchange-traded fund investments.
         """
         return Agent(
-            config=self.agents_config["market_analyst"],  # type: ignore[index]
+            config=self.agents_config["market_etf_analyst"],  # type: ignore[index]
             verbose=True,
             tools=tools,
             reasoning=True,
-            max_reasoning_steps=5,
+            memory=True,
+            cache=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_reasoning_steps=3,
         )
 
     @agent
-    def etf_specialist(self) -> Agent:
+    def investment_risk_analyst(self) -> Agent:
         """
-        Create an ETF Specialist agent.
+        Create an Investment & Risk Analyst agent.
 
-        Focuses on in-depth analysis of specific ETFs, their composition,
-        and performance.
+        This agent assesses risks and develops investment strategies for ETFs,
+        balancing risk factors with return potential.
         """
         return Agent(
-            config=self.agents_config["etf_specialist"],  # type: ignore[index]
+            config=self.agents_config["investment_risk_analyst"],  # type: ignore[index]
             verbose=True,
             tools=tools,
             reasoning=True,
-            max_reasoning_steps=5,
-        )
-
-    @agent
-    def risk_assessor(self) -> Agent:
-        """
-        Create a Risk Assessor agent.
-
-        Evaluates the risks associated with potential ETF investments.
-        """
-        return Agent(
-            config=self.agents_config["risk_assessor"],  # type: ignore[index]
-            verbose=True,
-            tools=tools,
-            reasoning=True,
-            max_reasoning_steps=5,
-        )
-
-    @agent
-    def investment_strategist(self) -> Agent:
-        """
-        Create an Investment Strategist agent.
-
-        Develops ETF investment strategies based on research findings.
-        """
-        return Agent(
-            config=self.agents_config["investment_strategist"],  # type: ignore[index]
-            verbose=True,
-            tools=tools,
-            reasoning=True,
-            max_reasoning_steps=5,
+            memory=True,
+            cache=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_reasoning_steps=3,
         )
 
     @agent
@@ -124,70 +121,60 @@ class EtfCrew:
         """
         Create a Research Director agent.
 
-        Oversees the ETF research process and synthesizes final recommendations.
+        This agent oversees the entire research process and synthesizes all findings
+        into comprehensive ETF investment recommendations.
         """
         return Agent(
             config=self.agents_config["research_director"],  # type: ignore[index]
             verbose=True,
             tools=tools,
             reasoning=True,
+            memory=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            cache=True,
             max_reasoning_steps=5,
         )
 
     @task
-    def market_analysis_task(self) -> Task:
+    def market_etf_analysis_task(self) -> Task:
         """
-        Define the task for the Market Analyst.
+        Define the market and ETF analysis task.
 
-        Researches market trends and identifies promising ETF categories.
+        This task involves researching market trends and conducting in-depth
+        technical evaluation of ETFs, focusing on market conditions, ETF
+        composition, performance metrics, and structural quality.
         """
         return Task(
-            config=self.tasks_config["market_analysis_task"],  # type: ignore[index]
+            config=self.tasks_config["market_etf_analysis_task"],  # type: ignore[index]
+            async_execution=False,
         )
 
     @task
-    def etf_evaluation_task(self) -> Task:
+    def investment_risk_strategy_task(self) -> Task:
         """
-        Define the task for the ETF Specialist.
+        Define the investment risk and strategy task.
 
-        Conducts detailed evaluations of selected ETFs.
+        This task involves evaluating potential risks of selected ETFs and developing
+        comprehensive investment strategies, including risk assessment, entry points,
+        position sizing, and expected returns.
         """
         return Task(
-            config=self.tasks_config["etf_evaluation_task"],  # type: ignore[index]
-        )
-
-    @task
-    def risk_assessment_task(self) -> Task:
-        """
-        Define the task for the Risk Assessor.
-
-        Analyzes the risk profiles of chosen ETFs.
-        """
-        return Task(
-            config=self.tasks_config["risk_assessment_task"],  # type: ignore[index]
-        )
-
-    @task
-    def investment_strategy_task(self) -> Task:
-        """
-        Define the task for the Investment Strategist.
-
-        Formulates an ETF investment strategy.
-        """
-        return Task(
-            config=self.tasks_config["investment_strategy_task"],  # type: ignore[index]
+            config=self.tasks_config["investment_risk_strategy_task"],  # type: ignore[index]
+            async_execution=False,
         )
 
     @task
     def research_synthesis_task(self) -> Task:
         """
-        Define the task for the Research Director.
+        Define the research synthesis task.
 
-        Compiles all ETF research into a comprehensive investment
-        recommendation report.
+        This task involves compiling all analyses and recommendations into a final
+        ETF investment report with clear, actionable insights.
         """
         return Task(
             config=self.tasks_config["research_synthesis_task"],  # type: ignore[index]
+            async_execution=False,
         )
 
     @crew
@@ -200,13 +187,7 @@ class EtfCrew:
         return Crew(
             agents=self.agents,  # Automatically created by the @agent decorator
             tasks=self.tasks,  # Automatically created by the @task decorator
-            process=Process.hierarchical,
-            manager_llm="gpt-4.1-mini",
+            process=Process.sequential,
             verbose=True,
-            memory=True,
-            cache=True,
-            allow_delegation=True,
-            allow_termination=True,
-            respect_context_window=True,
-            max_retries=3,
+            max_retries=10,
         )

@@ -10,3 +10,4 @@ search_indexed/
 db/
 uv.lock
 agentops.log
+old/
