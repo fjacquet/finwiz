@@ -8,7 +8,7 @@ to consume and process the data without complex parsing.
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -17,11 +17,11 @@ from pydantic import BaseModel, Field
 class JSONOutputToolInput(BaseModel):
     """Input schema for JSONOutputTool."""
 
-    data: Dict[str, Any] = Field(
+    data: dict[str, Any] = Field(
         ...,
         description="Data to be converted to JSON format. Should include recommendations, tickers, analysis, etc."
     )
-    output_path: Optional[str] = Field(
+    output_path: str | None = Field(
         None,
         description="Optional path to save the JSON output. If not provided, returns the JSON as string."
     )
@@ -43,7 +43,7 @@ class JSONOutputTool(BaseTool):
     )
     args_schema: type[BaseModel] = JSONOutputToolInput
 
-    def _run(self, data: Dict[str, Any], output_path: Optional[str] = None) -> str:
+    def _run(self, data: dict[str, Any], output_path: str | None = None) -> str:
         """
         Generate JSON output from the provided data.
 
@@ -57,20 +57,20 @@ class JSONOutputTool(BaseTool):
         """
         # Ensure the data has a standardized structure
         standardized_data = self._standardize_data(data)
-        
+
         # Convert to JSON
         json_output = json.dumps(standardized_data, indent=2)
-        
+
         # Save to file if path is provided
         if output_path:
             with open(output_path, 'w') as f:
                 f.write(json_output)
             return f"JSON output saved to {output_path}"
-        
+
         # Otherwise return the JSON string
         return json_output
-    
-    def _standardize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _standardize_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Ensure the data follows a standardized structure.
 
@@ -81,6 +81,7 @@ class JSONOutputTool(BaseTool):
 
         Returns:
             Standardized data dictionary
+
         """
         # Define required keys for standardized output
         required_keys = [
@@ -89,7 +90,7 @@ class JSONOutputTool(BaseTool):
             "recommendations",   # List of recommendation objects
             "tickers_analyzed",  # List of all tickers that were analyzed
         ]
-        
+
         # Add any missing required keys with empty values
         for key in required_keys:
             if key not in data:
@@ -99,7 +100,7 @@ class JSONOutputTool(BaseTool):
                     data[key] = []
                 else:
                     data[key] = ""
-        
+
         # Ensure recommendations have a standard structure if they exist
         if "recommendations" in data and isinstance(data["recommendations"], list):
             standardized_recommendations = []
@@ -124,5 +125,5 @@ class JSONOutputTool(BaseTool):
                             standard_rec[k] = v
                     standardized_recommendations.append(standard_rec)
             data["recommendations"] = standardized_recommendations
-        
+
         return data

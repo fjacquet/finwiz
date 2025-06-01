@@ -7,6 +7,8 @@ tasks to identify promising stock investments and provide detailed
 recommendations.
 """
 
+from pathlib import Path
+
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
@@ -21,6 +23,7 @@ from crewai_tools import (
 from dotenv import load_dotenv
 
 from finwiz.tools.finance_tools import get_data_output_tools
+from finwiz.tools.logger import get_logger
 from finwiz.tools.yahoo_finance_tool import (
     YahooFinanceCompanyInfoTool,
     YahooFinanceHistoryTool,
@@ -28,7 +31,8 @@ from finwiz.tools.yahoo_finance_tool import (
     YahooFinanceTickerInfoTool,
 )
 
-# Removed incompatible LangChain tool
+# Get logger for this module
+logger = get_logger(__name__)
 
 load_dotenv()
 
@@ -75,6 +79,12 @@ class StockCrew:
     Specialized in identifying high-potential stock investments and
     providing detailed, evidence-based investment recommendations.
     """
+
+    def __init__(self) -> None:
+        """Initialize the StockCrew."""
+        logger.info("Initializing StockCrew")
+        # Get the base path relative to the current file
+        self.base_path = Path(__file__).parent
 
     agents: list[BaseAgent]
     tasks: list[Task]
@@ -187,10 +197,19 @@ class StockCrew:
 
         Uses a sequential workflow for analysis.
         """
-        return Crew(
-            agents=self.agents,  # Automatically created by the @agent decorator
-            tasks=self.tasks,  # Automatically created by the @task decorator
-            process=Process.sequential,
-            verbose=True,
-            max_retries=10,
-        )
+        logger.info("Creating Stock Research Crew")
+        logger.debug(f"Number of agents: {len(self.agents)}")
+        logger.debug(f"Number of tasks: {len(self.tasks)}")
+
+        try:
+            return Crew(
+                name="Stock Research Crew",
+                agents=self.agents,  # Automatically created by the @agent decorator
+                tasks=self.tasks,  # Automatically created by the @task decorator
+                process=Process.sequential,
+                verbose=True,
+                max_retries=10,
+            )
+        except Exception as e:
+            logger.error(f"Error creating Stock Research Crew: {str(e)}", exc_info=True)
+            raise

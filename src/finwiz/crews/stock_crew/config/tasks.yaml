@@ -89,14 +89,18 @@ research_synthesis_task:
     IMPORTANT REQUIREMENTS:
     1. Present only real stocks with their actual ticker symbols. No hypothetical examples
        or "(Illustrative)" disclaimers.
-    2. Generate TWO outputs:
-       a. A human-readable HTML report (for display)
-       b. A structured JSON file (for data consumption by the Report Crew)
+    2. Generate TWO COMPLETELY SEPARATE outputs:
+       a. A human-readable HTML report (for display) to be returned as your task result
+       b. A structured JSON file that is ONLY created using the JSONOutputTool
     
-    For the JSON output:
-    1. Use the JSONOutputTool specifically to generate the JSON
-    2. Save it to "report/stock_unicorn_investment_recommendations.json"
-    3. Include the following structure:
+    CRITICAL INSTRUCTIONS FOR OUTPUT SEPARATION:
+    1. For the JSON output:
+       - Use the JSONOutputTool to create and save the JSON file
+       - Set output_path to: "report/stock_unicorn_investment_recommendations.json"
+       - Do NOT include the JSON content in your HTML output or task result
+       - After saving the JSON file, only mention that you've saved it
+    
+    2. JSON structure should include:
     {
       "crew_type": "stock",
       "analysis_date": "{full_date}",
@@ -117,9 +121,8 @@ research_synthesis_task:
       "tickers_analyzed": ["[SYMBOL1]", "[SYMBOL2]", ...]
     }
   expected_output: >
-    TWO outputs are required:
-    
-    1. HTML OUTPUT: A comprehensive HTML with emojis investment thesis document that presents the top
+    TWO SEPARATE outputs are required:
+    1. HTML OUTPUT (RETURN THIS AS TASK RESULT): A comprehensive HTML with emojis investment thesis document that presents the top
        stock investment opportunities, with detailed reasoning,
        investment guidelines, and expected outcomes. All recommendations must be for real stocks
        with their actual ticker symbols and verifiable data. The document should be
@@ -130,13 +133,14 @@ research_synthesis_task:
        📊 Investment allocation
        📍 Action steps
        📈 Monitoring metrics
-    
-    2. JSON OUTPUT: A structured JSON file containing all recommendations in a machine-readable format,
-       including ticker symbols, company names, current prices, recommended allocations, rationales,
-       risk levels, expected returns, and timeframes. This will be used by the Report Crew for portfolio integration.
-    ⏱️ Investment timeline
-    🔮 Future outlook
-    Include today's date ({full_date}) prominently in your report.
+       ⏱️ Investment timeline
+       🔮 Future outlook
+       Include today's date ({full_date}) prominently in your report.
+    2. JSON OUTPUT (SAVE USING JSONOutputTool): 
+      A structured JSON file containing all recommendations in a machine-readable format,
+      including ticker symbols, company names, current prices, recommended allocations, rationales,
+      risk levels, expected returns, and timeframes. This will be used by the Report Crew for portfolio integration.
+      IMPORTANT: Do NOT include this JSON in your task result - use the JSONOutputTool to save it separately.
   agent: research_director
-  output_file: "report/stock_unicorn_investment_recommendations.html"
-  json_output_file: "report/stock_unicorn_investment_recommendations.json"
+  output_file: "report/stock_research_synthesis.html"
+  # Note: json_output_file is not used directly by CrewAI. Use JSONOutputTool with the correct output_path instead.

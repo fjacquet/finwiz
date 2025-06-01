@@ -24,6 +24,7 @@ from crewai_tools import (
 )
 from dotenv import load_dotenv
 
+from finwiz.tools.coinmarketcap_tool import get_coinmarketcap_tools
 from finwiz.tools.finance_tools import get_data_output_tools
 from finwiz.tools.yahoo_finance_tool import (
     YahooFinanceHistoryTool,
@@ -49,6 +50,9 @@ youtube_tool = YoutubeVideoSearchTool()
 # Get JSON output tools
 json_tools = get_data_output_tools()
 
+# Get CoinMarketCap tools
+coinmarketcap_tools = get_coinmarketcap_tools()
+
 # Tools for crypto research and analysis
 tools = [
     directory_search_tool,
@@ -62,6 +66,7 @@ tools = [
     yahoo_news_tool,
     youtube_tool,
     *json_tools,  # Add JSON output tools
+    *coinmarketcap_tools,  # Add CoinMarketCap tools
 ]
 
 

@@ -152,7 +152,7 @@ class ReportCrew:
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
-            process=Process.hierarchical,
+            process=Process.sequential,
             verbose=True,
             memory=True,
             allow_delegation=True,

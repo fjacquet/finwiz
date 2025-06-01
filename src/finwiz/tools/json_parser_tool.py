@@ -9,7 +9,7 @@ other specialized crews without complex HTML parsing.
 
 import json
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -18,15 +18,15 @@ from pydantic import BaseModel, Field
 class JSONParserToolInput(BaseModel):
     """Input schema for JSONParserTool."""
 
-    json_content: Optional[str] = Field(
+    json_content: str | None = Field(
         None,
         description="JSON content to parse as a string."
     )
-    json_file_path: Optional[str] = Field(
+    json_file_path: str | None = Field(
         None,
         description="Path to JSON file to parse."
     )
-    extraction_type: Optional[str] = Field(
+    extraction_type: str | None = Field(
         "all",
         description="Type of information to extract (e.g., 'tickers', 'recommendations', 'all')."
     )
@@ -50,11 +50,11 @@ class JSONParserTool(BaseTool):
     args_schema: type[BaseModel] = JSONParserToolInput
 
     def _run(
-        self, 
-        json_content: Optional[str] = None, 
-        json_file_path: Optional[str] = None, 
+        self,
+        json_content: str | None = None,
+        json_file_path: str | None = None,
         extraction_type: str = "all"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Parse JSON content and extract structured information.
 
@@ -69,56 +69,56 @@ class JSONParserTool(BaseTool):
         """
         # Load JSON data
         data = None
-        
+
         if json_content:
             try:
                 data = json.loads(json_content)
             except json.JSONDecodeError:
                 return {"error": "Invalid JSON content provided"}
-        
+
         elif json_file_path:
             if not os.path.exists(json_file_path):
                 return {"error": f"File not found: {json_file_path}"}
-            
+
             try:
-                with open(json_file_path, 'r') as f:
+                with open(json_file_path) as f:
                     data = json.load(f)
             except (json.JSONDecodeError, UnicodeDecodeError):
                 return {"error": f"Invalid JSON file: {json_file_path}"}
-        
+
         else:
             return {"error": "Either json_content or json_file_path must be provided"}
-        
+
         # Extract requested information
         result = {}
-        
+
         if extraction_type == "all":
             # Return everything
             return data
-        
+
         elif extraction_type == "tickers":
             # Extract all ticker symbols
             tickers = set()
-            
+
             # From tickers_analyzed list
             if "tickers_analyzed" in data and isinstance(data["tickers_analyzed"], list):
                 tickers.update(data["tickers_analyzed"])
-            
+
             # From recommendations
             if "recommendations" in data and isinstance(data["recommendations"], list):
                 for rec in data["recommendations"]:
                     if isinstance(rec, dict) and "ticker" in rec:
                         tickers.add(rec["ticker"])
-            
+
             result["tickers"] = list(tickers)
-        
+
         elif extraction_type == "recommendations":
             # Extract just the recommendations
             if "recommendations" in data and isinstance(data["recommendations"], list):
                 result["recommendations"] = data["recommendations"]
             else:
                 result["recommendations"] = []
-        
+
         elif extraction_type == "allocation":
             # Extract allocation information
             allocations = []
@@ -131,7 +131,7 @@ class JSONParserTool(BaseTool):
                             "currency": rec.get("currency", "CHF")
                         })
             result["allocations"] = allocations
-        
+
         elif extraction_type == "summary":
             # Create a summary of the data
             summary = {
@@ -140,7 +140,7 @@ class JSONParserTool(BaseTool):
                 "total_tickers_analyzed": len(data.get("tickers_analyzed", [])),
                 "total_recommendations": len(data.get("recommendations", [])),
             }
-            
+
             # Add allocation totals if available
             total_allocation = 0
             if "recommendations" in data and isinstance(data["recommendations"], list):
@@ -150,10 +150,10 @@ class JSONParserTool(BaseTool):
                             total_allocation += float(rec["allocation"])
                         except (ValueError, TypeError):
                             pass
-            
+
             summary["total_allocation"] = total_allocation
             summary["currency"] = data.get("currency", "CHF")
-            
+
             result = summary
-        
+
         return result
