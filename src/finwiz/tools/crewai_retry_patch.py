@@ -95,7 +95,7 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
         logger.error(f"Failed to patch CrewAI with retry logic: {str(e)}")
 
 
-def initialize_retry_mechanism(max_retries: int = 5) -> None:
+def initialize_retry_mechanism(max_retries: int = 5, timeout: int = 180) -> None:
     """
     Initialize the LLM retry mechanism for FinWiz.
 
@@ -104,8 +104,33 @@ def initialize_retry_mechanism(max_retries: int = 5) -> None:
 
     Args:
         max_retries: Maximum number of retry attempts for LLM calls
+        timeout: Timeout in seconds for LLM API calls (default: 180 seconds)
 
     """
+    # Patch OpenAI client's default timeout settings
+    try:
+        import openai
+        # Set longer default timeout for OpenAI client
+        openai.timeout = timeout
+        logger.info(f"Set OpenAI client timeout to {timeout} seconds")
+    except ImportError:
+        logger.warning("OpenAI client not found, skipping timeout setting")
+    except Exception as e:
+        logger.warning(f"Failed to set OpenAI timeout: {e}")
+
+    # Patch HTTPX client timeout in CrewAI
+    try:
+        import httpx
+        # Try to find and update timeout in any httpx clients used by CrewAI
+        from crewai.llm import OpenAIChat
+        if hasattr(OpenAIChat, 'client') and hasattr(OpenAIChat.client, 'timeout'):
+            OpenAIChat.client.timeout = httpx.Timeout(timeout)
+            logger.info(f"Set CrewAI OpenAIChat client timeout to {timeout} seconds")
+    except ImportError:
+        logger.warning("HTTPX or CrewAI OpenAIChat not found, skipping timeout setting")
+    except Exception as e:
+        logger.warning(f"Failed to set HTTPX timeout: {e}")
+
     logger.info(f"Initializing LLM retry mechanism with {max_retries} max retries")
     patch_crewai_llm_initialization(max_retries=max_retries, verbose=True)
     logger.info("LLM retry mechanism initialized successfully")

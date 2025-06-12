@@ -1,94 +1,199 @@
+# Integration Portfolio Task
 integration_portfolio_task:
-  description: >
-    Analyze, integrate, and allocate investments across asset classes with a monthly budget of 1000 CHF.
-    IMPORTANT: You must ONLY use the information provided in the stock_result, etf_result, and crypto_result inputs.
-    DO NOT conduct any additional web searches or external research.
-    
-    Focus on:
-    1. Analysis and Integration:
-       a. FIRST check for JSON files (.json) for each crew's output, which contain structured data
-          - Look for files like stock_unicorn_investment_recommendations.json, etc.
-          - Use the JSONParserTool to extract structured data from these files
-       b. If JSON is not available, fall back to parsing HTML content using HTMLParserTool
-       c. Identify the strongest investment opportunities across all asset classes
-       d. Evaluate the quality and consistency of recommendations
-       e. Compare similar recommendations for consensus signals
-       f. Highlight unique opportunities with strong potential
-    2. Portfolio Allocation:
-       a. Distribute the 1000 CHF across stocks, ETFs, and cryptocurrencies
-       b. Prioritize investments based on potential return
-       c. Create appropriate diversification across asset classes
-       d. Provide specific allocation amounts (in CHF) for each investment
-    
-    Today is {full_date}, it's day {current_day} of month {current_month} in year {current_year}.
-    IMPORTANT: Ensure all recommendations reference real financial instruments with accurate ticker symbols.
-    No hypothetical examples or "(Illustrative)" disclaimers. Allocation amounts must sum to exactly 1000 CHF.
-  expected_output: >
-    A comprehensive HTML with emojis analysis and allocation plan that includes:
-    - Assessment of the best investment opportunities across stocks, ETFs, and cryptocurrencies
-    - Cross-referenced opportunities that appear in multiple recommendations
-    - Exact CHF allocation for each investment (totaling 1000 CHF)
-    - Breakdown across asset classes and rationale for allocation decisions
-    - All financial instruments with accurate ticker symbols and verifiable data
-    Use emojis for categorization:
-    🔍 Analysis strength
-    ⭐ Recommendation strength
-    🌐 Cross-crew consensus
-    💰 Allocation amount (CHF)
-    📊 Portfolio percentage
-    📈 Expected return
-    ⚖️ Risk level
-  agent: financial_integration_analyst
-  output_file: "report/integrated_portfolio_analysis.html"
+  description: |
+    Integrate recommendations from Stock, ETF, and Crypto crews in folder ../report 
+    to create a comprehensive investment portfolio within a 1000 CHF monthly budget.
 
-risk_final_report_task:
-  description: >
-    Assess risks and create a final actionable investment report with a 1000 CHF monthly budget.
-    IMPORTANT: You must ONLY use the information provided in the previous task's output and the original
-    stock_result, etf_result, and crypto_result inputs. DO NOT conduct any additional web searches
-    or external research.
-    
-    Focus on:
-    1. Data Consumption:
-       a. PRIORITIZE using structured JSON data when available:
-          - Use JSONParserTool to extract data from JSON files (like stock_unicorn_investment_recommendations.json)
-          - This provides more accurate and complete information for your analysis
-       b. Fall back to HTML parsing only when JSON data is not available
-       c. Combine with the previous task's output for a complete picture
-    
-    2. Risk Assessment:
-       a. Key risks specific to each asset class and individual investment based on the information provided
-       b. Correlation risks within the portfolio
-       c. Timing risks based on current market conditions mentioned in the crew reports
-       d. Practical mitigation strategies for identified risks
-    
-    3. Final Report Creation:
-       a. Synthesize all analyses into a coherent investment plan
-       b. Present the strongest investment opportunities across asset classes
-       c. Show the portfolio allocation with exact CHF amounts
-       d. Provide clear implementation guidance
-    
-    IMPORTANT: Risk assessments must be evidence-based for each real financial instrument.
-    Include only real financial instruments with accurate ticker symbols, implementable with 
-    a 1000 CHF monthly budget. Information must be current as of {timestamp}.
+    1. Analyze and consolidate recommendations from all three asset classes
+    2. Create a diversified portfolio allocation
+    3. Ensure the total investment does not exceed 1000 CHF
+    4. Provide clear allocation percentages and amounts
+
+    OUTPUT: A structured portfolio allocation plan with detailed breakdown.
   expected_output: >
-    A comprehensive HTML with emojis investment report titled "FinWiz Integrated Investment Plan" that includes:
-    - Executive Summary
-    - Investment Recommendations (with ticker symbols)
-    - Portfolio Allocation (with exact CHF amounts)
-    - Detailed Risk Assessment including:
-      * Key risk factors for each investment
-      * Overall portfolio risk analysis
-      * Risk ratings and practical mitigation strategies
-    - Implementation Guide
-    Use emojis for clarity and risk visualization:
-    🚨 High risk factors
-    ⚠️ Medium risk factors
-    ✅ Low risk factors
-    🛡️ Risk mitigation strategies
-    📊 Portfolio breakdown
-    💰 Investment amounts
-    🏆 Top opportunities
-    Include today's date ({full_date}) prominently in your report.
+    A comprehensive portfolio allocation plan integrating recommendations from
+    all asset classes within the 1000 CHF budget.
+  agent: portfolio_allocator
+  output_file: "output/report/integrated_portfolio_allocation.md"
+
+# Data Extraction Tasks
+data_extraction_task:
+  description: >
+    Extract and organize investment recommendations from the stock_result,
+    etf_result, and crypto_result inputs. Do not conduct any additional
+    research or web searches.
+
+    1. Parse the input data strings 2. Extract key investment recommendations
+    from each crew 3. Standardize the data format for analysis
+
+    OUTPUT: Return the extracted and organized data as a structured JSON
+  expected_output: >
+    A structured dataset of all investment recommendations from the stock,
+    ETF, and crypto crews.
+  agent: financial_integration_analyst
+  output_file: "output/report/extracted_investment_data.md"
+
+# Analysis Tasks
+opportunity_analysis_task:
+  description: >
+    Analyze the extracted investment data and identify the strongest
+    investment opportunities. Use the output of the data_extraction_task.
+
+    1. Evaluate quality and consistency of recommendations 2. Identify
+    consensus opportunities across crews 3. Highlight uniquely strong
+    opportunities
+
+    OUTPUT: Return a concise analysis of the top opportunities in each asset
+    class.
+  expected_output: >
+    An analysis of the strongest investment opportunities across all asset
+    classes.
+  agent: financial_integration_analyst
+  output_file: "output/report/investment_opportunities_analysis.md"
+
+# Portfolio Allocation Task
+portfolio_allocation_task:
+  description: >
+    Create a family-focused portfolio allocation with a 1000 CHF monthly
+    budget. Consider a 50-year-old father with medium-term (5-10 years) and
+    long-term (10-15 years) goals.
+
+    1. Distribute 1000 CHF across asset classes 2. Balance growth
+    opportunities and capital preservation 3. Specify exact CHF amounts for
+    each investment
+
+    OUTPUT: Return a detailed portfolio allocation plan.
+  expected_output: >
+    A specific portfolio allocation with exact CHF amounts totaling 1000 CHF.
+  agent: portfolio_allocator
+  output_file: "output/report/portfolio_allocation.md"
+
+# Risk Analysis Tasks
+risk_analysis_task:
+  description: >
+    Analyze the risks in the portfolio allocation for a 50-year-old father.
+    Use the portfolio_allocation task output.
+
+    1. Identify key risks for each investment 2. Assess correlation risks
+    between assets 3. Evaluate time horizon risks for family goals
+
+    OUTPUT: Return a structured risk assessment.
+  expected_output: >
+    A comprehensive risk analysis for the investment portfolio.
   agent: risk_manager
-  output_file: "report/finwiz_risk_investment_plan.html"
+  output_file: "output/report/investment_risks.md"
+
+# Risk Mitigation Tasks
+risk_mitigation_task:
+  description: >
+    Develop practical risk mitigation strategies for the identified risks.
+
+    1. Create age-appropriate risk mitigation approaches 2. Recommend specific
+    actions for each risk category 3. Consider insurance and protection
+    options
+
+    OUTPUT: Return actionable risk mitigation strategies.
+  expected_output: >
+    Practical risk mitigation strategies for the investment portfolio.
+  agent: risk_manager
+  output_file: "output/report/risk_mitigation.md"
+
+# Implementation Plan Task
+implementation_plan_task:
+  description: >
+    Create a clear step-by-step implementation plan for the investment
+    strategy.
+
+    1. Develop specific implementation steps 2. Create a monitoring and
+    adjustment schedule 3. Include pillar 3a recommendations
+
+    OUTPUT: Return a detailed implementation plan.
+  expected_output: >
+    A practical implementation plan with specific steps and timeline.
+  agent: risk_manager
+  output_file: "output/report/implementation_plan.md"
+
+# Risk and Final Report Task
+risk_final_report_task:
+  description: |
+    Conduct a comprehensive risk assessment of the integrated portfolio and generate
+    the final investment report. This task should:
+
+    1. Evaluate risks across all asset classes in the portfolio
+    2. Assess portfolio diversification and correlation risks
+    3. Provide risk-adjusted return analysis
+    4. Generate final recommendations with risk mitigation strategies
+
+    OUTPUT: A comprehensive risk assessment and final investment report.
+  expected_output: >
+    A detailed risk analysis and final investment report with clear
+    recommendations and risk mitigation strategies.
+  agent: risk_manager
+  output_file: "output/report/final_investment_report.md"
+
+# Final Report Tasks
+final_html_report_task:
+  description: |
+    Generate a comprehensive, visually appealing HTML final report that combines all previous analyses
+    into a single, easy-to-understand financial plan. Follow the report guidelines document at
+    docs/output_formatting_guide.md.
+    
+    Structure the report with these engaging sections:
+    
+    🏠 1. Executive Summary & Family Overview
+       - Key recommendations at a glance
+       - Total investment allocation breakdown
+       - Expected performance metrics
+    
+    🎯 2. Family Financial Goals & Timeline (1/3/5/10 Years)
+       - Short-term objectives (1-2 years) 🚀
+       - Medium-term goals (3-5 years) 📈
+       - Long-term wealth building (5-10+ years) 🌟
+    
+    💎 3. Investment Recommendations
+       - Top stock picks 📊
+       - Best ETF selections 📈
+       - Crypto allocation (if any) ₿
+       - Risk level for each recommendation ⚠️
+    
+    💰 4. Portfolio Allocation
+       - Asset class distribution 📊
+       - Sector diversification 🌐
+       - Geographic exposure 🌍
+       - Investment style mix (Growth/Value/Blend) 📊
+    
+    🛡️ 5. Risk Assessment & Management
+       - Overall portfolio risk level ⚠️
+       - Risk factors by asset class 🔍
+       - Mitigation strategies 🛡️
+       - Stress test scenarios 🌪️
+    
+    🏦 6. Implementation Guide
+       - Step-by-step investment instructions 📝
+       - Recommended brokers/platforms 💻
+       - Tax considerations 💰
+       - Account types to use (Taxable/Retirement) 🏦
+    
+    🔄 7. Monitoring & Maintenance
+       - Review schedule (Monthly/Quarterly/Annually) 📅
+       - Rebalancing strategy ⚖️
+       - Key performance indicators 📊
+       - When to adjust the strategy 🔄
+    
+    💡 8. Additional Resources
+       - Glossary of terms 📚
+       - Recommended reading list 📖
+       - Important contacts 📞
+    
+    Make generous use of emojis, icons, and visual elements to enhance readability.
+    Include clear section headers, bullet points, and tables where appropriate.
+    Ensure the report is mobile-responsive and prints well.
+
+  expected_output: |
+    A beautifully formatted, emoji-rich HTML report that presents the family's financial plan
+    in an engaging, easy-to-understand manner. The report should be visually appealing with
+    clear section headers, consistent styling, and professional layout that makes complex
+    financial information accessible to all family members.
+    The report should be in french
+  agent: risk_manager
+  output_file: "output/finwiz_family_financial_plan.html"

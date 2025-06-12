@@ -7,9 +7,10 @@ financial data tools for use in FinWiz crews.
 
 from crewai.tools import BaseTool
 
-from finwiz.tools.html_parser_tool import HTMLParserTool
-from finwiz.tools.json_output_tool import JSONOutputTool
-from finwiz.tools.json_parser_tool import JSONParserTool
+# from finwiz.tools.html_output_tool import HTMLOutputTool
+# from finwiz.tools.html_parser_tool import HTMLParserTool
+# from finwiz.tools.json_output_tool import JSONOutputTool
+# from finwiz.tools.json_parser_tool import JSONParserTool
 from finwiz.tools.yahoo_finance_tool import (
     YahooFinanceCompanyInfoTool,
     YahooFinanceETFHoldingsTool,
@@ -83,35 +84,37 @@ def get_crypto_research_tools() -> list[BaseTool]:
     ]
 
 
-def get_report_integration_tools() -> list[BaseTool]:
-    """
-    Get tools optimized for report integration and analysis.
+# def get_report_integration_tools() -> list[BaseTool]:
+#     """
+#     Get tools optimized for report integration and analysis.
 
-    These tools are designed for analyzing and integrating information
-    from other crews without conducting additional external research.
+#     These tools are designed for analyzing and integrating information
+#     from other crews without conducting additional external research.
 
-    Returns:
-        list[BaseTool]: A list of tools focused on report integration and analysis.
+#     Returns:
+#         list[BaseTool]: A list of tools focused on report integration and analysis.
 
-    """
-    return [
-        HTMLParserTool(),
-        JSONParserTool(),
-    ]
+#     """
+#     return [
+#         HTMLParserTool(),
+#         JSONParserTool(),
+#         JSONOutputTool(),
+#         HTMLOutputTool(),
+#     ]
 
 
-def get_data_output_tools() -> list[BaseTool]:
-    """
-    Get tools for standardized data output.
+# def get_data_output_tools() -> list[BaseTool]:
+#     """
+#     Get tools for standardized data output.
 
-    These tools enable crews to produce structured data outputs
-    that can be easily consumed by other crews, particularly
-    the Report Crew.
+#     These tools enable crews to produce structured data outputs
+#     that can be easily consumed by other crews, particularly
+#     the Report Crew.
 
-    Returns:
-        list[BaseTool]: A list of tools for standardized data output.
+#     Returns:
+#         list[BaseTool]: A list of tools for standardized data output.
 
-    """
-    return [
-        JSONOutputTool(),
-    ]
+#     """
+#     return [
+#         JSONOutputTool(),
+#     ]

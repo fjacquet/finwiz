@@ -6,9 +6,7 @@ Risk Assessor, Investment Strategist, Research Director) and their
 tasks to identify promising stock investments and provide detailed
 recommendations.
 """
-
-from pathlib import Path
-
+from tabnanny import verbose
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
@@ -22,8 +20,10 @@ from crewai_tools import (
 )
 from dotenv import load_dotenv
 
-from finwiz.tools.finance_tools import get_data_output_tools
+from finwiz.tools.finance_tools import get_stock_research_tools
+from finwiz.utils.config_loader import load_config_with_guidelines, load_yaml_config
 from finwiz.tools.logger import get_logger
+from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.yahoo_finance_tool import (
     YahooFinanceCompanyInfoTool,
     YahooFinanceHistoryTool,
@@ -31,43 +31,34 @@ from finwiz.tools.yahoo_finance_tool import (
     YahooFinanceTickerInfoTool,
 )
 
+
 # Get logger for this module
 logger = get_logger(__name__)
 
 load_dotenv()
 
 # Initialize research tools
-
-directory_search_tool = DirectorySearchTool(directory="./search_results")
-news_tool = SerperDevTool(n_results=10, save_file=True, search_type="news")
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=True)
-search_tool = SerperDevTool(n_results=10, save_file=True, search_type="search")
-search_tool2 = FirecrawlSearchTool(limit=10, save_file=True)
-# search_tool3 = TavilySearchTool(max_results=25)
-
+news_tool = SerperDevTool(n_results=10,  search_type="news")
+scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=False)
+search_tool = SerperDevTool(n_results=10,  search_type="search")
+search_tool2 = FirecrawlSearchTool(limit=10, save_file=False)
 yahoo_ticker_tool = YahooFinanceTickerInfoTool()
 yahoo_history_tool = YahooFinanceHistoryTool()
-yahoo_compinfo_tool = YahooFinanceCompanyInfoTool()
 yahoo_news_tool = YahooFinanceNewsTool()
+yahoo_company_info_tool = YahooFinanceCompanyInfoTool()
 youtube_tool = YoutubeVideoSearchTool()
 
-# Get JSON output tools
-json_tools = get_data_output_tools()
+# Get various financial tools
+# data_output_tools = get_data_output_tools()
+stock_research_tools = get_stock_research_tools()
+
+# Get RAG tools for knowledge retrieval and storage
+rag_tools = get_rag_tools(collection_suffix="stock")
 
 # Tools for stock research and analysis
 tools = [
-    directory_search_tool,
-    news_tool,
-    scrape_tool,
-    search_tool,
-    search_tool2,
-    # search_tool3,
-    yahoo_ticker_tool,
-    yahoo_history_tool,
-    yahoo_compinfo_tool,
-    yahoo_news_tool,
-    youtube_tool,
-    *json_tools,  # Add JSON output tools
+    *stock_research_tools,  # Add stock research tools
+    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
 ]
 
 
@@ -80,87 +71,51 @@ class StockCrew:
     providing detailed, evidence-based investment recommendations.
     """
 
-    def __init__(self) -> None:
-        """Initialize the StockCrew."""
-        logger.info("Initializing StockCrew")
-        # Get the base path relative to the current file
-        self.base_path = Path(__file__).parent
-
     agents: list[BaseAgent]
     tasks: list[Task]
 
     @agent
     def market_technical_analyst(self) -> Agent:
-        """
-        Create a Market & Technical Analyst agent.
-
-        This agent analyzes stock market trends and evaluates technical aspects
-        of company financials to identify high-potential investment opportunities.
-        """
         return Agent(
-            config=self.agents_config["market_technical_analyst"],  # type: ignore[index]
+            config=self.agents_config['market_technical_analyst'],
             verbose=True,
-            tools=tools,
-            reasoning=True,
-            memory=True,
-            cache=True,
-            respect_context_window=True,
-            allow_delegation=False,
-            max_reasoning_steps=3,
+            tools=tools
         )
 
     @agent
     def investment_risk_analyst(self) -> Agent:
-        """
-        Create an Investment & Risk Analyst agent.
-
-        This agent assesses risks and develops investment strategies for stocks,
-        balancing risk factors with return potential.
-        """
         return Agent(
-            config=self.agents_config["investment_risk_analyst"],  # type: ignore[index]
+            config=self.agents_config['investment_risk_analyst'],
             verbose=True,
-            tools=tools,
-            reasoning=True,
-            memory=True,
-            cache=True,
-            allow_delegation=False,
-            respect_context_window=True,
-            max_reasoning_steps=3,
-        )
-
-    @agent
-    def research_director(self) -> Agent:
-        """
-        Create a Research Director agent.
-
-        This agent oversees the entire research process and synthesizes all findings
-        into comprehensive stock investment recommendations.
-        """
-        return Agent(
-            config=self.agents_config["research_director"],  # type: ignore[index]
-            verbose=True,
-            tools=tools,
-            reasoning=True,
-            memory=True,
-            cache=True,
-            allow_delegation=False,
-            respect_context_window=True,
-            max_reasoning_steps=5,
+            tools=tools
         )
 
     @task
     def market_technical_analysis_task(self) -> Task:
-        """
-        Define the market and technical analysis task.
-
-        This task involves researching stock market trends and conducting in-depth
-        financial analysis of companies, focusing on identifying promising stocks
-        and evaluating their fundamentals, valuation, and growth prospects.
-        """
         return Task(
-            config=self.tasks_config["market_technical_analysis_task"],  # type: ignore[index]
-            async_execution=False,
+            config=self.tasks_config['market_technical_analysis_task'],
+            verbose=True
+        )
+
+    @task
+    def stock_screening_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['stock_screening_task'],
+            verbose=True
+        )
+
+    @task
+    def technical_detail_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['technical_detail_task'],
+            verbose=True
+        )
+
+    @task
+    def stock_risk_assessment_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['stock_risk_assessment_task'],
+            verbose=True
         )
 
     @task
@@ -173,43 +128,23 @@ class StockCrew:
         entry points, position sizing, and expected returns.
         """
         return Task(
-            config=self.tasks_config["investment_risk_strategy_task"],  # type: ignore[index]
-            async_execution=False,
-        )
-
-    @task
-    def research_synthesis_task(self) -> Task:
-        """
-        Define the research synthesis task.
-
-        This task involves compiling all analyses and recommendations into a final
-        stock investment report with clear, actionable insights.
-        """
-        return Task(
-            config=self.tasks_config["research_synthesis_task"],  # type: ignore[index]
-            async_execution=False,
-        )
+            config=self.tasks_config['investment_risk_strategy_task']
+        )   
 
     @crew
     def crew(self) -> Crew:
         """
         Create a specialized stock market research crew.
 
-        Uses a sequential workflow for analysis.
+        Uses a sequential workflow for analysis with validation steps to ensure
+        high-quality, consistent output formats for both HTML and JSON data.
         """
-        logger.info("Creating Stock Research Crew")
-        logger.debug(f"Number of agents: {len(self.agents)}")
-        logger.debug(f"Number of tasks: {len(self.tasks)}")
-
-        try:
-            return Crew(
-                name="Stock Research Crew",
-                agents=self.agents,  # Automatically created by the @agent decorator
-                tasks=self.tasks,  # Automatically created by the @task decorator
-                process=Process.sequential,
-                verbose=True,
-                max_retries=10,
-            )
-        except Exception as e:
-            logger.error(f"Error creating Stock Research Crew: {str(e)}", exc_info=True)
-            raise
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            process=Process.sequential,
+            verbose=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_rpm=20,
+        )

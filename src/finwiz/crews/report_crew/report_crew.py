@@ -10,25 +10,46 @@ assesses associated risks, and produces a detailed, evidence-based
 investment report without conducting additional external research.
 """
 
+# Third-party imports
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import DirectorySearchTool
+from crewai_tools import TXTSearchTool
 from dotenv import load_dotenv
 
-from finwiz.tools.finance_tools import get_report_integration_tools
+# Local application imports
+from finwiz.tools.rag_tools import get_rag_tools
+# from finwiz.tools.html_output_tool import HTMLOutputTool
 
 load_dotenv()
 
+# Get RAG tools for knowledge retrieval and storage
+rag_tools = get_rag_tools(collection_suffix="report")
 
-# Initialize tools for report crew
-directory_search_tool = DirectorySearchTool(directory="./search_results")
 
-# Get report integration tools
-integration_tools = get_report_integration_tools()
+file_tool = TXTSearchTool(
+    "output/crypto/crypto_market_trends.md",
+    "output/crypto/emerging_crypto_analysis.md",
+    "output/crypto/crypto_technical_details.md",
+    "output/crypto/crypto_risk_and_strategy_analysis.md",
+    "output/etf/etf_market_trends.md",
+    "output/etf/high_potential_etfs.md",
+    "output/etf/etf_technical_details.md",
+    "output/etf/etf_risk_assessment.md",
+    "output/etf/etf_investment_strategies.md",
+    "output/stock/stock_market_trends.md",
+    "output/stock/emerging_stocks_analysis.md",
+    "output/stock/stock_technical_details.md",
+    "output/stock/stock_investment_risk_strategy.md",
+    "output/stock/stock_investment_strategies.md"
+)
 
-# Combine directory search tool with report integration tools
-tools = [directory_search_tool, *integration_tools]
+
+# Tools for report generation and analysis
+tools = [
+    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
+    file_tool,
+]
 
 
 @CrewBase
@@ -48,95 +69,100 @@ class ReportCrew:
 
     @agent
     def financial_integration_analyst(self) -> Agent:
-        """
-        Create a financial integration analyst.
-
-        Specializes in consolidating recommendations from Stock, ETF, and Crypto
-        crews without conducting additional external research, and identifying
-        the strongest opportunities from the provided crew outputs.
-        """
         return Agent(
-            config=self.agents_config["financial_integration_analyst"],
+            config=self.agents_config['financial_integration_analyst'],
             verbose=True,
-            tools=tools,
-            reasoning=True,
-            memory=True,
-            cache=True,
-            allow_delegation=False,
-            respect_context_window=True,
-            max_reasoning_steps=5,
+            tools=tools
         )
 
     @agent
     def portfolio_allocator(self) -> Agent:
-        """
-        Create a portfolio allocation specialist.
-
-        Develops optimal asset allocation strategies within the 1000 CHF
-        monthly budget based exclusively on the recommendations from
-        Stock, ETF, and Crypto crews.
-        """
         return Agent(
-            config=self.agents_config["portfolio_allocator"],
+            config=self.agents_config['portfolio_allocator'],
             verbose=True,
-            tools=tools,
-            reasoning=True,
-            memory=True,
-            cache=True,
-            allow_delegation=False,
-            respect_context_window=True,
-            max_reasoning_steps=5,
+            tools=tools
         )
 
     @agent
     def risk_manager(self) -> Agent:
-        """
-        Create a risk management specialist.
-
-        Evaluates investment risks and develops appropriate mitigation
-        strategies based on the integrated analysis of recommendations
-        from Stock, ETF, and Crypto crews.
-        """
         return Agent(
-            config=self.agents_config["risk_manager"],
+            config=self.agents_config['risk_manager'],
             verbose=True,
-            tools=tools,
-            reasoning=True,
-            memory=True,
-            cache=True,
-            allow_delegation=False,
-            respect_context_window=True,
-            max_reasoning_steps=5,
+            tools=tools
+        )
+
+    @agent
+    def investment_reporter(self) -> Agent:
+        return Agent(
+            config=self.agents_config['investment_reporter'],
+            verbose=True,
+            tools=tools
         )
 
     @task
     def integration_portfolio_task(self) -> Task:
-        """
-        Define task to analyze, integrate, and allocate investments.
-
-        Integrates recommendations from Stock, ETF, and Crypto crews without
-        conducting additional external research, and creates an optimal
-        portfolio allocation within a 1000 CHF budget.
-        """
+        return Task(    
+            config=self.tasks_config['integration_portfolio_task'],
+            verbose=True
+        )
+        
+    @task
+    def data_extraction_task(self) -> Task:
         return Task(
-            config=self.tasks_config["integration_portfolio_task"],  # type: ignore[index]
-            async_execution=False,
+            config=self.tasks_config['data_extraction_task'],
+            verbose=True
         )
 
     @task
-    def risk_final_report_task(self) -> Task:
-        """
-        Define task to assess risks and create the final investment report.
-
-        Evaluates portfolio risks and creates a comprehensive investment report
-        with risk mitigation strategies and implementation guidance based
-        exclusively on the integrated analysis of recommendations from
-        Stock, ETF, and Crypto crews.
-        """
+    def opportunity_analysis_task(self) -> Task:
         return Task(
-            config=self.tasks_config["risk_final_report_task"],  # type: ignore[index]
-            async_execution=False,
+            config=self.tasks_config['opportunity_analysis_task'],
+            verbose=True
         )
+
+    @task
+    def portfolio_allocation_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['portfolio_allocation_task'],
+            verbose=True
+        )
+
+
+    @task
+    def risk_analysis_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['risk_analysis_task'],
+            verbose=True
+        )
+        
+     
+    @task
+    def risk_mitigation_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['risk_mitigation_task'],
+            verbose=True
+        )   
+        
+    @task
+    def implementation_plan_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['implementation_plan_task'],
+            verbose=True
+        )   
+        
+    @task
+    def implementation_plan_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['implementation_plan_task'],
+            verbose=True
+        )           
+                
+    @task
+    def final_html_report_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['final_html_report_task'],
+            verbose=True
+        )   
 
     @crew
     def crew(self) -> Crew:
@@ -154,9 +180,9 @@ class ReportCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
-            memory=True,
             allow_delegation=True,
             allow_termination=True,
             respect_context_window=True,
             max_retries=10,
+            max_rpm=20,
         )

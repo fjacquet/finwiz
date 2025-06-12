@@ -1,146 +1,115 @@
+# Market Analysis Tasks
 market_technical_analysis_task:
   description: >
-    Conduct a comprehensive market and technical analysis to identify and evaluate the top 10 emerging
-    stocks with potential to become unicorns (projects valued at $1B+). Focus on:
-    1. Market Analysis:
-       a. Current market trends and emerging sectors in the stock space
-       b. Projects with strong growth metrics but still under mainstream radar
-       c. Market sentiment analysis and adoption potential
-       d. Historical patterns that indicate potential for exponential growth
-    2. Technical Evaluation:
-       a. Financial fundamentals and business model analysis
-       b. Growth scalability and operational efficiency
-       c. Management team expertise and corporate governance
-       d. Technology innovations and competitive advantages
-       e. Balance sheet strength and financial risk assessment
-    Today is {full_date}, it's day {current_day} of month {current_month} in year {current_year}.
-    Ensure your analysis reflects the latest market conditions as of {timestamp}.
-    IMPORTANT: Use only real, existing stocks with accurate ticker symbols. 
-    Do not use illustrative or hypothetical examples.
-  expected_output: >
-    A comprehensive HTML with emojis report identifying and evaluating the top 10 promising stocks
-    with unicorn potential, including both market analysis and technical assessment for each stock. 
-    Each stock must include its actual ticker symbol and verifiable performance and financial data. 
-    Use emojis to highlight key points:
-    📈 Growth metrics
-    🔍 Market trends
-    🌐 Adoption indicators
-    🚀 Potential unicorns
-    📊 Financial fundamentals
-    📈 Growth scalability
-    👨‍💼 Management team
-    💡 Innovation factor
-    💰 Balance sheet strength
-    Include today's date ({full_date}) in your report.
-  agent: market_technical_analyst
-  output_file: "report/stock_market_technical_analysis.html"
+    Define the market and technical analysis task.
 
+    This task involves researching stock market trends and conducting in-depth
+    financial analysis of companies, focusing on identifying promising stocks
+    and evaluating their fundamentals, valuation, and growth prospects.
+
+    Research and identify current market trends in established sectors of the
+    stock market. Focus on stable, blue-chip companies with strong
+    fundamentals and consistent performance.
+
+    1. Identify key market trends and growth sectors 
+    2. Analyze market sentiment and adoption potential 
+    3. Examine historical patterns indicating growth potential
+
+    OUTPUT: Return a concise analysis of market trends.
+  expected_output: >
+    An analysis of current stock market trends and emerging sectors with
+    growth potential.
+  agent: market_technical_analyst
+  output_file: "output/stock/stock_market_trends.md"
+
+# Technical Analysis Tasks
+stock_screening_task:
+  description: >
+    Screen and identify the top 10 stable, blue-chip stocks with strong
+    fundamentals. Focus on companies with consistent earnings, solid balance
+    sheets, and proven track records of performance.
+
+    1. Screen stocks using stability and value metrics 
+    2. Evaluate financial fundamentals and dividend history 
+    3. Assess management teams and corporate governance 
+    4. Select the top 10 stocks with lowest risk profiles
+
+    Today is {full_date}. Ensure your analysis reflects current market
+    conditions. IMPORTANT: Use only real, existing stocks with accurate ticker
+    symbols.
+
+    OUTPUT: Return a list of the top 10 emerging stocks with analysis.
+  expected_output: >
+    A list of 10 emerging stocks with unicorn potential, including ticker
+    symbols and analysis.
+  agent: market_technical_analyst
+  output_file: "output/stock/emerging_stocks_analysis.md"
+
+# Technical Detail Tasks
+technical_detail_task:
+  description: >
+    Perform detailed technical analysis on each of the 10 selected stocks.
+
+    1. Analyze financial fundamentals for each stock 
+    2. Assess growth scalability and efficiency metrics 
+    3. Evaluate balance sheet strength and risk factors 
+    4. Examine competitive advantages and innovation potential
+
+  expected_output: >
+    Technical assessment in markdown of each stock including financial metrics
+    and analysis.
+  agent: market_technical_analyst
+  output_file: "output/stock/stock_technical_details.md"
+  depends_on:
+    - stock_screening_task
+
+# Risk Analysis Tasks
+stock_risk_assessment_task:
+  description: >
+    Evaluate risks for each of the 10 stocks identified in previous tasks.
+
+    1. Assess regulatory challenges and compliance status in major markets 
+    2. Identify financial stability and debt structure risks 
+    3. Analyze valuation risks (P/E ratio, revenue concentration, growth sustainability) 
+    4. Evaluate competitive threats and market positioning 
+    5. Review management and corporate governance risks
+
+    Follow the output instructions in
+    docs/output_formatting_guide.md.
+  expected_output: >
+    A detailed risk profile for each stock covering regulatory, financial,
+    valuation, competitive, and governance risks.
+  agent: investment_risk_analyst
+  output_file: "output/stock/stock_investment_risk_strategy.md"
+  depends_on:
+    - technical_detail_task
+
+# Investment Strategy Tasks
 investment_risk_strategy_task:
   description: >
-    Evaluate risks and develop investment strategies for each of the 10 stocks. Focus on:
-    1. Risk Assessment:
-       a. Regulatory challenges and compliance status in major markets
-       b. Financial stability and debt structure risks
-       c. Valuation risks (P/E ratio, revenue concentration, growth sustainability)
-       d. Competitive threats and market positioning
-       e. Management and corporate governance risks
-    2. Investment Strategy:
-       a. Optimal entry price points and target valuation
-       b. Position sizing recommendations based on risk/reward profile
-       c. Time horizon for expected returns
-       d. Portfolio allocation strategy and diversification considerations
-       e. Risk management tactics specific to each stock
-    Consider all factors known as of {timestamp} and use {current_year} regulatory standards.
-    Base your investment recommendations on current market conditions as of {full_date}.
-    IMPORTANT: Use accurate metrics based on real historical data and provide specific, actionable
-    recommendations for real stocks with their actual ticker symbols.
-    Do not use hypothetical scenarios or add "(Illustrative)" disclaimers.
-  expected_output: >
-    A comprehensive HTML with emojis risk assessment and investment strategy report for each stock,
-    including risk ratings, investment recommendations, specific price targets, position sizing,
-    time horizons, and expected return calculations. All assessments and recommendations
-    must be based on verifiable data for real stocks with their actual ticker symbols.
-    Use emojis to categorize information:
-    ⚖️ Regulatory risks
-    💵 Financial stability risks
-    📈 Valuation risks
-    🥊 Competitive threats
-    👥 Team/governance risks
-    ⚠️ Overall risk rating
-    💲 Entry points
-    📊 Position sizing
-    ⏱️ Time horizon
-    📈 Target valuation
-    🔄 Portfolio allocation
-    Include today's date ({full_date}) in your report.
-  agent: investment_risk_analyst
-  output_file: "report/stock_investment_risk_strategy.html"
+    Define the investment risk and strategy task.
 
-research_synthesis_task:
-  description: >
-    Review all analyses and synthesize the findings into a focused investment thesis for the 10 stocks.
-    Ensure that:
-    1. Key findings from all analyses are incorporated concisely
-    2. Stocks are clearly ranked by investment potential
-    3. Specific investment rationales and expected returns are provided
-    4. A brief timeline for investment and monitoring is included
-    This report should be current as of {timestamp} and provide guidance for the {current_year}-{current_year+1} investment horizon.
-    
-    IMPORTANT REQUIREMENTS:
-    1. Present only real stocks with their actual ticker symbols. No hypothetical examples
-       or "(Illustrative)" disclaimers.
-    2. Generate TWO COMPLETELY SEPARATE outputs:
-       a. A human-readable HTML report (for display) to be returned as your task result
-       b. A structured JSON file that is ONLY created using the JSONOutputTool
-    
-    CRITICAL INSTRUCTIONS FOR OUTPUT SEPARATION:
-    1. For the JSON output:
-       - Use the JSONOutputTool to create and save the JSON file
-       - Set output_path to: "report/stock_unicorn_investment_recommendations.json"
-       - Do NOT include the JSON content in your HTML output or task result
-       - After saving the JSON file, only mention that you've saved it
-    
-    2. JSON structure should include:
-    {
-      "crew_type": "stock",
-      "analysis_date": "{full_date}",
-      "recommendations": [
-        {
-          "ticker": "[SYMBOL]",
-          "name": "[COMPANY NAME]",
-          "action": "buy|sell|hold",
-          "price": [CURRENT_PRICE],
-          "currency": "CHF",
-          "allocation": [RECOMMENDED_ALLOCATION],
-          "rationale": "[INVESTMENT_RATIONALE]",
-          "risk_level": "low|medium|high",
-          "expected_return": "[PERCENTAGE]",
-          "timeframe": "[TIME_PERIOD]"
-        }
-      ],
-      "tickers_analyzed": ["[SYMBOL1]", "[SYMBOL2]", ...]
-    }
+    This task involves evaluating potential risks of the selected stocks and
+    developing comprehensive investment strategies, including risk assessment,
+    entry points, position sizing, and expected returns.
+
+    Develop investment strategies for each of the 10 stocks based on their
+    risk profiles.
+
+    1. Determine optimal entry price points and target valuations 
+    2. Recommend position sizing based on risk/reward profiles 
+    3. Define time hoizons for expected returns 
+    4. Create portfolio allocation strategies and diversification approaches 
+    5. Develop specific risk management tactics for each stock
+
+    Consider all factors known as of {timestamp} and use {current_year}
+    regulatory standards. Base your investment recommendations on current
+    market conditions as of {full_date}. Follow the output instructions in
+    docs/output_formatting_guide.md.
   expected_output: >
-    TWO SEPARATE outputs are required:
-    1. HTML OUTPUT (RETURN THIS AS TASK RESULT): A comprehensive HTML with emojis investment thesis document that presents the top
-       stock investment opportunities, with detailed reasoning,
-       investment guidelines, and expected outcomes. All recommendations must be for real stocks
-       with their actual ticker symbols and verifiable data. The document should be
-       actionable and provide clear guidance for winning in the stock
-       market. Use emojis for better visualization:
-       🏆 Top ranked stocks
-       💸 Expected ROI
-       📊 Investment allocation
-       📍 Action steps
-       📈 Monitoring metrics
-       ⏱️ Investment timeline
-       🔮 Future outlook
-       Include today's date ({full_date}) prominently in your report.
-    2. JSON OUTPUT (SAVE USING JSONOutputTool): 
-      A structured JSON file containing all recommendations in a machine-readable format,
-      including ticker symbols, company names, current prices, recommended allocations, rationales,
-      risk levels, expected returns, and timeframes. This will be used by the Report Crew for portfolio integration.
-      IMPORTANT: Do NOT include this JSON in your task result - use the JSONOutputTool to save it separately.
-  agent: research_director
-  output_file: "report/stock_research_synthesis.html"
-  # Note: json_output_file is not used directly by CrewAI. Use JSONOutputTool with the correct output_path instead.
+    Investment strategies for each stock including entry points, position
+    sizing, time horizons, and risk management tactics in a markdown report.
+  agent: investment_risk_analyst
+  output_file: "output/stock/stock_investment_strategies.md"
+  depends_on:
+    - stock_risk_assessment_task

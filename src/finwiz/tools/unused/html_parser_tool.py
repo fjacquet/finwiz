@@ -62,6 +62,7 @@ class HTMLParserTool(BaseTool):
 
         if extraction_type in ["all", "tickers"]:
             # Extract ticker symbols (common format: uppercase 1-5 letters, sometimes with numbers)
+            # Format: 1-5 uppercase letters, optionally followed by a dot and 1-2 more letters
             ticker_pattern = r"\b[A-Z]{1,5}(?:\.[A-Z]{1,2})?\b"
             tickers = re.findall(ticker_pattern, text_content)
             result["tickers"] = list(set(tickers))
@@ -97,7 +98,9 @@ class HTMLParserTool(BaseTool):
             ]
 
             # Extract all emojis and their surrounding context
-            emoji_pattern = r"[\U0001F300-\U0001F64F\U0001F680-\U0001F6FF\u2600-\u26FF\u2700-\u27BF]"
+            # Unicode ranges for common emoji characters
+            emoji_pattern = (r"[\U0001F300-\U0001F64F\U0001F680-\U0001F6FF"
+                            r"\u2600-\u26FF\u2700-\u27BF]")
             emojis_with_context = []
 
             for p in paragraphs:

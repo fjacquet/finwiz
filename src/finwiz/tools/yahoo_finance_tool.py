@@ -308,31 +308,55 @@ class YahooFinanceNewsTool(BaseTool):
     )
     args_schema: type[BaseModel] = GetTickerNewsInput
 
-    def _run(self, ticker: str, limit: int = 5) -> dict:
+    def _run(self, ticker: str, limit: int = 5) -> str:
         """Execute the Yahoo Finance news lookup."""
         try:
-            ticker_data = yf.Ticker(ticker)
-            news = ticker_data.news
-
+            ticker_obj = yf.Ticker(ticker)
+            news = ticker_obj.news
+            
             if not news:
-                return {"error": f"No news found for {ticker}"}
-
-            news_items = []
-            for item in news[:limit]:
-                news_items.append(
-                    {
-                        "title": item.get("title", "N/A"),
-                        "publisher": item.get("publisher", "N/A"),
-                        "link": item.get("link", "N/A"),
-                        "published": datetime.datetime.fromtimestamp(
-                            item.get("providerPublishTime", 0)
-                        ).strftime("%Y-%m-%d %H:%M:%S"),
-                        "summary": item.get("summary", "N/A")[:200] + "..."
-                        if len(item.get("summary", "")) > 200
-                        else item.get("summary", "N/A"),
-                    }
-                )
-
-            return {"symbol": ticker, "news_count": len(news_items), "news": news_items}
+                return f"No recent news found for {ticker}."
+            
+            # Limit the number of news items
+            news = news[:limit]
+            
+            # Format the news items
+            result = f"Recent news for {ticker}:\n\n"
+            
+            for i, item in enumerate(news, 1):
+                title = item.get("title", "No title")
+                publisher = item.get("publisher", "Unknown publisher")
+                link = item.get("link", "#")
+                published = item.get("providerPublishTime", None)
+                
+                if published:
+                    # Convert timestamp to datetime
+                    published_date = datetime.datetime.fromtimestamp(published)
+                    published_str = published_date.strftime("%Y-%m-%d %H:%M")
+                else:
+                    published_str = "Unknown date"
+                
+                result += f"{i}. {title}\n"
+                result += f"   Publisher: {publisher} | Date: {published_str}\n"
+                result += f"   Link: {link}\n\n"
+            
+            return result
         except Exception as e:
-            return {"error": f"Failed to get news for {ticker}: {str(e)}"}
+            return f"Error retrieving news for {ticker}: {str(e)}"
+
+
+def get_yahoo_tools():
+    """Return a list of all Yahoo Finance tools.
+    
+    This function is used to easily import all Yahoo Finance tools at once.
+    
+    Returns:
+        list: A list of Yahoo Finance tool instances.
+    """
+    return [
+        YahooFinanceTickerInfoTool(),
+        YahooFinanceHistoryTool(),
+        YahooFinanceCompanyInfoTool(),
+        YahooFinanceETFHoldingsTool(),
+        YahooFinanceNewsTool()
+    ]
