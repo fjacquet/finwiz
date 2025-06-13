@@ -1,74 +1,99 @@
 # FinWiz: AI-Powered Financial Research Crews
 
-Welcome to FinWiz, a multi-agent AI system powered by [crewAI](https://crewai.com) designed to conduct comprehensive financial research. FinWiz deploys specialized crews of AI agents to analyze stocks, ETFs, and cryptocurrencies, culminating in an integrated financial report for a family-focused investment strategy.
+**FinWiz** is a sophisticated financial analysis platform powered by autonomous AI agents built with the [CrewAI](https://github.com/joaomdmoura/crewai) framework. It leverages specialized crews of AI agents to perform in-depth research and generate comprehensive reports on various financial instruments, including cryptocurrencies, stocks, and ETFs.
 
-## Features
+## ✨ Features
 
-- **Multi-Agent Collaboration:** Utilizes multiple specialized AI agents for in-depth analysis in different financial domains.
-- **Specialized Research Crews:** Separate crews for Stocks, ETFs, and Cryptocurrencies, plus a Report crew to synthesize findings.
-- **Real-Time Data Integration:** Leverages tools for Yahoo Finance and CoinMarketCap to ensure analyses are based on current market data.
-- **Web Research Capabilities:** Equipped with tools like Serper for general web searches and Firecrawl for scraping.
-- **Persistent Knowledge Base:** Uses a Retrieval-Augmented Generation (RAG) system for each crew to store and recall information across sessions.
-- **Robust and Resilient:** Implements a retry mechanism for LLM calls to handle transient API errors gracefully.
+- **Specialized Research Crews**: Dedicated crews for Crypto, Stocks, and ETFs, each with tailored agents and tasks.
+- **Dynamic Configuration**: Agents and tasks are configured via YAML files, allowing for easy customization and extension.
+- **Asynchronous Task Execution**: Leverages async operations to significantly speed up I/O-bound tasks like web scraping and API calls, improving overall performance.
+- **Knowledge Base Integration**: Utilizes a local knowledge base (RAG) to store and retrieve information, ensuring consistency and reducing redundant research.
+- **Structured Output**: Generates detailed reports in Markdown and other formats, ready for review.
+- **Modular and Extendable**: The project is structured to be easily extendable with new crews, agents, or tools.
 
-## Project Structure
+## 📂 Project Structure
 
-- **`.env`**: Configuration file for API keys and other secrets.
-- **`src/finwiz/`**: Main source code directory.
-  - **`crews/`**: Contains the definitions for each specialized crew (`stock_crew`, `etf_crew`, `crypto_crew`, `report_crew`). Each crew has its own `agents.yaml` and `tasks.yaml`.
-  - **`tools/`**: Houses all the custom and third-party tools used by the agents.
-  - **`main.py`**: The main entry point to orchestrate the FinWiz workflow.
-- **`output/`**: Directory where all the final reports from the crews are saved.
+The project follows a modular structure to keep the codebase organized and maintainable:
 
-## Installation
+```text
+finwiz/
+├── src/finwiz/
+│   ├── crews/                # Contains the definitions for each financial crew
+│   │   ├── crypto_crew/
+│   │   ├── etf_crew/
+│   │   └── stock_crew/
+│   ├── tools/                # Custom tools for financial analysis and data handling
+│   └── utils/                # Utility functions (e.g., config loaders)
+├── docs/                     # Project documentation
+├── output/                   # Generated reports from the crews
+├── .env                      # Environment variables (API keys, etc.)
+├── pyproject.toml            # Project dependencies and metadata
+└── README.md                 # This file
+```
 
-Ensure you have Python >=3.10 <3.13 installed. This project uses [UV](https://docs.astral.sh/uv/) for dependency management.
+## 🚀 Getting Started
 
-1. **Install UV:**
+Follow these instructions to set up and run FinWiz on your local machine.
+
+### Prerequisites
+
+- Python 3.10+
+- A Python package manager like `pip` with `uv`.
+- API keys for any services you wish to use (e.g., Serper, Firecrawl).
+
+### Installation
+
+1. **Clone the repository:**
 
    ```bash
-   pip install uv
+   git clone <your-repo-url>
+   cd finwiz
    ```
 
-2. **Create a Virtual Environment and Install Dependencies:**
+2. **Set up environment variables:**
+
+   - If an `.env.example` file exists, copy it to `.env`:
+
+     ```bash
+     cp .env.example .env
+     ```
+
+   - Open the `.env` file and add your API keys.
+
+3. **Install dependencies:**
+
+   The project uses `uv` for dependency management.
 
    ```bash
-   uv venv
-   uv pip install -r requirements.txt
+   uv pip install -r requirements.txt # Or use your preferred package manager
    ```
 
-3. **Set up API Keys:**
-   - Rename the `.env.example` file to `.env`.
-   - Add your API keys to the `.env` file. You will need keys for:
-      - `OPENAI_API_KEY`
-      - `SERPER_API_KEY`
-      - `FIRECRAL_API_KEY`
-      - `X-CMC_PRO_API_KEY` (for CoinMarketCap)
+### Running the Flow
 
-## Running the Project
-
-To start the entire FinWiz financial analysis workflow, run the following command from the project's root directory:
+To kick off the entire financial analysis workflow, run the main flow:
 
 ```bash
 crewai flow kickoff
 ```
 
-This command will sequentially execute the Crypto, ETF, Stock, and Report crews. The final consolidated report will be saved in the `output/report/` directory.
+This command will execute the predefined sequence of crews (Crypto, Stock, ETF) and generate the final reports in the `output/` directory.
 
-## Customization
+## 🤖 Crews Overview
 
-You can customize the behavior of each crew by modifying their configuration files:
+FinWiz is composed of several specialized crews:
 
-- **Agents:** To change the roles, goals, or backstories of the agents, edit the `agents.yaml` file within the respective crew's directory (e.g., `src/finwiz/crews/stock_crew/config/agents.yaml`).
-- **Tasks:** To modify the research tasks, edit the `tasks.yaml` file for the desired crew.
+- **Crypto Crew**: Analyzes the cryptocurrency market, focusing on technical analysis, risk assessment, and investment strategies for specific digital assets.
+- **Stock Crew**: Conducts research on publicly traded stocks, performing technical analysis, screening, and risk assessment to identify promising investment opportunities.
+- **ETF Crew**: Specializes in Exchange-Traded Funds (ETFs), analyzing market trends, screening for suitable funds, and assessing risk to provide investment strategies.
 
-## Support
+## ⚡ Performance Enhancements
 
-For support, questions, or feedback regarding crewAI:
+### Asynchronous Execution
 
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+To improve performance, FinWiz leverages asynchronous task execution for I/O-bound operations. Tasks that involve fetching data from the web or calling external APIs are marked with `async_execution=True`.
 
-Let's create wonders together with the power and simplicity of crewAI.
+**Important Note:** When using a `Process.sequential` workflow in CrewAI, the final task in the sequence **must be synchronous**. All other tasks can be asynchronous. This is a current limitation of the framework that FinWiz adheres to.
+
+---
+
+Happy analyzing!

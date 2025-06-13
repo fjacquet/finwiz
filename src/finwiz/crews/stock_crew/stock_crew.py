@@ -92,16 +92,16 @@ class StockCrew:
     @task
     def market_technical_analysis_task(self) -> Task:
         return Task(
-            config=self.tasks_config["market_technical_analysis_task"], verbose=True
+            config=self.tasks_config["market_technical_analysis_task"], verbose=True, async_execution=True
         )
 
     @task
     def stock_screening_task(self) -> Task:
-        return Task(config=self.tasks_config["stock_screening_task"], verbose=True)
+        return Task(config=self.tasks_config["stock_screening_task"], verbose=True, async_execution=True)
 
     @task
     def technical_detail_task(self) -> Task:
-        return Task(config=self.tasks_config["technical_detail_task"], verbose=True)
+        return Task(config=self.tasks_config["technical_detail_task"], verbose=True, async_execution=True)
 
     @task
     def stock_risk_assessment_task(self) -> Task:

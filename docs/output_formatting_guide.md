@@ -57,7 +57,7 @@ Use emojis strategically to highlight key points:
 
 ### ✅ Best-Practice Implementation
 
-The final agent in a crew is typically responsible for consolidating all prior information into a single, comprehensive HTML report. This is returned as a string that is then saved to a file by the crew's configuration.
+The final agent in a crew is typically responsible for consolidating all prior information into a single, comprehensive HTML report. Preceding agents should pass their findings through the task context. The final agent then retrieves this information from the context, synthesizes it, and formats the final HTML report. This is returned as a string that is then saved to a file by the crew's configuration.
 
 ```python
 # Example of a final agent's action

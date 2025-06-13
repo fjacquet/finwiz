@@ -94,19 +94,19 @@ class EtfCrew:
 
     @task
     def etf_market_trends_task(self) -> Task:
-        return Task(config=self.tasks_config["etf_market_trends_task"], verbose=True)
+        return Task(config=self.tasks_config["etf_market_trends_task"], verbose=True, async_execution=True)
 
     @task
     def etf_screening_task(self) -> Task:
-        return Task(config=self.tasks_config["etf_screening_task"], verbose=True)
+        return Task(config=self.tasks_config["etf_screening_task"], verbose=True, async_execution=True)
 
     @task
     def etf_technical_detail_task(self) -> Task:
-        return Task(config=self.tasks_config["etf_technical_detail_task"], verbose=True)
+        return Task(config=self.tasks_config["etf_technical_detail_task"], verbose=True, async_execution=True)
 
     @task
     def etf_risk_assessment_task(self) -> Task:
-        return Task(config=self.tasks_config["etf_risk_assessment_task"], verbose=True)
+        return Task(config=self.tasks_config["etf_risk_assessment_task"], verbose=True, async_execution=True)
 
     @task
     def etf_investment_strategy_task(self) -> Task:

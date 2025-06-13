@@ -70,31 +70,27 @@ class CryptoCrew:
     def technical_analysis_task(self) -> Task:
         return Task(
             config=self.tasks_config["technical_analysis_task"],
+            async_execution=True
         )
 
     @task
     def risk_assessment_task(self) -> Task:
         return Task(
             config=self.tasks_config["risk_assessment_task"],
-            context=[self.technical_analysis_task()],
+            async_execution=True
         )
 
     @task
     def investment_strategy_task(self) -> Task:
         return Task(
             config=self.tasks_config["investment_strategy_task"],
-            context=[self.technical_analysis_task(), self.risk_assessment_task()],
+            async_execution=True
         )
 
     @task
     def final_report_task(self) -> Task:
         return Task(
             config=self.tasks_config["final_report_task"],
-            context=[
-                self.technical_analysis_task(),
-                self.risk_assessment_task(),
-                self.investment_strategy_task(),
-            ],
         )
 
     @crew

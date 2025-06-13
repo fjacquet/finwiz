@@ -97,3 +97,15 @@ This handbook establishes the core principles, ethical standards, and research m
     - Format your output in a clean, professional, and easily readable manner (e.g., Markdown or HTML as requested).
     - Use headings, bullet points, and other formatting elements to structure your reports.
     - Ensure your final output directly addresses the user's request and provides a clear, actionable conclusion.
+
+---
+
+## Agent Tool Usage Guidelines
+
+To perform their tasks effectively, agents are equipped with a specialized set of tools. It is crucial to use the right tool for the job.
+
+- **`SerperDevTool`**: Use for general-purpose web searches to gather a broad range of information on a topic.
+- **`FirecrawlScrapeWebsiteTool`**: Use when you have a specific URL and need to extract its full content for detailed analysis. This is ideal for deep dives into articles, reports, or documentation pages.
+- **`FirecrawlSearchTool`**: Use to perform a targeted search within a specific website. This is useful when you know a site contains the information you need but you have to find the exact page.
+- **`YoutubeVideoSearchTool`**: Use to find relevant video content, such as interviews, financial news reports, or technical analysis tutorials.
+- **`YahooFinanceNewsTool`**: Use specifically for fetching the latest financial news related to a stock, ETF, or cryptocurrency. This is the primary tool for timely market updates.

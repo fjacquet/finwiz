@@ -26,10 +26,12 @@ Like a haiku poem with its strict form of simplicity and elegance:
 
 ### CrewAI Flow Design Principles
 
-- Clear separation between state and behavior
-- Explicit flow transitions
-- Parallel processing where appropriate
-- Event-driven architecture
+- **Clear Separation of Concerns**: Maintain a clear distinction between state and behavior.
+- **Explicit Flow Transitions**: Define transitions between crews and tasks clearly.
+- **Asynchronous by Default (where possible)**:
+  - Leverage asynchronous execution (`async_execution=True`) for I/O-bound tasks to maximize performance.
+  - Be mindful of framework constraints, such as the requirement for the final task in a sequential process to be synchronous.
+- **Event-Driven Architecture**: Design components to react to events where applicable.
 
 ### Configuration-Driven Design
 
@@ -201,7 +203,6 @@ class YahooFinanceCompanyInfoTool(BaseTool):
 ```
 
 This approach provides a clean, organized, and easy-to-maintain structure for managing the project's tools.
-```
 
 ### Good Example - HTML Report Generation with Emojis
 
