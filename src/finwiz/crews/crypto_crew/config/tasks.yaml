@@ -1,85 +1,51 @@
-# Crypto Market Analysis Tasks
-market_technical_analysis_task:
+technical_analysis_task:
   description: >
-    Research and identify current market trends in the cryptocurrency space.
-    Focus on established, high-market-cap cryptocurrencies with proven track
-    records and lower volatility.
-
-    1. Identify key crypto market trends and emerging sectors as of {full_date}.
-    2. Analyze current market sentiment and adoption potential.
-    3. Examine historical patterns indicating growth potential, considering the present market context.
+    Conduct a detailed technical analysis of the cryptocurrencies provided by
+    the market analyst. Identify potential entry and exit points, support and
+    resistance levels, and overall price trends for the top 10 projects.
   expected_output: >
-    An analysis of current cryptocurrency market trends and emerging sectors
-    with growth potential.
-  agent: market_technical_analyst
-  output_file: "output/crypto/crypto_market_trends.md"
+    A technical analysis report for the top 10 cryptocurrencies, including
+    chart patterns and key price levels.
+  agent: technical_analyst
+  output_file: >
+    output/crypto/crypto_technical_analysis_{full_date}.md
 
-# Cryptocurrency Screening Tasks
-crypto_screening_task:
+risk_assessment_task:
   description: >
-    Screen and identify the top 10 established cryptocurrencies with strong
-    fundamentals. Focus on large-cap assets with high liquidity, established
-    use cases, and institutional adoption.
-
-    1. Screen cryptocurrencies using market cap and liquidity metrics 
-    2. Evaluate security and network effects 
-    3. Assess development teams and institutional backing 
-    4. Select the top 10 most established crypto assets with lowest risk profiles
-
-    Today is {full_date}. Ensure your analysis reflects current market
-    conditions. IMPORTANT: Use only real, existing cryptocurrencies with
-    accurate ticker symbols.
+    Evaluate the risks associated with the top 10 cryptocurrencies identified
+    by the technical analyst. Focus on security vulnerabilities, regulatory
+    concerns, and market volatility.
   expected_output: >
-    A list of 10 emerging cryptocurrency projects with unicorn potential,
-    including ticker symbols and analysis.
-  agent: market_technical_analyst
-  output_file: "output/crypto/emerging_crypto_analysis.md"
-
-# Technical Detail Tasks
-crypto_technical_detail_task:
-  description: >
-    Perform detailed technical analysis on each of the 10 selected
-    cryptocurrency projects.
-
-    1. Analyze technical architecture and blockchain technology, noting any recent updates as of {full_date}.
-    2. Assess scalability solutions and their current efficiency.
-    3. Evaluate recent development activity (GitHub commits, roadmap progress) up to {full_date}.
-    4. Examine smart contract security and any recently identified potential vulnerabilities.
-  expected_output: >
-    Technical assessment of each cryptocurrency project including blockchain
-    architecture, scalability, and security analysis.
-  agent: market_technical_analyst
-  output_file: "output/crypto/crypto_technical_details.md"
-
-# Investment Risk and Strategy Task
-investment_risk_strategy_task:
-  description: >
-    Evaluate risks and develop investment strategies for each of the 10
-    cryptocurrency projects.
-
-    Risk Assessment: 
-    1. Assess regulatory challenges and compliance status in
-    major markets 
-    2. Identify security vulnerabilities and review past security incidents 
-    3. Analyze tokenomics risks (supply concentration, inflation schedule) 
-    4. Evaluate competitive threats and market positioning 
-    5. Review team qualifications and governance structures
-
-    Investment Strategy: 
-    1. Determine optimal entry price points and target valuations 
-    2. Recommend position sizing based on risk/reward profiles 
-    3. Define time horizons for expected unicorn status achievement 
-    4. Create portfolio allocation strategies and diversification approaches 
-    5. Develop specific risk management tactics for each project
-
-    Consider all factors known as of {timestamp} and use {current_year}
-    regulatory standards. Base your investment recommendations on current
-    market conditions as of {full_date}.
-  expected_output: >
-    A comprehensive report including: 
-    1. Risk assessment for each cryptocurrency 
-    2. Investment strategies with entry points, position
-    sizing, and time horizons   
-    3. Risk management tactics and portfolio allocation recommendations
+    A comprehensive risk assessment report for each of the top 10
+    cryptocurrencies, highlighting potential risks and mitigation strategies.
   agent: risk_assessor
-  output_file: "output/crypto/crypto_risk_and_strategy_analysis.md"
+  output_file: >
+    output/crypto/crypto_risk_assessment_{full_date}.md
+
+investment_strategy_task:
+  description: >
+    Develop a comprehensive investment strategy for the top cryptocurrencies
+    based on the technical analysis and risk assessment. Provide
+    recommendations for asset allocation, position sizing, and a clear
+    investment thesis.
+  expected_output: >
+    A detailed investment strategy document, including asset allocation, risk
+    management, and a long-term outlook for the selected cryptocurrencies.
+  agent: investment_strategist
+  output_file: >
+    output/crypto/crypto_investment_strategy_{full_date}.md
+
+final_report_task:
+  description: >
+    Synthesize the findings from the market analysis, technical analysis, risk
+    assessment, and investment strategy into a single, comprehensive
+    investment report. The final report should be well-structured, easy to
+    read, and provide a clear, actionable investment plan.
+  expected_output: >
+    A polished, final investment report that presents a "Unicorn" crypto
+    investment plan, complete with justifications, data, and clear next steps.
+    The report should be formatted in HTML with emojis for better
+    visualization.
+  agent: research_director
+  output_file: >
+    output/crypto/crypto_final_report_{full_date}.html

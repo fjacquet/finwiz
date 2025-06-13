@@ -16,7 +16,7 @@ etf_market_trends_task:
     📈 Growth trends
     🌐 Global factors
   agent: market_etf_analyst
-  output_file: "output/etf/etf_market_trends.md"
+  output_file: "output/etf/etf_market_trends_{full_date}.md"
 
 # ETF Screening Tasks
 etf_screening_task:
@@ -38,7 +38,7 @@ etf_screening_task:
     🌍 Diversified exposure
     💰 Low expense ratios
   agent: market_etf_analyst
-  output_file: "output/etf/high_potential_etfs.md"
+  output_file: "output/etf/high_potential_etfs_{full_date}.md"
 
 # ETF Technical Detail Tasks
 etf_technical_detail_task:
@@ -58,7 +58,7 @@ etf_technical_detail_task:
     💧 Liquidity profile
     👨‍💼 Fund management
   agent: market_etf_analyst
-  output_file: "output/etf/etf_technical_details.md"
+  output_file: "output/etf/etf_technical_details_{full_date}.md"
 
 # Risk Analysis Tasks
 etf_risk_assessment_task:
@@ -75,7 +75,7 @@ etf_risk_assessment_task:
   expected_output: >
     A detailed risk profile for each ETF covering volatility, concentration, liquidity, counterparty, and regulatory risks.
   agent: risk_assessor
-  output_file: "output/etf/etf_risk_assessment.md"
+  output_file: "output/etf/etf_risk_assessment_{full_date}.md"
 
 # Investment Strategy Tasks
 etf_investment_strategy_task:
@@ -93,5 +93,5 @@ etf_investment_strategy_task:
   expected_output: >
     Investment strategies for each ETF including entry points, position sizing, time horizons, and risk management tactics.
   agent: risk_assessor
-  output_file: "output/etf/etf_investment_strategies.md"
+  output_file: "output/etf/etf_investment_strategies_{full_date}.md"
 

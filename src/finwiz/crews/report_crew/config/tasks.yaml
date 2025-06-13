@@ -23,7 +23,7 @@ comprehensive_financial_integration_task:
     providing clear rationale and how they fit within a 1000 CHF monthly budget.
     The document must include verifiable data and references to the source reports.
   agent: financial_integration_analyst
-  output_file: "output/report/consolidated_financial_analysis.md"
+  output_file: "output/report/consolidated_financial_analysis_{full_date}.md"
 
 # Task 2: Optimal Portfolio Allocation
 optimal_portfolio_allocation_task:
@@ -48,7 +48,7 @@ optimal_portfolio_allocation_task:
     exact CHF amounts for each investment, percentage allocations, and a clear justification
     for the overall strategy and individual choices, tailored to the family's profile and goals.
   agent: portfolio_allocator
-  output_file: "output/report/optimal_portfolio_allocation.md"
+  output_file: "output/report/optimal_portfolio_allocation_{full_date}.md"
 
 # Task 3: Risk Assessment and Mitigation Strategy
 risk_assessment_mitigation_task:
@@ -72,7 +72,7 @@ risk_assessment_mitigation_task:
     portfolio-level). The report must provide practical, actionable strategies to mitigate these risks,
     appropriate for the family's profile and investment horizon.
   agent: risk_manager
-  output_file: "output/report/risk_assessment_and_mitigation.md"
+  output_file: "output/report/risk_assessment_and_mitigation_{full_date}.md"
 
 # Task 4: Comprehensive Investment Report and Implementation Plan
 comprehensive_investment_report_task:
@@ -142,4 +142,4 @@ comprehensive_investment_report_task:
     à tous les membres de la famille.
     Le rapport doit être en français.
   agent: investment_reporter
-  output_file: "output/finwiz_family_financial_plan.html"
+  output_file: "output/finwiz_family_financial_plan_{full_date}.html"

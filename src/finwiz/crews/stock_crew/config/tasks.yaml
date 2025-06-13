@@ -20,7 +20,7 @@ market_technical_analysis_task:
     An analysis of current stock market trends and emerging sectors with
     growth potential.
   agent: market_technical_analyst
-  output_file: "output/stock/stock_market_trends.md"
+  output_file: "output/stock/stock_market_trends_{full_date}.md"
 
 # Technical Analysis Tasks
 stock_screening_task:
@@ -43,7 +43,7 @@ stock_screening_task:
     A list of 10 emerging stocks with unicorn potential, including ticker
     symbols and analysis.
   agent: market_technical_analyst
-  output_file: "output/stock/emerging_stocks_analysis.md"
+  output_file: "output/stock/emerging_stocks_analysis_{full_date}.md"
 
 # Technical Detail Tasks
 technical_detail_task:
@@ -60,7 +60,7 @@ technical_detail_task:
     Technical assessment in markdown of each stock including financial metrics
     and analysis.
   agent: market_technical_analyst
-  output_file: "output/stock/stock_technical_details.md"
+  output_file: "output/stock/stock_technical_details_{full_date}.md"
   depends_on:
     - stock_screening_task
 
@@ -75,41 +75,12 @@ stock_risk_assessment_task:
     4. Evaluate competitive threats and market positioning as of {full_date}.
     5. Review management and corporate governance risks based on the latest information.
 
-    Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is current as of {full_date}.
+    Follow the output instructions in docs/output_formatting_guide.md.
   expected_output: >
     A detailed risk profile for each stock covering regulatory, financial,
     valuation, competitive, and governance risks.
   agent: investment_risk_analyst
-  output_file: "output/stock/stock_investment_risk_strategy.md"
+  output_file: "output/stock/stock_investment_risk_strategy_{full_date}.md"
   depends_on:
     - technical_detail_task
 
-# Investment Strategy Tasks
-investment_risk_strategy_task:
-  description: >
-    Define the investment risk and strategy task.
-
-    This task involves evaluating potential risks of the selected stocks and
-    developing comprehensive investment strategies, including risk assessment,
-    entry points, position sizing, and expected returns.
-
-    Develop investment strategies for each of the 10 stocks based on their
-    risk profiles.
-
-    1. Determine optimal entry price points and target valuations 
-    2. Recommend position sizing based on risk/reward profiles 
-    3. Define time hoizons for expected returns 
-    4. Create portfolio allocation strategies and diversification approaches 
-    5. Develop specific risk management tactics for each stock
-
-    Consider all factors known as of {timestamp} and use {current_year}
-    regulatory standards. Base your investment recommendations on current
-    market conditions as of {full_date}. Follow the output instructions in
-    docs/output_formatting_guide.md.
-  expected_output: >
-    Investment strategies for each stock including entry points, position
-    sizing, time horizons, and risk management tactics in a markdown report.
-  agent: investment_risk_analyst
-  output_file: "output/stock/stock_investment_strategies.md"
-  depends_on:
-    - stock_risk_assessment_task

@@ -25,12 +25,10 @@ from finwiz.tools.finance_tools import get_stock_research_tools
 from finwiz.utils.config_loader import load_config_with_guidelines, load_yaml_config
 from finwiz.tools.logger import get_logger
 from finwiz.tools.rag_tools import get_rag_tools
-from finwiz.tools.yahoo_finance_tool import (
-    YahooFinanceCompanyInfoTool,
-    YahooFinanceHistoryTool,
-    YahooFinanceNewsTool,
-    YahooFinanceTickerInfoTool,
-)
+from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
+from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
+from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
+from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
 
 # Get logger for this module
@@ -111,16 +109,7 @@ class StockCrew:
             config=self.tasks_config["stock_risk_assessment_task"], verbose=True
         )
 
-    @task
-    def investment_risk_strategy_task(self) -> Task:
-        """
-        Define the investment risk and strategy task.
 
-        This task involves evaluating potential risks of the selected stocks
-        and developing comprehensive investment strategies, including risk assessment,
-        entry points, position sizing, and expected returns.
-        """
-        return Task(config=self.tasks_config["investment_risk_strategy_task"])
 
     @crew
     def crew(self) -> Crew:

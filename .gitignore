@@ -2,7 +2,7 @@
 __pycache__/
 .DS_Store
 .env
-# *.html
+*.html
 *.txt
 agentops.log
 db/
@@ -12,4 +12,4 @@ old/
 output/
 search/indexed/
 search/results/
-uv.lock
+

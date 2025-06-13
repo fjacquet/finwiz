@@ -1,157 +1,108 @@
 """
-Defines the Crypto Crew, specialized in cryptocurrency research and investment analysis.
+Defines the Crypto Crew for cryptocurrency research.
 
-This module sets up the agents (Market Analyst, Technical Analyst, Risk Assessor,
-Investment Strategist, Research Director) and their corresponding tasks to
-identify potential "unicorn" cryptocurrency projects and generate comprehensive
-investment recommendations.
+This module initializes and configures the crypto analysis crew, including agents,
+_tasks, and tools.
 """
 
+from pathlib import Path
 
-# Standard library imports
-
-# Third-party imports
-from crewai import Agent, Crew, Process, Task
-from crewai.agents.agent_builder.base_agent import BaseAgent
+from crewai import Agent, Crew, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import (
-    SerperDevTool,
-    FirecrawlScrapeWebsiteTool,
-    FirecrawlSearchTool,
-    YoutubeVideoSearchTool,
-)
-
-from dotenv import load_dotenv
-from finwiz.tools.web_tools import (
-    get_search_tools,
-    get_news_tools,
-    get_scrape_tools,
-    get_youtube_tools,
-)
+from crewai_tools import FirecrawlScrapeWebsiteTool, FirecrawlSearchTool, SerperDevTool, YoutubeVideoSearchTool
 
 from finwiz.tools.coinmarketcap_tool import get_coinmarketcap_tools
+from finwiz.tools.finance_tools import get_crypto_research_tools
 from finwiz.tools.rag_tools import get_rag_tools
+from finwiz.utils.config_loader import load_yaml_config
 
-# from finwiz.tools.finance_tools import get_data_output_tools
-from finwiz.tools.yahoo_finance_tool import (
-    YahooFinanceHistoryTool,
-    YahooFinanceNewsTool,
-    YahooFinanceTickerInfoTool,
-)
-from finwiz.utils.config_loader import load_config_with_guidelines, load_yaml_config
+# Get the absolute path of the current script
+current_script_path = Path(__file__).resolve()
+crew_dir = current_script_path.parent
 
-
-load_dotenv()
-
-# directory_search_tool = DirectorySearchTool(directory="./search_results")
-news_tool = SerperDevTool(n_results=10, search_type="news")
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=False)
-search_tool = SerperDevTool(n_results=10, search_type="search")
-search_tool2 = FirecrawlSearchTool(limit=10, save_file=False)
-# Get yahoo tools
-yahoo_ticker_tool = YahooFinanceTickerInfoTool()
-yahoo_history_tool = YahooFinanceHistoryTool()
-yahoo_news_tool = YahooFinanceNewsTool()
+# Initialize tools
+search_tool = SerperDevTool()
+scrape_tool = FirecrawlScrapeWebsiteTool()
+firecrawl_search = FirecrawlSearchTool()
 youtube_tool = YoutubeVideoSearchTool()
-# Get JSON output tools
-# json_tools = get_data_output_tools()
-
-# Get CoinMarketCap tools
+crypto_tools = get_crypto_research_tools()
 coinmarketcap_tools = get_coinmarketcap_tools()
-
-# Get RAG tools for knowledge retrieval and storage
 rag_tools = get_rag_tools(collection_suffix="crypto")
-
-# Tools for crypto research and analysis
-tools = [
-    news_tool,
-    scrape_tool,
-    search_tool,
-    search_tool2,
-    yahoo_ticker_tool,
-    yahoo_history_tool,
-    yahoo_news_tool,
-    youtube_tool,
-    # *json_tools,  # Add JSON output tools
-    *coinmarketcap_tools,  # Add CoinMarketCap tools
-    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
-]
 
 
 @CrewBase
 class CryptoCrew:
-    """
-    CryptoCrew - An expert team for cryptocurrency research.
-
-    This crew specializes in investment analysis and is designed to
-    identify potential unicorn cryptocurrency projects, providing
-    comprehensive investment recommendations.
-    """
-
-    agents: list[BaseAgent]
-    tasks: list[Task]
+    """Crypto crew for cryptocurrency analysis."""
 
     @agent
-    def market_technical_analyst(self) -> Agent:
+    def technical_analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config["market_technical_analyst"],
+            config=self.agents_config["technical_analyst"],
+            tools=[*crypto_tools, *rag_tools],
             verbose=True,
-            tools=tools,
+        )
+
+    @agent
+    def risk_assessor(self) -> Agent:
+        return Agent(
+            config=self.agents_config["risk_assessor"],
+            tools=[search_tool, scrape_tool, *rag_tools],
+            verbose=True,
         )
 
     @agent
     def investment_strategist(self) -> Agent:
         return Agent(
             config=self.agents_config["investment_strategist"],
+            tools=[*crypto_tools, *coinmarketcap_tools, *rag_tools],
             verbose=True,
-            tools=tools,
         )
 
     @agent
-    def risk_assessor(self) -> Agent:
+    def research_director(self) -> Agent:
         return Agent(
-            config=self.agents_config["risk_assessor"], verbose=True, tools=tools
+            config=self.agents_config["research_director"], 
+            tools=[*rag_tools],
+            verbose=True
         )
 
     @task
-    def market_technical_analysis_task(self) -> Task:
+    def technical_analysis_task(self) -> Task:
         return Task(
-            config=self.tasks_config["market_technical_analysis_task"], verbose=True
+            config=self.tasks_config["technical_analysis_task"],
         )
 
     @task
-    def crypto_screening_task(self) -> Task:
-        return Task(config=self.tasks_config["crypto_screening_task"], verbose=True)
-
-    @task
-    def crypto_technical_detail_task(self) -> Task:
+    def risk_assessment_task(self) -> Task:
         return Task(
-            config=self.tasks_config["crypto_technical_detail_task"], verbose=True
+            config=self.tasks_config["risk_assessment_task"],
+            context=[self.technical_analysis_task()],
         )
 
     @task
-    def investment_risk_strategy_task(self) -> Task:
+    def investment_strategy_task(self) -> Task:
         return Task(
-            config=self.tasks_config["investment_risk_strategy_task"], verbose=True
+            config=self.tasks_config["investment_strategy_task"],
+            context=[self.technical_analysis_task(), self.risk_assessment_task()],
+        )
+
+    @task
+    def final_report_task(self) -> Task:
+        return Task(
+            config=self.tasks_config["final_report_task"],
+            context=[
+                self.technical_analysis_task(),
+                self.risk_assessment_task(),
+                self.investment_strategy_task(),
+            ],
         )
 
     @crew
     def crew(self) -> Crew:
-        """
-        Create the CryptoCrew for cryptocurrency research.
-
-        This crew uses a sequential process to analyze potential unicorn
-        projects and offer investment analysis, with validation steps to ensure
-        high-quality, consistent output formats for both HTML and JSON data.
-        """
+        """Creates the crypto analysis crew."""
         return Crew(
             agents=self.agents,
-            tasks=self.tasks,  # Use our manually sequenced tasks
-            process=Process.sequential,
+            tasks=self.tasks,
             verbose=True,
-            tools=tools,
-            respect_context_window=True,
-            allow_delegation=False,
-            max_rpm=20,
-            max_retries=10,
         )
+

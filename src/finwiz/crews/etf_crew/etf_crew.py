@@ -23,12 +23,11 @@ from dotenv import load_dotenv
 
 # from finwiz.tools.finance_tools import get_data_output_tools
 # from finwiz.tools.html_output_tool import HTMLOutputTool
-from finwiz.tools.yahoo_finance_tool import (
-    YahooFinanceETFHoldingsTool,
-    YahooFinanceHistoryTool,
-    YahooFinanceNewsTool,
-    YahooFinanceTickerInfoTool,
-)
+from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool    
+from finwiz.tools.yahoo_finance_etf_holdings_tool import YahooFinanceETFHoldingsTool    
+from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
+from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
+from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.utils.config_loader import load_config_with_guidelines, load_yaml_config
 
