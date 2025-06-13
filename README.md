@@ -1,52 +1,70 @@
-# {{crew_name}} Crew
+# FinWiz: AI-Powered Financial Research Crews
 
-Welcome to the {{crew_name}} Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+Welcome to FinWiz, a multi-agent AI system powered by [crewAI](https://crewai.com) designed to conduct comprehensive financial research. FinWiz deploys specialized crews of AI agents to analyze stocks, ETFs, and cryptocurrencies, culminating in an integrated financial report for a family-focused investment strategy.
+
+## Features
+
+- **Multi-Agent Collaboration:** Utilizes multiple specialized AI agents for in-depth analysis in different financial domains.
+- **Specialized Research Crews:** Separate crews for Stocks, ETFs, and Cryptocurrencies, plus a Report crew to synthesize findings.
+- **Real-Time Data Integration:** Leverages tools for Yahoo Finance and CoinMarketCap to ensure analyses are based on current market data.
+- **Web Research Capabilities:** Equipped with tools like Serper for general web searches and Firecrawl for scraping.
+- **Persistent Knowledge Base:** Uses a Retrieval-Augmented Generation (RAG) system for each crew to store and recall information across sessions.
+- **Robust and Resilient:** Implements a retry mechanism for LLM calls to handle transient API errors gracefully.
+
+## Project Structure
+
+- **`.env`**: Configuration file for API keys and other secrets.
+- **`src/finwiz/`**: Main source code directory.
+  - **`crews/`**: Contains the definitions for each specialized crew (`stock_crew`, `etf_crew`, `crypto_crew`, `report_crew`). Each crew has its own `agents.yaml` and `tasks.yaml`.
+  - **`tools/`**: Houses all the custom and third-party tools used by the agents.
+  - **`main.py`**: The main entry point to orchestrate the FinWiz workflow.
+- **`output/`**: Directory where all the final reports from the crews are saved.
 
 ## Installation
 
-Ensure you have Python >=3.10 <3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+Ensure you have Python >=3.10 <3.13 installed. This project uses [UV](https://docs.astral.sh/uv/) for dependency management.
 
-First, if you haven't already, install uv:
+1. **Install UV:**
 
-```bash
-pip install uv
-```
+   ```bash
+   pip install uv
+   ```
 
-Next, navigate to your project directory and install the dependencies:
+2. **Create a Virtual Environment and Install Dependencies:**
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
+   ```bash
+   uv venv
+   uv pip install -r requirements.txt
+   ```
 
-### Customizing
-
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/finwiz/config/agents.yaml` to define your agents
-- Modify `src/finwiz/config/tasks.yaml` to define your tasks
-- Modify `src/finwiz/crew.py` to add your own logic, tools and specific args
-- Modify `src/finwiz/main.py` to add custom inputs for your agents and tasks
+3. **Set up API Keys:**
+   - Rename the `.env.example` file to `.env`.
+   - Add your API keys to the `.env` file. You will need keys for:
+      - `OPENAI_API_KEY`
+      - `SERPER_API_KEY`
+      - `FIRECRAL_API_KEY`
+      - `X-CMC_PRO_API_KEY` (for CoinMarketCap)
 
 ## Running the Project
 
-To kickstart your flow and begin execution, run this from the root folder of your project:
+To start the entire FinWiz financial analysis workflow, run the following command from the project's root directory:
 
 ```bash
-crewai run
+crewai flow kickoff
 ```
 
-This command initializes the finwiz Flow as defined in your configuration.
+This command will sequentially execute the Crypto, ETF, Stock, and Report crews. The final consolidated report will be saved in the `output/report/` directory.
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+## Customization
 
-## Understanding Your Crew
+You can customize the behavior of each crew by modifying their configuration files:
 
-The finwiz Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+- **Agents:** To change the roles, goals, or backstories of the agents, edit the `agents.yaml` file within the respective crew's directory (e.g., `src/finwiz/crews/stock_crew/config/agents.yaml`).
+- **Tasks:** To modify the research tasks, edit the `tasks.yaml` file for the desired crew.
 
 ## Support
 
-For support, questions, or feedback regarding the {{crew_name}} Crew or crewAI.
+For support, questions, or feedback regarding crewAI:
 
 - Visit our [documentation](https://docs.crewai.com)
 - Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
