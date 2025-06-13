@@ -11,11 +11,11 @@ market_technical_analysis_task:
     stock market. Focus on stable, blue-chip companies with strong
     fundamentals and consistent performance.
 
-    1. Identify key market trends and growth sectors 
-    2. Analyze market sentiment and adoption potential 
-    3. Examine historical patterns indicating growth potential
+    1. Identify key market trends and growth sectors as of {full_date}.
+    2. Analyze current market sentiment and adoption potential.
+    3. Examine historical patterns indicating growth potential, considering the present market context as of {full_date}.
 
-    OUTPUT: Return a concise analysis of market trends.
+    OUTPUT: Return a concise analysis of market trends, ensuring all information is current as of {full_date}.
   expected_output: >
     An analysis of current stock market trends and emerging sectors with
     growth potential.
@@ -50,11 +50,12 @@ technical_detail_task:
   description: >
     Perform detailed technical analysis on each of the 10 selected stocks.
 
-    1. Analyze financial fundamentals for each stock 
-    2. Assess growth scalability and efficiency metrics 
-    3. Evaluate balance sheet strength and risk factors 
-    4. Examine competitive advantages and innovation potential
+    1. Analyze financial fundamentals for each stock using the latest available data as of {full_date}.
+    2. Assess growth scalability and efficiency metrics based on recent performance.
+    3. Evaluate balance sheet strength and risk factors as of {full_date}.
+    4. Examine competitive advantages and innovation potential, considering any recent developments.
 
+    Ensure your analysis reflects the company's status as of {full_date}.
   expected_output: >
     Technical assessment in markdown of each stock including financial metrics
     and analysis.
@@ -68,14 +69,13 @@ stock_risk_assessment_task:
   description: >
     Evaluate risks for each of the 10 stocks identified in previous tasks.
 
-    1. Assess regulatory challenges and compliance status in major markets 
-    2. Identify financial stability and debt structure risks 
-    3. Analyze valuation risks (P/E ratio, revenue concentration, growth sustainability) 
-    4. Evaluate competitive threats and market positioning 
-    5. Review management and corporate governance risks
+    1. Assess regulatory challenges and compliance status in major markets, relevant for {current_year}.
+    2. Identify financial stability and debt structure risks based on data as of {full_date}.
+    3. Analyze valuation risks (P/E ratio, revenue concentration, growth sustainability) using current market data as of {full_date}.
+    4. Evaluate competitive threats and market positioning as of {full_date}.
+    5. Review management and corporate governance risks based on the latest information.
 
-    Follow the output instructions in
-    docs/output_formatting_guide.md.
+    Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is current as of {full_date}.
   expected_output: >
     A detailed risk profile for each stock covering regulatory, financial,
     valuation, competitive, and governance risks.

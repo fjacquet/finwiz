@@ -5,9 +5,9 @@ market_technical_analysis_task:
     Focus on established, high-market-cap cryptocurrencies with proven track
     records and lower volatility.
 
-    1. Identify key crypto market trends and emerging sectors 
-    2. Analyze  market sentiment and adoption potential 
-    3. Examine historical patterns indicating growth potential
+    1. Identify key crypto market trends and emerging sectors as of {full_date}.
+    2. Analyze current market sentiment and adoption potential.
+    3. Examine historical patterns indicating growth potential, considering the present market context.
   expected_output: >
     An analysis of current cryptocurrency market trends and emerging sectors
     with growth potential.
@@ -41,10 +41,10 @@ crypto_technical_detail_task:
     Perform detailed technical analysis on each of the 10 selected
     cryptocurrency projects.
 
-    1. Analyze technical architecture and blockchain technology 
-    2. Assess scalability solutions and efficiency 
-    3. Evaluate development activity (GitHub commits, roadmap progress) 
-    4. Examine smart contract security and potential vulnerabilities
+    1. Analyze technical architecture and blockchain technology, noting any recent updates as of {full_date}.
+    2. Assess scalability solutions and their current efficiency.
+    3. Evaluate recent development activity (GitHub commits, roadmap progress) up to {full_date}.
+    4. Examine smart contract security and any recently identified potential vulnerabilities.
   expected_output: >
     Technical assessment of each cryptocurrency project including blockchain
     architecture, scalability, and security analysis.

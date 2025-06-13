@@ -6,7 +6,6 @@ This file defines a sample custom tool `MyCustomTool` with an input schema
 tailored to specific project needs.
 """
 
-
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 

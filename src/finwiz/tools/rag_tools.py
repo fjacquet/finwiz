@@ -26,12 +26,12 @@ def get_rag_tools(collection_suffix: Optional[str] = None) -> List[Tool]:
     """
     # Create a copy of the default config
     config = DEFAULT_RAG_CONFIG.copy()
-    
+
     # If a collection suffix is provided, create a crew-specific collection
     if collection_suffix:
         config["vectordb"]["config"] = config["vectordb"]["config"].copy()
         config["vectordb"]["config"]["collection_name"] = f"finwiz-{collection_suffix}"
-    
+
     # Create the RAG tool for retrieval
     rag_tool = RagTool(
         config=config,
@@ -42,8 +42,8 @@ def get_rag_tools(collection_suffix: Optional[str] = None) -> List[Tool]:
             "researched information."
         ),
     )
-    
+
     # Create the SaveToRag tool for storage
     save_to_rag_tool = SaveToRagTool(rag_tool=rag_tool)
-    
+
     return [rag_tool, save_to_rag_tool]

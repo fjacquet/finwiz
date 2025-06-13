@@ -14,7 +14,7 @@ investment report without conducting additional external research.
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import TXTSearchTool
+from crewai_tools import DirectoryReadTool
 from dotenv import load_dotenv
 
 # Local application imports
@@ -27,28 +27,17 @@ load_dotenv()
 rag_tools = get_rag_tools(collection_suffix="report")
 
 
-file_tool = TXTSearchTool(
-    "output/crypto/crypto_market_trends.md",
-    "output/crypto/emerging_crypto_analysis.md",
-    "output/crypto/crypto_technical_details.md",
-    "output/crypto/crypto_risk_and_strategy_analysis.md",
-    "output/etf/etf_market_trends.md",
-    "output/etf/high_potential_etfs.md",
-    "output/etf/etf_technical_details.md",
-    "output/etf/etf_risk_assessment.md",
-    "output/etf/etf_investment_strategies.md",
-    "output/stock/stock_market_trends.md",
-    "output/stock/emerging_stocks_analysis.md",
-    "output/stock/stock_technical_details.md",
-    "output/stock/stock_investment_risk_strategy.md",
-    "output/stock/stock_investment_strategies.md"
-)
+crypto_reports = DirectoryReadTool(directory=("output/crypto"))
+etf_reports = DirectoryReadTool(directory=("output/etf"))
+stock_reports = DirectoryReadTool(directory=("output/stock"))
 
 
 # Tools for report generation and analysis
 tools = [
     *rag_tools,  # Add RAG tools for knowledge retrieval and storage
-    file_tool,
+    crypto_reports,
+    etf_reports,
+    stock_reports,
 ]
 
 
@@ -70,99 +59,56 @@ class ReportCrew:
     @agent
     def financial_integration_analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['financial_integration_analyst'],
+            config=self.agents_config["financial_integration_analyst"],
             verbose=True,
-            tools=tools
+            tools=tools,
         )
 
     @agent
     def portfolio_allocator(self) -> Agent:
         return Agent(
-            config=self.agents_config['portfolio_allocator'],
-            verbose=True,
-            tools=tools
+            config=self.agents_config["portfolio_allocator"], verbose=True, tools=tools
         )
 
     @agent
     def risk_manager(self) -> Agent:
         return Agent(
-            config=self.agents_config['risk_manager'],
-            verbose=True,
-            tools=tools
+            config=self.agents_config["risk_manager"], verbose=True, tools=tools
         )
 
     @agent
     def investment_reporter(self) -> Agent:
         return Agent(
-            config=self.agents_config['investment_reporter'],
+            config=self.agents_config["investment_reporter"], verbose=True, tools=tools
+        )
+
+    @task
+    def comprehensive_financial_integration_task(self) -> Task:
+        return Task(
+            config=self.tasks_config["comprehensive_financial_integration_task"],
             verbose=True,
-            tools=tools
         )
 
     @task
-    def integration_portfolio_task(self) -> Task:
-        return Task(    
-            config=self.tasks_config['integration_portfolio_task'],
-            verbose=True
-        )
-        
-    @task
-    def data_extraction_task(self) -> Task:
+    def optimal_portfolio_allocation_task(self) -> Task:
         return Task(
-            config=self.tasks_config['data_extraction_task'],
-            verbose=True
+            config=self.tasks_config["optimal_portfolio_allocation_task"],
+            verbose=True,
         )
 
     @task
-    def opportunity_analysis_task(self) -> Task:
+    def risk_assessment_mitigation_task(self) -> Task:
         return Task(
-            config=self.tasks_config['opportunity_analysis_task'],
-            verbose=True
+            config=self.tasks_config["risk_assessment_mitigation_task"],
+           verbose=True,
         )
 
     @task
-    def portfolio_allocation_task(self) -> Task:
+    def comprehensive_investment_report_task(self) -> Task:
         return Task(
-            config=self.tasks_config['portfolio_allocation_task'],
-            verbose=True
+            config=self.tasks_config["comprehensive_investment_report_task"],
+           verbose=True,
         )
-
-
-    @task
-    def risk_analysis_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['risk_analysis_task'],
-            verbose=True
-        )
-        
-     
-    @task
-    def risk_mitigation_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['risk_mitigation_task'],
-            verbose=True
-        )   
-        
-    @task
-    def implementation_plan_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['implementation_plan_task'],
-            verbose=True
-        )   
-        
-    @task
-    def implementation_plan_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['implementation_plan_task'],
-            verbose=True
-        )           
-                
-    @task
-    def final_html_report_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['final_html_report_task'],
-            verbose=True
-        )   
 
     @crew
     def crew(self) -> Crew:
@@ -180,7 +126,7 @@ class ReportCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
-            allow_delegation=True,
+            allow_delegation=False,
             allow_termination=True,
             respect_context_window=True,
             max_retries=10,

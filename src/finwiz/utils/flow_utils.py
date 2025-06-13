@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # def get_output_dir() -> str:
 #     """
 #     Return the path to the output directory.
-    
+
 #     Returns:
 #         str: Path to the output directory
 #     """
@@ -35,7 +35,7 @@ def run_crew_with_caching(
 ) -> None:
     """
     Run a crew with caching, or load from cache if results exist.
-    
+
     Args:
         crew_class: The crew class to instantiate and run
         output_filename: Name of the file to cache results

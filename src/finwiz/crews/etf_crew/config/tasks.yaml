@@ -24,12 +24,12 @@ etf_screening_task:
     Screen and identify the top 10 most stable and diversified ETFs for long-term investment.
     Focus on broad market exposure, low costs, and risk management.
     
-    1. Screen ETFs using stability and diversification metrics
-    2. Prioritize low expense ratios and tax efficiency
-    3. Assess tracking error and fund size for reliability
-    4. Select the top 10 ETFs with lowest volatility and consistent performance
+    1. Screen ETFs using stability and diversification metrics based on market data as of {full_date}.
+    2. Prioritize low expense ratios and tax efficiency.
+    3. Assess tracking error and fund size for reliability using the latest available information.
+    4. Select the top 10 ETFs with lowest volatility and consistent performance, considering current market conditions.
     
-    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols.
+    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your analysis is current as of {full_date}.
     
     OUTPUT: Return a list of the top 10 high-potential ETFs with analysis.
   expected_output: >
@@ -45,12 +45,12 @@ etf_technical_detail_task:
   description: >
     Perform detailed technical analysis on each of the 10 selected ETFs.
     
-    1. Analyze replication methods and lending practices
-    2. Evaluate tracking accuracy and benchmark adherence
-    3. Assess fund manager expertise and issuer stability
-    4. Examine historical performance against benchmarks
+    1. Analyze replication methods and lending practices, considering any recent changes as of {full_date}.
+    2. Evaluate tracking accuracy and benchmark adherence using the latest performance data.
+    3. Assess fund manager expertise and issuer stability based on current information.
+    4. Examine historical performance against benchmarks up to {full_date}.
     
-    OUTPUT: Return detailed technical analysis for each ETF.
+    OUTPUT: Return detailed technical analysis for each ETF, ensuring all data is current as of {full_date}.
   expected_output: >
     Technical assessment of each ETF including:
     ⚙️ ETF structure
@@ -65,13 +65,13 @@ etf_risk_assessment_task:
   description: >
     Evaluate risks for each of the 10 ETFs identified in previous tasks.
     
-    1. Assess volatility metrics and historical drawdowns
-    2. Identify concentration risks within ETF holdings
-    3. Analyze liquidity risks during market stress scenarios
-    4. Evaluate counterparty and structural risks
-    5. Review regulatory and tax considerations
+    1. Assess volatility metrics and historical drawdowns using data up to {full_date}.
+    2. Identify concentration risks within ETF holdings based on the latest disclosures.
+    3. Analyze liquidity risks during market stress scenarios, considering current market conditions as of {full_date}.
+    4. Evaluate counterparty and structural risks.
+    5. Review regulatory and tax considerations relevant for {current_year}.
     
-    Follow the output instructions in docs/output_formatting_guide.md.
+    Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is based on information available as of {full_date}.
   expected_output: >
     A detailed risk profile for each ETF covering volatility, concentration, liquidity, counterparty, and regulatory risks.
   agent: risk_assessor

@@ -11,27 +11,28 @@ from crewai_tools import RagTool
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
 
+
 def test_rag_integration():
     """Test the RAG tools integration."""
     print("Testing RAG tools integration in FinWiz...")
-    
+
     # Create RAG tools for different crews
     crypto_config = DEFAULT_RAG_CONFIG.copy()
     crypto_config["vectordb"]["config"] = crypto_config["vectordb"]["config"].copy()
     crypto_config["vectordb"]["config"]["collection_name"] = "finwiz-crypto"
-    
+
     etf_config = DEFAULT_RAG_CONFIG.copy()
     etf_config["vectordb"]["config"] = etf_config["vectordb"]["config"].copy()
     etf_config["vectordb"]["config"]["collection_name"] = "finwiz-etf"
-    
+
     # Initialize RAG tools
     crypto_rag = RagTool(config=crypto_config, summarize=True)
     etf_rag = RagTool(config=etf_config, summarize=True)
-    
+
     # Initialize SaveToRag tools
     crypto_save_tool = SaveToRagTool(rag_tool=crypto_rag)
     etf_save_tool = SaveToRagTool(rag_tool=etf_rag)
-    
+
     # Store some information in the crypto knowledge base
     print("\n1. Storing information in the crypto knowledge base...")
     crypto_info = """
@@ -44,7 +45,7 @@ def test_rag_integration():
     """
     result = crypto_save_tool._run(crypto_info)
     print(f"Result: {result}")
-    
+
     # Store some information in the ETF knowledge base
     print("\n2. Storing information in the ETF knowledge base...")
     etf_info = """
@@ -57,26 +58,27 @@ def test_rag_integration():
     """
     result = etf_save_tool._run(etf_info)
     print(f"Result: {result}")
-    
+
     # Retrieve information from the crypto knowledge base
     print("\n3. Retrieving information from the crypto knowledge base...")
     query = "What are the technical indicators for Bitcoin?"
     response = crypto_rag.run(query)
     print(f"Response: {response}")
-    
+
     # Retrieve information from the ETF knowledge base
     print("\n4. Retrieving information from the ETF knowledge base...")
     query = "What is the expense ratio of ARKK and how does it compare to the category average?"
     response = etf_rag.run(query)
     print(f"Response: {response}")
-    
+
     # Test cross-collection retrieval (should not retrieve ETF info when querying crypto)
     print("\n5. Testing isolation between collections...")
     query = "Tell me about ARKK ETF"
     response = crypto_rag.run(query)
     print(f"Response when querying crypto collection about ETFs: {response}")
-    
+
     print("\nRAG tools integration test completed!")
+
 
 if __name__ == "__main__":
     test_rag_integration()

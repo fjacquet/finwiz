@@ -16,21 +16,22 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import (
     SerperDevTool,
-    FirecrawlScrapeWebsiteTool, 
-    FirecrawlSearchTool, 
-    YoutubeVideoSearchTool
-    )
+    FirecrawlScrapeWebsiteTool,
+    FirecrawlSearchTool,
+    YoutubeVideoSearchTool,
+)
 
-from dotenv import load_dotenv  
+from dotenv import load_dotenv
 from finwiz.tools.web_tools import (
     get_search_tools,
     get_news_tools,
     get_scrape_tools,
-    get_youtube_tools
+    get_youtube_tools,
 )
-# from finwiz.tools.json_output_tool import get_json_tools
+
 from finwiz.tools.coinmarketcap_tool import get_coinmarketcap_tools
 from finwiz.tools.rag_tools import get_rag_tools
+
 # from finwiz.tools.finance_tools import get_data_output_tools
 from finwiz.tools.yahoo_finance_tool import (
     YahooFinanceHistoryTool,
@@ -86,59 +87,52 @@ class CryptoCrew:
     identify potential unicorn cryptocurrency projects, providing
     comprehensive investment recommendations.
     """
+
     agents: list[BaseAgent]
     tasks: list[Task]
 
-    @agent 
+    @agent
     def market_technical_analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['market_technical_analyst'],
+            config=self.agents_config["market_technical_analyst"],
             verbose=True,
-            tools=tools
+            tools=tools,
         )
 
     @agent
     def investment_strategist(self) -> Agent:
-        return Agent(   
-            config=self.agents_config['investment_strategist'],
+        return Agent(
+            config=self.agents_config["investment_strategist"],
             verbose=True,
-            tools=tools
+            tools=tools,
         )
 
     @agent
     def risk_assessor(self) -> Agent:
         return Agent(
-            config=self.agents_config['risk_assessor'],
-            verbose=True,
-            tools=tools
+            config=self.agents_config["risk_assessor"], verbose=True, tools=tools
         )
 
     @task
     def market_technical_analysis_task(self) -> Task:
         return Task(
-            config=self.tasks_config['market_technical_analysis_task'],     
-            verbose=True
+            config=self.tasks_config["market_technical_analysis_task"], verbose=True
         )
 
     @task
     def crypto_screening_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['crypto_screening_task'],
-            verbose=True
-        )
-        
+        return Task(config=self.tasks_config["crypto_screening_task"], verbose=True)
+
     @task
     def crypto_technical_detail_task(self) -> Task:
         return Task(
-            config=self.tasks_config['crypto_technical_detail_task'],
-            verbose=True
+            config=self.tasks_config["crypto_technical_detail_task"], verbose=True
         )
-        
+
     @task
     def investment_risk_strategy_task(self) -> Task:
         return Task(
-            config=self.tasks_config['investment_risk_strategy_task'], 
-            verbose=True
+            config=self.tasks_config["investment_risk_strategy_task"], verbose=True
         )
 
     @crew

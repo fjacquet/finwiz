@@ -1,199 +1,145 @@
-# Integration Portfolio Task
-integration_portfolio_task:
+# Task 1: Comprehensive Financial Integration and Opportunity Identification
+comprehensive_financial_integration_task:
   description: |
-    Integrate recommendations from Stock, ETF, and Crypto crews in folder ../report 
-    to create a comprehensive investment portfolio within a 1000 CHF monthly budget.
+    Review and synthesize investment recommendations from the Stock, ETF, and Crypto crew reports
+    (located in their respective output directories, e.g., ../crypto_crew/output/crypto_report.md).
+    Extract key data, analyze integrated opportunities, and produce a consolidated analysis.
+    Focus on identifying the strongest, evidence-based opportunities suitable for a family
+    with a 1000 CHF monthly investment budget and medium to long-term goals (5-15 years).
 
-    1. Analyze and consolidate recommendations from all three asset classes
-    2. Create a diversified portfolio allocation
-    3. Ensure the total investment does not exceed 1000 CHF
-    4. Provide clear allocation percentages and amounts
+    Key Steps:
+    1. Access and thoroughly review the latest reports (generated around {full_date}) from the Stock, ETF, and Crypto crews.
+    2. Extract specific, actionable investment recommendations (e.g., stock tickers, ETF names, crypto projects).
+    3. Identify overlapping recommendations or complementary strategies across asset classes, considering the market context as of {full_date}.
+    4. Evaluate the rationale and evidence provided for each recommendation.
+    5. Prioritize opportunities based on potential returns, risk profile, and alignment with family goals, reflecting current conditions as of {full_date}.
+    6. Ensure all analysis considers the 1000 CHF monthly budget constraint.
 
-    OUTPUT: A structured portfolio allocation plan with detailed breakdown.
+    OUTPUT: A comprehensive document detailing integrated insights, key data points from all asset classes,
+    and a prioritized list of investment opportunities with justifications, all relevant as of {full_date}.
   expected_output: >
-    A comprehensive portfolio allocation plan integrating recommendations from
-    all asset classes within the 1000 CHF budget.
-  agent: portfolio_allocator
-  output_file: "output/report/integrated_portfolio_allocation.md"
-
-# Data Extraction Tasks
-data_extraction_task:
-  description: >
-    Extract and organize investment recommendations from the stock_result,
-    etf_result, and crypto_result inputs. Do not conduct any additional
-    research or web searches.
-
-    1. Parse the input data strings 2. Extract key investment recommendations
-    from each crew 3. Standardize the data format for analysis
-
-    OUTPUT: Return the extracted and organized data as a structured JSON
-  expected_output: >
-    A structured dataset of all investment recommendations from the stock,
-    ETF, and crypto crews.
+    A structured analytical document that consolidates findings from all specialized crews.
+    It should highlight the most promising investment opportunities across stocks, ETFs, and crypto,
+    providing clear rationale and how they fit within a 1000 CHF monthly budget.
+    The document must include verifiable data and references to the source reports.
   agent: financial_integration_analyst
-  output_file: "output/report/extracted_investment_data.md"
+  output_file: "output/report/consolidated_financial_analysis.md"
 
-# Analysis Tasks
-opportunity_analysis_task:
-  description: >
-    Analyze the extracted investment data and identify the strongest
-    investment opportunities. Use the output of the data_extraction_task.
+# Task 2: Optimal Portfolio Allocation
+optimal_portfolio_allocation_task:
+  description: |
+    Based on the 'comprehensive_financial_integration_task' output, develop an optimal, diversified
+    portfolio allocation strategy for a family with a 1000 CHF monthly investment budget.
+    The family profile is a 50-year-old father with medium-term (5-10 years) and long-term (10-15 years)
+    financial goals.
 
-    1. Evaluate quality and consistency of recommendations 2. Identify
-    consensus opportunities across crews 3. Highlight uniquely strong
-    opportunities
+    Key Steps:
+    1. Review the consolidated analysis (current as of {full_date}) and prioritized opportunities.
+    2. Determine appropriate asset class weightings (stocks, ETFs, crypto) based on risk tolerance and goals, considering the market outlook as of {full_date}.
+    3. Select specific investments from the prioritized list for inclusion in the portfolio.
+    4. Allocate the 1000 CHF monthly budget across the selected investments, specifying exact CHF amounts.
+    5. Justify each allocation choice, explaining how it contributes to the overall strategy and family goals, based on information available up to {full_date}.
+    6. Ensure the portfolio is diversified and balances growth potential with capital preservation.
 
-    OUTPUT: Return a concise analysis of the top opportunities in each asset
-    class.
+    OUTPUT: A detailed portfolio allocation plan, reflecting market conditions as of {full_date}.
   expected_output: >
-    An analysis of the strongest investment opportunities across all asset
-    classes.
-  agent: financial_integration_analyst
-  output_file: "output/report/investment_opportunities_analysis.md"
-
-# Portfolio Allocation Task
-portfolio_allocation_task:
-  description: >
-    Create a family-focused portfolio allocation with a 1000 CHF monthly
-    budget. Consider a 50-year-old father with medium-term (5-10 years) and
-    long-term (10-15 years) goals.
-
-    1. Distribute 1000 CHF across asset classes 2. Balance growth
-    opportunities and capital preservation 3. Specify exact CHF amounts for
-    each investment
-
-    OUTPUT: Return a detailed portfolio allocation plan.
-  expected_output: >
-    A specific portfolio allocation with exact CHF amounts totaling 1000 CHF.
+    A specific and actionable portfolio allocation plan detailing the distribution of the 1000 CHF
+    monthly investment across selected stocks, ETFs, and cryptocurrencies. The plan must include
+    exact CHF amounts for each investment, percentage allocations, and a clear justification
+    for the overall strategy and individual choices, tailored to the family's profile and goals.
   agent: portfolio_allocator
-  output_file: "output/report/portfolio_allocation.md"
+  output_file: "output/report/optimal_portfolio_allocation.md"
 
-# Risk Analysis Tasks
-risk_analysis_task:
-  description: >
-    Analyze the risks in the portfolio allocation for a 50-year-old father.
-    Use the portfolio_allocation task output.
-
-    1. Identify key risks for each investment 2. Assess correlation risks
-    between assets 3. Evaluate time horizon risks for family goals
-
-    OUTPUT: Return a structured risk assessment.
-  expected_output: >
-    A comprehensive risk analysis for the investment portfolio.
-  agent: risk_manager
-  output_file: "output/report/investment_risks.md"
-
-# Risk Mitigation Tasks
-risk_mitigation_task:
-  description: >
-    Develop practical risk mitigation strategies for the identified risks.
-
-    1. Create age-appropriate risk mitigation approaches 2. Recommend specific
-    actions for each risk category 3. Consider insurance and protection
-    options
-
-    OUTPUT: Return actionable risk mitigation strategies.
-  expected_output: >
-    Practical risk mitigation strategies for the investment portfolio.
-  agent: risk_manager
-  output_file: "output/report/risk_mitigation.md"
-
-# Implementation Plan Task
-implementation_plan_task:
-  description: >
-    Create a clear step-by-step implementation plan for the investment
-    strategy.
-
-    1. Develop specific implementation steps 2. Create a monitoring and
-    adjustment schedule 3. Include pillar 3a recommendations
-
-    OUTPUT: Return a detailed implementation plan.
-  expected_output: >
-    A practical implementation plan with specific steps and timeline.
-  agent: risk_manager
-  output_file: "output/report/implementation_plan.md"
-
-# Risk and Final Report Task
-risk_final_report_task:
+# Task 3: Risk Assessment and Mitigation Strategy
+risk_assessment_mitigation_task:
   description: |
-    Conduct a comprehensive risk assessment of the integrated portfolio and generate
-    the final investment report. This task should:
+    Conduct a thorough risk assessment of the proposed portfolio from the 'optimal_portfolio_allocation_task'.
+    Develop practical mitigation strategies for identified risks, considering the family's profile
+    (50-year-old father, medium to long-term goals).
 
-    1. Evaluate risks across all asset classes in the portfolio
-    2. Assess portfolio diversification and correlation risks
-    3. Provide risk-adjusted return analysis
-    4. Generate final recommendations with risk mitigation strategies
+    Key Steps:
+    1. Analyze the allocated portfolio for specific investment risks (market, credit, liquidity, etc.) based on data as of {full_date}.
+    2. Evaluate portfolio-level risks (concentration, correlation, asset class specific) considering current market volatilities as of {full_date}.
+    3. Assess how macroeconomic factors, current as of {full_date}, could impact the portfolio.
+    4. Identify risks specific to the family's financial situation and time horizon.
+    5. Develop actionable mitigation strategies for each significant risk (e.g., diversification adjustments,
+       hedging considerations, stop-loss orders, alternative investments).
+    6. Recommend specific actions to manage and monitor risks effectively, with all analysis current as of {full_date}.
 
-    OUTPUT: A comprehensive risk assessment and final investment report.
+    OUTPUT: A comprehensive risk assessment report with actionable mitigation strategies, pertinent to {full_date}.
   expected_output: >
-    A detailed risk analysis and final investment report with clear
-    recommendations and risk mitigation strategies.
+    A detailed report identifying key risks in the allocated portfolio (both individual asset and
+    portfolio-level). The report must provide practical, actionable strategies to mitigate these risks,
+    appropriate for the family's profile and investment horizon.
   agent: risk_manager
-  output_file: "output/report/final_investment_report.md"
+  output_file: "output/report/risk_assessment_and_mitigation.md"
 
-# Final Report Tasks
-final_html_report_task:
+# Task 4: Comprehensive Investment Report and Implementation Plan
+comprehensive_investment_report_task:
   description: |
-    Generate a comprehensive, visually appealing HTML final report that combines all previous analyses
-    into a single, easy-to-understand financial plan. Follow the report guidelines document at
-    docs/output_formatting_guide.md.
-    
+    Compile all findings from previous tasks (Consolidated Analysis, Portfolio Allocation, Risk Assessment)
+    into a final, comprehensive investment report. This report should reflect the financial landscape as of {full_date}.
+    Generate a visually appealing HTML final report that combines all previous analyses into a single,
+    easy-to-understand financial plan, dated {full_date}.
+    Follow the report guidelines document at docs/output_formatting_guide.md.
+    The report must be in French.
+
     Structure the report with these engaging sections:
-    
-    🏠 1. Executive Summary & Family Overview
-       - Key recommendations at a glance
-       - Total investment allocation breakdown
-       - Expected performance metrics
-    
-    🎯 2. Family Financial Goals & Timeline (1/3/5/10 Years)
-       - Short-term objectives (1-2 years) 🚀
-       - Medium-term goals (3-5 years) 📈
-       - Long-term wealth building (5-10+ years) 🌟
-    
-    💎 3. Investment Recommendations
-       - Top stock picks 📊
-       - Best ETF selections 📈
-       - Crypto allocation (if any) ₿
-       - Risk level for each recommendation ⚠️
-    
-    💰 4. Portfolio Allocation
-       - Asset class distribution 📊
-       - Sector diversification 🌐
-       - Geographic exposure 🌍
-       - Investment style mix (Growth/Value/Blend) 📊
-    
-    🛡️ 5. Risk Assessment & Management
-       - Overall portfolio risk level ⚠️
-       - Risk factors by asset class 🔍
-       - Mitigation strategies 🛡️
-       - Stress test scenarios 🌪️
-    
-    🏦 6. Implementation Guide
-       - Step-by-step investment instructions 📝
-       - Recommended brokers/platforms 💻
-       - Tax considerations 💰
-       - Account types to use (Taxable/Retirement) 🏦
-    
-    🔄 7. Monitoring & Maintenance
-       - Review schedule (Monthly/Quarterly/Annually) 📅
-       - Rebalancing strategy ⚖️
-       - Key performance indicators 📊
-       - When to adjust the strategy 🔄
-    
-    💡 8. Additional Resources
-       - Glossary of terms 📚
-       - Recommended reading list 📖
-       - Important contacts 📞
-    
-    Make generous use of emojis, icons, and visual elements to enhance readability.
-    Include clear section headers, bullet points, and tables where appropriate.
-    Ensure the report is mobile-responsive and prints well.
 
+    🏠 1. Synthèse et Aperçu Familial
+       - Recommandations clés en un coup d'œil
+       - Répartition globale de l'investissement
+       - Indicateurs de performance attendus
+
+    🎯 2. Objectifs Financiers Familiaux et Calendrier (1/3/5/10 Ans)
+       - Objectifs à court terme (1-2 ans) 🚀
+       - Objectifs à moyen terme (3-5 ans) 📈
+       - Constitution de patrimoine à long terme (5-10+ ans) 🌟
+
+    💎 3. Recommandations d'Investissement
+       - Sélection d'actions 📊
+       - Sélection d'ETFs 📈
+       - Allocation en cryptomonnaies (le cas échéant) ₿
+       - Niveau de risque pour chaque recommandation ⚠️
+
+    💰 4. Allocation de Portefeuille
+       - Répartition par classe d'actifs 📊
+       - Diversification sectorielle 🌐
+       - Exposition géographique 🌍
+       - Mix de styles d'investissement (Croissance/Valeur/Mixte) 📊
+
+    🛡️ 5. Évaluation et Gestion des Risques
+       - Niveau de risque global du portefeuille ⚠️
+       - Facteurs de risque par classe d'actifs 🔍
+       - Stratégies d'atténuation 🛡️
+       - Scénarios de stress tests 🌪️
+
+    🏦 6. Guide de Mise en Œuvre
+       - Instructions d'investissement étape par étape 📝
+       - Courtiers/plateformes recommandés 💻
+       - Considérations fiscales 💰
+       - Types de comptes à utiliser (Imposable/Retraite) 🏦
+
+    🔄 7. Suivi et Maintenance
+       - Calendrier de révision (Mensuel/Trimestriel/Annuel) 📅
+       - Stratégie de rééquilibrage ⚖️
+       - Indicateurs de performance clés 📊
+       - Quand ajuster la stratégie 🔄
+
+    💡 8. Ressources Additionnelles
+       - Glossaire des termes 📚
+       - Liste de lectures recommandées 📖
+       - Contacts importants 📞
+
+    Utilisez généreusement les emojis, icônes et éléments visuels pour améliorer la lisibilité.
+    Incluez des en-têtes de section clairs, des listes à puces et des tableaux le cas échéant.
+    Assurez-vous que le rapport est adapté aux mobiles et s'imprime bien.
   expected_output: |
-    A beautifully formatted, emoji-rich HTML report that presents the family's financial plan
-    in an engaging, easy-to-understand manner. The report should be visually appealing with
-    clear section headers, consistent styling, and professional layout that makes complex
-    financial information accessible to all family members.
-    The report should be in french
-  agent: risk_manager
+    Un rapport HTML magnifiquement formaté et riche en emojis qui présente le plan financier
+    de la famille de manière engageante et facile à comprendre. Le rapport doit être
+    visuellement attrayant avec des en-têtes de section clairs, un style cohérent et une
+    mise en page professionnelle qui rend les informations financières complexes accessibles
+    à tous les membres de la famille.
+    Le rapport doit être en français.
+  agent: investment_reporter
   output_file: "output/finwiz_family_financial_plan.html"

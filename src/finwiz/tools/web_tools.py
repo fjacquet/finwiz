@@ -16,7 +16,7 @@ from crewai_tools import (
 def get_search_tools():
     """
     Get web search tools.
-    
+
     Returns:
         list: A list of web search tool instances.
     """
@@ -29,7 +29,7 @@ def get_search_tools():
 def get_news_tools():
     """
     Get news search tools.
-    
+
     Returns:
         list: A list of news search tool instances.
     """
@@ -41,7 +41,7 @@ def get_news_tools():
 def get_scrape_tools():
     """
     Get web scraping tools.
-    
+
     Returns:
         list: A list of web scraping tool instances.
     """
@@ -53,7 +53,7 @@ def get_scrape_tools():
 def get_youtube_tools():
     """
     Get YouTube search tools.
-    
+
     Returns:
         list: A list of YouTube search tool instances.
     """

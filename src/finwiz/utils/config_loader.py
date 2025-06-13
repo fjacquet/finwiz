@@ -73,7 +73,9 @@ def load_config_with_guidelines(config_path: str) -> Dict[str, Any]:
     agents_config = load_yaml_config(config_path)
 
     # Construct the path to the guidelines file
-    guidelines_path = Path(__file__).parent.parent.parent.parent / "docs" / "agent_handbook.md"
+    guidelines_path = (
+        Path(__file__).parent.parent.parent.parent / "docs" / "agent_handbook.md"
+    )
 
     # Read the shared guidelines
     with open(guidelines_path, "r", encoding="utf-8") as file:

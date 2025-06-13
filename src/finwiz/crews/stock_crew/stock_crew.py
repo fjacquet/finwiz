@@ -6,6 +6,7 @@ Risk Assessor, Investment Strategist, Research Director) and their
 tasks to identify promising stock investments and provide detailed
 recommendations.
 """
+
 from tabnanny import verbose
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
@@ -38,9 +39,9 @@ logger = get_logger(__name__)
 load_dotenv()
 
 # Initialize research tools
-news_tool = SerperDevTool(n_results=10,  search_type="news")
+news_tool = SerperDevTool(n_results=10, search_type="news")
 scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=False)
-search_tool = SerperDevTool(n_results=10,  search_type="search")
+search_tool = SerperDevTool(n_results=10, search_type="search")
 search_tool2 = FirecrawlSearchTool(limit=10, save_file=False)
 yahoo_ticker_tool = YahooFinanceTickerInfoTool()
 yahoo_history_tool = YahooFinanceHistoryTool()
@@ -77,45 +78,37 @@ class StockCrew:
     @agent
     def market_technical_analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['market_technical_analyst'],
+            config=self.agents_config["market_technical_analyst"],
             verbose=True,
-            tools=tools
+            tools=tools,
         )
 
     @agent
     def investment_risk_analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['investment_risk_analyst'],
+            config=self.agents_config["investment_risk_analyst"],
             verbose=True,
-            tools=tools
+            tools=tools,
         )
 
     @task
     def market_technical_analysis_task(self) -> Task:
         return Task(
-            config=self.tasks_config['market_technical_analysis_task'],
-            verbose=True
+            config=self.tasks_config["market_technical_analysis_task"], verbose=True
         )
 
     @task
     def stock_screening_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['stock_screening_task'],
-            verbose=True
-        )
+        return Task(config=self.tasks_config["stock_screening_task"], verbose=True)
 
     @task
     def technical_detail_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['technical_detail_task'],
-            verbose=True
-        )
+        return Task(config=self.tasks_config["technical_detail_task"], verbose=True)
 
     @task
     def stock_risk_assessment_task(self) -> Task:
         return Task(
-            config=self.tasks_config['stock_risk_assessment_task'],
-            verbose=True
+            config=self.tasks_config["stock_risk_assessment_task"], verbose=True
         )
 
     @task
@@ -127,9 +120,7 @@ class StockCrew:
         and developing comprehensive investment strategies, including risk assessment,
         entry points, position sizing, and expected returns.
         """
-        return Task(
-            config=self.tasks_config['investment_risk_strategy_task']
-        )   
+        return Task(config=self.tasks_config["investment_risk_strategy_task"])
 
     @crew
     def crew(self) -> Crew:

@@ -2,7 +2,7 @@
 
 ## Overview
 
-FinWiz is designed to be elegant and minimalist, like a haiku. 
+FinWiz is designed to be elegant and minimalist, like a haiku.
 It works with crewai as a flow of tasks and as the fondation of all.
 This document outlines the core principles that guide its development.
 
@@ -150,54 +150,57 @@ def archive_files(file: str) -> None:
     shutil.move(file, dest_file)
 ```
 
-### Good Example - Module Organization
+### Good Example - Module Organization with Tool Factories
 
-```text
-src/finwiz/
-├── utils/                  # Utilities package
-│   ├── __init__.py         # Empty file to mark as package
-│   ├── file_finder.py      # File discovery utilities
-│   ├── file_archiver.py    # File archiving utilities
-│   └── file_processor.py   # File processing utilities
-```
-
-```python
-# In main.py - Explicit imports from specific modules
-from finwiz.utils.file_finder import find_files
-from finwiz.utils.file_processor import process_files
-
-# In file_processor.py - Importing from other utility modules
-from finwiz.utils.file_archiver import archive_files
-```
-
-### Good Example - KISS and "Light as a Haiku" with Yahoo Finance Tools
-
-Instead of having a single monolithic file with multiple tools:
+This project organizes tools by domain and uses factory functions to provide them to the crews. This keeps the crew definitions clean and separates tool implementation from tool consumption.
 
 ```text
 src/finwiz/tools/
-├── __init__.py             # Empty file to mark as package
-├── yahoo_ticker_info_tool.py    # Specific tool for ticker information
-├── yahoo_history_tool.py        # Specific tool for historical data
-├── yahoo_company_info_tool.py   # Specific tool for company information
-├── yahoo_etf_holdings_tool.py   # Specific tool for ETF holdings
-└── yahoo_news_tool.py           # Specific tool for financial news
+├── __init__.py
+├── finance_tools.py          # Factory functions for finance tools
+├── web_tools.py              # Factory functions for web/search tools
+└── yahoo_finance_tool.py     # Implementation of all Yahoo Finance tools
 ```
 
 ```python
-# In research_crew.py - Explicit imports for each tool
-from finwiz.tools.yahoo_ticker_info_tool import YahooFinanceTickerInfoTool
-from finwiz.tools.yahoo_history_tool import YahooFinanceHistoryTool
-from finwiz.tools.yahoo_company_info_tool import YahooFinanceCompanyInfoTool
-from finwiz.tools.yahoo_etf_holdings_tool import YahooFinanceETFHoldingsTool
-from finwiz.tools.yahoo_news_tool import YahooFinanceNewsTool
+# In a crew file (e.g., src/finwiz/crews/stock_crew/stock_crew.py)
 
-# Each tool has a single responsibility and can be used independently
-ticker_info_tool = YahooFinanceTickerInfoTool()
-history_tool = YahooFinanceHistoryTool()
-company_info_tool = YahooFinanceCompanyInfoTool()
-etf_holdings_tool = YahooFinanceETFHoldingsTool()
-news_tool = YahooFinanceNewsTool()
+# Import the factory function, not the individual tools
+from finwiz.tools.finance_tools import get_stock_research_tools
+from finwiz.tools.web_tools import get_search_tools, get_scrape_tools
+
+# The crew can then easily be equipped with a curated set of tools
+class StockCrew:
+    def __init__(self):
+        self.tools = [
+            *get_search_tools(),
+            *get_scrape_tools(),
+            *get_stock_research_tools(),
+        ]
+        # ... setup agents and tasks with these tools
+```
+
+### Good Example - KISS and "Light as a Haiku" with Cohesive Tool Modules
+
+Instead of splitting every single tool into its own file, related tools are grouped into a single, cohesive module. This reduces file clutter while still maintaining a clear separation of concerns.
+
+```text
+# src/finwiz/tools/yahoo_finance_tool.py
+
+# All related Yahoo Finance tools are in one file
+class YahooFinanceTickerInfoTool(BaseTool):
+    # ... implementation
+
+class YahooFinanceHistoryTool(BaseTool):
+    # ... implementation
+
+class YahooFinanceCompanyInfoTool(BaseTool):
+    # ... implementation
+
+# ... and so on.
+```
+
+This approach provides a clean, organized, and easy-to-maintain structure for managing the project's tools.
 ```
 
 ### Good Example - HTML Report Generation with Emojis

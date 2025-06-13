@@ -74,7 +74,7 @@ def setup_logging(
         file_handler = TimedRotatingFileHandler(
             log_file,
             when="midnight",
-            backupCount=30  # Keep logs for 30 days
+            backupCount=30,  # Keep logs for 30 days
         )
         file_handler.setLevel(log_level)
 
@@ -94,7 +94,7 @@ def setup_logging(
         error_file_handler = RotatingFileHandler(
             error_log_file,
             maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=10
+            backupCount=10,
         )
         error_file_handler.setLevel(logging.ERROR)
         error_file_handler.setFormatter(file_formatter)
