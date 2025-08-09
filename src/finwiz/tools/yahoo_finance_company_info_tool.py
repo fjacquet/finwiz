@@ -1,6 +1,5 @@
-"""
-Tool for fetching Yahoo Finance Company Information.
-"""
+"""Tool for fetching Yahoo Finance Company Information."""
+
 import yfinance as yf
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -63,10 +62,7 @@ class YahooFinanceCompanyInfoTool(BaseTool):
 
             # Clean up N/A values
             return {
-                k:
-                v
-                if not isinstance(v, dict)
-                else {k2: v2 for k2, v2 in v.items() if v2 != "N/A"}
+                k: v if not isinstance(v, dict) else {k2: v2 for k2, v2 in v.items() if v2 != "N/A"}
                 for k, v in company_info.items()
                 if v != "N/A"
             }

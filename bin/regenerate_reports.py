@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
 Script to regenerate HTML reports with the improved HTMLOutputTool template.
+
 This will fix emoji rendering and improve the visual appearance of reports.
 """
 
 import os
 import sys
-import json
 from pathlib import Path
 
 # Add the project root to the Python path
@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.finwiz.tools.html_output_tool import HTMLOutputTool
 
 
-def regenerate_html_reports():
+def regenerate_html_reports() -> None:
     """Regenerate all HTML reports in the report directory with the improved template."""
     report_dir = Path("report")
     html_tool = HTMLOutputTool()
@@ -28,7 +28,7 @@ def regenerate_html_reports():
     for html_file in html_files:
         try:
             # Read the current HTML content
-            with open(html_file, "r", encoding="utf-8") as f:
+            with open(html_file, encoding="utf-8") as f:
                 content = f.read()
 
             # Extract the title from the content
@@ -51,14 +51,12 @@ def regenerate_html_reports():
             print(f"Error regenerating {html_file}: {e}")
 
 
-def extract_title(html_content):
+def extract_title(html_content: str) -> str | None:
     """Extract the title from HTML content."""
     import re
 
     # Try to find the title in <title> tags
-    title_match = re.search(
-        r"<title>(.*?)</title>", html_content, re.IGNORECASE | re.DOTALL
-    )
+    title_match = re.search(r"<title>(.*?)</title>", html_content, re.IGNORECASE | re.DOTALL)
     if title_match:
         return title_match.group(1).strip()
 
@@ -70,14 +68,12 @@ def extract_title(html_content):
     return None
 
 
-def extract_content(html_content):
+def extract_content(html_content: str) -> str | None:
     """Extract the main content from HTML content."""
     import re
 
     # Try to find content between <body> and </body>
-    body_match = re.search(
-        r"<body>(.*?)</body>", html_content, re.IGNORECASE | re.DOTALL
-    )
+    body_match = re.search(r"<body>(.*?)</body>", html_content, re.IGNORECASE | re.DOTALL)
     if body_match:
         body_content = body_match.group(1).strip()
 

@@ -32,6 +32,7 @@ Like a haiku poem with its strict form of simplicity and elegance:
   - Leverage asynchronous execution (`async_execution=True`) for I/O-bound tasks to maximize performance.
   - Be mindful of framework constraints, such as the requirement for the final task in a sequential process to be synchronous.
 - **Event-Driven Architecture**: Design components to react to events where applicable.
+- **Final Reporter Without Tools**: Configure the final reporting agent with an empty tools list. It must only consume upstream context and format the final HTML output, preventing any unintended external calls or research at this stage.
 
 ### Configuration-Driven Design
 
@@ -113,6 +114,25 @@ Like a haiku poem with its strict form of simplicity and elegance:
    - Use emojis strategically to enhance readability and visual appeal
    - Ensure cross-browser compatibility with proper HTML5 standards
    - Structure reports with clear sections and a logical flow of information
+
+9. **Testing Standards**
+   - Use `pytest` for unit and integration tests; use `pytest-mock` for mocking.
+   - Place tests under a top-level `tests/` directory with `test_*.py` files.
+   - Prefer small, isolated unit tests; add integration tests for crew flows.
+   - Run locally with:
+
+     ```bash
+     uv run pytest
+     ```
+
+   - Use markers (e.g., `@pytest.mark.integration`) to separate slower tests:
+
+     ```bash
+     uv run pytest -m "not integration"
+     ```
+
+   - Keep tests deterministic; mock external APIs/tools and filesystem.
+   - Ensure CI runs `uv run pytest` as the default test command.
 
 ## Implementation Examples
 

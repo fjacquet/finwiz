@@ -1,7 +1,4 @@
-"""
-Tool for fetching Yahoo Finance Ticker History.
-"""
-import datetime
+"""Tool for fetching Yahoo Finance Ticker History."""
 
 import yfinance as yf
 from crewai.tools import BaseTool
@@ -11,12 +8,8 @@ from pydantic import BaseModel, Field
 class GetTickerHistoryInput(BaseModel):
     """Input schema for getting ticker price history."""
 
-    ticker: str = Field(
-        ..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')"
-    )
-    period: str = Field(
-        "1y", description="Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max"
-    )
+    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')")
+    period: str = Field("1y", description="Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max")
     interval: str = Field(
         "1d",
         description="Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo",
@@ -71,9 +64,7 @@ class YahooFinanceHistoryTool(BaseTool):
                 "interval": interval,
                 "start_date": earliest.get("date", "N/A"),
                 "end_date": latest.get("date", "N/A"),
-                "price_change": round(
-                    latest.get("close", 0) - earliest.get("close", 0), 2
-                ),
+                "price_change": round(latest.get("close", 0) - earliest.get("close", 0), 2),
                 "price_change_percent": round(
                     (latest.get("close", 0) / earliest.get("close", 1) - 1) * 100, 2
                 ),
@@ -82,9 +73,7 @@ class YahooFinanceHistoryTool(BaseTool):
 
             return {
                 "summary": summary,
-                "history": history_list[
-                    -10:
-                ],  # Return only last 10 data points to avoid overloading
+                "history": history_list[-10:],  # Return only last 10 data points to avoid overloading
             }
         except Exception as e:
             return {"error": f"Failed to get history for {ticker}: {str(e)}"}

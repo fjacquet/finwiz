@@ -7,12 +7,12 @@ tasks to identify promising stock investments and provide detailed
 recommendations.
 """
 
-from tabnanny import verbose
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import (
-    DirectorySearchTool,
+    DirectoryReadTool,
+    FileReadTool,
     FirecrawlScrapeWebsiteTool,
     FirecrawlSearchTool,
     SerperDevTool,
@@ -22,14 +22,12 @@ from crewai_tools import (
 from dotenv import load_dotenv
 
 from finwiz.tools.finance_tools import get_stock_research_tools
-from finwiz.utils.config_loader import load_config_with_guidelines, load_yaml_config
 from finwiz.tools.logger import get_logger
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
-
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -58,6 +56,14 @@ rag_tools = get_rag_tools(collection_suffix="stock")
 tools = [
     *stock_research_tools,  # Add stock research tools
     *rag_tools,  # Add RAG tools for knowledge retrieval and storage
+    # Contract-aware reading of outputs and schemas
+    DirectoryReadTool(directory=("output/stock")),
+    DirectoryReadTool(directory=("docs/schemas")),
+    DirectoryReadTool(directory=("docs/schemas/examples")),
+    FileReadTool(file_path=("docs/schemas/MarketSentiment.schema.json")),
+    FileReadTool(file_path=("docs/schemas/TenKInsight.schema.json")),
+    FileReadTool(file_path=("docs/schemas/examples/market_sentiment.example.json")),
+    FileReadTool(file_path=("docs/schemas/examples/tenk_insight.example.json")),
 ]
 
 
@@ -75,41 +81,55 @@ class StockCrew:
 
     @agent
     def market_technical_analyst(self) -> Agent:
+        """Agent that performs technical analysis on target stocks."""
         return Agent(
             config=self.agents_config["market_technical_analyst"],
             verbose=True,
+            reasoning=True,
             tools=tools,
         )
 
     @agent
     def investment_risk_analyst(self) -> Agent:
+        """Agent that evaluates stock-specific and market risks."""
         return Agent(
             config=self.agents_config["investment_risk_analyst"],
             verbose=True,
             tools=tools,
+            reasoning=True,
         )
 
     @task
     def market_technical_analysis_task(self) -> Task:
+        """Execute technical analysis for short-listed tickers."""
         return Task(
-            config=self.tasks_config["market_technical_analysis_task"], verbose=True, async_execution=True
+            config=self.tasks_config["market_technical_analysis_task"],
+            verbose=True,
+            async_execution=True,
         )
 
     @task
     def stock_screening_task(self) -> Task:
-        return Task(config=self.tasks_config["stock_screening_task"], verbose=True, async_execution=True)
+        """Screen stocks based on predefined quantitative filters."""
+        return Task(
+            config=self.tasks_config["stock_screening_task"],
+            verbose=True,
+            async_execution=True,
+        )
 
     @task
     def technical_detail_task(self) -> Task:
-        return Task(config=self.tasks_config["technical_detail_task"], verbose=True, async_execution=True)
+        """Deep dive into technical indicators and patterns for candidates."""
+        return Task(
+            config=self.tasks_config["technical_detail_task"],
+            verbose=True,
+            async_execution=True,
+        )
 
     @task
     def stock_risk_assessment_task(self) -> Task:
-        return Task(
-            config=self.tasks_config["stock_risk_assessment_task"], verbose=True
-        )
-
-
+        """Assess key risks for recommended tickers and mitigation actions."""
+        return Task(config=self.tasks_config["stock_risk_assessment_task"], verbose=True)
 
     @crew
     def crew(self) -> Crew:

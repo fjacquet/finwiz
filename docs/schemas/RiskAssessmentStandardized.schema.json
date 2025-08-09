@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "description": "Standardized risk assessment across Stock/ETF/Crypto on a 0-5 scale.\n\n- score: 0 (lowest) .. 5 (highest)\n- level: human-friendly label mapped from score\n- risk_factors: up to 10 concise reasons\n- scale: reserved for future alternate encodings",
+  "properties": {
+    "scale": {
+      "default": "0_5",
+      "enum": [
+        "0_5",
+        "L_M_H",
+        "L_M_H_VH"
+      ],
+      "title": "Scale",
+      "type": "string"
+    },
+    "score": {
+      "maximum": 5.0,
+      "minimum": 0.0,
+      "title": "Score",
+      "type": "number"
+    },
+    "level": {
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Very High"
+      ],
+      "title": "Level",
+      "type": "string"
+    },
+    "risk_factors": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Risk Factors",
+      "type": "array"
+    }
+  },
+  "required": [
+    "score",
+    "level"
+  ],
+  "title": "RiskAssessmentStandardized",
+  "type": "object"
+}

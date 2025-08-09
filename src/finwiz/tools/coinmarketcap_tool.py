@@ -22,23 +22,17 @@ CMC_BASE_URL = "https://pro-api.coinmarketcap.com/v1"
 class CoinMarketCapException(Exception):
     """Exception raised for CoinMarketCap API errors."""
 
-    pass
-
 
 class CoinInfoInput(BaseModel):
     """Input schema for CoinMarketCapInfoTool."""
 
-    symbol: str = Field(
-        ..., description="Cryptocurrency symbol/ticker (e.g., BTC, ETH, SOL)"
-    )
+    symbol: str = Field(..., description="Cryptocurrency symbol/ticker (e.g., BTC, ETH, SOL)")
 
 
 class CryptocurrencyListInput(BaseModel):
     """Input schema for CoinMarketCapListTool."""
 
-    limit: int = Field(
-        25, description="Number of cryptocurrencies to return (default: 25, max: 100)"
-    )
+    limit: int = Field(25, description="Number of cryptocurrencies to return (default: 25, max: 100)")
     sort: str = Field(
         "market_cap",
         description="Sort cryptocurrencies by: 'market_cap', 'volume_24h', 'price', or 'percent_change_24h'",
@@ -48,9 +42,7 @@ class CryptocurrencyListInput(BaseModel):
 class CryptocurrencyHistoricalInput(BaseModel):
     """Input schema for CoinMarketCapHistoricalTool."""
 
-    symbol: str = Field(
-        ..., description="Cryptocurrency symbol/ticker (e.g., BTC, ETH, SOL)"
-    )
+    symbol: str = Field(..., description="Cryptocurrency symbol/ticker (e.g., BTC, ETH, SOL)")
     time_period: str = Field(
         "30d",
         description="Time period for historical data: '24h', '7d', '30d', '3m', '1y', or 'ytd'",
@@ -60,12 +52,8 @@ class CryptocurrencyHistoricalInput(BaseModel):
 class CryptocurrencyNewsInput(BaseModel):
     """Input schema for CoinMarketCapNewsTool."""
 
-    symbol: str | None = Field(
-        None, description="Cryptocurrency symbol to get news for (optional)"
-    )
-    limit: int = Field(
-        10, description="Number of news articles to return (default: 10, max: 100)"
-    )
+    symbol: str | None = Field(None, description="Cryptocurrency symbol to get news for (optional)")
+    limit: int = Field(10, description="Number of news articles to return (default: 10, max: 100)")
 
 
 class CoinMarketCapInfoTool(BaseTool):
@@ -115,9 +103,7 @@ class CoinMarketCapInfoTool(BaseTool):
             )
 
             if response.status_code != 200:
-                error_msg = (
-                    f"CoinMarketCap API error: {response.status_code} - {response.text}"
-                )
+                error_msg = f"CoinMarketCap API error: {response.status_code} - {response.text}"
                 logger.error(error_msg)
                 return f"Error retrieving cryptocurrency data: {error_msg}"
 
@@ -137,10 +123,15 @@ class CoinMarketCapInfoTool(BaseTool):
             info += f"**24h Volume:** ${quote.get('volume_24h', 0):,.0f} USD\n"
             info += f"**24h Change:** {quote.get('percent_change_24h', 0):.2f}%\n"
             info += f"**7d Change:** {quote.get('percent_change_7d', 0):.2f}%\n"
-            info += f"**Circulating Supply:** {crypto_data.get('circulating_supply', 0):,.0f} {crypto_data.get('symbol')}\n"
+            info += (
+                f"**Circulating Supply:** {crypto_data.get('circulating_supply', 0):,.0f} "
+                f"{crypto_data.get('symbol')}\n"
+            )
 
             if crypto_data.get("max_supply"):
-                info += f"**Max Supply:** {crypto_data.get('max_supply', 0):,.0f} {crypto_data.get('symbol')}\n"
+                info += (
+                    f"**Max Supply:** {crypto_data.get('max_supply', 0):,.0f} {crypto_data.get('symbol')}\n"
+                )
 
             info += f"**Market Cap Rank:** #{crypto_data.get('cmc_rank', 'N/A')}\n"
             info += f"**Last Updated:** {quote.get('last_updated', 'N/A')}\n\n"
@@ -223,9 +214,7 @@ class CoinMarketCapListTool(BaseTool):
             )
 
             if response.status_code != 200:
-                error_msg = (
-                    f"CoinMarketCap API error: {response.status_code} - {response.text}"
-                )
+                error_msg = f"CoinMarketCap API error: {response.status_code} - {response.text}"
                 logger.error(error_msg)
                 return f"Error retrieving cryptocurrency list: {error_msg}"
 
@@ -250,9 +239,7 @@ class CoinMarketCapListTool(BaseTool):
                 result += f"| ${quote.get('market_cap', 0) / 1e9:.2f}B "
                 result += f"| ${quote.get('volume_24h', 0) / 1e6:.2f}M |\n"
 
-            logger.info(
-                f"Successfully retrieved list of {len(data['data'])} cryptocurrencies"
-            )
+            logger.info(f"Successfully retrieved list of {len(data['data'])} cryptocurrencies")
             return result
 
         except Exception as e:
@@ -346,7 +333,9 @@ class CoinMarketCapHistoricalTool(BaseTool):
             )
 
             if history_response.status_code != 200:
-                error_msg = f"CoinMarketCap API error: {history_response.status_code} - {history_response.text}"
+                error_msg = (
+                    f"CoinMarketCap API error: {history_response.status_code} - {history_response.text}"
+                )
                 logger.error(error_msg)
                 return f"Error retrieving historical data: {error_msg}"
 
@@ -473,14 +462,10 @@ class CoinMarketCapNewsTool(BaseTool):
 
                 params["cryptocurrencies"] = id_data["data"][0]["id"]
 
-            response = requests.get(
-                f"{CMC_BASE_URL}/content/latest", headers=headers, params=params
-            )
+            response = requests.get(f"{CMC_BASE_URL}/content/latest", headers=headers, params=params)
 
             if response.status_code != 200:
-                error_msg = (
-                    f"CoinMarketCap API error: {response.status_code} - {response.text}"
-                )
+                error_msg = f"CoinMarketCap API error: {response.status_code} - {response.text}"
                 logger.error(error_msg)
                 return f"Error retrieving cryptocurrency news: {error_msg}"
 
@@ -500,9 +485,7 @@ class CoinMarketCapNewsTool(BaseTool):
                 result += f"### {article.get('title', 'No Title')}\n"
                 result += f"**Date:** {article.get('published_at', 'N/A')}\n"
                 result += f"**Source:** {article.get('source', 'Unknown')}\n\n"
-                result += (
-                    f"{article.get('description', 'No description available.')}\n\n"
-                )
+                result += f"{article.get('description', 'No description available.')}\n\n"
                 result += f"[Read more]({article.get('url', '#')})\n\n"
                 result += "---\n\n"
 

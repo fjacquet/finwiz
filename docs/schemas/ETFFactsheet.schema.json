@@ -1,0 +1,187 @@
+{
+  "$defs": {
+    "ETFTopHolding": {
+      "additionalProperties": false,
+      "description": "A single ETF top holding with weight and provenance.",
+      "properties": {
+        "ticker": {
+          "maxLength": 15,
+          "minLength": 1,
+          "title": "Ticker",
+          "type": "string"
+        },
+        "weight_pct": {
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "Weight Pct",
+          "type": "number"
+        },
+        "source_url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Source Url",
+          "type": "string"
+        },
+        "as_of": {
+          "format": "date",
+          "title": "As Of",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ticker",
+        "weight_pct",
+        "source_url",
+        "as_of"
+      ],
+      "title": "ETFTopHolding",
+      "type": "object"
+    },
+    "RiskAssessmentStandardized": {
+      "additionalProperties": false,
+      "description": "Standardized risk assessment across Stock/ETF/Crypto on a 0-5 scale.\n\n- score: 0 (lowest) .. 5 (highest)\n- level: human-friendly label mapped from score\n- risk_factors: up to 10 concise reasons\n- scale: reserved for future alternate encodings",
+      "properties": {
+        "scale": {
+          "default": "0_5",
+          "enum": [
+            "0_5",
+            "L_M_H",
+            "L_M_H_VH"
+          ],
+          "title": "Scale",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "level": {
+          "enum": [
+            "Low",
+            "Medium",
+            "High",
+            "Very High"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "risk_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Risk Factors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level"
+      ],
+      "title": "RiskAssessmentStandardized",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "ETF factsheet highlights and metadata.\n\nInclude commonly available numbers to aid the final reporter and risk synthesis.",
+  "properties": {
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "ticker": {
+      "maxLength": 15,
+      "minLength": 1,
+      "title": "Ticker",
+      "type": "string"
+    },
+    "issuer": {
+      "title": "Issuer",
+      "type": "string"
+    },
+    "expense_ratio": {
+      "description": "Total expense ratio (%)",
+      "maximum": 5.0,
+      "minimum": 0.0,
+      "title": "Expense Ratio",
+      "type": "number"
+    },
+    "tracking_diff": {
+      "anyOf": [
+        {
+          "maximum": 10.0,
+          "minimum": -10.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Annualized tracking difference vs benchmark in %",
+      "title": "Tracking Diff"
+    },
+    "replication_method": {
+      "default": "other",
+      "enum": [
+        "physical",
+        "synthetic",
+        "optimized",
+        "other"
+      ],
+      "title": "Replication Method",
+      "type": "string"
+    },
+    "factsheet_url": {
+      "format": "uri",
+      "maxLength": 2083,
+      "minLength": 1,
+      "title": "Factsheet Url",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date",
+      "title": "As Of",
+      "type": "string"
+    },
+    "factsheet_highlights": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Factsheet Highlights",
+      "type": "array"
+    },
+    "top_holdings": {
+      "items": {
+        "$ref": "#/$defs/ETFTopHolding"
+      },
+      "title": "Top Holdings",
+      "type": "array"
+    },
+    "risk": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RiskAssessmentStandardized"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "ticker",
+    "issuer",
+    "expense_ratio",
+    "factsheet_url",
+    "as_of"
+  ],
+  "title": "ETFFactsheet",
+  "type": "object"
+}

@@ -1,0 +1,59 @@
+{
+  "additionalProperties": false,
+  "description": "Extracted 10-K insight with provenance.\n\nsection: One of the most-cited sections to constrain prompts and allow\n         downstream section-specific synthesis.",
+  "properties": {
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "ticker": {
+      "maxLength": 10,
+      "minLength": 1,
+      "title": "Ticker",
+      "type": "string"
+    },
+    "filing_url": {
+      "format": "uri",
+      "maxLength": 2083,
+      "minLength": 1,
+      "title": "Filing Url",
+      "type": "string"
+    },
+    "filed_at": {
+      "format": "date-time",
+      "title": "Filed At",
+      "type": "string"
+    },
+    "section": {
+      "enum": [
+        "Item 1",
+        "Item 1A",
+        "Item 7",
+        "Item 7A",
+        "Item 8"
+      ],
+      "title": "Section",
+      "type": "string"
+    },
+    "excerpt": {
+      "minLength": 20,
+      "title": "Excerpt",
+      "type": "string"
+    },
+    "sec_citation": {
+      "title": "Sec Citation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ticker",
+    "filing_url",
+    "filed_at",
+    "section",
+    "excerpt",
+    "sec_citation"
+  ],
+  "title": "TenKInsight",
+  "type": "object"
+}

@@ -1,0 +1,11 @@
+{
+  "symbol": "AAPL",
+  "asset_class": "stock",
+  "valid": true,
+  "reason": null,
+  "meta": {
+    "exchange": "NASDAQ",
+    "quoteType": "EQUITY",
+    "source": "yahoo"
+  }
+}

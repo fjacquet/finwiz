@@ -1,6 +1,5 @@
-"""
-Tool for fetching Yahoo Finance Ticker Information.
-"""
+"""Tool for fetching Yahoo Finance Ticker Information."""
+
 import yfinance as yf
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -9,9 +8,7 @@ from pydantic import BaseModel, Field
 class GetTickerInfoInput(BaseModel):
     """Input schema for getting ticker information."""
 
-    ticker: str = Field(
-        ..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')"
-    )
+    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')")
 
 
 class YahooFinanceTickerInfoTool(BaseTool):
@@ -40,9 +37,7 @@ class YahooFinanceTickerInfoTool(BaseTool):
                 "symbol": ticker,
                 "name": info.get("shortName", "N/A"),
                 "currency": info.get("currency", "N/A"),
-                "current_price": info.get(
-                    "currentPrice", info.get("regularMarketPrice", "N/A")
-                ),
+                "current_price": info.get("currentPrice", info.get("regularMarketPrice", "N/A")),
                 "previous_close": info.get("previousClose", "N/A"),
                 "market_cap": info.get("marketCap", "N/A"),
                 "volume": info.get("volume", "N/A"),

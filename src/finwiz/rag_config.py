@@ -1,3 +1,10 @@
+"""
+Default configuration for FinWiz Retrieval-Augmented Generation (RAG).
+
+Defines project root paths and defaults for LLM, embeddings, vector DB, and
+chunking parameters used by tools like `SaveToRagTool`.
+"""
+
 import os
 
 # Get the project root directory (2 levels up from this file)
@@ -22,9 +29,7 @@ DEFAULT_RAG_CONFIG = {
         "provider": "chroma",
         "config": {
             "collection_name": "finwiz",
-            "dir": os.path.join(
-                PROJECT_ROOT, "db"
-            ),  # Absolute path to storage directory
+            "dir": os.path.join(PROJECT_ROOT, "db"),  # Absolute path to storage directory
             "allow_reset": True,
         },
     },

@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
 """
 Debug script to examine configuration loading in the FinWiz application.
+
 This script helps diagnose issues with YAML configuration file loading.
 """
 
 import os
-from pathlib import Path
-import yaml
 import sys
+from pathlib import Path
+
+import yaml
 
 # Add the src directory to the Python path so we can import modules
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from finwiz.utils.config_loader import (
+    _get_config_path,
     load_config_with_guidelines,
     load_yaml_config,
-    _get_config_path,
 )
 
 
-def print_separator():
+def print_separator() -> None:
+    """Print a visual separator line for console readability."""
     print("\n" + "=" * 70 + "\n")
 
 
-def debug_path_resolution():
+def debug_path_resolution() -> None:
+    """Display path resolution diagnostics for configs and crew files."""
     print("Debugging Path Resolution:")
     print(f"Current working directory: {os.getcwd()}")
     print(f"This file location: {Path(__file__).absolute()}")
@@ -40,7 +44,8 @@ def debug_path_resolution():
     print_separator()
 
 
-def debug_config_loader():
+def debug_config_loader() -> None:
+    """Exercise config loader helpers and report key presence."""
     print("Debugging Config Loader:")
 
     # Test internal path resolution
@@ -65,12 +70,8 @@ def debug_config_loader():
 
     # Test loading with guidelines
     try:
-        print(
-            "\nAttempting to load stock crew agents config with load_config_with_guidelines:"
-        )
-        config_with_guidelines = load_config_with_guidelines(
-            "stock_crew/config/agents.yaml"
-        )
+        print("\nAttempting to load stock crew agents config with load_config_with_guidelines:")
+        config_with_guidelines = load_config_with_guidelines("stock_crew/config/agents.yaml")
         print(f"Keys in config_with_guidelines: {list(config_with_guidelines.keys())}")
         if "market_technical_analyst" in config_with_guidelines:
             print("'market_technical_analyst' key found!")
@@ -82,23 +83,18 @@ def debug_config_loader():
     print_separator()
 
 
-def debug_direct_yaml_load():
+def debug_direct_yaml_load() -> None:
+    """Load YAML directly via PyYAML to verify file integrity."""
     print("Debugging Direct YAML Loading:")
 
     # Try to load the YAML file directly
     stock_config_path = (
-        Path(__file__).parent
-        / "src"
-        / "finwiz"
-        / "crews"
-        / "stock_crew"
-        / "config"
-        / "agents.yaml"
+        Path(__file__).parent / "src" / "finwiz" / "crews" / "stock_crew" / "config" / "agents.yaml"
     )
 
     try:
         print(f"Attempting to load YAML directly from: {stock_config_path}")
-        with open(stock_config_path, "r", encoding="utf-8") as file:
+        with open(stock_config_path, encoding="utf-8") as file:
             config = yaml.safe_load(file)
             print(f"Direct YAML load successful. Keys: {list(config.keys())}")
             if "market_technical_analyst" in config:

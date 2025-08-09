@@ -6,7 +6,6 @@ It allows for fetching market data like ticker information, order books, and his
 """
 
 import json
-from typing import Type
 
 import requests
 from crewai.tools import BaseTool
@@ -16,7 +15,10 @@ from pydantic import BaseModel, Field
 class TickerInfoInput(BaseModel):
     """Input schema for the KrakenTickerInfoTool."""
 
-    pair: str = Field(..., description="The cryptocurrency pair to get ticker information for (e.g., 'XXBTZUSD').")
+    pair: str = Field(
+        ...,
+        description="The cryptocurrency pair to get ticker information for (e.g., 'XXBTZUSD').",
+    )
 
 
 class KrakenTickerInfoTool(BaseTool):
@@ -29,7 +31,7 @@ class KrakenTickerInfoTool(BaseTool):
 
     name: str = "Kraken Ticker Information"
     description: str = "Fetches real-time ticker information for a specific cryptocurrency pair from Kraken."
-    args_schema: Type[BaseModel] = TickerInfoInput
+    args_schema: type[BaseModel] = TickerInfoInput
 
     def _run(self, pair: str) -> str:
         """Execute the tool to fetch ticker data."""

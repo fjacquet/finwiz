@@ -16,7 +16,7 @@ etf_market_trends_task:
     📈 Growth trends
     🌐 Global factors
   agent: market_etf_analyst
-  output_file: "output/etf/etf_market_trends_{full_date}.md"
+  output_file: "output/etf/etf_market_trends.md"
 
 # ETF Screening Tasks
 etf_screening_task:
@@ -28,6 +28,10 @@ etf_screening_task:
     2. Prioritize low expense ratios and tax efficiency.
     3. Assess tracking error and fund size for reliability using the latest available information.
     4. Select the top 10 ETFs with lowest volatility and consistent performance, considering current market conditions.
+    5. Validate each proposed ETF ticker using the "Ticker Existence Validation Tool":
+       - Use Yahoo Finance existence and ensure quoteType is ETF
+        
+       - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
     
     IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your analysis is current as of {full_date}.
     
@@ -37,8 +41,11 @@ etf_screening_task:
     🛡️ Low-volatility ETFs
     🌍 Diversified exposure
     💰 Low expense ratios
+    
+    Also include a machine-readable JSON appendix at the end containing:
+    - validated_etfs[] where each item is {symbol, asset_class, valid, reason, meta}
   agent: market_etf_analyst
-  output_file: "output/etf/high_potential_etfs_{full_date}.md"
+  output_file: "output/etf/high_potential_etfs.md"
 
 # ETF Technical Detail Tasks
 etf_technical_detail_task:
@@ -49,6 +56,8 @@ etf_technical_detail_task:
     2. Evaluate tracking accuracy and benchmark adherence using the latest performance data.
     3. Assess fund manager expertise and issuer stability based on current information.
     4. Examine historical performance against benchmarks up to {full_date}.
+    5. (Optional) Extract factsheet highlights for each ETF (ticker, category, expense ratio, as_of, source_url).
+    6. (Optional) Extract top holdings with weights and provenance (ticker, weight_pct, as_of, source_url).
     
     OUTPUT: Return detailed technical analysis for each ETF, ensuring all data is current as of {full_date}.
   expected_output: >
@@ -57,8 +66,14 @@ etf_technical_detail_task:
     📊 Tracking accuracy
     💧 Liquidity profile
     👨‍💼 Fund management
+    📄 Factsheet Highlights (optional): name, ticker, category, expense_ratio, as_of, source_url
+    📈 Top Holdings (optional): array of {ticker, weight_pct, as_of, source_url}
+
+    Also include a machine-readable JSON appendix at the end containing:
+    - etf_factsheets[] matching the ETFFactsheet schema
+    - top_holdings[] matching the ETFTopHolding schema
   agent: market_etf_analyst
-  output_file: "output/etf/etf_technical_details_{full_date}.md"
+  output_file: "output/etf/etf_technical_details.md"
 
 # Risk Analysis Tasks
 etf_risk_assessment_task:
@@ -75,7 +90,7 @@ etf_risk_assessment_task:
   expected_output: >
     A detailed risk profile for each ETF covering volatility, concentration, liquidity, counterparty, and regulatory risks.
   agent: risk_assessor
-  output_file: "output/etf/etf_risk_assessment_{full_date}.md"
+  output_file: "output/etf/etf_risk_assessment.md"
 
 # Investment Strategy Tasks
 etf_investment_strategy_task:
@@ -91,7 +106,10 @@ etf_investment_strategy_task:
     Consider all factors known as of {timestamp} and use {current_year} regulatory standards.
     Base your investment recommendations on current market conditions as of {full_date}.
   expected_output: >
-    Investment strategies for each ETF including entry points, position sizing, time horizons, and risk management tactics.
+    Investment strategies for each ETF including entry points, position sizing,
+     time horizons, and risk management tactics.
+    The report should be formatted in HTML with emojis for better
+    visualization.
   agent: risk_assessor
-  output_file: "output/etf/etf_investment_strategies_{full_date}.md"
+  output_file: "output/etf/etf_investment_strategies.html"
 

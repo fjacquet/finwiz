@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "ticker": "MSFT",
+  "filing_url": "https://www.sec.gov/Archives/edgar/data/0000789019/000156459024000000/msft-20240630x10k.htm",
+  "filed_at": "2024-07-31T09:00:00Z",
+  "section": "Item 7",
+  "excerpt": "Management discusses revenue growth driven by cloud adoption and AI services.",
+  "sec_citation": "10-K (2024), Item 7"
+}

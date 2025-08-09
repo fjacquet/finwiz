@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "ticker": "AAPL",
+  "mean_score": 0.25,
+  "counts": {"pos": 10, "neu": 5, "neg": 3},
+  "top_pos": [],
+  "top_neg": []
+}

@@ -22,6 +22,7 @@ import logging
 import os
 import warnings
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from crewai.flow import Flow, and_, listen, start
@@ -31,14 +32,14 @@ from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
 from finwiz.crews.etf_crew.etf_crew import EtfCrew
 from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
+from finwiz.schemas.validate import validate_reporter_input
 from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 from finwiz.tools.logger import get_logger, setup_logging
+
 # from finwiz.utils.flow_utils import get_output_dir, run_crew_with_caching
 
 # Setup logging configuration
-log_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "logs"
-)
+log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "logs")
 setup_logging(log_level=logging.INFO, log_dir=log_dir)
 
 # Get logger for this module
@@ -109,10 +110,34 @@ class FinwizFlow(Flow[FinwizState]):
         EtfCrew().crew().kickoff(inputs=self.inputs)
 
     @listen(and_(check_stock, check_etf, check_crypto))
+    def pre_validate_reporter_input(self) -> None:
+        """
+        Validate ReporterInput payload before triggering the final report.
+
+        This enforces the boundary contract using VALIDATION_STRICTNESS.
+        Currently sources the example payload; replace with real aggregation
+        once upstream consolidation writes the contract JSON to disk.
+        """
+        try:
+            # src/finwiz/main.py -> parents[2] resolves to repository root
+            project_root = Path(__file__).resolve().parents[2]
+            example = project_root / "docs/schemas/examples/reporter_input.example.json"
+            if not example.exists():
+                logger.warning(f"ReporterInput example not found at {example}; skipping validation step")
+                return
+            model = validate_reporter_input(example)
+            # Pass validated payload into downstream crew context as JSON-safe primitives
+            self.inputs["reporter_input"] = model.model_dump(mode="json")
+            logger.info("ReporterInput validated and injected into flow inputs")
+        except Exception as e:
+            logger.error(f"ReporterInput validation failed: {e}")
+            raise
+
+    @listen(pre_validate_reporter_input)
     def report(self) -> None:
         """Generate a consolidated report after all analyses are complete."""
         ReportCrew().crew().kickoff(inputs=self.inputs)
-       
+
 
 def kickoff() -> None:
     """Initialize and start the main FinWiz analysis flow."""

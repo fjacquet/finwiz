@@ -52,12 +52,10 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
         if hasattr(OpenAIAdapter, "get_model"):
             original_get_model = OpenAIAdapter.get_model
 
-        logger.info(
-            f"Patching CrewAI LLM initialization with {max_retries} max retries"
-        )
+        logger.info(f"Patching CrewAI LLM initialization with {max_retries} max retries")
 
         # Patch the Agent._get_llm method to wrap LLMs with retry capability
-        def patched_get_llm(agent_self) -> Any:
+        def patched_get_llm(agent_self: Any) -> Any:
             """Patched version of _get_llm that adds retry capabilities."""
             # Get the original LLM
             llm = original_get_llm(agent_self)
@@ -65,27 +63,21 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
             # Check if it's a langchain LLM that we can wrap
             if isinstance(llm, BaseLLM | BaseChatModel):
                 logger.info(f"Adding retry wrapper to LLM: {type(llm).__name__}")
-                return get_llm_with_retries(
-                    llm, max_retries=max_retries, verbose=verbose
-                )
+                return get_llm_with_retries(llm, max_retries=max_retries, verbose=verbose)
             return llm
 
         # Patch OpenAI adapter if applicable
         if original_get_model:
 
-            def patched_get_model(adapter_self, *args: Any, **kwargs: Any) -> Any:
+            def patched_get_model(adapter_self: Any, *args: Any, **kwargs: Any) -> Any:
                 """Patched version of get_model that adds retry capabilities."""
                 # Get the original model
                 model = original_get_model(adapter_self, *args, **kwargs)
 
                 # Check if it's a langchain LLM that we can wrap
                 if isinstance(model, BaseLLM | BaseChatModel):
-                    logger.info(
-                        f"Adding retry wrapper to OpenAI model: {type(model).__name__}"
-                    )
-                    return get_llm_with_retries(
-                        model, max_retries=max_retries, verbose=verbose
-                    )
+                    logger.info(f"Adding retry wrapper to OpenAI model: {type(model).__name__}")
+                    return get_llm_with_retries(model, max_retries=max_retries, verbose=verbose)
                 return model
 
             # Apply the patch to OpenAI adapter

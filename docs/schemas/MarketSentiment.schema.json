@@ -1,0 +1,94 @@
+{
+  "$defs": {
+    "SentimentItem": {
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "title": "Headline",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        },
+        "date": {
+          "format": "date-time",
+          "title": "Date",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "headline",
+        "url",
+        "date",
+        "score"
+      ],
+      "title": "SentimentItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "ticker": {
+      "maxLength": 10,
+      "minLength": 1,
+      "title": "Ticker",
+      "type": "string"
+    },
+    "mean_score": {
+      "maximum": 1.0,
+      "minimum": -1.0,
+      "title": "Mean Score",
+      "type": "number"
+    },
+    "counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "propertyNames": {
+        "enum": [
+          "pos",
+          "neu",
+          "neg"
+        ]
+      },
+      "title": "Counts",
+      "type": "object"
+    },
+    "top_pos": {
+      "items": {
+        "$ref": "#/$defs/SentimentItem"
+      },
+      "title": "Top Pos",
+      "type": "array"
+    },
+    "top_neg": {
+      "items": {
+        "$ref": "#/$defs/SentimentItem"
+      },
+      "title": "Top Neg",
+      "type": "array"
+    }
+  },
+  "required": [
+    "ticker",
+    "mean_score",
+    "counts"
+  ],
+  "title": "MarketSentiment",
+  "type": "object"
+}

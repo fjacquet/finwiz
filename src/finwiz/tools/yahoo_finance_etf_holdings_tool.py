@@ -1,6 +1,5 @@
-"""
-Tool for fetching Yahoo Finance ETF Holdings.
-"""
+"""Tool for fetching Yahoo Finance ETF Holdings."""
+
 import yfinance as yf
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field

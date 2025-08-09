@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "description": "A single ETF top holding with weight and provenance.",
+  "properties": {
+    "ticker": {
+      "maxLength": 15,
+      "minLength": 1,
+      "title": "Ticker",
+      "type": "string"
+    },
+    "weight_pct": {
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Weight Pct",
+      "type": "number"
+    },
+    "source_url": {
+      "format": "uri",
+      "maxLength": 2083,
+      "minLength": 1,
+      "title": "Source Url",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date",
+      "title": "As Of",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ticker",
+    "weight_pct",
+    "source_url",
+    "as_of"
+  ],
+  "title": "ETFTopHolding",
+  "type": "object"
+}

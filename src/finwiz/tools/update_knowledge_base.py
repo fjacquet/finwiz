@@ -8,7 +8,6 @@ with fresh financial data and prune outdated information.
 
 import datetime
 import logging
-from typing import Dict, List, Optional
 
 import yfinance as yf
 from crewai_tools import RagTool
@@ -17,21 +16,18 @@ from finwiz.rag_config import DEFAULT_RAG_CONFIG
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def update_market_data(
-    tickers: List[str], collection_suffix: Optional[str] = None
-) -> None:
+def update_market_data(tickers: list[str], collection_suffix: str | None = None) -> None:
     """
     Update the knowledge base with fresh market data for specified tickers.
 
     Args:
         tickers: List of ticker symbols to update
         collection_suffix: Optional suffix for the collection name
+
     """
     # Create RAG tools with the appropriate collection
     config = DEFAULT_RAG_CONFIG.copy()
@@ -56,9 +52,7 @@ def update_market_data(
                 sector = info.get("sector", "Unknown")
                 industry = info.get("industry", "Unknown")
                 market_cap = info.get("marketCap", "Unknown")
-                current_price = info.get(
-                    "currentPrice", info.get("regularMarketPrice", "Unknown")
-                )
+                current_price = info.get("currentPrice", info.get("regularMarketPrice", "Unknown"))
 
                 # Format financial metrics
                 pe_ratio = info.get("trailingPE", "Unknown")
@@ -69,14 +63,14 @@ def update_market_data(
                 # Create knowledge entry
                 entry = f"""
                 Market Data Update for {name} ({ticker}) - {current_date}
-                
+
                 Current Price: {current_price}
                 Market Cap: {market_cap}
                 Sector: {sector}
                 Industry: {industry}
                 P/E Ratio: {pe_ratio}
                 Dividend Yield: {dividend_yield}
-                
+
                 This data was automatically collected and added to the knowledge base
                 as part of the periodic update process.
                 """
@@ -92,27 +86,24 @@ def update_market_data(
             logger.error(f"Error updating {ticker}: {str(e)}")
 
 
-def prune_outdated_knowledge(
-    max_age_days: int = 30, collection_suffix: Optional[str] = None
-) -> None:
+def prune_outdated_knowledge(max_age_days: int = 30, collection_suffix: str | None = None) -> None:
     """
     Remove outdated entries from the knowledge base.
 
     Args:
         max_age_days: Maximum age of entries to keep (in days)
         collection_suffix: Optional suffix for the collection name
+
     """
     # This is a placeholder for future implementation
     # Currently, ChromaDB doesn't have a simple way to delete documents by metadata
     # This would require custom implementation with the ChromaDB API
-    logger.info(
-        f"Pruning outdated knowledge (older than {max_age_days} days) is not yet implemented"
-    )
+    logger.info(f"Pruning outdated knowledge (older than {max_age_days} days) is not yet implemented")
     logger.info("This feature will be implemented in a future version")
 
 
-def main():
-    """Main entry point for the knowledge base update script."""
+def main() -> None:
+    """Run the knowledge base update script."""
     # Example usage
     logger.info("Starting knowledge base update")
 

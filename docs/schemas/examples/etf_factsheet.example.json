@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "ticker": "SPY",
+  "issuer": "State Street",
+  "expense_ratio": 0.09,
+  "tracking_diff": -0.15,
+  "replication_method": "physical",
+  "factsheet_url": "https://www.spglobal.com/spdji/en/indices/equity/sp-500/#overview",
+  "as_of": "2025-08-01",
+  "factsheet_highlights": ["Broad U.S. large-cap exposure"],
+  "top_holdings": []
+}

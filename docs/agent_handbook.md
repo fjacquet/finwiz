@@ -48,6 +48,7 @@ This handbook establishes the core principles, ethical standards, and research m
 - Document functions, classes, and complex logic
 - Handle edge cases and potential errors gracefully
 - Optimize for both performance and maintainability
+- Testing: use `pytest` for unit/integration tests and `pytest-mock` for mocking. Place tests under a `tests/` directory using `test_*.py` naming. Run with `uv run pytest`.
 
 ### Specific Agent Responsibilities
 
@@ -64,6 +65,7 @@ This handbook establishes the core principles, ethical standards, and research m
 - Maintain all technical depth from the original research
 - Create professional formatting with proper document structure
 - Ensure all citations and references are properly formatted
+- Do not have any tools; the final reporter consumes prior agents' context only to avoid unintended external calls and ensure consolidation-only behavior
 
 ---
 

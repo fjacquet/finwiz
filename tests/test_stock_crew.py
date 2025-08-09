@@ -1,3 +1,10 @@
+"""
+Manual validation runner for `StockCrew` (not a unit test).
+
+This module is kept under tests/ for convenience but is intended to be
+executed as a script when needed to validate a full StockCrew flow.
+"""
+
 import logging
 import os
 import warnings
@@ -24,6 +31,7 @@ load_dotenv()
 # Initialize LLM retry mechanism
 logger.info("Initializing LLM retry mechanism.")
 initialize_retry_mechanism(max_retries=5, timeout=300)
+
 
 def run_test():
     """Run a single crew for validation."""
@@ -53,6 +61,7 @@ def run_test():
     except Exception as e:
         logger.critical(f"Single crew validation failed: {str(e)}", exc_info=True)
         raise
+
 
 if __name__ == "__main__":
     run_test()

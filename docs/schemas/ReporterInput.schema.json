@@ -1,0 +1,456 @@
+{
+  "$defs": {
+    "CryptoThesis": {
+      "additionalProperties": false,
+      "description": "Crypto investment thesis bullets with optional citations.",
+      "properties": {
+        "schema_version": {
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "symbol": {
+          "description": "Crypto symbol, e.g., BTC",
+          "maxLength": 10,
+          "minLength": 2,
+          "title": "Symbol",
+          "type": "string"
+        },
+        "thesis_bullets": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Thesis Bullets",
+          "type": "array"
+        },
+        "references": {
+          "items": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "References",
+          "type": "array"
+        }
+      },
+      "required": [
+        "symbol"
+      ],
+      "title": "CryptoThesis",
+      "type": "object"
+    },
+    "ETFFactsheet": {
+      "additionalProperties": false,
+      "description": "ETF factsheet highlights and metadata.\n\nInclude commonly available numbers to aid the final reporter and risk synthesis.",
+      "properties": {
+        "schema_version": {
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "ticker": {
+          "maxLength": 15,
+          "minLength": 1,
+          "title": "Ticker",
+          "type": "string"
+        },
+        "issuer": {
+          "title": "Issuer",
+          "type": "string"
+        },
+        "expense_ratio": {
+          "description": "Total expense ratio (%)",
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Expense Ratio",
+          "type": "number"
+        },
+        "tracking_diff": {
+          "anyOf": [
+            {
+              "maximum": 10.0,
+              "minimum": -10.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Annualized tracking difference vs benchmark in %",
+          "title": "Tracking Diff"
+        },
+        "replication_method": {
+          "default": "other",
+          "enum": [
+            "physical",
+            "synthetic",
+            "optimized",
+            "other"
+          ],
+          "title": "Replication Method",
+          "type": "string"
+        },
+        "factsheet_url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Factsheet Url",
+          "type": "string"
+        },
+        "as_of": {
+          "format": "date",
+          "title": "As Of",
+          "type": "string"
+        },
+        "factsheet_highlights": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Factsheet Highlights",
+          "type": "array"
+        },
+        "top_holdings": {
+          "items": {
+            "$ref": "#/$defs/ETFTopHolding"
+          },
+          "title": "Top Holdings",
+          "type": "array"
+        },
+        "risk": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskAssessmentStandardized"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "ticker",
+        "issuer",
+        "expense_ratio",
+        "factsheet_url",
+        "as_of"
+      ],
+      "title": "ETFFactsheet",
+      "type": "object"
+    },
+    "ETFTopHolding": {
+      "additionalProperties": false,
+      "description": "A single ETF top holding with weight and provenance.",
+      "properties": {
+        "ticker": {
+          "maxLength": 15,
+          "minLength": 1,
+          "title": "Ticker",
+          "type": "string"
+        },
+        "weight_pct": {
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "Weight Pct",
+          "type": "number"
+        },
+        "source_url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Source Url",
+          "type": "string"
+        },
+        "as_of": {
+          "format": "date",
+          "title": "As Of",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ticker",
+        "weight_pct",
+        "source_url",
+        "as_of"
+      ],
+      "title": "ETFTopHolding",
+      "type": "object"
+    },
+    "MarketSentiment": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "ticker": {
+          "maxLength": 10,
+          "minLength": 1,
+          "title": "Ticker",
+          "type": "string"
+        },
+        "mean_score": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Mean Score",
+          "type": "number"
+        },
+        "counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "propertyNames": {
+            "enum": [
+              "pos",
+              "neu",
+              "neg"
+            ]
+          },
+          "title": "Counts",
+          "type": "object"
+        },
+        "top_pos": {
+          "items": {
+            "$ref": "#/$defs/SentimentItem"
+          },
+          "title": "Top Pos",
+          "type": "array"
+        },
+        "top_neg": {
+          "items": {
+            "$ref": "#/$defs/SentimentItem"
+          },
+          "title": "Top Neg",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ticker",
+        "mean_score",
+        "counts"
+      ],
+      "title": "MarketSentiment",
+      "type": "object"
+    },
+    "RiskAssessmentStandardized": {
+      "additionalProperties": false,
+      "description": "Standardized risk assessment across Stock/ETF/Crypto on a 0-5 scale.\n\n- score: 0 (lowest) .. 5 (highest)\n- level: human-friendly label mapped from score\n- risk_factors: up to 10 concise reasons\n- scale: reserved for future alternate encodings",
+      "properties": {
+        "scale": {
+          "default": "0_5",
+          "enum": [
+            "0_5",
+            "L_M_H",
+            "L_M_H_VH"
+          ],
+          "title": "Scale",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "level": {
+          "enum": [
+            "Low",
+            "Medium",
+            "High",
+            "Very High"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "risk_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Risk Factors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level"
+      ],
+      "title": "RiskAssessmentStandardized",
+      "type": "object"
+    },
+    "SentimentItem": {
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "title": "Headline",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        },
+        "date": {
+          "format": "date-time",
+          "title": "Date",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "headline",
+        "url",
+        "date",
+        "score"
+      ],
+      "title": "SentimentItem",
+      "type": "object"
+    },
+    "TenKInsight": {
+      "additionalProperties": false,
+      "description": "Extracted 10-K insight with provenance.\n\nsection: One of the most-cited sections to constrain prompts and allow\n         downstream section-specific synthesis.",
+      "properties": {
+        "schema_version": {
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "ticker": {
+          "maxLength": 10,
+          "minLength": 1,
+          "title": "Ticker",
+          "type": "string"
+        },
+        "filing_url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Filing Url",
+          "type": "string"
+        },
+        "filed_at": {
+          "format": "date-time",
+          "title": "Filed At",
+          "type": "string"
+        },
+        "section": {
+          "enum": [
+            "Item 1",
+            "Item 1A",
+            "Item 7",
+            "Item 7A",
+            "Item 8"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "excerpt": {
+          "minLength": 20,
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "sec_citation": {
+          "title": "Sec Citation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ticker",
+        "filing_url",
+        "filed_at",
+        "section",
+        "excerpt",
+        "sec_citation"
+      ],
+      "title": "TenKInsight",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Aggregate input for the final tool-less reporter.\n\nOnly validated, structured data should reach the reporter. Extra keys are\nforbidden to prevent silent schema drift.",
+  "properties": {
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "ten_k_insights": {
+      "items": {
+        "$ref": "#/$defs/TenKInsight"
+      },
+      "title": "Ten K Insights",
+      "type": "array"
+    },
+    "stock_sentiments": {
+      "items": {
+        "$ref": "#/$defs/MarketSentiment"
+      },
+      "title": "Stock Sentiments",
+      "type": "array"
+    },
+    "stock_risks": {
+      "items": {
+        "$ref": "#/$defs/RiskAssessmentStandardized"
+      },
+      "title": "Stock Risks",
+      "type": "array"
+    },
+    "etf_factsheets": {
+      "items": {
+        "$ref": "#/$defs/ETFFactsheet"
+      },
+      "title": "Etf Factsheets",
+      "type": "array"
+    },
+    "etf_holdings": {
+      "items": {
+        "$ref": "#/$defs/ETFTopHolding"
+      },
+      "title": "Etf Holdings",
+      "type": "array"
+    },
+    "etf_risks": {
+      "items": {
+        "$ref": "#/$defs/RiskAssessmentStandardized"
+      },
+      "title": "Etf Risks",
+      "type": "array"
+    },
+    "crypto_theses": {
+      "items": {
+        "$ref": "#/$defs/CryptoThesis"
+      },
+      "title": "Crypto Theses",
+      "type": "array"
+    },
+    "crypto_risks": {
+      "items": {
+        "$ref": "#/$defs/RiskAssessmentStandardized"
+      },
+      "title": "Crypto Risks",
+      "type": "array"
+    },
+    "as_of": {
+      "format": "date",
+      "title": "As Of",
+      "type": "string"
+    }
+  },
+  "required": [
+    "as_of"
+  ],
+  "title": "ReporterInput",
+  "type": "object"
+}

@@ -15,6 +15,10 @@ dependencies = [
     "serpapi>=0.1.5",
     "yfinance>=0.2.62",
     "tavily-python>=0.7.5",
+    "weasyprint>=65.1",
+    "dotenv>=0.9.9",
+    "pydantic[dotenv]>=2.11.7",
+    "unstructured>=0.18.11",
 ]
 
 [project.scripts]
@@ -24,7 +28,9 @@ plot = "finwiz.main:plot"
 
 [project.optional-dependencies]
 dev = [
-  "ruff>=0.4.8,<1.0.0"
+  "ruff>=0.4.8,<1.0.0",
+  "pytest>=8.4.1",
+  "pytest-mock>=3.14.1",
 ]
 
 [build-system]
@@ -36,21 +42,9 @@ type = "flow"
 
 [tool.ruff]
 # Same as Black.
-line-length = 88
+line-length = 110
 # Assume Python 3.10.
 target-version = "py310"
-
-[tool.ruff.lint]
-# Enable Pyflakes and pycodestyle rules by default.
-# Flake8-compatible list of codes to enable/disable.
-select = ["E", "F", "W", "I", "UP", "ANN", "D"]
-ignore = ["ANN101", "ANN102", "ANN401", "D203", "D212"]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
-
-# Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
     ".direnv",
@@ -75,8 +69,21 @@ exclude = [
     "venv",
 ]
 
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+[tool.ruff.lint]
+# Enable Pyflakes and pycodestyle rules by default.
+# Flake8-compatible list of codes to enable/disable.
+select = ["E", "F", "W", "I", "UP", "ANN", "D"]
+ignore = ["ANN101", "ANN102", "ANN401", "D203", "D212", "W291"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN", "D100", "D101", "D102", "D103"]
+"src/finwiz/schemas/**/*.py" = ["D100", "D101", "D102", "D103", "D401"]
+"src/finwiz/crews/**/*.py" = ["D102"]
+"src/finwiz/tools/etf_crew.py" = ["D102"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
@@ -87,3 +94,10 @@ indent-style = "space"
 docstring-code-format = true
 # Line endings: "auto" | "lf" | "crlf"
 line-ending = "auto"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -m \"not integration\""
+markers = [
+  "integration: marks tests as integration (deselect with '-m \"not integration\"')",
+]

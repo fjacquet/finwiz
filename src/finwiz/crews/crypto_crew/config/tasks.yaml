@@ -1,3 +1,19 @@
+market_analysis_task:
+  description: >
+    Analyze the current cryptocurrency market trends, sentiment, and news.
+    Identify the top 10 promising cryptocurrencies with high growth potential for the current date of {full_date}.
+    
+    Validation Requirement:
+    - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
+    - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
+  expected_output: >
+    A list of the top 10 promising cryptocurrencies with a brief analysis of each.
+    
+    Also include a machine-readable JSON appendix at the end containing:
+    - validated_symbols[] where each item is {symbol, asset_class, valid, reason, meta}
+  agent: market_analyst
+  output_file: "output/crypto/crypto_market_analysis.md"
+
 technical_analysis_task:
   description: >
     Conduct a detailed technical analysis of the cryptocurrencies provided by
@@ -7,8 +23,7 @@ technical_analysis_task:
     A technical analysis report for the top 10 cryptocurrencies, including
     chart patterns and key price levels.
   agent: technical_analyst
-  output_file: >
-    output/crypto/crypto_technical_analysis_{full_date}.md
+  output_file: "output/crypto/crypto_technical_analysis.md"
 
 risk_assessment_task:
   description: >
@@ -19,8 +34,7 @@ risk_assessment_task:
     A comprehensive risk assessment report for each of the top 10
     cryptocurrencies, highlighting potential risks and mitigation strategies.
   agent: risk_assessor
-  output_file: >
-    output/crypto/crypto_risk_assessment_{full_date}.md
+  output_file: "output/crypto/crypto_risk_assessment.md"
 
 investment_strategy_task:
   description: >
@@ -32,8 +46,7 @@ investment_strategy_task:
     A detailed investment strategy document, including asset allocation, risk
     management, and a long-term outlook for the selected cryptocurrencies.
   agent: investment_strategist
-  output_file: >
-    output/crypto/crypto_investment_strategy_{full_date}.md
+  output_file: "output/crypto/crypto_investment_strategy.md"
 
 final_report_task:
   description: >
@@ -47,5 +60,4 @@ final_report_task:
     The report should be formatted in HTML with emojis for better
     visualization.
   agent: research_director
-  output_file: >
-    output/crypto/crypto_final_report_{full_date}.html
+  output_file: "output/crypto/crypto_final_report.html"

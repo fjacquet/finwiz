@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "description": "Strict, minimal contract for a validated symbol.\n\nFields mirror `TickerExistenceValidationTool` output (see\n`src/finwiz/tools/ticker_validation_tool.py`).",
+  "properties": {
+    "symbol": {
+      "maxLength": 15,
+      "minLength": 1,
+      "title": "Symbol",
+      "type": "string"
+    },
+    "asset_class": {
+      "enum": [
+        "stock",
+        "etf",
+        "crypto"
+      ],
+      "title": "Asset Class",
+      "type": "string"
+    },
+    "valid": {
+      "title": "Valid",
+      "type": "boolean"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    },
+    "meta": {
+      "additionalProperties": true,
+      "title": "Meta",
+      "type": "object"
+    }
+  },
+  "required": [
+    "symbol",
+    "asset_class",
+    "valid"
+  ],
+  "title": "ValidatedTicker",
+  "type": "object"
+}

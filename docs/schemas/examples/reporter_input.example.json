@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "ten_k_insights": [
+    {
+      "schema_version": 1,
+      "ticker": "AAPL",
+      "filing_url": "https://www.sec.gov/Archives/edgar/data/0000320193/000032019324000066/aapl-20230930.htm",
+      "filed_at": "2024-01-31T12:00:00Z",
+      "section": "Item 1A",
+      "excerpt": "Risk factors include supply chain disruptions and currency fluctuations impacting margins.",
+      "sec_citation": "10-K (2024), Item 1A"
+    }
+  ],
+  "stock_sentiments": [
+    {
+      "schema_version": 1,
+      "ticker": "AAPL",
+      "mean_score": 0.2,
+      "counts": {"pos": 5, "neu": 3, "neg": 2},
+      "top_pos": [],
+      "top_neg": []
+    }
+  ],
+  "stock_risks": [
+    {"scale": "0_5", "score": 3.0, "level": "Medium", "risk_factors": []}
+  ],
+  "etf_factsheets": [],
+  "etf_holdings": [],
+  "etf_risks": [],
+  "crypto_theses": [],
+  "crypto_risks": [],
+  "as_of": "2025-08-09"
+}

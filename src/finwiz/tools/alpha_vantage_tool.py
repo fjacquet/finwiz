@@ -8,7 +8,6 @@ and more.
 
 import json
 import os
-from typing import Type
 
 import requests
 from crewai.tools import BaseTool
@@ -39,7 +38,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         "from Alpha Vantage. Use this to get detailed financial metrics like Market Cap, "
         "P/E Ratio, EPS, and more."
     )
-    args_schema: Type[BaseModel] = CompanyOverviewInput
+    args_schema: type[BaseModel] = CompanyOverviewInput
 
     def _run(self, ticker: str) -> str:
         """Execute the tool to fetch company overview data."""
@@ -47,10 +46,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         if not api_key:
             return "Error: ALPHA_VANTAGE_API_KEY environment variable not set."
 
-        url = (
-            f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}"
-            f"&apikey={api_key}"
-        )
+        url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={api_key}"
 
         try:
             response = requests.get(url, timeout=10)

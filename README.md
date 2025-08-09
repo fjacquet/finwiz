@@ -7,8 +7,8 @@
 - **Specialized Research Crews**: Dedicated crews for Crypto, Stocks, and ETFs, each with tailored agents and tasks.
 - **Dynamic Configuration**: Agents and tasks are configured via YAML files, allowing for easy customization and extension.
 - **Asynchronous Task Execution**: Leverages async operations to significantly speed up I/O-bound tasks like web scraping and API calls, improving overall performance.
-- **Knowledge Base Integration**: Utilizes a local knowledge base (RAG) to store and retrieve information, ensuring consistency and reducing redundant research.
-- **Structured Output**: Generates detailed reports in Markdown and other formats, ready for review.
+- **Real-Time Data Retrieval**: Employs a suite of tools to fetch live data from the web, ensuring analyses are based on the most current information.
+- **Structured Output**: Generates detailed reports in HTML and PDF formats, ready for review.
 - **Modular and Extendable**: The project is structured to be easily extendable with new crews, agents, or tools.
 
 ## 📂 Project Structure
@@ -62,11 +62,30 @@ Follow these instructions to set up and run FinWiz on your local machine.
 
 3. **Install dependencies:**
 
-   The project uses `uv` for dependency management.
+   The project uses `uv` for dependency management, and dependencies are defined in `pyproject.toml`.
 
    ```bash
-   uv pip install -r requirements.txt # Or use your preferred package manager
+   uv pip install . # Install the project and its dependencies
    ```
+
+4. **Install WeasyPrint System Dependencies:**
+
+   FinWiz uses WeasyPrint to generate PDF reports from HTML. WeasyPrint requires certain system-level libraries to be installed.
+
+   - **macOS (using Homebrew):**
+
+     ```bash
+     brew install pango cairo libffi gdk-pixbuf
+     ```
+
+   - **Debian/Ubuntu Linux:**
+
+     ```bash
+     sudo apt-get update
+     sudo apt-get install python3-dev python3-pip python3-setuptools python3-wheel python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+     ```
+
+   - **Windows:** Please refer to the [WeasyPrint documentation](https://doc.weasyprint.org/stable/first_steps.html#windows) for installation instructions, typically involving installing GTK+.
 
 ### Running the Flow
 
@@ -76,7 +95,7 @@ To kick off the entire financial analysis workflow, run the main flow:
 crewai flow kickoff
 ```
 
-This command will execute the predefined sequence of crews (Crypto, Stock, ETF) and generate the final reports in the `output/` directory.
+This command will execute the predefined sequence of crews (Crypto, Stock, ETF) and generate the final reports in both HTML and PDF formats in the `output/` directory.
 
 ## 🤖 Crews Overview
 
@@ -97,3 +116,6 @@ To improve performance, FinWiz leverages asynchronous task execution for I/O-bou
 ---
 
 Happy analyzing!
+
+
+export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_FALLBACK_LIBRARY_PATH

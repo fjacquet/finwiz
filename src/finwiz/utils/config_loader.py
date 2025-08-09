@@ -9,9 +9,8 @@ loading from the crew definitions and removing dependencies
 on the internal 'crewai.project.config' object.
 """
 
-import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -26,13 +25,14 @@ def _get_config_path(relative_path: str) -> Path:
 
     Returns:
         The absolute path to the configuration file.
+
     """
     # Assumes that 'crews' directory is a sibling of the 'utils' directory.
     base_path = Path(__file__).parent.parent / "crews"
     return base_path / relative_path
 
 
-def load_yaml_config(config_path: str) -> Dict[str, Any]:
+def load_yaml_config(config_path: str) -> dict[str, Any]:
     """
     Load a generic YAML configuration file.
 
@@ -41,21 +41,20 @@ def load_yaml_config(config_path: str) -> Dict[str, Any]:
 
     Returns:
         A dictionary containing the configuration.
+
     """
     full_path = _get_config_path(config_path)
     try:
-        with open(full_path, "r", encoding="utf-8") as file:
+        with open(full_path, encoding="utf-8") as file:
             config = yaml.safe_load(file)
             if not isinstance(config, dict) or not config:
-                raise ValueError(
-                    f"Config file at {full_path} is empty or not a valid dictionary."
-                )
+                raise ValueError(f"Config file at {full_path} is empty or not a valid dictionary.")
             return config
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Config file not found at {full_path}") from e
 
 
-def load_config_with_guidelines(config_path: str) -> Dict[str, Any]:
+def load_config_with_guidelines(config_path: str) -> dict[str, Any]:
     """
     Load an agent YAML configuration and inject shared guidelines.
 
@@ -68,17 +67,16 @@ def load_config_with_guidelines(config_path: str) -> Dict[str, Any]:
 
     Returns:
         A dictionary containing the agent configurations with guidelines injected.
+
     """
     # Load the agent configurations
     agents_config = load_yaml_config(config_path)
 
     # Construct the path to the guidelines file
-    guidelines_path = (
-        Path(__file__).parent.parent.parent.parent / "docs" / "agent_handbook.md"
-    )
+    guidelines_path = Path(__file__).parent.parent.parent.parent / "docs" / "agent_handbook.md"
 
     # Read the shared guidelines
-    with open(guidelines_path, "r", encoding="utf-8") as file:
+    with open(guidelines_path, encoding="utf-8") as file:
         guidelines = file.read()
 
     # Inject guidelines into each agent's backstory

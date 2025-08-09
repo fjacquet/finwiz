@@ -14,6 +14,12 @@ comprehensive_financial_integration_task:
     4. Evaluate the rationale and evidence provided for each recommendation.
     5. Prioritize opportunities based on potential returns, risk profile, and alignment with family goals, reflecting current conditions as of {full_date}.
     6. Ensure all analysis considers the 1000 CHF monthly budget constraint.
+    7. Locate validated ticker appendices in upstream crew outputs and extract them:
+       - Stocks: validated_tickers[]
+       - ETFs: validated_etfs[]
+       - Crypto: validated_symbols[]
+    8. Cross-check narrative recommendations against these arrays. Flag any symbols mentioned in the reports but missing from the validated arrays and summarize required upstream validation actions.
+    9. Produce a concise, machine-readable summary block for the reporter to embed (e.g., missing_validated_etfs, missing_validated_stocks, crypto_notes) without performing any new external validation.
 
     OUTPUT: A comprehensive document detailing integrated insights, key data points from all asset classes,
     and a prioritized list of investment opportunities with justifications, all relevant as of {full_date}.
@@ -23,7 +29,7 @@ comprehensive_financial_integration_task:
     providing clear rationale and how they fit within a 1000 CHF monthly budget.
     The document must include verifiable data and references to the source reports.
   agent: financial_integration_analyst
-  output_file: "output/report/consolidated_financial_analysis_{full_date}.md"
+  output_file: "output/report/consolidated_financial_analysis.md"
 
 # Task 2: Optimal Portfolio Allocation
 optimal_portfolio_allocation_task:
@@ -48,7 +54,7 @@ optimal_portfolio_allocation_task:
     exact CHF amounts for each investment, percentage allocations, and a clear justification
     for the overall strategy and individual choices, tailored to the family's profile and goals.
   agent: portfolio_allocator
-  output_file: "output/report/optimal_portfolio_allocation_{full_date}.md"
+  output_file: "output/report/optimal_portfolio_allocation.md"
 
 # Task 3: Risk Assessment and Mitigation Strategy
 risk_assessment_mitigation_task:
@@ -72,7 +78,7 @@ risk_assessment_mitigation_task:
     portfolio-level). The report must provide practical, actionable strategies to mitigate these risks,
     appropriate for the family's profile and investment horizon.
   agent: risk_manager
-  output_file: "output/report/risk_assessment_and_mitigation_{full_date}.md"
+  output_file: "output/report/risk_assessment_and_mitigation.md"
 
 # Task 4: Comprehensive Investment Report and Implementation Plan
 comprehensive_investment_report_task:
@@ -84,7 +90,7 @@ comprehensive_investment_report_task:
     Follow the report guidelines document at docs/output_formatting_guide.md.
     The report must be in French.
 
-    Structure the report with these engaging sections:
+    Structure the report with these engaging sections (incluez des sous-sections "Synthèse 10-K" et "Sentiment du Marché" basées uniquement sur les contenus amont, avec citations SEC, dates et sources) :
 
     🏠 1. Synthèse et Aperçu Familial
        - Recommandations clés en un coup d'œil
@@ -97,10 +103,11 @@ comprehensive_investment_report_task:
        - Constitution de patrimoine à long terme (5-10+ ans) 🌟
 
     💎 3. Recommandations d'Investissement
-       - Sélection d'actions 📊
-       - Sélection d'ETFs 📈
-       - Allocation en cryptomonnaies (le cas échéant) ₿
-       - Niveau de risque pour chaque recommandation ⚠️
+      - Sélection d'actions 📊
+      - Sélection d'ETFs 📈
+      - Allocation en cryptomonnaies (le cas échéant) ₿
+      - Niveau de risque pour chaque recommandation ⚠️
+      - Synthèse 10-K (citations SEC, date de dépôt, sections clés: Business Overview, MD&A, Risk Factors, Liquidité, Segments) 📄
 
     💰 4. Allocation de Portefeuille
        - Répartition par classe d'actifs 📊
@@ -109,10 +116,11 @@ comprehensive_investment_report_task:
        - Mix de styles d'investissement (Croissance/Valeur/Mixte) 📊
 
     🛡️ 5. Évaluation et Gestion des Risques
-       - Niveau de risque global du portefeuille ⚠️
-       - Facteurs de risque par classe d'actifs 🔍
-       - Stratégies d'atténuation 🛡️
-       - Scénarios de stress tests 🌪️
+      - Niveau de risque global du portefeuille ⚠️
+      - Facteurs de risque par classe d'actifs 🔍
+      - Stratégies d'atténuation 🛡️
+      - Scénarios de stress tests 🌪️
+      - Sentiment du Marché (score moyen, répartition Pos/Neutre/Neg, top 3 titres positifs/négatifs avec URL et date) 📰
 
     🏦 6. Guide de Mise en Œuvre
        - Instructions d'investissement étape par étape 📝
@@ -129,7 +137,14 @@ comprehensive_investment_report_task:
     💡 8. Ressources Additionnelles
        - Glossaire des termes 📚
        - Liste de lectures recommandées 📖
-       - Contacts importants 📞
+        - Contacts importants 📞
+    
+    📎 Annexes & Prochaines étapes
+       - Corrections et Suggestions — Validation des Tickers
+         (construites à partir des annexes JSON validées amont: validated_tickers[],
+         validated_etfs[], validated_symbols[]; le reporter ne fait aucune validation externe).
+       - Inclure un petit bloc JSON machine‑lisible récapitulatif (ex.: missing_validated_etfs,
+         missing_validated_stocks, crypto_notes) directement dérivé des données amont.
 
     Utilisez généreusement les emojis, icônes et éléments visuels pour améliorer la lisibilité.
     Incluez des en-têtes de section clairs, des listes à puces et des tableaux le cas échéant.
@@ -141,5 +156,23 @@ comprehensive_investment_report_task:
     mise en page professionnelle qui rend les informations financières complexes accessibles
     à tous les membres de la famille.
     Le rapport doit être en français.
+    Inclure une annexe "Corrections et Suggestions — Validation des Tickers" fondée exclusivement
+    sur les annexes JSON validées des équipes (validated_tickers[], validated_etfs[], validated_symbols[]),
+    ainsi qu'un court bloc JSON récapitulatif. Aucun appel externe supplémentaire ne doit être effectué.
   agent: investment_reporter
-  output_file: "output/finwiz_family_financial_plan_{full_date}.html"
+  output_file: "output/finwiz_family_financial_plan.html"
+
+# Task 5: PDF Generation from HTML Report
+pdf_generation_task:
+  description: |
+    Convert the final HTML financial report (generated by the 'comprehensive_investment_report_task')
+    into a PDF document. The input to this task will be the file path of the HTML report.
+    Ensure the PDF is saved in the same directory as the HTML report.
+  expected_output: >
+    A confirmation message indicating the successful conversion of the HTML report to PDF,
+    including the path to the saved PDF file. Or an error message if conversion failed.
+  agent: pdf_conversion_specialist
+  # This task will implicitly use the output_file from the 'comprehensive_investment_report_task'
+  # as its input context if it's the next task in a sequence.
+  # The HtmlToPdfTool is designed to take the HTML file path as its direct argument.
+  # No separate output_file is needed here as the tool handles PDF saving.

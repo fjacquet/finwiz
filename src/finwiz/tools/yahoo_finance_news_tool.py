@@ -1,6 +1,5 @@
-"""
-Tool for fetching Yahoo Finance News.
-"""
+"""Tool for fetching Yahoo Finance News."""
+
 import datetime
 
 import yfinance as yf

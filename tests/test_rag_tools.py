@@ -6,13 +6,15 @@ This script demonstrates how the RAG tools can be used to store and retrieve
 financial knowledge across different crews.
 """
 
-import os
+import pytest
 from crewai_tools import RagTool
+
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
 
 
-def test_rag_integration():
+@pytest.mark.integration
+def test_rag_integration() -> None:
     """Test the RAG tools integration."""
     print("Testing RAG tools integration in FinWiz...")
 

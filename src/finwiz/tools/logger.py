@@ -24,7 +24,6 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from pathlib import Path
-from typing import Optional
 
 
 def setup_logging(
@@ -79,10 +78,7 @@ def setup_logging(
         file_handler.setLevel(log_level)
 
         # More detailed format for file logs
-        file_format = (
-            "%(asctime)s - %(name)s - %(levelname)s - "
-            "[%(filename)s:%(lineno)d] - %(message)s"
-        )
+        file_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
         file_formatter = logging.Formatter(file_format, datefmt="%Y-%m-%d %H:%M:%S")
         file_handler.setFormatter(file_formatter)
 
@@ -103,7 +99,7 @@ def setup_logging(
         root_logger.addHandler(error_file_handler)
 
 
-def get_logger(name: str, log_level: Optional[int] = None) -> logging.Logger:  # noqa: UP007
+def get_logger(name: str, log_level: int | None = None) -> logging.Logger:  # noqa: UP007
     """
     Get a logger with the given name.
 

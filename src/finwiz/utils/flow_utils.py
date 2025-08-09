@@ -7,23 +7,30 @@ output directory handling, caching, and result persistence.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
+
+from weasyprint import HTML
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 
-# def get_output_dir() -> str:
-#     """
-#     Return the path to the output directory.
+def get_output_dir() -> str:
+    """
+    Return the absolute path to the output directory for generated reports.
 
-#     Returns:
-#         str: Path to the output directory
-#     """
-#     project_root = os.path.dirname(
-#         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#     )
-#     return os.path.join(project_root, "output", "report")
+    The directory is resolved relative to the project root, under
+    "output/report". The caller is responsible for creating the directory
+    if it does not exist (some call sites already do this with
+    os.makedirs(output_dir, exist_ok=True)).
+
+    Returns:
+        str: Absolute path to the output/report directory.
+
+
+    """
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return os.path.join(project_root, "output", "report")
 
 
 def run_crew_with_caching(
@@ -31,7 +38,7 @@ def run_crew_with_caching(
     output_filename: str,
     state_key: str,
     state: Any,
-    inputs: Dict[str, Any],
+    inputs: dict[str, Any],
 ) -> None:
     """
     Run a crew with caching, or load from cache if results exist.
@@ -42,6 +49,7 @@ def run_crew_with_caching(
         state_key: Key in the state object to store results
         state: State object to update with results
         inputs: Input parameters for the crew
+
     """
     output_dir = get_output_dir()
     json_file = os.path.join(output_dir, output_filename)
@@ -49,7 +57,7 @@ def run_crew_with_caching(
     if os.path.exists(json_file):
         logger.info(f"Found existing analysis results at {json_file}")
         try:
-            with open(json_file, "r") as f:
+            with open(json_file) as f:
                 result_raw = f.read()
             if isinstance(state, dict):
                 state[state_key] = result_raw
@@ -58,9 +66,7 @@ def run_crew_with_caching(
             logger.info(f"Loaded existing {state_key} results successfully")
             return
         except Exception as e:
-            logger.warning(
-                f"Failed to load existing {state_key} results: {e}. Will run analysis."
-            )
+            logger.warning(f"Failed to load existing {state_key} results: {e}. Will run analysis.")
 
     logger.info(f"Starting {crew_class.__name__} analysis")
     try:
@@ -76,7 +82,15 @@ def run_crew_with_caching(
         os.makedirs(output_dir, exist_ok=True)
         with open(json_file, "w") as f:
             f.write(result_raw)
-        logger.debug(f"Saved {state_key} results to {json_file}")
+        logger.debug(f"Saved {state_key} HTML results to {json_file}")
+
+        # Generate PDF from HTML
+        try:
+            pdf_filename = os.path.splitext(json_file)[0] + ".pdf"
+            HTML(filename=json_file).write_pdf(pdf_filename)
+            logger.info(f"Successfully generated PDF report: {pdf_filename}")
+        except Exception as e:
+            logger.error(f"Failed to generate PDF report from {json_file}: {e}", exc_info=True)
     except Exception as e:
         logger.error(f"Error in {state_key} analysis: {e}", exc_info=True)
         raise

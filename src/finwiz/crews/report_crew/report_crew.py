@@ -14,11 +14,14 @@ investment report without conducting additional external research.
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import DirectoryReadTool
+from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
+
+from finwiz.tools.file_conversion_tools import HtmlToPdfTool  # Added for PDF conversion
 
 # Local application imports
 from finwiz.tools.rag_tools import get_rag_tools
+
 # from finwiz.tools.html_output_tool import HTMLOutputTool
 
 load_dotenv()
@@ -31,6 +34,8 @@ crypto_reports = DirectoryReadTool(directory=("output/crypto"))
 etf_reports = DirectoryReadTool(directory=("output/etf"))
 stock_reports = DirectoryReadTool(directory=("output/stock"))
 
+html_to_pdf_tool = HtmlToPdfTool()  # Tool instance for PDF conversion
+
 
 # Tools for report generation and analysis
 tools = [
@@ -38,6 +43,11 @@ tools = [
     crypto_reports,
     etf_reports,
     stock_reports,
+    # Schemas and examples for contract-aware reading
+    DirectoryReadTool(directory=("docs/schemas")),
+    DirectoryReadTool(directory=("docs/schemas/examples")),
+    FileReadTool(file_path=("docs/schemas/ReporterInput.schema.json")),
+    FileReadTool(file_path=("docs/schemas/examples/reporter_input.example.json")),
 ]
 
 
@@ -61,29 +71,53 @@ class ReportCrew:
         return Agent(
             config=self.agents_config["financial_integration_analyst"],
             verbose=True,
+            reasoning=True,
             tools=tools,
         )
 
     @agent
     def portfolio_allocator(self) -> Agent:
+        """Agent that proposes optimal cross-asset portfolio allocations."""
         return Agent(
-            config=self.agents_config["portfolio_allocator"], verbose=True, tools=tools
+            config=self.agents_config["portfolio_allocator"],
+            verbose=True,
+            tools=tools,
+            reasoning=True,
         )
 
     @agent
     def risk_manager(self) -> Agent:
+        """Agent that identifies and mitigates portfolio and market risks."""
         return Agent(
-            config=self.agents_config["risk_manager"], verbose=True, tools=tools
+            config=self.agents_config["risk_manager"],
+            verbose=True,
+            tools=tools,
+            reasoning=True,
         )
 
     @agent
     def investment_reporter(self) -> Agent:
+        """Define the final reporter with no tools; format the consolidated HTML report."""
         return Agent(
-            config=self.agents_config["investment_reporter"], verbose=True, tools=tools
+            config=self.agents_config["investment_reporter"],
+            verbose=True,
+            # Per FinWiz policy: final reporter must have NO tools; it only consumes upstream
+            # context and formats the final HTML report.
+            tools=[],
+        )
+
+    @agent
+    def pdf_conversion_specialist(self) -> Agent:
+        """Agent specialized in converting final HTML reports to PDF."""
+        return Agent(
+            config=self.agents_config["pdf_conversion_specialist"],
+            verbose=True,
+            tools=[html_to_pdf_tool],  # Use the specific tool instance
         )
 
     @task
     def comprehensive_financial_integration_task(self) -> Task:
+        """Integrate Stock/ETF/Crypto analyses into a unified narrative."""
         return Task(
             config=self.tasks_config["comprehensive_financial_integration_task"],
             verbose=True,
@@ -91,6 +125,7 @@ class ReportCrew:
 
     @task
     def optimal_portfolio_allocation_task(self) -> Task:
+        """Derive optimal asset allocation based on goals and constraints."""
         return Task(
             config=self.tasks_config["optimal_portfolio_allocation_task"],
             verbose=True,
@@ -98,16 +133,27 @@ class ReportCrew:
 
     @task
     def risk_assessment_mitigation_task(self) -> Task:
+        """Assess key risks and propose mitigation strategies."""
         return Task(
             config=self.tasks_config["risk_assessment_mitigation_task"],
-           verbose=True,
+            verbose=True,
         )
 
     @task
     def comprehensive_investment_report_task(self) -> Task:
+        """Compile the comprehensive HTML investment report."""
         return Task(
             config=self.tasks_config["comprehensive_investment_report_task"],
-           verbose=True,
+            verbose=True,
+        )
+
+    @task
+    def pdf_generation_task(self) -> Task:
+        """Generate a PDF version of the final HTML report."""
+        return Task(
+            config=self.tasks_config["pdf_generation_task"],
+            verbose=True,
+            # Agent is assigned via tasks.yaml, context is passed from previous task
         )
 
     @crew

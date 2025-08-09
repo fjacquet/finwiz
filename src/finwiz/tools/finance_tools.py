@@ -7,13 +7,14 @@ financial data tools for use in FinWiz crews.
 
 from crewai.tools import BaseTool
 
+from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
+from finwiz.tools.kraken_api_tool import KrakenTickerInfoTool
+from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
 from finwiz.tools.yahoo_finance_etf_holdings_tool import YahooFinanceETFHoldingsTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
-from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
-from finwiz.tools.kraken_api_tool import KrakenTickerInfoTool
 
 
 def get_yahoo_finance_tools() -> list[BaseTool]:
@@ -47,6 +48,7 @@ def get_stock_research_tools() -> list[BaseTool]:
         YahooFinanceCompanyInfoTool(),
         YahooFinanceNewsTool(),
         AlphaVantageCompanyOverviewTool(),
+        TickerExistenceValidationTool(),
     ]
 
 
@@ -63,6 +65,7 @@ def get_crypto_research_tools() -> list[BaseTool]:
         YahooFinanceNewsTool(),
         YahooFinanceTickerInfoTool(),
         KrakenTickerInfoTool(),
+        TickerExistenceValidationTool(),
     ]
 
 
@@ -79,20 +82,5 @@ def get_etf_research_tools() -> list[BaseTool]:
         YahooFinanceHistoryTool(),
         YahooFinanceETFHoldingsTool(),
         YahooFinanceNewsTool(),
+        TickerExistenceValidationTool(),
     ]
-
-
-def get_crypto_research_tools() -> list[BaseTool]:
-    """
-    Get tools optimized for cryptocurrency research.
-
-    Returns:
-        list[BaseTool]: A list of tools focused on cryptocurrency analysis.
-
-    """
-    return [
-        YahooFinanceTickerInfoTool(),
-        YahooFinanceHistoryTool(),
-        YahooFinanceNewsTool(),
-    ]
-

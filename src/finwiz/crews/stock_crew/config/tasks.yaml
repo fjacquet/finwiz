@@ -20,7 +20,7 @@ market_technical_analysis_task:
     An analysis of current stock market trends and emerging sectors with
     growth potential.
   agent: market_technical_analyst
-  output_file: "output/stock/stock_market_trends_{full_date}.md"
+  output_file: "output/stock/stock_market_trends.md"
 
 # Technical Analysis Tasks
 stock_screening_task:
@@ -33,6 +33,14 @@ stock_screening_task:
     2. Evaluate financial fundamentals and dividend history 
     3. Assess management teams and corporate governance 
     4. Select the top 10 stocks with lowest risk profiles
+    5. Validate each proposed ticker using the "Ticker Existence Validation Tool":
+       - For equities/ETFs use Yahoo Finance existence and quoteType
+       - For crypto proposals (if any), validate via Coinbase Products API
+       - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
+    5. Sentiment analysis (OpenAI): Collect recent headlines/snippets (last 30–90 days)
+       for each candidate and classify each as Positive/Neutral/Negative with confidence (0–1).
+       Provide an aggregate per ticker: mean score, counts per label, and top 3 positive/negative
+       headlines with source URLs and dates.
 
     Today is {full_date}. Ensure your analysis reflects current market
     conditions. IMPORTANT: Use only real, existing stocks with accurate ticker
@@ -41,9 +49,13 @@ stock_screening_task:
     OUTPUT: Return a list of the top 10 emerging stocks with analysis.
   expected_output: >
     A list of 10 emerging stocks with unicorn potential, including ticker
-    symbols and analysis.
+    symbols and analysis. Include a concise "Market Sentiment" summary per ticker
+    with aggregate metrics and cited headlines.
+    Also include machine-readable JSON appendices at the end containing:
+    - stock_sentiments[] matching the MarketSentiment schema (one per ticker)
+    - validated_tickers[] where each item is {symbol, asset_class, valid, reason, meta}
   agent: market_technical_analyst
-  output_file: "output/stock/emerging_stocks_analysis_{full_date}.md"
+  output_file: "output/stock/emerging_stocks_analysis.md"
 
 # Technical Detail Tasks
 technical_detail_task:
@@ -54,13 +66,20 @@ technical_detail_task:
     2. Assess growth scalability and efficiency metrics based on recent performance.
     3. Evaluate balance sheet strength and risk factors as of {full_date}.
     4. Examine competitive advantages and innovation potential, considering any recent developments.
+    5. 10-K extraction: Locate the most recent 10-K on sec.gov/EDGAR for each ticker.
+       - Extract short, cited excerpts for Business Overview, MD&A, Risk Factors, Liquidity, and Segment Information.
+       - Provide SEC filing URL, specific section references (e.g., Item 1, Item 1A, Item 7, Item 7A), and the filing date.
+       - Summarize material year-over-year changes relevant to the current analysis as of {full_date}.
 
     Ensure your analysis reflects the company's status as of {full_date}.
   expected_output: >
     Technical assessment in markdown of each stock including financial metrics
-    and analysis.
+    and analysis. Include a "10-K Insights" subsection with cited excerpts and
+    the SEC filing URL and date.
+    Also include a machine-readable JSON appendix at the end containing
+    ten_k_insights[] matching the TenKInsight schema.
   agent: market_technical_analyst
-  output_file: "output/stock/stock_technical_details_{full_date}.md"
+  output_file: "output/stock/stock_technical_details.md"
   depends_on:
     - stock_screening_task
 
@@ -74,13 +93,19 @@ stock_risk_assessment_task:
     3. Analyze valuation risks (P/E ratio, revenue concentration, growth sustainability) using current market data as of {full_date}.
     4. Evaluate competitive threats and market positioning as of {full_date}.
     5. Review management and corporate governance risks based on the latest information.
+    6. Market sentiment (OpenAI): Using recent headlines/snippets, classify and aggregate sentiment
+       per ticker (mean score, Positive/Neutral/Negative counts). List top 3 positive and top 3 negative
+       headlines with source URLs and dates. Note the recency window used.
 
     Follow the output instructions in docs/output_formatting_guide.md.
   expected_output: >
     A detailed risk profile for each stock covering regulatory, financial,
-    valuation, competitive, and governance risks.
+    valuation, competitive, and governance risks. Include a "Market Sentiment"
+    subsection per ticker with aggregates and cited examples.
+    The report should be formatted in HTML with emojis for better
+    visualization.
   agent: investment_risk_analyst
-  output_file: "output/stock/stock_investment_risk_strategy_{full_date}.md"
+  output_file: "output/stock/stock_investment_risk_strategy.html"
   depends_on:
     - technical_detail_task
 

@@ -5,15 +5,14 @@ This module provides tools for Retrieval Augmented Generation (RAG)
 to enable crews to store and retrieve knowledge across sessions.
 """
 
-from typing import List, Optional, Dict, Any
-
-from crewai_tools import RagTool
 from crewai.tools import BaseTool as Tool
+from crewai_tools import RagTool
+
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
 
 
-def get_rag_tools(collection_suffix: Optional[str] = None) -> List[Tool]:
+def get_rag_tools(collection_suffix: str | None = None) -> list[Tool]:
     """
     Get RAG tools for knowledge retrieval and storage.
 
@@ -23,6 +22,7 @@ def get_rag_tools(collection_suffix: Optional[str] = None) -> List[Tool]:
 
     Returns:
         List of RAG tools for knowledge retrieval and storage.
+
     """
     # Create a copy of the default config
     config = DEFAULT_RAG_CONFIG.copy()

@@ -20,19 +20,19 @@ FinWiz includes the following pre-configured crews:
 
 - **Objective**: To analyze the cryptocurrency market.
 - **Tasks**: Performs technical analysis, risk assessment, and develops investment strategies for specified cryptocurrencies.
-- **Output**: A detailed report on the analyzed digital asset.
+- **Output**: A detailed report in HTML and PDF formats on the analyzed digital asset.
 
 ### 2. Stock Crew
 
 - **Objective**: To research and analyze publicly traded stocks.
 - **Tasks**: Conducts market analysis, screens stocks based on predefined criteria, performs technical analysis, and assesses risk.
-- **Output**: A report on promising stock investment opportunities.
+- **Output**: A report in HTML and PDF formats on promising stock investment opportunities.
 
 ### 3. ETF Crew
 
 - **Objective**: To analyze Exchange-Traded Funds (ETFs).
 - **Tasks**: Analyzes market trends, screens for suitable ETFs, and assesses risk factors.
-- **Output**: A report with investment strategies for ETFs.
+- **Output**: A report in HTML and PDF formats with investment strategies for ETFs.
 
 ## Customization
 
@@ -57,6 +57,10 @@ When using a `Process.sequential` workflow in CrewAI, there is a key limitation:
 
 This means the last task in the sequence cannot have `async_execution=True`. All preceding tasks can be asynchronous. FinWiz's crews are configured to adhere to this rule to ensure the workflow runs correctly. If you modify the task sequence or add new tasks, ensure the final task remains synchronous.
 
+### Final Reporter Tooling Policy
+
+To avoid unintended external calls or research at the reporting stage, the final reporting agent must be configured with an empty tools list. It should only consume upstream context and format the final HTML report according to `docs/output_formatting_guide.md`.
+
 ## Available Tools
 
 The agents in FinWiz are equipped with a variety of tools to perform their research, including:
@@ -67,3 +71,24 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `YoutubeVideoSearchTool`: For finding relevant videos on YouTube.
 - `YahooFinanceNewsTool`: For fetching financial news.
 - And other specialized financial data tools.
+
+## Testing
+
+- Framework: `pytest`; mocking: `pytest-mock`.
+- Structure: place tests under a top-level `tests/` directory using `test_*.py` files.
+- Run commands:
+
+```bash
+uv run pytest
+```
+
+- Use markers to manage scope/speed (e.g., integration tests):
+
+```bash
+uv run pytest -m "not integration"
+```
+
+- Guidelines:
+  - Mock external APIs/tools and filesystem for determinism.
+  - Prefer small unit tests, add integration tests for crew flows.
+  - Ensure CI runs `uv run pytest` as default.
