@@ -122,6 +122,16 @@ comprehensive_investment_report_task:
       - Scénarios de stress tests 🌪️
       - Sentiment du Marché (score moyen, répartition Pos/Neutre/Neg, top 3 titres positifs/négatifs avec URL et date) 📰
 
+    📦 Revue du portefeuille: Conserver ou Vendre (section spéciale)
+      - Utilisez exclusivement le contexte JSON injecté `portfolio_review` (inputs.portfolio_review). Aucun outil ni appel externe.
+      - Pour chaque ligne détenue: affichez Nom, Ticker, Décision (KEEP/SELL), Score composite, et Risque (score et niveau).
+      - Si la décision est SELL, proposez jusqu'à 3 alternatives issues du JSON avec score et risque, avec puces synthétiques.
+      - Affichez un tableau récapitulatif (Nom | Ticker | Décision | Score | Risque) et une courte analyse globale.
+      - Contexte JSON injecté (ne pas appeler d'outils; utilisez le contenu ci‑dessous tel quel) :
+        ```json
+        {portfolio_review}
+        ```
+
     🏦 6. Guide de Mise en Œuvre
        - Instructions d'investissement étape par étape 📝
        - Courtiers/plateformes recommandés 💻

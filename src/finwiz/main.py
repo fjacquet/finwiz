@@ -18,6 +18,7 @@ Functions:
     plot: Initialize the FinWiz analysis flow and plot its structure.
 """
 
+import json
 import logging
 import os
 import warnings
@@ -32,6 +33,7 @@ from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
 from finwiz.crews.etf_crew.etf_crew import EtfCrew
 from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
+from finwiz.orchestrators.portfolio_review import run as run_portfolio_review
 from finwiz.schemas.validate import validate_reporter_input
 from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 from finwiz.tools.logger import get_logger, setup_logging
@@ -89,6 +91,7 @@ class FinwizFlow(Flow[FinwizState]):
             "current_date": today.strftime("%Y-%m-%d"),
             "full_date": today.strftime("%B %d, %Y"),
             "timestamp": today.strftime("%Y-%m-%d %H:%M:%S"),
+            "report_language": "fr",
         }
         logger.debug(f"Flow inputs prepared with timestamp: {self.inputs['timestamp']}")
 
@@ -109,7 +112,33 @@ class FinwizFlow(Flow[FinwizState]):
         """Initiate the ETF analysis crew."""
         EtfCrew().crew().kickoff(inputs=self.inputs)
 
-    @listen(and_(check_stock, check_etf, check_crypto))
+    @start()
+    def check_portfolio(self) -> None:
+        """Run portfolio keep-or-sell review orchestrator and stash JSON path."""
+        enabled = (os.getenv("PORTFOLIO_REVIEW_ENABLED") or "true").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if not enabled:
+            logger.info("Portfolio review disabled via PORTFOLIO_REVIEW_ENABLED")
+            return
+        try:
+            out_path = run_portfolio_review()
+            self.inputs["portfolio_review_json"] = str(out_path)
+            # Load content for tool-less reporter consumption
+            try:
+                with open(out_path, encoding="utf-8") as f:
+                    self.inputs["portfolio_review"] = json.load(f)
+            except Exception as le:
+                logger.warning(f"Failed to load portfolio review JSON content: {le}")
+            logger.info(f"Portfolio review generated at {out_path}")
+        except Exception as e:
+            logger.error(f"Portfolio review failed: {e}")
+            raise
+
+    @listen(and_(check_stock, check_etf, check_crypto, check_portfolio))
     def pre_validate_reporter_input(self) -> None:
         """
         Validate ReporterInput payload before triggering the final report.

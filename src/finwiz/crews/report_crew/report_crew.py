@@ -33,6 +33,7 @@ rag_tools = get_rag_tools(collection_suffix="report")
 crypto_reports = DirectoryReadTool(directory=("output/crypto"))
 etf_reports = DirectoryReadTool(directory=("output/etf"))
 stock_reports = DirectoryReadTool(directory=("output/stock"))
+portfolio_outputs = DirectoryReadTool(directory=("output/portfolio"))
 
 html_to_pdf_tool = HtmlToPdfTool()  # Tool instance for PDF conversion
 
@@ -43,6 +44,7 @@ tools = [
     crypto_reports,
     etf_reports,
     stock_reports,
+    portfolio_outputs,
     # Schemas and examples for contract-aware reading
     DirectoryReadTool(directory=("docs/schemas")),
     DirectoryReadTool(directory=("docs/schemas/examples")),
