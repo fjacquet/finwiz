@@ -23,8 +23,11 @@ from crewai_tools import (
 )
 from dotenv import load_dotenv
 
+from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
+from finwiz.tools.chart_img_tool import ChartImgTool
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
+from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
 # from finwiz.tools.finance_tools import get_data_output_tools
 # from finwiz.tools.html_output_tool import HTMLOutputTool
@@ -65,6 +68,9 @@ tools = [
     yahoo_history_tool,
     yahoo_news_tool,
     yahoo_ticker_tool,
+    AlphaVantageNewsSentimentTool(),
+    TwelveDataIndicatorTool(),
+    ChartImgTool(),
     TickerExistenceValidationTool(),
     youtube_tool,
     *rag_tools,  # Add RAG tools for knowledge retrieval and storage
@@ -96,7 +102,7 @@ class EtfCrew:
             config=self.agents_config["market_etf_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=True,
+            reasoning=False,
         )
 
     @agent
@@ -105,7 +111,7 @@ class EtfCrew:
             config=self.agents_config["risk_assessor"],
             verbose=True,
             tools=tools,
-            reasoning=True,
+            reasoning=False,
         )
 
     @task
@@ -113,7 +119,7 @@ class EtfCrew:
         return Task(
             config=self.tasks_config["etf_market_trends_task"],
             verbose=True,
-            reasoning=True,
+            reasoning=False,
             async_execution=True,
         )
 

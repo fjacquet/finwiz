@@ -73,7 +73,7 @@ class ReportCrew:
         return Agent(
             config=self.agents_config["financial_integration_analyst"],
             verbose=True,
-            reasoning=True,
+            reasoning=False,
             tools=tools,
         )
 
@@ -84,7 +84,7 @@ class ReportCrew:
             config=self.agents_config["portfolio_allocator"],
             verbose=True,
             tools=tools,
-            reasoning=True,
+            reasoning=False,
         )
 
     @agent
@@ -94,7 +94,7 @@ class ReportCrew:
             config=self.agents_config["risk_manager"],
             verbose=True,
             tools=tools,
-            reasoning=True,
+            reasoning=False,
         )
 
     @agent

@@ -7,6 +7,8 @@ etf_market_trends_task:
     2. Analyze global economic factors impacting ETF categories
     3. Examine liquidity and volume trends across ETF segments
     4. Research regulatory developments affecting ETF structures
+    5. Prefer the "Alpha Vantage News Sentiment" tool to summarize structured news/sentiment for
+       key ETFs and sectors; complement with `YahooFinanceNewsTool` when needed.
     
     Today is {full_date}. Ensure your analysis reflects current market conditions.
     
@@ -58,6 +60,9 @@ etf_technical_detail_task:
     4. Examine historical performance against benchmarks up to {full_date}.
     5. (Optional) Extract factsheet highlights for each ETF (ticker, category, expense ratio, as_of, source_url).
     6. (Optional) Extract top holdings with weights and provenance (ticker, weight_pct, as_of, source_url).
+    7. Technical indicators: Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands
+       for relevant intervals per ETF, and cite parameters used.
+    8. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
     
     OUTPUT: Return detailed technical analysis for each ETF, ensuring all data is current as of {full_date}.
   expected_output: >
@@ -85,6 +90,8 @@ etf_risk_assessment_task:
     3. Analyze liquidity risks during market stress scenarios, considering current market conditions as of {full_date}.
     4. Evaluate counterparty and structural risks.
     5. Review regulatory and tax considerations relevant for {current_year}.
+    6. Market sentiment: Prefer the "Alpha Vantage News Sentiment" tool to source structured news and
+       sentiment for covered ETFs; provide top positive/negative headlines with URLs and dates.
     
     Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is based on information available as of {full_date}.
   expected_output: >

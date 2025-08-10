@@ -6,6 +6,10 @@ market_analysis_task:
     Validation Requirement:
     - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
     - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
+    
+    Sentiment Sourcing:
+    - Prefer the "Alpha Vantage News Sentiment" tool for structured news/sentiment where applicable (tickers supported by Alpha Vantage);
+      otherwise complement with `YahooFinanceNewsTool`.
   expected_output: >
     A list of the top 10 promising cryptocurrencies with a brief analysis of each.
     
@@ -19,6 +23,11 @@ technical_analysis_task:
     Conduct a detailed technical analysis of the cryptocurrencies provided by
     the market analyst. Identify potential entry and exit points, support and
     resistance levels, and overall price trends for the top 10 projects.
+    
+    Technical Indicators & Charts:
+    - Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands for relevant intervals (if the symbol/interval is supported),
+      and cite the parameters used.
+    - Generate charts with the "Chart-img Generator" tool and embed returned data URLs directly in the report.
   expected_output: >
     A technical analysis report for the top 10 cryptocurrencies, including
     chart patterns and key price levels.
@@ -30,6 +39,10 @@ risk_assessment_task:
     Evaluate the risks associated with the top 10 cryptocurrencies identified
     by the technical analyst. Focus on security vulnerabilities, regulatory
     concerns, and market volatility.
+    
+    Sentiment Context:
+    - Prefer the "Alpha Vantage News Sentiment" tool to gather structured news/sentiment for covered symbols when available; include
+      top positive/negative headlines with URLs and dates.
   expected_output: >
     A comprehensive risk assessment report for each of the top 10
     cryptocurrencies, highlighting potential risks and mitigation strategies.

@@ -17,7 +17,7 @@ dependencies = [
     "tavily-python>=0.7.5",
     "weasyprint>=65.1",
     "dotenv>=0.9.9",
-    "pydantic[dotenv]>=2.11.7",
+    "pydantic>=2.11.7",
     "unstructured>=0.18.11",
 ]
 

@@ -96,7 +96,7 @@ class EtfCrew:
             config=self.agents_config["market_etf_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=True,
+            reasoning=False,
         )
 
     @agent
@@ -105,7 +105,7 @@ class EtfCrew:
             config=self.agents_config["risk_assessor"],
             verbose=True,
             tools=tools,
-            reasoning=True,
+            reasoning=False,
         )
 
     @task
@@ -113,7 +113,7 @@ class EtfCrew:
         return Task(
             config=self.tasks_config["etf_market_trends_task"],
             verbose=True,
-            reasoning=True,
+            reasoning=False,
             async_execution=True,
         )
 

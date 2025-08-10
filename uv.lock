@@ -1030,7 +1030,7 @@ requires-dist = [
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "firecrawl-py", specifier = ">=2.7.1" },
     { name = "langchain-core", specifier = ">=0.3.65" },
-    { name = "pydantic", extras = ["dotenv"], specifier = ">=2.11.7" },
+    { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.1" },
     { name = "python-dotenv", specifier = ">=1.0.1" },

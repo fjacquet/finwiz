@@ -58,7 +58,7 @@ class CryptoCrew:
         return Agent(
             config=self.agents_config["market_analyst"],
             tools=research_tools,
-            reasoning=True,
+            reasoning=False,
             verbose=True,
         )
 
@@ -67,7 +67,7 @@ class CryptoCrew:
         return Agent(
             config=self.agents_config["technical_analyst"],
             tools=[*crypto_tools],
-            reasoning=True,
+            reasoning=False,
             verbose=True,
         )
 
@@ -77,7 +77,7 @@ class CryptoCrew:
             config=self.agents_config["risk_assessor"],
             tools=research_tools,
             verbose=True,
-            reasoning=True,
+            reasoning=False,
         )
 
     @agent

@@ -111,3 +111,6 @@ To perform their tasks effectively, agents are equipped with a specialized set o
 - **`FirecrawlSearchTool`**: Use to perform a targeted search within a specific website. This is useful when you know a site contains the information you need but you have to find the exact page.
 - **`YoutubeVideoSearchTool`**: Use to find relevant video content, such as interviews, financial news reports, or technical analysis tutorials.
 - **`YahooFinanceNewsTool`**: Use specifically for fetching the latest financial news related to a stock, ETF, or cryptocurrency. This is the primary tool for timely market updates.
+- **`AlphaVantageNewsSentimentTool`**: Use to retrieve structured news and sentiment for one or more tickers via Alpha Vantage. Prefer when you need sentiment scores and metadata in a single payload. Requires `ALPHA_VANTAGE_API_KEY`.
+- **`TwelveDataIndicatorTool`**: Use to fetch technical indicators (RSI, MACD, Bollinger Bands) across stocks, ETFs, and crypto with flexible intervals. Requires `TWELVE_DATA_API_KEY`.
+- **`ChartImgTool`**: Use to generate PNG chart images as base64 data URLs for embedding in HTML outputs. Provide ticker, interval, and any overlays/indicators for clarity. Requires `CHART_IMG_API_KEY` (optional `CHART_IMG_BASE_URL`).

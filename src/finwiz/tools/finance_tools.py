@@ -7,9 +7,12 @@ financial data tools for use in FinWiz crews.
 
 from crewai.tools import BaseTool
 
+from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
+from finwiz.tools.chart_img_tool import ChartImgTool
 from finwiz.tools.kraken_api_tool import KrakenTickerInfoTool
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
+from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
 from finwiz.tools.yahoo_finance_etf_holdings_tool import YahooFinanceETFHoldingsTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
@@ -48,6 +51,9 @@ def get_stock_research_tools() -> list[BaseTool]:
         YahooFinanceCompanyInfoTool(),
         YahooFinanceNewsTool(),
         AlphaVantageCompanyOverviewTool(),
+        AlphaVantageNewsSentimentTool(),
+        TwelveDataIndicatorTool(),
+        ChartImgTool(),
         TickerExistenceValidationTool(),
     ]
 
@@ -65,6 +71,9 @@ def get_crypto_research_tools() -> list[BaseTool]:
         YahooFinanceNewsTool(),
         YahooFinanceTickerInfoTool(),
         KrakenTickerInfoTool(),
+        AlphaVantageNewsSentimentTool(),
+        TwelveDataIndicatorTool(),
+        ChartImgTool(),
         TickerExistenceValidationTool(),
     ]
 
@@ -82,5 +91,8 @@ def get_etf_research_tools() -> list[BaseTool]:
         YahooFinanceHistoryTool(),
         YahooFinanceETFHoldingsTool(),
         YahooFinanceNewsTool(),
+        AlphaVantageNewsSentimentTool(),
+        TwelveDataIndicatorTool(),
+        ChartImgTool(),
         TickerExistenceValidationTool(),
     ]

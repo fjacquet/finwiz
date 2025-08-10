@@ -37,10 +37,12 @@ stock_screening_task:
        - For equities/ETFs use Yahoo Finance existence and quoteType
        - For crypto proposals (if any), validate via Coinbase Products API
        - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
-    5. Sentiment analysis (OpenAI): Collect recent headlines/snippets (last 30–90 days)
+    6. Sentiment analysis (OpenAI): Collect recent headlines/snippets (last 30–90 days)
        for each candidate and classify each as Positive/Neutral/Negative with confidence (0–1).
        Provide an aggregate per ticker: mean score, counts per label, and top 3 positive/negative
        headlines with source URLs and dates.
+       Use the "Alpha Vantage News Sentiment" tool to retrieve structured news/sentiment where possible
+       (fallback to `YahooFinanceNewsTool` if unavailable).
 
     Today is {full_date}. Ensure your analysis reflects current market
     conditions. IMPORTANT: Use only real, existing stocks with accurate ticker
@@ -70,6 +72,9 @@ technical_detail_task:
        - Extract short, cited excerpts for Business Overview, MD&A, Risk Factors, Liquidity, and Segment Information.
        - Provide SEC filing URL, specific section references (e.g., Item 1, Item 1A, Item 7, Item 7A), and the filing date.
        - Summarize material year-over-year changes relevant to the current analysis as of {full_date}.
+    6. Technical indicators: Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands
+       for relevant intervals per ticker, referencing exact parameters used.
+    7. Charts: Generate visual charts with the "Chart-img Generator" tool and embed returned data URLs in the report.
 
     Ensure your analysis reflects the company's status as of {full_date}.
   expected_output: >
@@ -95,7 +100,8 @@ stock_risk_assessment_task:
     5. Review management and corporate governance risks based on the latest information.
     6. Market sentiment (OpenAI): Using recent headlines/snippets, classify and aggregate sentiment
        per ticker (mean score, Positive/Neutral/Negative counts). List top 3 positive and top 3 negative
-       headlines with source URLs and dates. Note the recency window used.
+       headlines with source URLs and dates. Note the recency window used. Prefer the "Alpha Vantage News Sentiment"
+       tool to source structured news/sentiment payloads.
 
     Follow the output instructions in docs/output_formatting_guide.md.
   expected_output: >

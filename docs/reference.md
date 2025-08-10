@@ -70,7 +70,22 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `FirecrawlSearchTool`: For searching within a website's content.
 - `YoutubeVideoSearchTool`: For finding relevant videos on YouTube.
 - `YahooFinanceNewsTool`: For fetching financial news.
+- `AlphaVantageNewsSentimentTool`: For structured news and sentiment via Alpha Vantage's NEWS_SENTIMENT endpoint.
+- `TwelveDataIndicatorTool`: For technical indicators (RSI, MACD, Bollinger Bands) via Twelve Data.
+- `ChartImgTool`: For generating PNG chart images as base64 data URLs via Chart-img. Requires `CHART_IMG_API_KEY`.
 - And other specialized financial data tools.
+
+## Environment Variables
+
+These tools require API keys. Create a `.env` file (see `.env.example`) with the following variables:
+
+- `ALPHA_VANTAGE_API_KEY`: API key for Alpha Vantage (used by `AlphaVantageNewsSentimentTool`).
+- `TWELVE_DATA_API_KEY`: API key for Twelve Data (used by `TwelveDataIndicatorTool`).
+- `CHART_IMG_API_KEY`: API key for Chart-img (used by `ChartImgTool`).
+- `CHART_IMG_BASE_URL` (optional): Override base URL for Chart-img; defaults to `https://api.chart-img.com/v1/stock`.
+
+Notes:
+- Ensure variable names match exactly. If you previously used `CHARTIMG_API_KEY`, rename it to `CHART_IMG_API_KEY`.
 
 ## Testing
 

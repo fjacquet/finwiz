@@ -85,7 +85,7 @@ class StockCrew:
         return Agent(
             config=self.agents_config["market_technical_analyst"],
             verbose=True,
-            reasoning=True,
+            reasoning=False,
             tools=tools,
         )
 
@@ -96,7 +96,7 @@ class StockCrew:
             config=self.agents_config["investment_risk_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=True,
+            reasoning=False,
         )
 
     @task
