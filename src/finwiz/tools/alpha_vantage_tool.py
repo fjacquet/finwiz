@@ -14,6 +14,10 @@ from crewai.tools import BaseTool
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
+from finwiz.utils.api_decorators import api_tool
+from finwiz.utils.cache_manager import cache_key, cached
+from finwiz.utils.rate_limiter import APIProvider
+
 load_dotenv()
 
 
@@ -42,24 +46,51 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
 
     def _run(self, ticker: str) -> str:
         """Execute the tool to fetch company overview data."""
-        api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
-        if not api_key:
-            return "Error: ALPHA_VANTAGE_API_KEY environment variable not set."
+        import asyncio
 
-        url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={api_key}"
+        # Use async wrapper for caching
+        async def fetch_data():
+            return await self._fetch_company_overview(ticker)
 
+        # Run in event loop
         try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        return loop.run_until_complete(fetch_data())
+
+    @api_tool(
+        provider=APIProvider.ALPHA_VANTAGE,
+        endpoint="company_overview",
+        timeout=15.0,
+        default_return="Error: Unable to fetch company overview data",
+    )
+    async def _fetch_company_overview(self, ticker: str) -> str:
+        """Fetch company overview data with caching."""
+        cache_key_str = cache_key("alpha_vantage", "overview", ticker.upper())
+
+        async def fetch_from_api():
+            api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+            if not api_key:
+                return "Error: ALPHA_VANTAGE_API_KEY environment variable not set."
+
+            url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={api_key}"
+
             response = requests.get(url, timeout=10)
-            response.raise_for_status()  # Raise an exception for bad status codes
+            response.raise_for_status()
             data = response.json()
 
             if not data or "Note" in data:
                 return f"No data found for ticker {ticker}. It might be an invalid symbol."
 
-            # Filter out metadata and return a clean JSON string of the overview
             return json.dumps(data, indent=2)
 
-        except requests.exceptions.RequestException as e:
-            return f"Error fetching data from Alpha Vantage: {e}"
-        except json.JSONDecodeError:
-            return "Error: Failed to parse JSON response from Alpha Vantage."
+        # Use caching with 30-minute TTL for company overview data
+        return await cached(
+            cache_key_str,
+            fetch_from_api,
+            ttl=1800,  # 30 minutes
+            tags={"alpha_vantage", "company_overview", ticker.upper()},
+        )

@@ -105,9 +105,7 @@ def basic_composite_score(valid: bool, asset_class: AssetClass) -> float:
 def basic_risk(valid: bool) -> RiskAssessmentStandardized:
     if valid:
         return RiskAssessmentStandardized(score=2.0, level="Medium", risk_factors=["Baseline placeholder"])
-    return RiskAssessmentStandardized(
-        score=5.0, level="Very High", risk_factors=["Invalid or unknown exchange"]
-    )
+    return RiskAssessmentStandardized(score=5.0, level="Very High", risk_factors=["Invalid or unknown exchange"])
 
 
 # --- Builder ---

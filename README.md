@@ -5,10 +5,17 @@
 ## ✨ Features
 
 - **Specialized Research Crews**: Dedicated crews for Crypto, Stocks, and ETFs, each with tailored agents and tasks.
+- **Portfolio Review & Analysis**: Automated keep/sell recommendations for existing holdings with risk assessment and alternatives.
 - **Dynamic Configuration**: Agents and tasks are configured via YAML files, allowing for easy customization and extension.
 - **Asynchronous Task Execution**: Leverages async operations to significantly speed up I/O-bound tasks like web scraping and API calls, improving overall performance.
 - **Real-Time Data Retrieval**: Employs a suite of tools to fetch live data from the web, ensuring analyses are based on the most current information.
-- **Structured Output**: Generates detailed reports in HTML and PDF formats, ready for review.
+- **Structured Output**: Generates detailed reports in HTML and PDF formats with strict schema validation.
+- **Enhanced Financial Analysis**: Standardized multi-source sentiment analysis, technical indicators, and chart generation capabilities with comprehensive testing coverage.
+- **Persistent Financial Planning**: Loads and updates existing financial plans from previous sessions.
+- **Data Validation Infrastructure**: Centralized validation system with configurable strictness modes and structured error handling.
+- **Intelligent Caching System**: Advanced caching layer with TTL support, multiple backends (memory/file/hybrid), and performance monitoring.
+- **Dynamic Test Data Framework**: Faker-based test data generation with pytest-mock integration for reliable, deterministic testing.
+- **Comprehensive Testing**: Extensive test coverage with unit tests, integration tests, and mocked external dependencies for reliable CI/CD.
 - **Modular and Extendable**: The project is structured to be easily extendable with new crews, agents, or tools.
 
 ## 📂 Project Structure
@@ -21,11 +28,21 @@ finwiz/
 │   ├── crews/                # Contains the definitions for each financial crew
 │   │   ├── crypto_crew/
 │   │   ├── etf_crew/
-│   │   └── stock_crew/
+│   │   ├── stock_crew/
+│   │   └── report_crew/      # Final report generation crew
+│   ├── orchestrators/        # Flow coordination and portfolio analysis
+│   ├── schemas/              # Pydantic data models with strict validation
 │   ├── tools/                # Custom tools for financial analysis and data handling
+│   ├── templates/            # Report templates
+│   ├── validation/           # Core validation infrastructure and schema registry
 │   └── utils/                # Utility functions (e.g., config loaders)
 ├── docs/                     # Project documentation
+│   └── schemas/              # JSON schemas and examples
+├── data/                     # Input data files (CSV portfolios)
 ├── output/                   # Generated reports from the crews
+├── input/                    # Processing inputs
+├── logs/                     # Application logs
+├── archive/                  # Processed file archive
 ├── .env                      # Environment variables (API keys, etc.)
 ├── pyproject.toml            # Project dependencies and metadata
 └── README.md                 # This file
@@ -58,7 +75,26 @@ Follow these instructions to set up and run FinWiz on your local machine.
      cp .env.example .env
      ```
 
-   - Open the `.env` file and add your API keys.
+   - Open the `.env` file and add your API keys:
+
+     ```bash
+     # Required API Keys
+     OPENAI_API_KEY=your_openai_key_here
+     SERPER_API_KEY=your_serper_key_here
+     FIRECRAWL_API_KEY=your_firecrawl_key_here
+     
+     # Optional Enhanced Features
+     ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
+     TWELVE_DATA_API_KEY=your_twelve_data_key_here
+     CHART_IMG_API_KEY=your_chart_img_key_here
+     COINMARKETCAP_API_KEY=your_coinmarketcap_key_here
+     
+     # Configuration
+     PORTFOLIO_REVIEW_ENABLED=true
+     VALIDATION_STRICTNESS=warn  # Options: off, warn, error
+     CACHE_BACKEND=hybrid        # Options: memory, file, hybrid
+     CACHE_TTL=2700             # Cache TTL in seconds (45 minutes default)
+     ```
 
 3. **Install dependencies:**
 
@@ -95,7 +131,23 @@ To kick off the entire financial analysis workflow, run the main flow:
 crewai flow kickoff
 ```
 
-This command will execute the predefined sequence of crews (Crypto, Stock, ETF) and generate the final reports in both HTML and PDF formats in the `output/` directory.
+This command will execute the predefined sequence of crews (Crypto, Stock, ETF, Portfolio Review) and generate the final reports in both HTML and PDF formats in the `output/` directory.
+
+### Portfolio Data Setup
+
+For portfolio analysis functionality, create CSV files with your holdings:
+
+1. **ETF Holdings**: Create `data/etf.csv` with columns: Name, Ticker, Currency
+2. **Stock Holdings**: Create `data/stock.csv` with columns: Name, Ticker, Currency
+
+Example CSV format:
+```csv
+Name,Ticker,Currency
+Apple Inc,AAPL,USD
+Microsoft Corporation,MSFT,USD
+```
+
+The system will automatically analyze these holdings and provide keep/sell recommendations.
 
 ## 🤖 Crews Overview
 
@@ -104,6 +156,47 @@ FinWiz is composed of several specialized crews:
 - **Crypto Crew**: Analyzes the cryptocurrency market, focusing on technical analysis, risk assessment, and investment strategies for specific digital assets.
 - **Stock Crew**: Conducts research on publicly traded stocks, performing technical analysis, screening, and risk assessment to identify promising investment opportunities.
 - **ETF Crew**: Specializes in Exchange-Traded Funds (ETFs), analyzing market trends, screening for suitable funds, and assessing risk to provide investment strategies.
+- **Report Crew**: Consolidates all analysis into comprehensive HTML reports with no external tools, ensuring clean separation of concerns.
+
+## 📊 Portfolio Analysis
+
+FinWiz includes automated portfolio review capabilities:
+
+- **Keep/Sell Recommendations**: Analyzes existing holdings and provides actionable recommendations
+- **Risk Assessment**: Standardized risk scoring across all asset classes (0-5 scale)
+- **Alternative Suggestions**: Identifies better alternatives for underperforming holdings
+- **CSV Integration**: Reads portfolio data from `data/etf.csv` and `data/stock.csv`
+- **Validation**: Ticker existence validation across multiple exchanges and asset classes
+
+## 🔬 Enhanced Analysis Features
+
+FinWiz provides sophisticated financial analysis through specialized tools:
+
+### Technical Analysis
+- **Multi-Indicator Synthesis**: RSI, MACD, Bollinger Bands analysis via Twelve Data API
+- **Chart Generation**: Visual chart analysis using Chart-img API with base64 embedding
+- **Pattern Recognition**: LLM-based technical pattern identification
+- **Support/Resistance**: Automated level detection and confluence analysis
+
+### Sentiment Analysis
+- **Standardized Methodology**: Consistent sentiment analysis across all asset classes (stocks, ETFs, crypto)
+- **Multi-Source Integration**: Alpha Vantage, Yahoo Finance, CoinMarketCap news aggregation with asset-specific sources
+- **Weighted Scoring**: Confidence-weighted sentiment calculation with statistical confidence intervals
+- **Trending Topics**: Automated extraction of trending topics with relevance scoring and sentiment correlation
+- **Article Deduplication**: Intelligent removal of duplicate articles based on headline similarity
+- **Impact Assessment**: Top positive/negative articles with scores and citations for transparency
+
+### Data Validation & Quality
+- **Schema Enforcement**: Strict Pydantic v2 models with `extra='forbid'` validation
+- **Configurable Validation**: Off/warn/error modes for different deployment environments
+- **Contract Testing**: Automated validation of data contracts between crews
+- **Error Handling**: Graceful degradation with detailed error reporting
+
+### Performance & Caching
+- **Intelligent Caching**: Multi-backend caching system (memory/file/hybrid) with configurable TTL
+- **Cache Strategies**: LRU, LFU, TTL, and adaptive eviction strategies
+- **Performance Monitoring**: Comprehensive cache statistics and hit rate tracking
+- **Cache Warming**: Pre-loading of frequently accessed data for optimal performance
 
 ## ⚡ Performance Enhancements
 
@@ -112,6 +205,32 @@ FinWiz is composed of several specialized crews:
 To improve performance, FinWiz leverages asynchronous task execution for I/O-bound operations. Tasks that involve fetching data from the web or calling external APIs are marked with `async_execution=True`.
 
 **Important Note:** When using a `Process.sequential` workflow in CrewAI, the final task in the sequence **must be synchronous**. All other tasks can be asynchronous. This is a current limitation of the framework that FinWiz adheres to.
+
+---
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[Agent Handbook](docs/agent_handbook.md)**: Guidelines and standards for AI agents
+- **[Design Principles](docs/DESIGN_PRINCIPLES.md)**: Core architectural principles and patterns
+- **[Technical Reference](docs/reference.md)**: Complete API and configuration reference
+- **[Validation System](docs/validation_system.md)**: Data validation infrastructure guide
+- **[Caching System](docs/caching_system.md)**: Intelligent caching capabilities
+- **[Migration Guide](docs/migration_guide.md)**: Guide for upgrading to latest features
+- **[Schemas Documentation](docs/schemas/README.md)**: Pydantic models and JSON schemas
+
+## 🔧 Development
+
+### Code Quality
+- **Linting**: `ruff check . && ruff format .`
+- **Testing**: `uv run pytest -m "not integration"`
+- **Coverage**: `uv run pytest --cov=src/finwiz`
+
+### Performance Monitoring
+- **Cache Statistics**: Monitor hit rates and performance metrics
+- **Validation Metrics**: Track validation errors and warnings
+- **API Rate Limits**: Automatic throttling and retry strategies
 
 ---
 

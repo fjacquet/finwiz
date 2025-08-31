@@ -12,6 +12,8 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
 from finwiz.tools.logger import get_logger
+from finwiz.utils.api_decorators import api_tool
+from finwiz.utils.rate_limiter import APIProvider
 
 logger = get_logger(__name__)
 
@@ -72,6 +74,12 @@ class CoinMarketCapInfoTool(BaseTool):
     )
     args_schema: type[BaseModel] = CoinInfoInput
 
+    @api_tool(
+        provider=APIProvider.COINMARKETCAP,
+        endpoint="cryptocurrency_quotes",
+        timeout=15.0,
+        default_return="Error: Unable to fetch cryptocurrency data",
+    )
     def _run(self, symbol: str) -> str:
         """
         Retrieve detailed information about a specific cryptocurrency.
@@ -88,68 +96,57 @@ class CoinMarketCapInfoTool(BaseTool):
         """
         logger.info(f"Retrieving information for cryptocurrency: {symbol}")
 
-        try:
-            headers = {
-                "X-CMC_PRO_API_KEY": os.environ.get("X-CMC_PRO_API_KEY", ""),
-                "Accept": "application/json",
-            }
+        headers = {
+            "X-CMC_PRO_API_KEY": os.environ.get("X-CMC_PRO_API_KEY", ""),
+            "Accept": "application/json",
+        }
 
-            params = {"symbol": symbol.upper(), "convert": "USD"}
+        params = {"symbol": symbol.upper(), "convert": "USD"}
 
-            response = requests.get(
-                f"{CMC_BASE_URL}/cryptocurrency/quotes/latest",
-                headers=headers,
-                params=params,
-            )
+        response = requests.get(
+            f"{CMC_BASE_URL}/cryptocurrency/quotes/latest",
+            headers=headers,
+            params=params,
+        )
 
-            if response.status_code != 200:
-                error_msg = f"CoinMarketCap API error: {response.status_code} - {response.text}"
-                logger.error(error_msg)
-                return f"Error retrieving cryptocurrency data: {error_msg}"
-
-            data = response.json()
-
-            if "data" not in data or symbol.upper() not in data["data"]:
-                logger.warning(f"No data found for symbol: {symbol}")
-                return f"No data found for cryptocurrency symbol: {symbol}"
-
-            crypto_data = data["data"][symbol.upper()]
-            quote = crypto_data["quote"]["USD"]
-
-            # Format the information
-            info = f"## {crypto_data.get('name')} ({crypto_data.get('symbol')})\n\n"
-            info += f"**Current Price:** ${quote.get('price', 0):.4f} USD\n"
-            info += f"**Market Cap:** ${quote.get('market_cap', 0):,.0f} USD\n"
-            info += f"**24h Volume:** ${quote.get('volume_24h', 0):,.0f} USD\n"
-            info += f"**24h Change:** {quote.get('percent_change_24h', 0):.2f}%\n"
-            info += f"**7d Change:** {quote.get('percent_change_7d', 0):.2f}%\n"
-            info += (
-                f"**Circulating Supply:** {crypto_data.get('circulating_supply', 0):,.0f} "
-                f"{crypto_data.get('symbol')}\n"
-            )
-
-            if crypto_data.get("max_supply"):
-                info += (
-                    f"**Max Supply:** {crypto_data.get('max_supply', 0):,.0f} {crypto_data.get('symbol')}\n"
-                )
-
-            info += f"**Market Cap Rank:** #{crypto_data.get('cmc_rank', 'N/A')}\n"
-            info += f"**Last Updated:** {quote.get('last_updated', 'N/A')}\n\n"
-
-            # Add additional details if available
-            if "platform" in crypto_data and crypto_data["platform"]:
-                info += f"**Token Platform:** {crypto_data['platform'].get('name', 'N/A')}\n"
-
-            if "tags" in crypto_data and crypto_data["tags"]:
-                info += f"**Categories:** {', '.join(crypto_data['tags'][:5])}\n"
-
-            logger.info(f"Successfully retrieved information for {symbol}")
-            return info
-
-        except Exception as e:
-            error_msg = f"Error retrieving cryptocurrency data for {symbol}: {str(e)}"
+        if response.status_code != 200:
+            error_msg = f"CoinMarketCap API error: {response.status_code} - {response.text}"
             logger.error(error_msg)
-            return error_msg
+            return f"Error retrieving cryptocurrency data: {error_msg}"
+
+        data = response.json()
+
+        if "data" not in data or symbol.upper() not in data["data"]:
+            logger.warning(f"No data found for symbol: {symbol}")
+            return f"No data found for cryptocurrency symbol: {symbol}"
+
+        crypto_data = data["data"][symbol.upper()]
+        quote = crypto_data["quote"]["USD"]
+
+        # Format the information
+        info = f"## {crypto_data.get('name')} ({crypto_data.get('symbol')})\n\n"
+        info += f"**Current Price:** ${quote.get('price', 0):.4f} USD\n"
+        info += f"**Market Cap:** ${quote.get('market_cap', 0):,.0f} USD\n"
+        info += f"**24h Volume:** ${quote.get('volume_24h', 0):,.0f} USD\n"
+        info += f"**24h Change:** {quote.get('percent_change_24h', 0):.2f}%\n"
+        info += f"**7d Change:** {quote.get('percent_change_7d', 0):.2f}%\n"
+        info += f"**Circulating Supply:** {crypto_data.get('circulating_supply', 0):,.0f} {crypto_data.get('symbol')}\n"
+
+        if crypto_data.get("max_supply"):
+            info += f"**Max Supply:** {crypto_data.get('max_supply', 0):,.0f} {crypto_data.get('symbol')}\n"
+
+        info += f"**Market Cap Rank:** #{crypto_data.get('cmc_rank', 'N/A')}\n"
+        info += f"**Last Updated:** {quote.get('last_updated', 'N/A')}\n\n"
+
+        # Add additional details if available
+        if "platform" in crypto_data and crypto_data["platform"]:
+            info += f"**Token Platform:** {crypto_data['platform'].get('name', 'N/A')}\n"
+
+        if "tags" in crypto_data and crypto_data["tags"]:
+            info += f"**Categories:** {', '.join(crypto_data['tags'][:5])}\n"
+
+        logger.info(f"Successfully retrieved information for {symbol}")
+        return info
 
 
 class CoinMarketCapListTool(BaseTool):
@@ -301,9 +298,7 @@ class CoinMarketCapHistoricalTool(BaseTool):
             # For historical data, we first need to get the crypto ID
             id_params = {"symbol": symbol.upper()}
 
-            id_response = requests.get(
-                f"{CMC_BASE_URL}/cryptocurrency/map", headers=headers, params=id_params
-            )
+            id_response = requests.get(f"{CMC_BASE_URL}/cryptocurrency/map", headers=headers, params=id_params)
 
             if id_response.status_code != 200:
                 error_msg = f"CoinMarketCap API error: {id_response.status_code} - {id_response.text}"
@@ -333,9 +328,7 @@ class CoinMarketCapHistoricalTool(BaseTool):
             )
 
             if history_response.status_code != 200:
-                error_msg = (
-                    f"CoinMarketCap API error: {history_response.status_code} - {history_response.text}"
-                )
+                error_msg = f"CoinMarketCap API error: {history_response.status_code} - {history_response.text}"
                 logger.error(error_msg)
                 return f"Error retrieving historical data: {error_msg}"
 

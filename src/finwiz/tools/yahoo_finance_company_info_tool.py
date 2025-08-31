@@ -21,8 +21,7 @@ class YahooFinanceCompanyInfoTool(BaseTool):
 
     name: str = "Yahoo Finance Company Info Tool"
     description: str = (
-        "Get detailed company information including business description, "
-        "key financial metrics, and company profile."
+        "Get detailed company information including business description, key financial metrics, and company profile."
     )
     args_schema: type[BaseModel] = GetCompanyInfoInput
 

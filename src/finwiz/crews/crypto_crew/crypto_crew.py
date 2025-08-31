@@ -45,6 +45,7 @@ research_tools = [
     DirectoryReadTool(directory=("docs/schemas")),
     DirectoryReadTool(directory=("docs/schemas/examples")),
     FileReadTool(file_path=("docs/schemas/CryptoThesis.schema.json")),
+    FileReadTool(file_path=("docs/schemas/RiskAssessmentStandardized.schema.json")),
     FileReadTool(file_path=("docs/schemas/examples/crypto_thesis.example.json")),
 ]
 

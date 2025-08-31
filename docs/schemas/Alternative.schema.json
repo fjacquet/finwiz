@@ -1,0 +1,63 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "ticker": {
+      "title": "Ticker",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "asset_class": {
+      "enum": [
+        "stock",
+        "etf"
+      ],
+      "title": "Asset Class",
+      "type": "string"
+    },
+    "composite_score": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Composite Score",
+      "type": "number"
+    },
+    "risk_score_standardized": {
+      "maximum": 5.0,
+      "minimum": 0.0,
+      "title": "Risk Score Standardized",
+      "type": "number"
+    },
+    "key_metrics": {
+      "additionalProperties": true,
+      "title": "Key Metrics",
+      "type": "object"
+    },
+    "thesis_bullets": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Thesis Bullets",
+      "type": "array"
+    },
+    "citations": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Citations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "ticker",
+    "name",
+    "asset_class",
+    "composite_score",
+    "risk_score_standardized"
+  ],
+  "title": "Alternative",
+  "type": "object"
+}

@@ -88,9 +88,7 @@ def debug_direct_yaml_load() -> None:
     print("Debugging Direct YAML Loading:")
 
     # Try to load the YAML file directly
-    stock_config_path = (
-        Path(__file__).parent / "src" / "finwiz" / "crews" / "stock_crew" / "config" / "agents.yaml"
-    )
+    stock_config_path = Path(__file__).parent / "src" / "finwiz" / "crews" / "stock_crew" / "config" / "agents.yaml"
 
     try:
         print(f"Attempting to load YAML directly from: {stock_config_path}")

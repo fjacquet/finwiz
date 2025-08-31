@@ -16,6 +16,7 @@ from . import (
     TenKInsight,
     ValidatedTicker,
 )
+from .portfolio_review import Alternative, HoldingDecision, PortfolioReview
 
 
 def _models() -> Iterable[type[BaseModel]]:
@@ -27,6 +28,9 @@ def _models() -> Iterable[type[BaseModel]]:
     yield ETFTopHolding
     yield CryptoThesis
     yield ValidatedTicker
+    yield PortfolioReview
+    yield HoldingDecision
+    yield Alternative
 
 
 def export_json_schemas(out_dir: Path) -> None:
@@ -35,9 +39,7 @@ def export_json_schemas(out_dir: Path) -> None:
         schema = model.model_json_schema()
         # file name e.g., ReporterInput.schema.json
         fname = f"{model.__name__}.schema.json"
-        (out_dir / fname).write_text(
-            json.dumps(schema, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-        )
+        (out_dir / fname).write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def main() -> None:

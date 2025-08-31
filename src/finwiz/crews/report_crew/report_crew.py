@@ -10,6 +10,9 @@ assesses associated risks, and produces a detailed, evidence-based
 investment report without conducting additional external research.
 """
 
+import logging
+from typing import Any
+
 # Third-party imports
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
@@ -21,10 +24,14 @@ from finwiz.tools.file_conversion_tools import HtmlToPdfTool  # Added for PDF co
 
 # Local application imports
 from finwiz.tools.rag_tools import get_rag_tools
+from finwiz.validation.tool_restrictions import ReporterInputValidator, ToolRestrictionValidator
 
 # from finwiz.tools.html_output_tool import HTMLOutputTool
 
 load_dotenv()
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Get RAG tools for knowledge retrieval and storage
 rag_tools = get_rag_tools(collection_suffix="report")
@@ -67,6 +74,11 @@ class ReportCrew:
 
     agents: list[BaseAgent]
     tasks: list[Task]
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.tool_validator = ToolRestrictionValidator()
+        self.input_validator = ReporterInputValidator()
 
     @agent
     def financial_integration_analyst(self) -> Agent:
@@ -169,6 +181,14 @@ class ReportCrew:
         risks, and produces a comprehensive investment report with actionable
         recommendations backed by verifiable evidence. Uses a sequential workflow.
         """
+        # Validate tool restrictions before creating crew
+        try:
+            self.tool_validator.validate_crew_compliance(self.agents)
+            logger.info("Tool restriction validation passed for ReportCrew")
+        except Exception as e:
+            logger.error(f"Tool restriction validation failed: {e}")
+            raise
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
@@ -180,3 +200,13 @@ class ReportCrew:
             max_retries=10,
             max_rpm=20,
         )
+
+    def validate_reporter_input(self, context: dict[str, Any]) -> None:
+        """
+        Validate that reporter receives proper upstream context.
+
+        Args:
+            context: The context data being passed to the reporter
+
+        """
+        self.input_validator.validate_reporter_context(context)

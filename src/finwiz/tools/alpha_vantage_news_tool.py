@@ -20,15 +20,11 @@ class AlphaVantageNewsInput(BaseModel):
     """Input schema for Alpha Vantage News Sentiment tool."""
 
     tickers: str = Field(..., description="Comma-separated tickers, e.g., AAPL,MSFT or BTC")
-    sort: Literal["LATEST", "EARLIEST", "RELEVANCE"] = Field(
-        "LATEST", description="Sorting strategy for results"
-    )
+    sort: Literal["LATEST", "EARLIEST", "RELEVANCE"] = Field("LATEST", description="Sorting strategy for results")
     time_from: str | None = Field(None, description="ISO8601 start time (YYYYMMDDTHHMM)")
     time_to: str | None = Field(None, description="ISO8601 end time (YYYYMMDDTHHMM)")
     limit: int | None = Field(50, description="Max number of items to return")
-    topics: str | None = Field(
-        None, description="Comma-separated topics filter (e.g., technology,financial_markets)"
-    )
+    topics: str | None = Field(None, description="Comma-separated topics filter (e.g., technology,financial_markets)")
 
 
 class AlphaVantageNewsSentimentTool(BaseTool):
@@ -36,8 +32,7 @@ class AlphaVantageNewsSentimentTool(BaseTool):
 
     name: str = "Alpha Vantage News Sentiment"
     description: str = (
-        "Fetches news and sentiment using Alpha Vantage NEWS_SENTIMENT endpoint. "
-        "Requires ALPHA_VANTAGE_API_KEY in environment."
+        "Fetches news and sentiment using Alpha Vantage NEWS_SENTIMENT endpoint. Requires ALPHA_VANTAGE_API_KEY in environment."
     )
     args_schema: type[BaseModel] = AlphaVantageNewsInput
 

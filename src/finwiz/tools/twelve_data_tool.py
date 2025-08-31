@@ -14,15 +14,16 @@ import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
+from finwiz.utils.api_decorators import api_tool
+from finwiz.utils.rate_limiter import APIProvider
+
 
 class TwelveDataIndicatorInput(BaseModel):
     """Input schema for Twelve Data indicator tool."""
 
     symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, BTC/USD, SPY")
     interval: str = Field("1day", description="Interval, e.g., 1min, 5min, 1h, 1day")
-    indicator: Literal["rsi", "macd", "bbands"] = Field(
-        ..., description="Indicator to fetch from Twelve Data"
-    )
+    indicator: Literal["rsi", "macd", "bbands"] = Field(..., description="Indicator to fetch from Twelve Data")
     length: int | None = Field(None, description="Window length for indicators like RSI/BBANDS")
     fast_period: int | None = Field(None, description="Fast period for MACD")
     slow_period: int | None = Field(None, description="Slow period for MACD")
@@ -39,13 +40,18 @@ class TwelveDataIndicatorTool(BaseTool):
 
     name: str = "Twelve Data Indicator"
     description: str = (
-        "Fetches RSI/MACD/BBANDS from Twelve Data for a symbol and interval. "
-        "Requires TWELVE_DATA_API_KEY in environment."
+        "Fetches RSI/MACD/BBANDS from Twelve Data for a symbol and interval. Requires TWELVE_DATA_API_KEY in environment."
     )
     args_schema: type[BaseModel] = TwelveDataIndicatorInput
 
     base_url: str = "https://api.twelvedata.com"
 
+    @api_tool(
+        provider=APIProvider.TWELVE_DATA,
+        endpoint="technical_indicators",
+        timeout=20.0,
+        default_return="Error: Unable to fetch technical indicator data",
+    )
     def _run(
         self,
         symbol: str,
@@ -81,10 +87,6 @@ class TwelveDataIndicatorTool(BaseTool):
             if signal_period is not None:
                 params["signal"] = signal_period
 
-        try:
-            resp = requests.get(endpoint, params=params, timeout=15)
-            resp.raise_for_status()
-            return resp.text
-        except Exception as e:
-            # Catch broad exceptions to provide a stable error surface in tools
-            return f"Error fetching Twelve Data {indicator} for {symbol}: {e}"
+        resp = requests.get(endpoint, params=params, timeout=15)
+        resp.raise_for_status()
+        return resp.text

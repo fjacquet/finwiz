@@ -10,7 +10,19 @@ from crewai.tools import BaseTool
 from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.chart_img_tool import ChartImgTool
+from finwiz.tools.enhanced_crypto_tool import (
+    CryptoRiskScoringTool,
+    CryptoThesisGeneratorTool,
+    EnhancedCryptoAnalysisTool,
+)
+from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool, ETFTrackingAnalysisTool
+from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool, StandardizedRiskScoringTool
 from finwiz.tools.kraken_api_tool import KrakenTickerInfoTool
+from finwiz.tools.sec_tool import SECFilingSearchTool
+from finwiz.tools.standardized_sentiment_tool import (
+    CrossAssetSentimentComparatorTool,
+    StandardizedSentimentAnalysisTool,
+)
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
@@ -55,6 +67,13 @@ def get_stock_research_tools() -> list[BaseTool]:
         TwelveDataIndicatorTool(),
         ChartImgTool(),
         TickerExistenceValidationTool(),
+        # Enhanced SEC analysis tools
+        EnhancedSECAnalysisTool(),
+        SECFilingSearchTool(),
+        StandardizedRiskScoringTool(),
+        # Standardized sentiment analysis
+        StandardizedSentimentAnalysisTool(),
+        CrossAssetSentimentComparatorTool(),
     ]
 
 
@@ -75,6 +94,14 @@ def get_crypto_research_tools() -> list[BaseTool]:
         TwelveDataIndicatorTool(),
         ChartImgTool(),
         TickerExistenceValidationTool(),
+        # Enhanced crypto analysis tools
+        EnhancedCryptoAnalysisTool(),
+        CryptoThesisGeneratorTool(),
+        CryptoRiskScoringTool(),
+        StandardizedRiskScoringTool(),
+        # Standardized sentiment analysis
+        StandardizedSentimentAnalysisTool(),
+        CrossAssetSentimentComparatorTool(),
     ]
 
 
@@ -95,4 +122,11 @@ def get_etf_research_tools() -> list[BaseTool]:
         TwelveDataIndicatorTool(),
         ChartImgTool(),
         TickerExistenceValidationTool(),
+        # Enhanced ETF analysis tools
+        EnhancedETFAnalysisTool(),
+        ETFTrackingAnalysisTool(),
+        StandardizedRiskScoringTool(),
+        # Standardized sentiment analysis
+        StandardizedSentimentAnalysisTool(),
+        CrossAssetSentimentComparatorTool(),
     ]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -17,7 +17,7 @@ def _sample_tenk() -> TenKInsight:
     return TenKInsight(
         ticker="MSFT",
         filing_url="https://www.sec.gov/Archives/edgar/data/0000789019/000156459024000000/msft-20240630x10k.htm",
-        filed_at=datetime(2024, 7, 31, 9, 0, tzinfo=timezone.utc),
+        filed_at=datetime(2024, 7, 31, 9, 0, tzinfo=UTC),
         section="Item 7",
         excerpt="Management discusses revenue growth driven by cloud adoption and AI services.",
         sec_citation="10-K (2024), Item 7",

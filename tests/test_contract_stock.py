@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -12,7 +12,7 @@ def test_tenk_insight_valid() -> None:
     item = TenKInsight(
         ticker="AAPL",
         filing_url="https://www.sec.gov/Archives/edgar/data/0000320193/000032019324000066/aapl-20230930.htm",
-        filed_at=datetime(2024, 1, 31, 12, 0, tzinfo=timezone.utc),
+        filed_at=datetime(2024, 1, 31, 12, 0, tzinfo=UTC),
         section="Item 1A",
         excerpt="Risk factors include supply chain disruptions and currency fluctuations impacting margins.",
         sec_citation="10-K (2024), Item 1A",

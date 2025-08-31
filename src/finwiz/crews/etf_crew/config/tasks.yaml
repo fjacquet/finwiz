@@ -58,8 +58,12 @@ etf_technical_detail_task:
     2. Evaluate tracking accuracy and benchmark adherence using the latest performance data.
     3. Assess fund manager expertise and issuer stability based on current information.
     4. Examine historical performance against benchmarks up to {full_date}.
-    5. (Optional) Extract factsheet highlights for each ETF (ticker, category, expense ratio, as_of, source_url).
-    6. (Optional) Extract top holdings with weights and provenance (ticker, weight_pct, as_of, source_url).
+    5. Use the "Enhanced ETF Analysis Tool" to extract comprehensive factsheet data for each ETF including:
+       - Expense ratios and tracking differences with proper validation
+       - Top holdings with weights and provenance (ticker, weight_pct, as_of, source_url)
+       - Issuer information and replication methods
+       - Factsheet highlights and key metrics
+    6. Use the "ETF Tracking Analysis Tool" to analyze tracking performance against benchmarks.
     7. Technical indicators: Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands
        for relevant intervals per ETF, and cite parameters used.
     8. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
@@ -75,8 +79,9 @@ etf_technical_detail_task:
     📈 Top Holdings (optional): array of {ticker, weight_pct, as_of, source_url}
 
     Also include a machine-readable JSON appendix at the end containing:
-    - etf_factsheets[] matching the ETFFactsheet schema
-    - top_holdings[] matching the ETFTopHolding schema
+    - etf_factsheets[] matching the ETFFactsheet schema with enhanced data extraction
+    - top_holdings[] matching the ETFTopHolding schema with proper validation
+    - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
   agent: market_etf_analyst
   output_file: "output/etf/etf_technical_details.md"
 
@@ -85,17 +90,26 @@ etf_risk_assessment_task:
   description: >
     Evaluate risks for each of the 10 ETFs identified in previous tasks.
     
-    1. Assess volatility metrics and historical drawdowns using data up to {full_date}.
-    2. Identify concentration risks within ETF holdings based on the latest disclosures.
-    3. Analyze liquidity risks during market stress scenarios, considering current market conditions as of {full_date}.
-    4. Evaluate counterparty and structural risks.
-    5. Review regulatory and tax considerations relevant for {current_year}.
-    6. Market sentiment: Prefer the "Alpha Vantage News Sentiment" tool to source structured news and
-       sentiment for covered ETFs; provide top positive/negative headlines with URLs and dates.
+    1. Use the "Enhanced ETF Analysis Tool" with risk assessment enabled to perform standardized risk scoring.
+    2. Assess volatility metrics and historical drawdowns using data up to {full_date}.
+    3. Identify concentration risks within ETF holdings based on the latest disclosures from factsheet analysis.
+    4. Analyze liquidity risks during market stress scenarios, considering current market conditions as of {full_date}.
+    5. Evaluate counterparty and structural risks based on replication methods and issuer stability.
+    6. Review regulatory and tax considerations relevant for {current_year}.
+    7. Apply the "Standardized Risk Scoring Tool" methodology for consistent 0-5 risk scores across all ETFs.
+    8. Market sentiment: Use the "Standardized Sentiment Analysis Tool" for consistent ETF sentiment analysis.
+       - Apply standardized cross-asset sentiment methodology for ETFs
+       - Provide weighted sentiment scores and confidence intervals
+       - Extract trending topics relevant to ETF sectors and holdings
+       - Include top positive/negative headlines with URLs and dates
+       - Ensure sentiment scoring consistency with stock and crypto analysis
     
     Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is based on information available as of {full_date}.
   expected_output: >
     A detailed risk profile for each ETF covering volatility, concentration, liquidity, counterparty, and regulatory risks.
+    Include standardized risk scores (0-5 scale) with consistent methodology across all ETFs.
+    Also include a machine-readable JSON appendix containing:
+    - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.md"
 

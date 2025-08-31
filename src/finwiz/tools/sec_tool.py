@@ -138,9 +138,7 @@ class SECFilingSearchTool(BaseTool):
     def _split_into_documents(self, html_text: str) -> list[Any]:
         elements = partition_html(text=html_text)
         content = "\n".join([str(el) for el in elements])
-        splitter = CharacterTextSplitter(
-            separator="\n", chunk_size=2000, chunk_overlap=200, length_function=len
-        )
+        splitter = CharacterTextSplitter(separator="\n", chunk_size=2000, chunk_overlap=200, length_function=len)
         return splitter.create_documents([content])
 
     def _retrieve_excerpts(self, docs: list[Any], question: str, top_k: int) -> list[str]:

@@ -23,11 +23,8 @@ from crewai_tools import (
 )
 from dotenv import load_dotenv
 
-from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
-from finwiz.tools.chart_img_tool import ChartImgTool
+from finwiz.tools.finance_tools import get_etf_research_tools
 from finwiz.tools.rag_tools import get_rag_tools
-from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
-from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
 # from finwiz.tools.finance_tools import get_data_output_tools
 # from finwiz.tools.html_output_tool import HTMLOutputTool
@@ -56,23 +53,19 @@ youtube_tool = YoutubeVideoSearchTool()
 # Get RAG tools for knowledge retrieval and storage
 rag_tools = get_rag_tools(collection_suffix="etf")
 
+# Get enhanced ETF research tools
+etf_research_tools = get_etf_research_tools()
+
 # Tools for ETF research and analysis
 tools = [
-    # directory_search_tool,
+    # Basic research tools
     news_tool,
     scrape_tool,
     search_tool,
     search_tool2,
-    # search_tool3,
-    yahoo_etf_tool,
-    yahoo_history_tool,
-    yahoo_news_tool,
-    yahoo_ticker_tool,
-    AlphaVantageNewsSentimentTool(),
-    TwelveDataIndicatorTool(),
-    ChartImgTool(),
-    TickerExistenceValidationTool(),
     youtube_tool,
+    # Enhanced ETF-specific tools
+    *etf_research_tools,
     *rag_tools,  # Add RAG tools for knowledge retrieval and storage
     # Contract-aware reading of outputs and schemas
     DirectoryReadTool(directory=("output/etf")),
@@ -81,6 +74,7 @@ tools = [
     FileReadTool(file_path=("docs/schemas/ETFFactsheet.schema.json")),
     FileReadTool(file_path=("docs/schemas/ETFTopHolding.schema.json")),
     FileReadTool(file_path=("docs/schemas/examples/etf_factsheet.example.json")),
+    FileReadTool(file_path=("docs/schemas/RiskAssessmentStandardized.schema.json")),
 ]
 
 

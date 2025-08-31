@@ -1,7 +1,5 @@
 """Tests for Alpha Vantage News Sentiment Tool."""
 
-from unittest.mock import Mock, patch
-
 from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
 
 
@@ -14,11 +12,11 @@ class TestAlphaVantageNewsSentimentTool:
         out = self.tool._run(tickers="AAPL,MSFT")
         assert out.startswith("Error: ALPHA_VANTAGE_API_KEY")
 
-    @patch("requests.get")
-    def test_success_with_params(self, mock_get, monkeypatch):
+    def test_success_with_params(self, mocker, monkeypatch):
         monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "key")
-        resp = Mock()
-        resp.raise_for_status = Mock()
+        mock_get = mocker.patch("requests.get")
+        resp = mocker.Mock()
+        resp.raise_for_status = mocker.Mock()
         resp.text = '{"feed": []}'
         mock_get.return_value = resp
 
@@ -44,9 +42,9 @@ class TestAlphaVantageNewsSentimentTool:
         assert called_params["topics"] == "technology,financial_markets"
         assert called_params["apikey"] == "key"
 
-    @patch("requests.get")
-    def test_request_error(self, mock_get, monkeypatch):
+    def test_request_error(self, mocker, monkeypatch):
         monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "key")
+        mock_get = mocker.patch("requests.get")
         mock_get.side_effect = Exception("timeout")
         out = self.tool._run(tickers="AAPL")
         assert out.startswith("Error fetching Alpha Vantage news sentiment: ")

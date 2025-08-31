@@ -20,9 +20,7 @@ def _get_strictness(env_value: str | None) -> Strictness:
     return "warn"
 
 
-def validate_reporter_input(
-    data: dict[str, Any] | str | Path, *, strictness: Strictness | None = None
-) -> ReporterInput | None:
+def validate_reporter_input(data: dict[str, Any] | str | Path, *, strictness: Strictness | None = None) -> ReporterInput | None:
     """
     Validate a ReporterInput payload.
 
@@ -60,9 +58,7 @@ def validate_reporter_input(
 def main(argv: list[str] | None = None) -> int:
     argv = argv or sys.argv[1:]
     if not argv:
-        print(
-            "Usage: python -m finwiz.schemas.validate <reporter_input.json> [off|warn|error]", file=sys.stderr
-        )
+        print("Usage: python -m finwiz.schemas.validate <reporter_input.json> [off|warn|error]", file=sys.stderr)
         return 2
     path = argv[0]
     strict: Strictness | None = None

@@ -1,7 +1,6 @@
 """Tests for Enhanced Sentiment Analysis Tool."""
 
 import datetime
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -40,11 +39,10 @@ class TestEnhancedSentimentAnalysisTool:
             },
         ]
 
-    @patch("yfinance.Ticker")
-    def test_successful_sentiment_analysis_stock(self, mock_ticker):
+    def test_successful_sentiment_analysis_stock(self, mock_ticker, mocker):
         """Test successful sentiment analysis for stock."""
         # Mock yfinance response
-        mock_ticker_obj = Mock()
+        mock_ticker_obj = mocker.Mock()
         mock_ticker_obj.news = [
             {
                 "title": "Strong earnings beat expectations",
@@ -63,10 +61,9 @@ class TestEnhancedSentimentAnalysisTool:
         assert "Market Outlook" in result
         assert "Articles Analyzed: 1" in result
 
-    @patch("yfinance.Ticker")
-    def test_successful_sentiment_analysis_etf(self, mock_ticker):
+    def test_successful_sentiment_analysis_etf(self, mock_ticker, mocker):
         """Test successful sentiment analysis for ETF."""
-        mock_ticker_obj = Mock()
+        mock_ticker_obj = mocker.Mock()
         mock_ticker_obj.news = [
             {
                 "title": "ETF sees strong inflows amid market rally",
@@ -83,10 +80,9 @@ class TestEnhancedSentimentAnalysisTool:
         assert "Enhanced Sentiment Analysis for VTI (ETF)" in result
         assert "Sentiment Overview" in result
 
-    @patch("yfinance.Ticker")
-    def test_successful_sentiment_analysis_crypto(self, mock_ticker):
+    def test_successful_sentiment_analysis_crypto(self, mock_ticker, mocker):
         """Test successful sentiment analysis for crypto."""
-        mock_ticker_obj = Mock()
+        mock_ticker_obj = mocker.Mock()
         mock_ticker_obj.news = [
             {
                 "title": "Bitcoin rallies on institutional adoption",
@@ -103,10 +99,9 @@ class TestEnhancedSentimentAnalysisTool:
         assert "Enhanced Sentiment Analysis for BTC-USD (CRYPTO)" in result
         assert "Sentiment Overview" in result
 
-    @patch("yfinance.Ticker")
-    def test_no_news_available(self, mock_ticker):
+    def test_no_news_available(self, mock_ticker, mocker):
         """Test handling when no news is available."""
-        mock_ticker_obj = Mock()
+        mock_ticker_obj = mocker.Mock()
         mock_ticker_obj.news = []
         mock_ticker.return_value = mock_ticker_obj
 
@@ -115,13 +110,12 @@ class TestEnhancedSentimentAnalysisTool:
         assert "No Data Available" in result
         assert "No recent news articles found" in result
 
-    @patch("yfinance.Ticker")
-    def test_no_recent_news(self, mock_ticker):
+    def test_no_recent_news(self, mock_ticker, mocker):
         """Test handling when no recent news is available."""
         # Create old news (beyond date filter)
         old_timestamp = (datetime.datetime.now() - datetime.timedelta(days=10)).timestamp()
 
-        mock_ticker_obj = Mock()
+        mock_ticker_obj = mocker.Mock()
         mock_ticker_obj.news = [
             {
                 "title": "Old news article",
@@ -292,8 +286,7 @@ class TestEnhancedSentimentAnalysisTool:
         assert "earnings" in outlook.lower()
         assert "technology" in outlook.lower()
 
-    @patch("yfinance.Ticker")
-    def test_error_handling(self, mock_ticker):
+    def test_error_handling(self, mock_ticker, mocker):
         """Test error handling in sentiment analysis."""
         # Mock yfinance to raise an exception
         mock_ticker.side_effect = Exception("API Error")
@@ -309,9 +302,7 @@ class TestEnhancedSentimentAnalysisTool:
         try:
             from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentInput
 
-            valid_input = EnhancedSentimentInput(
-                ticker="AAPL", asset_type="stock", days_back=7, max_articles=20
-            )
+            valid_input = EnhancedSentimentInput(ticker="AAPL", asset_type="stock", days_back=7, max_articles=20)
             assert valid_input.ticker == "AAPL"
             assert valid_input.asset_type == "stock"
             assert valid_input.days_back == 7
@@ -321,11 +312,10 @@ class TestEnhancedSentimentAnalysisTool:
             pytest.fail(f"Valid input should not raise exception: {e}")
 
     @pytest.mark.integration
-    @patch("yfinance.Ticker")
-    def test_full_workflow_integration(self, mock_ticker):
+    def test_full_workflow_integration(self, mock_ticker, mocker):
         """Integration test for complete sentiment analysis workflow."""
         # Mock comprehensive news data
-        mock_ticker_obj = Mock()
+        mock_ticker_obj = mocker.Mock()
         mock_ticker_obj.news = [
             {
                 "title": "Apple reports record quarterly earnings with strong iPhone sales",
@@ -366,12 +356,7 @@ class TestEnhancedSentimentAnalysisTool:
         assert "Sentiment Distribution:" in result
 
         # Should identify earnings and technology topics
-        assert (
-            "Earnings" in result
-            or "Financial Results" in result
-            or "Technology" in result
-            or "Product Launch" in result
-        )
+        assert "Earnings" in result or "Financial Results" in result or "Technology" in result or "Product Launch" in result
 
 
 if __name__ == "__main__":

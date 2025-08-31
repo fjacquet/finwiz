@@ -65,9 +65,7 @@ class YahooFinanceHistoryTool(BaseTool):
                 "start_date": earliest.get("date", "N/A"),
                 "end_date": latest.get("date", "N/A"),
                 "price_change": round(latest.get("close", 0) - earliest.get("close", 0), 2),
-                "price_change_percent": round(
-                    (latest.get("close", 0) / earliest.get("close", 1) - 1) * 100, 2
-                ),
+                "price_change_percent": round((latest.get("close", 0) / earliest.get("close", 1) - 1) * 100, 2),
                 "data_points": len(history_list),
             }
 

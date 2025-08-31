@@ -1,11 +1,11 @@
-"""Enhanced Sentiment Analysis Tool with Multi-Source Integration.
+"""
+Enhanced Sentiment Analysis Tool with Multi-Source Integration.
 
 This tool implements the n8n workflow sentiment analysis logic adapted for FinWiz,
 providing comprehensive sentiment analysis across stocks, ETFs, and crypto assets.
 """
 
 import datetime
-from typing import Optional
 
 import yfinance as yf
 from crewai.tools import BaseTool
@@ -342,23 +342,21 @@ class EnhancedSentimentAnalysisTool(BaseTool):
 
         return impact_articles[:10]  # Return top 10 impactful articles
 
-    def _format_article_date(self, timestamp: Optional[float]) -> str:
+    def _format_article_date(self, timestamp: float | None) -> str:
         """Format article timestamp to readable date."""
         if timestamp is None:
             return "Unknown date"
 
         try:
             # Treat negative timestamps as invalid/unknown
-            if isinstance(timestamp, (int, float)) and timestamp < 0:
+            if isinstance(timestamp, int | float) and timestamp < 0:
                 return "Unknown date"
             dt = datetime.datetime.fromtimestamp(timestamp)
             return dt.strftime("%Y-%m-%d")
         except (ValueError, OSError):
             return "Unknown date"
 
-    def _generate_market_outlook(
-        self, sentiment_analysis: dict, trending_topics: list[dict], asset_type: str
-    ) -> str:
+    def _generate_market_outlook(self, sentiment_analysis: dict, trending_topics: list[dict], asset_type: str) -> str:
         """Generate market outlook based on sentiment and topics."""
         sentiment = sentiment_analysis.get("overall_sentiment", "neutral")
         score = sentiment_analysis.get("sentiment_score", 0.0)
@@ -366,18 +364,14 @@ class EnhancedSentimentAnalysisTool(BaseTool):
         # Base outlook by sentiment
         if sentiment == "positive":
             if score >= 0.3:
-                base_outlook = (
-                    f"Strong positive sentiment indicates high confidence in {asset_type} performance."
-                )
+                base_outlook = f"Strong positive sentiment indicates high confidence in {asset_type} performance."
             else:
                 base_outlook = f"Moderate positive sentiment suggests cautious optimism for {asset_type}."
         elif sentiment == "negative":
             if score <= -0.3:
                 base_outlook = f"Strong negative sentiment indicates significant concerns about {asset_type} performance."
             else:
-                base_outlook = (
-                    f"Moderate negative sentiment suggests some caution warranted for {asset_type}."
-                )
+                base_outlook = f"Moderate negative sentiment suggests some caution warranted for {asset_type}."
         else:
             base_outlook = f"Mixed sentiment indicates uncertainty in {asset_type} direction."
 
@@ -402,7 +396,6 @@ class EnhancedSentimentAnalysisTool(BaseTool):
         article_count: int,
     ) -> str:
         """Format comprehensive sentiment analysis response."""
-
         sentiment = sentiment_analysis.get("overall_sentiment", "neutral")
         score = sentiment_analysis.get("sentiment_score", 0.0)
         distribution = sentiment_analysis.get("sentiment_distribution", {})
@@ -428,7 +421,9 @@ class EnhancedSentimentAnalysisTool(BaseTool):
 
         if trending_topics:
             for i, topic in enumerate(trending_topics, 1):
-                response += f"{i}. **{topic['topic']}** - {topic['article_count']} articles (relevance: {topic['average_relevance']:.2f})\n"
+                response += (
+                    f"{i}. **{topic['topic']}** - {topic['article_count']} articles (relevance: {topic['average_relevance']:.2f})\n"
+                )
         else:
             response += "No significant trending topics identified.\n"
 
@@ -436,13 +431,7 @@ class EnhancedSentimentAnalysisTool(BaseTool):
 
         if impact_scores:
             for i, article in enumerate(impact_scores[:5], 1):
-                sentiment_emoji = (
-                    "📈"
-                    if article["sentiment"] == "bullish"
-                    else "📉"
-                    if article["sentiment"] == "bearish"
-                    else "⚖️"
-                )
+                sentiment_emoji = "📈" if article["sentiment"] == "bullish" else "📉" if article["sentiment"] == "bearish" else "⚖️"
                 response += f"{i}. {sentiment_emoji} **{article['title']}**\n"
                 response += f"   - Publisher: {article['publisher']} | Date: {article['date']}\n"
                 response += f"   - Impact Score: {article['impact_score']:.4f} | Sentiment: {article['sentiment'].title()}\n"

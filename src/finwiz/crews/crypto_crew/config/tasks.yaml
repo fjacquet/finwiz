@@ -7,14 +7,17 @@ market_analysis_task:
     - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
     - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
     
-    Sentiment Sourcing:
-    - Prefer the "Alpha Vantage News Sentiment" tool for structured news/sentiment where applicable (tickers supported by Alpha Vantage);
-      otherwise complement with `YahooFinanceNewsTool`.
+    Sentiment Analysis:
+    - Use the "Standardized Sentiment Analysis Tool" with asset_class="crypto" for consistent methodology
+    - Apply standardized cross-asset sentiment scoring for cryptocurrency analysis
+    - Extract trending topics relevant to crypto markets and blockchain technology
+    - Provide weighted sentiment scores and confidence intervals for each cryptocurrency
   expected_output: >
     A list of the top 10 promising cryptocurrencies with a brief analysis of each.
     
     Also include a machine-readable JSON appendix at the end containing:
     - validated_symbols[] where each item is {symbol, asset_class, valid, reason, meta}
+    - crypto_theses[] matching the CryptoThesis schema with initial thesis bullets
   agent: market_analyst
   output_file: "output/crypto/crypto_market_analysis.md"
 
@@ -37,27 +40,54 @@ technical_analysis_task:
 risk_assessment_task:
   description: >
     Evaluate the risks associated with the top 10 cryptocurrencies identified
-    by the technical analyst. Focus on security vulnerabilities, regulatory
-    concerns, and market volatility.
+    by the technical analyst. Use the "Enhanced Crypto Analysis Tool" with risk assessment
+    enabled to perform standardized crypto risk scoring.
     
-    Sentiment Context:
-    - Prefer the "Alpha Vantage News Sentiment" tool to gather structured news/sentiment for covered symbols when available; include
-      top positive/negative headlines with URLs and dates.
+    Enhanced Risk Assessment:
+    - Use the "Enhanced Crypto Analysis Tool" for comprehensive risk analysis of each cryptocurrency
+    - Apply the "Crypto Risk Scoring Tool" methodology for consistent 0-5 risk scores
+    - Focus on crypto-specific risks: volatility, regulatory uncertainty, technology risks, market manipulation
+    - Assess tokenomics, supply dynamics, and adoption risks
+    
+    Sentiment Analysis:
+    - Use the "Standardized Sentiment Analysis Tool" with asset_class="crypto" for consistent sentiment methodology
+    - Apply standardized cross-asset sentiment scoring with crypto-specific considerations
+    - Extract trending topics relevant to cryptocurrency markets and regulatory developments
+    - Include top positive/negative headlines with URLs and dates using consistent format
   expected_output: >
     A comprehensive risk assessment report for each of the top 10
     cryptocurrencies, highlighting potential risks and mitigation strategies.
+    Include standardized risk scores (0-5 scale) with crypto-specific methodology.
+    
+    Also include a machine-readable JSON appendix containing:
+    - risk_assessments[] matching the RiskAssessmentStandardized schema for each cryptocurrency
   agent: risk_assessor
   output_file: "output/crypto/crypto_risk_assessment.md"
 
 investment_strategy_task:
   description: >
     Develop a comprehensive investment strategy for the top cryptocurrencies
-    based on the technical analysis and risk assessment. Provide
-    recommendations for asset allocation, position sizing, and a clear
-    investment thesis.
+    based on the technical analysis and risk assessment. Use the "Enhanced Crypto Analysis Tool"
+    to generate detailed investment thesis and standardized risk assessments.
+    
+    Enhanced Analysis Requirements:
+    - Use the "Enhanced Crypto Analysis Tool" for each cryptocurrency to generate:
+      * Structured investment thesis bullets with market analysis
+      * Standardized risk assessment on 0-5 scale (mapped from crypto 1-10 scale)
+      * Market dynamics and tokenomics evaluation
+    - Use the "Crypto Thesis Generator Tool" for additional thesis refinement
+    - Apply the "Crypto Risk Scoring Tool" for consistent risk methodology
+    
+    Provide recommendations for asset allocation, position sizing, and clear
+    investment thesis with proper risk-adjusted returns analysis.
   expected_output: >
     A detailed investment strategy document, including asset allocation, risk
     management, and a long-term outlook for the selected cryptocurrencies.
+    Include standardized risk scores (0-5 scale) for each cryptocurrency.
+    
+    Also include a machine-readable JSON appendix containing:
+    - crypto_theses[] matching the CryptoThesis schema for each cryptocurrency
+    - risk_assessments[] matching the RiskAssessmentStandardized schema
   agent: investment_strategist
   output_file: "output/crypto/crypto_investment_strategy.md"
 

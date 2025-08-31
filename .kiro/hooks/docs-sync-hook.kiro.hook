@@ -1,0 +1,23 @@
+{
+  "enabled": true,
+  "name": "Documentation Sync",
+  "description": "Listens to Python source files and configuration changes to automatically update project documentation in README.md and docs folder",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "src/**/*.py",
+      "tests/**/*.py",
+      "*.py",
+      "pyproject.toml",
+      "*.yaml",
+      "*.yml",
+      "src/**/config/*.yaml",
+      "src/**/config/*.yml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Source code or configuration files have been modified. Please review the changes and update the documentation accordingly. Focus on:\n\n1. Update README.md if there are significant changes to the project structure, new features, or usage instructions\n2. Update relevant documentation in the /docs folder, particularly:\n   - Update agent_handbook.md if agent configurations or behaviors changed\n   - Update DESIGN_PRINCIPLES.md if architectural changes were made\n   - Update reference.md if new tools, schemas, or APIs were added\n   - Update schemas documentation if new schemas were added or modified\n3. Ensure all new Python modules, classes, and functions are properly documented\n4. Update any configuration-related documentation if YAML files changed\n\nPlease analyze the specific files that changed and determine which documentation needs updates, then make the necessary changes to keep the documentation in sync with the codebase."
+  }
+}

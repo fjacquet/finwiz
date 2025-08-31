@@ -1,0 +1,215 @@
+{
+  "$defs": {
+    "Alternative": {
+      "additionalProperties": false,
+      "properties": {
+        "ticker": {
+          "title": "Ticker",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "asset_class": {
+          "enum": [
+            "stock",
+            "etf"
+          ],
+          "title": "Asset Class",
+          "type": "string"
+        },
+        "composite_score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Composite Score",
+          "type": "number"
+        },
+        "risk_score_standardized": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Risk Score Standardized",
+          "type": "number"
+        },
+        "key_metrics": {
+          "additionalProperties": true,
+          "title": "Key Metrics",
+          "type": "object"
+        },
+        "thesis_bullets": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Thesis Bullets",
+          "type": "array"
+        },
+        "citations": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Citations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ticker",
+        "name",
+        "asset_class",
+        "composite_score",
+        "risk_score_standardized"
+      ],
+      "title": "Alternative",
+      "type": "object"
+    },
+    "HoldingDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_class": {
+          "enum": [
+            "stock",
+            "etf"
+          ],
+          "title": "Asset Class",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "ticker": {
+          "title": "Ticker",
+          "type": "string"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "KEEP",
+            "SELL"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "composite_score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Composite Score",
+          "type": "number"
+        },
+        "risk": {
+          "$ref": "#/$defs/RiskAssessmentStandardized"
+        },
+        "rationale_bullets": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Rationale Bullets",
+          "type": "array"
+        },
+        "citations": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Citations",
+          "type": "array"
+        },
+        "alternatives": {
+          "items": {
+            "$ref": "#/$defs/Alternative"
+          },
+          "maxItems": 3,
+          "title": "Alternatives",
+          "type": "array"
+        }
+      },
+      "required": [
+        "asset_class",
+        "name",
+        "ticker",
+        "currency",
+        "decision",
+        "composite_score",
+        "risk"
+      ],
+      "title": "HoldingDecision",
+      "type": "object"
+    },
+    "RiskAssessmentStandardized": {
+      "additionalProperties": false,
+      "description": "Standardized risk assessment across Stock/ETF/Crypto on a 0-5 scale.\n\n- score: 0 (lowest) .. 5 (highest)\n- level: human-friendly label mapped from score\n- risk_factors: up to 10 concise reasons\n- scale: reserved for future alternate encodings",
+      "properties": {
+        "scale": {
+          "default": "0_5",
+          "enum": [
+            "0_5",
+            "L_M_H",
+            "L_M_H_VH"
+          ],
+          "title": "Scale",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "level": {
+          "enum": [
+            "Low",
+            "Medium",
+            "High",
+            "Very High"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "risk_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Risk Factors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level"
+      ],
+      "title": "RiskAssessmentStandardized",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+    },
+    "base_currency": {
+      "default": "CHF",
+      "title": "Base Currency",
+      "type": "string"
+    },
+    "holdings": {
+      "items": {
+        "$ref": "#/$defs/HoldingDecision"
+      },
+      "title": "Holdings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "as_of"
+  ],
+  "title": "PortfolioReview",
+  "type": "object"
+}

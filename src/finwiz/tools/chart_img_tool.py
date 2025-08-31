@@ -1,5 +1,5 @@
 """
-Chart-img API Tool
+Chart-img API Tool.
 
 Generates chart images for a given symbol and timeframe using the Chart-img API.
 Environment variables required:
@@ -19,6 +19,9 @@ import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
+from finwiz.utils.api_decorators import api_tool
+from finwiz.utils.rate_limiter import APIProvider
+
 
 class ChartImgInput(BaseModel):
     symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, SPY, BTCUSD")
@@ -37,6 +40,12 @@ class ChartImgTool(BaseTool):
     )
     args_schema: type[BaseModel] = ChartImgInput
 
+    @api_tool(
+        provider=APIProvider.CHART_IMG,
+        endpoint="chart_generation",
+        timeout=25.0,
+        default_return="Error: Unable to generate chart image",
+    )
     def _run(
         self,
         symbol: str,
@@ -60,11 +69,9 @@ class ChartImgTool(BaseTool):
             "height": height,
             "theme": theme,
         }
-        try:
-            resp = requests.get(base_url, headers=headers, params=params, timeout=20)
-            resp.raise_for_status()
-            content_type = resp.headers.get("Content-Type", "image/png")
-            b64 = base64.b64encode(resp.content).decode("ascii")
-            return f"data:{content_type};base64,{b64}"
-        except Exception as e:
-            return f"Error generating chart image for {symbol}: {e}"
+
+        resp = requests.get(base_url, headers=headers, params=params, timeout=20)
+        resp.raise_for_status()
+        content_type = resp.headers.get("Content-Type", "image/png")
+        b64 = base64.b64encode(resp.content).decode("ascii")
+        return f"data:{content_type};base64,{b64}"

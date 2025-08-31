@@ -33,6 +33,13 @@ Like a haiku poem with its strict form of simplicity and elegance:
   - Be mindful of framework constraints, such as the requirement for the final task in a sequential process to be synchronous.
 - **Event-Driven Architecture**: Design components to react to events where applicable.
 - **Final Reporter Without Tools**: Configure the final reporting agent with an empty tools list. It must only consume upstream context and format the final HTML output, preventing any unintended external calls or research at this stage.
+- **Schema-First Design**: Use strict Pydantic v2 models with `extra='forbid'` to enforce data contracts and prevent schema drift.
+- **Validation Boundaries**: Validate data at crew boundaries with configurable strictness levels.
+- **Centralized Validation**: Use ValidationManager and SchemaRegistry for consistent validation across all components.
+- **Structured Error Handling**: Implement ValidationResult with detailed error context and remediation guidance.
+- **Persistent State Management**: Support loading and updating existing financial plans from previous sessions.
+- **Intelligent Caching**: Implement multi-backend caching with configurable TTL and eviction strategies.
+- **Performance Monitoring**: Track cache hit rates and system performance metrics.
 
 ### Configuration-Driven Design
 
@@ -114,10 +121,21 @@ Like a haiku poem with its strict form of simplicity and elegance:
    - Use emojis strategically to enhance readability and visual appeal
    - Ensure cross-browser compatibility with proper HTML5 standards
    - Structure reports with clear sections and a logical flow of information
+   - Support persistent financial planning by loading existing reports from `report/` directory
+
+9. **Data Validation & Contracts**
+   - Use Pydantic v2 models with strict validation (`extra='forbid'`)
+   - Implement configurable validation strictness (off/warn/error modes) via `VALIDATION_STRICTNESS` environment variable
+   - Validate data at crew boundaries using ValidationManager to prevent schema drift
+   - Use SchemaRegistry for centralized model management and dynamic schema lookup
+   - Implement structured error handling with ValidationResult, ValidationError, and ValidationWarning classes
+   - Export JSON schemas for external integration and documentation
+   - Provide clear error messages with remediation guidance
 
 9. **Testing Standards**
    - Use `pytest` for unit and integration tests; use `pytest-mock` for mocking.
    - Place tests under a top-level `tests/` directory with `test_*.py` files.
+   - Use Faker for dynamic test data generation to avoid static test data.
    - Prefer small, isolated unit tests; add integration tests for crew flows.
    - Run locally with:
 
@@ -132,6 +150,7 @@ Like a haiku poem with its strict form of simplicity and elegance:
      ```
 
    - Keep tests deterministic; mock external APIs/tools and filesystem.
+   - Use standardized mock setups through APITestMocks class.
    - Ensure CI runs `uv run pytest` as the default test command.
 
 ## Implementation Examples
