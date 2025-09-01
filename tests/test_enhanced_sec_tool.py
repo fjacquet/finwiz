@@ -223,10 +223,12 @@ class TestStandardizedRiskScoringTool:
     def test_should_return_methodology_information(self, tool):
         """Test that the tool returns methodology information."""
         # Act
-        result = tool._run()
+        result = tool._run(symbol="AAPL", asset_class="stock")
 
         # Assert
         assert result["tool"] == "StandardizedRiskScoringTool"
+        assert result["symbol"] == "AAPL"
+        assert result["asset_class"] == "stock"
         assert "methodology" in result
         assert "0-5 scale" in result["methodology"]
 

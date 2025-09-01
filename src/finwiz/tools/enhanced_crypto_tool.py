@@ -440,6 +440,12 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             return "Very High"
 
 
+class CryptoThesisInput(BaseModel):
+    """Input schema for Crypto Thesis Generator Tool."""
+    
+    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
+
+
 class CryptoThesisGeneratorTool(BaseTool):
     """
     Specialized tool for crypto investment thesis generation.
@@ -452,7 +458,7 @@ class CryptoThesisGeneratorTool(BaseTool):
     description: str = (
         "Generate structured investment thesis bullets for cryptocurrencies with proper citations and market analysis."
     )
-    args_schema: type[BaseModel] = BaseModel
+    args_schema: type[BaseModel] = CryptoThesisInput
 
     def _run(self, symbol: str, **kwargs) -> dict[str, Any]:
         """Generate crypto investment thesis."""
@@ -462,6 +468,12 @@ class CryptoThesisGeneratorTool(BaseTool):
             "message": "Use EnhancedCryptoAnalysisTool for comprehensive thesis generation",
             "methodology": "Structured thesis bullets with market analysis and citations",
         }
+
+
+class CryptoRiskScoringInput(BaseModel):
+    """Input schema for Crypto Risk Scoring Tool."""
+    
+    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
 
 
 class CryptoRiskScoringTool(BaseTool):
@@ -476,7 +488,7 @@ class CryptoRiskScoringTool(BaseTool):
     description: str = (
         "Calculate standardized risk scores for cryptocurrencies on 1-10 scale with crypto-specific risk factors and methodology."
     )
-    args_schema: type[BaseModel] = BaseModel
+    args_schema: type[BaseModel] = CryptoRiskScoringInput
 
     def _run(self, symbol: str, **kwargs) -> dict[str, Any]:
         """Calculate crypto-specific risk score."""

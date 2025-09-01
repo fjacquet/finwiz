@@ -5,14 +5,14 @@
 ## ✨ Features
 
 - **Specialized Research Crews**: Dedicated crews for Crypto, Stocks, and ETFs, each with tailored agents and tasks.
-- **Portfolio Review & Analysis**: Automated keep/sell recommendations for existing holdings with risk assessment and alternatives.
+- **Portfolio Review & Analysis**: Comprehensive automated portfolio analysis with keep/sell recommendations, risk assessment, and alternative investment suggestions for existing holdings.
 - **Dynamic Configuration**: Agents and tasks are configured via YAML files, allowing for easy customization and extension.
 - **Asynchronous Task Execution**: Leverages async operations to significantly speed up I/O-bound tasks like web scraping and API calls, improving overall performance.
 - **Real-Time Data Retrieval**: Employs a suite of tools to fetch live data from the web, ensuring analyses are based on the most current information.
 - **Structured Output**: Generates detailed reports in HTML and PDF formats with strict schema validation.
 - **Enhanced Financial Analysis**: Standardized multi-source sentiment analysis, technical indicators, and chart generation capabilities with comprehensive testing coverage.
 - **Persistent Financial Planning**: Loads and updates existing financial plans from previous sessions.
-- **Data Validation Infrastructure**: Centralized validation system with configurable strictness modes and structured error handling.
+- **Advanced Data Validation**: Centralized validation system with ValidationManager, SchemaRegistry, configurable strictness modes (off/warn/error), and structured error handling with detailed context.
 - **Intelligent Caching System**: Advanced caching layer with TTL support, multiple backends (memory/file/hybrid), and performance monitoring.
 - **Dynamic Test Data Framework**: Faker-based test data generation with pytest-mock integration for reliable, deterministic testing.
 - **Comprehensive Testing**: Extensive test coverage with unit tests, integration tests, and mocked external dependencies for reliable CI/CD.

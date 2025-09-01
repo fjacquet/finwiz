@@ -494,6 +494,12 @@ class EnhancedETFAnalysisTool(BaseTool):
             }
 
 
+class ETFTrackingAnalysisInput(BaseModel):
+    """Input schema for ETF Tracking Analysis Tool."""
+    
+    ticker: str = Field(..., description="The ETF ticker symbol, e.g., SPY, VTI")
+
+
 class ETFTrackingAnalysisTool(BaseTool):
     """
     Specialized tool for ETF tracking performance analysis.
@@ -506,7 +512,7 @@ class ETFTrackingAnalysisTool(BaseTool):
     description: str = (
         "Analyze ETF tracking performance including tracking error, tracking difference, and performance attribution analysis."
     )
-    args_schema: type[BaseModel] = BaseModel
+    args_schema: type[BaseModel] = ETFTrackingAnalysisInput
 
     def _run(self, ticker: str, **kwargs) -> dict[str, Any]:
         """Analyze ETF tracking performance."""

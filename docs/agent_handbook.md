@@ -54,12 +54,14 @@ This handbook establishes the core principles, ethical standards, and research m
 
 - Use strict Pydantic v2 models with `extra='forbid'` for all data structures
 - Validate inputs and outputs at crew boundaries using ValidationManager to prevent schema drift
-- Follow standardized risk assessment scoring (0-5 scale) across all asset classes
-- Ensure all outputs conform to registered schemas in SchemaRegistry
-- Handle validation errors gracefully using ValidationResult with informative error messages
-- Support configurable validation strictness (off/warn/error modes) via `VALIDATION_STRICTNESS`
-- Use structured error handling with ValidationError and ValidationWarning classes
-- Leverage centralized SchemaRegistry for consistent model management across crews
+- Follow standardized risk assessment scoring (0-5 scale) across all asset classes using RiskAssessmentStandardized schema
+- Ensure all outputs conform to registered schemas in SchemaRegistry (automatically initialized with core FinWiz schemas)
+- Handle validation errors gracefully using ValidationResult with informative error messages and field-level context
+- Support configurable validation strictness (off/warn/error modes) via `VALIDATION_STRICTNESS` environment variable
+- Use structured error handling with ValidationError and ValidationWarning classes for detailed diagnostics
+- Leverage centralized SchemaRegistry for consistent model management across crews with crew-specific schema registration
+- Implement contract validation for crew boundaries to ensure expected data structure compliance
+- Use global validation manager instance via `get_validation_manager()` for consistent validation behavior
 
 ### Specific Agent Responsibilities
 
@@ -93,11 +95,13 @@ This handbook establishes the core principles, ethical standards, and research m
 
 #### Portfolio Analysis Agents
 
-- Validate existing holdings across multiple exchanges
-- Apply consistent scoring methodology for keep/sell decisions
-- Identify suitable alternatives for underperforming holdings
+- Validate existing holdings across multiple exchanges using TickerExistenceValidationTool
+- Apply consistent scoring methodology for keep/sell decisions based on configurable thresholds
+- Generate comprehensive HoldingDecision objects with composite scores and risk assessments
+- Identify suitable alternatives for underperforming holdings with detailed thesis and metrics
 - Provide clear rationale with supporting evidence and citations
-- Maintain standardized risk assessment across all recommendations
+- Maintain standardized risk assessment across all recommendations using RiskAssessmentStandardized schema
+- Support CSV-based portfolio ingestion with automatic ticker normalization
 
 #### Reporting Agents
 
@@ -161,7 +165,7 @@ To perform their tasks effectively, agents are equipped with a specialized set o
 - **`YahooFinanceETFHoldingsTool`**: Use specifically for ETF holdings analysis and top positions.
 
 ### Enhanced Analysis Tools
-- **`AlphaVantageNewsSentimentTool`**: Use to retrieve structured news and sentiment for one or more tickers via Alpha Vantage. Prefer when you need sentiment scores and metadata in a single payload. Requires `ALPHA_VANTAGE_API_KEY`.
+- **`AlphaVantageNewsSentimentTool`**: Use to retrieve structured news and sentiment for one or more tickers via Alpha Vantage NEWS_SENTIMENT endpoint. Supports filtering by time range, topics, and sorting strategies. Requires `ALPHA_VANTAGE_API_KEY`.
 - **`TwelveDataIndicatorTool`**: Use to fetch technical indicators (RSI, MACD, Bollinger Bands) across stocks, ETFs, and crypto with flexible intervals. Requires `TWELVE_DATA_API_KEY`.
 - **`ChartImgTool`**: Use to generate PNG chart images as base64 data URLs for embedding in HTML outputs. Provide ticker, interval, and any overlays/indicators for clarity. Requires `CHART_IMG_API_KEY` (optional `CHART_IMG_BASE_URL`).
 - **`StandardizedSentimentAnalysisTool`**: Use for comprehensive sentiment analysis with consistent methodology across all asset classes (stocks, ETFs, crypto). Provides weighted scoring, trending topics extraction, confidence intervals, and top positive/negative articles with citations. Includes deduplication and multi-source news aggregation.

@@ -22,6 +22,7 @@ tests/
 - **Execution**: `uv run pytest tests/unit/`
 - **Requirements**: Must complete in < 5 seconds, no external calls
 - **Naming**: `test_should_{behavior}_when_{condition}`
+- **Coverage**: Includes validation system, portfolio review, and all tool implementations
 
 ### Integration Tests (`tests/integration/`)
 - **Purpose**: Test interactions with external APIs and services
@@ -83,3 +84,12 @@ def test_should_return_buy_recommendation_when_strong_metrics(mocker):
 - Use shared fixtures from `conftest.py`
 - Create domain-specific fixtures in test modules
 - Keep test data realistic but sanitized
+- Use `APITestMocks` class for standardized mock setups
+- Leverage Faker for dynamic test data generation
+
+### Key Test Files
+- `test_portfolio_review.py`: Portfolio analysis and decision logic
+- `test_validation_infrastructure.py`: Validation system components
+- `test_alpha_vantage_news_tool.py`: Alpha Vantage news integration
+- `test_standardized_sentiment_tool.py`: Sentiment analysis tools
+- `test_contract_*.py`: Schema contract validation

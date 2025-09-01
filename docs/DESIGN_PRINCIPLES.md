@@ -34,9 +34,11 @@ Like a haiku poem with its strict form of simplicity and elegance:
 - **Event-Driven Architecture**: Design components to react to events where applicable.
 - **Final Reporter Without Tools**: Configure the final reporting agent with an empty tools list. It must only consume upstream context and format the final HTML output, preventing any unintended external calls or research at this stage.
 - **Schema-First Design**: Use strict Pydantic v2 models with `extra='forbid'` to enforce data contracts and prevent schema drift.
-- **Validation Boundaries**: Validate data at crew boundaries with configurable strictness levels.
+- **Validation Boundaries**: Validate data at crew boundaries with configurable strictness levels (off/warn/error).
 - **Centralized Validation**: Use ValidationManager and SchemaRegistry for consistent validation across all components.
-- **Structured Error Handling**: Implement ValidationResult with detailed error context and remediation guidance.
+- **Structured Error Handling**: Implement ValidationResult with detailed error context, field paths, and remediation guidance.
+- **Contract Validation**: Enforce boundary contracts between crews using ContractValidator for expected data structure compliance.
+- **Portfolio Integration**: Support CSV-based portfolio ingestion with automatic ticker validation and keep/sell decision logic.
 - **Persistent State Management**: Support loading and updating existing financial plans from previous sessions.
 - **Intelligent Caching**: Implement multi-backend caching with configurable TTL and eviction strategies.
 - **Performance Monitoring**: Track cache hit rates and system performance metrics.
@@ -127,10 +129,12 @@ Like a haiku poem with its strict form of simplicity and elegance:
    - Use Pydantic v2 models with strict validation (`extra='forbid'`)
    - Implement configurable validation strictness (off/warn/error modes) via `VALIDATION_STRICTNESS` environment variable
    - Validate data at crew boundaries using ValidationManager to prevent schema drift
-   - Use SchemaRegistry for centralized model management and dynamic schema lookup
+   - Use SchemaRegistry for centralized model management and dynamic schema lookup with automatic initialization
    - Implement structured error handling with ValidationResult, ValidationError, and ValidationWarning classes
    - Export JSON schemas for external integration and documentation
-   - Provide clear error messages with remediation guidance
+   - Provide clear error messages with field paths, context, and remediation guidance
+   - Enforce contract validation between crews using ContractValidator for boundary compliance
+   - Support global validation manager instance for consistent behavior across all components
 
 9. **Testing Standards**
    - Use `pytest` for unit and integration tests; use `pytest-mock` for mocking.

@@ -297,6 +297,14 @@ class EnhancedSECAnalysisTool(BaseTool):
             return "Very High"
 
 
+class StandardizedRiskScoringInput(BaseModel):
+    """Input schema for Standardized Risk Scoring Tool."""
+    
+    symbol: str = Field(..., description="The asset symbol (stock ticker, ETF, or crypto)")
+    asset_class: str = Field(..., description="Type of asset being analyzed")
+    risk_factors: list[str] = Field(default=[], description="List of identified risk factors")
+
+
 class StandardizedRiskScoringTool(BaseTool):
     """
     Standalone tool for standardized risk scoring across asset classes.
@@ -310,14 +318,20 @@ class StandardizedRiskScoringTool(BaseTool):
         "Calculate standardized risk scores (0-5 scale) with consistent methodology "
         "across different asset classes and analysis contexts."
     )
-    args_schema: type[BaseModel] = BaseModel
+    args_schema: type[BaseModel] = StandardizedRiskScoringInput
 
-    def _run(self, **kwargs) -> dict[str, Any]:
+    def _run(self, symbol: str, asset_class: str, risk_factors: list[str] = None, **kwargs) -> dict[str, Any]:
         """Calculate standardized risk score based on provided factors."""
+        if risk_factors is None:
+            risk_factors = []
+            
         # This is a placeholder implementation
         # In practice, this would analyze various risk inputs
         return {
             "tool": "StandardizedRiskScoringTool",
+            "symbol": symbol,
+            "asset_class": asset_class,
+            "risk_factors": risk_factors,
             "message": "Use EnhancedSECAnalysisTool for comprehensive risk assessment",
             "methodology": "Standardized 0-5 scale with consistent factor weighting",
         }

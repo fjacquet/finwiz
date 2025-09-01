@@ -531,6 +531,13 @@ class StandardizedSentimentAnalysisTool(BaseTool):
         return top_pos, top_neg
 
 
+class CrossAssetSentimentComparatorInput(BaseModel):
+    """Input schema for Cross-Asset Sentiment Comparator Tool."""
+    
+    symbols: list[str] = Field(..., description="List of asset symbols to compare")
+    asset_classes: list[str] = Field(..., description="List of asset classes corresponding to symbols")
+
+
 class CrossAssetSentimentComparatorTool(BaseTool):
     """
     Tool for comparing sentiment across different asset classes.
@@ -544,12 +551,14 @@ class CrossAssetSentimentComparatorTool(BaseTool):
         "Compare sentiment analysis results across different asset classes "
         "to identify relative sentiment trends and market dynamics."
     )
-    args_schema: type[BaseModel] = BaseModel
+    args_schema: type[BaseModel] = CrossAssetSentimentComparatorInput
 
-    def _run(self, **kwargs) -> dict[str, Any]:
+    def _run(self, symbols: list[str], asset_classes: list[str], **kwargs) -> dict[str, Any]:
         """Compare sentiment across asset classes."""
         return {
             "tool": "CrossAssetSentimentComparatorTool",
+            "symbols": symbols,
+            "asset_classes": asset_classes,
             "message": "Use StandardizedSentimentAnalysisTool for individual asset analysis",
             "methodology": "Cross-asset sentiment comparison with relative scoring",
         }

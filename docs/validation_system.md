@@ -84,6 +84,7 @@ The registry automatically registers existing FinWiz schemas:
 - ETF: `ETFFactsheet`, `ETFTopHolding`, `RiskAssessmentStandardized`
 - Crypto: `CryptoThesis`, `RiskAssessmentStandardized`
 - Report: `ReporterInput`
+- Portfolio: `PortfolioReview`, `HoldingDecision`, `Alternative`
 
 ### ValidationResult
 
@@ -137,18 +138,21 @@ The validation system supports three strictness modes controlled by the `VALIDAT
 - Original data passes through unchanged
 - No errors or warnings are generated
 - Useful for development or when validation overhead is not desired
+- ValidationResult.is_valid remains True, errors are cleared
 
 ### WARN Mode (`VALIDATION_STRICTNESS=warn`) - Default
 - Validation errors are converted to warnings
 - Processing continues with original data
-- Warnings are logged for monitoring
+- Warnings are logged for monitoring and added to ValidationResult.warnings
 - Ideal for production environments where data flow continuity is critical
+- ValidationResult.is_valid becomes True, errors are moved to warnings
 
 ### ERROR Mode (`VALIDATION_STRICTNESS=error`)
 - Validation errors halt processing
 - Invalid data is rejected
 - Strict enforcement of data contracts
 - Recommended for critical production systems
+- ValidationResult.is_valid remains False when errors occur
 
 ## Integration with Crews
 

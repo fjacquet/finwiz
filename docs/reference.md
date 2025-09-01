@@ -79,7 +79,7 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `YahooFinanceETFHoldingsTool`: ETF holdings information.
 
 ### Enhanced Analysis Tools
-- `AlphaVantageNewsSentimentTool`: Structured news and sentiment via Alpha Vantage's NEWS_SENTIMENT endpoint.
+- `AlphaVantageNewsSentimentTool`: Structured news and sentiment via Alpha Vantage's NEWS_SENTIMENT endpoint with support for multiple tickers, time filtering, topic filtering, and sorting strategies.
 - `TwelveDataIndicatorTool`: Technical indicators (RSI, MACD, Bollinger Bands) via Twelve Data.
 - `ChartImgTool`: PNG chart images as base64 data URLs via Chart-img.
 - `StandardizedSentimentAnalysisTool`: Comprehensive sentiment analysis with consistent methodology across all asset classes. Features weighted scoring, trending topics extraction, confidence intervals, article deduplication, and multi-source news aggregation.
@@ -93,9 +93,10 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `KrakenTickerInfoTool`: Real-time ticker information from Kraken.
 
 ### Validation & Analysis Tools
-- `TickerExistenceValidationTool`: Validates ticker existence across exchanges.
+- `TickerExistenceValidationTool`: Validates ticker existence across multiple exchanges (Yahoo Finance, Coinbase).
 - `SECFilingSearchTool`: Searches and extracts SEC filing information.
 - `HtmlToPdfTool`: Converts HTML reports to PDF format.
+- `AlphaVantageNewsSentimentTool`: Fetches news and sentiment data with filtering capabilities.
 
 ### RAG & Knowledge Tools
 - `SaveToRagTool`: Persists text for later retrieval via RAG.
@@ -111,7 +112,7 @@ These tools require API keys. Create a `.env` file (see `.env.example`) with the
 - `FIRECRAWL_API_KEY`: Firecrawl API key for web scraping.
 
 ### Optional API Keys (Enhanced Features)
-- `ALPHA_VANTAGE_API_KEY`: Alpha Vantage API key for news sentiment analysis.
+- `ALPHA_VANTAGE_API_KEY`: Alpha Vantage API key for news sentiment analysis via NEWS_SENTIMENT endpoint.
 - `TWELVE_DATA_API_KEY`: Twelve Data API key for technical indicators.
 - `CHART_IMG_API_KEY`: Chart-img API key for chart generation.
 - `CHART_IMG_BASE_URL` (optional): Override base URL for Chart-img; defaults to `https://api.chart-img.com/v1/stock`.
@@ -141,59 +142,71 @@ FinWiz includes an automated portfolio analysis system that evaluates existing h
 
 ### Data Sources
 - **ETF Holdings**: `data/etf.csv` with columns: Name, Ticker, Currency
-- **Stock Holdings**: `data/stock.csv` with columns: Name, Ticker, Currency
+- **Stock Holdings**: `data/stock.csv` with columns: Name, Ticker, Currency  
 - **Ticker Normalization**: Handles Yahoo Finance prefixes (e.g., "YAHOO:AAPL" → "AAPL")
+- **Validation**: Uses TickerExistenceValidationTool to verify ticker existence across multiple exchanges
 
 ### Analysis Process
-1. **Validation**: Checks ticker existence across multiple exchanges
-2. **Risk Assessment**: Standardized 0-5 risk scoring with human-readable levels
-3. **Decision Logic**: Keep/sell recommendations based on configurable thresholds
-4. **Alternative Identification**: Suggests better alternatives for underperforming holdings
+1. **CSV Ingestion**: Reads portfolio data from configurable CSV files with automatic ticker normalization
+2. **Validation**: Checks ticker existence across multiple exchanges using TickerExistenceValidationTool
+3. **Scoring**: Calculates composite scores based on validation results and asset class characteristics
+4. **Risk Assessment**: Standardized 0-5 risk scoring with human-readable levels using RiskAssessmentStandardized schema
+5. **Decision Logic**: Keep/sell recommendations based on configurable thresholds (KEEP_THRESHOLD)
+6. **Alternative Identification**: Suggests better alternatives for underperforming holdings (future enhancement)
 
 ### Configuration
+- `PORTFOLIO_REVIEW_ENABLED` (default: "true"): Enable/disable portfolio review functionality
+- `PORTFOLIO_ETF_CSV` (default: "data/etf.csv"): Path to ETF portfolio CSV file
+- `PORTFOLIO_STOCK_CSV` (default: "data/stock.csv"): Path to stock portfolio CSV file
 - `KEEP_THRESHOLD` (default: 0.55): Minimum composite score for KEEP recommendation
 - `DELTA_THRESHOLD` (default: 0.10): Score difference threshold for alternatives
 - `MAX_RISK_STEP` (default: 1): Maximum risk level increase for alternatives
 
 ### Output Schema
 The portfolio review generates a structured JSON output conforming to the `PortfolioReview` schema:
-- Holdings with keep/sell decisions
-- Composite scores and risk assessments
-- Rationale bullets and citations
-- Alternative recommendations (up to 3 per holding)
+- **PortfolioReview**: Contains analysis timestamp, base currency, and holdings list
+- **HoldingDecision**: Individual holding analysis with asset class, decision (KEEP/SELL), composite score, risk assessment, rationale bullets, and citations
+- **Alternative**: Alternative investment suggestions with ticker, name, composite score, risk score, key metrics, thesis bullets, and citations (up to 3 per holding)
+- **RiskAssessmentStandardized**: Standardized risk scoring (0-5 scale) with human-readable levels and risk factors
 
 ## Data Validation Infrastructure
 
-FinWiz implements a comprehensive validation system built around centralized management and configurable strictness modes.
+FinWiz implements a comprehensive validation system built around centralized management and configurable strictness modes. The system provides structured error handling, schema registry management, and contract validation across all crew boundaries.
 
 ### Validation Components
 
 #### ValidationManager
 The central orchestrator for all validation operations:
 - Coordinates with SchemaRegistry for dynamic schema lookup
-- Supports configurable validation modes (off/warn/error)
-- Provides structured error handling with detailed context
+- Supports configurable validation modes (off/warn/error) via `VALIDATION_STRICTNESS` environment variable
+- Provides structured error handling with detailed context through ValidationResult objects
 - Validates crew outputs, reporter inputs, and arbitrary data against registered schemas
+- Integrates with ContractValidator for boundary contract compliance
+- Handles Pydantic validation errors with graceful degradation based on strictness mode
 
 #### SchemaRegistry
 Centralized registry for Pydantic models:
 - Single point of control for all validation schemas
 - Dynamic schema lookup by name or crew type
-- Automatic registration of existing FinWiz schemas
-- Support for crew-specific output validation
+- Automatic registration of existing FinWiz schemas on initialization
+- Support for crew-specific output validation with `register_crew_schema()`
+- Global singleton instance accessible via `get_registry()`
+- Pre-registered schemas include ReporterInput, ValidatedTicker, RiskAssessmentStandardized, and all crew-specific models
 
 #### ValidationResult
 Structured validation outcome with:
-- Boolean validation status
-- Detailed error and warning collections
-- Sanitized/cleaned data output
-- Contextual information for debugging
+- Boolean validation status (`is_valid`)
+- Detailed error and warning collections with field paths and context
+- Sanitized/cleaned data output (`sanitized_data`)
+- Contextual information for debugging and remediation
+- Helper methods: `add_error()`, `add_warning()`, `has_errors`, `has_warnings`
+- Pydantic model with strict validation (`extra='forbid'`)
 
 #### Validation Modes
 Configurable via `VALIDATION_STRICTNESS` environment variable:
-- **off**: Validation disabled, original data passed through
-- **warn**: Validation errors logged as warnings, processing continues
-- **error**: Validation errors halt processing (default for production)
+- **off**: Validation disabled, original data passed through unchanged
+- **warn**: Validation errors converted to warnings, processing continues with original data (default)
+- **error**: Validation errors halt processing, strict enforcement of data contracts
 
 ### Usage Examples
 
