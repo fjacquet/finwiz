@@ -533,7 +533,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
 
 class CrossAssetSentimentComparatorInput(BaseModel):
     """Input schema for Cross-Asset Sentiment Comparator Tool."""
-    
+
     symbols: list[str] = Field(..., description="List of asset symbols to compare")
     asset_classes: list[str] = Field(..., description="List of asset classes corresponding to symbols")
 

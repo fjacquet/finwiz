@@ -442,7 +442,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
 
 class CryptoThesisInput(BaseModel):
     """Input schema for Crypto Thesis Generator Tool."""
-    
+
     symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
 
 
@@ -472,7 +472,7 @@ class CryptoThesisGeneratorTool(BaseTool):
 
 class CryptoRiskScoringInput(BaseModel):
     """Input schema for Crypto Risk Scoring Tool."""
-    
+
     symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
 
 

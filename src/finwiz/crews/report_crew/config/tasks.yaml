@@ -186,3 +186,18 @@ pdf_generation_task:
   # as its input context if it's the next task in a sequence.
   # The HtmlToPdfTool is designed to take the HTML file path as its direct argument.
   # No separate output_file is needed here as the tool handles PDF saving.
+
+translation_task:
+  description: >
+    Translate the comprehensive English investment report to French
+    while preserving the exact HTML structure, CSS styling, emojis, and formatting.
+    Maintain all technical financial terminology accuracy and professional tone.
+    Do not modify the HTML structure, CSS classes, or visual elements - only translate
+    the text content within HTML tags.
+  expected_output: >
+    A complete French translation of the investment report with
+    identical HTML structure, formatting, and visual elements. All financial
+    terminology should be accurately translated while maintaining professional
+    investment report standards.
+  agent: translator
+  output_file: "output/finwiz_family_financial_plan_fr.html"

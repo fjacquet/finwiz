@@ -93,6 +93,15 @@ class CryptoCrew:
     def research_director(self) -> Agent:
         return Agent(config=self.agents_config["research_director"], tools=[], verbose=True)
 
+    @agent
+    def translator(self) -> Agent:
+        """Translator agent that converts English reports to French while preserving layout."""
+        return Agent(
+            config=self.agents_config["translator"],
+            tools=[],  # No tools - only consumes upstream HTML context
+            verbose=True,
+        )
+
     @task
     def market_analysis_task(self) -> Task:
         return Task(config=self.tasks_config["market_analysis_task"], async_execution=True)
@@ -113,6 +122,13 @@ class CryptoCrew:
     def final_report_task(self) -> Task:
         return Task(
             config=self.tasks_config["final_report_task"],
+        )
+
+    @task
+    def translation_task(self) -> Task:
+        """Task to translate the English report to French while preserving layout."""
+        return Task(
+            config=self.tasks_config["translation_task"],
         )
 
     @crew

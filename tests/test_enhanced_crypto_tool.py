@@ -304,9 +304,7 @@ class TestEnhancedCryptoAnalysisTool:
     def test_should_handle_thesis_disabled(self, tool, mocker):
         """Test behavior when thesis generation is disabled."""
         # Arrange & Act
-        mocker.patch.object(
-            tool, "_get_crypto_data", return_value={"symbol": "BTC", "name": "Bitcoin", "sources": ["Test"]}
-        )
+        mocker.patch.object(tool, "_get_crypto_data", return_value={"symbol": "BTC", "name": "Bitcoin", "sources": ["Test"]})
 
         result = tool._run(symbol="BTC", include_thesis=False)
 
@@ -317,9 +315,7 @@ class TestEnhancedCryptoAnalysisTool:
     def test_should_handle_risk_assessment_disabled(self, tool, mocker):
         """Test behavior when risk assessment is disabled."""
         # Arrange & Act
-        mocker.patch.object(
-            tool, "_get_crypto_data", return_value={"symbol": "BTC", "name": "Bitcoin", "sources": ["Test"]}
-        )
+        mocker.patch.object(tool, "_get_crypto_data", return_value={"symbol": "BTC", "name": "Bitcoin", "sources": ["Test"]})
 
         result = tool._run(symbol="BTC", include_risk_assessment=False)
 
@@ -330,9 +326,7 @@ class TestEnhancedCryptoAnalysisTool:
     def test_should_handle_crypto_data_errors(self, tool, mocker):
         """Test handling of crypto data retrieval errors."""
         # Arrange
-        mocker.patch.object(
-            EnhancedCryptoAnalysisTool, "_get_crypto_data", return_value={"error": "API unavailable"}
-        )
+        mocker.patch.object(EnhancedCryptoAnalysisTool, "_get_crypto_data", return_value={"error": "API unavailable"})
 
         # Act
         result = tool._run(symbol="BTC")

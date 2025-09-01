@@ -7,6 +7,7 @@ from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
 def mock_rate_limit_decorator(mocker):
     """Helper to mock the rate limiting decorator."""
+
     def mock_with_rate_limit(provider, func, *args, **kwargs):
         # Filter out decorator-specific kwargs and call function directly
         filtered_kwargs = {k: v for k, v in kwargs.items() if k not in ["endpoint"]}
@@ -35,7 +36,7 @@ class TestTwelveDataIndicatorTool:
                 return "Error: TWELVE_DATA_API_KEY environment variable not set."
             return "success"
 
-        mocker.patch.object(tool, '_run', side_effect=mock_run_method)
+        mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
         # Ensure API key is not set
         monkeypatch.delenv("TWELVE_DATA_API_KEY", raising=False)
@@ -57,18 +58,21 @@ class TestTwelveDataIndicatorTool:
 
             # Simulate successful API call
             import requests
-            resp = requests.get(f"{tool.base_url}/{indicator}",
-                              params={
-                                  "symbol": symbol,
-                                  "interval": interval,
-                                  "time_period": length,
-                                  "outputsize": outputsize,
-                                  "apikey": api_key,
-                              })
+
+            resp = requests.get(
+                f"{tool.base_url}/{indicator}",
+                params={
+                    "symbol": symbol,
+                    "interval": interval,
+                    "time_period": length,
+                    "outputsize": outputsize,
+                    "apikey": api_key,
+                },
+            )
             resp.raise_for_status()
             return resp.text
 
-        mocker.patch.object(tool, '_run', side_effect=mock_run_method)
+        mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
         monkeypatch.setenv("TWELVE_DATA_API_KEY", "testkey")
         resp = mocker.Mock()
@@ -104,19 +108,22 @@ class TestTwelveDataIndicatorTool:
 
             # Simulate successful API call
             import requests
-            resp = requests.get(f"{tool.base_url}/{indicator}",
-                              params={
-                                  "symbol": symbol,
-                                  "interval": interval,
-                                  "fast": fast_period,
-                                  "slow": slow_period,
-                                  "signal": signal_period,
-                                  "apikey": api_key,
-                              })
+
+            resp = requests.get(
+                f"{tool.base_url}/{indicator}",
+                params={
+                    "symbol": symbol,
+                    "interval": interval,
+                    "fast": fast_period,
+                    "slow": slow_period,
+                    "signal": signal_period,
+                    "apikey": api_key,
+                },
+            )
             resp.raise_for_status()
             return resp.text
 
-        mocker.patch.object(tool, '_run', side_effect=mock_run_method)
+        mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
         monkeypatch.setenv("TWELVE_DATA_API_KEY", "testkey")
         resp = mocker.Mock()
@@ -157,14 +164,14 @@ class TestTwelveDataIndicatorTool:
             # Simulate API call error
             try:
                 import requests
-                resp = requests.get(f"{tool.base_url}/{indicator}",
-                                  params={"symbol": symbol, "apikey": api_key})
+
+                resp = requests.get(f"{tool.base_url}/{indicator}", params={"symbol": symbol, "apikey": api_key})
                 resp.raise_for_status()
                 return resp.text
             except Exception as e:
                 return f"Error fetching Twelve Data {indicator} for {symbol}: {str(e)}"
 
-        mocker.patch.object(tool, '_run', side_effect=mock_run_method)
+        mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
         monkeypatch.setenv("TWELVE_DATA_API_KEY", "testkey")
         mock_get.side_effect = Exception("Network down")

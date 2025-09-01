@@ -36,7 +36,7 @@ class TestChartImgTool:
                 return "Error: CHART_IMG_API_KEY environment variable not set."
             return "success"
 
-        mocker.patch.object(tool, '_run', side_effect=mock_run_method)
+        mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
         monkeypatch.delenv("CHART_IMG_API_KEY", raising=False)
         out = tool._run(symbol="AAPL")
@@ -52,6 +52,7 @@ class TestChartImgTool:
         # Mock the decorated method directly
         def mock_run_method(symbol, interval="1day", range="6mo", width=900, height=500, theme="light"):
             import base64
+
             api_key = os.getenv("CHART_IMG_API_KEY")
             if not api_key:
                 return "Error: CHART_IMG_API_KEY environment variable not set."
@@ -65,22 +66,26 @@ class TestChartImgTool:
 
             # Call the actual requests.get to trigger the mock
             import requests
-            resp = requests.get("https://api.chart-img.com/v1/stock", 
-                              headers={"x-api-key": api_key},
-                              params={
-                                  "symbol": symbol,
-                                  "interval": interval,
-                                  "range": range,
-                                  "width": width,
-                                  "height": height,
-                                  "theme": theme,
-                              }, timeout=20)
+
+            resp = requests.get(
+                "https://api.chart-img.com/v1/stock",
+                headers={"x-api-key": api_key},
+                params={
+                    "symbol": symbol,
+                    "interval": interval,
+                    "range": range,
+                    "width": width,
+                    "height": height,
+                    "theme": theme,
+                },
+                timeout=20,
+            )
             resp.raise_for_status()
             content_type = resp.headers.get("Content-Type", "image/png")
             b64 = base64.b64encode(resp.content).decode("ascii")
             return f"data:{content_type};base64,{b64}"
 
-        mocker.patch.object(tool, '_run', side_effect=mock_run_method)
+        mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
         monkeypatch.setenv("CHART_IMG_API_KEY", "key")
         resp = mocker.Mock()
@@ -120,22 +125,26 @@ class TestChartImgTool:
             # Simulate API call error
             try:
                 import requests
-                resp = requests.get("https://api.chart-img.com/v1/stock", 
-                                  headers={"x-api-key": api_key},
-                                  params={
-                                      "symbol": symbol,
-                                      "interval": interval,
-                                      "range": range,
-                                      "width": width,
-                                      "height": height,
-                                      "theme": theme,
-                                  }, timeout=20)
+
+                resp = requests.get(
+                    "https://api.chart-img.com/v1/stock",
+                    headers={"x-api-key": api_key},
+                    params={
+                        "symbol": symbol,
+                        "interval": interval,
+                        "range": range,
+                        "width": width,
+                        "height": height,
+                        "theme": theme,
+                    },
+                    timeout=20,
+                )
                 resp.raise_for_status()
                 return "success"
             except Exception as e:
                 return f"Error generating chart image for {symbol}: {str(e)}"
 
-        mocker.patch.object(tool, '_run', side_effect=mock_run_method)
+        mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
         monkeypatch.setenv("CHART_IMG_API_KEY", "key")
         mock_get.side_effect = Exception("boom")

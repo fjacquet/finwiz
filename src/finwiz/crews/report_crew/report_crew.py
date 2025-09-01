@@ -129,6 +129,15 @@ class ReportCrew:
             tools=[html_to_pdf_tool],  # Use the specific tool instance
         )
 
+    @agent
+    def translator(self) -> Agent:
+        """Translator agent that converts English reports to French while preserving layout."""
+        return Agent(
+            config=self.agents_config["translator"],
+            tools=[],  # No tools - only consumes upstream HTML context
+            verbose=True,
+        )
+
     @task
     def comprehensive_financial_integration_task(self) -> Task:
         """Integrate Stock/ETF/Crypto analyses into a unified narrative."""
@@ -168,6 +177,13 @@ class ReportCrew:
             config=self.tasks_config["pdf_generation_task"],
             verbose=True,
             # Agent is assigned via tasks.yaml, context is passed from previous task
+        )
+
+    @task
+    def translation_task(self) -> Task:
+        """Task to translate the English report to French while preserving layout."""
+        return Task(
+            config=self.tasks_config["translation_task"],
         )
 
     @crew

@@ -496,7 +496,7 @@ class EnhancedETFAnalysisTool(BaseTool):
 
 class ETFTrackingAnalysisInput(BaseModel):
     """Input schema for ETF Tracking Analysis Tool."""
-    
+
     ticker: str = Field(..., description="The ETF ticker symbol, e.g., SPY, VTI")
 
 

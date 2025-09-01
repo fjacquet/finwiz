@@ -99,6 +99,15 @@ class StockCrew:
             reasoning=False,
         )
 
+    @agent
+    def translator(self) -> Agent:
+        """Translator agent that converts English reports to French while preserving layout."""
+        return Agent(
+            config=self.agents_config["translator"],
+            tools=[],  # No tools - only consumes upstream HTML context
+            verbose=True,
+        )
+
     @task
     def market_technical_analysis_task(self) -> Task:
         """Execute technical analysis for short-listed tickers."""
@@ -130,6 +139,13 @@ class StockCrew:
     def stock_risk_assessment_task(self) -> Task:
         """Assess key risks for recommended tickers and mitigation actions."""
         return Task(config=self.tasks_config["stock_risk_assessment_task"], verbose=True)
+
+    @task
+    def translation_task(self) -> Task:
+        """Task to translate the English report to French while preserving layout."""
+        return Task(
+            config=self.tasks_config["translation_task"],
+        )
 
     @crew
     def crew(self) -> Crew:

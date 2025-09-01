@@ -132,5 +132,20 @@ etf_investment_strategy_task:
     The report should be formatted in HTML with emojis for better
     visualization.
   agent: risk_assessor
-  output_file: "output/etf/etf_investment_strategies.html"
+  output_file: "output/etf/etf_investment_strategies_en.html"
+
+translation_task:
+  description: >
+    Translate the comprehensive English ETF investment report to French
+    while preserving the exact HTML structure, CSS styling, emojis, and formatting.
+    Maintain all technical financial terminology accuracy and professional tone.
+    Do not modify the HTML structure, CSS classes, or visual elements - only translate
+    the text content within HTML tags.
+  expected_output: >
+    A complete French translation of the ETF investment report with
+    identical HTML structure, formatting, and visual elements. All financial
+    terminology should be accurately translated while maintaining professional
+    investment report standards.
+  agent: translator
+  output_file: "output/etf/etf_investment_strategies_fr.html"
 

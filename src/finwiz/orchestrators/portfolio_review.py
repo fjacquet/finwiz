@@ -4,7 +4,7 @@ import csv
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -153,7 +153,7 @@ def build_portfolio_review(
         )
 
     return PortfolioReview(
-        as_of=datetime.now(timezone.utc),
+        as_of=datetime.now(UTC),
         base_currency=base_currency,
         holdings=decisions,
     )

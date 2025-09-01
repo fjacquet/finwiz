@@ -108,6 +108,15 @@ class EtfCrew:
             reasoning=False,
         )
 
+    @agent
+    def translator(self) -> Agent:
+        """Translator agent that converts English reports to French while preserving layout."""
+        return Agent(
+            config=self.agents_config["translator"],
+            tools=[],  # No tools - only consumes upstream HTML context
+            verbose=True,
+        )
+
     @task
     def etf_market_trends_task(self) -> Task:
         return Task(
@@ -144,6 +153,13 @@ class EtfCrew:
     @task
     def etf_investment_strategy_task(self) -> Task:
         return Task(config=self.tasks_config["etf_investment_strategy_task"], verbose=True)
+
+    @task
+    def translation_task(self) -> Task:
+        """Task to translate the English report to French while preserving layout."""
+        return Task(
+            config=self.tasks_config["translation_task"],
+        )
 
     @crew
     def crew(self) -> Crew:

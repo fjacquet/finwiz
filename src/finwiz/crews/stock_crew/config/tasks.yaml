@@ -51,7 +51,7 @@ stock_screening_task:
 
     OUTPUT: Return a list of the top 10 emerging stocks with analysis.
   expected_output: >
-    A list of 10 emerging stocks with unicorn potential, including ticker
+    A list of 10 emerging stocks with  potential, including ticker
     symbols and analysis. Include a concise "Market Sentiment" summary per ticker
     with aggregate metrics and cited headlines.
     Also include machine-readable JSON appendices at the end containing:
@@ -122,7 +122,22 @@ stock_risk_assessment_task:
     Also include a machine-readable JSON appendix containing:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ticker
   agent: investment_risk_analyst
-  output_file: "output/stock/stock_investment_risk_strategy.html"
+  output_file: "output/stock/stock_investment_risk_strategy_en.html"
   depends_on:
     - technical_detail_task
+
+translation_task:
+  description: >
+    Translate the comprehensive English stock investment report to French
+    while preserving the exact HTML structure, CSS styling, emojis, and formatting.
+    Maintain all technical financial terminology accuracy and professional tone.
+    Do not modify the HTML structure, CSS classes, or visual elements - only translate
+    the text content within HTML tags.
+  expected_output: >
+    A complete French translation of the stock investment report with
+    identical HTML structure, formatting, and visual elements. All financial
+    terminology should be accurately translated while maintaining professional
+    investment report standards.
+  agent: translator
+  output_file: "output/stock/stock_investment_risk_strategy_fr.html"
 

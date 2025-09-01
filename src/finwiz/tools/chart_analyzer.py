@@ -564,7 +564,8 @@ class ChartAnalyzer:
         # Find the sentence containing the price
         # Use regex to split on sentence boundaries while preserving decimal points in prices
         import re
-        sentences = re.split(r'\.(?!\d)', text)  # Split on periods not followed by digits
+
+        sentences = re.split(r"\.(?!\d)", text)  # Split on periods not followed by digits
         for sentence in sentences:
             if f"${price}" in sentence:
                 return sentence.strip()
