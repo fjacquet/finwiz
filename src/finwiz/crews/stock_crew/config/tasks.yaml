@@ -13,9 +13,11 @@ market_technical_analysis_task:
 
     1. Identify key market trends and growth sectors as of {full_date}.
     2. Analyze current market sentiment and adoption potential.
-    3. Examine historical patterns indicating growth potential, considering the present market context as of {full_date}.
+    3. Examine historical patterns indicating growth potential, considering 
+    the present market context as of {full_date}.
 
-    OUTPUT: Return a concise analysis of market trends, ensuring all information is current as of {full_date}.
+    OUTPUT: Return a concise analysis of market trends, ensuring all information 
+    is current as of {full_date}.
   expected_output: >
     An analysis of current stock market trends and emerging sectors with
     growth potential.
@@ -37,7 +39,8 @@ stock_screening_task:
        - For equities/ETFs use Yahoo Finance existence and quoteType
        - For crypto proposals (if any), validate via Coinbase Products API
        - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
-    6. Sentiment analysis: Use the "Standardized Sentiment Analysis Tool" for consistent sentiment methodology.
+    6. Sentiment analysis: Use the "Standardized Sentiment Analysis Tool" for consistent 
+    sentiment methodology.
        - Analyze recent headlines/snippets (last 30–90 days) for each candidate
        - Classify sentiment with weighted scoring and confidence intervals
        - Provide aggregate metrics: mean score, weighted score, counts per label
@@ -69,8 +72,10 @@ technical_detail_task:
     2. Assess growth scalability and efficiency metrics based on recent performance.
     3. Evaluate balance sheet strength and risk factors as of {full_date}.
     4. Examine competitive advantages and innovation potential, considering any recent developments.
-    5. 10-K extraction: Use the "Enhanced SEC Analysis Tool" to extract comprehensive insights from the most recent 10-K filing for each ticker.
-       - Extract detailed, cited excerpts from Business Overview (Item 1), Risk Factors (Item 1A), MD&A (Item 7), and Market Risk Disclosures (Item 7A).
+    5. 10-K extraction: Use the "Enhanced SEC Analysis Tool" to extract comprehensive insights from 
+    the most recent 10-K filing for each ticker.
+       - Extract detailed, cited excerpts from Business Overview (Item 1), Risk Factors (Item 1A), MD&A (Item 7),
+        and Market Risk Disclosures (Item 7A).
        - Include SEC filing URL, specific section references, filing date, and standardized risk assessment.
        - Provide structured TenKInsight objects with proper citations and provenance.
        - Summarize material year-over-year changes relevant to the current analysis as of {full_date}.
@@ -96,13 +101,16 @@ stock_risk_assessment_task:
   description: >
     Evaluate risks for each of the 10 stocks identified in previous tasks.
 
-    1. Use the "Enhanced SEC Analysis Tool" to extract comprehensive risk factors from 10-K filings for standardized risk assessment.
+    1. Use the "Enhanced SEC Analysis Tool" to extract comprehensive risk factors from 10-K filings
+     for standardized risk assessment.
     2. Assess regulatory challenges and compliance status in major markets, relevant for {current_year}.
     3. Identify financial stability and debt structure risks based on data as of {full_date}.
-    4. Analyze valuation risks (P/E ratio, revenue concentration, growth sustainability) using current market data as of {full_date}.
+    4. Analyze valuation risks (P/E ratio, revenue concentration, growth sustainability) using current 
+    market data as of {full_date}.
     5. Evaluate competitive threats and market positioning as of {full_date}.
     6. Review management and corporate governance risks based on the latest information.
-    7. Apply the "Standardized Risk Scoring Tool" methodology to generate consistent 0-5 risk scores with proper level mapping.
+    7. Apply the "Standardized Risk Scoring Tool" methodology to generate consistent 0-5 risk scores
+     with proper level mapping.
     8. Market sentiment: Use the "Standardized Sentiment Analysis Tool" for consistent sentiment analysis.
        - Analyze recent headlines/snippets with standardized methodology
        - Provide weighted sentiment scores and confidence intervals
