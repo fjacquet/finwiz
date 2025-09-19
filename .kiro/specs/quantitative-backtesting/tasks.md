@@ -2,7 +2,7 @@
 
 - [ ] 1. Set up quantitative analysis infrastructure
   - Create project structure for quantitative analysis modules
-  - Add required dependencies (TA-Lib, Backtrader, Pyfolio, QuantLib, PyPortfolioOpt) to pyproject.toml
+  - Add required dependencies (TA-Lib, Backtrader, QuantLib) to pyproject.toml
   - Create base configuration classes for quantitative analysis settings
   - _Requirements: 14.1, 14.4_
 

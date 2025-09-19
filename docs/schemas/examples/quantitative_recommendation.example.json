@@ -1,0 +1,27 @@
+{
+  "symbol": "AAPL",
+  "recommendation": "BUY",
+  "confidence": 0.82,
+  "technical_signal": "Multiple bullish indicators align",
+  "backtest_performance": "Strategy shows 15.75% return with 1.45 Sharpe ratio",
+  "risk_assessment": "Moderate risk with good risk-adjusted returns",
+  "target_return": 18.5,
+  "target_timeframe": "12 months",
+  "stop_loss_level": 142.50,
+  "take_profit_level": 185.75,
+  "key_indicators": {
+    "rsi": 45.67,
+    "macd_signal": "bullish",
+    "bollinger_position": "oversold",
+    "support_level": 145.20,
+    "resistance_level": 162.80
+  },
+  "risk_metrics": {
+    "volatility": 0.1845,
+    "max_drawdown": -0.0823,
+    "var_95": -0.0234,
+    "beta": 1.12
+  },
+  "analysis_date": "2024-01-15T10:30:00Z",
+  "methodology": "quantitative_analysis"
+}

@@ -196,25 +196,68 @@
   - Document rollback procedures for failed deployments
   - _Requirements: 8.2, 8.5_
 
-- [ ] 12. Complete remaining configuration and environment management
-- [ ] 12.1 Finalize ConfigurationManager implementation
-  - Complete ConfigurationManager class with centralized API key validation
-  - Implement startup validation that checks all required API keys at once
-  - Add clear error messages with remediation guidance for missing keys
-  - Write comprehensive unit tests for configuration validation scenarios
-  - _Requirements: 5.1, 5.3_
-
-- [ ] 12.2 Implement feature flag system
-  - Create FeatureFlags class with environment variable-based configuration
-  - Implement feature flag evaluation logic for gradual rollout capabilities
-  - Add graceful degradation logic for API failures and rate limits
-  - Write unit tests for feature flag behavior and fallback scenarios
-  - _Requirements: 5.4, 5.5_
-
-- [ ] 12.3 Integrate configuration management into main application
-  - Modify main.py to use ConfigurationManager for startup validation
-  - Ensure all crews and tools use centralized configuration
-  - Add logging for configuration status and feature flag states
-  - Write integration tests for complete configuration workflow
+- [x] 12. Integrate configuration management into main application
+- [x] 12.1 Update main.py to use ConfigurationManager for startup validation
+  - Import and initialize ConfigurationManager in main.py
+  - Add startup validation that checks all required API keys before flow execution
+  - Implement graceful error handling with clear remediation guidance for missing keys
+  - Add logging for configuration status and feature flag states during startup
   - _Requirements: 5.1, 5.3, 5.4_
+
+- [x] 12.2 Integrate session management into main application flow
+  - Import SessionManager in main.py and initialize session loading
+  - Add session loading logic to check for existing financial plan at startup
+  - Integrate session data into flow inputs for crew consumption
+  - Add error handling for corrupted sessions with fallback to new session creation
+  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+
+- [-] 13. Implement quantitative analysis and backtesting framework
+- [x] 13.1 Create quantitative analysis configuration system
+  - Implement QuantConfig, BacktestConfig, and ScreenerConfig classes in config.py
+  - Add configuration for data providers, backtesting parameters, and screening criteria
+  - Include feature flag integration for quantitative analysis capabilities
+  - Write unit tests for configuration loading and validation
+  - _Requirements: 12.1, 12.2, 12.3_
+
+- [x] 13.2 Implement historical data management system
+  - Create HistoricalDataManager class in data.py for downloading OHLCV data using yfinance
+  - Implement DataQualityValidator for validating data completeness and accuracy
+  - Add data caching and storage mechanisms with configurable retention policies
+  - Write unit tests for data downloading, validation, and caching
+  - _Requirements: 12.1, 12.4_
+
+- [x] 13.3 Build technical analysis engine with TA-Lib integration
+  - Create TechnicalAnalysisEngine class in technical.py with TA-Lib wrapper functions
+  - Implement calculation methods for SMA, RSI, MACD, Bollinger Bands, and other indicators
+  - Add confluence detection and signal generation capabilities
+  - Write unit tests for technical indicator calculations and signal accuracy
+  - _Requirements: 12.2, 12.5_
+
+- [x] 13.4 Implement backtesting engine with Backtrader framework
+  - Create BacktestingEngine class in backtesting.py using Backtrader for strategy execution
+  - Implement StrategyFramework base class for custom trading strategies
+  - Add portfolio management, position sizing, and risk management features
+  - Write unit tests for backtesting execution and strategy validation
+  - _Requirements: 12.3, 12.6_
+
+- [x] 13.5 Build performance analysis and reporting system
+  - Create PerformanceAnalyzer class in performance.py for calculating Sharpe ratio, maximum drawdown, and returns
+  - Implement portfolio optimization using PyPortfolioOpt for efficient frontier calculations
+  - Add performance visualization and reporting capabilities
+  - Write unit tests for performance calculations and optimization algorithms
+  - _Requirements: 12.4, 12.7_
+
+- [x] 13.6 Build derivatives pricing and portfolio optimization modules
+  - Create DerivativesPricer class in derivatives.py with QuantLib integration
+  - Implement PortfolioOptimizer class in optimization.py for modern portfolio theory
+  - Create StockScreener class in screening.py for fundamental analysis screening
+  - Write unit tests for derivatives pricing and portfolio optimization
+  - _Requirements: 12.4, 12.7_
+
+- [x] 13.7 Integrate quantitative analysis into existing crews
+  - Add quantitative analysis capabilities to Stock, ETF, and Crypto crews
+  - Implement backtesting integration for investment recommendations
+  - Add quantitative metrics to crew output schemas and validation
+  - Write integration tests for quantitative analysis workflow
+  - _Requirements: 12.8_
 

@@ -19,6 +19,9 @@ dependencies = [
     "dotenv>=0.9.9",
     "pydantic>=2.11.7",
     "unstructured>=0.18.11",
+    "ta-lib>=0.6.6",
+    "backtrader>=1.9.78.123",
+    "quantlib>=1.39",
 ]
 
 [project.scripts]

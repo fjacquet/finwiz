@@ -151,6 +151,44 @@ class FeatureFlags:
                 fallback_strategy=FallbackStrategy.DISABLE,
                 description="Portfolio keep-or-sell review functionality",
             ),
+            "quantitative_analysis": FeatureFlagConfig(
+                name="quantitative_analysis",
+                enabled=self._get_env_bool("FF_QUANTITATIVE_ANALYSIS", False),
+                strategy=FeatureFlagStrategy.PERCENTAGE,
+                rollout_percentage=self._get_env_float("FF_QUANTITATIVE_ANALYSIS_ROLLOUT", 0.0),
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Quantitative analysis and backtesting framework",
+            ),
+            "quantitative_backtesting": FeatureFlagConfig(
+                name="quantitative_backtesting",
+                enabled=self._get_env_bool("FF_QUANTITATIVE_BACKTESTING", False),
+                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
+                circuit_breaker_threshold=self._get_env_int("FF_BACKTEST_BREAKER_THRESHOLD", 3),
+                circuit_breaker_timeout=self._get_env_int("FF_BACKTEST_BREAKER_TIMEOUT", 600),
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Strategy backtesting with professional frameworks",
+            ),
+            "stock_screening": FeatureFlagConfig(
+                name="stock_screening",
+                enabled=self._get_env_bool("FF_STOCK_SCREENING", False),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
+                description="Fundamental analysis stock screening",
+            ),
+            "portfolio_optimization": FeatureFlagConfig(
+                name="portfolio_optimization",
+                enabled=self._get_env_bool("FF_PORTFOLIO_OPTIMIZATION", False),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Modern portfolio theory optimization",
+            ),
+            "derivatives_pricing": FeatureFlagConfig(
+                name="derivatives_pricing",
+                enabled=self._get_env_bool("FF_DERIVATIVES_PRICING", False),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="QuantLib derivatives pricing capabilities",
+            ),
         }
 
         self.flags.update(default_flags)
@@ -400,6 +438,14 @@ class FeatureFlags:
     def list_all_flags(self) -> dict[str, dict[str, Any]]:
         """List all feature flags and their current status."""
         return {name: self.get_flag_status(name) for name in self.flags.keys()}
+
+    def get_enabled_flags(self) -> list[str]:
+        """Get list of enabled feature flag names."""
+        enabled_flags = []
+        for flag_name in self.flags.keys():
+            if self.is_enabled(flag_name):
+                enabled_flags.append(flag_name)
+        return enabled_flags
 
     def update_flag(self, flag_name: str, **updates) -> bool:
         """

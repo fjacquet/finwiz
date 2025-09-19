@@ -1,0 +1,16 @@
+{
+  "symbol": "AAPL",
+  "strategy_name": "SimpleMovingAverageStrategy",
+  "total_return": 15.75,
+  "annualized_return": 12.34,
+  "sharpe_ratio": 1.45,
+  "max_drawdown": -8.23,
+  "total_trades": 24,
+  "win_rate": 0.625,
+  "volatility": 18.45,
+  "var_95": -2.34,
+  "backtest_start_date": "2023-01-01T00:00:00Z",
+  "backtest_end_date": "2024-01-01T00:00:00Z",
+  "initial_capital": 100000.0,
+  "final_value": 115750.0
+}

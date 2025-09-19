@@ -13,6 +13,15 @@ This folder hosts JSON Schemas exported from Pydantic models in `src/finwiz/sche
 - **ETF Analysis**: `ETFFactsheet`, `ETFTopHolding`
 - **Crypto Analysis**: `CryptoThesis`
 
+### Quantitative Analysis Schemas
+- **`QuantitativeBacktestResult`**: Backtesting results with performance metrics and trade statistics
+- **`QuantitativeTechnicalAnalysis`**: Technical analysis results with signal counts and indicator values
+- **`QuantitativePerformanceMetrics`**: Performance metrics including Sharpe ratio, drawdown, and risk measures
+- **`QuantitativeRecommendation`**: Investment recommendations based on quantitative analysis
+- **`EnhancedStockAnalysis`**: Stock analysis enhanced with quantitative capabilities
+- **`EnhancedETFAnalysis`**: ETF analysis enhanced with quantitative capabilities
+- **`EnhancedCryptoAnalysis`**: Crypto analysis enhanced with quantitative capabilities
+
 ### Standardized Analysis Tools
 
 The project includes standardized analysis tools that provide consistent output formats across asset classes:
@@ -40,7 +49,23 @@ This writes `*.schema.json` files into this folder.
 
 ## Examples & Validation
 
-Examples live under `docs/schemas/examples/`.
+Examples live under `docs/schemas/examples/`:
+
+### Core Examples
+- `reporter_input.example.json` - Reporter input structure
+- `validated_ticker.example.json` - Ticker validation results
+
+### Asset-Specific Examples  
+- `tenk_insight.example.json` - Stock 10-K analysis
+- `market_sentiment.example.json` - Market sentiment analysis
+- `etf_factsheet.example.json` - ETF factsheet data
+- `crypto_thesis.example.json` - Crypto investment thesis
+
+### Quantitative Analysis Examples
+- `quantitative_backtest_result.example.json` - Backtesting results
+- `quantitative_technical_analysis.example.json` - Technical analysis output
+- `quantitative_recommendation.example.json` - Investment recommendations
+- `enhanced_stock_analysis.example.json` - Complete enhanced stock analysis
 
 All schemas use strict Pydantic v2 models with `extra='forbid'` to prevent schema drift and ensure data contract compliance.
 

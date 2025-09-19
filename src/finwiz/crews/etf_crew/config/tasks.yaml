@@ -66,7 +66,13 @@ etf_technical_detail_task:
     6. Use the "ETF Tracking Analysis Tool" to analyze tracking performance against benchmarks.
     7. Technical indicators: Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands
        for relevant intervals per ETF, and cite parameters used.
-    8. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
+    8. Quantitative analysis: Use the "Quantitative Analysis Tool" to perform comprehensive quantitative analysis
+       for each ETF including:
+       - Technical analysis with ETF-specific indicators and signal generation
+       - Strategy backtesting with tracking error analysis against benchmarks
+       - Performance metrics calculation including correlation analysis with underlying assets
+       - Use asset_class="etf" and analysis_type="comprehensive" for complete ETF analysis
+    9. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
     
     OUTPUT: Return detailed technical analysis for each ETF, ensuring all data is current as of {full_date}.
   expected_output: >
@@ -75,6 +81,7 @@ etf_technical_detail_task:
     📊 Tracking accuracy
     💧 Liquidity profile
     👨‍💼 Fund management
+    📈 Quantitative Analysis: backtesting results, technical signals, and performance metrics
     📄 Factsheet Highlights (optional): name, ticker, category, expense_ratio, as_of, source_url
     📈 Top Holdings (optional): array of {ticker, weight_pct, as_of, source_url}
 
@@ -82,6 +89,7 @@ etf_technical_detail_task:
     - etf_factsheets[] matching the ETFFactsheet schema with enhanced data extraction
     - top_holdings[] matching the ETFTopHolding schema with proper validation
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
+    - quantitative_analysis[] with comprehensive quantitative analysis results for each ETF
   agent: market_etf_analyst
   output_file: "output/etf/etf_technical_details.md"
 
@@ -97,7 +105,13 @@ etf_risk_assessment_task:
     5. Evaluate counterparty and structural risks based on replication methods and issuer stability.
     6. Review regulatory and tax considerations relevant for {current_year}.
     7. Apply the "Standardized Risk Scoring Tool" methodology for consistent 0-5 risk scores across all ETFs.
-    8. Market sentiment: Use the "Standardized Sentiment Analysis Tool" for consistent ETF sentiment analysis.
+    8. Quantitative risk assessment: Use the "Quantitative Analysis Tool" with analysis_type="performance"
+       to calculate ETF-specific risk metrics including:
+       - Tracking error and correlation analysis with benchmark indices
+       - Volatility decomposition and risk attribution analysis
+       - Performance metrics during market stress periods
+       - Liquidity risk assessment and bid-ask spread analysis
+    9. Market sentiment: Use the "Standardized Sentiment Analysis Tool" for consistent ETF sentiment analysis.
        - Apply standardized cross-asset sentiment methodology for ETFs
        - Provide weighted sentiment scores and confidence intervals
        - Extract trending topics relevant to ETF sectors and holdings

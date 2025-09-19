@@ -98,6 +98,9 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `HtmlToPdfTool`: Converts HTML reports to PDF format.
 - `AlphaVantageNewsSentimentTool`: Fetches news and sentiment data with filtering capabilities.
 
+### Quantitative Analysis Tools
+- `QuantitativeAnalysisTool`: Comprehensive quantitative analysis including technical analysis, backtesting, and performance metrics. Supports stocks, ETFs, and cryptocurrencies with multiple analysis types (technical, backtest, performance, comprehensive).
+
 ### RAG & Knowledge Tools
 - `SaveToRagTool`: Persists text for later retrieval via RAG.
 - RAG tools for knowledge retrieval and storage.
@@ -440,6 +443,169 @@ def test_stock_analysis(mocker):
     result = analyze_stock(fake.stock_ticker())
     assert result.recommendation in ["BUY", "HOLD", "SELL"]
 ```
+
+## Quantitative Analysis Framework
+
+FinWiz includes a comprehensive quantitative analysis framework built on professional-grade financial libraries.
+
+### Core Components
+
+#### Backtesting Engine (`finwiz.quantitative.backtesting`)
+- **Framework**: Built on Backtrader for professional strategy development
+- **Strategy Base Class**: `StrategyFramework` with built-in risk management
+- **Position Sizing**: Multiple methods including fixed amount, percentage of portfolio, Kelly criterion
+- **Risk Management**: Stop-loss, take-profit, and maximum drawdown controls
+- **Performance Metrics**: Comprehensive analysis including Sharpe ratio, maximum drawdown, win rate
+
+```python
+from finwiz.quantitative import get_backtesting_engine, SimpleMovingAverageStrategy
+
+engine = get_backtesting_engine()
+result = engine.run_strategy_backtest(
+    SimpleMovingAverageStrategy,
+    symbol="AAPL",
+    start_date=datetime(2023, 1, 1),
+    end_date=datetime(2024, 1, 1)
+)
+```
+
+#### Technical Analysis Engine (`finwiz.quantitative.technical`)
+- **Library**: TA-Lib integration with 150+ technical indicators
+- **Indicators**: SMA, EMA, RSI, MACD, Bollinger Bands, Stochastic, ATR, ADX, CCI, Williams %R, Fibonacci
+- **Signal Generation**: Automated buy/sell signals with confidence scoring
+- **Confluence Detection**: Identify zones where multiple indicators align
+- **Multi-Timeframe**: Support for different timeframes and data frequencies
+
+```python
+from finwiz.quantitative.technical import TechnicalAnalysisEngine
+
+engine = TechnicalAnalysisEngine()
+result = engine.analyze_symbol(data, "AAPL", "1d", indicators=[
+    TechnicalIndicator.RSI,
+    TechnicalIndicator.MACD,
+    TechnicalIndicator.BOLLINGER_BANDS
+])
+```
+
+#### Performance Analytics (`finwiz.quantitative.performance`)
+- **Metrics**: Sharpe, Sortino, Calmar ratios, maximum drawdown, VaR, CVaR
+- **Portfolio Optimization**: PyPortfolioOpt integration for efficient frontier
+- **Benchmark Comparison**: Alpha, beta, tracking error, information ratio
+- **Visualization**: Performance charts and optimization plots (requires Plotly)
+
+```python
+from finwiz.quantitative import get_performance_analyzer
+
+analyzer = get_performance_analyzer()
+report = analyzer.analyze_performance(
+    returns=strategy_returns,
+    benchmark_returns=benchmark_returns,
+    strategy_name="My Strategy"
+)
+```
+
+#### Portfolio Optimization (`finwiz.quantitative.optimization`)
+- **Methods**: Mean-variance, risk parity, Black-Litterman, hierarchical risk parity
+- **Objectives**: Maximum Sharpe ratio, minimum volatility, maximum return
+- **Constraints**: Weight bounds, sector limits, turnover constraints
+- **Efficient Frontier**: Generate and visualize efficient portfolios
+
+```python
+from finwiz.quantitative.optimization import PortfolioOptimizer
+
+optimizer = PortfolioOptimizer()
+result = optimizer.optimize_portfolio(
+    inputs=portfolio_inputs,
+    objective=ObjectiveFunction.MAX_SHARPE,
+    method=OptimizationMethod.MEAN_VARIANCE
+)
+```
+
+#### Derivatives Pricing (`finwiz.quantitative.derivatives`)
+- **Library**: QuantLib integration for professional derivatives pricing
+- **Options**: Black-Scholes, binomial, Monte Carlo pricing models
+- **Greeks**: Delta, gamma, theta, vega, rho calculation
+- **Bonds**: Yield curve analysis, duration, convexity
+- **Implied Volatility**: Newton-Raphson method for volatility calculation
+
+```python
+from finwiz.quantitative.derivatives import DerivativesPricer, OptionParameters
+
+pricer = DerivativesPricer()
+result = pricer.price_option(
+    OptionParameters(
+        underlying_price=100.0,
+        strike_price=105.0,
+        time_to_expiry=0.25,
+        risk_free_rate=0.05,
+        volatility=0.20,
+        option_type=OptionType.CALL
+    )
+)
+```
+
+#### Stock Screening (`finwiz.quantitative.screening`)
+- **Universes**: S&P 500, NASDAQ 100, Russell 2000, Dow 30, custom lists
+- **Criteria**: Fundamental metrics (P/E, ROE, debt ratios) and technical indicators
+- **Scoring**: Multi-criteria composite scoring with configurable weights
+- **Filtering**: Advanced filtering with min/max values and custom logic
+
+```python
+from finwiz.quantitative.screening import StockScreener, ScreeningFilter
+
+screener = StockScreener()
+results, summary = screener.screen_stocks(
+    filters=[
+        ScreeningFilter(criteria=ScreeningCriteria.PE_RATIO, min_value=5, max_value=20),
+        ScreeningFilter(criteria=ScreeningCriteria.ROE, min_value=0.15)
+    ],
+    universe=ScreeningUniverse.SP500,
+    max_results=50
+)
+```
+
+### Configuration
+
+Quantitative analysis is configured through environment variables and configuration classes:
+
+```bash
+# Optional quantitative analysis dependencies
+QUANTITATIVE_ENABLED=true
+BACKTEST_INITIAL_CAPITAL=100000
+BACKTEST_COMMISSION=0.001
+RISK_FREE_RATE=0.02
+```
+
+### Dependencies
+
+The quantitative framework requires additional dependencies:
+- **Backtrader**: Strategy backtesting framework
+- **TA-Lib**: Technical analysis library
+- **PyPortfolioOpt**: Portfolio optimization (optional)
+- **QuantLib**: Derivatives pricing (optional)
+- **Plotly**: Visualization (optional)
+- **SciPy**: Statistical functions
+
+Install with:
+```bash
+uv pip install backtrader ta-lib
+# Optional dependencies
+uv pip install PyPortfolioOpt QuantLib plotly scipy
+```
+
+### Integration with Crews
+
+The quantitative framework integrates with existing crews through the `QuantitativeAnalysisTool`:
+
+```python
+# In crew configuration
+tools = [
+    QuantitativeAnalysisTool(),
+    # ... other tools
+]
+```
+
+The tool provides comprehensive analysis results that can be incorporated into crew outputs using the quantitative schemas in `src/finwiz/schemas/quantitative.py`.
 
 ## Testing
 

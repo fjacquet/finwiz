@@ -1,0 +1,80 @@
+{
+  "ticker": "AAPL",
+  "company_name": "Apple Inc.",
+  "technical_analysis": {
+    "symbol": "AAPL",
+    "timeframe": "1d",
+    "overall_signal": "BUY",
+    "overall_confidence": 0.78,
+    "signal_strength": "STRONG",
+    "bullish_signals_count": 5,
+    "bearish_signals_count": 1,
+    "neutral_signals_count": 2,
+    "rsi_value": 45.67,
+    "macd_signal": "Bullish crossover detected",
+    "bollinger_position": "Price near lower band - potential bounce",
+    "analysis_timestamp": "2024-01-15T10:30:00Z"
+  },
+  "backtest_result": {
+    "symbol": "AAPL",
+    "strategy_name": "SimpleMovingAverageStrategy",
+    "total_return": 15.75,
+    "annualized_return": 12.34,
+    "sharpe_ratio": 1.45,
+    "max_drawdown": -8.23,
+    "total_trades": 24,
+    "win_rate": 0.625,
+    "volatility": 18.45,
+    "var_95": -2.34,
+    "backtest_start_date": "2023-01-01T00:00:00Z",
+    "backtest_end_date": "2024-01-01T00:00:00Z",
+    "initial_capital": 100000.0,
+    "final_value": 115750.0
+  },
+  "performance_metrics": {
+    "symbol": "AAPL",
+    "total_return": 15.75,
+    "annualized_return": 12.34,
+    "sharpe_ratio": 1.45,
+    "sortino_ratio": 1.67,
+    "calmar_ratio": 1.50,
+    "max_drawdown": -8.23,
+    "volatility": 18.45,
+    "var_95": -2.34,
+    "skewness": 0.12,
+    "kurtosis": 2.89,
+    "alpha": 2.45,
+    "beta": 1.12,
+    "information_ratio": 0.78,
+    "start_date": "2023-01-01T00:00:00Z",
+    "end_date": "2024-01-01T00:00:00Z",
+    "total_days": 365,
+    "trading_days": 252
+  },
+  "quantitative_recommendation": {
+    "symbol": "AAPL",
+    "recommendation": "BUY",
+    "confidence": 0.82,
+    "technical_signal": "Multiple bullish indicators align",
+    "backtest_performance": "Strategy shows 15.75% return with 1.45 Sharpe ratio",
+    "risk_assessment": "Moderate risk with good risk-adjusted returns",
+    "target_return": 18.5,
+    "target_timeframe": "12 months",
+    "stop_loss_level": 142.50,
+    "take_profit_level": 185.75,
+    "key_indicators": {
+      "rsi": 45.67,
+      "macd_signal": "bullish",
+      "bollinger_position": "oversold"
+    },
+    "risk_metrics": {
+      "volatility": 0.1845,
+      "max_drawdown": -0.0823,
+      "var_95": -0.0234
+    },
+    "analysis_date": "2024-01-15T10:30:00Z",
+    "methodology": "quantitative_analysis"
+  },
+  "analysis_timestamp": "2024-01-15T10:30:00Z",
+  "quantitative_enabled": true
+}

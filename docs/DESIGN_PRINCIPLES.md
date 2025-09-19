@@ -42,6 +42,9 @@ Like a haiku poem with its strict form of simplicity and elegance:
 - **Persistent State Management**: Support loading and updating existing financial plans from previous sessions.
 - **Intelligent Caching**: Implement multi-backend caching with configurable TTL and eviction strategies.
 - **Performance Monitoring**: Track cache hit rates and system performance metrics.
+- **Quantitative Integration**: Support professional-grade quantitative analysis with Backtrader, TA-Lib, and other specialized libraries.
+- **Multi-Asset Support**: Provide consistent quantitative methodologies across stocks, ETFs, and cryptocurrencies.
+- **Statistical Rigor**: Implement statistically sound methods for backtesting, performance analysis, and risk assessment.
 
 ### Configuration-Driven Design
 

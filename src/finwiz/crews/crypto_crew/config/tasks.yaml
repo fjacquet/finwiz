@@ -30,6 +30,11 @@ technical_analysis_task:
     Technical Indicators & Charts:
     - Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands for relevant intervals (if the symbol/interval is supported),
       and cite the parameters used.
+    - Use the "Quantitative Analysis Tool" with analysis_type="technical" and asset_class="crypto" to perform
+      comprehensive technical analysis including:
+      * Multi-indicator confluence detection and signal strength scoring
+      * Crypto-specific volatility analysis and momentum indicators
+      * Support and resistance level identification with price targets
     - Generate charts with the "Chart-img Generator" tool and embed returned data URLs directly in the report.
   expected_output: >
     A technical analysis report for the top 10 cryptocurrencies, including
@@ -48,6 +53,10 @@ risk_assessment_task:
     - Apply the "Crypto Risk Scoring Tool" methodology for consistent 0-5 risk scores
     - Focus on crypto-specific risks: volatility, regulatory uncertainty, technology risks, market manipulation
     - Assess tokenomics, supply dynamics, and adoption risks
+    - Use the "Quantitative Analysis Tool" with analysis_type="performance" and asset_class="crypto" to calculate:
+      * Extreme volatility metrics and tail risk analysis (VaR/CVaR)
+      * Correlation analysis with traditional assets and other cryptocurrencies
+      * Drawdown analysis during crypto market crashes and recovery patterns
     
     Sentiment Analysis:
     - Use the "Standardized Sentiment Analysis Tool" with asset_class="crypto" for consistent sentiment methodology
@@ -77,6 +86,10 @@ investment_strategy_task:
       * Market dynamics and tokenomics evaluation
     - Use the "Crypto Thesis Generator Tool" for additional thesis refinement
     - Apply the "Crypto Risk Scoring Tool" for consistent risk methodology
+    - Use the "Quantitative Analysis Tool" with analysis_type="comprehensive" and asset_class="crypto" to generate:
+      * Complete backtesting analysis with crypto-specific strategies
+      * Performance attribution and risk-adjusted return calculations
+      * Investment recommendations with quantitative justification and price targets
     
     Provide recommendations for asset allocation, position sizing, and clear
     investment thesis with proper risk-adjusted returns analysis.
@@ -84,10 +97,12 @@ investment_strategy_task:
     A detailed investment strategy document, including asset allocation, risk
     management, and a long-term outlook for the selected cryptocurrencies.
     Include standardized risk scores (0-5 scale) for each cryptocurrency.
+    Include quantitative analysis results with backtesting performance and technical signals.
     
     Also include a machine-readable JSON appendix containing:
     - crypto_theses[] matching the CryptoThesis schema for each cryptocurrency
     - risk_assessments[] matching the RiskAssessmentStandardized schema
+    - quantitative_analysis[] with comprehensive quantitative analysis results for each cryptocurrency
   agent: investment_strategist
   output_file: "output/crypto/crypto_investment_strategy.md"
 

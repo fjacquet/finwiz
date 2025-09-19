@@ -11,6 +11,7 @@
 - **Real-Time Data Retrieval**: Employs a suite of tools to fetch live data from the web, ensuring analyses are based on the most current information.
 - **Structured Output**: Generates detailed reports in HTML and PDF formats with strict schema validation.
 - **Enhanced Financial Analysis**: Standardized multi-source sentiment analysis, technical indicators, and chart generation capabilities with comprehensive testing coverage.
+- **Quantitative Analysis Framework**: Professional-grade backtesting engine with Backtrader, technical analysis with TA-Lib, portfolio optimization, derivatives pricing, and performance analytics.
 - **Persistent Financial Planning**: Loads and updates existing financial plans from previous sessions.
 - **Advanced Data Validation**: Centralized validation system with ValidationManager, SchemaRegistry, configurable strictness modes (off/warn/error), and structured error handling with detailed context.
 - **Intelligent Caching System**: Advanced caching layer with TTL support, multiple backends (memory/file/hybrid), and performance monitoring.
@@ -31,6 +32,15 @@ finwiz/
 │   │   ├── stock_crew/
 │   │   └── report_crew/      # Final report generation crew
 │   ├── orchestrators/        # Flow coordination and portfolio analysis
+│   ├── quantitative/         # Quantitative analysis framework
+│   │   ├── backtesting.py    # Backtrader-based backtesting engine
+│   │   ├── technical.py      # TA-Lib technical analysis engine
+│   │   ├── performance.py    # Performance analytics and optimization
+│   │   ├── derivatives.py    # QuantLib derivatives pricing
+│   │   ├── optimization.py   # Portfolio optimization (PyPortfolioOpt)
+│   │   ├── screening.py      # Stock screening and filtering
+│   │   ├── data.py          # Historical data management
+│   │   └── config.py        # Quantitative analysis configuration
 │   ├── schemas/              # Pydantic data models with strict validation
 │   ├── tools/                # Custom tools for financial analysis and data handling
 │   ├── templates/            # Report templates
@@ -168,6 +178,46 @@ FinWiz includes automated portfolio review capabilities:
 - **CSV Integration**: Reads portfolio data from `data/etf.csv` and `data/stock.csv`
 - **Validation**: Ticker existence validation across multiple exchanges and asset classes
 
+## 📈 Quantitative Analysis Framework
+
+FinWiz includes a comprehensive quantitative analysis framework for professional-grade financial modeling and backtesting:
+
+### Backtesting Engine
+- **Backtrader Integration**: Professional backtesting framework with strategy development capabilities
+- **Strategy Framework**: Base classes for custom trading strategies with risk management
+- **Performance Metrics**: Comprehensive performance analysis including Sharpe ratio, maximum drawdown, and risk-adjusted returns
+- **Multi-Strategy Support**: Compare multiple strategies across different timeframes and assets
+
+### Technical Analysis Engine
+- **TA-Lib Integration**: Professional technical analysis with 150+ indicators
+- **Signal Generation**: Automated buy/sell signal generation with confidence scoring
+- **Confluence Detection**: Identify zones where multiple indicators align
+- **Multi-Timeframe Analysis**: Analyze patterns across different timeframes
+
+### Portfolio Optimization
+- **Modern Portfolio Theory**: Mean-variance optimization with efficient frontier calculation
+- **Risk Parity**: Equal risk contribution portfolio construction
+- **Black-Litterman Model**: Bayesian approach to portfolio optimization
+- **Hierarchical Risk Parity**: Advanced diversification using machine learning clustering
+
+### Derivatives Pricing
+- **QuantLib Integration**: Professional derivatives pricing library
+- **Options Pricing**: Black-Scholes, binomial, and Monte Carlo models
+- **Greeks Calculation**: Delta, gamma, theta, vega, and rho for risk management
+- **Bond Analytics**: Yield curve analysis, duration, and convexity calculations
+
+### Stock Screening
+- **Fundamental Screening**: Filter stocks based on financial metrics
+- **Technical Screening**: Screen based on technical indicators and patterns
+- **Multi-Criteria Scoring**: Composite scoring across multiple factors
+- **Universe Support**: Screen across S&P 500, NASDAQ 100, Russell 2000, and custom lists
+
+### Performance Analytics
+- **Risk-Adjusted Metrics**: Sharpe, Sortino, and Calmar ratios
+- **Drawdown Analysis**: Maximum drawdown and recovery time analysis
+- **Benchmark Comparison**: Alpha, beta, and tracking error calculation
+- **Portfolio Attribution**: Performance attribution analysis
+
 ## 🔬 Enhanced Analysis Features
 
 FinWiz provides sophisticated financial analysis through specialized tools:
@@ -215,6 +265,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Agent Handbook](docs/agent_handbook.md)**: Guidelines and standards for AI agents
 - **[Design Principles](docs/DESIGN_PRINCIPLES.md)**: Core architectural principles and patterns
 - **[Technical Reference](docs/reference.md)**: Complete API and configuration reference
+- **[Quantitative Analysis](docs/quantitative_analysis.md)**: Comprehensive guide to quantitative analysis framework
 - **[Validation System](docs/validation_system.md)**: Data validation infrastructure guide
 - **[Caching System](docs/caching_system.md)**: Intelligent caching capabilities
 - **[Migration Guide](docs/migration_guide.md)**: Guide for upgrading to latest features

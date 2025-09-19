@@ -745,8 +745,8 @@ class BacktestingEngine:
         # Execute backtest using Backtrader framework
         backtest_result = self._execute_backtrader_strategy(strategy, ohlcv_data, indicators)
         
-        # Generate performance analysis with Pyfolio
-        tear_sheet = self.performance_analyzer.create_full_tear_sheet(
+        # Generate performance analysis with custom analytics
+        performance_report = self.performance_analyzer.create_performance_report(
             backtest_result.returns, 
             benchmark_returns=self._get_benchmark_returns(ticker, start_date, end_date)
         )
@@ -825,8 +825,10 @@ class QuantitativeAnalyzer:
     
     def optimize_portfolio(self, assets: List[str], returns: DataFrame, 
                           risk_tolerance: float = 0.1) -> OptimalPortfolio:
-        """Use PyPortfolioOpt for efficient frontier calculations."""
-        from pypfopt import EfficientFrontier, risk_models, expected_returns
+        """Use modern optimization libraries for efficient frontier calculations."""
+        import cvxpy as cp
+        import numpy as np
+        from scipy.optimize import minimize
         
         # Calculate expected returns and risk model
         mu = expected_returns.mean_historical_return(returns)
@@ -976,11 +978,11 @@ class DataQualityValidator:
 ```python
 class PerformanceAnalyzer:
     def __init__(self):
-        self.pyfolio_wrapper = PyfolioWrapper()
+        self.analytics_engine = CustomAnalyticsEngine()
     
-    def create_full_tear_sheet(self, returns: Series, benchmark_returns: Series = None) -> TearSheet:
-        """Generate comprehensive performance analysis using Pyfolio."""
-        return self.pyfolio_wrapper.create_full_tear_sheet(returns, benchmark_returns)
+    def create_performance_report(self, returns: Series, benchmark_returns: Series = None) -> PerformanceReport:
+        """Generate comprehensive performance analysis with custom analytics."""
+        return self.analytics_engine.create_performance_report(returns, benchmark_returns)
     
     def calculate_risk_metrics(self, returns: Series) -> PerformanceMetrics:
         """Calculate comprehensive risk and performance metrics."""
@@ -1066,39 +1068,42 @@ class PerformanceAnalyzer:
         """Create risk-return scatter plot."""
         pass
 
-class PyfolioWrapper:
-    """Wrapper for Pyfolio performance analysis library."""
+class CustomAnalyticsEngine:
+    """Custom performance analysis engine with modern libraries."""
     
     def __init__(self):
-        import pyfolio as pf
-        self.pf = pf
+        import numpy as np
+        import pandas as pd
+        from scipy import stats
+        self.np = np
+        self.pd = pd
+        self.stats = stats
     
-    def create_full_tear_sheet(self, returns: Series, benchmark_returns: Series = None) -> TearSheet:
-        """Generate comprehensive Pyfolio tear sheet."""
-        # Create tear sheet with all standard metrics
-        tear_sheet_data = self.pf.create_full_tear_sheet(
+    def create_performance_report(self, returns: Series, benchmark_returns: Series = None) -> PerformanceReport:
+        """Generate comprehensive performance report with custom analytics."""
+        # Calculate performance metrics using modern statistical methods
+        performance_data = self._calculate_performance_metrics(
             returns, 
-            benchmark_rets=benchmark_returns,
-            return_fig=True
+            benchmark_rets=benchmark_returns
         )
         
-        return TearSheet(
-            summary_stats=self._extract_summary_stats(returns, benchmark_returns),
-            plots=self._extract_plots(tear_sheet_data),
-            risk_metrics=self._extract_risk_metrics(returns),
-            performance_attribution=self._extract_attribution(returns, benchmark_returns)
+        return PerformanceReport(
+            summary_stats=self._calculate_summary_stats(returns, benchmark_returns),
+            charts=self._generate_performance_charts(performance_data),
+            risk_metrics=self._calculate_risk_metrics(returns),
+            performance_attribution=self._calculate_attribution(returns, benchmark_returns)
         )
     
-    def _extract_summary_stats(self, returns: Series, benchmark: Series = None) -> Dict[str, float]:
-        """Extract summary statistics from Pyfolio analysis."""
+    def _calculate_summary_stats(self, returns: Series, benchmark: Series = None) -> Dict[str, float]:
+        """Calculate summary statistics using custom analytics."""
         pass
     
-    def _extract_plots(self, tear_sheet_data) -> List[Plot]:
-        """Extract plot data from Pyfolio tear sheet."""
+    def _generate_performance_charts(self, performance_data) -> List[Chart]:
+        """Generate performance charts using modern visualization libraries."""
         pass
     
-    def _extract_risk_metrics(self, returns: Series) -> Dict[str, float]:
-        """Extract risk metrics from Pyfolio analysis."""
+    def _calculate_risk_metrics(self, returns: Series) -> Dict[str, float]:
+        """Calculate risk metrics using custom analytics."""
         pass
     
     def _extract_attribution(self, returns: Series, benchmark: Series = None) -> Dict[str, Any]:
@@ -1107,10 +1112,10 @@ class PyfolioWrapper:
 ```
 
 #### Design Rationale
-- **Professional-grade libraries**: Uses industry-standard tools (TA-Lib, Backtrader, Pyfolio, QuantLib, PyPortfolioOpt) for institutional-quality analysis
+- **Professional-grade libraries**: Uses industry-standard tools (TA-Lib, Backtrader, QuantLib, cvxpy, scipy.optimize) for institutional-quality analysis
 - **Modular architecture**: Each component can be used independently or as part of comprehensive backtesting workflow
 - **Data quality focus**: Validates input data to ensure reliable backtesting results with comprehensive quality checks
-- **Comprehensive reporting**: Generates detailed performance analysis with visual components using Pyfolio tear sheets
+- **Comprehensive reporting**: Generates detailed performance analysis with custom analytics including Sharpe ratio, maximum drawdown, and return analysis
 - **Extensible framework**: Supports multiple backtesting engines and can be extended with additional strategies
 - **Caching integration**: Leverages existing cache infrastructure to avoid redundant data downloads
 - **Error handling**: Robust error handling for data quality issues and unsupported instruments

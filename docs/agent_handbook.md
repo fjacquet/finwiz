@@ -103,6 +103,16 @@ This handbook establishes the core principles, ethical standards, and research m
 - Maintain standardized risk assessment across all recommendations using RiskAssessmentStandardized schema
 - Support CSV-based portfolio ingestion with automatic ticker normalization
 
+#### Quantitative Analysis Agents
+
+- Use `QuantitativeAnalysisTool` for comprehensive quantitative analysis including backtesting, technical analysis, and performance metrics
+- Integrate multiple analysis types: technical indicators, strategy backtesting, performance analytics, and comprehensive analysis
+- Apply professional-grade methodologies using Backtrader, TA-Lib, and other quantitative libraries
+- Generate data-driven investment recommendations with statistical confidence measures
+- Provide risk-adjusted performance metrics including Sharpe ratio, maximum drawdown, and VaR calculations
+- Support multi-asset analysis across stocks, ETFs, and cryptocurrencies with consistent methodologies
+- Incorporate quantitative signals into investment thesis and recommendation rationale
+
 #### Reporting Agents
 
 - Transform research into well-structured, readable formats
@@ -181,6 +191,9 @@ To perform their tasks effectively, agents are equipped with a specialized set o
 ### Validation & SEC Tools
 - **`TickerExistenceValidationTool`**: Use to validate ticker symbols across multiple exchanges and asset classes.
 - **`SECFilingSearchTool`**: Use to search and extract information from SEC filings (10-K, 10-Q, etc.).
+
+### Quantitative Analysis Tools
+- **`QuantitativeAnalysisTool`**: Use for comprehensive quantitative analysis including technical analysis, backtesting, and performance metrics. Supports multiple analysis types (technical, backtest, performance, comprehensive) across stocks, ETFs, and cryptocurrencies. Provides data-driven insights with statistical confidence measures and risk-adjusted performance metrics.
 
 ### Utility Tools
 - **`SaveToRagTool`**: Use to persist important research findings for later retrieval.

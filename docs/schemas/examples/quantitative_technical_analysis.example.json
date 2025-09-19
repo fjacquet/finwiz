@@ -1,0 +1,14 @@
+{
+  "symbol": "AAPL",
+  "timeframe": "1d",
+  "overall_signal": "BUY",
+  "overall_confidence": 0.78,
+  "signal_strength": "STRONG",
+  "bullish_signals_count": 5,
+  "bearish_signals_count": 1,
+  "neutral_signals_count": 2,
+  "rsi_value": 45.67,
+  "macd_signal": "Bullish crossover detected",
+  "bollinger_position": "Price near lower band - potential bounce",
+  "analysis_timestamp": "2024-01-15T10:30:00Z"
+}

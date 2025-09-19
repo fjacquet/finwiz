@@ -19,6 +19,13 @@ This guide helps you migrate to the latest version of FinWiz with enhanced valid
 - Standardized pytest-mock integration
 - APITestMocks for consistent external API mocking
 
+### 4. Quantitative Analysis Framework
+- Professional-grade backtesting with Backtrader
+- Technical analysis with TA-Lib integration
+- Portfolio optimization and derivatives pricing
+- Performance analytics and risk metrics
+- Stock screening and multi-criteria filtering
+
 ## Environment Variables
 
 Add these new environment variables to your `.env` file:
@@ -36,6 +43,14 @@ CACHE_DIRECTORY=cache                  # Cache directory path
 CACHE_STRATEGY=ttl                     # ttl, lru, lfu, adaptive
 CACHE_AUTO_CLEANUP=true                # Enable auto cleanup
 CACHE_CLEANUP_INTERVAL=3600            # Cleanup interval in seconds
+
+# Quantitative Analysis Configuration (Optional)
+QUANTITATIVE_ENABLED=true              # Enable quantitative analysis
+BACKTEST_INITIAL_CAPITAL=100000        # Default backtesting capital
+BACKTEST_COMMISSION=0.001              # Default commission rate
+RISK_FREE_RATE=0.02                    # Risk-free rate for calculations
+YFINANCE_ENABLED=true                  # Enable Yahoo Finance data
+DATA_CACHE_TTL=3600                    # Data cache TTL in seconds
 ```
 
 ## Code Migration
@@ -131,6 +146,39 @@ def test_stock_analysis(mocker):
     mocks.setup_yahoo_finance_success(ticker=ticker, price=expected_price)
 ```
 
+### 4. Quantitative Analysis Integration
+
+#### Before (Basic analysis only)
+```python
+# Limited to basic financial analysis
+tools = [
+    YahooFinanceTickerInfoTool(),
+    AlphaVantageNewsSentimentTool(),
+    # ... other basic tools
+]
+```
+
+#### After (Enhanced with quantitative analysis)
+```python
+from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
+
+# Enhanced with quantitative capabilities
+tools = [
+    YahooFinanceTickerInfoTool(),
+    AlphaVantageNewsSentimentTool(),
+    QuantitativeAnalysisTool(),  # New quantitative analysis
+    # ... other tools
+]
+
+# Use in agent tasks
+quantitative_result = quantitative_tool.run(
+    symbol="AAPL",
+    asset_class="stock",
+    analysis_type="comprehensive",
+    timeframe="1y"
+)
+```
+
 ## Backward Compatibility
 
 ### Validation System
@@ -171,7 +219,13 @@ def test_stock_analysis(mocker):
 3. Use APITestMocks for consistent external API mocking
 4. Run tests to ensure compatibility
 
-### Step 5: Monitor and Optimize
+### Step 5: Enable Quantitative Analysis (Optional)
+1. Install optional dependencies: `uv pip install backtrader ta-lib`
+2. Add `QuantitativeAnalysisTool` to crew tools
+3. Configure quantitative analysis environment variables
+4. Test quantitative capabilities with sample data
+
+### Step 6: Monitor and Optimize
 1. Monitor validation warnings and errors
 2. Check cache hit rates and performance metrics
 3. Adjust configuration based on usage patterns
@@ -219,6 +273,31 @@ ticker = fake.stock_ticker()  # Returns valid ticker format
 price = fake.stock_price(min_value=1.0, max_value=1000.0)
 ```
 
+### Quantitative Analysis Issues
+```python
+# Debug quantitative analysis problems
+from finwiz.quantitative import get_backtesting_engine, get_performance_analyzer
+
+# Check if dependencies are available
+try:
+    import backtrader
+    import talib
+    print("Quantitative dependencies available")
+except ImportError as e:
+    print(f"Missing dependency: {e}")
+
+# Test data availability
+from finwiz.quantitative import get_historical_data_manager
+data_manager = get_historical_data_manager()
+data = data_manager.fetch_historical_data("AAPL", start_date, end_date)
+print(f"Data points: {len(data)}")
+
+# Validate configuration
+from finwiz.quantitative.config import get_quant_config
+config = get_quant_config()
+print(f"Risk-free rate: {config.risk_free_rate}")
+```
+
 ## Performance Considerations
 
 ### Validation Performance
@@ -238,9 +317,11 @@ price = fake.stock_price(min_value=1.0, max_value=1000.0)
 
 ## Support and Resources
 
-- **Documentation**: See `docs/validation_system.md` and `docs/caching_system.md`
+- **Documentation**: See `docs/validation_system.md`, `docs/caching_system.md`, and `docs/quantitative_analysis.md`
 - **Examples**: Check `tests/` directory for usage examples
 - **Configuration**: Review environment variable documentation
 - **Performance**: Monitor cache statistics and validation metrics
+- **Quantitative Analysis**: See comprehensive guide in `docs/quantitative_analysis.md`
+- **Testing**: Unit tests in `tests/unit/quantitative/` and integration tests in `tests/integration/`
 
 This migration is designed to be non-breaking and can be adopted incrementally based on your needs and timeline.

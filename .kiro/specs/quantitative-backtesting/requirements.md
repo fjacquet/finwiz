@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This specification defines a comprehensive quantitative analysis and backtesting framework for the FinWiz financial analysis platform. The framework will integrate professional-grade Python libraries including TA-Lib, Backtrader, Pyfolio, QuantLib, and PyPortfolioOpt to provide institutional-quality backtesting capabilities, portfolio optimization, and risk analysis.
+This specification defines a comprehensive quantitative analysis and backtesting framework for the FinWiz financial analysis platform. The framework will integrate professional-grade Python libraries including TA-Lib, Backtrade and  QuantLib to provide institutional-quality backtesting capabilities, portfolio optimization, and risk analysis.
 
 The quantitative framework will enable users to backtest trading strategies, optimize portfolios, analyze performance metrics, and conduct advanced derivatives pricing analysis. This enhancement transforms FinWiz from a research-focused platform into a complete quantitative analysis suite suitable for both retail and institutional users.
 

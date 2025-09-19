@@ -81,16 +81,24 @@ technical_detail_task:
        - Summarize material year-over-year changes relevant to the current analysis as of {full_date}.
     6. Technical indicators: Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands
        for relevant intervals per ticker, referencing exact parameters used.
-    7. Charts: Generate visual charts with the "Chart-img Generator" tool and embed returned data URLs in the report.
+    7. Quantitative analysis: Use the "Quantitative Analysis Tool" to perform comprehensive quantitative analysis
+       for each ticker including:
+       - Technical analysis with multiple indicators and signal generation
+       - Strategy backtesting with performance metrics (Sharpe ratio, max drawdown, win rate)
+       - Risk-adjusted performance analysis and investment recommendations
+       - Use asset_class="stock" and analysis_type="comprehensive" for complete analysis
+    8. Charts: Generate visual charts with the "Chart-img Generator" tool and embed returned data URLs in the report.
 
     Ensure your analysis reflects the company's status as of {full_date}.
   expected_output: >
     Technical assessment in markdown of each stock including financial metrics
     and analysis. Include a "10-K Insights" subsection with cited excerpts and
-    the SEC filing URL and date.
+    the SEC filing URL and date. Include a "Quantitative Analysis" subsection with
+    backtesting results, technical signals, and investment recommendations.
     Also include a machine-readable JSON appendix at the end containing:
     - ten_k_insights[] matching the TenKInsight schema with enhanced SEC citations
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ticker
+    - quantitative_analysis[] with comprehensive quantitative analysis results for each ticker
   agent: market_technical_analyst
   output_file: "output/stock/stock_technical_details.md"
   depends_on:
@@ -111,7 +119,13 @@ stock_risk_assessment_task:
     6. Review management and corporate governance risks based on the latest information.
     7. Apply the "Standardized Risk Scoring Tool" methodology to generate consistent 0-5 risk scores
      with proper level mapping.
-    8. Market sentiment: Use the "Standardized Sentiment Analysis Tool" for consistent sentiment analysis.
+    8. Quantitative risk assessment: Use the "Quantitative Analysis Tool" with analysis_type="performance"
+       to calculate risk-adjusted metrics including:
+       - Value at Risk (VaR) and Conditional VaR calculations
+       - Maximum drawdown analysis and volatility metrics
+       - Sharpe, Sortino, and Calmar ratios for risk-adjusted returns
+       - Beta and alpha calculations relative to market benchmarks
+    9. Market sentiment: Use the "Standardized Sentiment Analysis Tool" for consistent sentiment analysis.
        - Analyze recent headlines/snippets with standardized methodology
        - Provide weighted sentiment scores and confidence intervals
        - Include sentiment distribution (Positive/Neutral/Negative counts)
@@ -124,11 +138,13 @@ stock_risk_assessment_task:
     A detailed risk profile for each stock covering regulatory, financial,
     valuation, competitive, and governance risks. Include standardized risk scores
     (0-5 scale) with consistent methodology. Include a "Market Sentiment"
-    subsection per ticker with aggregates and cited examples.
-    The report should be formatted in HTML with emojis for better
+    subsection per ticker with aggregates and cited examples. Include a "Quantitative Risk Metrics"
+    subsection with VaR, drawdown analysis, and risk-adjusted performance metrics.
+    The report should be formatted in professional looking HTML with emojis for better
     visualization.
     Also include a machine-readable JSON appendix containing:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ticker
+    - quantitative_risk_metrics[] with comprehensive risk analysis for each ticker
   agent: investment_risk_analyst
   output_file: "output/stock/stock_investment_risk_strategy_en.html"
   depends_on:

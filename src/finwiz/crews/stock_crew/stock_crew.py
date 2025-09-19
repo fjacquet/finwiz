@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 
 from finwiz.tools.finance_tools import get_stock_research_tools
 from finwiz.tools.logger import get_logger
+from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
@@ -49,12 +50,16 @@ youtube_tool = YoutubeVideoSearchTool()
 # data_output_tools = get_data_output_tools()
 stock_research_tools = get_stock_research_tools()
 
+# Get quantitative analysis tool
+quantitative_tool = get_quantitative_analysis_tool()
+
 # Get RAG tools for knowledge retrieval and storage
 rag_tools = get_rag_tools(collection_suffix="stock")
 
 # Tools for stock research and analysis
 tools = [
     *stock_research_tools,  # Add stock research tools
+    quantitative_tool,  # Add quantitative analysis tool
     *rag_tools,  # Add RAG tools for knowledge retrieval and storage
     # Contract-aware reading of outputs and schemas
     DirectoryReadTool(directory=("output/stock")),

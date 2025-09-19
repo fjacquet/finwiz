@@ -24,6 +24,7 @@ from crewai_tools import (
 from dotenv import load_dotenv
 
 from finwiz.tools.finance_tools import get_etf_research_tools
+from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.rag_tools import get_rag_tools
 
 # from finwiz.tools.finance_tools import get_data_output_tools
@@ -56,6 +57,9 @@ rag_tools = get_rag_tools(collection_suffix="etf")
 # Get enhanced ETF research tools
 etf_research_tools = get_etf_research_tools()
 
+# Get quantitative analysis tool
+quantitative_tool = get_quantitative_analysis_tool()
+
 # Tools for ETF research and analysis
 tools = [
     # Basic research tools
@@ -66,6 +70,7 @@ tools = [
     youtube_tool,
     # Enhanced ETF-specific tools
     *etf_research_tools,
+    quantitative_tool,  # Add quantitative analysis tool
     *rag_tools,  # Add RAG tools for knowledge retrieval and storage
     # Contract-aware reading of outputs and schemas
     DirectoryReadTool(directory=("output/etf")),

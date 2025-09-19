@@ -4,7 +4,7 @@
 
 This specification defines comprehensive enhancements to the FinWiz financial analysis platform based on analysis of the documentation in the `docs/` folder and identified improvement opportunities. The enhancements focus on strengthening data validation, expanding analytical capabilities, ensuring architectural compliance, and improving overall system reliability while maintaining the existing elegant, configuration-driven design principles.
 
-The improvements address critical needs identified in change requests CR-2025-08-09-01, CR-2025-08-09-02, and CR-2025-08-10-01, while ensuring compliance with FinWiz's core design principles of being "light as a haiku" with strict separation of concerns.
+The improvements address critical needs identified in change requests CR-2025-08-09-01, CR-2025-08-09-02, and CR-2025-08-10-01, while ensuring compliance with FinWiz's core design principles of being "light as a haiku" with strict separation of concerns and CrewAI Flow framework standards.
 
 ## Requirements
 
@@ -132,8 +132,7 @@ The improvements address critical needs identified in change requests CR-2025-08
 
 ### Requirement 11: Code Quality & Test Infrastructure
 
-**User Story:** As a FinWiz developer, I want comprehensive code quality standards and robust test infrastructure, 
-so that the codebase maintains high reliability and follows Python best practices.
+**User Story:** As a FinWiz developer, I want comprehensive code quality standards and robust test infrastructure, so that the codebase maintains high reliability and follows Python best practices.
 
 #### Acceptance Criteria
 
@@ -152,6 +151,8 @@ so that the codebase maintains high reliability and follows Python best practice
 1. WHEN a user specifies a stock symbol and date range THEN the system SHALL download historical OHLCV data using yfinance or similar data provider
 2. WHEN backtesting is initiated THEN the system SHALL use TA-Lib for technical indicator calculations (SMA, RSI, MACD, Bollinger Bands)
 3. WHEN strategy signals are generated THEN the system SHALL execute simulated trades using Backtrader or Zipline framework
-4. WHEN backtesting completes THEN the system SHALL generate performance reports with Pyfolio tear sheets including Sharpe ratio, maximum drawdown, and return analysis
-5. WHEN portfolio optimization is required THEN the system SHALL use PyPortfolioOpt for efficient frontier calculations and risk-return optimization
+4. WHEN backtesting completes THEN the system SHALL generate performance reports with custom analytics including Sharpe ratio, maximum drawdown, and return analysis
+5. WHEN portfolio optimization is required THEN the system SHALL use modern portfolio optimization libraries like cvxpy or scipy.optimize for efficient frontier calculations
 6. IF advanced quantitative analysis is needed THEN the system SHALL integrate QuantLib for derivatives pricing and fixed-income analysis
+7. WHEN backtesting results are generated THEN they SHALL be integrated into the existing HTML report format with proper visualization
+8. WHEN quantitative analysis tools are used THEN they SHALL follow the same validation and error handling patterns as other FinWiz components
