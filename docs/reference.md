@@ -246,8 +246,8 @@ manager.set_strictness_mode(ValidationMode.ERROR)
 FinWiz uses strict Pydantic v2 models with `extra='forbid'` to prevent schema drift:
 
 ### Core Schemas
-- `ReporterInput`: Aggregate input for the final reporter
-- `RiskAssessmentStandardized`: Standardized 0-5 risk scoring
+- `ReporterInput`: Aggregate input for the final reporter with strict validation
+- `RiskAssessmentStandardized`: Standardized 0-5 risk scoring with bounded validation
 - `ValidatedTicker`: Ticker validation results
 
 ### Asset-Specific Schemas
@@ -255,6 +255,12 @@ FinWiz uses strict Pydantic v2 models with `extra='forbid'` to prevent schema dr
 - **ETF**: `ETFFactsheet`, `ETFTopHolding`
 - **Crypto**: `CryptoThesis`
 - **Portfolio**: `PortfolioReview`, `HoldingDecision`, `Alternative`
+
+### Contract Testing
+FinWiz includes comprehensive contract tests to ensure schema compliance:
+- **`test_contract_reporter.py`**: Validates ReporterInput with `extra='forbid'` and minimal valid payloads
+- **`test_contract_stock.py`**: Tests TenKInsight and MarketSentiment schema validation
+- **`test_contract_risk.py`**: Enforces standardized 0-5 risk scale bounds and label consistency
 
 ### Schema Export
 Generate JSON schemas from Pydantic models:

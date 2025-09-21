@@ -282,6 +282,7 @@ Comprehensive documentation is available in the `docs/` directory:
 ### Code Quality
 - **Linting**: `ruff check . && ruff format .`
 - **Testing**: `uv run pytest -m "not integration"`
+- **Contract Testing**: `uv run pytest tests/test_contract_*.py` (schema validation)
 - **Coverage**: `uv run pytest --cov=src/finwiz`
 
 ### Performance Monitoring

@@ -22,13 +22,22 @@ tests/
 - **Execution**: `uv run pytest tests/unit/`
 - **Requirements**: Must complete in < 5 seconds, no external calls
 - **Naming**: `test_should_{behavior}_when_{condition}`
-- **Coverage**: Includes validation system, portfolio review, and all tool implementations
+- **Coverage**: Includes validation system, portfolio review, schema contract validation, and all tool implementations
 
 ### Integration Tests (`tests/integration/`)
 - **Purpose**: Test interactions with external APIs and services
 - **Execution**: `uv run pytest tests/integration/ -m integration`
 - **Requirements**: Marked with `@pytest.mark.integration`
 - **Note**: Requires valid API keys and network access
+
+### Contract Tests (`tests/test_contract_*.py`)
+- **Purpose**: Validate Pydantic schema contracts and data boundaries
+- **Execution**: `uv run pytest tests/test_contract_*.py`
+- **Coverage**: 
+  - `test_contract_reporter.py`: ReporterInput aggregate schema with `extra='forbid'` validation
+  - `test_contract_stock.py`: Stock-specific schemas (TenKInsight, MarketSentiment)
+  - `test_contract_risk.py`: RiskAssessmentStandardized with 0-5 scale validation
+- **Requirements**: Ensure strict schema compliance and prevent data drift
 
 ### Validation Scripts (`tests/validation/`)
 - **Purpose**: Manual validation of full crew workflows
@@ -92,4 +101,6 @@ def test_should_return_buy_recommendation_when_strong_metrics(mocker):
 - `test_validation_infrastructure.py`: Validation system components
 - `test_alpha_vantage_news_tool.py`: Alpha Vantage news integration
 - `test_standardized_sentiment_tool.py`: Sentiment analysis tools
-- `test_contract_*.py`: Schema contract validation
+- `test_contract_reporter.py`: ReporterInput schema contract validation with strict Pydantic validation
+- `test_contract_stock.py`: Stock-specific schema validation (TenKInsight, MarketSentiment)
+- `test_contract_risk.py`: RiskAssessmentStandardized schema validation and bounds checking

@@ -69,6 +69,37 @@ Examples live under `docs/schemas/examples/`:
 
 All schemas use strict Pydantic v2 models with `extra='forbid'` to prevent schema drift and ensure data contract compliance.
 
+## Contract Testing
+
+FinWiz includes comprehensive contract tests to validate schema compliance and prevent data drift:
+
+### Test Coverage
+- **`tests/test_contract_reporter.py`**: Validates ReporterInput aggregate schema
+  - Tests minimal valid payload construction
+  - Enforces `extra='forbid'` to prevent unexpected fields
+  - Validates required fields and data types
+  
+- **`tests/test_contract_stock.py`**: Tests stock-specific schemas
+  - TenKInsight validation with SEC filing data
+  - MarketSentiment validation with sentiment scoring bounds
+  - Extra field rejection testing
+  
+- **`tests/test_contract_risk.py`**: Validates risk assessment standardization
+  - Tests 0-5 risk score bounds enforcement
+  - Validates risk level mappings (Low, Medium, High, Very High)
+  - Ensures consistent risk factor structure
+
+### Running Contract Tests
+```bash
+# Run all contract tests
+uv run pytest tests/test_contract_*.py
+
+# Run specific contract test
+uv run pytest tests/test_contract_reporter.py -v
+```
+
+These contract tests ensure that all inter-agent data exchanges conform to strict schemas and prevent silent schema drift that could compromise data integrity.
+
 ## Validation Infrastructure
 
 FinWiz implements a centralized validation system with the following components:
