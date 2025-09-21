@@ -1,3 +1,5 @@
+"""Portfolio review orchestrator module."""
+
 from __future__ import annotations
 
 import csv
@@ -22,10 +24,12 @@ AssetClass = Literal["stock", "etf"]
 
 
 def _get_env(name: str, default: str) -> str:
+    """Get environment variable with default value."""
     return (os.getenv(name) or default).strip()
 
 
 def get_csv_paths() -> tuple[Path, Path]:
+    """Get CSV file paths for ETF and stock data."""
     project_root = Path(__file__).resolve().parents[3]
     etf_csv = Path(_get_env("PORTFOLIO_ETF_CSV", str(project_root / "data/etf.csv")))
     stock_csv = Path(_get_env("PORTFOLIO_STOCK_CSV", str(project_root / "data/stock.csv")))
@@ -33,6 +37,8 @@ def get_csv_paths() -> tuple[Path, Path]:
 
 
 def get_thresholds() -> tuple[float, float, int]:
+    """Get portfolio review thresholds from environment."""
+
     def _f(name: str, default: float) -> float:
         try:
             return float(os.getenv(name, default))
@@ -56,6 +62,7 @@ def get_thresholds() -> tuple[float, float, int]:
 
 
 def normalize_ticker(raw: str) -> str:
+    """Normalize ticker symbol by removing prefixes."""
     s = (raw or "").strip()
     if s.upper().startswith("YAHOO:"):
         return s.split(":", 1)[1]
@@ -64,6 +71,8 @@ def normalize_ticker(raw: str) -> str:
 
 @dataclass
 class RawHolding:
+    """Raw holding data from CSV."""
+
     asset_class: AssetClass
     name: str
     ticker: str
@@ -71,6 +80,7 @@ class RawHolding:
 
 
 def read_csv_holdings(path: Path, asset_class: AssetClass) -> list[RawHolding]:
+    """Read holdings from CSV file."""
     holdings: list[RawHolding] = []
     if not path.exists():
         return holdings
@@ -90,11 +100,13 @@ def read_csv_holdings(path: Path, asset_class: AssetClass) -> list[RawHolding]:
 
 
 def validate_symbol(symbol: str, asset_class: AssetClass) -> dict:
+    """Validate symbol existence using ticker validation tool."""
     tool = TickerExistenceValidationTool()
     return tool._run(symbol=symbol, asset_class=asset_class)  # use internal run for programmatic call
 
 
 def basic_composite_score(valid: bool, asset_class: AssetClass) -> float:
+    """Calculate basic composite score based on validity and asset class."""
     # Placeholder: prefer valid listings; ETFs get slight baseline boost for diversification
     base = 0.6 if valid else 0.0
     if asset_class == "etf" and valid:
@@ -103,6 +115,7 @@ def basic_composite_score(valid: bool, asset_class: AssetClass) -> float:
 
 
 def basic_risk(valid: bool) -> RiskAssessmentStandardized:
+    """Generate basic risk assessment based on validity."""
     if valid:
         return RiskAssessmentStandardized(score=2.0, level="Medium", risk_factors=["Baseline placeholder"])
     return RiskAssessmentStandardized(score=5.0, level="Very High", risk_factors=["Invalid or unknown exchange"])
@@ -116,6 +129,7 @@ def build_portfolio_review(
     *,
     base_currency: str = "CHF",
 ) -> PortfolioReview:
+    """Build portfolio review from raw holdings."""
     keep_threshold, _delta, _max_step = get_thresholds()
 
     decisions: list[HoldingDecision] = []
@@ -163,11 +177,13 @@ def build_portfolio_review(
 
 
 def save_review_json(review: PortfolioReview, out_path: Path) -> None:
+    """Save portfolio review to JSON file."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(review.model_dump_json(indent=2), encoding="utf-8")
 
 
 def run() -> Path:
+    """Run portfolio review process."""
     etf_csv, stock_csv = get_csv_paths()
     etfs = read_csv_holdings(etf_csv, "etf")
     stocks = read_csv_holdings(stock_csv, "stock")

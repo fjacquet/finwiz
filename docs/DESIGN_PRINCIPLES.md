@@ -42,9 +42,12 @@ Like a haiku poem with its strict form of simplicity and elegance:
 - **Persistent State Management**: Support loading and updating existing financial plans from previous sessions.
 - **Intelligent Caching**: Implement multi-backend caching with configurable TTL and eviction strategies.
 - **Performance Monitoring**: Track cache hit rates and system performance metrics.
-- **Quantitative Integration**: Support professional-grade quantitative analysis with Backtrader, TA-Lib, and other specialized libraries.
-- **Multi-Asset Support**: Provide consistent quantitative methodologies across stocks, ETFs, and cryptocurrencies.
-- **Statistical Rigor**: Implement statistically sound methods for backtesting, performance analysis, and risk assessment.
+- **Quantitative Integration**: Support professional-grade quantitative analysis with industry-standard libraries (Backtrader, TA-Lib, QuantLib, PyPortfolioOpt).
+- **Multi-Asset Support**: Provide consistent quantitative methodologies across stocks, ETFs, and cryptocurrencies with unified schemas.
+- **Statistical Rigor**: Implement statistically sound methods for backtesting, performance analysis, risk assessment, and signal generation.
+- **Modular Quantitative Architecture**: Separate concerns between data management, analysis engines, and result presentation.
+- **Professional Standards**: Follow quantitative finance best practices with proper risk management and performance attribution.
+- **Extensible Framework**: Design quantitative components for easy extension with new indicators, strategies, and analysis methods.
 
 ### Configuration-Driven Design
 

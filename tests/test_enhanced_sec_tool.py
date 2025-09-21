@@ -68,7 +68,9 @@ class TestEnhancedSECAnalysisTool:
         <div>Item 1. Business</div>
         <p>Apple Inc. designs, manufactures and markets smartphones, personal computers, tablets, wearables and accessories.</p>
         <div>Item 1A. Risk Factors</div>
-        <p>The Company faces intense competition in all markets in which it operates. Competition has been particularly intense as competitors have aggressively cut prices and lowered product margins.</p>
+        <p>The Company faces intense competition in all markets in which it operates. 
+        Competition has been particularly intense as competitors have aggressively cut prices 
+        and lowered product margins.</p>
         <div>Item 7. Management's Discussion and Analysis</div>
         <p>Net sales increased during 2024 compared to 2023 due to higher net sales of iPhone, Services and Mac.</p>
         </body>

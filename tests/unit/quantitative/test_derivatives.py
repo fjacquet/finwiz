@@ -75,7 +75,7 @@ class TestDerivativesPricer:
     def test_check_quantlib_availability(self, pricer):
         """Test QuantLib availability check."""
         # Test with QuantLib not available (default case)
-        with patch("finwiz.quantitative.derivatives.logger") as mock_logger:
+        with patch("finwiz.quantitative.derivatives.logger"):
             availability = pricer._check_quantlib_availability()
             assert isinstance(availability, bool)
 

@@ -509,7 +509,7 @@ def get_cache_manager() -> CacheManager:
 
 
 async def cached(
-    key: str | list[Any], func: Callable, *args, ttl: int | None = None, tags: set[str] | None = None, **kwargs
+    key: str | list[Any], func: Callable, *args: Any, ttl: int | None = None, tags: set[str] | None = None, **kwargs: Any
 ) -> Any:
     """
     Execute function with caching.
@@ -517,9 +517,10 @@ async def cached(
     Args:
         key: Cache key or key parts
         func: Function to execute if not cached
+        *args: Positional arguments for the function
         ttl: Time-to-live for cache entry
         tags: Optional tags for cache entry
-        *args, **kwargs: Arguments for the function
+        **kwargs: Keyword arguments for the function
 
     Returns:
         Cached or computed result

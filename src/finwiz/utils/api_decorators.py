@@ -20,7 +20,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 def rate_limited(provider: APIProvider, endpoint: str = "", timeout: float = 30.0) -> Callable[[F], F]:
     """
-    Decorator to add rate limiting to API functions.
+    Add rate limiting to API functions.
 
     Args:
         provider: API provider for rate limiting
@@ -34,11 +34,11 @@ def rate_limited(provider: APIProvider, endpoint: str = "", timeout: float = 30.
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             return await with_rate_limit(provider, func, *args, endpoint=endpoint, **kwargs)
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             # For sync functions, run in event loop
             try:
                 loop = asyncio.get_event_loop()
@@ -59,7 +59,7 @@ def rate_limited(provider: APIProvider, endpoint: str = "", timeout: float = 30.
 
 def api_error_handler(default_return: Any = None, log_errors: bool = True, reraise: bool = False) -> Callable[[F], F]:
     """
-    Decorator to add consistent error handling to API functions.
+    Add consistent error handling to API functions.
 
     Args:
         default_return: Value to return on error (if not reraising)
@@ -73,7 +73,7 @@ def api_error_handler(default_return: Any = None, log_errors: bool = True, rerai
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
@@ -86,7 +86,7 @@ def api_error_handler(default_return: Any = None, log_errors: bool = True, rerai
                 return default_return
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
@@ -109,7 +109,7 @@ def api_error_handler(default_return: Any = None, log_errors: bool = True, rerai
 
 def timeout_handler(timeout_seconds: float = 30.0) -> Callable[[F], F]:
     """
-    Decorator to add timeout handling to functions.
+    Add timeout handling to functions.
 
     Args:
         timeout_seconds: Timeout in seconds
@@ -121,7 +121,7 @@ def timeout_handler(timeout_seconds: float = 30.0) -> Callable[[F], F]:
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout_seconds)
             except TimeoutError:
@@ -129,7 +129,7 @@ def timeout_handler(timeout_seconds: float = 30.0) -> Callable[[F], F]:
                 raise TimeoutError(f"Function {func.__name__} timed out after {timeout_seconds}s")
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             # For sync functions, we can't easily add timeout without threading
             # Just call the function normally and let underlying libraries handle timeouts
             return func(*args, **kwargs)
@@ -176,13 +176,14 @@ class APICallContext:
     """Context manager for API calls with automatic rate limiting and error handling."""
 
     def __init__(self, provider: APIProvider, endpoint: str = "", timeout: float = 30.0, log_calls: bool = True) -> None:
+        """Initialize API call context manager."""
         self.provider = provider
         self.endpoint = endpoint
         self.timeout = timeout
         self.log_calls = log_calls
         self.start_time: float | None = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "APICallContext":
         """Enter the context and acquire rate limit permission."""
         import time
 
@@ -197,7 +198,7 @@ class APICallContext:
 
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         """Exit the context and log call completion."""
         if self.start_time and self.log_calls:
             import time
@@ -216,7 +217,7 @@ class APICallContext:
 
 
 async def safe_api_call(
-    provider: APIProvider, func: Callable, *args, endpoint: str = "", default_return: Any = None, **kwargs
+    provider: APIProvider, func: Callable, *args: Any, endpoint: str = "", default_return: Any = None, **kwargs: Any
 ) -> Any:
     """
     Make a safe API call with rate limiting and error handling.
@@ -224,9 +225,10 @@ async def safe_api_call(
     Args:
         provider: API provider for rate limiting
         func: Function to call
+        *args: Positional arguments for the function
         endpoint: Specific endpoint
         default_return: Value to return on error
-        *args, **kwargs: Arguments for the function
+        **kwargs: Keyword arguments for the function
 
     Returns:
         Function result or default_return on error

@@ -735,7 +735,9 @@ class SessionManager:
             <h2>👤 Profil Client</h2>
             {f"<p><strong>Nom:</strong> {profile.name}</p>" if profile.name else ""}
             {f"<p><strong>Âge:</strong> {profile.age} ans</p>" if profile.age else ""}
-            {f"<p><strong>Horizon d'investissement:</strong> {profile.investment_horizon}</p>" if profile.investment_horizon else ""}
+            {
+            f"<p><strong>Horizon d'investissement:</strong> {profile.investment_horizon}</p>" if profile.investment_horizon else ""
+        }
             {f"<p><strong>Budget mensuel:</strong> {profile.monthly_budget}</p>" if profile.monthly_budget else ""}
             {f"<p><strong>Devise:</strong> {profile.currency}</p>" if profile.currency != "CHF" else ""}
         </section>"""

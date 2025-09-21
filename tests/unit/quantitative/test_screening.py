@@ -403,8 +403,8 @@ class TestStockScreener:
         high_weight_scored = screener._calculate_scores([stock_data], [filter_high_weight])
 
         # Scores should be the same since it's the same criteria
-        low_score = low_weight_scored[0][1].total_score
-        high_score = high_weight_scored[0][1].total_score
+        low_weight_scored[0][1].total_score
+        high_weight_scored[0][1].total_score
 
         # Individual criteria scores should be the same
         low_criteria_score = low_weight_scored[0][1].criteria_scores[ScreeningCriteria.ROE.value]

@@ -52,7 +52,7 @@ class ScreeningFilter(BaseModel):
         extra = "forbid"
 
     @validator("max_value")
-    def validate_max_value(cls, v, values):
+    def validate_max_value(cls, v: float | None, values: dict[str, Any]) -> float | None:
         """Validate max_value is greater than min_value."""
         if v is not None and "min_value" in values:
             min_val = values.get("min_value")
@@ -161,7 +161,7 @@ class StockScreener:
     scoring systems, and ranking algorithms for stock selection.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the stock screener."""
         self.config = get_screener_config()
         self._data_cache = {}
@@ -454,10 +454,13 @@ class StockScreener:
         """Sort and rank screening results."""
         # Sort by specified field
         if sort_by == "total_score":
-            key_func = lambda x: x[1].total_score
+
+            def key_func(x: tuple[StockData, ScreeningScore]) -> float:
+                return x[1].total_score
         else:
             # Sort by stock data field
-            key_func = lambda x: getattr(x[0], sort_by, 0) or 0
+            def key_func(x: tuple[StockData, ScreeningScore]) -> float:
+                return getattr(x[0], sort_by, 0) or 0
 
         reverse = sort_order == SortOrder.DESCENDING
         sorted_stocks = sorted(scored_stocks, key=key_func, reverse=reverse)

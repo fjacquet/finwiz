@@ -18,6 +18,7 @@ class ToolRestrictionError(Exception):
     """Raised when tool restrictions are violated."""
 
     def __init__(self, agent_role: str, violation: str) -> None:
+        """Initialize tool restriction violation error."""
         super().__init__(f"Tool restriction violation in {agent_role}: {violation}")
         self.agent_role = agent_role
         self.violation = violation
@@ -31,6 +32,7 @@ class ToolRestrictionValidator:
     }
 
     def __init__(self) -> None:
+        """Initialize tool restriction validator."""
         self.violations: list[str] = []
         self.logger = logger
 
@@ -102,6 +104,7 @@ class ReporterInputValidator:
     """Validates that reporter only consumes upstream context."""
 
     def __init__(self) -> None:
+        """Initialize reporter input validator."""
         self.required_context_keys = {
             "ten_k_insights",
             "market_sentiment",

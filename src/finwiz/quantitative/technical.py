@@ -974,8 +974,8 @@ class TechnicalAnalysisEngine:
 
         """
         close_prices = data["Close"].values.astype(np.float64)
-        high_prices = data["High"].values.astype(np.float64)
-        low_prices = data["Low"].values.astype(np.float64)
+        data["High"].values.astype(np.float64)
+        data["Low"].values.astype(np.float64)
 
         if len(close_prices) < lookback_period:
             raise ValueError(f"Insufficient data for Fibonacci: need {lookback_period}, have {len(close_prices)}")
@@ -1290,7 +1290,7 @@ def calculate_technical_indicators(
     timeframe: str = "1d",
 ) -> TechnicalAnalysisResult:
     """
-    Convenience function to calculate technical indicators.
+    Calculate technical indicators for given data.
 
     Args:
         data: OHLCV data DataFrame

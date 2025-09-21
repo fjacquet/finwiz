@@ -9,7 +9,7 @@ and other advanced portfolio construction techniques.
 import warnings
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Never
 
 import numpy as np
 from pydantic import BaseModel, Field, validator
@@ -24,16 +24,23 @@ except ImportError:
 
     # Create mock objects for type hints
     class MockOptimize:
+        """Mock optimize class when SciPy is not available."""
+
         OptimizeWarning = Warning
 
-        def minimize(self, *args, **kwargs):
+        def minimize(self, *args: Any, **kwargs: Any) -> Never:
+            """Mock minimize method."""
             raise ImportError("SciPy not available")
 
     class MockNorm:
-        def ppf(self, *args, **kwargs):
+        """Mock norm class when SciPy is not available."""
+
+        def ppf(self, *args: Any, **kwargs: Any) -> Never:
+            """Mock ppf method."""
             raise ImportError("SciPy not available")
 
-        def pdf(self, *args, **kwargs):
+        def pdf(self, *args: Any, **kwargs: Any) -> Never:
+            """Mock pdf method."""
             raise ImportError("SciPy not available")
 
     optimize = MockOptimize()
@@ -98,14 +105,14 @@ class PortfolioInputs(BaseModel):
         extra = "forbid"
 
     @validator("expected_returns")
-    def validate_returns_length(cls, v, values):
+    def validate_returns_length(cls, v: list[float], values: dict[str, Any]) -> list[float]:
         """Validate expected returns length matches symbols."""
         if "symbols" in values and len(v) != len(values["symbols"]):
             raise ValueError("Expected returns length must match symbols length")
         return v
 
     @validator("covariance_matrix")
-    def validate_covariance_matrix(cls, v, values):
+    def validate_covariance_matrix(cls, v: list[list[float]], values: dict[str, Any]) -> list[list[float]]:
         """Validate covariance matrix dimensions."""
         if "symbols" in values:
             n = len(values["symbols"])
@@ -114,7 +121,7 @@ class PortfolioInputs(BaseModel):
         return v
 
     @validator("current_weights")
-    def validate_current_weights(cls, v, values):
+    def validate_current_weights(cls, v: list[float] | None, values: dict[str, Any]) -> list[float] | None:
         """Validate current weights if provided."""
         if v is not None and "symbols" in values:
             if len(v) != len(values["symbols"]):
@@ -198,7 +205,7 @@ class PortfolioOptimizer:
     risk parity, Black-Litterman, and other advanced portfolio construction techniques.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the portfolio optimizer."""
         self.config = get_quant_config()
         self._cvxpy_available = self._check_cvxpy_availability()
@@ -213,9 +220,9 @@ class PortfolioOptimizer:
     def _check_cvxpy_availability(self) -> bool:
         """Check if CVXPY is available for advanced optimization."""
         try:
-            import cvxpy as cp
+            import importlib.util
 
-            return True
+            return importlib.util.find_spec("cvxpy") is not None
         except ImportError:
             return False
 
@@ -252,7 +259,7 @@ class PortfolioOptimizer:
             # Convert inputs to numpy arrays
             returns = np.array(inputs.expected_returns)
             cov_matrix = np.array(inputs.covariance_matrix)
-            n_assets = len(inputs.symbols)
+            len(inputs.symbols)
 
             # Perform optimization based on method
             if method == OptimizationMethod.MEAN_VARIANCE:
@@ -332,7 +339,7 @@ class PortfolioOptimizer:
         n_assets = len(returns)
 
         # Define objective function
-        def objective_func(weights):
+        def objective_func(weights: np.ndarray) -> float:
             portfolio_return = np.dot(weights, returns)
             portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
 
@@ -356,8 +363,8 @@ class PortfolioOptimizer:
                     pass
                 elif constraint.constraint_type == ConstraintType.SECTOR_LIMITS:
                     # Add sector constraint
-                    sector_map = constraint.parameters.get("sector_map", {})
-                    sector_limits = constraint.parameters.get("limits", {})
+                    constraint.parameters.get("sector_map", {})
+                    constraint.parameters.get("limits", {})
                     # Implementation would depend on sector mapping
 
         # Set bounds (default: long-only)
@@ -382,7 +389,7 @@ class PortfolioOptimizer:
         """Optimize using risk parity approach."""
         n_assets = len(returns)
 
-        def risk_parity_objective(weights):
+        def risk_parity_objective(weights: np.ndarray) -> float:
             """Risk parity objective function."""
             portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
             marginal_contrib = np.dot(cov_matrix, weights) / portfolio_vol
@@ -443,14 +450,14 @@ class PortfolioOptimizer:
         # Simplified HRP implementation
         # Full implementation would require hierarchical clustering
 
-        n_assets = len(returns)
+        len(returns)
 
         # Calculate correlation matrix
         std_devs = np.sqrt(np.diag(cov_matrix))
         corr_matrix = cov_matrix / np.outer(std_devs, std_devs)
 
         # Distance matrix (1 - correlation)
-        distance_matrix = 1 - corr_matrix
+        1 - corr_matrix
 
         # For simplicity, use inverse volatility weighting
         inv_vol_weights = (1 / std_devs) / np.sum(1 / std_devs)
@@ -579,7 +586,7 @@ class PortfolioOptimizer:
         """Optimize for minimum volatility at target return."""
         n_assets = len(returns)
 
-        def objective(weights):
+        def objective(weights: np.ndarray) -> float:
             return np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
 
         # Constraints

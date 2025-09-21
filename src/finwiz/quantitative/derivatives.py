@@ -130,7 +130,7 @@ class DerivativesPricer:
     derivative instruments with multiple pricing models and risk analytics.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the derivatives pricer."""
         self.config = get_quant_config()
         self._quantlib_available = self._check_quantlib_availability()
@@ -141,7 +141,7 @@ class DerivativesPricer:
     def _check_quantlib_availability(self) -> bool:
         """Check if QuantLib is available for advanced pricing."""
         try:
-            import QuantLib as ql
+            import QuantLib  # noqa: F401
 
             return True
         except ImportError:
@@ -191,11 +191,11 @@ class DerivativesPricer:
         d2 = d1 - sigma * math.sqrt(T)
 
         # Standard normal CDF
-        def norm_cdf(x):
+        def norm_cdf(x: float) -> float:
             return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
         # Standard normal PDF
-        def norm_pdf(x):
+        def norm_pdf(x: float) -> float:
             return math.exp(-0.5 * x**2) / math.sqrt(2 * math.pi)
 
         # Calculate option price
@@ -304,7 +304,7 @@ class DerivativesPricer:
     ) -> float:
         """Calculate option delta."""
 
-        def norm_cdf(x):
+        def norm_cdf(x: float) -> float:
             return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
         if option_type == OptionType.CALL:
@@ -315,7 +315,7 @@ class DerivativesPricer:
     def _calculate_gamma(self, S: float, T: float, sigma: float, q: float, d1: float) -> float:
         """Calculate option gamma."""
 
-        def norm_pdf(x):
+        def norm_pdf(x: float) -> float:
             return math.exp(-0.5 * x**2) / math.sqrt(2 * math.pi)
 
         return (math.exp(-q * T) * norm_pdf(d1)) / (S * sigma * math.sqrt(T))
@@ -325,10 +325,10 @@ class DerivativesPricer:
     ) -> float:
         """Calculate option theta (time decay)."""
 
-        def norm_cdf(x):
+        def norm_cdf(x: float) -> float:
             return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
-        def norm_pdf(x):
+        def norm_pdf(x: float) -> float:
             return math.exp(-0.5 * x**2) / math.sqrt(2 * math.pi)
 
         term1 = -(S * math.exp(-q * T) * norm_pdf(d1) * sigma) / (2 * math.sqrt(T))
@@ -345,7 +345,7 @@ class DerivativesPricer:
     def _calculate_vega(self, S: float, T: float, sigma: float, q: float, d1: float) -> float:
         """Calculate option vega."""
 
-        def norm_pdf(x):
+        def norm_pdf(x: float) -> float:
             return math.exp(-0.5 * x**2) / math.sqrt(2 * math.pi)
 
         return (S * math.exp(-q * T) * norm_pdf(d1) * math.sqrt(T)) / 100  # Per 1% vol change
@@ -353,7 +353,7 @@ class DerivativesPricer:
     def _calculate_rho(self, K: float, T: float, r: float, option_type: OptionType, d2: float) -> float:
         """Calculate option rho."""
 
-        def norm_cdf(x):
+        def norm_cdf(x: float) -> float:
             return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
         if option_type == OptionType.CALL:
@@ -502,7 +502,6 @@ class DerivativesPricer:
         """Calculate convexity approximation."""
         # Simplified convexity calculation
         ytm = params.yield_to_maturity
-        frequency = params.coupon_frequency
         years = params.years_to_maturity
 
         # Approximate convexity

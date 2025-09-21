@@ -205,7 +205,7 @@ class StrategyFramework(bt.Strategy):
         ("risk_free_rate", 0.02),  # 2% risk-free rate
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize strategy framework."""
         self.trades_executed = []
         self.signals = []
@@ -366,7 +366,7 @@ class StrategyFramework(bt.Strategy):
 
     def next(self) -> None:
         """
-        Main strategy logic called for each bar.
+        Execute main strategy logic for each bar.
 
         This method should be overridden by concrete strategy implementations.
         """
@@ -398,7 +398,7 @@ class SimpleMovingAverageStrategy(StrategyFramework):
         ("position_size_pct", 0.1),
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SMA strategy."""
         super().__init__()
 
@@ -461,12 +461,12 @@ class SimpleMovingAverageStrategy(StrategyFramework):
             if self.crossover[0] > 0:  # Bullish crossover
                 size = self.calculate_position_size(current_price)
                 if size > 0:
-                    order = self.buy(size=size)
+                    self.buy(size=size)
                     self.log(f"BUY ORDER: Size={size}, Price={current_price:.2f}")
 
         else:  # Have position
             if self.crossover[0] < 0:  # Bearish crossover
-                order = self.sell(size=self.position.size)
+                self.sell(size=self.position.size)
                 self.log(f"SELL ORDER: Size={self.position.size}, Price={current_price:.2f}")
 
 
@@ -860,7 +860,7 @@ class BacktestingEngine:
                     benchmark_returns.append(bench_return)
                 else:
                     benchmark_returns.append(0.0)
-            except:
+            except Exception:
                 benchmark_returns.append(0.0)
 
         if len(portfolio_returns) > 1 and len(benchmark_returns) > 1:

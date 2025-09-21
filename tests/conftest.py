@@ -224,6 +224,7 @@ class FakeDataGenerator:
     """
 
     def __init__(self, faker_instance: Faker):
+        """Initialize session HTML generator."""
         self.fake = faker_instance
 
     def generate_session_html(
@@ -252,7 +253,8 @@ class FakeDataGenerator:
                         <tr>
                             <td>{holding["name"]}</td>
                             <td>{holding["ticker"]}</td>
-                            <td><span class="badge {"keep" if holding["decision"] == "KEEP" else "sell"}">{holding["decision"]}</span></td>
+                            <td><span class="badge {"keep" if holding["decision"] == "KEEP" else "sell"}">
+                        {holding["decision"]}</span></td>
                             <td>{holding["composite_score"]}</td>
                             <td>{holding["risk_level"]}</td>
                         </tr>"""
@@ -275,7 +277,9 @@ class FakeDataGenerator:
         <body>
             <div class="container">
                 <header>
-                    <div class="meta">Client: {client_profile["name"]}, {client_profile["age"]} ans • Horizon: {client_profile["investment_horizon"]} • Budget mensuel: {client_profile["monthly_budget"]}</div>
+                    <div class="meta">Client: {client_profile["name"]}, {client_profile["age"]} ans • 
+                    Horizon: {client_profile["investment_horizon"]} • 
+                    Budget mensuel: {client_profile["monthly_budget"]}</div>
                 </header>
 
                 <section class="card">

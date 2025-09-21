@@ -320,7 +320,7 @@ class StandardizedRiskScoringTool(BaseTool):
     )
     args_schema: type[BaseModel] = StandardizedRiskScoringInput
 
-    def _run(self, symbol: str, asset_class: str, risk_factors: list[str] = None, **kwargs) -> dict[str, Any]:
+    def _run(self, symbol: str, asset_class: str, risk_factors: list[str] = None, **kwargs: Any) -> dict[str, Any]:
         """Calculate standardized risk score based on provided factors."""
         if risk_factors is None:
             risk_factors = []

@@ -180,43 +180,49 @@ FinWiz includes automated portfolio review capabilities:
 
 ## 📈 Quantitative Analysis Framework
 
-FinWiz includes a comprehensive quantitative analysis framework for professional-grade financial modeling and backtesting:
+FinWiz includes a comprehensive quantitative analysis framework built on professional-grade financial libraries for institutional-quality analysis:
 
 ### Backtesting Engine
 - **Backtrader Integration**: Professional backtesting framework with strategy development capabilities
-- **Strategy Framework**: Base classes for custom trading strategies with risk management
-- **Performance Metrics**: Comprehensive performance analysis including Sharpe ratio, maximum drawdown, and risk-adjusted returns
+- **Strategy Framework**: Base classes for custom trading strategies with built-in risk management
+- **Performance Metrics**: Comprehensive analysis including Sharpe ratio, maximum drawdown, VaR, and CVaR
 - **Multi-Strategy Support**: Compare multiple strategies across different timeframes and assets
+- **Trade Analysis**: Detailed trade-by-trade statistics with win rates and profit factors
 
 ### Technical Analysis Engine
 - **TA-Lib Integration**: Professional technical analysis with 150+ indicators
-- **Signal Generation**: Automated buy/sell signal generation with confidence scoring
-- **Confluence Detection**: Identify zones where multiple indicators align
-- **Multi-Timeframe Analysis**: Analyze patterns across different timeframes
+- **Signal Generation**: Automated buy/sell signal generation with confidence scoring and strength classification
+- **Confluence Detection**: Identify zones where multiple indicators align for high-probability setups
+- **Multi-Timeframe Analysis**: Analyze patterns across different timeframes with consistent methodologies
+- **Supported Indicators**: SMA, EMA, RSI, MACD, Bollinger Bands, Stochastic, ATR, ADX, CCI, Williams %R, Fibonacci retracements
 
 ### Portfolio Optimization
 - **Modern Portfolio Theory**: Mean-variance optimization with efficient frontier calculation
 - **Risk Parity**: Equal risk contribution portfolio construction
-- **Black-Litterman Model**: Bayesian approach to portfolio optimization
+- **Black-Litterman Model**: Bayesian approach incorporating market views
 - **Hierarchical Risk Parity**: Advanced diversification using machine learning clustering
+- **Constraint Support**: Weight bounds, sector limits, and turnover constraints
 
 ### Derivatives Pricing
-- **QuantLib Integration**: Professional derivatives pricing library
+- **QuantLib Integration**: Professional derivatives pricing library (optional)
 - **Options Pricing**: Black-Scholes, binomial, and Monte Carlo models
-- **Greeks Calculation**: Delta, gamma, theta, vega, and rho for risk management
-- **Bond Analytics**: Yield curve analysis, duration, and convexity calculations
+- **Greeks Calculation**: Delta, gamma, theta, vega, and rho for comprehensive risk management
+- **Bond Analytics**: Yield curve analysis, duration, convexity, and accrued interest
+- **Implied Volatility**: Newton-Raphson method for market-implied volatility calculation
 
 ### Stock Screening
-- **Fundamental Screening**: Filter stocks based on financial metrics
-- **Technical Screening**: Screen based on technical indicators and patterns
-- **Multi-Criteria Scoring**: Composite scoring across multiple factors
-- **Universe Support**: Screen across S&P 500, NASDAQ 100, Russell 2000, and custom lists
+- **Multi-Universe Support**: Screen across S&P 500, NASDAQ 100, Russell 2000, Dow 30, and custom lists
+- **Fundamental Screening**: Filter based on P/E ratios, ROE, debt levels, and growth metrics
+- **Technical Screening**: Screen based on technical indicators and momentum patterns
+- **Multi-Criteria Scoring**: Composite scoring with configurable weights across multiple factors
+- **Predefined Screens**: Value, growth, dividend, and quality stock screens
 
 ### Performance Analytics
-- **Risk-Adjusted Metrics**: Sharpe, Sortino, and Calmar ratios
-- **Drawdown Analysis**: Maximum drawdown and recovery time analysis
-- **Benchmark Comparison**: Alpha, beta, and tracking error calculation
-- **Portfolio Attribution**: Performance attribution analysis
+- **Risk-Adjusted Metrics**: Sharpe, Sortino, Calmar, and Information ratios
+- **Drawdown Analysis**: Maximum drawdown, recovery time, and underwater curves
+- **Benchmark Comparison**: Alpha, beta, tracking error, and relative performance analysis
+- **Portfolio Attribution**: Performance attribution analysis with allocation and selection effects
+- **Statistical Analysis**: VaR, CVaR, skewness, kurtosis, and confidence intervals
 
 ## 🔬 Enhanced Analysis Features
 

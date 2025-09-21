@@ -514,7 +514,7 @@ class ETFTrackingAnalysisTool(BaseTool):
     )
     args_schema: type[BaseModel] = ETFTrackingAnalysisInput
 
-    def _run(self, ticker: str, **kwargs) -> dict[str, Any]:
+    def _run(self, ticker: str, **kwargs: Any) -> dict[str, Any]:
         """Analyze ETF tracking performance."""
         return {
             "tool": "ETFTrackingAnalysisTool",

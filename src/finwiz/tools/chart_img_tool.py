@@ -24,6 +24,8 @@ from finwiz.utils.rate_limiter import APIProvider
 
 
 class ChartImgInput(BaseModel):
+    """Input schema for chart image generation."""
+
     symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, SPY, BTCUSD")
     interval: str = Field("1day", description="Bar interval, e.g., 1min, 5min, 1h, 1day")
     range: str = Field("6mo", description="Time range, e.g., 1mo, 3mo, 6mo, 1y, 5y, max")
@@ -33,6 +35,8 @@ class ChartImgInput(BaseModel):
 
 
 class ChartImgTool(BaseTool):
+    """Tool for generating chart images via Chart-img API."""
+
     name: str = "Chart-img Generator"
     description: str = (
         "Generates a PNG chart image via Chart-img for a given symbol and timeframe, "

@@ -18,7 +18,6 @@ from pydantic import BaseModel, Field
 
 # Optional visualization imports
 try:
-    import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
 
@@ -29,9 +28,9 @@ except ImportError:
 
 # Optional scipy imports
 try:
-    from scipy import stats
+    import importlib.util
 
-    SCIPY_AVAILABLE = True
+    SCIPY_AVAILABLE = importlib.util.find_spec("scipy") is not None
 except ImportError:
     SCIPY_AVAILABLE = False
     warnings.warn("SciPy not available. Some statistical features may be limited.")
@@ -165,7 +164,7 @@ class PerformanceAnalyzer:
     using industry-standard methodologies and professional-grade libraries.
     """
 
-    def __init__(self, config: BacktestConfig | None = None):
+    def __init__(self, config: BacktestConfig | None = None) -> None:
         """
         Initialize performance analyzer.
 
@@ -284,13 +283,13 @@ class PerformanceAnalyzer:
 
         # Optimize based on method
         if method == "max_sharpe":
-            weights = ef.max_sharpe(risk_free_rate=self.config.risk_free_rate)
+            ef.max_sharpe(risk_free_rate=self.config.risk_free_rate)
         elif method == "min_volatility":
-            weights = ef.min_volatility()
+            ef.min_volatility()
         elif method == "efficient_return":
-            weights = ef.efficient_return(target_return)
+            ef.efficient_return(target_return)
         elif method == "efficient_risk":
-            weights = ef.efficient_risk(target_risk)
+            ef.efficient_risk(target_risk)
 
         # Clean weights (remove tiny weights)
         cleaned_weights = ef.clean_weights()
@@ -670,7 +669,7 @@ class PerformanceAnalyzer:
                 frontier_returns.append(ret)
                 frontier_volatilities.append(vol)
                 frontier_sharpe.append(sharpe)
-            except:
+            except Exception:
                 continue
 
         return frontier_returns, frontier_volatilities, frontier_sharpe

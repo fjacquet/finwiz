@@ -22,7 +22,7 @@ class TestFeatureFlags:
     """Test suite for FeatureFlags class."""
 
     def setup_method(self):
-        """Setup test environment."""
+        """Set up test environment."""
         # Clear environment variables
         env_vars_to_clear = [
             "FF_ENHANCED_SENTIMENT",

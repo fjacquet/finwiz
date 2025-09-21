@@ -110,7 +110,7 @@ class EtfCrew:
 
     @agent
     def translator(self) -> Agent:
-        """Translator agent that converts English reports to French while preserving layout."""
+        """Create translator agent that converts English reports to French while preserving layout."""
         return Agent(
             config=self.agents_config["translator"],
             tools=[],  # No tools - only consumes upstream HTML context

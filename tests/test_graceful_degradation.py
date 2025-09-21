@@ -25,7 +25,7 @@ class TestGracefulDegradationManager:
     """Test suite for GracefulDegradationManager class."""
 
     def setup_method(self):
-        """Setup test environment."""
+        """Set up test environment."""
         # Create fresh manager for each test
         self.manager = GracefulDegradationManager()
 

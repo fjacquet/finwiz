@@ -553,7 +553,7 @@ class CrossAssetSentimentComparatorTool(BaseTool):
     )
     args_schema: type[BaseModel] = CrossAssetSentimentComparatorInput
 
-    def _run(self, symbols: list[str], asset_classes: list[str], **kwargs) -> dict[str, Any]:
+    def _run(self, symbols: list[str], asset_classes: list[str], **kwargs: Any) -> dict[str, Any]:
         """Compare sentiment across asset classes."""
         return {
             "tool": "CrossAssetSentimentComparatorTool",

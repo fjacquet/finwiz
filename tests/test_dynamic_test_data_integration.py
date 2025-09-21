@@ -270,7 +270,9 @@ class TestDynamicTestDataFixtures:
         """Fixture providing dynamic financial news data."""
         return [
             {
-                "headline": f"{faker_instance.lexify(text='????')} {faker_instance.random_element(['Surges', 'Falls', 'Holds Steady'])} on {faker_instance.random_element(['Earnings', 'News', 'Market Sentiment'])}",
+                "headline": f"{faker_instance.lexify(text='????')} "
+                f"{faker_instance.random_element(['Surges', 'Falls', 'Holds Steady'])} on "
+                f"{faker_instance.random_element(['Earnings', 'News', 'Market Sentiment'])}",
                 "content": faker_instance.text(max_nb_chars=200),
                 "sentiment_score": faker_instance.pyfloat(min_value=-1.0, max_value=1.0, right_digits=2),
                 "published_date": faker_instance.date_time_between(start_date="-30d", end_date="now"),

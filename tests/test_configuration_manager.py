@@ -27,7 +27,7 @@ class TestConfigurationManager:
     """Test suite for ConfigurationManager class."""
 
     def setup_method(self):
-        """Setup test environment."""
+        """Set up test environment."""
         # Clear environment variables
         env_vars_to_clear = [
             "OPENAI_API_KEY",

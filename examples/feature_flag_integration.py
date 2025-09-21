@@ -31,7 +31,7 @@ async def enhanced_sentiment_analysis(ticker: str) -> dict[str, Any]:
 
 
 async def basic_sentiment_analysis(ticker: str) -> dict[str, Any]:
-    """Basic sentiment analysis fallback."""
+    """Perform basic sentiment analysis fallback."""
     print(f"📊 Performing basic sentiment analysis for {ticker}")
 
     return {"sentiment_score": 0.5, "article_count": 5, "trending_topics": ["market"], "sources": ["yahoo_finance"]}
@@ -176,7 +176,7 @@ async def demonstrate_circuit_breaker() -> None:
 
 
 async def main() -> None:
-    """Main demonstration function."""
+    """Run main demonstration."""
     print("🎯 FinWiz Feature Flag & Configuration Demo")
     print("=" * 60)
 

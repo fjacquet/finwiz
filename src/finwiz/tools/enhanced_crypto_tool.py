@@ -460,7 +460,7 @@ class CryptoThesisGeneratorTool(BaseTool):
     )
     args_schema: type[BaseModel] = CryptoThesisInput
 
-    def _run(self, symbol: str, **kwargs) -> dict[str, Any]:
+    def _run(self, symbol: str, **kwargs: Any) -> dict[str, Any]:
         """Generate crypto investment thesis."""
         return {
             "tool": "CryptoThesisGeneratorTool",
@@ -490,7 +490,7 @@ class CryptoRiskScoringTool(BaseTool):
     )
     args_schema: type[BaseModel] = CryptoRiskScoringInput
 
-    def _run(self, symbol: str, **kwargs) -> dict[str, Any]:
+    def _run(self, symbol: str, **kwargs: Any) -> dict[str, Any]:
         """Calculate crypto-specific risk score."""
         return {
             "tool": "CryptoRiskScoringTool",

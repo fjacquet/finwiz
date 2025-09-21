@@ -6,7 +6,7 @@ from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
 
 def mock_rate_limit_decorator(mocker):
-    """Helper to mock the rate limiting decorator."""
+    """Mock the rate limiting decorator."""
 
     def mock_with_rate_limit(provider, func, *args, **kwargs):
         # Filter out decorator-specific kwargs and call function directly

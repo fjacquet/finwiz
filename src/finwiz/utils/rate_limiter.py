@@ -309,7 +309,7 @@ def get_rate_limiter() -> RateLimiter:
     return _rate_limiter
 
 
-async def with_rate_limit(provider: APIProvider, func: Callable, *args, endpoint: str = "", **kwargs) -> Any:
+async def with_rate_limit(provider: APIProvider, func: Callable, *args: Any, endpoint: str = "", **kwargs: Any) -> Any:
     """
     Execute a function with rate limiting and retry logic.
 
@@ -317,7 +317,8 @@ async def with_rate_limit(provider: APIProvider, func: Callable, *args, endpoint
         provider: API provider for rate limiting
         func: Function to execute (can be sync or async)
         endpoint: Specific API endpoint being called
-        *args, **kwargs: Arguments to pass to the function
+        *args: Positional arguments to pass to the function
+        **kwargs: Keyword arguments to pass to the function
 
     Returns:
         Result of the function call

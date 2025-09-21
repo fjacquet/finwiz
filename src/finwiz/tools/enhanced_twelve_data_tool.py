@@ -12,6 +12,7 @@ import asyncio
 import os
 import time
 from datetime import datetime
+from typing import Any
 
 import aiohttp
 from pydantic import BaseModel, ConfigDict, Field
@@ -522,8 +523,8 @@ class TwelveDataTool:
 
         url = f"{self.base_url}/{endpoint}"
 
-        async def make_request():
-            """Internal function to make the actual HTTP request."""
+        async def make_request() -> dict[str, Any]:
+            """Make the actual HTTP request."""
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=self.timeout)) as response:
                     if response.status != 200:

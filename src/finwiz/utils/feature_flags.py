@@ -339,8 +339,8 @@ class FeatureFlags:
         fallback_func: Callable | None = None,
         user_id: str | None = None,
         context: dict[str, Any] | None = None,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         """
         Execute function with feature flag and fallback logic.
@@ -351,7 +351,8 @@ class FeatureFlags:
             fallback_func: Optional fallback function
             user_id: Optional user identifier
             context: Optional context for evaluation
-            *args, **kwargs: Arguments for the functions
+            *args: Positional arguments for the functions
+            **kwargs: Keyword arguments for the functions
 
         Returns:
             Result from primary or fallback function
@@ -370,7 +371,7 @@ class FeatureFlags:
             logger.debug(f"Feature flag {flag_name} disabled, using fallback")
             return self._execute_fallback(flag_name, fallback_func, *args, **kwargs)
 
-    def _execute_fallback(self, flag_name: str, fallback_func: Callable | None, *args, **kwargs) -> Any:
+    def _execute_fallback(self, flag_name: str, fallback_func: Callable | None, *args: Any, **kwargs: Any) -> Any:
         """Execute fallback logic based on strategy."""
         strategy = self.get_fallback_strategy(flag_name)
 
@@ -447,7 +448,7 @@ class FeatureFlags:
                 enabled_flags.append(flag_name)
         return enabled_flags
 
-    def update_flag(self, flag_name: str, **updates) -> bool:
+    def update_flag(self, flag_name: str, **updates: Any) -> bool:
         """
         Update feature flag configuration at runtime.
 
@@ -490,7 +491,7 @@ def get_feature_flags() -> FeatureFlags:
 
 
 def is_feature_enabled(flag_name: str, user_id: str | None = None, context: dict[str, Any] | None = None) -> bool:
-    """Convenience function to check if a feature is enabled."""
+    """Check if a feature is enabled."""
     return get_feature_flags().is_enabled(flag_name, user_id, context)
 
 
@@ -500,8 +501,8 @@ def execute_with_feature_flag(
     fallback_func: Callable | None = None,
     user_id: str | None = None,
     context: dict[str, Any] | None = None,
-    *args,
-    **kwargs,
+    *args: Any,
+    **kwargs: Any,
 ) -> Any:
-    """Convenience function to execute with feature flag and fallback."""
+    """Execute with feature flag and fallback."""
     return get_feature_flags().execute_with_fallback(flag_name, primary_func, fallback_func, user_id, context, *args, **kwargs)

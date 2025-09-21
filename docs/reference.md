@@ -99,7 +99,14 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `AlphaVantageNewsSentimentTool`: Fetches news and sentiment data with filtering capabilities.
 
 ### Quantitative Analysis Tools
-- `QuantitativeAnalysisTool`: Comprehensive quantitative analysis including technical analysis, backtesting, and performance metrics. Supports stocks, ETFs, and cryptocurrencies with multiple analysis types (technical, backtest, performance, comprehensive).
+- `QuantitativeAnalysisTool`: Comprehensive quantitative analysis framework with professional-grade capabilities:
+  - **Technical Analysis**: Multi-indicator analysis using TA-Lib (RSI, MACD, Bollinger Bands, Stochastic, ATR, ADX, CCI, Williams %R, Fibonacci)
+  - **Backtesting**: Strategy backtesting using Backtrader with risk management and performance metrics
+  - **Performance Analytics**: Risk-adjusted performance analysis with Sharpe, Sortino, Calmar ratios, VaR, CVaR
+  - **Portfolio Optimization**: Modern portfolio theory with efficient frontier calculation (requires PyPortfolioOpt)
+  - **Derivatives Pricing**: Options and bond pricing using Black-Scholes and QuantLib models (optional)
+  - **Stock Screening**: Multi-criteria screening across major indices with composite scoring
+  - Supports stocks, ETFs, and cryptocurrencies with consistent methodologies and unified schemas
 
 ### RAG & Knowledge Tools
 - `SaveToRagTool`: Persists text for later retrieval via RAG.
@@ -607,6 +614,117 @@ tools = [
 
 The tool provides comprehensive analysis results that can be incorporated into crew outputs using the quantitative schemas in `src/finwiz/schemas/quantitative.py`.
 
+## Quantitative Analysis Framework
+
+FinWiz includes a comprehensive quantitative analysis framework built on professional-grade financial libraries. See [Quantitative Analysis Documentation](quantitative_analysis.md) for detailed information.
+
+### Core Components
+
+#### Backtesting Engine (`finwiz.quantitative.backtesting`)
+Professional backtesting framework using Backtrader:
+
+```python
+from finwiz.quantitative import get_backtesting_engine, SimpleMovingAverageStrategy
+
+engine = get_backtesting_engine()
+result = engine.run_strategy_backtest(
+    SimpleMovingAverageStrategy,
+    symbol="AAPL",
+    start_date=datetime(2023, 1, 1),
+    end_date=datetime(2024, 1, 1),
+    strategy_params={"short_period": 20, "long_period": 50}
+)
+```
+
+#### Technical Analysis Engine (`finwiz.quantitative.technical`)
+TA-Lib integration with 150+ technical indicators:
+
+```python
+from finwiz.quantitative.technical import TechnicalAnalysisEngine, TechnicalIndicator
+
+engine = TechnicalAnalysisEngine()
+result = engine.analyze_symbol(
+    data=price_data,
+    symbol="AAPL",
+    timeframe="1d",
+    indicators=[TechnicalIndicator.RSI, TechnicalIndicator.MACD, TechnicalIndicator.BOLLINGER_BANDS]
+)
+```
+
+#### Performance Analytics (`finwiz.quantitative.performance`)
+Risk-adjusted performance metrics and portfolio optimization:
+
+```python
+from finwiz.quantitative import get_performance_analyzer
+
+analyzer = get_performance_analyzer()
+report = analyzer.analyze_performance(
+    returns=strategy_returns,
+    benchmark_returns=benchmark_returns,
+    strategy_name="My Strategy"
+)
+```
+
+#### Portfolio Optimization (`finwiz.quantitative.optimization`)
+Modern portfolio theory implementation:
+
+```python
+from finwiz.quantitative.optimization import PortfolioOptimizer, ObjectiveFunction
+
+optimizer = PortfolioOptimizer()
+result = optimizer.optimize_portfolio(
+    inputs=portfolio_inputs,
+    objective=ObjectiveFunction.MAX_SHARPE
+)
+```
+
+#### Derivatives Pricing (`finwiz.quantitative.derivatives`)
+Options and bond pricing using QuantLib (optional):
+
+```python
+from finwiz.quantitative.derivatives import DerivativesPricer, OptionParameters
+
+pricer = DerivativesPricer()
+result = pricer.price_option(option_params)
+```
+
+#### Stock Screening (`finwiz.quantitative.screening`)
+Multi-criteria stock screening and ranking:
+
+```python
+from finwiz.quantitative.screening import StockScreener, ScreeningFilter
+
+screener = StockScreener()
+results, summary = screener.screen_stocks(
+    filters=screening_filters,
+    universe=ScreeningUniverse.SP500
+)
+```
+
+### Configuration
+
+```bash
+# Quantitative Analysis Configuration (Optional)
+QUANTITATIVE_ENABLED=true
+BACKTEST_INITIAL_CAPITAL=100000
+BACKTEST_COMMISSION=0.001
+RISK_FREE_RATE=0.02
+```
+
+### Dependencies
+
+**Required:**
+- backtrader (backtesting)
+- ta-lib (technical analysis)
+- numpy, pandas (data processing)
+- yfinance (data provider)
+
+**Optional:**
+- QuantLib (derivatives pricing)
+- PyPortfolioOpt (portfolio optimization)
+- plotly (visualizations)
+- scipy (statistical functions)
+
 ## Testing
 
 - Framework: `pytest`; mocking: `pytest-mock`.
@@ -623,8 +741,19 @@ uv run pytest
 uv run pytest -m "not integration"
 ```
 
+- Quantitative tests:
+
+```bash
+# Run quantitative unit tests
+uv run pytest tests/unit/quantitative/ -v
+
+# Run quantitative integration tests
+uv run pytest tests/integration/test_quantitative_analysis_integration.py -v
+```
+
 - Guidelines:
   - Mock external APIs/tools and filesystem for determinism.
   - Use Faker for dynamic test data generation.
   - Prefer small unit tests, add integration tests for crew flows.
+  - Quantitative tests include comprehensive coverage of all analysis components.
   - Ensure CI runs `uv run pytest` as default.

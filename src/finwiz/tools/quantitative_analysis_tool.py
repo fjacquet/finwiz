@@ -443,5 +443,5 @@ class QuantitativeAnalysisTool(BaseTool):
 
 
 def get_quantitative_analysis_tool() -> QuantitativeAnalysisTool:
-    """Factory function to create quantitative analysis tool."""
+    """Create quantitative analysis tool."""
     return QuantitativeAnalysisTool()

@@ -31,7 +31,7 @@ class PriceData:
     closes: list[float]
     volumes: list[int]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate that all lists have the same length."""
         lengths = [
             len(self.dates),
@@ -526,8 +526,8 @@ class TechnicalAnalyzer:
                 contributing_indicators = [level["source"] for level in group]
 
                 # Find Fibonacci and S/R levels in this zone
-                fib_level = next((l["price"] for l in group if l["type"] == "fibonacci"), None)
-                sr_level = next((l["price"] for l in group if l["type"] == "support_resistance"), None)
+                fib_level = next((level["price"] for level in group if level["type"] == "fibonacci"), None)
+                sr_level = next((level["price"] for level in group if level["type"] == "support_resistance"), None)
 
                 confluence_zones.append(
                     ConfluenceZone(
@@ -776,7 +776,7 @@ class TechnicalAnalyzer:
 
         for level in sorted_levels[1:]:
             # Check if this level is close to the current group
-            group_avg_price = statistics.mean([l["price"] for l in current_group])
+            group_avg_price = statistics.mean([level_item["price"] for level_item in current_group])
             price_diff = abs(level["price"] - group_avg_price) / group_avg_price
 
             if price_diff <= self.confluence_tolerance:

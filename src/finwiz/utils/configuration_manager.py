@@ -378,15 +378,15 @@ def get_configuration_manager() -> ConfigurationManager:
 
 
 def validate_startup_configuration() -> bool:
-    """Convenience function for startup validation."""
+    """Validate startup configuration."""
     return get_configuration_manager().validate_startup_configuration()
 
 
 def get_api_key(service_name: str) -> str | None:
-    """Convenience function to get API key for a service."""
+    """Get API key for a service."""
     return get_configuration_manager().get_api_key(service_name)
 
 
 def is_service_available(service_name: str) -> bool:
-    """Convenience function to check if a service is available."""
+    """Check if a service is available."""
     return get_configuration_manager().is_service_available(service_name)

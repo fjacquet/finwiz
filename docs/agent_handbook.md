@@ -105,13 +105,18 @@ This handbook establishes the core principles, ethical standards, and research m
 
 #### Quantitative Analysis Agents
 
-- Use `QuantitativeAnalysisTool` for comprehensive quantitative analysis including backtesting, technical analysis, and performance metrics
-- Integrate multiple analysis types: technical indicators, strategy backtesting, performance analytics, and comprehensive analysis
-- Apply professional-grade methodologies using Backtrader, TA-Lib, and other quantitative libraries
-- Generate data-driven investment recommendations with statistical confidence measures
-- Provide risk-adjusted performance metrics including Sharpe ratio, maximum drawdown, and VaR calculations
-- Support multi-asset analysis across stocks, ETFs, and cryptocurrencies with consistent methodologies
-- Incorporate quantitative signals into investment thesis and recommendation rationale
+- Use `QuantitativeAnalysisTool` for comprehensive quantitative analysis with professional-grade methodologies
+- **Technical Analysis**: Apply multi-indicator analysis with TA-Lib integration (RSI, MACD, Bollinger Bands, etc.)
+- **Signal Generation**: Generate buy/sell signals with confidence scoring and strength classification
+- **Confluence Detection**: Identify high-probability setups where multiple indicators align
+- **Backtesting**: Execute strategy backtesting using Backtrader framework with risk management
+- **Performance Analytics**: Calculate risk-adjusted metrics (Sharpe, Sortino, Calmar ratios, VaR, CVaR)
+- **Portfolio Optimization**: Apply modern portfolio theory with efficient frontier analysis
+- **Stock Screening**: Multi-criteria screening across major market indices with composite scoring
+- **Derivatives Analysis**: Options pricing and Greeks calculation using Black-Scholes and advanced models
+- **Multi-Asset Support**: Consistent quantitative methodologies across stocks, ETFs, and cryptocurrencies
+- **Statistical Rigor**: Provide confidence intervals, significance testing, and robust error handling
+- **Integration**: Incorporate quantitative signals into investment thesis with supporting statistical evidence
 
 #### Reporting Agents
 
@@ -193,7 +198,13 @@ To perform their tasks effectively, agents are equipped with a specialized set o
 - **`SECFilingSearchTool`**: Use to search and extract information from SEC filings (10-K, 10-Q, etc.).
 
 ### Quantitative Analysis Tools
-- **`QuantitativeAnalysisTool`**: Use for comprehensive quantitative analysis including technical analysis, backtesting, and performance metrics. Supports multiple analysis types (technical, backtest, performance, comprehensive) across stocks, ETFs, and cryptocurrencies. Provides data-driven insights with statistical confidence measures and risk-adjusted performance metrics.
+- **`QuantitativeAnalysisTool`**: Use for comprehensive quantitative analysis including technical analysis, backtesting, and performance metrics. Supports multiple analysis types:
+  - **Technical Analysis**: Multi-indicator analysis with signal generation and confluence detection
+  - **Backtesting**: Strategy backtesting with comprehensive performance metrics
+  - **Performance Analytics**: Risk-adjusted performance analysis with benchmark comparison
+  - **Comprehensive Analysis**: Combined technical, fundamental, and quantitative analysis
+  - Supports stocks, ETFs, and cryptocurrencies with consistent methodologies
+  - Provides statistical confidence measures and professional-grade risk metrics
 
 ### Utility Tools
 - **`SaveToRagTool`**: Use to persist important research findings for later retrieval.

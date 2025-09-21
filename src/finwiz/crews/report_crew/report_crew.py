@@ -75,7 +75,8 @@ class ReportCrew:
     agents: list[BaseAgent]
     tasks: list[Task]
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize report crew with validators."""
         super().__init__(*args, **kwargs)
         self.tool_validator = ToolRestrictionValidator()
         self.input_validator = ReporterInputValidator()
@@ -131,7 +132,7 @@ class ReportCrew:
 
     @agent
     def translator(self) -> Agent:
-        """Translator agent that converts English reports to French while preserving layout."""
+        """Create translator agent that converts English reports to French while preserving layout."""
         return Agent(
             config=self.agents_config["translator"],
             tools=[],  # No tools - only consumes upstream HTML context

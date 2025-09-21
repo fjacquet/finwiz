@@ -150,8 +150,8 @@ class GracefulDegradationManager:
         primary_func: Callable,
         fallback_func: Callable | None = None,
         cache_key: str | None = None,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         """
         Execute function with graceful degradation support.
@@ -161,7 +161,8 @@ class GracefulDegradationManager:
             primary_func: Primary function to execute
             fallback_func: Optional fallback function
             cache_key: Optional cache key for fallback data
-            *args, **kwargs: Arguments for the functions
+            *args: Positional arguments for the functions
+            **kwargs: Keyword arguments for the functions
 
         Returns:
             Result from primary function or fallback
@@ -227,7 +228,7 @@ class GracefulDegradationManager:
         logger.error(f"All attempts failed for {service_name}, using fallback")
         return await self._execute_fallback(service_name, fallback_func, cache_key, *args, **kwargs)
 
-    async def _execute_primary_function(self, func: Callable, *args, **kwargs) -> Any:
+    async def _execute_primary_function(self, func: Callable, *args: Any, **kwargs: Any) -> Any:
         """Execute primary function without degradation handling."""
         if asyncio.iscoroutinefunction(func):
             return await func(*args, **kwargs)
@@ -235,7 +236,7 @@ class GracefulDegradationManager:
             return func(*args, **kwargs)
 
     async def _execute_fallback(
-        self, service_name: str, fallback_func: Callable | None, cache_key: str | None, *args, **kwargs
+        self, service_name: str, fallback_func: Callable | None, cache_key: str | None, *args: Any, **kwargs: Any
     ) -> Any:
         """Execute fallback strategy for failed service."""
         config = self.degradation_configs.get(service_name)
@@ -419,7 +420,7 @@ class GracefulDegradationManager:
 
         return health
 
-    def update_service_config(self, service_name: str, **config_updates) -> bool:
+    def update_service_config(self, service_name: str, **config_updates: Any) -> bool:
         """Update degradation configuration for a service."""
         if service_name not in self.degradation_configs:
             logger.error(f"No configuration found for service: {service_name}")
@@ -449,8 +450,13 @@ def get_degradation_manager() -> GracefulDegradationManager:
 
 
 async def execute_with_degradation(
-    service_name: str, primary_func: Callable, fallback_func: Callable | None = None, cache_key: str | None = None, *args, **kwargs
+    service_name: str,
+    primary_func: Callable,
+    fallback_func: Callable | None = None,
+    cache_key: str | None = None,
+    *args: Any,
+    **kwargs: Any,
 ) -> Any:
-    """Convenience function for executing with graceful degradation."""
+    """Execute with graceful degradation."""
     manager = get_degradation_manager()
     return await manager.execute_with_degradation(service_name, primary_func, fallback_func, cache_key, *args, **kwargs)

@@ -127,9 +127,9 @@ def get_session_summary(plan: FinancialPlan) -> dict:
 
 
 # Example usage in main.py integration
-def integrate_with_main_flow():
+def integrate_with_main_flow() -> None:
     """
-    Example of how to integrate session management with the main FinWiz flow.
+    Integrate session management with the main FinWiz flow.
 
     This would be called from the main FinWiz application to add session
     persistence to the existing workflow.

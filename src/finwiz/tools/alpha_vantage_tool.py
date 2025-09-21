@@ -8,6 +8,7 @@ and more.
 
 import json
 import os
+from typing import Any
 
 import requests
 from crewai.tools import BaseTool
@@ -49,7 +50,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         import asyncio
 
         # Use async wrapper for caching
-        async def fetch_data():
+        async def fetch_data() -> dict[str, Any]:
             return await self._fetch_company_overview(ticker)
 
         # Run in event loop
@@ -71,7 +72,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         """Fetch company overview data with caching."""
         cache_key_str = cache_key("alpha_vantage", "overview", ticker.upper())
 
-        async def fetch_from_api():
+        async def fetch_from_api() -> str:
             api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
             if not api_key:
                 return "Error: ALPHA_VANTAGE_API_KEY environment variable not set."

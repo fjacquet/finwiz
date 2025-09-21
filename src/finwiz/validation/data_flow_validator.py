@@ -18,6 +18,7 @@ class DataFlowViolation(Exception):
     """Raised when data flow validation fails."""
 
     def __init__(self, crew_name: str, violation: str) -> None:
+        """Initialize data flow validation error."""
         super().__init__(f"Data flow violation in {crew_name}: {violation}")
         self.crew_name = crew_name
         self.violation = violation
@@ -51,6 +52,7 @@ class DataFlowValidator:
     """
 
     def __init__(self) -> None:
+        """Initialize data flow validator."""
         self.crew_contracts = self._initialize_crew_contracts()
         self.flow_traces: list[DataFlowTrace] = []
         self.logger = logger
@@ -284,6 +286,7 @@ class ReporterContextValidator:
     """
 
     def __init__(self) -> None:
+        """Initialize reporter validator."""
         self.required_context_keys = {"ten_k_insights", "market_sentiment", "risk_score_standardized"}
         self.optional_context_keys = {
             "portfolio_allocation",

@@ -16,7 +16,7 @@ class APITestMocks:
     @staticmethod
     def setup_yahoo_finance_mock(mocker, ticker: str = "AAPL", **kwargs) -> Any:
         """
-        Setup comprehensive Yahoo Finance API mock with explicit behavior.
+        Set up comprehensive Yahoo Finance API mock with explicit behavior.
 
         Args:
             mocker: pytest-mock fixture
@@ -96,7 +96,7 @@ class APITestMocks:
     @staticmethod
     def setup_alpha_vantage_mock(mocker, ticker: str = "AAPL", **kwargs) -> Any:
         """
-        Setup Alpha Vantage API mock with explicit news and sentiment data.
+        Set up Alpha Vantage API mock with explicit news and sentiment data.
 
         Args:
             mocker: pytest-mock fixture
@@ -156,7 +156,7 @@ class APITestMocks:
     @staticmethod
     def setup_twelve_data_mock(mocker, indicator: str = "rsi", **kwargs) -> Any:
         """
-        Setup Twelve Data API mock for technical indicators.
+        Set up Twelve Data API mock for technical indicators.
 
         Args:
             mocker: pytest-mock fixture
@@ -232,7 +232,7 @@ class APITestMocks:
     @staticmethod
     def setup_coinmarketcap_mock(mocker, crypto_symbol: str = "BTC", **kwargs) -> Any:
         """
-        Setup CoinMarketCap API mock for cryptocurrency data.
+        Set up CoinMarketCap API mock for cryptocurrency data.
 
         Args:
             mocker: pytest-mock fixture
@@ -284,7 +284,7 @@ class APITestMocks:
     @staticmethod
     def setup_chart_img_mock(mocker, **kwargs) -> Any:
         """
-        Setup Chart-img API mock for chart generation.
+        Set up Chart-img API mock for chart generation.
 
         Args:
             mocker: pytest-mock fixture
@@ -309,7 +309,7 @@ class APITestMocks:
     @staticmethod
     def setup_sec_edgar_mock(mocker, ticker: str = "AAPL", **kwargs) -> Any:
         """
-        Setup SEC EDGAR API mock for filing data.
+        Set up SEC EDGAR API mock for filing data.
 
         Args:
             mocker: pytest-mock fixture
@@ -347,7 +347,7 @@ class APITestMocks:
     @staticmethod
     def setup_http_error_mock(mocker, status_code: int = 500, error_message: str = "Internal Server Error") -> Any:
         """
-        Setup mock for HTTP error responses.
+        Set up mock for HTTP error responses.
 
         Args:
             mocker: pytest-mock fixture
@@ -373,7 +373,7 @@ class APITestMocks:
     @staticmethod
     def setup_timeout_mock(mocker, timeout_error: bool = True) -> Any:
         """
-        Setup mock for timeout scenarios.
+        Set up mock for timeout scenarios.
 
         Args:
             mocker: pytest-mock fixture
@@ -405,7 +405,7 @@ class APITestMocks:
     @staticmethod
     def setup_rate_limit_mock(mocker, retry_after: int = 60) -> Any:
         """
-        Setup mock for rate limit scenarios.
+        Set up mock for rate limit scenarios.
 
         Args:
             mocker: pytest-mock fixture
@@ -428,7 +428,7 @@ class APITestMocks:
     @staticmethod
     def setup_file_system_mock(mocker, file_content: str = "", file_exists: bool = True) -> Any:
         """
-        Setup file system operation mocks.
+        Set up file system operation mocks.
 
         Args:
             mocker: pytest-mock fixture
@@ -459,7 +459,7 @@ class APITestMocks:
     @staticmethod
     def setup_environment_mock(mocker, env_vars: dict[str, str]) -> Any:
         """
-        Setup environment variable mocks.
+        Set up environment variable mocks.
 
         Args:
             mocker: pytest-mock fixture
@@ -474,7 +474,7 @@ class APITestMocks:
     @staticmethod
     def setup_database_mock(mocker, **kwargs) -> Any:
         """
-        Setup database operation mocks.
+        Set up database operation mocks.
 
         Args:
             mocker: pytest-mock fixture

@@ -22,7 +22,7 @@ class TestSessionManagerWithFaker:
     """
 
     def setup_method(self):
-        """Configuration des fixtures de test."""
+        """Configure test fixtures."""
         self.temp_dir = tempfile.mkdtemp()
         self.test_report_path = Path(self.temp_dir) / "test_report.html"
         self.session_manager = SessionManager(str(self.test_report_path))
