@@ -26,7 +26,7 @@ DEFAULT_RAG_CONFIG = {
         },
     },
     "vectordb": {
-        "provider": "chroma",
+        "provider": "chromadb",
         "config": {
             "collection_name": "finwiz",
             "dir": os.path.join(PROJECT_ROOT, "db"),  # Absolute path to storage directory

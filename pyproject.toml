@@ -22,6 +22,10 @@ dependencies = [
     "ta-lib>=0.6.6",
     "backtrader>=1.9.78.123",
     "quantlib>=1.39",
+    "pyportfolioopt>=1.5.5",
+    "plotly>=6.3.0",
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.29",
 ]
 
 [project.scripts]
@@ -164,8 +168,8 @@ ignore_missing_imports = true
 exclude_dirs = ["tests", "venv", ".venv"]
 skips = ["B101", "B601"]
 
-[tool.uv]
-dev-dependencies = [
+
+dependency-groups.dev = [
     "bandit>=1.8.6",
     "pip-audit>=2.9.0",
     "pytest-asyncio>=1.1.0",
