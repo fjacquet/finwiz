@@ -1,0 +1,146 @@
+# Portfolio Analysis Tasks
+portfolio_analysis_task:
+  description: >
+    Analyze current portfolio composition and calculate precise weightings against target allocations.
+
+    This task involves comprehensive analysis of the current portfolio holdings, calculation of 
+    accurate market-weighted allocations, and identification of deviations from target weightings.
+
+    1. Retrieve current market prices for all portfolio holdings as of {full_date}.
+    2. Calculate total portfolio value and individual position weightings.
+    3. Compare current weightings against target allocations to identify drift.
+    4. Analyze portfolio risk characteristics and concentration metrics.
+    5. Identify positions that require rebalancing based on tolerance thresholds.
+    6. Use the "Quantitative Analysis Tool" with analysis_type="portfolio" to perform:
+       - Portfolio composition analysis with sector and asset class breakdowns
+       - Risk metrics calculation including portfolio beta, volatility, and correlation analysis
+       - Performance attribution analysis for current vs target allocations
+       - Diversification metrics and concentration risk assessment
+    7. Store portfolio analysis results in the knowledge base for team collaboration.
+
+    Today is {full_date}. Ensure your analysis reflects current market conditions and prices.
+    Use the portfolio configuration provided in the input parameters.
+
+    OUTPUT: Return detailed portfolio composition analysis with current vs target weightings.
+  expected_output: >
+    A comprehensive portfolio analysis including current weightings, target deviations, 
+    risk metrics, and positions requiring rebalancing. Include quantitative portfolio 
+    metrics and risk assessment.
+  agent: portfolio_analyst
+  output_file: "output/portfolio/portfolio_composition_analysis.md"
+  output_pydantic: PortfolioReview
+  output_json: true
+  async_execution: true
+
+# Rebalancing Optimization Tasks
+rebalancing_optimization_task:
+  description: >
+    Generate optimal trade recommendations to rebalance the portfolio to target allocations.
+
+    This task involves sophisticated optimization to determine the most cost-effective trades 
+    needed to bring the portfolio back into alignment with target weightings.
+
+    1. Retrieve portfolio analysis results from the previous task and knowledge base.
+    2. Calculate required trade quantities for each position to achieve target weightings.
+    3. Optimize trade recommendations to minimize total transaction costs and market impact.
+    4. Consider available capital constraints and minimum trade size requirements.
+    5. Prioritize trades based on deviation magnitude and cost-benefit analysis.
+    6. Use the "Quantitative Analysis Tool" with analysis_type="optimization" to perform:
+       - Multi-objective portfolio optimization with cost minimization
+       - Constraint handling for capital limits, position sizes, and trading restrictions
+       - Scenario analysis for different rebalancing approaches
+       - Sensitivity analysis for parameter variations
+    7. Generate detailed trade recommendations with rationale and cost estimates.
+    8. Store optimization results and trade recommendations in the knowledge base.
+
+    Consider transaction costs, market impact, and practical trading constraints in your optimization.
+    Ensure recommendations are actionable and cost-effective.
+
+    OUTPUT: Return specific trade recommendations with quantities, costs, and optimization rationale.
+  expected_output: >
+    Detailed trade recommendations including buy/sell quantities, estimated costs, 
+    priority rankings, and optimization analysis. Include cost-benefit analysis 
+    and alternative scenarios.
+  agent: rebalancing_strategist
+  output_file: "output/portfolio/rebalancing_trade_recommendations.md"
+  async_execution: true
+  depends_on:
+    - portfolio_analysis_task
+
+# Risk Validation Tasks
+risk_validation_task:
+  description: >
+    Validate rebalancing recommendations against risk constraints and investment policies.
+
+    This task involves comprehensive risk assessment of the proposed rebalancing trades 
+    to ensure compliance with risk management policies and investment mandates.
+
+    1. Retrieve trade recommendations from the rebalancing optimization task.
+    2. Assess concentration risk and position size limits for proposed portfolio changes.
+    3. Validate compliance with investment policy constraints and risk tolerance parameters.
+    4. Analyze potential market impact and liquidity risks of recommended trades.
+    5. Evaluate tax implications and regulatory considerations for proposed changes.
+    6. Use the "Quantitative Analysis Tool" with analysis_type="risk" to perform:
+       - Value at Risk (VaR) and Conditional VaR calculations for the rebalanced portfolio
+       - Stress testing and scenario analysis for adverse market conditions
+       - Risk-adjusted performance projections and Sharpe ratio analysis
+       - Correlation and beta analysis for the proposed portfolio composition
+    7. Generate risk assessment scores using standardized 1-10 risk scoring methodology.
+    8. Provide risk mitigation recommendations and alternative approaches if needed.
+    9. Store risk validation results and compliance status in the knowledge base.
+
+    Follow the standardized risk assessment framework and ensure all recommendations 
+    comply with established risk management policies.
+
+    OUTPUT: Return comprehensive risk validation with compliance status and mitigation strategies.
+  expected_output: >
+    A detailed risk assessment of rebalancing recommendations including compliance validation, 
+    risk scores, stress test results, and mitigation strategies. The report should be formatted 
+    in professional HTML with clear risk indicators and actionable recommendations.
+    Also include a machine-readable JSON appendix containing:
+    - risk_assessments[] matching the RiskAssessmentStandardized schema
+    - compliance_validation with detailed policy adherence analysis
+    - quantitative_risk_metrics[] with comprehensive risk analysis results
+  agent: risk_manager
+  output_file: "output/portfolio/portfolio_rebalancing_risk_validation.html"
+  output_pydantic: RiskAssessmentStandardized
+  output_json: true
+  depends_on:
+    - rebalancing_optimization_task
+
+# Translation Task
+translation_task:
+  description: >
+    Translate the English portfolio rebalancing report to French while preserving exact HTML structure and styling.
+
+    This task involves professional translation of the comprehensive portfolio rebalancing analysis 
+    from English to French, maintaining all technical accuracy and visual formatting.
+
+    1. Receive the complete HTML portfolio rebalancing report from the risk validation task.
+    2. Translate all text content from English to French while preserving:
+       - Exact HTML structure and all HTML tags
+       - All CSS classes, IDs, and styling attributes
+       - All numerical data, percentages, and financial metrics (unchanged)
+       - All table structures, headers, and data organization
+       - All chart titles, axis labels, and data point labels
+    3. Ensure accurate translation of financial terminology:
+       - Portfolio management and rebalancing terms
+       - Risk assessment and compliance terminology
+       - Investment strategy and optimization language
+       - Quantitative analysis and statistical terms
+    4. Maintain professional tone and technical precision in French.
+    5. Preserve all JSON appendices exactly as provided (no translation of structured data).
+    6. Ensure the translated report maintains the same visual appearance and functionality.
+
+    CRITICAL: Do not modify any HTML structure, CSS styling, or numerical data. 
+    Only translate the text content while preserving all formatting and technical elements.
+
+    OUTPUT: Return the complete French version of the portfolio rebalancing report.
+  expected_output: >
+    A complete French translation of the portfolio rebalancing report maintaining exact HTML structure, 
+    CSS styling, and technical accuracy. All financial terms should be properly translated while 
+    preserving numerical data and formatting.
+  agent: translator
+  output_file: "output/portfolio/portfolio_rebalancing_report_french.html"
+  depends_on:
+    - risk_validation_task

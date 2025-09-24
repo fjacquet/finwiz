@@ -189,6 +189,37 @@ class FeatureFlags:
                 fallback_strategy=FallbackStrategy.DISABLE,
                 description="QuantLib derivatives pricing capabilities",
             ),
+            "portfolio_rebalancing": FeatureFlagConfig(
+                name="portfolio_rebalancing",
+                enabled=self._get_env_bool("FF_PORTFOLIO_REBALANCING", False),
+                strategy=FeatureFlagStrategy.PERCENTAGE,
+                rollout_percentage=self._get_env_float("FF_PORTFOLIO_REBALANCING_ROLLOUT", 0.0),
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Portfolio rebalancing with optimization algorithms",
+            ),
+            "rebalancing_monitoring": FeatureFlagConfig(
+                name="rebalancing_monitoring",
+                enabled=self._get_env_bool("FF_REBALANCING_MONITORING", False),
+                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
+                circuit_breaker_threshold=self._get_env_int("FF_REBALANCING_BREAKER_THRESHOLD", 3),
+                circuit_breaker_timeout=self._get_env_int("FF_REBALANCING_BREAKER_TIMEOUT", 300),
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Real-time portfolio monitoring and alerts",
+            ),
+            "rebalancing_api": FeatureFlagConfig(
+                name="rebalancing_api",
+                enabled=self._get_env_bool("FF_REBALANCING_API", False),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="REST API endpoints for portfolio rebalancing",
+            ),
+            "monitoring": FeatureFlagConfig(
+                name="monitoring",
+                enabled=self._get_env_bool("FF_MONITORING", True),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Performance monitoring and metrics collection",
+            ),
         }
 
         self.flags.update(default_flags)

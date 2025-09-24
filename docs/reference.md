@@ -6,6 +6,10 @@ This document provides a technical reference for the FinWiz project, covering it
 
 FinWiz is built on the [CrewAI](https://github.com/joaomdmoura/crewai) framework and follows a modular architecture designed for extensibility and maintainability.
 
+For detailed CrewAI feature usage patterns and best practices, see:
+- [CrewAI Feature Usage Guide](crewai_feature_usage_guide.md) - Comprehensive guide for proper CrewAI implementation
+- [CrewAI Compliance Checklist](crewai_compliance_checklist.md) - Checklist for ensuring consistent feature usage
+
 - **Crews**: The core of the application. Each crew is a specialized team of AI agents designed to perform a specific type of financial analysis (e.g., Crypto, Stocks, ETFs).
 - **Agents**: The individual AI workers within a crew. Each agent has a specific role, goal, and set of tools. Agent configurations are defined in `agents.yaml` files.
 - **Tasks**: The specific assignments for agents. Tasks define the work to be done, the expected output, and which agent should perform it. Task configurations are defined in `tasks.yaml` files.
@@ -33,6 +37,12 @@ FinWiz includes the following pre-configured crews:
 - **Objective**: To analyze Exchange-Traded Funds (ETFs).
 - **Tasks**: Analyzes market trends, screens for suitable ETFs, and assesses risk factors.
 - **Output**: A report in HTML and PDF formats with investment strategies for ETFs.
+
+### 4. Portfolio Rebalancing Crew
+
+- **Objective**: To provide intelligent portfolio rebalancing analysis and optimization.
+- **Tasks**: Analyzes current portfolio composition, generates optimal trade recommendations, performs cost analysis, and validates against risk constraints.
+- **Output**: Comprehensive rebalancing report with trade recommendations, cost analysis, and scenario comparisons in HTML and PDF formats.
 
 ## Customization
 
@@ -107,6 +117,17 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
   - **Derivatives Pricing**: Options and bond pricing using Black-Scholes and QuantLib models (optional)
   - **Stock Screening**: Multi-criteria screening across major indices with composite scoring
   - Supports stocks, ETFs, and cryptocurrencies with consistent methodologies and unified schemas
+
+### Portfolio Rebalancing Tools
+- `PortfolioRebalancingTool`: Comprehensive portfolio rebalancing analysis framework with professional-grade capabilities:
+  - **Trade Recommendations**: Generate optimal buy/sell recommendations to maintain target allocations
+  - **Multiple Optimization Methods**: Choose from minimize trades, minimize costs, or risk-aware strategies
+  - **Cost Analysis**: Calculate transaction costs including commissions, spreads, and market impact
+  - **Risk Management**: Apply concentration limits, turnover monitoring, and volatility-based recommendations
+  - **Scenario Analysis**: Compare different rebalancing approaches and what-if scenarios
+  - **Performance Tracking**: Monitor rebalancing effectiveness with historical analysis
+  - Supports fractional shares, multiple asset classes, and configurable tolerance bands
+  - Integrates with existing portfolio monitoring and alerting systems
 
 ### RAG & Knowledge Tools
 - `SaveToRagTool`: Persists text for later retrieval via RAG.
@@ -620,6 +641,121 @@ tools = [
 
 The tool provides comprehensive analysis results that can be incorporated into crew outputs using the quantitative schemas in `src/finwiz/schemas/quantitative.py`.
 
+## Portfolio Rebalancing System
+
+FinWiz includes a comprehensive portfolio rebalancing system designed for professional portfolio management with intelligent optimization and risk management.
+
+### Core Architecture
+
+The portfolio rebalancing system follows a modular architecture with clear separation of concerns:
+
+#### PortfolioRebalancingOrchestrator
+Main orchestrator class that coordinates the entire rebalancing workflow:
+- Price data retrieval and validation
+- Portfolio analysis and deviation calculation
+- Optimization strategy execution
+- Risk constraint validation
+- Report generation and formatting
+
+#### RebalancingEngine
+Core optimization engine with multiple strategies:
+- **MINIMIZE_TRADES**: Reduces the number of transactions (ideal for high-cost accounts)
+- **MINIMIZE_COSTS**: Optimizes for lowest total transaction costs
+- **RISK_AWARE**: Considers risk metrics and concentration limits
+
+#### Portfolio Analysis Components
+- **PortfolioAnalyzer**: Calculates current weightings, deviations, and portfolio metrics
+- **CostAnalyzer**: Models transaction costs including commissions, spreads, and market impact
+- **RiskManager**: Validates against concentration limits and risk constraints
+- **ScenarioAnalyzer**: Provides what-if analysis and scenario comparisons
+
+#### Data Management
+- **PortfolioPriceService**: Real-time price data retrieval with caching and fallback mechanisms
+- **RebalancingHistoryTracker**: Historical tracking and performance attribution analysis
+- **PortfolioConfigurationManager**: Configuration management with versioning support
+
+### Configuration Options
+
+#### Portfolio Configuration
+```python
+PortfolioConfiguration(
+    holdings=[Holding(symbol="AAPL", shares=100.0)],
+    target_weights={"AAPL": 0.4, "GOOGL": 0.35, "MSFT": 0.25},
+    tolerance_bands={"AAPL": 0.03, "GOOGL": 0.05},  # Position-specific tolerances
+    global_tolerance=0.05,                           # Default tolerance
+    available_capital=5000.0,                        # Additional capital
+    transaction_cost_rate=0.001,                     # Transaction cost rate
+    min_trade_size=100.0,                           # Minimum trade size
+    rebalancing_method=RebalancingMethod.MINIMIZE_TRADES
+)
+```
+
+#### Environment Variables
+- `PORTFOLIO_REBALANCING_ENABLED` (default: "true"): Enable/disable rebalancing functionality
+- `REBALANCING_DEFAULT_TOLERANCE` (default: "0.05"): Default tolerance band
+- `REBALANCING_MIN_TRADE_SIZE` (default: "100.0"): Minimum trade size
+- `REBALANCING_TRANSACTION_COST_RATE` (default: "0.001"): Default transaction cost rate
+
+### Output Schemas
+
+#### RebalancingResult
+Complete rebalancing analysis result:
+- Current portfolio analysis with weightings and deviations
+- Trade recommendations with quantities and cost estimates
+- Cost analysis with total transaction costs and impact
+- Risk analysis and constraint validation results
+- Overall recommendation and urgency assessment
+
+#### TradeRecommendation
+Individual trade recommendation:
+- Symbol, action (BUY/SELL), and quantity
+- Current and target weights
+- Trade value and estimated costs
+- Rationale and priority scoring
+- Risk impact assessment
+
+### Integration Examples
+
+#### Basic Rebalancing
+```python
+from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
+
+orchestrator = PortfolioRebalancingOrchestrator()
+result = await orchestrator.rebalance_portfolio(config)
+
+# Access trade recommendations
+for trade in result.trade_recommendations:
+    print(f"{trade.action} {trade.quantity} shares of {trade.symbol}")
+    print(f"Estimated cost: ${trade.total_estimated_cost:.2f}")
+```
+
+#### Scenario Analysis
+```python
+# Compare different methods
+methods = [RebalancingMethod.MINIMIZE_TRADES, RebalancingMethod.MINIMIZE_COSTS]
+results = {}
+
+for method in methods:
+    config.rebalancing_method = method
+    results[method] = await orchestrator.rebalance_portfolio(config)
+
+# Compare total costs
+for method, result in results.items():
+    print(f"{method}: ${result.cost_analysis.total_transaction_costs:.2f}")
+```
+
+#### Historical Tracking
+```python
+from finwiz.quantitative.rebalancing_history_tracker import RebalancingHistoryTracker
+
+tracker = RebalancingHistoryTracker()
+await tracker.record_rebalancing_action(result, portfolio_id="my-portfolio")
+
+# Analyze historical performance
+analytics = await tracker.generate_rebalancing_analytics("my-portfolio")
+print(f"Average rebalancing frequency: {analytics.average_frequency_days} days")
+```
+
 ## Quantitative Analysis Framework
 
 FinWiz includes a comprehensive quantitative analysis framework built on professional-grade financial libraries. See [Quantitative Analysis Documentation](quantitative_analysis.md) for detailed information.
@@ -755,6 +891,19 @@ uv run pytest tests/unit/quantitative/ -v
 
 # Run quantitative integration tests
 uv run pytest tests/integration/test_quantitative_analysis_integration.py -v
+```
+
+- Portfolio rebalancing tests:
+
+```bash
+# Run portfolio rebalancing unit tests
+uv run pytest tests/unit/quantitative/test_portfolio_*rebalancing* -v
+
+# Run portfolio rebalancing integration tests
+uv run pytest tests/integration/test_portfolio_rebalancing* -v
+
+# Run portfolio rebalancing performance tests
+uv run pytest tests/performance/test_portfolio_rebalancing_performance.py -v
 ```
 
 - Guidelines:

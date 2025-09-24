@@ -18,9 +18,12 @@ from crewai_tools import (
     YoutubeVideoSearchTool,
 )
 
+from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.crypto import CryptoThesis
 from finwiz.tools.coinmarketcap_tool import get_coinmarketcap_tools
 from finwiz.tools.finance_tools import get_crypto_research_tools
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
+from finwiz.tools.rag_tools import get_rag_tools
 
 # Get the absolute path of the current script
 current_script_path = Path(__file__).resolve()
@@ -35,6 +38,9 @@ crypto_tools = get_crypto_research_tools()
 coinmarketcap_tools = get_coinmarketcap_tools()
 quantitative_tool = get_quantitative_analysis_tool()
 
+# Get RAG tools for knowledge retrieval and storage
+rag_tools = get_rag_tools(collection_suffix="crypto")
+
 # Define a shared list of research tools for agents (includes validator via crypto_tools)
 research_tools = [
     search_tool,
@@ -43,6 +49,7 @@ research_tools = [
     youtube_tool,
     *crypto_tools,
     quantitative_tool,  # Add quantitative analysis tool
+    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
     # Contract-aware reading of outputs and schemas
     DirectoryReadTool(directory=("output/crypto")),
     DirectoryReadTool(directory=("docs/schemas")),
@@ -70,7 +77,7 @@ class CryptoCrew:
     def technical_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["technical_analyst"],
-            tools=[*crypto_tools, quantitative_tool],
+            tools=[*crypto_tools, quantitative_tool, *rag_tools],
             reasoning=False,
             verbose=True,
         )
@@ -88,7 +95,7 @@ class CryptoCrew:
     def investment_strategist(self) -> Agent:
         return Agent(
             config=self.agents_config["investment_strategist"],
-            tools=[*crypto_tools, *coinmarketcap_tools, quantitative_tool],
+            tools=[*crypto_tools, *coinmarketcap_tools, quantitative_tool, *rag_tools],
             verbose=True,
         )
 
@@ -107,7 +114,11 @@ class CryptoCrew:
 
     @task
     def market_analysis_task(self) -> Task:
-        return Task(config=self.tasks_config["market_analysis_task"], async_execution=True)
+        return Task(
+            config=self.tasks_config["market_analysis_task"],
+            async_execution=True,
+            output_pydantic=CryptoThesis,
+        )
 
     @task
     def technical_analysis_task(self) -> Task:
@@ -115,11 +126,19 @@ class CryptoCrew:
 
     @task
     def risk_assessment_task(self) -> Task:
-        return Task(config=self.tasks_config["risk_assessment_task"], async_execution=True)
+        return Task(
+            config=self.tasks_config["risk_assessment_task"],
+            async_execution=True,
+            output_pydantic=RiskAssessmentStandardized,
+        )
 
     @task
     def investment_strategy_task(self) -> Task:
-        return Task(config=self.tasks_config["investment_strategy_task"], async_execution=True)
+        return Task(
+            config=self.tasks_config["investment_strategy_task"],
+            async_execution=True,
+            output_pydantic=CryptoThesis,
+        )
 
     @task
     def final_report_task(self) -> Task:
@@ -142,4 +161,8 @@ class CryptoCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
+            respect_context_window=True,
+            allow_delegation=False,
+            max_rpm=20,
+            max_retries=10,
         )

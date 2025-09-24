@@ -54,3 +54,28 @@ run: ## Run the main application
 
 validate-stock: ## Run stock crew validation
 	uv run python tests/validation/stock_crew_validation.py
+
+# Deployment commands
+deploy-dev: ## Deploy to development environment
+	./scripts/deploy.sh --env development
+
+deploy-staging: ## Deploy to staging environment
+	./scripts/deploy.sh --env staging --run-tests
+
+deploy-prod: ## Deploy to production environment
+	./scripts/deploy.sh --env production
+
+rollback: ## Interactive rollback to previous version
+	./scripts/rollback.sh
+
+rollback-emergency: ## Emergency rollback to latest backup
+	./scripts/rollback.sh --emergency
+
+api-server: ## Start the FastAPI server (if rebalancing API is enabled)
+	uv run uvicorn finwiz.api.app:app --host 0.0.0.0 --port 8000 --reload
+
+validate-config: ## Validate configuration and API keys
+	uv run python -c "from finwiz.utils.configuration_manager import get_configuration_manager; get_configuration_manager().validate_startup_configuration(); print('✅ Configuration valid')"
+
+health-check: ## Check application health status
+	curl -f http://localhost:8000/health || echo "API server not running or health check failed"

@@ -23,6 +23,8 @@ from crewai_tools import (
 )
 from dotenv import load_dotenv
 
+from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.etf import ETFFactsheet, ETFTopHolding
 from finwiz.tools.finance_tools import get_etf_research_tools
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.rag_tools import get_rag_tools
@@ -137,6 +139,7 @@ class EtfCrew:
             config=self.tasks_config["etf_screening_task"],
             verbose=True,
             async_execution=True,
+            output_pydantic=ETFTopHolding,
         )
 
     @task
@@ -145,6 +148,7 @@ class EtfCrew:
             config=self.tasks_config["etf_technical_detail_task"],
             verbose=True,
             async_execution=True,
+            output_pydantic=ETFFactsheet,
         )
 
     @task
@@ -153,6 +157,7 @@ class EtfCrew:
             config=self.tasks_config["etf_risk_assessment_task"],
             verbose=True,
             async_execution=True,
+            output_pydantic=RiskAssessmentStandardized,
         )
 
     @task

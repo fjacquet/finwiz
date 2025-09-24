@@ -20,6 +20,9 @@ market_analysis_task:
     - crypto_theses[] matching the CryptoThesis schema with initial thesis bullets
   agent: market_analyst
   output_file: "output/crypto/crypto_market_analysis.md"
+  output_pydantic: CryptoThesis
+  output_json: true
+  async_execution: true
 
 technical_analysis_task:
   description: >
@@ -41,6 +44,7 @@ technical_analysis_task:
     chart patterns and key price levels.
   agent: technical_analyst
   output_file: "output/crypto/crypto_technical_analysis.md"
+  async_execution: true
 
 risk_assessment_task:
   description: >
@@ -72,6 +76,9 @@ risk_assessment_task:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each cryptocurrency
   agent: risk_assessor
   output_file: "output/crypto/crypto_risk_assessment.md"
+  output_pydantic: RiskAssessmentStandardized
+  output_json: true
+  async_execution: true
 
 investment_strategy_task:
   description: >
@@ -105,6 +112,9 @@ investment_strategy_task:
     - quantitative_analysis[] with comprehensive quantitative analysis results for each cryptocurrency
   agent: investment_strategist
   output_file: "output/crypto/crypto_investment_strategy.md"
+  output_pydantic: CryptoThesis
+  output_json: true
+  async_execution: true
 
 final_report_task:
   description: >

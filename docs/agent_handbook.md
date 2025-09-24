@@ -103,6 +103,19 @@ This handbook establishes the core principles, ethical standards, and research m
 - Maintain standardized risk assessment across all recommendations using RiskAssessmentStandardized schema
 - Support CSV-based portfolio ingestion with automatic ticker normalization
 
+#### Portfolio Rebalancing Agents
+
+- **Portfolio Analyst Agent**: Analyze current portfolio composition, calculate weightings, and identify deviations from target allocations
+- **Rebalancing Strategist Agent**: Generate optimal trade recommendations using multiple optimization strategies (minimize trades, minimize costs, risk-aware)
+- **Risk Manager Agent**: Validate rebalancing recommendations against risk constraints, concentration limits, and safeguards
+- **Cost Analyzer Agent**: Calculate comprehensive transaction costs including commissions, spreads, and market impact
+- **Performance Monitor Agent**: Track rebalancing effectiveness and provide performance attribution analysis
+- Use `PortfolioRebalancingTool` for comprehensive rebalancing analysis with professional-grade optimization
+- Support multiple rebalancing methods with configurable tolerance bands and constraints
+- Generate detailed trade recommendations with quantity calculations, cost estimates, and rationale
+- Provide scenario analysis and what-if comparisons for different rebalancing approaches
+- Integrate with existing portfolio monitoring and alerting systems
+
 #### Quantitative Analysis Agents
 
 - Use `QuantitativeAnalysisTool` for comprehensive quantitative analysis with professional-grade methodologies
@@ -205,6 +218,17 @@ To perform their tasks effectively, agents are equipped with a specialized set o
   - **Comprehensive Analysis**: Combined technical, fundamental, and quantitative analysis
   - Supports stocks, ETFs, and cryptocurrencies with consistent methodologies
   - Provides statistical confidence measures and professional-grade risk metrics
+
+### Portfolio Rebalancing Tools
+- **`PortfolioRebalancingTool`**: Use for comprehensive portfolio rebalancing analysis and optimization. Provides:
+  - **Trade Recommendations**: Generate optimal buy/sell recommendations to maintain target allocations
+  - **Multiple Optimization Methods**: Choose from minimize trades, minimize costs, or risk-aware strategies
+  - **Cost Analysis**: Calculate transaction costs including commissions, spreads, and market impact
+  - **Risk Management**: Apply concentration limits, turnover monitoring, and volatility-based recommendations
+  - **Scenario Analysis**: Compare different rebalancing approaches and what-if scenarios
+  - **Performance Tracking**: Monitor rebalancing effectiveness with historical analysis
+  - Supports fractional shares, multiple asset classes, and configurable tolerance bands
+  - Integrates with existing portfolio monitoring and alerting systems
 
 ### Utility Tools
 - **`SaveToRagTool`**: Use to persist important research findings for later retrieval.

@@ -13,12 +13,14 @@ import pandas as pd
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from finwiz.quantitative import (
+from finwiz.quantitative.backtesting import (
     BacktestingEngine,
-    PerformanceAnalyzer,
     SimpleMovingAverageStrategy,
     get_backtesting_engine,
-    get_historical_data_manager,
+)
+from finwiz.quantitative.data import get_historical_data_manager
+from finwiz.quantitative.performance import (
+    PerformanceAnalyzer,
     get_performance_analyzer,
 )
 from finwiz.quantitative.technical import TechnicalAnalysisEngine

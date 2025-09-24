@@ -1,14 +1,15 @@
-"""Portfolio review orchestrator module."""
+"""Portfolio review orchestrator module with rebalancing integration."""
 
 from __future__ import annotations
 
 import csv
+import json
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.portfolio_review import (
@@ -16,6 +17,7 @@ from finwiz.schemas.portfolio_review import (
     PortfolioReview,
 )
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
+from finwiz.utils.cache_manager import get_cache_manager
 
 AssetClass = Literal["stock", "etf"]
 
@@ -182,8 +184,84 @@ def save_review_json(review: PortfolioReview, out_path: Path) -> None:
     out_path.write_text(review.model_dump_json(indent=2), encoding="utf-8")
 
 
+async def run_with_rebalancing(
+    target_weights: dict[str, float] | None = None,
+    available_capital: float = 0.0,
+    include_rebalancing: bool = True,
+) -> tuple[Path, dict[str, Any] | None]:
+    """
+    Run portfolio review process with optional rebalancing analysis.
+
+    Args:
+        target_weights: Target allocation weights for rebalancing
+        available_capital: Available capital for rebalancing
+        include_rebalancing: Whether to include rebalancing analysis
+
+    Returns:
+        Tuple of (review_path, rebalancing_result)
+
+    """
+    # Run standard portfolio review
+    etf_csv, stock_csv = get_csv_paths()
+    etfs = read_csv_holdings(etf_csv, "etf")
+    stocks = read_csv_holdings(stock_csv, "stock")
+    review = build_portfolio_review([*etfs, *stocks])
+
+    # Save portfolio review
+    project_root = Path(__file__).resolve().parents[3]
+    out = project_root / "output" / "portfolio" / "portfolio_review.json"
+    save_review_json(review, out)
+
+    rebalancing_result = None
+
+    if include_rebalancing and target_weights:
+        try:
+            # Import rebalancing orchestrator
+            from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
+            from finwiz.schemas.portfolio_rebalancing import Holding, PortfolioConfiguration
+
+            # Convert portfolio review holdings to rebalancing holdings
+            holdings = []
+            for decision in review.holdings:
+                if decision.decision == "KEEP":  # Only include holdings we're keeping
+                    # For demo purposes, assume 100 shares per holding
+                    # In real implementation, this would come from actual portfolio data
+                    holdings.append(
+                        Holding(
+                            symbol=decision.ticker,
+                            shares=100.0,  # Placeholder - would need actual share counts
+                            cost_basis=None,
+                            acquisition_date=None,
+                        )
+                    )
+
+            if holdings:
+                # Create portfolio configuration
+                config = PortfolioConfiguration(
+                    holdings=holdings,
+                    target_weights=target_weights,
+                    available_capital=available_capital,
+                    global_tolerance=0.05,  # 5% tolerance
+                )
+
+                # Run rebalancing analysis
+                orchestrator = PortfolioRebalancingOrchestrator()
+                rebalancing_result = await orchestrator.rebalance_portfolio(config)
+
+                # Save rebalancing result
+                rebalancing_out = project_root / "output" / "portfolio" / "rebalancing_analysis.json"
+                rebalancing_out.parent.mkdir(parents=True, exist_ok=True)
+                rebalancing_out.write_text(rebalancing_result.model_dump_json(indent=2), encoding="utf-8")
+
+        except Exception as e:
+            print(f"Warning: Rebalancing analysis failed: {e}")
+            rebalancing_result = None
+
+    return out, rebalancing_result
+
+
 def run() -> Path:
-    """Run portfolio review process."""
+    """Run standard portfolio review process."""
     etf_csv, stock_csv = get_csv_paths()
     etfs = read_csv_holdings(etf_csv, "etf")
     stocks = read_csv_holdings(stock_csv, "stock")
@@ -195,6 +273,291 @@ def run() -> Path:
     return out
 
 
+class EnhancedPortfolioReviewOrchestrator:
+    """
+    Enhanced portfolio review orchestrator with integrated rebalancing capabilities.
+
+    Provides seamless integration between portfolio review and rebalancing analysis,
+    with shared caching and unified reporting.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the enhanced orchestrator."""
+        self.cache_manager = get_cache_manager()
+
+    async def run_comprehensive_analysis(
+        self,
+        target_weights: dict[str, float] | None = None,
+        available_capital: float = 0.0,
+        enable_caching: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Run comprehensive portfolio analysis including review and rebalancing.
+
+        Args:
+            target_weights: Target allocation weights for rebalancing
+            available_capital: Available capital for rebalancing
+            enable_caching: Whether to use caching for expensive operations
+
+        Returns:
+            Comprehensive analysis results
+
+        """
+        cache_key = ["portfolio_analysis", str(target_weights), str(available_capital)]
+
+        if enable_caching:
+            cached_result = await self.cache_manager.get(cache_key)
+            if cached_result is not None:
+                return cached_result
+
+        # Run portfolio review
+        review_path, rebalancing_result = await run_with_rebalancing(
+            target_weights=target_weights,
+            available_capital=available_capital,
+            include_rebalancing=target_weights is not None,
+        )
+
+        # Load review data
+        review_data = json.loads(Path(review_path).read_text(encoding="utf-8"))
+
+        # Combine results
+        comprehensive_result = {
+            "portfolio_review": review_data,
+            "rebalancing_analysis": rebalancing_result.model_dump() if rebalancing_result else None,
+            "analysis_timestamp": datetime.now(UTC).isoformat(),
+            "has_rebalancing_recommendations": rebalancing_result is not None,
+        }
+
+        # Cache the result for 30 minutes
+        if enable_caching:
+            await self.cache_manager.set(cache_key, comprehensive_result, ttl=1800)
+
+        return comprehensive_result
+
+    async def generate_unified_report(
+        self,
+        analysis_result: dict[str, Any],
+        language: str = "en",
+    ) -> str:
+        """
+        Generate unified HTML report combining portfolio review and rebalancing.
+
+        Args:
+            analysis_result: Comprehensive analysis result
+            language: Report language (en/fr)
+
+        Returns:
+            HTML report content
+
+        """
+        from finwiz.tools.html_report_generator import HTMLReportGenerator
+
+        generator = HTMLReportGenerator()
+
+        # Add portfolio review sections
+        self._add_portfolio_review_sections(generator, analysis_result["portfolio_review"])
+
+        # Add rebalancing sections if available
+        if analysis_result["rebalancing_analysis"]:
+            self._add_rebalancing_sections(generator, analysis_result["rebalancing_analysis"])
+
+        # Generate report using unified template
+        title = f"Comprehensive Portfolio Analysis - {datetime.now().strftime('%Y-%m-%d')}"
+
+        # Try to use unified HTML generator if available
+        if hasattr(generator, "generate_unified_html"):
+            return generator.generate_unified_html(title=title, language=language)
+        else:
+            return generator.generate_html_fallback(title=title, language=language)
+
+    def _add_portfolio_review_sections(self, generator: Any, review_data: dict[str, Any]) -> None:
+        """Add portfolio review sections to the report."""
+        # Portfolio overview
+        holdings = review_data.get("holdings", [])
+        keep_count = sum(1 for h in holdings if h.get("decision") == "KEEP")
+        sell_count = sum(1 for h in holdings if h.get("decision") == "SELL")
+
+        overview_content = f"""
+        <div class="portfolio-overview">
+            <h3>Portfolio Overview</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <span class="metric-label">Total Holdings:</span>
+                    <span class="metric-value">{len(holdings)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Keep Recommendations:</span>
+                    <span class="metric-value keep">{keep_count}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Sell Recommendations:</span>
+                    <span class="metric-value sell">{sell_count}</span>
+                </div>
+            </div>
+        </div>
+        """
+        generator.add_section("Portfolio Overview", overview_content, "portfolio", order=1)
+
+        # Holdings analysis
+        holdings_content = self._generate_holdings_table(holdings)
+        generator.add_section("Holdings Analysis", holdings_content, "analysis", order=2)
+
+    def _add_rebalancing_sections(self, generator: Any, rebalancing_data: dict[str, Any]) -> None:
+        """Add rebalancing sections to the report."""
+        # Rebalancing summary
+        execution_summary = rebalancing_data.get("execution_summary", {})
+        cost_analysis = rebalancing_data.get("cost_analysis", {})
+
+        summary_content = f"""
+        <div class="rebalancing-summary">
+            <h3>Rebalancing Summary</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <span class="metric-label">Trades Required:</span>
+                    <span class="metric-value">{execution_summary.get("total_trades_required", 0)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Total Cost:</span>
+                    <span class="metric-value">${cost_analysis.get("total_transaction_costs", 0):.2f}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Recommendation:</span>
+                    <span class="metric-value">{rebalancing_data.get("overall_recommendation", "N/A")}</span>
+                </div>
+            </div>
+        </div>
+        """
+        generator.add_section("Rebalancing Summary", summary_content, "financial", order=3)
+
+        # Trade recommendations
+        trades = rebalancing_data.get("trade_recommendations", [])
+        if trades:
+            trades_content = self._generate_trades_table(trades)
+            generator.add_section("Trade Recommendations", trades_content, "opportunity", order=4)
+
+    def _generate_holdings_table(self, holdings: list[dict[str, Any]]) -> str:
+        """Generate HTML table for holdings."""
+        if not holdings:
+            return "<p>No holdings found.</p>"
+
+        rows = []
+        for holding in holdings:
+            decision_class = "keep" if holding.get("decision") == "KEEP" else "sell"
+            risk_score = holding.get("risk", {}).get("score", 0)
+
+            rows.append(f"""
+            <tr>
+                <td>{holding.get("ticker", "N/A")}</td>
+                <td>{holding.get("name", "N/A")}</td>
+                <td>{holding.get("asset_class", "N/A").upper()}</td>
+                <td class="{decision_class}">{holding.get("decision", "N/A")}</td>
+                <td>{holding.get("composite_score", 0):.2f}</td>
+                <td>{risk_score:.1f}/10</td>
+            </tr>
+            """)
+
+        return f"""
+        <table class="holdings-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Decision</th>
+                    <th>Score</th>
+                    <th>Risk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {"".join(rows)}
+            </tbody>
+        </table>
+        """
+
+    def _generate_trades_table(self, trades: list[dict[str, Any]]) -> str:
+        """Generate HTML table for trade recommendations."""
+        if not trades:
+            return "<p>No trades recommended.</p>"
+
+        rows = []
+        for trade in trades:
+            action_class = trade.get("action", "").lower()
+
+            rows.append(f"""
+            <tr>
+                <td>{trade.get("symbol", "N/A")}</td>
+                <td class="{action_class}">{trade.get("action", "N/A")}</td>
+                <td>{trade.get("quantity", 0):.2f}</td>
+                <td>${trade.get("current_price", 0):.2f}</td>
+                <td>${trade.get("trade_value", 0):.2f}</td>
+                <td>${trade.get("total_estimated_cost", 0):.2f}</td>
+                <td>{trade.get("priority", 0)}</td>
+            </tr>
+            """)
+
+        return f"""
+        <table class="trades-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Action</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Value</th>
+                    <th>Cost</th>
+                    <th>Priority</th>
+                </tr>
+            </thead>
+            <tbody>
+                {"".join(rows)}
+            </tbody>
+        </table>
+        """
+
+
 if __name__ == "__main__":
-    path = run()
-    print(f"Portfolio review saved to: {path}")
+    import asyncio
+    import json
+
+    async def main() -> None:
+        """Run portfolio review demonstration."""
+        # Run standard portfolio review
+        path = run()
+        print(f"Portfolio review saved to: {path}")
+
+        # Example of enhanced analysis with rebalancing
+        orchestrator = EnhancedPortfolioReviewOrchestrator()
+
+        # Example target weights (adjust as needed)
+        target_weights = {
+            "AAPL": 0.20,
+            "GOOGL": 0.15,
+            "MSFT": 0.15,
+            "TSLA": 0.10,
+            "NVDA": 0.10,
+            "SPY": 0.30,  # ETF allocation
+        }
+
+        try:
+            comprehensive_result = await orchestrator.run_comprehensive_analysis(
+                target_weights=target_weights,
+                available_capital=10000.0,
+            )
+
+            # Save comprehensive result
+            project_root = Path(__file__).resolve().parents[3]
+            comprehensive_out = project_root / "output" / "portfolio" / "comprehensive_analysis.json"
+            comprehensive_out.parent.mkdir(parents=True, exist_ok=True)
+            comprehensive_out.write_text(json.dumps(comprehensive_result, indent=2, default=str), encoding="utf-8")
+            print(f"Comprehensive analysis saved to: {comprehensive_out}")
+
+            # Generate unified report
+            html_report = await orchestrator.generate_unified_report(comprehensive_result)
+            report_out = project_root / "output" / "portfolio" / "comprehensive_report.html"
+            report_out.write_text(html_report, encoding="utf-8")
+            print(f"Unified report saved to: {report_out}")
+
+        except Exception as e:
+            print(f"Enhanced analysis failed: {e}")
+
+    asyncio.run(main())

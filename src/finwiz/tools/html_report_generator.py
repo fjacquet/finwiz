@@ -64,6 +64,7 @@ class HTMLReportGenerator:
 
         """
         self.template_path = template_path or "src/finwiz/templates/html_template.html"
+        self.unified_template_path = "src/finwiz/templates/unified_portfolio_report.html"
         self.sections: list[ReportSection] = []
 
     def add_section(self, title: str, content: str, emoji_key: str | None = None, order: int = 0) -> None:
@@ -98,9 +99,151 @@ class HTMLReportGenerator:
             raise ValueError(f"Invalid French section key: {section_key}")
 
         title = self.FRENCH_SECTIONS[section_key]
+        self.add_section(title, content, order=100)  # French sections at end
 
-        self.add_section(title, content, order=100)  # French sections appear later
-        logger.info(f"Added French section: {title}")
+    def add_rebalancing_section(self, title: str, content: str, order: int = 0) -> None:
+        """
+        Add a rebalancing-specific section to the report.
+
+        Args:
+            title: Section title
+            content: Section content in HTML format
+            order: Display order
+
+        """
+        self.add_section(title, content, emoji_key="portfolio", order=order)
+
+    def add_portfolio_overview_section(self, portfolio_data: dict[str, Any]) -> None:
+        """
+        Add portfolio overview section with key metrics.
+
+        Args:
+            portfolio_data: Portfolio analysis data
+
+        """
+        # Extract key metrics
+        total_value = portfolio_data.get("total_value", 0)
+        positions_count = len(portfolio_data.get("weightings", {}))
+        risk_score = portfolio_data.get("risk_metrics", {}).get("concentration_risk", 0)
+
+        content = f"""
+        <div class="portfolio-overview">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>💰 Total Portfolio Value</h4>
+                    <p class="metric-value">${total_value:,.2f}</p>
+                </div>
+                <div class="metric-card">
+                    <h4>📊 Number of Positions</h4>
+                    <p class="metric-value">{positions_count}</p>
+                </div>
+                <div class="metric-card">
+                    <h4>⚠️ Risk Score</h4>
+                    <p class="metric-value">{risk_score:.1f}/10</p>
+                </div>
+            </div>
+        </div>
+        """
+        self.add_section("Portfolio Overview", content, emoji_key="portfolio", order=1)
+
+    def add_rebalancing_summary_section(self, rebalancing_data: dict[str, Any]) -> None:
+        """
+        Add rebalancing summary section.
+
+        Args:
+            rebalancing_data: Rebalancing analysis data
+
+        """
+        execution_summary = rebalancing_data.get("execution_summary", {})
+        cost_analysis = rebalancing_data.get("cost_analysis", {})
+        recommendation = rebalancing_data.get("overall_recommendation", "MONITOR")
+
+        # Determine recommendation emoji and color
+        rec_emoji = "🚀" if recommendation == "REBALANCE_NOW" else "👀" if recommendation == "MONITOR" else "⏰"
+        rec_class = recommendation.lower().replace("_", "-")
+
+        content = f"""
+        <div class="rebalancing-summary">
+            <div class="recommendation-banner {rec_class}">
+                <h3>{rec_emoji} Recommendation: {recommendation.replace("_", " ").title()}</h3>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>🔄 Trades Required</h4>
+                    <p class="metric-value">{execution_summary.get("total_trades_required", 0)}</p>
+                </div>
+                <div class="metric-card">
+                    <h4>💸 Transaction Costs</h4>
+                    <p class="metric-value">${cost_analysis.get("total_transaction_costs", 0):.2f}</p>
+                </div>
+                <div class="metric-card">
+                    <h4>⏱️ Execution Time</h4>
+                    <p class="metric-value">{execution_summary.get("estimated_execution_time", "N/A")}</p>
+                </div>
+            </div>
+        </div>
+        """
+        self.add_section("Rebalancing Summary", content, emoji_key="financial", order=2)
+
+    def add_trade_recommendations_section(self, trades: list[dict[str, Any]]) -> None:
+        """
+        Add trade recommendations section.
+
+        Args:
+            trades: List of trade recommendations
+
+        """
+        if not trades:
+            content = "<p>No trades required - portfolio is within tolerance bands.</p>"
+        else:
+            # Sort trades by priority
+            sorted_trades = sorted(trades, key=lambda x: x.get("priority", 10))
+
+            rows = []
+            for trade in sorted_trades:
+                action = trade.get("action", "HOLD")
+                action_emoji = "🟢" if action == "BUY" else "🔴" if action == "SELL" else "⚪"
+                action_class = action.lower()
+
+                rows.append(f"""
+                <tr class="trade-row {action_class}">
+                    <td>{action_emoji} {trade.get("symbol", "N/A")}</td>
+                    <td class="action-cell">{action}</td>
+                    <td class="number-cell">{trade.get("quantity", 0):.2f}</td>
+                    <td class="currency-cell">${trade.get("current_price", 0):.2f}</td>
+                    <td class="currency-cell">${trade.get("trade_value", 0):,.2f}</td>
+                    <td class="currency-cell">${trade.get("total_estimated_cost", 0):.2f}</td>
+                    <td class="priority-cell">{trade.get("priority", "N/A")}</td>
+                </tr>
+                """)
+
+            content = f"""
+            <div class="trades-container">
+                <table class="trades-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Action</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Trade Value</th>
+                            <th>Est. Cost</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {"".join(rows)}
+                    </tbody>
+                </table>
+            </div>
+            """
+
+        self.add_section("Trade Recommendations", content, emoji_key="opportunity", order=3)
+
+    def clear_sections(self) -> None:
+        """Clear all sections from the report."""
+        self.sections.clear()
+        logger.debug("Cleared all report sections")
 
     def generate_html(self, title: str = "FinWiz Financial Report", language: str = "en") -> str:
         """
@@ -366,7 +509,121 @@ class HTMLReportGenerator:
             logger.error(f"Error saving HTML report: {e}")
             raise
 
-    def clear_sections(self) -> None:
-        """Clear all sections from the report."""
-        self.sections.clear()
-        logger.debug("Cleared all report sections")
+    def generate_unified_html(self, title: str, language: str = "en") -> str:
+        """
+        Generate unified HTML report using the unified template.
+
+        Args:
+            title: Report title
+            language: Report language
+
+        Returns:
+            Complete HTML report
+
+        """
+        try:
+            from jinja2 import Template
+
+            # Read unified template
+            template_path = Path(self.unified_template_path)
+            if not template_path.exists():
+                logger.warning(f"Unified template not found at {template_path}, using fallback")
+                return self.generate_html(title, language)
+
+            template_content = template_path.read_text(encoding="utf-8")
+            template = Template(template_content)
+
+            # Sort sections by order
+            sorted_sections = sorted(self.sections, key=lambda x: x.order)
+
+            # Render template
+            html_content = template.render(
+                title=title,
+                language=language,
+                timestamp=datetime.now(),
+                sections=sorted_sections,
+                french_sections=list(self.FRENCH_SECTIONS.values()),
+            )
+
+            logger.info(f"Generated unified HTML report with {len(self.sections)} sections")
+            return html_content
+
+        except Exception as e:
+            logger.error(f"Error generating unified HTML report: {e}")
+            # Fallback to standard HTML generation
+            return self.generate_html_fallback(title, language)
+
+    def generate_html_fallback(self, title: str, language: str = "en") -> str:
+        """
+        Generate HTML report using fallback template.
+
+        Args:
+            title: Report title
+            language: Report language
+
+        Returns:
+            Complete HTML report
+
+        """
+        try:
+            # Sort sections by order
+            sorted_sections = sorted(self.sections, key=lambda x: x.order)
+
+            # Build HTML content
+            sections_html = []
+            for section in sorted_sections:
+                section_html = f"""
+                <div class="section">
+                    <h2 class="section-title">
+                        {section.emoji + " " if section.emoji else ""}{section.title}
+                    </h2>
+                    <div class="section-content">
+                        {section.content}
+                    </div>
+                </div>
+                """
+                sections_html.append(section_html)
+
+            # Basic HTML template
+            html_content = f"""
+            <!DOCTYPE html>
+            <html lang="{language}">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{title}</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                    .section {{ margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; }}
+                    .section-title {{ color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }}
+                    table {{ width: 100%; border-collapse: collapse; }}
+                    th, td {{ padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }}
+                    th {{ background-color: #f2f2f2; }}
+                    .keep {{ color: #27ae60; font-weight: bold; }}
+                    .sell {{ color: #e74c3c; font-weight: bold; }}
+                    .buy {{ background-color: #d5f4e6; }}
+                    .metric-card {{ background: #f8f9fa; padding: 1rem; margin: 0.5rem; border-radius: 5px; }}
+                    .recommendation-banner {{ padding: 1rem; border-radius: 5px; margin: 1rem 0; text-align: center; }}
+                    .rebalance-now {{ background-color: #e74c3c; color: white; }}
+                    .rebalance-soon {{ background-color: #f39c12; color: white; }}
+                    .monitor {{ background-color: #3498db; color: white; }}
+                    .no-action {{ background-color: #27ae60; color: white; }}
+                </style>
+            </head>
+            <body>
+                <h1>{title}</h1>
+                <p>Generated on {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+                {"".join(sections_html)}
+                <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd; text-align: center; color: #666;">
+                    <p>Generated by FinWiz Portfolio Analysis System</p>
+                </footer>
+            </body>
+            </html>
+            """
+
+            logger.info(f"Generated fallback HTML report with {len(self.sections)} sections")
+            return html_content
+
+        except Exception as e:
+            logger.error(f"Error generating fallback HTML report: {e}")
+            return f"<html><body><h1>Error generating report: {e}</h1></body></html>"

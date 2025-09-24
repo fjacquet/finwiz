@@ -10,6 +10,23 @@ Modules:
 from .common import RiskAssessmentStandardized, RiskLevel  # noqa: F401
 from .crypto import CryptoRisk, CryptoThesis  # noqa: F401
 from .etf import ETFFactsheet, ETFTopHolding  # noqa: F401
+from .portfolio_rebalancing import (  # noqa: F401
+    AlternativeScenario,
+    CostAnalysis,
+    ExecutionSummary,
+    Holding,
+    PortfolioAnalysis,
+    PortfolioConfiguration,
+    PortfolioMetrics,
+    PriceData,
+    RebalancingMethod,
+    RebalancingNeed,
+    RebalancingRecommendation,
+    RebalancingResult,
+    TradeAction,
+    TradeRecommendation,
+    UrgencyLevel,
+)
 from .quantitative import (  # noqa: F401
     EnhancedCryptoAnalysis,
     EnhancedETFAnalysis,

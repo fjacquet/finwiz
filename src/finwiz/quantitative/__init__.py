@@ -23,6 +23,15 @@ from .backtesting import (
     get_backtesting_engine,
 )
 from .config import BacktestConfig, QuantConfig, ScreenerConfig
+from .cost_analyzer import (
+    BrokerFeeStructure,
+    BrokerType,
+    CostAnalyzer,
+    CostBenefitAnalysis,
+    MarketCapCategory,
+    MarketImpactEstimate,
+    SpreadEstimate,
+)
 from .data import (
     CachedDataInfo,
     DataQualityIssue,
@@ -38,6 +47,22 @@ from .performance import (
     PortfolioOptimizationResult,
     get_performance_analyzer,
 )
+from .rebalancing_history_tracker import RebalancingHistoryTracker
+from .risk_manager import (
+    ConcentrationLimits,
+    RiskAssessment,
+    RiskLevel,
+    RiskManager,
+    RiskManagerConfig,
+    RiskWarning,
+    RiskWarningType,
+    TaxLossHarvestingConfig,
+    TurnoverLimits,
+    VolatilityThresholds,
+)
+
+# Removed portfolio_analyzer import to avoid circular dependency
+# Import directly from the module when needed
 
 __all__ = [
     "QuantConfig",
@@ -63,4 +88,22 @@ __all__ = [
     "PerformanceReport",
     "PortfolioOptimizationResult",
     "get_performance_analyzer",
+    "CostAnalyzer",
+    "BrokerType",
+    "MarketCapCategory",
+    "BrokerFeeStructure",
+    "SpreadEstimate",
+    "MarketImpactEstimate",
+    "CostBenefitAnalysis",
+    "RebalancingHistoryTracker",
+    "RiskManager",
+    "RiskManagerConfig",
+    "RiskAssessment",
+    "RiskWarning",
+    "RiskLevel",
+    "RiskWarningType",
+    "ConcentrationLimits",
+    "TurnoverLimits",
+    "VolatilityThresholds",
+    "TaxLossHarvestingConfig",
 ]

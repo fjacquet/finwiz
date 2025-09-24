@@ -122,15 +122,6 @@ class ReportCrew:
         )
 
     @agent
-    def pdf_conversion_specialist(self) -> Agent:
-        """Agent specialized in converting final HTML reports to PDF."""
-        return Agent(
-            config=self.agents_config["pdf_conversion_specialist"],
-            verbose=True,
-            tools=[html_to_pdf_tool],  # Use the specific tool instance
-        )
-
-    @agent
     def translator(self) -> Agent:
         """Create translator agent that converts English reports to French while preserving layout."""
         return Agent(
@@ -172,15 +163,6 @@ class ReportCrew:
         )
 
     @task
-    def pdf_generation_task(self) -> Task:
-        """Generate a PDF version of the final HTML report."""
-        return Task(
-            config=self.tasks_config["pdf_generation_task"],
-            verbose=True,
-            # Agent is assigned via tasks.yaml, context is passed from previous task
-        )
-
-    @task
     def translation_task(self) -> Task:
         """Task to translate the English report to French while preserving layout."""
         return Task(
@@ -198,17 +180,34 @@ class ReportCrew:
         risks, and produces a comprehensive investment report with actionable
         recommendations backed by verifiable evidence. Uses a sequential workflow.
         """
+        # Get all agents for validation and crew creation
+        agents = [
+            self.financial_integration_analyst(),
+            self.portfolio_allocator(),
+            self.risk_manager(),
+            self.investment_reporter(),
+            self.translator(),
+        ]
+
+        tasks = [
+            self.comprehensive_financial_integration_task(),
+            self.optimal_portfolio_allocation_task(),
+            self.risk_assessment_mitigation_task(),
+            self.comprehensive_investment_report_task(),
+            self.translation_task(),
+        ]
+
         # Validate tool restrictions before creating crew
         try:
-            self.tool_validator.validate_crew_compliance(self.agents)
+            self.tool_validator.validate_crew_compliance(agents)
             logger.info("Tool restriction validation passed for ReportCrew")
         except Exception as e:
             logger.error(f"Tool restriction validation failed: {e}")
             raise
 
         return Crew(
-            agents=self.agents,
-            tasks=self.tasks,
+            agents=agents,
+            tasks=tasks,
             process=Process.sequential,
             verbose=True,
             allow_delegation=False,

@@ -19,6 +19,7 @@ etf_market_trends_task:
     🌐 Global factors
   agent: market_etf_analyst
   output_file: "output/etf/etf_market_trends.md"
+  async_execution: true
 
 # ETF Screening Tasks
 etf_screening_task:
@@ -48,6 +49,9 @@ etf_screening_task:
     - validated_etfs[] where each item is {symbol, asset_class, valid, reason, meta}
   agent: market_etf_analyst
   output_file: "output/etf/high_potential_etfs.md"
+  output_pydantic: ETFTopHolding
+  output_json: true
+  async_execution: true
 
 # ETF Technical Detail Tasks
 etf_technical_detail_task:
@@ -92,6 +96,9 @@ etf_technical_detail_task:
     - quantitative_analysis[] with comprehensive quantitative analysis results for each ETF
   agent: market_etf_analyst
   output_file: "output/etf/etf_technical_details.md"
+  output_pydantic: ETFFactsheet
+  output_json: true
+  async_execution: true
 
 # Risk Analysis Tasks
 etf_risk_assessment_task:
@@ -126,6 +133,8 @@ etf_risk_assessment_task:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.md"
+  output_pydantic: RiskAssessmentStandardized
+  output_json: true
 
 # Investment Strategy Tasks
 etf_investment_strategy_task:

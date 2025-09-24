@@ -21,6 +21,8 @@ from crewai_tools import (
 )
 from dotenv import load_dotenv
 
+from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.stock import MarketSentiment, TenKInsight
 from finwiz.tools.finance_tools import get_stock_research_tools
 from finwiz.tools.logger import get_logger
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
@@ -129,6 +131,7 @@ class StockCrew:
             config=self.tasks_config["stock_screening_task"],
             verbose=True,
             async_execution=True,
+            output_pydantic=MarketSentiment,
         )
 
     @task
@@ -138,12 +141,17 @@ class StockCrew:
             config=self.tasks_config["technical_detail_task"],
             verbose=True,
             async_execution=True,
+            output_pydantic=TenKInsight,
         )
 
     @task
     def stock_risk_assessment_task(self) -> Task:
         """Assess key risks for recommended tickers and mitigation actions."""
-        return Task(config=self.tasks_config["stock_risk_assessment_task"], verbose=True)
+        return Task(
+            config=self.tasks_config["stock_risk_assessment_task"],
+            verbose=True,
+            output_pydantic=RiskAssessmentStandardized,
+        )
 
     @task
     def translation_task(self) -> Task:
@@ -168,4 +176,5 @@ class StockCrew:
             respect_context_window=True,
             allow_delegation=False,
             max_rpm=20,
+            max_retries=10,
         )

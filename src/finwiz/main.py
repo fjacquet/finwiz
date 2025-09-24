@@ -31,6 +31,7 @@ from dotenv import load_dotenv
 
 from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
 from finwiz.crews.etf_crew.etf_crew import EtfCrew
+from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import PortfolioRebalancingCrew
 from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
 from finwiz.orchestrators.portfolio_review import run as run_portfolio_review
@@ -142,7 +143,49 @@ class FinwizFlow(Flow[FinwizState]):
             logger.error(f"Portfolio review failed: {e}")
             raise
 
-    @listen(and_(check_stock, check_etf, check_crypto, check_portfolio))
+    @start()
+    def check_portfolio_rebalancing(self) -> None:
+        """Run portfolio rebalancing analysis using CrewAI crew if enabled."""
+        from finwiz.utils.feature_flags import is_feature_enabled
+
+        if not is_feature_enabled("portfolio_rebalancing"):
+            logger.info("Portfolio rebalancing disabled via feature flag")
+            return
+
+        try:
+            # Check if we have portfolio data from portfolio review
+            if "portfolio_review" in self.inputs:
+                logger.info("Running portfolio rebalancing analysis with CrewAI crew")
+
+                # Initialize portfolio rebalancing crew
+                portfolio_rebalancing_crew = PortfolioRebalancingCrew()
+
+                # Prepare inputs for the crew
+                crew_inputs = {
+                    "full_date": datetime.now().strftime("%B %d, %Y"),
+                    "portfolio_data": self.inputs.get("portfolio_review", {}),
+                    "target_allocations": self.inputs.get("target_allocations", {}),
+                    "tolerance_bands": self.inputs.get("tolerance_bands", {}),
+                    "available_capital": self.inputs.get("available_capital", 0.0),
+                }
+
+                # Execute the portfolio rebalancing crew
+                result = portfolio_rebalancing_crew.crew().kickoff(inputs=crew_inputs)
+
+                # Store crew result
+                self.inputs["portfolio_rebalancing_result"] = result
+                self.inputs["portfolio_rebalancing_available"] = True
+
+                logger.info("Portfolio rebalancing analysis completed successfully with CrewAI crew")
+            else:
+                logger.info("No portfolio data available for rebalancing analysis")
+                self.inputs["portfolio_rebalancing_available"] = False
+
+        except Exception as e:
+            logger.error(f"Portfolio rebalancing analysis failed: {e}")
+            self.inputs["portfolio_rebalancing_available"] = False
+
+    @listen(and_(check_stock, check_etf, check_crypto, check_portfolio, check_portfolio_rebalancing))
     def pre_validate_reporter_input(self) -> None:
         """
         Validate ReporterInput payload before triggering the final report.
@@ -169,7 +212,19 @@ class FinwizFlow(Flow[FinwizState]):
     @listen(pre_validate_reporter_input)
     def report(self) -> None:
         """Generate a consolidated report after all analyses are complete."""
-        ReportCrew().crew().kickoff(inputs=self.inputs)
+        # Initialize Report crew and validate inputs
+        report_crew = ReportCrew()
+
+        # Validate reporter input using the crew's validator
+        try:
+            report_crew.validate_reporter_input(self.inputs)
+            logger.info("Reporter input validation passed")
+        except Exception as e:
+            logger.warning(f"Reporter input validation warning: {e}")
+            # Continue with graceful degradation as per ReporterInputValidator design
+
+        # Execute the report crew
+        report_crew.crew().kickoff(inputs=self.inputs)
 
 
 def kickoff() -> None:

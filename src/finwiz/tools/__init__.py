@@ -6,8 +6,7 @@ CrewAI agents within the FinWiz project. It may include tools for
 specific data retrieval, analysis, or other specialized tasks.
 """
 
-from .quantitative_analysis_tool import get_quantitative_analysis_tool
+# Removed quantitative_analysis_tool import to avoid circular dependency
+# Import directly from the module when needed
 
-__all__ = [
-    "get_quantitative_analysis_tool",
-]
+__all__ = []
