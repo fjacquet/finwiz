@@ -64,7 +64,6 @@ stock_screening_task:
   agent: market_technical_analyst
   output_file: "output/stock/emerging_stocks_analysis.md"
   output_pydantic: MarketSentiment
-  output_json: true
   async_execution: true
 
 # Technical Detail Tasks
@@ -106,7 +105,6 @@ technical_detail_task:
   agent: market_technical_analyst
   output_file: "output/stock/stock_technical_details.md"
   output_pydantic: TenKInsight
-  output_json: true
   async_execution: true
   depends_on:
     - stock_screening_task
@@ -155,7 +153,6 @@ stock_risk_assessment_task:
   agent: investment_risk_analyst
   output_file: "output/stock/stock_investment_risk_strategy_en.html"
   output_pydantic: RiskAssessmentStandardized
-  output_json: true
   depends_on:
     - technical_detail_task
 

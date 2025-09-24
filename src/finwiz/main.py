@@ -102,20 +102,20 @@ class FinwizFlow(Flow[FinwizState]):
         else:
             logger.debug("Flow initialized without existing session")
 
-    @start()
-    def check_crypto(self) -> None:
-        """Initiate the cryptocurrency analysis crew."""
-        CryptoCrew().crew().kickoff(inputs=self.inputs)
+    # @start()
+    # def check_crypto(self) -> None:
+    #     """Initiate the cryptocurrency analysis crew."""
+    #     CryptoCrew().crew().kickoff(inputs=self.inputs)
 
-    @start()
-    def check_stock(self) -> None:
-        """Initiate the stock analysis crew."""
-        StockCrew().crew().kickoff(inputs=self.inputs)
+    # @start()
+    # def check_stock(self) -> None:
+    #     """Initiate the stock analysis crew."""
+    #     StockCrew().crew().kickoff(inputs=self.inputs)
 
-    @start()
-    def check_etf(self) -> None:
-        """Initiate the ETF analysis crew."""
-        EtfCrew().crew().kickoff(inputs=self.inputs)
+    # @start()
+    # def check_etf(self) -> None:
+    #     """Initiate the ETF analysis crew."""
+    #     EtfCrew().crew().kickoff(inputs=self.inputs)
 
     @start()
     def check_portfolio(self) -> None:
@@ -185,7 +185,7 @@ class FinwizFlow(Flow[FinwizState]):
             logger.error(f"Portfolio rebalancing analysis failed: {e}")
             self.inputs["portfolio_rebalancing_available"] = False
 
-    @listen(and_(check_stock, check_etf, check_crypto, check_portfolio, check_portfolio_rebalancing))
+    @listen(and_(check_portfolio, check_portfolio_rebalancing))
     def pre_validate_reporter_input(self) -> None:
         """
         Validate ReporterInput payload before triggering the final report.

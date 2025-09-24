@@ -50,7 +50,6 @@ etf_screening_task:
   agent: market_etf_analyst
   output_file: "output/etf/high_potential_etfs.md"
   output_pydantic: ETFTopHolding
-  output_json: true
   async_execution: true
 
 # ETF Technical Detail Tasks
@@ -97,7 +96,6 @@ etf_technical_detail_task:
   agent: market_etf_analyst
   output_file: "output/etf/etf_technical_details.md"
   output_pydantic: ETFFactsheet
-  output_json: true
   async_execution: true
 
 # Risk Analysis Tasks
@@ -134,7 +132,6 @@ etf_risk_assessment_task:
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.md"
   output_pydantic: RiskAssessmentStandardized
-  output_json: true
 
 # Investment Strategy Tasks
 etf_investment_strategy_task:

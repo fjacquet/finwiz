@@ -29,7 +29,6 @@ portfolio_analysis_task:
   agent: portfolio_analyst
   output_file: "output/portfolio/portfolio_composition_analysis.md"
   output_pydantic: PortfolioReview
-  output_json: true
   async_execution: true
 
 # Rebalancing Optimization Tasks
@@ -104,7 +103,6 @@ risk_validation_task:
   agent: risk_manager
   output_file: "output/portfolio/portfolio_rebalancing_risk_validation.html"
   output_pydantic: RiskAssessmentStandardized
-  output_json: true
   depends_on:
     - rebalancing_optimization_task
 

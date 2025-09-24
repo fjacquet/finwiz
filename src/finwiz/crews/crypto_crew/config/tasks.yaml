@@ -21,7 +21,6 @@ market_analysis_task:
   agent: market_analyst
   output_file: "output/crypto/crypto_market_analysis.md"
   output_pydantic: CryptoThesis
-  output_json: true
   async_execution: true
 
 technical_analysis_task:
@@ -77,7 +76,6 @@ risk_assessment_task:
   agent: risk_assessor
   output_file: "output/crypto/crypto_risk_assessment.md"
   output_pydantic: RiskAssessmentStandardized
-  output_json: true
   async_execution: true
 
 investment_strategy_task:
@@ -113,7 +111,6 @@ investment_strategy_task:
   agent: investment_strategist
   output_file: "output/crypto/crypto_investment_strategy.md"
   output_pydantic: CryptoThesis
-  output_json: true
   async_execution: true
 
 final_report_task:

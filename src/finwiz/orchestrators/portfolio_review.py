@@ -18,6 +18,12 @@ from finwiz.schemas.portfolio_review import (
 )
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.utils.cache_manager import get_cache_manager
+from finwiz.utils.grading_system import (
+    format_grade_display,
+    get_grade_css_styles,
+    get_portfolio_grade_summary,
+    score_to_grade,
+)
 
 AssetClass = Literal["stock", "etf"]
 
@@ -153,6 +159,9 @@ def build_portfolio_review(
         elif src == "coinbase":
             citations.append("Coinbase Products API")
 
+        # Get grade information
+        grade_info = score_to_grade(score)
+        
         decisions.append(
             HoldingDecision(
                 asset_class=rh.asset_class,
@@ -161,6 +170,9 @@ def build_portfolio_review(
                 currency=rh.currency or base_currency,
                 decision=decision,  # type: ignore[arg-type]
                 composite_score=score,
+                grade=grade_info.grade,  # type: ignore[arg-type]
+                grade_description=grade_info.description,
+                recommended_action=grade_info.action,
                 risk=risk,
                 rationale_bullets=rationale,
                 citations=citations,
@@ -436,36 +448,77 @@ class EnhancedPortfolioReviewOrchestrator:
             generator.add_section("Trade Recommendations", trades_content, "opportunity", order=4)
 
     def _generate_holdings_table(self, holdings: list[dict[str, Any]]) -> str:
-        """Generate HTML table for holdings."""
+        """Generate HTML table for holdings with letter grades."""
         if not holdings:
             return "<p>No holdings found.</p>"
+
+        # Calculate portfolio grade summary
+        scores = [holding.get("composite_score", 0) for holding in holdings]
+        grade_summary = get_portfolio_grade_summary(scores)
 
         rows = []
         for holding in holdings:
             decision_class = "keep" if holding.get("decision") == "KEEP" else "sell"
             risk_score = holding.get("risk", {}).get("score", 0)
-
+            composite_score = holding.get("composite_score", 0)
+            
+            # Get grade information
+            grade_info = score_to_grade(composite_score)
+            grade_display = f'<span class="grade-badge {grade_info.css_class}">{grade_info.emoji} {grade_info.grade}</span>'
+            
             rows.append(f"""
             <tr>
                 <td>{holding.get("ticker", "N/A")}</td>
                 <td>{holding.get("name", "N/A")}</td>
                 <td>{holding.get("asset_class", "N/A").upper()}</td>
                 <td class="{decision_class}">{holding.get("decision", "N/A")}</td>
-                <td>{holding.get("composite_score", 0):.2f}</td>
+                <td>{grade_display}</td>
+                <td>{grade_info.action}</td>
                 <td>{risk_score:.1f}/10</td>
             </tr>
             """)
 
+        # Generate grade summary
+        grade_summary_html = f"""
+        <div class="grade-summary">
+            <h4>📊 Bulletin du Portefeuille</h4>
+            <p><strong>Moyenne générale :</strong> {grade_summary['grade_info'].emoji} <strong>{grade_summary['average_grade']}</strong> ({grade_summary['average_percentage']:.0f}%)</p>
+            <p><strong>Répartition des notes :</strong></p>
+            <ul>
+        """
+        
+        for grade, data in grade_summary['distribution'].items():
+            grade_info = score_to_grade(0.5)  # Get emoji for grade
+            for test_score in [0.98, 0.90, 0.82, 0.77, 0.72, 0.67, 0.55, 0.25]:
+                test_grade_info = score_to_grade(test_score)
+                if test_grade_info.grade == grade:
+                    grade_info = test_grade_info
+                    break
+            
+            grade_summary_html += f'<li>{grade_info.emoji} <strong>{grade}</strong>: {data["count"]} positions ({data["percentage"]:.0f}%)</li>'
+        
+        grade_summary_html += """
+            </ul>
+        </div>
+        """
+
         return f"""
+        <style>
+        {get_grade_css_styles()}
+        </style>
+        
+        {grade_summary_html}
+        
         <table class="holdings-table">
             <thead>
                 <tr>
                     <th>Ticker</th>
-                    <th>Name</th>
+                    <th>Nom</th>
                     <th>Type</th>
-                    <th>Decision</th>
-                    <th>Score</th>
-                    <th>Risk</th>
+                    <th>Décision</th>
+                    <th>Note</th>
+                    <th>Action Recommandée</th>
+                    <th>Risque</th>
                 </tr>
             </thead>
             <tbody>
