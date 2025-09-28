@@ -3,8 +3,10 @@ Enhanced ETF analysis tool for comprehensive factsheet parsing and holdings extr
 
 Provides enhanced ETF analysis with factsheet parsing, expense ratio extraction,
 tracking difference analysis, and top holdings extraction with proper validation.
+Enhanced with optional Perplexity Sonar integration for recent ETF performance updates and holdings changes.
 """
 
+import asyncio
 import re
 from datetime import date, datetime
 from typing import Any
@@ -14,6 +16,13 @@ from bs4 import BeautifulSoup
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field, ValidationError
 
+from finwiz.schemas.perplexity import SonarArticle
+from finwiz.tools.logger import get_logger
+from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
+from finwiz.utils.feature_flags import get_feature_flags
+
+logger = get_logger(__name__)
+
 
 class EnhancedETFAnalysisInput(BaseModel):
     """Input schema for Enhanced ETF Analysis Tool."""
@@ -22,6 +31,7 @@ class EnhancedETFAnalysisInput(BaseModel):
     include_holdings: bool = Field(default=True, description="Whether to extract top holdings")
     include_risk_assessment: bool = Field(default=True, description="Whether to perform risk assessment")
     max_holdings: int = Field(default=10, ge=1, le=50, description="Maximum number of holdings to extract")
+    include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
 class EnhancedETFAnalysisTool(BaseTool):
@@ -33,14 +43,43 @@ class EnhancedETFAnalysisTool(BaseTool):
     - Top holdings extraction with weights and validation
     - Risk assessment based on concentration and volatility
     - Structured output for downstream processing
+    - Optional Perplexity Sonar integration for recent ETF performance updates and holdings changes
     """
 
     name: str = "Enhanced ETF Analysis Tool"
     description: str = (
         "Comprehensive ETF analysis tool that parses factsheets, extracts holdings, "
-        "calculates tracking differences, and performs risk assessment."
+        "calculates tracking differences, and performs risk assessment. "
+        "Optionally enhanced with Perplexity Sonar for recent ETF performance updates and holdings changes."
     )
     args_schema: type[BaseModel] = EnhancedETFAnalysisInput
+
+    def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
+        """Get Perplexity integration instance if enabled."""
+        feature_flags = get_feature_flags()
+
+        # Check feature flag status and log for debugging
+        is_enabled = feature_flags.is_enabled("perplexity_research")
+        fallback_strategy = feature_flags.get_fallback_strategy("perplexity_research").value
+
+        from finwiz.tools.perplexity_analysis_integration import PerplexityOperationLogger
+
+        PerplexityOperationLogger.log_feature_flag_status("etf_analysis", is_enabled, fallback_strategy)
+
+        if not is_enabled:
+            return None
+
+        try:
+            integration = PerplexityAnalysisIntegration()
+            if integration.is_available:
+                logger.debug("Perplexity Sonar integration available for ETF analysis")
+                return integration
+            else:
+                logger.warning("Perplexity integration initialized but API key not available")
+                return None
+        except Exception as e:
+            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            return None
 
     def _run(
         self,
@@ -48,9 +87,12 @@ class EnhancedETFAnalysisTool(BaseTool):
         include_holdings: bool = True,
         include_risk_assessment: bool = True,
         max_holdings: int = 10,
+        include_perplexity: bool = True,
     ) -> dict[str, Any]:
         """Execute enhanced ETF analysis."""
         try:
+            logger.info(f"Starting enhanced ETF analysis for {ticker}")
+
             # Normalize ticker
             ticker = ticker.upper().strip()
 
@@ -69,6 +111,13 @@ class EnhancedETFAnalysisTool(BaseTool):
             if include_risk_assessment:
                 risk_assessment = self._perform_etf_risk_assessment(ticker, factsheet_data, holdings_data)
 
+            # Optionally get Perplexity ETF insights
+            perplexity_insights = []
+            if include_perplexity:
+                perplexity_integration = self._get_perplexity_integration()
+                if perplexity_integration:
+                    perplexity_insights = asyncio.run(self._get_perplexity_etf_insights(ticker))
+
             # Construct ETF factsheet object
             etf_factsheet = self._construct_etf_factsheet(ticker, factsheet_data, holdings_data, risk_assessment)
 
@@ -77,11 +126,13 @@ class EnhancedETFAnalysisTool(BaseTool):
                 "factsheet": etf_factsheet,
                 "holdings_count": len(holdings_data),
                 "risk_assessment": risk_assessment,
+                "perplexity_insights": perplexity_insights,
                 "analysis_timestamp": datetime.now().isoformat(),
                 "data_sources": factsheet_data.get("sources", []),
             }
 
         except Exception as e:
+            logger.error(f"Enhanced ETF analysis failed for {ticker}: {str(e)}")
             return {"error": f"Enhanced ETF analysis failed for {ticker}: {e}"}
 
     def _extract_factsheet_data(self, ticker: str) -> dict[str, Any]:
@@ -492,6 +543,38 @@ class EnhancedETFAnalysisTool(BaseTool):
                 "as_of": date.today(),
                 "error": f"Factsheet construction error: {e}",
             }
+
+    async def _get_perplexity_etf_insights(self, ticker: str) -> list[SonarArticle]:
+        """Get ETF-specific insights from Perplexity Sonar."""
+        perplexity_integration = self._get_perplexity_integration()
+        if not perplexity_integration:
+            return []
+
+        try:
+            # Create ETF-specific search query
+            query = f"{ticker} ETF fund performance holdings changes expense ratio tracking error"
+
+            sonar_result = await perplexity_integration.search_financial_news(
+                query=query, ticker=ticker, asset_type="etf", analysis_type="etf", max_results=6
+            )
+
+            if sonar_result.success:
+                logger.info(f"Retrieved {len(sonar_result.results)} Perplexity ETF insights for {ticker}")
+                return sonar_result.results
+                # Success tracking is handled automatically in PerplexityOperationLogger.log_search_success
+            else:
+                logger.warning(f"Perplexity ETF search failed for {ticker}: {sonar_result.error_message}")
+                # Failure tracking is handled automatically in PerplexityOperationLogger.log_search_failure
+                return []
+
+        except Exception as e:
+            logger.warning(f"Perplexity ETF search failed for {ticker}: {str(e)}")
+
+            # Record failure for feature flag tracking
+            from finwiz.tools.perplexity_analysis_integration import PerplexityFeatureFlagTracker
+
+            PerplexityFeatureFlagTracker.record_operation_failure(ticker, "etf", "integration_error")
+            return []
 
 
 class ETFTrackingAnalysisInput(BaseModel):

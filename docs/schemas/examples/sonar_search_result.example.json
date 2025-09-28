@@ -1,0 +1,35 @@
+{
+  "query": "AAPL earnings sentiment market reaction",
+  "ticker": "AAPL",
+  "asset_type": "stock",
+  "analysis_type": "sentiment",
+  "results": [
+    {
+      "title": "Apple Reports Strong Q3 Earnings Beat Expectations",
+      "url": "https://www.bloomberg.com/news/articles/2024-07-31/apple-earnings-q3-2024",
+      "summary": "Apple Inc. reported third-quarter earnings that exceeded Wall Street expectations, driven by strong iPhone sales and services revenue growth.",
+      "publisher": "Bloomberg",
+      "published_date": "2024-07-31T16:30:00Z",
+      "relevance_score": 0.95,
+      "content_type": "earnings",
+      "analysis_type": "sentiment"
+    },
+    {
+      "title": "Analysts Raise Apple Price Targets Following Earnings Beat",
+      "url": "https://www.reuters.com/business/apple-price-targets-raised-2024-08-01",
+      "summary": "Multiple Wall Street analysts raised their price targets for Apple following the company's strong quarterly results and positive guidance.",
+      "publisher": "Reuters",
+      "published_date": "2024-08-01T09:15:00Z",
+      "relevance_score": 0.88,
+      "content_type": "analysis",
+      "analysis_type": "sentiment"
+    }
+  ],
+  "total_results": 8,
+  "search_time_ms": 1250,
+  "source": "perplexity_sonar",
+  "success": true,
+  "error_message": null,
+  "fallback_used": false,
+  "retry_count": 0
+}

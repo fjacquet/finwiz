@@ -1,0 +1,524 @@
+{
+  "name": "Coach Sport & Santé - Homme 50 ans",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "Déclencheur Quotidien",
+      "name": "Déclencheur Quotidien",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "coach-interaction",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Interaction Utilisateur",
+      "name": "Interaction Utilisateur",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        480
+      ],
+      "webhookId": "coach-sport-sante-webhook"
+    },
+    {
+      "parameters": {
+        "chatId": "{{ $json.chat_id }}",
+        "text": "🏃‍♂️ Bonjour ! Je suis votre coach sport et santé personnalisé. Comment puis-je vous aider aujourd'hui ?\n\n💪 Mes spécialités :\n• Plans d'entraînement adaptés à 50 ans\n• Conseils nutritionnels\n• Suivi de progression\n• Motivation quotidienne\n• Prévention des blessures\n\nTapez votre question ou dites-moi comment vous vous sentez aujourd'hui !"
+      },
+      "id": "Message d'Accueil Telegram",
+      "name": "Message d'Accueil Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-bot-credentials",
+          "name": "Telegram Bot Coach"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "Tu es un coach sport et santé spécialisé pour les hommes de 50 ans. Ton rôle est de :\n\n🎯 OBJECTIFS PRINCIPAUX :\n• Créer des programmes d'entraînement adaptés à l'âge et condition physique\n• Donner des conseils nutritionnels équilibrés\n• Motiver et encourager de manière positive\n• Prévenir les blessures et surmenage\n• Suivre les progrès et ajuster les recommandations\n\n💪 SPÉCIFICITÉS 50 ANS :\n• Privilégier la récupération et l'échauffement\n• Adapter l'intensité selon la forme du jour\n• Intégrer exercices de mobilité et souplesse\n• Surveiller les signaux du corps\n• Équilibrer cardio, renforcement et récupération\n\n🍎 NUTRITION :\n• Conseils anti-inflammatoires\n• Hydratation optimale\n• Protéines pour maintenir la masse musculaire\n• Éviter les régimes drastiques\n\n📊 SUIVI :\n• Demander régulièrement des nouvelles\n• Célébrer les petites victoires\n• Ajuster selon les retours\n• Encourager la constance plutôt que la perfection\n\nTon ton est bienveillant, motivant et professionnel. Tu poses des questions pour personnaliser tes conseils.",
+        "options": {
+          "systemMessage": "Tu réponds toujours en français. Utilise des emojis pour rendre tes messages plus engageants. Sois concis mais complet dans tes réponses."
+        }
+      },
+      "id": "Agent Coach IA",
+      "name": "Agent Coach IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        720,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 1000
+        }
+      },
+      "id": "Modèle OpenAI",
+      "name": "Modèle OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        720,
+        580
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "fromInput",
+        "sessionKey": "user_id",
+        "contextWindowLength": 10
+      },
+      "id": "Mémoire Conversation",
+      "name": "Mémoire Conversation",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "VOTRE_GOOGLE_SHEET_ID",
+        "sheetName": "Suivi_Coaching",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyy-MM-dd HH:mm') }}",
+            "user_id": "={{ $json.user_id }}",
+            "message_user": "={{ $json.user_message }}",
+            "response_coach": "={{ $json.coach_response }}",
+            "sentiment": "={{ $json.sentiment }}",
+            "category": "={{ $json.category }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "Enregistrement Google Sheets",
+      "name": "Enregistrement Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1200,
+        600
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets Coach"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": "VOTRE_GOOGLE_SHEET_ID",
+        "sheetName": "Profil_Utilisateur",
+        "options": {
+          "range": "A:Z"
+        }
+      },
+      "id": "Outil Profil Utilisateur",
+      "name": "Outil Profil Utilisateur",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 1,
+      "position": [
+        720,
+        940
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets Coach"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": "VOTRE_GOOGLE_SHEET_ID",
+        "sheetName": "Programmes_Entrainement",
+        "options": {
+          "range": "A:Z"
+        }
+      },
+      "id": "Outil Programmes Entraînement",
+      "name": "Outil Programmes Entraînement",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 1,
+      "position": [
+        720,
+        1120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets Coach"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": "VOTRE_GOOGLE_SHEET_ID",
+        "sheetName": "Conseils_Nutrition",
+        "options": {
+          "range": "A:Z"
+        }
+      },
+      "id": "Outil Conseils Nutrition",
+      "name": "Outil Conseils Nutrition",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 1,
+      "position": [
+        720,
+        1300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets Coach"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "Calculatrice",
+      "name": "Calculatrice",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        720,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "morning-motivation",
+              "leftValue": "={{ $now.format('HH') }}",
+              "rightValue": "08",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "evening-recap",
+              "leftValue": "={{ $now.format('HH') }}",
+              "rightValue": "20",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Condition Horaire",
+      "name": "Condition Horaire",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "VOTRE_TELEGRAM_CHAT_ID",
+        "text": "🌅 Bonjour ! C'est l'heure de votre motivation matinale !\n\n💪 Rappel du jour :\n• Buvez un grand verre d'eau au réveil\n• 5 minutes d'étirements légers\n• Planifiez votre activité physique\n\nComment vous sentez-vous ce matin ? Prêt pour une belle journée active ? 🏃‍♂️"
+      },
+      "id": "Motivation Matinale",
+      "name": "Motivation Matinale",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-bot-credentials",
+          "name": "Telegram Bot Coach"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "VOTRE_TELEGRAM_CHAT_ID",
+        "text": "🌙 Bonsoir ! Comment s'est passée votre journée ?\n\n📊 Petit bilan :\n• Avez-vous fait votre activité prévue ?\n• Comment vous sentez-vous physiquement ?\n• Avez-vous bien bu aujourd'hui ?\n\nPartagez-moi vos ressentis pour que je puisse ajuster vos conseils de demain ! 😊"
+      },
+      "id": "Bilan du Soir",
+      "name": "Bilan du Soir",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        100
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-bot-credentials",
+          "name": "Telegram Bot Coach"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "Réponse Webhook",
+      "name": "Réponse Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "user-id",
+              "name": "user_id",
+              "value": "={{ $json.from?.id || $json.user_id || 'anonymous' }}",
+              "type": "string"
+            },
+            {
+              "id": "user-message",
+              "name": "user_message",
+              "value": "={{ $json.text || $json.message || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "chat-id",
+              "name": "chat_id",
+              "value": "={{ $json.chat?.id || $json.chat_id || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Préparation Données",
+      "name": "Préparation Données",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Déclencheur Quotidien": {
+      "main": [
+        [
+          {
+            "node": "Condition Horaire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interaction Utilisateur": {
+      "main": [
+        [
+          {
+            "node": "Préparation Données",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Condition Horaire": {
+      "main": [
+        [
+          {
+            "node": "Motivation Matinale",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bilan du Soir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparation Données": {
+      "main": [
+        [
+          {
+            "node": "Agent Coach IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Coach IA": {
+      "main": [
+        [
+          {
+            "node": "Message d'Accueil Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Enregistrement Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message d'Accueil Telegram": {
+      "main": [
+        [
+          {
+            "node": "Réponse Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modèle OpenAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent Coach IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mémoire Conversation": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent Coach IA",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outil Profil Utilisateur": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Coach IA",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outil Programmes Entraînement": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Coach IA",
+            "type": "ai_tool",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Outil Conseils Nutrition": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Coach IA",
+            "type": "ai_tool",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Calculatrice": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Coach IA",
+            "type": "ai_tool",
+            "index": 3
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-09-28T16:58:22.000Z",
+      "updatedAt": "2025-09-28T16:58:22.000Z",
+      "id": "coach-sport-sante",
+      "name": "Coach Sport Santé"
+    }
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2025-09-28T16:58:22.000Z",
+  "versionId": "1"
+}

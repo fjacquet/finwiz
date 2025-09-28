@@ -59,7 +59,7 @@ class TestEnhancedSentimentAnalysisTool:
         assert "Enhanced Sentiment Analysis for AAPL (STOCK)" in result
         assert "Sentiment Overview" in result
         assert "Market Outlook" in result
-        assert "Articles Analyzed: 1" in result
+        assert "**Total Articles Analyzed**: 1" in result
 
     def test_successful_sentiment_analysis_etf(self, mock_ticker, mocker):
         """Test successful sentiment analysis for ETF."""
@@ -352,7 +352,7 @@ class TestEnhancedSentimentAnalysisTool:
         assert "📈 Analysis Summary" in result
 
         # Verify data processing
-        assert "Articles Analyzed: 3" in result
+        assert "**Total Articles Analyzed**: 3" in result
         assert "Sentiment Distribution:" in result
 
         # Should identify earnings and technology topics

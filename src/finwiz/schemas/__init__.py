@@ -18,6 +18,13 @@ from .investment_discovery import (  # noqa: F401
     PortfolioImprovement,
     ValidationResult,
 )
+from .perplexity import (  # noqa: F401
+    PerplexityConfig,
+    PerplexitySearchRequest,
+    PerplexitySearchResponse,
+    SonarArticle,
+    SonarSearchResult,
+)
 from .portfolio_rebalancing import (  # noqa: F401
     AlternativeScenario,
     CostAnalysis,

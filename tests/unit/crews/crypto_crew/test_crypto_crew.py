@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
 from finwiz.schemas.crypto import CryptoThesis
 
 

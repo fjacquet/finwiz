@@ -87,11 +87,13 @@ This handbook establishes the core principles, ethical standards, and research m
 
 - Use `StandardizedSentimentAnalysisTool` for comprehensive cross-asset sentiment analysis
 - Aggregate news from multiple sources appropriate to asset class (financial sources for stocks/ETFs, crypto sources for cryptocurrencies)
+- **Perplexity Sonar Integration**: Leverage optional Perplexity Sonar Search for enhanced research capabilities when `FF_PERPLEXITY_RESEARCH` feature flag is enabled
 - Calculate both mean and confidence-weighted sentiment scores with statistical confidence intervals
 - Identify trending topics with mention counts, relevance scores, and associated sentiment
 - Provide top positive and negative articles with scores and citations for transparency
 - Apply consistent methodology across all asset classes for comparable results
 - Handle article deduplication and graceful error recovery with fallback sample data
+- Implement circuit breaker pattern for Perplexity API failures with automatic fallback to existing providers
 
 #### Portfolio Analysis Agents
 
@@ -196,8 +198,9 @@ To perform their tasks effectively, agents are equipped with a specialized set o
 - **`AlphaVantageNewsSentimentTool`**: Use to retrieve structured news and sentiment for one or more tickers via Alpha Vantage NEWS_SENTIMENT endpoint. Supports filtering by time range, topics, and sorting strategies. Requires `ALPHA_VANTAGE_API_KEY`.
 - **`TwelveDataIndicatorTool`**: Use to fetch technical indicators (RSI, MACD, Bollinger Bands) across stocks, ETFs, and crypto with flexible intervals. Requires `TWELVE_DATA_API_KEY`.
 - **`ChartImgTool`**: Use to generate PNG chart images as base64 data URLs for embedding in HTML outputs. Provide ticker, interval, and any overlays/indicators for clarity. Requires `CHART_IMG_API_KEY` (optional `CHART_IMG_BASE_URL`).
-- **`StandardizedSentimentAnalysisTool`**: Use for comprehensive sentiment analysis with consistent methodology across all asset classes (stocks, ETFs, crypto). Provides weighted scoring, trending topics extraction, confidence intervals, and top positive/negative articles with citations. Includes deduplication and multi-source news aggregation.
+- **`StandardizedSentimentAnalysisTool`**: Use for comprehensive sentiment analysis with consistent methodology across all asset classes (stocks, ETFs, crypto). Provides weighted scoring, trending topics extraction, confidence intervals, and top positive/negative articles with citations. Includes deduplication and multi-source news aggregation. **Enhanced with optional Perplexity Sonar integration** when `FF_PERPLEXITY_RESEARCH` feature flag is enabled and `PPLX_API_KEY` is configured.
 - **`CrossAssetSentimentComparatorTool`**: Use for comparative sentiment analysis across different asset classes to identify relative sentiment trends and market dynamics.
+- **`PerplexityAnalysisIntegration`**: Use for enhanced research capabilities across sentiment, technical, and fundamental analysis. Provides structured search methods with circuit breaker protection and graceful fallback. Requires `PPLX_API_KEY` and `FF_PERPLEXITY_RESEARCH=true`.
 
 ### Cryptocurrency Tools
 - **`CoinMarketCapInfoTool`**: Use for detailed cryptocurrency information including market data and project details.

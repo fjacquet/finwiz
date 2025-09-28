@@ -3,8 +3,10 @@ Enhanced SEC tool for comprehensive 10-K insights extraction and risk assessment
 
 Provides enhanced SEC filing analysis with standardized risk scoring,
 comprehensive section extraction, and structured output for FinWiz crews.
+Enhanced with optional Perplexity Sonar integration for recent earnings and SEC filing insights.
 """
 
+import asyncio
 import os
 from datetime import datetime
 from typing import Any, Literal
@@ -17,6 +19,12 @@ from langchain_community.vectorstores import FAISS
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.common import RiskLevel
+from finwiz.schemas.perplexity import SonarArticle
+from finwiz.tools.logger import get_logger
+from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
+from finwiz.utils.feature_flags import get_feature_flags
+
+logger = get_logger(__name__)
 
 try:
     from unstructured.partition.html import partition_html
@@ -40,6 +48,7 @@ class EnhancedSECAnalysisInput(BaseModel):
         default=["Item 1", "Item 1A", "Item 7"], description="SEC sections to extract insights from"
     )
     risk_assessment: bool = Field(default=True, description="Whether to perform standardized risk assessment")
+    include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
 class EnhancedSECAnalysisTool(BaseTool):
@@ -51,31 +60,63 @@ class EnhancedSECAnalysisTool(BaseTool):
     - Standardized risk assessment scoring
     - Structured output for downstream processing
     - Enhanced error handling and validation
+    - Optional Perplexity Sonar integration for recent earnings and SEC filing insights
     """
 
     name: str = "Enhanced SEC Analysis Tool"
     description: str = (
         "Comprehensive SEC filing analysis tool that extracts detailed insights "
-        "from 10-K/10-Q filings with standardized risk assessment and proper citations."
+        "from 10-K/10-Q filings with standardized risk assessment and proper citations. "
+        "Optionally enhanced with Perplexity Sonar for recent earnings reports and SEC filing commentary."
     )
     args_schema: type[BaseModel] = EnhancedSECAnalysisInput
 
+    def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
+        """Get Perplexity integration instance if enabled."""
+        feature_flags = get_feature_flags()
+
+        # Check feature flag status and log for debugging
+        is_enabled = feature_flags.is_enabled("perplexity_research")
+        fallback_strategy = feature_flags.get_fallback_strategy("perplexity_research").value
+
+        from finwiz.tools.perplexity_analysis_integration import PerplexityOperationLogger
+
+        PerplexityOperationLogger.log_feature_flag_status("sec_analysis", is_enabled, fallback_strategy)
+
+        if not is_enabled:
+            return None
+
+        try:
+            integration = PerplexityAnalysisIntegration()
+            if integration.is_available:
+                logger.debug("Perplexity Sonar integration available for SEC analysis")
+                return integration
+            else:
+                logger.warning("Perplexity integration initialized but API key not available")
+                return None
+        except Exception as e:
+            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            return None
+
     def _run(
-        self, ticker: str, form_type: str = "10-K", sections: list[str] = None, risk_assessment: bool = True
-    ) -> dict[str, Any]:
+        self,
+        ticker: str,
+        form_type: str = "10-K",
+        sections: list[str] = None,
+        risk_assessment: bool = True,
+        include_perplexity: bool = True,
+    ) -> str:
         """Execute enhanced SEC filing analysis."""
         if sections is None:
             sections = ["Item 1", "Item 1A", "Item 7"]
 
         try:
+            logger.info(f"Starting enhanced SEC analysis for {ticker} ({form_type})")
+
             # Fetch latest filing
             filing = self._fetch_latest_filing(ticker=ticker, form_type=form_type)
             if filing is None:
-                return {
-                    "error": f"No {form_type} filing found for ticker {ticker}",
-                    "ticker": ticker,
-                    "form_type": form_type,
-                }
+                return f"Error: No {form_type} filing found for ticker {ticker}"
 
             # Download and process filing content
             html = self._download_html(filing["filing_url"])
@@ -92,21 +133,29 @@ class EnhancedSECAnalysisTool(BaseTool):
             if risk_assessment:
                 risk_assessment_result = self._perform_risk_assessment(insights, ticker, filing)
 
-            return {
-                "ticker": ticker,
-                "form_type": form_type,
-                "filing_url": filing["filing_url"],
-                "filed_at": filing["filed_at"],
-                "insights": insights,
-                "risk_assessment": risk_assessment_result,
-                "sections_analyzed": sections,
-                "analysis_timestamp": datetime.now().isoformat(),
-            }
+            # Optionally get Perplexity fundamental insights
+            perplexity_insights = []
+            if include_perplexity:
+                perplexity_integration = self._get_perplexity_integration()
+                if perplexity_integration:
+                    perplexity_insights = asyncio.run(self._get_perplexity_fundamental_insights(ticker, form_type))
+
+            # Format comprehensive response
+            return self._format_enhanced_sec_response(
+                ticker=ticker,
+                form_type=form_type,
+                filing=filing,
+                insights=insights,
+                risk_assessment_result=risk_assessment_result,
+                sections=sections,
+                perplexity_insights=perplexity_insights,
+            )
 
         except KeyError as e:
-            return {"error": f"Missing environment/config: {e}"}
+            return f"Error: Missing environment/config: {e}"
         except Exception as e:
-            return {"error": f"Enhanced SEC analysis failed: {e}"}
+            logger.error(f"Enhanced SEC analysis failed for {ticker}: {str(e)}")
+            return f"Error: Enhanced SEC analysis failed for {ticker}: {str(e)}"
 
     def _fetch_latest_filing(self, ticker: str, form_type: str) -> dict[str, str] | None:
         """Fetch the latest SEC filing for the given ticker and form type."""
@@ -295,6 +344,127 @@ class EnhancedSECAnalysisTool(BaseTool):
             return "High"
         else:
             return "Very High"
+
+    async def _get_perplexity_fundamental_insights(self, ticker: str, form_type: str) -> list[SonarArticle]:
+        """Get fundamental analysis insights from Perplexity Sonar."""
+        perplexity_integration = self._get_perplexity_integration()
+        if not perplexity_integration:
+            return []
+
+        try:
+            # Determine asset type (simplified logic for stocks)
+            asset_type = "stock"
+
+            sonar_result = await perplexity_integration.search_fundamental_analysis(
+                ticker=ticker, asset_type=asset_type, max_results=6
+            )
+
+            if sonar_result.success:
+                logger.info(f"Retrieved {len(sonar_result.results)} Perplexity fundamental insights for {ticker}")
+                return sonar_result.results
+                # Success tracking is handled automatically in PerplexityOperationLogger.log_search_success
+            else:
+                logger.warning(f"Perplexity fundamental search failed for {ticker}: {sonar_result.error_message}")
+                # Failure tracking is handled automatically in PerplexityOperationLogger.log_search_failure
+                return []
+
+        except Exception as e:
+            logger.warning(f"Perplexity fundamental search failed for {ticker}: {str(e)}")
+
+            # Record failure for feature flag tracking
+            from finwiz.tools.perplexity_analysis_integration import PerplexityFeatureFlagTracker
+
+            PerplexityFeatureFlagTracker.record_operation_failure(ticker, "fundamental", "integration_error")
+            return []
+
+    def _format_enhanced_sec_response(
+        self,
+        ticker: str,
+        form_type: str,
+        filing: dict[str, str],
+        insights: list[dict[str, Any]],
+        risk_assessment_result: dict[str, Any] | None,
+        sections: list[str],
+        perplexity_insights: list[SonarArticle],
+    ) -> str:
+        """Format comprehensive enhanced SEC analysis response."""
+        response = f"# Enhanced SEC Analysis for {ticker} ({form_type})\n\n"
+
+        # Filing Information
+        response += "## 📋 Filing Information\n"
+        response += f"- **Form Type**: {form_type}\n"
+        response += f"- **Filed Date**: {filing['filed_at'][:10]}\n"
+        response += f"- **Filing URL**: {filing['filing_url']}\n"
+        response += f"- **Sections Analyzed**: {', '.join(sections)}\n\n"
+
+        # SEC Filing Insights
+        response += "## 📊 SEC Filing Insights\n"
+        if insights:
+            # Group insights by section
+            sections_data = {}
+            for insight in insights:
+                section = insight["section"]
+                if section not in sections_data:
+                    sections_data[section] = []
+                sections_data[section].append(insight)
+
+            for section, section_insights in sections_data.items():
+                response += f"\n### {section}\n"
+                for i, insight in enumerate(section_insights[:2], 1):  # Limit to 2 per section
+                    response += f"{i}. **Excerpt {insight['relevance_rank']}**:\n"
+                    response += f"   {insight['excerpt'][:300]}{'...' if len(insight['excerpt']) > 300 else ''}\n\n"
+        else:
+            response += "No significant insights extracted from SEC filing.\n\n"
+
+        # Risk Assessment
+        if risk_assessment_result:
+            response += "## ⚠️ Risk Assessment\n"
+            response += f"- **Risk Score**: {risk_assessment_result['score']}/5.0\n"
+            response += f"- **Risk Level**: {risk_assessment_result['level']}\n"
+            response += f"- **Assessment Scale**: {risk_assessment_result['scale']}\n\n"
+
+            if risk_assessment_result.get("risk_factors"):
+                response += "### Key Risk Factors:\n"
+                for i, factor in enumerate(risk_assessment_result["risk_factors"][:5], 1):
+                    response += f"{i}. {factor}\n"
+                response += "\n"
+
+        # Perplexity Insights
+        if perplexity_insights:
+            response += "## 🔍 Recent Fundamental Analysis (Perplexity Sonar)\n"
+            response += f"Recent earnings reports, SEC filings, and fundamental analysis ({len(perplexity_insights)} articles):\n\n"
+
+            for i, article in enumerate(perplexity_insights, 1):
+                content_emoji = {"news": "📰", "filing": "📋", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(
+                    article.content_type, "📊"
+                )
+
+                response += f"{i}. {content_emoji} **{article.title}**\n"
+                response += f"   - Publisher: {article.publisher}\n"
+                response += f"   - Content Type: {article.content_type.title()}\n"
+                response += f"   - Relevance: {article.relevance_score:.2f}\n"
+                if article.summary:
+                    response += f"   - Summary: {article.summary[:200]}{'...' if len(article.summary) > 200 else ''}\n"
+                response += f"   - URL: {article.url}\n\n"
+
+        # Analysis Summary
+        response += "## 📈 Enhanced Analysis Summary\n"
+        response += f"This comprehensive SEC analysis for {ticker} combines:\n"
+        response += f"- **SEC Filing Analysis**: Detailed insights from {form_type} sections\n"
+        response += "- **Risk Assessment**: Standardized risk scoring based on filing content\n"
+        response += "- **Structured Extraction**: Key excerpts with proper citations\n"
+
+        if perplexity_insights:
+            response += f"- **Market Context**: {len(perplexity_insights)} recent fundamental analysis articles\n\n"
+            response += "**Enhanced with Perplexity Sonar**: Recent earnings reports and SEC filing commentary "
+            response += "provide additional context and market perspective on the company's fundamentals.\n\n"
+        else:
+            response += "\n"
+
+        response += "**Investment Consideration**: SEC filings provide official company disclosures and should be "
+        response += "combined with current market analysis and technical indicators for comprehensive investment decisions.\n"
+
+        return response
 
 
 class StandardizedRiskScoringInput(BaseModel):

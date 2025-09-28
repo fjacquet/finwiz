@@ -24,6 +24,30 @@ Like a haiku poem with its strict form of simplicity and elegance:
 - Elegant solutions over complex ones
 - Purposeful design choices
 
+### External Service Integration Principles
+
+#### Perplexity Sonar Integration Architecture
+
+The Perplexity Sonar integration follows these architectural principles:
+
+- **Optional Enhancement Pattern**: Integration is designed as an optional enhancement that doesn't affect core functionality
+- **Feature Flag Control**: All integration points are controlled by the `FF_PERPLEXITY_RESEARCH` feature flag
+- **Circuit Breaker Protection**: Automatic failure detection and recovery with configurable thresholds
+- **Graceful Fallback**: Seamless fallback to existing data providers when Perplexity is unavailable
+- **Structured Data Parsing**: Convert raw API responses to validated Pydantic models (SonarArticle, SonarSearchResult)
+- **Security-Focused Logging**: Content redaction in logs while preserving operational metadata
+- **Performance Monitoring**: Track latency, success rates, and circuit breaker state
+- **Error Classification**: Structured error handling with appropriate retry strategies
+- **Configuration Validation**: Startup validation of API keys and integration settings
+
+#### Integration Design Patterns
+
+- **Wrapper Pattern**: PerplexityAnalysisIntegration wraps the existing PerplexitySearchTool
+- **Factory Pattern**: Standardized initialization through utility functions
+- **Observer Pattern**: Feature flag tracking for success/failure metrics
+- **Strategy Pattern**: Multiple analysis types (sentiment, technical, fundamental) with context-specific queries
+- **Decorator Pattern**: Enhanced analysis tools maintain existing interfaces while adding Perplexity capabilities
+
 ### CrewAI Flow Design Principles
 
 - **Clear Separation of Concerns**: Maintain a clear distinction between state and behavior.
@@ -48,6 +72,11 @@ Like a haiku poem with its strict form of simplicity and elegance:
 - **Modular Quantitative Architecture**: Separate concerns between data management, analysis engines, and result presentation.
 - **Professional Standards**: Follow quantitative finance best practices with proper risk management and performance attribution.
 - **Extensible Framework**: Design quantitative components for easy extension with new indicators, strategies, and analysis methods.
+- **Optional Enhancement Integration**: Design external service integrations as optional enhancements with feature flag control and graceful fallback.
+- **Circuit Breaker Protection**: Implement circuit breaker patterns for external API integrations to ensure system reliability.
+- **Graceful Degradation**: Ensure core functionality continues when optional services are unavailable or failing.
+- **Security-First Integration**: Implement content redaction, API key validation, and secure logging for external service integrations.
+- **Structured Error Handling**: Classify errors appropriately and implement retry logic with exponential backoff for transient failures.
 - **Portfolio Rebalancing Architecture**: Implement modular rebalancing system with pluggable optimization strategies, comprehensive cost analysis, and risk management safeguards.
 - **Rebalancing Optimization**: Support multiple optimization methods (minimize trades, minimize costs, risk-aware) with configurable constraints and tolerance bands.
 - **Transaction Cost Modeling**: Provide comprehensive cost analysis including commissions, spreads, market impact, and tax considerations.

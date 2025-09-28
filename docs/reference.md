@@ -92,8 +92,9 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `AlphaVantageNewsSentimentTool`: Structured news and sentiment via Alpha Vantage's NEWS_SENTIMENT endpoint with support for multiple tickers, time filtering, topic filtering, and sorting strategies.
 - `TwelveDataIndicatorTool`: Technical indicators (RSI, MACD, Bollinger Bands) via Twelve Data.
 - `ChartImgTool`: PNG chart images as base64 data URLs via Chart-img.
-- `StandardizedSentimentAnalysisTool`: Comprehensive sentiment analysis with consistent methodology across all asset classes. Features weighted scoring, trending topics extraction, confidence intervals, article deduplication, and multi-source news aggregation.
+- `StandardizedSentimentAnalysisTool`: Comprehensive sentiment analysis with consistent methodology across all asset classes. Features weighted scoring, trending topics extraction, confidence intervals, article deduplication, and multi-source news aggregation. **Enhanced with optional Perplexity Sonar integration** for recent market insights.
 - `CrossAssetSentimentComparatorTool`: Comparative sentiment analysis across different asset classes for relative trend identification.
+- `PerplexityAnalysisIntegration`: Enhanced research capabilities using Perplexity Sonar Search with structured data parsing, circuit breaker protection, and graceful fallback mechanisms.
 
 ### Cryptocurrency Tools
 - `CoinMarketCapInfoTool`: Detailed cryptocurrency information.
@@ -148,6 +149,7 @@ These tools require API keys. Create a `.env` file (see `.env.example`) with the
 - `CHART_IMG_API_KEY`: Chart-img API key for chart generation.
 - `CHART_IMG_BASE_URL` (optional): Override base URL for Chart-img; defaults to `https://api.chart-img.com/v1/stock`.
 - `COINMARKETCAP_API_KEY`: CoinMarketCap API key for cryptocurrency data.
+- `PPLX_API_KEY`: Perplexity API key for Sonar Search integration (requires `FF_PERPLEXITY_RESEARCH=true`).
 
 ### Configuration Variables
 - `PORTFOLIO_REVIEW_ENABLED` (default: "true"): Enable/disable portfolio review functionality.
@@ -313,6 +315,218 @@ archive/
 - New analysis integrates with existing plan structure
 - Maintains consistency in formatting and section organization
 - Preserves user customizations and manual adjustments
+
+## Perplexity Sonar Integration
+
+FinWiz includes optional integration with Perplexity Sonar Search for enhanced research capabilities across sentiment, technical, and fundamental analysis.
+
+### Overview
+
+The Perplexity Sonar integration provides:
+- **Enhanced Research Capabilities**: Access to recent market insights and analysis
+- **Multi-Analysis Support**: Sentiment, technical, and fundamental analysis contexts
+- **Circuit Breaker Protection**: Automatic fallback on API failures
+- **Structured Data Parsing**: Converts raw responses to structured SonarArticle objects
+- **Graceful Degradation**: Seamless fallback to existing data providers
+
+### Configuration
+
+Enable Perplexity integration through environment variables:
+
+```bash
+# Enable Perplexity research feature flag
+FF_PERPLEXITY_RESEARCH=true
+
+# Configure API key
+PPLX_API_KEY=your_perplexity_api_key_here
+
+# Optional: Configure circuit breaker settings
+FF_PERPLEXITY_BREAKER_THRESHOLD=5
+FF_PERPLEXITY_BREAKER_TIMEOUT=300
+```
+
+### Integration Points
+
+The Perplexity integration enhances existing analysis tools:
+
+#### Enhanced Sentiment Analysis
+- **Tool**: `StandardizedSentimentAnalysisTool`
+- **Enhancement**: Additional Sonar articles for recent market sentiment
+- **Fallback**: Yahoo Finance and Alpha Vantage news sources
+
+#### Enhanced Crypto Analysis
+- **Tool**: `EnhancedCryptoAnalysisTool`
+- **Enhancement**: Regulatory updates and adoption news via Sonar
+- **Context**: Crypto-specific search queries for blockchain and regulatory insights
+
+#### Enhanced ETF Analysis
+- **Tool**: `EnhancedETFAnalysisTool`
+- **Enhancement**: Recent ETF performance updates and holdings changes
+- **Context**: ETF-specific search queries for fund performance and expense ratio changes
+
+### PerplexityAnalysisIntegration Class
+
+Core integration wrapper providing structured search methods:
+
+```python
+from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
+
+# Initialize integration
+integration = PerplexityAnalysisIntegration()
+
+# Check availability
+if integration.is_available:
+    # Perform financial news search
+    result = await integration.search_financial_news(
+        query="AAPL earnings sentiment market reaction",
+        ticker="AAPL",
+        asset_type="stock",
+        analysis_type="sentiment",
+        max_results=10
+    )
+```
+
+### SonarSearchResult Schema
+
+Structured response format for Perplexity searches:
+
+```python
+{
+    "query": "AAPL earnings sentiment",
+    "ticker": "AAPL",
+    "asset_type": "stock",
+    "analysis_type": "sentiment",
+    "results": [
+        {
+            "title": "Apple Reports Strong Q3 Earnings",
+            "url": "https://example.com/article",
+            "summary": "Apple exceeded expectations...",
+            "publisher": "Financial Times",
+            "published_date": "2024-07-31",
+            "relevance_score": 0.95,
+            "content_type": "news",
+            "analysis_type": "sentiment"
+        }
+    ],
+    "total_results": 8,
+    "search_time_ms": 1250,
+    "success": true,
+    "retry_count": 0
+}
+```
+
+### Circuit Breaker Protection
+
+The integration includes comprehensive circuit breaker protection:
+
+#### Failure Tracking
+- **Threshold**: Configurable failure count before circuit opens (default: 5)
+- **Timeout**: Configurable timeout before retry attempts (default: 300 seconds)
+- **Recovery**: Automatic circuit closure on successful operations
+
+#### Fallback Strategies
+- **Cached Data**: Use previously cached Sonar results when available
+- **Existing Providers**: Seamless fallback to Yahoo Finance, Alpha Vantage, etc.
+- **Graceful Degradation**: Continue analysis without Perplexity enhancement
+
+### Error Handling and Logging
+
+Comprehensive error handling with structured logging:
+
+#### Error Classification
+- **Rate Limit Errors**: Automatic retry with exponential backoff
+- **API Key Errors**: Clear configuration guidance
+- **Network Errors**: Retry with circuit breaker protection
+- **Parsing Errors**: Graceful fallback with error logging
+
+#### Structured Logging
+- **Request Logging**: Query length and analysis type (content redacted)
+- **Performance Metrics**: Latency, result count, HTTP status
+- **Failure Tracking**: Error types and retry attempts
+- **Feature Flag Status**: Integration enabled/disabled state
+
+### Feature Flag Integration
+
+The Perplexity integration is controlled by the feature flag system:
+
+```python
+from finwiz.utils.feature_flags import get_feature_flags
+
+flags = get_feature_flags()
+
+# Check if Perplexity research is enabled
+if flags.is_enabled("perplexity_research"):
+    # Integration is available
+    pass
+
+# Record success/failure for circuit breaker
+flags.record_success("perplexity_research")
+flags.record_failure("perplexity_research")
+```
+
+### Usage Examples
+
+#### Sentiment Analysis Enhancement
+```python
+# Enhanced sentiment analysis with Perplexity integration
+from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
+
+tool = EnhancedSentimentAnalysisTool()
+result = tool._run(
+    ticker="AAPL",
+    asset_type="stock",
+    days_back=7,
+    max_articles=20
+)
+
+# Result includes both traditional and Sonar articles
+print(f"Yahoo articles: {len(result['yahoo_articles'])}")
+print(f"Sonar articles: {len(result['sonar_articles'])}")
+```
+
+#### Crypto Analysis Enhancement
+```python
+# Enhanced crypto analysis with regulatory insights
+from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
+
+tool = EnhancedCryptoAnalysisTool()
+result = tool._run(
+    symbol="BTC",
+    include_perplexity=True
+)
+
+# Result includes Perplexity insights for regulatory updates
+print(f"Perplexity insights: {len(result['perplexity_insights'])}")
+```
+
+### Testing and Validation
+
+The Perplexity integration includes comprehensive testing:
+
+#### Unit Tests
+- **Feature Flag Integration**: Test enabled/disabled states
+- **Circuit Breaker**: Test failure thresholds and recovery
+- **Error Handling**: Test various error scenarios
+- **Data Parsing**: Test response parsing and validation
+
+#### Integration Tests
+- **API Mocking**: Mock Perplexity API responses
+- **Fallback Testing**: Test graceful degradation scenarios
+- **Performance Testing**: Test timeout and retry behavior
+
+### Security and Privacy
+
+The integration follows security best practices:
+
+#### API Key Management
+- **Environment Variables**: Secure API key storage
+- **Validation**: Startup validation of required keys
+- **Error Redaction**: Sensitive information redacted from logs
+
+#### Content Handling
+- **Content Redaction**: Article content not logged for privacy
+- **Metadata Only**: Only metadata and performance metrics logged
+- **GDPR Compliance**: No personal data stored or logged
 
 ## Standardized Sentiment Analysis
 

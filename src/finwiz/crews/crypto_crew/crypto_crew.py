@@ -102,7 +102,7 @@ class CryptoCrew:
             tools=[*crypto_tools, quantitative_tool, *rag_tools],
             reasoning=True,  # Enable AI reasoning for technical analysis decisions
             verbose=True,
-          )
+        )
 
     @agent
     def risk_assessor(self) -> Agent:

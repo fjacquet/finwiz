@@ -37,6 +37,13 @@ These tools complement the existing schema-validated crew outputs and provide ad
 - **`HoldingDecision`**: Individual holding analysis with keep/sell decision and rationale
 - **`Alternative`**: Alternative investment suggestions with scoring and thesis
 
+### Perplexity Sonar Integration
+- **`SonarArticle`**: Individual article from Perplexity Sonar search results with validation
+- **`SonarSearchResult`**: Structured result container for Perplexity searches
+- **`PerplexitySearchRequest`**: Request schema for Perplexity search operations
+- **`PerplexitySearchResponse`**: Response schema for Perplexity search operations
+- **`PerplexityConfig`**: Configuration schema for Perplexity Sonar integration
+
 ## Schema Export
 
 Generate JSON schemas from Pydantic models:
@@ -60,6 +67,11 @@ Examples live under `docs/schemas/examples/`:
 - `market_sentiment.example.json` - Market sentiment analysis
 - `etf_factsheet.example.json` - ETF factsheet data
 - `crypto_thesis.example.json` - Crypto investment thesis
+
+### Perplexity Integration Examples
+- `sonar_article.example.json` - Individual Sonar article structure
+- `sonar_search_result.example.json` - Complete Sonar search result
+- `perplexity_config.example.json` - Perplexity integration configuration
 
 ### Quantitative Analysis Examples
 - `quantitative_backtest_result.example.json` - Backtesting results

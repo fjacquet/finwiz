@@ -1,0 +1,16 @@
+{
+  "api_key": "pplx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "timeout_seconds": 30.0,
+  "max_retries": 3,
+  "backoff_factor": 2.0,
+  "rate_limit_buffer": 5,
+  "default_max_results": 10,
+  "financial_news_filters": {
+    "site": "bloomberg.com,reuters.com,wsj.com,ft.com,cnbc.com",
+    "date": "past_week"
+  },
+  "sec_filing_filters": {
+    "site": "sec.gov",
+    "filetype": "pdf,html"
+  }
+}

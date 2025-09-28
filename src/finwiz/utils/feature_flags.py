@@ -249,6 +249,15 @@ class FeatureFlags:
                 fallback_strategy=FallbackStrategy.DISABLE,
                 description="Cryptocurrency analysis crew for digital asset research and recommendations",
             ),
+            "perplexity_research": FeatureFlagConfig(
+                name="perplexity_research",
+                enabled=self._get_env_bool("FF_PERPLEXITY_RESEARCH", False),
+                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
+                circuit_breaker_threshold=self._get_env_int("FF_PERPLEXITY_BREAKER_THRESHOLD", 5),
+                circuit_breaker_timeout=self._get_env_int("FF_PERPLEXITY_BREAKER_TIMEOUT", 300),
+                fallback_strategy=FallbackStrategy.CACHED_ONLY,
+                description="Perplexity Sonar Search integration for enhanced research capabilities across sentiment, technical, and fundamental analysis",
+            ),
         }
 
         self.flags.update(default_flags)
@@ -464,6 +473,13 @@ class FeatureFlags:
                 "support_resistance": {"support": [], "resistance": []},
             },
             "chart_analysis": {"chart_url": None, "pattern_insights": [], "visual_analysis": "Chart analysis unavailable"},
+            "perplexity_research": {
+                "sonar_articles": [],
+                "search_results": [],
+                "total_results": 0,
+                "source": "fallback",
+                "status": "disabled",
+            },
         }
         return defaults.get(flag_name, {})
 

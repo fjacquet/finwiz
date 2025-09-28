@@ -33,6 +33,9 @@ class TestFeatureFlags:
             "FF_CHART_BREAKER_THRESHOLD",
             "FF_TWELVE_DATA",
             "FF_STRICT_VALIDATION",
+            "FF_PERPLEXITY_RESEARCH",
+            "FF_PERPLEXITY_BREAKER_THRESHOLD",
+            "FF_PERPLEXITY_BREAKER_TIMEOUT",
         ]
         for var in env_vars_to_clear:
             if var in os.environ:
@@ -50,6 +53,7 @@ class TestFeatureFlags:
         assert "chart_analysis" in flags.flags
         assert "twelve_data_integration" in flags.flags
         assert "strict_validation" in flags.flags
+        assert "perplexity_research" in flags.flags
 
     def test_should_load_boolean_flag_from_environment(self, mocker):
         """Test loading boolean feature flags from environment variables."""
@@ -367,6 +371,61 @@ class TestFeatureFlags:
 
         success = flags.update_flag("unknown_flag", enabled=True)
         assert success is False
+
+    def test_should_configure_perplexity_research_flag_correctly(self):
+        """Test that perplexity_research flag is configured with circuit breaker strategy."""
+        # Arrange & Act
+        flags = FeatureFlags()
+
+        # Assert
+        config = flags.flags["perplexity_research"]
+        assert config.name == "perplexity_research"
+        assert config.enabled is False  # Default disabled
+        assert config.strategy == FeatureFlagStrategy.CIRCUIT_BREAKER
+        assert config.fallback_strategy == FallbackStrategy.CACHED_ONLY
+        assert config.circuit_breaker_threshold == 5  # Default threshold
+        assert config.circuit_breaker_timeout == 300  # Default timeout
+        assert "Perplexity Sonar Search integration" in config.description
+
+    def test_should_load_perplexity_research_flag_from_environment(self, mocker):
+        """Test loading perplexity_research flag configuration from environment variables."""
+        # Arrange
+        mocker.patch.dict(
+            os.environ,
+            {
+                "FF_PERPLEXITY_RESEARCH": "true",
+                "FF_PERPLEXITY_BREAKER_THRESHOLD": "3",
+                "FF_PERPLEXITY_BREAKER_TIMEOUT": "600",
+            },
+        )
+
+        # Act
+        flags = FeatureFlags()
+
+        # Assert
+        config = flags.flags["perplexity_research"]
+        assert config.enabled is True
+        assert config.circuit_breaker_threshold == 3
+        assert config.circuit_breaker_timeout == 600
+
+    def test_should_return_perplexity_default_values_when_disabled(self):
+        """Test that perplexity_research returns appropriate default values when disabled."""
+        # Arrange
+        flags = FeatureFlags()
+
+        def primary_func():
+            return {"sonar_articles": [{"title": "Test"}], "total_results": 1}
+
+        # Act
+        result = flags.execute_with_fallback("perplexity_research", primary_func)
+
+        # Assert - Should return default values since flag is disabled by default
+        assert result is not None
+        assert "sonar_articles" in result
+        assert result["sonar_articles"] == []
+        assert result["total_results"] == 0
+        assert result["source"] == "fallback"
+        assert result["status"] == "disabled"
 
 
 class TestFeatureFlagConvenienceFunctions:

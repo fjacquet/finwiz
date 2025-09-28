@@ -47,8 +47,7 @@ class PerplexitySearchTool(BaseTool):
 
     name: str = "Perplexity Sonar Search"
     description: str = (
-        "Queries Perplexity Sonar to obtain grounded answers with citations. "
-        "Requires the PPLX_API_KEY environment variable."
+        "Queries Perplexity Sonar to obtain grounded answers with citations. Requires the PPLX_API_KEY environment variable."
     )
     args_schema: type[BaseModel] = PerplexitySearchInput
 

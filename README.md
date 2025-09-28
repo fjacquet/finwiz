@@ -13,6 +13,7 @@
 - **Real-Time Data Retrieval**: Employs a suite of tools to fetch live data from the web, ensuring analyses are based on the most current information.
 - **Structured Output**: Generates detailed reports in HTML and PDF formats with strict schema validation.
 - **Enhanced Financial Analysis**: Standardized multi-source sentiment analysis, technical indicators, and chart generation capabilities with comprehensive testing coverage.
+- **Perplexity Sonar Integration**: Optional integration with Perplexity Sonar Search for enhanced research capabilities across sentiment, technical, and fundamental analysis with circuit breaker protection and graceful fallback.
 - **Quantitative Analysis Framework**: Professional-grade backtesting engine with Backtrader, technical analysis with TA-Lib, portfolio optimization, derivatives pricing, and performance analytics.
 - **Persistent Financial Planning**: Loads and updates existing financial plans from previous sessions.
 - **Advanced Data Validation**: Centralized validation system with ValidationManager, SchemaRegistry, configurable strictness modes (off/warn/error), and structured error handling with detailed context.
@@ -111,6 +112,7 @@ Follow these instructions to set up and run FinWiz on your local machine.
      TWELVE_DATA_API_KEY=your_twelve_data_key_here
      CHART_IMG_API_KEY=your_chart_img_key_here
      COINMARKETCAP_API_KEY=your_coinmarketcap_key_here
+     PPLX_API_KEY=your_perplexity_api_key_here
      
      # Configuration
      PORTFOLIO_REVIEW_ENABLED=true
@@ -304,6 +306,7 @@ FinWiz provides sophisticated financial analysis through specialized tools:
 ### Sentiment Analysis
 - **Standardized Methodology**: Consistent sentiment analysis across all asset classes (stocks, ETFs, crypto)
 - **Multi-Source Integration**: Alpha Vantage, Yahoo Finance, CoinMarketCap news aggregation with asset-specific sources
+- **Perplexity Sonar Enhancement**: Optional integration with Perplexity Sonar Search for enhanced research capabilities with circuit breaker protection
 - **Weighted Scoring**: Confidence-weighted sentiment calculation with statistical confidence intervals
 - **Trending Topics**: Automated extraction of trending topics with relevance scoring and sentiment correlation
 - **Article Deduplication**: Intelligent removal of duplicate articles based on headline similarity

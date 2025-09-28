@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from finwiz.crews.etf_crew.etf_crew import EtfCrew
 from finwiz.schemas.etf import ETFFactsheet, ETFTopHolding
 
 

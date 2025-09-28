@@ -9,8 +9,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from finwiz.crews.stock_crew.stock_crew import StockCrew
-
 
 class TestStockCrew:
     """Test cases for Stock Crew."""

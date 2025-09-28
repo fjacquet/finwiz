@@ -109,8 +109,6 @@ class StockCrew:
         self.TenKInsight = TenKInsight
         self.RiskAssessmentStandardized = RiskAssessmentStandardized
 
-
-
     @agent
     def market_technical_analyst(self) -> Agent:
         """Agent that performs technical analysis on target stocks."""

@@ -3,14 +3,23 @@ Enhanced crypto analysis tool for investment thesis generation and risk assessme
 
 Provides comprehensive crypto analysis with investment thesis generation,
 standardized risk assessment on 1-10 scale, and structured output for FinWiz crews.
+Enhanced with optional Perplexity Sonar integration for recent regulatory updates and adoption news.
 """
 
+import asyncio
 from datetime import datetime
 from typing import Any
 
 import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+
+from finwiz.schemas.perplexity import SonarArticle
+from finwiz.tools.logger import get_logger
+from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
+from finwiz.utils.feature_flags import get_feature_flags
+
+logger = get_logger(__name__)
 
 
 class EnhancedCryptoAnalysisInput(BaseModel):
@@ -20,6 +29,7 @@ class EnhancedCryptoAnalysisInput(BaseModel):
     include_thesis: bool = Field(default=True, description="Whether to generate investment thesis")
     include_risk_assessment: bool = Field(default=True, description="Whether to perform risk assessment")
     max_thesis_bullets: int = Field(default=10, ge=3, le=20, description="Maximum number of thesis bullets")
+    include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
 class EnhancedCryptoAnalysisTool(BaseTool):
@@ -31,14 +41,43 @@ class EnhancedCryptoAnalysisTool(BaseTool):
     - Standardized risk assessment on 1-10 scale (mapped to 0-5 internally)
     - Market dynamics analysis and tokenomics evaluation
     - Structured output for downstream processing
+    - Optional Perplexity Sonar integration for recent regulatory updates and adoption news
     """
 
     name: str = "Enhanced Crypto Analysis Tool"
     description: str = (
         "Comprehensive crypto analysis tool that generates investment thesis, "
-        "performs standardized risk assessment, and analyzes market dynamics."
+        "performs standardized risk assessment, and analyzes market dynamics. "
+        "Optionally enhanced with Perplexity Sonar for recent regulatory updates and adoption news."
     )
     args_schema: type[BaseModel] = EnhancedCryptoAnalysisInput
+
+    def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
+        """Get Perplexity integration instance if enabled."""
+        feature_flags = get_feature_flags()
+
+        # Check feature flag status and log for debugging
+        is_enabled = feature_flags.is_enabled("perplexity_research")
+        fallback_strategy = feature_flags.get_fallback_strategy("perplexity_research").value
+
+        from finwiz.tools.perplexity_analysis_integration import PerplexityOperationLogger
+
+        PerplexityOperationLogger.log_feature_flag_status("crypto_analysis", is_enabled, fallback_strategy)
+
+        if not is_enabled:
+            return None
+
+        try:
+            integration = PerplexityAnalysisIntegration()
+            if integration.is_available:
+                logger.debug("Perplexity Sonar integration available for crypto analysis")
+                return integration
+            else:
+                logger.warning("Perplexity integration initialized but API key not available")
+                return None
+        except Exception as e:
+            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            return None
 
     def _run(
         self,
@@ -46,9 +85,12 @@ class EnhancedCryptoAnalysisTool(BaseTool):
         include_thesis: bool = True,
         include_risk_assessment: bool = True,
         max_thesis_bullets: int = 10,
+        include_perplexity: bool = True,
     ) -> dict[str, Any]:
         """Execute enhanced crypto analysis."""
         try:
+            logger.info(f"Starting enhanced crypto analysis for {symbol}")
+
             # Normalize symbol
             symbol = symbol.upper().strip()
 
@@ -67,16 +109,25 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             if include_risk_assessment:
                 risk_assessment = self._perform_crypto_risk_assessment(symbol, crypto_data)
 
+            # Optionally get Perplexity crypto insights
+            perplexity_insights = []
+            if include_perplexity:
+                perplexity_integration = self._get_perplexity_integration()
+                if perplexity_integration:
+                    perplexity_insights = asyncio.run(self._get_perplexity_crypto_insights(symbol))
+
             return {
                 "symbol": symbol,
                 "crypto_data": crypto_data,
                 "investment_thesis": thesis,
                 "risk_assessment": risk_assessment,
+                "perplexity_insights": perplexity_insights,
                 "analysis_timestamp": datetime.now().isoformat(),
                 "data_sources": crypto_data.get("sources", []),
             }
 
         except Exception as e:
+            logger.error(f"Enhanced crypto analysis failed for {symbol}: {str(e)}")
             return {"error": f"Enhanced crypto analysis failed for {symbol}: {e}"}
 
     def _get_crypto_data(self, symbol: str) -> dict[str, Any]:
@@ -438,6 +489,38 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             return "High"
         else:
             return "Very High"
+
+    async def _get_perplexity_crypto_insights(self, symbol: str) -> list[SonarArticle]:
+        """Get crypto-specific insights from Perplexity Sonar."""
+        perplexity_integration = self._get_perplexity_integration()
+        if not perplexity_integration:
+            return []
+
+        try:
+            # Create crypto-specific search query
+            query = f"{symbol} cryptocurrency regulatory updates adoption news blockchain technology"
+
+            sonar_result = await perplexity_integration.search_financial_news(
+                query=query, ticker=symbol, asset_type="crypto", analysis_type="crypto", max_results=6
+            )
+
+            if sonar_result.success:
+                logger.info(f"Retrieved {len(sonar_result.results)} Perplexity crypto insights for {symbol}")
+                return sonar_result.results
+                # Success tracking is handled automatically in PerplexityOperationLogger.log_search_success
+            else:
+                logger.warning(f"Perplexity crypto search failed for {symbol}: {sonar_result.error_message}")
+                # Failure tracking is handled automatically in PerplexityOperationLogger.log_search_failure
+                return []
+
+        except Exception as e:
+            logger.warning(f"Perplexity crypto search failed for {symbol}: {str(e)}")
+
+            # Record failure for feature flag tracking
+            from finwiz.tools.perplexity_analysis_integration import PerplexityFeatureFlagTracker
+
+            PerplexityFeatureFlagTracker.record_operation_failure(symbol, "crypto", "integration_error")
+            return []
 
 
 class CryptoThesisInput(BaseModel):
