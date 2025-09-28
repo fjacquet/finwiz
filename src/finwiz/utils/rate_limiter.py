@@ -29,6 +29,7 @@ class APIProvider(str, Enum):
     COINMARKETCAP = "coinmarketcap"
     KRAKEN = "kraken"
     SEC_EDGAR = "sec_edgar"
+    PERPLEXITY = "perplexity"
 
 
 @dataclass
@@ -113,6 +114,15 @@ DEFAULT_RATE_LIMITS: dict[APIProvider, RateLimitConfig] = {
         max_retries=3,
         base_backoff=2.0,
         max_backoff=60.0,
+    ),
+    APIProvider.PERPLEXITY: RateLimitConfig(
+        requests_per_minute=30,
+        requests_per_hour=1200,
+        burst_limit=5,
+        cooldown_seconds=2.0,
+        max_retries=3,
+        base_backoff=1.0,
+        max_backoff=30.0,
     ),
 }
 
@@ -199,16 +209,11 @@ class RateLimiter:
         day_count = sum(1 for r in history if now - r.timestamp <= 86400)
 
         # Check against limits
-        if minute_count >= config.requests_per_minute:
-            return False
-
-        if config.requests_per_hour > 0 and hour_count >= config.requests_per_hour:
-            return False
-
-        if config.requests_per_day > 0 and day_count >= config.requests_per_day:
-            return False
-
-        return True
+        return not (
+            minute_count >= config.requests_per_minute
+            or (config.requests_per_hour > 0 and hour_count >= config.requests_per_hour)
+            or (config.requests_per_day > 0 and day_count >= config.requests_per_day)
+        )
 
     async def wait_for_availability(self, provider: APIProvider, endpoint: str = "") -> None:
         """Wait until a request can be made for the given provider."""

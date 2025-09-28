@@ -14,6 +14,8 @@ from crewai_tools import (
     YoutubeVideoSearchTool,
 )
 
+from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
+
 
 def get_search_tools() -> list[Any]:
     """
@@ -26,6 +28,7 @@ def get_search_tools() -> list[Any]:
     return [
         SerperDevTool(n_results=25, search_type="search"),
         FirecrawlSearchTool(limit=25, save_file=True),
+        PerplexitySearchTool(),
     ]
 
 
