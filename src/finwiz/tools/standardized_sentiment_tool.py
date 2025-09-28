@@ -12,6 +12,10 @@ from typing import Any, Literal
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class StandardizedSentimentInput(BaseModel):
     """Input schema for Standardized Sentiment Analysis Tool."""
@@ -122,67 +126,105 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             unique_articles = self._deduplicate_articles(articles)
             return unique_articles[:max_articles]
 
-        except Exception:
-            # Return sample articles if collection fails
-            return self._create_sample_articles(symbol, asset_class)
+        except Exception as e:
+            # Return empty list instead of fake sample articles
+            logger.error(f"News collection failed for {symbol}: {str(e)}")
+            return []
 
     def _get_financial_news(self, symbol: str, max_count: int, days_back: int) -> list[dict[str, Any]]:
-        """Get financial news from Yahoo Finance and other sources."""
+        """Get financial news from real sources, not fake data."""
         articles = []
 
         try:
-            # Yahoo Finance news (simplified approach)
-            search_terms = [f"{symbol} stock", f"{symbol} earnings", f"{symbol} news"]
+            # Try to use Perplexity Sonar integration for real news
+            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
+            from finwiz.utils.feature_flags import FeatureFlags
 
-            for term in search_terms:
-                # Simulate news collection (in real implementation, would use actual APIs)
-                sample_articles = self._create_sample_financial_articles(symbol, term)
-                articles.extend(sample_articles)
+            flags = FeatureFlags()
+            if flags.is_enabled("perplexity_research"):
+                try:
+                    perplexity = PerplexityAnalysisIntegration()
+                    if perplexity.is_available:
+                        # Search for financial news using Perplexity
+                        query = f"{symbol} financial news earnings stock analysis"
 
-                if len(articles) >= max_count:
-                    break
+                        # Note: This would need to be called from an async context
+                        # For now, we'll skip Perplexity and use other real sources
+                        logger.info(f"Perplexity integration available for {symbol} but requires async context")
+                except Exception as e:
+                    logger.warning(f"Perplexity integration failed for {symbol}: {str(e)}")
 
-        except Exception:
-            pass
+            # Try Yahoo Finance news tool
+            try:
+                from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
 
-        return articles[:max_count]
+                yahoo_tool = YahooFinanceNewsTool()
+                yahoo_result = yahoo_tool._run(f"{symbol} news")
+
+                if yahoo_result and isinstance(yahoo_result, list):
+                    for item in yahoo_result[:max_count]:
+                        if isinstance(item, dict) and "title" in item:
+                            articles.append(
+                                {
+                                    "headline": item.get("title", ""),
+                                    "url": item.get("link", ""),
+                                    "date": datetime.now() - timedelta(days=1),  # Yahoo tool doesn't provide dates
+                                    "source": "Yahoo Finance",
+                                    "content": item.get("summary", ""),
+                                }
+                            )
+
+                    if articles:
+                        logger.info(f"Retrieved {len(articles)} real articles from Yahoo Finance for {symbol}")
+                        return articles[:max_count]
+            except Exception as e:
+                logger.warning(f"Yahoo Finance news failed for {symbol}: {str(e)}")
+
+            # If no real sources work, return empty list instead of fake data
+            logger.warning(f"No real news sources available for {symbol} - returning empty list instead of fake data")
+            return []
+
+        except Exception as e:
+            logger.error(f"Error collecting financial news for {symbol}: {str(e)}")
+            return []
 
     def _get_crypto_news(self, symbol: str, max_count: int, days_back: int) -> list[dict[str, Any]]:
-        """Get cryptocurrency news from crypto-specific sources."""
+        """Get cryptocurrency news from real sources, not fake data."""
         articles = []
 
         try:
-            # CoinDesk, CoinTelegraph, etc. (simplified approach)
-            search_terms = [f"{symbol} crypto", f"{symbol} blockchain", f"{symbol} price"]
+            # Try to use real crypto news sources
+            logger.warning(f"Real crypto news collection not implemented for {symbol} - returning empty list instead of fake data")
 
-            for term in search_terms:
-                # Simulate crypto news collection
-                sample_articles = self._create_sample_crypto_articles(symbol, term)
-                articles.extend(sample_articles)
+            # TODO: Implement real crypto news sources like:
+            # - CoinDesk API
+            # - CoinTelegraph API
+            # - CryptoNews API
+            # - Perplexity Sonar for crypto news
 
-                if len(articles) >= max_count:
-                    break
+            return []
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Error collecting crypto news for {symbol}: {str(e)}")
+            return []
 
         return articles[:max_count]
 
     def _get_general_news(self, symbol: str, max_count: int, days_back: int) -> list[dict[str, Any]]:
-        """Get general news from search engines and news aggregators."""
+        """Get general news from real sources, not fake data."""
         articles = []
 
         try:
-            # General news sources (simplified approach)
-            search_terms = [f"{symbol} news", f"{symbol} analysis", f"{symbol} market"]
+            # Try to use real news sources
+            logger.warning(f"Real general news collection not implemented for {symbol} - returning empty list instead of fake data")
 
-            for term in search_terms:
-                # Simulate general news collection
-                sample_articles = self._create_sample_general_articles(symbol, term)
-                articles.extend(sample_articles)
+            # TODO: Implement real news sources like:
+            # - Google News API
+            # - NewsAPI
+            # - Alpha Vantage News
+            # - Perplexity Sonar for general news
 
-                if len(articles) >= max_count:
-                    break
+            return []
 
         except Exception:
             pass
@@ -190,94 +232,24 @@ class StandardizedSentimentAnalysisTool(BaseTool):
         return articles[:max_count]
 
     def _create_sample_financial_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
-        """Create sample financial articles for testing/fallback."""
-        base_date = datetime.now() - timedelta(days=1)
-
-        articles = [
-            {
-                "headline": f"{symbol} Reports Strong Quarterly Earnings Beat",
-                "url": f"https://finance.yahoo.com/news/{symbol.lower()}-earnings-beat",
-                "date": base_date,
-                "source": "Yahoo Finance",
-                "content": f"{symbol} exceeded analyst expectations with strong revenue growth and improved margins.",
-            },
-            {
-                "headline": f"Analysts Upgrade {symbol} Price Target on Growth Prospects",
-                "url": f"https://marketwatch.com/story/{symbol.lower()}-upgrade",
-                "date": base_date - timedelta(hours=12),
-                "source": "MarketWatch",
-                "content": f"Multiple analysts raised their price targets for {symbol} citing strong fundamentals.",
-            },
-            {
-                "headline": f"{symbol} Faces Headwinds from Market Volatility",
-                "url": f"https://reuters.com/business/{symbol.lower()}-challenges",
-                "date": base_date - timedelta(days=2),
-                "source": "Reuters",
-                "content": f"{symbol} stock declined amid broader market concerns and sector rotation.",
-            },
-        ]
-
-        return articles
+        """DEPRECATED: This method created fake articles with hallucinated URLs."""
+        logger.warning(f"_create_sample_financial_articles called for {symbol} - this creates fake data and is disabled")
+        return []
 
     def _create_sample_crypto_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
-        """Create sample crypto articles for testing/fallback."""
-        base_date = datetime.now() - timedelta(days=1)
-
-        articles = [
-            {
-                "headline": f"{symbol} Surges on Institutional Adoption News",
-                "url": f"https://coindesk.com/{symbol.lower()}-institutional-adoption",
-                "date": base_date,
-                "source": "CoinDesk",
-                "content": f"{symbol} price rallied following announcements of major institutional adoption.",
-            },
-            {
-                "headline": f"Technical Analysis: {symbol} Shows Bullish Momentum",
-                "url": f"https://cointelegraph.com/{symbol.lower()}-technical-analysis",
-                "date": base_date - timedelta(hours=8),
-                "source": "CoinTelegraph",
-                "content": f"{symbol} technical indicators suggest continued upward momentum in the near term.",
-            },
-            {
-                "headline": f"Regulatory Concerns Weigh on {symbol} Price Action",
-                "url": f"https://cryptonews.com/{symbol.lower()}-regulatory-concerns",
-                "date": base_date - timedelta(days=3),
-                "source": "CryptoNews",
-                "content": f"{symbol} faced selling pressure amid regulatory uncertainty in key markets.",
-            },
-        ]
-
-        return articles
+        """DEPRECATED: This method created fake articles with hallucinated URLs."""
+        logger.warning(f"_create_sample_crypto_articles called for {symbol} - this creates fake data and is disabled")
+        return []
 
     def _create_sample_general_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
-        """Create sample general articles for testing/fallback."""
-        base_date = datetime.now() - timedelta(days=1)
-
-        articles = [
-            {
-                "headline": f"{symbol} Market Analysis and Future Outlook",
-                "url": f"https://bloomberg.com/news/{symbol.lower()}-analysis",
-                "date": base_date,
-                "source": "Bloomberg",
-                "content": f"Comprehensive analysis of {symbol} market position and growth prospects.",
-            },
-            {
-                "headline": f"Investment Thesis for {symbol} in Current Market",
-                "url": f"https://seekingalpha.com/{symbol.lower()}-investment-thesis",
-                "date": base_date - timedelta(hours=6),
-                "source": "Seeking Alpha",
-                "content": f"Detailed investment thesis examining {symbol} fundamentals and valuation.",
-            },
-        ]
-
-        return articles
+        """DEPRECATED: This method created fake articles with hallucinated URLs."""
+        logger.warning(f"_create_sample_general_articles called for {symbol} - this creates fake data and is disabled")
+        return []
 
     def _create_sample_articles(self, symbol: str, asset_class: str) -> list[dict[str, Any]]:
-        """Create sample articles when collection fails."""
-        if asset_class == "crypto":
-            return self._create_sample_crypto_articles(symbol, "news")
-        else:
-            return self._create_sample_financial_articles(symbol, "news")
+        """DEPRECATED: This method created fake articles and should not be used."""
+        logger.warning(f"_create_sample_articles called for {symbol} - this creates fake data and is disabled")
+        return []
 
     def _deduplicate_articles(self, articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Remove duplicate articles based on headline similarity."""
