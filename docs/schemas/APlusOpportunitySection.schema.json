@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "description": "A+ opportunities section for portfolio review reports.",
+  "properties": {
+    "total_opportunities_found": {
+      "default": 0,
+      "description": "Total number of A+ opportunities identified",
+      "title": "Total Opportunities Found",
+      "type": "integer"
+    },
+    "high_priority_opportunities": {
+      "default": 0,
+      "description": "Number of high-priority opportunities",
+      "title": "High Priority Opportunities",
+      "type": "integer"
+    },
+    "expected_portfolio_grade_improvement": {
+      "default": 0.0,
+      "description": "Expected improvement in portfolio grade",
+      "title": "Expected Portfolio Grade Improvement",
+      "type": "number"
+    },
+    "grade_improvement_description": {
+      "default": "",
+      "description": "Human-readable description of grade improvement",
+      "title": "Grade Improvement Description",
+      "type": "string"
+    },
+    "replacement_opportunities": {
+      "default": 0,
+      "description": "Number of replacement opportunities",
+      "title": "Replacement Opportunities",
+      "type": "integer"
+    },
+    "addition_opportunities": {
+      "default": 0,
+      "description": "Number of addition opportunities",
+      "title": "Addition Opportunities",
+      "type": "integer"
+    },
+    "rebalancing_opportunities": {
+      "default": 0,
+      "description": "Number of rebalancing opportunities",
+      "title": "Rebalancing Opportunities",
+      "type": "integer"
+    },
+    "top_recommendations": {
+      "description": "Top A+ symbols recommended",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Top Recommendations",
+      "type": "array"
+    },
+    "implementation_timeline": {
+      "default": "",
+      "description": "Recommended implementation timeline",
+      "title": "Implementation Timeline",
+      "type": "string"
+    },
+    "total_expected_annual_benefit": {
+      "default": 0.0,
+      "description": "Total expected annual benefit",
+      "title": "Total Expected Annual Benefit",
+      "type": "number"
+    },
+    "last_discovery_date": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "When A+ discovery was last performed",
+      "title": "Last Discovery Date"
+    },
+    "discovery_coverage": {
+      "description": "Asset types covered in discovery",
+      "items": {
+        "type": "string"
+      },
+      "title": "Discovery Coverage",
+      "type": "array"
+    },
+    "market_conditions_note": {
+      "default": "",
+      "description": "Note about market conditions during discovery",
+      "title": "Market Conditions Note",
+      "type": "string"
+    }
+  },
+  "title": "APlusOpportunitySection",
+  "type": "object"
+}

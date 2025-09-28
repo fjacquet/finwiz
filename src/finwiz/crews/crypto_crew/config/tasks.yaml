@@ -1,26 +1,53 @@
 market_analysis_task:
   description: >
-    Analyze the current cryptocurrency market trends, sentiment, and news.
-    Identify the top 10 promising cryptocurrencies with high growth potential for the current date of {full_date}.
+    IMPORTANT: Today's date is {full_date}. Use this as your current date reference for all analysis.
     
+    As an AI-driven cryptocurrency market analyst, use advanced reasoning to analyze current market 
+    trends, sentiment, and news. Apply intelligent decision-making to identify the top 10 promising 
+    cryptocurrencies with high growth potential.
+
+    AI REASONING REQUIREMENTS:
+    - Apply intelligent reasoning to interpret market data, trends, and sentiment
+    - Provide clear AI-generated insights that go beyond simple data aggregation
+    - Demonstrate understanding of crypto market dynamics, blockchain technology, and adoption patterns
+    - Show adaptive thinking based on current market conditions as of {full_date}
+    - Generate investment insights through AI reasoning, not just algorithmic screening
+    
+    CRITICAL DATE CONTEXT:
+    - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
+    - All analysis must reflect market conditions as of {full_date}, NOT historical dates
+    - When searching or analyzing, use {full_date} as the current date context
+
+    AI-DRIVEN ANALYSIS PROCESS:
+    - Use AI reasoning to analyze cryptocurrency market trends and identify emerging opportunities
+    - Apply intelligent interpretation of market sentiment, news, and social media signals
+    - Generate insights on blockchain technology adoption and regulatory developments
+    - Use reasoning to assess tokenomics, utility, and long-term viability
+    - Apply AI decision-making to select cryptocurrencies with optimal risk-return profiles
+
     Validation Requirement:
     - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
     - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
     
-    Sentiment Analysis:
-    - Use the "Standardized Sentiment Analysis Tool" with asset_class="crypto" for consistent methodology
-    - Apply standardized cross-asset sentiment scoring for cryptocurrency analysis
-    - Extract trending topics relevant to crypto markets and blockchain technology
-    - Provide weighted sentiment scores and confidence intervals for each cryptocurrency
+    AI-Enhanced Sentiment Analysis:
+    - Use the "Standardized Sentiment Analysis Tool" with intelligent interpretation
+    - Apply AI reasoning to analyze sentiment patterns and their implications
+    - Generate insights on sentiment-driven price movements and market psychology
+    - Use AI to extract trending topics and assess their relevance to investment decisions
+    - Provide AI-generated confidence intervals and uncertainty acknowledgments
   expected_output: >
     A list of the top 10 promising cryptocurrencies with a brief analysis of each.
+    
+    CRITICAL SCHEMA REQUIREMENTS:
+    - Read docs/schemas/CryptoThesis.schema.json and docs/schemas/examples/crypto_thesis.example.json
+    - Follow the exact schema structure shown in the example files
+    - Ensure all required fields are included with correct data types
     
     Also include a machine-readable JSON appendix at the end containing:
     - validated_symbols[] where each item is {symbol, asset_class, valid, reason, meta}
     - crypto_theses[] matching the CryptoThesis schema with initial thesis bullets
   agent: market_analyst
   output_file: "output/crypto/crypto_market_analysis.md"
-  output_pydantic: CryptoThesis
   async_execution: true
 
 technical_analysis_task:
@@ -75,7 +102,6 @@ risk_assessment_task:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each cryptocurrency
   agent: risk_assessor
   output_file: "output/crypto/crypto_risk_assessment.md"
-  output_pydantic: RiskAssessmentStandardized
   async_execution: true
 
 investment_strategy_task:
@@ -110,7 +136,6 @@ investment_strategy_task:
     - quantitative_analysis[] with comprehensive quantitative analysis results for each cryptocurrency
   agent: investment_strategist
   output_file: "output/crypto/crypto_investment_strategy.md"
-  output_pydantic: CryptoThesis
   async_execution: true
 
 final_report_task:

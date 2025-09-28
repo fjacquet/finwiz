@@ -1,33 +1,41 @@
 # Task 1: Comprehensive Financial Integration and Opportunity Identification
 comprehensive_financial_integration_task:
   description: |
-    Review and synthesize investment recommendations from the Stock, ETF, and Crypto crew reports
-    (located in their respective output directories, e.g., ../crypto_crew/output/crypto_report.md).
-    Extract key data, analyze integrated opportunities, and produce a consolidated analysis.
-    Focus on identifying the strongest, evidence-based opportunities suitable for a family
-    with a 1000 CHF monthly investment budget and medium to long-term goals (5-15 years).
+    Review and synthesize investment recommendations using the integrated data system.
+    Access consolidated data from Stock, ETF, Crypto, and Discovery crews through the 
+    integrated data context. Extract key data, analyze integrated opportunities, and 
+    produce a consolidated analysis with proper SEC/EDGAR citations and market sentiment.
 
     Key Steps:
-    1. Access and thoroughly review the latest reports (generated around {full_date}) from the Stock, ETF, and Crypto crews.
-    2. Extract specific, actionable investment recommendations (e.g., stock tickers, ETF names, crypto projects).
-    3. Identify overlapping recommendations or complementary strategies across asset classes, considering the market context as of {full_date}.
-    4. Evaluate the rationale and evidence provided for each recommendation.
-    5. Prioritize opportunities based on potential returns, risk profile, and alignment with family goals, reflecting current conditions as of {full_date}.
-    6. Ensure all analysis considers the 1000 CHF monthly budget constraint.
-    7. Locate validated ticker appendices in upstream crew outputs and extract them:
-       - Stocks: validated_tickers[]
-       - ETFs: validated_etfs[]
-       - Crypto: validated_symbols[]
-    8. Cross-check narrative recommendations against these arrays. Flag any symbols mentioned in the reports but missing from the validated arrays and summarize required upstream validation actions.
-    9. Produce a concise, machine-readable summary block for the reporter to embed (e.g., missing_validated_etfs, missing_validated_stocks, crypto_notes) without performing any new external validation.
+    1. Access integrated data context containing consolidated crew outputs with metadata and freshness status.
+    2. Review SEC/EDGAR citations with filing dates and excerpts from stock analysis.
+    3. Analyze market sentiment data with aggregated scores and top 3 sources with URLs and dates.
+    4. Extract validated ticker symbols from consolidated ticker validation results.
+    5. Review A+ opportunities from discovery crew with allocation recommendations and replacement notes.
+    6. Identify overlapping recommendations or complementary strategies across asset classes.
+    7. Evaluate the rationale and evidence provided for each recommendation, including A+ discovery insights.
+    8. Prioritize opportunities based on potential returns, risk profile, and alignment with family goals.
+    9. Ensure all analysis considers the 1000 CHF monthly budget constraint.
+    10. Handle graceful degradation for missing or stale data with clear warnings.
+    11. Include data availability status and freshness warnings in the analysis.
+    12. Produce a comprehensive analysis with proper source attribution and data lineage.
 
-    OUTPUT: A comprehensive document detailing integrated insights, key data points from all asset classes,
-    and a prioritized list of investment opportunities with justifications, all relevant as of {full_date}.
+    Data Sources (accessed through integrated context):
+    - Stock crew data: 10-K insights, validated tickers, SEC citations, market sentiments
+    - ETF crew data: validated ETFs, factsheets, holdings analysis, risk assessments  
+    - Crypto crew data: validated symbols, crypto theses, market analysis
+    - Discovery crew data: A+ opportunities, portfolio improvements, optimization results
+    - Consolidated market sentiment: aggregated scores, top sources with attribution
+    - Consolidated ticker validation: validation status, alternatives for failed validations
+
+    OUTPUT: A comprehensive document with integrated insights, SEC/EDGAR citations, 
+    market sentiment analysis, and prioritized investment opportunities.
   expected_output: >
-    A structured analytical document that consolidates findings from all specialized crews.
-    It should highlight the most promising investment opportunities across stocks, ETFs, and crypto,
-    providing clear rationale and how they fit within a 1000 CHF monthly budget.
-    The document must include verifiable data and references to the source reports.
+    A structured analytical document that consolidates findings from all specialized crews
+    using the integrated data system. It should include SEC/EDGAR citations with filing dates,
+    market sentiment analysis with source attribution, validated ticker symbols, A+ opportunities
+    with allocation recommendations, and clear handling of missing or stale data.
+    The document must include verifiable data and references with proper data lineage.
   agent: financial_integration_analyst
   output_file: "output/report/consolidated_financial_analysis.md"
   async_execution: true
@@ -35,25 +43,36 @@ comprehensive_financial_integration_task:
 # Task 2: Optimal Portfolio Allocation
 optimal_portfolio_allocation_task:
   description: |
-    Based on the 'comprehensive_financial_integration_task' output, develop an optimal, diversified
-    portfolio allocation strategy for a family with a 1000 CHF monthly investment budget.
-    The family profile is a 50-year-old father with medium-term (5-10 years) and long-term (10-15 years)
-    financial goals.
+    Based on the integrated data analysis, develop an optimal, diversified portfolio allocation 
+    strategy incorporating A+ opportunities and validated ticker symbols. Use consolidated data
+    to ensure all recommendations are properly validated and include allocation updates based
+    on A+ discoveries.
 
     Key Steps:
-    1. Review the consolidated analysis (current as of {full_date}) and prioritized opportunities.
-    2. Determine appropriate asset class weightings (stocks, ETFs, crypto) based on risk tolerance and goals, considering the market outlook as of {full_date}.
-    3. Select specific investments from the prioritized list for inclusion in the portfolio.
-    4. Allocate the 1000 CHF monthly budget across the selected investments, specifying exact CHF amounts.
-    5. Justify each allocation choice, explaining how it contributes to the overall strategy and family goals, based on information available up to {full_date}.
-    6. Ensure the portfolio is diversified and balances growth potential with capital preservation.
+    1. Review the consolidated analysis with integrated data and A+ opportunities.
+    2. Incorporate A+ opportunity allocation recommendations and replacement notes.
+    3. Use validated ticker symbols from consolidated ticker validation results.
+    4. Determine appropriate asset class weightings (stocks, ETFs, crypto) based on integrated risk assessments.
+    5. Select specific investments from validated opportunities, prioritizing A+ discoveries.
+    6. Allocate the 1000 CHF monthly budget across validated investments, specifying exact CHF amounts.
+    7. Include portfolio allocation updates based on A+ opportunity recommendations.
+    8. Handle graceful degradation if A+ opportunities are unavailable.
+    9. Justify each allocation choice with reference to integrated data sources.
+    10. Ensure the portfolio is diversified and balances growth potential with capital preservation.
 
-    OUTPUT: A detailed portfolio allocation plan, reflecting market conditions as of {full_date}.
+    Data Integration Features:
+    - Use A+ opportunity allocation recommendations to optimize portfolio quality
+    - Include replacement notes for improving existing positions
+    - Reference validated ticker symbols to ensure accuracy
+    - Incorporate consolidated risk assessments from all crews
+    - Handle missing data gracefully with alternative recommendations
+
+    OUTPUT: A detailed portfolio allocation plan with A+ opportunity integration.
   expected_output: >
-    A specific and actionable portfolio allocation plan detailing the distribution of the 1000 CHF
-    monthly investment across selected stocks, ETFs, and cryptocurrencies. The plan must include
-    exact CHF amounts for each investment, percentage allocations, and a clear justification
-    for the overall strategy and individual choices, tailored to the family's profile and goals.
+    A specific and actionable portfolio allocation plan incorporating A+ opportunities and
+    validated ticker symbols. The plan must include exact CHF amounts for each investment,
+    percentage allocations, A+ opportunity integration, replacement recommendations,
+    and clear justification for choices based on integrated data sources.
   agent: portfolio_allocator
   output_file: "output/report/optimal_portfolio_allocation.md"
   async_execution: true
@@ -61,24 +80,36 @@ optimal_portfolio_allocation_task:
 # Task 3: Risk Assessment and Mitigation Strategy
 risk_assessment_mitigation_task:
   description: |
-    Conduct a thorough risk assessment of the proposed portfolio from the 'optimal_portfolio_allocation_task'.
-    Develop practical mitigation strategies for identified risks, considering the family's profile
-    (50-year-old father, medium to long-term goals).
+    Conduct a thorough risk assessment using consolidated risk data from all crews.
+    Incorporate market sentiment analysis and A+ opportunity risk profiles to develop
+    comprehensive mitigation strategies.
 
     Key Steps:
-    1. Analyze the allocated portfolio for specific investment risks (market, credit, liquidity, etc.) based on data as of {full_date}.
-    2. Evaluate portfolio-level risks (concentration, correlation, asset class specific) considering current market volatilities as of {full_date}.
-    3. Assess how macroeconomic factors, current as of {full_date}, could impact the portfolio.
-    4. Identify risks specific to the family's financial situation and time horizon.
-    5. Develop actionable mitigation strategies for each significant risk (e.g., diversification adjustments,
-       hedging considerations, stop-loss orders, alternative investments).
-    6. Recommend specific actions to manage and monitor risks effectively, with all analysis current as of {full_date}.
+    1. Analyze consolidated risk assessments from stock, ETF, and crypto crews.
+    2. Incorporate market sentiment analysis to assess sentiment-based risks.
+    3. Evaluate A+ opportunity risk profiles and their impact on portfolio risk.
+    4. Assess portfolio-level risks using integrated data from all asset classes.
+    5. Identify risks specific to validated ticker symbols and their validation status.
+    6. Analyze data freshness risks and their impact on decision quality.
+    7. Develop actionable mitigation strategies for each significant risk category.
+    8. Include sentiment-based risk monitoring using top sentiment sources.
+    9. Recommend specific actions based on integrated risk data.
+    10. Handle graceful degradation for missing risk data with conservative assumptions.
 
-    OUTPUT: A comprehensive risk assessment report with actionable mitigation strategies, pertinent to {full_date}.
+    Integrated Risk Data Sources:
+    - Consolidated risk assessments from all crews with standardized risk scores
+    - Market sentiment analysis with positive/neutral/negative distribution
+    - A+ opportunity risk profiles and confidence scores
+    - Ticker validation status and alternative suggestions for failed validations
+    - Data freshness status and staleness warnings
+    - Cross-crew risk correlation analysis
+
+    OUTPUT: A comprehensive risk assessment with integrated data and sentiment analysis.
   expected_output: >
-    A detailed report identifying key risks in the allocated portfolio (both individual asset and
-    portfolio-level). The report must provide practical, actionable strategies to mitigate these risks,
-    appropriate for the family's profile and investment horizon.
+    A detailed report identifying key risks using consolidated data from all crews.
+    The report must include market sentiment-based risks, A+ opportunity risk analysis,
+    ticker validation risks, data freshness risks, and practical mitigation strategies
+    with reference to integrated data sources and sentiment analysis.
   agent: risk_manager
   output_file: "output/report/risk_assessment_and_mitigation.md"
   async_execution: true
@@ -86,12 +117,19 @@ risk_assessment_mitigation_task:
 # Task 4: Comprehensive Investment Report and Implementation Plan
 comprehensive_investment_report_task:
   description: |
-    Compile all findings from previous tasks (Consolidated Analysis, Portfolio Allocation, Risk Assessment)
-    into a final, comprehensive investment report. This report should reflect the financial landscape as of {full_date}.
-    Generate a visually appealing HTML final report that combines all previous analyses into a single,
-    easy-to-understand financial plan, dated {full_date}.
+    Compile all findings using the integrated data system to create a comprehensive investment report
+    with SEC/EDGAR citations, market sentiment analysis, A+ opportunities, and validated ticker symbols.
+    Generate a visually appealing HTML report that leverages all integrated data sources.
     Follow the report guidelines document at docs/output_formatting_guide.md.
     The report must be in French.
+
+    Integrated Data Usage:
+    - Use SEC/EDGAR citations with filing URLs, dates, and excerpts from integrated stock data
+    - Include market sentiment analysis with aggregated scores and top 3 sources with attribution
+    - Incorporate A+ opportunities with allocation recommendations and replacement notes
+    - Reference validated ticker symbols with validation status and alternatives
+    - Include data availability status and freshness warnings
+    - Handle graceful degradation for missing or stale data
 
     Structure the report with these engaging sections (incluez des sous-sections "Synthèse 10-K" et "Sentiment du Marché" basées uniquement sur les contenus amont, avec citations SEC, dates et sources) :
 
@@ -106,11 +144,22 @@ comprehensive_investment_report_task:
        - Constitution de patrimoine à long terme (5-10+ ans) 🌟
 
     💎 3. Recommandations d'Investissement
-      - Sélection d'actions 📊
-      - Sélection d'ETFs 📈
-      - Allocation en cryptomonnaies (le cas échéant) ₿
+      - Sélection d'actions 📊 (avec tickers validés du système d'intégration)
+      - Sélection d'ETFs 📈 (avec ETFs validés du système d'intégration)
+      - Allocation en cryptomonnaies (le cas échéant) ₿ (avec symboles validés)
       - Niveau de risque pour chaque recommandation ⚠️
-      - Synthèse 10-K (citations SEC, date de dépôt, sections clés: Business Overview, MD&A, Risk Factors, Liquidité, Segments) 📄
+      - Synthèse 10-K (citations SEC avec URLs, dates de dépôt, et extraits des sections: Business Overview, MD&A, Risk Factors, Liquidité, Segments) 📄
+
+    ⭐ 3.1. Opportunités A+ Découvertes (du système d'intégration)
+      - Utilisez les données A+ du contexte intégré `aplus_opportunities` si disponible
+      - ETF A+ recommandés avec notes d'allocation et de remplacement
+      - Actions A+ recommandées avec recommandations d'allocation
+      - Crypto A+ recommandés avec analyse de confiance
+      - Score de confiance global des opportunités A+
+      - Recommandations de remplacement pour améliorer les positions existantes
+      - Nouvelles opportunités d'investissement A+ à considérer
+      - Impact sur la diversification et le profil de risque
+      - Horodatage de validation des opportunités A+
 
     💰 4. Allocation de Portefeuille
        - Répartition par classe d'actifs 📊
@@ -119,11 +168,15 @@ comprehensive_investment_report_task:
        - Mix de styles d'investissement (Croissance/Valeur/Mixte) 📊
 
     🛡️ 5. Évaluation et Gestion des Risques
-      - Niveau de risque global du portefeuille ⚠️
-      - Facteurs de risque par classe d'actifs 🔍
-      - Stratégies d'atténuation 🛡️
+      - Niveau de risque global du portefeuille ⚠️ (consolidé de tous les crews)
+      - Facteurs de risque par classe d'actifs 🔍 (avec évaluations standardisées)
+      - Stratégies d'atténuation 🛡️ (basées sur l'analyse intégrée)
       - Scénarios de stress tests 🌪️
-      - Sentiment du Marché (score moyen, répartition Pos/Neutre/Neg, top 3 titres positifs/négatifs avec URL et date) 📰
+      - Sentiment du Marché (du système d'intégration) 📰:
+        * Scores agrégés: Positif/Neutre/Négatif avec pourcentages
+        * Top 3 sources de sentiment avec URLs, dates de publication et scores de confiance
+        * Qualité des données de sentiment (HIGH/MEDIUM/LOW)
+        * Analyse par crew (stock, crypto) avec nombre de sources
 
     📦 Revue du portefeuille: Conserver ou Vendre (section spéciale)
       - Utilisez exclusivement le contexte JSON injecté `portfolio_review` (inputs.portfolio_review). Aucun outil ni appel externe.
@@ -153,11 +206,20 @@ comprehensive_investment_report_task:
         - Contacts importants 📞
     
     📎 Annexes & Prochaines étapes
-       - Corrections et Suggestions — Validation des Tickers
-         (construites à partir des annexes JSON validées amont: validated_tickers[],
-         validated_etfs[], validated_symbols[]; le reporter ne fait aucune validation externe).
-       - Inclure un petit bloc JSON machine‑lisible récapitulatif (ex.: missing_validated_etfs,
-         missing_validated_stocks, crypto_notes) directement dérivé des données amont.
+       - Validation des Tickers (du système d'intégration consolidé):
+         * Tickers d'actions validés avec statut de validation et sources
+         * ETFs validés avec métadonnées de validation
+         * Symboles crypto validés avec alternatives pour les échecs
+         * Taux de validation global et résumé par classe d'actifs
+         * Suggestions d'alternatives pour les validations échouées
+       - Statut de Fraîcheur des Données:
+         * Crews avec données fraîches vs périmées
+         * Avertissements de données périmées avec âge en heures
+         * Recommandations de rafraîchissement par ordre de priorité
+       - Rapport de Disponibilité des Données:
+         * Statut global: COMPLETE/PARTIAL/INSUFFICIENT
+         * Données manquantes par crew avec suggestions de récupération
+         * Erreurs d'intégration avec actions de récupération
 
     Utilisez généreusement les emojis, icônes et éléments visuels pour améliorer la lisibilité.
     Incluez des en-têtes de section clairs, des listes à puces et des tableaux le cas échéant.

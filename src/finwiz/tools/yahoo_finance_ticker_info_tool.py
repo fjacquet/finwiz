@@ -1,8 +1,13 @@
 """Tool for fetching Yahoo Finance Ticker Information."""
 
+import logging
+from datetime import UTC, datetime
+
 import yfinance as yf
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 class GetTickerInfoInput(BaseModel):
@@ -50,7 +55,26 @@ class YahooFinanceTickerInfoTool(BaseTool):
                 "industry": info.get("industry", "N/A"),
             }
 
-            # Remove N/A values for cleaner output
-            return {k: v for k, v in result.items() if v != "N/A"}
+            # Add timestamp for freshness validation
+            result["timestamp"] = datetime.now(UTC).isoformat()
+
+            # Add market time if available from Yahoo Finance
+            if "regularMarketTime" in info:
+                try:
+                    market_time = datetime.fromtimestamp(info["regularMarketTime"], tz=UTC)
+                    result["market_time"] = market_time.isoformat()
+                    logger.debug(f"Market time for {ticker}: {market_time}")
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Could not parse market time for {ticker}: {e}")
+
+            # Remove N/A values for cleaner output (but keep timestamp)
+            cleaned_result = {k: v for k, v in result.items() if v != "N/A"}
+
+            # Ensure timestamp is always included
+            if "timestamp" not in cleaned_result:
+                cleaned_result["timestamp"] = result["timestamp"]
+
+            return cleaned_result
         except Exception as e:
+            logger.error(f"Failed to get ticker info for {ticker}: {e}")
             return {"error": f"Failed to get ticker info for {ticker}: {str(e)}"}

@@ -26,6 +26,8 @@ dependencies = [
     "plotly>=6.3.0",
     "langchain>=0.3.27",
     "langchain-community>=0.3.29",
+    "rumdl>=0.0.146",
+    "perplexityai>=0.12.0",
 ]
 
 [project.scripts]
@@ -134,6 +136,9 @@ markers = [
     "asyncio: marks tests as async tests",
     "performance: marks tests as performance tests",
     "benchmark: marks tests as benchmark tests",
+    "core_analysis: marks tests as core analysis related",
+    "crew: marks tests as crew-specific tests",
+    "flow: marks tests as flow orchestration tests",
 ]
 
 filterwarnings = [
@@ -190,3 +195,52 @@ dev = [
     "faker>=33.1.0",
     "pytest-cov>=7.0.0",
 ]
+
+[tool.markdownlint]
+# MD003: Heading style (Set to enforce '# Heading 1' style)
+MD003 = { style = "atx" }
+# MD004: Unordered list style (Set to enforce consistency, e.g., 'dash' for -)
+MD004 = { style = "dash" }
+# MD007: Unordered list indentation (2 spaces is common)
+MD007 = { indent = 2 }
+# MD013: Line length (Set 80 characters, but ignore code blocks and tables)
+MD013 = { line_length = 120, code_blocks = false, tables = false }
+# MD026: Trailing punctuation in heading (Enforce no punctuation)
+MD026 = { punctuation = ".,;:!?" }
+# MD029: Ordered list item prefix (Set to 'one' to enforce '1.', '2.', '3.')
+MD029 = { style = "one" }
+# MD035: Horizontal rule style (Enforce '---')
+MD035 = { style = "---" }
+# MD046: Code block style (Enforce 'fenced' code blocks)
+MD046 = { style = "fenced" }
+# MD049: Emphasis style (Set to "consistent" to enforce the style chosen for MD036)
+MD049 = { style = "consistent" }
+
+# Rules that are simply enabled (true) or disabled (false):
+# By default, all rules are enabled unless explicitly disabled or configured.
+# You can override this by explicitly enabling/disabling individual rules:
+MD001 = true  # Heading levels should only increment by one
+MD005 = true  # Inconsistent indentation for list items
+MD009 = false  # Trailing spaces
+MD010 = true  # Hard tabs
+MD012 = true  # Multiple consecutive blank lines
+MD014 = true  # Dollar signs in shell examples
+MD018 = true  # No space after hash on atx style heading
+MD019 = true  # Multiple spaces after hash on atx style heading
+MD022 = true  # Headings should be surrounded by blank lines (Keep this to fix your error)
+MD024 = true  # Multiple headings with the same content
+MD025 = true  # Multiple top-level headings
+MD027 = true  # Multiple spaces after blockquote marker
+MD030 = true  # Spaces after list markers
+MD031 = true  # Fenced code blocks should be surrounded by blank lines
+MD032 = true  # Lists should be surrounded by blank lines (Keep this to fix your error)
+MD033 = false # Inline HTML (Set to false if you want to allow it)
+MD034 = true  # Bare URLs should be enclosed in angle brackets
+MD038 = true  # Spaces inside code span elements
+MD039 = true  # Spaces inside link text
+MD040 = true  # Fenced code blocks should have a language specified
+MD041 = false # First line in file should be a top-level heading (Disabled as it's often too strict)
+MD042 = true  # No empty links
+MD047 = true  # Files should end with a single newline character (Keep this to fix your error)
+MD051 = true  # Link reference definitions should be used
+MD052 = true  # Reference links and images should be used

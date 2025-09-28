@@ -64,12 +64,34 @@ research_tools = [
 class CryptoCrew:
     """Crypto crew for cryptocurrency analysis."""
 
+    def __init__(self) -> None:
+        """Set configuration paths before calling super().__init__()."""
+        from pathlib import Path
+
+        import yaml
+
+        # Get the directory of this file
+        current_dir = Path(__file__).parent
+
+        # Load configuration files
+        with open(current_dir / "config" / "agents.yaml") as f:
+            self.agents_config = yaml.safe_load(f)
+
+        with open(current_dir / "config" / "tasks.yaml") as f:
+            self.tasks_config = yaml.safe_load(f)
+
+        super().__init__()
+
+        # Make Pydantic models available for CrewAI resolution
+        self.CryptoThesis = CryptoThesis
+        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+
     @agent
     def market_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["market_analyst"],
             tools=research_tools,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for market analysis decisions
             verbose=True,
         )
 
@@ -78,9 +100,9 @@ class CryptoCrew:
         return Agent(
             config=self.agents_config["technical_analyst"],
             tools=[*crypto_tools, quantitative_tool, *rag_tools],
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for technical analysis decisions
             verbose=True,
-        )
+          )
 
     @agent
     def risk_assessor(self) -> Agent:
@@ -88,7 +110,7 @@ class CryptoCrew:
             config=self.agents_config["risk_assessor"],
             tools=research_tools,
             verbose=True,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for risk assessment decisions
         )
 
     @agent
@@ -97,6 +119,7 @@ class CryptoCrew:
             config=self.agents_config["investment_strategist"],
             tools=[*crypto_tools, *coinmarketcap_tools, quantitative_tool, *rag_tools],
             verbose=True,
+            reasoning=True,  # Enable AI reasoning for investment strategy decisions
         )
 
     @agent

@@ -1,0 +1,168 @@
+{
+  "$defs": {
+    "RiskAssessmentStandardized": {
+      "additionalProperties": false,
+      "description": "Standardized risk assessment across Stock/ETF/Crypto on a 0-5 scale.\n\n- score: 0 (lowest) .. 5 (highest)\n- level: human-friendly label mapped from score\n- risk_factors: up to 10 concise reasons\n- scale: reserved for future alternate encodings",
+      "properties": {
+        "scale": {
+          "default": "0_5",
+          "enum": [
+            "0_5",
+            "L_M_H",
+            "L_M_H_VH"
+          ],
+          "title": "Scale",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "level": {
+          "enum": [
+            "Low",
+            "Medium",
+            "High",
+            "Very High"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "risk_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Risk Factors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level"
+      ],
+      "title": "RiskAssessmentStandardized",
+      "type": "object"
+    }
+  },
+  "description": "A candidate investment discovered through A+ screening.",
+  "properties": {
+    "symbol": {
+      "description": "Investment symbol (e.g., AAPL, SPY, BTC-USD)",
+      "title": "Symbol",
+      "type": "string"
+    },
+    "name": {
+      "description": "Full name of the investment",
+      "title": "Name",
+      "type": "string"
+    },
+    "asset_type": {
+      "description": "Type of asset",
+      "enum": [
+        "etf",
+        "stock",
+        "crypto"
+      ],
+      "title": "Asset Type",
+      "type": "string"
+    },
+    "current_price": {
+      "description": "Current market price",
+      "exclusiveMinimum": 0,
+      "title": "Current Price",
+      "type": "number"
+    },
+    "market_cap": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Market capitalization in USD",
+      "title": "Market Cap"
+    },
+    "preliminary_score": {
+      "description": "Initial A+ score",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Preliminary Score",
+      "type": "number"
+    },
+    "final_score": {
+      "description": "Final A+ score after validation",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Final Score",
+      "type": "number"
+    },
+    "grade": {
+      "description": "Letter grade from FinWiz grading system (A+ to F)",
+      "enum": [
+        "A+",
+        "A",
+        "B+",
+        "B",
+        "C+",
+        "C",
+        "D",
+        "F"
+      ],
+      "title": "Grade",
+      "type": "string"
+    },
+    "grade_description": {
+      "description": "Human-readable grade description",
+      "title": "Grade Description",
+      "type": "string"
+    },
+    "recommended_action": {
+      "description": "Recommended action based on grade",
+      "title": "Recommended Action",
+      "type": "string"
+    },
+    "discovery_date": {
+      "description": "When the candidate was discovered",
+      "format": "date-time",
+      "title": "Discovery Date",
+      "type": "string"
+    },
+    "data_source": {
+      "description": "Primary data source used for analysis",
+      "title": "Data Source",
+      "type": "string"
+    },
+    "risk_assessment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RiskAssessmentStandardized"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Standardized risk assessment"
+    }
+  },
+  "required": [
+    "symbol",
+    "name",
+    "asset_type",
+    "current_price",
+    "preliminary_score",
+    "final_score",
+    "grade",
+    "grade_description",
+    "recommended_action",
+    "data_source"
+  ],
+  "title": "InvestmentCandidate",
+  "type": "object"
+}

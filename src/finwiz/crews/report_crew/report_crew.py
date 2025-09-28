@@ -11,6 +11,7 @@ investment report without conducting additional external research.
 """
 
 import logging
+from pathlib import Path
 from typing import Any
 
 # Third-party imports
@@ -20,9 +21,10 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
-from finwiz.tools.file_conversion_tools import HtmlToPdfTool  # Added for PDF conversion
-
 # Local application imports
+from finwiz.integration.data_accessor import CrewDataAccessor
+from finwiz.integration.manager import CrewDataIntegrationManager
+from finwiz.tools.file_conversion_tools import HtmlToPdfTool  # Added for PDF conversion
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.validation.tool_restrictions import ReporterInputValidator, ToolRestrictionValidator
 
@@ -36,28 +38,7 @@ logger = logging.getLogger(__name__)
 # Get RAG tools for knowledge retrieval and storage
 rag_tools = get_rag_tools(collection_suffix="report")
 
-
-crypto_reports = DirectoryReadTool(directory=("output/crypto"))
-etf_reports = DirectoryReadTool(directory=("output/etf"))
-stock_reports = DirectoryReadTool(directory=("output/stock"))
-portfolio_outputs = DirectoryReadTool(directory=("output/portfolio"))
-
 html_to_pdf_tool = HtmlToPdfTool()  # Tool instance for PDF conversion
-
-
-# Tools for report generation and analysis
-tools = [
-    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
-    crypto_reports,
-    etf_reports,
-    stock_reports,
-    portfolio_outputs,
-    # Schemas and examples for contract-aware reading
-    DirectoryReadTool(directory=("docs/schemas")),
-    DirectoryReadTool(directory=("docs/schemas/examples")),
-    FileReadTool(file_path=("docs/schemas/ReporterInput.schema.json")),
-    FileReadTool(file_path=("docs/schemas/examples/reporter_input.example.json")),
-]
 
 
 @CrewBase
@@ -76,10 +57,129 @@ class ReportCrew:
     tasks: list[Task]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Initialize report crew with validators."""
+        """Initialize report crew with validators and data integration."""
         super().__init__(*args, **kwargs)
         self.tool_validator = ToolRestrictionValidator()
         self.input_validator = ReporterInputValidator()
+
+        # Initialize data integration components
+        self.output_dir = Path("output")
+        self.integration_manager = CrewDataIntegrationManager(self.output_dir)
+        self.data_accessor = CrewDataAccessor(self.integration_manager)
+
+        # Initialize tools with data availability checking
+        self._initialize_tools()
+
+    def _initialize_tools(self) -> None:
+        """Initialize tools with data availability checking and graceful degradation."""
+        try:
+            # Check data availability before setting up tools
+            availability_report = self.data_accessor.check_data_availability()
+
+            # Log data availability status
+            logger.info(
+                f"Data availability check: {availability_report.overall_status.value}",
+                extra={
+                    "stock_available": availability_report.stock_available,
+                    "etf_available": availability_report.etf_available,
+                    "crypto_available": availability_report.crypto_available,
+                    "discovery_available": availability_report.discovery_available,
+                    "portfolio_available": availability_report.portfolio_available,
+                },
+            )
+
+            # Set up tools based on data availability
+            self.tools = [*rag_tools]  # Always include RAG tools
+
+            # Add directory tools only for available data
+            if availability_report.stock_available:
+                self.tools.append(DirectoryReadTool(directory="output/stock"))
+            if availability_report.etf_available:
+                self.tools.append(DirectoryReadTool(directory="output/etf"))
+            if availability_report.crypto_available:
+                self.tools.append(DirectoryReadTool(directory="output/crypto"))
+            if availability_report.portfolio_available:
+                self.tools.append(DirectoryReadTool(directory="output/portfolio"))
+            if availability_report.discovery_available:
+                self.tools.append(DirectoryReadTool(directory="output/discovery"))
+
+            # Always add schema tools for contract-aware reading
+            self.tools.extend(
+                [
+                    DirectoryReadTool(directory="docs/schemas"),
+                    DirectoryReadTool(directory="docs/schemas/examples"),
+                    FileReadTool(file_path="docs/schemas/ReporterInput.schema.json"),
+                    FileReadTool(file_path="docs/schemas/examples/reporter_input.example.json"),
+                    FileReadTool(file_path="docs/schemas/APlusDiscoveryResult.schema.json"),
+                    FileReadTool(file_path="docs/schemas/OptimizationResult.schema.json"),
+                    FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
+                ]
+            )
+
+            # Log warnings for missing data
+            if availability_report.missing_data:
+                logger.warning(
+                    f"Missing data for crews: {', '.join(availability_report.missing_data)}. "
+                    "Report generation will proceed with available data."
+                )
+
+            # Log stale data warnings
+            if availability_report.stale_data:
+                stale_warnings = self.data_accessor.get_stale_data_warnings()
+                for warning in stale_warnings:
+                    logger.warning(warning)
+
+        except Exception as e:
+            logger.error(f"Failed to initialize tools with data integration: {str(e)}", exc_info=True)
+            # Fallback to basic tools
+            self.tools = [
+                *rag_tools,
+                DirectoryReadTool(directory="output/crypto"),
+                DirectoryReadTool(directory="output/etf"),
+                DirectoryReadTool(directory="output/stock"),
+                DirectoryReadTool(directory="output/portfolio"),
+                DirectoryReadTool(directory="output/discovery"),
+                DirectoryReadTool(directory="docs/schemas"),
+                DirectoryReadTool(directory="docs/schemas/examples"),
+                FileReadTool(file_path="docs/schemas/ReporterInput.schema.json"),
+                FileReadTool(file_path="docs/schemas/examples/reporter_input.example.json"),
+                FileReadTool(file_path="docs/schemas/APlusDiscoveryResult.schema.json"),
+                FileReadTool(file_path="docs/schemas/OptimizationResult.schema.json"),
+                FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
+            ]
+
+    def get_integrated_data_context(self, max_age_hours: int = 24) -> dict[str, Any]:
+        """
+        Get integrated data context for report generation.
+
+        Args:
+            max_age_hours: Maximum acceptable age in hours for data
+
+        Returns:
+            Dictionary containing consolidated data and metadata
+
+        """
+        try:
+            # Get consolidated reporter input with all integrated data
+            integrated_data = self.data_accessor.get_consolidated_reporter_input(max_age_hours)
+
+            # Add data availability information
+            integrated_data["data_availability_report"] = self.data_accessor.check_data_availability(max_age_hours)
+
+            # Add stale data warnings
+            integrated_data["stale_data_warnings"] = self.data_accessor.get_stale_data_warnings(max_age_hours)
+
+            logger.info("Integrated data context prepared for report generation")
+            return integrated_data
+
+        except Exception as e:
+            logger.error(f"Failed to get integrated data context: {str(e)}", exc_info=True)
+            return {
+                "error": f"Data integration failed: {str(e)}",
+                "fallback_mode": True,
+                "data_availability_report": None,
+                "stale_data_warnings": [f"Data integration error: {str(e)}"],
+            }
 
     @agent
     def financial_integration_analyst(self) -> Agent:
@@ -87,7 +187,7 @@ class ReportCrew:
             config=self.agents_config["financial_integration_analyst"],
             verbose=True,
             reasoning=False,
-            tools=tools,
+            tools=self.tools,
         )
 
     @agent
@@ -96,7 +196,7 @@ class ReportCrew:
         return Agent(
             config=self.agents_config["portfolio_allocator"],
             verbose=True,
-            tools=tools,
+            tools=self.tools,
             reasoning=False,
         )
 
@@ -106,7 +206,7 @@ class ReportCrew:
         return Agent(
             config=self.agents_config["risk_manager"],
             verbose=True,
-            tools=tools,
+            tools=self.tools,
             reasoning=False,
         )
 
@@ -205,7 +305,8 @@ class ReportCrew:
             logger.error(f"Tool restriction validation failed: {e}")
             raise
 
-        return Crew(
+        # Create crew with integrated data context
+        crew = Crew(
             agents=agents,
             tasks=tasks,
             process=Process.sequential,
@@ -217,6 +318,49 @@ class ReportCrew:
             max_rpm=20,
         )
 
+        return crew
+
+    def kickoff(self, inputs: dict[str, Any] | None = None, max_age_hours: int = 24) -> Any:
+        """
+        Execute the crew with integrated data context.
+
+        Args:
+            inputs: Additional inputs for crew execution
+            max_age_hours: Maximum acceptable age in hours for data
+
+        Returns:
+            Crew execution result
+
+        """
+        try:
+            # Prepare integrated context
+            integrated_context = self.prepare_crew_context(max_age_hours)
+
+            # Merge with provided inputs
+            if inputs:
+                integrated_context.update(inputs)
+
+            # Log execution start with data status
+            logger.info(
+                "Starting ReportCrew execution with integrated data",
+                extra={
+                    "max_age_hours": max_age_hours,
+                    "has_integrated_context": "error" not in integrated_context,
+                    "fallback_mode": integrated_context.get("fallback_mode", False),
+                },
+            )
+
+            # Execute crew with integrated context
+            crew = self.crew()
+            result = crew.kickoff(inputs=integrated_context)
+
+            logger.info("ReportCrew execution completed successfully")
+            return result
+
+        except Exception as e:
+            logger.error(f"ReportCrew execution failed: {str(e)}", exc_info=True)
+            raise
+
     def validate_reporter_input(self, context: dict[str, Any]) -> None:
         """
         Validate that reporter receives proper upstream context.
@@ -226,3 +370,46 @@ class ReportCrew:
 
         """
         self.input_validator.validate_reporter_context(context)
+
+    def prepare_crew_context(self, max_age_hours: int = 24) -> dict[str, Any]:
+        """
+        Prepare integrated context for crew execution.
+
+        Args:
+            max_age_hours: Maximum acceptable age in hours for data
+
+        Returns:
+            Dictionary containing all integrated data and metadata for crew execution
+
+        """
+        try:
+            # Get integrated data context
+            integrated_context = self.get_integrated_data_context(max_age_hours)
+
+            # Validate the integrated context
+            self.validate_reporter_input(integrated_context)
+
+            # Add execution metadata
+            integrated_context["execution_metadata"] = {
+                "max_age_hours": max_age_hours,
+                "integration_manager_initialized": self.integration_manager is not None,
+                "data_accessor_initialized": self.data_accessor is not None,
+                "tools_count": len(self.tools),
+            }
+
+            logger.info("Crew context prepared with integrated data")
+            return integrated_context
+
+        except Exception as e:
+            logger.error(f"Failed to prepare crew context: {str(e)}", exc_info=True)
+            # Return minimal context for graceful degradation
+            return {
+                "error": f"Context preparation failed: {str(e)}",
+                "fallback_mode": True,
+                "execution_metadata": {
+                    "max_age_hours": max_age_hours,
+                    "integration_manager_initialized": False,
+                    "data_accessor_initialized": False,
+                    "tools_count": len(self.tools) if hasattr(self, "tools") else 0,
+                },
+            }

@@ -1,0 +1,104 @@
+{
+  "description": "Result from A+ candidate validation process.",
+  "properties": {
+    "total_candidates": {
+      "description": "Total candidates validated",
+      "minimum": 0,
+      "title": "Total Candidates",
+      "type": "integer"
+    },
+    "passed_validation": {
+      "description": "Candidates that passed validation",
+      "minimum": 0,
+      "title": "Passed Validation",
+      "type": "integer"
+    },
+    "failed_validation": {
+      "description": "Candidates that failed validation",
+      "minimum": 0,
+      "title": "Failed Validation",
+      "type": "integer"
+    },
+    "validation_details": {
+      "description": "Detailed validation results",
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Validation Details",
+      "type": "array"
+    },
+    "backtest_period_years": {
+      "description": "Years of backtesting data used",
+      "minimum": 1,
+      "title": "Backtest Period Years",
+      "type": "integer"
+    },
+    "market_regimes_tested": {
+      "description": "Market regimes included in testing",
+      "items": {
+        "type": "string"
+      },
+      "title": "Market Regimes Tested",
+      "type": "array"
+    },
+    "average_sharpe_ratio": {
+      "description": "Average Sharpe ratio of validated candidates",
+      "title": "Average Sharpe Ratio",
+      "type": "number"
+    },
+    "average_max_drawdown": {
+      "description": "Average maximum drawdown",
+      "maximum": 0.0,
+      "title": "Average Max Drawdown",
+      "type": "number"
+    },
+    "average_sortino_ratio": {
+      "description": "Average Sortino ratio",
+      "title": "Average Sortino Ratio",
+      "type": "number"
+    },
+    "correlation_analysis": {
+      "additionalProperties": true,
+      "description": "Correlation with existing holdings",
+      "title": "Correlation Analysis",
+      "type": "object"
+    },
+    "stress_test_results": {
+      "additionalProperties": true,
+      "description": "Stress testing outcomes",
+      "title": "Stress Test Results",
+      "type": "object"
+    },
+    "validated_candidates": {
+      "description": "Symbols that passed validation",
+      "items": {
+        "type": "string"
+      },
+      "title": "Validated Candidates",
+      "type": "array"
+    },
+    "rejected_candidates": {
+      "description": "Rejected candidates with reasons",
+      "items": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "title": "Rejected Candidates",
+      "type": "array"
+    }
+  },
+  "required": [
+    "total_candidates",
+    "passed_validation",
+    "failed_validation",
+    "backtest_period_years",
+    "average_sharpe_ratio",
+    "average_max_drawdown",
+    "average_sortino_ratio"
+  ],
+  "title": "ValidationResult",
+  "type": "object"
+}

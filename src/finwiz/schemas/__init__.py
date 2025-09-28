@@ -10,6 +10,14 @@ Modules:
 from .common import RiskAssessmentStandardized, RiskLevel  # noqa: F401
 from .crypto import CryptoRisk, CryptoThesis  # noqa: F401
 from .etf import ETFFactsheet, ETFTopHolding  # noqa: F401
+from .investment_discovery import (  # noqa: F401
+    APlusAnalysis,
+    APlusDiscoveryResult,
+    InvestmentCandidate,
+    OptimizationResult,
+    PortfolioImprovement,
+    ValidationResult,
+)
 from .portfolio_rebalancing import (  # noqa: F401
     AlternativeScenario,
     CostAnalysis,

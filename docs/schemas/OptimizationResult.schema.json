@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "PortfolioImprovement": {
+      "description": "A specific portfolio improvement recommendation.",
+      "properties": {
+        "current_holding": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Current holding to replace (if any)",
+          "title": "Current Holding"
+        },
+        "recommended_investment": {
+          "description": "Recommended A+ investment symbol",
+          "title": "Recommended Investment",
+          "type": "string"
+        },
+        "improvement_type": {
+          "description": "Type of improvement",
+          "enum": [
+            "replacement",
+            "addition",
+            "rebalancing"
+          ],
+          "title": "Improvement Type",
+          "type": "string"
+        },
+        "expected_grade_improvement": {
+          "description": "Expected improvement in portfolio grade",
+          "title": "Expected Grade Improvement",
+          "type": "number"
+        },
+        "allocation_percentage": {
+          "description": "Recommended allocation percentage",
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "Allocation Percentage",
+          "type": "number"
+        },
+        "implementation_priority": {
+          "description": "Implementation priority",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Implementation Priority",
+          "type": "string"
+        },
+        "rationale": {
+          "description": "Detailed rationale for the improvement",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "risk_impact": {
+          "description": "Impact on portfolio risk profile",
+          "title": "Risk Impact",
+          "type": "string"
+        },
+        "cost_analysis": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Transaction costs and fees",
+          "title": "Cost Analysis",
+          "type": "object"
+        }
+      },
+      "required": [
+        "recommended_investment",
+        "improvement_type",
+        "expected_grade_improvement",
+        "allocation_percentage",
+        "implementation_priority",
+        "rationale",
+        "risk_impact"
+      ],
+      "title": "PortfolioImprovement",
+      "type": "object"
+    }
+  },
+  "description": "Result from portfolio optimization with A+ discoveries.",
+  "properties": {
+    "current_portfolio_grade": {
+      "description": "Current portfolio letter grade",
+      "title": "Current Portfolio Grade",
+      "type": "string"
+    },
+    "optimized_portfolio_grade": {
+      "description": "Projected portfolio grade after improvements",
+      "title": "Optimized Portfolio Grade",
+      "type": "string"
+    },
+    "grade_improvement": {
+      "description": "Numerical improvement in portfolio score",
+      "title": "Grade Improvement",
+      "type": "number"
+    },
+    "improvements": {
+      "description": "Specific improvement recommendations",
+      "items": {
+        "$ref": "#/$defs/PortfolioImprovement"
+      },
+      "title": "Improvements",
+      "type": "array"
+    },
+    "current_metrics": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Current portfolio metrics",
+      "title": "Current Metrics",
+      "type": "object"
+    },
+    "projected_metrics": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Projected metrics after optimization",
+      "title": "Projected Metrics",
+      "type": "object"
+    },
+    "risk_impact_analysis": {
+      "additionalProperties": true,
+      "description": "Analysis of risk changes",
+      "title": "Risk Impact Analysis",
+      "type": "object"
+    },
+    "diversification_impact": {
+      "additionalProperties": true,
+      "description": "Impact on diversification",
+      "title": "Diversification Impact",
+      "type": "object"
+    },
+    "implementation_timeline": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Recommended implementation timeline",
+      "title": "Implementation Timeline",
+      "type": "object"
+    },
+    "total_transaction_costs": {
+      "description": "Estimated total transaction costs",
+      "minimum": 0.0,
+      "title": "Total Transaction Costs",
+      "type": "number"
+    },
+    "expected_annual_benefit": {
+      "description": "Expected annual benefit from improvements",
+      "title": "Expected Annual Benefit",
+      "type": "number"
+    },
+    "constraints_met": {
+      "description": "Portfolio constraints that are satisfied",
+      "items": {
+        "type": "string"
+      },
+      "title": "Constraints Met",
+      "type": "array"
+    },
+    "implementation_notes": {
+      "description": "Important implementation considerations",
+      "items": {
+        "type": "string"
+      },
+      "title": "Implementation Notes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "current_portfolio_grade",
+    "optimized_portfolio_grade",
+    "grade_improvement",
+    "total_transaction_costs",
+    "expected_annual_benefit"
+  ],
+  "title": "OptimizationResult",
+  "type": "object"
+}

@@ -1,0 +1,121 @@
+{
+  "additionalProperties": false,
+  "description": "A+ improvement suggestion for a specific holding.",
+  "properties": {
+    "improvement_type": {
+      "description": "Type of improvement suggested",
+      "enum": [
+        "replacement",
+        "addition",
+        "rebalancing"
+      ],
+      "title": "Improvement Type",
+      "type": "string"
+    },
+    "recommended_symbol": {
+      "description": "Recommended A+ investment symbol",
+      "title": "Recommended Symbol",
+      "type": "string"
+    },
+    "recommended_name": {
+      "description": "Full name of recommended investment",
+      "title": "Recommended Name",
+      "type": "string"
+    },
+    "recommended_grade": {
+      "description": "Grade of recommended investment",
+      "enum": [
+        "A+",
+        "A",
+        "B+",
+        "B",
+        "C+",
+        "C",
+        "D",
+        "F"
+      ],
+      "title": "Recommended Grade",
+      "type": "string"
+    },
+    "expected_grade_improvement": {
+      "description": "Expected numerical improvement in grade",
+      "title": "Expected Grade Improvement",
+      "type": "number"
+    },
+    "grade_improvement_description": {
+      "description": "Human-readable description of grade improvement",
+      "title": "Grade Improvement Description",
+      "type": "string"
+    },
+    "allocation_percentage": {
+      "description": "Recommended allocation percentage",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Allocation Percentage",
+      "type": "number"
+    },
+    "implementation_priority": {
+      "description": "Implementation priority",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Implementation Priority",
+      "type": "string"
+    },
+    "rationale": {
+      "description": "Detailed rationale for the improvement",
+      "title": "Rationale",
+      "type": "string"
+    },
+    "expected_annual_benefit": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Expected annual benefit in percentage points",
+      "title": "Expected Annual Benefit"
+    },
+    "risk_impact_description": {
+      "description": "Description of risk impact",
+      "title": "Risk Impact Description",
+      "type": "string"
+    },
+    "cost_analysis": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Transaction costs and fees",
+      "title": "Cost Analysis",
+      "type": "object"
+    },
+    "implementation_notes": {
+      "description": "Implementation considerations",
+      "items": {
+        "type": "string"
+      },
+      "title": "Implementation Notes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "improvement_type",
+    "recommended_symbol",
+    "recommended_name",
+    "recommended_grade",
+    "expected_grade_improvement",
+    "grade_improvement_description",
+    "allocation_percentage",
+    "implementation_priority",
+    "rationale",
+    "risk_impact_description"
+  ],
+  "title": "APlusImprovementSuggestion",
+  "type": "object"
+}

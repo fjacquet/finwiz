@@ -97,13 +97,36 @@ class EtfCrew:
     agents: list[BaseAgent]
     tasks: list[Task]
 
+    def __init__(self):
+        # Set configuration paths before calling super().__init__()
+        from pathlib import Path
+
+        import yaml
+
+        # Get the directory of this file
+        current_dir = Path(__file__).parent
+
+        # Load configuration files
+        with open(current_dir / "config" / "agents.yaml") as f:
+            self.agents_config = yaml.safe_load(f)
+
+        with open(current_dir / "config" / "tasks.yaml") as f:
+            self.tasks_config = yaml.safe_load(f)
+
+        super().__init__()
+
+        # Make Pydantic models available for CrewAI resolution
+        self.ETFTopHolding = ETFTopHolding
+        self.ETFFactsheet = ETFFactsheet
+        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+
     @agent
     def market_etf_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["market_etf_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for ETF analysis decisions
         )
 
     @agent
@@ -112,7 +135,7 @@ class EtfCrew:
             config=self.agents_config["risk_assessor"],
             verbose=True,
             tools=tools,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for risk assessment decisions
         )
 
     @agent

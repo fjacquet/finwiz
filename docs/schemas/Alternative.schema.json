@@ -12,7 +12,8 @@
     "asset_class": {
       "enum": [
         "stock",
-        "etf"
+        "etf",
+        "crypto"
       ],
       "title": "Asset Class",
       "type": "string"
@@ -22,6 +23,31 @@
       "minimum": 0.0,
       "title": "Composite Score",
       "type": "number"
+    },
+    "grade": {
+      "description": "Letter grade (A+ to F)",
+      "enum": [
+        "A+",
+        "A",
+        "B+",
+        "B",
+        "C+",
+        "C",
+        "D",
+        "F"
+      ],
+      "title": "Grade",
+      "type": "string"
+    },
+    "grade_description": {
+      "description": "Human-readable grade description",
+      "title": "Grade Description",
+      "type": "string"
+    },
+    "recommended_action": {
+      "description": "Recommended action based on grade",
+      "title": "Recommended Action",
+      "type": "string"
     },
     "risk_score_standardized": {
       "maximum": 5.0,
@@ -49,6 +75,53 @@
       "maxItems": 10,
       "title": "Citations",
       "type": "array"
+    },
+    "is_a_plus_candidate": {
+      "default": false,
+      "description": "Whether this is an A+ grade candidate",
+      "title": "Is A Plus Candidate",
+      "type": "boolean"
+    },
+    "discovery_source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Source of A+ discovery (e.g., 'investment_discovery_crew')",
+      "title": "Discovery Source"
+    },
+    "confidence_level": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Confidence in A+ classification",
+      "title": "Confidence Level"
+    },
+    "expected_annual_benefit": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Expected annual benefit in percentage points",
+      "title": "Expected Annual Benefit"
     }
   },
   "required": [
@@ -56,6 +129,9 @@
     "name",
     "asset_class",
     "composite_score",
+    "grade",
+    "grade_description",
+    "recommended_action",
     "risk_score_standardized"
   ],
   "title": "Alternative",

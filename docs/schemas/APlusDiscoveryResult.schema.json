@@ -1,0 +1,607 @@
+{
+  "$defs": {
+    "APlusAnalysis": {
+      "description": "Detailed A+ analysis for an investment candidate.",
+      "properties": {
+        "candidate": {
+          "$ref": "#/$defs/InvestmentCandidate"
+        },
+        "fundamental_score": {
+          "description": "Fundamental analysis score",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Fundamental Score",
+          "type": "number"
+        },
+        "technical_score": {
+          "description": "Technical analysis score",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Technical Score",
+          "type": "number"
+        },
+        "quality_score": {
+          "description": "Quality metrics score",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Quality Score",
+          "type": "number"
+        },
+        "risk_score": {
+          "description": "Risk assessment score",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Risk Score",
+          "type": "number"
+        },
+        "composite_score": {
+          "description": "Final composite score",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Composite Score",
+          "type": "number"
+        },
+        "confidence_level": {
+          "description": "Confidence in the analysis",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence Level",
+          "type": "number"
+        },
+        "is_a_plus_candidate": {
+          "description": "Whether this qualifies as A+ (score >= 0.95)",
+          "title": "Is A Plus Candidate",
+          "type": "boolean"
+        },
+        "rationale": {
+          "description": "Key reasons for A+ classification",
+          "items": {
+            "type": "string"
+          },
+          "title": "Rationale",
+          "type": "array"
+        },
+        "key_metrics": {
+          "additionalProperties": true,
+          "description": "Important financial metrics",
+          "title": "Key Metrics",
+          "type": "object"
+        },
+        "competitive_advantages": {
+          "description": "Competitive moats and advantages",
+          "items": {
+            "type": "string"
+          },
+          "title": "Competitive Advantages",
+          "type": "array"
+        },
+        "risk_factors": {
+          "description": "Key risk considerations",
+          "items": {
+            "type": "string"
+          },
+          "title": "Risk Factors",
+          "type": "array"
+        },
+        "market_context": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarketRegime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Market regime during analysis"
+        },
+        "criteria_used": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/APlusCriteria"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Scoring criteria applied"
+        }
+      },
+      "required": [
+        "candidate",
+        "fundamental_score",
+        "technical_score",
+        "quality_score",
+        "risk_score",
+        "composite_score",
+        "confidence_level",
+        "is_a_plus_candidate",
+        "rationale"
+      ],
+      "title": "APlusAnalysis",
+      "type": "object"
+    },
+    "APlusCriteria": {
+      "description": "Dynamic A+ scoring criteria that adapt to market conditions.",
+      "properties": {
+        "etf_max_expense_ratio": {
+          "default": 0.15,
+          "description": "Maximum acceptable expense ratio for ETFs",
+          "maximum": 2.0,
+          "minimum": 0.0,
+          "title": "Etf Max Expense Ratio",
+          "type": "number"
+        },
+        "etf_min_aum": {
+          "default": 1000000000.0,
+          "description": "Minimum AUM for ETF liquidity",
+          "maximum": 1000000000000.0,
+          "minimum": 1000000.0,
+          "title": "Etf Min Aum",
+          "type": "number"
+        },
+        "etf_max_tracking_error": {
+          "default": 0.002,
+          "description": "Maximum tracking error tolerance",
+          "maximum": 0.1,
+          "minimum": 0.0,
+          "title": "Etf Max Tracking Error",
+          "type": "number"
+        },
+        "etf_min_history_years": {
+          "default": 3,
+          "description": "Minimum operating history in years",
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Etf Min History Years",
+          "type": "integer"
+        },
+        "stock_min_roe": {
+          "default": 0.2,
+          "description": "Minimum return on equity",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Stock Min Roe",
+          "type": "number"
+        },
+        "stock_min_revenue_growth": {
+          "default": 0.15,
+          "description": "Minimum revenue growth rate",
+          "maximum": 2.0,
+          "minimum": -0.5,
+          "title": "Stock Min Revenue Growth",
+          "type": "number"
+        },
+        "stock_max_debt_to_equity": {
+          "default": 0.3,
+          "description": "Maximum debt-to-equity ratio",
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Stock Max Debt To Equity",
+          "type": "number"
+        },
+        "stock_min_market_cap": {
+          "default": 1000000000.0,
+          "description": "Minimum market capitalization",
+          "maximum": 10000000000000.0,
+          "minimum": 1000000.0,
+          "title": "Stock Min Market Cap",
+          "type": "number"
+        },
+        "crypto_min_market_cap": {
+          "default": 10000000000.0,
+          "description": "Minimum crypto market cap",
+          "maximum": 10000000000000.0,
+          "minimum": 1000000.0,
+          "title": "Crypto Min Market Cap",
+          "type": "number"
+        },
+        "crypto_min_daily_volume": {
+          "default": 500000000.0,
+          "description": "Minimum daily trading volume",
+          "maximum": 1000000000000.0,
+          "minimum": 1000000.0,
+          "title": "Crypto Min Daily Volume",
+          "type": "number"
+        },
+        "crypto_min_age_months": {
+          "default": 36,
+          "description": "Minimum age in months",
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Crypto Min Age Months",
+          "type": "integer"
+        },
+        "regime_adjusted": {
+          "default": false,
+          "description": "Whether criteria were adjusted for market regime",
+          "title": "Regime Adjusted",
+          "type": "boolean"
+        },
+        "adjustment_rationale": {
+          "default": "",
+          "description": "Explanation of any regime-based adjustments",
+          "title": "Adjustment Rationale",
+          "type": "string"
+        }
+      },
+      "title": "APlusCriteria",
+      "type": "object"
+    },
+    "InvestmentCandidate": {
+      "description": "A candidate investment discovered through A+ screening.",
+      "properties": {
+        "symbol": {
+          "description": "Investment symbol (e.g., AAPL, SPY, BTC-USD)",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "name": {
+          "description": "Full name of the investment",
+          "title": "Name",
+          "type": "string"
+        },
+        "asset_type": {
+          "description": "Type of asset",
+          "enum": [
+            "etf",
+            "stock",
+            "crypto"
+          ],
+          "title": "Asset Type",
+          "type": "string"
+        },
+        "current_price": {
+          "description": "Current market price",
+          "exclusiveMinimum": 0,
+          "title": "Current Price",
+          "type": "number"
+        },
+        "market_cap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Market capitalization in USD",
+          "title": "Market Cap"
+        },
+        "preliminary_score": {
+          "description": "Initial A+ score",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Preliminary Score",
+          "type": "number"
+        },
+        "final_score": {
+          "description": "Final A+ score after validation",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Final Score",
+          "type": "number"
+        },
+        "grade": {
+          "description": "Letter grade from FinWiz grading system (A+ to F)",
+          "enum": [
+            "A+",
+            "A",
+            "B+",
+            "B",
+            "C+",
+            "C",
+            "D",
+            "F"
+          ],
+          "title": "Grade",
+          "type": "string"
+        },
+        "grade_description": {
+          "description": "Human-readable grade description",
+          "title": "Grade Description",
+          "type": "string"
+        },
+        "recommended_action": {
+          "description": "Recommended action based on grade",
+          "title": "Recommended Action",
+          "type": "string"
+        },
+        "discovery_date": {
+          "description": "When the candidate was discovered",
+          "format": "date-time",
+          "title": "Discovery Date",
+          "type": "string"
+        },
+        "data_source": {
+          "description": "Primary data source used for analysis",
+          "title": "Data Source",
+          "type": "string"
+        },
+        "risk_assessment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskAssessmentStandardized"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Standardized risk assessment"
+        }
+      },
+      "required": [
+        "symbol",
+        "name",
+        "asset_type",
+        "current_price",
+        "preliminary_score",
+        "final_score",
+        "grade",
+        "grade_description",
+        "recommended_action",
+        "data_source"
+      ],
+      "title": "InvestmentCandidate",
+      "type": "object"
+    },
+    "MarketRegime": {
+      "description": "Current market regime assessment for A+ discovery.",
+      "properties": {
+        "regime_type": {
+          "description": "Current market regime",
+          "enum": [
+            "bull",
+            "bear",
+            "sideways",
+            "volatile"
+          ],
+          "title": "Regime Type",
+          "type": "string"
+        },
+        "vix_level": {
+          "description": "VIX volatility index level",
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "Vix Level",
+          "type": "number"
+        },
+        "inflation_rate": {
+          "description": "Current inflation rate percentage",
+          "maximum": 20.0,
+          "minimum": -5.0,
+          "title": "Inflation Rate",
+          "type": "number"
+        },
+        "interest_rate_trend": {
+          "description": "Interest rate trend",
+          "enum": [
+            "rising",
+            "falling",
+            "stable"
+          ],
+          "title": "Interest Rate Trend",
+          "type": "string"
+        },
+        "market_stress_level": {
+          "description": "Overall market stress level",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Market Stress Level",
+          "type": "string"
+        },
+        "assessment_date": {
+          "description": "When regime was assessed",
+          "format": "date-time",
+          "title": "Assessment Date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "regime_type",
+        "vix_level",
+        "inflation_rate",
+        "interest_rate_trend",
+        "market_stress_level"
+      ],
+      "title": "MarketRegime",
+      "type": "object"
+    },
+    "RiskAssessmentStandardized": {
+      "additionalProperties": false,
+      "description": "Standardized risk assessment across Stock/ETF/Crypto on a 0-5 scale.\n\n- score: 0 (lowest) .. 5 (highest)\n- level: human-friendly label mapped from score\n- risk_factors: up to 10 concise reasons\n- scale: reserved for future alternate encodings",
+      "properties": {
+        "scale": {
+          "default": "0_5",
+          "enum": [
+            "0_5",
+            "L_M_H",
+            "L_M_H_VH"
+          ],
+          "title": "Scale",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "level": {
+          "enum": [
+            "Low",
+            "Medium",
+            "High",
+            "Very High"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "risk_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Risk Factors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level"
+      ],
+      "title": "RiskAssessmentStandardized",
+      "type": "object"
+    }
+  },
+  "description": "Result from A+ investment discovery process.",
+  "properties": {
+    "asset_type": {
+      "description": "Type of assets analyzed",
+      "enum": [
+        "etf",
+        "stock",
+        "crypto"
+      ],
+      "title": "Asset Type",
+      "type": "string"
+    },
+    "total_screened": {
+      "description": "Total number of investments screened",
+      "minimum": 0,
+      "title": "Total Screened",
+      "type": "integer"
+    },
+    "candidates_found": {
+      "description": "Number of A+ candidates found",
+      "minimum": 0,
+      "title": "Candidates Found",
+      "type": "integer"
+    },
+    "discovery_criteria": {
+      "$ref": "#/$defs/APlusCriteria",
+      "description": "Criteria used for discovery"
+    },
+    "market_context": {
+      "$ref": "#/$defs/MarketRegime",
+      "description": "Market conditions during discovery"
+    },
+    "discovery_timestamp": {
+      "description": "When discovery was performed",
+      "format": "date-time",
+      "title": "Discovery Timestamp",
+      "type": "string"
+    },
+    "a_plus_candidates": {
+      "description": "Detailed A+ candidate analysis",
+      "items": {
+        "$ref": "#/$defs/APlusAnalysis"
+      },
+      "title": "A Plus Candidates",
+      "type": "array"
+    },
+    "average_score": {
+      "description": "Average score of A+ candidates",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Average Score",
+      "type": "number"
+    },
+    "grade_distribution": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Distribution of grades found",
+      "propertyNames": {
+        "enum": [
+          "A+",
+          "A",
+          "B+",
+          "B",
+          "C+",
+          "C",
+          "D",
+          "F"
+        ]
+      },
+      "title": "Grade Distribution",
+      "type": "object"
+    },
+    "a_plus_percentage": {
+      "description": "Percentage of screened investments achieving A+",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "A Plus Percentage",
+      "type": "number"
+    },
+    "ucits_compliant_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Number of UCITS-compliant ETFs found",
+      "title": "Ucits Compliant Count"
+    },
+    "ucits_compliant_symbols": {
+      "description": "UCITS-compliant symbols",
+      "items": {
+        "type": "string"
+      },
+      "title": "Ucits Compliant Symbols",
+      "type": "array"
+    },
+    "top_recommendations": {
+      "description": "Top 3-5 symbol recommendations",
+      "items": {
+        "type": "string"
+      },
+      "title": "Top Recommendations",
+      "type": "array"
+    },
+    "implementation_notes": {
+      "description": "Implementation considerations",
+      "items": {
+        "type": "string"
+      },
+      "title": "Implementation Notes",
+      "type": "array"
+    },
+    "high_confidence_count": {
+      "default": 0,
+      "description": "Number of candidates with >80% confidence",
+      "title": "High Confidence Count",
+      "type": "integer"
+    },
+    "screening_efficiency": {
+      "description": "Percentage of quality candidates found",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Screening Efficiency",
+      "type": "number"
+    }
+  },
+  "required": [
+    "asset_type",
+    "total_screened",
+    "candidates_found",
+    "discovery_criteria",
+    "market_context",
+    "average_score",
+    "a_plus_percentage",
+    "screening_efficiency"
+  ],
+  "title": "APlusDiscoveryResult",
+  "type": "object"
+}

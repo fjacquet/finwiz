@@ -1,8 +1,13 @@
 """Tool for fetching Yahoo Finance Ticker History."""
 
+import logging
+from datetime import UTC, datetime
+
 import yfinance as yf
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 class GetTickerHistoryInput(BaseModel):
@@ -69,9 +74,24 @@ class YahooFinanceHistoryTool(BaseTool):
                 "data_points": len(history_list),
             }
 
-            return {
+            # Add timestamp for freshness validation
+            result = {
                 "summary": summary,
                 "history": history_list[-10:],  # Return only last 10 data points to avoid overloading
+                "timestamp": datetime.now(UTC).isoformat(),
             }
+
+            # Use the latest data point date as the data timestamp if available
+            if history_list:
+                latest_date = history_list[-1]["date"]
+                try:
+                    # Convert date string back to datetime for better timestamp
+                    data_date = datetime.strptime(latest_date, "%Y-%m-%d")
+                    result["data_time"] = data_date.replace(tzinfo=UTC).isoformat()
+                    logger.debug(f"Latest data point for {ticker}: {latest_date}")
+                except ValueError as e:
+                    logger.warning(f"Could not parse latest date for {ticker}: {e}")
+
+            return result
         except Exception as e:
             return {"error": f"Failed to get history for {ticker}: {str(e)}"}

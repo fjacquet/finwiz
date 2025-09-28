@@ -1,0 +1,179 @@
+# FinWiz Data Integration System Configuration
+# This file configures the crew data integration system settings
+
+# Data Integration Settings
+integration:
+  # Output directory for all crew data
+  output_dir: "output"
+  
+  # Data freshness settings
+  freshness:
+    # Default maximum age in hours before data is considered stale
+    default_max_age_hours: 24
+    
+    # Crew-specific freshness thresholds
+    crew_thresholds:
+      stock: 24      # Stock data valid for 24 hours
+      etf: 48        # ETF data valid for 48 hours (less volatile)
+      crypto: 12     # Crypto data valid for 12 hours (highly volatile)
+      discovery: 72  # Discovery analysis valid for 72 hours
+      portfolio: 168 # Portfolio review valid for 1 week
+  
+  # Data validation settings
+  validation:
+    # Enable strict schema validation
+    strict_validation: true
+    
+    # Validation timeout in seconds
+    timeout_seconds: 30
+    
+    # Continue on validation warnings (vs errors)
+    continue_on_warnings: true
+  
+  # Error handling settings
+  error_handling:
+    # Maximum retry attempts for data access
+    max_retries: 3
+    
+    # Retry delay in seconds
+    retry_delay: 2
+    
+    # Enable graceful degradation when data is unavailable
+    graceful_degradation: true
+  
+  # Logging settings
+  logging:
+    # Log level for integration operations
+    level: "INFO"
+    
+    # Enable structured logging
+    structured: true
+    
+    # Log data lineage information
+    log_lineage: true
+    
+    # Log performance metrics
+    log_performance: false
+
+# Crew Dependencies Configuration
+# Defines which crews depend on outputs from other crews
+crew_dependencies:
+  # Stock crew has no dependencies (can run independently)
+  stock:
+    dependencies: []
+    max_age_hours: 24
+  
+  # ETF crew has no dependencies (can run independently)
+  etf:
+    dependencies: []
+    max_age_hours: 48
+  
+  # Crypto crew has no dependencies (can run independently)
+  crypto:
+    dependencies: []
+    max_age_hours: 12
+  
+  # Discovery crew depends on portfolio data
+  discovery:
+    dependencies: ["portfolio"]
+    max_age_hours: 72
+  
+  # Portfolio crew has no dependencies (can run independently)
+  portfolio:
+    dependencies: []
+    max_age_hours: 168
+  
+  # Report crew depends on all other crews
+  report:
+    dependencies: ["stock", "etf", "crypto", "discovery", "portfolio"]
+    max_age_hours: 24
+
+# A+ Opportunity Extraction Settings
+aplus_extraction:
+  # Enable A+ opportunity extraction
+  enabled: true
+  
+  # Confidence threshold for A+ opportunities
+  confidence_threshold: 0.7
+  
+  # Maximum number of opportunities per category
+  max_opportunities:
+    stocks: 10
+    etfs: 5
+    crypto: 8
+  
+  # File patterns to search for A+ opportunities
+  file_patterns:
+    stocks: ["*stock*.md", "*equity*.md"]
+    etfs: ["*etf*.md", "*fund*.md"]
+    crypto: ["*crypto*.md", "*digital*.md"]
+
+# Market Sentiment Consolidation Settings
+sentiment_consolidation:
+  # Enable sentiment data consolidation
+  enabled: true
+  
+  # Minimum number of sources for reliable sentiment
+  min_sources: 2
+  
+  # Weight factors for different sentiment sources
+  source_weights:
+    news: 1.0
+    social: 0.8
+    analyst: 1.2
+    technical: 0.9
+  
+  # Data quality thresholds
+  quality_thresholds:
+    high: 5    # 5+ sources = HIGH quality
+    medium: 2  # 2-4 sources = MEDIUM quality
+    low: 1     # 1 source = LOW quality
+
+# Ticker Validation Settings
+ticker_validation:
+  # Enable ticker validation consolidation
+  enabled: true
+  
+  # Validation sources priority (higher number = higher priority)
+  source_priority:
+    yahoo_finance: 10
+    alpha_vantage: 8
+    twelve_data: 6
+    manual: 5
+  
+  # Enable alternative ticker suggestions
+  suggest_alternatives: true
+  
+  # Maximum number of alternative suggestions
+  max_alternatives: 3
+
+# Performance Settings
+performance:
+  # Enable performance monitoring
+  monitoring_enabled: false
+  
+  # Performance metrics collection
+  collect_metrics:
+    execution_time: true
+    memory_usage: false
+    data_size: true
+  
+  # Performance thresholds (warnings)
+  thresholds:
+    max_execution_time_seconds: 300  # 5 minutes
+    max_memory_mb: 1024             # 1GB
+    max_data_size_mb: 100           # 100MB
+
+# Development and Testing Settings
+development:
+  # Enable debug mode (more verbose logging)
+  debug_mode: false
+  
+  # Mock external dependencies in development
+  mock_external_apis: false
+  
+  # Use sample data when real data is unavailable
+  use_sample_data: false
+  
+  # Validate configuration on startup
+  validate_config_on_startup: true

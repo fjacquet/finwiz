@@ -9,4 +9,10 @@ specific data retrieval, analysis, or other specialized tasks.
 # Removed quantitative_analysis_tool import to avoid circular dependency
 # Import directly from the module when needed
 
-__all__ = []
+from .a_plus_scoring_tool import APlusScoringTool
+from .backtesting_tool import BacktestingTool
+from .optimization_tool import OptimizationTool
+from .portfolio_analysis_tool import PortfolioAnalysisTool
+from .risk_assessment_tool import RiskAssessmentTool
+
+__all__ = ["APlusScoringTool", "BacktestingTool", "OptimizationTool", "PortfolioAnalysisTool", "RiskAssessmentTool"]

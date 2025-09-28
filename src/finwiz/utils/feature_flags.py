@@ -220,6 +220,35 @@ class FeatureFlags:
                 fallback_strategy=FallbackStrategy.DISABLE,
                 description="Performance monitoring and metrics collection",
             ),
+            "investment_discovery": FeatureFlagConfig(
+                name="investment_discovery",
+                enabled=self._get_env_bool("FF_INVESTMENT_DISCOVERY", True),
+                strategy=FeatureFlagStrategy.PERCENTAGE,
+                rollout_percentage=self._get_env_float("FF_INVESTMENT_DISCOVERY_ROLLOUT", 100.0),
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="A+ grade investment discovery agents for proactive opportunity identification",
+            ),
+            "stock_analysis": FeatureFlagConfig(
+                name="stock_analysis",
+                enabled=self._get_env_bool("FF_STOCK_ANALYSIS", True),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Stock market analysis crew for equity research and recommendations",
+            ),
+            "etf_analysis": FeatureFlagConfig(
+                name="etf_analysis",
+                enabled=self._get_env_bool("FF_ETF_ANALYSIS", True),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="ETF analysis crew for exchange-traded fund research and recommendations",
+            ),
+            "crypto_analysis": FeatureFlagConfig(
+                name="crypto_analysis",
+                enabled=self._get_env_bool("FF_CRYPTO_ANALYSIS", True),
+                strategy=FeatureFlagStrategy.BOOLEAN,
+                fallback_strategy=FallbackStrategy.DISABLE,
+                description="Cryptocurrency analysis crew for digital asset research and recommendations",
+            ),
         }
 
         self.flags.update(default_flags)

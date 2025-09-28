@@ -19,7 +19,6 @@ from finwiz.schemas.portfolio_review import (
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.utils.cache_manager import get_cache_manager
 from finwiz.utils.grading_system import (
-    format_grade_display,
     get_grade_css_styles,
     get_portfolio_grade_summary,
     score_to_grade,
@@ -161,7 +160,7 @@ def build_portfolio_review(
 
         # Get grade information
         grade_info = score_to_grade(score)
-        
+
         decisions.append(
             HoldingDecision(
                 asset_class=rh.asset_class,
@@ -461,11 +460,11 @@ class EnhancedPortfolioReviewOrchestrator:
             decision_class = "keep" if holding.get("decision") == "KEEP" else "sell"
             risk_score = holding.get("risk", {}).get("score", 0)
             composite_score = holding.get("composite_score", 0)
-            
+
             # Get grade information
             grade_info = score_to_grade(composite_score)
             grade_display = f'<span class="grade-badge {grade_info.css_class}">{grade_info.emoji} {grade_info.grade}</span>'
-            
+
             rows.append(f"""
             <tr>
                 <td>{holding.get("ticker", "N/A")}</td>
@@ -482,21 +481,23 @@ class EnhancedPortfolioReviewOrchestrator:
         grade_summary_html = f"""
         <div class="grade-summary">
             <h4>📊 Bulletin du Portefeuille</h4>
-            <p><strong>Moyenne générale :</strong> {grade_summary['grade_info'].emoji} <strong>{grade_summary['average_grade']}</strong> ({grade_summary['average_percentage']:.0f}%)</p>
+            <p><strong>Moyenne générale :</strong> {grade_summary["grade_info"].emoji} <strong>{grade_summary["average_grade"]}</strong> ({grade_summary["average_percentage"]:.0f}%)</p>
             <p><strong>Répartition des notes :</strong></p>
             <ul>
         """
-        
-        for grade, data in grade_summary['distribution'].items():
+
+        for grade, data in grade_summary["distribution"].items():
             grade_info = score_to_grade(0.5)  # Get emoji for grade
             for test_score in [0.98, 0.90, 0.82, 0.77, 0.72, 0.67, 0.55, 0.25]:
                 test_grade_info = score_to_grade(test_score)
                 if test_grade_info.grade == grade:
                     grade_info = test_grade_info
                     break
-            
-            grade_summary_html += f'<li>{grade_info.emoji} <strong>{grade}</strong>: {data["count"]} positions ({data["percentage"]:.0f}%)</li>'
-        
+
+            grade_summary_html += (
+                f"<li>{grade_info.emoji} <strong>{grade}</strong>: {data['count']} positions ({data['percentage']:.0f}%)</li>"
+            )
+
         grade_summary_html += """
             </ul>
         </div>
@@ -506,9 +507,9 @@ class EnhancedPortfolioReviewOrchestrator:
         <style>
         {get_grade_css_styles()}
         </style>
-        
+
         {grade_summary_html}
-        
+
         <table class="holdings-table">
             <thead>
                 <tr>

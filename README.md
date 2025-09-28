@@ -7,6 +7,7 @@
 - **Specialized Research Crews**: Dedicated crews for Crypto, Stocks, and ETFs, each with tailored agents and tasks.
 - **Portfolio Review & Analysis**: Comprehensive automated portfolio analysis with keep/sell recommendations, risk assessment, and alternative investment suggestions for existing holdings.
 - **Portfolio Rebalancing System**: Professional-grade portfolio rebalancing with intelligent trade recommendations, multiple optimization strategies, cost analysis, and comprehensive reporting.
+- **A+ Investment Discovery**: Proactive AI-powered discovery of exceptional investment opportunities (A+ grade, score ≥ 0.95) across ETFs, stocks, and cryptocurrencies with continuous monitoring and validation.
 - **Dynamic Configuration**: Agents and tasks are configured via YAML files, allowing for easy customization and extension.
 - **Asynchronous Task Execution**: Leverages async operations to significantly speed up I/O-bound tasks like web scraping and API calls, improving overall performance.
 - **Real-Time Data Retrieval**: Employs a suite of tools to fetch live data from the web, ensuring analyses are based on the most current information.
@@ -32,6 +33,7 @@ finwiz/
 │   │   ├── etf_crew/
 │   │   ├── stock_crew/
 │   │   ├── portfolio_rebalancing_crew/  # Portfolio rebalancing crew
+│   │   ├── investment_discovery_crew/   # A+ investment discovery crew
 │   │   └── report_crew/      # Final report generation crew
 │   ├── orchestrators/        # Flow coordination and portfolio analysis
 │   │   ├── portfolio_review.py          # Portfolio review orchestrator
@@ -178,6 +180,7 @@ FinWiz is composed of several specialized crews:
 - **Stock Crew**: Conducts research on publicly traded stocks, performing technical analysis, screening, and risk assessment to identify promising investment opportunities.
 - **ETF Crew**: Specializes in Exchange-Traded Funds (ETFs), analyzing market trends, screening for suitable funds, and assessing risk to provide investment strategies.
 - **Portfolio Rebalancing Crew**: Provides intelligent portfolio rebalancing analysis with trade recommendations, cost optimization, and risk management.
+- **Investment Discovery Crew**: Proactively discovers A+ grade investment opportunities across all asset classes using specialized agents for ETFs, stocks, crypto, validation, and portfolio optimization.
 - **Report Crew**: Consolidates all analysis into comprehensive HTML reports with no external tools, ensuring clean separation of concerns.
 
 ## 📊 Portfolio Analysis
@@ -327,6 +330,39 @@ To improve performance, FinWiz leverages asynchronous task execution for I/O-bou
 **Important Note:** When using a `Process.sequential` workflow in CrewAI, the final task in the sequence **must be synchronous**. All other tasks can be asynchronous. This is a current limitation of the framework that FinWiz adheres to.
 
 ---
+
+## 🎯 A+ Investment Discovery
+
+FinWiz's A+ Investment Discovery system transforms passive portfolio evaluation into proactive opportunity discovery. The system uses specialized AI agents to scan global markets and identify exceptional investments with A+ grades (score ≥ 0.95).
+
+### Quick Start
+```bash
+# Discover A+ opportunities across all asset types
+uv run python src/finwiz/main.py --discovery
+
+# Discover specific asset type
+uv run python src/finwiz/main.py --discovery --asset-type etf
+```
+
+### Key Features
+- **Proactive Discovery**: Scans 3,000+ ETFs, thousands of stocks, and top cryptocurrencies
+- **Rigorous Validation**: 5+ year backtesting across multiple market regimes
+- **Dynamic Criteria**: Adapts to market conditions (inflation, volatility, interest rates)
+- **Continuous Monitoring**: Tracks A+ investments to ensure quality maintenance
+- **Portfolio Integration**: Seamlessly integrates discoveries with existing portfolio analysis
+
+### A+ Criteria Examples
+- **ETFs**: Expense ratio ≤0.15%, AUM ≥$1B, tracking error ≤0.20%
+- **Stocks**: ROE ≥20%, revenue growth ≥15%, debt/equity ≤0.3
+- **Crypto**: Market cap ≥$10B, institutional adoption, real utility
+
+### Documentation
+- **[📖 Complete User Guide](docs/investment_discovery_user_guide.md)**: Comprehensive guide with examples
+- **[🚀 Quick Reference](docs/investment_discovery_quick_reference.md)**: Essential commands and criteria
+- **[❓ FAQ](docs/investment_discovery_faq.md)**: Common questions and troubleshooting
+- **[🔧 Developer Guide](docs/investment_discovery_developer_guide.md)**: Technical architecture and extension
+- **[📋 API Reference](docs/investment_discovery_api_reference.md)**: Complete API documentation
+- **[📚 Documentation Index](docs/investment_discovery_index.md)**: Navigate all A+ discovery docs
 
 ## 📚 Documentation
 

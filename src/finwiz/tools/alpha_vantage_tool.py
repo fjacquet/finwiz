@@ -7,7 +7,9 @@ and more.
 """
 
 import json
+import logging
 import os
+from datetime import UTC, datetime
 from typing import Any
 
 import requests
@@ -18,6 +20,8 @@ from pydantic import BaseModel, Field
 from finwiz.utils.api_decorators import api_tool
 from finwiz.utils.cache_manager import cache_key, cached
 from finwiz.utils.rate_limiter import APIProvider
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -85,6 +89,12 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
 
             if not data or "Note" in data:
                 return f"No data found for ticker {ticker}. It might be an invalid symbol."
+
+            # Add timestamp for freshness validation
+            data["timestamp"] = datetime.now(UTC).isoformat()
+
+            # Log data retrieval for debugging
+            logger.debug(f"Retrieved Alpha Vantage data for {ticker}")
 
             return json.dumps(data, indent=2)
 

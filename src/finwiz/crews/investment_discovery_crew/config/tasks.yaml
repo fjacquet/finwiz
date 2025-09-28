@@ -1,0 +1,395 @@
+etf_discovery_task:
+  description: >
+    Scan global ETF markets to identify A+ grade opportunities with exceptional
+    characteristics. Focus on low-cost, well-diversified ETFs with strong tracking
+    records and UCITS compatibility for European investors.
+    
+    Analysis Requirements:
+    - Screen ETFs with expense ratios ≤ 0.15% (broad market) or ≤ 0.25% (specialized)
+    - Minimum AUM of $1B for liquidity
+    - Tracking error ≤ 0.20% over 3 years
+    - Minimum 3-year operating history
+    - UCITS compliance verification for Swiss and European investors
+    - Regulatory domicile analysis (Ireland, Luxembourg, etc.)
+    - Cross-border investment eligibility assessment
+    
+    Use the Market Screening Tool to identify candidates, then apply A+ Scoring Tool
+    for detailed evaluation. Validate all tickers and perform comprehensive analysis
+    using Enhanced ETF Analysis Tool.
+    
+  expected_output: >
+    A ranked list of top 10 A+ grade ETF candidates with detailed analysis including:
+    - Composite scores and letter grades (A+ target: ≥ 0.95)
+    - Cost analysis and tracking performance
+    - Liquidity metrics and trading considerations
+    - UCITS compliance status and regulatory domicile for European investors
+    - Cross-border investment suitability assessment
+    - Comparison with existing portfolio ETFs
+    - Specific replacement recommendations where applicable
+    
+  agent: etf_discovery_agent
+  output_file: "output/discovery/a_plus_etfs.md"
+  async_execution: true
+
+stock_discovery_task:
+  description: >
+    Identify individual stocks with A+ potential through comprehensive fundamental
+    analysis. Focus on companies with exceptional competitive moats, strong financials,
+    and sustainable growth prospects that maximize returns for the equity portion.
+    
+    Fundamental Screening Criteria (Requirements 2.1):
+    - ROE ≥ 20% sustained over 3 years minimum
+    - Revenue growth ≥ 15% annually over 5 years consistently
+    - Debt-to-equity ratio ≤ 0.3 for financial stability
+    - Free Cash Flow positive and growing trend over 3+ years
+    - Market cap ≥ $1B for institutional liquidity
+    - Dominant market position in growing sectors with competitive moats
+    
+    Competitive Moat Analysis Workflow (Requirements 2.2):
+    - Analyze competitive advantages: brand strength, network effects, switching costs
+    - Evaluate barriers to entry and competitive positioning
+    - Assess market share trends and competitive dynamics
+    - Review management quality and strategic execution
+    - Examine pricing power and margin sustainability
+    
+    Portfolio Integration Analysis (Requirements 2.3):
+    - Verify compatibility with investor objectives and risk profile
+    - Evaluate correlation with existing portfolio holdings
+    - Assess sector and geographic diversification impact
+    - Calculate optimal allocation recommendations
+    - Consider implementation timing and market conditions
+    
+    Use Market Screening Tool for initial filtering based on fundamental criteria,
+    A+ Scoring Tool for comprehensive evaluation, Enhanced SEC Analysis Tool for
+    10-K/10-Q fundamental analysis, and Portfolio Analysis Tool for correlation
+    and allocation optimization.
+    
+  expected_output: >
+    A curated list of top 15 A+ grade stock candidates with comprehensive analysis:
+    - Fundamental analysis summary with key financial metrics and ratios
+    - Competitive moat analysis with specific advantage identification
+    - Growth prospects analysis and sustainable competitive positioning
+    - Risk factor assessment including sector and company-specific risks
+    - Valuation assessment with entry points and price targets
+    - Portfolio correlation analysis with existing holdings
+    - Optimal allocation suggestions with implementation priorities
+    - Compatibility assessment with investor objectives and risk profile
+    
+  agent: stock_discovery_agent
+  output_file: "output/discovery/a_plus_stocks.md"
+  async_execution: true
+  depends_on:
+    - etf_discovery_task
+
+crypto_discovery_task:
+  description: >
+    Discover A+ grade cryptocurrencies with strong fundamentals and institutional
+    adoption potential. Focus on digital assets with real utility, strong tokenomics,
+    and regulatory compliance potential across multiple jurisdictions.
+    
+    A+ Screening Criteria (Requirements 3.1):
+    - Market cap ≥ $10B for institutional liquidity and stability
+    - Daily trading volume ≥ $500M for market depth and liquidity
+    - Minimum 3 years operating history with consistent development activity
+    - Institutional adoption metrics and corporate treasury adoption evidence
+    - Clear utility and proven use cases beyond speculation
+    - Active and transparent development team with regular updates
+    - Strong tokenomics with deflationary or utility-driven mechanisms
+    
+    Regulatory Risk Assessment Workflow (Requirements 3.2):
+    - Analyze regulatory compliance across US, EU, Switzerland, UK, Singapore
+    - Assess regulatory clarity and potential future restrictions
+    - Evaluate exchange listing status and regulatory approval
+    - Review compliance with AML/KYC requirements by jurisdiction
+    - Identify potential regulatory risks and mitigation strategies
+    
+    Acquisition Strategy Analysis (Requirements 3.3):
+    - Recommend optimal acquisition strategies (DCA vs lump sum)
+    - Analyze market timing considerations and volatility patterns
+    - Suggest entry points based on technical and fundamental analysis
+    - Provide implementation timeline and risk management strategies
+    
+    Allocation Management (Requirements 3.4):
+    - Enforce strict 5% maximum allocation limit for all crypto combined
+    - When 5% limit is reached, propose internal rebalancing strategies
+    - Optimize allocation weights within the 5% constraint
+    - Suggest replacement strategies for underperforming crypto holdings
+    
+    Use Market Screening Tool for initial filtering, Enhanced Crypto Analysis Tool
+    for comprehensive evaluation, DeFi Metrics Tool for protocol analysis, and
+    A+ Scoring Tool for final grading assessment.
+    
+  expected_output: >
+    A selective list of top 5 A+ grade crypto candidates with comprehensive analysis:
+    - Composite A+ scores and detailed grading rationale
+    - Tokenomics analysis including supply mechanisms and utility functions
+    - Institutional adoption metrics and corporate treasury integration evidence
+    - Active development team assessment and transparency evaluation
+    - DeFi protocol metrics (TVL, yield opportunities, governance participation)
+    - Regulatory risk assessment by major jurisdictions (US, EU, Switzerland, UK, Singapore)
+    - Technology assessment and development activity indicators
+    - Acquisition strategy recommendations (DCA timing, entry points, risk management)
+    - Allocation recommendations within 5% total crypto limit
+    - Internal rebalancing strategies when limit constraints are reached
+    - Implementation timeline and specific execution considerations
+    
+  agent: crypto_discovery_agent
+  output_file: "output/discovery/a_plus_crypto.md"
+  async_execution: true
+  depends_on:
+    - stock_discovery_task
+
+validation_task:
+  description: >
+    Validate all A+ candidates through rigorous backtesting and risk analysis.
+    Ensure recommendations meet the highest standards of due diligence across
+    multiple market regimes and time periods.
+    
+    Validation Requirements:
+    - Backtest over minimum 5 years of data
+    - Test across bull, bear, and sideways markets
+    - Calculate risk-adjusted performance metrics
+    - Stress test under various scenarios
+    - Validate tracking error for ETFs
+    - Assess correlation with existing holdings
+    
+    Reject any candidates that fail validation criteria.
+    
+  expected_output: >
+    Validation report for all A+ candidates including:
+    - Backtesting results with risk metrics (Sharpe, Sortino, Max Drawdown)
+    - Performance across different market regimes
+    - Stress test results and scenario analysis
+    - Final validation status (PASS/FAIL) for each candidate
+    - Detailed rationale for any rejections
+    
+  agent: validation_agent
+  output_file: "output/discovery/validation_report.md"
+  depends_on:
+    - crypto_discovery_task
+
+optimization_task:
+  description: >
+    Integrate validated A+ discoveries into existing portfolios for maximum
+    improvement. Optimize allocations while maintaining appropriate risk-return
+    profiles and considering implementation constraints.
+    
+    Portfolio Integration Logic (Requirements 5.1, 5.4):
+    - Analyze current portfolio composition and grade distribution
+    - Identify optimal replacement opportunities for lower-grade holdings
+    - Calculate portfolio-level impact of A+ discoveries integration
+    - Ensure seamless integration with existing portfolio review system
+    - Update allocation targets automatically when recommendations are accepted
+    - Maintain compatibility with user investment objectives and risk profile
+    
+    Impact Analysis Requirements (Requirements 5.2):
+    - Calculate before/after portfolio grade improvements (target: +10% minimum)
+    - Analyze impact on portfolio risk metrics (volatility, Sharpe ratio, max drawdown)
+    - Assess diversification effects and correlation changes
+    - Evaluate sector and geographic allocation impacts
+    - Project expected performance improvements vs benchmarks
+    - Include confidence intervals and sensitivity analysis
+    
+    Allocation Optimization Requirements (Requirements 5.3):
+    - Optimize allocation weights using modern portfolio theory principles
+    - Apply risk constraints and diversification requirements
+    - Consider transaction costs, tax implications, and implementation timing
+    - Respect regulatory constraints (UCITS compliance, concentration limits)
+    - Maintain appropriate asset class allocations (max 5% crypto)
+    - Generate specific buy/sell recommendations with quantities and timing
+    
+    Implementation Planning:
+    - Prioritize recommendations by expected impact and implementation ease
+    - Create phased implementation timeline to minimize market impact
+    - Consider market conditions and optimal execution timing
+    - Provide specific action items with clear next steps
+    - Include monitoring and rebalancing recommendations
+    
+    Use Portfolio Analysis Tool for current portfolio assessment, Optimization Tool
+    for allocation calculations, Risk Assessment Tool for impact analysis, and
+    integration with existing grading system for grade improvement calculations.
+    
+  expected_output: >
+    Comprehensive portfolio optimization report including:
+    - Executive summary of optimization opportunities and expected improvements
+    - Current portfolio analysis with grade distribution and risk metrics
+    - Before/after portfolio comparison showing grade improvements (target: +10%)
+    - Detailed impact analysis on risk-return profile and diversification
+    - Optimal allocation recommendations for each A+ discovery with specific weights
+    - Risk impact assessment including volatility, correlation, and concentration changes
+    - Implementation plan with prioritized recommendations and timeline
+    - Transaction cost analysis and tax optimization considerations
+    - Regulatory compliance verification (UCITS, concentration limits)
+    - Monitoring recommendations and rebalancing triggers
+    - Integration instructions for updating portfolio review system
+    - Expected performance improvements vs relevant benchmarks
+    - Sensitivity analysis and confidence intervals for projections
+    
+  agent: portfolio_optimization_agent
+  output_file: "output/discovery/optimization_report.md"
+  depends_on:
+    - validation_task
+
+report_generation_task:
+  description: >
+    Generate comprehensive HTML report with dedicated A+ opportunities section,
+    showcasing portfolio grade improvements and implementation recommendations.
+    Provide full French language support for Swiss and European investors.
+    
+    HTML Report Format Requirements (Requirements 5.1, 5.2):
+    - Professional HTML structure with responsive design and FinWiz branding
+    - Dedicated "Opportunités A+ Identifiées" section with detailed analysis
+    - Interactive charts and visualizations for grade improvements
+    - Executive summary highlighting key findings and recommendations
+    - Detailed analysis sections for ETFs, stocks, and crypto discoveries
+    - Implementation roadmap with prioritized action items
+    - Risk assessment and mitigation strategies section
+    - Data sources and methodology transparency
+    
+    Before/After Portfolio Comparison Requirements (Requirements 5.1, 5.2):
+    - Current portfolio composition with individual asset grades
+    - Proposed portfolio composition with A+ replacements
+    - Grade distribution comparison (current vs optimized)
+    - Portfolio-level grade improvement calculation (target: +10% minimum)
+    - Risk-return profile comparison (Sharpe ratio, volatility, max drawdown)
+    - Diversification impact analysis with sector/geographic breakdowns
+    - Expected performance improvement vs benchmarks
+    - Visual charts showing grade improvements and allocation changes
+    
+    French Language Support Configuration (Requirements 5.2):
+    - Complete French translation of all report sections
+    - Financial terminology localization for Swiss/European context
+    - Currency formatting in EUR/CHF where applicable
+    - Date formatting according to European standards (DD/MM/YYYY)
+    - Regulatory references adapted for UCITS and European regulations
+    - Cultural adaptation for Swiss investment preferences
+    - Bilingual executive summary (French primary, English secondary)
+    
+    Report Structure and Content:
+    - Résumé Exécutif (Executive Summary) with key findings
+    - Analyse du Portefeuille Actuel (Current Portfolio Analysis)
+    - Opportunités A+ Identifiées (A+ Opportunities Identified)
+      * ETFs A+ recommandés avec analyse détaillée
+      * Actions A+ sélectionnées avec fondamentaux
+      * Cryptomonnaies A+ avec évaluation des risques
+    - Comparaison Avant/Après (Before/After Comparison)
+    - Plan d'Implémentation (Implementation Plan)
+    - Évaluation des Risques (Risk Assessment)
+    - Annexes Techniques (Technical Appendices)
+    
+    Technical Implementation:
+    - Use HTML Report Generator with French template support
+    - Integrate with existing FinWiz report styling and branding
+    - Ensure PDF conversion compatibility with French characters
+    - Include interactive elements for grade comparison visualization
+    - Implement responsive design for mobile and desktop viewing
+    - Add export functionality for sharing and archiving
+    
+  expected_output: >
+    Professional HTML investment discovery report including:
+    - Comprehensive executive summary in French highlighting A+ opportunities
+    - Current portfolio analysis with detailed grade breakdown and risk metrics
+    - Dedicated A+ opportunities section with 10+ ETFs, 15+ stocks, 5+ crypto candidates
+    - Before/after portfolio comparison with visual grade improvement charts
+    - Portfolio-level grade improvement calculation (minimum 10% target)
+    - Risk-return profile comparison with Sharpe ratio and volatility analysis
+    - Detailed implementation roadmap with prioritized recommendations
+    - French-localized financial terminology and regulatory context
+    - Professional styling consistent with FinWiz branding standards
+    - PDF conversion ready with proper French character encoding
+    - Interactive charts for grade distribution and allocation changes
+    - Data source citations and methodology transparency
+    - Risk mitigation strategies and monitoring recommendations
+    
+  agent: portfolio_optimization_agent
+  output_file: "output/discovery/rapport_opportunites_a_plus.html"
+  depends_on:
+    - optimization_task
+
+feedback_learning_task:
+  description: >
+    Analyze collected user feedback and performance outcomes to continuously
+    improve A+ discovery criteria. Implement machine learning approaches to
+    optimize recommendation quality and ensure the feedback loop drives
+    measurable improvements in discovery effectiveness.
+    
+    Feedback Collection and Analysis (Requirements 7.4):
+    - Collect and analyze user feedback on A+ recommendations (acceptance/rejection)
+    - Track performance outcomes for accepted recommendations over time
+    - Monitor grade maintenance rates for A+ investments (target: 80%+)
+    - Analyze user confidence ratings and sentiment patterns
+    - Identify success and failure patterns across asset types (ETFs, stocks, crypto)
+    - Calculate acceptance rates by asset type and grade level
+    - Assess data quality and statistical significance of feedback samples
+    
+    Performance Outcome Tracking (Success Metrics):
+    - Monitor portfolio grade improvements from A+ implementations (target: 10%+)
+    - Track discovery rate effectiveness (target: 5+ A+ opportunities monthly)
+    - Measure recommendation precision (target: 80% maintain A+ grade over 6 months)
+    - Analyze user adoption rates (target: 70% acceptance rate)
+    - Calculate relative performance vs benchmarks (target: 2%+ annual outperformance)
+    - Monitor user satisfaction through confidence ratings and sentiment analysis
+    
+    Criteria Optimization and Learning (Requirements 7.4):
+    - Implement adaptive learning algorithms to adjust A+ criteria based on feedback
+    - Optimize screening thresholds for ETFs (expense ratios, AUM, tracking error)
+    - Refine stock selection criteria (ROE, growth rates, debt ratios) based on outcomes
+    - Adjust crypto evaluation parameters (market cap, volume, adoption metrics)
+    - Apply market regime adjustments to criteria during different economic conditions
+    - Validate criteria changes through backtesting before implementation
+    - Implement rollback mechanisms for underperforming criteria adjustments
+    
+    Learning System Implementation:
+    - Use Feedback Analysis Tool to identify patterns and insights
+    - Apply Criteria Optimization Tool to implement learning-based adjustments
+    - Utilize Learning Metrics Tool to monitor system effectiveness
+    - Implement statistical significance testing for criteria changes
+    - Create A/B testing framework for validating improvements
+    - Maintain comprehensive audit trail of all criteria adjustments
+    
+    Success Metrics Monitoring:
+    - Track all five key success metrics defined in requirements
+    - Generate monthly learning effectiveness reports
+    - Monitor trends in acceptance rates, performance outcomes, and user satisfaction
+    - Identify opportunities for further system improvements
+    - Provide recommendations for manual criteria adjustments when needed
+    - Alert on significant performance degradation requiring immediate attention
+    
+    Integration with Monitoring System:
+    - Coordinate with A+ Monitoring Service for continuous grade tracking
+    - Integrate feedback collection with portfolio review workflows
+    - Ensure seamless data flow between discovery, monitoring, and learning systems
+    - Maintain consistency with existing grading system and criteria
+    - Support both automated and manual feedback collection mechanisms
+    
+    Use Feedback Analysis Tool for pattern identification, Criteria Optimization Tool
+    for implementing learning-based adjustments, Learning Metrics Tool for effectiveness
+    monitoring, and integration with A+ Monitoring Service for continuous tracking.
+    
+  expected_output: >
+    Comprehensive feedback learning analysis and optimization report including:
+    - Feedback analysis summary with acceptance rates, sentiment patterns, and insights
+    - Performance outcome tracking with grade maintenance and relative performance metrics
+    - Success metrics dashboard showing progress against all five key targets:
+      * Portfolio grade improvement rates (target: 10%+ minimum)
+      * Discovery rate effectiveness (target: 5+ A+ opportunities monthly)
+      * Recommendation precision (target: 80% maintain A+ grade over 6 months)
+      * User adoption rates (target: 70% acceptance rate)
+      * Relative performance vs benchmarks (target: 2%+ annual outperformance)
+    - Criteria optimization recommendations based on learning analysis
+    - Asset-specific learning insights for ETFs, stocks, and cryptocurrencies
+    - Market regime adjustments and adaptive criteria modifications
+    - Learning system effectiveness metrics and improvement trends
+    - Statistical significance analysis for all proposed criteria changes
+    - Backtesting validation results for criteria adjustments
+    - Implementation plan for approved criteria optimizations
+    - Rollback recommendations for underperforming previous adjustments
+    - Integration status with A+ monitoring and portfolio review systems
+    - Monthly learning effectiveness summary with trend analysis
+    - Recommendations for manual intervention when automated learning is insufficient
+    - Quality assurance metrics for feedback data and learning algorithm performance
+    
+  agent: feedback_learning_agent
+  output_file: "output/discovery/feedback_learning_report.md"
+  depends_on:
+    - report_generation_task

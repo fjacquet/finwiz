@@ -1,5 +1,225 @@
 {
   "$defs": {
+    "APlusImprovementSuggestion": {
+      "additionalProperties": false,
+      "description": "A+ improvement suggestion for a specific holding.",
+      "properties": {
+        "improvement_type": {
+          "description": "Type of improvement suggested",
+          "enum": [
+            "replacement",
+            "addition",
+            "rebalancing"
+          ],
+          "title": "Improvement Type",
+          "type": "string"
+        },
+        "recommended_symbol": {
+          "description": "Recommended A+ investment symbol",
+          "title": "Recommended Symbol",
+          "type": "string"
+        },
+        "recommended_name": {
+          "description": "Full name of recommended investment",
+          "title": "Recommended Name",
+          "type": "string"
+        },
+        "recommended_grade": {
+          "description": "Grade of recommended investment",
+          "enum": [
+            "A+",
+            "A",
+            "B+",
+            "B",
+            "C+",
+            "C",
+            "D",
+            "F"
+          ],
+          "title": "Recommended Grade",
+          "type": "string"
+        },
+        "expected_grade_improvement": {
+          "description": "Expected numerical improvement in grade",
+          "title": "Expected Grade Improvement",
+          "type": "number"
+        },
+        "grade_improvement_description": {
+          "description": "Human-readable description of grade improvement",
+          "title": "Grade Improvement Description",
+          "type": "string"
+        },
+        "allocation_percentage": {
+          "description": "Recommended allocation percentage",
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "Allocation Percentage",
+          "type": "number"
+        },
+        "implementation_priority": {
+          "description": "Implementation priority",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Implementation Priority",
+          "type": "string"
+        },
+        "rationale": {
+          "description": "Detailed rationale for the improvement",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "expected_annual_benefit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expected annual benefit in percentage points",
+          "title": "Expected Annual Benefit"
+        },
+        "risk_impact_description": {
+          "description": "Description of risk impact",
+          "title": "Risk Impact Description",
+          "type": "string"
+        },
+        "cost_analysis": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Transaction costs and fees",
+          "title": "Cost Analysis",
+          "type": "object"
+        },
+        "implementation_notes": {
+          "description": "Implementation considerations",
+          "items": {
+            "type": "string"
+          },
+          "title": "Implementation Notes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "improvement_type",
+        "recommended_symbol",
+        "recommended_name",
+        "recommended_grade",
+        "expected_grade_improvement",
+        "grade_improvement_description",
+        "allocation_percentage",
+        "implementation_priority",
+        "rationale",
+        "risk_impact_description"
+      ],
+      "title": "APlusImprovementSuggestion",
+      "type": "object"
+    },
+    "APlusOpportunitySection": {
+      "additionalProperties": false,
+      "description": "A+ opportunities section for portfolio review reports.",
+      "properties": {
+        "total_opportunities_found": {
+          "default": 0,
+          "description": "Total number of A+ opportunities identified",
+          "title": "Total Opportunities Found",
+          "type": "integer"
+        },
+        "high_priority_opportunities": {
+          "default": 0,
+          "description": "Number of high-priority opportunities",
+          "title": "High Priority Opportunities",
+          "type": "integer"
+        },
+        "expected_portfolio_grade_improvement": {
+          "default": 0.0,
+          "description": "Expected improvement in portfolio grade",
+          "title": "Expected Portfolio Grade Improvement",
+          "type": "number"
+        },
+        "grade_improvement_description": {
+          "default": "",
+          "description": "Human-readable description of grade improvement",
+          "title": "Grade Improvement Description",
+          "type": "string"
+        },
+        "replacement_opportunities": {
+          "default": 0,
+          "description": "Number of replacement opportunities",
+          "title": "Replacement Opportunities",
+          "type": "integer"
+        },
+        "addition_opportunities": {
+          "default": 0,
+          "description": "Number of addition opportunities",
+          "title": "Addition Opportunities",
+          "type": "integer"
+        },
+        "rebalancing_opportunities": {
+          "default": 0,
+          "description": "Number of rebalancing opportunities",
+          "title": "Rebalancing Opportunities",
+          "type": "integer"
+        },
+        "top_recommendations": {
+          "description": "Top A+ symbols recommended",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Top Recommendations",
+          "type": "array"
+        },
+        "implementation_timeline": {
+          "default": "",
+          "description": "Recommended implementation timeline",
+          "title": "Implementation Timeline",
+          "type": "string"
+        },
+        "total_expected_annual_benefit": {
+          "default": 0.0,
+          "description": "Total expected annual benefit",
+          "title": "Total Expected Annual Benefit",
+          "type": "number"
+        },
+        "last_discovery_date": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When A+ discovery was last performed",
+          "title": "Last Discovery Date"
+        },
+        "discovery_coverage": {
+          "description": "Asset types covered in discovery",
+          "items": {
+            "type": "string"
+          },
+          "title": "Discovery Coverage",
+          "type": "array"
+        },
+        "market_conditions_note": {
+          "default": "",
+          "description": "Note about market conditions during discovery",
+          "title": "Market Conditions Note",
+          "type": "string"
+        }
+      },
+      "title": "APlusOpportunitySection",
+      "type": "object"
+    },
     "Alternative": {
       "additionalProperties": false,
       "properties": {
@@ -14,7 +234,8 @@
         "asset_class": {
           "enum": [
             "stock",
-            "etf"
+            "etf",
+            "crypto"
           ],
           "title": "Asset Class",
           "type": "string"
@@ -24,6 +245,31 @@
           "minimum": 0.0,
           "title": "Composite Score",
           "type": "number"
+        },
+        "grade": {
+          "description": "Letter grade (A+ to F)",
+          "enum": [
+            "A+",
+            "A",
+            "B+",
+            "B",
+            "C+",
+            "C",
+            "D",
+            "F"
+          ],
+          "title": "Grade",
+          "type": "string"
+        },
+        "grade_description": {
+          "description": "Human-readable grade description",
+          "title": "Grade Description",
+          "type": "string"
+        },
+        "recommended_action": {
+          "description": "Recommended action based on grade",
+          "title": "Recommended Action",
+          "type": "string"
         },
         "risk_score_standardized": {
           "maximum": 5.0,
@@ -51,6 +297,53 @@
           "maxItems": 10,
           "title": "Citations",
           "type": "array"
+        },
+        "is_a_plus_candidate": {
+          "default": false,
+          "description": "Whether this is an A+ grade candidate",
+          "title": "Is A Plus Candidate",
+          "type": "boolean"
+        },
+        "discovery_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source of A+ discovery (e.g., 'investment_discovery_crew')",
+          "title": "Discovery Source"
+        },
+        "confidence_level": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Confidence in A+ classification",
+          "title": "Confidence Level"
+        },
+        "expected_annual_benefit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expected annual benefit in percentage points",
+          "title": "Expected Annual Benefit"
         }
       },
       "required": [
@@ -58,6 +351,9 @@
         "name",
         "asset_class",
         "composite_score",
+        "grade",
+        "grade_description",
+        "recommended_action",
         "risk_score_standardized"
       ],
       "title": "Alternative",
@@ -69,7 +365,8 @@
         "asset_class": {
           "enum": [
             "stock",
-            "etf"
+            "etf",
+            "crypto"
           ],
           "title": "Asset Class",
           "type": "string"
@@ -100,6 +397,31 @@
           "title": "Composite Score",
           "type": "number"
         },
+        "grade": {
+          "description": "Letter grade (A+ to F)",
+          "enum": [
+            "A+",
+            "A",
+            "B+",
+            "B",
+            "C+",
+            "C",
+            "D",
+            "F"
+          ],
+          "title": "Grade",
+          "type": "string"
+        },
+        "grade_description": {
+          "description": "Human-readable grade description",
+          "title": "Grade Description",
+          "type": "string"
+        },
+        "recommended_action": {
+          "description": "Recommended action based on grade",
+          "title": "Recommended Action",
+          "type": "string"
+        },
         "risk": {
           "$ref": "#/$defs/RiskAssessmentStandardized"
         },
@@ -126,6 +448,34 @@
           "maxItems": 3,
           "title": "Alternatives",
           "type": "array"
+        },
+        "a_plus_improvement_suggestions": {
+          "description": "A+ improvement suggestions for this holding",
+          "items": {
+            "$ref": "#/$defs/APlusImprovementSuggestion"
+          },
+          "maxItems": 5,
+          "title": "A Plus Improvement Suggestions",
+          "type": "array"
+        },
+        "has_a_plus_opportunities": {
+          "default": false,
+          "description": "Whether A+ improvement opportunities exist for this holding",
+          "title": "Has A Plus Opportunities",
+          "type": "boolean"
+        },
+        "current_grade_potential": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Assessment of current holding's potential for grade improvement",
+          "title": "Current Grade Potential"
         }
       },
       "required": [
@@ -135,6 +485,9 @@
         "currency",
         "decision",
         "composite_score",
+        "grade",
+        "grade_description",
+        "recommended_action",
         "risk"
       ],
       "title": "HoldingDecision",
@@ -205,6 +558,40 @@
       },
       "title": "Holdings",
       "type": "array"
+    },
+    "a_plus_opportunities": {
+      "$ref": "#/$defs/APlusOpportunitySection",
+      "description": "A+ investment opportunities identified for this portfolio"
+    },
+    "current_a_plus_holdings_count": {
+      "default": 0,
+      "description": "Number of current A+ holdings",
+      "title": "Current A Plus Holdings Count",
+      "type": "integer"
+    },
+    "potential_a_plus_holdings_count": {
+      "default": 0,
+      "description": "Potential A+ holdings after improvements",
+      "title": "Potential A Plus Holdings Count",
+      "type": "integer"
+    },
+    "portfolio_grade_improvement_potential": {
+      "default": 0.0,
+      "description": "Maximum potential grade improvement",
+      "title": "Portfolio Grade Improvement Potential",
+      "type": "number"
+    },
+    "schema_version": {
+      "default": "2.0",
+      "description": "Schema version for migration compatibility",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "has_a_plus_analysis": {
+      "default": false,
+      "description": "Whether A+ analysis has been performed",
+      "title": "Has A Plus Analysis",
+      "type": "boolean"
     }
   },
   "required": [

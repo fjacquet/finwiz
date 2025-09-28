@@ -28,71 +28,127 @@ market_technical_analysis_task:
 # Technical Analysis Tasks
 stock_screening_task:
   description: >
-    Screen and identify the top 10 stable, blue-chip stocks with strong
-    fundamentals. Focus on companies with consistent earnings, solid balance
-    sheets, and proven track records of performance.
+    FIRST: Read the schema files docs/schemas/MarketSentiment.schema.json and 
+    docs/schemas/examples/market_sentiment.example.json to understand the exact output format required.
+    
+    As an AI-driven financial analyst, use your reasoning capabilities to screen and identify 
+    the top 10 stable, blue-chip stocks with strong fundamentals. Your analysis should demonstrate 
+    clear AI reasoning and decision-making throughout the process.
 
-    1. Screen stocks using stability and value metrics 
-    2. Evaluate financial fundamentals and dividend history 
-    3. Assess management teams and corporate governance 
-    4. Select the top 10 stocks with lowest risk profiles
+    AI REASONING REQUIREMENTS:
+    - Apply intelligent reasoning to evaluate each stock's potential
+    - Provide clear rationale for why each stock was selected or rejected
+    - Demonstrate understanding of market dynamics and financial relationships
+    - Show adaptive thinking based on current market conditions as of {full_date}
+    - Generate insights that go beyond simple rule-based calculations
+    
+    CRITICAL DATE CONTEXT:
+    - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
+    - All analysis must reflect market conditions as of {full_date}, NOT historical dates
+    - When searching or analyzing, use {full_date} as the current date context
+
+    ANALYSIS PROCESS (AI-DRIVEN):
+    1. Use AI reasoning to screen stocks using stability and value metrics, explaining your methodology
+    2. Apply intelligent evaluation of financial fundamentals and dividend history with clear reasoning
+    3. Demonstrate AI assessment of management teams and corporate governance quality
+    4. Use reasoning to select the top 10 stocks with optimal risk-return profiles
     5. Validate each proposed ticker using the "Ticker Existence Validation Tool":
        - For equities/ETFs use Yahoo Finance existence and quoteType
        - For crypto proposals (if any), validate via Coinbase Products API
        - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
-    6. Sentiment analysis: Use the "Standardized Sentiment Analysis Tool" for consistent 
-    sentiment methodology.
-       - Analyze recent headlines/snippets (last 30–90 days) for each candidate
-       - Classify sentiment with weighted scoring and confidence intervals
-       - Provide aggregate metrics: mean score, weighted score, counts per label
-       - Extract trending topics with relevance scoring
-       - Include top 3 positive/negative headlines with source URLs and dates
-       - Use standardized cross-asset sentiment methodology for consistency
+    6. AI-driven sentiment analysis: Use the "Standardized Sentiment Analysis Tool" with intelligent interpretation:
+       - FIRST: Read docs/schemas/examples/market_sentiment.example.json to understand the exact output format
+       - Apply AI reasoning to analyze recent headlines/snippets (last 30–90 days) for each candidate
+       - Use intelligent classification with weighted scoring and confidence intervals
+       - Generate AI insights on aggregate metrics: mean score, weighted score, counts per label
+       - IMPORTANT: Use only "pos", "neu", "neg" as keys in the counts field (not "Bullish", "Bearish", etc.)
+       - Apply reasoning to extract trending topics with relevance scoring
+       - Use AI judgment to select top 3 positive/negative headlines with source URLs and dates
+       - Apply standardized cross-asset sentiment methodology with intelligent adaptation
 
-    Today is {full_date}. Ensure your analysis reflects current market
+    AI OUTPUT REQUIREMENTS:
+    - Include explicit AI reasoning for each stock selection
+    - Provide confidence levels based on AI analysis
+    - Demonstrate understanding of market interconnections
+    - Show adaptive thinking for current market conditions as of {full_date}
+    - Generate actionable insights that reflect AI decision-making
+
+    Today is {full_date}. Ensure your AI analysis reflects current market
     conditions. IMPORTANT: Use only real, existing stocks with accurate ticker
     symbols.
 
-    OUTPUT: Return a list of the top 10 emerging stocks with analysis.
+    OUTPUT: Return a list of the top 10 emerging stocks with AI-driven analysis and explicit reasoning.
   expected_output: >
     A list of 10 emerging stocks with  potential, including ticker
     symbols and analysis. Include a concise "Market Sentiment" summary per ticker
     with aggregate metrics and cited headlines.
+    
+    CRITICAL SCHEMA REQUIREMENTS:
+    - Read docs/schemas/MarketSentiment.schema.json and docs/schemas/examples/market_sentiment.example.json
+    - The counts field MUST use exactly these keys: "pos", "neu", "neg" (NOT "Bullish", "Bearish", etc.)
+    - All dates must be in ISO format with timezone (e.g., "2025-09-27T00:00:00Z")
+    - Follow the exact schema structure shown in the example files
+    
     Also include machine-readable JSON appendices at the end containing:
     - stock_sentiments[] matching the MarketSentiment schema (one per ticker)
     - validated_tickers[] where each item is {symbol, asset_class, valid, reason, meta}
   agent: market_technical_analyst
   output_file: "output/stock/emerging_stocks_analysis.md"
-  output_pydantic: MarketSentiment
   async_execution: true
 
 # Technical Detail Tasks
 technical_detail_task:
   description: >
-    Perform detailed technical analysis on each of the 10 selected stocks.
+    As an AI financial analyst, perform detailed technical analysis on each of the 10 selected stocks 
+    using advanced reasoning and decision-making capabilities. Demonstrate clear AI thinking throughout 
+    your analysis process.
 
-    1. Analyze financial fundamentals for each stock using the latest available data as of {full_date}.
-    2. Assess growth scalability and efficiency metrics based on recent performance.
-    3. Evaluate balance sheet strength and risk factors as of {full_date}.
-    4. Examine competitive advantages and innovation potential, considering any recent developments.
-    5. 10-K extraction: Use the "Enhanced SEC Analysis Tool" to extract comprehensive insights from 
-    the most recent 10-K filing for each ticker.
-       - Extract detailed, cited excerpts from Business Overview (Item 1), Risk Factors (Item 1A), MD&A (Item 7),
-        and Market Risk Disclosures (Item 7A).
-       - Include SEC filing URL, specific section references, filing date, and standardized risk assessment.
-       - Provide structured TenKInsight objects with proper citations and provenance.
-       - Summarize material year-over-year changes relevant to the current analysis as of {full_date}.
-    6. Technical indicators: Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands
-       for relevant intervals per ticker, referencing exact parameters used.
-    7. Quantitative analysis: Use the "Quantitative Analysis Tool" to perform comprehensive quantitative analysis
-       for each ticker including:
-       - Technical analysis with multiple indicators and signal generation
-       - Strategy backtesting with performance metrics (Sharpe ratio, max drawdown, win rate)
-       - Risk-adjusted performance analysis and investment recommendations
-       - Use asset_class="stock" and analysis_type="comprehensive" for complete analysis
-    8. Charts: Generate visual charts with the "Chart-img Generator" tool and embed returned data URLs in the report.
+    AI REASONING REQUIREMENTS:
+    - Apply intelligent reasoning to interpret financial data and technical indicators
+    - Provide clear AI-generated insights that go beyond simple data reporting
+    - Demonstrate understanding of complex financial relationships and market dynamics
+    - Show adaptive analysis based on current market conditions and company-specific factors
+    - Generate investment recommendations based on AI reasoning, not just algorithmic rules
 
-    Ensure your analysis reflects the company's status as of {full_date}.
+    AI-DRIVEN ANALYSIS PROCESS:
+    1. Use AI reasoning to analyze financial fundamentals for each stock using latest data as of {full_date}:
+       - Apply intelligent interpretation of financial metrics and ratios
+       - Generate insights on financial health and performance trends
+       - Provide reasoned assessment of financial strength and weaknesses
+    2. Apply AI assessment of growth scalability and efficiency metrics:
+       - Use reasoning to evaluate sustainable growth potential
+       - Generate insights on operational efficiency and competitive positioning
+    3. Use AI reasoning to evaluate balance sheet strength and risk factors as of {full_date}:
+       - Apply intelligent risk assessment beyond simple ratio analysis
+       - Generate insights on financial stability and potential vulnerabilities
+    4. Apply AI reasoning to examine competitive advantages and innovation potential:
+       - Use intelligent analysis of competitive moats and market positioning
+       - Generate insights on innovation capacity and future growth drivers
+    5. AI-enhanced 10-K extraction: Use the "Enhanced SEC Analysis Tool" with intelligent interpretation:
+       - Apply AI reasoning to extract and synthesize insights from SEC filings
+       - Generate intelligent summaries of Business Overview, Risk Factors, MD&A, and Market Risk Disclosures
+       - Use AI to identify material year-over-year changes and their implications
+       - Provide AI-generated risk assessments with clear reasoning
+    6. AI-driven technical indicators analysis: Use tools with intelligent interpretation:
+       - Apply AI reasoning to interpret RSI/MACD/Bollinger Bands signals
+       - Generate insights on technical patterns and their implications
+       - Use AI to synthesize multiple indicator signals into coherent analysis
+    7. AI-enhanced quantitative analysis: Use the "Quantitative Analysis Tool" with intelligent interpretation:
+       - Apply AI reasoning to interpret backtesting results and performance metrics
+       - Generate AI-driven investment recommendations based on quantitative insights
+       - Use reasoning to assess risk-adjusted performance and portfolio fit
+    8. AI-interpreted charts: Generate and intelligently analyze visual charts:
+       - Use AI reasoning to interpret chart patterns and technical formations
+       - Generate insights on price action and trend analysis
+
+    AI OUTPUT REQUIREMENTS:
+    - Include explicit AI reasoning for each technical assessment
+    - Provide AI-generated confidence levels and uncertainty acknowledgments
+    - Demonstrate intelligent synthesis of multiple data sources
+    - Show adaptive thinking for current market conditions as of {full_date}
+    - Generate actionable investment insights based on AI decision-making
+
+    Ensure your AI analysis reflects the company's status as of {full_date}.
   expected_output: >
     Technical assessment in markdown of each stock including financial metrics
     and analysis. Include a "10-K Insights" subsection with cited excerpts and
@@ -104,7 +160,6 @@ technical_detail_task:
     - quantitative_analysis[] with comprehensive quantitative analysis results for each ticker
   agent: market_technical_analyst
   output_file: "output/stock/stock_technical_details.md"
-  output_pydantic: TenKInsight
   async_execution: true
   depends_on:
     - stock_screening_task
@@ -112,31 +167,56 @@ technical_detail_task:
 # Risk Analysis Tasks
 stock_risk_assessment_task:
   description: >
-    Evaluate risks for each of the 10 stocks identified in previous tasks.
+    As an AI risk assessment specialist, evaluate risks for each of the 10 stocks using advanced 
+    reasoning and intelligent decision-making. Your analysis should demonstrate clear AI thinking 
+    and provide insights that go beyond simple rule-based risk scoring.
 
-    1. Use the "Enhanced SEC Analysis Tool" to extract comprehensive risk factors from 10-K filings
-     for standardized risk assessment.
-    2. Assess regulatory challenges and compliance status in major markets, relevant for {current_year}.
-    3. Identify financial stability and debt structure risks based on data as of {full_date}.
-    4. Analyze valuation risks (P/E ratio, revenue concentration, growth sustainability) using current 
-    market data as of {full_date}.
-    5. Evaluate competitive threats and market positioning as of {full_date}.
-    6. Review management and corporate governance risks based on the latest information.
-    7. Apply the "Standardized Risk Scoring Tool" methodology to generate consistent 0-5 risk scores
-     with proper level mapping.
-    8. Quantitative risk assessment: Use the "Quantitative Analysis Tool" with analysis_type="performance"
-       to calculate risk-adjusted metrics including:
-       - Value at Risk (VaR) and Conditional VaR calculations
-       - Maximum drawdown analysis and volatility metrics
-       - Sharpe, Sortino, and Calmar ratios for risk-adjusted returns
-       - Beta and alpha calculations relative to market benchmarks
-    9. Market sentiment: Use the "Standardized Sentiment Analysis Tool" for consistent sentiment analysis.
-       - Analyze recent headlines/snippets with standardized methodology
-       - Provide weighted sentiment scores and confidence intervals
-       - Include sentiment distribution (Positive/Neutral/Negative counts)
-       - Extract trending topics relevant to each ticker
-       - List top 3 positive and top 3 negative headlines with source URLs and dates
-       - Use consistent cross-asset sentiment scoring for comparability
+    AI REASONING REQUIREMENTS:
+    - Apply intelligent risk assessment that considers complex interdependencies
+    - Provide clear AI-generated insights on risk factors and their potential impacts
+    - Demonstrate understanding of systemic vs. idiosyncratic risks
+    - Show adaptive risk analysis based on current market conditions and company-specific factors
+    - Generate risk mitigation strategies based on AI reasoning
+
+    AI-DRIVEN RISK ASSESSMENT PROCESS:
+    1. AI-enhanced SEC analysis: Use the "Enhanced SEC Analysis Tool" with intelligent interpretation:
+       - Apply AI reasoning to extract and synthesize risk factors from 10-K filings
+       - Generate intelligent risk categorization and impact assessment
+       - Use AI to identify emerging risks not explicitly stated in filings
+    2. AI-driven regulatory risk assessment: Apply intelligent analysis of regulatory challenges:
+       - Use reasoning to assess regulatory compliance status and future regulatory risks
+       - Generate insights on regulatory trends and their potential impacts
+    3. AI-powered financial stability analysis: Use intelligent assessment of financial risks:
+       - Apply AI reasoning to evaluate debt structure and liquidity risks
+       - Generate insights on financial stability under various stress scenarios
+    4. AI-driven valuation risk analysis: Apply intelligent valuation risk assessment:
+       - Use reasoning to evaluate P/E ratios, revenue concentration, and growth sustainability
+       - Generate insights on valuation risks relative to market conditions and peer comparisons
+    5. AI-enhanced competitive risk assessment: Apply intelligent competitive analysis:
+       - Use reasoning to evaluate competitive threats and market positioning
+       - Generate insights on competitive moats and vulnerability to disruption
+    6. AI-driven governance risk analysis: Apply intelligent assessment of management risks:
+       - Use reasoning to evaluate management quality and corporate governance
+       - Generate insights on governance risks and their potential impacts
+    7. AI-enhanced risk scoring: Apply the "Standardized Risk Scoring Tool" with intelligent interpretation:
+       - Use AI reasoning to generate consistent 0-5 risk scores with clear justification
+       - Provide AI-generated confidence levels and uncertainty acknowledgments
+    8. AI-driven quantitative risk assessment: Use tools with intelligent interpretation:
+       - Apply AI reasoning to interpret VaR, drawdown analysis, and risk-adjusted metrics
+       - Generate AI insights on portfolio risk contributions and correlations
+       - Use reasoning to assess risk-adjusted performance in current market context
+    9. AI-enhanced sentiment risk analysis: Use the "Standardized Sentiment Analysis Tool" with intelligent interpretation:
+       - Apply AI reasoning to analyze sentiment trends and their risk implications
+       - Generate insights on sentiment-driven risks and market perception risks
+       - Use AI to identify sentiment patterns that may indicate emerging risks
+
+    AI OUTPUT REQUIREMENTS:
+    - Include explicit AI reasoning for each risk assessment
+    - Provide AI-generated risk scenarios and their probability assessments
+    - Demonstrate intelligent synthesis of multiple risk factors
+    - Show adaptive risk thinking for current market conditions
+    - Generate actionable risk mitigation strategies based on AI decision-making
+    - Include AI confidence levels and acknowledgment of uncertainties
 
     Follow the output instructions in docs/output_formatting_guide.md.
   expected_output: >
@@ -152,7 +232,6 @@ stock_risk_assessment_task:
     - quantitative_risk_metrics[] with comprehensive risk analysis for each ticker
   agent: investment_risk_analyst
   output_file: "output/stock/stock_investment_risk_strategy_en.html"
-  output_pydantic: RiskAssessmentStandardized
   depends_on:
     - technical_detail_task
 

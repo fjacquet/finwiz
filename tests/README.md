@@ -2,15 +2,22 @@
 
 ## Directory Structure
 
-```
+```bash
 tests/
 ├── conftest.py              # Shared fixtures and configuration
 ├── unit/                    # Fast unit tests (< 5 seconds)
 │   ├── crews/              # CrewAI crew unit tests
+│   │   ├── stock_crew/     # Stock analysis crew tests
+│   │   ├── etf_crew/       # ETF analysis crew tests
+│   │   └── crypto_crew/    # Cryptocurrency analysis crew tests
+│   ├── flow/               # Flow orchestration and main app tests
 │   ├── tools/              # Tool unit tests with mocked dependencies
 │   ├── schemas/            # Pydantic schema validation tests
-│   └── orchestrators/      # Flow orchestration unit tests
+│   ├── orchestrators/      # Flow orchestration unit tests
+│   └── utils/              # Utility function tests
 ├── integration/            # Integration tests with external services
+│   └── core_analysis/      # Core analysis integration tests
+├── performance/            # Performance and benchmark tests
 ├── validation/             # Manual validation scripts (not automated tests)
 └── fixtures/               # Test data and mock responses
 ```
@@ -18,6 +25,7 @@ tests/
 ## Test Categories
 
 ### Unit Tests (`tests/unit/`)
+
 - **Purpose**: Fast, isolated tests with mocked dependencies
 - **Execution**: `uv run pytest tests/unit/`
 - **Requirements**: Must complete in < 5 seconds, no external calls
@@ -25,10 +33,17 @@ tests/
 - **Coverage**: Includes validation system, portfolio review, schema contract validation, and all tool implementations
 
 ### Integration Tests (`tests/integration/`)
+
 - **Purpose**: Test interactions with external APIs and services
 - **Execution**: `uv run pytest tests/integration/ -m integration`
 - **Requirements**: Marked with `@pytest.mark.integration`
 - **Note**: Requires valid API keys and network access
+
+### Core Analysis Integration Tests (`tests/integration/core_analysis/`)
+
+- **Purpose**: Test core analysis crew integration and data flow
+- **Execution**: `uv run pytest tests/integration/core_analysis/ -m integration`
+- **Coverage**: Crew output validation, data integration, freshness validation
 
 ### Contract Tests (`tests/test_contract_*.py`)
 - **Purpose**: Validate Pydantic schema contracts and data boundaries
@@ -50,12 +65,17 @@ tests/
 # All unit tests (default)
 uv run pytest
 
-# Specific test category
+# Specific test categories
 uv run pytest tests/unit/tools/
 uv run pytest tests/unit/crews/
+uv run pytest tests/unit/crews/stock_crew/
+uv run pytest tests/unit/flow/
 
 # Integration tests only
 uv run pytest -m integration
+
+# Core analysis integration tests
+uv run pytest tests/integration/core_analysis/ -m integration
 
 # Exclude integration tests
 uv run pytest -m "not integration"

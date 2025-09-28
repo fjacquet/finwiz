@@ -1,0 +1,189 @@
+{
+  "$defs": {
+    "RiskAssessmentStandardized": {
+      "additionalProperties": false,
+      "description": "Standardized risk assessment across Stock/ETF/Crypto on a 0-5 scale.\n\n- score: 0 (lowest) .. 5 (highest)\n- level: human-friendly label mapped from score\n- risk_factors: up to 10 concise reasons\n- scale: reserved for future alternate encodings",
+      "properties": {
+        "scale": {
+          "default": "0_5",
+          "enum": [
+            "0_5",
+            "L_M_H",
+            "L_M_H_VH"
+          ],
+          "title": "Scale",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "level": {
+          "enum": [
+            "Low",
+            "Medium",
+            "High",
+            "Very High"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "risk_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Risk Factors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level"
+      ],
+      "title": "RiskAssessmentStandardized",
+      "type": "object"
+    }
+  },
+  "description": "A specific portfolio improvement recommendation.",
+  "properties": {
+    "current_holding": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Current holding to replace (if any)",
+      "title": "Current Holding"
+    },
+    "current_grade": {
+      "anyOf": [
+        {
+          "enum": [
+            "A+",
+            "A",
+            "B+",
+            "B",
+            "C+",
+            "C",
+            "D",
+            "F"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Current holding grade (if replacing)",
+      "title": "Current Grade"
+    },
+    "recommended_investment": {
+      "description": "Recommended A+ investment symbol",
+      "title": "Recommended Investment",
+      "type": "string"
+    },
+    "recommended_grade": {
+      "description": "Grade of recommended investment",
+      "enum": [
+        "A+",
+        "A",
+        "B+",
+        "B",
+        "C+",
+        "C",
+        "D",
+        "F"
+      ],
+      "title": "Recommended Grade",
+      "type": "string"
+    },
+    "improvement_type": {
+      "description": "Type of improvement",
+      "enum": [
+        "replacement",
+        "addition",
+        "rebalancing"
+      ],
+      "title": "Improvement Type",
+      "type": "string"
+    },
+    "expected_grade_improvement": {
+      "description": "Expected numerical improvement in portfolio grade",
+      "title": "Expected Grade Improvement",
+      "type": "number"
+    },
+    "grade_improvement_description": {
+      "description": "Human-readable description of grade improvement",
+      "title": "Grade Improvement Description",
+      "type": "string"
+    },
+    "allocation_percentage": {
+      "description": "Recommended allocation percentage",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Allocation Percentage",
+      "type": "number"
+    },
+    "implementation_priority": {
+      "description": "Implementation priority",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Implementation Priority",
+      "type": "string"
+    },
+    "rationale": {
+      "description": "Detailed rationale for the improvement",
+      "title": "Rationale",
+      "type": "string"
+    },
+    "risk_impact": {
+      "$ref": "#/$defs/RiskAssessmentStandardized",
+      "description": "Impact on portfolio risk profile"
+    },
+    "cost_analysis": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Transaction costs and fees",
+      "title": "Cost Analysis",
+      "type": "object"
+    },
+    "expected_annual_benefit": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Expected annual benefit in percentage points",
+      "title": "Expected Annual Benefit"
+    }
+  },
+  "required": [
+    "recommended_investment",
+    "recommended_grade",
+    "improvement_type",
+    "expected_grade_improvement",
+    "grade_improvement_description",
+    "allocation_percentage",
+    "implementation_priority",
+    "rationale",
+    "risk_impact"
+  ],
+  "title": "PortfolioImprovement",
+  "type": "object"
+}

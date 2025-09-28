@@ -86,13 +86,38 @@ class StockCrew:
     agents: list[BaseAgent]
     tasks: list[Task]
 
+    def __init__(self):
+        # Set configuration paths before calling super().__init__()
+        from pathlib import Path
+
+        import yaml
+
+        # Get the directory of this file
+        current_dir = Path(__file__).parent
+
+        # Load configuration files
+        with open(current_dir / "config" / "agents.yaml") as f:
+            self.agents_config = yaml.safe_load(f)
+
+        with open(current_dir / "config" / "tasks.yaml") as f:
+            self.tasks_config = yaml.safe_load(f)
+
+        super().__init__()
+
+        # Make Pydantic models available for CrewAI resolution
+        self.MarketSentiment = MarketSentiment
+        self.TenKInsight = TenKInsight
+        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+
+
+
     @agent
     def market_technical_analyst(self) -> Agent:
         """Agent that performs technical analysis on target stocks."""
         return Agent(
             config=self.agents_config["market_technical_analyst"],
             verbose=True,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning to show decision-making process
             tools=tools,
         )
 
@@ -103,7 +128,7 @@ class StockCrew:
             config=self.agents_config["investment_risk_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for risk assessment decisions
         )
 
     @agent

@@ -90,16 +90,32 @@ pre_deployment_checks() {
     # Check required directories
     mkdir -p "$BACKUP_DIR" "$PROJECT_ROOT/logs" "$PROJECT_ROOT/cache" "$PROJECT_ROOT/output"
     
+    # Create integration system directories
+    mkdir -p "$PROJECT_ROOT/output/integration/metadata"
+    mkdir -p "$PROJECT_ROOT/output/integration/contracts"
+    mkdir -p "$PROJECT_ROOT/output/integration/consolidated"
+    
     # Validate environment configuration
     log_info "Validating environment configuration..."
     cd "$PROJECT_ROOT"
     
     if ! uv run python -c "
 from finwiz.utils.configuration_manager import get_configuration_manager
+from finwiz.integration.config import load_integration_config
+from pathlib import Path
+
 try:
+    # Validate main configuration
     config_manager = get_configuration_manager()
     config_manager.validate_startup_configuration()
-    print('✅ Configuration validation successful')
+    print('✅ Main configuration validation successful')
+    
+    # Validate integration system configuration
+    integration_config_path = Path('config/integration.yaml')
+    integration_config = load_integration_config(integration_config_path if integration_config_path.exists() else None)
+    print(f'✅ Integration system configuration loaded (output_dir: {integration_config.output_dir})')
+    
+    print('✅ All configuration validation successful')
 except Exception as e:
     print(f'❌ Configuration validation failed: {e}')
     exit(1)
@@ -190,16 +206,32 @@ deploy_application() {
             export FF_PORTFOLIO_REBALANCING="${FF_PORTFOLIO_REBALANCING:-false}"
             export FF_REBALANCING_API="${FF_REBALANCING_API:-false}"
             export FF_REBALANCING_MONITORING="${FF_REBALANCING_MONITORING:-false}"
+            # Integration system settings for production
+            export FINWIZ_INTEGRATION_SYSTEM_ENABLED="${FINWIZ_INTEGRATION_SYSTEM_ENABLED:-true}"
+            export FINWIZ_INTEGRATION_STRICT_VALIDATION="${FINWIZ_INTEGRATION_STRICT_VALIDATION:-true}"
+            export FINWIZ_INTEGRATION_LOG_LEVEL="${FINWIZ_INTEGRATION_LOG_LEVEL:-INFO}"
+            export FINWIZ_INTEGRATION_PERFORMANCE_MONITORING="${FINWIZ_INTEGRATION_PERFORMANCE_MONITORING:-false}"
             ;;
         "staging")
             export FF_PORTFOLIO_REBALANCING="${FF_PORTFOLIO_REBALANCING:-true}"
             export FF_REBALANCING_API="${FF_REBALANCING_API:-true}"
             export FF_REBALANCING_MONITORING="${FF_REBALANCING_MONITORING:-false}"
+            # Integration system settings for staging
+            export FINWIZ_INTEGRATION_SYSTEM_ENABLED="${FINWIZ_INTEGRATION_SYSTEM_ENABLED:-true}"
+            export FINWIZ_INTEGRATION_STRICT_VALIDATION="${FINWIZ_INTEGRATION_STRICT_VALIDATION:-true}"
+            export FINWIZ_INTEGRATION_LOG_LEVEL="${FINWIZ_INTEGRATION_LOG_LEVEL:-DEBUG}"
+            export FINWIZ_INTEGRATION_PERFORMANCE_MONITORING="${FINWIZ_INTEGRATION_PERFORMANCE_MONITORING:-true}"
             ;;
         "development")
             export FF_PORTFOLIO_REBALANCING="${FF_PORTFOLIO_REBALANCING:-true}"
             export FF_REBALANCING_API="${FF_REBALANCING_API:-true}"
             export FF_REBALANCING_MONITORING="${FF_REBALANCING_MONITORING:-true}"
+            # Integration system settings for development
+            export FINWIZ_INTEGRATION_SYSTEM_ENABLED="${FINWIZ_INTEGRATION_SYSTEM_ENABLED:-true}"
+            export FINWIZ_INTEGRATION_STRICT_VALIDATION="${FINWIZ_INTEGRATION_STRICT_VALIDATION:-false}"
+            export FINWIZ_INTEGRATION_LOG_LEVEL="${FINWIZ_INTEGRATION_LOG_LEVEL:-DEBUG}"
+            export FINWIZ_INTEGRATION_DEBUG_MODE="${FINWIZ_INTEGRATION_DEBUG_MODE:-true}"
+            export FINWIZ_INTEGRATION_PERFORMANCE_MONITORING="${FINWIZ_INTEGRATION_PERFORMANCE_MONITORING:-true}"
             ;;
     esac
     
@@ -216,6 +248,9 @@ post_deployment_verification() {
     if ! timeout 30 uv run python -c "
 from finwiz.utils.configuration_manager import get_configuration_manager
 from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.integration.manager import CrewDataIntegrationManager
+from finwiz.integration.config import load_integration_config
+from pathlib import Path
 
 # Test configuration
 config_manager = get_configuration_manager()
@@ -226,6 +261,15 @@ print(f'API keys configured: {config_summary[\"api_keys_configured\"]}')
 feature_flags = get_feature_flags()
 enabled_flags = feature_flags.get_enabled_flags()
 print(f'Enabled features: {len(enabled_flags)}')
+
+# Test integration system
+try:
+    integration_config_path = Path('config/integration.yaml')
+    integration_config = load_integration_config(integration_config_path if integration_config_path.exists() else None)
+    integration_manager = CrewDataIntegrationManager(config_path=integration_config_path if integration_config_path.exists() else None)
+    print(f'✅ Integration system initialized (output_dir: {integration_manager.output_dir})')
+except Exception as e:
+    print(f'⚠️  Integration system warning: {e}')
 
 print('✅ Application startup verification successful')
 "; then

@@ -5,8 +5,6 @@ Tests the conversion of composite scores to letter grades and
 the generation of portfolio-wide grade summaries.
 """
 
-import pytest
-
 from finwiz.utils.grading_system import (
     format_grade_display,
     get_portfolio_grade_summary,
@@ -21,10 +19,10 @@ class TestScoreToGrade:
         """Test A+ grade for excellent scores."""
         # Arrange
         score = 0.98
-        
+
         # Act
         grade_info = score_to_grade(score)
-        
+
         # Assert
         assert grade_info.grade == "A+"
         assert grade_info.percentage == 98.0
@@ -36,10 +34,10 @@ class TestScoreToGrade:
         """Test A grade for very good scores."""
         # Arrange
         score = 0.88
-        
+
         # Act
         grade_info = score_to_grade(score)
-        
+
         # Assert
         assert grade_info.grade == "A"
         assert grade_info.percentage == 88.0
@@ -49,10 +47,10 @@ class TestScoreToGrade:
         """Test B grade for good scores."""
         # Arrange
         score = 0.77
-        
+
         # Act
         grade_info = score_to_grade(score)
-        
+
         # Assert
         assert grade_info.grade == "B"
         assert grade_info.percentage == 77.0
@@ -63,10 +61,10 @@ class TestScoreToGrade:
         """Test C grade for acceptable scores."""
         # Arrange
         score = 0.67
-        
+
         # Act
         grade_info = score_to_grade(score)
-        
+
         # Assert
         assert grade_info.grade == "C"
         assert grade_info.percentage == 67.0
@@ -76,10 +74,10 @@ class TestScoreToGrade:
         """Test F grade for failing scores."""
         # Arrange
         score = 0.00
-        
+
         # Act
         grade_info = score_to_grade(score)
-        
+
         # Assert
         assert grade_info.grade == "F"
         assert grade_info.percentage == 0.0
@@ -106,7 +104,7 @@ class TestScoreToGrade:
             (0.50, "D"),
             (0.49, "F"),
         ]
-        
+
         for score, expected_grade in test_cases:
             grade_info = score_to_grade(score)
             assert grade_info.grade == expected_grade, f"Score {score} should be grade {expected_grade}, got {grade_info.grade}"
@@ -119,10 +117,10 @@ class TestFormatGradeDisplay:
         """Test default formatting includes percentage."""
         # Arrange
         score = 0.77
-        
+
         # Act
         result = format_grade_display(score)
-        
+
         # Assert
         assert "✅ B (77%)" == result
 
@@ -130,10 +128,10 @@ class TestFormatGradeDisplay:
         """Test formatting without percentage."""
         # Arrange
         score = 0.88
-        
+
         # Act
         result = format_grade_display(score, include_percentage=False)
-        
+
         # Assert
         assert "⭐ A" == result
 
@@ -145,10 +143,10 @@ class TestPortfolioGradeSummary:
         """Test portfolio average calculation."""
         # Arrange
         scores = [0.80, 0.70, 0.60]  # B+, C+, D
-        
+
         # Act
         summary = get_portfolio_grade_summary(scores)
-        
+
         # Assert
         assert abs(summary["average_score"] - 0.70) < 0.01  # Allow for floating point precision
         assert abs(summary["average_percentage"] - 70.0) < 0.1
@@ -159,10 +157,10 @@ class TestPortfolioGradeSummary:
         """Test grade distribution calculation."""
         # Arrange
         scores = [0.88, 0.85, 0.77, 0.77, 0.00]  # A, A, B, B, F
-        
+
         # Act
         summary = get_portfolio_grade_summary(scores)
-        
+
         # Assert
         distribution = summary["distribution"]
         assert distribution["A"]["count"] == 2
@@ -176,10 +174,10 @@ class TestPortfolioGradeSummary:
         """Test handling of empty portfolio."""
         # Arrange
         scores = []
-        
+
         # Act
         summary = get_portfolio_grade_summary(scores)
-        
+
         # Assert
         assert summary["average_grade"] == "N/A"
         assert summary["total_positions"] == 0
@@ -189,10 +187,10 @@ class TestPortfolioGradeSummary:
         """Test handling of single position portfolio."""
         # Arrange
         scores = [0.85]
-        
+
         # Act
         summary = get_portfolio_grade_summary(scores)
-        
+
         # Assert
         assert summary["average_grade"] == "A"
         assert summary["total_positions"] == 1
@@ -207,12 +205,12 @@ class TestGradeSystemIntegration:
         """Test that grade mapping is consistent across functions."""
         # Arrange
         test_scores = [0.98, 0.88, 0.77, 0.67, 0.00]
-        
+
         # Act & Assert
         for score in test_scores:
             grade_info = score_to_grade(score)
             formatted = format_grade_display(score, include_percentage=False)
-            
+
             # Check that emoji and grade are consistent
             assert grade_info.emoji in formatted
             assert grade_info.grade in formatted
@@ -221,14 +219,22 @@ class TestGradeSystemIntegration:
         """Test with realistic portfolio scores."""
         # Arrange - Typical portfolio with mostly good investments and few problems
         realistic_scores = [
-            0.85, 0.82, 0.80, 0.78, 0.75,  # ETFs (good grades)
-            0.77, 0.75, 0.72, 0.68,        # Individual stocks (mixed)
-            0.00, 0.00                      # Two invalid positions
+            0.85,
+            0.82,
+            0.80,
+            0.78,
+            0.75,  # ETFs (good grades)
+            0.77,
+            0.75,
+            0.72,
+            0.68,  # Individual stocks (mixed)
+            0.00,
+            0.00,  # Two invalid positions
         ]
-        
+
         # Act
         summary = get_portfolio_grade_summary(realistic_scores)
-        
+
         # Assert
         assert summary["total_positions"] == 11
         assert 60 <= summary["average_percentage"] <= 75  # Adjusted range due to F grades

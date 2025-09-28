@@ -24,21 +24,50 @@ etf_market_trends_task:
 # ETF Screening Tasks
 etf_screening_task:
   description: >
-    Screen and identify the top 10 most stable and diversified ETFs for long-term investment.
-    Focus on broad market exposure, low costs, and risk management.
+    As an AI-driven ETF analyst, use advanced reasoning to screen and identify the top 10 most stable 
+    and diversified ETFs for long-term investment. Apply intelligent decision-making that goes beyond 
+    simple metric-based screening.
+
+    AI REASONING REQUIREMENTS:
+    - Apply intelligent reasoning to evaluate ETF quality and investment potential
+    - Provide clear AI-generated rationale for each ETF selection or rejection
+    - Demonstrate understanding of ETF structures, market dynamics, and investor needs
+    - Show adaptive thinking based on current market conditions as of {full_date}
+    - Generate insights that synthesize multiple factors intelligently
     
-    1. Screen ETFs using stability and diversification metrics based on market data as of {full_date}.
-    2. Prioritize low expense ratios and tax efficiency.
-    3. Assess tracking error and fund size for reliability using the latest available information.
-    4. Select the top 10 ETFs with lowest volatility and consistent performance, considering current market conditions.
+    CRITICAL DATE CONTEXT:
+    - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
+    - All analysis must reflect market conditions as of {full_date}, NOT historical dates
+    - When searching or analyzing, use {full_date} as the current date context
+
+    AI-DRIVEN SCREENING PROCESS:
+    1. Use AI reasoning to screen ETFs using stability and diversification metrics:
+       - Apply intelligent interpretation of volatility, tracking error, and correlation data
+       - Generate insights on diversification quality and risk-return profiles
+    2. Apply AI assessment of cost efficiency and tax implications:
+       - Use reasoning to evaluate expense ratios in context of fund value proposition
+       - Generate insights on tax efficiency and total cost of ownership
+    3. Use AI reasoning to assess fund reliability and operational quality:
+       - Apply intelligent evaluation of tracking error, fund size, and liquidity
+       - Generate insights on operational risks and fund management quality
+    4. Apply AI decision-making to select optimal ETFs:
+       - Use reasoning to balance multiple factors and investor objectives
+       - Generate insights on portfolio fit and strategic allocation
     5. Validate each proposed ETF ticker using the "Ticker Existence Validation Tool":
        - Use Yahoo Finance existence and ensure quoteType is ETF
-        
        - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
+
+    AI OUTPUT REQUIREMENTS:
+    - Include explicit AI reasoning for each ETF selection
+    - Provide AI-generated confidence levels and risk assessments
+    - Demonstrate intelligent synthesis of quantitative and qualitative factors
+    - Show adaptive thinking for current market conditions as of {full_date}
+    - Generate actionable insights based on AI decision-making
+
+    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your AI analysis 
+    is current as of {full_date}.
     
-    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your analysis is current as of {full_date}.
-    
-    OUTPUT: Return a list of the top 10 high-potential ETFs with analysis.
+    OUTPUT: Return a list of the top 10 high-potential ETFs with AI-driven analysis and reasoning.
   expected_output: >
     A list of 10 stable, diversified ETFs in markdown format with analysis and emoji highlights:
     🛡️ Low-volatility ETFs
@@ -49,7 +78,6 @@ etf_screening_task:
     - validated_etfs[] where each item is {symbol, asset_class, valid, reason, meta}
   agent: market_etf_analyst
   output_file: "output/etf/high_potential_etfs.md"
-  output_pydantic: ETFTopHolding
   async_execution: true
 
 # ETF Technical Detail Tasks
@@ -88,6 +116,12 @@ etf_technical_detail_task:
     📄 Factsheet Highlights (optional): name, ticker, category, expense_ratio, as_of, source_url
     📈 Top Holdings (optional): array of {ticker, weight_pct, as_of, source_url}
 
+    CRITICAL SCHEMA REQUIREMENTS:
+    - Read docs/schemas/ETFFactsheet.schema.json and docs/schemas/ETFTopHolding.schema.json
+    - Read docs/schemas/examples/etf_factsheet.example.json for correct format
+    - Follow the exact schema structure shown in the example files
+    - Ensure all required fields are included with correct data types
+    
     Also include a machine-readable JSON appendix at the end containing:
     - etf_factsheets[] matching the ETFFactsheet schema with enhanced data extraction
     - top_holdings[] matching the ETFTopHolding schema with proper validation
@@ -95,7 +129,6 @@ etf_technical_detail_task:
     - quantitative_analysis[] with comprehensive quantitative analysis results for each ETF
   agent: market_etf_analyst
   output_file: "output/etf/etf_technical_details.md"
-  output_pydantic: ETFFactsheet
   async_execution: true
 
 # Risk Analysis Tasks
@@ -131,7 +164,6 @@ etf_risk_assessment_task:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.md"
-  output_pydantic: RiskAssessmentStandardized
 
 # Investment Strategy Tasks
 etf_investment_strategy_task:
