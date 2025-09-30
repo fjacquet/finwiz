@@ -4,17 +4,76 @@ This document provides a technical reference for the FinWiz project, covering it
 
 ## Project Architecture
 
-FinWiz is built on the [CrewAI](https://github.com/joaomdmoura/crewai) framework and follows a modular architecture designed for extensibility and maintainability.
+FinWiz is built on the [CrewAI](https://github.com/joaomdmoura/crewai) framework and follows a modular architecture designed for extensibility and maintainability. **The codebase has undergone significant modernization to improve code organization and maintainability.**
 
 For detailed CrewAI feature usage patterns and best practices, see:
 - [CrewAI Feature Usage Guide](crewai_feature_usage_guide.md) - Comprehensive guide for proper CrewAI implementation
 - [CrewAI Compliance Checklist](crewai_compliance_checklist.md) - Checklist for ensuring consistent feature usage
+
+### Core Components
 
 - **Crews**: The core of the application. Each crew is a specialized team of AI agents designed to perform a specific type of financial analysis (e.g., Crypto, Stocks, ETFs).
 - **Agents**: The individual AI workers within a crew. Each agent has a specific role, goal, and set of tools. Agent configurations are defined in `agents.yaml` files.
 - **Tasks**: The specific assignments for agents. Tasks define the work to be done, the expected output, and which agent should perform it. Task configurations are defined in `tasks.yaml` files.
 - **Tools**: The functions and APIs that agents can use to perform their tasks. This includes web search tools, data scraping tools, and financial data APIs.
 - **Flow**: The `crewai.flow` orchestrates the execution of the different crews in a predefined sequence.
+
+### Modernized Architecture
+
+The codebase has been systematically modernized with the following improvements:
+
+#### File Decomposition
+- **Large files split**: Monolithic files (1000+ lines) decomposed into focused modules under 200 lines
+- **Single responsibility**: Each module has a clear, focused purpose
+- **Extracted components**: Calculations, formatting, utilities, and models separated into dedicated files
+
+#### Key Modernization Areas
+
+**Main Application Structure:**
+- `main.py` (reduced from 1291 lines) → Core application logic
+- `flow_state.py` (extracted) → Flow state management
+- `crew_factory.py` (extracted) → Crew initialization logic
+
+**Quantitative Analysis Framework:**
+- `quantitative/technical.py` (reduced from 1323 lines) → Core technical analysis
+- `quantitative/technical/technical_indicators.py` (extracted) → TA-Lib wrappers
+- `quantitative/technical/technical_models.py` (extracted) → Pydantic models and enums
+- `quantitative/technical/basic_indicators.py` (extracted) → Basic indicators
+- `quantitative/technical/advanced_indicators.py` (extracted) → Advanced indicators
+
+**Tool Modernization:**
+- `tools/market_screening_tool.py` (reduced from 1062 lines) → Core screening logic
+- `tools/screening_criteria.py` (extracted) → Screening criteria
+- `tools/screening_utils.py` (extracted) → Screening utilities
+- `tools/screening_ranking.py` (extracted) → Ranking algorithms
+- `tools/technical_analyzer.py` (reduced from 821 lines) → Core technical analysis
+- `tools/technical_algorithms.py` (extracted) → Mathematical algorithms and calculations
+- `tools/technical_patterns.py` (extracted) → Pattern recognition and confluence detection
+- `tools/technical_models.py` (extracted) → Technical analysis data models
+
+**Portfolio Rebalancing:**
+- `tools/rebalancing_report_generator.py` (reduced from 1129 lines) → Core reporting
+- `tools/rebalancing_formatters.py` (extracted) → HTML formatting
+- `tools/rebalancing_calculations.py` (extracted) → Calculations
+- `tools/rebalancing_templates.py` (extracted) → Template management
+
+**Sentiment Analysis:**
+- `tools/enhanced_sentiment_tool.py` (reduced from 822 lines) → Core sentiment analysis
+- `tools/sentiment_calculations.py` (extracted) → Sentiment calculations
+- `tools/sentiment_sources.py` (extracted) → Data source integrations
+
+**Data Integration:**
+- `integration/data_accessor.py` (reduced from 1026 lines) → Core data access
+- `integration/data_validation.py` (extracted) → Validation logic
+- `integration/data_cache.py` (extracted) → Caching logic
+- `integration/data_transformation.py` (extracted) → Data transformation
+
+#### Scientific Package Optimization
+- Manual calculations replaced with pandas/numpy vectorized operations
+- `pandas.Series.mean()` instead of manual `sum()/len()` calculations
+- `pandas.groupby()` for aggregation operations
+- `pandas.rolling()` for moving averages
+- Numpy broadcasting for efficient array operations
 
 ## Crews
 
@@ -95,6 +154,57 @@ The agents in FinWiz are equipped with a variety of tools to perform their resea
 - `StandardizedSentimentAnalysisTool`: Comprehensive sentiment analysis with consistent methodology across all asset classes. Features weighted scoring, trending topics extraction, confidence intervals, article deduplication, and multi-source news aggregation. **Enhanced with optional Perplexity Sonar integration** for recent market insights.
 - `CrossAssetSentimentComparatorTool`: Comparative sentiment analysis across different asset classes for relative trend identification.
 - `PerplexityAnalysisIntegration`: Enhanced research capabilities using Perplexity Sonar Search with structured data parsing, circuit breaker protection, and graceful fallback mechanisms.
+
+### Advanced Technical Analysis Framework
+
+FinWiz includes a comprehensive technical analysis framework built with modular architecture for advanced pattern recognition and signal generation:
+
+#### TechnicalAnalyzer
+The main orchestrator that coordinates comprehensive technical analysis including:
+- **Fibonacci Analysis**: Retracement and extension level calculations with trend identification
+- **Support/Resistance Detection**: Dynamic level identification with strength scoring and volume confirmation
+- **Multi-Indicator Confluence**: Detection of zones where multiple technical indicators align
+- **Signal Generation**: Overall buy/sell/neutral signals with confidence scoring
+- **Pattern Recognition**: Advanced pivot point analysis and trend pattern identification
+
+#### Technical Analysis Modules
+- **`TechnicalAlgorithms`**: Mathematical calculations for technical indicators including:
+  - RSI (Relative Strength Index) with customizable periods
+  - MACD (Moving Average Convergence Divergence) with signal line crossovers
+  - Bollinger Bands with dynamic volatility bands
+  - Fibonacci retracements and extensions with standard ratios (0.382, 0.618, etc.)
+  - Moving averages and trend analysis
+
+- **`TechnicalPatterns`**: Pattern recognition algorithms for:
+  - Support and resistance level identification with touch count validation
+  - Confluence zone detection with configurable tolerance levels
+  - Pivot point analysis for swing highs and lows
+  - Overall signal determination with weighted indicator consensus
+  - Volume confirmation for level validation
+
+- **`TechnicalModels`**: Comprehensive Pydantic data models including:
+  - `PriceData`: Historical price data structure with validation
+  - `FibonacciLevels`: Complete Fibonacci analysis results
+  - `SupportResistance`: Support and resistance level analysis
+  - `IndicatorSignal`: Individual technical indicator signals
+  - `ConfluenceZone`: Multi-indicator alignment zones
+  - `TechnicalAnalysisResult`: Complete analysis output with all components
+
+#### Usage Example
+```python
+from finwiz.tools.technical_analyzer import TechnicalAnalyzer
+from finwiz.tools.technical_models import PriceData
+
+analyzer = TechnicalAnalyzer()
+result = analyzer.analyze("AAPL", price_data)
+
+# Access comprehensive analysis components
+fibonacci_levels = result.fibonacci_levels
+support_resistance = result.support_resistance
+confluence_zones = result.confluence_zones
+overall_signal = result.overall_signal  # "buy", "sell", or "neutral"
+confidence = result.signal_confidence   # 0.0 to 1.0
+```
 
 ### Cryptocurrency Tools
 - `CoinMarketCapInfoTool`: Detailed cryptocurrency information.
