@@ -6,11 +6,10 @@ to ensure compliance with performance requirements.
 """
 
 import time
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
-from finwiz.schemas.perplexity import SonarSearchResult
 from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,
     PerplexityPerformanceMonitor,
@@ -291,19 +290,19 @@ class TestPerplexityFailureScenarios:
         """Test that failure rate stays below 5% threshold in normal conditions."""
         # Arrange - Test the benchmark result tracking directly
         benchmark_result = PerplexityBenchmarkResult("test_validation")
-        
+
         # Add mostly successful results (96% success rate)
         for i in range(24):
             if i == 23:  # Last one fails (1/24 = 4.17% failure rate)
                 benchmark_result.add_result(1000, False, "API error")
             else:
                 benchmark_result.add_result(1000, True)
-        
+
         benchmark_result.finalize()
-        
+
         # Act
         summary = benchmark_result.get_performance_summary()
-        
+
         # Assert
         assert summary["failure_rate"] <= 5.0  # Should be 4.17%
         assert summary["success_rate"] >= 95.0  # Should be 95.83%
@@ -411,11 +410,11 @@ class TestPerplexityPerformanceBenchmark:
         """Test benchmark execution with multiple test cases."""
         # Arrange - Test the benchmark result tracking directly
         benchmark_result = PerplexityBenchmarkResult("test_benchmark")
-        
+
         # Simulate adding results from benchmark execution
         for i in range(4):  # 2 test cases * 2 iterations
             benchmark_result.add_result(1000, True)  # All successful
-        
+
         benchmark_result.finalize()
 
         # Act
@@ -433,11 +432,11 @@ class TestPerplexityPerformanceBenchmark:
         """Test performance requirements validation."""
         # Arrange - Test validation logic directly
         benchmark_result = PerplexityBenchmarkResult("validation_test")
-        
+
         # Add fast, successful responses (under baseline)
         for i in range(6):
             benchmark_result.add_result(800, True)  # All under 2x baseline (2000ms)
-        
+
         benchmark_result.finalize()
         summary = benchmark_result.get_performance_summary()
 

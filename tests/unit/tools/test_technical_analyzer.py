@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from finwiz.tools.technical_analyzer import (
+from finwiz.tools.technical_analyzer import TechnicalAnalyzer
+from finwiz.tools.technical_models import (
     ConfluenceZone,
     FibonacciLevels,
     IndicatorSignal,
@@ -19,7 +20,6 @@ from finwiz.tools.technical_analyzer import (
     SupportResistance,
     SupportResistanceLevel,
     TechnicalAnalysisResult,
-    TechnicalAnalyzer,
 )
 
 

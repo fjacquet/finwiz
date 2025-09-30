@@ -11,16 +11,17 @@ This module provides comprehensive quantitative analysis capabilities including:
 - Stock screening and fundamental analysis
 """
 
-from .backtesting import (
-    BacktestingEngine,
+from .backtesting import BacktestingEngine, get_backtesting_engine
+from .backtesting_models import (
     BacktestResult,
     PositionSizingMethod,
-    SimpleMovingAverageStrategy,
-    StrategyFramework,
     Trade,
     TradeStatus,
     TradeType,
-    get_backtesting_engine,
+)
+from .backtesting_strategies import (
+    SimpleMovingAverageStrategy,
+    StrategyFramework,
 )
 from .config import BacktestConfig, QuantConfig, ScreenerConfig
 from .cost_analyzer import (

@@ -14,6 +14,32 @@ from typing import Any
 
 from pydantic import BaseModel, Field, validator
 
+
+class TechnicalIndicator(str, Enum):
+    """Supported technical indicators."""
+
+    SMA = "sma"
+    EMA = "ema"
+    RSI = "rsi"
+    MACD = "macd"
+    BOLLINGER_BANDS = "bollinger_bands"
+    STOCHASTIC = "stochastic"
+    ATR = "atr"
+    ADX = "adx"
+    CCI = "cci"
+    WILLIAMS_R = "williams_r"
+    FIBONACCI = "fibonacci"
+    ICHIMOKU = "ichimoku"
+    MOMENTUM = "momentum"
+    ROC = "roc"
+    TRIX = "trix"
+    DMI = "dmi"
+    AROON = "aroon"
+    MFI = "mfi"
+    PARABOLIC_SAR = "parabolic_sar"
+    ULTIMATE_OSCILLATOR = "ultimate_oscillator"
+
+
 from finwiz.tools.logger import get_logger
 from finwiz.utils.feature_flags import get_feature_flags
 
@@ -48,23 +74,6 @@ class OptimizationMethod(str, Enum):
     HIERARCHICAL_RISK_PARITY = "hrp"
     CRITICAL_LINE_ALGORITHM = "cla"
     EFFICIENT_FRONTIER = "efficient_frontier"
-
-
-class TechnicalIndicator(str, Enum):
-    """Supported technical indicators."""
-
-    SMA = "sma"
-    EMA = "ema"
-    RSI = "rsi"
-    MACD = "macd"
-    BOLLINGER_BANDS = "bollinger_bands"
-    STOCHASTIC = "stochastic"
-    ATR = "atr"
-    ADX = "adx"
-    CCI = "cci"
-    WILLIAMS_R = "williams_r"
-    FIBONACCI = "fibonacci"
-    ICHIMOKU = "ichimoku"
 
 
 class ScreeningCriteria(str, Enum):

@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from finwiz.schemas.perplexity import SonarSearchResult
 from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,
     PerplexityFallbackManager,
@@ -17,7 +16,6 @@ from finwiz.tools.perplexity_analysis_integration import (
 )
 from finwiz.tools.perplexity_performance_benchmark import (
     PerplexityBenchmarkResult,
-    PerplexityPerformanceBenchmark,
 )
 
 
@@ -190,19 +188,19 @@ class TestPerplexityPerformanceValidation:
         """Test that failure rate validation works correctly."""
         # Arrange - Test the benchmark result tracking directly
         benchmark_result = PerplexityBenchmarkResult("test_validation")
-        
+
         # Add mostly successful results (96% success rate)
         for i in range(24):
             if i == 23:  # Last one fails (1/24 = 4.17% failure rate)
                 benchmark_result.add_result(1000, False, "API error")
             else:
                 benchmark_result.add_result(1000, True)
-        
+
         benchmark_result.finalize()
-        
+
         # Act
         summary = benchmark_result.get_performance_summary()
-        
+
         # Assert
         assert summary["failure_rate"] <= 5.0  # Should be 4.17%
         assert summary["success_rate"] >= 95.0  # Should be 95.83%

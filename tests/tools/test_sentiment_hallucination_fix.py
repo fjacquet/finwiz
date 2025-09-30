@@ -5,8 +5,6 @@ This test verifies that the fix for hallucinated URLs in sentiment analysis
 is working correctly and prevents fake news articles from being generated.
 """
 
-import pytest
-
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 
 
@@ -17,15 +15,15 @@ class TestSentimentHallucinationFix:
         """Test that sentiment analysis doesn't generate hallucinated URLs."""
         # Arrange
         tool = StandardizedSentimentAnalysisTool()
-        
+
         # Act
         result = tool._run(symbol="MSFT", asset_class="stock")
-        
+
         # Assert
         assert isinstance(result, dict)
         assert "top_pos" in result
         assert "top_neg" in result
-        
+
         # Verify no fake URLs are generated
         for article in result["top_pos"]:
             if "url" in article:
@@ -33,7 +31,7 @@ class TestSentimentHallucinationFix:
                 # Check for obvious fake URL patterns
                 assert "xyz12345" not in url, f"Found fake URL pattern in: {url}"
                 assert not url.endswith(f"/{article.get('symbol', '').lower()}-challenges"), f"Found templated fake URL: {url}"
-        
+
         for article in result["top_neg"]:
             if "url" in article:
                 url = article["url"]
@@ -45,10 +43,10 @@ class TestSentimentHallucinationFix:
         """Test that tool returns empty lists instead of fake data when no real sources available."""
         # Arrange
         tool = StandardizedSentimentAnalysisTool()
-        
+
         # Act
         result = tool._run(symbol="TESTFAKE", asset_class="stock")
-        
+
         # Assert
         assert isinstance(result, dict)
         assert result["top_pos"] == []
@@ -62,13 +60,13 @@ class TestSentimentHallucinationFix:
         """Test that deprecated sample article methods return empty lists."""
         # Arrange
         tool = StandardizedSentimentAnalysisTool()
-        
+
         # Act & Assert
         financial_articles = tool._create_sample_financial_articles("MSFT", "test")
         crypto_articles = tool._create_sample_crypto_articles("BTC", "test")
         general_articles = tool._create_sample_general_articles("MSFT", "test")
         sample_articles = tool._create_sample_articles("MSFT", "stock")
-        
+
         # All should return empty lists now
         assert financial_articles == []
         assert crypto_articles == []
@@ -79,15 +77,15 @@ class TestSentimentHallucinationFix:
         """Test that all asset classes return empty data instead of fake articles."""
         # Arrange
         tool = StandardizedSentimentAnalysisTool()
-        
+
         # Act & Assert for different asset classes
         for asset_class in ["stock", "etf", "crypto"]:
             result = tool._run(symbol="TEST", asset_class=asset_class)
-            
+
             assert isinstance(result, dict)
             assert result["top_pos"] == []
             assert result["top_neg"] == []
-            
+
             # Verify no articles contain fake URL patterns
             all_articles = result["top_pos"] + result["top_neg"]
             for article in all_articles:
@@ -95,6 +93,8 @@ class TestSentimentHallucinationFix:
                     url = article["url"]
                     # Should not contain obvious fake patterns
                     assert "xyz12345" not in url
-                    assert not any(fake_pattern in url for fake_pattern in [
-                        "-challenges", "-upgrade", "-analysis", "-institutional-adoption"
-                    ] if url.endswith(fake_pattern))
+                    assert not any(
+                        fake_pattern in url
+                        for fake_pattern in ["-challenges", "-upgrade", "-analysis", "-institutional-adoption"]
+                        if url.endswith(fake_pattern)
+                    )

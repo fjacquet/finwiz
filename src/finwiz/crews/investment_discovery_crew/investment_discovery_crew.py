@@ -88,6 +88,24 @@ class InvestmentDiscoveryCrew:
     agents: list[BaseAgent]
     tasks: list[Task]
 
+    def __init__(self) -> None:
+        """Set configuration paths before calling super().__init__()."""
+        from pathlib import Path
+
+        import yaml
+
+        # Get the directory of this file
+        current_dir = Path(__file__).parent
+
+        # Load configuration files
+        with open(current_dir / "config" / "agents.yaml") as f:
+            self.agents_config = yaml.safe_load(f)
+
+        with open(current_dir / "config" / "tasks.yaml") as f:
+            self.tasks_config = yaml.safe_load(f)
+
+        super().__init__()
+
     @agent
     def etf_discovery_agent(self) -> Agent:
         """ETF Discovery Agent specialized in finding A+ grade ETFs."""

@@ -29,6 +29,12 @@ dependencies = [
     "rumdl>=0.0.146",
     "perplexityai>=0.12.0",
     "trio>=0.31.0",
+    "numpy>=1.26.4",
+    "scipy>=1.15.3",
+    "pandas>=2.3.2",
+    "statsmodels>=0.14.5",
+    "quandl>=3.7.0",
+    "bs4>=0.0.2",
 ]
 
 [project.scripts]

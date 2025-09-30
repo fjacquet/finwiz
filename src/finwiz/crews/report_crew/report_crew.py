@@ -58,6 +58,18 @@ class ReportCrew:
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize report crew with validators and data integration."""
+        import yaml
+
+        # Get the directory of this file
+        current_dir = Path(__file__).parent
+
+        # Load configuration files
+        with open(current_dir / "config" / "agents.yaml") as f:
+            self.agents_config = yaml.safe_load(f)
+
+        with open(current_dir / "config" / "tasks.yaml") as f:
+            self.tasks_config = yaml.safe_load(f)
+
         super().__init__(*args, **kwargs)
         self.tool_validator = ToolRestrictionValidator()
         self.input_validator = ReporterInputValidator()

@@ -12,10 +12,7 @@ import pandas as pd
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from finwiz.quantitative.backtesting import (
-    SimpleMovingAverageStrategy,
-    get_backtesting_engine,
-)
+# Lazy imports to avoid circular dependencies
 from finwiz.quantitative.data import get_historical_data_manager
 from finwiz.quantitative.performance import get_performance_analyzer
 from finwiz.tools.logger import get_logger
@@ -156,6 +153,8 @@ class BacktestingTool(BaseTool):
             logger.info(f"Starting backtesting for {input_data.symbol} with {input_data.strategy} strategy")
 
             # Initialize components
+            from finwiz.quantitative.backtesting import get_backtesting_engine
+
             backtesting_engine = get_backtesting_engine()
             data_manager = get_historical_data_manager()
             get_performance_analyzer()
@@ -252,6 +251,8 @@ class BacktestingTool(BaseTool):
 
     def _get_strategy_class(self, strategy_name: str) -> type:
         """Get strategy class based on strategy name."""
+        from finwiz.quantitative.backtesting_strategies import SimpleMovingAverageStrategy
+
         strategy_mapping = {
             "sma_crossover": SimpleMovingAverageStrategy,
             "buy_and_hold": SimpleMovingAverageStrategy,  # Can be extended with BuyAndHoldStrategy

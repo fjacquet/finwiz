@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 class PerplexityBenchmarkResult:
     """Results from a Perplexity performance benchmark."""
 
-    def __init__(self, test_name: str):
+    def __init__(self, test_name: str) -> None:
         self.test_name = test_name
         self.response_times: list[int] = []
         self.success_count = 0
@@ -129,7 +129,7 @@ class PerplexityBenchmarkResult:
 class PerplexityPerformanceBenchmark:
     """Performance benchmarking utility for Perplexity integration."""
 
-    def __init__(self, integration: PerplexityAnalysisIntegration | None = None):
+    def __init__(self, integration: PerplexityAnalysisIntegration | None = None) -> None:
         """Initialize the benchmark utility."""
         self.integration = integration or PerplexityAnalysisIntegration()
 

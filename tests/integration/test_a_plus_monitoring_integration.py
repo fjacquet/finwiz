@@ -18,7 +18,8 @@ from finwiz.schemas.investment_discovery import (
     InvestmentCandidate,
     MarketRegime,
 )
-from finwiz.schemas.portfolio_review import Holding, PortfolioReview
+from finwiz.schemas.portfolio_review import PortfolioReview
+from finwiz.schemas.rebalancing.core import Holding
 from finwiz.services.a_plus_monitoring_service import APlusMonitoringService
 from finwiz.utils.a_plus_monitoring import get_monitoring_system
 
