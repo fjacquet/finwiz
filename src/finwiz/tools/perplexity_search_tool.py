@@ -25,9 +25,9 @@ class PerplexitySearchInput(BaseModel):
 
     query: str = Field(..., description="Natural language query to research with Perplexity Sonar.")
     model: str = Field(
-        "sonar-small-chat",
+        "sonar-pro",
         description=(
-            "Perplexity model to use (e.g., sonar-small-chat, sonar-medium-chat, sonar-large). "
+            "Perplexity model to use (e.g., sonar-pro). "
             "Use higher tiers only if your account has access."
         ),
     )
@@ -62,7 +62,7 @@ class PerplexitySearchTool(BaseTool):
     def _run(
         self,
         query: str,
-        model: str = "sonar-small-chat",
+        model: str = "sonar-pro",
         top_k: int | None = 5,
         search_recency: str | None = None,
         search_domain_filter: list[str] | None = None,

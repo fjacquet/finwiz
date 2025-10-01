@@ -251,11 +251,11 @@ class FeatureFlags:
             ),
             "perplexity_research": FeatureFlagConfig(
                 name="perplexity_research",
-                enabled=self._get_env_bool("FF_PERPLEXITY_RESEARCH", False),
+                enabled=self._get_env_bool("FF_PERPLEXITY_RESEARCH", True),
                 strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
                 circuit_breaker_threshold=self._get_env_int("FF_PERPLEXITY_BREAKER_THRESHOLD", 5),
                 circuit_breaker_timeout=self._get_env_int("FF_PERPLEXITY_BREAKER_TIMEOUT", 300),
-                fallback_strategy=FallbackStrategy.CACHED_ONLY,
+                fallback_strategy=FallbackStrategy.DISABLE,
                 description=(
                     "Perplexity Sonar Search integration for enhanced research capabilities "
                     "across sentiment, technical, and fundamental analysis"

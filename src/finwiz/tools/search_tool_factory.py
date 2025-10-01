@@ -9,11 +9,15 @@ from typing import Any
 
 from crewai.tools import BaseTool
 from crewai_tools import SerperDevTool
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.feature_flags import get_feature_flags
+
+# Ensure environment variables are loaded
+load_dotenv()
 
 logger = get_logger(__name__)
 
@@ -101,63 +105,92 @@ class PerplexitySearchWrapper(BaseTool):
         self._search_type = search_type
         self._max_results = max_results
 
-    def _run(self, query: str) -> str:
+    def _run(self, query: str = None, search_query: str = None) -> str:
         """Run the search query through Perplexity."""
-        import asyncio
-
-        async def _async_run() -> str:
-            try:
-                if self._search_type == "news":
-                    result = await self._integration.search_financial_news(
-                        query=query,
-                        ticker="AAPL",  # Use a valid ticker for validation
-                        asset_type="stock",
-                        analysis_type="news",
-                        max_results=self._max_results,
-                    )
-                else:
-                    result = await self._integration.search_financial_news(
-                        query=query,
-                        ticker="AAPL",  # Use a valid ticker for validation
-                        asset_type="stock",
-                        analysis_type="general",
-                        max_results=self._max_results,
-                    )
-
-                if result.success and result.results:
-                    # Format results similar to SerperDevTool output
-                    formatted_results = []
-                    for article in result.results:
-                        formatted_results.append(
-                            {
-                                "title": article.title,
-                                "link": article.url,
-                                "snippet": article.content[:200] + "..." if len(article.content) > 200 else article.content,
-                                "source": article.source,
-                                "date": article.published_date,
-                            }
-                        )
-
-                    return str(formatted_results)
-                else:
-                    logger.warning(f"Perplexity search failed: {result.error_message}")
-                    return "[]"
-
-            except Exception as e:
-                logger.error(f"Perplexity search error: {e}")
-                return "[]"
+        # Handle both parameter names for compatibility
+        search_term = query or search_query
+        if not search_term:
+            logger.error("No search query provided")
+            return "[]"
 
         try:
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(_async_run())
-        except RuntimeError:
-            # Create new event loop if none exists
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            # Check if Perplexity integration is available
+            if not self._integration.is_available:
+                logger.warning("Perplexity API key not available, returning empty results")
+                return "[]"
+
+            # Use the synchronous PerplexitySearchTool directly to avoid async issues
+            from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
+
+            perplexity_tool = PerplexitySearchTool()
+
+            # Create enhanced query for financial context
+            enhanced_query = f"{search_term} financial analysis market data"
+
+            # Call the synchronous tool directly
+            raw_result = perplexity_tool._run(
+                query=enhanced_query,
+                model="sonar-pro",
+                top_k=min(self._max_results, 10),
+                search_recency="week" if self._search_type == "news" else None
+            )
+
+            # Check if result is an error
+            if raw_result.startswith("Error:"):
+                logger.warning(f"Perplexity search failed: {raw_result}")
+                return "[]"
+
+            # Parse the JSON response and format for SerperDevTool compatibility
+            import json
             try:
-                return loop.run_until_complete(_async_run())
-            finally:
-                loop.close()
+                response_data = json.loads(raw_result)
+                formatted_results = []
+
+                # Extract search results from response (these contain structured data)
+                search_results = response_data.get("search_results", [])
+
+                # Convert search results to SerperDevTool format
+                for i, result in enumerate(search_results[:self._max_results]):
+                    try:
+                        title = result.get("title", f"Article {i + 1}")
+                        url = result.get("url", "")
+                        snippet = result.get("snippet", "")[:200]
+                        source = result.get("source", "")
+                        date = result.get("date", result.get("last_updated"))
+
+                        # Extract publisher from source or URL if not provided
+                        if not source and url:
+                            from urllib.parse import urlparse
+                            domain = urlparse(url).netloc
+                            if domain.startswith("www."):
+                                domain = domain[4:]
+                            source = domain.replace(".com", "").title()
+
+                        formatted_results.append({
+                            "title": title,
+                            "link": url,
+                            "snippet": snippet,
+                            "source": source or "Unknown",
+                            "date": date
+                        })
+                    except Exception as e:
+                        logger.warning(f"Failed to parse search result {i}: {e}")
+                        continue
+
+                if formatted_results:
+                    logger.info(f"Perplexity search returned {len(formatted_results)} results")
+                    return str(formatted_results)
+                else:
+                    logger.warning("No valid search results found in Perplexity response")
+                    return "[]"
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse Perplexity JSON response: {e}")
+                return "[]"
+
+        except Exception as e:
+            logger.error(f"Perplexity search error: {e}")
+            return "[]"
 
 
 # Global factory instance
