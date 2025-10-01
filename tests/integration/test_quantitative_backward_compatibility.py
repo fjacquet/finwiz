@@ -6,7 +6,6 @@ after the core analysis restoration.
 """
 
 import os
-from unittest.mock import patch
 
 import pytest
 
@@ -46,7 +45,7 @@ class TestQuantitativeBackwardCompatibility:
         except ImportError as e:
             pytest.fail(f"Quantitative module import failed: {e}")
 
-    def test_quantitative_tool_instantiation(self):
+    def test_quantitative_tool_instantiation(self, mocker):
         """Test that quantitative tools can be instantiated."""
         try:
             from finwiz.tools.backtesting_tool import BacktestingTool
@@ -54,7 +53,7 @@ class TestQuantitativeBackwardCompatibility:
             from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 
             # Mock environment variables to avoid configuration errors
-            with patch.dict(
+            mocker.patch.dict(
                 os.environ,
                 {
                     "OPENAI_API_KEY": "test-key",
@@ -62,21 +61,22 @@ class TestQuantitativeBackwardCompatibility:
                     "FIRECRAWL_API_KEY": "test-key",
                     "ALPHA_VANTAGE_API_KEY": "test-key",
                 },
-            ):
-                # Should be able to create tool instances
-                quant_tool = QuantitativeAnalysisTool()
-                backtest_tool = BacktestingTool()
-                portfolio_tool = PortfolioAnalysisTool()
+            )
 
-                # Verify tools have expected methods
-                assert hasattr(quant_tool, "_run")
-                assert hasattr(backtest_tool, "_run")
-                assert hasattr(portfolio_tool, "_run")
+            # Should be able to create tool instances
+            quant_tool = QuantitativeAnalysisTool()
+            backtest_tool = BacktestingTool()
+            portfolio_tool = PortfolioAnalysisTool()
 
-                # Verify tools are callable
-                assert callable(quant_tool._run)
-                assert callable(backtest_tool._run)
-                assert callable(portfolio_tool._run)
+            # Verify tools have expected methods
+            assert hasattr(quant_tool, "_run")
+            assert hasattr(backtest_tool, "_run")
+            assert hasattr(portfolio_tool, "_run")
+
+            # Verify tools are callable
+            assert callable(quant_tool._run)
+            assert callable(backtest_tool._run)
+            assert callable(portfolio_tool._run)
 
         except Exception as e:
             pytest.fail(f"Quantitative tool instantiation failed: {e}")

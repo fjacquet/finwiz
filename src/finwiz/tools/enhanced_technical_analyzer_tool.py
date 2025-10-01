@@ -8,6 +8,7 @@ search for recent analyst opinions, price targets, and technical commentary.
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 import yfinance as yf
 from crewai.tools import BaseTool
@@ -166,7 +167,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             return []
 
     def _format_enhanced_technical_response(
-        self, ticker: str, asset_type: str, technical_result, perplexity_insights: list[SonarArticle]
+        self, ticker: str, asset_type: str, technical_result: Any, perplexity_insights: list[SonarArticle]
     ) -> str:
         """Format comprehensive enhanced technical analysis response."""
         response = f"# Enhanced Technical Analysis for {ticker} ({asset_type.upper()})\n\n"
@@ -233,8 +234,15 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
         if technical_result.confluence_zones:
             response += "\n## 🎯 Confluence Zones\n"
             for i, zone in enumerate(technical_result.confluence_zones[:3], 1):
-                zone_emoji = "🟢" if zone.zone_type == "support" else "🔴" if zone.zone_type == "resistance" else "🟡"
-                response += f"{i}. {zone_emoji} **{zone.zone_type.title()} Zone**: ${zone.price_range[0]:.2f} - ${zone.price_range[1]:.2f}\n"
+                if zone.zone_type == "support":
+                    zone_emoji = "🟢"
+                elif zone.zone_type == "resistance":
+                    zone_emoji = "🔴"
+                else:
+                    zone_emoji = "🟡"
+
+                price_range = f"${zone.price_range[0]:.2f} - ${zone.price_range[1]:.2f}"
+                response += f"{i}. {zone_emoji} **{zone.zone_type.title()} Zone**: {price_range}\n"
                 response += f"   - Confluence Score: {zone.confluence_score:.2f}\n"
                 response += f"   - Contributing: {', '.join(zone.contributing_indicators)}\n\n"
 

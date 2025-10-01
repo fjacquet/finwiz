@@ -256,7 +256,10 @@ class FeatureFlags:
                 circuit_breaker_threshold=self._get_env_int("FF_PERPLEXITY_BREAKER_THRESHOLD", 5),
                 circuit_breaker_timeout=self._get_env_int("FF_PERPLEXITY_BREAKER_TIMEOUT", 300),
                 fallback_strategy=FallbackStrategy.CACHED_ONLY,
-                description="Perplexity Sonar Search integration for enhanced research capabilities across sentiment, technical, and fundamental analysis",
+                description=(
+                    "Perplexity Sonar Search integration for enhanced research capabilities "
+                    "across sentiment, technical, and fundamental analysis"
+                ),
             ),
         }
 
@@ -444,12 +447,13 @@ class FeatureFlags:
         """Execute fallback logic based on strategy."""
         strategy = self.get_fallback_strategy(flag_name)
 
-        if strategy == FallbackStrategy.DISABLE:
-            logger.info(f"Feature {flag_name} disabled, returning None")
-            return None
-
-        elif strategy == FallbackStrategy.DEFAULT_VALUES:
+        if strategy == FallbackStrategy.DEFAULT_VALUES:
             logger.info(f"Feature {flag_name} using default values")
+            return self._get_default_values(flag_name)
+
+        elif strategy == FallbackStrategy.CACHED_ONLY:
+            # For cached_only strategy, return default values if no cache available
+            logger.info(f"Feature {flag_name} using cached fallback (default values)")
             return self._get_default_values(flag_name)
 
         elif fallback_func:
@@ -457,9 +461,23 @@ class FeatureFlags:
                 return fallback_func(*args, **kwargs)
             except Exception as e:
                 logger.error(f"Fallback function failed for {flag_name}: {e}")
+                # Try default values as last resort
+                default_values = self._get_default_values(flag_name)
+                if default_values:
+                    return default_values
                 return None
 
+        elif strategy == FallbackStrategy.DISABLE:
+            logger.info(f"Feature {flag_name} disabled, returning None")
+            return None
+
         else:
+            # Try default values as fallback
+            default_values = self._get_default_values(flag_name)
+            if default_values:
+                logger.info(f"Using default values as fallback for {flag_name}")
+                return default_values
+
             logger.warning(f"No fallback available for {flag_name}")
             return None
 
@@ -481,7 +499,10 @@ class FeatureFlags:
                 "status": "disabled",
             },
         }
-        return defaults.get(flag_name, {})
+        result = defaults.get(flag_name, {})
+        if result:
+            logger.info(f"Using default values for {flag_name}")
+        return result
 
     def get_flag_status(self, flag_name: str) -> dict[str, Any]:
         """Get comprehensive status of a feature flag."""

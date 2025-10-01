@@ -143,7 +143,8 @@ def cmd_analyze(args: Any) -> None:
                 print("\nAverage Execution Times:")
                 for crew, duration_data in durations.items():
                     print(
-                        f"  {crew}: {duration_data['average']:.2f}s (min: {duration_data['min']:.2f}s, max: {duration_data['max']:.2f}s)"
+                        f"  {crew}: {duration_data['average']:.2f}s "
+                        f"(min: {duration_data['min']:.2f}s, max: {duration_data['max']:.2f}s)"
                     )
 
         elif args.type == "bottlenecks":
@@ -234,7 +235,7 @@ def cmd_lineage(args: Any) -> None:
 
 
 def main() -> int | None:
-    """Main CLI entry point."""
+    """Run the main CLI interface."""
     parser = argparse.ArgumentParser(
         description="FinWiz Integration System CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,

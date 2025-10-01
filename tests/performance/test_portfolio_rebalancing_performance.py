@@ -10,7 +10,6 @@ import os
 import sys
 import time
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -70,150 +69,150 @@ class TestPortfolioRebalancingPerformance:
 
     @pytest.mark.performance
     @pytest.mark.asyncio
-    async def test_should_complete_small_portfolio_rebalancing_quickly(self, performance_config_small):
+    async def test_should_complete_small_portfolio_rebalancing_quickly(self, performance_config_small, mocker):
         """Test performance with small portfolio (10 positions)."""
         # Arrange
         symbols = [f"STOCK{i:02d}" for i in range(10)]
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
-            mock_price_service_class.return_value = mock_price_service
-            mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
+        mock_price_service_class = mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService")
+        mock_price_service = mocker.AsyncMock()
+        mock_price_service_class.return_value = mock_price_service
+        mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
 
-            with patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer") as mock_analyzer_class:
-                mock_analyzer = MagicMock()
-                mock_analyzer_class.return_value = mock_analyzer
-                mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 100000.0)
+        mock_analyzer_class = mocker.patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer")
+        mock_analyzer = mocker.Mock()
+        mock_analyzer_class.return_value = mock_analyzer
+        mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 100000.0)
 
-                with patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine") as mock_engine_class:
-                    mock_engine = MagicMock()
-                    mock_engine_class.return_value = mock_engine
-                    mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
+        mock_engine_class = mocker.patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine")
+        mock_engine = mocker.Mock()
+        mock_engine_class.return_value = mock_engine
+        mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
 
-                    with patch("finwiz.tools.html_report_generator.HTMLReportGenerator"):
-                        orchestrator = PortfolioRebalancingOrchestrator()
+        mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator")
+        orchestrator = PortfolioRebalancingOrchestrator()
 
-                        # Act - Measure execution time
-                        start_time = time.perf_counter()
-                        result = await orchestrator.rebalance_portfolio(performance_config_small)
-                        end_time = time.perf_counter()
+        # Act - Measure execution time
+        start_time = time.perf_counter()
+        result = await orchestrator.rebalance_portfolio(performance_config_small)
+        end_time = time.perf_counter()
 
-                        # Assert
-                        execution_time = end_time - start_time
-                        assert execution_time < 1.0  # Should complete within 1 second
-                        assert result is not None
-                        assert len(result.current_portfolio.weightings) == 10
+        # Assert
+        execution_time = end_time - start_time
+        assert execution_time < 1.0  # Should complete within 1 second
+        assert result is not None
+        assert len(result.current_portfolio.weightings) == 10
 
     @pytest.mark.performance
     @pytest.mark.asyncio
-    async def test_should_complete_medium_portfolio_rebalancing_efficiently(self, performance_config_medium):
+    async def test_should_complete_medium_portfolio_rebalancing_efficiently(self, performance_config_medium, mocker):
         """Test performance with medium portfolio (50 positions)."""
         # Arrange
         symbols = [f"STOCK{i:03d}" for i in range(50)]
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
-            mock_price_service_class.return_value = mock_price_service
-            mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
+        mock_price_service_class = mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService")
+        mock_price_service = mocker.AsyncMock()
+        mock_price_service_class.return_value = mock_price_service
+        mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
 
-            with patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer") as mock_analyzer_class:
-                mock_analyzer = MagicMock()
-                mock_analyzer_class.return_value = mock_analyzer
-                mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 500000.0)
+        mock_analyzer_class = mocker.patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer")
+        mock_analyzer = mocker.Mock()
+        mock_analyzer_class.return_value = mock_analyzer
+        mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 500000.0)
 
-                with patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine") as mock_engine_class:
-                    mock_engine = MagicMock()
-                    mock_engine_class.return_value = mock_engine
-                    mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
+        mock_engine_class = mocker.patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine")
+        mock_engine = mocker.Mock()
+        mock_engine_class.return_value = mock_engine
+        mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
 
-                    with patch("finwiz.tools.html_report_generator.HTMLReportGenerator"):
-                        orchestrator = PortfolioRebalancingOrchestrator()
+        mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator")
+        orchestrator = PortfolioRebalancingOrchestrator()
 
-                        # Act - Measure execution time
-                        start_time = time.perf_counter()
-                        result = await orchestrator.rebalance_portfolio(performance_config_medium)
-                        end_time = time.perf_counter()
+        # Act - Measure execution time
+        start_time = time.perf_counter()
+        result = await orchestrator.rebalance_portfolio(performance_config_medium)
+        end_time = time.perf_counter()
 
-                        # Assert
-                        execution_time = end_time - start_time
-                        assert execution_time < 3.0  # Should complete within 3 seconds
-                        assert result is not None
-                        assert len(result.current_portfolio.weightings) == 50
+        # Assert
+        execution_time = end_time - start_time
+        assert execution_time < 3.0  # Should complete within 3 seconds
+        assert result is not None
+        assert len(result.current_portfolio.weightings) == 50
 
     @pytest.mark.performance
     @pytest.mark.asyncio
-    async def test_should_handle_large_portfolio_within_reasonable_time(self, performance_config_large):
+    async def test_should_handle_large_portfolio_within_reasonable_time(self, performance_config_large, mocker):
         """Test performance with large portfolio (100 positions)."""
         # Arrange
         symbols = [f"STOCK{i:03d}" for i in range(100)]
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
-            mock_price_service_class.return_value = mock_price_service
-            mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
+        mock_price_service_class = mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService")
+        mock_price_service = mocker.AsyncMock()
+        mock_price_service_class.return_value = mock_price_service
+        mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
 
-            with patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer") as mock_analyzer_class:
-                mock_analyzer = MagicMock()
-                mock_analyzer_class.return_value = mock_analyzer
-                mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 1000000.0)
+        mock_analyzer_class = mocker.patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer")
+        mock_analyzer = mocker.Mock()
+        mock_analyzer_class.return_value = mock_analyzer
+        mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 1000000.0)
 
-                with patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine") as mock_engine_class:
-                    mock_engine = MagicMock()
-                    mock_engine_class.return_value = mock_engine
-                    mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
+        mock_engine_class = mocker.patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine")
+        mock_engine = mocker.Mock()
+        mock_engine_class.return_value = mock_engine
+        mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
 
-                    with patch("finwiz.tools.html_report_generator.HTMLReportGenerator"):
-                        orchestrator = PortfolioRebalancingOrchestrator()
+        mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator")
+        orchestrator = PortfolioRebalancingOrchestrator()
 
-                        # Act - Measure execution time
-                        start_time = time.perf_counter()
-                        result = await orchestrator.rebalance_portfolio(performance_config_large)
-                        end_time = time.perf_counter()
+        # Act - Measure execution time
+        start_time = time.perf_counter()
+        result = await orchestrator.rebalance_portfolio(performance_config_large)
+        end_time = time.perf_counter()
 
-                        # Assert
-                        execution_time = end_time - start_time
-                        assert execution_time < 5.0  # Should complete within 5 seconds
-                        assert result is not None
-                        assert len(result.current_portfolio.weightings) == 100
+        # Assert
+        execution_time = end_time - start_time
+        assert execution_time < 5.0  # Should complete within 5 seconds
+        assert result is not None
+        assert len(result.current_portfolio.weightings) == 100
 
     @pytest.mark.performance
     @pytest.mark.asyncio
-    async def test_should_handle_concurrent_rebalancing_requests_efficiently(self, performance_config_small):
+    async def test_should_handle_concurrent_rebalancing_requests_efficiently(self, performance_config_small, mocker):
         """Test performance with concurrent rebalancing requests."""
         # Arrange
         symbols = [f"STOCK{i:02d}" for i in range(10)]
         num_concurrent_requests = 5
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
-            mock_price_service_class.return_value = mock_price_service
-            mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
+        mock_price_service_class = mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService")
+        mock_price_service = mocker.AsyncMock()
+        mock_price_service_class.return_value = mock_price_service
+        mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
 
-            with patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer") as mock_analyzer_class:
-                mock_analyzer = MagicMock()
-                mock_analyzer_class.return_value = mock_analyzer
-                mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 100000.0)
+        mock_analyzer_class = mocker.patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer")
+        mock_analyzer = mocker.Mock()
+        mock_analyzer_class.return_value = mock_analyzer
+        mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 100000.0)
 
-                with patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine") as mock_engine_class:
-                    mock_engine = MagicMock()
-                    mock_engine_class.return_value = mock_engine
-                    mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
+        mock_engine_class = mocker.patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine")
+        mock_engine = mocker.Mock()
+        mock_engine_class.return_value = mock_engine
+        mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
 
-                    with patch("finwiz.tools.html_report_generator.HTMLReportGenerator"):
-                        orchestrator = PortfolioRebalancingOrchestrator()
+        mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator")
+        orchestrator = PortfolioRebalancingOrchestrator()
 
-                        # Act - Measure concurrent execution time
-                        start_time = time.perf_counter()
-                        tasks = [orchestrator.rebalance_portfolio(performance_config_small) for _ in range(num_concurrent_requests)]
-                        results = await asyncio.gather(*tasks)
-                        end_time = time.perf_counter()
+        # Act - Measure concurrent execution time
+        start_time = time.perf_counter()
+        tasks = [orchestrator.rebalance_portfolio(performance_config_small) for _ in range(num_concurrent_requests)]
+        results = await asyncio.gather(*tasks)
+        end_time = time.perf_counter()
 
-                        # Assert
-                        execution_time = end_time - start_time
-                        assert execution_time < 3.0  # Should complete within 3 seconds for 5 concurrent requests
-                        assert len(results) == num_concurrent_requests
-                        for result in results:
-                            assert result is not None
+        # Assert
+        execution_time = end_time - start_time
+        assert execution_time < 3.0  # Should complete within 3 seconds for 5 concurrent requests
+        assert len(results) == num_concurrent_requests
+        for result in results:
+            assert result is not None
 
     @pytest.mark.performance
     def test_should_use_memory_efficiently_with_different_portfolio_sizes(self):
@@ -301,45 +300,45 @@ class TestPortfolioRebalancingPerformance:
 
     @pytest.mark.performance
     @pytest.mark.asyncio
-    async def test_should_handle_report_generation_efficiently(self, performance_config_medium):
+    async def test_should_handle_report_generation_efficiently(self, performance_config_medium, mocker):
         """Test report generation performance."""
         # Arrange
         symbols = [f"STOCK{i:03d}" for i in range(50)]
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
-            mock_price_service_class.return_value = mock_price_service
-            mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
+        mock_price_service_class = mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService")
+        mock_price_service = mocker.AsyncMock()
+        mock_price_service_class.return_value = mock_price_service
+        mock_price_service.get_current_prices.return_value = self.create_mock_price_data(symbols)
 
-            with patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer") as mock_analyzer_class:
-                mock_analyzer = MagicMock()
-                mock_analyzer_class.return_value = mock_analyzer
-                mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 500000.0)
+        mock_analyzer_class = mocker.patch("finwiz.quantitative.portfolio_analyzer.PortfolioAnalyzer")
+        mock_analyzer = mocker.Mock()
+        mock_analyzer_class.return_value = mock_analyzer
+        mock_analyzer.analyze_current_portfolio.return_value = self.create_mock_portfolio_analysis(symbols, 500000.0)
 
-                with patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine") as mock_engine_class:
-                    mock_engine = MagicMock()
-                    mock_engine_class.return_value = mock_engine
-                    mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
+        mock_engine_class = mocker.patch("finwiz.quantitative.rebalancing_engine.RebalancingEngine")
+        mock_engine = mocker.Mock()
+        mock_engine_class.return_value = mock_engine
+        mock_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
 
-                    with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                        mock_report_generator = MagicMock()
-                        mock_report_class.return_value = mock_report_generator
-                        mock_report_generator.generate_html.return_value = "<html>Test Report</html>"
+        mock_report_class = mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator")
+        mock_report_generator = mocker.Mock()
+        mock_report_class.return_value = mock_report_generator
+        mock_report_generator.generate_html.return_value = "<html>Test Report</html>"
 
-                        orchestrator = PortfolioRebalancingOrchestrator()
+        orchestrator = PortfolioRebalancingOrchestrator()
 
-                        # Get rebalancing result
-                        result = await orchestrator.rebalance_portfolio(performance_config_medium)
+        # Get rebalancing result
+        result = await orchestrator.rebalance_portfolio(performance_config_medium)
 
-                        # Act - Measure report generation time
-                        start_time = time.perf_counter()
-                        html_report = await orchestrator.generate_rebalancing_report(result)
-                        end_time = time.perf_counter()
+        # Act - Measure report generation time
+        start_time = time.perf_counter()
+        html_report = await orchestrator.generate_rebalancing_report(result)
+        end_time = time.perf_counter()
 
-                        # Assert
-                        generation_time = end_time - start_time
-                        assert generation_time < 2.0  # Should generate report within 2 seconds
-                        assert html_report == "<html>Test Report</html>"
+        # Assert
+        generation_time = end_time - start_time
+        assert generation_time < 2.0  # Should generate report within 2 seconds
+        assert html_report == "<html>Test Report</html>"
 
     @pytest.mark.performance
     def test_should_scale_optimization_algorithms_efficiently(self):

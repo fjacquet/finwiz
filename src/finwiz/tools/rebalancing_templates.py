@@ -511,7 +511,7 @@ class RebalancingTemplates:
                 row.addEventListener('mouseenter', function() {
                     this.style.backgroundColor = '#e3f2fd';
                 });
-                
+
                 row.addEventListener('mouseleave', function() {
                     this.style.backgroundColor = '';
                 });
@@ -533,30 +533,30 @@ class RebalancingTemplates:
         function sortTable(table, columnIndex) {
             const tbody = table.querySelector('tbody');
             const rows = Array.from(tbody.querySelectorAll('tr'));
-            
+
             // Determine sort direction
             const isAscending = table.dataset.sortDirection !== 'asc';
             table.dataset.sortDirection = isAscending ? 'asc' : 'desc';
-            
+
             // Sort rows
             rows.sort((a, b) => {
                 const aValue = a.cells[columnIndex].textContent.trim();
                 const bValue = b.cells[columnIndex].textContent.trim();
-                
+
                 // Try to parse as numbers
                 const aNum = parseFloat(aValue.replace(/[^0-9.-]/g, ''));
                 const bNum = parseFloat(bValue.replace(/[^0-9.-]/g, ''));
-                
+
                 if (!isNaN(aNum) && !isNaN(bNum)) {
                     return isAscending ? aNum - bNum : bNum - aNum;
                 } else {
                     return isAscending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
                 }
             });
-            
+
             // Re-append sorted rows
             rows.forEach(row => tbody.appendChild(row));
-            
+
             // Update header indicators
             const headers = table.querySelectorAll('th');
             headers.forEach((header, index) => {

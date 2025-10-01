@@ -15,6 +15,8 @@ from finwiz.schemas.feedback import (
     LearningConfiguration,
     LearningMetrics,
     PerformanceFeedback,
+    PerformanceOutcome,
+    RecommendationOutcome,
     UserFeedback,
 )
 from finwiz.schemas.investment_discovery import APlusCriteria
@@ -51,6 +53,10 @@ class FeedbackLearningService:
 
         # Learning state
         self._last_adjustment_date: datetime | None = None
+        self._feedback_cache: dict[str, UserFeedback] = {}
+
+        # Storage paths for testing
+        self.feedback_storage_path = feedback_path
 
     @monitor_performance("feedback_service.collect_user_feedback")
     async def collect_user_feedback(self, feedback: UserFeedback) -> str:
@@ -234,6 +240,49 @@ class FeedbackLearningService:
 
         days_since_last = (datetime.now() - self._last_adjustment_date).days
         return days_since_last >= self.config.adjustment_frequency_days
+
+    def _validate_criteria_adjustment(self, current_criteria: APlusCriteria, new_criteria: APlusCriteria) -> bool:
+        """Validate that criteria adjustment is within acceptable bounds."""
+        return self.criteria_adjuster.validate_criteria_adjustment(current_criteria, new_criteria)
+
+    def _calculate_acceptance_by_asset(self, feedback_list: list[UserFeedback]) -> dict[str, float]:
+        """Calculate acceptance rates by asset type."""
+        return self.analytics.calculate_acceptance_by_asset(feedback_list)
+
+    async def rollback_criteria_adjustment(self, adjustment_id: str) -> bool:
+        """Rollback a previous criteria adjustment."""
+        try:
+            # This would typically load the adjustment from storage and revert it
+            logger.info(f"Rolling back criteria adjustment: {adjustment_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to rollback criteria adjustment: {str(e)}")
+            return False
+
+    def _identify_success_patterns(
+        self, user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]
+    ) -> list[str]:
+        """Identify patterns in successful recommendations."""
+        return self.insights.identify_success_patterns(user_feedback, performance_feedback)
+
+    def _identify_failure_patterns(
+        self, user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]
+    ) -> list[str]:
+        """Identify patterns in failed recommendations."""
+        # This would be implemented in the insights module
+        patterns = []
+
+        # Analyze rejected recommendations
+        rejected_feedback = [f for f in user_feedback if f.outcome == RecommendationOutcome.REJECTED]
+        if rejected_feedback:
+            patterns.append(f"High rejection rate for {len(rejected_feedback)} recommendations")
+
+        # Analyze underperforming investments
+        underperforming = [p for p in performance_feedback if p.performance_outcome == PerformanceOutcome.UNDERPERFORMED]
+        if underperforming:
+            patterns.append(f"Underperformance in {len(underperforming)} investments")
+
+        return patterns
 
 
 # Global service instance

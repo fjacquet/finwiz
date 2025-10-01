@@ -139,6 +139,9 @@ The Perplexity Sonar integration follows these architectural principles:
    - Prefer explicit imports from specific modules over package-level imports
    - Place all imports at the top of the file, never inline within functions or methods
    - Group related functionality in dedicated directories
+   - **File Size Guidelines**: Target files under 200 lines for maximum readability and maintainability
+   - **Single Responsibility**: Each module should have a clear, focused purpose
+   - **Extract Common Patterns**: Move shared calculations, formatting, and utilities to dedicated modules
 
 6. **Project Directory Layout**
    - The `src` directory should contain only Python source code (e.g., the main application package `finwiz`, tools, etc.).
@@ -196,6 +199,65 @@ The Perplexity Sonar integration follows these architectural principles:
    - Use standardized mock setups through APITestMocks class.
    - Ensure CI runs `uv run pytest` as the default test command.
 
+## Code Modernization Principles
+
+### File Decomposition Strategy
+
+The codebase has undergone systematic modernization to improve maintainability:
+
+#### Target File Sizes
+- **Under 200 lines**: Optimal for readability and maintainability
+- **200-500 lines**: Acceptable for complex but focused modules
+- **500+ lines**: Candidates for decomposition
+
+#### Decomposition Patterns
+- **Extract Calculations**: Move mathematical operations to dedicated calculation modules
+- **Extract Formatting**: Separate presentation logic from business logic
+- **Extract Utilities**: Common helper functions moved to utility modules
+- **Extract Models**: Pydantic models and enums moved to dedicated model files
+- **Extract Strategies**: Algorithm implementations moved to strategy modules
+
+#### Scientific Package Optimization
+- Replace manual calculations with pandas/numpy vectorized operations
+- Use `pandas.Series.mean()` instead of manual `sum()/len()` calculations
+- Leverage `pandas.groupby()` for aggregation operations
+- Use `pandas.rolling()` for moving averages instead of manual loops
+- Apply numpy broadcasting for efficient array operations
+
+### Modernization Examples
+
+#### Before: Monolithic File (1323 lines)
+```python
+# src/finwiz/quantitative/technical.py - Original monolithic file
+class TechnicalAnalysis:
+    def calculate_rsi(self): # 50+ lines
+    def calculate_macd(self): # 40+ lines
+    def calculate_bollinger_bands(self): # 60+ lines
+    # ... 20+ more indicators
+    
+    class SignalType(Enum): # Models mixed with logic
+    class SignalStrength(Enum):
+    class TechnicalSignal(BaseModel):
+```
+
+#### After: Modular Structure
+```python
+# src/finwiz/quantitative/technical/technical_indicators.py (200 lines)
+# TA-Lib wrapper functions only
+
+# src/finwiz/quantitative/technical/technical_models.py (100 lines)  
+# Pydantic models and enums only
+
+# src/finwiz/quantitative/technical/basic_indicators.py (150 lines)
+# Basic indicator implementations
+
+# src/finwiz/quantitative/technical/advanced_indicators.py (180 lines)
+# Advanced indicator implementations
+
+# src/finwiz/quantitative/technical/engine.py (190 lines)
+# Main technical analysis orchestration
+```
+
 ## Implementation Examples
 
 ### Good Example - DRY Principle
@@ -236,14 +298,25 @@ def archive_files(file: str) -> None:
 
 ### Good Example - Module Organization with Tool Factories
 
-This project organizes tools by domain and uses factory functions to provide them to the crews. This keeps the crew definitions clean and separates tool implementation from tool consumption.
+This project organizes tools by domain and uses factory functions to provide them to the crews. This keeps the crew definitions clean and separates tool implementation from tool consumption. **Recent modernization has further improved organization by extracting specialized components:**
 
 ```text
 src/finwiz/tools/
 ├── __init__.py
 ├── finance_tools.py          # Factory functions for finance tools
 ├── web_tools.py              # Factory functions for web/search tools
-└── yahoo_finance_tool.py     # Implementation of all Yahoo Finance tools
+├── yahoo_finance_tool.py     # Implementation of all Yahoo Finance tools
+├── market_screening_tool.py  # Core screening logic (reduced from 1062 lines)
+├── screening_criteria.py     # Extracted screening criteria
+├── screening_utils.py        # Extracted screening utilities
+├── screening_ranking.py      # Extracted ranking algorithms
+├── enhanced_sentiment_tool.py # Core sentiment analysis (reduced from 822 lines)
+├── sentiment_calculations.py # Extracted sentiment calculations
+├── sentiment_sources.py      # Extracted data source integrations
+├── rebalancing_report_generator.py # Core reporting (reduced from 1129 lines)
+├── rebalancing_formatters.py # Extracted HTML formatting
+├── rebalancing_calculations.py # Extracted calculations
+└── rebalancing_templates.py  # Extracted template management
 ```
 
 ```python

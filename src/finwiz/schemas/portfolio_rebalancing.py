@@ -10,7 +10,28 @@ Use: from finwiz.schemas.rebalancing import <ClassName>
 """
 
 # Re-export all classes from the new modular structure for backward compatibility
-from finwiz.schemas.rebalancing import *
+from finwiz.schemas.rebalancing import (
+    AlternativeScenario,
+    CostAnalysis,
+    ExecutionSummary,
+    Holding,
+    PerformanceAttribution,
+    PortfolioAnalysis,
+    PortfolioConfiguration,
+    PortfolioMetrics,
+    PositionHistory,
+    PriceData,
+    RebalancingAnalytics,
+    RebalancingHistoryEntry,
+    RebalancingMethod,
+    RebalancingNeed,
+    RebalancingRecommendation,
+    RebalancingResult,
+    TradeAction,
+    TradeRecommendation,
+    TrendAnalysis,
+    UrgencyLevel,
+)
 
 __all__ = [
     # Enums

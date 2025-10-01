@@ -262,9 +262,7 @@ class TechnicalPatterns:
 
         return levels
 
-    def _find_nearest_level(
-        self, levels: list[SupportResistanceLevel], current_price: float, level_type: str
-    ) -> float | None:
+    def _find_nearest_level(self, levels: list[SupportResistanceLevel], current_price: float, level_type: str) -> float | None:
         """Find the nearest support or resistance level."""
         if not levels:
             return None

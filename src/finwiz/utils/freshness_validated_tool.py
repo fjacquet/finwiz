@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 class RefreshResult:
     """Result of data refresh attempt."""
 
-    def __init__(self, success: bool, data: Any = None, error: str | None = None):
+    def __init__(self, success: bool, data: Any = None, error: str | None = None) -> None:
+        """Initialize refresh result."""
         self.success = success
         self.data = data
         self.error = error
@@ -32,7 +33,7 @@ class FreshnessValidatedTool(BaseTool):
     with graceful degradation when data is stale.
     """
 
-    def __init__(self, base_tool: BaseTool, validator: DataFreshnessValidator | None = None, max_age_hours: int = 24):
+    def __init__(self, base_tool: BaseTool, validator: DataFreshnessValidator | None = None, max_age_hours: int = 24) -> None:
         """
         Initialize the freshness validated tool wrapper.
 
@@ -63,7 +64,7 @@ class FreshnessValidatedTool(BaseTool):
         """Get the freshness validator."""
         return self._validator
 
-    def _run(self, *args, **kwargs) -> Any:
+    def _run(self, *args: Any, **kwargs: Any) -> Any:
         """Execute tool with freshness validation."""
         try:
             # Get data from base tool
@@ -104,7 +105,7 @@ class FreshnessValidatedTool(BaseTool):
             logger.error(f"Freshness validated tool execution failed: {e}")
             return {"error": f"Tool execution failed: {str(e)}"}
 
-    def _attempt_refresh(self, *args, **kwargs) -> RefreshResult:
+    def _attempt_refresh(self, *args: Any, **kwargs: Any) -> RefreshResult:
         """
         Attempt to refresh stale data.
 

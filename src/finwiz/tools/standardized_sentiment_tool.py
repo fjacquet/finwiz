@@ -232,22 +232,22 @@ class StandardizedSentimentAnalysisTool(BaseTool):
         return articles[:max_count]
 
     def _create_sample_financial_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
-        """DEPRECATED: This method created fake articles with hallucinated URLs."""
+        """Do not use: This method created fake articles with hallucinated URLs."""
         logger.warning(f"_create_sample_financial_articles called for {symbol} - this creates fake data and is disabled")
         return []
 
     def _create_sample_crypto_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
-        """DEPRECATED: This method created fake articles with hallucinated URLs."""
+        """Do not use: This method created fake articles with hallucinated URLs."""
         logger.warning(f"_create_sample_crypto_articles called for {symbol} - this creates fake data and is disabled")
         return []
 
     def _create_sample_general_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
-        """DEPRECATED: This method created fake articles with hallucinated URLs."""
+        """Do not use: This method created fake articles with hallucinated URLs."""
         logger.warning(f"_create_sample_general_articles called for {symbol} - this creates fake data and is disabled")
         return []
 
     def _create_sample_articles(self, symbol: str, asset_class: str) -> list[dict[str, Any]]:
-        """DEPRECATED: This method created fake articles and should not be used."""
+        """Do not use: This method created fake articles and should not be used."""
         logger.warning(f"_create_sample_articles called for {symbol} - this creates fake data and is disabled")
         return []
 

@@ -258,7 +258,7 @@ class PerplexityIntegrationValidator:
 
 def validate_perplexity_integrations() -> str:
     """
-    Convenience function to run full validation and return report.
+    Run full validation and return report.
 
     Returns:
         Validation report string

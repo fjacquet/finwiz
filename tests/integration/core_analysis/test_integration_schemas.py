@@ -244,15 +244,15 @@ class TestCrewOutputMetadata:
     """Test CrewOutputMetadata model."""
 
     def create_valid_validation_status(self) -> ValidationStatus:
-        """Helper to create a valid ValidationStatus."""
+        """Create a valid ValidationStatus."""
         return ValidationStatus(is_valid=True, validation_timestamp=datetime.now(UTC))
 
     def create_valid_freshness_status(self) -> FreshnessStatus:
-        """Helper to create a valid FreshnessStatus."""
+        """Create a valid FreshnessStatus."""
         return FreshnessStatus(is_fresh=True, age_hours=1.0, refresh_recommended=False, last_updated=datetime.now(UTC))
 
     def create_valid_data_source(self) -> DataSource:
-        """Helper to create a valid DataSource."""
+        """Create a valid DataSource."""
         return DataSource(source_type=DataSourceType.YAHOO_FINANCE, accessed_at=datetime.now(UTC), data_quality=DataQuality.HIGH)
 
     def test_should_create_valid_metadata_when_all_fields_provided(self):
@@ -432,7 +432,7 @@ class TestSECCitation:
     """Test SECCitation model."""
 
     def create_valid_validation_status(self) -> ValidationStatus:
-        """Helper to create a valid ValidationStatus."""
+        """Create a valid ValidationStatus."""
         return ValidationStatus(is_valid=True, validation_timestamp=datetime.now(UTC))
 
     def test_should_create_valid_sec_citation_when_all_fields_provided(self):
@@ -684,7 +684,7 @@ class TestEnhancedCrewOutputs:
     """Test enhanced crew output schemas."""
 
     def create_valid_metadata(self) -> CrewOutputMetadata:
-        """Helper to create valid CrewOutputMetadata."""
+        """Create valid CrewOutputMetadata."""
         validation_status = ValidationStatus(is_valid=True, validation_timestamp=datetime.now(UTC))
         freshness_status = FreshnessStatus(is_fresh=True, age_hours=1.0, refresh_recommended=False, last_updated=datetime.now(UTC))
 
@@ -1026,7 +1026,7 @@ class TestDiscoveryCrewOutput:
     """Test DiscoveryCrewOutput model."""
 
     def create_valid_metadata(self) -> CrewOutputMetadata:
-        """Helper to create valid CrewOutputMetadata."""
+        """Create valid CrewOutputMetadata."""
         validation_status = ValidationStatus(is_valid=True, validation_timestamp=datetime.now(UTC))
         freshness_status = FreshnessStatus(is_fresh=True, age_hours=1.0, refresh_recommended=False, last_updated=datetime.now(UTC))
 
@@ -1039,7 +1039,7 @@ class TestDiscoveryCrewOutput:
         )
 
     def create_valid_aplus_collection(self) -> APlusOpportunityCollection:
-        """Helper to create valid APlusOpportunityCollection."""
+        """Create valid APlusOpportunityCollection."""
         return APlusOpportunityCollection(
             etf_opportunities=["SPY", "QQQ"],
             stock_opportunities=["AAPL", "MSFT"],

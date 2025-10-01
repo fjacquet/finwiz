@@ -115,8 +115,8 @@ def create_default_test_cases() -> list[dict[str, Any]]:
     ]
 
 
-async def main():
-    """Main CLI entry point."""
+async def main() -> None:
+    """Run CLI entry point."""
     parser = argparse.ArgumentParser(description="Benchmark Perplexity API performance and validate requirements")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

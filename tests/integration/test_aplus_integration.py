@@ -7,7 +7,6 @@ with portfolio allocation updates and availability status tracking.
 
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -20,19 +19,19 @@ class TestAPlusIntegration:
     """Test suite for A+ opportunity integration functionality."""
 
     @pytest.fixture
-    def mock_integration_manager(self):
+    def mock_integration_manager(self, mocker):
         """Create a mock integration manager."""
-        manager = Mock(spec=CrewDataIntegrationManager)
+        manager = mocker.Mock(spec=CrewDataIntegrationManager)
         manager.output_dir = Path("output")
-        manager.logger = Mock()
+        manager.logger = mocker.Mock()
         return manager
 
     @pytest.fixture
-    def data_accessor(self, mock_integration_manager):
+    def data_accessor(self, mock_integration_manager, mocker):
         """Create data accessor with mocked dependencies."""
-        with patch("finwiz.integration.data_accessor.APlusDataExtractor"):
-            accessor = CrewDataAccessor(mock_integration_manager)
-            return accessor
+        mocker.patch("finwiz.integration.data_accessor.APlusDataExtractor")
+        accessor = CrewDataAccessor(mock_integration_manager)
+        return accessor
 
     @pytest.fixture
     def sample_aplus_opportunities(self):
@@ -41,7 +40,9 @@ class TestAPlusIntegration:
             etf_opportunities=["VWCE", "IWDA"],
             stock_opportunities=["NVDA", "AVGO", "ADBE"],
             crypto_opportunities=["BTC", "ETH"],
-            discovery_summary="Analysis identified 7 high-quality investment opportunities with strong fundamentals and growth potential.",
+            discovery_summary=(
+                "Analysis identified 7 high-quality investment opportunities with strong fundamentals and growth potential."
+            ),
             confidence_score=0.85,
             validation_timestamp=datetime.now(),
             allocation_recommendations=[
@@ -113,16 +114,18 @@ class TestAPlusIntegration:
         # Assert
         assert result is None
 
-    def test_should_generate_consolidated_reporter_input_with_aplus_opportunities(self, data_accessor, sample_aplus_opportunities):
+    def test_should_generate_consolidated_reporter_input_with_aplus_opportunities(
+        self, data_accessor, sample_aplus_opportunities, mocker
+    ):
         """Test consolidated reporter input generation with A+ opportunities."""
         # Arrange
         base_consolidated_data = {"stock": {"mock": "stock_data"}, "etf": {"mock": "etf_data"}, "crypto": {"mock": "crypto_data"}}
 
-        data_accessor.get_consolidated_data = Mock(return_value=base_consolidated_data)
-        data_accessor.get_consolidated_market_sentiment = Mock(return_value={"sentiment": "positive"})
-        data_accessor.get_consolidated_ticker_validation = Mock(return_value={"validation": "passed"})
-        data_accessor.get_aplus_opportunities = Mock(return_value=sample_aplus_opportunities)
-        data_accessor.check_data_availability = Mock(return_value={"status": "complete"})
+        data_accessor.get_consolidated_data = mocker.Mock(return_value=base_consolidated_data)
+        data_accessor.get_consolidated_market_sentiment = mocker.Mock(return_value={"sentiment": "positive"})
+        data_accessor.get_consolidated_ticker_validation = mocker.Mock(return_value={"validation": "passed"})
+        data_accessor.get_aplus_opportunities = mocker.Mock(return_value=sample_aplus_opportunities)
+        data_accessor.check_data_availability = mocker.Mock(return_value={"status": "complete"})
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -151,16 +154,16 @@ class TestAPlusIntegration:
         assert status["available"] is True
         assert status["total_opportunities"] == 7
 
-    def test_should_generate_consolidated_reporter_input_without_aplus_opportunities(self, data_accessor):
+    def test_should_generate_consolidated_reporter_input_without_aplus_opportunities(self, data_accessor, mocker):
         """Test consolidated reporter input generation when A+ opportunities are unavailable."""
         # Arrange
         base_consolidated_data = {"stock": {"mock": "stock_data"}, "etf": {"mock": "etf_data"}}
 
-        data_accessor.get_consolidated_data = Mock(return_value=base_consolidated_data)
-        data_accessor.get_consolidated_market_sentiment = Mock(return_value={"sentiment": "neutral"})
-        data_accessor.get_consolidated_ticker_validation = Mock(return_value={"validation": "passed"})
-        data_accessor.get_aplus_opportunities = Mock(return_value=None)
-        data_accessor.check_data_availability = Mock(return_value={"status": "partial"})
+        data_accessor.get_consolidated_data = mocker.Mock(return_value=base_consolidated_data)
+        data_accessor.get_consolidated_market_sentiment = mocker.Mock(return_value={"sentiment": "neutral"})
+        data_accessor.get_consolidated_ticker_validation = mocker.Mock(return_value={"validation": "passed"})
+        data_accessor.get_aplus_opportunities = mocker.Mock(return_value=None)
+        data_accessor.check_data_availability = mocker.Mock(return_value={"status": "partial"})
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -304,10 +307,10 @@ class TestAPlusIntegration:
         status = data_accessor._get_aplus_availability_status(empty_opportunities)
         assert status["status"] == "EMPTY"
 
-    def test_should_handle_consolidated_reporter_input_errors_gracefully(self, data_accessor):
+    def test_should_handle_consolidated_reporter_input_errors_gracefully(self, data_accessor, mocker):
         """Test consolidated reporter input generation handles errors gracefully."""
         # Arrange
-        data_accessor.get_consolidated_data = Mock(side_effect=Exception("Consolidation error"))
+        data_accessor.get_consolidated_data = mocker.Mock(side_effect=Exception("Consolidation error"))
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -341,9 +344,11 @@ class TestAPlusIntegration:
         assert isinstance(updates, list)  # Should still return a list even with errors
         # Should handle malformed data gracefully
 
-    @patch("finwiz.integration.data_accessor.APlusDataExtractor")
-    def test_should_initialize_aplus_extractor_correctly(self, mock_extractor_class, mock_integration_manager):
+    def test_should_initialize_aplus_extractor_correctly(self, mock_integration_manager, mocker):
         """Test that A+ extractor is initialized correctly in data accessor."""
+        # Arrange
+        mock_extractor_class = mocker.patch("finwiz.integration.data_accessor.APlusDataExtractor")
+
         # Act
         accessor = CrewDataAccessor(mock_integration_manager)
 

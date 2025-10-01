@@ -25,6 +25,7 @@ class PerplexityBenchmarkResult:
     """Results from a Perplexity performance benchmark."""
 
     def __init__(self, test_name: str) -> None:
+        """Initialize benchmark results for a test."""
         self.test_name = test_name
         self.response_times: list[int] = []
         self.success_count = 0

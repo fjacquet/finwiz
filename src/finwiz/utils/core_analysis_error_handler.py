@@ -58,7 +58,7 @@ class CoreAnalysisErrorHandler:
     even when individual crews fail.
     """
 
-    def __init__(self, integration_manager: CrewDataIntegrationManager):
+    def __init__(self, integration_manager: CrewDataIntegrationManager) -> None:
         """
         Initialize the error handler.
 
@@ -167,7 +167,6 @@ class CoreAnalysisErrorHandler:
 
     def _classify_error(self, error: Exception) -> str:
         """Classify the type of error for appropriate handling."""
-        error_type = type(error).__name__
         error_message = str(error).lower()
 
         if "timeout" in error_message or "timed out" in error_message:

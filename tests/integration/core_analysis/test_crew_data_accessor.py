@@ -32,7 +32,7 @@ class TestCrewDataAccessor:
 
     @pytest.fixture
     def current_time(self):
-        """Fixed current time for consistent testing."""
+        """Return fixed current time for consistent testing."""
         return datetime(2024, 1, 15, 12, 0, 0)
 
     def test_should_retrieve_stock_data_with_freshness_check(self, data_accessor, mock_integration_manager):

@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 @click.group()
 def feedback_cli() -> None:
-    """A+ Investment Feedback Learning System CLI."""
+    """Manage A+ Investment Feedback Learning System."""
     pass
 
 
@@ -175,9 +175,9 @@ def learning_metrics(days: int) -> None:
 
             # Display metrics
             click.echo("\n🎯 Learning System Performance")
-            click.echo(
-                f"   Period: {metrics.evaluation_period_start.strftime('%Y-%m-%d')} to {metrics.evaluation_period_end.strftime('%Y-%m-%d')}"
-            )
+            start_date = metrics.evaluation_period_start.strftime("%Y-%m-%d")
+            end_date = metrics.evaluation_period_end.strftime("%Y-%m-%d")
+            click.echo(f"   Period: {start_date} to {end_date}")
 
             # Recommendation metrics
             click.echo("\n📈 Recommendation Metrics:")
@@ -271,9 +271,9 @@ def optimize_criteria(criteria_file: str, force: bool, dry_run: bool) -> None:
 
                     # ETF changes
                     if new_criteria.etf_max_expense_ratio != old_criteria.etf_max_expense_ratio:
-                        click.echo(
-                            f"   ETF max expense ratio: {old_criteria.etf_max_expense_ratio:.3f} → {new_criteria.etf_max_expense_ratio:.3f}"
-                        )
+                        old_ratio = old_criteria.etf_max_expense_ratio
+                        new_ratio = new_criteria.etf_max_expense_ratio
+                        click.echo(f"   ETF max expense ratio: {old_ratio:.3f} → {new_ratio:.3f}")
 
                     # Stock changes
                     if new_criteria.stock_min_roe != old_criteria.stock_min_roe:
@@ -281,9 +281,9 @@ def optimize_criteria(criteria_file: str, force: bool, dry_run: bool) -> None:
 
                     # Crypto changes
                     if new_criteria.crypto_min_market_cap != old_criteria.crypto_min_market_cap:
-                        click.echo(
-                            f"   Crypto min market cap: ${old_criteria.crypto_min_market_cap / 1e9:.1f}B → ${new_criteria.crypto_min_market_cap / 1e9:.1f}B"
-                        )
+                        old_cap = old_criteria.crypto_min_market_cap / 1e9
+                        new_cap = new_criteria.crypto_min_market_cap / 1e9
+                        click.echo(f"   Crypto min market cap: ${old_cap:.1f}B → ${new_cap:.1f}B")
 
                     # Save new criteria
                     new_criteria_file = criteria_path.parent / f"optimized_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

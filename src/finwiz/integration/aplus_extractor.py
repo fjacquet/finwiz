@@ -464,7 +464,10 @@ class APlusDataExtractor:
         summary = f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: " + ", ".join(
             summary_parts
         )
-        summary += ". Opportunities selected based on fundamental analysis, competitive moats, valuation attractiveness, and portfolio integration potential."
+        summary += (
+            ". Opportunities selected based on fundamental analysis, competitive moats, "
+            "valuation attractiveness, and portfolio integration potential."
+        )
 
         return summary
 

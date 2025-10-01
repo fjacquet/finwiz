@@ -17,7 +17,7 @@ from .technical_models import SignalStrength, SignalType, TechnicalIndicatorResu
 class BasicIndicators:
     """Calculator for basic technical indicators."""
 
-    def __init__(self, logger: Any):
+    def __init__(self, logger: Any) -> None:
         """Initialize with logger."""
         self.logger = logger
 

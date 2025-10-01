@@ -47,7 +47,7 @@ class DataFreshnessValidator:
     degradation when data is stale.
     """
 
-    def __init__(self, max_age_hours: int = 24):
+    def __init__(self, max_age_hours: int = 24) -> None:
         """
         Initialize the validator.
 

@@ -48,6 +48,9 @@ This handbook establishes the core principles, ethical standards, and research m
 - Document functions, classes, and complex logic
 - Handle edge cases and potential errors gracefully
 - Optimize for both performance and maintainability
+- **Modular Design**: Follow the modernized codebase structure with focused, single-responsibility modules
+- **File Size Guidelines**: Target files under 200 lines for maximum maintainability
+- **Scientific Package Usage**: Leverage pandas/numpy for calculations instead of manual implementations
 - Testing: use `pytest` for unit/integration tests and `pytest-mock` for mocking. Place tests under a `tests/` directory using `test_*.py` naming. Run with `uv run pytest`.
 
 #### 6. Data Validation & Schema Compliance

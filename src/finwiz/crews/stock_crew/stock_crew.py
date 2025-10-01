@@ -86,7 +86,8 @@ class StockCrew:
     agents: list[BaseAgent]
     tasks: list[Task]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize stock crew with configuration files."""
         # Set configuration paths before calling super().__init__()
         from pathlib import Path
 

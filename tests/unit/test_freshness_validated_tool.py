@@ -28,6 +28,7 @@ class MockTool(BaseTool):
     args_schema: type[BaseModel] = MockToolInput
 
     def __init__(self, return_data=None, should_error=False, **kwargs):
+        """Initialize mock tool with test data."""
         super().__init__(**kwargs)
         # Store test data as private attributes to avoid Pydantic validation
         self._return_data = return_data or {"symbol": "AAPL", "price": 150.0}

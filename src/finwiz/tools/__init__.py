@@ -19,7 +19,7 @@ from .risk_assessment_tool import RiskAssessmentTool
 __all__ = ["APlusScoringTool", "BacktestingTool", "OptimizationTool", "PortfolioAnalysisTool", "RiskAssessmentTool"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> type:
     """Lazy import for BacktestingTool to avoid circular imports."""
     if name == "BacktestingTool":
         from .backtesting_tool import BacktestingTool

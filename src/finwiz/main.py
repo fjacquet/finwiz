@@ -309,16 +309,21 @@ class FinwizFlow(Flow[FinwizState]):
                 result_data = self.crew_factory.execute_investment_discovery_crew(crew_inputs)
                 self.inputs.update(result_data)
 
-                # Store crew result in integration system
-                self.integration_manager.store_crew_output("discovery", result)
+                # Store crew result in integration system (use result_data since result is not defined)
+                if "result" in result_data:
+                    crew_result = result_data["result"]
+                    self.integration_manager.store_crew_output("discovery", crew_result)
 
-                # Store crew result - convert CrewOutput to string for template interpolation
-                if hasattr(result, "raw"):
-                    result_text = str(result.raw)
-                    self.inputs["investment_discovery_result"] = result_text
+                    # Store crew result - convert CrewOutput to string for template interpolation
+                    if hasattr(crew_result, "raw"):
+                        result_text = str(crew_result.raw)
+                        self.inputs["investment_discovery_result"] = result_text
+                    else:
+                        result_text = str(crew_result)
+                        self.inputs["investment_discovery_result"] = result_text
                 else:
-                    result_text = str(result)
-                    self.inputs["investment_discovery_result"] = result_text
+                    # Fallback if no result in result_data
+                    self.inputs["investment_discovery_result"] = str(result_data)
 
                 # Use integrated A+ opportunity extraction (with error handling)
                 try:

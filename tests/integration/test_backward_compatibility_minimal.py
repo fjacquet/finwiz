@@ -6,7 +6,6 @@ triggering circular imports or complex dependencies.
 """
 
 import os
-from unittest.mock import patch
 
 import pytest
 
@@ -112,20 +111,20 @@ class TestMinimalBackwardCompatibility:
         assert state.crypto_result == ""
         assert state.stock_result == ""
 
-    def test_environment_variables_compatibility(self):
+    def test_environment_variables_compatibility(self, mocker):
         """Test that environment variable handling remains compatible."""
         # Test portfolio review environment variable
-        with patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "true"}):
-            assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "true"
+        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "true"})
+        assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "true"
 
-        with patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "false"}):
-            assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "false"
+        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "false"})
+        assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "false"
 
         # Test that missing environment variables are handled gracefully
-        with patch.dict(os.environ, {}, clear=True):
-            # Should not raise exceptions when environment variables are missing
-            portfolio_enabled = (os.getenv("PORTFOLIO_REVIEW_ENABLED") or "true").strip().lower() in {"1", "true", "yes", "on"}
-            assert portfolio_enabled is True  # Default behavior
+        mocker.patch.dict(os.environ, {}, clear=True)
+        # Should not raise exceptions when environment variables are missing
+        portfolio_enabled = (os.getenv("PORTFOLIO_REVIEW_ENABLED") or "true").strip().lower() in {"1", "true", "yes", "on"}
+        assert portfolio_enabled is True  # Default behavior
 
     def test_basic_tools_importable(self):
         """Test that basic tools can be imported."""
@@ -151,7 +150,7 @@ class TestMinimalBackwardCompatibility:
         except ImportError as e:
             pytest.fail(f"Schema validation import failed: {e}")
 
-    def test_crew_instantiation_basic(self):
+    def test_crew_instantiation_basic(self, mocker):
         """Test that crews can be instantiated without errors."""
         try:
             from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
@@ -160,7 +159,7 @@ class TestMinimalBackwardCompatibility:
             from finwiz.crews.stock_crew.stock_crew import StockCrew
 
             # Mock environment variables to avoid configuration errors
-            with patch.dict(
+            mocker.patch.dict(
                 os.environ,
                 {
                     "OPENAI_API_KEY": "test-key",
@@ -168,22 +167,23 @@ class TestMinimalBackwardCompatibility:
                     "FIRECRAWL_API_KEY": "test-key",
                     "ALPHA_VANTAGE_API_KEY": "test-key",
                 },
-            ):
-                # Test that crew classes exist and have expected structure
-                # Note: We don't instantiate them due to complex dependencies
-                # but verify they have the expected interface
+            )
 
-                # Verify crews have expected methods
-                assert hasattr(StockCrew, "__init__")
-                assert hasattr(EtfCrew, "__init__")
-                assert hasattr(CryptoCrew, "__init__")
-                assert hasattr(ReportCrew, "__init__")
+            # Test that crew classes exist and have expected structure
+            # Note: We don't instantiate them due to complex dependencies
+            # but verify they have the expected interface
 
-                # Verify crew classes are callable (can be instantiated)
-                assert callable(StockCrew)
-                assert callable(EtfCrew)
-                assert callable(CryptoCrew)
-                assert callable(ReportCrew)
+            # Verify crews have expected methods
+            assert hasattr(StockCrew, "__init__")
+            assert hasattr(EtfCrew, "__init__")
+            assert hasattr(CryptoCrew, "__init__")
+            assert hasattr(ReportCrew, "__init__")
+
+            # Verify crew classes are callable (can be instantiated)
+            assert callable(StockCrew)
+            assert callable(EtfCrew)
+            assert callable(CryptoCrew)
+            assert callable(ReportCrew)
 
         except Exception as e:
             pytest.fail(f"Crew class verification failed: {e}")
@@ -213,13 +213,13 @@ class TestMinimalBackwardCompatibility:
         except Exception as e:
             pytest.fail(f"Integration system instantiation failed: {e}")
 
-    def test_flow_initialization_basic(self):
+    def test_flow_initialization_basic(self, mocker):
         """Test that FinwizFlow can be initialized."""
         try:
             from finwiz.main import FinwizFlow, FinwizState
 
             # Mock environment variables to avoid configuration errors
-            with patch.dict(
+            mocker.patch.dict(
                 os.environ,
                 {
                     "OPENAI_API_KEY": "test-key",
@@ -227,25 +227,26 @@ class TestMinimalBackwardCompatibility:
                     "FIRECRAWL_API_KEY": "test-key",
                     "ALPHA_VANTAGE_API_KEY": "test-key",
                 },
-            ):
-                # Should be able to create flow instance
-                state = FinwizState()
-                flow = FinwizFlow(state=state)
+            )
 
-                # Verify flow has expected attributes
-                assert hasattr(flow, "inputs")
-                assert hasattr(flow, "integration_manager")
-                assert hasattr(flow, "data_accessor")
-                assert hasattr(flow, "error_handler")
+            # Should be able to create flow instance
+            state = FinwizState()
+            flow = FinwizFlow(state=state)
 
-                # Verify inputs structure contains expected fields
-                assert "current_day" in flow.inputs
-                assert "current_month" in flow.inputs
-                assert "current_year" in flow.inputs
-                assert "current_date" in flow.inputs
-                assert "full_date" in flow.inputs
-                assert "timestamp" in flow.inputs
-                assert "report_language" in flow.inputs
+            # Verify flow has expected attributes
+            assert hasattr(flow, "inputs")
+            assert hasattr(flow, "integration_manager")
+            assert hasattr(flow, "data_accessor")
+            assert hasattr(flow, "error_handler")
+
+            # Verify inputs structure contains expected fields
+            assert "current_day" in flow.inputs
+            assert "current_month" in flow.inputs
+            assert "current_year" in flow.inputs
+            assert "current_date" in flow.inputs
+            assert "full_date" in flow.inputs
+            assert "timestamp" in flow.inputs
+            assert "report_language" in flow.inputs
 
         except Exception as e:
             pytest.fail(f"Flow initialization failed: {e}")
@@ -261,10 +262,10 @@ class TestMinimalBackwardCompatibility:
         except ImportError as e:
             pytest.fail(f"Error handling class import failed: {e}")
 
-    def test_basic_feature_flag_functionality(self):
+    def test_basic_feature_flag_functionality(self, mocker):
         """Test basic feature flag functionality without circular imports."""
         # Test environment variable based feature flags directly
-        with patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "FINWIZ_FF_PORTFOLIO_REBALANCING": "true",
@@ -273,13 +274,14 @@ class TestMinimalBackwardCompatibility:
                 "FINWIZ_FF_ETF_ANALYSIS": "true",
                 "FINWIZ_FF_CRYPTO_ANALYSIS": "true",
             },
-        ):
-            # Test direct environment variable access (basic feature flag behavior)
-            assert os.getenv("FINWIZ_FF_PORTFOLIO_REBALANCING") == "true"
-            assert os.getenv("FINWIZ_FF_INVESTMENT_DISCOVERY") == "true"
-            assert os.getenv("FINWIZ_FF_STOCK_ANALYSIS") == "true"
-            assert os.getenv("FINWIZ_FF_ETF_ANALYSIS") == "true"
-            assert os.getenv("FINWIZ_FF_CRYPTO_ANALYSIS") == "true"
+        )
+
+        # Test direct environment variable access (basic feature flag behavior)
+        assert os.getenv("FINWIZ_FF_PORTFOLIO_REBALANCING") == "true"
+        assert os.getenv("FINWIZ_FF_INVESTMENT_DISCOVERY") == "true"
+        assert os.getenv("FINWIZ_FF_STOCK_ANALYSIS") == "true"
+        assert os.getenv("FINWIZ_FF_ETF_ANALYSIS") == "true"
+        assert os.getenv("FINWIZ_FF_CRYPTO_ANALYSIS") == "true"
 
     def test_existing_api_structure_maintained(self):
         """Test that existing API structure is maintained."""

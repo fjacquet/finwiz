@@ -328,9 +328,7 @@ class TechnicalAlgorithms:
 
         return swing_high, swing_low, high_date, low_date, trend
 
-    def _find_nearest_fib_levels(
-        self, levels: list[FibonacciLevel], current_price: float
-    ) -> tuple[float | None, float | None]:
+    def _find_nearest_fib_levels(self, levels: list[FibonacciLevel], current_price: float) -> tuple[float | None, float | None]:
         """Find nearest Fibonacci support and resistance levels."""
         support_levels = [level.price for level in levels if level.price < current_price]
         resistance_levels = [level.price for level in levels if level.price > current_price]

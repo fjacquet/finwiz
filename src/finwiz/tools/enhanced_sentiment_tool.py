@@ -49,7 +49,7 @@ class EnhancedSentimentAnalysisTool(BaseTool):
     )
     args_schema: type[BaseModel] = EnhancedSentimentInput
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize the enhanced sentiment analysis tool."""
         super().__init__(**kwargs)
         # Initialize components after parent initialization

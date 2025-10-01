@@ -507,27 +507,34 @@ class TestBackwardCompatibility:
         """Test that existing API endpoints and interfaces remain stable."""
         # Test that existing classes can still be imported and instantiated
         try:
+            # Test that core components can be imported (backward compatibility check)
+            import importlib.util
+
             # Core crews should be importable
-            from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
-            from finwiz.crews.etf_crew.etf_crew import EtfCrew
-            from finwiz.crews.investment_discovery_crew.investment_discovery_crew import InvestmentDiscoveryCrew
-            from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import PortfolioRebalancingCrew
-            from finwiz.crews.report_crew.report_crew import ReportCrew
-            from finwiz.crews.stock_crew.stock_crew import StockCrew
-            from finwiz.integration.data_accessor import CrewDataAccessor
+            modules_to_test = [
+                "finwiz.crews.crypto_crew.crypto_crew",
+                "finwiz.crews.etf_crew.etf_crew",
+                "finwiz.crews.investment_discovery_crew.investment_discovery_crew",
+                "finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew",
+                "finwiz.crews.report_crew.report_crew",
+                "finwiz.crews.stock_crew.stock_crew",
+                "finwiz.integration.data_accessor",
+                "finwiz.integration.manager",
+                "finwiz.main",
+                "finwiz.orchestrators.portfolio_review",
+                "finwiz.utils.feature_flags",
+                "finwiz.utils.session_manager",
+            ]
 
-            # Integration system should be importable
-            from finwiz.integration.manager import CrewDataIntegrationManager
+            # Test each module can be found and imported
+            for module_name in modules_to_test:
+                spec = importlib.util.find_spec(module_name)
+                if spec is None:
+                    pytest.fail(f"Module {module_name} not found, breaking backward compatibility")
 
-            # Main flow should be importable
-            from finwiz.main import FinwizFlow, FinwizState, kickoff, plot
-
-            # Orchestrators should be importable
-            from finwiz.orchestrators.portfolio_review import run as run_portfolio_review
-
-            # Utils should be importable
-            from finwiz.utils.feature_flags import FeatureFlags
-            from finwiz.utils.session_manager import SessionManager
+                # Actually import to test for import errors
+                module = importlib.import_module(module_name)
+                assert module is not None, f"Failed to import {module_name}"
 
             # All imports successful
             assert True

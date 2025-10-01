@@ -18,7 +18,6 @@ import sys
 import time
 import tracemalloc
 from datetime import datetime
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -414,7 +413,7 @@ class TestInvestmentDiscoveryPerformance:
         )
 
         # Mock crew execution
-        mock_crew = MagicMock()
+        mock_crew = mocker.Mock()
         mock_crew.kickoff.return_value = {
             "etf_discovery": mock_discovery_results["etf"],
             "stock_discovery": mock_discovery_results["stock"],
@@ -473,7 +472,7 @@ class TestInvestmentDiscoveryPerformance:
 
         # Mock crew execution for each instance
         for i, crew in enumerate(crews):
-            mock_crew = MagicMock()
+            mock_crew = mocker.Mock()
             mock_crew.kickoff.return_value = {
                 "status": "completed",
                 "session_id": f"concurrent_test_{i}",

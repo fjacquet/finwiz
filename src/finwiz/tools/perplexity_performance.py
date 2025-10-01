@@ -105,7 +105,7 @@ class PerplexityPerformanceMonitor:
 class PerplexityFeatureFlagTracker:
     """Tracks feature flag success/failure for Perplexity operations with circuit breaker integration."""
 
-    def __init__(self, failure_threshold: int = 5, recovery_threshold: int = 3):
+    def __init__(self, failure_threshold: int = 5, recovery_threshold: int = 3) -> None:
         """
         Initialize feature flag tracker.
 

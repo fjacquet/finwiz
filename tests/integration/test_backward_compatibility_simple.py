@@ -6,7 +6,6 @@ complex mocking or external API calls.
 """
 
 import os
-from unittest.mock import patch
 
 import pytest
 
@@ -61,55 +60,58 @@ class TestSimpleBackwardCompatibility:
         except ImportError as e:
             pytest.fail(f"Import failed, breaking backward compatibility: {e}")
 
-    def test_feature_flags_backward_compatibility(self):
+    def test_feature_flags_backward_compatibility(self, mocker):
         """Test that existing feature flags continue to work."""
         # Test with existing feature flags
-        with patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "FINWIZ_FF_PORTFOLIO_REBALANCING": "true",
                 "FINWIZ_FF_INVESTMENT_DISCOVERY": "true",
             },
-        ):
-            feature_flags = FeatureFlags()
+        )
 
-            # Existing feature flags should still work
-            assert feature_flags.is_enabled("portfolio_rebalancing") is True
-            assert feature_flags.is_enabled("investment_discovery") is True
+        feature_flags = FeatureFlags()
 
-    def test_new_feature_flags_available(self):
+        # Existing feature flags should still work
+        assert feature_flags.is_enabled("portfolio_rebalancing") is True
+        assert feature_flags.is_enabled("investment_discovery") is True
+
+    def test_new_feature_flags_available(self, mocker):
         """Test that new core analysis feature flags are available."""
-        with patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "FINWIZ_FF_STOCK_ANALYSIS": "true",
                 "FINWIZ_FF_ETF_ANALYSIS": "true",
                 "FINWIZ_FF_CRYPTO_ANALYSIS": "true",
             },
-        ):
-            feature_flags = FeatureFlags()
+        )
 
-            # New feature flags should be available
-            assert feature_flags.is_enabled("stock_analysis") is True
-            assert feature_flags.is_enabled("etf_analysis") is True
-            assert feature_flags.is_enabled("crypto_analysis") is True
+        feature_flags = FeatureFlags()
 
-    def test_feature_flags_can_disable_core_analysis(self):
+        # New feature flags should be available
+        assert feature_flags.is_enabled("stock_analysis") is True
+        assert feature_flags.is_enabled("etf_analysis") is True
+        assert feature_flags.is_enabled("crypto_analysis") is True
+
+    def test_feature_flags_can_disable_core_analysis(self, mocker):
         """Test that core analysis can be disabled via feature flags."""
-        with patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "FINWIZ_FF_STOCK_ANALYSIS": "false",
                 "FINWIZ_FF_ETF_ANALYSIS": "false",
                 "FINWIZ_FF_CRYPTO_ANALYSIS": "false",
             },
-        ):
-            feature_flags = FeatureFlags()
+        )
 
-            # Core analysis should be disabled
-            assert feature_flags.is_enabled("stock_analysis") is False
-            assert feature_flags.is_enabled("etf_analysis") is False
-            assert feature_flags.is_enabled("crypto_analysis") is False
+        feature_flags = FeatureFlags()
+
+        # Core analysis should be disabled
+        assert feature_flags.is_enabled("stock_analysis") is False
+        assert feature_flags.is_enabled("etf_analysis") is False
+        assert feature_flags.is_enabled("crypto_analysis") is False
 
     def test_flow_state_structure_unchanged(self):
         """Test that FinwizState structure remains unchanged."""
@@ -128,12 +130,12 @@ class TestSimpleBackwardCompatibility:
         assert state.crypto_result == ""
         assert state.stock_result == ""
 
-    def test_flow_initialization_backward_compatible(self):
+    def test_flow_initialization_backward_compatible(self, mocker):
         """Test that FinwizFlow can be initialized without breaking changes."""
         from finwiz.main import FinwizFlow, FinwizState
 
         # Mock environment variables to avoid configuration errors
-        with patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "test-key",
@@ -141,32 +143,33 @@ class TestSimpleBackwardCompatibility:
                 "FIRECRAWL_API_KEY": "test-key",
                 "ALPHA_VANTAGE_API_KEY": "test-key",
             },
-        ):
-            # Should be able to create flow instance
-            state = FinwizState()
-            flow = FinwizFlow(state=state)
+        )
 
-            # Verify flow has expected attributes
-            assert hasattr(flow, "inputs")
-            assert hasattr(flow, "integration_manager")
-            assert hasattr(flow, "data_accessor")
-            assert hasattr(flow, "error_handler")
+        # Should be able to create flow instance
+        state = FinwizState()
+        flow = FinwizFlow(state=state)
 
-            # Verify inputs structure contains expected fields
-            assert "current_day" in flow.inputs
-            assert "current_month" in flow.inputs
-            assert "current_year" in flow.inputs
-            assert "current_date" in flow.inputs
-            assert "full_date" in flow.inputs
-            assert "timestamp" in flow.inputs
-            assert "report_language" in flow.inputs
+        # Verify flow has expected attributes
+        assert hasattr(flow, "inputs")
+        assert hasattr(flow, "integration_manager")
+        assert hasattr(flow, "data_accessor")
+        assert hasattr(flow, "error_handler")
 
-    def test_configuration_manager_backward_compatible(self):
+        # Verify inputs structure contains expected fields
+        assert "current_day" in flow.inputs
+        assert "current_month" in flow.inputs
+        assert "current_year" in flow.inputs
+        assert "current_date" in flow.inputs
+        assert "full_date" in flow.inputs
+        assert "timestamp" in flow.inputs
+        assert "report_language" in flow.inputs
+
+    def test_configuration_manager_backward_compatible(self, mocker):
         """Test that configuration manager maintains backward compatibility."""
         from finwiz.utils.configuration_manager import get_configuration_manager
 
         # Mock environment variables
-        with patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "test-key",
@@ -174,20 +177,21 @@ class TestSimpleBackwardCompatibility:
                 "FIRECRAWL_API_KEY": "test-key",
                 "ALPHA_VANTAGE_API_KEY": "test-key",
             },
-        ):
-            # Should be able to get configuration manager
-            config_manager = get_configuration_manager()
+        )
 
-            # Verify expected methods exist
-            assert hasattr(config_manager, "validate_startup_configuration")
-            assert hasattr(config_manager, "get_configuration_summary")
-            assert hasattr(config_manager, "feature_flags")
+        # Should be able to get configuration manager
+        config_manager = get_configuration_manager()
 
-            # Verify configuration summary structure
-            config_summary = config_manager.get_configuration_summary()
-            assert "api_keys_configured" in config_summary
-            assert "available_services" in config_summary
-            assert isinstance(config_summary["available_services"], list)
+        # Verify expected methods exist
+        assert hasattr(config_manager, "validate_startup_configuration")
+        assert hasattr(config_manager, "get_configuration_summary")
+        assert hasattr(config_manager, "feature_flags")
+
+        # Verify configuration summary structure
+        config_summary = config_manager.get_configuration_summary()
+        assert "api_keys_configured" in config_summary
+        assert "available_services" in config_summary
+        assert isinstance(config_summary["available_services"], list)
 
     def test_session_manager_backward_compatible(self):
         """Test that session manager maintains backward compatibility."""
@@ -240,20 +244,20 @@ class TestSimpleBackwardCompatibility:
             assert hasattr(crew, "crew")
             assert callable(crew.crew)
 
-    def test_environment_variables_compatibility(self):
+    def test_environment_variables_compatibility(self, mocker):
         """Test that environment variable handling remains compatible."""
         # Test portfolio review environment variable
-        with patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "true"}):
-            assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "true"
+        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "true"})
+        assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "true"
 
-        with patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "false"}):
-            assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "false"
+        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "false"})
+        assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "false"
 
         # Test that missing environment variables are handled gracefully
-        with patch.dict(os.environ, {}, clear=True):
-            # Should not raise exceptions when environment variables are missing
-            portfolio_enabled = (os.getenv("PORTFOLIO_REVIEW_ENABLED") or "true").strip().lower() in {"1", "true", "yes", "on"}
-            assert portfolio_enabled is True  # Default behavior
+        mocker.patch.dict(os.environ, {}, clear=True)
+        # Should not raise exceptions when environment variables are missing
+        portfolio_enabled = (os.getenv("PORTFOLIO_REVIEW_ENABLED") or "true").strip().lower() in {"1", "true", "yes", "on"}
+        assert portfolio_enabled is True  # Default behavior
 
     def test_quantitative_tools_remain_importable(self):
         """Test that quantitative analysis tools remain importable."""

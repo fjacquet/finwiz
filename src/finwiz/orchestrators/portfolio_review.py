@@ -11,6 +11,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+from bs4 import BeautifulSoup
+
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.portfolio_review import (
     HoldingDecision,
@@ -477,14 +479,40 @@ class EnhancedPortfolioReviewOrchestrator:
             </tr>
             """)
 
-        # Generate grade summary
-        grade_summary_html = f"""
-        <div class="grade-summary">
-            <h4>📊 Bulletin du Portefeuille</h4>
-            <p><strong>Moyenne générale :</strong> {grade_summary["grade_info"].emoji} <strong>{grade_summary["average_grade"]}</strong> ({grade_summary["average_percentage"]:.0f}%)</p>
-            <p><strong>Répartition des notes :</strong></p>
-            <ul>
-        """
+        # Generate grade summary using BeautifulSoup
+        soup = BeautifulSoup("", "html.parser")
+        grade_div = soup.new_tag("div", **{"class": "grade-summary"})
+
+        # Title
+        title = soup.new_tag("h4")
+        title.string = "📊 Bulletin du Portefeuille"
+        grade_div.append(title)
+
+        # Average grade paragraph
+        avg_p = soup.new_tag("p")
+        avg_strong = soup.new_tag("strong")
+        avg_strong.string = "Moyenne générale :"
+        avg_p.append(avg_strong)
+        avg_p.append(f" {grade_summary['grade_info'].emoji} ")
+
+        grade_strong = soup.new_tag("strong")
+        grade_strong.string = grade_summary["average_grade"]
+        avg_p.append(grade_strong)
+        avg_p.append(f" ({grade_summary['average_percentage']:.0f}%)")
+        grade_div.append(avg_p)
+
+        # Distribution paragraph
+        dist_p = soup.new_tag("p")
+        dist_strong = soup.new_tag("strong")
+        dist_strong.string = "Répartition des notes :"
+        dist_p.append(dist_strong)
+        grade_div.append(dist_p)
+
+        # Start the list
+        grade_ul = soup.new_tag("ul")
+        grade_div.append(grade_ul)
+
+        grade_summary_html = str(grade_div)[:-5]  # Remove closing </div> to continue building
 
         for grade, data in grade_summary["distribution"].items():
             grade_info = score_to_grade(0.5)  # Get emoji for grade

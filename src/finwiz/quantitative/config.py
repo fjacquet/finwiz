@@ -14,6 +14,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field, validator
 
+# Lazy imports to avoid circular dependencies
+
 
 class TechnicalIndicator(str, Enum):
     """Supported technical indicators."""
@@ -38,12 +40,6 @@ class TechnicalIndicator(str, Enum):
     MFI = "mfi"
     PARABOLIC_SAR = "parabolic_sar"
     ULTIMATE_OSCILLATOR = "ultimate_oscillator"
-
-
-from finwiz.tools.logger import get_logger
-from finwiz.utils.feature_flags import get_feature_flags
-
-logger = get_logger(__name__)
 
 
 class DataProvider(str, Enum):
@@ -470,6 +466,8 @@ class QuantitativeConfigManager:
             config_file: Optional path to configuration file
 
         """
+        from finwiz.utils.feature_flags import get_feature_flags
+
         self.config_file = config_file
         self.feature_flags = get_feature_flags()
 
@@ -478,10 +476,17 @@ class QuantitativeConfigManager:
         self.backtest_config = self._load_backtest_config()
         self.screener_config = self._load_screener_config()
 
+        from finwiz.tools.logger import get_logger
+
+        logger = get_logger(__name__)
         logger.info("Quantitative configuration manager initialized")
 
     def _load_quant_config(self) -> QuantConfig:
         """Load quantitative analysis configuration."""
+        from finwiz.tools.logger import get_logger
+
+        logger = get_logger(__name__)
+
         config_data = {}
 
         # Load from environment variables
@@ -508,6 +513,10 @@ class QuantitativeConfigManager:
 
     def _load_backtest_config(self) -> BacktestConfig:
         """Load backtesting configuration."""
+        from finwiz.tools.logger import get_logger
+
+        logger = get_logger(__name__)
+
         config_data = {}
 
         # Load from environment variables
@@ -530,6 +539,10 @@ class QuantitativeConfigManager:
 
     def _load_screener_config(self) -> ScreenerConfig:
         """Load screener configuration."""
+        from finwiz.tools.logger import get_logger
+
+        logger = get_logger(__name__)
+
         config_data = {}
 
         # Load from environment variables
@@ -579,6 +592,10 @@ class QuantitativeConfigManager:
             True if all configurations are valid
 
         """
+        from finwiz.tools.logger import get_logger
+
+        logger = get_logger(__name__)
+
         try:
             # Validate data provider availability
             available_providers = self.quant_config.get_available_providers()

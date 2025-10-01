@@ -7,6 +7,7 @@ and criteria optimization functionality.
 
 import json
 import uuid
+from datetime import datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -72,6 +73,7 @@ class TestFeedbackLearningService:
             feedback_id=str(uuid.uuid4()),
             original_recommendation_id="rec_123",
             symbol="AAPL",
+            evaluation_date=datetime.now(),
             holding_period_days=90,
             absolute_return=0.15,
             benchmark_return=0.10,
@@ -399,6 +401,7 @@ class TestFeedbackLearningService:
                 feedback_id=str(uuid.uuid4()),
                 original_recommendation_id="rec1",
                 symbol="AAPL",
+                evaluation_date=datetime.now(),
                 holding_period_days=90,
                 absolute_return=0.20,
                 benchmark_return=0.10,
@@ -455,7 +458,7 @@ class TestFeedbackLearningService:
                 recommended_score=0.94,
                 outcome=RecommendationOutcome.REJECTED,
                 sentiment=FeedbackSentiment.NEUTRAL,
-                confidence_rating=0,  # Missing
+                confidence_rating=1,  # Minimum valid value
                 reasons=[],  # Missing
             ),
         ]

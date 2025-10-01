@@ -315,66 +315,168 @@ class RebalancingSections:
         """Generate alternative scenarios section content."""
         is_french = language == "fr"
 
-        scenarios_html = ""
-        for i, scenario in enumerate(result.alternative_scenarios, 1):
-            scenarios_html += f"""
-            <div class="scenario-card">
-                <h4>{"Scénario" if is_french else "Scenario"} {i}: {scenario.scenario_name}</h4>
-                <p><strong>{"Paramètres Modifiés" if is_french else "Modified Parameters"}:</strong></p>
-                <ul>
-                    {self.formatters.format_scenario_parameters(scenario.modified_parameters, is_french)}
-                </ul>
-                <p><strong>{"Résultat Attendu" if is_french else "Expected Outcome"}:</strong> {scenario.projected_outcome}</p>
-                <div class="scenario-metrics">
-                    <span class="metric">{"Différence de Coût" if is_french else "Cost Difference"}: 
-                        <span class="{"positive" if scenario.cost_difference < 0 else "negative"}">${scenario.cost_difference:+,.2f}</span>
-                    </span>
-                    <span class="metric">{"Différence de Risque" if is_french else "Risk Difference"}: 
-                        <span class="{"positive" if scenario.risk_difference < 0 else "negative"}">{scenario.risk_difference:+.2f}</span>
-                    </span>
-                </div>
-            </div>
-            """
+        # Create soup and main container
+        soup = BeautifulSoup("", "html.parser")
+        main_div = soup.new_tag("div", **{"class": "alternative-scenarios"})
 
-        return f"""
-        <div class="alternative-scenarios">
-            <p>{"Voici des approches alternatives pour le rééquilibrage:" if is_french else "Here are alternative approaches to rebalancing:"}</p>
-            {scenarios_html}
-        </div>
-        """
+        # Add intro paragraph
+        intro_p = soup.new_tag("p")
+        if is_french:
+            intro_text = "Voici des approches alternatives pour le rééquilibrage:"
+        else:
+            intro_text = "Here are alternative approaches to rebalancing:"
+        intro_p.string = intro_text
+        main_div.append(intro_p)
+
+        # Generate scenario cards
+        for i, scenario in enumerate(result.alternative_scenarios, 1):
+            scenario_div = soup.new_tag("div", **{"class": "scenario-card"})
+
+            # Scenario title
+            title = soup.new_tag("h4")
+            scenario_label = "Scénario" if is_french else "Scenario"
+            title.string = f"{scenario_label} {i}: {scenario.scenario_name}"
+            scenario_div.append(title)
+
+            # Modified parameters section
+            params_p = soup.new_tag("p")
+            params_strong = soup.new_tag("strong")
+            params_label = "Paramètres Modifiés" if is_french else "Modified Parameters"
+            params_strong.string = f"{params_label}:"
+            params_p.append(params_strong)
+            scenario_div.append(params_p)
+
+            # Parameters list
+            params_ul = soup.new_tag("ul")
+            params_html = self.formatters.format_scenario_parameters(scenario.modified_parameters, is_french)
+            params_soup = BeautifulSoup(params_html, "html.parser")
+            for item in params_soup.find_all():
+                params_ul.append(item)
+            scenario_div.append(params_ul)
+
+            # Expected outcome
+            outcome_p = soup.new_tag("p")
+            outcome_strong = soup.new_tag("strong")
+            outcome_label = "Résultat Attendu" if is_french else "Expected Outcome"
+            outcome_strong.string = f"{outcome_label}:"
+            outcome_p.append(outcome_strong)
+            outcome_p.append(f" {scenario.projected_outcome}")
+            scenario_div.append(outcome_p)
+
+            # Metrics div
+            metrics_div = soup.new_tag("div", **{"class": "scenario-metrics"})
+
+            # Cost difference metric
+            cost_span = soup.new_tag("span", **{"class": "metric"})
+            cost_label = "Différence de Coût" if is_french else "Cost Difference"
+            cost_span.append(f"{cost_label}: ")
+
+            cost_value_class = "positive" if scenario.cost_difference < 0 else "negative"
+            cost_value_span = soup.new_tag("span", **{"class": cost_value_class})
+            cost_value_span.string = f"${scenario.cost_difference:+,.2f}"
+            cost_span.append(cost_value_span)
+            metrics_div.append(cost_span)
+
+            # Risk difference metric
+            risk_span = soup.new_tag("span", **{"class": "metric"})
+            risk_label = "Différence de Risque" if is_french else "Risk Difference"
+            risk_span.append(f"{risk_label}: ")
+
+            risk_value_class = "positive" if scenario.risk_difference < 0 else "negative"
+            risk_value_span = soup.new_tag("span", **{"class": risk_value_class})
+            risk_value_span.string = f"{scenario.risk_difference:+.2f}"
+            risk_span.append(risk_value_span)
+            metrics_div.append(risk_span)
+
+            scenario_div.append(metrics_div)
+            main_div.append(scenario_div)
+
+        return str(main_div)
 
     def generate_execution_summary_content(self, result: "RebalancingResult", language: str) -> str:
-        """Generate execution summary section content."""
+        """Generate execution summary section content using BeautifulSoup."""
         is_french = language == "fr"
         execution = result.execution_summary
 
-        return f"""
-        <div class="execution-summary">
-            <div class="execution-stats">
-                <div class="stat-item">
-                    <span class="stat-label">{"Transactions Totales" if is_french else "Total Trades"}:</span>
-                    <span class="stat-value">{execution.total_trades_required}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">{"Temps d'Exécution Estimé" if is_french else "Estimated Execution Time"}:</span>
-                    <span class="stat-value">{execution.estimated_execution_time}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">{"Capital Requis" if is_french else "Capital Required"}:</span>
-                    <span class="stat-value {"positive" if execution.capital_required < 0 else "negative"}">
-                        ${execution.capital_required:+,.2f}
-                    </span>
-                </div>
-            </div>
-            <div class="next-steps">
-                <h4>{"Prochaines Étapes" if is_french else "Next Steps"}</h4>
-                <ol>
-                    <li>{"Examiner les recommandations de trading ci-dessus" if is_french else "Review the trade recommendations above"}</li>
-                    <li>{"Vérifier les coûts de transaction avec votre courtier" if is_french else "Verify transaction costs with your broker"}</li>
-                    <li>{"Exécuter les transactions par ordre de priorité" if is_french else "Execute trades in priority order"}</li>
-                    <li>{"Surveiller l'exécution et ajuster si nécessaire" if is_french else "Monitor execution and adjust if needed"}</li>
-                </ol>
-                <p><strong>{"Prochaine Révision" if is_french else "Next Review"}:</strong> {result.next_review_date.strftime("%Y-%m-%d")}</p>
-            </div>
-        </div>
-        """
+        # Create soup and main container
+        soup = BeautifulSoup("", "html.parser")
+        main_div = soup.new_tag("div", **{"class": "execution-summary"})
+
+        # Execution stats section
+        stats_div = soup.new_tag("div", **{"class": "execution-stats"})
+
+        # Total trades stat
+        trades_div = soup.new_tag("div", **{"class": "stat-item"})
+        trades_label = soup.new_tag("span", **{"class": "stat-label"})
+        trades_label_text = "Transactions Totales" if is_french else "Total Trades"
+        trades_label.string = f"{trades_label_text}:"
+        trades_value = soup.new_tag("span", **{"class": "stat-value"})
+        trades_value.string = str(execution.total_trades_required)
+        trades_div.append(trades_label)
+        trades_div.append(trades_value)
+        stats_div.append(trades_div)
+
+        # Execution time stat
+        time_div = soup.new_tag("div", **{"class": "stat-item"})
+        time_label = soup.new_tag("span", **{"class": "stat-label"})
+        time_label_text = "Temps d'Exécution Estimé" if is_french else "Estimated Execution Time"
+        time_label.string = f"{time_label_text}:"
+        time_value = soup.new_tag("span", **{"class": "stat-value"})
+        time_value.string = execution.estimated_execution_time
+        time_div.append(time_label)
+        time_div.append(time_value)
+        stats_div.append(time_div)
+
+        # Capital required stat
+        capital_div = soup.new_tag("div", **{"class": "stat-item"})
+        capital_label = soup.new_tag("span", **{"class": "stat-label"})
+        capital_label_text = "Capital Requis" if is_french else "Capital Required"
+        capital_label.string = f"{capital_label_text}:"
+        capital_value_class = "positive" if execution.capital_required < 0 else "negative"
+        capital_value = soup.new_tag("span", **{"class": f"stat-value {capital_value_class}"})
+        capital_value.string = f"${execution.capital_required:+,.2f}"
+        capital_div.append(capital_label)
+        capital_div.append(capital_value)
+        stats_div.append(capital_div)
+
+        main_div.append(stats_div)
+
+        # Next steps section
+        steps_div = soup.new_tag("div", **{"class": "next-steps"})
+
+        # Steps title
+        steps_title = soup.new_tag("h4")
+        steps_title_text = "Prochaines Étapes" if is_french else "Next Steps"
+        steps_title.string = steps_title_text
+        steps_div.append(steps_title)
+
+        # Steps list
+        steps_ol = soup.new_tag("ol")
+
+        step_texts = [
+            ("Examiner les recommandations de trading ci-dessus", "Review the trade recommendations above"),
+            ("Vérifier les coûts de transaction avec votre courtier", "Verify transaction costs with your broker"),
+            ("Exécuter les transactions par ordre de priorité", "Execute trades in priority order"),
+            ("Surveiller l'exécution et ajuster si nécessaire", "Monitor execution and adjust if needed"),
+        ]
+
+        for french_text, english_text in step_texts:
+            step_li = soup.new_tag("li")
+            step_text = french_text if is_french else english_text
+            step_li.string = step_text
+            steps_ol.append(step_li)
+
+        steps_div.append(steps_ol)
+
+        # Next review date
+        review_p = soup.new_tag("p")
+        review_strong = soup.new_tag("strong")
+        review_label = "Prochaine Révision" if is_french else "Next Review"
+        review_strong.string = f"{review_label}:"
+        review_p.append(review_strong)
+        review_p.append(f" {result.next_review_date.strftime('%Y-%m-%d')}")
+        steps_div.append(review_p)
+
+        main_div.append(steps_div)
+
+        return str(main_div)

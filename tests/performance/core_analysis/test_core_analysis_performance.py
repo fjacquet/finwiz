@@ -7,7 +7,6 @@ execution time, memory usage, and scalability.
 
 import time
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -35,77 +34,77 @@ class TestCoreAnalysisPerformance:
         }
 
     @pytest.fixture
-    def mock_fast_crew_results(self):
+    def mock_fast_crew_results(self, mocker):
         """Create mock crew results optimized for performance testing."""
         return {
-            "stock": MagicMock(raw="Fast stock analysis: BUY AAPL"),
-            "etf": MagicMock(raw="Fast ETF analysis: BUY SPY"),
-            "crypto": MagicMock(raw="Fast crypto analysis: HOLD BTC"),
+            "stock": mocker.Mock(raw="Fast stock analysis: BUY AAPL"),
+            "etf": mocker.Mock(raw="Fast ETF analysis: BUY SPY"),
+            "crypto": mocker.Mock(raw="Fast crypto analysis: HOLD BTC"),
         }
 
-    def test_should_execute_single_crew_within_time_limit(self, performance_inputs):
+    def test_should_execute_single_crew_within_time_limit(self, performance_inputs, mocker):
         """Test that a single crew executes within acceptable time limits."""
-        with patch("finwiz.main.is_feature_enabled", return_value=True):
-            with patch("finwiz.main.StockCrew") as mock_stock_crew_class:
-                # Mock fast crew execution
-                mock_stock_crew = MagicMock()
-                mock_result = MagicMock()
-                mock_result.raw = "Fast stock analysis"
-                mock_stock_crew.crew().kickoff.return_value = mock_result
-                mock_stock_crew_class.return_value = mock_stock_crew
+        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
+        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
 
-                flow = FinwizFlow()
+        # Mock fast crew execution
+        mock_stock_crew = mocker.Mock()
+        mock_result = mocker.Mock()
+        mock_result.raw = "Fast stock analysis"
+        mock_stock_crew.crew().kickoff.return_value = mock_result
+        mock_stock_crew_class.return_value = mock_stock_crew
 
-                # Measure execution time
-                start_time = time.time()
-                flow.check_stock()
-                execution_time = time.time() - start_time
+        flow = FinwizFlow()
 
-                # Verify execution time is reasonable (< 5 seconds for mocked execution)
-                assert execution_time < 5.0, f"Stock crew execution took {execution_time:.2f}s, expected < 5.0s"
+        # Measure execution time
+        start_time = time.time()
+        flow.check_stock()
+        execution_time = time.time() - start_time
 
-    def test_should_execute_all_crews_in_parallel_efficiently(self, performance_inputs, mock_fast_crew_results):
+        # Verify execution time is reasonable (< 5 seconds for mocked execution)
+        assert execution_time < 5.0, f"Stock crew execution took {execution_time:.2f}s, expected < 5.0s"
+
+    def test_should_execute_all_crews_in_parallel_efficiently(self, performance_inputs, mock_fast_crew_results, mocker):
         """Test that all crews can execute efficiently when run in parallel."""
-        with patch("finwiz.main.is_feature_enabled", return_value=True):
-            with (
-                patch("finwiz.main.StockCrew") as mock_stock_crew_class,
-                patch("finwiz.main.EtfCrew") as mock_etf_crew_class,
-                patch("finwiz.main.CryptoCrew") as mock_crypto_crew_class,
-            ):
-                # Mock crew instances with fast execution
-                mock_stock_crew = MagicMock()
-                mock_stock_crew.crew().kickoff.return_value = mock_fast_crew_results["stock"]
-                mock_stock_crew_class.return_value = mock_stock_crew
+        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
+        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
+        mock_etf_crew_class = mocker.patch("finwiz.main.EtfCrew")
+        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
 
-                mock_etf_crew = MagicMock()
-                mock_etf_crew.crew().kickoff.return_value = mock_fast_crew_results["etf"]
-                mock_etf_crew_class.return_value = mock_etf_crew
+        # Mock crew instances with fast execution
+        mock_stock_crew = mocker.Mock()
+        mock_stock_crew.crew().kickoff.return_value = mock_fast_crew_results["stock"]
+        mock_stock_crew_class.return_value = mock_stock_crew
 
-                mock_crypto_crew = MagicMock()
-                mock_crypto_crew.crew().kickoff.return_value = mock_fast_crew_results["crypto"]
-                mock_crypto_crew_class.return_value = mock_crypto_crew
+        mock_etf_crew = mocker.Mock()
+        mock_etf_crew.crew().kickoff.return_value = mock_fast_crew_results["etf"]
+        mock_etf_crew_class.return_value = mock_etf_crew
 
-                flow = FinwizFlow()
+        mock_crypto_crew = mocker.Mock()
+        mock_crypto_crew.crew().kickoff.return_value = mock_fast_crew_results["crypto"]
+        mock_crypto_crew_class.return_value = mock_crypto_crew
 
-                # Measure total execution time for all crews
-                start_time = time.time()
+        flow = FinwizFlow()
 
-                # Execute all crews (in real scenario these would run in parallel)
-                flow.check_stock()
-                flow.check_etf()
-                flow.check_crypto()
+        # Measure total execution time for all crews
+        start_time = time.time()
 
-                total_execution_time = time.time() - start_time
+        # Execute all crews (in real scenario these would run in parallel)
+        flow.check_stock()
+        flow.check_etf()
+        flow.check_crypto()
 
-                # Verify total execution time is reasonable
-                assert total_execution_time < 10.0, f"All crews execution took {total_execution_time:.2f}s, expected < 10.0s"
+        total_execution_time = time.time() - start_time
 
-                # Verify all crews were executed
-                mock_stock_crew.crew().kickoff.assert_called_once()
-                mock_etf_crew.crew().kickoff.assert_called_once()
-                mock_crypto_crew.crew().kickoff.assert_called_once()
+        # Verify total execution time is reasonable
+        assert total_execution_time < 10.0, f"All crews execution took {total_execution_time:.2f}s, expected < 10.0s"
 
-    def test_should_handle_large_input_datasets_efficiently(self, performance_inputs):
+        # Verify all crews were executed
+        mock_stock_crew.crew().kickoff.assert_called_once()
+        mock_etf_crew.crew().kickoff.assert_called_once()
+        mock_crypto_crew.crew().kickoff.assert_called_once()
+
+    def test_should_handle_large_input_datasets_efficiently(self, performance_inputs, mocker):
         """Test that crews handle large input datasets efficiently."""
         # Create large input dataset
         large_inputs = {
@@ -121,26 +120,27 @@ class TestCoreAnalysisPerformance:
             },
         }
 
-        with patch("finwiz.main.is_feature_enabled", return_value=True):
-            with patch("finwiz.main.StockCrew") as mock_stock_crew_class:
-                mock_stock_crew = MagicMock()
-                mock_result = MagicMock()
-                mock_result.raw = "Analysis of large dataset completed"
-                mock_stock_crew.crew().kickoff.return_value = mock_result
-                mock_stock_crew_class.return_value = mock_stock_crew
+        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
+        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
 
-                flow = FinwizFlow()
-                flow.inputs.update(large_inputs)
+        mock_stock_crew = mocker.Mock()
+        mock_result = mocker.Mock()
+        mock_result.raw = "Analysis of large dataset completed"
+        mock_stock_crew.crew().kickoff.return_value = mock_result
+        mock_stock_crew_class.return_value = mock_stock_crew
 
-                # Measure execution time with large dataset
-                start_time = time.time()
-                flow.check_stock()
-                execution_time = time.time() - start_time
+        flow = FinwizFlow()
+        flow.inputs.update(large_inputs)
 
-                # Should still execute within reasonable time even with large dataset
-                assert execution_time < 8.0, f"Large dataset execution took {execution_time:.2f}s, expected < 8.0s"
+        # Measure execution time with large dataset
+        start_time = time.time()
+        flow.check_stock()
+        execution_time = time.time() - start_time
 
-    def test_should_maintain_memory_efficiency(self, performance_inputs):
+        # Should still execute within reasonable time even with large dataset
+        assert execution_time < 8.0, f"Large dataset execution took {execution_time:.2f}s, expected < 8.0s"
+
+    def test_should_maintain_memory_efficiency(self, performance_inputs, mocker):
         """Test that crew execution maintains memory efficiency."""
         import os
 
@@ -149,27 +149,28 @@ class TestCoreAnalysisPerformance:
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
-        with patch("finwiz.main.is_feature_enabled", return_value=True):
-            with patch("finwiz.main.StockCrew") as mock_stock_crew_class:
-                mock_stock_crew = MagicMock()
-                mock_result = MagicMock()
-                mock_result.raw = "Memory efficient analysis"
-                mock_stock_crew.crew().kickoff.return_value = mock_result
-                mock_stock_crew_class.return_value = mock_stock_crew
+        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
+        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
 
-                flow = FinwizFlow()
+        mock_stock_crew = mocker.Mock()
+        mock_result = mocker.Mock()
+        mock_result.raw = "Memory efficient analysis"
+        mock_stock_crew.crew().kickoff.return_value = mock_result
+        mock_stock_crew_class.return_value = mock_stock_crew
 
-                # Execute crew multiple times to test memory leaks
-                for _ in range(10):
-                    flow.check_stock()
+        flow = FinwizFlow()
 
-                final_memory = process.memory_info().rss / 1024 / 1024  # MB
-                memory_increase = final_memory - initial_memory
+        # Execute crew multiple times to test memory leaks
+        for _ in range(10):
+            flow.check_stock()
 
-                # Memory increase should be reasonable (< 100MB for mocked execution)
-                assert memory_increase < 100, f"Memory increased by {memory_increase:.2f}MB, expected < 100MB"
+        final_memory = process.memory_info().rss / 1024 / 1024  # MB
+        memory_increase = final_memory - initial_memory
 
-    def test_should_handle_concurrent_crew_executions(self, performance_inputs):
+        # Memory increase should be reasonable (< 100MB for mocked execution)
+        assert memory_increase < 100, f"Memory increased by {memory_increase:.2f}MB, expected < 100MB"
+
+    def test_should_handle_concurrent_crew_executions(self, performance_inputs, mocker):
         """Test that system handles concurrent crew executions efficiently."""
         import queue
         import threading
@@ -179,21 +180,21 @@ class TestCoreAnalysisPerformance:
 
         def execute_crew(crew_type):
             """Execute a crew and measure time."""
-            with patch("finwiz.main.is_feature_enabled", return_value=True):
-                if crew_type == "stock":
-                    with patch("finwiz.main.StockCrew") as mock_crew_class:
-                        mock_crew = MagicMock()
-                        mock_result = MagicMock()
-                        mock_result.raw = f"Concurrent {crew_type} analysis"
-                        mock_crew.crew().kickoff.return_value = mock_result
-                        mock_crew_class.return_value = mock_crew
+            mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
+            if crew_type == "stock":
+                mock_crew_class = mocker.patch("finwiz.main.StockCrew")
+                mock_crew = mocker.Mock()
+                mock_result = mocker.Mock()
+                mock_result.raw = f"Concurrent {crew_type} analysis"
+                mock_crew.crew().kickoff.return_value = mock_result
+                mock_crew_class.return_value = mock_crew
 
-                        flow = FinwizFlow()
-                        start_time = time.time()
-                        flow.check_stock()
-                        execution_time = time.time() - start_time
+                flow = FinwizFlow()
+                start_time = time.time()
+                flow.check_stock()
+                execution_time = time.time() - start_time
 
-                        results_queue.put((crew_type, execution_time))
+                results_queue.put((crew_type, execution_time))
 
         # Create threads for concurrent execution
         threads = []
@@ -256,38 +257,39 @@ class TestCoreAnalysisPerformance:
         assert storage_time < 2.0, f"Storage took {storage_time:.2f}s, expected < 2.0s"
         assert retrieval_time < 1.0, f"Retrieval took {retrieval_time:.2f}s, expected < 1.0s"
 
-    def test_should_handle_error_scenarios_efficiently(self, performance_inputs):
+    def test_should_handle_error_scenarios_efficiently(self, performance_inputs, mocker):
         """Test that error handling doesn't significantly impact performance."""
-        with patch("finwiz.main.is_feature_enabled", return_value=True):
-            with patch("finwiz.main.StockCrew") as mock_stock_crew_class:
-                # Mock crew that fails
-                mock_stock_crew = MagicMock()
-                mock_stock_crew.crew().kickoff.side_effect = Exception("Simulated failure")
-                mock_stock_crew_class.return_value = mock_stock_crew
+        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
+        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
 
-                flow = FinwizFlow()
+        # Mock crew that fails
+        mock_stock_crew = mocker.Mock()
+        mock_stock_crew.crew().kickoff.side_effect = Exception("Simulated failure")
+        mock_stock_crew_class.return_value = mock_stock_crew
 
-                # Mock error handler for fast fallback
-                mock_fallback_response = MagicMock()
-                mock_fallback_response.success = False
-                mock_fallback_response.message = "Fast fallback"
-                mock_fallback_response.fallback_strategy = "skip"
-                mock_fallback_response.degraded_functionality = []
-                flow.error_handler.handle_crew_failure.return_value = mock_fallback_response
+        flow = FinwizFlow()
 
-                # Measure error handling performance
-                start_time = time.time()
-                flow.check_stock()  # This should fail and trigger error handling
-                error_handling_time = time.time() - start_time
+        # Mock error handler for fast fallback
+        mock_fallback_response = mocker.Mock()
+        mock_fallback_response.success = False
+        mock_fallback_response.message = "Fast fallback"
+        mock_fallback_response.fallback_strategy = "skip"
+        mock_fallback_response.degraded_functionality = []
+        flow.error_handler.handle_crew_failure.return_value = mock_fallback_response
 
-                # Error handling should be fast
-                assert error_handling_time < 3.0, f"Error handling took {error_handling_time:.2f}s, expected < 3.0s"
+        # Measure error handling performance
+        start_time = time.time()
+        flow.check_stock()  # This should fail and trigger error handling
+        error_handling_time = time.time() - start_time
 
-                # Verify error was handled
-                assert flow.inputs["stock_analysis_success"] is False
-                assert flow.inputs["stock_analysis_fallback"] is True
+        # Error handling should be fast
+        assert error_handling_time < 3.0, f"Error handling took {error_handling_time:.2f}s, expected < 3.0s"
 
-    def test_should_scale_with_feature_flag_combinations(self, performance_inputs):
+        # Verify error was handled
+        assert flow.inputs["stock_analysis_success"] is False
+        assert flow.inputs["stock_analysis_fallback"] is True
+
+    def test_should_scale_with_feature_flag_combinations(self, performance_inputs, mocker):
         """Test that performance scales properly with different feature flag combinations."""
         feature_combinations = [
             {"stock_analysis": True, "etf_analysis": False, "crypto_analysis": False},
@@ -302,30 +304,29 @@ class TestCoreAnalysisPerformance:
             def mock_feature_enabled(feature_name):
                 return feature_flags.get(feature_name, False)
 
-            with patch("finwiz.main.is_feature_enabled", side_effect=mock_feature_enabled):
-                with (
-                    patch("finwiz.main.StockCrew") as mock_stock_crew_class,
-                    patch("finwiz.main.EtfCrew") as mock_etf_crew_class,
-                    patch("finwiz.main.CryptoCrew") as mock_crypto_crew_class,
-                ):
-                    # Mock all crews
-                    for mock_crew_class in [mock_stock_crew_class, mock_etf_crew_class, mock_crypto_crew_class]:
-                        mock_crew = MagicMock()
-                        mock_result = MagicMock()
-                        mock_result.raw = "Fast analysis"
-                        mock_crew.crew().kickoff.return_value = mock_result
-                        mock_crew_class.return_value = mock_crew
+            mocker.patch("finwiz.main.is_feature_enabled", side_effect=mock_feature_enabled)
+            mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
+            mock_etf_crew_class = mocker.patch("finwiz.main.EtfCrew")
+            mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
 
-                    flow = FinwizFlow()
+            # Mock all crews
+            for mock_crew_class in [mock_stock_crew_class, mock_etf_crew_class, mock_crypto_crew_class]:
+                mock_crew = mocker.Mock()
+                mock_result = mocker.Mock()
+                mock_result.raw = "Fast analysis"
+                mock_crew.crew().kickoff.return_value = mock_result
+                mock_crew_class.return_value = mock_crew
 
-                    # Measure execution time
-                    start_time = time.time()
-                    flow.check_stock()
-                    flow.check_etf()
-                    flow.check_crypto()
-                    execution_time = time.time() - start_time
+            flow = FinwizFlow()
 
-                    execution_times.append(execution_time)
+            # Measure execution time
+            start_time = time.time()
+            flow.check_stock()
+            flow.check_etf()
+            flow.check_crypto()
+            execution_time = time.time() - start_time
+
+            execution_times.append(execution_time)
 
         # Verify execution times scale reasonably
         assert len(execution_times) == 3
@@ -341,7 +342,7 @@ class TestCoreAnalysisPerformance:
 
         for _ in range(10):  # Test multiple initializations
             start_time = time.time()
-            flow = FinwizFlow()
+            FinwizFlow()
             initialization_time = time.time() - start_time
             initialization_times.append(initialization_time)
 
@@ -353,7 +354,7 @@ class TestCoreAnalysisPerformance:
         assert max_init_time < 2.0, f"Maximum initialization took {max_init_time:.2f}s, expected < 2.0s"
 
     @pytest.mark.slow
-    def test_should_handle_stress_test_scenario(self, performance_inputs):
+    def test_should_handle_stress_test_scenario(self, performance_inputs, mocker):
         """Stress test with multiple crews and large datasets."""
         # This test is marked as slow and may be skipped in regular test runs
 
@@ -367,39 +368,38 @@ class TestCoreAnalysisPerformance:
             "watchlist": [f"TICKER{i}" for i in range(2000)],  # 2000 tickers
         }
 
-        with patch("finwiz.main.is_feature_enabled", return_value=True):
-            with (
-                patch("finwiz.main.StockCrew") as mock_stock_crew_class,
-                patch("finwiz.main.EtfCrew") as mock_etf_crew_class,
-                patch("finwiz.main.CryptoCrew") as mock_crypto_crew_class,
-            ):
-                # Mock crews with realistic delays
-                for mock_crew_class in [mock_stock_crew_class, mock_etf_crew_class, mock_crypto_crew_class]:
-                    mock_crew = MagicMock()
-                    mock_result = MagicMock()
-                    mock_result.raw = "Stress test analysis completed"
+        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
+        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
+        mock_etf_crew_class = mocker.patch("finwiz.main.EtfCrew")
+        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
 
-                    def slow_kickoff(*args, **kwargs):
-                        time.sleep(0.1)  # Simulate some processing time
-                        return mock_result
+        # Mock crews with realistic delays
+        for mock_crew_class in [mock_stock_crew_class, mock_etf_crew_class, mock_crypto_crew_class]:
+            mock_crew = mocker.Mock()
+            mock_result = mocker.Mock()
+            mock_result.raw = "Stress test analysis completed"
 
-                    mock_crew.crew().kickoff.side_effect = slow_kickoff
-                    mock_crew_class.return_value = mock_crew
+            def slow_kickoff(*args, **kwargs):
+                time.sleep(0.1)  # Simulate some processing time
+                return mock_result
 
-                flow = FinwizFlow()
-                flow.inputs.update(stress_inputs)
+            mock_crew.crew().kickoff.side_effect = slow_kickoff
+            mock_crew_class.return_value = mock_crew
 
-                # Measure stress test execution
-                start_time = time.time()
-                flow.check_stock()
-                flow.check_etf()
-                flow.check_crypto()
-                stress_test_time = time.time() - start_time
+        flow = FinwizFlow()
+        flow.inputs.update(stress_inputs)
 
-                # Should complete within reasonable time even under stress
-                assert stress_test_time < 30.0, f"Stress test took {stress_test_time:.2f}s, expected < 30.0s"
+        # Measure stress test execution
+        start_time = time.time()
+        flow.check_stock()
+        flow.check_etf()
+        flow.check_crypto()
+        stress_test_time = time.time() - start_time
 
-                # Verify all crews completed successfully
-                assert "stock_analysis_result" in flow.inputs
-                assert "etf_analysis_result" in flow.inputs
-                assert "crypto_analysis_result" in flow.inputs
+        # Should complete within reasonable time even under stress
+        assert stress_test_time < 30.0, f"Stress test took {stress_test_time:.2f}s, expected < 30.0s"
+
+        # Verify all crews completed successfully
+        assert "stock_analysis_result" in flow.inputs
+        assert "etf_analysis_result" in flow.inputs
+        assert "crypto_analysis_result" in flow.inputs

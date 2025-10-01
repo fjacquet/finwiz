@@ -531,7 +531,7 @@ def run_all_validations(output_dir: Path = None) -> dict[str, Any]:
 
 
 def main() -> None:
-    """Main entry point for validation scripts."""
+    """Run validation scripts based on command line arguments."""
     if len(sys.argv) > 1:
         command = sys.argv[1].lower()
 

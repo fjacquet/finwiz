@@ -19,7 +19,8 @@ class PerplexityError(Exception):
 class PerplexityRateLimitError(PerplexityError):
     """Raised when rate limits are exceeded."""
 
-    def __init__(self, retry_after: int | None = None, message: str = "Rate limit exceeded"):
+    def __init__(self, retry_after: int | None = None, message: str = "Rate limit exceeded") -> None:
+        """Initialize rate limit error with optional retry time."""
         self.retry_after = retry_after
         super().__init__(f"{message}{f', retry after {retry_after} seconds' if retry_after else ''}")
 
@@ -27,7 +28,8 @@ class PerplexityRateLimitError(PerplexityError):
 class PerplexityAPIError(PerplexityError):
     """Raised when API returns an error response."""
 
-    def __init__(self, status_code: int | None, message: str):
+    def __init__(self, status_code: int | None, message: str) -> None:
+        """Initialize API error with status code and message."""
         self.status_code = status_code
         super().__init__(f"API error{f' {status_code}' if status_code else ''}: {message}")
 

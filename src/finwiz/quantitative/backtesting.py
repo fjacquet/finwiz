@@ -17,9 +17,23 @@ from finwiz.quantitative.config import BacktestConfig, get_backtest_config
 from finwiz.quantitative.data import HistoricalDataManager
 from finwiz.tools.logger import get_logger
 
-# Import models and enums from separate module
-from .backtesting_models import BacktestResult
+# Import models and enums from separate modules
+from .backtesting_models import BacktestResult, PositionSizingMethod, Trade, TradeStatus, TradeType
+from .backtesting_strategies import SimpleMovingAverageStrategy, StrategyFramework
 from .backtesting_utils import create_backtrader_datafeed, setup_cerebro
+
+# Re-export for backward compatibility
+__all__ = [
+    "BacktestingEngine",
+    "BacktestResult",
+    "PositionSizingMethod",
+    "Trade",
+    "TradeStatus",
+    "TradeType",
+    "SimpleMovingAverageStrategy",
+    "StrategyFramework",
+    "get_backtesting_engine",
+]
 
 logger = get_logger(__name__)
 

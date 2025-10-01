@@ -5,7 +5,6 @@ Handles all file I/O operations for feedback data persistence.
 """
 
 import json
-import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -29,12 +28,11 @@ class FeedbackStorage:
 
     async def save_user_feedback(self, feedback: UserFeedback) -> str:
         """Save user feedback to storage."""
-        feedback_id = str(uuid.uuid4())
+        feedback_id = feedback.feedback_id
         feedback_file = self.feedback_path / f"{feedback_id}.json"
 
         try:
             feedback_data = feedback.model_dump()
-            feedback_data["id"] = feedback_id
             feedback_data["timestamp"] = feedback.timestamp.isoformat()
 
             with open(feedback_file, "w") as f:
@@ -49,13 +47,12 @@ class FeedbackStorage:
 
     async def save_performance_feedback(self, performance: PerformanceFeedback) -> str:
         """Save performance feedback to storage."""
-        performance_id = str(uuid.uuid4())
+        performance_id = performance.feedback_id
         performance_file = self.performance_path / f"{performance_id}.json"
 
         try:
             performance_data = performance.model_dump()
-            performance_data["id"] = performance_id
-            performance_data["timestamp"] = performance.timestamp.isoformat()
+            performance_data["evaluation_date"] = performance.evaluation_date.isoformat()
 
             with open(performance_file, "w") as f:
                 json.dump(performance_data, f, indent=2)

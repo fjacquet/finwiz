@@ -143,15 +143,19 @@ class TestTechnicalAnalyzer:
 
     def test_should_initialize_with_correct_parameters(self, analyzer):
         """Test that analyzer initializes with proper parameters."""
-        # Check Fibonacci ratios
-        assert 0.618 in analyzer.fib_ratios
-        assert 0.382 in analyzer.fib_ratios
-        assert 1.618 in analyzer.fib_extensions
+        # Check that algorithms and patterns are initialized
+        assert analyzer.algorithms is not None
+        assert analyzer.patterns is not None
 
-        # Check parameters
-        assert analyzer.min_touches >= 2
-        assert 0 < analyzer.price_tolerance < 0.1
-        assert analyzer.min_confluence_indicators >= 2
+        # Check Fibonacci ratios in algorithms
+        assert 0.618 in analyzer.algorithms.fib_ratios
+        assert 0.382 in analyzer.algorithms.fib_ratios
+        assert 1.618 in analyzer.algorithms.fib_extensions
+
+        # Check parameters in patterns
+        assert analyzer.patterns.min_touches >= 2
+        assert 0 < analyzer.patterns.price_tolerance < 0.1
+        assert analyzer.patterns.min_confluence_indicators >= 2
 
     def test_should_raise_error_for_insufficient_data(self, analyzer):
         """Test that analyzer raises error for insufficient data."""
@@ -171,7 +175,7 @@ class TestTechnicalAnalyzer:
 
     def test_should_calculate_fibonacci_levels_correctly(self, analyzer, trending_price_data):
         """Test Fibonacci level calculation."""
-        fibonacci_levels = analyzer.calculate_fibonacci_levels(trending_price_data)
+        fibonacci_levels = analyzer.algorithms.calculate_fibonacci_levels(trending_price_data)
 
         # Verify structure
         assert isinstance(fibonacci_levels, FibonacciLevels)
@@ -192,7 +196,7 @@ class TestTechnicalAnalyzer:
 
     def test_should_identify_support_resistance_levels(self, analyzer, sample_price_data):
         """Test support and resistance level identification."""
-        support_resistance = analyzer.identify_support_resistance(sample_price_data)
+        support_resistance = analyzer.patterns.identify_support_resistance(sample_price_data)
 
         # Verify structure
         assert isinstance(support_resistance, SupportResistance)
@@ -206,14 +210,14 @@ class TestTechnicalAnalyzer:
             assert level.price > 0
             assert level.level_type in ["support", "resistance"]
             assert 0.0 <= level.strength <= 1.0
-            assert level.touch_count >= analyzer.min_touches
+            assert level.touch_count >= analyzer.patterns.min_touches
 
     def test_should_calculate_rsi_correctly(self, analyzer):
         """Test RSI calculation."""
         # Create price series with known pattern
         prices = pd.Series([100, 102, 101, 103, 105, 104, 106, 108, 107, 109, 111, 110, 112, 114, 113])
 
-        rsi = analyzer._calculate_rsi(prices, period=14)
+        rsi = analyzer.algorithms.calculate_rsi(prices, period=14)
 
         # RSI should be between 0 and 100
         assert all(0 <= value <= 100 for value in rsi.dropna())
@@ -226,7 +230,7 @@ class TestTechnicalAnalyzer:
         # Create price series
         prices = pd.Series(np.linspace(100, 120, 50))
 
-        macd_line, signal_line, histogram = analyzer._calculate_macd(prices)
+        macd_line, signal_line, histogram = analyzer.algorithms.calculate_macd(prices)
 
         # All series should have same length
         assert len(macd_line) == len(signal_line) == len(histogram)
@@ -239,7 +243,7 @@ class TestTechnicalAnalyzer:
         # Create price series
         prices = pd.Series([100, 101, 99, 102, 98, 103, 97, 104, 96, 105] * 3)
 
-        upper, middle, lower = analyzer._calculate_bollinger_bands(prices, period=10)
+        upper, middle, lower = analyzer.algorithms.calculate_bollinger_bands(prices, period=10)
 
         # Upper should be above middle, middle above lower
         valid_data = ~(upper.isna() | middle.isna() | lower.isna())
@@ -248,7 +252,7 @@ class TestTechnicalAnalyzer:
 
     def test_should_calculate_indicator_signals(self, analyzer, sample_price_data):
         """Test technical indicator signal calculation."""
-        signals = analyzer.calculate_indicator_signals(sample_price_data)
+        signals = analyzer.algorithms.calculate_indicator_signals(sample_price_data)
 
         # Should have signals from multiple indicators
         assert len(signals) > 0
@@ -269,12 +273,14 @@ class TestTechnicalAnalyzer:
     def test_should_find_confluence_zones(self, analyzer, trending_price_data):
         """Test confluence zone detection."""
         # First calculate components
-        fibonacci_levels = analyzer.calculate_fibonacci_levels(trending_price_data)
-        support_resistance = analyzer.identify_support_resistance(trending_price_data)
-        indicator_signals = analyzer.calculate_indicator_signals(trending_price_data)
+        fibonacci_levels = analyzer.algorithms.calculate_fibonacci_levels(trending_price_data)
+        support_resistance = analyzer.patterns.identify_support_resistance(trending_price_data)
+        indicator_signals = analyzer.algorithms.calculate_indicator_signals(trending_price_data)
         current_price = trending_price_data.closes[-1]
 
-        confluence_zones = analyzer.find_confluence_zones(fibonacci_levels, support_resistance, indicator_signals, current_price)
+        confluence_zones = analyzer.patterns.find_confluence_zones(
+            fibonacci_levels, support_resistance, indicator_signals, current_price
+        )
 
         # Verify structure
         assert isinstance(confluence_zones, list)
@@ -284,20 +290,20 @@ class TestTechnicalAnalyzer:
             assert zone.zone_type in ["support", "resistance", "reversal"]
             assert 0.0 <= zone.confluence_score <= 1.0
             assert 0.0 <= zone.signal_strength <= 1.0
-            assert len(zone.contributing_indicators) >= analyzer.min_confluence_indicators
+            assert len(zone.contributing_indicators) >= analyzer.patterns.min_confluence_indicators
             assert zone.price_range[0] <= zone.price_range[1]
 
     def test_should_determine_overall_signal(self, analyzer, sample_price_data):
         """Test overall signal determination."""
         # Calculate all components
-        fibonacci_levels = analyzer.calculate_fibonacci_levels(sample_price_data)
-        support_resistance = analyzer.identify_support_resistance(sample_price_data)
-        indicator_signals = analyzer.calculate_indicator_signals(sample_price_data)
-        confluence_zones = analyzer.find_confluence_zones(
+        fibonacci_levels = analyzer.algorithms.calculate_fibonacci_levels(sample_price_data)
+        support_resistance = analyzer.patterns.identify_support_resistance(sample_price_data)
+        indicator_signals = analyzer.algorithms.calculate_indicator_signals(sample_price_data)
+        confluence_zones = analyzer.patterns.find_confluence_zones(
             fibonacci_levels, support_resistance, indicator_signals, sample_price_data.closes[-1]
         )
 
-        overall_signal, confidence = analyzer.determine_overall_signal(
+        overall_signal, confidence = analyzer.patterns.determine_overall_signal(
             fibonacci_levels, support_resistance, indicator_signals, confluence_zones
         )
 
@@ -329,7 +335,7 @@ class TestTechnicalAnalyzer:
         # Create data with clear pivot high in the middle
         highs = [100, 101, 102, 105, 103, 102, 101, 100, 99, 98]
 
-        pivots = analyzer._find_pivot_highs(highs, window=2)
+        pivots = analyzer.patterns._find_pivot_highs(highs, window=2)
 
         # Should find the pivot at index 3 (price 105)
         assert len(pivots) > 0
@@ -341,7 +347,7 @@ class TestTechnicalAnalyzer:
         # Create data with clear pivot low in the middle
         lows = [100, 99, 98, 95, 97, 98, 99, 100, 101, 102]
 
-        pivots = analyzer._find_pivot_lows(lows, window=2)
+        pivots = analyzer.patterns._find_pivot_lows(lows, window=2)
 
         # Should find the pivot at index 3 (price 95)
         assert len(pivots) > 0
@@ -353,13 +359,13 @@ class TestTechnicalAnalyzer:
         # Create mock pivots with similar prices
         pivots = [(5, 100.0), (10, 100.5), (15, 99.8), (20, 110.0), (25, 110.2)]
 
-        levels = analyzer._group_price_levels(pivots, sample_price_data, "support")
+        levels = analyzer.patterns._group_price_levels(pivots, sample_price_data, "support")
 
         # Should group similar prices together
         assert len(levels) <= len(pivots)  # Should have fewer groups than individual pivots
 
         for level in levels:
-            assert level.touch_count >= analyzer.min_touches
+            assert level.touch_count >= analyzer.patterns.min_touches
             assert level.level_type == "support"
 
     def test_should_calculate_confluence_score_correctly(self, analyzer):
@@ -371,7 +377,7 @@ class TestTechnicalAnalyzer:
             {"type": "fibonacci", "strength": 0.6, "price": 99.8},
         ]
 
-        score = analyzer._calculate_confluence_score(group)
+        score = analyzer.patterns._calculate_confluence_score(group)
 
         # Score should be between 0 and 1
         assert 0.0 <= score <= 1.0
@@ -398,7 +404,7 @@ class TestTechnicalAnalyzer:
 
     def test_should_validate_fibonacci_ratios(self, analyzer, trending_price_data):
         """Test that Fibonacci levels use correct ratios."""
-        fibonacci_levels = analyzer.calculate_fibonacci_levels(trending_price_data)
+        fibonacci_levels = analyzer.algorithms.calculate_fibonacci_levels(trending_price_data)
 
         # Extract ratios from levels
         ratios = [level.ratio for level in fibonacci_levels.levels if level.level_type == "retracement"]
@@ -423,7 +429,7 @@ class TestTechnicalAnalyzer:
             volumes=[1000] * 30,
         )
 
-        fibonacci_levels = analyzer.calculate_fibonacci_levels(uptrend_data)
+        fibonacci_levels = analyzer.algorithms.calculate_fibonacci_levels(uptrend_data)
 
         # Should identify as uptrend (though this depends on swing point detection)
         assert fibonacci_levels.trend_direction in ["uptrend", "downtrend"]

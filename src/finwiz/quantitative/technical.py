@@ -13,7 +13,22 @@ Use: from finwiz.quantitative.technical import <ClassName>
 """
 
 # Re-export all classes from the new modular structure for backward compatibility
-from finwiz.quantitative.technical import *
+from finwiz.quantitative.technical.engine import TechnicalAnalysisEngine
+from finwiz.quantitative.technical.models import (
+    ConfluenceZone,
+    SignalStrength,
+    SignalType,
+    TechnicalAnalysisResult,
+    TechnicalIndicatorResult,
+    TechnicalSignal,
+)
+from finwiz.quantitative.technical.technical_indicators import (
+    calculate_technical_indicators,
+    detect_confluence_zones,
+)
+
+# Backward compatibility alias
+get_confluence_signals = detect_confluence_zones
 
 __all__ = [
     # Main engine

@@ -40,7 +40,7 @@ class TestFreshnessIntegration:
 
     @pytest.fixture
     def current_time(self):
-        """Fixed current time for consistent testing."""
+        """Return fixed current time for consistent testing."""
         return datetime(2024, 1, 15, 12, 0, 0)
 
     def test_should_detect_stale_data_in_upstream_collection(self, integration_manager, temp_output_dir, mocker, current_time):

@@ -13,8 +13,8 @@ from finwiz.schemas.perplexity import SonarArticle, SonarSearchResult
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
 from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,
-    PerplexityFeatureFlagTracker,
 )
+from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker
 from finwiz.utils.feature_flags import FeatureFlags, FeatureFlagStrategy
 
 

@@ -16,7 +16,7 @@ class TALibWrappers:
     @staticmethod
     def sma(close_prices: np.ndarray, period: int) -> np.ndarray:
         """
-        Simple Moving Average wrapper.
+        Calculate Simple Moving Average.
 
         Args:
             close_prices: Array of closing prices

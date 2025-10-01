@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 @click.group()
 def a_plus_monitoring() -> None:
-    """A+ Investment Monitoring System CLI."""
+    """Manage A+ Investment Monitoring System."""
     pass
 
 
