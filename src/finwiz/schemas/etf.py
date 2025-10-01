@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .common import RiskAssessmentStandardized
 
@@ -15,8 +15,28 @@ class ETFTopHolding(BaseModel):
 
     ticker: str = Field(min_length=1, max_length=15)
     weight_pct: float = Field(ge=0.0, le=100.0)
-    source_url: HttpUrl
+    source_url: str = Field(description="Source URL for the holding data")
     as_of: date
+
+    @field_validator("source_url")
+    @classmethod
+    def validate_source_url(cls, v: str) -> str:
+        """Validate that source_url is a valid URL."""
+        import re
+
+        url_pattern = re.compile(
+            r"^https?://"  # http:// or https://
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
+
+        if not url_pattern.match(v):
+            raise ValueError(f"Invalid URL format: {v}")
+        return v
 
 
 class ETFFactsheet(BaseModel):
@@ -41,11 +61,31 @@ class ETFFactsheet(BaseModel):
     )
     replication_method: Literal["physical", "synthetic", "optimized", "other"] = "other"
 
-    factsheet_url: HttpUrl
+    factsheet_url: str = Field(description="URL to the ETF factsheet")
     as_of: date
 
     factsheet_highlights: list[str] = Field(default_factory=list, max_length=20)
     top_holdings: list[ETFTopHolding] = Field(default_factory=list)
+
+    @field_validator("factsheet_url")
+    @classmethod
+    def validate_factsheet_url(cls, v: str) -> str:
+        """Validate that factsheet_url is a valid URL."""
+        import re
+
+        url_pattern = re.compile(
+            r"^https?://"  # http:// or https://
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
+
+        if not url_pattern.match(v):
+            raise ValueError(f"Invalid URL format: {v}")
+        return v
 
     # standardized risk lives separately
     risk: RiskAssessmentStandardized | None = None

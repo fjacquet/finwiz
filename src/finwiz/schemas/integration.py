@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DataSourceType(str, Enum):
@@ -63,8 +63,32 @@ class DataSource(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     source_type: DataSourceType = Field(description="Type of data source")
-    source_url: HttpUrl | None = Field(default=None, description="URL of the data source")
+    source_url: str | None = Field(default=None, description="URL of the data source")
     accessed_at: datetime = Field(description="When the source was accessed")
+
+    @field_validator("source_url")
+    @classmethod
+    def validate_source_url(cls, v: str | None) -> str | None:
+        """Validate that source_url is a valid URL if provided."""
+        if v is None:
+            return v
+
+        import re
+
+        url_pattern = re.compile(
+            r"^https?://"  # http:// or https://
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
+
+        if not url_pattern.match(v):
+            raise ValueError(f"Invalid URL format: {v}")
+        return v
+
     data_quality: DataQuality = Field(description="Assessed quality of the data")
     response_time_ms: float | None = Field(default=None, ge=0.0, description="Response time in milliseconds")
 
@@ -92,8 +116,29 @@ class SECCitation(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     ticker: str = Field(min_length=1, max_length=10, description="Stock ticker symbol")
-    filing_url: HttpUrl = Field(description="URL to the SEC filing")
+    filing_url: str = Field(description="URL to the SEC filing")
     filed_at: datetime = Field(description="Date when the filing was submitted")
+
+    @field_validator("filing_url")
+    @classmethod
+    def validate_filing_url(cls, v: str) -> str:
+        """Validate that filing_url is a valid URL."""
+        import re
+
+        url_pattern = re.compile(
+            r"^https?://"  # http:// or https://
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
+
+        if not url_pattern.match(v):
+            raise ValueError(f"Invalid URL format: {v}")
+        return v
+
     section: str = Field(min_length=1, description="Section of the filing (e.g., Item 1A)")
     excerpt: str = Field(min_length=20, description="Relevant excerpt from the filing")
     sec_citation: str = Field(min_length=1, description="Formatted citation (e.g., '10-K (2024), Item 1A, p. 17')")

@@ -15,8 +15,6 @@ from crewai_tools import (
     FileReadTool,
     FirecrawlScrapeWebsiteTool,
     FirecrawlSearchTool,
-    SerperDevTool,
-    # TavilySearchTool,
     YoutubeVideoSearchTool,
 )
 from dotenv import load_dotenv
@@ -37,10 +35,12 @@ logger = get_logger(__name__)
 
 load_dotenv()
 
-# Initialize research tools
-news_tool = SerperDevTool(n_results=10, search_type="news")
+# Initialize research tools with Perplexity prioritization
+from finwiz.tools.search_tool_factory import get_news_search_tool, get_web_search_tool
+
+news_tool = get_news_search_tool(n_results=10)
 scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=False)
-search_tool = SerperDevTool(n_results=10, search_type="search")
+search_tool = get_web_search_tool(n_results=10)
 search_tool2 = FirecrawlSearchTool(limit=10, save_file=False)
 yahoo_ticker_tool = YahooFinanceTickerInfoTool()
 yahoo_history_tool = YahooFinanceHistoryTool()

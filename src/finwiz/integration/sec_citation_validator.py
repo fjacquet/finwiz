@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 from pydantic import ValidationError as PydanticValidationError
 
 from ..schemas.integration import SECCitation
@@ -387,7 +387,7 @@ class SECCitationValidator:
         # Basic ticker validation - 1-10 alphanumeric characters
         return bool(re.match(r"^[A-Z0-9]{1,10}$", ticker.upper()))
 
-    def _validate_filing_url(self, url: HttpUrl) -> tuple[bool, str, SECFilingInfo | None]:
+    def _validate_filing_url(self, url: str) -> tuple[bool, str, SECFilingInfo | None]:
         """
         Validate SEC filing URL format and extract information.
 
@@ -465,7 +465,7 @@ class SECCitationValidator:
         # Check against known citation patterns
         return any(re.search(pattern, citation, re.IGNORECASE) for pattern in self.citation_patterns)
 
-    def _check_url_accessibility(self, url: HttpUrl) -> bool:
+    def _check_url_accessibility(self, url: str) -> bool:
         """
         Check if URL is accessible (mock implementation).
 

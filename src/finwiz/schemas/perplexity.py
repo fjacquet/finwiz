@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, validator
 
 
 class SonarArticle(BaseModel):
@@ -19,9 +19,30 @@ class SonarArticle(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, validate_assignment=True)
 
     title: str = Field(..., min_length=1, max_length=500, description="Article title")
-    url: HttpUrl = Field(..., description="Article URL")
+    url: str = Field(..., description="Article URL")
     summary: str = Field("", max_length=2000, description="Article summary/snippet")
     publisher: str = Field("", max_length=200, description="Publisher name")
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        """Validate that url is a valid URL."""
+        import re
+
+        url_pattern = re.compile(
+            r"^https?://"  # http:// or https://
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
+
+        if not url_pattern.match(v):
+            raise ValueError(f"Invalid URL format: {v}")
+        return v
+
     published_date: str | None = Field(None, description="Publication date (ISO format)")
     relevance_score: float = Field(0.0, ge=0.0, le=1.0, description="Relevance to query (0.0-1.0)")
     content_type: Literal["news", "filing", "analysis", "earnings", "regulatory"] = Field("news", description="Type of content")

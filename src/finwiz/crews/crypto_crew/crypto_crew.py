@@ -14,7 +14,6 @@ from crewai_tools import (
     FileReadTool,
     FirecrawlScrapeWebsiteTool,
     FirecrawlSearchTool,
-    SerperDevTool,
     YoutubeVideoSearchTool,
 )
 
@@ -29,8 +28,10 @@ from finwiz.tools.rag_tools import get_rag_tools
 current_script_path = Path(__file__).resolve()
 crew_dir = current_script_path.parent
 
-# Initialize tools
-search_tool = SerperDevTool()
+# Initialize tools with Perplexity prioritization
+from finwiz.tools.search_tool_factory import get_web_search_tool
+
+search_tool = get_web_search_tool(n_results=10)
 scrape_tool = FirecrawlScrapeWebsiteTool()
 firecrawl_search = FirecrawlSearchTool()
 youtube_tool = YoutubeVideoSearchTool()
