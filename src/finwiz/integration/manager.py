@@ -268,7 +268,8 @@ class CrewDataIntegrationManager:
                         for task in (crew_output.tasks_output if hasattr(crew_output, "tasks_output") else [])
                     ],
                     "token_usage": crew_output.token_usage if hasattr(crew_output, "token_usage") else {},
-                    "usage_metrics": crew_output.usage_metrics if hasattr(crew_output, "usage_metrics") else {},
+                    "usage_metrics": self._serialize_usage_metrics(crew_output.usage_metrics) 
+                                   if hasattr(crew_output, "usage_metrics") else {},
                 }
             elif isinstance(crew_output, dict):
                 output_data = crew_output
@@ -666,6 +667,43 @@ class CrewDataIntegrationManager:
             self.logger.warning(f"Failed to load JSON file {file_path}: {str(e)}")
 
         return default
+
+    def _serialize_usage_metrics(self, usage_metrics: Any) -> dict:
+        """
+        Convert UsageMetrics object to JSON-serializable dictionary.
+        
+        Args:
+            usage_metrics: UsageMetrics object from CrewAI
+            
+        Returns:
+            Dictionary representation of usage metrics
+
+        """
+        if usage_metrics is None:
+            return {}
+
+        try:
+            # If it's already a dict, return as-is
+            if isinstance(usage_metrics, dict):
+                return usage_metrics
+
+            # Try to convert Pydantic model to dict
+            if hasattr(usage_metrics, 'model_dump'):
+                return usage_metrics.model_dump()
+
+            # Try to convert using dict() for dataclasses or similar
+            if hasattr(usage_metrics, '__dict__'):
+                return {
+                    key: value for key, value in usage_metrics.__dict__.items()
+                    if not key.startswith('_') and not callable(value)
+                }
+
+            # Fallback: convert to string representation
+            return {"raw_usage_metrics": str(usage_metrics)}
+
+        except Exception as e:
+            self.logger.warning(f"Failed to serialize usage_metrics: {str(e)}")
+            return {"serialization_error": str(e), "raw_usage_metrics": str(usage_metrics)}
 
     def _save_json_file(self, file_path: Path, data: dict) -> None:
         """Save data to JSON file."""

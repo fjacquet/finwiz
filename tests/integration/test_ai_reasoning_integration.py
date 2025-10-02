@@ -74,7 +74,7 @@ class TestAIReasoningIntegration:
 
             # Verify LLM was called with consistent parameters
             mock_llm.assert_called_with(
-                model="gpt-4o-mini",
+                model="gpt-5-mini",
                 temperature=0.1,
                 max_tokens=4000,
                 timeout=60,

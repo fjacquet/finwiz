@@ -7,7 +7,7 @@ _tasks, and tools.
 
 from pathlib import Path
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import (
     DirectoryReadTool,
@@ -23,6 +23,7 @@ from finwiz.tools.coinmarketcap_tool import get_coinmarketcap_tools
 from finwiz.tools.finance_tools import get_crypto_research_tools
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.rag_tools import get_rag_tools
+from finwiz.utils.llm_config import get_configured_llm
 
 # Get the absolute path of the current script
 current_script_path = Path(__file__).resolve()
@@ -87,6 +88,10 @@ class CryptoCrew:
         self.CryptoThesis = CryptoThesis
         self.RiskAssessmentStandardized = RiskAssessmentStandardized
 
+    def _get_configured_llm(self) -> LLM:
+        """Get configured LLM instance for this crew."""
+        return get_configured_llm()
+
     @agent
     def market_analyst(self) -> Agent:
         return Agent(
@@ -94,6 +99,7 @@ class CryptoCrew:
             tools=research_tools,
             reasoning=True,  # Enable AI reasoning for market analysis decisions
             verbose=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -103,6 +109,7 @@ class CryptoCrew:
             tools=[*crypto_tools, quantitative_tool, *rag_tools],
             reasoning=True,  # Enable AI reasoning for technical analysis decisions
             verbose=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -112,6 +119,7 @@ class CryptoCrew:
             tools=research_tools,
             verbose=True,
             reasoning=True,  # Enable AI reasoning for risk assessment decisions
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -121,11 +129,17 @@ class CryptoCrew:
             tools=[*crypto_tools, *coinmarketcap_tools, quantitative_tool, *rag_tools],
             verbose=True,
             reasoning=True,  # Enable AI reasoning for investment strategy decisions
+            llm=self._get_configured_llm(),
         )
 
     @agent
     def research_director(self) -> Agent:
-        return Agent(config=self.agents_config["research_director"], tools=[], verbose=True)
+        return Agent(
+            config=self.agents_config["research_director"], 
+            tools=[], 
+            verbose=True,
+            llm=self._get_configured_llm(),
+        )
 
     @agent
     def translator(self) -> Agent:
@@ -134,6 +148,7 @@ class CryptoCrew:
             config=self.agents_config["translator"],
             tools=[],  # No tools - only consumes upstream HTML context
             verbose=True,
+            llm=self._get_configured_llm(),
         )
 
     @task

@@ -7,7 +7,7 @@ tasks to identify promising stock investments and provide detailed
 recommendations.
 """
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import (
@@ -29,6 +29,7 @@ from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfo
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+from finwiz.utils.llm_config import get_configured_llm
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -110,6 +111,10 @@ class StockCrew:
         self.TenKInsight = TenKInsight
         self.RiskAssessmentStandardized = RiskAssessmentStandardized
 
+    def _get_configured_llm(self) -> LLM:
+        """Get configured LLM instance for this crew."""
+        return get_configured_llm()
+
     @agent
     def market_technical_analyst(self) -> Agent:
         """Agent that performs technical analysis on target stocks."""
@@ -118,6 +123,7 @@ class StockCrew:
             verbose=True,
             reasoning=True,  # Enable AI reasoning to show decision-making process
             tools=tools,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -128,6 +134,7 @@ class StockCrew:
             verbose=True,
             tools=tools,
             reasoning=True,  # Enable AI reasoning for risk assessment decisions
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -137,6 +144,7 @@ class StockCrew:
             config=self.agents_config["translator"],
             tools=[],  # No tools - only consumes upstream HTML context
             verbose=True,
+            llm=self._get_configured_llm(),
         )
 
     @task

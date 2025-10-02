@@ -113,7 +113,7 @@ class TestAIReasoningConfiguration:
 
             # Verify LLM was called with appropriate parameters
             mock_llm.assert_called_with(
-                model="gpt-4o-mini",
+                model="gpt-5-mini",
                 temperature=0.1,  # Low temperature for consistent analysis
                 max_tokens=4000,  # Sufficient tokens for detailed reasoning
                 timeout=60,  # Reasonable timeout

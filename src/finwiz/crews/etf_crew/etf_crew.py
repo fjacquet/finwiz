@@ -10,7 +10,7 @@ agent to ensure consistent output quality. ETF investment analysis crew using
 the CrewAI framework.
 """
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import (
@@ -34,6 +34,7 @@ from finwiz.tools.yahoo_finance_etf_holdings_tool import YahooFinanceETFHoldings
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+from finwiz.utils.llm_config import get_configured_llm
 
 # Removed incompatible LangChain tool
 
@@ -122,6 +123,10 @@ class EtfCrew:
         self.ETFFactsheet = ETFFactsheet
         self.RiskAssessmentStandardized = RiskAssessmentStandardized
 
+    def _get_configured_llm(self) -> LLM:
+        """Get configured LLM instance for this crew."""
+        return get_configured_llm()
+
     @agent
     def market_etf_analyst(self) -> Agent:
         return Agent(
@@ -129,6 +134,7 @@ class EtfCrew:
             verbose=True,
             tools=tools,
             reasoning=True,  # Enable AI reasoning for ETF analysis decisions
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -138,6 +144,7 @@ class EtfCrew:
             verbose=True,
             tools=tools,
             reasoning=True,  # Enable AI reasoning for risk assessment decisions
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -147,6 +154,7 @@ class EtfCrew:
             config=self.agents_config["translator"],
             tools=[],  # No tools - only consumes upstream HTML context
             verbose=True,
+            llm=self._get_configured_llm(),
         )
 
     @task
