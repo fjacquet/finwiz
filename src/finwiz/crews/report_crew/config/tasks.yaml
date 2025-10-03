@@ -1,6 +1,34 @@
 # Task 1: Comprehensive Financial Integration and Opportunity Identification
 comprehensive_financial_integration_task:
   description: |
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES - READ FIRST ⚠️
+    
+    1. You MUST ONLY use ticker symbols from inputs.validated_tickers_list[]
+    2. DO NOT invent, create, or hallucinate ANY ticker symbols under any circumstances
+    3. DO NOT create fake company names, SEC filings, or URLs
+    4. DO NOT use example tickers like ABC, XYZ, LMN, TEST, SAMPLE, EXAMPLE
+    5. Every ticker you mention MUST exist in inputs.validated_tickers_list[]
+    6. If you cannot find a ticker in validated_tickers_list, DO NOT mention it
+    7. If validated_tickers_list has fewer than 3 tickers, acknowledge the limitation
+    
+    VERIFIED DATA SOURCES (use ONLY these):
+    - inputs.validated_tickers_list[] - The ONLY tickers you are allowed to use
+    - inputs.stock_analysis_data - Analysis for tickers in validated_tickers_list
+    - inputs.etf_analysis_data - ETF analysis for validated tickers
+    - inputs.crypto_analysis_data - Crypto analysis for validated symbols
+    
+    FORBIDDEN ACTIONS (will cause task failure):
+    - Creating placeholder or example tickers (ABC, XYZ, etc.)
+    - Inventing company names like "Alpha Beta Corp", "Lumina Networks", "Xylon Holdings"
+    - Fabricating SEC filing URLs or CIK numbers
+    - Using any ticker not explicitly listed in validated_tickers_list
+    - Making up data when real data is unavailable
+    
+    If you find yourself wanting to create an example ticker or company name,
+    STOP immediately and work only with the validated tickers provided.
+    
+    ---
+    
     Review and synthesize investment recommendations using the integrated data system.
     Access consolidated data from Stock, ETF, Crypto, and Discovery crews through the 
     integrated data context. Extract key data, analyze integrated opportunities, and 
@@ -8,17 +36,19 @@ comprehensive_financial_integration_task:
 
     Key Steps:
     1. Access integrated data context containing consolidated crew outputs with metadata and freshness status.
-    2. Review SEC/EDGAR citations with filing dates and excerpts from stock analysis.
-    3. Analyze market sentiment data with aggregated scores and top 3 sources with URLs and dates.
-    4. Extract validated ticker symbols from consolidated ticker validation results.
-    5. Review A+ opportunities from discovery crew with allocation recommendations and replacement notes.
-    6. Identify overlapping recommendations or complementary strategies across asset classes.
-    7. Evaluate the rationale and evidence provided for each recommendation, including A+ discovery insights.
-    8. Prioritize opportunities based on potential returns, risk profile, and alignment with family goals.
-    9. Ensure all analysis considers the 1000 CHF monthly budget constraint.
-    10. Handle graceful degradation for missing or stale data with clear warnings.
-    11. Include data availability status and freshness warnings in the analysis.
-    12. Produce a comprehensive analysis with proper source attribution and data lineage.
+    2. FIRST: Review inputs.validated_tickers_list[] - these are the ONLY tickers you may use.
+    3. Review SEC/EDGAR citations with filing dates and excerpts from stock analysis (ONLY for validated tickers).
+    4. Analyze market sentiment data with aggregated scores and top 3 sources with URLs and dates.
+    5. Use ONLY ticker symbols from inputs.validated_tickers_list[] - verify each ticker before mentioning it.
+    6. Review A+ opportunities from discovery crew with allocation recommendations and replacement notes.
+    7. Identify overlapping recommendations or complementary strategies across asset classes.
+    8. Evaluate the rationale and evidence provided for each recommendation, including A+ discovery insights.
+    9. Prioritize opportunities based on potential returns, risk profile, and alignment with family goals.
+    10. Ensure all analysis considers the 1000 CHF monthly budget constraint.
+    11. Handle graceful degradation for missing or stale data with clear warnings.
+    12. Include data availability status and freshness warnings in the analysis.
+    13. Produce a comprehensive analysis with proper source attribution and data lineage.
+    14. FINAL CHECK: Verify every ticker mentioned is in inputs.validated_tickers_list[].
 
     Data Sources (accessed through integrated context):
     - Stock crew data: 10-K insights, validated tickers, SEC citations, market sentiments
@@ -32,10 +62,12 @@ comprehensive_financial_integration_task:
     market sentiment analysis, and prioritized investment opportunities.
   expected_output: >
     A structured analytical document that consolidates findings from all specialized crews
-    using the integrated data system. It should include SEC/EDGAR citations with filing dates,
-    market sentiment analysis with source attribution, validated ticker symbols, A+ opportunities
-    with allocation recommendations, and clear handling of missing or stale data.
-    The document must include verifiable data and references with proper data lineage.
+    using the integrated data system. CRITICAL: Every ticker symbol mentioned must be from
+    inputs.validated_tickers_list[] - NO exceptions. The document should include SEC/EDGAR 
+    citations with filing dates (ONLY for validated tickers), market sentiment analysis with 
+    source attribution, A+ opportunities with allocation recommendations, and clear handling 
+    of missing or stale data. The document must include verifiable data and references with 
+    proper data lineage. DO NOT include any ticker symbols not in validated_tickers_list[].
   agent: financial_integration_analyst
   output_file: "output/report/consolidated_financial_analysis.md"
   async_execution: true
@@ -43,6 +75,9 @@ comprehensive_financial_integration_task:
 # Task 2: Optimal Portfolio Allocation
 optimal_portfolio_allocation_task:
   description: |
+    ⚠️ CRITICAL: Use ONLY tickers from inputs.validated_tickers_list[] ⚠️
+    DO NOT invent or hallucinate ticker symbols. Every ticker must be validated.
+    
     Based on the integrated data analysis, develop an optimal, diversified portfolio allocation 
     strategy incorporating A+ opportunities and validated ticker symbols. Use consolidated data
     to ensure all recommendations are properly validated and include allocation updates based
@@ -80,6 +115,9 @@ optimal_portfolio_allocation_task:
 # Task 3: Risk Assessment and Mitigation Strategy
 risk_assessment_mitigation_task:
   description: |
+    ⚠️ CRITICAL: Use ONLY tickers from inputs.validated_tickers_list[] ⚠️
+    DO NOT invent or hallucinate ticker symbols. Every ticker must be validated.
+    
     Conduct a thorough risk assessment using consolidated risk data from all crews.
     Incorporate market sentiment analysis and A+ opportunity risk profiles to develop
     comprehensive mitigation strategies.
@@ -117,6 +155,20 @@ risk_assessment_mitigation_task:
 # Task 4: Comprehensive Investment Report and Implementation Plan
 comprehensive_investment_report_task:
   description: |
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES ⚠️
+    
+    1. You MUST ONLY use ticker symbols from inputs.validated_tickers_list[]
+    2. DO NOT invent ticker symbols like ABC, XYZ, LMN, TEST, SAMPLE
+    3. DO NOT create fake company names like "Alpha Beta Corp", "Lumina Networks", "Xylon Holdings"
+    4. DO NOT fabricate SEC filing URLs or CIK numbers
+    5. Every ticker in the HTML report MUST be from validated_tickers_list[]
+    6. If a ticker is not in validated_tickers_list[], DO NOT include it in the report
+    
+    Read the consolidated analysis from previous tasks, but VERIFY every ticker against
+    inputs.validated_tickers_list[] before including it in the HTML report.
+    
+    ---
+    
     Compile all findings using the integrated data system to create a comprehensive investment report
     with SEC/EDGAR citations, market sentiment analysis, A+ opportunities, and validated ticker symbols.
     Generate a visually appealing HTML report that leverages all integrated data sources.
@@ -144,11 +196,11 @@ comprehensive_investment_report_task:
        - Constitution de patrimoine à long terme (5-10+ ans) 🌟
 
     💎 3. Recommandations d'Investissement
-      - Sélection d'actions 📊 (avec tickers validés du système d'intégration)
-      - Sélection d'ETFs 📈 (avec ETFs validés du système d'intégration)
-      - Allocation en cryptomonnaies (le cas échéant) ₿ (avec symboles validés)
+      - Sélection d'actions 📊 (UNIQUEMENT tickers de inputs.validated_tickers_list[])
+      - Sélection d'ETFs 📈 (UNIQUEMENT ETFs de inputs.validated_tickers_list[])
+      - Allocation en cryptomonnaies ₿ (UNIQUEMENT symboles de inputs.validated_tickers_list[])
       - Niveau de risque pour chaque recommandation ⚠️
-      - Synthèse 10-K (citations SEC avec URLs, dates de dépôt, et extraits des sections: Business Overview, MD&A, Risk Factors, Liquidité, Segments) 📄
+      - Synthèse 10-K 📄 (UNIQUEMENT pour tickers dans validated_tickers_list[] - citations SEC avec URLs réelles, dates de dépôt vérifiées, et extraits des sections: Business Overview, MD&A, Risk Factors, Liquidité, Segments)
 
     ⭐ 3.1. Opportunités A+ Découvertes (du système d'intégration)
       - Utilisez les données A+ du contexte intégré `aplus_opportunities` si disponible

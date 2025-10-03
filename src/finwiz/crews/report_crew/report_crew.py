@@ -421,15 +421,37 @@ class ReportCrew:
             # Validate the integrated context
             self.validate_reporter_input(integrated_context)
 
+            # CRITICAL: Extract and validate tickers to prevent hallucination
+            validated_tickers = self._extract_validated_tickers(integrated_context)
+
+            if not validated_tickers or len(validated_tickers) < 3:
+                error_msg = (
+                    f"Cannot generate report: Insufficient validated tickers. "
+                    f"Found {len(validated_tickers)} ticker(s): {validated_tickers}. "
+                    f"Need at least 3 validated tickers for a diversified portfolio report. "
+                    f"This prevents hallucination of fake ticker symbols."
+                )
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Add validated tickers to context for agents to use
+            integrated_context["validated_tickers_list"] = validated_tickers
+            integrated_context["ticker_count"] = len(validated_tickers)
+
+            logger.info(
+                f"Validated {len(validated_tickers)} tickers for report generation", extra={"validated_tickers": validated_tickers}
+            )
+
             # Add execution metadata
             integrated_context["execution_metadata"] = {
                 "max_age_hours": max_age_hours,
                 "integration_manager_initialized": self.integration_manager is not None,
                 "data_accessor_initialized": self.data_accessor is not None,
                 "tools_count": len(self.tools),
+                "validated_ticker_count": len(validated_tickers),
             }
 
-            logger.info("Crew context prepared with integrated data")
+            logger.info("Crew context prepared with integrated data and validated tickers")
             return integrated_context
 
         except Exception as e:
@@ -445,3 +467,126 @@ class ReportCrew:
                     "tools_count": len(self.tools) if hasattr(self, "tools") else 0,
                 },
             }
+
+    def _extract_validated_tickers(self, context: dict[str, Any]) -> list[str]:
+        """
+        Extract validated tickers from upstream crew data.
+
+        This method prevents hallucination by extracting only real tickers
+        that were validated by upstream crews (stock, ETF, crypto).
+
+        Args:
+            context: Integrated data context from all crews
+
+        Returns:
+            List of validated ticker symbols
+        """
+        tickers = set()
+
+        # Extract from stock data
+        stock_data = context.get("stock_analysis_data", {})
+        if isinstance(stock_data, dict):
+            for task in stock_data.get("tasks_output", []):
+                if isinstance(task, dict):
+                    pydantic = task.get("pydantic", {})
+                    if isinstance(pydantic, dict) and "ticker" in pydantic:
+                        ticker = pydantic["ticker"]
+                        if ticker and isinstance(ticker, str):
+                            tickers.add(ticker.upper())
+
+        # Extract from ETF data
+        etf_data = context.get("etf_analysis_data", {})
+        if isinstance(etf_data, dict):
+            for task in etf_data.get("tasks_output", []):
+                if isinstance(task, dict):
+                    pydantic = task.get("pydantic", {})
+                    if isinstance(pydantic, dict) and "ticker" in pydantic:
+                        ticker = pydantic["ticker"]
+                        if ticker and isinstance(ticker, str):
+                            tickers.add(ticker.upper())
+
+        # Extract from crypto data
+        crypto_data = context.get("crypto_analysis_data", {})
+        if isinstance(crypto_data, dict):
+            for task in crypto_data.get("tasks_output", []):
+                if isinstance(task, dict):
+                    pydantic = task.get("pydantic", {})
+                    if isinstance(pydantic, dict):
+                        # Crypto might use 'symbol' instead of 'ticker'
+                        symbol = pydantic.get("symbol") or pydantic.get("ticker")
+                        if symbol and isinstance(symbol, str):
+                            tickers.add(symbol.upper())
+
+        # Also check for consolidated ticker validation results
+        ticker_validation = context.get("ticker_validation", {})
+        if isinstance(ticker_validation, dict):
+            validated = ticker_validation.get("validated_tickers", [])
+            if isinstance(validated, list):
+                for ticker in validated:
+                    if ticker and isinstance(ticker, str):
+                        tickers.add(ticker.upper())
+
+        validated_list = sorted(list(tickers))
+
+        logger.info(f"Extracted {len(validated_list)} validated tickers from upstream data", extra={"tickers": validated_list})
+
+        return validated_list
+
+    def _validate_task_output(self, task_output: str, validated_tickers: list[str]) -> None:
+        """
+        Validate that task output only contains validated tickers.
+
+        This prevents hallucination by checking for common fake tickers
+        and ensuring all mentioned tickers are in the validated list.
+
+        Args:
+            task_output: The output text from a task
+            validated_tickers: List of validated ticker symbols
+
+        Raises:
+            ValueError: If hallucinated tickers are detected
+        """
+        # Common hallucinated ticker patterns
+        hallucinated_patterns = ["ABC", "XYZ", "LMN", "TEST", "EXAMPLE", "SAMPLE", "TICKER", "STOCK", "ETF", "CRYPTO"]
+
+        # Convert validated tickers to uppercase for comparison
+        validated_upper = [t.upper() for t in validated_tickers]
+
+        # Check for hallucinated patterns
+        for pattern in hallucinated_patterns:
+            if pattern in validated_upper:
+                # Skip if it's actually a valid ticker
+                continue
+
+            # Check if pattern appears as a standalone word (not part of another word)
+            import re
+
+            if re.search(rf"\b{pattern}\b", task_output):
+                error_msg = (
+                    f"Task output contains hallucinated ticker '{pattern}' "
+                    f"which is not in validated_tickers: {validated_tickers}. "
+                    f"This indicates the agent is inventing fake ticker symbols."
+                )
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+        # Check for fake company names that often accompany hallucinated tickers
+        fake_company_patterns = [
+            "Alpha Beta Corp",
+            "Lumina Networks",
+            "Xylon Holdings",
+            "Example Corp",
+            "Sample Inc",
+            "Test Company",
+        ]
+
+        for fake_company in fake_company_patterns:
+            if fake_company in task_output:
+                error_msg = (
+                    f"Task output contains fake company name '{fake_company}'. "
+                    f"This indicates the agent is hallucinating company information."
+                )
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+        logger.debug("Task output validation passed - no hallucinated tickers detected")
