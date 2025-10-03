@@ -268,8 +268,9 @@ class CrewDataIntegrationManager:
                         for task in (crew_output.tasks_output if hasattr(crew_output, "tasks_output") else [])
                     ],
                     "token_usage": crew_output.token_usage if hasattr(crew_output, "token_usage") else {},
-                    "usage_metrics": self._serialize_usage_metrics(crew_output.usage_metrics) 
-                                   if hasattr(crew_output, "usage_metrics") else {},
+                    "usage_metrics": self._serialize_usage_metrics(crew_output.usage_metrics)
+                    if hasattr(crew_output, "usage_metrics")
+                    else {},
                 }
             elif isinstance(crew_output, dict):
                 output_data = crew_output
@@ -671,10 +672,10 @@ class CrewDataIntegrationManager:
     def _serialize_usage_metrics(self, usage_metrics: Any) -> dict:
         """
         Convert UsageMetrics object to JSON-serializable dictionary.
-        
+
         Args:
             usage_metrics: UsageMetrics object from CrewAI
-            
+
         Returns:
             Dictionary representation of usage metrics
 
@@ -688,14 +689,13 @@ class CrewDataIntegrationManager:
                 return usage_metrics
 
             # Try to convert Pydantic model to dict
-            if hasattr(usage_metrics, 'model_dump'):
+            if hasattr(usage_metrics, "model_dump"):
                 return usage_metrics.model_dump()
 
             # Try to convert using dict() for dataclasses or similar
-            if hasattr(usage_metrics, '__dict__'):
+            if hasattr(usage_metrics, "__dict__"):
                 return {
-                    key: value for key, value in usage_metrics.__dict__.items()
-                    if not key.startswith('_') and not callable(value)
+                    key: value for key, value in usage_metrics.__dict__.items() if not key.startswith("_") and not callable(value)
                 }
 
             # Fallback: convert to string representation
@@ -706,6 +706,17 @@ class CrewDataIntegrationManager:
             return {"serialization_error": str(e), "raw_usage_metrics": str(usage_metrics)}
 
     def _save_json_file(self, file_path: Path, data: dict) -> None:
-        """Save data to JSON file."""
+        """Save data to JSON file with custom serialization for datetime and Pydantic models."""
+        
+        def json_serializer(obj):
+            """Custom JSON serializer for datetime and Pydantic objects."""
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            if isinstance(obj, BaseModel):
+                return obj.model_dump()
+            if hasattr(obj, "__dict__"):
+                return obj.__dict__
+            return str(obj)
+        
         with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+            json.dump(data, f, indent=2, ensure_ascii=False, default=json_serializer)

@@ -23,6 +23,7 @@ from crewai_tools import (
 from dotenv import load_dotenv
 
 from finwiz.tools.rag_tools import get_rag_tools
+from finwiz.tools.search_tool_factory import get_news_search_tool, get_web_search_tool
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 
 # from finwiz.tools.finance_tools import get_data_output_tools
@@ -39,7 +40,6 @@ load_dotenv()
 
 # Initialize research tools with Perplexity prioritization
 # directory_search_tool = DirectorySearchTool(directory="./search_results")
-from finwiz.tools.search_tool_factory import get_news_search_tool, get_web_search_tool
 
 news_tool = get_news_search_tool(n_results=10)
 scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=False)

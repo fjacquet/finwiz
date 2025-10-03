@@ -10,11 +10,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from finwiz.quantitative.scenario_analyzer import (
-    MonteCarloResult,
+from finwiz.quantitative.scenario_analysis import (
     ScenarioAnalysisReport,
     ScenarioComparison,
     SensitivityResult,
+)
+from finwiz.quantitative.scenario_generators import (
+    MonteCarloResult,
 )
 from finwiz.schemas.portfolio_rebalancing import (
     AlternativeScenario,

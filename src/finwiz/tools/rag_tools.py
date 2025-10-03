@@ -5,11 +5,66 @@ This module provides tools for Retrieval Augmented Generation (RAG)
 to enable crews to store and retrieve knowledge across sessions.
 """
 
+from typing import Any
+
 from crewai.tools import BaseTool as Tool
 from crewai_tools import RagTool
+from pydantic import BaseModel, Field
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
+
+
+class KnowledgeBaseInput(BaseModel):
+    """Input schema for Knowledge Base tool with optional parameters."""
+
+    query: str = Field(..., description="Search query for the knowledge base")
+    similarity_threshold: float | None = Field(
+        default=None,
+        description="Minimum similarity score for results (0.0 to 1.0)",
+    )
+    limit: int | None = Field(
+        default=None,
+        description="Maximum number of results to return",
+    )
+
+
+class KnowledgeBaseTool(Tool):
+    """
+    Wrapper around RagTool that fixes the schema validation issue.
+
+    The crewai_tools.RagTool has a bug where similarity_threshold and limit
+    are marked as required in the schema even though they have default values.
+    This wrapper provides the correct schema with optional parameters.
+    """
+
+    name: str = "Knowledge base"
+    description: str = (
+        "Use this tool to retrieve information from the FinWiz knowledge base. "
+        "Ask questions about financial data, market trends, or previously "
+        "researched information."
+    )
+    args_schema: type[BaseModel] = KnowledgeBaseInput
+    _rag_tool: Any = None
+
+    def __init__(self, rag_tool: RagTool) -> None:
+        """Initialize with an underlying RagTool instance."""
+        super().__init__()
+        self._rag_tool = rag_tool
+
+    def _run(
+        self,
+        query: str,
+        similarity_threshold: float | None = None,
+        limit: int | None = None,
+    ) -> str:
+        """Execute the RAG query with optional parameters."""
+        result: str = self._rag_tool._run(
+            query=query,
+            similarity_threshold=similarity_threshold,
+            limit=limit,
+        )
+        return result
 
 
 def get_rag_tools(collection_suffix: str | None = None) -> list[Tool]:
@@ -25,25 +80,23 @@ def get_rag_tools(collection_suffix: str | None = None) -> list[Tool]:
 
     """
     # Create a copy of the default config
-    config = DEFAULT_RAG_CONFIG.copy()
+    config: dict[str, Any] = DEFAULT_RAG_CONFIG.copy()
 
     # If a collection suffix is provided, create a crew-specific collection
     if collection_suffix:
         config["vectordb"]["config"] = config["vectordb"]["config"].copy()
         config["vectordb"]["config"]["collection_name"] = f"finwiz-{collection_suffix}"
 
-    # Create the RAG tool for retrieval
-    rag_tool = RagTool(
+    # Create the underlying RAG tool for retrieval
+    underlying_rag_tool = RagTool(
         config=config,
         summarize=True,
-        description=(
-            "Use this tool to retrieve information from the FinWiz knowledge base. "
-            "Ask questions about financial data, market trends, or previously "
-            "researched information."
-        ),
     )
 
-    # Create the SaveToRag tool for storage
-    save_to_rag_tool = SaveToRagTool(rag_tool=rag_tool)
+    # Wrap it with our custom tool that has the correct schema
+    knowledge_base_tool = KnowledgeBaseTool(rag_tool=underlying_rag_tool)
 
-    return [rag_tool, save_to_rag_tool]
+    # Create the SaveToRag tool for storage
+    save_to_rag_tool = SaveToRagTool(rag_tool=underlying_rag_tool)
+
+    return [knowledge_base_tool, save_to_rag_tool]

@@ -159,7 +159,7 @@ The Perplexity Sonar integration follows these architectural principles:
 
    - Maintain consistent package versions across development environments.
 
-8. **Report Generation**
+1. **Report Generation**
    - Generate reports in HTML format for rich presentation
    - Always include UTF-8 encoding declarations to handle special characters and emojis
    - Use emojis strategically to enhance readability and visual appeal
@@ -167,7 +167,7 @@ The Perplexity Sonar integration follows these architectural principles:
    - Structure reports with clear sections and a logical flow of information
    - Support persistent financial planning by loading existing reports from `report/` directory
 
-9. **Data Validation & Contracts**
+2. **Data Validation & Contracts**
    - Use Pydantic v2 models with strict validation (`extra='forbid'`)
    - Implement configurable validation strictness (off/warn/error modes) via `VALIDATION_STRICTNESS` environment variable
    - Validate data at crew boundaries using ValidationManager to prevent schema drift
@@ -178,26 +178,39 @@ The Perplexity Sonar integration follows these architectural principles:
    - Enforce contract validation between crews using ContractValidator for boundary compliance
    - Support global validation manager instance for consistent behavior across all components
 
-9. **Testing Standards**
-   - Use `pytest` for unit and integration tests; use `pytest-mock` for mocking.
-   - Place tests under a top-level `tests/` directory with `test_*.py` files.
-   - Use Faker for dynamic test data generation to avoid static test data.
-   - Prefer small, isolated unit tests; add integration tests for crew flows.
-   - Run locally with:
+3. **Testing Standards & Coverage Stabilization**
+   - **Framework**: Use `pytest` exclusively with `pytest-mock` for all mocking (never `unittest.mock`)
+   - **Test Organization**: Place tests under `tests/` directory with clear categorization:
+     - `tests/unit/` - Fast, isolated unit tests (< 5 seconds execution)
+     - `tests/integration/` - Integration tests with external services
+     - `tests/fixtures/` - Reusable test data and mock responses
+   - **Naming Convention**: `test_should_{behavior}_when_{condition}` for descriptive test names
+   - **Test Data**: Use Faker library for dynamic, realistic test data generation
+   - **Mock Strategy**: Mock all external dependencies (APIs, file system, LLM calls)
+   - **Test Isolation**: Each test must run independently without shared state
+   - **Coverage Requirements**: Maintain minimum 80% code coverage with focus on critical paths
+   - **Execution Commands**:
 
      ```bash
-     uv run pytest
-     ```
-
-   - Use markers (e.g., `@pytest.mark.integration`) to separate slower tests:
-
-     ```bash
+     # Unit tests only (default)
      uv run pytest -m "not integration"
+
+     # All tests including integration
+     uv run pytest
+
+     # Coverage measurement
+     uv run pytest --cov=src/finwiz
+
+     # Specific test categories
+     uv run pytest tests/unit/crews/
+     uv run pytest tests/integration/ -m integration
      ```
 
-   - Keep tests deterministic; mock external APIs/tools and filesystem.
-   - Use standardized mock setups through APITestMocks class.
-   - Ensure CI runs `uv run pytest` as the default test command.
+   - **Standardized Mocking**: Use centralized mock patterns and fixtures from `conftest.py`
+   - **JSON Serialization**: Implement custom serializers for CrewAI objects (UsageMetrics, datetime)
+   - **Error Handling**: Tests must provide clear failure messages with detailed context
+   - **Performance**: Unit tests must complete in under 5 seconds per test suite
+   - **CI Integration**: Ensure all tests pass in CI with proper environment setup
 
 ## Code Modernization Principles
 
@@ -206,11 +219,13 @@ The Perplexity Sonar integration follows these architectural principles:
 The codebase has undergone systematic modernization to improve maintainability:
 
 #### Target File Sizes
+
 - **Under 200 lines**: Optimal for readability and maintainability
 - **200-500 lines**: Acceptable for complex but focused modules
 - **500+ lines**: Candidates for decomposition
 
 #### Decomposition Patterns
+
 - **Extract Calculations**: Move mathematical operations to dedicated calculation modules
 - **Extract Formatting**: Separate presentation logic from business logic
 - **Extract Utilities**: Common helper functions moved to utility modules
@@ -218,6 +233,7 @@ The codebase has undergone systematic modernization to improve maintainability:
 - **Extract Strategies**: Algorithm implementations moved to strategy modules
 
 #### Scientific Package Optimization
+
 - Replace manual calculations with pandas/numpy vectorized operations
 - Use `pandas.Series.mean()` instead of manual `sum()/len()` calculations
 - Leverage `pandas.groupby()` for aggregation operations
@@ -227,6 +243,7 @@ The codebase has undergone systematic modernization to improve maintainability:
 ### Modernization Examples
 
 #### Before: Monolithic File (1323 lines)
+
 ```python
 # src/finwiz/quantitative/technical.py - Original monolithic file
 class TechnicalAnalysis:
@@ -234,13 +251,14 @@ class TechnicalAnalysis:
     def calculate_macd(self): # 40+ lines
     def calculate_bollinger_bands(self): # 60+ lines
     # ... 20+ more indicators
-    
+
     class SignalType(Enum): # Models mixed with logic
     class SignalStrength(Enum):
     class TechnicalSignal(BaseModel):
 ```
 
 #### After: Modular Structure
+
 ```python
 # src/finwiz/quantitative/technical/technical_indicators.py (200 lines)
 # TA-Lib wrapper functions only
@@ -284,14 +302,14 @@ def archive_files(file: str) -> None:
     """Move processed files to an archive directory."""
     knowledge_dir = "knowledge"
     archive_dir = "archive"
-    
+
     if not os.path.exists(knowledge_dir):
         return
-        
+
     rel_path = os.path.relpath(file, knowledge_dir)
     dest_dir = os.path.join(archive_dir, os.path.dirname(rel_path))
     os.makedirs(dest_dir, exist_ok=True)
-    
+
     dest_file = os.path.join(archive_dir, rel_path)
     shutil.move(file, dest_file)
 ```
@@ -403,7 +421,7 @@ This approach provides a clean, organized, and easy-to-maintain structure for ma
 <body>
     <h1>🔍 PowerFlex Analysis Report</h1>
     <p><strong>Date:</strong> June 9, 2025</p>
-    
+
     <div class="toc">
         <h2>📋 Table of Contents</h2>
         <ul>
@@ -413,7 +431,7 @@ This approach provides a clean, organized, and easy-to-maintain structure for ma
             <li><a href="#conclusion">🏁 Conclusion</a></li>
         </ul>
     </div>
-    
+
     <section id="summary">
         <h2><span class="emoji-header">📊</span>Executive Summary</h2>
         <p>This report addresses the question: <strong>"What are the top 5 reasons to buy PowerFlex? What are the proven benefits and use cases?"</strong></p>

@@ -204,8 +204,8 @@ class TestFeatureFlags:
         # Circuit should now be open
         assert flags.is_enabled("test_flag") is False
 
-        # Wait for timeout and test recovery
-        time.sleep(1.1)  # Wait slightly longer than timeout
+        # Manually reset circuit breaker state to simulate timeout
+        flags.circuit_breakers["test_flag"]["last_failure_time"] = time.time() - 2.0  # Simulate timeout passed
         assert flags.is_enabled("test_flag") is True  # Should be in half-open state
 
         # Record success to close circuit
@@ -505,8 +505,8 @@ class TestFeatureFlagIntegration:
         assert result2 == {"cached": True, "data": "fallback_data"}
         assert result3 == {"cached": True, "data": "fallback_data"}
 
-        # Wait for circuit breaker timeout
-        time.sleep(0.6)
+        # Manually reset circuit breaker to simulate timeout
+        flags.circuit_breakers["test_service"]["last_failure_time"] = time.time() - 1.0
 
         # Define a working service for recovery
         def working_service():

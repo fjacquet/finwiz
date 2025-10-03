@@ -38,10 +38,7 @@ def get_configured_llm() -> LLM:
     openai_api_key = os.getenv("OPENAI_API_KEY")
 
     if not openai_api_key:
-        raise OSError(
-            "OPENAI_API_KEY not found in environment variables. "
-            "Please set your OpenAI API key in the .env file."
-        )
+        raise OSError("OPENAI_API_KEY not found in environment variables. Please set your OpenAI API key in the .env file.")
 
     # Log the model being used
     logger.info(f"Configuring LLM with model: {model}")

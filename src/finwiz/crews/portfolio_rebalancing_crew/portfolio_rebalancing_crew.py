@@ -90,6 +90,10 @@ class PortfolioRebalancingCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
+        # Make Pydantic models available for CrewAI resolution (BEFORE super().__init__())
+        self.PortfolioReview = PortfolioReview
+        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+
         super().__init__()
 
     @agent

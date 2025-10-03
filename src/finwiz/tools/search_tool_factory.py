@@ -132,7 +132,7 @@ class PerplexitySearchWrapper(BaseTool):
                 query=enhanced_query,
                 model="sonar-pro",
                 top_k=min(self._max_results, 10),
-                search_recency="week" if self._search_type == "news" else None
+                search_recency="week" if self._search_type == "news" else None,
             )
 
             # Check if result is an error
@@ -142,6 +142,7 @@ class PerplexitySearchWrapper(BaseTool):
 
             # Parse the JSON response and format for SerperDevTool compatibility
             import json
+
             try:
                 response_data = json.loads(raw_result)
                 formatted_results = []
@@ -150,7 +151,7 @@ class PerplexitySearchWrapper(BaseTool):
                 search_results = response_data.get("search_results", [])
 
                 # Convert search results to SerperDevTool format
-                for i, result in enumerate(search_results[:self._max_results]):
+                for i, result in enumerate(search_results[: self._max_results]):
                     try:
                         title = result.get("title", f"Article {i + 1}")
                         url = result.get("url", "")
@@ -161,18 +162,15 @@ class PerplexitySearchWrapper(BaseTool):
                         # Extract publisher from source or URL if not provided
                         if not source and url:
                             from urllib.parse import urlparse
+
                             domain = urlparse(url).netloc
                             if domain.startswith("www."):
                                 domain = domain[4:]
                             source = domain.replace(".com", "").title()
 
-                        formatted_results.append({
-                            "title": title,
-                            "link": url,
-                            "snippet": snippet,
-                            "source": source or "Unknown",
-                            "date": date
-                        })
+                        formatted_results.append(
+                            {"title": title, "link": url, "snippet": snippet, "source": source or "Unknown", "date": date}
+                        )
                     except Exception as e:
                         logger.warning(f"Failed to parse search result {i}: {e}")
                         continue

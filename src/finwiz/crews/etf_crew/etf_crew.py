@@ -10,81 +10,29 @@ agent to ensure consistent output quality. ETF investment analysis crew using
 the CrewAI framework.
 """
 
+import time
+from typing import Any
+
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import (
-    DirectoryReadTool,
-    FileReadTool,
-    FirecrawlScrapeWebsiteTool,
-    FirecrawlSearchTool,
-    YoutubeVideoSearchTool,
-)
 from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.etf import ETFFactsheet, ETFTopHolding
-from finwiz.tools.finance_tools import get_etf_research_tools
-from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-from finwiz.tools.rag_tools import get_rag_tools
-
-# from finwiz.tools.finance_tools import get_data_output_tools
-# from finwiz.tools.html_output_tool import HTMLOutputTool
-from finwiz.tools.yahoo_finance_etf_holdings_tool import YahooFinanceETFHoldingsTool
-from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
-from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
-from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+from finwiz.tools.tool_factories import get_etf_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
-
-# Removed incompatible LangChain tool
-
+from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.utils.task_decorators import async_task, sync_task
 
 load_dotenv()
 
-# Initialize research tools with Perplexity prioritization
-# directory_search_tool = DirectorySearchTool(directory="./search_results")
-from finwiz.tools.search_tool_factory import get_news_search_tool, get_web_search_tool
-
-news_tool = get_news_search_tool(n_results=10)
-scrape_tool = FirecrawlScrapeWebsiteTool(limit=10, save_file=False)
-search_tool = get_web_search_tool(n_results=10)
-search_tool2 = FirecrawlSearchTool(limit=10, save_file=False)
-yahoo_ticker_tool = YahooFinanceTickerInfoTool()
-yahoo_history_tool = YahooFinanceHistoryTool()
-yahoo_etf_tool = YahooFinanceETFHoldingsTool()
-yahoo_news_tool = YahooFinanceNewsTool()
-youtube_tool = YoutubeVideoSearchTool()
-
-# Get RAG tools for knowledge retrieval and storage
-rag_tools = get_rag_tools(collection_suffix="etf")
-
-# Get enhanced ETF research tools
-etf_research_tools = get_etf_research_tools()
-
-# Get quantitative analysis tool
-quantitative_tool = get_quantitative_analysis_tool()
-
-# Tools for ETF research and analysis
-tools = [
-    # Basic research tools
-    news_tool,
-    scrape_tool,
-    search_tool,
-    search_tool2,
-    youtube_tool,
-    # Enhanced ETF-specific tools
-    *etf_research_tools,
-    quantitative_tool,  # Add quantitative analysis tool
-    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
-    # Contract-aware reading of outputs and schemas
-    DirectoryReadTool(directory=("output/etf")),
-    DirectoryReadTool(directory=("docs/schemas")),
-    DirectoryReadTool(directory=("docs/schemas/examples")),
-    FileReadTool(file_path=("docs/schemas/ETFFactsheet.schema.json")),
-    FileReadTool(file_path=("docs/schemas/ETFTopHolding.schema.json")),
-    FileReadTool(file_path=("docs/schemas/examples/etf_factsheet.example.json")),
-    FileReadTool(file_path=("docs/schemas/RiskAssessmentStandardized.schema.json")),
-]
+# Get standardized tool set for ETF crew
+tools = get_etf_crew_tools(
+    include_rag=True,
+    include_quantitative=True,
+    collection_suffix="etf",
+)
 
 
 @CrewBase
@@ -123,6 +71,9 @@ class EtfCrew:
         self.ETFFactsheet = ETFFactsheet
         self.RiskAssessmentStandardized = RiskAssessmentStandardized
 
+        # Initialize structured logger
+        self.crew_logger = CrewLogger("EtfCrew")
+
     def _get_configured_llm(self) -> LLM:
         """Get configured LLM instance for this crew."""
         return get_configured_llm()
@@ -157,46 +108,48 @@ class EtfCrew:
             llm=self._get_configured_llm(),
         )
 
+    @async_task
     @task
     def etf_market_trends_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_market_trends_task"],
             verbose=True,
             reasoning=False,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def etf_screening_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_screening_task"],
             verbose=True,
-            async_execution=True,
             output_pydantic=ETFTopHolding,
         )
 
+    @async_task
     @task
     def etf_technical_detail_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_technical_detail_task"],
             verbose=True,
-            async_execution=True,
             output_pydantic=ETFFactsheet,
         )
 
+    @async_task
     @task
     def etf_risk_assessment_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_risk_assessment_task"],
             verbose=True,
-            async_execution=True,
             output_pydantic=RiskAssessmentStandardized,
         )
 
+    @sync_task
     @task
     def etf_investment_strategy_task(self) -> Task:
         return Task(config=self.tasks_config["etf_investment_strategy_task"], verbose=True)
 
+    @sync_task
     @task
     def translation_task(self) -> Task:
         """Task to translate the English report to French while preserving layout."""
@@ -213,7 +166,32 @@ class EtfCrew:
             process=Process.sequential,
             verbose=True,
             max_retries=10,
+            max_iter=25,  # Prevent infinite loops - max iterations per agent
             respect_context_window=True,
             allow_delegation=False,
             max_rpm=20,
         )
+
+    def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:
+        """
+        Execute the crew with structured logging.
+
+        Args:
+            inputs: Input parameters for crew execution
+
+        Returns:
+            Crew execution result
+
+        """
+        self.crew_logger.log_start(inputs or {})
+        start_time = time.time()
+
+        try:
+            crew_instance = self.crew()
+            result = crew_instance.kickoff(inputs=inputs)
+            duration = time.time() - start_time
+            self.crew_logger.log_complete(duration)
+            return result
+        except Exception as e:
+            self.crew_logger.log_error(e)
+            raise

@@ -8,9 +8,66 @@ financial knowledge across different crews.
 
 import pytest
 from crewai_tools import RagTool
+from pydantic import ValidationError
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
+from finwiz.tools.rag_tools import KnowledgeBaseTool, get_rag_tools
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
+
+
+def test_knowledge_base_tool_schema() -> None:
+    """Test that KnowledgeBaseTool has correct schema with optional parameters."""
+    tools = get_rag_tools()
+    kb_tool = tools[0]
+
+    # Verify tool name
+    assert kb_tool.name == "Knowledge base"
+
+    # Verify schema fields
+    schema_fields = kb_tool.args_schema.model_fields
+    assert "query" in schema_fields
+    assert "similarity_threshold" in schema_fields
+    assert "limit" in schema_fields
+
+    # Verify query is required
+    assert schema_fields["query"].is_required()
+
+    # Verify similarity_threshold and limit are optional
+    assert not schema_fields["similarity_threshold"].is_required()
+    assert not schema_fields["limit"].is_required()
+
+    # Test schema validation with only query (should work)
+    try:
+        kb_tool.args_schema(query="test query")
+    except ValidationError:
+        pytest.fail("Schema validation should pass with only query parameter")
+
+    # Test schema validation with all parameters (should work)
+    try:
+        kb_tool.args_schema(query="test query", similarity_threshold=0.7, limit=10)
+    except ValidationError:
+        pytest.fail("Schema validation should pass with all parameters")
+
+
+def test_get_rag_tools_returns_correct_tools() -> None:
+    """Test that get_rag_tools returns the correct tools."""
+    tools = get_rag_tools()
+
+    assert len(tools) == 2
+    assert isinstance(tools[0], KnowledgeBaseTool)
+    assert isinstance(tools[1], SaveToRagTool)
+    assert tools[0].name == "Knowledge base"
+    assert tools[1].name == "SaveToRag"
+
+
+def test_get_rag_tools_with_collection_suffix() -> None:
+    """Test that get_rag_tools creates crew-specific collections."""
+    tools = get_rag_tools(collection_suffix="test-crew")
+
+    # Both tools should be created
+    assert len(tools) == 2
+    assert isinstance(tools[0], KnowledgeBaseTool)
+    assert isinstance(tools[1], SaveToRagTool)
 
 
 @pytest.mark.integration

@@ -18,11 +18,13 @@ import pytest
 from finwiz.quantitative.config import BacktestConfig
 from finwiz.quantitative.performance import (
     PerformanceAnalyzer,
-    PerformanceMetrics,
-    PerformanceReport,
-    PortfolioOptimizationResult,
     get_performance_analyzer,
 )
+from finwiz.quantitative.performance_benchmarks import (
+    PerformanceReport,
+    PortfolioOptimizationResult,
+)
+from finwiz.quantitative.performance_metrics import PerformanceMetrics
 
 
 class TestPerformanceAnalyzer:

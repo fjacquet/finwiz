@@ -12,7 +12,8 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from finwiz.integration.validation_pipeline import CrossCrewValidationResult, ValidationPipeline, ValidationPipelineResult
+from finwiz.integration.pipeline_stages import CrossCrewValidationResult, ValidationPipelineResult
+from finwiz.integration.validation_pipeline import ValidationPipeline
 from finwiz.validation.enums import ValidationMode
 from finwiz.validation.result import ValidationResult as BaseValidationResult
 

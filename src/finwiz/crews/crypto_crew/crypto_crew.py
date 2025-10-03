@@ -5,61 +5,30 @@ This module initializes and configures the crypto analysis crew, including agent
 _tasks, and tools.
 """
 
+import time
 from pathlib import Path
+from typing import Any
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import (
-    DirectoryReadTool,
-    FileReadTool,
-    FirecrawlScrapeWebsiteTool,
-    FirecrawlSearchTool,
-    YoutubeVideoSearchTool,
-)
 
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.crypto import CryptoThesis
-from finwiz.tools.coinmarketcap_tool import get_coinmarketcap_tools
-from finwiz.tools.finance_tools import get_crypto_research_tools
-from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-from finwiz.tools.rag_tools import get_rag_tools
+from finwiz.tools.tool_factories import get_crypto_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
+from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.utils.task_decorators import async_task, sync_task
 
 # Get the absolute path of the current script
 current_script_path = Path(__file__).resolve()
 crew_dir = current_script_path.parent
 
-# Initialize tools with Perplexity prioritization
-from finwiz.tools.search_tool_factory import get_web_search_tool
-
-search_tool = get_web_search_tool(n_results=10)
-scrape_tool = FirecrawlScrapeWebsiteTool()
-firecrawl_search = FirecrawlSearchTool()
-youtube_tool = YoutubeVideoSearchTool()
-crypto_tools = get_crypto_research_tools()
-coinmarketcap_tools = get_coinmarketcap_tools()
-quantitative_tool = get_quantitative_analysis_tool()
-
-# Get RAG tools for knowledge retrieval and storage
-rag_tools = get_rag_tools(collection_suffix="crypto")
-
-# Define a shared list of research tools for agents (includes validator via crypto_tools)
-research_tools = [
-    search_tool,
-    scrape_tool,
-    firecrawl_search,
-    youtube_tool,
-    *crypto_tools,
-    quantitative_tool,  # Add quantitative analysis tool
-    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
-    # Contract-aware reading of outputs and schemas
-    DirectoryReadTool(directory=("output/crypto")),
-    DirectoryReadTool(directory=("docs/schemas")),
-    DirectoryReadTool(directory=("docs/schemas/examples")),
-    FileReadTool(file_path=("docs/schemas/CryptoThesis.schema.json")),
-    FileReadTool(file_path=("docs/schemas/RiskAssessmentStandardized.schema.json")),
-    FileReadTool(file_path=("docs/schemas/examples/crypto_thesis.example.json")),
-]
+# Get standardized tool set for crypto crew
+research_tools = get_crypto_crew_tools(
+    include_rag=True,
+    include_quantitative=True,
+    collection_suffix="crypto",
+)
 
 
 @CrewBase
@@ -88,6 +57,9 @@ class CryptoCrew:
         self.CryptoThesis = CryptoThesis
         self.RiskAssessmentStandardized = RiskAssessmentStandardized
 
+        # Initialize structured logger
+        self.crew_logger = CrewLogger("CryptoCrew")
+
     def _get_configured_llm(self) -> LLM:
         """Get configured LLM instance for this crew."""
         return get_configured_llm()
@@ -106,7 +78,7 @@ class CryptoCrew:
     def technical_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["technical_analyst"],
-            tools=[*crypto_tools, quantitative_tool, *rag_tools],
+            tools=research_tools,
             reasoning=True,  # Enable AI reasoning for technical analysis decisions
             verbose=True,
             llm=self._get_configured_llm(),
@@ -126,7 +98,7 @@ class CryptoCrew:
     def investment_strategist(self) -> Agent:
         return Agent(
             config=self.agents_config["investment_strategist"],
-            tools=[*crypto_tools, *coinmarketcap_tools, quantitative_tool, *rag_tools],
+            tools=research_tools,
             verbose=True,
             reasoning=True,  # Enable AI reasoning for investment strategy decisions
             llm=self._get_configured_llm(),
@@ -135,8 +107,8 @@ class CryptoCrew:
     @agent
     def research_director(self) -> Agent:
         return Agent(
-            config=self.agents_config["research_director"], 
-            tools=[], 
+            config=self.agents_config["research_director"],
+            tools=[],
             verbose=True,
             llm=self._get_configured_llm(),
         )
@@ -151,40 +123,43 @@ class CryptoCrew:
             llm=self._get_configured_llm(),
         )
 
+    @async_task
     @task
     def market_analysis_task(self) -> Task:
         return Task(
             config=self.tasks_config["market_analysis_task"],
-            async_execution=True,
             output_pydantic=CryptoThesis,
         )
 
+    @async_task
     @task
     def technical_analysis_task(self) -> Task:
-        return Task(config=self.tasks_config["technical_analysis_task"], async_execution=True)
+        return Task(config=self.tasks_config["technical_analysis_task"])
 
+    @async_task
     @task
     def risk_assessment_task(self) -> Task:
         return Task(
             config=self.tasks_config["risk_assessment_task"],
-            async_execution=True,
             output_pydantic=RiskAssessmentStandardized,
         )
 
+    @async_task
     @task
     def investment_strategy_task(self) -> Task:
         return Task(
             config=self.tasks_config["investment_strategy_task"],
-            async_execution=True,
             output_pydantic=CryptoThesis,
         )
 
+    @sync_task
     @task
     def final_report_task(self) -> Task:
         return Task(
             config=self.tasks_config["final_report_task"],
         )
 
+    @sync_task
     @task
     def translation_task(self) -> Task:
         """Task to translate the English report to French while preserving layout."""
@@ -200,8 +175,33 @@ class CryptoCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
+            max_iter=25,  # Prevent infinite loops - max iterations per agent
             respect_context_window=True,
             allow_delegation=False,
             max_rpm=20,
             max_retries=10,
         )
+
+    def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:
+        """
+        Execute the crew with structured logging.
+
+        Args:
+            inputs: Input parameters for crew execution
+
+        Returns:
+            Crew execution result
+
+        """
+        self.crew_logger.log_start(inputs or {})
+        start_time = time.time()
+
+        try:
+            crew_instance = self.crew()
+            result = crew_instance.kickoff(inputs=inputs)
+            duration = time.time() - start_time
+            self.crew_logger.log_complete(duration)
+            return result
+        except Exception as e:
+            self.crew_logger.log_error(e)
+            raise

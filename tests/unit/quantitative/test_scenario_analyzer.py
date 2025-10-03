@@ -10,13 +10,17 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
-from finwiz.quantitative.scenario_analyzer import (
-    MonteCarloResult,
+from finwiz.quantitative.scenario_analysis import (
     ScenarioAnalysisReport,
-    ScenarioAnalyzer,
     ScenarioComparison,
-    ScenarioParameters,
     SensitivityResult,
+)
+from finwiz.quantitative.scenario_analyzer import (
+    ScenarioAnalyzer,
+)
+from finwiz.quantitative.scenario_generators import (
+    MonteCarloResult,
+    ScenarioParameters,
 )
 from finwiz.schemas.portfolio_rebalancing import (
     AlternativeScenario,

@@ -6,7 +6,7 @@ import yaml
 
 
 def test_final_reporter_has_no_tools() -> None:
-    agents_yaml = Path(__file__).resolve().parents[1] / "src/finwiz/crews/report_crew/config/agents.yaml"
+    agents_yaml = Path(__file__).resolve().parents[3] / "src/finwiz/crews/report_crew/config/agents.yaml"
     assert agents_yaml.exists(), f"agents.yaml not found at {agents_yaml}"
 
     data = yaml.safe_load(agents_yaml.read_text(encoding="utf-8"))

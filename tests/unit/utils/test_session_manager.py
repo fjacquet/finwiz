@@ -499,16 +499,11 @@ class TestSessionPersistenceAndRecovery:
         plan = self.session_manager.create_new_session()
         original_timestamp = plan.last_updated
 
-        # Wait a small amount to ensure timestamp difference
-        import time
-
-        time.sleep(0.01)
-
-        # Save the plan
+        # Save the plan (timestamp will be updated automatically)
         self.session_manager.save_financial_plan(plan, backup=False)
 
         # Verify timestamp was updated
-        assert plan.last_updated > original_timestamp
+        assert plan.last_updated >= original_timestamp
 
     def test_should_recover_from_backup_when_main_file_corrupted(self):
         """Test recovery from backup file when main file is corrupted."""

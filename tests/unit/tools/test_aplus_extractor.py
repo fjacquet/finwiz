@@ -452,7 +452,9 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
             etf_opportunities=["VWCE", "IWDA"],
             stock_opportunities=["NVDA", "AVGO"],
             crypto_opportunities=["BTC", "ETH"],
-            discovery_summary="Comprehensive analysis identified 6 high-quality opportunities with strong fundamentals and growth potential.",
+            discovery_summary=(
+                "Comprehensive analysis identified 6 high-quality opportunities with strong fundamentals and growth potential."
+            ),
             confidence_score=0.85,
             validation_timestamp=datetime.now(),
             allocation_recommendations=[{"asset_type": "stock", "symbol": "NVDA", "allocation": "5-8%", "grade": "A+", "rank": 1}],

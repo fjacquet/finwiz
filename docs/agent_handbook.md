@@ -51,7 +51,12 @@ This handbook establishes the core principles, ethical standards, and research m
 - **Modular Design**: Follow the modernized codebase structure with focused, single-responsibility modules
 - **File Size Guidelines**: Target files under 200 lines for maximum maintainability
 - **Scientific Package Usage**: Leverage pandas/numpy for calculations instead of manual implementations
-- Testing: use `pytest` for unit/integration tests and `pytest-mock` for mocking. Place tests under a `tests/` directory using `test_*.py` naming. Run with `uv run pytest`.
+- **Testing Standards**: Use `pytest` exclusively with `pytest-mock` for all mocking (never `unittest.mock`)
+- **Test Organization**: Place tests under `tests/` directory with clear categorization (unit/integration/fixtures)
+- **Test Execution**: Run with `uv run pytest -m "not integration"` for unit tests, `uv run pytest --cov=src/finwiz` for coverage
+- **Test Data**: Use Faker library for realistic, dynamic test data generation
+- **Mock Strategy**: Mock all external dependencies (APIs, file system, LLM calls) for test isolation
+- **AI Reasoning**: Enable reasoning capabilities in agents with `reasoning=True` for transparent decision-making processes
 
 #### 6. Data Validation & Schema Compliance
 
@@ -144,6 +149,9 @@ This handbook establishes the core principles, ethical standards, and research m
 - Ensure all citations and references are properly formatted
 - Do not have any tools; the final reporter consumes prior agents' context only to avoid unintended external calls and ensure consolidation-only behavior
 - Support persistent financial planning by integrating with existing reports when available
+- **AI Reasoning Integration**: Incorporate AI reasoning outputs from analysis agents into final reports
+- **Decision Transparency**: Clearly present AI decision-making processes and rationale in reports
+- **Confidence Indicators**: Include confidence levels and reasoning quality metrics in recommendations
 
 ---
 

@@ -11,6 +11,7 @@ investment report without conducting additional external research.
 """
 
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,9 @@ from finwiz.integration.data_accessor import CrewDataAccessor
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.tools.file_conversion_tools import HtmlToPdfTool  # Added for PDF conversion
 from finwiz.tools.rag_tools import get_rag_tools
+from finwiz.utils.agent_validators import final_reporter
+from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.utils.task_decorators import async_task, sync_task
 from finwiz.validation.tool_restrictions import ReporterInputValidator, ToolRestrictionValidator
 
 # from finwiz.tools.html_output_tool import HTMLOutputTool
@@ -81,6 +85,9 @@ class ReportCrew:
 
         # Initialize tools with data availability checking
         self._initialize_tools()
+
+        # Initialize structured logger
+        self.crew_logger = CrewLogger("ReportCrew")
 
     def _initialize_tools(self) -> None:
         """Initialize tools with data availability checking and graceful degradation."""
@@ -222,6 +229,7 @@ class ReportCrew:
             reasoning=False,
         )
 
+    @final_reporter
     @agent
     def investment_reporter(self) -> Agent:
         """Define the final reporter with no tools; format the consolidated HTML report."""
@@ -233,6 +241,7 @@ class ReportCrew:
             tools=[],
         )
 
+    @final_reporter
     @agent
     def translator(self) -> Agent:
         """Create translator agent that converts English reports to French while preserving layout."""
@@ -242,6 +251,7 @@ class ReportCrew:
             verbose=True,
         )
 
+    @async_task
     @task
     def comprehensive_financial_integration_task(self) -> Task:
         """Integrate Stock/ETF/Crypto analyses into a unified narrative."""
@@ -250,6 +260,7 @@ class ReportCrew:
             verbose=True,
         )
 
+    @async_task
     @task
     def optimal_portfolio_allocation_task(self) -> Task:
         """Derive optimal asset allocation based on goals and constraints."""
@@ -258,6 +269,7 @@ class ReportCrew:
             verbose=True,
         )
 
+    @async_task
     @task
     def risk_assessment_mitigation_task(self) -> Task:
         """Assess key risks and propose mitigation strategies."""
@@ -266,6 +278,7 @@ class ReportCrew:
             verbose=True,
         )
 
+    @sync_task
     @task
     def comprehensive_investment_report_task(self) -> Task:
         """Compile the comprehensive HTML investment report."""
@@ -274,6 +287,7 @@ class ReportCrew:
             verbose=True,
         )
 
+    @sync_task
     @task
     def translation_task(self) -> Task:
         """Task to translate the English report to French while preserving layout."""
@@ -344,6 +358,10 @@ class ReportCrew:
             Crew execution result
 
         """
+        # Log execution start
+        self.crew_logger.log_start(inputs or {})
+        start_time = time.time()
+
         try:
             # Prepare integrated context
             integrated_context = self.prepare_crew_context(max_age_hours)
@@ -352,9 +370,9 @@ class ReportCrew:
             if inputs:
                 integrated_context.update(inputs)
 
-            # Log execution start with data status
+            # Log additional context about data status
             logger.info(
-                "Starting ReportCrew execution with integrated data",
+                "ReportCrew executing with integrated data",
                 extra={
                     "max_age_hours": max_age_hours,
                     "has_integrated_context": "error" not in integrated_context,
@@ -363,14 +381,16 @@ class ReportCrew:
             )
 
             # Execute crew with integrated context
-            crew = self.crew()
-            result = crew.kickoff(inputs=integrated_context)
+            crew_instance = self.crew()
+            result = crew_instance.kickoff(inputs=integrated_context)
 
-            logger.info("ReportCrew execution completed successfully")
+            # Log completion
+            duration = time.time() - start_time
+            self.crew_logger.log_complete(duration)
             return result
 
         except Exception as e:
-            logger.error(f"ReportCrew execution failed: {str(e)}", exc_info=True)
+            self.crew_logger.log_error(e)
             raise
 
     def validate_reporter_input(self, context: dict[str, Any]) -> None:

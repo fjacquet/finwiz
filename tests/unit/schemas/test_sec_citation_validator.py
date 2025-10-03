@@ -191,7 +191,10 @@ class TestSECCitationValidator:
         """Test excerpt validation."""
         # Valid excerpts
         valid_excerpts = [
-            "The Company faces intense competition in all areas of its business and believes a significant factor in competing successfully is continually improving the total customer experience.",
+            (
+                "The Company faces intense competition in all areas of its business and believes "
+                "a significant factor in competing successfully is continually improving the total customer experience."
+            ),
             "This is a valid excerpt with sufficient length and meaningful content for testing purposes.",
             "Risk factors include market volatility, regulatory changes, and competitive pressures.",
         ]

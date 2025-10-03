@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Literal, Union
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -53,7 +53,7 @@ class ETFFactsheet(BaseModel):
     ticker: str = Field(min_length=1, max_length=15)
     issuer: str
     expense_ratio: float = Field(ge=0.0, le=5.0, description="Total expense ratio (%)")
-    tracking_diff: Union[float, None] = Field(
+    tracking_diff: Optional[float] = Field(
         default=None,
         ge=-10.0,
         le=10.0,
@@ -88,4 +88,4 @@ class ETFFactsheet(BaseModel):
         return v
 
     # standardized risk lives separately
-    risk: Union[RiskAssessmentStandardized, None] = None
+    risk: Optional[RiskAssessmentStandardized] = None

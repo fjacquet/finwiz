@@ -13,10 +13,11 @@ For detailed CrewAI feature usage patterns and best practices, see:
 ### Core Components
 
 - **Crews**: The core of the application. Each crew is a specialized team of AI agents designed to perform a specific type of financial analysis (e.g., Crypto, Stocks, ETFs).
-- **Agents**: The individual AI workers within a crew. Each agent has a specific role, goal, and set of tools. Agent configurations are defined in `agents.yaml` files.
+- **Agents**: The individual AI workers within a crew. Each agent has a specific role, goal, and set of tools. Agent configurations are defined in `agents.yaml` files. **AI Reasoning**: Agents now support reasoning capabilities with `reasoning=True` for transparent decision-making processes.
 - **Tasks**: The specific assignments for agents. Tasks define the work to be done, the expected output, and which agent should perform it. Task configurations are defined in `tasks.yaml` files.
 - **Tools**: The functions and APIs that agents can use to perform their tasks. This includes web search tools, data scraping tools, and financial data APIs.
 - **Flow**: The `crewai.flow` orchestrates the execution of the different crews in a predefined sequence.
+- **Testing Infrastructure**: Comprehensive test suite with pytest and pytest-mock, featuring realistic test data generation, standardized mocking patterns, and robust coverage measurement.
 
 ### Modernized Architecture
 
@@ -1191,48 +1192,139 @@ RISK_FREE_RATE=0.02
 - plotly (visualizations)
 - scipy (statistical functions)
 
-## Testing
+## Testing Infrastructure
 
-- Framework: `pytest`; mocking: `pytest-mock`.
-- Structure: place tests under a top-level `tests/` directory using `test_*.py` files.
-- Run commands:
+### Framework and Standards
+- **Framework**: `pytest` exclusively with `pytest-mock` for all mocking (never `unittest.mock`)
+- **Structure**: Tests organized under `tests/` directory with clear categorization:
+  - `tests/unit/` - Fast, isolated unit tests (< 5 seconds execution)
+  - `tests/integration/` - Integration tests with external services
+  - `tests/fixtures/` - Reusable test data and mock responses
+- **Naming Convention**: `test_should_{behavior}_when_{condition}` for descriptive test names
+
+### Test Execution Commands
 
 ```bash
-uv run pytest
-```
-
-- Use markers to manage scope/speed (e.g., integration tests):
-
-```bash
+# Unit tests only (default, fast execution)
 uv run pytest -m "not integration"
-```
 
-- Quantitative tests:
+# All tests including integration
+uv run pytest
 
-```bash
-# Run quantitative unit tests
+# Coverage measurement
+uv run pytest --cov=src/finwiz
+
+# Specific test categories
+uv run pytest tests/unit/crews/
+uv run pytest tests/integration/ -m integration
 uv run pytest tests/unit/quantitative/ -v
-
-# Run quantitative integration tests
 uv run pytest tests/integration/test_quantitative_analysis_integration.py -v
 ```
 
-- Portfolio rebalancing tests:
+### Specialized Test Categories
 
+**Portfolio Rebalancing Tests**:
 ```bash
-# Run portfolio rebalancing unit tests
+# Portfolio rebalancing unit tests
 uv run pytest tests/unit/quantitative/test_portfolio_*rebalancing* -v
 
-# Run portfolio rebalancing integration tests
+# Portfolio rebalancing integration tests
 uv run pytest tests/integration/test_portfolio_rebalancing* -v
 
-# Run portfolio rebalancing performance tests
+# Portfolio rebalancing performance tests
 uv run pytest tests/performance/test_portfolio_rebalancing_performance.py -v
 ```
 
-- Guidelines:
-  - Mock external APIs/tools and filesystem for determinism.
-  - Use Faker for dynamic test data generation.
-  - Prefer small unit tests, add integration tests for crew flows.
-  - Quantitative tests include comprehensive coverage of all analysis components.
-  - Ensure CI runs `uv run pytest` as default.
+**AI Reasoning Tests**:
+```bash
+# AI reasoning integration tests
+uv run pytest tests/integration/test_ai_reasoning_integration.py -v
+
+# AI reasoning configuration tests
+uv run pytest tests/unit/test_ai_reasoning_configuration.py -v
+```
+
+**Contract Validation Tests**:
+```bash
+# Schema contract validation
+uv run pytest tests/test_contract_*.py -v
+```
+
+### Test Infrastructure Features
+
+#### Comprehensive Fixtures System
+- **Faker Integration**: Realistic test data generation with fixed seeds for reproducibility
+- **Financial Data Factory**: Specialized factories for stock, ETF, and crypto test data
+- **Mock Patterns**: Standardized mocking patterns for CrewAI, APIs, and file operations
+- **Serialization Helpers**: Custom JSON encoders for CrewAI objects and datetime handling
+
+#### Coverage Stabilization
+- **Import Error Resolution**: All test files import successfully without module errors
+- **Mocking Standardization**: Converted from `unittest.mock` to `pytest-mock` exclusively
+- **JSON Serialization**: Custom serializers for UsageMetrics, datetime, and Pydantic objects
+- **Test Isolation**: Independent test execution without shared state dependencies
+- **Performance**: All unit tests execute in under 5 seconds per suite
+
+#### Quality Standards
+- **Mock Strategy**: All external dependencies mocked (APIs, file system, LLM calls)
+- **Test Structure**: Arrange-Act-Assert pattern with clear assertions
+- **Error Handling**: Robust error handling with clear failure messages
+- **Coverage Requirements**: Minimum 80% code coverage with focus on critical paths
+
+### Testing Guidelines
+
+#### Mock Strategy by Component
+```python
+# CrewAI Components
+mocker.patch('finwiz.crews.stock_crew.StockCrew.crew')
+mocker.patch('crewai.Crew.kickoff', return_value=mock_result)
+
+# External APIs
+mocker.patch('finwiz.tools.yahoo_finance_tool.get_stock_data')
+mocker.patch('finwiz.tools.alpha_vantage_tool.get_company_overview')
+
+# File Operations
+mocker.patch('builtins.open', mocker.mock_open(read_data=mock_data))
+mocker.patch('json.dump')
+```
+
+#### Test Data Generation
+```python
+# Use Faker fixtures for realistic data
+def test_stock_analysis(fake_stock_data):
+    result = analyze_stock(fake_stock_data["ticker"])
+    assert result.price == fake_stock_data["price"]
+
+# Use factory methods for customized data
+def test_high_pe_stock():
+    stock_data = FinancialDataFactory.create_stock_data(pe_ratio=50.0)
+    result = analyze_stock(stock_data["ticker"])
+    assert result.recommendation == "SELL"
+```
+
+#### AI Reasoning Test Patterns
+```python
+def test_should_show_ai_reasoning_in_output(mocker):
+    # Arrange
+    mock_crew = mocker.patch('finwiz.crews.stock_crew.StockCrew')
+    mock_result = mocker.Mock()
+    mock_result.raw = "AI reasoning: Based on analysis..."
+    
+    # Act
+    result = mock_crew.crew().kickoff(inputs={"test": "data"})
+    
+    # Assert
+    assert "ai reasoning" in str(result.raw).lower()
+    assert "analysis" in str(result.raw).lower()
+```
+
+### Coverage and Quality Monitoring
+- **Coverage Targets**: Minimum 80% overall, 90% for critical modules
+- **Coverage Reporting**: HTML and terminal formats with line-by-line analysis
+- **Performance Monitoring**: Test execution time tracking and optimization
+- **Quality Gates**: Automated quality checks in CI/CD pipeline
+
+For detailed testing documentation, see:
+- [Test Coverage Stabilization Guide](test_coverage_stabilization.md)
+- [Test Fixtures Documentation](../tests/fixtures/README.md)
+- [Test Organization Guide](../tests/README.md)

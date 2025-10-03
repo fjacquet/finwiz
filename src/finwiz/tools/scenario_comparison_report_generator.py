@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from finwiz.quantitative.scenario_analyzer import ScenarioAnalysisReport
+from finwiz.quantitative.scenario_analysis import ScenarioAnalysisReport
 from finwiz.tools.html_report_generator import HTMLReportGenerator
 
 logger = logging.getLogger(__name__)
