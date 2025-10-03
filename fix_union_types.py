@@ -14,16 +14,20 @@ def fix_union_types(file_path):
     has_optional = 'from typing import' in content and 'Optional' in content
     
     # Pattern to match: type | None (including complex types)
-    pattern = r':\s+([\w\[\], ]+)\s+\|\s+None'
+    # Match both field annotations and return type annotations
+    pattern1 = r':\s+([\w\[\], ]+)\s+\|\s+None'  # Field annotations
+    pattern2 = r'->\s+([\w\[\], ]+)\s+\|\s+None'  # Return type annotations
     
     # Find all matches
-    matches = list(re.finditer(pattern, content))
+    matches1 = list(re.finditer(pattern1, content))
+    matches2 = list(re.finditer(pattern2, content))
     
-    if not matches:
+    if not matches1 and not matches2:
         return False
     
     # Replace all occurrences
-    content = re.sub(pattern, r': Optional[\1]', content)
+    content = re.sub(pattern1, r': Optional[\1]', content)
+    content = re.sub(pattern2, r'-> Optional[\1]', content)
     
     # Add Optional to imports if not present
     if not has_optional and 'from typing import' in content:

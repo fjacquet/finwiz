@@ -4,7 +4,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import ValidationError
 
@@ -13,14 +13,14 @@ from .report import ReporterInput
 Strictness = Literal["off", "warn", "error"]
 
 
-def _get_strictness(env_value: str | None) -> Strictness:
+def _get_strictness(env_value: Optional[str]) -> Strictness:
     val = (env_value or "warn").strip().lower()
     if val in {"off", "warn", "error"}:
         return val  # type: ignore[return-value]
     return "warn"
 
 
-def validate_reporter_input(data: dict[str, Any] | str | Path, *, strictness: Strictness | None = None) -> ReporterInput | None:
+def validate_reporter_input(data: dict[str, Any] | str | Path, *, strictness: Optional[Strictness] = None) -> Optional[ReporterInput]:
     """
     Validate a ReporterInput payload.
 
@@ -55,13 +55,13 @@ def validate_reporter_input(data: dict[str, Any] | str | Path, *, strictness: St
         return None
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     argv = argv or sys.argv[1:]
     if not argv:
         print("Usage: python -m finwiz.schemas.validate <reporter_input.json> [off|warn|error]", file=sys.stderr)
         return 2
     path = argv[0]
-    strict: Strictness | None = None
+    strict: Optional[Strictness] = None
     if len(argv) > 1:
         strict = _get_strictness(argv[1])
 

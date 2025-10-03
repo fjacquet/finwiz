@@ -6,7 +6,7 @@ validation outcomes, and portfolio optimization recommendations.
 """
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -57,7 +57,7 @@ class InvestmentCandidate(BaseModel):
     name: str = Field(..., description="Full name of the investment")
     asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of asset")
     current_price: float = Field(..., gt=0, description="Current market price")
-    market_cap: float | None = Field(None, description="Market capitalization in USD")
+    market_cap: Optional[float] = Field(None, description="Market capitalization in USD")
     preliminary_score: float = Field(..., ge=0.0, le=1.0, description="Initial A+ score")
     final_score: float = Field(..., ge=0.0, le=1.0, description="Final A+ score after validation")
     grade: Grade = Field(..., description="Letter grade from FinWiz grading system (A+ to F)")
@@ -65,7 +65,7 @@ class InvestmentCandidate(BaseModel):
     recommended_action: str = Field(..., description="Recommended action based on grade")
     discovery_date: datetime = Field(default_factory=datetime.now, description="When the candidate was discovered")
     data_source: str = Field(..., description="Primary data source used for analysis")
-    risk_assessment: RiskAssessmentStandardized | None = Field(None, description="Standardized risk assessment")
+    risk_assessment: Optional[RiskAssessmentStandardized] = Field(None, description="Standardized risk assessment")
 
 
 class APlusAnalysis(BaseModel):
@@ -83,8 +83,8 @@ class APlusAnalysis(BaseModel):
     key_metrics: dict[str, Any] = Field(default_factory=dict, description="Important financial metrics")
     competitive_advantages: list[str] = Field(default_factory=list, description="Competitive moats and advantages")
     risk_factors: list[str] = Field(default_factory=list, description="Key risk considerations")
-    market_context: MarketRegime | None = Field(None, description="Market regime during analysis")
-    criteria_used: APlusCriteria | None = Field(None, description="Scoring criteria applied")
+    market_context: Optional[MarketRegime] = Field(None, description="Market regime during analysis")
+    criteria_used: Optional[APlusCriteria] = Field(None, description="Scoring criteria applied")
 
 
 class APlusDiscoveryResult(BaseModel):
@@ -106,7 +106,7 @@ class APlusDiscoveryResult(BaseModel):
     a_plus_percentage: float = Field(..., ge=0.0, le=100.0, description="Percentage of screened investments achieving A+")
 
     # UCITS compliance for ETFs (European investors)
-    ucits_compliant_count: int | None = Field(None, description="Number of UCITS-compliant ETFs found")
+    ucits_compliant_count: Optional[int] = Field(None, description="Number of UCITS-compliant ETFs found")
     ucits_compliant_symbols: list[str] = Field(default_factory=list, description="UCITS-compliant symbols")
 
     # Recommendations
@@ -149,8 +149,8 @@ class ValidationResult(BaseModel):
 class PortfolioImprovement(BaseModel):
     """A specific portfolio improvement recommendation."""
 
-    current_holding: str | None = Field(None, description="Current holding to replace (if any)")
-    current_grade: Grade | None = Field(None, description="Current holding grade (if replacing)")
+    current_holding: Optional[str] = Field(None, description="Current holding to replace (if any)")
+    current_grade: Optional[Grade] = Field(None, description="Current holding grade (if replacing)")
     recommended_investment: str = Field(..., description="Recommended A+ investment symbol")
     recommended_grade: Grade = Field(..., description="Grade of recommended investment")
     improvement_type: Literal["replacement", "addition", "rebalancing"] = Field(..., description="Type of improvement")
@@ -161,7 +161,7 @@ class PortfolioImprovement(BaseModel):
     rationale: str = Field(..., description="Detailed rationale for the improvement")
     risk_impact: RiskAssessmentStandardized = Field(..., description="Impact on portfolio risk profile")
     cost_analysis: dict[str, float] = Field(default_factory=dict, description="Transaction costs and fees")
-    expected_annual_benefit: float | None = Field(None, description="Expected annual benefit in percentage points")
+    expected_annual_benefit: Optional[float] = Field(None, description="Expected annual benefit in percentage points")
 
 
 class OptimizationResult(BaseModel):

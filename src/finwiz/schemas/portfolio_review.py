@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -31,9 +31,9 @@ class Alternative(BaseModel):
 
     # A+ discovery enhancement fields
     is_a_plus_candidate: bool = Field(default=False, description="Whether this is an A+ grade candidate")
-    discovery_source: str | None = Field(None, description="Source of A+ discovery (e.g., 'investment_discovery_crew')")
-    confidence_level: float | None = Field(None, ge=0.0, le=1.0, description="Confidence in A+ classification")
-    expected_annual_benefit: float | None = Field(None, description="Expected annual benefit in percentage points")
+    discovery_source: Optional[str] = Field(None, description="Source of A+ discovery (e.g., 'investment_discovery_crew')")
+    confidence_level: Optional[float] = Field(None, ge=0.0, le=1.0, description="Confidence in A+ classification")
+    expected_annual_benefit: Optional[float] = Field(None, description="Expected annual benefit in percentage points")
 
 
 class APlusImprovementSuggestion(BaseModel):
@@ -50,7 +50,7 @@ class APlusImprovementSuggestion(BaseModel):
     allocation_percentage: float = Field(..., ge=0.0, le=100.0, description="Recommended allocation percentage")
     implementation_priority: Priority = Field(..., description="Implementation priority")
     rationale: str = Field(..., description="Detailed rationale for the improvement")
-    expected_annual_benefit: float | None = Field(None, description="Expected annual benefit in percentage points")
+    expected_annual_benefit: Optional[float] = Field(None, description="Expected annual benefit in percentage points")
     risk_impact_description: str = Field(..., description="Description of risk impact")
     cost_analysis: dict[str, float] = Field(default_factory=dict, description="Transaction costs and fees")
     implementation_notes: list[str] = Field(default_factory=list, description="Implementation considerations")
@@ -78,7 +78,7 @@ class HoldingDecision(BaseModel):
         default_factory=list, max_length=5, description="A+ improvement suggestions for this holding"
     )
     has_a_plus_opportunities: bool = Field(default=False, description="Whether A+ improvement opportunities exist for this holding")
-    current_grade_potential: str | None = Field(None, description="Assessment of current holding's potential for grade improvement")
+    current_grade_potential: Optional[str] = Field(None, description="Assessment of current holding's potential for grade improvement")
 
 
 class APlusOpportunitySection(BaseModel):
@@ -102,7 +102,7 @@ class APlusOpportunitySection(BaseModel):
     total_expected_annual_benefit: float = Field(default=0.0, description="Total expected annual benefit")
 
     # Discovery metadata
-    last_discovery_date: datetime | None = Field(None, description="When A+ discovery was last performed")
+    last_discovery_date: Optional[datetime] = Field(None, description="When A+ discovery was last performed")
     discovery_coverage: list[str] = Field(default_factory=list, description="Asset types covered in discovery")
     market_conditions_note: str = Field(default="", description="Note about market conditions during discovery")
 

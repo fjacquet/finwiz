@@ -22,7 +22,7 @@ class RebalancingResult(BaseModel):
 
     # Analysis metadata
     analysis_timestamp: datetime = Field(default_factory=datetime.now, description="Analysis timestamp")
-    portfolio_id: str | None = Field(None, description="Portfolio identifier")
+    portfolio_id: Optional[str] = Field(None, description="Portfolio identifier")
 
     # Current portfolio state
     current_portfolio: PortfolioAnalysis = Field(..., description="Current portfolio analysis")
@@ -86,7 +86,7 @@ class RebalancingHistoryEntry(BaseModel):
 
     # Performance tracking
     portfolio_value_before: float = Field(..., gt=0, description="Portfolio value before rebalancing")
-    portfolio_value_after: float | None = Field(None, gt=0, description="Portfolio value after rebalancing")
+    portfolio_value_after: Optional[float] = Field(None, gt=0, description="Portfolio value after rebalancing")
 
     # Metrics
     total_transaction_costs: float = Field(..., ge=0, description="Actual transaction costs incurred")
@@ -94,7 +94,7 @@ class RebalancingHistoryEntry(BaseModel):
     deviation_improvement: float = Field(..., description="Improvement in portfolio deviation from targets")
 
     # Notes
-    execution_notes: str | None = Field(None, description="Notes about the execution")
+    execution_notes: Optional[str] = Field(None, description="Notes about the execution")
 
 
 class PositionHistory(BaseModel):
@@ -106,6 +106,6 @@ class PositionHistory(BaseModel):
     rebalancing_frequency: int = Field(..., ge=0, description="Number of times rebalanced")
     average_deviation: float = Field(..., ge=0, description="Average deviation from target weight")
     max_deviation: float = Field(..., ge=0, description="Maximum deviation observed")
-    last_rebalanced: datetime | None = Field(None, description="Last rebalancing date")
+    last_rebalanced: Optional[datetime] = Field(None, description="Last rebalancing date")
     total_trades: int = Field(..., ge=0, description="Total number of trades executed")
     total_transaction_costs: float = Field(..., ge=0, description="Total transaction costs for this position")

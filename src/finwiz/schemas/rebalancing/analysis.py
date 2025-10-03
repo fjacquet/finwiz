@@ -58,8 +58,8 @@ class PortfolioMetrics(BaseModel):
     volatility: float = Field(..., ge=0, description="Portfolio volatility")
     sharpe_ratio: float = Field(..., description="Sharpe ratio")
     max_drawdown: float = Field(..., le=0, description="Maximum drawdown")
-    beta: float | None = Field(None, description="Portfolio beta vs benchmark")
-    correlation_with_benchmark: float | None = Field(None, ge=-1, le=1, description="Correlation with benchmark")
+    beta: Optional[float] = Field(None, description="Portfolio beta vs benchmark")
+    correlation_with_benchmark: Optional[float] = Field(None, ge=-1, le=1, description="Correlation with benchmark")
 
 
 class PerformanceAttribution(BaseModel):
@@ -130,8 +130,8 @@ class RebalancingAnalytics(BaseModel):
     current_rebalancing_needs: list[RebalancingNeed] = Field(..., description="Current rebalancing needs")
 
     # Historical performance
-    performance_attribution: PerformanceAttribution | None = Field(None, description="Performance attribution analysis")
-    trend_analysis: TrendAnalysis | None = Field(None, description="Trend analysis results")
+    performance_attribution: Optional[PerformanceAttribution] = Field(None, description="Performance attribution analysis")
+    trend_analysis: Optional[TrendAnalysis] = Field(None, description="Trend analysis results")
 
     # Recommendations
     recommended_action: RebalancingRecommendation = Field(..., description="Overall recommended action")

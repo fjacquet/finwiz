@@ -9,7 +9,7 @@ technical analysis, and performance metrics.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -34,7 +34,7 @@ class QuantitativeBacktestResult(BaseModel):
 
     # Risk metrics
     volatility: float = Field(..., ge=0, description="Annualized volatility")
-    var_95: float | None = Field(None, description="Value at Risk (95% confidence)")
+    var_95: Optional[float] = Field(None, description="Value at Risk (95% confidence)")
 
     # Execution details
     backtest_start_date: datetime = Field(..., description="Backtest start date")
@@ -62,9 +62,9 @@ class QuantitativeTechnicalAnalysis(BaseModel):
     neutral_signals_count: int = Field(default=0, description="Number of neutral signals")
 
     # Key indicators
-    rsi_value: float | None = Field(None, description="Current RSI value")
-    macd_signal: str | None = Field(None, description="MACD signal description")
-    bollinger_position: str | None = Field(None, description="Position relative to Bollinger Bands")
+    rsi_value: Optional[float] = Field(None, description="Current RSI value")
+    macd_signal: Optional[str] = Field(None, description="MACD signal description")
+    bollinger_position: Optional[str] = Field(None, description="Position relative to Bollinger Bands")
 
     # Analysis timestamp
     analysis_timestamp: datetime = Field(default_factory=datetime.now, description="When analysis was performed")
@@ -96,9 +96,9 @@ class QuantitativePerformanceMetrics(BaseModel):
     kurtosis: float = Field(..., description="Kurtosis of returns")
 
     # Benchmark comparison (optional)
-    alpha: float | None = Field(None, description="Alpha vs benchmark")
-    beta: float | None = Field(None, description="Beta vs benchmark")
-    information_ratio: float | None = Field(None, description="Information ratio")
+    alpha: Optional[float] = Field(None, description="Alpha vs benchmark")
+    beta: Optional[float] = Field(None, description="Beta vs benchmark")
+    information_ratio: Optional[float] = Field(None, description="Information ratio")
 
     # Period information
     start_date: datetime = Field(..., description="Analysis start date")
@@ -117,14 +117,14 @@ class QuantitativeRecommendation(BaseModel):
 
     # Quantitative justification
     technical_signal: str = Field(..., description="Technical analysis signal")
-    backtest_performance: str | None = Field(None, description="Backtesting performance summary")
+    backtest_performance: Optional[str] = Field(None, description="Backtesting performance summary")
     risk_assessment: str = Field(..., description="Risk assessment summary")
 
     # Target metrics
-    target_return: float | None = Field(None, description="Expected return percentage")
-    target_timeframe: str | None = Field(None, description="Investment timeframe")
-    stop_loss_level: float | None = Field(None, description="Recommended stop loss level")
-    take_profit_level: float | None = Field(None, description="Recommended take profit level")
+    target_return: Optional[float] = Field(None, description="Expected return percentage")
+    target_timeframe: Optional[str] = Field(None, description="Investment timeframe")
+    stop_loss_level: Optional[float] = Field(None, description="Recommended stop loss level")
+    take_profit_level: Optional[float] = Field(None, description="Recommended take profit level")
 
     # Supporting data
     key_indicators: dict[str, Any] = Field(default_factory=dict, description="Key technical indicators")
@@ -142,15 +142,15 @@ class EnhancedStockAnalysis(BaseModel):
 
     # Basic information
     ticker: str = Field(..., description="Stock ticker symbol")
-    company_name: str | None = Field(None, description="Company name")
+    company_name: Optional[str] = Field(None, description="Company name")
 
     # Quantitative analysis results
-    technical_analysis: QuantitativeTechnicalAnalysis | None = Field(None, description="Technical analysis results")
-    backtest_result: QuantitativeBacktestResult | None = Field(None, description="Backtesting results")
-    performance_metrics: QuantitativePerformanceMetrics | None = Field(None, description="Performance metrics")
+    technical_analysis: Optional[QuantitativeTechnicalAnalysis] = Field(None, description="Technical analysis results")
+    backtest_result: Optional[QuantitativeBacktestResult] = Field(None, description="Backtesting results")
+    performance_metrics: Optional[QuantitativePerformanceMetrics] = Field(None, description="Performance metrics")
 
     # Investment recommendation
-    quantitative_recommendation: QuantitativeRecommendation | None = Field(None, description="Quantitative recommendation")
+    quantitative_recommendation: Optional[QuantitativeRecommendation] = Field(None, description="Quantitative recommendation")
 
     # Analysis metadata
     analysis_timestamp: datetime = Field(default_factory=datetime.now, description="Analysis timestamp")
@@ -164,19 +164,19 @@ class EnhancedETFAnalysis(BaseModel):
 
     # Basic information
     ticker: str = Field(..., description="ETF ticker symbol")
-    fund_name: str | None = Field(None, description="ETF fund name")
+    fund_name: Optional[str] = Field(None, description="ETF fund name")
 
     # Quantitative analysis results
-    technical_analysis: QuantitativeTechnicalAnalysis | None = Field(None, description="Technical analysis results")
-    backtest_result: QuantitativeBacktestResult | None = Field(None, description="Backtesting results")
-    performance_metrics: QuantitativePerformanceMetrics | None = Field(None, description="Performance metrics")
+    technical_analysis: Optional[QuantitativeTechnicalAnalysis] = Field(None, description="Technical analysis results")
+    backtest_result: Optional[QuantitativeBacktestResult] = Field(None, description="Backtesting results")
+    performance_metrics: Optional[QuantitativePerformanceMetrics] = Field(None, description="Performance metrics")
 
     # ETF-specific quantitative metrics
-    tracking_error_analysis: dict[str, float] | None = Field(None, description="Tracking error analysis")
-    benchmark_correlation: float | None = Field(None, description="Correlation with benchmark")
+    tracking_error_analysis: Optional[dict[str, float]] = Field(None, description="Tracking error analysis")
+    benchmark_correlation: Optional[float] = Field(None, description="Correlation with benchmark")
 
     # Investment recommendation
-    quantitative_recommendation: QuantitativeRecommendation | None = Field(None, description="Quantitative recommendation")
+    quantitative_recommendation: Optional[QuantitativeRecommendation] = Field(None, description="Quantitative recommendation")
 
     # Analysis metadata
     analysis_timestamp: datetime = Field(default_factory=datetime.now, description="Analysis timestamp")
@@ -190,19 +190,19 @@ class EnhancedCryptoAnalysis(BaseModel):
 
     # Basic information
     symbol: str = Field(..., description="Crypto symbol")
-    name: str | None = Field(None, description="Cryptocurrency name")
+    name: Optional[str] = Field(None, description="Cryptocurrency name")
 
     # Quantitative analysis results
-    technical_analysis: QuantitativeTechnicalAnalysis | None = Field(None, description="Technical analysis results")
-    backtest_result: QuantitativeBacktestResult | None = Field(None, description="Backtesting results")
-    performance_metrics: QuantitativePerformanceMetrics | None = Field(None, description="Performance metrics")
+    technical_analysis: Optional[QuantitativeTechnicalAnalysis] = Field(None, description="Technical analysis results")
+    backtest_result: Optional[QuantitativeBacktestResult] = Field(None, description="Backtesting results")
+    performance_metrics: Optional[QuantitativePerformanceMetrics] = Field(None, description="Performance metrics")
 
     # Crypto-specific quantitative metrics
-    volatility_analysis: dict[str, float] | None = Field(None, description="Volatility analysis")
-    correlation_analysis: dict[str, float] | None = Field(None, description="Correlation with other assets")
+    volatility_analysis: Optional[dict[str, float]] = Field(None, description="Volatility analysis")
+    correlation_analysis: Optional[dict[str, float]] = Field(None, description="Correlation with other assets")
 
     # Investment recommendation
-    quantitative_recommendation: QuantitativeRecommendation | None = Field(None, description="Quantitative recommendation")
+    quantitative_recommendation: Optional[QuantitativeRecommendation] = Field(None, description="Quantitative recommendation")
 
     # Analysis metadata
     analysis_timestamp: datetime = Field(default_factory=datetime.now, description="Analysis timestamp")
