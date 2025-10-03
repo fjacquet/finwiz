@@ -7,6 +7,7 @@ Models for portfolio analysis, metrics, and performance tracking.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 

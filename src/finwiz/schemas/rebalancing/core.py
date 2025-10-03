@@ -7,6 +7,7 @@ Basic data models for holdings, configuration, and price data.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
