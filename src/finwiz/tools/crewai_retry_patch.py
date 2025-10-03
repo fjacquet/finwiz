@@ -41,15 +41,27 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
 
     try:
         # Import CrewAI agent module - we'll patch its LLM handling
-        from crewai.agents.agent import Agent as CrewAIAgent
-        from crewai.llms.adapters.openai import OpenAIAdapter
+        from crewai.agent import Agent as CrewAIAgent
+        
+        # Try to import OpenAI adapter if it exists
+        try:
+            from crewai.llms.adapters.openai import OpenAIAdapter
+        except ImportError:
+            OpenAIAdapter = None
+            logger.debug("OpenAI adapter not found in CrewAI, skipping adapter patching")
+
+        # Check if the Agent class has the methods we need to patch
+        if not hasattr(CrewAIAgent, "_get_llm"):
+            logger.info("CrewAI Agent class structure has changed - retry patching not needed for this version")
+            _PATCHED = True  # Mark as patched to avoid repeated attempts
+            return
 
         # Store original methods for patching
         original_get_llm = CrewAIAgent._get_llm
         original_get_model = None
 
         # Try to access OpenAI adapter's get_model method if it exists
-        if hasattr(OpenAIAdapter, "get_model"):
+        if OpenAIAdapter and hasattr(OpenAIAdapter, "get_model"):
             original_get_model = OpenAIAdapter.get_model
 
         logger.info(f"Patching CrewAI LLM initialization with {max_retries} max retries")
@@ -67,7 +79,7 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
             return llm
 
         # Patch OpenAI adapter if applicable
-        if original_get_model:
+        if original_get_model and OpenAIAdapter:
 
             def patched_get_model(adapter_self: Any, *args: Any, **kwargs: Any) -> Any:
                 """Patched version of get_model that adds retry capabilities."""
@@ -125,15 +137,18 @@ def initialize_retry_mechanism(max_retries: int = 5, timeout: int = 180) -> None
         import httpx
 
         # Try to find and update timeout in any httpx clients used by CrewAI
-        from crewai.llm import OpenAIChat
-
-        if hasattr(OpenAIChat, "client") and hasattr(OpenAIChat.client, "timeout"):
-            OpenAIChat.client.timeout = httpx.Timeout(timeout)
-            logger.info(f"Set CrewAI OpenAIChat client timeout to {timeout} seconds")
+        # Note: The exact module path may vary by CrewAI version
+        try:
+            from crewai.llm import OpenAIChat
+            if hasattr(OpenAIChat, "client") and hasattr(OpenAIChat.client, "timeout"):
+                OpenAIChat.client.timeout = httpx.Timeout(timeout)
+                logger.info(f"Set CrewAI OpenAIChat client timeout to {timeout} seconds")
+        except (ImportError, AttributeError):
+            logger.debug("CrewAI OpenAIChat client not accessible, skipping timeout setting")
     except ImportError:
-        logger.warning("HTTPX or CrewAI OpenAIChat not found, skipping timeout setting")
+        logger.debug("HTTPX not found, skipping timeout setting")
     except Exception as e:
-        logger.warning(f"Failed to set HTTPX timeout: {e}")
+        logger.debug(f"Failed to set HTTPX timeout: {e}")
 
     logger.info(f"Initializing LLM retry mechanism with {max_retries} max retries")
     patch_crewai_llm_initialization(max_retries=max_retries, verbose=True)
