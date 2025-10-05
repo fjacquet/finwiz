@@ -123,7 +123,6 @@ class EtfCrew:
         return Task(
             config=self.tasks_config["etf_screening_task"],
             verbose=True,
-            output_pydantic=ETFTopHolding,
         )
 
     @async_task

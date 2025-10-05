@@ -224,6 +224,7 @@ risk_validation_task:
     - quantitative_risk_metrics[] with comprehensive risk analysis results
   agent: risk_manager
   output_file: "output/portfolio/portfolio_rebalancing_risk_validation.html"
+  async_execution: true
   depends_on:
     - rebalancing_optimization_task
 
@@ -261,5 +262,6 @@ translation_task:
     preserving numerical data and formatting.
   agent: translator
   output_file: "output/portfolio/portfolio_rebalancing_report_french.html"
+  async_execution: false
   depends_on:
     - risk_validation_task

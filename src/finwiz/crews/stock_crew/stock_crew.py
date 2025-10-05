@@ -127,7 +127,6 @@ class StockCrew:
         return Task(
             config=self.tasks_config["stock_screening_task"],
             verbose=True,
-            output_pydantic=MarketSentiment,
         )
 
     @async_task
@@ -137,17 +136,15 @@ class StockCrew:
         return Task(
             config=self.tasks_config["technical_detail_task"],
             verbose=True,
-            output_pydantic=TenKInsight,
         )
 
-    @sync_task
+    @async_task
     @task
     def stock_risk_assessment_task(self) -> Task:
         """Assess key risks for recommended tickers and mitigation actions."""
         return Task(
             config=self.tasks_config["stock_risk_assessment_task"],
             verbose=True,
-            output_pydantic=RiskAssessmentStandardized,
         )
 
     @sync_task

@@ -165,6 +165,7 @@ validation_task:
     
   agent: validation_agent
   output_file: "output/discovery/validation_report.md"
+  async_execution: true
   depends_on:
     - crypto_discovery_task
 
@@ -227,6 +228,7 @@ optimization_task:
     
   agent: portfolio_optimization_agent
   output_file: "output/discovery/optimization_report.md"
+  async_execution: true
   depends_on:
     - validation_task
 
@@ -303,6 +305,7 @@ report_generation_task:
     
   agent: portfolio_optimization_agent
   output_file: "output/discovery/rapport_opportunites_a_plus.html"
+  async_execution: false
   depends_on:
     - optimization_task
 
@@ -391,5 +394,6 @@ feedback_learning_task:
     
   agent: feedback_learning_agent
   output_file: "output/discovery/feedback_learning_report.md"
+  async_execution: false
   depends_on:
     - report_generation_task

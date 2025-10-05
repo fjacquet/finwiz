@@ -83,7 +83,7 @@ etf_screening_task:
 # ETF Technical Detail Tasks
 etf_technical_detail_task:
   description: >
-    Perform detailed technical analysis on each of the 10 selected ETFs.
+    Perform detailed technical analysis on each of the 10 selected ETFs from the screening task.
     
     1. Analyze replication methods and lending practices, considering any recent changes as of {full_date}.
     2. Evaluate tracking accuracy and benchmark adherence using the latest performance data.
@@ -130,6 +130,8 @@ etf_technical_detail_task:
   agent: market_etf_analyst
   output_file: "output/etf/etf_technical_details.md"
   async_execution: true
+  depends_on:
+    - etf_screening_task
 
 # Risk Analysis Tasks
 etf_risk_assessment_task:
@@ -164,11 +166,14 @@ etf_risk_assessment_task:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.md"
+  async_execution: true
+  depends_on:
+    - etf_technical_detail_task
 
 # Investment Strategy Tasks
 etf_investment_strategy_task:
   description: >
-    Develop investment strategies for each of the 10 ETFs based on their risk profiles.
+    Develop investment strategies for each of the 10 ETFs based on their risk profiles and technical analysis.
     
     1. Determine optimal entry price points and target valuations
     2. Recommend position sizing based on risk/reward profiles
@@ -185,6 +190,9 @@ etf_investment_strategy_task:
     visualization.
   agent: risk_assessor
   output_file: "output/etf/etf_investment_strategies_en.html"
+  async_execution: false
+  depends_on:
+    - etf_risk_assessment_task
 
 translation_task:
   description: >
@@ -200,4 +208,7 @@ translation_task:
     investment report standards.
   agent: translator
   output_file: "output/etf/etf_investment_strategies_fr.html"
+  async_execution: false
+  depends_on:
+    - etf_investment_strategy_task
 

@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.portfolio_review import PortfolioReview
+from finwiz.utils.task_decorators import async_task, sync_task
 from finwiz.tools.alternative_finder_tool import AlternativeFinder
 from finwiz.tools.enhanced_sec_tool import StandardizedRiskScoringTool
 from finwiz.tools.holding_analyzer_orchestrator import HoldingAnalyzerOrchestrator
@@ -182,61 +183,61 @@ class PortfolioRebalancingCrew:
             verbose=True,
         )
 
+    @async_task
     @task
     def analyze_holding_task(self) -> Task:
         """Analyze individual holding using appropriate crew."""
         return Task(
             config=self.tasks_config["analyze_holding_task"],
             verbose=True,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def calculate_price_targets_task(self) -> Task:
         """Calculate actionable buy/sell price targets."""
         return Task(
             config=self.tasks_config["calculate_price_targets_task"],
             verbose=True,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def find_alternatives_task(self) -> Task:
         """Find better alternatives for underperforming holdings."""
         return Task(
             config=self.tasks_config["find_alternatives_task"],
             verbose=True,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def portfolio_analysis_task(self) -> Task:
         """Analyze current portfolio composition and calculate weightings."""
         return Task(
             config=self.tasks_config["portfolio_analysis_task"],
             verbose=True,
-            async_execution=True,
-            output_pydantic=PortfolioReview,
         )
 
+    @async_task
     @task
     def rebalancing_optimization_task(self) -> Task:
         """Generate optimal rebalancing trade recommendations."""
         return Task(
             config=self.tasks_config["rebalancing_optimization_task"],
             verbose=True,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def risk_validation_task(self) -> Task:
         """Validate rebalancing recommendations against risk constraints."""
         return Task(
             config=self.tasks_config["risk_validation_task"],
             verbose=True,
-            output_pydantic=RiskAssessmentStandardized,
         )
 
+    @sync_task
     @task
     def translation_task(self) -> Task:
         """Task to translate the English report to French while preserving layout."""

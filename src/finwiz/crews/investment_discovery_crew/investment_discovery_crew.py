@@ -26,6 +26,7 @@ from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_to
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.risk_assessment_tool import get_risk_assessment_tool
+from finwiz.utils.task_decorators import async_task, sync_task
 
 load_dotenv()
 
@@ -178,33 +179,34 @@ class InvestmentDiscoveryCrew:
             reasoning=False,
         )
 
+    @async_task
     @task
     def etf_discovery_task(self) -> Task:
         """Task for discovering A+ grade ETFs."""
         return Task(
             config=self.tasks_config["etf_discovery_task"],
             verbose=True,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def stock_discovery_task(self) -> Task:
         """Task for discovering A+ grade stocks."""
         return Task(
             config=self.tasks_config["stock_discovery_task"],
             verbose=True,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def crypto_discovery_task(self) -> Task:
         """Task for discovering A+ grade cryptocurrencies."""
         return Task(
             config=self.tasks_config["crypto_discovery_task"],
             verbose=True,
-            async_execution=True,
         )
 
+    @async_task
     @task
     def validation_task(self) -> Task:
         """Task for validating A+ candidates through backtesting."""
@@ -213,6 +215,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
         )
 
+    @async_task
     @task
     def optimization_task(self) -> Task:
         """Task for optimizing portfolio with A+ discoveries."""
@@ -221,6 +224,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
         )
 
+    @sync_task
     @task
     def report_generation_task(self) -> Task:
         """Task for generating comprehensive discovery report."""
@@ -229,6 +233,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
         )
 
+    @sync_task
     @task
     def feedback_learning_task(self) -> Task:
         """Task for analyzing feedback and improving A+ criteria."""

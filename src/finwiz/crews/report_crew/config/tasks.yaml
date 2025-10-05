@@ -111,6 +111,8 @@ optimal_portfolio_allocation_task:
   agent: portfolio_allocator
   output_file: "output/report/optimal_portfolio_allocation.md"
   async_execution: true
+  depends_on:
+    - comprehensive_financial_integration_task
 
 # Task 3: Risk Assessment and Mitigation Strategy
 risk_assessment_mitigation_task:
@@ -151,6 +153,8 @@ risk_assessment_mitigation_task:
   agent: risk_manager
   output_file: "output/report/risk_assessment_and_mitigation.md"
   async_execution: true
+  depends_on:
+    - optimal_portfolio_allocation_task
 
 # Task 4: Comprehensive Investment Report and Implementation Plan
 comprehensive_investment_report_task:
@@ -288,6 +292,9 @@ comprehensive_investment_report_task:
     ainsi qu'un court bloc JSON récapitulatif. Aucun appel externe supplémentaire ne doit être effectué.
   agent: investment_reporter
   output_file: "output/finwiz_family_financial_plan.html"
+  async_execution: false
+  depends_on:
+    - risk_assessment_mitigation_task
 
 # Task 5: PDF Generation from HTML Report
 # pdf_generation_task:
@@ -318,3 +325,6 @@ translation_task:
     investment report standards.
   agent: translator
   output_file: "output/finwiz_family_financial_plan_fr.html"
+  async_execution: false
+  depends_on:
+    - comprehensive_investment_report_task

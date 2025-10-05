@@ -25,7 +25,7 @@ market_technical_analysis_task:
   output_file: "output/stock/stock_market_trends.md"
   async_execution: true
 
-# Technical Analysis Tasks
+# Stock Screening Tasks
 stock_screening_task:
   description: >
     FIRST: Read the schema files docs/schemas/MarketSentiment.schema.json and 
@@ -79,7 +79,7 @@ stock_screening_task:
 
     OUTPUT: Return a list of the top 10 emerging stocks with AI-driven analysis and explicit reasoning.
   expected_output: >
-    A list of 10 emerging stocks with  potential, including ticker
+    A list of 10 emerging stocks with potential, including ticker
     symbols and analysis. Include a concise "Market Sentiment" summary per ticker
     with aggregate metrics and cited headlines.
     
@@ -95,6 +95,8 @@ stock_screening_task:
   agent: market_technical_analyst
   output_file: "output/stock/emerging_stocks_analysis.md"
   async_execution: true
+  depends_on:
+    - market_technical_analysis_task
 
 # Technical Detail Tasks
 technical_detail_task:
@@ -232,6 +234,7 @@ stock_risk_assessment_task:
     - quantitative_risk_metrics[] with comprehensive risk analysis for each ticker
   agent: investment_risk_analyst
   output_file: "output/stock/stock_investment_risk_strategy_en.html"
+  async_execution: true
   depends_on:
     - technical_detail_task
 
@@ -249,4 +252,7 @@ translation_task:
     investment report standards.
   agent: translator
   output_file: "output/stock/stock_investment_risk_strategy_fr.html"
+  async_execution: false
+  depends_on:
+    - stock_risk_assessment_task
 

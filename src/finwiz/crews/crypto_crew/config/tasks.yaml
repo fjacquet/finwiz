@@ -52,9 +52,9 @@ market_analysis_task:
 
 technical_analysis_task:
   description: >
-    Conduct a detailed technical analysis of the cryptocurrencies provided by
-    the market analyst. Identify potential entry and exit points, support and
-    resistance levels, and overall price trends for the top 10 projects.
+    Conduct a detailed technical analysis of the cryptocurrencies identified by the market analyst. 
+    Identify potential entry and exit points, support and resistance levels, and overall price trends 
+    for the top 10 projects.
     
     Technical Indicators & Charts:
     - Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands for relevant intervals (if the symbol/interval is supported),
@@ -71,11 +71,13 @@ technical_analysis_task:
   agent: technical_analyst
   output_file: "output/crypto/crypto_technical_analysis.md"
   async_execution: true
+  depends_on:
+    - market_analysis_task
 
 risk_assessment_task:
   description: >
     Evaluate the risks associated with the top 10 cryptocurrencies identified
-    by the technical analyst. Use the "Enhanced Crypto Analysis Tool" with risk assessment
+    in previous tasks. Use the "Enhanced Crypto Analysis Tool" with risk assessment
     enabled to perform standardized crypto risk scoring.
     
     Enhanced Risk Assessment:
@@ -103,6 +105,8 @@ risk_assessment_task:
   agent: risk_assessor
   output_file: "output/crypto/crypto_risk_assessment.md"
   async_execution: true
+  depends_on:
+    - technical_analysis_task
 
 investment_strategy_task:
   description: >
@@ -137,6 +141,8 @@ investment_strategy_task:
   agent: investment_strategist
   output_file: "output/crypto/crypto_investment_strategy.md"
   async_execution: true
+  depends_on:
+    - risk_assessment_task
 
 final_report_task:
   description: >
@@ -151,6 +157,9 @@ final_report_task:
     visualization.
   agent: research_director
   output_file: "output/crypto/crypto_final_report_en.html"
+  async_execution: false
+  depends_on:
+    - investment_strategy_task
 
 translation_task:
   description: >
@@ -166,3 +175,6 @@ translation_task:
     investment report standards.
   agent: translator
   output_file: "output/crypto/crypto_final_report_fr.html"
+  async_execution: false
+  depends_on:
+    - final_report_task

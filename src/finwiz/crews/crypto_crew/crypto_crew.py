@@ -128,7 +128,6 @@ class CryptoCrew:
     def market_analysis_task(self) -> Task:
         return Task(
             config=self.tasks_config["market_analysis_task"],
-            output_pydantic=CryptoThesis,
         )
 
     @async_task
@@ -141,7 +140,6 @@ class CryptoCrew:
     def risk_assessment_task(self) -> Task:
         return Task(
             config=self.tasks_config["risk_assessment_task"],
-            output_pydantic=RiskAssessmentStandardized,
         )
 
     @async_task
@@ -149,7 +147,6 @@ class CryptoCrew:
     def investment_strategy_task(self) -> Task:
         return Task(
             config=self.tasks_config["investment_strategy_task"],
-            output_pydantic=CryptoThesis,
         )
 
     @sync_task
