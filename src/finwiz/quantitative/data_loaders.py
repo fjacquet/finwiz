@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from pydantic import BaseModel, Field
 
 from finwiz.quantitative.config import DataProvider, QuantConfig, get_quant_config

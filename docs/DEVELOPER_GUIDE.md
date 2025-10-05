@@ -16,7 +16,7 @@ Complete guide for developers working on the FinWiz codebase.
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - `uv` package manager
 - API keys (see `.env.example`)
 
@@ -297,7 +297,7 @@ def analyze_stock(
     ...
 ```
 
-**Use modern Python 3.10+ syntax**:
+**Use modern Python 3.12+ syntax**:
 
 ```python
 # ✅ Correct

@@ -8,7 +8,7 @@ implementations for use with the backtesting engine.
 from datetime import datetime
 from typing import Any
 
-import backtrader as bt
+import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no official type stubs
 
 from finwiz.tools.logger import get_logger
 

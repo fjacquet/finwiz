@@ -9,7 +9,7 @@ with fresh financial data and prune outdated information.
 import datetime
 import logging
 
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from crewai_tools import RagTool
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG

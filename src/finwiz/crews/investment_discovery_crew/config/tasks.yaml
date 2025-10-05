@@ -17,18 +17,18 @@ etf_discovery_task:
     for detailed evaluation. Validate all tickers and perform comprehensive analysis
     using Enhanced ETF Analysis Tool.
     
+    OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
+    
   expected_output: >
-    A ranked list of top 10 A+ grade ETF candidates with detailed analysis including:
-    - Composite scores and letter grades (A+ target: ≥ 0.95)
-    - Cost analysis and tracking performance
-    - Liquidity metrics and trading considerations
-    - UCITS compliance status and regulatory domicile for European investors
-    - Cross-border investment suitability assessment
-    - Comparison with existing portfolio ETFs
-    - Specific replacement recommendations where applicable
+    A structured ranked list of top 10 A+ grade ETF candidates conforming to the 
+    APlusDiscoveryResult Pydantic schema. Include composite scores, letter grades 
+    (A+ target: ≥ 0.95), cost analysis, tracking performance, liquidity metrics, 
+    UCITS compliance status, and replacement recommendations.
     
   agent: etf_discovery_agent
-  output_file: "output/discovery/a_plus_etfs.md"
+  output_pydantic: APlusDiscoveryResult
+  output_file: "output/discovery/a_plus_etfs.json"
+  output_json: true
   async_execution: true
 
 stock_discovery_task:
@@ -64,19 +64,18 @@ stock_discovery_task:
     10-K/10-Q fundamental analysis, and Portfolio Analysis Tool for correlation
     and allocation optimization.
     
+    OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
+    
   expected_output: >
-    A curated list of top 15 A+ grade stock candidates with comprehensive analysis:
-    - Fundamental analysis summary with key financial metrics and ratios
-    - Competitive moat analysis with specific advantage identification
-    - Growth prospects analysis and sustainable competitive positioning
-    - Risk factor assessment including sector and company-specific risks
-    - Valuation assessment with entry points and price targets
-    - Portfolio correlation analysis with existing holdings
-    - Optimal allocation suggestions with implementation priorities
-    - Compatibility assessment with investor objectives and risk profile
+    A structured curated list of top 15 A+ grade stock candidates conforming to the 
+    APlusDiscoveryResult Pydantic schema. Include fundamental analysis, competitive moat 
+    analysis, growth prospects, risk factors, valuation assessment, portfolio correlation 
+    analysis, and optimal allocation suggestions.
     
   agent: stock_discovery_agent
-  output_file: "output/discovery/a_plus_stocks.md"
+  output_pydantic: APlusDiscoveryResult
+  output_file: "output/discovery/a_plus_stocks.json"
+  output_json: true
   async_execution: true
   depends_on:
     - etf_discovery_task
@@ -119,22 +118,18 @@ crypto_discovery_task:
     for comprehensive evaluation, DeFi Metrics Tool for protocol analysis, and
     A+ Scoring Tool for final grading assessment.
     
+    OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
+    
   expected_output: >
-    A selective list of top 5 A+ grade crypto candidates with comprehensive analysis:
-    - Composite A+ scores and detailed grading rationale
-    - Tokenomics analysis including supply mechanisms and utility functions
-    - Institutional adoption metrics and corporate treasury integration evidence
-    - Active development team assessment and transparency evaluation
-    - DeFi protocol metrics (TVL, yield opportunities, governance participation)
-    - Regulatory risk assessment by major jurisdictions (US, EU, Switzerland, UK, Singapore)
-    - Technology assessment and development activity indicators
-    - Acquisition strategy recommendations (DCA timing, entry points, risk management)
-    - Allocation recommendations within 5% total crypto limit
-    - Internal rebalancing strategies when limit constraints are reached
-    - Implementation timeline and specific execution considerations
+    A structured selective list of top 5 A+ grade crypto candidates conforming to the 
+    APlusDiscoveryResult Pydantic schema. Include composite A+ scores, tokenomics analysis, 
+    institutional adoption metrics, DeFi protocol metrics, regulatory risk assessment, 
+    acquisition strategy recommendations, and allocation recommendations within 5% limit.
     
   agent: crypto_discovery_agent
-  output_file: "output/discovery/a_plus_crypto.md"
+  output_pydantic: APlusDiscoveryResult
+  output_file: "output/discovery/a_plus_crypto.json"
+  output_json: true
   async_execution: true
   depends_on:
     - stock_discovery_task
@@ -155,16 +150,18 @@ validation_task:
     
     Reject any candidates that fail validation criteria.
     
+    OUTPUT: Return a structured JSON output conforming to the ValidationResult schema.
+    
   expected_output: >
-    Validation report for all A+ candidates including:
-    - Backtesting results with risk metrics (Sharpe, Sortino, Max Drawdown)
-    - Performance across different market regimes
-    - Stress test results and scenario analysis
-    - Final validation status (PASS/FAIL) for each candidate
-    - Detailed rationale for any rejections
+    A structured validation report for all A+ candidates conforming to the ValidationResult 
+    Pydantic schema. Include backtesting results with risk metrics (Sharpe, Sortino, Max 
+    Drawdown), performance across different market regimes, stress test results, final 
+    validation status (PASS/FAIL), and detailed rationale for any rejections.
     
   agent: validation_agent
-  output_file: "output/discovery/validation_report.md"
+  output_pydantic: ValidationResult
+  output_file: "output/discovery/validation_report.json"
+  output_json: true
   async_execution: true
   depends_on:
     - crypto_discovery_task
@@ -210,24 +207,20 @@ optimization_task:
     for allocation calculations, Risk Assessment Tool for impact analysis, and
     integration with existing grading system for grade improvement calculations.
     
+    OUTPUT: Return a structured JSON output conforming to the OptimizationResult schema.
+    
   expected_output: >
-    Comprehensive portfolio optimization report including:
-    - Executive summary of optimization opportunities and expected improvements
-    - Current portfolio analysis with grade distribution and risk metrics
-    - Before/after portfolio comparison showing grade improvements (target: +10%)
-    - Detailed impact analysis on risk-return profile and diversification
-    - Optimal allocation recommendations for each A+ discovery with specific weights
-    - Risk impact assessment including volatility, correlation, and concentration changes
-    - Implementation plan with prioritized recommendations and timeline
-    - Transaction cost analysis and tax optimization considerations
-    - Regulatory compliance verification (UCITS, concentration limits)
-    - Monitoring recommendations and rebalancing triggers
-    - Integration instructions for updating portfolio review system
-    - Expected performance improvements vs relevant benchmarks
-    - Sensitivity analysis and confidence intervals for projections
+    A structured comprehensive portfolio optimization report conforming to the 
+    OptimizationResult Pydantic schema. Include executive summary, current portfolio 
+    analysis, before/after comparison (target: +10% grade improvement), impact analysis, 
+    optimal allocation recommendations, risk impact assessment, implementation plan, 
+    transaction cost analysis, regulatory compliance verification, and monitoring 
+    recommendations.
     
   agent: portfolio_optimization_agent
-  output_file: "output/discovery/optimization_report.md"
+  output_pydantic: OptimizationResult
+  output_file: "output/discovery/optimization_report.json"
+  output_json: true
   async_execution: true
   depends_on:
     - validation_task

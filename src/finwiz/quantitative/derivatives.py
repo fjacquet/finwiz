@@ -141,7 +141,7 @@ class DerivativesPricer:
     def _check_quantlib_availability(self) -> bool:
         """Check if QuantLib is available for advanced pricing."""
         try:
-            import QuantLib  # noqa: F401
+            import QuantLib  # noqa: F401  # type: ignore[import-untyped]  # QuantLib has no official type stubs
 
             return True
         except ImportError:
@@ -226,7 +226,7 @@ class DerivativesPricer:
             raise RuntimeError("QuantLib not available for advanced pricing models")
 
         try:
-            import QuantLib as ql
+            import QuantLib as ql  # type: ignore[import-untyped]  # QuantLib has no official type stubs
 
             # Set up QuantLib calculation date
             ql.Settings.instance().evaluationDate = ql.Date.todaysDate()
@@ -428,7 +428,7 @@ class DerivativesPricer:
             return self._price_bond_simple(params)
 
         try:
-            import QuantLib as ql
+            import QuantLib as ql  # type: ignore[import-untyped]  # QuantLib has no official type stubs
 
             # Set calculation date
             ql.Settings.instance().evaluationDate = ql.Date.todaysDate()

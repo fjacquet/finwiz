@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.portfolio_rebalancing import PriceData

@@ -7,7 +7,7 @@ health checking, pipeline management, and crew coordination.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -126,7 +126,7 @@ class ValidationErrorAnalysis(BaseModel):
     severity: ValidationSeverity = Field(description="Severity level of the error")
     field_path: str = Field(description="Path to the field with error")
     error_message: str = Field(description="Detailed error message")
-    suggested_fix: Optional[str] = Field(None, description="Suggested fix for the error")
+    suggested_fix: str | None = Field(None, description="Suggested fix for the error")
     recovery_strategy: RecoveryStrategy = Field(description="Recommended recovery strategy")
     can_auto_fix: bool = Field(default=False, description="Whether error can be automatically fixed")
 
@@ -148,7 +148,7 @@ class ValidationResult(BaseModel):
     is_valid: bool = Field(description="Whether validation passed")
     errors: list[str] = Field(default_factory=list, description="Validation errors")
     warnings: list[str] = Field(default_factory=list, description="Validation warnings")
-    sanitized_data: Optional[dict[str, Any]] = Field(None, description="Sanitized data if validation passed")
+    sanitized_data: dict[str, Any] | None = Field(None, description="Sanitized data if validation passed")
     validation_time: float = Field(description="Time taken for validation in seconds")
 
 
@@ -166,7 +166,7 @@ class ValidationPipelineResult(BaseModel):
 
     pipeline_success: bool = Field(description="Whether pipeline completed successfully")
     individual_results: dict[str, ValidationResult] = Field(description="Results for each validation step")
-    cross_crew_result: Optional[CrossCrewValidationResult] = Field(None, description="Cross-crew validation result")
+    cross_crew_result: CrossCrewValidationResult | None = Field(None, description="Cross-crew validation result")
     overall_quality_score: float = Field(ge=0, le=1, description="Overall data quality score")
     execution_time: float = Field(description="Total pipeline execution time")
 
@@ -237,8 +237,8 @@ class StorageResult(BaseModel):
     """Result of storage operation."""
 
     success: bool = Field(description="Whether storage was successful")
-    storage_key: Optional[str] = Field(None, description="Key where data was stored")
-    error_message: Optional[str] = Field(None, description="Error message if storage failed")
+    storage_key: str | None = Field(None, description="Key where data was stored")
+    error_message: str | None = Field(None, description="Error message if storage failed")
     storage_time: float = Field(description="Time taken for storage operation")
 
 
@@ -246,7 +246,7 @@ class RetrievalResult(BaseModel):
     """Result of retrieval operation."""
 
     success: bool = Field(description="Whether retrieval was successful")
-    data: Optional[dict[str, Any]] = Field(None, description="Retrieved data")
+    data: dict[str, Any] | None = Field(None, description="Retrieved data")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Data metadata")
     retrieval_time: float = Field(description="Time taken for retrieval operation")
 
@@ -255,7 +255,7 @@ class StorageQuery(BaseModel):
     """Query parameters for storage retrieval."""
 
     crew_name: str = Field(description="Name of the crew")
-    data_type: Optional[str] = Field(None, description="Type of data to retrieve")
+    data_type: str | None = Field(None, description="Type of data to retrieve")
     max_age_hours: int = Field(default=24, description="Maximum age of data in hours")
     include_metadata: bool = Field(default=True, description="Whether to include metadata")
 
@@ -355,15 +355,15 @@ class SECFilingInfo(BaseModel):
     cik: str = Field(description="Central Index Key")
     accession_number: str = Field(description="SEC accession number")
     filing_type: str = Field(description="Type of SEC filing")
-    filing_date: Optional[datetime] = Field(None, description="Filing date if available")
-    company_name: Optional[str] = Field(None, description="Company name if available")
+    filing_date: datetime | None = Field(None, description="Filing date if available")
+    company_name: str | None = Field(None, description="Company name if available")
 
 
 class SECCitationValidationResult(BaseModel):
     """Result of SEC citation validation."""
 
     is_valid: bool = Field(description="Whether the citation is valid")
-    filing_info: Optional[SECFilingInfo] = Field(None, description="Extracted filing information")
+    filing_info: SECFilingInfo | None = Field(None, description="Extracted filing information")
     validation_errors: list[str] = Field(default_factory=list, description="Validation errors")
     confidence_score: float = Field(ge=0, le=1, description="Confidence in validation result")
 
@@ -411,12 +411,12 @@ class MonitoringRule(BaseModel):
     metric_name: str = Field(description="Name of the metric to monitor")
 
     # Threshold rules
-    threshold_value: Optional[float] = Field(None, description="Threshold value for alerts")
+    threshold_value: float | None = Field(None, description="Threshold value for alerts")
     comparison_operator: Literal["gt", "lt", "gte", "lte", "eq", "ne"] | None = Field(None, description="Comparison operator")
 
     # Trend rules
-    trend_window: Optional[int] = Field(None, description="Window size for trend analysis")
-    trend_threshold: Optional[float] = Field(None, description="Threshold for trend detection")
+    trend_window: int | None = Field(None, description="Window size for trend analysis")
+    trend_threshold: float | None = Field(None, description="Threshold for trend detection")
 
     # General settings
     enabled: bool = Field(default=True, description="Whether rule is enabled")
@@ -439,8 +439,8 @@ class PortfolioAlert(BaseModel):
 
     # Timing
     triggered_at: datetime = Field(description="When alert was triggered")
-    acknowledged_at: Optional[datetime] = Field(None, description="When alert was acknowledged")
-    resolved_at: Optional[datetime] = Field(None, description="When alert was resolved")
+    acknowledged_at: datetime | None = Field(None, description="When alert was acknowledged")
+    resolved_at: datetime | None = Field(None, description="When alert was resolved")
 
     # Actions
     recommended_actions: list[str] = Field(default_factory=list, description="Recommended actions")

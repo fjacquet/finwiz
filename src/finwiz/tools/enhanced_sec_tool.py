@@ -145,7 +145,7 @@ class EnhancedSECAnalysisTool(BaseTool):
         global QueryApi
         if QueryApi is None:
             try:
-                from sec_api import QueryApi as _QueryApi
+                from sec_api import QueryApi as _QueryApi  # type: ignore[import-not-found]  # sec_api is optional dependency
             except Exception as e:
                 raise e
             QueryApi = _QueryApi

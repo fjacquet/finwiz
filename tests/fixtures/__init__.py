@@ -1,1 +1,1 @@
-"""Test fixtures for FinWiz test suite."""
+"""Test fixtures for FinWiz tests."""

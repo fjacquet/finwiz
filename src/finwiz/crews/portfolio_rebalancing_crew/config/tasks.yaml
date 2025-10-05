@@ -19,11 +19,15 @@ analyze_holding_task:
     5. Handle failures gracefully with baseline analysis fallback.
 
     INPUT: Ticker symbol, asset class, currency, holding name
-    OUTPUT: HoldingAnalysis object with crew data mapped to schema
+    OUTPUT: Return a structured JSON output conforming to the HoldingDecision schema.
   expected_output: >
-    Complete HoldingAnalysis object with fundamental/technical analysis, SEC citations (if applicable), 
-    data freshness indicator, and crew analysis source. Include confidence level and composite score.
+    A structured complete HoldingDecision object conforming to the HoldingDecision Pydantic 
+    schema. Include fundamental/technical analysis, SEC citations (if applicable), data 
+    freshness indicator, crew analysis source, confidence level, and composite score.
   agent: holding_analyzer
+  output_pydantic: HoldingDecision
+  output_file: "output/portfolio/holding_analysis.json"
+  output_json: true
   async_execution: true
 
 calculate_price_targets_task:
@@ -49,12 +53,16 @@ calculate_price_targets_task:
     6. Ensure all targets are in holding's native currency.
 
     INPUT: Ticker, asset class, current price, price history, fundamental data, recommendation
-    OUTPUT: PriceTargets object with buy/sell/stop-loss levels and rationale
+    OUTPUT: Return a structured JSON output conforming to the PriceTargets schema.
   expected_output: >
-    Complete PriceTargets object with current price, fair value estimate, buy targets (primary/secondary), 
-    sell targets (primary/secondary), stop-loss level, support/resistance levels, calculation method, 
+    A structured complete PriceTargets object conforming to the PriceTargets Pydantic schema. 
+    Include current price, fair value estimate, buy targets (primary/secondary), sell targets 
+    (primary/secondary), stop-loss level, support/resistance levels, calculation method, 
     confidence level, and French rationale for each target.
   agent: price_target_specialist
+  output_pydantic: PriceTargets
+  output_file: "output/portfolio/price_targets.json"
+  output_json: true
   async_execution: true
   depends_on:
     - analyze_holding_task
@@ -85,13 +93,16 @@ find_alternatives_task:
     6. Limit to top 2-3 alternatives per holding.
 
     INPUT: Holding profile (ticker, grade, asset class, sector, metrics)
-    OUTPUT: List of Alternative objects with transition strategies
+    OUTPUT: Return a structured JSON output conforming to the Alternative schema.
   expected_output: >
-    List of 0-3 Alternative objects for holdings graded below B. Each alternative includes ticker, 
-    name, grade, composite score, key metrics, thesis bullets, transition strategy (immediate/gradual/
-    tax-optimized), tax implications, and expected improvements (expense ratio savings, fundamental 
-    improvements, or liquidity improvements). Empty list for holdings graded B or above.
+    A structured list of 0-3 Alternative objects conforming to the Alternative Pydantic schema 
+    for holdings graded below B. Each alternative includes ticker, name, grade, composite score, 
+    key metrics, thesis bullets, transition strategy (immediate/gradual/tax-optimized), tax 
+    implications, and expected improvements. Empty list for holdings graded B or above.
   agent: alternative_researcher
+  output_pydantic: Alternative
+  output_file: "output/portfolio/alternatives.json"
+  output_json: true
   async_execution: true
   depends_on:
     - analyze_holding_task
@@ -123,14 +134,16 @@ portfolio_analysis_task:
     Today is {full_date}. Ensure your analysis reflects current market conditions and prices.
     Use the portfolio configuration provided in the input parameters.
 
-    OUTPUT: Return detailed portfolio composition analysis with current vs target weightings.
+    OUTPUT: Return a structured JSON output conforming to the PortfolioAnalysis schema.
   expected_output: >
-    A comprehensive portfolio analysis including current weightings, target deviations, 
-    risk metrics, and positions requiring rebalancing. Include quantitative portfolio 
-    metrics and risk assessment. Each holding should have deep analysis from appropriate 
-    crew (stock/ETF/crypto) with data freshness indicators.
+    A structured comprehensive portfolio analysis conforming to the PortfolioAnalysis Pydantic 
+    schema. Include current weightings, target deviations, risk metrics, positions requiring 
+    rebalancing, quantitative portfolio metrics, and risk assessment. Each holding should have 
+    deep analysis from appropriate crew with data freshness indicators.
   agent: portfolio_analyst
-  output_file: "output/portfolio/portfolio_composition_analysis.md"
+  output_pydantic: PortfolioAnalysis
+  output_file: "output/portfolio/portfolio_composition_analysis.json"
+  output_json: true
   async_execution: true
   depends_on:
     - analyze_holding_task
@@ -170,13 +183,16 @@ rebalancing_optimization_task:
     Consider transaction costs, market impact, and practical trading constraints in your optimization.
     Ensure recommendations are actionable and cost-effective.
 
-    OUTPUT: Return specific trade recommendations with quantities, costs, price targets, alternatives, and optimization rationale.
+    OUTPUT: Return a structured JSON output conforming to the RebalancingRecommendation schema.
   expected_output: >
-    Detailed trade recommendations including buy/sell quantities, estimated costs, 
-    priority rankings, and optimization analysis. Include price targets for each holding, 
-    alternatives for underperforming positions, transition strategies, and cost-benefit analysis.
+    A structured detailed trade recommendations conforming to the RebalancingRecommendation 
+    Pydantic schema. Include buy/sell quantities, estimated costs, priority rankings, 
+    optimization analysis, price targets for each holding, alternatives for underperforming 
+    positions, transition strategies, and cost-benefit analysis.
   agent: rebalancing_strategist
-  output_file: "output/portfolio/rebalancing_trade_recommendations.md"
+  output_pydantic: RebalancingRecommendation
+  output_file: "output/portfolio/rebalancing_trade_recommendations.json"
+  output_json: true
   async_execution: true
   depends_on:
     - portfolio_analysis_task

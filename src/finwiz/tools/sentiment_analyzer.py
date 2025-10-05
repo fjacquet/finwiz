@@ -15,7 +15,7 @@ import re
 from typing import Any
 
 import aiohttp
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.schemas.stock import MarketSentiment, SentimentItem

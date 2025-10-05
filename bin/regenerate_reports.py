@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import the HTMLOutputTool
-from src.finwiz.tools.html_output_tool import HTMLOutputTool
+from src.finwiz.tools.html_output_tool import HTMLOutputTool  # type: ignore[import-not-found]  # Path setup for bin scripts
 
 
 def regenerate_html_reports() -> None:

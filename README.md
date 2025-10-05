@@ -130,7 +130,7 @@ Follow these instructions to set up and run FinWiz on your local machine.
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - A Python package manager like `pip` with `uv`.
 - API keys for any services you wish to use (e.g., Serper, Firecrawl).
 
@@ -461,7 +461,7 @@ FinWiz maintains high code quality standards through comprehensive testing and s
 # Linting and formatting
 ruff check . && ruff format .
 
-# Type checking (Python 3.10+ type hints)
+# Type checking (Python 3.12+ type hints)
 uv run mypy src/finwiz/
 
 # Unit tests (< 5 seconds execution)
@@ -482,11 +482,11 @@ uv run pytest -v
 
 **Type Checking Setup:**
 
-FinWiz uses mypy for static type checking with Python 3.10+ type hints. Configuration is in `mypy.ini`:
+FinWiz uses mypy for static type checking with Python 3.12+ type hints. Configuration is in `mypy.ini`:
 
 ```ini
 [mypy]
-python_version = 3.10
+python_version = 3.12
 warn_return_any = True
 disallow_untyped_defs = True
 check_untyped_defs = True
@@ -497,7 +497,7 @@ ignore_missing_imports = True
 ```
 
 **Type Hint Standards:**
-- Use modern Python 3.10+ syntax: `str | None` instead of `Optional[str]`
+- Use modern Python 3.12+ syntax: `str | None` instead of `Optional[str]`
 - All public functions must have type hints
 - Return types must be explicitly specified
 - Use `from typing import Any` for complex types
@@ -740,7 +740,7 @@ ignore_missing_imports = True
 
 **Type Hint Standards:**
 ```python
-# Use modern Python 3.10+ syntax
+# Use modern Python 3.12+ syntax
 from crewai.tools import BaseTool
 
 def get_rag_tools(
@@ -782,10 +782,10 @@ uv run mypy src/finwiz/
 - Improved code maintainability
 
 **Type Hint Best Practices:**
-- Use `str | None` instead of `Optional[str]` (Python 3.10+)
+- Use `str | None` instead of `Optional[str]` (Python 3.12+)
 - Always specify return types for public functions
-- Use `list[Type]` instead of `List[Type]` (Python 3.10+)
-- Use `dict[str, Any]` instead of `Dict[str, Any]` (Python 3.10+)
+- Use `list[Type]` instead of `List[Type]` (Python 3.12+)
+- Use `dict[str, Any]` instead of `Dict[str, Any]` (Python 3.12+)
 - Add type hints to all parameters
 - Use `from typing import Any` for complex/unknown types
 

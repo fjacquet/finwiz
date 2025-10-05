@@ -8,7 +8,7 @@ and risk analysis functions for backtesting results.
 from datetime import datetime
 from typing import Any
 
-import backtrader as bt
+import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no official type stubs
 import numpy as np
 
 from finwiz.quantitative.data import HistoricalDataManager

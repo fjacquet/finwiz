@@ -14,7 +14,7 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import backtrader as bt
+import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no official type stubs
 import pandas as pd
 import pytest
 from faker import Faker

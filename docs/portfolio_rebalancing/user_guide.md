@@ -19,7 +19,7 @@ The FinWiz Portfolio Rebalancing system provides intelligent buy/sell quantity r
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - FinWiz installed and configured
 - Valid API keys for price data providers
 

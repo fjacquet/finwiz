@@ -5,7 +5,7 @@ This module provides REST API endpoints for portfolio rebalancing functionality,
 including analysis, recommendations, and monitoring capabilities.
 """
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status  # type: ignore[import-not-found]  # fastapi may not be installed
 from pydantic import BaseModel, Field
 
 from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator

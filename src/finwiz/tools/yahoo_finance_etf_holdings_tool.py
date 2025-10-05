@@ -1,6 +1,6 @@
 """Tool for fetching Yahoo Finance ETF Holdings."""
 
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 

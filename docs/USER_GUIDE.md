@@ -15,7 +15,7 @@ Complete guide for deploying, operating, and migrating FinWiz.
 
 **System Requirements**:
 
-- Python 3.10+
+- Python 3.12+
 - `uv` package manager (recommended) or `pip`
 - Linux, macOS, or Windows with WSL
 - Minimum 2GB RAM (4GB+ recommended)

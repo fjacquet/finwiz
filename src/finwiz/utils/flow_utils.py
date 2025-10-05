@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Any
 
-from weasyprint import HTML
+from weasyprint import HTML  # type: ignore[import-untyped]  # weasyprint has no official type stubs
 
 # Set up logging
 logger = logging.getLogger(__name__)

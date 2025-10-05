@@ -7,7 +7,7 @@ Yahoo Finance, Perplexity Sonar, and other news providers.
 
 import datetime
 
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.tools.logger import get_logger

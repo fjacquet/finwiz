@@ -16,13 +16,14 @@ market_technical_analysis_task:
     3. Examine historical patterns indicating growth potential, considering 
     the present market context as of {full_date}.
 
-    OUTPUT: Return a concise analysis of market trends, ensuring all information 
-    is current as of {full_date}.
+    OUTPUT: Return a structured JSON output conforming to the MarketTrend schema.
   expected_output: >
-    An analysis of current stock market trends and emerging sectors with
-    growth potential.
+    A structured analysis of current stock market trends and emerging sectors with
+    growth potential, conforming to the MarketTrend Pydantic schema.
   agent: market_technical_analyst
-  output_file: "output/stock/stock_market_trends.md"
+  output_pydantic: MarketTrend
+  output_file: "output/stock/stock_market_trends.json"
+  output_json: true
   async_execution: true
 
 # Stock Screening Tasks
@@ -77,23 +78,21 @@ stock_screening_task:
     conditions. IMPORTANT: Use only real, existing stocks with accurate ticker
     symbols.
 
-    OUTPUT: Return a list of the top 10 emerging stocks with AI-driven analysis and explicit reasoning.
+    OUTPUT: Return a structured JSON output conforming to the StockScreeningResult schema.
   expected_output: >
-    A list of 10 emerging stocks with potential, including ticker
-    symbols and analysis. Include a concise "Market Sentiment" summary per ticker
-    with aggregate metrics and cited headlines.
+    A structured list of 10 emerging stocks with potential, conforming to the 
+    StockScreeningResult Pydantic schema. Include ticker symbols, analysis, and 
+    market sentiment summaries with aggregate metrics and cited headlines.
     
     CRITICAL SCHEMA REQUIREMENTS:
     - Read docs/schemas/MarketSentiment.schema.json and docs/schemas/examples/market_sentiment.example.json
     - The counts field MUST use exactly these keys: "pos", "neu", "neg" (NOT "Bullish", "Bearish", etc.)
     - All dates must be in ISO format with timezone (e.g., "2025-09-27T00:00:00Z")
     - Follow the exact schema structure shown in the example files
-    
-    Also include machine-readable JSON appendices at the end containing:
-    - stock_sentiments[] matching the MarketSentiment schema (one per ticker)
-    - validated_tickers[] where each item is {symbol, asset_class, valid, reason, meta}
   agent: market_technical_analyst
-  output_file: "output/stock/emerging_stocks_analysis.md"
+  output_pydantic: StockScreeningResult
+  output_file: "output/stock/emerging_stocks_analysis.json"
+  output_json: true
   async_execution: true
   depends_on:
     - market_technical_analysis_task
@@ -151,17 +150,16 @@ technical_detail_task:
     - Generate actionable investment insights based on AI decision-making
 
     Ensure your AI analysis reflects the company's status as of {full_date}.
+    
+    OUTPUT: Return a structured JSON output conforming to the StockTechnicalAnalysis schema.
   expected_output: >
-    Technical assessment in markdown of each stock including financial metrics
-    and analysis. Include a "10-K Insights" subsection with cited excerpts and
-    the SEC filing URL and date. Include a "Quantitative Analysis" subsection with
-    backtesting results, technical signals, and investment recommendations.
-    Also include a machine-readable JSON appendix at the end containing:
-    - ten_k_insights[] matching the TenKInsight schema with enhanced SEC citations
-    - risk_assessments[] matching the RiskAssessmentStandardized schema for each ticker
-    - quantitative_analysis[] with comprehensive quantitative analysis results for each ticker
+    A structured technical assessment of each stock conforming to the StockTechnicalAnalysis 
+    Pydantic schema. Include financial metrics, 10-K insights with SEC citations, quantitative 
+    analysis with backtesting results, and investment recommendations.
   agent: market_technical_analyst
-  output_file: "output/stock/stock_technical_details.md"
+  output_pydantic: StockTechnicalAnalysis
+  output_file: "output/stock/stock_technical_details.json"
+  output_json: true
   async_execution: true
   depends_on:
     - stock_screening_task

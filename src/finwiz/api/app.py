@@ -9,9 +9,9 @@ import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request  # type: ignore[import-not-found]  # fastapi may not be installed
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import-not-found]  # fastapi may not be installed
+from fastapi.responses import JSONResponse  # type: ignore[import-not-found]  # fastapi may not be installed
 
 from finwiz.api.rebalancing import router as rebalancing_router
 from finwiz.tools.logger import get_logger

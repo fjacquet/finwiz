@@ -69,7 +69,9 @@ comprehensive_financial_integration_task:
     of missing or stale data. The document must include verifiable data and references with 
     proper data lineage. DO NOT include any ticker symbols not in validated_tickers_list[].
   agent: financial_integration_analyst
-  output_file: "output/report/consolidated_financial_analysis.md"
+  output_pydantic: ReporterInput
+  output_file: "output/report/consolidated_financial_analysis.json"
+  output_json: true
   async_execution: true
 
 # Task 2: Optimal Portfolio Allocation
@@ -109,7 +111,9 @@ optimal_portfolio_allocation_task:
     percentage allocations, A+ opportunity integration, replacement recommendations,
     and clear justification for choices based on integrated data sources.
   agent: portfolio_allocator
-  output_file: "output/report/optimal_portfolio_allocation.md"
+  output_pydantic: PortfolioConfiguration
+  output_file: "output/report/optimal_portfolio_allocation.json"
+  output_json: true
   async_execution: true
   depends_on:
     - comprehensive_financial_integration_task
@@ -151,7 +155,9 @@ risk_assessment_mitigation_task:
     ticker validation risks, data freshness risks, and practical mitigation strategies
     with reference to integrated data sources and sentiment analysis.
   agent: risk_manager
-  output_file: "output/report/risk_assessment_and_mitigation.md"
+  output_pydantic: RiskAssessmentStandardized
+  output_file: "output/report/risk_assessment_and_mitigation.json"
+  output_json: true
   async_execution: true
   depends_on:
     - optimal_portfolio_allocation_task

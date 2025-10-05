@@ -11,6 +11,11 @@ Modules:
 - integration: system integration and validation models
 - tools: tool input validation schemas
 - api: FastAPI request/response models
+- investment_discovery: A+ investment discovery schemas
+- portfolio_rebalancing: portfolio rebalancing and optimization schemas
+- perplexity: Perplexity API integration schemas
+- session: session management and financial planning schemas
+- validation: ticker validation schemas
 """
 
 # Core domain schemas
@@ -21,9 +26,51 @@ from . import (
     quantitative,  # noqa: F401
     tools,  # noqa: F401
 )
+
+# Common schemas
 from .common import RiskAssessmentStandardized, RiskLevel  # noqa: F401
-from .crypto import CryptoRisk, CryptoThesis  # noqa: F401
-from .etf import ETFFactsheet, ETFTopHolding  # noqa: F401
+
+# Crypto crew schemas
+from .crypto import (  # noqa: F401
+    CryptoCandidate,
+    CryptoInvestmentStrategy,
+    CryptoMarketAnalysis,
+    CryptoQuantitativeMetrics,
+    CryptoRisk,
+    CryptoRiskProfile,
+    CryptoTechnicalAnalysis,
+    CryptoTechnicalIndicators,
+    CryptoThesis,
+)
+
+# ETF crew schemas
+from .etf import (  # noqa: F401
+    ETFCandidate,
+    ETFFactsheet,
+    ETFMarketTrend,
+    ETFQuantitativeMetrics,
+    ETFRiskProfile,
+    ETFScreeningResult,
+    ETFTechnicalAnalysis,
+    ETFTechnicalIndicators,
+    ETFTopHolding,
+)
+
+# Feedback schemas
+from .feedback import (  # noqa: F401
+    CriteriaAdjustment,
+    FeedbackSentiment,
+    FeedbackSummary,
+    FeedbackType,
+    LearningConfiguration,
+    LearningMetrics,
+    PerformanceFeedback,
+    PerformanceOutcome,
+    RecommendationOutcome,
+    UserFeedback,
+)
+
+# Investment discovery crew schemas
 from .investment_discovery import (  # noqa: F401
     APlusAnalysis,
     APlusDiscoveryResult,
@@ -32,6 +79,8 @@ from .investment_discovery import (  # noqa: F401
     PortfolioImprovement,
     ValidationResult,
 )
+
+# Perplexity integration schemas
 from .perplexity import (  # noqa: F401
     PerplexityConfig,
     PerplexitySearchRequest,
@@ -39,6 +88,8 @@ from .perplexity import (  # noqa: F401
     SonarArticle,
     SonarSearchResult,
 )
+
+# Portfolio rebalancing crew schemas
 from .portfolio_rebalancing import (  # noqa: F401
     AlternativeScenario,
     CostAnalysis,
@@ -56,12 +107,153 @@ from .portfolio_rebalancing import (  # noqa: F401
     TradeRecommendation,
     UrgencyLevel,
 )
+
+# Portfolio review schemas
+from .portfolio_review import (  # noqa: F401
+    Alternative,
+    APlusImprovementSuggestion,
+    APlusOpportunitySection,
+    AssetClass,
+    Decision,
+    Grade,
+    HoldingDecision,
+    ImprovementType,
+    PortfolioReview,
+    PositionSizeRecommendation,
+    PriceTargets,
+    Priority,
+)
+
+# Quantitative analysis schemas
 from .quantitative import (  # noqa: F401
     BacktestResult,
     PerformanceMetrics,
     TechnicalAnalysisResult,
 )
+
+# Report crew schemas
 from .report import ReporterInput  # noqa: F401
+
+# Session management schemas
 from .session import AnalysisRecord, ClientProfile, FinancialPlan, SessionMetadata  # noqa: F401
-from .stock import MarketSentiment, SentimentItem, TenKInsight  # noqa: F401
+
+# Stock crew schemas
+from .stock import (  # noqa: F401
+    MarketSentiment,
+    MarketTrend,
+    QuantitativeMetrics,
+    SentimentItem,
+    StockCandidate,
+    StockRiskProfile,
+    StockScreeningResult,
+    StockTechnicalAnalysis,
+    TechnicalIndicators,
+    TenKInsight,
+)
+
+# Validation schemas
 from .validation import ValidatedTicker  # noqa: F401
+
+# Explicit exports for better IDE support and documentation
+__all__ = [
+    # Common schemas
+    "RiskAssessmentStandardized",
+    "RiskLevel",
+    # Crypto crew schemas
+    "CryptoCandidate",
+    "CryptoInvestmentStrategy",
+    "CryptoMarketAnalysis",
+    "CryptoQuantitativeMetrics",
+    "CryptoRisk",
+    "CryptoRiskProfile",
+    "CryptoTechnicalAnalysis",
+    "CryptoTechnicalIndicators",
+    "CryptoThesis",
+    # ETF crew schemas
+    "ETFCandidate",
+    "ETFFactsheet",
+    "ETFMarketTrend",
+    "ETFQuantitativeMetrics",
+    "ETFRiskProfile",
+    "ETFScreeningResult",
+    "ETFTechnicalAnalysis",
+    "ETFTechnicalIndicators",
+    "ETFTopHolding",
+    # Investment discovery crew schemas
+    "APlusAnalysis",
+    "APlusDiscoveryResult",
+    "InvestmentCandidate",
+    "OptimizationResult",
+    "PortfolioImprovement",
+    "ValidationResult",
+    # Perplexity integration schemas
+    "PerplexityConfig",
+    "PerplexitySearchRequest",
+    "PerplexitySearchResponse",
+    "SonarArticle",
+    "SonarSearchResult",
+    # Portfolio rebalancing crew schemas
+    "AlternativeScenario",
+    "CostAnalysis",
+    "ExecutionSummary",
+    "Holding",
+    "PortfolioAnalysis",
+    "PortfolioConfiguration",
+    "PortfolioMetrics",
+    "PriceData",
+    "RebalancingMethod",
+    "RebalancingNeed",
+    "RebalancingRecommendation",
+    "RebalancingResult",
+    "TradeAction",
+    "TradeRecommendation",
+    "UrgencyLevel",
+    # Portfolio review schemas
+    "Alternative",
+    "APlusImprovementSuggestion",
+    "APlusOpportunitySection",
+    "AssetClass",
+    "Decision",
+    "Grade",
+    "HoldingDecision",
+    "ImprovementType",
+    "PortfolioReview",
+    "PositionSizeRecommendation",
+    "PriceTargets",
+    "Priority",
+    # Feedback schemas
+    "CriteriaAdjustment",
+    "FeedbackSentiment",
+    "FeedbackSummary",
+    "FeedbackType",
+    "LearningConfiguration",
+    "LearningMetrics",
+    "PerformanceFeedback",
+    "PerformanceOutcome",
+    "RecommendationOutcome",
+    "UserFeedback",
+    # Quantitative analysis schemas
+    "BacktestResult",
+    "PerformanceMetrics",
+    "TechnicalAnalysisResult",
+    # Report crew schemas
+    "ReporterInput",
+    # Session management schemas
+    "AnalysisRecord",
+    "ClientProfile",
+    "FinancialPlan",
+    "SessionMetadata",
+    # Stock crew schemas
+    "MarketSentiment",
+    "MarketTrend",
+    "QuantitativeMetrics",
+    "SentimentItem",
+    "StockCandidate",
+    "StockRiskProfile",
+    "StockScreeningResult",
+    "StockTechnicalAnalysis",
+    "TechnicalIndicators",
+    "TenKInsight",
+    # Validation schemas
+    "ValidatedTicker",
+]

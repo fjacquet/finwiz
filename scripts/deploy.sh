@@ -82,8 +82,8 @@ pre_deployment_checks() {
     
     # Check Python version
     python_version=$(python3 --version | cut -d' ' -f2)
-    if [[ ! "$python_version" =~ ^3\.(10|11|12) ]]; then
-        log_error "Python 3.10+ required. Found: $python_version"
+    if [[ ! "$python_version" =~ ^3\.12 ]]; then
+        log_error "Python 3.12+ required. Found: $python_version"
         exit 1
     fi
     

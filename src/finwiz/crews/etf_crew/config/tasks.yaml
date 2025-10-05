@@ -12,13 +12,14 @@ etf_market_trends_task:
     
     Today is {full_date}. Ensure your analysis reflects current market conditions.
     
-    OUTPUT: Return a concise analysis of ETF market trends.
+    OUTPUT: Return a structured JSON output conforming to the ETFMarketTrend schema.
   expected_output: >
-    An analysis of current ETF market trends with emoji highlights: 
-    📈 Growth trends
-    🌐 Global factors
+    A structured analysis of current ETF market trends conforming to the ETFMarketTrend 
+    Pydantic schema. Include growth trends, global factors, and market insights.
   agent: market_etf_analyst
-  output_file: "output/etf/etf_market_trends.md"
+  output_pydantic: ETFMarketTrend
+  output_file: "output/etf/etf_market_trends.json"
+  output_json: true
   async_execution: true
 
 # ETF Screening Tasks
@@ -67,17 +68,14 @@ etf_screening_task:
     IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your AI analysis 
     is current as of {full_date}.
     
-    OUTPUT: Return a list of the top 10 high-potential ETFs with AI-driven analysis and reasoning.
+    OUTPUT: Return a structured JSON output conforming to the ETFScreeningResult schema.
   expected_output: >
-    A list of 10 stable, diversified ETFs in markdown format with analysis and emoji highlights:
-    🛡️ Low-volatility ETFs
-    🌍 Diversified exposure
-    💰 Low expense ratios
-    
-    Also include a machine-readable JSON appendix at the end containing:
-    - validated_etfs[] where each item is {symbol, asset_class, valid, reason, meta}
+    A structured list of 10 stable, diversified ETFs conforming to the ETFScreeningResult 
+    Pydantic schema. Include analysis, validation status, and AI-driven insights.
   agent: market_etf_analyst
-  output_file: "output/etf/high_potential_etfs.md"
+  output_pydantic: ETFScreeningResult
+  output_file: "output/etf/high_potential_etfs.json"
+  output_json: true
   async_execution: true
 
 # ETF Technical Detail Tasks
@@ -105,30 +103,21 @@ etf_technical_detail_task:
        - Use asset_class="etf" and analysis_type="comprehensive" for complete ETF analysis
     9. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
     
-    OUTPUT: Return detailed technical analysis for each ETF, ensuring all data is current as of {full_date}.
+    OUTPUT: Return a structured JSON output conforming to the ETFTechnicalAnalysis schema.
   expected_output: >
-    Technical assessment of each ETF including:
-    ⚙️ ETF structure
-    📊 Tracking accuracy
-    💧 Liquidity profile
-    👨‍💼 Fund management
-    📈 Quantitative Analysis: backtesting results, technical signals, and performance metrics
-    📄 Factsheet Highlights (optional): name, ticker, category, expense_ratio, as_of, source_url
-    📈 Top Holdings (optional): array of {ticker, weight_pct, as_of, source_url}
+    A structured technical assessment of each ETF conforming to the ETFTechnicalAnalysis 
+    Pydantic schema. Include ETF structure, tracking accuracy, liquidity profile, fund 
+    management, quantitative analysis, factsheet highlights, and top holdings.
 
     CRITICAL SCHEMA REQUIREMENTS:
     - Read docs/schemas/ETFFactsheet.schema.json and docs/schemas/ETFTopHolding.schema.json
     - Read docs/schemas/examples/etf_factsheet.example.json for correct format
     - Follow the exact schema structure shown in the example files
     - Ensure all required fields are included with correct data types
-    
-    Also include a machine-readable JSON appendix at the end containing:
-    - etf_factsheets[] matching the ETFFactsheet schema with enhanced data extraction
-    - top_holdings[] matching the ETFTopHolding schema with proper validation
-    - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
-    - quantitative_analysis[] with comprehensive quantitative analysis results for each ETF
   agent: market_etf_analyst
-  output_file: "output/etf/etf_technical_details.md"
+  output_pydantic: ETFTechnicalAnalysis
+  output_file: "output/etf/etf_technical_details.json"
+  output_json: true
   async_execution: true
   depends_on:
     - etf_screening_task
@@ -166,7 +155,7 @@ etf_risk_assessment_task:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.md"
-  async_execution: true
+  async_execution: false
   depends_on:
     - etf_technical_detail_task
 

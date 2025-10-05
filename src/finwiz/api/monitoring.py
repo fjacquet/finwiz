@@ -8,7 +8,7 @@ health status, and alert information for the Investment Discovery system.
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query  # type: ignore[import-not-found]  # fastapi may not be installed
 from pydantic import BaseModel, Field
 
 from finwiz.monitoring.alerting import AlertSeverity, get_alert_manager

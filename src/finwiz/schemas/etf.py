@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -89,3 +89,146 @@ class ETFFactsheet(BaseModel):
 
     # standardized risk lives separately
     risk: RiskAssessmentStandardized | None = None
+
+
+class ETFMarketTrend(BaseModel):
+    """ETF market trend analysis output."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    schema_version: int = 1
+    analysis_date: date = Field(description="Date of the analysis")
+    key_trends: list[str] = Field(description="Key ETF market trends", max_length=20)
+    emerging_sectors: list[str] = Field(description="Emerging ETF sectors", max_length=15)
+    global_factors: list[str] = Field(description="Global economic factors impacting ETFs", default_factory=list, max_length=10)
+    liquidity_trends: list[str] = Field(description="Liquidity and volume trends", default_factory=list, max_length=10)
+    regulatory_developments: list[str] = Field(description="Regulatory developments", default_factory=list, max_length=10)
+    data_sources: list[str] = Field(description="Data sources used", default_factory=list)
+
+
+class ETFCandidate(BaseModel):
+    """Individual ETF candidate from screening task."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    ticker: str = Field(min_length=1, max_length=15)
+    name: str = Field(description="Full ETF name")
+    issuer: str = Field(description="ETF issuer/provider")
+    category: str | None = Field(None, description="ETF category (e.g., equity, bond, commodity)")
+    aum: float | None = Field(None, gt=0, description="Assets under management in USD")
+    expense_ratio: float | None = Field(None, ge=0.0, le=5.0, description="Expense ratio percentage")
+    tracking_error: float | None = Field(None, ge=0.0, description="Tracking error vs benchmark")
+    selection_rationale: str = Field(description="Why this ETF was selected", min_length=20)
+    confidence_level: float = Field(ge=0.0, le=1.0, description="Confidence in selection")
+
+
+class ETFScreeningResult(BaseModel):
+    """ETF screening task output with top candidates."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    schema_version: int = 1
+    screening_date: date = Field(description="Date of screening")
+    total_screened: int = Field(ge=0, description="Total ETFs screened")
+    candidates: list[ETFCandidate] = Field(description="Top ETF candidates", max_length=20)
+    screening_criteria: list[str] = Field(description="Criteria used for screening", max_length=10)
+    market_context: str = Field(description="Market context during screening")
+
+
+class ETFTechnicalIndicators(BaseModel):
+    """Technical indicators for an ETF."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    ticker: str = Field(min_length=1, max_length=15)
+    rsi: float | None = Field(None, ge=0.0, le=100.0, description="Relative Strength Index")
+    macd: float | None = Field(None, description="MACD indicator value")
+    macd_signal: float | None = Field(None, description="MACD signal line")
+    bollinger_upper: float | None = Field(None, gt=0, description="Bollinger Bands upper bound")
+    bollinger_lower: float | None = Field(None, gt=0, description="Bollinger Bands lower bound")
+    moving_avg_50: float | None = Field(None, gt=0, description="50-day moving average")
+    moving_avg_200: float | None = Field(None, gt=0, description="200-day moving average")
+
+
+class ETFQuantitativeMetrics(BaseModel):
+    """Quantitative analysis metrics for an ETF."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    ticker: str = Field(min_length=1, max_length=15)
+    sharpe_ratio: float | None = Field(None, description="Sharpe ratio")
+    sortino_ratio: float | None = Field(None, description="Sortino ratio")
+    max_drawdown: float | None = Field(None, le=0.0, description="Maximum drawdown percentage")
+    volatility: float | None = Field(None, ge=0.0, description="Annualized volatility")
+    beta: float | None = Field(None, description="Beta relative to benchmark")
+    alpha: float | None = Field(None, description="Alpha (excess return)")
+    tracking_error: float | None = Field(None, ge=0.0, description="Tracking error vs benchmark")
+    correlation_with_benchmark: float | None = Field(None, ge=-1.0, le=1.0, description="Correlation with benchmark")
+    recommendation: Literal["BUY", "HOLD", "SELL"] | None = Field(None, description="Investment recommendation")
+    confidence: float | None = Field(None, ge=0.0, le=1.0, description="Recommendation confidence")
+
+
+class ETFTechnicalAnalysis(BaseModel):
+    """Technical analysis output for ETF technical detail task."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    schema_version: int = 1
+    ticker: str = Field(min_length=1, max_length=15)
+    name: str = Field(description="Full ETF name")
+    analysis_date: date = Field(description="Date of analysis")
+
+    # ETF structure
+    factsheet: ETFFactsheet | None = Field(None, description="ETF factsheet data")
+    replication_method: str | None = Field(None, description="Replication method details")
+    lending_practices: str | None = Field(None, description="Securities lending practices")
+
+    # Performance
+    tracking_accuracy: str | None = Field(None, description="Tracking accuracy assessment")
+    historical_performance: str | None = Field(None, description="Historical performance summary")
+
+    # Technical indicators
+    technical_indicators: ETFTechnicalIndicators | None = Field(None, description="Technical indicators")
+
+    # Quantitative analysis
+    quantitative_metrics: ETFQuantitativeMetrics | None = Field(None, description="Quantitative metrics")
+
+    # Management
+    fund_manager_assessment: str | None = Field(None, description="Fund manager expertise assessment")
+    issuer_stability: str | None = Field(None, description="Issuer stability assessment")
+
+    # Overall assessment
+    investment_thesis: str = Field(description="Investment thesis summary", min_length=50)
+    liquidity_profile: str | None = Field(None, description="Liquidity profile assessment")
+
+
+class ETFRiskProfile(BaseModel):
+    """Risk assessment output for ETF risk assessment task."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    schema_version: int = 1
+    ticker: str = Field(min_length=1, max_length=15)
+    name: str = Field(description="Full ETF name")
+    assessment_date: date = Field(description="Date of risk assessment")
+
+    # Standardized risk assessment
+    risk_assessment: RiskAssessmentStandardized = Field(description="Standardized risk assessment")
+
+    # Risk categories
+    volatility_risk: str = Field(description="Volatility and drawdown risk assessment", min_length=20)
+    concentration_risk: str = Field(description="Holdings concentration risk assessment", min_length=20)
+    liquidity_risk: str = Field(description="Liquidity risk assessment", min_length=20)
+    counterparty_risk: str = Field(description="Counterparty and structural risk assessment", min_length=20)
+    regulatory_risk: str = Field(description="Regulatory and tax risk assessment", min_length=20)
+
+    # Quantitative risk metrics
+    quantitative_risk_metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Quantitative risk metrics (tracking error, correlation, etc.)"
+    )
+
+    # Risk mitigation
+    risk_mitigation_strategies: list[str] = Field(default_factory=list, description="Risk mitigation strategies", max_length=10)
+
+    # Overall risk summary
+    risk_summary: str = Field(description="Overall risk summary", min_length=50)

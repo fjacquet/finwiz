@@ -6,7 +6,7 @@ inclusion: always
 
 ## Core Technology Stack
 
-**Framework**: CrewAI Flow with Python 3.10+, managed by `uv` package manager  
+**Framework**: CrewAI Flow with Python 3.12+, managed by `uv` package manager  
 **Code Quality**: Ruff (110 char limit), pytest with pytest-mock  
 **Data Validation**: Pydantic v2 strict mode, schemas in `src/finwiz/schemas/`
 
