@@ -11,27 +11,10 @@ from typing import Any
 
 import numpy as np
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from finwiz.schemas.tools import RiskAssessmentInput
 from finwiz.tools.logger import get_logger
-
-logger = get_logger(__name__)
-
-
-class RiskAssessmentInput(BaseModel):
-    """Input model for risk assessment tool."""
-
-    assets: list[str] = Field(..., description="List of asset symbols to assess")
-    portfolio_weights: dict[str, float] | None = Field(
-        None, description="Portfolio weights for each asset (if assessing portfolio risk)"
-    )
-    assessment_type: str = Field(
-        default="comprehensive", description="Type of assessment: 'individual', 'portfolio', or 'comprehensive'"
-    )
-    risk_horizon: str = Field(default="1y", description="Risk assessment horizon (1m, 3m, 6m, 1y, 2y)")
-    confidence_level: float = Field(default=0.95, description="Confidence level for VaR calculations")
-    include_stress_testing: bool = Field(default=True, description="Include stress testing scenarios")
-    market_regime: str = Field(default="normal", description="Market regime: 'bull', 'bear', 'normal', 'volatile'")
 
 
 class RiskAssessmentTool(BaseTool):
@@ -534,3 +517,6 @@ class RiskAssessmentTool(BaseTool):
 def get_risk_assessment_tool() -> RiskAssessmentTool:
     """Get an instance of the risk assessment tool."""
     return RiskAssessmentTool()
+
+
+logger = get_logger(__name__)

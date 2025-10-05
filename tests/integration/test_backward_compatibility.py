@@ -1,3 +1,14 @@
+import json
+import os
+import tempfile
+from pathlib import Path
+
+import pytest
+
+from finwiz.flow_state import FinwizState
+from finwiz.flows.flow_orchestrator import FinwizFlow
+from finwiz.utils.feature_flags import FeatureFlags
+
 """
 Backward compatibility tests for core analysis restoration.
 
@@ -17,19 +28,8 @@ NOTE: These tests are currently hanging due to FinwizFlow initialization.
 Needs deeper investigation of flow initialization and crew loading.
 """
 
-import json
-import os
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-
 # Mark all tests in this file as slow/hanging
 pytestmark = pytest.mark.skip(reason="Tests hang during FinwizFlow initialization - needs investigation")
-
-from finwiz.main import FinwizFlow, FinwizState
-from finwiz.utils.feature_flags import FeatureFlags
 
 
 class TestBackwardCompatibility:
@@ -49,11 +49,11 @@ class TestBackwardCompatibility:
         mocker.patch("finwiz.main.ReportCrew")
 
         # Mock LLM to prevent API calls
-        mock_llm = MagicMock()
+        mock_llm = mocker.MagicMock()
         mocker.patch("finwiz.utils.llm_config.get_configured_llm", return_value=mock_llm)
 
     @pytest.fixture
-    def mock_env_vars(self):
+    def mock_env_vars(self, mocker):
         """Set up environment variables for testing."""
         env_vars = {
             "OPENAI_API_KEY": "test-key",
@@ -68,7 +68,7 @@ class TestBackwardCompatibility:
             "FINWIZ_FF_CRYPTO_ANALYSIS": "true",
         }
 
-        with patch.dict(os.environ, env_vars):
+        with mocker.patch.dict(os.environ, env_vars):
             yield env_vars
 
     @pytest.fixture
@@ -180,10 +180,10 @@ class TestBackwardCompatibility:
     ):
         """Test that investment discovery works with enhanced core analysis data."""
         # Mock the investment discovery crew
-        mock_discovery_result = MagicMock()
+        mock_discovery_result = mocker.MagicMock()
         mock_discovery_result.raw = "Investment discovery completed with A+ opportunities found"
 
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.crew.return_value.kickoff.return_value = mock_discovery_result
 
         mocker.patch(
@@ -192,8 +192,8 @@ class TestBackwardCompatibility:
         )
 
         # Mock the integration manager
-        mock_integration_manager = MagicMock()
-        mock_upstream_data = MagicMock()
+        mock_integration_manager = mocker.MagicMock()
+        mock_upstream_data = mocker.MagicMock()
         mock_upstream_data.available_data = {"stock": {}, "etf": {}, "crypto": {}}
         mock_upstream_data.stale_data = []
         mock_upstream_data.missing_data = []
@@ -201,8 +201,8 @@ class TestBackwardCompatibility:
         mock_integration_manager.get_crew_data_with_freshness_check.return_value = {"test": "data"}
 
         # Mock the data accessor
-        mock_data_accessor = MagicMock()
-        mock_aplus_opportunities = MagicMock()
+        mock_data_accessor = mocker.MagicMock()
+        mock_aplus_opportunities = mocker.MagicMock()
         mock_aplus_opportunities.etf_opportunities = ["SPY", "QQQ"]
         mock_aplus_opportunities.stock_opportunities = ["AAPL", "MSFT"]
         mock_aplus_opportunities.crypto_opportunities = ["BTC", "ETH"]
@@ -257,10 +257,10 @@ class TestBackwardCompatibility:
     ):
         """Test that portfolio rebalancing integrates with core analysis data."""
         # Mock the portfolio rebalancing crew
-        mock_rebalancing_result = MagicMock()
+        mock_rebalancing_result = mocker.MagicMock()
         mock_rebalancing_result.raw = "Portfolio rebalancing recommendations with market analysis"
 
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.crew.return_value.kickoff.return_value = mock_rebalancing_result
 
         mocker.patch(
@@ -310,8 +310,8 @@ class TestBackwardCompatibility:
     def test_report_generation_includes_core_analysis_insights(self, mock_env_vars, sample_core_analysis_results, mocker):
         """Test that report generation includes core analysis insights."""
         # Mock the report crew
-        mock_report_crew = MagicMock()
-        mock_crew_instance = MagicMock()
+        mock_report_crew = mocker.MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.crew.return_value.kickoff.return_value = None
         mock_crew_instance.validate_reporter_input.return_value = None
         mock_report_crew.return_value = mock_crew_instance
@@ -319,7 +319,7 @@ class TestBackwardCompatibility:
         mocker.patch("finwiz.crews.report_crew.report_crew.ReportCrew", mock_report_crew)
 
         # Mock the data accessor
-        mock_data_accessor = MagicMock()
+        mock_data_accessor = mocker.MagicMock()
         mock_consolidated_data = {
             "stock": {"analysis": "stock_data"},
             "etf": {"analysis": "etf_data"},
@@ -379,7 +379,7 @@ class TestBackwardCompatibility:
     def test_feature_flag_compatibility(self, mock_env_vars, mocker):
         """Test that feature flags work correctly with core analysis restoration."""
         # Test with core analysis disabled
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {"FINWIZ_FF_STOCK_ANALYSIS": "false", "FINWIZ_FF_ETF_ANALYSIS": "false", "FINWIZ_FF_CRYPTO_ANALYSIS": "false"},
         ):
@@ -413,8 +413,8 @@ class TestBackwardCompatibility:
         mocker.patch("finwiz.crews.crypto_crew.crypto_crew.CryptoCrew.crew", side_effect=mock_failing_crew)
 
         # Mock error handler
-        mock_error_handler = MagicMock()
-        mock_fallback_response = MagicMock()
+        mock_error_handler = mocker.MagicMock()
+        mock_fallback_response = mocker.MagicMock()
         mock_fallback_response.success = False
         mock_fallback_response.data = None
         mock_fallback_response.message = "No fallback available"
@@ -461,11 +461,11 @@ class TestBackwardCompatibility:
     def test_data_integration_system_compatibility(self, mock_env_vars, mocker):
         """Test that data integration system works with core analysis restoration."""
         # Mock integration manager and data accessor
-        mock_integration_manager = MagicMock()
-        mock_data_accessor = MagicMock()
+        mock_integration_manager = mocker.MagicMock()
+        mock_data_accessor = mocker.MagicMock()
 
         # Mock data availability report
-        mock_availability_report = MagicMock()
+        mock_availability_report = mocker.MagicMock()
         mock_availability_report.overall_status.value = "HEALTHY"
         mock_availability_report.stock_available = True
         mock_availability_report.etf_available = True
@@ -503,7 +503,7 @@ class TestBackwardCompatibility:
     def test_quantitative_backtesting_integration_continues_to_work(self, mock_env_vars, mocker):
         """Test that quantitative backtesting integration continues to work."""
         # Mock quantitative analysis components
-        mock_quantitative_tool = MagicMock()
+        mock_quantitative_tool = mocker.MagicMock()
         mock_quantitative_tool.return_value = {
             "backtest_results": {"total_return": 0.15, "sharpe_ratio": 1.2, "max_drawdown": -0.08},
             "performance_metrics": {"volatility": 0.12, "beta": 1.05},

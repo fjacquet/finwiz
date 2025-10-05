@@ -5,8 +5,6 @@ Tests the stock analysis crew agents, tasks, and workflow execution
 with mocked external dependencies.
 """
 
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 
@@ -69,9 +67,9 @@ class TestStockCrew:
         }
 
     @pytest.fixture
-    def stock_crew(self):
+    def stock_crew(self, mocker):
         """Create a mock StockCrew instance for testing."""
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.agents_config = {
             "market_analyst": {"role": "Market Analyst", "goal": "Analyze markets"},
             "fundamental_analyst": {"role": "Fundamental Analyst", "goal": "Analyze fundamentals"},
@@ -84,17 +82,17 @@ class TestStockCrew:
         }
 
         # Mock agent methods
-        mock_crew.market_analyst.return_value = MagicMock()
-        mock_crew.fundamental_analyst.return_value = MagicMock()
-        mock_crew.risk_assessor.return_value = MagicMock()
+        mock_crew.market_analyst.return_value = mocker.MagicMock()
+        mock_crew.fundamental_analyst.return_value = mocker.MagicMock()
+        mock_crew.risk_assessor.return_value = mocker.MagicMock()
 
         # Mock task methods
-        mock_crew.market_research.return_value = MagicMock()
-        mock_crew.fundamental_analysis.return_value = MagicMock()
-        mock_crew.risk_assessment.return_value = MagicMock()
+        mock_crew.market_research.return_value = mocker.MagicMock()
+        mock_crew.fundamental_analysis.return_value = mocker.MagicMock()
+        mock_crew.risk_assessment.return_value = mocker.MagicMock()
 
         # Mock crew method
-        mock_crew.crew.return_value = MagicMock()
+        mock_crew.crew.return_value = mocker.MagicMock()
 
         return mock_crew
 
@@ -148,11 +146,11 @@ class TestStockCrew:
         assert hasattr(crew, "process")
         assert hasattr(crew, "verbose")
 
-    def test_should_execute_crew_with_mock_data(self, stock_crew, mock_stock_inputs, mock_yahoo_finance_data):
+    def test_should_execute_crew_with_mock_data(self, mocker, stock_crew, mock_stock_inputs, mock_yahoo_finance_data):
         """Test crew execution with mocked external data."""
         # Mock the crew kickoff to avoid actual LLM calls
-        with patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Mock stock analysis result with BUY recommendation"
             mock_kickoff.return_value = mock_result
 
@@ -161,12 +159,12 @@ class TestStockCrew:
             assert result is not None
             mock_kickoff.assert_called_once_with(inputs=mock_stock_inputs)
 
-    def test_should_handle_missing_inputs_gracefully(self, stock_crew):
+    def test_should_handle_missing_inputs_gracefully(self, mocker, stock_crew):
         """Test that crew handles missing inputs gracefully."""
         incomplete_inputs = {"current_date": "2025-01-15"}
 
         # Mock the crew kickoff to simulate error handling
-        with patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
+        with mocker.patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
             mock_kickoff.side_effect = ValueError("Missing required inputs")
 
             with pytest.raises(ValueError, match="Missing required inputs"):
@@ -176,11 +174,11 @@ class TestStockCrew:
         """Test that crew uses stock research tools from tool factory."""
         # Verify that the stock crew module imports the tool factory
         import finwiz.crews.stock_crew.stock_crew as stock_crew_module
-        
+
         # Check that get_stock_crew_tools is imported and used
         assert hasattr(stock_crew_module, "get_stock_crew_tools")
         assert hasattr(stock_crew_module, "research_tools")
-        
+
         # Verify tools are used in agent creation
         market_analyst = stock_crew.market_analyst()
         assert market_analyst is not None
@@ -205,11 +203,11 @@ class TestStockCrew:
         for task_name in required_tasks:
             assert task_name in config, f"Missing task configuration: {task_name}"
 
-    def test_should_handle_tool_failures_gracefully(self, stock_crew, mock_stock_inputs):
+    def test_should_handle_tool_failures_gracefully(self, mocker, stock_crew, mock_stock_inputs):
         """Test that crew handles tool failures gracefully."""
         # Mock the crew to handle tool failures
-        with patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Analysis completed with limited data due to tool failures"
             mock_kickoff.return_value = mock_result
 
@@ -220,8 +218,6 @@ class TestStockCrew:
 
     def test_should_have_proper_crew_process(self, stock_crew):
         """Test that crew uses proper process configuration."""
-        from crewai import Process
-        
         crew = stock_crew.crew()
 
         # Verify crew has a process defined
@@ -234,22 +230,22 @@ class TestStockCrew:
         """Test that crew integrates with RAG system for knowledge storage."""
         # Verify that the stock crew module uses tool factory which includes RAG tools
         import finwiz.crews.stock_crew.stock_crew as stock_crew_module
-        
+
         # Check that tool factory is used (which includes RAG tools)
         assert hasattr(stock_crew_module, "get_stock_crew_tools")
         assert hasattr(stock_crew_module, "tools")
-        
+
         # Verify tools are available
         market_analyst = stock_crew.market_analyst()
         assert market_analyst is not None
 
-    def test_should_support_multilingual_analysis(self, stock_crew, mock_stock_inputs):
+    def test_should_support_multilingual_analysis(self, mocker, stock_crew, mock_stock_inputs):
         """Test that crew supports multilingual analysis."""
         # Test with French language setting
         french_inputs = {**mock_stock_inputs, "report_language": "fr"}
 
-        with patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Analyse des actions en français"
             mock_kickoff.return_value = mock_result
 
@@ -259,8 +255,8 @@ class TestStockCrew:
         # Test with English language setting
         english_inputs = {**mock_stock_inputs, "report_language": "en"}
 
-        with patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(stock_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Stock analysis in English"
             mock_kickoff.return_value = mock_result
 

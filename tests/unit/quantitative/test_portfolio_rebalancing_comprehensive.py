@@ -9,7 +9,6 @@ import asyncio
 import os
 import sys
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -50,12 +49,12 @@ class TestPortfolioRebalancingEdgeCases:
         return PortfolioConfiguration(holdings=holdings, target_weights=target_weights)
 
     @pytest.fixture
-    def mock_orchestrator_dependencies(self):
+    def mock_orchestrator_dependencies(self, mocker):
         """Create mocked dependencies for orchestrator testing."""
-        price_service = AsyncMock(spec=PortfolioPriceService)
-        portfolio_analyzer = MagicMock(spec=PortfolioAnalyzer)
-        rebalancing_engine = MagicMock(spec=RebalancingEngine)
-        report_generator = MagicMock()
+        price_service = mocker.AsyncMock(spec=PortfolioPriceService)
+        portfolio_analyzer = mocker.MagicMock(spec=PortfolioAnalyzer)
+        rebalancing_engine = mocker.MagicMock(spec=RebalancingEngine)
+        report_generator = mocker.MagicMock()
 
         return {
             "price_service": price_service,
@@ -416,12 +415,12 @@ class TestPortfolioRebalancingErrorScenarios:
     """Test various error scenarios and failure modes."""
 
     @pytest.fixture
-    def orchestrator_with_failing_dependencies(self):
+    def orchestrator_with_failing_dependencies(self, mocker):
         """Create orchestrator with dependencies that fail in various ways."""
-        price_service = AsyncMock(spec=PortfolioPriceService)
-        portfolio_analyzer = MagicMock(spec=PortfolioAnalyzer)
-        rebalancing_engine = MagicMock(spec=RebalancingEngine)
-        report_generator = MagicMock()
+        price_service = mocker.AsyncMock(spec=PortfolioPriceService)
+        portfolio_analyzer = mocker.MagicMock(spec=PortfolioAnalyzer)
+        rebalancing_engine = mocker.MagicMock(spec=RebalancingEngine)
+        report_generator = mocker.MagicMock()
 
         return PortfolioRebalancingOrchestrator(
             price_service=price_service,

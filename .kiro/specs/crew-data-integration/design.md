@@ -11,9 +11,11 @@ This design implements a comprehensive **Crew Data Integration System** that est
 ### Core Components
 
 #### 1. Data Integration Manager
+
 A centralized service that orchestrates data flow between crews and manages the integration lifecycle.
 
 **Key Responsibilities:**
+
 - Coordinate crew execution order based on data dependencies
 - Validate data contracts between crews
 - Monitor data freshness and trigger refresh when needed
@@ -21,18 +23,22 @@ A centralized service that orchestrates data flow between crews and manages the 
 - Handle graceful degradation when data is unavailable
 
 #### 2. Standardized Data Contracts
+
 Enhanced Pydantic schemas that define strict contracts for inter-crew communication.
 
 **Key Features:**
+
 - Metadata inclusion (timestamps, validation status, data lineage)
 - Backward compatibility versioning
 - Validation status tracking
 - Source attribution and citations
 
 #### 3. Centralized Data Store
+
 A structured file-based storage system that maintains crew outputs with proper metadata and accessibility.
 
 **Structure:**
+
 ```
 output/
 ├── integration/
@@ -55,18 +61,22 @@ output/
 ```
 
 #### 4. Data Validation Pipeline
+
 Automated validation system that ensures data quality and contract compliance.
 
 **Components:**
+
 - Schema validation using Pydantic models
 - Data freshness checks
 - Cross-crew data consistency validation
 - Missing data detection and reporting
 
 #### 5. Error Recovery System
+
 Robust error handling that provides clear diagnostics and recovery options.
 
 **Features:**
+
 - Detailed error reporting with specific file paths
 - Data staleness warnings and refresh suggestions
 - Graceful degradation with partial data
@@ -296,18 +306,21 @@ class ValidationErrorRecovery:
 ### 1. Unit Tests
 
 **Data Integration Manager Tests:**
+
 - Test crew coordination logic
 - Test data validation pipeline
 - Test error handling scenarios
 - Test data freshness checking
 
 **Schema Validation Tests:**
+
 - Test enhanced Pydantic models
 - Test backward compatibility
 - Test validation error scenarios
 - Test metadata handling
 
 **Data Access Layer Tests:**
+
 - Test data retrieval methods
 - Test error handling for missing data
 - Test graceful degradation
@@ -316,12 +329,14 @@ class ValidationErrorRecovery:
 ### 2. Integration Tests
 
 **End-to-End Data Flow Tests:**
+
 - Test complete crew execution pipeline
 - Test data propagation between crews
 - Test report generation with integrated data
 - Test error recovery scenarios
 
 **Cross-Crew Communication Tests:**
+
 - Test data contract compliance
 - Test dependency resolution
 - Test data freshness coordination
@@ -330,12 +345,14 @@ class ValidationErrorRecovery:
 ### 3. Performance Tests
 
 **Data Processing Performance:**
+
 - Test large dataset handling
 - Test concurrent crew execution
 - Test data consolidation performance
 - Test memory usage optimization
 
 **Error Recovery Performance:**
+
 - Test error detection speed
 - Test recovery action execution
 - Test graceful degradation performance
@@ -344,12 +361,14 @@ class ValidationErrorRecovery:
 ### 4. Mock Strategy
 
 **External Dependencies:**
+
 - Mock file system operations
 - Mock crew execution results
 - Mock validation services
 - Mock data source APIs
 
 **Test Data Generation:**
+
 - Generate valid crew outputs
 - Generate invalid/corrupted data
 - Generate stale data scenarios
@@ -358,30 +377,35 @@ class ValidationErrorRecovery:
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure
+
 1. Implement CrewDataIntegrationManager
 2. Create enhanced data schemas
 3. Set up centralized data storage structure
 4. Implement basic validation pipeline
 
 ### Phase 2: Data Access Layer
+
 1. Implement CrewDataAccessor
 2. Create integration middleware
 3. Add data freshness checking
 4. Implement error detection and reporting
 
 ### Phase 3: Enhanced Features
+
 1. Add A+ opportunity integration
 2. Implement SEC citation handling
 3. Add market sentiment consolidation
 4. Create ticker validation system
 
 ### Phase 4: Error Recovery
+
 1. Implement missing data handlers
 2. Add validation error recovery
 3. Create comprehensive error reporting
 4. Add recovery suggestion system
 
 ### Phase 5: Integration and Testing
+
 1. Integrate with existing crews
 2. Update Report crew to use new system
 3. Add comprehensive test coverage

@@ -6,7 +6,6 @@ and cryptocurrencies with A+ criteria filtering.
 """
 
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
 
@@ -408,15 +407,15 @@ class TestMarketScreeningTool:
         global_result = self.tool._run(asset_type="stock", market_region="global")
         assert global_result["summary"]["total_screened"] >= us_result["summary"]["total_screened"]
 
-    def test_should_handle_errors_gracefully(self):
+    def test_should_handle_errors_gracefully(self, mocker):
         """Test error handling."""
         # Invalid asset type
         result = self.tool._run(asset_type="invalid")
         assert "error" in result
         assert result.get("candidates_found", 0) == 0
 
-        # Test with mock that raises exception
-        with patch.object(self.tool, "_get_screening_universe", side_effect=Exception("Test error")):
+        # Test with mock that raises exception on a real method
+        with mocker.patch.object(self.tool, "_apply_screening_filters", side_effect=Exception("Test error")):
             result = self.tool._run(asset_type="etf")
             assert "error" in result
 
@@ -432,9 +431,9 @@ class TestMarketScreeningTool:
         # Cache should contain some data after the calls
         assert len(self.tool._screening_cache) >= 0  # Cache may or may not be populated depending on implementation
 
-    def test_should_integrate_with_a_plus_scorer_when_detailed_analysis_enabled(self):
+    def test_should_integrate_with_a_plus_scorer_when_detailed_analysis_enabled(self, mocker):
         """Test integration with A+ scoring tool."""
-        with patch.object(self.tool._a_plus_scorer, "_run") as mock_scorer:
+        with mocker.patch.object(self.tool._a_plus_scorer, "_run") as mock_scorer:
             mock_scorer.return_value = {
                 "composite_score": 0.92,
                 "is_a_plus_candidate": True,

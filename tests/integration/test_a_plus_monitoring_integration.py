@@ -8,7 +8,6 @@ monitoring scenarios.
 
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -33,7 +32,7 @@ class TestAPlusMonitoringIntegration:
         return APlusMonitoringService()
 
     @pytest.fixture
-    def sample_discovery_result(self):
+    def sample_discovery_result(self, mocker):
         """Create sample discovery result with A+ candidates."""
         # Create sample candidates
         candidates = []
@@ -69,7 +68,7 @@ class TestAPlusMonitoringIntegration:
             asset_type="stock",
             total_screened=1000,
             candidates_found=3,
-            discovery_criteria=MagicMock(),
+            discovery_criteria=mocker.MagicMock(),
             market_context=MarketRegime(
                 regime_type="bull",
                 vix_level=15.0,
@@ -468,7 +467,7 @@ class TestAPlusMonitoringIntegration:
         await monitoring_service.stop_service()
 
     @pytest.mark.asyncio
-    async def test_should_handle_empty_discovery_results(self, monitoring_service):
+    async def test_should_handle_empty_discovery_results(self, mocker, monitoring_service):
         """Test handling of empty discovery results."""
         # Arrange
         await monitoring_service.start_service()
@@ -477,7 +476,7 @@ class TestAPlusMonitoringIntegration:
             asset_type="stock",
             total_screened=1000,
             candidates_found=0,
-            discovery_criteria=MagicMock(),
+            discovery_criteria=mocker.MagicMock(),
             market_context=MarketRegime(
                 regime_type="bear",
                 vix_level=35.0,

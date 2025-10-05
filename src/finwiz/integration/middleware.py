@@ -14,9 +14,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..schemas.integration import (
-    ValidationStatus,
-)
+from finwiz.schemas.integration import ValidationStatus
+
 from .data_accessor import CrewDataAccessor
 from .manager import CrewConfig, CrewDataIntegrationManager, ExecutionResult
 from .validation_pipeline import ValidationPipeline

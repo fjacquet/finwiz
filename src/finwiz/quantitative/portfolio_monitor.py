@@ -251,7 +251,7 @@ class PortfolioMonitor:
             rebalancing_needs = await self.check_portfolio_drift(portfolio_id, portfolio_config)
 
             # Calculate health metrics
-            positions_needing_attention = [need for need in rebalancing_needs if need.exceeds_tolerance]
+            positions_needing_attention = [need for need in rebalancing_needs if need.needs_rebalancing]
             max_deviation = max([abs(need.deviation) for need in rebalancing_needs], default=0.0)
             avg_deviation = (
                 sum([abs(need.deviation) for need in rebalancing_needs]) / len(rebalancing_needs) if rebalancing_needs else 0.0
@@ -354,7 +354,7 @@ class PortfolioMonitor:
     ) -> None:
         """Process monitoring rules and generate alerts as needed."""
         try:
-            positions_out_of_tolerance = [need for need in rebalancing_needs if need.exceeds_tolerance]
+            positions_out_of_tolerance = [need for need in rebalancing_needs if need.needs_rebalancing]
             max_deviation = max([abs(need.deviation) for need in rebalancing_needs], default=0.0)
 
             # Check deviation threshold rule
@@ -509,7 +509,7 @@ class PortfolioMonitor:
         avg_deviation = total_deviation / len(rebalancing_needs)
 
         # Calculate positions out of tolerance ratio
-        positions_out_of_tolerance = len([need for need in rebalancing_needs if need.exceeds_tolerance])
+        positions_out_of_tolerance = len([need for need in rebalancing_needs if need.needs_rebalancing])
         out_of_tolerance_ratio = positions_out_of_tolerance / len(rebalancing_needs)
 
         # Health score calculation (higher deviations and more positions out of tolerance = lower score)

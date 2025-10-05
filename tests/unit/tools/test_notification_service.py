@@ -5,7 +5,6 @@ Tests cover email/SMS notifications, user preferences, and notification delivery
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -120,7 +119,7 @@ class TestEmailNotificationProvider:
         for email in valid_emails:
             assert email_provider.validate_recipient(email) is True
 
-    def test_should_not_validate_incorrect_email_address(self, email_provider):
+    def test_should_not_validate_incorrect_email_address(self, email_provider, mocker):
         """Test email address validation with incorrect format."""
         # Arrange
         invalid_emails = ["invalid-email", "@example.com", "user@", "user@domain", ""]
@@ -130,15 +129,15 @@ class TestEmailNotificationProvider:
             assert email_provider.validate_recipient(email) is False
 
     @pytest.mark.asyncio
-    async def test_should_send_email_notification_when_valid_data_provided(self, email_provider, sample_alert):
+    async def test_should_send_email_notification_when_valid_data_provided(self, mocker, email_provider, sample_alert):
         """Test email notification sending with valid data."""
         # Arrange
         recipient = "test@example.com"
         subject = "Test Alert"
         message = "Test message"
 
-        with patch("smtplib.SMTP") as mock_smtp:
-            mock_server = MagicMock()
+        with mocker.patch("smtplib.SMTP") as mock_smtp:
+            mock_server = mocker.MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
 
             # Act
@@ -156,14 +155,14 @@ class TestEmailNotificationProvider:
             mock_server.send_message.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_handle_email_sending_failure(self, email_provider, sample_alert):
+    async def test_should_handle_email_sending_failure(self, mocker, email_provider, sample_alert):
         """Test email notification handling when sending fails."""
         # Arrange
         recipient = "test@example.com"
         subject = "Test Alert"
         message = "Test message"
 
-        with patch("smtplib.SMTP") as mock_smtp:
+        with mocker.patch("smtplib.SMTP") as mock_smtp:
             mock_smtp.side_effect = Exception("SMTP connection failed")
 
             # Act
@@ -330,10 +329,10 @@ class TestNotificationService:
         assert notification_service.notification_history == []
         assert notification_service.user_preferences == {}
 
-    def test_should_register_provider_when_called(self, notification_service):
+    def test_should_register_provider_when_called(self, mocker, notification_service):
         """Test provider registration."""
         # Arrange
-        mock_provider = MagicMock()
+        mock_provider = mocker.MagicMock()
 
         # Act
         notification_service.register_provider(NotificationType.EMAIL, mock_provider)
@@ -341,7 +340,7 @@ class TestNotificationService:
         # Assert
         assert notification_service.providers[NotificationType.EMAIL] == mock_provider
 
-    def test_should_set_user_preferences_when_called(self, notification_service, sample_preferences):
+    def test_should_set_user_preferences_when_called(self, notification_service, sample_preferences, mocker):
         """Test user preferences setting."""
         # Arrange
         user_id = "test_user"
@@ -354,7 +353,7 @@ class TestNotificationService:
 
     @pytest.mark.asyncio
     async def test_should_send_email_notification_when_preferences_allow(
-        self, notification_service, sample_alert, sample_preferences
+        self, notification_service, sample_alert, sample_preferences, mocker
     ):
         """Test sending email notification when preferences allow."""
         # Arrange
@@ -362,7 +361,7 @@ class TestNotificationService:
         notification_service.set_user_preferences(user_id, sample_preferences)
 
         # Mock email provider
-        mock_email_provider = AsyncMock()
+        mock_email_provider = mocker.AsyncMock()
         mock_record = NotificationRecord(
             notification_id="test_notification",
             alert_id=sample_alert.alert_id,
@@ -384,7 +383,7 @@ class TestNotificationService:
         mock_email_provider.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_send_both_notifications_when_alert_severity_high(self, notification_service, sample_preferences):
+    async def test_should_send_both_notifications_when_alert_severity_high(self, notification_service, sample_preferences, mocker):
         """Test sending both email and SMS when alert severity is high enough."""
         # Arrange
         user_id = "test_user"
@@ -401,8 +400,8 @@ class TestNotificationService:
         )
 
         # Mock providers
-        mock_email_provider = AsyncMock()
-        mock_sms_provider = AsyncMock()
+        mock_email_provider = mocker.AsyncMock()
+        mock_sms_provider = mocker.AsyncMock()
 
         mock_email_record = NotificationRecord(
             notification_id="email_notification",
@@ -451,13 +450,13 @@ class TestNotificationService:
         # Assert
         assert len(records) == 0
 
-    def test_should_detect_quiet_hours_correctly(self, notification_service):
+    def test_should_detect_quiet_hours_correctly(self, mocker, notification_service):
         """Test quiet hours detection."""
         # Arrange
         preferences = NotificationPreferences(quiet_hours_start=22, quiet_hours_end=7)
 
         # Mock current time to be in quiet hours
-        with patch("finwiz.tools.notification_service.datetime") as mock_datetime:
+        with mocker.patch("finwiz.tools.notification_service.datetime") as mock_datetime:
             mock_datetime.now.return_value.hour = 23  # 11 PM
 
             # Act
@@ -467,7 +466,7 @@ class TestNotificationService:
             assert is_quiet is True
 
         # Mock current time to be outside quiet hours
-        with patch("finwiz.tools.notification_service.datetime") as mock_datetime:
+        with mocker.patch("finwiz.tools.notification_service.datetime") as mock_datetime:
             mock_datetime.now.return_value.hour = 10  # 10 AM
 
             # Act

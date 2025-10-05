@@ -5,8 +5,6 @@ Tests the cryptocurrency analysis crew agents, tasks, and workflow execution
 with mocked external dependencies.
 """
 
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 from finwiz.schemas.crypto import CryptoThesis
@@ -109,9 +107,9 @@ class TestCryptoCrew:
         )
 
     @pytest.fixture
-    def crypto_crew(self):
+    def crypto_crew(self, mocker):
         """Create a mock CryptoCrew instance for testing."""
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.agents_config = {
             "market_analyst": {"role": "Market Analyst", "goal": "Analyze markets"},
             "crypto_researcher": {"role": "Crypto Researcher", "goal": "Research crypto"},
@@ -124,17 +122,17 @@ class TestCryptoCrew:
         }
 
         # Mock agent methods
-        mock_crew.market_analyst.return_value = MagicMock()
-        mock_crew.crypto_researcher.return_value = MagicMock()
-        mock_crew.risk_assessor.return_value = MagicMock()
+        mock_crew.market_analyst.return_value = mocker.MagicMock()
+        mock_crew.crypto_researcher.return_value = mocker.MagicMock()
+        mock_crew.risk_assessor.return_value = mocker.MagicMock()
 
         # Mock task methods
-        mock_crew.market_research.return_value = MagicMock()
-        mock_crew.crypto_analysis.return_value = MagicMock()
-        mock_crew.risk_assessment.return_value = MagicMock()
+        mock_crew.market_research.return_value = mocker.MagicMock()
+        mock_crew.crypto_analysis.return_value = mocker.MagicMock()
+        mock_crew.risk_assessment.return_value = mocker.MagicMock()
 
         # Mock crew method
-        mock_crew.crew.return_value = MagicMock()
+        mock_crew.crew.return_value = mocker.MagicMock()
 
         return mock_crew
 
@@ -176,11 +174,11 @@ class TestCryptoCrew:
         assert hasattr(crypto_analysis_task, "description")
         assert hasattr(risk_assessment_task, "description")
 
-    @patch("finwiz.tools.tool_factories.get_crypto_crew_tools")
-    def test_should_create_crew_with_all_components(self, mock_crypto_tools, crypto_crew):
+    def test_should_create_crew_with_all_components(self, mocker, crypto_crew):
         """Test that crew is created with all agents and tasks."""
         # Mock the tools
-        mock_crypto_tools.return_value = [MagicMock()]
+        mock_crypto_tools = mocker.patch("finwiz.tools.tool_factories.get_crypto_crew_tools")
+        mock_crypto_tools.return_value = [mocker.MagicMock()]
 
         crew = crypto_crew.crew()
 
@@ -192,16 +190,11 @@ class TestCryptoCrew:
         assert hasattr(crew, "process")
         assert hasattr(crew, "verbose")
 
-    def test_should_execute_crew_with_mock_data(
-        self,
-        crypto_crew,
-        mock_crypto_inputs,
-        mock_crypto_data,
-    ):
+    def test_should_execute_crew_with_mock_data(self, crypto_crew, mock_crypto_inputs, mock_crypto_data, mocker):
         """Test crew execution with mocked external data."""
         # Mock the crew kickoff to avoid actual LLM calls
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Mock crypto analysis result with BUY recommendation for Bitcoin"
             mock_kickoff.return_value = mock_result
 
@@ -210,12 +203,12 @@ class TestCryptoCrew:
             assert result is not None
             mock_kickoff.assert_called_once_with(inputs=mock_crypto_inputs)
 
-    def test_should_handle_missing_inputs_gracefully(self, crypto_crew):
+    def test_should_handle_missing_inputs_gracefully(self, crypto_crew, mocker):
         """Test that crew handles missing inputs gracefully."""
         incomplete_inputs = {"current_date": "2025-01-15"}
 
         # Mock the crew kickoff to simulate error handling
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
             mock_kickoff.side_effect = ValueError("Missing required inputs")
 
             with pytest.raises(ValueError, match="Missing required inputs"):
@@ -225,11 +218,11 @@ class TestCryptoCrew:
         """Test that crew uses crypto research tools from tool factory."""
         # Verify that the crypto crew module imports the tool factory
         import finwiz.crews.crypto_crew.crypto_crew as crypto_crew_module
-        
+
         # Check that get_crypto_crew_tools is imported and used
         assert hasattr(crypto_crew_module, "get_crypto_crew_tools")
         assert hasattr(crypto_crew_module, "research_tools")
-        
+
         # Verify tools are used in agent creation
         market_analyst = crypto_crew.market_analyst()
         assert market_analyst is not None
@@ -238,11 +231,11 @@ class TestCryptoCrew:
         """Test that crew uses CoinMarketCap tools via tool factory."""
         # Verify that the crypto crew module uses tool factory
         import finwiz.crews.crypto_crew.crypto_crew as crypto_crew_module
-        
+
         # Check that tool factory is used
         assert hasattr(crypto_crew_module, "get_crypto_crew_tools")
         assert hasattr(crypto_crew_module, "research_tools")
-        
+
         # Verify tools are used in agent creation
         market_analyst = crypto_crew.market_analyst()
         assert market_analyst is not None
@@ -267,17 +260,17 @@ class TestCryptoCrew:
         for task_name in required_tasks:
             assert task_name in config, f"Missing task configuration: {task_name}"
 
-    @patch("finwiz.tools.tool_factories.get_crypto_crew_tools")
-    def test_should_handle_tool_failures_gracefully(self, mock_crypto_tools, crypto_crew, mock_crypto_inputs):
+    def test_should_handle_tool_failures_gracefully(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew handles tool failures gracefully."""
         # Mock tool failure
-        mock_tool_instance = MagicMock()
+        mock_crypto_tools = mocker.patch("finwiz.tools.tool_factories.get_crypto_crew_tools")
+        mock_tool_instance = mocker.MagicMock()
         mock_tool_instance.run.side_effect = Exception("Crypto API connection failed")
         mock_crypto_tools.return_value = [mock_tool_instance]
 
         # Mock the crew to handle tool failures
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Crypto analysis completed with limited data due to API failures"
             mock_kickoff.return_value = mock_result
 
@@ -288,8 +281,6 @@ class TestCryptoCrew:
 
     def test_should_have_proper_crew_process(self, crypto_crew):
         """Test that crew uses proper process configuration."""
-        from crewai import Process
-        
         crew = crypto_crew.crew()
 
         # Verify crew has a process defined
@@ -302,20 +293,20 @@ class TestCryptoCrew:
         """Test that crew integrates with RAG system for knowledge storage."""
         # Verify that the crypto crew module uses tool factory which includes RAG tools
         import finwiz.crews.crypto_crew.crypto_crew as crypto_crew_module
-        
+
         # Check that tool factory is used (which includes RAG tools)
         assert hasattr(crypto_crew_module, "get_crypto_crew_tools")
         assert hasattr(crypto_crew_module, "research_tools")
-        
+
         # Verify tools are available
         market_analyst = crypto_crew.market_analyst()
         assert market_analyst is not None
 
-    def test_should_analyze_tokenomics(self, crypto_crew, mock_crypto_inputs, mock_crypto_data):
+    def test_should_analyze_tokenomics(self, mocker, crypto_crew, mock_crypto_inputs, mock_crypto_data):
         """Test that crew analyzes tokenomics properly."""
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
             # Mock result that includes tokenomics analysis
-            mock_result = MagicMock()
+            mock_result = mocker.MagicMock()
             mock_result.raw = (
                 f"Bitcoin tokenomics: {mock_crypto_data['circulating_supply']} "
                 f"of {mock_crypto_data['max_supply']} coins in circulation"
@@ -327,11 +318,11 @@ class TestCryptoCrew:
             assert result is not None
             assert "tokenomics" in str(result.raw)
 
-    def test_should_analyze_defi_protocols(self, crypto_crew, mock_crypto_inputs, mock_defi_data):
+    def test_should_analyze_defi_protocols(self, mocker, crypto_crew, mock_crypto_inputs, mock_defi_data):
         """Test that crew analyzes DeFi protocols when relevant."""
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
             # Mock result that includes DeFi analysis
-            mock_result = MagicMock()
+            mock_result = mocker.MagicMock()
             mock_result.raw = f"DeFi analysis shows TVL of ${mock_defi_data['tvl']:,} with staking opportunities"
             mock_kickoff.return_value = mock_result
 
@@ -340,13 +331,13 @@ class TestCryptoCrew:
             assert result is not None
             assert "DeFi" in str(result.raw) or "TVL" in str(result.raw)
 
-    def test_should_support_multilingual_analysis(self, crypto_crew, mock_crypto_inputs):
+    def test_should_support_multilingual_analysis(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew supports multilingual analysis."""
         # Test with French language setting
         french_inputs = {**mock_crypto_inputs, "report_language": "fr"}
 
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Analyse des cryptomonnaies en français"
             mock_kickoff.return_value = mock_result
 
@@ -356,15 +347,15 @@ class TestCryptoCrew:
         # Test with English language setting
         english_inputs = {**mock_crypto_inputs, "report_language": "en"}
 
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Cryptocurrency analysis in English"
             mock_kickoff.return_value = mock_result
 
             result = crypto_crew.crew().kickoff(inputs=english_inputs)
             assert result is not None
 
-    def test_should_handle_high_volatility_scenarios(self, crypto_crew, mock_crypto_inputs):
+    def test_should_handle_high_volatility_scenarios(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew handles high volatility crypto scenarios."""
         high_volatility_data = {
             "symbol": "SHIB",
@@ -374,8 +365,8 @@ class TestCryptoCrew:
             "risk_level": "very_high",
         }
 
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "High volatility detected: -25.5% in 24h. Risk assessment: VERY HIGH"
             mock_kickoff.return_value = mock_result
 
@@ -384,10 +375,10 @@ class TestCryptoCrew:
             assert result is not None
             assert "volatility" in str(result.raw) or "VERY HIGH" in str(result.raw)
 
-    def test_should_analyze_regulatory_risks(self, crypto_crew, mock_crypto_inputs):
+    def test_should_analyze_regulatory_risks(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew analyzes regulatory risks for cryptocurrencies."""
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Regulatory analysis: SEC enforcement actions and potential classification changes pose risks"
             mock_kickoff.return_value = mock_result
 
@@ -396,11 +387,11 @@ class TestCryptoCrew:
             assert result is not None
             assert "regulatory" in str(result.raw).lower() or "SEC" in str(result.raw)
 
-    @patch("finwiz.tools.tool_factories.get_crypto_crew_tools")
-    def test_should_integrate_quantitative_analysis(self, mock_crypto_tools, crypto_crew, mock_crypto_inputs):
+    def test_should_integrate_quantitative_analysis(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew integrates quantitative analysis for crypto performance."""
         # Mock the tool factory to return tools including quantitative analysis
-        mock_tool_instance = MagicMock()
+        mock_crypto_tools = mocker.patch("finwiz.tools.tool_factories.get_crypto_crew_tools")
+        mock_tool_instance = mocker.MagicMock()
         mock_tool_instance.run.return_value = {
             "sharpe_ratio": 0.85,
             "sortino_ratio": 1.12,
@@ -410,8 +401,8 @@ class TestCryptoCrew:
         }
         mock_crypto_tools.return_value = [mock_tool_instance]
 
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Quantitative analysis shows Sharpe ratio of 0.85 with high volatility of 65%"
             mock_kickoff.return_value = mock_result
 
@@ -420,12 +411,12 @@ class TestCryptoCrew:
             assert result is not None
             assert "Sharpe ratio" in str(result.raw) or "volatility" in str(result.raw)
 
-    def test_should_handle_stablecoin_analysis(self, crypto_crew, mock_crypto_inputs):
+    def test_should_handle_stablecoin_analysis(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew handles stablecoin analysis differently."""
         stablecoin_inputs = {**mock_crypto_inputs, "asset_type": "stablecoin"}
 
-        with patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Stablecoin analysis: Peg stability and collateral backing assessment"
             mock_kickoff.return_value = mock_result
 

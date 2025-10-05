@@ -8,7 +8,6 @@ and criteria optimization functionality.
 import json
 import uuid
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -100,7 +99,7 @@ class TestFeedbackLearningService:
         )
 
     @pytest.mark.asyncio
-    async def test_should_collect_user_feedback_when_valid_data_provided(self, feedback_service, sample_user_feedback):
+    async def test_should_collect_user_feedback_when_valid_data_provided(self, feedback_service, sample_user_feedback, mocker):
         """Test collecting user feedback with valid data."""
         # Act
         feedback_id = await feedback_service.collect_user_feedback(sample_user_feedback)
@@ -119,7 +118,9 @@ class TestFeedbackLearningService:
         assert stored_data["outcome"] == "accepted"
 
     @pytest.mark.asyncio
-    async def test_should_record_performance_outcome_when_valid_data_provided(self, feedback_service, sample_performance_feedback):
+    async def test_should_record_performance_outcome_when_valid_data_provided(
+        self, feedback_service, sample_performance_feedback, mocker
+    ):
         """Test recording performance outcomes with valid data."""
         # Act
         performance_id = await feedback_service.record_performance_outcome(sample_performance_feedback)
@@ -139,7 +140,7 @@ class TestFeedbackLearningService:
 
     @pytest.mark.asyncio
     async def test_should_analyze_feedback_patterns_when_sufficient_data_available(
-        self, feedback_service, sample_user_feedback, sample_performance_feedback
+        self, feedback_service, sample_user_feedback, sample_performance_feedback, mocker
     ):
         """Test feedback pattern analysis with sufficient data."""
         # Arrange - Create multiple feedback samples
@@ -171,7 +172,7 @@ class TestFeedbackLearningService:
 
     @pytest.mark.asyncio
     async def test_should_adjust_criteria_when_sufficient_feedback_and_due_timing(
-        self, feedback_service, sample_criteria, sample_user_feedback
+        self, feedback_service, sample_criteria, sample_user_feedback, mocker
     ):
         """Test criteria adjustment based on feedback learning."""
         # Arrange - Create feedback indicating low acceptance for stocks
@@ -190,7 +191,7 @@ class TestFeedbackLearningService:
             await feedback_service.collect_user_feedback(feedback)
 
         # Mock backtesting to pass
-        with patch.object(feedback_service, "_backtest_criteria_adjustment") as mock_backtest:
+        with mocker.patch.object(feedback_service, "_backtest_criteria_adjustment") as mock_backtest:
             mock_backtest.return_value = {"passed": True, "sharpe_ratio": 1.2}
 
             # Act
@@ -209,7 +210,7 @@ class TestFeedbackLearningService:
         assert adjustment.criteria_after.stock_min_revenue_growth <= sample_criteria.stock_min_revenue_growth
 
     @pytest.mark.asyncio
-    async def test_should_not_adjust_criteria_when_insufficient_feedback(self, feedback_service, sample_criteria):
+    async def test_should_not_adjust_criteria_when_insufficient_feedback(self, feedback_service, sample_criteria, mocker):
         """Test that criteria adjustment is skipped with insufficient feedback."""
         # Arrange - Only create 2 feedback samples (below minimum of 5)
         for i in range(2):
@@ -238,7 +239,7 @@ class TestFeedbackLearningService:
 
     @pytest.mark.asyncio
     async def test_should_get_learning_metrics_when_data_available(
-        self, feedback_service, sample_user_feedback, sample_performance_feedback
+        self, feedback_service, sample_user_feedback, sample_performance_feedback, mocker
     ):
         """Test learning metrics calculation with available data."""
         # Arrange - Create feedback and performance data
@@ -257,10 +258,10 @@ class TestFeedbackLearningService:
         assert metrics.average_confidence_rating > 0
 
     @pytest.mark.asyncio
-    async def test_should_rollback_criteria_adjustment_when_requested(self, feedback_service, sample_criteria):
+    async def test_should_rollback_criteria_adjustment_when_requested(self, mocker, feedback_service, sample_criteria):
         """Test rolling back a criteria adjustment."""
         # Arrange - First create an adjustment
-        with patch.object(feedback_service, "_backtest_criteria_adjustment") as mock_backtest:
+        with mocker.patch.object(feedback_service, "_backtest_criteria_adjustment") as mock_backtest:
             mock_backtest.return_value = {"passed": True}
 
             # Create sufficient feedback for adjustment
@@ -477,7 +478,7 @@ class TestFeedbackIntegrationTools:
     """Test cases for feedback integration tools."""
 
     @pytest.mark.asyncio
-    async def test_feedback_collection_tool_should_process_valid_input(self):
+    async def test_feedback_collection_tool_should_process_valid_input(self, mocker):
         """Test feedback collection tool with valid input."""
         from finwiz.tools.feedback_integration_tool import FeedbackCollectionTool
 
@@ -497,8 +498,8 @@ class TestFeedbackIntegrationTools:
         }
 
         # Mock the feedback service
-        with patch("finwiz.tools.feedback_integration_tool.get_feedback_service") as mock_service:
-            mock_feedback_service = AsyncMock()
+        with mocker.patch("finwiz.tools.feedback_integration_tool.get_feedback_service") as mock_service:
+            mock_feedback_service = mocker.AsyncMock()
             mock_feedback_service.collect_user_feedback.return_value = "feedback_123"
             mock_service.return_value = mock_feedback_service
 
@@ -512,7 +513,7 @@ class TestFeedbackIntegrationTools:
             mock_feedback_service.collect_user_feedback.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_performance_tracking_tool_should_calculate_alpha_correctly(self):
+    async def test_performance_tracking_tool_should_calculate_alpha_correctly(self, mocker):
         """Test performance tracking tool alpha calculation."""
         from finwiz.tools.feedback_integration_tool import PerformanceTrackingTool
 
@@ -530,8 +531,8 @@ class TestFeedbackIntegrationTools:
         }
 
         # Mock the feedback service
-        with patch("finwiz.tools.feedback_integration_tool.get_feedback_service") as mock_service:
-            mock_feedback_service = AsyncMock()
+        with mocker.patch("finwiz.tools.feedback_integration_tool.get_feedback_service") as mock_service:
+            mock_feedback_service = mocker.AsyncMock()
             mock_feedback_service.record_performance_outcome.return_value = "performance_123"
             mock_service.return_value = mock_feedback_service
 
@@ -545,7 +546,7 @@ class TestFeedbackIntegrationTools:
             mock_feedback_service.record_performance_outcome.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_criteria_optimization_tool_should_handle_no_adjustment_needed(self):
+    async def test_criteria_optimization_tool_should_handle_no_adjustment_needed(self, mocker):
         """Test criteria optimization tool when no adjustment is needed."""
         from finwiz.tools.feedback_integration_tool import CriteriaOptimizationTool
 
@@ -563,8 +564,8 @@ class TestFeedbackIntegrationTools:
         }
 
         # Mock the feedback service to return no adjustment
-        with patch("finwiz.tools.feedback_integration_tool.get_feedback_service") as mock_service:
-            mock_feedback_service = AsyncMock()
+        with mocker.patch("finwiz.tools.feedback_integration_tool.get_feedback_service") as mock_service:
+            mock_feedback_service = mocker.AsyncMock()
             mock_feedback_service.adjust_criteria_based_on_learning.return_value = None
             mock_service.return_value = mock_feedback_service
 

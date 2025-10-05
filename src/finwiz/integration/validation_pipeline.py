@@ -10,15 +10,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..schemas.integration import (
-    CryptoCrewOutput,
-    DiscoveryCrewOutput,
-    ETFCrewOutput,
-    StockCrewOutput,
-)
-from ..validation.enums import ValidationMode
-from ..validation.manager import ValidationManager, get_validation_manager
-from ..validation.result import ValidationResult as BaseValidationResult
+from finwiz.schemas.integration import CryptoCrewOutput, DiscoveryCrewOutput, ETFCrewOutput, StockCrewOutput
+from finwiz.validation.enums import ValidationMode
+from finwiz.validation.manager import ValidationManager, get_validation_manager
+from finwiz.validation.result import ValidationResult as BaseValidationResult
+
 from .pipeline_stages import PipelineStages, ValidationPipelineResult
 from .validation_rules import ValidationRules
 

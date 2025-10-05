@@ -6,7 +6,6 @@ interactive elements, and various portfolio scenarios.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
 import pytest
 
@@ -369,11 +368,11 @@ class TestRebalancingReportGenerator:
         assert "scenario-card" in enhanced_html
         assert "addEventListener" in enhanced_html
 
-    @patch("pathlib.Path.write_text")
-    @patch("pathlib.Path.mkdir")
-    def test_should_export_to_pdf_placeholder(self, mock_mkdir, mock_write_text, sample_rebalancing_result):
+    def test_should_export_to_pdf_placeholder(self, mocker, sample_rebalancing_result):
         """Test PDF export placeholder functionality."""
         # Arrange
+        mock_write_text = mocker.patch("pathlib.Path.write_text")
+        mock_mkdir = mocker.patch("pathlib.Path.mkdir")
         generator = RebalancingReportGenerator()
         html_content = "<html><head></head><body>Test Report</body></html>"
         output_path = "test_report.pdf"
@@ -467,10 +466,10 @@ class TestRebalancingReportGenerator:
         assert "urgency-critical" in table_html
         assert "CRITICAL" in table_html
 
-    @patch("finwiz.tools.rebalancing_report_generator.logger")
-    def test_should_log_report_generation_info(self, mock_logger, sample_rebalancing_result):
+    def test_should_log_report_generation_info(self, mocker, sample_rebalancing_result):
         """Test that report generation logs appropriate information."""
         # Arrange
+        mock_logger = mocker.patch("finwiz.tools.rebalancing_report_generator.logger")
         generator = RebalancingReportGenerator()
 
         # Act

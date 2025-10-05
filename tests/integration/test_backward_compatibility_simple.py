@@ -19,19 +19,21 @@ class TestSimpleBackwardCompatibility:
         """Test that all existing classes can still be imported."""
         try:
             # Core crews should be importable
+            from finwiz.core.app_initializer import kickoff
             from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
             from finwiz.crews.etf_crew.etf_crew import EtfCrew
             from finwiz.crews.investment_discovery_crew.investment_discovery_crew import InvestmentDiscoveryCrew
             from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import PortfolioRebalancingCrew
             from finwiz.crews.report_crew.report_crew import ReportCrew
             from finwiz.crews.stock_crew.stock_crew import StockCrew
+            from finwiz.flow_state import FinwizState
+
+            # Main flow should be importable
+            from finwiz.flows.flow_orchestrator import FinwizFlow, plot
             from finwiz.integration.data_accessor import CrewDataAccessor
 
             # Integration system should be importable
             from finwiz.integration.manager import CrewDataIntegrationManager
-
-            # Main flow should be importable
-            from finwiz.main import FinwizFlow, FinwizState, kickoff, plot
 
             # Orchestrators should be importable
             from finwiz.orchestrators.portfolio_review import run as run_portfolio_review
@@ -115,7 +117,7 @@ class TestSimpleBackwardCompatibility:
 
     def test_flow_state_structure_unchanged(self):
         """Test that FinwizState structure remains unchanged."""
-        from finwiz.main import FinwizState
+        from finwiz.flow_state import FinwizState
 
         # Create state instance
         state = FinwizState()
@@ -132,7 +134,8 @@ class TestSimpleBackwardCompatibility:
 
     def test_flow_initialization_backward_compatible(self, mocker):
         """Test that FinwizFlow can be initialized without breaking changes."""
-        from finwiz.main import FinwizFlow, FinwizState
+        from finwiz.flow_state import FinwizState
+        from finwiz.flows.flow_orchestrator import FinwizFlow
 
         # Mock environment variables to avoid configuration errors
         mocker.patch.dict(
@@ -247,14 +250,14 @@ class TestSimpleBackwardCompatibility:
     def test_environment_variables_compatibility(self, mocker):
         """Test that environment variable handling remains compatible."""
         # Test portfolio review environment variable
-        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "true"})
+        mocker.patch.dict("os.environ", {"PORTFOLIO_REVIEW_ENABLED": "true"})
         assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "true"
 
-        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "false"})
+        mocker.patch.dict("os.environ", {"PORTFOLIO_REVIEW_ENABLED": "false"})
         assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "false"
 
         # Test that missing environment variables are handled gracefully
-        mocker.patch.dict(os.environ, {}, clear=True)
+        mocker.patch.dict("os.environ", {}, clear=True)
         # Should not raise exceptions when environment variables are missing
         portfolio_enabled = (os.getenv("PORTFOLIO_REVIEW_ENABLED") or "true").strip().lower() in {"1", "true", "yes", "on"}
         assert portfolio_enabled is True  # Default behavior

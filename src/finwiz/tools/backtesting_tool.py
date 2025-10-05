@@ -15,21 +15,10 @@ from pydantic import BaseModel, Field
 # Lazy imports to avoid circular dependencies
 from finwiz.quantitative.data import get_historical_data_manager
 from finwiz.quantitative.performance import get_performance_analyzer
+from finwiz.schemas.tools import BacktestingInput
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-class BacktestingInput(BaseModel):
-    """Input schema for backtesting tool."""
-
-    symbol: str = Field(..., description="Symbol to backtest (e.g., AAPL, SPY, BTC-USD)")
-    strategy: str = Field(default="sma_crossover", description="Strategy to backtest: 'sma_crossover', 'buy_and_hold', 'momentum'")
-    backtest_period_years: int = Field(default=5, ge=1, le=10, description="Backtesting period in years (1-10)")
-    benchmark_symbol: str = Field(default="SPY", description="Benchmark symbol for comparison")
-    initial_capital: float = Field(default=100000.0, gt=0, description="Initial capital for backtesting")
-    include_regime_analysis: bool = Field(default=True, description="Include multi-regime analysis (bull, bear, sideways)")
-    strategy_params: dict[str, Any] = Field(default_factory=dict, description="Custom strategy parameters")
 
 
 class MarketRegime(BaseModel):

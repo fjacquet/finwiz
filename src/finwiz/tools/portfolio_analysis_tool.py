@@ -10,25 +10,12 @@ from datetime import datetime
 from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.quantitative.performance import get_performance_analyzer
 from finwiz.quantitative.portfolio_analyzer import PortfolioAnalyzer
+from finwiz.schemas.tools import PortfolioAnalysisInput
 from finwiz.tools.logger import get_logger
-
-logger = get_logger(__name__)
-
-
-class PortfolioAnalysisInput(BaseModel):
-    """Input model for portfolio analysis tool."""
-
-    holdings: list[dict[str, Any]] = Field(
-        ..., description="List of portfolio holdings with symbol, shares, and optional cost_basis"
-    )
-    benchmark: str = Field(default="SPY", description="Benchmark symbol for comparison")
-    analysis_period: str = Field(default="1y", description="Analysis period (1y, 2y, 5y)")
-    include_risk_metrics: bool = Field(default=True, description="Include risk analysis")
-    include_diversification: bool = Field(default=True, description="Include diversification analysis")
 
 
 class PortfolioAnalysisTool(BaseTool):
@@ -282,3 +269,6 @@ class PortfolioAnalysisTool(BaseTool):
 def get_portfolio_analysis_tool() -> PortfolioAnalysisTool:
     """Get an instance of the portfolio analysis tool."""
     return PortfolioAnalysisTool()
+
+
+logger = get_logger(__name__)

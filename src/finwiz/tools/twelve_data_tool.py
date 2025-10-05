@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Literal
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+# Import schema from centralized location
+from finwiz.schemas.tools import TwelveDataIndicatorInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.api_decorators import api_tool
@@ -22,19 +23,6 @@ from finwiz.utils.feature_flags import get_feature_flags
 from finwiz.utils.rate_limiter import APIProvider
 
 logger = get_logger(__name__)
-
-
-class TwelveDataIndicatorInput(BaseModel):
-    """Input schema for Twelve Data indicator tool."""
-
-    symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, BTC/USD, SPY")
-    interval: str = Field("1day", description="Interval, e.g., 1min, 5min, 1h, 1day")
-    indicator: Literal["rsi", "macd", "bbands"] = Field(..., description="Indicator to fetch from Twelve Data")
-    length: int | None = Field(None, description="Window length for indicators like RSI/BBANDS")
-    fast_period: int | None = Field(None, description="Fast period for MACD")
-    slow_period: int | None = Field(None, description="Slow period for MACD")
-    signal_period: int | None = Field(None, description="Signal period for MACD")
-    outputsize: int | None = Field(100, description="Number of data points to return (max depends on plan)")
 
 
 class TwelveDataIndicatorTool(BaseTool):

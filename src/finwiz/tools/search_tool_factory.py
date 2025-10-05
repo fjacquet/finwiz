@@ -10,78 +10,12 @@ from typing import Any
 from crewai.tools import BaseTool
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from finwiz.schemas.tools import PerplexitySearchWrapperInput as PerplexitySearchInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.feature_flags import get_feature_flags
-
-# Ensure environment variables are loaded
-load_dotenv()
-
-logger = get_logger(__name__)
-
-
-class SearchToolFactory:
-    """Factory for creating prioritized search tools."""
-
-    def __init__(self) -> None:
-        """Initialize the search tool factory."""
-        self.feature_flags = get_feature_flags()
-        self._perplexity_integration = None
-        self._serper_tools = {}
-
-    def get_primary_search_tool(self, search_type: str = "search", n_results: int = 10) -> Any:
-        """
-        Get the primary search tool with Perplexity prioritization.
-
-        Args:
-            search_type: Type of search ("search", "news")
-            n_results: Number of results to return
-
-        Returns:
-            Search tool instance (Perplexity wrapper or SerperDevTool)
-
-        """
-        if self.feature_flags.is_enabled("perplexity_research"):
-            if self._perplexity_integration is None:
-                try:
-                    self._perplexity_integration = PerplexityAnalysisIntegration()
-                except Exception as e:
-                    logger.warning(f"Failed to initialize Perplexity search: {e}")
-                    self._perplexity_integration = None
-
-            if self._perplexity_integration and self._perplexity_integration.is_available:
-                logger.info("Using Perplexity as primary search tool")
-                return PerplexitySearchWrapper(self._perplexity_integration, search_type=search_type, max_results=n_results)
-            elif self._perplexity_integration:
-                # Always return Perplexity wrapper when feature is enabled, even if API key is missing
-                # This ensures consistent behavior and proper fallback handling
-                logger.info("Using Perplexity wrapper (API key validation at runtime)")
-                return PerplexitySearchWrapper(self._perplexity_integration, search_type=search_type, max_results=n_results)
-
-        # Fallback to SerperDevTool
-        cache_key = f"{search_type}_{n_results}"
-        if cache_key not in self._serper_tools:
-            fallback_or_primary = "fallback" if self.feature_flags.is_enabled("perplexity_research") else "primary"
-            logger.info(f"Using SerperDevTool as {fallback_or_primary} search tool")
-            self._serper_tools[cache_key] = SerperDevTool(n_results=n_results, search_type=search_type)
-
-        return self._serper_tools[cache_key]
-
-    def get_news_search_tool(self, n_results: int = 10) -> Any:
-        """Get news-specific search tool."""
-        return self.get_primary_search_tool("news", n_results)
-
-    def get_web_search_tool(self, n_results: int = 10) -> Any:
-        """Get general web search tool."""
-        return self.get_primary_search_tool("search", n_results)
-
-
-class PerplexitySearchInput(BaseModel):
-    """Input schema for PerplexitySearchWrapper."""
-
-    query: str = Field(..., description="Search query for financial research")
 
 
 class PerplexitySearchWrapper(BaseTool):
@@ -189,6 +123,68 @@ class PerplexitySearchWrapper(BaseTool):
         except Exception as e:
             logger.error(f"Perplexity search error: {e}")
             return "[]"
+
+
+# Ensure environment variables are loaded
+load_dotenv()
+
+logger = get_logger(__name__)
+
+
+class SearchToolFactory:
+    """Factory for creating prioritized search tools."""
+
+    def __init__(self) -> None:
+        """Initialize the search tool factory."""
+        self.feature_flags = get_feature_flags()
+        self._perplexity_integration = None
+        self._serper_tools = {}
+
+    def get_primary_search_tool(self, search_type: str = "search", n_results: int = 10) -> Any:
+        """
+        Get the primary search tool with Perplexity prioritization.
+
+        Args:
+            search_type: Type of search ("search", "news")
+            n_results: Number of results to return
+
+        Returns:
+            Search tool instance (Perplexity wrapper or SerperDevTool)
+
+        """
+        if self.feature_flags.is_enabled("perplexity_research"):
+            if self._perplexity_integration is None:
+                try:
+                    self._perplexity_integration = PerplexityAnalysisIntegration()
+                except Exception as e:
+                    logger.warning(f"Failed to initialize Perplexity search: {e}")
+                    self._perplexity_integration = None
+
+            if self._perplexity_integration and self._perplexity_integration.is_available:
+                logger.info("Using Perplexity as primary search tool")
+                return PerplexitySearchWrapper(self._perplexity_integration, search_type=search_type, max_results=n_results)
+            elif self._perplexity_integration:
+                # Always return Perplexity wrapper when feature is enabled, even if API key is missing
+                # This ensures consistent behavior and proper fallback handling
+                logger.info("Using Perplexity wrapper (API key validation at runtime)")
+                return PerplexitySearchWrapper(self._perplexity_integration, search_type=search_type, max_results=n_results)
+
+        # Fallback to SerperDevTool
+        cache_key = f"{search_type}_{n_results}"
+        if cache_key not in self._serper_tools:
+            fallback_or_primary = "fallback" if self.feature_flags.is_enabled("perplexity_research") else "primary"
+            logger.info(f"Using SerperDevTool as {fallback_or_primary} search tool")
+            self._serper_tools[cache_key] = SerperDevTool(n_results=n_results, search_type=search_type)
+
+        return self._serper_tools[cache_key]
+
+    def get_news_search_tool(self, n_results: int = 10) -> Any:
+        """Get news-specific search tool."""
+        return self.get_primary_search_tool("news", n_results)
+
+    def get_web_search_tool(self, n_results: int = 10) -> Any:
+        """Get general web search tool."""
+        return self.get_primary_search_tool("search", n_results)
 
 
 # Global factory instance

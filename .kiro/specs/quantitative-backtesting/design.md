@@ -86,6 +86,7 @@ graph TB
 ### 1. Data Management System
 
 #### Historical Data Manager
+
 ```python
 class HistoricalDataManager:
     """Manages historical market data acquisition and quality validation."""
@@ -240,6 +241,7 @@ class DataQualityValidator:
 ```
 
 #### Design Rationale
+
 - **Multi-source validation**: Reduces single-point-of-failure and improves data reliability
 - **Comprehensive quality checks**: Detects missing data, price anomalies, and structural issues
 - **Intelligent caching**: Balances performance with data freshness requirements
@@ -248,6 +250,7 @@ class DataQualityValidator:
 ### 2. Technical Analysis Engine
 
 #### TA-Lib Integration
+
 ```python
 class TechnicalAnalysisEngine:
     """Professional technical analysis using TA-Lib with fallback implementations."""
@@ -420,6 +423,7 @@ class NativeTechnicalCalculator:
 ```
 
 #### Design Rationale
+
 - **Professional library integration**: Uses TA-Lib for institutional-quality calculations
 - **Graceful fallback**: Native Python implementations when TA-Lib unavailable
 - **Batch processing**: Efficient calculation of multiple indicators
@@ -429,6 +433,7 @@ class NativeTechnicalCalculator:
 ### 3. Backtesting Engine
 
 #### Backtrader Integration
+
 ```python
 class BacktestingEngine:
     """Professional backtesting engine using Backtrader framework."""
@@ -711,6 +716,7 @@ class StrategyFramework:
 ```
 
 #### Design Rationale
+
 - **Professional framework**: Uses Backtrader for institutional-quality backtesting
 - **Realistic trading conditions**: Includes commission, slippage, and market impact
 - **Comprehensive analysis**: Multiple analyzers for detailed performance metrics
@@ -720,6 +726,7 @@ class StrategyFramework:
 ### 4. Stock Screening Engine
 
 #### Yahoo Finance Integration
+
 ```python
 class StockScreener:
     """Advanced stock screening using Yahoo Finance and fundamental metrics."""
@@ -925,6 +932,7 @@ class FundamentalAnalyzer:
 ```
 
 #### Design Rationale
+
 - **Multi-criteria screening**: Supports complex combinations of fundamental and technical filters
 - **Efficient batch processing**: Minimizes API calls through intelligent batching
 - **Composite scoring**: Ranks stocks using weighted scoring across multiple dimensions
@@ -934,6 +942,7 @@ class FundamentalAnalyzer:
 ## Error Handling
 
 ### Comprehensive Error Management
+
 ```python
 class QuantitativeAnalysisError(Exception):
     """Base exception for quantitative analysis errors."""
@@ -989,6 +998,7 @@ class ErrorHandler:
 ## Testing Strategy
 
 ### Comprehensive Testing Framework
+
 ```python
 class QuantitativeTestSuite:
     """Comprehensive test suite for quantitative analysis components."""

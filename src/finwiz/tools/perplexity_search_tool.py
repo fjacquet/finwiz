@@ -14,29 +14,12 @@ from typing import Any
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+# Import schema from centralized location
+from finwiz.schemas.tools import PerplexitySearchInput
 from finwiz.utils.api_decorators import api_tool
 from finwiz.utils.rate_limiter import APIProvider
-
-
-class PerplexitySearchInput(BaseModel):
-    """Input schema for Perplexity Sonar search."""
-
-    query: str = Field(..., description="Natural language query to research with Perplexity Sonar.")
-    model: str = Field(
-        "sonar-pro",
-        description=("Perplexity model to use (e.g., sonar-pro). Use higher tiers only if your account has access."),
-    )
-    top_k: int | None = Field(5, description="Maximum number of web results to retrieve (1-10 typical).")
-    search_recency: str | None = Field(
-        None,
-        description="Recency filter such as 'day', 'week', or 'month'. Leave empty for default behaviour.",
-    )
-    search_domain_filter: list[str] | None = Field(
-        None,
-        description="Optional list of domains to allow (Perplexity search_domain_filter parameter).",
-    )
 
 
 class PerplexitySearchTool(BaseTool):

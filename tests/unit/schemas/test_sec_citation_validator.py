@@ -6,7 +6,6 @@ and citation consolidation with full mocking.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -23,9 +22,9 @@ class TestSECCitationValidator:
     """Test cases for SECCitationValidator class."""
 
     @pytest.fixture
-    def mock_logger(self):
+    def mock_logger(self, mocker):
         """Mock logger for testing."""
-        return Mock()
+        return mocker.Mock()
 
     @pytest.fixture
     def sec_validator(self, mock_logger):
@@ -394,10 +393,10 @@ class TestSECCitationValidator:
         assert isinstance(extracted_citations, dict)
         assert len(extracted_citations) == 0
 
-    def test_should_handle_exception_during_validation_gracefully(self, sec_validator, sample_sec_citation):
+    def test_should_handle_exception_during_validation_gracefully(self, mocker, sec_validator, sample_sec_citation):
         """Test graceful handling of exceptions during validation."""
         # Mock an exception in URL validation
-        with patch.object(sec_validator, "_validate_filing_url", side_effect=Exception("Test error")):
+        with mocker.patch.object(sec_validator, "_validate_filing_url", side_effect=Exception("Test error")):
             result = sec_validator.validate_sec_citation(sample_sec_citation)
 
             assert isinstance(result, SECCitationValidationResult)
@@ -405,10 +404,10 @@ class TestSECCitationValidator:
             assert len(result.validation_errors) > 0
             assert "Test error" in str(result.validation_errors)
 
-    def test_should_check_url_accessibility_when_requested(self, sec_validator, sample_sec_citation):
+    def test_should_check_url_accessibility_when_requested(self, mocker, sec_validator, sample_sec_citation):
         """Test URL accessibility checking."""
         # Mock URL accessibility check
-        with patch.object(sec_validator, "_check_url_accessibility", return_value=False):
+        with mocker.patch.object(sec_validator, "_check_url_accessibility", return_value=False):
             result = sec_validator.validate_sec_citation(sample_sec_citation, check_url_accessibility=True)
 
             assert result.url_accessible is False

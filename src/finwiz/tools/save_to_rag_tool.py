@@ -9,15 +9,12 @@ from typing import Any
 
 from crewai.tools import BaseTool
 from crewai_tools import RagTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
 
-
-class SaveToRagInput(BaseModel):
-    """Input schema for SaveToRagTool."""
-
-    text: str = Field(..., description="Text to store in the vector database")
+# Import schema from centralized location
+from finwiz.schemas.tools import SaveToRagInput
 
 
 class SaveToRagTool(BaseTool):

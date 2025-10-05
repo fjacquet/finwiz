@@ -5,15 +5,18 @@ This folder hosts JSON Schemas exported from Pydantic models in `src/finwiz/sche
 ## Core Schemas
 
 ### Reporter & Flow Contracts
+
 - **`ReporterInput`**: Aggregate input for the final tool-less reporter
 - **`RiskAssessmentStandardized`**: Standardized 0-5 risk scoring across all asset classes
 
 ### Asset-Specific Contracts
+
 - **Stock Analysis**: `TenKInsight`, `MarketSentiment`
 - **ETF Analysis**: `ETFFactsheet`, `ETFTopHolding`
 - **Crypto Analysis**: `CryptoThesis`
 
 ### Quantitative Analysis Schemas
+
 - **`QuantitativeBacktestResult`**: Backtesting results with performance metrics and trade statistics
 - **`QuantitativeTechnicalAnalysis`**: Technical analysis results with signal counts and indicator values
 - **`QuantitativePerformanceMetrics`**: Performance metrics including Sharpe ratio, drawdown, and risk measures
@@ -32,12 +35,14 @@ The project includes standardized analysis tools that provide consistent output 
 These tools complement the existing schema-validated crew outputs and provide additional analytical capabilities with their own structured output formats.
 
 ### Validation & Portfolio
+
 - **`ValidatedTicker`**: Ticker existence validation results
 - **`PortfolioReview`**: Complete portfolio analysis with metadata and holdings list
 - **`HoldingDecision`**: Individual holding analysis with keep/sell decision and rationale
 - **`Alternative`**: Alternative investment suggestions with scoring and thesis
 
 ### Perplexity Sonar Integration
+
 - **`SonarArticle`**: Individual article from Perplexity Sonar search results with validation
 - **`SonarSearchResult`**: Structured result container for Perplexity searches
 - **`PerplexitySearchRequest`**: Request schema for Perplexity search operations
@@ -59,21 +64,25 @@ This writes `*.schema.json` files into this folder.
 Examples live under `docs/schemas/examples/`:
 
 ### Core Examples
+
 - `reporter_input.example.json` - Reporter input structure
 - `validated_ticker.example.json` - Ticker validation results
 
 ### Asset-Specific Examples  
+
 - `tenk_insight.example.json` - Stock 10-K analysis
 - `market_sentiment.example.json` - Market sentiment analysis
 - `etf_factsheet.example.json` - ETF factsheet data
 - `crypto_thesis.example.json` - Crypto investment thesis
 
 ### Perplexity Integration Examples
+
 - `sonar_article.example.json` - Individual Sonar article structure
 - `sonar_search_result.example.json` - Complete Sonar search result
 - `perplexity_config.example.json` - Perplexity integration configuration
 
 ### Quantitative Analysis Examples
+
 - `quantitative_backtest_result.example.json` - Backtesting results
 - `quantitative_technical_analysis.example.json` - Technical analysis output
 - `quantitative_recommendation.example.json` - Investment recommendations
@@ -86,6 +95,7 @@ All schemas use strict Pydantic v2 models with `extra='forbid'` to prevent schem
 FinWiz includes comprehensive contract tests to validate schema compliance and prevent data drift:
 
 ### Test Coverage
+
 - **`tests/test_contract_reporter.py`**: Validates ReporterInput aggregate schema
   - Tests minimal valid payload construction
   - Enforces `extra='forbid'` to prevent unexpected fields
@@ -102,6 +112,7 @@ FinWiz includes comprehensive contract tests to validate schema compliance and p
   - Ensures consistent risk factor structure
 
 ### Running Contract Tests
+
 ```bash
 # Run all contract tests
 uv run pytest tests/test_contract_*.py
@@ -124,6 +135,7 @@ FinWiz implements a centralized validation system with the following components:
 ### Validation Modes
 
 Configure validation strictness via `VALIDATION_STRICTNESS` environment variable:
+
 - `off`: No validation (development only)
 - `warn`: Log validation errors but continue (default)
 - `error`: Fail on validation errors (production)

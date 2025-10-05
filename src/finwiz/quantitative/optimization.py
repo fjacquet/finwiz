@@ -8,7 +8,6 @@ and other advanced portfolio construction techniques.
 
 import warnings
 from datetime import datetime
-from enum import Enum
 from typing import Any, Never
 
 import numpy as np
@@ -47,6 +46,9 @@ except ImportError:
     norm = MockNorm()
 
 from finwiz.quantitative.config import OptimizationMethod, get_quant_config
+from finwiz.quantitative.constraint_handlers import ConstraintHandler, OptimizationConstraint
+from finwiz.quantitative.objective_functions import ObjectiveFunction, ObjectiveFunctionCalculator
+from finwiz.quantitative.portfolio_optimization_algorithms import PortfolioOptimizationAlgorithms
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -54,40 +56,6 @@ logger = get_logger(__name__)
 # Suppress scipy optimization warnings if available
 if SCIPY_AVAILABLE:
     warnings.filterwarnings("ignore", category=optimize.OptimizeWarning)
-
-
-class ObjectiveFunction(str, Enum):
-    """Portfolio optimization objective functions."""
-
-    MAX_SHARPE = "max_sharpe"
-    MIN_VOLATILITY = "min_volatility"
-    MAX_RETURN = "max_return"
-    RISK_PARITY = "risk_parity"
-    MAX_DIVERSIFICATION = "max_diversification"
-    MIN_CVAR = "min_cvar"
-
-
-class ConstraintType(str, Enum):
-    """Portfolio constraint types."""
-
-    WEIGHT_SUM = "weight_sum"
-    WEIGHT_BOUNDS = "weight_bounds"
-    SECTOR_LIMITS = "sector_limits"
-    TURNOVER_LIMIT = "turnover_limit"
-    TRACKING_ERROR = "tracking_error"
-
-
-class OptimizationConstraint(BaseModel):
-    """Portfolio optimization constraint."""
-
-    constraint_type: ConstraintType = Field(..., description="Type of constraint")
-    parameters: dict[str, Any] = Field(..., description="Constraint parameters")
-
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
-        extra = "forbid"
 
 
 class PortfolioInputs(BaseModel):
@@ -211,6 +179,11 @@ class PortfolioOptimizer:
         self._cvxpy_available = self._check_cvxpy_availability()
         self._scipy_available = SCIPY_AVAILABLE
 
+        # Initialize component modules
+        self.algorithms = PortfolioOptimizationAlgorithms()
+        self.constraint_handler = ConstraintHandler()
+        self.objective_calculator = ObjectiveFunctionCalculator()
+
         if not self._cvxpy_available:
             logger.warning("CVXPY not available, using scipy optimization")
 
@@ -263,13 +236,15 @@ class PortfolioOptimizer:
 
             # Perform optimization based on method
             if method == OptimizationMethod.MEAN_VARIANCE:
-                result = self._optimize_mean_variance(returns, cov_matrix, inputs.risk_free_rate, objective, constraints)
+                result = self.algorithms.optimize_mean_variance(returns, cov_matrix, inputs.risk_free_rate, objective, constraints)
             elif method == OptimizationMethod.RISK_PARITY:
-                result = self._optimize_risk_parity(returns, cov_matrix, constraints)
+                result = self.algorithms.optimize_risk_parity(returns, cov_matrix, constraints)
             elif method == OptimizationMethod.BLACK_LITTERMAN:
-                result = self._optimize_black_litterman(inputs, constraints)
+                result = self.algorithms.optimize_black_litterman(
+                    returns, cov_matrix, inputs.risk_free_rate, constraints=constraints
+                )
             elif method == OptimizationMethod.HIERARCHICAL_RISK_PARITY:
-                result = self._optimize_hrp(returns, cov_matrix, constraints)
+                result = self.algorithms.optimize_hierarchical_risk_parity(returns, cov_matrix, constraints)
             else:
                 raise ValueError(f"Optimization method {method} not implemented")
 
@@ -282,7 +257,9 @@ class PortfolioOptimizer:
                 optimal_weights=result.tolist(),
                 symbols=inputs.symbols,
                 metrics=metrics,
-                objective_value=self._calculate_objective_value(result, returns, cov_matrix, inputs.risk_free_rate, objective),
+                objective_value=self.objective_calculator.calculate_objective_value(
+                    result, returns, cov_matrix, inputs.risk_free_rate, objective
+                ),
                 optimization_method=method,
                 success=True,
                 message="Optimization completed successfully",
@@ -319,150 +296,18 @@ class PortfolioOptimizer:
         """Validate portfolio optimization inputs."""
         # Check for positive definite covariance matrix
         cov_matrix = np.array(inputs.covariance_matrix)
-        eigenvals = np.linalg.eigvals(cov_matrix)
-
-        if np.any(eigenvals <= 0):
-            logger.warning("Covariance matrix is not positive definite, adding regularization")
-            # Add small regularization to diagonal
-            regularization = 1e-8 * np.eye(len(eigenvals))
-            inputs.covariance_matrix = (cov_matrix + regularization).tolist()
-
-    def _optimize_mean_variance(
-        self,
-        returns: np.ndarray,
-        cov_matrix: np.ndarray,
-        risk_free_rate: float,
-        objective: ObjectiveFunction,
-        constraints: list[OptimizationConstraint] | None,
-    ) -> np.ndarray:
-        """Optimize using mean-variance optimization."""
-        n_assets = len(returns)
-
-        # Define objective function
-        def objective_func(weights: np.ndarray) -> float:
-            portfolio_return = np.dot(weights, returns)
-            portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-
-            if objective == ObjectiveFunction.MAX_SHARPE:
-                return -(portfolio_return - risk_free_rate) / portfolio_vol
-            elif objective == ObjectiveFunction.MIN_VOLATILITY:
-                return portfolio_vol
-            elif objective == ObjectiveFunction.MAX_RETURN:
-                return -portfolio_return
-            else:
-                raise ValueError(f"Objective {objective} not supported in mean-variance optimization")
-
-        # Set up constraints
-        constraints_list = [{"type": "eq", "fun": lambda x: np.sum(x) - 1.0}]  # Weights sum to 1
-
-        # Add custom constraints
-        if constraints:
-            for constraint in constraints:
-                if constraint.constraint_type == ConstraintType.WEIGHT_BOUNDS:
-                    # Will be handled in bounds parameter
-                    pass
-                elif constraint.constraint_type == ConstraintType.SECTOR_LIMITS:
-                    # Add sector constraint
-                    constraint.parameters.get("sector_map", {})
-                    constraint.parameters.get("limits", {})
-                    # Implementation would depend on sector mapping
-
-        # Set bounds (default: long-only)
-        bounds = [(0, 1) for _ in range(n_assets)]
-
-        # Initial guess (equal weights)
-        x0 = np.array([1.0 / n_assets] * n_assets)
-
-        # Optimize
-        result = optimize.minimize(
-            objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9}
-        )
-
-        if not result.success:
-            logger.warning(f"Optimization did not converge: {result.message}")
-
-        return result.x
-
-    def _optimize_risk_parity(
-        self, returns: np.ndarray, cov_matrix: np.ndarray, constraints: list[OptimizationConstraint] | None
-    ) -> np.ndarray:
-        """Optimize using risk parity approach."""
-        n_assets = len(returns)
-
-        def risk_parity_objective(weights: np.ndarray) -> float:
-            """Risk parity objective function."""
-            portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-            marginal_contrib = np.dot(cov_matrix, weights) / portfolio_vol
-            contrib = weights * marginal_contrib
-
-            # Target equal risk contribution
-            target_contrib = portfolio_vol / n_assets
-            return np.sum((contrib - target_contrib) ** 2)
-
-        # Constraints
-        constraints_list = [{"type": "eq", "fun": lambda x: np.sum(x) - 1.0}]
-
-        # Bounds (long-only)
-        bounds = [(0.001, 1) for _ in range(n_assets)]  # Small lower bound to avoid division by zero
-
-        # Initial guess
-        x0 = np.array([1.0 / n_assets] * n_assets)
-
-        # Optimize
-        result = optimize.minimize(
-            risk_parity_objective,
-            x0,
-            method="SLSQP",
-            bounds=bounds,
-            constraints=constraints_list,
-            options={"maxiter": 1000, "ftol": 1e-9},
-        )
-
-        return result.x
-
-    def _optimize_black_litterman(self, inputs: PortfolioInputs, constraints: list[OptimizationConstraint] | None) -> np.ndarray:
-        """Optimize using Black-Litterman model."""
-        # Simplified Black-Litterman implementation
-        # In practice, this would require market cap weights and investor views
-
         returns = np.array(inputs.expected_returns)
-        cov_matrix = np.array(inputs.covariance_matrix)
-        n_assets = len(returns)
 
-        # Use market cap weights as prior (simplified - using equal weights)
-        market_weights = np.array([1.0 / n_assets] * n_assets)
+        # Use algorithms module for validation
+        is_valid, errors = self.algorithms.validate_inputs(returns, cov_matrix)
 
-        # Risk aversion parameter (simplified)
-        risk_aversion = 3.0
+        if not is_valid:
+            logger.warning(f"Input validation errors: {errors}")
 
-        # Implied equilibrium returns
-        implied_returns = risk_aversion * np.dot(cov_matrix, market_weights)
-
-        # For simplicity, use implied returns in mean-variance optimization
-        return self._optimize_mean_variance(
-            implied_returns, cov_matrix, inputs.risk_free_rate, ObjectiveFunction.MAX_SHARPE, constraints
-        )
-
-    def _optimize_hrp(
-        self, returns: np.ndarray, cov_matrix: np.ndarray, constraints: list[OptimizationConstraint] | None
-    ) -> np.ndarray:
-        """Optimize using Hierarchical Risk Parity."""
-        # Simplified HRP implementation
-        # Full implementation would require hierarchical clustering
-
-        len(returns)
-
-        # Calculate correlation matrix
-        std_devs = np.sqrt(np.diag(cov_matrix))
-        corr_matrix = cov_matrix / np.outer(std_devs, std_devs)
-
-        # Distance matrix (1 - correlation)
-        1 - corr_matrix
-
-        # For simplicity, use inverse volatility weighting
-        inv_vol_weights = (1 / std_devs) / np.sum(1 / std_devs)
-
-        return inv_vol_weights
+        # Regularize covariance matrix if needed
+        regularized_cov = self.algorithms.regularize_covariance_matrix(cov_matrix)
+        if not np.array_equal(cov_matrix, regularized_cov):
+            inputs.covariance_matrix = regularized_cov.tolist()
 
     def _calculate_portfolio_metrics(
         self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float
@@ -497,22 +342,6 @@ class PortfolioOptimizer:
             cvar_95=cvar_95,
             diversification_ratio=diversification_ratio,
         )
-
-    def _calculate_objective_value(
-        self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float, objective: ObjectiveFunction
-    ) -> float:
-        """Calculate objective function value."""
-        portfolio_return = np.dot(weights, returns)
-        portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-
-        if objective == ObjectiveFunction.MAX_SHARPE:
-            return (portfolio_return - risk_free_rate) / portfolio_vol if portfolio_vol > 0 else 0
-        elif objective == ObjectiveFunction.MIN_VOLATILITY:
-            return portfolio_vol
-        elif objective == ObjectiveFunction.MAX_RETURN:
-            return portfolio_return
-        else:
-            return 0.0
 
     def generate_efficient_frontier(
         self, inputs: PortfolioInputs, num_points: int = 50, method: OptimizationMethod = OptimizationMethod.MEAN_VARIANCE
@@ -584,29 +413,7 @@ class PortfolioOptimizer:
 
     def _optimize_for_target_return(self, returns: np.ndarray, cov_matrix: np.ndarray, target_return: float) -> np.ndarray | None:
         """Optimize for minimum volatility at target return."""
-        n_assets = len(returns)
-
-        def objective(weights: np.ndarray) -> float:
-            return np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-
-        # Constraints
-        constraints = [
-            {"type": "eq", "fun": lambda x: np.sum(x) - 1.0},  # Weights sum to 1
-            {"type": "eq", "fun": lambda x: np.dot(x, returns) - target_return},  # Target return
-        ]
-
-        # Bounds
-        bounds = [(0, 1) for _ in range(n_assets)]
-
-        # Initial guess
-        x0 = np.array([1.0 / n_assets] * n_assets)
-
-        # Optimize
-        result = optimize.minimize(
-            objective, x0, method="SLSQP", bounds=bounds, constraints=constraints, options={"maxiter": 1000, "ftol": 1e-9}
-        )
-
-        return result.x if result.success else None
+        return self.algorithms.optimize_for_target_return(returns, cov_matrix, target_return)
 
     def calculate_portfolio_attribution(
         self, weights: np.ndarray, returns: np.ndarray, benchmark_weights: np.ndarray | None = None
@@ -676,14 +483,22 @@ class PortfolioOptimizer:
 
     def get_available_methods(self) -> list[OptimizationMethod]:
         """Get available optimization methods."""
-        methods = [
-            OptimizationMethod.MEAN_VARIANCE,
-            OptimizationMethod.RISK_PARITY,
-            OptimizationMethod.BLACK_LITTERMAN,
-            OptimizationMethod.HIERARCHICAL_RISK_PARITY,
-        ]
+        methods = self.algorithms.get_available_algorithms()
 
         if self._cvxpy_available:
             methods.extend([OptimizationMethod.CRITICAL_LINE_ALGORITHM, OptimizationMethod.EFFICIENT_FRONTIER])
 
         return methods
+
+    # Backward compatibility methods for tests
+    def _calculate_objective_value(
+        self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float, objective: ObjectiveFunction
+    ) -> float:
+        """Calculate objective function value (backward compatibility)."""
+        return self.objective_calculator.calculate_objective_value(weights, returns, cov_matrix, risk_free_rate, objective)
+
+    def _optimize_risk_parity(
+        self, returns: np.ndarray, cov_matrix: np.ndarray, constraints: list[OptimizationConstraint] | None
+    ) -> np.ndarray:
+        """Optimize using risk parity (backward compatibility)."""
+        return self.algorithms.optimize_risk_parity(returns, cov_matrix, constraints)

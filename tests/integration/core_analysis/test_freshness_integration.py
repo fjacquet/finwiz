@@ -10,7 +10,6 @@ import shutil
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -64,11 +63,13 @@ class TestFreshnessIntegration:
         stale_time = (current_time - timedelta(hours=48)).timestamp()  # 48 hours ago (stale)
         fresh_time = (current_time - timedelta(hours=1)).timestamp()  # 1 hour ago (fresh)
 
-        with patch("pathlib.Path.stat") as mock_stat:
+        with mocker.patch("pathlib.Path.stat") as mock_stat:
             # Configure stat mock to return different times for different files
-            def stat_side_effect():
-                mock_stat_obj = Mock()
-                if str(stock_file) in str(mock_stat.call_args):
+            def stat_side_effect(*args, **kwargs):
+                mock_stat_obj = mocker.Mock()
+                # Get the path from the mock call context
+                path_str = str(mock_stat.call_args[0][0]) if mock_stat.call_args and mock_stat.call_args[0] else ""
+                if str(stock_file) in path_str:
                     mock_stat_obj.st_mtime = stale_time
                 else:
                     mock_stat_obj.st_mtime = fresh_time
@@ -77,7 +78,7 @@ class TestFreshnessIntegration:
             mock_stat.side_effect = stat_side_effect
 
             # Mock datetime in freshness checker
-            with patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
+            with mocker.patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
                 datetime_mock.now.return_value = current_time
                 datetime_mock.fromtimestamp.side_effect = lambda ts: datetime.fromtimestamp(ts)
                 datetime_mock.min = datetime.min
@@ -103,12 +104,12 @@ class TestFreshnessIntegration:
         # Mock file as stale (48 hours old)
         stale_time = (current_time - timedelta(hours=48)).timestamp()
 
-        with patch("pathlib.Path.stat") as mock_stat:
-            mock_stat_obj = Mock()
+        with mocker.patch("pathlib.Path.stat") as mock_stat:
+            mock_stat_obj = mocker.Mock()
             mock_stat_obj.st_mtime = stale_time
             mock_stat.return_value = mock_stat_obj
 
-            with patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
+            with mocker.patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
                 datetime_mock.now.return_value = current_time
                 datetime_mock.fromtimestamp.return_value = current_time - timedelta(hours=48)
                 datetime_mock.min = datetime.min
@@ -144,18 +145,20 @@ class TestFreshnessIntegration:
             "discovery": 72,  # Very stale (depends on others)
         }
 
-        def stat_side_effect(path_obj):
-            mock_stat_obj = Mock()
+        def stat_side_effect(*args, **kwargs):
+            mock_stat_obj = mocker.Mock()
+            # Extract path from args - first argument is self (Path object)
+            path_obj = args[0] if args else None
             for crew_name, hours_ago in crew_staleness.items():
-                if crew_name in str(path_obj):
+                if path_obj and crew_name in str(path_obj):
                     mock_stat_obj.st_mtime = (current_time - timedelta(hours=hours_ago)).timestamp()
                     break
             else:
                 mock_stat_obj.st_mtime = current_time.timestamp()
             return mock_stat_obj
 
-        with patch("pathlib.Path.stat", side_effect=stat_side_effect):
-            with patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
+        with mocker.patch("pathlib.Path.stat", side_effect=stat_side_effect):
+            with mocker.patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
                 datetime_mock.now.return_value = current_time
                 datetime_mock.fromtimestamp.side_effect = lambda ts: datetime.fromtimestamp(ts)
 
@@ -196,19 +199,21 @@ class TestFreshnessIntegration:
                 crew_file = crew_dir / f"{crew_name}_output.json"
                 crew_file.write_text(json.dumps({"crew": crew_name, "test": "data"}))
 
-        def stat_side_effect(path_obj):
-            mock_stat_obj = Mock()
+        def stat_side_effect(*args, **kwargs):
+            mock_stat_obj = mocker.Mock()
             mock_stat_obj.st_size = 1024
+            # Extract path from args - first argument is self (Path object)
+            path_obj = args[0] if args else None
             for crew_name, scenario in scenarios.items():
-                if crew_name in str(path_obj) and scenario["exists"]:
+                if path_obj and crew_name in str(path_obj) and scenario["exists"]:
                     mock_stat_obj.st_mtime = (current_time - timedelta(hours=scenario["age_hours"])).timestamp()
                     break
             else:
                 mock_stat_obj.st_mtime = current_time.timestamp()
             return mock_stat_obj
 
-        with patch("pathlib.Path.stat", side_effect=stat_side_effect):
-            with patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
+        with mocker.patch("pathlib.Path.stat", side_effect=stat_side_effect):
+            with mocker.patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
                 datetime_mock.now.return_value = current_time
                 datetime_mock.fromtimestamp.side_effect = lambda ts: datetime.fromtimestamp(ts)
                 datetime_mock.min = datetime.min
@@ -249,16 +254,18 @@ class TestFreshnessIntegration:
             crew_file.write_text(json.dumps(data))
 
         # Mock ETF data as stale
-        def stat_side_effect(path_obj):
-            mock_stat_obj = Mock()
-            if "etf" in str(path_obj):
+        def stat_side_effect(*args, **kwargs):
+            mock_stat_obj = mocker.Mock()
+            # Extract path from args - first argument is self (Path object)
+            path_obj = args[0] if args else None
+            if path_obj and "etf" in str(path_obj):
                 mock_stat_obj.st_mtime = (current_time - timedelta(hours=48)).timestamp()  # Stale
             else:
                 mock_stat_obj.st_mtime = (current_time - timedelta(hours=1)).timestamp()  # Fresh
             return mock_stat_obj
 
-        with patch("pathlib.Path.stat", side_effect=stat_side_effect):
-            with patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
+        with mocker.patch("pathlib.Path.stat", side_effect=stat_side_effect):
+            with mocker.patch("finwiz.integration.freshness_checker.datetime") as datetime_mock:
                 datetime_mock.now.return_value = current_time
                 datetime_mock.fromtimestamp.side_effect = lambda ts: datetime.fromtimestamp(ts)
                 datetime_mock.min = datetime.min

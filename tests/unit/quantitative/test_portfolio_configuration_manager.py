@@ -8,7 +8,6 @@ versioning, validation, templates, and import/export functionality.
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -384,9 +383,11 @@ class TestPortfolioConfigurationManager:
         loaded_config = config_manager.load_configuration(config_id)
         assert loaded_config.configuration.global_tolerance == 0.08
 
-    @patch("finwiz.quantitative.portfolio_configuration_manager.logger")
-    def test_should_log_operations_correctly(self, mock_logger, config_manager, sample_holdings, sample_target_weights):
+    def test_should_log_operations_correctly(self, mocker, config_manager, sample_holdings, sample_target_weights):
         """Test that operations are logged correctly."""
+        # Arrange
+        mock_logger = mocker.patch("finwiz.quantitative.portfolio_configuration_manager.logger")
+
         # Act
         config_manager.create_configuration(name="Logging Test", holdings=sample_holdings, target_weights=sample_target_weights)
 

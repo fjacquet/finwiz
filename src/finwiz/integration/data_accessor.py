@@ -7,7 +7,8 @@ automatic freshness validation, error handling, and graceful degradation.
 
 from typing import Any
 
-from ..schemas.integration import APlusOpportunityCollection, DataAvailabilityReport
+from finwiz.schemas.integration import APlusOpportunityCollection, DataAvailabilityReport
+
 from .data_cache import DataCache
 from .data_validation import DataValidator
 from .manager import CrewDataIntegrationManager

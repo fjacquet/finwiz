@@ -9,46 +9,24 @@ Enhanced with optional Perplexity Sonar integration for recent earnings and SEC 
 import asyncio
 import os
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 import requests
 from crewai.tools import BaseTool
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.schemas.common import RiskLevel
 from finwiz.schemas.perplexity import SonarArticle
+from finwiz.schemas.tools import (
+    EnhancedSECAnalysisInput,
+    StandardizedRiskScoringInput,
+)
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.feature_flags import get_feature_flags
-
-logger = get_logger(__name__)
-
-try:
-    from unstructured.partition.html import partition_html
-except Exception:
-
-    def partition_html(text: str) -> list[Any]:
-        """Fallback partitioner: return the raw HTML as a single chunk."""
-        return [text]
-
-
-# Defer importing QueryApi to runtime
-QueryApi = None
-
-
-class EnhancedSECAnalysisInput(BaseModel):
-    """Input schema for Enhanced SEC Analysis Tool."""
-
-    ticker: str = Field(..., description="The stock ticker symbol, e.g., AAPL")
-    form_type: Literal["10-K", "10-Q"] = Field(default="10-K", description="SEC form type to analyze")
-    sections: list[Literal["Item 1", "Item 1A", "Item 7", "Item 7A", "Item 8"]] = Field(
-        default=["Item 1", "Item 1A", "Item 7"], description="SEC sections to extract insights from"
-    )
-    risk_assessment: bool = Field(default=True, description="Whether to perform standardized risk assessment")
-    include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
 class EnhancedSECAnalysisTool(BaseTool):
@@ -467,14 +445,6 @@ class EnhancedSECAnalysisTool(BaseTool):
         return response
 
 
-class StandardizedRiskScoringInput(BaseModel):
-    """Input schema for Standardized Risk Scoring Tool."""
-
-    symbol: str = Field(..., description="The asset symbol (stock ticker, ETF, or crypto)")
-    asset_class: str = Field(..., description="Type of asset being analyzed")
-    risk_factors: list[str] = Field(default=[], description="List of identified risk factors")
-
-
 class StandardizedRiskScoringTool(BaseTool):
     """
     Standalone tool for standardized risk scoring across asset classes.
@@ -505,3 +475,18 @@ class StandardizedRiskScoringTool(BaseTool):
             "message": "Use EnhancedSECAnalysisTool for comprehensive risk assessment",
             "methodology": "Standardized 0-5 scale with consistent factor weighting",
         }
+
+
+logger = get_logger(__name__)
+
+try:
+    from unstructured.partition.html import partition_html
+except Exception:
+
+    def partition_html(text: str) -> list[Any]:
+        """Fallback partitioner: return the raw HTML as a single chunk."""
+        return [text]
+
+
+# Defer importing QueryApi to runtime
+QueryApi = None

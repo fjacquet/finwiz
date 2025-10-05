@@ -123,6 +123,7 @@ def get_etf_crew_tools(
 ```
 
 **Implementation Details**:
+
 - Each factory function returns a list of BaseTool instances
 - Tools are organized by category: core research, quantitative, RAG, schema/contract
 - Factory functions call existing helper functions (get_stock_research_tools, get_rag_tools, etc.)
@@ -130,6 +131,7 @@ def get_etf_crew_tools(
 - All parameters have sensible defaults for easy adoption
 
 **Dependencies**:
+
 - `crewai.tools.BaseTool`
 - `crewai_tools.DirectoryReadTool`, `FileReadTool`
 - `finwiz.tools.finance_tools` (existing)
@@ -169,6 +171,7 @@ def final_reporter(func: Callable) -> Callable:
 ```
 
 **Implementation Details**:
+
 - Decorator wraps agent creation functions
 - After agent is created, validates that `agent.tools` is empty
 - Raises `FinalReporterError` with descriptive message if tools are found
@@ -177,6 +180,7 @@ def final_reporter(func: Callable) -> Callable:
 - Error message includes agent role and tool count for debugging
 
 **Dependencies**:
+
 - `crewai.Agent`
 - `functools.wraps`
 - `finwiz.tools.logger.get_logger`
@@ -221,6 +225,7 @@ def sync_task(func: Callable) -> Callable:
 ```
 
 **Implementation Details**:
+
 - `async_task` sets `task.async_execution = True` after task creation
 - `sync_task` sets `task.async_execution = False` after task creation
 - Both decorators log configuration for debugging
@@ -228,6 +233,7 @@ def sync_task(func: Callable) -> Callable:
 - Self-documenting: decorator name clearly indicates execution mode
 
 **Dependencies**:
+
 - `crewai.Task`
 - `functools.wraps`
 - `finwiz.tools.logger.get_logger`
@@ -263,6 +269,7 @@ ignore_missing_imports = True
 ```
 
 **Implementation Strategy**:
+
 1. Install mypy as dev dependency: `uv add --dev mypy`
 2. Create mypy.ini configuration file
 3. Run mypy on individual modules to identify missing type hints
@@ -288,6 +295,7 @@ def get_rag_tools(collection_suffix: str | None = None) -> list[BaseTool]:
 ```
 
 **Dependencies**:
+
 - `mypy` (dev dependency)
 - Python 3.10+ type hint syntax
 
@@ -343,6 +351,7 @@ class CrewLogger:
 ```
 
 **Implementation Details**:
+
 - `CrewLogger` wraps existing `get_logger` functionality
 - Each method logs with structured `extra` fields for parsing
 - `log_start` includes crew name, input keys, and event type
@@ -378,6 +387,7 @@ class StockCrew:
 ```
 
 **Dependencies**:
+
 - `finwiz.tools.logger.get_logger`
 - `typing.Any`
 
@@ -417,6 +427,7 @@ All factory functions return `list[BaseTool]` where `BaseTool` is from `crewai.t
 **Scenario**: Tool initialization fails (e.g., missing API key, invalid configuration)
 
 **Handling**:
+
 - Factory functions propagate exceptions from underlying tool constructors
 - Crews should handle tool initialization errors in their `__init__` methods
 - Existing error handling patterns in crews remain unchanged
@@ -426,6 +437,7 @@ All factory functions return `list[BaseTool]` where `BaseTool` is from `crewai.t
 **Scenario**: Final reporter is created with tools
 
 **Handling**:
+
 ```python
 try:
     agent = create_final_reporter()
@@ -435,6 +447,7 @@ except FinalReporterError as e:
 ```
 
 **Error Message Format**:
+
 ```
 FinalReporterError: Final reporter 'Investment Reporter' must have NO tools. 
 Found 3 tools. Final reporters should only consume upstream context.
@@ -445,6 +458,7 @@ Found 3 tools. Final reporters should only consume upstream context.
 **Scenario**: Task creation fails or task object is invalid
 
 **Handling**:
+
 - Decorators assume task creation succeeds
 - If task creation fails, exception propagates before decorator logic runs
 - No additional error handling needed in decorators
@@ -454,6 +468,7 @@ Found 3 tools. Final reporters should only consume upstream context.
 **Scenario**: mypy detects type inconsistencies
 
 **Handling**:
+
 - Errors are caught at development time, not runtime
 - Developer fixes type hints or adds `# type: ignore` comments with justification
 - CI/CD pipeline can enforce mypy checks
@@ -463,6 +478,7 @@ Found 3 tools. Final reporters should only consume upstream context.
 **Scenario**: Logging fails (e.g., disk full, permission denied)
 
 **Handling**:
+
 - Logging errors should not crash crew execution
 - Existing logger error handling in `finwiz.tools.logger` handles these cases
 - `CrewLogger` methods do not catch exceptions; they rely on underlying logger
@@ -526,12 +542,14 @@ tests/
 ### Testing Patterns
 
 **Mocking Strategy**:
+
 - Use `pytest-mock` (mocker fixture) for all mocking
 - Mock external tool constructors in factory tests
 - Mock logger calls in logging helper tests
 - Mock Agent and Task creation in decorator tests
 
 **Test Naming Convention**:
+
 ```python
 def test_should_{expected_behavior}_when_{condition}():
     """Test description."""
@@ -544,6 +562,7 @@ def test_should_{expected_behavior}_when_{condition}():
 ```
 
 **Example Test**:
+
 ```python
 def test_should_return_correct_tools_when_stock_factory_called(mocker):
     """Test stock crew factory returns expected tool set."""

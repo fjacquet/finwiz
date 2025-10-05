@@ -10,23 +10,12 @@ import json
 from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
 from finwiz.schemas.portfolio_rebalancing import Holding, PortfolioConfiguration
+from finwiz.schemas.tools import PortfolioRebalancingInput
 from finwiz.tools.logger import get_logger
-
-logger = get_logger(__name__)
-
-
-class PortfolioRebalancingInput(BaseModel):
-    """Input model for portfolio rebalancing tool."""
-
-    holdings: list[dict[str, Any]] = Field(..., description="List of portfolio holdings with symbol and shares")
-    target_weights: dict[str, float] = Field(..., description="Target percentage weights for each symbol")
-    tolerance_bands: dict[str, float] | None = Field(default=None, description="Tolerance bands for each position")
-    available_capital: float = Field(default=0.0, description="Available capital for rebalancing")
-    global_tolerance: float = Field(default=0.05, description="Default tolerance band (5% = ±5%)")
 
 
 class PortfolioRebalancingTool(BaseTool):
@@ -167,3 +156,6 @@ class PortfolioRebalancingTool(BaseTool):
 def get_portfolio_rebalancing_tool() -> PortfolioRebalancingTool:
     """Get an instance of the portfolio rebalancing tool."""
     return PortfolioRebalancingTool()
+
+
+logger = get_logger(__name__)

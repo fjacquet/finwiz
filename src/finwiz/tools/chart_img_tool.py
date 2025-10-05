@@ -13,25 +13,15 @@ from __future__ import annotations
 
 import base64
 import os
-from typing import Literal
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+# Import schema from centralized location
+from finwiz.schemas.tools import ChartImgInput
 from finwiz.utils.api_decorators import api_tool
 from finwiz.utils.rate_limiter import APIProvider
-
-
-class ChartImgInput(BaseModel):
-    """Input schema for chart image generation."""
-
-    symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, SPY, BTCUSD")
-    interval: str = Field("1day", description="Bar interval, e.g., 1min, 5min, 1h, 1day")
-    range: str = Field("6mo", description="Time range, e.g., 1mo, 3mo, 6mo, 1y, 5y, max")
-    width: int = Field(900, description="Image width in pixels")
-    height: int = Field(500, description="Image height in pixels")
-    theme: Literal["light", "dark"] = Field("light", description="Chart theme")
 
 
 class ChartImgTool(BaseTool):

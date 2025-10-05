@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, Field
 from pydantic import ValidationError as PydanticValidationError
 
-from ..schemas.integration import SECCitation
+from finwiz.schemas.integration import SECCitation
 
 
 class SECFilingInfo(BaseModel):

@@ -9,23 +9,12 @@ from datetime import datetime
 from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from finwiz.schemas.tools import RegulatoryComplianceInput
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-class RegulatoryComplianceInput(BaseModel):
-    """Input schema for Regulatory Compliance Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
-    jurisdictions: list[str] = Field(
-        default=["US", "EU", "Switzerland", "UK", "Singapore"],
-        description="List of jurisdictions to analyze",
-    )
-    include_risk_assessment: bool = Field(default=True, description="Include regulatory risk assessment")
-    include_compliance_status: bool = Field(default=True, description="Include compliance status analysis")
 
 
 class RegulatoryComplianceTool(BaseTool):

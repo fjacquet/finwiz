@@ -14,11 +14,9 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..schemas.integration import (
-    IntegrationError,
-    IntegrationErrorType,
-)
-from ..validation.result import ValidationResult as BaseValidationResult
+from finwiz.schemas.integration import IntegrationError, IntegrationErrorType
+from finwiz.validation.result import ValidationResult as BaseValidationResult
+
 from .sec_citation_validator import SECCitationValidator
 from .validation_rules import ValidationRules
 

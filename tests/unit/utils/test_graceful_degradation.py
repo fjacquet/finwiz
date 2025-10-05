@@ -7,7 +7,6 @@ and recovery mechanisms.
 
 import asyncio
 import time
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -25,7 +24,7 @@ from finwiz.utils.graceful_degradation import (
 @pytest.fixture(autouse=True)
 def mock_sleep(mocker):
     """Mock asyncio.sleep to avoid delays in tests."""
-    return mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+    return mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
 
 class TestGracefulDegradationManager:

@@ -6,7 +6,6 @@ to ensure compliance with performance requirements.
 """
 
 import time
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -65,7 +64,7 @@ class TestPerplexityPerformanceMonitor:
         assert summary["max_acceptable_ms"] == PerplexityPerformanceMonitor.MAX_ACCEPTABLE_RESPONSE_TIME_MS
         assert 0 <= summary["compliance_rate"] <= 1
 
-    def test_should_handle_empty_response_times(self):
+    def test_should_handle_empty_response_times(self, mocker):
         """Test handling of empty response times list."""
         # Act
         summary = PerplexityPerformanceMonitor.get_performance_summary([])
@@ -124,7 +123,7 @@ class TestPerplexityRateLimitingScenarios:
         ]
 
         # Mock sleep to avoid actual delays in tests
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         start_time = time.time()
@@ -153,7 +152,7 @@ class TestPerplexityRateLimitingScenarios:
             for _ in range(5)  # More failures than max retries
         ]
 
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = await mock_integration.search_financial_news(
@@ -175,7 +174,7 @@ class TestPerplexityRateLimitingScenarios:
             '{"choices": [{"message": {"content": "Success"}}], "citations": []}',
         ]
 
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = await mock_integration.search_financial_news(
@@ -194,7 +193,7 @@ class TestPerplexityRateLimitingScenarios:
         """Test handling of different error types with appropriate retry logic."""
         # Arrange
         mock_tool = mocker.patch.object(mock_integration, "perplexity_tool")
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         test_cases = [
             ("Error: Connection timeout", True),  # Should retry
@@ -273,7 +272,7 @@ class TestPerplexityFailureScenarios:
             '{"choices": [{"message": {"content": "Success"}}], "citations": []}',
         ]
 
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = await mock_integration.search_financial_news(

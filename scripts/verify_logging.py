@@ -20,7 +20,7 @@ from finwiz.utils.logging_helpers import CrewLogger
 class LogFormatter(logging.Formatter):
     """Custom formatter to display structured log fields."""
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """Format log record with extra fields."""
         # Get base message
         msg = super().format(record)
@@ -44,7 +44,7 @@ class LogFormatter(logging.Formatter):
         return msg
 
 
-def setup_logging():
+def setup_logging() -> None:
     """Configure logging to show structured fields."""
     # Get root logger
     logger = logging.getLogger()
@@ -62,7 +62,7 @@ def setup_logging():
     logger.addHandler(handler)
 
 
-def simulate_successful_execution():
+def simulate_successful_execution() -> None:
     """Simulate a successful crew execution."""
     print("\n" + "=" * 80)
     print("SCENARIO 1: Successful Crew Execution")
@@ -82,7 +82,7 @@ def simulate_successful_execution():
     logger.log_complete(duration)
 
 
-def simulate_execution_with_error():
+def simulate_execution_with_error() -> None:
     """Simulate a crew execution that fails."""
     print("\n" + "=" * 80)
     print("SCENARIO 2: Failed Crew Execution")
@@ -101,7 +101,7 @@ def simulate_execution_with_error():
         logger.log_error(e)
 
 
-def simulate_execution_with_empty_inputs():
+def simulate_execution_with_empty_inputs() -> None:
     """Simulate a crew execution with no inputs."""
     print("\n" + "=" * 80)
     print("SCENARIO 3: Execution with Empty Inputs")
@@ -120,7 +120,7 @@ def simulate_execution_with_empty_inputs():
     logger.log_complete(duration)
 
 
-def simulate_multiple_crews():
+def simulate_multiple_crews() -> None:
     """Simulate multiple crews executing in sequence."""
     print("\n" + "=" * 80)
     print("SCENARIO 4: Multiple Crews Executing")
@@ -137,7 +137,7 @@ def simulate_multiple_crews():
         logger.log_complete(0.1)
 
 
-def main():
+def main() -> None:
     """Run all verification scenarios."""
     print("\n" + "=" * 80)
     print("CrewLogger Integration Verification")

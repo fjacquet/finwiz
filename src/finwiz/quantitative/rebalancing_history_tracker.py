@@ -244,19 +244,19 @@ class RebalancingHistoryTracker:
             avg_days_between = days_diff / len(history) if history else 0
 
             attribution = PerformanceAttribution(
-                start_date=start_date,
-                end_date=end_date,
-                rebalanced_return=rebalanced_return,
-                buy_and_hold_return=buy_and_hold_return,
+                attribution_start_date=start_date,
+                attribution_end_date=end_date,
+                total_return_with_rebalancing=rebalanced_return,
+                total_return_without_rebalancing=buy_and_hold_return,
                 rebalancing_alpha=rebalancing_alpha,
-                rebalanced_volatility=rebalanced_volatility,
-                buy_and_hold_volatility=buy_and_hold_volatility,
-                risk_reduction=risk_reduction,
                 total_rebalancing_costs=total_costs,
                 net_benefit=net_benefit,
-                cost_drag=cost_drag,
-                rebalancing_frequency=len(history),
-                average_days_between_rebalancing=avg_days_between,
+                cost_adjusted_alpha=net_benefit,  # Same as net_benefit after costs
+                volatility_reduction=risk_reduction,
+                tracking_error_vs_target=0.0,  # Default value, would need calculation
+                rebalancing_frequency_days=avg_days_between,
+                optimal_frequency_estimate=avg_days_between,  # Default estimate
+                position_contributions={},  # Default empty dict
             )
 
             logger.info(
@@ -295,16 +295,15 @@ class RebalancingHistoryTracker:
             if len(history) < 3:
                 # Default recommendations for insufficient data
                 return TrendAnalysis(
-                    analysis_period_days=analysis_period_days,
-                    frequency_scenarios=[30, 60, 90, 180],
+                    analysis_period_months=analysis_period_days // 30,
+                    frequency_scenarios_tested=[30, 60, 90, 180],
+                    performance_by_frequency={"30": 0.02, "60": 0.025, "90": 0.02, "180": 0.015},
+                    cost_by_frequency={"30": 0.005, "60": 0.003, "90": 0.002, "180": 0.001},
+                    net_benefit_by_frequency={"30": 0.015, "60": 0.022, "90": 0.018, "180": 0.014},
                     optimal_frequency_days=60,
-                    optimal_tolerance_band=0.05,
-                    frequency_performance={30: 0.02, 60: 0.025, 90: 0.02, 180: 0.015},
-                    frequency_costs={30: 0.005, 60: 0.003, 90: 0.002, 180: 0.001},
-                    frequency_risk={30: 0.12, 60: 0.11, 90: 0.115, 180: 0.13},
-                    recommended_frequency=60,
-                    recommended_tolerance=0.05,
-                    confidence_score=0.3,
+                    confidence_in_optimal=0.3,
+                    performance_in_bull_markets={},  # Default empty dict
+                    performance_in_bear_markets={},  # Default empty dict
                 )
 
             # Analyze different frequency scenarios
@@ -338,16 +337,15 @@ class RebalancingHistoryTracker:
             confidence = min(1.0, len(history) / 10)  # Higher confidence with more data points
 
             trend_analysis = TrendAnalysis(
-                analysis_period_days=analysis_period_days,
-                frequency_scenarios=frequency_scenarios,
+                analysis_period_months=analysis_period_days // 30,  # Convert days to months
+                frequency_scenarios_tested=frequency_scenarios,
+                performance_by_frequency={str(k): v for k, v in frequency_performance.items()},
+                cost_by_frequency={str(k): v for k, v in frequency_costs.items()},
+                net_benefit_by_frequency={str(k): v - frequency_costs[k] for k, v in frequency_performance.items()},
                 optimal_frequency_days=optimal_freq,
-                optimal_tolerance_band=optimal_tolerance,
-                frequency_performance=frequency_performance,
-                frequency_costs=frequency_costs,
-                frequency_risk=frequency_risk,
-                recommended_frequency=optimal_freq,
-                recommended_tolerance=optimal_tolerance,
-                confidence_score=confidence,
+                confidence_in_optimal=confidence,
+                performance_in_bull_markets={},  # Default empty dict
+                performance_in_bear_markets={},  # Default empty dict
             )
 
             logger.info(

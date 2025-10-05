@@ -46,6 +46,7 @@ class TestFinalReporterDecorator:
 
         # Create a mock BaseTool that will pass Pydantic validation
         from crewai.tools import BaseTool
+
         mock_tool = mocker.Mock(spec=BaseTool)
         mock_tool.name = "MockTool"
         mock_tool.description = "A mock tool"
@@ -85,6 +86,7 @@ class TestFinalReporterDecorator:
         mocker.patch("finwiz.utils.agent_validators.logger")
 
         from crewai.tools import BaseTool
+
         mock_tool = mocker.Mock(spec=BaseTool)
         mock_tool.name = "MockTool"
 
@@ -111,6 +113,7 @@ class TestFinalReporterDecorator:
 
     def test_should_preserve_function_metadata(self):
         """Test decorator preserves function metadata."""
+
         # Arrange
         @final_reporter
         def investment_reporter():
@@ -162,6 +165,7 @@ class TestFinalReporterDecorator:
         mock_logger = mocker.patch("finwiz.utils.agent_validators.logger")
 
         from crewai.tools import BaseTool
+
         mock_tool = mocker.Mock(spec=BaseTool)
         mock_tool.name = "MockTool"
 
@@ -196,6 +200,7 @@ class TestFinalReporterDecorator:
         mock_logger = mocker.patch("finwiz.utils.agent_validators.logger")
 
         from crewai.tools import BaseTool
+
         mock_tool = mocker.Mock(spec=BaseTool)
         mock_tool.name = "MockTool"
 

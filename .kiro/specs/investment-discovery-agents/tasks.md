@@ -89,13 +89,13 @@ Convert the CrewAI-based investment discovery design into a series of implementa
   - Configure 5% allocation limit enforcement
   - _Requirements: 3.1, 3.2, 3.4_-
 
-  
  [ ] 12. Implement Validation Task
-  - Create tasks.yaml configuration for validation_task
-  - Define backtesting requirements (5+ years, multiple regimes)
-  - Set up risk metrics calculation and validation thresholds
-  - Configure rejection criteria for failed validations
-  - _Requirements: 6.1, 6.2, 6.3, 6.4_
+
+- Create tasks.yaml configuration for validation_task
+- Define backtesting requirements (5+ years, multiple regimes)
+- Set up risk metrics calculation and validation thresholds
+- Configure rejection criteria for failed validations
+- _Requirements: 6.1, 6.2, 6.3, 6.4_
 
 - [x] 13. Implement Portfolio Optimization Task
   - Create tasks.yaml configuration for optimization_task
@@ -174,7 +174,6 @@ hase 6: Testing and Validation
   - Add performance tracking for A+ recommendations
   - _Requirements: 7.1, 7.2, 7.3_
 
-
 - [x] 23. Create Feedback Loop System
   - Implement user feedback collection for A+ recommendations
   - Track acceptance rates and performance outcomes
@@ -208,6 +207,7 @@ hase 6: Testing and Validation
 ## Success Criteria
 
 Each task is considered complete when:
+
 - All code is implemented with proper type hints and documentation
 - Unit tests pass with >90% coverage
 - Integration tests validate end-to-end functionality

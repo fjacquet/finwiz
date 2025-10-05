@@ -8,7 +8,6 @@ and validation error collection and reporting with full mocking.
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -22,22 +21,22 @@ class TestValidationPipeline:
     """Test cases for ValidationPipeline class."""
 
     @pytest.fixture
-    def mock_logger(self):
+    def mock_logger(self, mocker):
         """Mock logger for testing."""
-        return Mock()
+        return mocker.Mock()
 
     @pytest.fixture
-    def mock_validation_manager(self):
+    def mock_validation_manager(self, mocker):
         """Mock validation manager for testing."""
-        manager = Mock()
+        manager = mocker.Mock()
         manager.get_strictness_mode.return_value = ValidationMode.WARN
-        manager.set_strictness_mode = Mock()
+        manager.set_strictness_mode = mocker.Mock()
         return manager
 
     @pytest.fixture
-    def validation_pipeline(self, mock_validation_manager, mock_logger):
+    def validation_pipeline(self, mock_validation_manager, mock_logger, mocker):
         """Create ValidationPipeline instance for testing."""
-        with patch("finwiz.integration.validation_pipeline.get_validation_manager", return_value=mock_validation_manager):
+        with mocker.patch("finwiz.integration.validation_pipeline.get_validation_manager", return_value=mock_validation_manager):
             pipeline = ValidationPipeline(
                 output_dir=Path("/mock/output"), validation_manager=mock_validation_manager, logger=mock_logger
             )
@@ -146,9 +145,9 @@ class TestValidationPipeline:
             "risk_assessments": [{"symbol": "SPY", "risk_score": 4, "risk_factors": ["Market risk", "Tracking error"]}],
         }
 
-    def test_should_initialize_validation_pipeline_successfully(self, mock_validation_manager, mock_logger):
+    def test_should_initialize_validation_pipeline_successfully(self, mock_validation_manager, mock_logger, mocker):
         """Test ValidationPipeline initialization."""
-        with patch("finwiz.integration.validation_pipeline.get_validation_manager", return_value=mock_validation_manager):
+        with mocker.patch("finwiz.integration.validation_pipeline.get_validation_manager", return_value=mock_validation_manager):
             pipeline = ValidationPipeline(
                 output_dir=Path("/test/output"), validation_manager=mock_validation_manager, logger=mock_logger
             )
@@ -312,17 +311,16 @@ class TestValidationPipeline:
         assert any("schema version mismatch" in issue.lower() for issue in issues)
         assert any("unmet dependencies" in issue.lower() for issue in issues)
 
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.glob")
-    @patch("pathlib.Path.stat")
-    def test_should_load_crew_data_successfully_when_files_exist(
-        self, mock_stat, mock_glob, mock_exists, mock_file, validation_pipeline, sample_stock_output
-    ):
+    def test_should_load_crew_data_successfully_when_files_exist(self, mocker, validation_pipeline, sample_stock_output):
         """Test successful loading of crew data from files."""
         # Mock file system operations
+        mock_file = mocker.patch("builtins.open", new_callable=mocker.mock_open)
+        mock_exists = mocker.patch("pathlib.Path.exists")
+        mock_glob = mocker.patch("pathlib.Path.glob")
+        mock_stat = mocker.patch("pathlib.Path.stat")
+
         mock_exists.return_value = True
-        mock_file_path = Mock()
+        mock_file_path = mocker.Mock()
         mock_file_path.stat.return_value.st_mtime = 1234567890
         mock_glob.return_value = [mock_file_path]
         mock_file.return_value.read.return_value = json.dumps(sample_stock_output)
@@ -334,8 +332,7 @@ class TestValidationPipeline:
         mock_exists.assert_called_once()
         mock_glob.assert_called_once()
 
-    @patch("pathlib.Path.exists")
-    def test_should_return_none_when_crew_directory_does_not_exist(self, mock_exists, validation_pipeline):
+    def test_should_return_none_when_crew_directory_does_not_exist(self, mocker, mock_exists, validation_pipeline):
         """Test loading crew data when directory doesn't exist."""
         mock_exists.return_value = False
 
@@ -344,10 +341,11 @@ class TestValidationPipeline:
         assert result is None
         mock_exists.assert_called_once()
 
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.glob")
-    def test_should_return_none_when_no_output_files_found(self, mock_glob, mock_exists, validation_pipeline):
+    def test_should_return_none_when_no_output_files_found(self, mocker, validation_pipeline):
         """Test loading crew data when no output files exist."""
+        mock_exists = mocker.patch("pathlib.Path.exists")
+        mock_glob = mocker.patch("pathlib.Path.glob")
+
         mock_exists.return_value = True
         mock_glob.return_value = []  # No files found
 
@@ -357,13 +355,13 @@ class TestValidationPipeline:
         mock_exists.assert_called_once()
         mock_glob.assert_called_once()
 
-    @patch("finwiz.integration.validation_pipeline.ValidationPipeline._load_crew_data")
     def test_should_validate_all_crew_outputs_successfully_when_valid_data_available(
-        self, mock_load_data, validation_pipeline, sample_stock_output, sample_etf_output
+        self, mocker, validation_pipeline, sample_stock_output, sample_etf_output
     ):
         """Test comprehensive validation of all crew outputs."""
-
         # Mock data loading
+        mock_load_data = mocker.patch("finwiz.integration.validation_pipeline.ValidationPipeline._load_crew_data")
+
         def mock_load_side_effect(crew_name):
             if crew_name == "stock":
                 return sample_stock_output
@@ -383,8 +381,7 @@ class TestValidationPipeline:
         assert result.total_errors == 0
         assert isinstance(result.cross_crew_validation, CrossCrewValidationResult)
 
-    @patch("finwiz.integration.validation_pipeline.ValidationPipeline._load_crew_data")
-    def test_should_handle_validation_errors_gracefully_when_crew_data_invalid(self, mock_load_data, validation_pipeline):
+    def test_should_handle_validation_errors_gracefully_when_crew_data_invalid(self, mocker, mock_load_data, validation_pipeline):
         """Test graceful handling of validation errors."""
         # Mock invalid data
         invalid_data = {"invalid": "data", "missing": "required_fields"}
@@ -397,8 +394,7 @@ class TestValidationPipeline:
         assert result.total_errors > 0
         assert len(result.failed_crews) > 0
 
-    @patch("finwiz.integration.validation_pipeline.ValidationPipeline._load_crew_data")
-    def test_should_use_strict_mode_when_requested(self, mock_load_data, validation_pipeline, sample_stock_output):
+    def test_should_use_strict_mode_when_requested(self, mocker, mock_load_data, validation_pipeline, sample_stock_output):
         """Test validation pipeline with strict mode enabled."""
         mock_load_data.return_value = sample_stock_output
 
@@ -408,7 +404,7 @@ class TestValidationPipeline:
         validation_pipeline.validation_manager.set_strictness_mode.assert_called_with(ValidationMode.ERROR)
         assert isinstance(result, ValidationPipelineResult)
 
-    def test_should_generate_comprehensive_validation_report(self, validation_pipeline, sample_stock_output):
+    def test_should_generate_comprehensive_validation_report(self, validation_pipeline, sample_stock_output, mocker):
         """Test generation of comprehensive validation report."""
         # Create a sample validation result
         validation_result = ValidationPipelineResult(
@@ -432,10 +428,12 @@ class TestValidationPipeline:
         assert "stock" in report["schema_validation"]
         assert report["cross_crew_validation"]["is_consistent"] is True
 
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("pathlib.Path.mkdir")
-    def test_should_save_validation_report_to_file_when_path_provided(self, mock_mkdir, mock_file, validation_pipeline):
+    def test_should_save_validation_report_to_file_when_path_provided(self, mocker, validation_pipeline):
         """Test saving validation report to file."""
+        # Mock file operations
+        mock_mkdir = mocker.patch("pathlib.Path.mkdir")
+        mock_file = mocker.patch("builtins.open", mocker.mock_open())
+
         validation_result = ValidationPipelineResult(
             overall_valid=True,
             validation_timestamp=datetime.now(),
@@ -449,10 +447,10 @@ class TestValidationPipeline:
         mock_mkdir.assert_called_once()
         mock_file.assert_called_once_with(output_path, "w", encoding="utf-8")
 
-    def test_should_handle_exception_during_validation_gracefully(self, validation_pipeline, mock_logger):
+    def test_should_handle_exception_during_validation_gracefully(self, mocker, validation_pipeline, mock_logger):
         """Test graceful handling of exceptions during validation."""
         # Create invalid data that will cause an exception
-        with patch.object(validation_pipeline, "_validate_crew_schema", side_effect=Exception("Test error")):
+        with mocker.patch.object(validation_pipeline, "_validate_crew_schema", side_effect=Exception("Test error")):
             result = validation_pipeline.validate_crew_output("stock", {"test": "data"})
 
             assert result.is_valid is False
@@ -493,23 +491,23 @@ class TestValidationPipelineIntegration:
     """Integration tests for ValidationPipeline with mocked dependencies."""
 
     @pytest.fixture
-    def mock_file_system(self):
+    def mock_file_system(self, mocker):
         """Mock file system for integration tests."""
         with (
-            patch("pathlib.Path.exists") as mock_exists,
-            patch("pathlib.Path.glob") as mock_glob,
-            patch("builtins.open", new_callable=mock_open) as mock_file,
+            mocker.patch("pathlib.Path.exists") as mock_exists,
+            mocker.patch("pathlib.Path.glob") as mock_glob,
+            mocker.patch("builtins.open", new_callable=mocker.mock_open) as mock_file,
         ):
             # Configure mocks
             mock_exists.return_value = True
-            mock_file_path = Mock()
+            mock_file_path = mocker.Mock()
             mock_file_path.stat.return_value.st_mtime = 1234567890
             mock_glob.return_value = [mock_file_path]
 
             yield {"exists": mock_exists, "glob": mock_glob, "open": mock_file}
 
     def test_should_perform_end_to_end_validation_with_mocked_file_system(
-        self, mock_file_system, sample_stock_output, sample_etf_output
+        self, mock_file_system, sample_stock_output, sample_etf_output, mocker
     ):
         """Test end-to-end validation pipeline with mocked file system."""
 
@@ -525,7 +523,7 @@ class TestValidationPipelineIntegration:
         mock_file_system["open"].return_value.read.side_effect = mock_read_side_effect
 
         # Create pipeline and run validation
-        with patch("finwiz.integration.validation_pipeline.get_validation_manager"):
+        with mocker.patch("finwiz.integration.validation_pipeline.get_validation_manager"):
             pipeline = ValidationPipeline(output_dir=Path("/mock/output"))
             result = pipeline.validate_all_crew_outputs()
 
@@ -534,12 +532,12 @@ class TestValidationPipelineIntegration:
         assert result.validation_timestamp is not None
         assert isinstance(result.cross_crew_validation, CrossCrewValidationResult)
 
-    def test_should_handle_missing_crew_data_gracefully_in_full_validation(self, mock_file_system):
+    def test_should_handle_missing_crew_data_gracefully_in_full_validation(self, mock_file_system, mocker):
         """Test full validation pipeline with missing crew data."""
         # Configure mock to simulate missing data
         mock_file_system["exists"].return_value = False
 
-        with patch("finwiz.integration.validation_pipeline.get_validation_manager"):
+        with mocker.patch("finwiz.integration.validation_pipeline.get_validation_manager"):
             pipeline = ValidationPipeline(output_dir=Path("/mock/output"))
             result = pipeline.validate_all_crew_outputs()
 

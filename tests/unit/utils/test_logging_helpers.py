@@ -5,7 +5,6 @@ Tests the CrewLogger class to ensure it correctly logs crew execution
 events with structured fields for start, completion, and error scenarios.
 """
 
-
 from finwiz.utils.logging_helpers import CrewLogger
 
 

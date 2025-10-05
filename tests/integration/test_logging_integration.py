@@ -7,7 +7,6 @@ across all crews and that log entries contain the expected fields.
 
 import logging
 import time
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -21,6 +20,7 @@ class LogCapture:
     """Helper class to capture log records with extra fields."""
 
     def __init__(self):
+        """Initialize the log record handler."""
         self.records = []
 
     def __call__(self, record):
@@ -39,9 +39,9 @@ class TestLoggingIntegration:
         log_capture = LogCapture()
 
         # Mock the crew kickoff to avoid actual execution
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.kickoff.return_value = "test_result"
-        mocker.patch.object(StockCrew, 'crew', return_value=mock_crew_instance)
+        mocker.patch.object(StockCrew, "crew", return_value=mock_crew_instance)
 
         # Capture logs
         logger = logging.getLogger("finwiz.crews.StockCrew")
@@ -55,16 +55,16 @@ class TestLoggingIntegration:
         crew.kickoff(inputs)
 
         # Assert
-        start_logs = [r for r in log_capture.records if hasattr(r, 'event') and r.event == 'crew_start']
+        start_logs = [r for r in log_capture.records if hasattr(r, "event") and r.event == "crew_start"]
         assert len(start_logs) > 0, "No crew_start event logged"
 
         start_log = start_logs[0]
-        assert hasattr(start_log, 'crew'), "Log missing 'crew' field"
+        assert hasattr(start_log, "crew"), "Log missing 'crew' field"
         assert start_log.crew == "StockCrew", f"Expected crew='StockCrew', got '{start_log.crew}'"
-        assert hasattr(start_log, 'input_keys'), "Log missing 'input_keys' field"
-        assert 'ticker' in start_log.input_keys, "Log missing 'ticker' in input_keys"
-        assert hasattr(start_log, 'event'), "Log missing 'event' field"
-        assert start_log.event == 'crew_start', f"Expected event='crew_start', got '{start_log.event}'"
+        assert hasattr(start_log, "input_keys"), "Log missing 'input_keys' field"
+        assert "ticker" in start_log.input_keys, "Log missing 'ticker' in input_keys"
+        assert hasattr(start_log, "event"), "Log missing 'event' field"
+        assert start_log.event == "crew_start", f"Expected event='crew_start', got '{start_log.event}'"
 
     def test_should_log_complete_event_when_crypto_crew_succeeds(self, mocker):
         """Verify CryptoCrew logs completion event with duration."""
@@ -72,9 +72,9 @@ class TestLoggingIntegration:
         log_capture = LogCapture()
 
         # Mock the crew kickoff
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.kickoff.return_value = "test_result"
-        mocker.patch.object(CryptoCrew, 'crew', return_value=mock_crew_instance)
+        mocker.patch.object(CryptoCrew, "crew", return_value=mock_crew_instance)
 
         # Capture logs
         logger = logging.getLogger("finwiz.crews.CryptoCrew")
@@ -88,17 +88,17 @@ class TestLoggingIntegration:
         crew.kickoff(inputs)
 
         # Assert
-        complete_logs = [r for r in log_capture.records if hasattr(r, 'event') and r.event == 'crew_complete']
+        complete_logs = [r for r in log_capture.records if hasattr(r, "event") and r.event == "crew_complete"]
         assert len(complete_logs) > 0, "No crew_complete event logged"
 
         complete_log = complete_logs[0]
-        assert hasattr(complete_log, 'crew'), "Log missing 'crew' field"
+        assert hasattr(complete_log, "crew"), "Log missing 'crew' field"
         assert complete_log.crew == "CryptoCrew", f"Expected crew='CryptoCrew', got '{complete_log.crew}'"
-        assert hasattr(complete_log, 'duration'), "Log missing 'duration' field"
+        assert hasattr(complete_log, "duration"), "Log missing 'duration' field"
         assert isinstance(complete_log.duration, float), "Duration should be a float"
         assert complete_log.duration >= 0, "Duration should be non-negative"
-        assert hasattr(complete_log, 'event'), "Log missing 'event' field"
-        assert complete_log.event == 'crew_complete', f"Expected event='crew_complete', got '{complete_log.event}'"
+        assert hasattr(complete_log, "event"), "Log missing 'event' field"
+        assert complete_log.event == "crew_complete", f"Expected event='crew_complete', got '{complete_log.event}'"
 
     def test_should_log_error_event_when_etf_crew_fails(self, mocker):
         """Verify EtfCrew logs error event with exception details."""
@@ -106,10 +106,10 @@ class TestLoggingIntegration:
         log_capture = LogCapture()
 
         # Mock the crew kickoff to raise an exception
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         test_error = ValueError("Test error")
         mock_crew_instance.kickoff.side_effect = test_error
-        mocker.patch.object(EtfCrew, 'crew', return_value=mock_crew_instance)
+        mocker.patch.object(EtfCrew, "crew", return_value=mock_crew_instance)
 
         # Capture logs
         logger = logging.getLogger("finwiz.crews.EtfCrew")
@@ -124,16 +124,16 @@ class TestLoggingIntegration:
             crew.kickoff(inputs)
 
         # Assert error logging
-        error_logs = [r for r in log_capture.records if hasattr(r, 'event') and r.event == 'crew_error']
+        error_logs = [r for r in log_capture.records if hasattr(r, "event") and r.event == "crew_error"]
         assert len(error_logs) > 0, "No crew_error event logged"
 
         error_log = error_logs[0]
-        assert hasattr(error_log, 'crew'), "Log missing 'crew' field"
+        assert hasattr(error_log, "crew"), "Log missing 'crew' field"
         assert error_log.crew == "EtfCrew", f"Expected crew='EtfCrew', got '{error_log.crew}'"
-        assert hasattr(error_log, 'error_type'), "Log missing 'error_type' field"
+        assert hasattr(error_log, "error_type"), "Log missing 'error_type' field"
         assert error_log.error_type == "ValueError", f"Expected error_type='ValueError', got '{error_log.error_type}'"
-        assert hasattr(error_log, 'event'), "Log missing 'event' field"
-        assert error_log.event == 'crew_error', f"Expected event='crew_error', got '{error_log.event}'"
+        assert hasattr(error_log, "event"), "Log missing 'event' field"
+        assert error_log.event == "crew_error", f"Expected event='crew_error', got '{error_log.event}'"
         assert error_log.exc_info is not None, "Log missing exception info"
 
     def test_should_log_all_events_when_report_crew_executes(self, mocker):
@@ -142,9 +142,9 @@ class TestLoggingIntegration:
         log_capture = LogCapture()
 
         # Mock the crew kickoff
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.kickoff.return_value = "test_result"
-        mocker.patch.object(ReportCrew, 'crew', return_value=mock_crew_instance)
+        mocker.patch.object(ReportCrew, "crew", return_value=mock_crew_instance)
 
         # Capture logs
         logger = logging.getLogger("finwiz.crews.ReportCrew")
@@ -158,11 +158,11 @@ class TestLoggingIntegration:
         crew.kickoff(inputs)
 
         # Assert start event
-        start_logs = [r for r in log_capture.records if hasattr(r, 'event') and r.event == 'crew_start']
+        start_logs = [r for r in log_capture.records if hasattr(r, "event") and r.event == "crew_start"]
         assert len(start_logs) > 0, "No crew_start event logged"
 
         # Assert complete event
-        complete_logs = [r for r in log_capture.records if hasattr(r, 'event') and r.event == 'crew_complete']
+        complete_logs = [r for r in log_capture.records if hasattr(r, "event") and r.event == "crew_complete"]
         assert len(complete_logs) > 0, "No crew_complete event logged"
 
         # Verify event order (start should come before complete)
@@ -176,9 +176,9 @@ class TestLoggingIntegration:
         log_capture = LogCapture()
 
         # Mock the crew kickoff
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.kickoff.return_value = "test_result"
-        mocker.patch.object(StockCrew, 'crew', return_value=mock_crew_instance)
+        mocker.patch.object(StockCrew, "crew", return_value=mock_crew_instance)
 
         # Capture logs
         logger = logging.getLogger("finwiz.crews.StockCrew")
@@ -191,11 +191,11 @@ class TestLoggingIntegration:
         crew.kickoff(None)
 
         # Assert
-        start_logs = [r for r in log_capture.records if hasattr(r, 'event') and r.event == 'crew_start']
+        start_logs = [r for r in log_capture.records if hasattr(r, "event") and r.event == "crew_start"]
         assert len(start_logs) > 0, "No crew_start event logged"
 
         start_log = start_logs[0]
-        assert hasattr(start_log, 'input_keys'), "Log missing 'input_keys' field"
+        assert hasattr(start_log, "input_keys"), "Log missing 'input_keys' field"
         assert start_log.input_keys == [], "Expected empty input_keys for None inputs"
 
     def test_should_measure_duration_accurately_when_crew_executes(self, mocker):
@@ -204,12 +204,14 @@ class TestLoggingIntegration:
         log_capture = LogCapture()
 
         # Mock the crew kickoff with a delay
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
+
         def delayed_kickoff(*args, **kwargs):
             time.sleep(0.1)  # 100ms delay
             return "test_result"
+
         mock_crew_instance.kickoff.side_effect = delayed_kickoff
-        mocker.patch.object(CryptoCrew, 'crew', return_value=mock_crew_instance)
+        mocker.patch.object(CryptoCrew, "crew", return_value=mock_crew_instance)
 
         # Capture logs
         logger = logging.getLogger("finwiz.crews.CryptoCrew")
@@ -222,11 +224,11 @@ class TestLoggingIntegration:
         crew.kickoff({"crypto": "ETH"})
 
         # Assert
-        complete_logs = [r for r in log_capture.records if hasattr(r, 'event') and r.event == 'crew_complete']
+        complete_logs = [r for r in log_capture.records if hasattr(r, "event") and r.event == "crew_complete"]
         assert len(complete_logs) > 0, "No crew_complete event logged"
 
         complete_log = complete_logs[0]
-        assert hasattr(complete_log, 'duration'), "Log missing 'duration' field"
+        assert hasattr(complete_log, "duration"), "Log missing 'duration' field"
         # Duration should be at least 0.1 seconds (100ms)
         assert complete_log.duration >= 0.1, f"Expected duration >= 0.1s, got {complete_log.duration}s"
         # Duration should be reasonable (less than 1 second for this test)

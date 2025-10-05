@@ -9,6 +9,7 @@ The design maintains FinWiz's architectural principles while ensuring that AI ag
 ## Architecture
 
 ### Current Flow Layout (Suboptimal)
+
 ```mermaid
 graph TB
     DV[validate_data_integration]
@@ -95,21 +96,26 @@ graph TB
 ### Flow Execution Phases
 
 **Phase 1: Initialization (Sequential)**
+
 - Data integration validation and system health checks
 
 **Phase 2: Core Analysis (Parallel)**  
+
 - Stock, ETF, and Crypto crews execute simultaneously for maximum efficiency
 - Each crew performs AI-driven analysis with fresh market data
 
 **Phase 3: Portfolio Analysis (Parallel)**
+
 - Portfolio review and rebalancing execute in parallel
 - Both can leverage core analysis results from Phase 2
 
 **Phase 4: Advanced Analysis (Sequential)**
+
 - Investment discovery uses all previous analysis results
 - Identifies A+ opportunities based on comprehensive market data
 
 **Phase 5: Report Generation (Sequential)**
+
 - Consolidates all analysis into final comprehensive report
 - Maintains tool-free reporter architecture
 
@@ -267,6 +273,7 @@ class RestoredETFCrew:
 ```
 
 #### Crypto Crew Enhancement
+
 ```python
 class RestoredCryptoCrew:
     """AI-driven cryptocurrency analysis crew with market dynamics focus."""
@@ -322,6 +329,7 @@ class RestoredCryptoCrew:
 ### 2. Data Freshness Validation System
 
 #### Freshness Validator
+
 ```python
 class DataFreshnessValidator:
     """Validates that all market data is within acceptable age limits."""
@@ -455,6 +463,7 @@ class FreshnessValidatedTool(BaseTool):
 ### 3. Flow Orchestration Integration
 
 #### Enhanced FinwizFlow
+
 ```python
 class EnhancedFinwizFlow(Flow[FinwizState]):
     """Enhanced flow with restored core analysis crews."""
@@ -642,6 +651,7 @@ class EnhancedFinwizFlow(Flow[FinwizState]):
 ### 4. Feature Flag Integration
 
 #### Enhanced Feature Flags
+
 ```python
 class EnhancedFeatureFlags(FeatureFlags):
     """Enhanced feature flags with core analysis crew controls."""
@@ -679,6 +689,7 @@ class EnhancedFeatureFlags(FeatureFlags):
 ## Data Models
 
 ### Core Analysis Output Schemas
+
 ```python
 class CoreAnalysisResult(BaseModel):
     """Standardized output schema for core analysis crews."""
@@ -727,6 +738,7 @@ class FreshnessInfo(BaseModel):
 ## Error Handling
 
 ### Graceful Degradation Strategy
+
 ```python
 class CoreAnalysisErrorHandler:
     """Handles errors in core analysis crews with graceful degradation."""
@@ -801,6 +813,7 @@ class CoreAnalysisErrorHandler:
 ## Testing Strategy
 
 ### Comprehensive Test Coverage
+
 ```python
 class CoreAnalysisTestSuite:
     """Comprehensive test suite for restored core analysis crews."""
@@ -851,6 +864,7 @@ class CoreAnalysisTestSuite:
 ## Performance Considerations
 
 ### Optimization Strategies
+
 1. **Parallel Execution**: Core analysis crews run concurrently to minimize total execution time
 2. **Intelligent Caching**: Fresh data is cached with appropriate TTL to reduce API calls
 3. **Lazy Loading**: Crews are only initialized when enabled via feature flags
@@ -858,6 +872,7 @@ class CoreAnalysisTestSuite:
 5. **Async I/O**: I/O-bound tasks use async execution where possible
 
 ### Monitoring and Metrics
+
 ```python
 class CoreAnalysisMetrics:
     """Performance and health metrics for core analysis crews."""
@@ -897,6 +912,7 @@ class CoreAnalysisMetrics:
 ## Testing Strategy
 
 ### Current Test Structure Issues
+
 ```
 tests/
 ├── 50+ scattered test files in root directory ❌
@@ -907,6 +923,7 @@ tests/
 ```
 
 ### Improved Test Organization
+
 ```
 tests/
 ├── conftest.py                           # Global test configuration
@@ -956,6 +973,7 @@ tests/
 ### Test Categories and Best Practices
 
 #### 1. Unit Tests (`tests/unit/`)
+
 - **Purpose**: Test individual components in isolation
 - **Scope**: Single class/function testing
 - **Mocking**: Mock all external dependencies
@@ -963,6 +981,7 @@ tests/
 - **Coverage**: 90%+ code coverage
 
 #### 2. Integration Tests (`tests/integration/`)
+
 - **Purpose**: Test component interactions
 - **Scope**: Multiple components working together
 - **Mocking**: Mock only external services (APIs)
@@ -970,18 +989,21 @@ tests/
 - **Focus**: Data flow, crew interactions, system integration
 
 #### 3. Performance Tests (`tests/performance/`)
+
 - **Purpose**: Validate performance requirements
 - **Scope**: System performance under load
 - **Metrics**: Execution time, memory usage, throughput
 - **Benchmarks**: Baseline performance tracking
 
 #### 4. Contract Tests (`tests/contract/`)
+
 - **Purpose**: Validate API/schema contracts
 - **Scope**: Input/output validation
 - **Focus**: Schema compliance, data contracts
 - **Stability**: Prevent breaking changes
 
 ### Test Execution Strategy
+
 ```bash
 # Fast feedback loop (< 30 seconds)
 pytest tests/unit/ -m "not slow"
@@ -997,6 +1019,7 @@ pytest tests/unit/ tests/integration/ --cov=src/finwiz --cov-report=html
 ```
 
 ### Benefits of Improved Structure
+
 - **🎯 Clear Organization**: Easy to find relevant tests
 - **⚡ Fast Feedback**: Quick unit test execution
 - **🔍 Focused Testing**: Each test type has clear purpose

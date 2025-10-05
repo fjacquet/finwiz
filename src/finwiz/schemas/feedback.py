@@ -8,7 +8,7 @@ discovery criteria over time.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -75,8 +75,8 @@ class UserFeedback(BaseModel):
 
     # Detailed feedback
     reasons: list[str] = Field(default_factory=list, description="Reasons for acceptance/rejection")
-    alternative_chosen: Optional[str] = Field(None, description="Alternative investment chosen instead")
-    allocation_percentage: Optional[float] = Field(None, ge=0.0, le=100.0, description="Actual allocation if accepted")
+    alternative_chosen: str | None = Field(None, description="Alternative investment chosen instead")
+    allocation_percentage: float | None = Field(None, ge=0.0, le=100.0, description="Actual allocation if accepted")
 
     # Context
     portfolio_context: dict[str, Any] = Field(default_factory=dict, description="Portfolio context at time of decision")
@@ -105,7 +105,7 @@ class PerformanceFeedback(BaseModel):
     # Risk metrics
     volatility: float = Field(..., ge=0.0, description="Volatility during holding period")
     max_drawdown: float = Field(..., le=0.0, description="Maximum drawdown experienced")
-    sharpe_ratio: Optional[float] = Field(None, description="Sharpe ratio if calculable")
+    sharpe_ratio: float | None = Field(None, description="Sharpe ratio if calculable")
 
     # Grade tracking
     current_grade: Grade = Field(..., description="Current grade of investment")

@@ -9,7 +9,6 @@ Tests cover:
 """
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
@@ -251,25 +250,25 @@ class TestPerformanceAnalyzer:
         with pytest.raises(RuntimeError, match="PyPortfolioOpt is not available"):
             performance_analyzer.optimize_portfolio(price_data=sample_price_data, method="max_sharpe")
 
-    @patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", False)
-    def test_optimize_portfolio_pypfopt_unavailable(self, performance_analyzer, sample_price_data):
+    def test_optimize_portfolio_pypfopt_unavailable(self, performance_analyzer, sample_price_data, mocker):
         """Test portfolio optimization when PyPortfolioOpt is not available."""
+        mocker.patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", False)
         with pytest.raises(RuntimeError, match="PyPortfolioOpt is not available"):
             performance_analyzer.optimize_portfolio(sample_price_data)
 
-    def test_optimize_portfolio_invalid_method(self, performance_analyzer, sample_price_data):
+    def test_optimize_portfolio_invalid_method(self, performance_analyzer, sample_price_data, mocker):
         """Test portfolio optimization with invalid method."""
-        with patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", True):
-            with pytest.raises(ValueError, match="Invalid optimization method"):
-                performance_analyzer.optimize_portfolio(sample_price_data, method="invalid_method")
+        mocker.patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", True)
+        with pytest.raises(ValueError, match="Invalid optimization method"):
+            performance_analyzer.optimize_portfolio(sample_price_data, method="invalid_method")
 
-    def test_optimize_portfolio_empty_data(self, performance_analyzer):
+    def test_optimize_portfolio_empty_data(self, performance_analyzer, mocker):
         """Test portfolio optimization with empty price data."""
         empty_data = pd.DataFrame()
 
-        with patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", True):
-            with pytest.raises(ValueError, match="Price data cannot be empty"):
-                performance_analyzer.optimize_portfolio(empty_data)
+        mocker.patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", True)
+        with pytest.raises(ValueError, match="Price data cannot be empty"):
+            performance_analyzer.optimize_portfolio(empty_data)
 
     def test_generate_equity_curve_data(self, performance_analyzer, sample_returns, sample_benchmark_returns):
         """Test equity curve data generation."""
@@ -310,9 +309,9 @@ class TestPerformanceAnalyzer:
         with pytest.raises(RuntimeError, match="Plotly is not available"):
             performance_analyzer.generate_performance_visualization(report)
 
-    @patch("finwiz.quantitative.performance.PLOTLY_AVAILABLE", False)
-    def test_generate_performance_visualization_plotly_unavailable(self, performance_analyzer, sample_returns):
+    def test_generate_performance_visualization_plotly_unavailable(self, performance_analyzer, sample_returns, mocker):
         """Test performance visualization when Plotly is not available."""
+        mocker.patch("finwiz.quantitative.performance.PLOTLY_AVAILABLE", False)
         report = performance_analyzer.analyze_performance(sample_returns, strategy_name="Test")
 
         with pytest.raises(RuntimeError, match="Plotly is not available"):
@@ -337,9 +336,9 @@ class TestPerformanceAnalyzer:
         with pytest.raises(RuntimeError, match="Plotly is not available"):
             performance_analyzer.generate_optimization_visualization(optimization_result)
 
-    @patch("finwiz.quantitative.performance.PLOTLY_AVAILABLE", False)
-    def test_generate_optimization_visualization_plotly_unavailable(self, performance_analyzer):
+    def test_generate_optimization_visualization_plotly_unavailable(self, performance_analyzer, mocker):
         """Test optimization visualization when Plotly is not available."""
+        mocker.patch("finwiz.quantitative.performance.PLOTLY_AVAILABLE", False)
         optimization_result = PortfolioOptimizationResult(
             optimization_method="max_sharpe",
             risk_free_rate=0.02,
@@ -500,8 +499,7 @@ class TestPerformanceAnalysisIntegration:
         assert "strategy_equity" in report.equity_curve_data
         assert len(report.equity_curve_data["dates"]) == len(realistic_returns)
 
-    @patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", True)
-    def test_end_to_end_portfolio_optimization(self):
+    def test_end_to_end_portfolio_optimization(self, mocker):
         """Test complete portfolio optimization workflow."""
         # Generate sample price data
         np.random.seed(42)
@@ -524,35 +522,33 @@ class TestPerformanceAnalysisIntegration:
 
         analyzer = PerformanceAnalyzer()
 
-        with (
-            patch("finwiz.quantitative.performance.expected_returns") as mock_expected_returns,
-            patch("finwiz.quantitative.performance.risk_models") as mock_risk_models,
-            patch("finwiz.quantitative.performance.EfficientFrontier") as mock_ef_class,
-        ):
-            # Mock the optimization components
-            mock_expected_returns.mean_historical_return.return_value = pd.Series(
-                [0.12, 0.08, 0.04], index=["TECH", "GROWTH", "BOND"]
-            )
-            mock_risk_models.sample_cov.return_value = pd.DataFrame(
-                [[0.04, 0.02, 0.01], [0.02, 0.03, 0.01], [0.01, 0.01, 0.02]],
-                index=["TECH", "GROWTH", "BOND"],
-                columns=["TECH", "GROWTH", "BOND"],
-            )
+        # Mock the optimization components
+        mocker.patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", True)
+        mock_expected_returns = mocker.patch("finwiz.quantitative.performance.expected_returns")
+        mock_risk_models = mocker.patch("finwiz.quantitative.performance.risk_models")
+        mock_ef_class = mocker.patch("finwiz.quantitative.performance.EfficientFrontier")
 
-            mock_ef = MagicMock()
-            mock_ef_class.return_value = mock_ef
-            mock_ef.max_sharpe.return_value = {"TECH": 0.5, "GROWTH": 0.3, "BOND": 0.2}
-            mock_ef.clean_weights.return_value = {"TECH": 0.5, "GROWTH": 0.3, "BOND": 0.2}
-            mock_ef.portfolio_performance.return_value = (0.095, 0.18, 0.42)
+        mock_expected_returns.mean_historical_return.return_value = pd.Series([0.12, 0.08, 0.04], index=["TECH", "GROWTH", "BOND"])
+        mock_risk_models.sample_cov.return_value = pd.DataFrame(
+            [[0.04, 0.02, 0.01], [0.02, 0.03, 0.01], [0.01, 0.01, 0.02]],
+            index=["TECH", "GROWTH", "BOND"],
+            columns=["TECH", "GROWTH", "BOND"],
+        )
 
-            # Perform optimization
-            result = analyzer.optimize_portfolio(price_data=price_data, method="max_sharpe", total_portfolio_value=100000)
+        mock_ef = mocker.MagicMock()
+        mock_ef_class.return_value = mock_ef
+        mock_ef.max_sharpe.return_value = {"TECH": 0.5, "GROWTH": 0.3, "BOND": 0.2}
+        mock_ef.clean_weights.return_value = {"TECH": 0.5, "GROWTH": 0.3, "BOND": 0.2}
+        mock_ef.portfolio_performance.return_value = (0.095, 0.18, 0.42)
 
-            # Verify optimization result
-            assert isinstance(result, PortfolioOptimizationResult)
-            assert result.optimization_method == "max_sharpe"
-            assert len(result.weights) == 3
-            assert all(asset in result.weights for asset in ["TECH", "GROWTH", "BOND"])
-            assert 0.09 < result.expected_annual_return < 0.10
-            assert 0.17 < result.annual_volatility < 0.19
-            assert result.sharpe_ratio > 0
+        # Perform optimization
+        result = analyzer.optimize_portfolio(price_data=price_data, method="max_sharpe", total_portfolio_value=100000)
+
+        # Verify optimization result
+        assert isinstance(result, PortfolioOptimizationResult)
+        assert result.optimization_method == "max_sharpe"
+        assert len(result.weights) == 3
+        assert all(asset in result.weights for asset in ["TECH", "GROWTH", "BOND"])
+        assert 0.09 < result.expected_annual_return < 0.10
+        assert 0.17 < result.annual_volatility < 0.19
+        assert result.sharpe_ratio > 0

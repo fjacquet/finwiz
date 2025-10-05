@@ -9,7 +9,6 @@ import asyncio
 import os
 import sys
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -81,12 +80,12 @@ class TestPortfolioRebalancingEndToEnd:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_should_complete_full_rebalancing_workflow_with_real_components(
-        self, realistic_portfolio_config, realistic_price_data
+        self, mocker, realistic_portfolio_config, realistic_price_data
     ):
         """Test complete workflow using real component instances."""
         # Arrange - Use real components with mocked external dependencies
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
@@ -97,8 +96,8 @@ class TestPortfolioRebalancingEndToEnd:
             CostAnalyzer()
             RiskManager()
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>Integration Test Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -144,11 +143,11 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_generate_comprehensive_html_report(self, realistic_portfolio_config, realistic_price_data):
+    async def test_should_generate_comprehensive_html_report(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test HTML report generation with real data."""
         # Arrange
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
@@ -179,7 +178,9 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_different_rebalancing_methods_consistently(self, realistic_portfolio_config, realistic_price_data):
+    async def test_should_handle_different_rebalancing_methods_consistently(
+        self, mocker, realistic_portfolio_config, realistic_price_data
+    ):
         """Test that different rebalancing methods produce consistent results."""
         # Arrange
         methods_to_test = [RebalancingMethod.MINIMIZE_TRADES, RebalancingMethod.MINIMIZE_COSTS, RebalancingMethod.RISK_AWARE]
@@ -190,14 +191,14 @@ class TestPortfolioRebalancingEndToEnd:
             config = realistic_portfolio_config.model_copy()
             config.rebalancing_method = method
 
-            with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-                mock_price_service = AsyncMock()
+            with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+                mock_price_service = mocker.AsyncMock()
                 mock_price_service_class.return_value = mock_price_service
                 mock_price_service.get_current_prices.return_value = realistic_price_data
                 mock_price_service.close.return_value = None
 
-                with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                    mock_report_generator = MagicMock()
+                with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                    mock_report_generator = mocker.MagicMock()
                     mock_report_class.return_value = mock_report_generator
                     mock_report_generator.generate_html.return_value = f"<html>{method} Report</html>"
                     mock_report_generator.clear_sections.return_value = None
@@ -227,7 +228,7 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_portfolio_requiring_no_rebalancing(self, realistic_price_data):
+    async def test_should_handle_portfolio_requiring_no_rebalancing(self, mocker, realistic_price_data):
         """Test handling of portfolio that doesn't require rebalancing."""
         # Arrange - Create perfectly balanced portfolio
         balanced_config = PortfolioConfiguration(
@@ -242,14 +243,14 @@ class TestPortfolioRebalancingEndToEnd:
             global_tolerance=0.05,
         )
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>No Action Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -275,7 +276,7 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_portfolio_with_extreme_imbalance(self, realistic_price_data):
+    async def test_should_handle_portfolio_with_extreme_imbalance(self, mocker, realistic_price_data):
         """Test handling of portfolio with extreme allocation imbalance."""
         # Arrange - Create extremely imbalanced portfolio
         imbalanced_config = PortfolioConfiguration(
@@ -291,14 +292,14 @@ class TestPortfolioRebalancingEndToEnd:
             available_capital=50000.0,  # Provide capital for rebalancing
         )
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>Extreme Rebalancing Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -330,20 +331,20 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_insufficient_capital_scenario(self, realistic_portfolio_config, realistic_price_data):
+    async def test_should_handle_insufficient_capital_scenario(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test handling when insufficient capital is available for optimal rebalancing."""
         # Arrange - Limit available capital
         limited_capital_config = realistic_portfolio_config.model_copy()
         limited_capital_config.available_capital = 1000.0  # Very limited capital
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>Limited Capital Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -366,20 +367,20 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_high_transaction_costs_scenario(self, realistic_portfolio_config, realistic_price_data):
+    async def test_should_handle_high_transaction_costs_scenario(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test handling when transaction costs are prohibitively high."""
         # Arrange - Set very high transaction costs
         high_cost_config = realistic_portfolio_config.model_copy()
         high_cost_config.transaction_cost_rate = 0.05  # 5% transaction cost
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>High Cost Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -408,20 +409,20 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_tax_implications_correctly(self, realistic_portfolio_config, realistic_price_data):
+    async def test_should_handle_tax_implications_correctly(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test handling of tax implications in rebalancing decisions."""
         # Arrange - Portfolio with significant gains (cost basis < current price)
         tax_config = realistic_portfolio_config.model_copy()
         # Holdings already have cost basis set in fixture
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>Tax Implications Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -450,20 +451,20 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_concurrent_portfolio_analysis(self, realistic_portfolio_config, realistic_price_data):
+    async def test_should_handle_concurrent_portfolio_analysis(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test handling of concurrent portfolio analysis requests."""
         # Arrange
         num_concurrent = 3
         configs = [realistic_portfolio_config.model_copy() for _ in range(num_concurrent)]
 
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>Concurrent Test Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -491,11 +492,11 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_error_recovery_gracefully(self, realistic_portfolio_config):
+    async def test_should_handle_error_recovery_gracefully(self, mocker, realistic_portfolio_config):
         """Test error recovery and graceful degradation."""
         # Arrange - Simulate various failure scenarios
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
 
             # First call fails, second succeeds
@@ -511,8 +512,8 @@ class TestPortfolioRebalancingEndToEnd:
             ]
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>Error Recovery Report</html>"
                 mock_report_generator.clear_sections.return_value = None
@@ -540,17 +541,17 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_validate_end_to_end_data_consistency(self, realistic_portfolio_config, realistic_price_data):
+    async def test_should_validate_end_to_end_data_consistency(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test data consistency throughout the entire workflow."""
         # Arrange
-        with patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
-            mock_price_service = AsyncMock()
+        with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
+            mock_price_service = mocker.AsyncMock()
             mock_price_service_class.return_value = mock_price_service
             mock_price_service.get_current_prices.return_value = realistic_price_data
             mock_price_service.close.return_value = None
 
-            with patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
-                mock_report_generator = MagicMock()
+            with mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator") as mock_report_class:
+                mock_report_generator = mocker.MagicMock()
                 mock_report_class.return_value = mock_report_generator
                 mock_report_generator.generate_html.return_value = "<html>Data Consistency Report</html>"
                 mock_report_generator.clear_sections.return_value = None

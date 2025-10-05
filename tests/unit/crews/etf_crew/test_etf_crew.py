@@ -5,8 +5,6 @@ Tests the ETF analysis crew agents, tasks, and workflow execution
 with mocked external dependencies.
 """
 
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 from finwiz.schemas.etf import ETFFactsheet, ETFTopHolding
@@ -86,9 +84,9 @@ class TestEtfCrew:
         )
 
     @pytest.fixture
-    def etf_crew(self):
+    def etf_crew(self, mocker):
         """Create a mock EtfCrew instance for testing."""
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.agents_config = {
             "market_analyst": {"role": "Market Analyst", "goal": "Analyze markets"},
             "etf_specialist": {"role": "ETF Specialist", "goal": "Analyze ETFs"},
@@ -101,17 +99,17 @@ class TestEtfCrew:
         }
 
         # Mock agent methods
-        mock_crew.market_analyst.return_value = MagicMock()
-        mock_crew.etf_specialist.return_value = MagicMock()
-        mock_crew.risk_assessor.return_value = MagicMock()
+        mock_crew.market_analyst.return_value = mocker.MagicMock()
+        mock_crew.etf_specialist.return_value = mocker.MagicMock()
+        mock_crew.risk_assessor.return_value = mocker.MagicMock()
 
         # Mock task methods
-        mock_crew.market_research.return_value = MagicMock()
-        mock_crew.etf_analysis.return_value = MagicMock()
-        mock_crew.risk_assessment.return_value = MagicMock()
+        mock_crew.market_research.return_value = mocker.MagicMock()
+        mock_crew.etf_analysis.return_value = mocker.MagicMock()
+        mock_crew.risk_assessment.return_value = mocker.MagicMock()
 
         # Mock crew method
-        mock_crew.crew.return_value = MagicMock()
+        mock_crew.crew.return_value = mocker.MagicMock()
 
         return mock_crew
 
@@ -153,11 +151,11 @@ class TestEtfCrew:
         assert hasattr(etf_analysis_task, "description")
         assert hasattr(risk_assessment_task, "description")
 
-    @patch("finwiz.tools.tool_factories.get_etf_crew_tools")
-    def test_should_create_crew_with_all_components(self, mock_etf_tools, etf_crew):
+    def test_should_create_crew_with_all_components(self, mocker, etf_crew):
         """Test that crew is created with all agents and tasks."""
         # Mock the tools
-        mock_etf_tools.return_value = [MagicMock()]
+        mock_etf_tools = mocker.patch("finwiz.tools.tool_factories.get_etf_crew_tools")
+        mock_etf_tools.return_value = [mocker.MagicMock()]
 
         crew = etf_crew.crew()
 
@@ -169,17 +167,11 @@ class TestEtfCrew:
         assert hasattr(crew, "process")
         assert hasattr(crew, "verbose")
 
-    def test_should_execute_crew_with_mock_data(
-        self,
-        etf_crew,
-        mock_etf_inputs,
-        mock_etf_data,
-        mock_etf_holdings,
-    ):
+    def test_should_execute_crew_with_mock_data(self, etf_crew, mock_etf_inputs, mock_etf_data, mock_etf_holdings, mocker):
         """Test crew execution with mocked external data."""
         # Mock the crew kickoff to avoid actual LLM calls
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Mock ETF analysis result with BUY recommendation"
             mock_kickoff.return_value = mock_result
 
@@ -188,12 +180,12 @@ class TestEtfCrew:
             assert result is not None
             mock_kickoff.assert_called_once_with(inputs=mock_etf_inputs)
 
-    def test_should_handle_missing_inputs_gracefully(self, etf_crew):
+    def test_should_handle_missing_inputs_gracefully(self, etf_crew, mocker):
         """Test that crew handles missing inputs gracefully."""
         incomplete_inputs = {"current_date": "2025-01-15"}
 
         # Mock the crew kickoff to simulate error handling
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
             mock_kickoff.side_effect = ValueError("Missing required inputs")
 
             with pytest.raises(ValueError, match="Missing required inputs"):
@@ -203,11 +195,11 @@ class TestEtfCrew:
         """Test that crew uses ETF research tools from tool factory."""
         # Verify that the ETF crew module imports the tool factory
         import finwiz.crews.etf_crew.etf_crew as etf_crew_module
-        
+
         # Check that get_etf_crew_tools is imported and used
         assert hasattr(etf_crew_module, "get_etf_crew_tools")
         assert hasattr(etf_crew_module, "research_tools")
-        
+
         # Verify tools are used in agent creation
         market_analyst = etf_crew.market_analyst()
         assert market_analyst is not None
@@ -232,17 +224,17 @@ class TestEtfCrew:
         for task_name in required_tasks:
             assert task_name in config, f"Missing task configuration: {task_name}"
 
-    @patch("finwiz.tools.tool_factories.get_etf_crew_tools")
-    def test_should_handle_tool_failures_gracefully(self, mock_etf_tools, etf_crew, mock_etf_inputs):
+    def test_should_handle_tool_failures_gracefully(self, mocker, etf_crew, mock_etf_inputs):
+        mock_etf_tools = mocker.patch("finwiz.tools.tool_factories.get_etf_crew_tools")
         """Test that crew handles tool failures gracefully."""
         # Mock tool failure
-        mock_holdings_instance = MagicMock()
+        mock_holdings_instance = mocker.MagicMock()
         mock_holdings_instance.run.side_effect = Exception("ETF holdings API failed")
         mock_etf_tools.return_value = [mock_holdings_instance]
 
         # Mock the crew to handle tool failures
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "ETF analysis completed with limited holdings data"
             mock_kickoff.return_value = mock_result
 
@@ -253,8 +245,6 @@ class TestEtfCrew:
 
     def test_should_have_proper_crew_process(self, etf_crew):
         """Test that crew uses proper process configuration."""
-        from crewai import Process
-        
         crew = etf_crew.crew()
 
         # Verify crew has a process defined
@@ -267,20 +257,20 @@ class TestEtfCrew:
         """Test that crew integrates with RAG system for knowledge storage."""
         # Verify that the ETF crew module uses tool factory which includes RAG tools
         import finwiz.crews.etf_crew.etf_crew as etf_crew_module
-        
+
         # Check that tool factory is used (which includes RAG tools)
         assert hasattr(etf_crew_module, "get_etf_crew_tools")
         assert hasattr(etf_crew_module, "research_tools")
-        
+
         # Verify tools are available
         market_analyst = etf_crew.market_analyst()
         assert market_analyst is not None
 
-    def test_should_analyze_expense_ratios(self, etf_crew, mock_etf_inputs, mock_etf_data):
+    def test_should_analyze_expense_ratios(self, mocker, etf_crew, mock_etf_inputs, mock_etf_data):
         """Test that crew analyzes expense ratios properly."""
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
             # Mock result that includes expense ratio analysis
-            mock_result = MagicMock()
+            mock_result = mocker.MagicMock()
             mock_result.raw = f"ETF analysis shows expense ratio of {mock_etf_data['expenseRatio']:.4f} which is competitive"
             mock_kickoff.return_value = mock_result
 
@@ -289,11 +279,11 @@ class TestEtfCrew:
             assert result is not None
             assert "expense ratio" in str(result.raw)
 
-    def test_should_analyze_tracking_error(self, etf_crew, mock_etf_inputs, mock_etf_data):
+    def test_should_analyze_tracking_error(self, mocker, etf_crew, mock_etf_inputs, mock_etf_data):
         """Test that crew analyzes tracking error properly."""
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
             # Mock result that includes tracking error analysis
-            mock_result = MagicMock()
+            mock_result = mocker.MagicMock()
             mock_result.raw = f"Tracking error of {mock_etf_data['trackingError']:.2f} indicates good benchmark tracking"
             mock_kickoff.return_value = mock_result
 
@@ -303,13 +293,13 @@ class TestEtfCrew:
             assert "0.02" in str(result.raw) or "good benchmark" in str(result.raw)
             assert "tracking error" in str(result.raw)
 
-    def test_should_support_multilingual_analysis(self, etf_crew, mock_etf_inputs):
+    def test_should_support_multilingual_analysis(self, mocker, etf_crew, mock_etf_inputs):
         """Test that crew supports multilingual analysis."""
         # Test with French language setting
         french_inputs = {**mock_etf_inputs, "report_language": "fr"}
 
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Analyse des ETF en français"
             mock_kickoff.return_value = mock_result
 
@@ -319,16 +309,16 @@ class TestEtfCrew:
         # Test with English language setting
         english_inputs = {**mock_etf_inputs, "report_language": "en"}
 
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "ETF analysis in English"
             mock_kickoff.return_value = mock_result
 
             result = etf_crew.crew().kickoff(inputs=english_inputs)
             assert result is not None
 
-    @patch("finwiz.tools.tool_factories.get_etf_crew_tools")
-    def test_should_handle_large_etf_holdings_data(self, mock_etf_tools, etf_crew, mock_etf_inputs):
+    def test_should_handle_large_etf_holdings_data(self, mocker, etf_crew, mock_etf_inputs):
+        mock_etf_tools = mocker.patch("finwiz.tools.tool_factories.get_etf_crew_tools")
         """Test that crew handles large ETF holdings datasets efficiently."""
         # Create large holdings dataset
         large_holdings = [
@@ -337,12 +327,12 @@ class TestEtfCrew:
         ]
 
         # Mock the tool factory to return tools
-        mock_holdings_instance = MagicMock()
+        mock_holdings_instance = mocker.MagicMock()
         mock_holdings_instance.run.return_value = large_holdings
         mock_etf_tools.return_value = [mock_holdings_instance]
 
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "ETF analysis completed for diversified fund with 500 holdings"
             mock_kickoff.return_value = mock_result
 
@@ -351,11 +341,11 @@ class TestEtfCrew:
             assert result is not None
             assert "500 holdings" in str(result.raw)
 
-    @patch("finwiz.tools.tool_factories.get_etf_crew_tools")
-    def test_should_integrate_quantitative_analysis(self, mock_etf_tools, etf_crew, mock_etf_inputs):
+    def test_should_integrate_quantitative_analysis(self, mocker, etf_crew, mock_etf_inputs):
+        mock_etf_tools = mocker.patch("finwiz.tools.tool_factories.get_etf_crew_tools")
         """Test that crew integrates quantitative analysis for ETF performance."""
         # Mock the tool factory to return tools including quantitative analysis
-        mock_quant_instance = MagicMock()
+        mock_quant_instance = mocker.MagicMock()
         mock_quant_instance.run.return_value = {
             "sharpe_ratio": 1.25,
             "sortino_ratio": 1.45,
@@ -365,8 +355,8 @@ class TestEtfCrew:
         }
         mock_etf_tools.return_value = [mock_quant_instance]
 
-        with patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = MagicMock()
+        with mocker.patch.object(etf_crew.crew(), "kickoff") as mock_kickoff:
+            mock_result = mocker.MagicMock()
             mock_result.raw = "ETF shows strong risk-adjusted returns with Sharpe ratio of 1.25"
             mock_kickoff.return_value = mock_result
 

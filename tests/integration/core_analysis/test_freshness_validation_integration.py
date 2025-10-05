@@ -6,7 +6,6 @@ and Alpha Vantage tools.
 """
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock, patch
 
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
@@ -18,10 +17,10 @@ from finwiz.utils.freshness_validated_tool import FreshnessValidatedTool
 class TestYahooFinanceToolsIntegration:
     """Test integration of freshness validation with Yahoo Finance tools."""
 
-    @patch("finwiz.tools.yahoo_finance_ticker_info_tool.yf.Ticker")
-    def test_should_add_timestamp_to_ticker_info(self, mock_ticker):
+    def test_should_add_timestamp_to_ticker_info(self, mocker):
         """Test that ticker info tool adds timestamp for freshness validation."""
         # Mock yfinance response
+        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.yf.Ticker")
         mock_info = {
             "shortName": "Apple Inc.",
             "currentPrice": 150.0,
@@ -45,9 +44,11 @@ class TestYahooFinanceToolsIntegration:
         age_seconds = (datetime.now(UTC) - timestamp).total_seconds()
         assert age_seconds < 60  # Should be very recent
 
-    @patch("finwiz.tools.yahoo_finance_ticker_info_tool.yf.Ticker")
-    def test_should_add_market_time_when_available(self, mock_ticker):
+    def test_should_add_market_time_when_available(self, mocker):
         """Test that market time is added when available from Yahoo Finance."""
+        # Mock yfinance response
+        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.yf.Ticker")
+
         market_timestamp = datetime.now(UTC) - timedelta(hours=2)
         mock_info = {
             "shortName": "Apple Inc.",
@@ -67,9 +68,11 @@ class TestYahooFinanceToolsIntegration:
         age_hours = (datetime.now(UTC) - market_time).total_seconds() / 3600
         assert 1.9 <= age_hours <= 2.1
 
-    @patch("finwiz.tools.yahoo_finance_history_tool.yf.Ticker")
-    def test_should_add_timestamp_to_history_data(self, mock_ticker):
+    def test_should_add_timestamp_to_history_data(self, mocker):
         """Test that history tool adds timestamp for freshness validation."""
+        # Mock yfinance response
+        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_history_tool.yf.Ticker")
+
         # Mock historical data
         import pandas as pd
 
@@ -100,9 +103,11 @@ class TestYahooFinanceToolsIntegration:
         data_time = result["data_time"]
         assert "2024-01-05" in data_time  # Latest date from mock data
 
-    @patch("finwiz.tools.yahoo_finance_ticker_info_tool.yf.Ticker")
-    def test_should_work_with_freshness_validator_wrapper(self, mock_ticker):
+    def test_should_work_with_freshness_validator_wrapper(self, mocker):
         """Test Yahoo Finance tool with freshness validation wrapper."""
+        # Mock yfinance response
+        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.yf.Ticker")
+
         # Mock fresh data
         mock_info = {
             "shortName": "Apple Inc.",
@@ -126,12 +131,10 @@ class TestYahooFinanceToolsIntegration:
 class TestAlphaVantageToolIntegration:
     """Test integration of freshness validation with Alpha Vantage tools."""
 
-    @patch("finwiz.tools.alpha_vantage_tool.requests.get")
-    @patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "test_key"})
-    def test_should_add_timestamp_to_alpha_vantage_data(self, mock_get):
+    def test_should_add_timestamp_to_alpha_vantage_data(self, mocker):
         """Test that Alpha Vantage tool adds timestamp for freshness validation."""
         # Mock Alpha Vantage API response
-        mock_response = Mock()
+        mock_response = mocker.Mock()
         mock_response.json.return_value = {
             "Symbol": "AAPL",
             "Name": "Apple Inc",
@@ -140,17 +143,21 @@ class TestAlphaVantageToolIntegration:
             "EPS": "6.05",
         }
         mock_response.raise_for_status.return_value = None
+
+        mock_get = mocker.patch("finwiz.tools.alpha_vantage_tool.requests.get")
         mock_get.return_value = mock_response
+
+        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "test_key"})
 
         tool = AlphaVantageCompanyOverviewTool()
 
         # Mock the async execution
-        with patch("asyncio.get_event_loop") as mock_loop:
-            mock_event_loop = Mock()
+        with mocker.patch("asyncio.get_event_loop") as mock_loop:
+            mock_event_loop = mocker.Mock()
             mock_loop.return_value = mock_event_loop
 
             # Mock the cached function to return data directly
-            with patch.object(tool, "_fetch_company_overview") as mock_fetch:
+            with mocker.patch.object(tool, "_fetch_company_overview") as mock_fetch:
                 mock_data = {
                     "Symbol": "AAPL",
                     "Name": "Apple Inc",
@@ -170,12 +177,14 @@ class TestAlphaVantageToolIntegration:
                     assert "Symbol" in parsed_result
                     assert parsed_result["Symbol"] == "AAPL"
 
-    @patch("finwiz.tools.alpha_vantage_tool.requests.get")
-    @patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "test_key"})
-    def test_should_work_with_freshness_validator_wrapper(self, mock_get):
+    def test_should_work_with_alpha_vantage_freshness_validator_wrapper(self, mocker):
         """Test Alpha Vantage tool with freshness validation wrapper."""
+        # Mock environment and API
+        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "test_key"})
+        mock_get = mocker.patch("finwiz.tools.alpha_vantage_tool.requests.get")
+
         # Mock API response
-        mock_response = Mock()
+        mock_response = mocker.Mock()
         mock_response.json.return_value = {"Symbol": "AAPL", "Name": "Apple Inc", "MarketCapitalization": "2500000000000"}
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
@@ -184,8 +193,8 @@ class TestAlphaVantageToolIntegration:
         wrapped_tool = FreshnessValidatedTool(base_tool, max_age_hours=24)
 
         # Mock the async execution for the wrapper
-        with patch("asyncio.get_event_loop") as mock_loop:
-            mock_event_loop = Mock()
+        with mocker.patch("asyncio.get_event_loop") as mock_loop:
+            mock_event_loop = mocker.Mock()
             mock_loop.return_value = mock_event_loop
 
             # Create mock data with timestamp
@@ -203,12 +212,10 @@ class TestAlphaVantageToolIntegration:
 class TestFreshnessValidationEndToEnd:
     """End-to-end tests for freshness validation system."""
 
-    def test_should_detect_stale_data_and_attempt_refresh(self):
+    def test_should_detect_stale_data_and_attempt_refresh(self, mocker):
         """Test complete flow of stale data detection and refresh attempt."""
         # Create a mock tool that returns stale data first, then fresh data
-        from unittest.mock import Mock
-
-        mock_tool = Mock()
+        mock_tool = mocker.Mock()
         mock_tool.name = "Test Tool"
         mock_tool.description = "Test tool for freshness validation"
         mock_tool.args_schema = None
@@ -244,14 +251,14 @@ class TestFreshnessValidationEndToEnd:
         assert isinstance(result, dict)
         assert "_freshness_info" in result
 
-    def test_should_handle_missing_api_keys_gracefully(self):
+    def test_should_handle_missing_api_keys_gracefully(self, mocker):
         """Test graceful handling when API keys are missing."""
-        with patch.dict("os.environ", {}, clear=True):
+        with mocker.patch.dict("os.environ", {}, clear=True):
             tool = AlphaVantageCompanyOverviewTool()
 
             # Should handle missing API key gracefully
-            with patch("asyncio.get_event_loop") as mock_loop:
-                mock_event_loop = Mock()
+            with mocker.patch("asyncio.get_event_loop") as mock_loop:
+                mock_event_loop = mocker.Mock()
                 mock_loop.return_value = mock_event_loop
                 mock_event_loop.run_until_complete.return_value = "Error: ALPHA_VANTAGE_API_KEY environment variable not set."
 

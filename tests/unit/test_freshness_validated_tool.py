@@ -5,7 +5,6 @@ Tests the tool wrapper that adds freshness validation to existing CrewAI tools.
 """
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import patch
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -127,7 +126,7 @@ class TestFreshnessValidatedTool:
         assert result["_freshness_info"]["is_fresh"] is True
         assert mock_tool.call_count == 1
 
-    def test_should_warn_about_stale_data(self):
+    def test_should_warn_about_stale_data(self, mocker):
         """Test warning behavior with stale data."""
         # Create mock tool with stale data
         stale_time = datetime.now(UTC) - timedelta(hours=48)
@@ -135,16 +134,16 @@ class TestFreshnessValidatedTool:
 
         wrapper = FreshnessValidatedTool(mock_tool, max_age_hours=24)
 
-        with patch("finwiz.utils.freshness_validated_tool.logger") as mock_logger:
-            result = wrapper._run(ticker="AAPL")
+        mock_logger = mocker.patch("finwiz.utils.freshness_validated_tool.logger")
+        result = wrapper._run(ticker="AAPL")
 
-            # Should log warning about stale data
-            mock_logger.warning.assert_called()
-            # Check that at least one warning contains "Stale data detected"
-            warning_calls = [call[0][0] for call in mock_logger.warning.call_args_list]
-            assert any("Stale data detected" in call for call in warning_calls)
+        # Should log warning about stale data
+        mock_logger.warning.assert_called()
+        # Check that at least one warning contains "Stale data detected"
+        warning_calls = [call[0][0] for call in mock_logger.warning.call_args_list]
+        assert any("Stale data detected" in call for call in warning_calls)
 
-    def test_should_attempt_refresh_for_stale_data(self):
+    def test_should_attempt_refresh_for_stale_data(self, mocker):
         """Test refresh attempt for stale data."""
         # Create mock tool that returns stale data first, then fresh data
         stale_time = datetime.now(UTC) - timedelta(hours=48)
@@ -168,12 +167,12 @@ class TestFreshnessValidatedTool:
                 # Second call (refresh) - fresh data
                 return {"symbol": "AAPL", "price": 150.0, "timestamp": fresh_time.isoformat()}
 
-        with patch.object(mock_tool, "_run", side_effect=mock_run_side_effect):
-            result = wrapper._run(ticker="AAPL")
+        mocker.patch.object(mock_tool, "_run", side_effect=mock_run_side_effect)
+        result = wrapper._run(ticker="AAPL")
 
-            # Should have attempted refresh (2 calls total)
-            assert call_counter[0] >= 1
-            assert isinstance(result, dict)
+        # Should have attempted refresh (2 calls total)
+        assert call_counter[0] >= 1
+        assert isinstance(result, dict)
 
     def test_should_handle_tool_errors_gracefully(self):
         """Test graceful handling of tool errors."""
@@ -188,32 +187,32 @@ class TestFreshnessValidatedTool:
         # Should not attempt freshness validation on error results
         assert "_freshness_info" not in result
 
-    def test_should_handle_wrapper_exceptions(self):
+    def test_should_handle_wrapper_exceptions(self, mocker):
         """Test handling of exceptions in wrapper logic."""
         mock_tool = MockTool()
         wrapper = FreshnessValidatedTool(mock_tool)
 
         # Mock validator to raise exception
-        with patch.object(wrapper.validator, "validate_data_freshness", side_effect=Exception("Test error")):
-            result = wrapper._run(ticker="AAPL")
+        mocker.patch.object(wrapper.validator, "validate_data_freshness", side_effect=Exception("Test error"))
+        result = wrapper._run(ticker="AAPL")
 
-            assert isinstance(result, dict)
-            assert "error" in result
-            assert "Tool execution failed" in result["error"]
+        assert isinstance(result, dict)
+        assert "error" in result
+        assert "Tool execution failed" in result["error"]
 
-    def test_should_skip_validation_for_error_results(self):
+    def test_should_skip_validation_for_error_results(self, mocker):
         """Test that validation is skipped for error results."""
         mock_tool = MockTool(should_error=True)
         wrapper = FreshnessValidatedTool(mock_tool)
 
-        with patch.object(wrapper.validator, "validate_data_freshness") as mock_validate:
-            result = wrapper._run(ticker="AAPL")
+        mock_validate = mocker.patch.object(wrapper.validator, "validate_data_freshness")
+        result = wrapper._run(ticker="AAPL")
 
-            # Validation should not be called for error results
-            mock_validate.assert_not_called()
-            assert "error" in result
+        # Validation should not be called for error results
+        mock_validate.assert_not_called()
+        assert "error" in result
 
-    def test_should_continue_with_stale_data_when_refresh_fails(self):
+    def test_should_continue_with_stale_data_when_refresh_fails(self, mocker):
         """Test graceful degradation when refresh fails."""
         stale_time = datetime.now(UTC) - timedelta(hours=48)
         mock_tool = MockTool(return_data={"symbol": "AAPL", "price": 150.0, "timestamp": stale_time.isoformat()})
@@ -221,14 +220,14 @@ class TestFreshnessValidatedTool:
         wrapper = FreshnessValidatedTool(mock_tool, max_age_hours=24)
 
         # Mock refresh to always fail
-        with patch.object(wrapper, "_attempt_refresh", return_value=RefreshResult(success=False, error="Refresh failed")):
-            result = wrapper._run(ticker="AAPL")
+        mocker.patch.object(wrapper, "_attempt_refresh", return_value=RefreshResult(success=False, error="Refresh failed"))
+        result = wrapper._run(ticker="AAPL")
 
-            # Should continue with stale data
-            assert isinstance(result, dict)
-            assert result["symbol"] == "AAPL"
-            assert "_freshness_info" in result
-            assert result["_freshness_info"]["is_fresh"] is False
+        # Should continue with stale data
+        assert isinstance(result, dict)
+        assert result["symbol"] == "AAPL"
+        assert "_freshness_info" in result
+        assert result["_freshness_info"]["is_fresh"] is False
 
     def test_refresh_result_with_successful_refresh(self):
         """Test RefreshResult with successful data refresh."""

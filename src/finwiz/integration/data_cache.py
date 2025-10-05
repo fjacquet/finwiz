@@ -8,7 +8,7 @@ consolidated data operations.
 from datetime import datetime
 from typing import Any
 
-from ..schemas.integration import APlusOpportunityCollection
+from finwiz.schemas.integration import APlusOpportunityCollection
 
 
 class DataCache:

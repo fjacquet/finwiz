@@ -6,7 +6,7 @@ Models for trade recommendations, cost analysis, and execution planning.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -42,8 +42,8 @@ class TradeRecommendation(BaseModel):
     rationale: str = Field(..., min_length=10, description="Rationale for trade recommendation")
 
     # Risk considerations
-    tax_implications: Optional[str] = Field(None, description="Tax implications if applicable")
-    market_impact_warning: Optional[str] = Field(None, description="Market impact warnings")
+    tax_implications: str | None = Field(None, description="Tax implications if applicable")
+    market_impact_warning: str | None = Field(None, description="Market impact warnings")
 
     @model_validator(mode="after")
     def validate_trade_consistency(self) -> TradeRecommendation:
@@ -79,7 +79,7 @@ class CostAnalysis(BaseModel):
     spread_costs: float = Field(..., ge=0, description="Total bid-ask spread costs")
     market_impact_costs: float = Field(default=0.0, ge=0, description="Estimated market impact costs")
     cost_as_percentage: float = Field(..., ge=0, description="Costs as percentage of portfolio value")
-    break_even_days: Optional[int] = Field(None, ge=0, description="Days to break even on rebalancing costs")
+    break_even_days: int | None = Field(None, ge=0, description="Days to break even on rebalancing costs")
 
 
 class AlternativeScenario(BaseModel):

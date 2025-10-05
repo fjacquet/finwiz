@@ -6,7 +6,6 @@ for core analysis crews.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -18,9 +17,9 @@ class TestCoreAnalysisErrorHandler:
     """Test suite for CoreAnalysisErrorHandler."""
 
     @pytest.fixture
-    def mock_integration_manager(self):
+    def mock_integration_manager(self, mocker):
         """Create a mock integration manager."""
-        manager = Mock(spec=CrewDataIntegrationManager)
+        manager = mocker.Mock(spec=CrewDataIntegrationManager)
         manager.get_cached_crew_output.return_value = None
         return manager
 
@@ -72,7 +71,7 @@ class TestCoreAnalysisErrorHandler:
         assert error_context.error_message == "Test error"
         assert error_context.execution_time == 5.0
 
-    def test_should_return_cached_data_fallback_when_cache_available(self, error_handler, mock_integration_manager):
+    def test_should_return_cached_data_fallback_when_cache_available(self, mocker, error_handler, mock_integration_manager):
         """Test cached data fallback strategy."""
         # Setup cached data
         cached_data = {
@@ -83,7 +82,7 @@ class TestCoreAnalysisErrorHandler:
         mock_integration_manager.get_cached_crew_output.return_value = cached_data
 
         # Mock feature flags to return cached_only strategy
-        with patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
+        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
             mock_strategy.return_value = "cached_only"
 
             test_error = Exception("Test error")
@@ -94,13 +93,13 @@ class TestCoreAnalysisErrorHandler:
             assert response.fallback_strategy == "cached_data"
             assert response.data is not None
 
-    def test_should_return_reduced_functionality_when_no_cache_available(self, error_handler, mock_integration_manager):
+    def test_should_return_reduced_functionality_when_no_cache_available(self, mocker, error_handler, mock_integration_manager):
         """Test reduced functionality fallback strategy."""
         # No cached data available
         mock_integration_manager.get_cached_crew_output.return_value = None
 
         # Mock feature flags to return cached_only strategy (will fallback to reduced)
-        with patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
+        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
             mock_strategy.return_value = "cached_only"
 
             test_error = Exception("Test error")
@@ -111,13 +110,13 @@ class TestCoreAnalysisErrorHandler:
             assert response.fallback_strategy == "reduced_functionality"
             assert "limited_analysis" in response.degraded_functionality
 
-    def test_should_return_default_values_when_reduced_functionality_fails(self, error_handler, mock_integration_manager):
+    def test_should_return_default_values_when_reduced_functionality_fails(self, mocker, error_handler, mock_integration_manager):
         """Test default values fallback strategy."""
         # No cached data available
         mock_integration_manager.get_cached_crew_output.return_value = None
 
         # Mock feature flags to return default_values strategy
-        with patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
+        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
             mock_strategy.return_value = "default_values"
 
             test_error = Exception("Test error")
@@ -128,7 +127,7 @@ class TestCoreAnalysisErrorHandler:
             assert response.data["ai_recommendation"] == "HOLD"
             assert response.data["confidence_score"] == 0.1
 
-    def test_should_reject_stale_cache_when_too_old(self, error_handler, mock_integration_manager):
+    def test_should_reject_stale_cache_when_too_old(self, mocker, error_handler, mock_integration_manager):
         """Test cache rejection when data is too old."""
         # Setup very old cached data
         old_timestamp = (datetime.now() - timedelta(days=5)).isoformat()
@@ -139,7 +138,7 @@ class TestCoreAnalysisErrorHandler:
         mock_integration_manager.get_cached_crew_output.return_value = cached_data
 
         # Mock feature flags to return cached_only strategy
-        with patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
+        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
             mock_strategy.return_value = "cached_only"
 
             test_error = Exception("Test error")
@@ -194,13 +193,13 @@ class TestCoreAnalysisErrorHandler:
         assert enhanced_data["metadata"]["error_type"] == "api_error"
         assert "[FALLBACK MODE]" in enhanced_data["raw_output"]
 
-    def test_should_handle_missing_cache_gracefully(self, error_handler, mock_integration_manager):
+    def test_should_handle_missing_cache_gracefully(self, mocker, error_handler, mock_integration_manager):
         """Test graceful handling when cache is completely missing."""
         # No cached data available
         mock_integration_manager.get_cached_crew_output.return_value = None
 
         # Mock feature flags to return disable strategy
-        with patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
+        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
             mock_strategy.return_value = "disable"
 
             test_error = Exception("Test error")

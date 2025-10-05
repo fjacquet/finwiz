@@ -58,6 +58,7 @@ graph TB
 ### 1. CrewAI Agents
 
 #### ETF Discovery Agent
+
 ```yaml
 # config/agents.yaml
 etf_discovery_agent:
@@ -76,6 +77,7 @@ etf_discovery_agent:
 ```
 
 #### Stock Discovery Agent  
+
 ```yaml
 # config/agents.yaml
 stock_discovery_agent:
@@ -93,6 +95,7 @@ stock_discovery_agent:
 ```
 
 #### Crypto Discovery Agent
+
 ```yaml
 # config/agents.yaml  
 crypto_discovery_agent:
@@ -138,6 +141,7 @@ validation_agent:
 ### 2. CrewAI Tasks
 
 #### Discovery Tasks
+
 ```yaml
 # config/tasks.yaml
 etf_discovery_task:
@@ -197,6 +201,7 @@ stock_discovery_task:
 ```
 
 #### MarketContextAnalyzer
+
 ```python
 class MarketContextAnalyzer:
     def get_current_market_regime(self) -> MarketRegime:
@@ -212,6 +217,7 @@ class MarketContextAnalyzer:
 ### 3. CrewAI Tools
 
 #### A+ Scoring Tool
+
 ```python
 class APlusScoringTool(BaseTool):
     name: str = "A+ Investment Scoring Tool"
@@ -258,6 +264,7 @@ class BacktestingTool(BaseTool):
 ### 4. Integration Components
 
 #### PortfolioOptimizer
+
 ```python
 class PortfolioOptimizer:
     def __init__(self, current_portfolio: Portfolio):
@@ -341,31 +348,37 @@ class CryptoScreeningCriteria:
 ## Error Handling
 
 ### Discovery Errors
+
 - **Data Source Unavailable** : Fallback vers sources alternatives
 - **API Rate Limits** : Implémentation de backoff exponentiel
 - **Invalid Data** : Validation et nettoyage automatique
 
 ### Scoring Errors
+
 - **Missing Fundamentals** : Score partiel avec flag de confiance réduite
 - **Calculation Errors** : Logging détaillé et valeurs par défaut sécurisées
 
 ### Integration Errors
+
 - **Portfolio Conflicts** : Résolution automatique avec préférences utilisateur
 - **Optimization Failures** : Fallback vers recommandations simples
 
 ## Testing Strategy
 
 ### Unit Tests
+
 - Tests de chaque agent de découverte avec données mockées
 - Validation des critères de scoring dans différents contextes
 - Tests de régression pour les changements de critères
 
 ### Integration Tests
+
 - Tests end-to-end du pipeline de découverte
 - Validation de l'intégration avec le système de grading existant
 - Tests de performance avec de gros volumes de données
 
 ### Backtesting Validation
+
 - Validation historique des critères A+ sur 10 ans
 - Tests de robustesse dans différents régimes de marché
 - Comparaison avec des benchmarks de référence
@@ -373,16 +386,19 @@ class CryptoScreeningCriteria:
 ## Performance Considerations
 
 ### Optimizations
+
 - **Caching** : Mise en cache des résultats de screening pour 24h
 - **Parallel Processing** : Analyse parallèle des candidats
 - **Incremental Updates** : Mise à jour incrémentale des scores
 
 ### Scalability
+
 - **Database Indexing** : Index optimisés pour les requêtes de screening
 - **API Throttling** : Gestion intelligente des limites d'API
 - **Memory Management** : Traitement par batch pour les gros datasets
 
 ### Monitoring
+
 - **Performance Metrics** : Temps de découverte, précision des scores
 - **Quality Metrics** : Taux de maintien du grade A+ sur 6 mois
 - **User Adoption** : Taux d'acceptation des recommandations
@@ -390,13 +406,16 @@ class CryptoScreeningCriteria:
 ## Security Considerations
 
 ### Data Protection
+
 - Chiffrement des données de marché sensibles
 - Anonymisation des patterns de trading utilisateur
 
 ### API Security
+
 - Authentification sécurisée pour les sources de données
 - Rate limiting pour éviter les abus
 
 ### Audit Trail
+
 - Logging complet des décisions de scoring
 - Traçabilité des recommandations d'investissement

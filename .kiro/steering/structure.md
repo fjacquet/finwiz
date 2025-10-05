@@ -22,6 +22,7 @@ tests/              # Test suite with pytest
 ## CrewAI Patterns
 
 ### Crew Structure (Required)
+
 ```python
 # crews/{name}/{name}.py
 from crewai import Agent, Task, Crew
@@ -42,10 +43,12 @@ class {Name}Crew:
 ```
 
 ### Configuration Files (Required)
+
 - `config/agents.yaml` - Agent definitions with roles, goals, backstories
 - `config/tasks.yaml` - Task definitions with descriptions and expected outputs
 
 ### Schema Validation (Required)
+
 ```python
 # All crew outputs must use Pydantic models
 from pydantic import BaseModel, Field
@@ -59,6 +62,7 @@ class AnalysisResult(BaseModel):
 ## Tool Development
 
 ### Tool Factory Pattern
+
 ```python
 # tools/{domain}_tools.py
 def get_{domain}_tools() -> list:
@@ -67,6 +71,7 @@ def get_{domain}_tools() -> list:
 ```
 
 ### External API Integration
+
 - Always implement retry logic with exponential backoff
 - Mock all external calls in tests using pytest-mock
 - Handle rate limits and API errors gracefully

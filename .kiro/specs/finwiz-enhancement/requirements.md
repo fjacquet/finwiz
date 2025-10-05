@@ -117,7 +117,6 @@ The improvements address critical needs identified in change requests CR-2025-08
 4. WHEN creating a new session THEN the system SHALL log a message indicating creation of a new financial plan
 5. IF the existing report file is corrupted or unreadable THEN the system SHALL log an error and create a new default financial plan object
 
-
 ### Requirement 10: Use of Dynamic Test Data
 
 **User Story:** As a developer, I want our tests to use realistic, dynamic data to improve test coverage and simulate various user scenarios without relying on static identifiers.

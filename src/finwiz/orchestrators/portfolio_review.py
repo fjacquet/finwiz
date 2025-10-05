@@ -390,25 +390,52 @@ class EnhancedPortfolioReviewOrchestrator:
         keep_count = sum(1 for h in holdings if h.get("decision") == "KEEP")
         sell_count = sum(1 for h in holdings if h.get("decision") == "SELL")
 
-        overview_content = f"""
-        <div class="portfolio-overview">
-            <h3>Portfolio Overview</h3>
-            <div class="metrics-grid">
-                <div class="metric">
-                    <span class="metric-label">Total Holdings:</span>
-                    <span class="metric-value">{len(holdings)}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Keep Recommendations:</span>
-                    <span class="metric-value keep">{keep_count}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Sell Recommendations:</span>
-                    <span class="metric-value sell">{sell_count}</span>
-                </div>
-            </div>
-        </div>
-        """
+        # Create portfolio overview using bs4
+        soup = BeautifulSoup("", "html.parser")
+        overview_div = soup.new_tag("div", **{"class": "portfolio-overview"})
+
+        # Title
+        title = soup.new_tag("h3")
+        title.string = "Portfolio Overview"
+        overview_div.append(title)
+
+        # Metrics grid
+        metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+
+        # Total holdings metric
+        total_metric = soup.new_tag("div", **{"class": "metric"})
+        total_label = soup.new_tag("span", **{"class": "metric-label"})
+        total_label.string = "Total Holdings:"
+        total_value = soup.new_tag("span", **{"class": "metric-value"})
+        total_value.string = str(len(holdings))
+        total_metric.append(total_label)
+        total_metric.append(total_value)
+        metrics_grid.append(total_metric)
+
+        # Keep recommendations metric
+        keep_metric = soup.new_tag("div", **{"class": "metric"})
+        keep_label = soup.new_tag("span", **{"class": "metric-label"})
+        keep_label.string = "Keep Recommendations:"
+        keep_value = soup.new_tag("span", **{"class": "metric-value keep"})
+        keep_value.string = str(keep_count)
+        keep_metric.append(keep_label)
+        keep_metric.append(keep_value)
+        metrics_grid.append(keep_metric)
+
+        # Sell recommendations metric
+        sell_metric = soup.new_tag("div", **{"class": "metric"})
+        sell_label = soup.new_tag("span", **{"class": "metric-label"})
+        sell_label.string = "Sell Recommendations:"
+        sell_value = soup.new_tag("span", **{"class": "metric-value sell"})
+        sell_value.string = str(sell_count)
+        sell_metric.append(sell_label)
+        sell_metric.append(sell_value)
+        metrics_grid.append(sell_metric)
+
+        overview_div.append(metrics_grid)
+        soup.append(overview_div)
+
+        overview_content = soup.prettify(formatter="html")
         generator.add_section("Portfolio Overview", overview_content, "portfolio", order=1)
 
         # Holdings analysis
@@ -421,25 +448,52 @@ class EnhancedPortfolioReviewOrchestrator:
         execution_summary = rebalancing_data.get("execution_summary", {})
         cost_analysis = rebalancing_data.get("cost_analysis", {})
 
-        summary_content = f"""
-        <div class="rebalancing-summary">
-            <h3>Rebalancing Summary</h3>
-            <div class="metrics-grid">
-                <div class="metric">
-                    <span class="metric-label">Trades Required:</span>
-                    <span class="metric-value">{execution_summary.get("total_trades_required", 0)}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Total Cost:</span>
-                    <span class="metric-value">${cost_analysis.get("total_transaction_costs", 0):.2f}</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Recommendation:</span>
-                    <span class="metric-value">{rebalancing_data.get("overall_recommendation", "N/A")}</span>
-                </div>
-            </div>
-        </div>
-        """
+        # Create rebalancing summary using bs4
+        soup = BeautifulSoup("", "html.parser")
+        summary_div = soup.new_tag("div", **{"class": "rebalancing-summary"})
+
+        # Title
+        title = soup.new_tag("h3")
+        title.string = "Rebalancing Summary"
+        summary_div.append(title)
+
+        # Metrics grid
+        metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+
+        # Trades required metric
+        trades_metric = soup.new_tag("div", **{"class": "metric"})
+        trades_label = soup.new_tag("span", **{"class": "metric-label"})
+        trades_label.string = "Trades Required:"
+        trades_value = soup.new_tag("span", **{"class": "metric-value"})
+        trades_value.string = str(execution_summary.get("total_trades_required", 0))
+        trades_metric.append(trades_label)
+        trades_metric.append(trades_value)
+        metrics_grid.append(trades_metric)
+
+        # Total cost metric
+        cost_metric = soup.new_tag("div", **{"class": "metric"})
+        cost_label = soup.new_tag("span", **{"class": "metric-label"})
+        cost_label.string = "Total Cost:"
+        cost_value = soup.new_tag("span", **{"class": "metric-value"})
+        cost_value.string = f"${cost_analysis.get('total_transaction_costs', 0):.2f}"
+        cost_metric.append(cost_label)
+        cost_metric.append(cost_value)
+        metrics_grid.append(cost_metric)
+
+        # Recommendation metric
+        rec_metric = soup.new_tag("div", **{"class": "metric"})
+        rec_label = soup.new_tag("span", **{"class": "metric-label"})
+        rec_label.string = "Recommendation:"
+        rec_value = soup.new_tag("span", **{"class": "metric-value"})
+        rec_value.string = rebalancing_data.get("overall_recommendation", "N/A")
+        rec_metric.append(rec_label)
+        rec_metric.append(rec_value)
+        metrics_grid.append(rec_metric)
+
+        summary_div.append(metrics_grid)
+        soup.append(summary_div)
+
+        summary_content = soup.prettify(formatter="html")
         generator.add_section("Rebalancing Summary", summary_content, "financial", order=3)
 
         # Trade recommendations
@@ -451,36 +505,26 @@ class EnhancedPortfolioReviewOrchestrator:
     def _generate_holdings_table(self, holdings: list[dict[str, Any]]) -> str:
         """Generate HTML table for holdings with letter grades."""
         if not holdings:
-            return "<p>No holdings found.</p>"
+            # Use bs4 for simple paragraph
+            soup = BeautifulSoup("", "html.parser")
+            p = soup.new_tag("p")
+            p.string = "No holdings found."
+            soup.append(p)
+            return soup.prettify(formatter="html")
 
         # Calculate portfolio grade summary
         scores = [holding.get("composite_score", 0) for holding in holdings]
         grade_summary = get_portfolio_grade_summary(scores)
 
-        rows = []
-        for holding in holdings:
-            decision_class = "keep" if holding.get("decision") == "KEEP" else "sell"
-            risk_score = holding.get("risk", {}).get("score", 0)
-            composite_score = holding.get("composite_score", 0)
+        # Create main soup container
+        soup = BeautifulSoup("", "html.parser")
 
-            # Get grade information
-            grade_info = score_to_grade(composite_score)
-            grade_display = f'<span class="grade-badge {grade_info.css_class}">{grade_info.emoji} {grade_info.grade}</span>'
-
-            rows.append(f"""
-            <tr>
-                <td>{holding.get("ticker", "N/A")}</td>
-                <td>{holding.get("name", "N/A")}</td>
-                <td>{holding.get("asset_class", "N/A").upper()}</td>
-                <td class="{decision_class}">{holding.get("decision", "N/A")}</td>
-                <td>{grade_display}</td>
-                <td>{grade_info.action}</td>
-                <td>{risk_score:.1f}/10</td>
-            </tr>
-            """)
+        # Add CSS styles
+        style = soup.new_tag("style")
+        style.string = get_grade_css_styles()
+        soup.append(style)
 
         # Generate grade summary using BeautifulSoup
-        soup = BeautifulSoup("", "html.parser")
         grade_div = soup.new_tag("div", **{"class": "grade-summary"})
 
         # Title
@@ -508,12 +552,8 @@ class EnhancedPortfolioReviewOrchestrator:
         dist_p.append(dist_strong)
         grade_div.append(dist_p)
 
-        # Start the list
+        # Distribution list
         grade_ul = soup.new_tag("ul")
-        grade_div.append(grade_ul)
-
-        grade_summary_html = str(grade_div)[:-5]  # Remove closing </div> to continue building
-
         for grade, data in grade_summary["distribution"].items():
             grade_info = score_to_grade(0.5)  # Get emoji for grade
             for test_score in [0.98, 0.90, 0.82, 0.77, 0.72, 0.67, 0.55, 0.25]:
@@ -522,79 +562,164 @@ class EnhancedPortfolioReviewOrchestrator:
                     grade_info = test_grade_info
                     break
 
-            grade_summary_html += (
-                f"<li>{grade_info.emoji} <strong>{grade}</strong>: {data['count']} positions ({data['percentage']:.0f}%)</li>"
-            )
+            li = soup.new_tag("li")
+            li.append(f"{grade_info.emoji} ")
+            strong = soup.new_tag("strong")
+            strong.string = grade
+            li.append(strong)
+            li.append(f": {data['count']} positions ({data['percentage']:.0f}%)")
+            grade_ul.append(li)
 
-        grade_summary_html += """
-            </ul>
-        </div>
-        """
+        grade_div.append(grade_ul)
+        soup.append(grade_div)
 
-        return f"""
-        <style>
-        {get_grade_css_styles()}
-        </style>
+        # Create holdings table
+        table = soup.new_tag("table", **{"class": "holdings-table"})
 
-        {grade_summary_html}
+        # Table header
+        thead = soup.new_tag("thead")
+        header_row = soup.new_tag("tr")
+        headers = ["Ticker", "Nom", "Type", "Décision", "Note", "Action Recommandée", "Risque"]
+        for header_text in headers:
+            th = soup.new_tag("th")
+            th.string = header_text
+            header_row.append(th)
+        thead.append(header_row)
+        table.append(thead)
 
-        <table class="holdings-table">
-            <thead>
-                <tr>
-                    <th>Ticker</th>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Décision</th>
-                    <th>Note</th>
-                    <th>Action Recommandée</th>
-                    <th>Risque</th>
-                </tr>
-            </thead>
-            <tbody>
-                {"".join(rows)}
-            </tbody>
-        </table>
-        """
+        # Table body
+        tbody = soup.new_tag("tbody")
+        for holding in holdings:
+            decision_class = "keep" if holding.get("decision") == "KEEP" else "sell"
+            risk_score = holding.get("risk", {}).get("score", 0)
+            composite_score = holding.get("composite_score", 0)
+
+            # Get grade information
+            grade_info = score_to_grade(composite_score)
+
+            # Create table row
+            tr = soup.new_tag("tr")
+
+            # Ticker cell
+            td_ticker = soup.new_tag("td")
+            td_ticker.string = holding.get("ticker", "N/A")
+            tr.append(td_ticker)
+
+            # Name cell
+            td_name = soup.new_tag("td")
+            td_name.string = holding.get("name", "N/A")
+            tr.append(td_name)
+
+            # Asset class cell
+            td_asset = soup.new_tag("td")
+            td_asset.string = holding.get("asset_class", "N/A").upper()
+            tr.append(td_asset)
+
+            # Decision cell
+            td_decision = soup.new_tag("td", **{"class": decision_class})
+            td_decision.string = holding.get("decision", "N/A")
+            tr.append(td_decision)
+
+            # Grade cell with badge
+            td_grade = soup.new_tag("td")
+            grade_span = soup.new_tag("span", **{"class": f"grade-badge {grade_info.css_class}"})
+            grade_span.string = f"{grade_info.emoji} {grade_info.grade}"
+            td_grade.append(grade_span)
+            tr.append(td_grade)
+
+            # Action cell
+            td_action = soup.new_tag("td")
+            td_action.string = grade_info.action
+            tr.append(td_action)
+
+            # Risk cell
+            td_risk = soup.new_tag("td")
+            td_risk.string = f"{risk_score:.1f}/10"
+            tr.append(td_risk)
+
+            tbody.append(tr)
+
+        table.append(tbody)
+        soup.append(table)
+
+        return soup.prettify(formatter="html")
 
     def _generate_trades_table(self, trades: list[dict[str, Any]]) -> str:
         """Generate HTML table for trade recommendations."""
         if not trades:
-            return "<p>No trades recommended.</p>"
+            # Use bs4 for simple paragraph
+            soup = BeautifulSoup("", "html.parser")
+            p = soup.new_tag("p")
+            p.string = "No trades recommended."
+            soup.append(p)
+            return soup.prettify(formatter="html")
 
-        rows = []
+        # Create main soup container
+        soup = BeautifulSoup("", "html.parser")
+
+        # Create trades table
+        table = soup.new_tag("table", **{"class": "trades-table"})
+
+        # Table header
+        thead = soup.new_tag("thead")
+        header_row = soup.new_tag("tr")
+        headers = ["Symbol", "Action", "Quantity", "Price", "Value", "Cost", "Priority"]
+        for header_text in headers:
+            th = soup.new_tag("th")
+            th.string = header_text
+            header_row.append(th)
+        thead.append(header_row)
+        table.append(thead)
+
+        # Table body
+        tbody = soup.new_tag("tbody")
         for trade in trades:
             action_class = trade.get("action", "").lower()
 
-            rows.append(f"""
-            <tr>
-                <td>{trade.get("symbol", "N/A")}</td>
-                <td class="{action_class}">{trade.get("action", "N/A")}</td>
-                <td>{trade.get("quantity", 0):.2f}</td>
-                <td>${trade.get("current_price", 0):.2f}</td>
-                <td>${trade.get("trade_value", 0):.2f}</td>
-                <td>${trade.get("total_estimated_cost", 0):.2f}</td>
-                <td>{trade.get("priority", 0)}</td>
-            </tr>
-            """)
+            # Create table row
+            tr = soup.new_tag("tr")
 
-        return f"""
-        <table class="trades-table">
-            <thead>
-                <tr>
-                    <th>Symbol</th>
-                    <th>Action</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Value</th>
-                    <th>Cost</th>
-                    <th>Priority</th>
-                </tr>
-            </thead>
-            <tbody>
-                {"".join(rows)}
-            </tbody>
-        </table>
-        """
+            # Symbol cell
+            td_symbol = soup.new_tag("td")
+            td_symbol.string = trade.get("symbol", "N/A")
+            tr.append(td_symbol)
+
+            # Action cell
+            td_action = soup.new_tag("td", **{"class": action_class})
+            td_action.string = trade.get("action", "N/A")
+            tr.append(td_action)
+
+            # Quantity cell
+            td_quantity = soup.new_tag("td")
+            td_quantity.string = f"{trade.get('quantity', 0):.2f}"
+            tr.append(td_quantity)
+
+            # Price cell
+            td_price = soup.new_tag("td")
+            td_price.string = f"${trade.get('current_price', 0):.2f}"
+            tr.append(td_price)
+
+            # Value cell
+            td_value = soup.new_tag("td")
+            td_value.string = f"${trade.get('trade_value', 0):.2f}"
+            tr.append(td_value)
+
+            # Cost cell
+            td_cost = soup.new_tag("td")
+            td_cost.string = f"${trade.get('total_estimated_cost', 0):.2f}"
+            tr.append(td_cost)
+
+            # Priority cell
+            td_priority = soup.new_tag("td")
+            td_priority.string = str(trade.get("priority", 0))
+            tr.append(td_priority)
+
+            tbody.append(tr)
+
+        table.append(tbody)
+        soup.append(table)
+
+        return soup.prettify(formatter="html")
 
 
 if __name__ == "__main__":

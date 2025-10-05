@@ -8,7 +8,6 @@ JSON response parsing, error handling, and SonarArticle model validation.
 import asyncio
 import json
 import os
-from unittest.mock import AsyncMock
 
 import pytest
 from pydantic import ValidationError
@@ -360,7 +359,7 @@ class TestPerplexityIntegrationWrapper:
         mocker.patch.object(integration.perplexity_tool, "_run", side_effect=mock_responses)
 
         # Mock sleep to avoid actual delays
-        mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))

@@ -5,8 +5,6 @@ Tests cover the complete workflow from portfolio monitoring to alert generation
 and notification delivery.
 """
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
 from finwiz.quantitative.portfolio_analyzer import PortfolioAnalyzer
@@ -93,7 +91,7 @@ class TestPortfolioMonitoringIntegration:
 
     @pytest.mark.asyncio
     async def test_should_complete_full_monitoring_workflow_when_deviations_detected(
-        self, mock_price_service, sample_portfolio_config, monitoring_rule, notification_preferences
+        self, mocker, mock_price_service, sample_portfolio_config, monitoring_rule, notification_preferences
     ):
         """Test complete monitoring workflow from drift detection to notification."""
         # Arrange
@@ -155,7 +153,7 @@ class TestPortfolioMonitoringIntegration:
         ]
 
         # Mock the analyzer methods
-        portfolio_analyzer.analyze_current_portfolio = AsyncMock(
+        portfolio_analyzer.analyze_current_portfolio = mocker.AsyncMock(
             return_value=PortfolioAnalysis(
                 total_value=75000.0,
                 weightings={"AAPL": 0.20, "GOOGL": 0.33, "MSFT": 0.20, "TSLA": 0.27},
@@ -163,11 +161,11 @@ class TestPortfolioMonitoringIntegration:
                 positions_needing_rebalancing=["TSLA"],
             )
         )
-        portfolio_analyzer.identify_rebalancing_needs = MagicMock(return_value=mock_rebalancing_needs)
+        portfolio_analyzer.identify_rebalancing_needs = mocker.MagicMock(return_value=mock_rebalancing_needs)
 
         # Mock notification providers to track calls
-        mock_email_provider = AsyncMock()
-        mock_sms_provider = AsyncMock()
+        mock_email_provider = mocker.AsyncMock()
+        mock_sms_provider = mocker.AsyncMock()
         notification_service.providers[NotificationType.EMAIL] = mock_email_provider
         notification_service.providers[NotificationType.SMS] = mock_sms_provider
 
@@ -219,7 +217,7 @@ class TestPortfolioMonitoringIntegration:
 
     @pytest.mark.asyncio
     async def test_should_send_multiple_notifications_when_critical_alert_generated(
-        self, mock_price_service, sample_portfolio_config, monitoring_rule, notification_preferences
+        self, mocker, mock_price_service, sample_portfolio_config, monitoring_rule, notification_preferences
     ):
         """Test that critical alerts trigger both email and SMS notifications."""
         # Arrange
@@ -232,8 +230,8 @@ class TestPortfolioMonitoringIntegration:
         notification_service.set_user_preferences(user_id, notification_preferences)
 
         # Mock notification providers
-        mock_email_provider = AsyncMock()
-        mock_sms_provider = AsyncMock()
+        mock_email_provider = mocker.AsyncMock()
+        mock_sms_provider = mocker.AsyncMock()
         notification_service.providers[NotificationType.EMAIL] = mock_email_provider
         notification_service.providers[NotificationType.SMS] = mock_sms_provider
 
@@ -262,7 +260,7 @@ class TestPortfolioMonitoringIntegration:
 
     @pytest.mark.asyncio
     async def test_should_respect_quiet_hours_when_sending_notifications(
-        self, mock_price_service, sample_portfolio_config, notification_preferences
+        self, mocker, mock_price_service, sample_portfolio_config, notification_preferences
     ):
         """Test that notifications respect quiet hours settings."""
         # Arrange
@@ -285,12 +283,12 @@ class TestPortfolioMonitoringIntegration:
 
         # Mock current time to be in quiet hours (11 PM)
         with pytest.MonkeyPatch().context() as m:
-            mock_datetime = MagicMock()
+            mock_datetime = mocker.MagicMock()
             mock_datetime.now.return_value.hour = 23
             m.setattr("finwiz.tools.notification_service.datetime", mock_datetime)
 
             # Mock notification provider
-            mock_email_provider = AsyncMock()
+            mock_email_provider = mocker.AsyncMock()
             notification_service.providers[NotificationType.EMAIL] = mock_email_provider
 
             # Act - Generate alert during quiet hours
@@ -314,7 +312,7 @@ class TestPortfolioMonitoringIntegration:
 
     @pytest.mark.asyncio
     async def test_should_respect_rate_limiting_when_sending_notifications(
-        self, mock_price_service, sample_portfolio_config, notification_preferences
+        self, mocker, mock_price_service, sample_portfolio_config, notification_preferences
     ):
         """Test that notifications respect rate limiting settings."""
         # Arrange
@@ -334,7 +332,7 @@ class TestPortfolioMonitoringIntegration:
         notification_service.set_user_preferences(user_id, rate_limit_preferences)
 
         # Mock notification provider
-        mock_email_provider = AsyncMock()
+        mock_email_provider = mocker.AsyncMock()
         notification_service.providers[NotificationType.EMAIL] = mock_email_provider
 
         # Act - Send multiple alerts to exceed rate limit
@@ -359,14 +357,16 @@ class TestPortfolioMonitoringIntegration:
         assert mock_email_provider.send_notification.call_count <= 2
 
     @pytest.mark.asyncio
-    async def test_should_handle_monitoring_errors_gracefully(self, mock_price_service, sample_portfolio_config, monitoring_rule):
+    async def test_should_handle_monitoring_errors_gracefully(
+        self, mocker, mock_price_service, sample_portfolio_config, monitoring_rule
+    ):
         """Test that monitoring system handles errors gracefully."""
         # Arrange
         portfolio_id = "error_test_portfolio"
 
         # Create portfolio monitor with failing price service
-        failing_price_service = MagicMock()
-        failing_price_service.get_current_prices = AsyncMock(side_effect=Exception("Price service unavailable"))
+        failing_price_service = mocker.MagicMock()
+        failing_price_service.get_current_prices = mocker.AsyncMock(side_effect=Exception("Price service unavailable"))
 
         portfolio_monitor = PortfolioMonitor(price_service=failing_price_service)
 
@@ -380,7 +380,7 @@ class TestPortfolioMonitoringIntegration:
         assert isinstance(stats, dict)
 
     @pytest.mark.asyncio
-    async def test_should_track_alert_acknowledgment_and_resolution(self, mock_price_service, sample_portfolio_config):
+    async def test_should_track_alert_acknowledgment_and_resolution(self, mocker, mock_price_service, sample_portfolio_config):
         """Test alert acknowledgment and resolution workflow."""
         # Arrange
         portfolio_id = "alert_lifecycle_test_portfolio"
@@ -418,7 +418,7 @@ class TestPortfolioMonitoringIntegration:
         active_alerts = await portfolio_monitor.get_active_alerts(portfolio_id)
         assert len(active_alerts) == 0
 
-    def test_should_provide_comprehensive_monitoring_statistics(self, mock_price_service):
+    def test_should_provide_comprehensive_monitoring_statistics(self, mocker, mock_price_service):
         """Test that monitoring system provides comprehensive statistics."""
         # Arrange
         portfolio_monitor = PortfolioMonitor()

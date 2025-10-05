@@ -48,12 +48,14 @@ class MockPatterns:
 **Purpose**: Provide consistent, reusable test data across all test modules
 
 **Key Components**:
+
 - `FinancialDataFactory`: Faker-based factory for generating realistic financial test data
 - `CrewConfigFixtures`: Mock YAML configurations for crew testing
 - `APIResponseFixtures`: Standardized mock responses for external APIs
 - `SerializationFixtures`: Helper functions for testing JSON serialization
 
 **Interface**:
+
 ```python
 @pytest.fixture
 def mock_stock_data():
@@ -71,11 +73,13 @@ def mock_crew_config():
 **Purpose**: Resolve JSON serialization issues with CrewAI objects and datetime fields
 
 **Key Components**:
+
 - `CustomJSONEncoder`: Handles UsageMetrics, datetime, and Pydantic objects
 - `SerializationValidator`: Tests serialization before storage
 - `DataSanitizer`: Cleans data structures for JSON compatibility
 
 **Interface**:
+
 ```python
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -91,11 +95,13 @@ class CustomJSONEncoder(json.JSONEncoder):
 **Purpose**: Standardize mocking patterns and ensure consistent behavior
 
 **Key Components**:
+
 - `CrewMockManager`: Handles CrewAI-specific mocking patterns
 - `APIMockManager`: Manages external API mocking
 - `AsyncMockManager`: Handles async operation mocking
 
 **Interface**:
+
 ```python
 class CrewMockManager:
     def __init__(self, mocker):
@@ -113,11 +119,13 @@ class CrewMockManager:
 **Purpose**: Provide detailed coverage analysis and reporting
 
 **Key Components**:
+
 - `CoverageCollector`: Gathers coverage data during test execution
 - `CoverageAnalyzer`: Analyzes coverage gaps and trends
 - `CoverageReporter`: Generates detailed coverage reports
 
 **Interface**:
+
 ```python
 class CoverageAnalyzer:
     def analyze_coverage(self, coverage_data):
@@ -214,6 +222,7 @@ class TestErrorHandler:
 ### Mock Strategy by Component
 
 **CrewAI Components**:
+
 ```python
 # Mock crew execution
 mocker.patch('finwiz.crews.stock_crew.StockCrew.crew')
@@ -224,6 +233,7 @@ mocker.patch('crewai.Agent', return_value=mock_agent)
 ```
 
 **External APIs**:
+
 ```python
 # Mock API tools
 mocker.patch('finwiz.tools.yahoo_finance_tool.get_stock_data')
@@ -231,6 +241,7 @@ mocker.patch('finwiz.tools.alpha_vantage_tool.get_company_overview')
 ```
 
 **File Operations**:
+
 ```python
 # Mock file I/O
 mocker.patch('builtins.open', mocker.mock_open(read_data=mock_data))
@@ -240,26 +251,31 @@ mocker.patch('json.dump')
 ## Implementation Phases
 
 ### Phase 1: Critical Error Resolution
+
 - Fix all import errors in test files
 - Resolve missing class/function references
 - Update test imports to match current module structure
 
 ### Phase 2: Mocking Standardization
+
 - Convert all unittest.mock usage to pytest-mock
 - Implement centralized mock patterns
 - Create reusable mock fixtures
 
 ### Phase 3: Serialization Fixes
+
 - Implement CustomJSONEncoder for problematic objects
 - Add serialization validation to integration manager
 - Create serializable versions of complex objects
 
 ### Phase 4: Coverage Infrastructure
+
 - Set up comprehensive coverage measurement
 - Create coverage reporting and analysis tools
 - Establish coverage thresholds and monitoring
 
 ### Phase 5: Test Enhancement
+
 - Add missing tests for uncovered code
 - Improve test isolation and performance
 - Create comprehensive test documentation

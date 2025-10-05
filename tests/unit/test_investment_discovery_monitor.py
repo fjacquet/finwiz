@@ -6,7 +6,6 @@ including metrics collection, alerting, and dashboard functionality.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -70,25 +69,25 @@ class TestInvestmentDiscoveryMonitor:
         assert len(monitor.discovery_history) == 0
         assert len(monitor.alert_history) == 0
 
-    def test_should_record_discovery_start(self):
+    def test_should_record_discovery_start(self, mocker):
         """Test recording discovery start."""
         discovery_id = "test_discovery_001"
         asset_type = "stock"
 
-        with patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter:
+        with mocker.patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter:
             self.monitor.record_discovery_start(discovery_id, asset_type)
 
             mock_counter.assert_called_once_with("discovery.started", tags={"asset_type": asset_type, "discovery_id": discovery_id})
 
-    def test_should_record_successful_discovery_completion(self):
+    def test_should_record_successful_discovery_completion(self, mocker):
         """Test recording successful discovery completion."""
         discovery_id = "test_discovery_001"
         duration = 120.5
 
         with (
-            patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter,
-            patch.object(self.monitor.metrics_collector, "record_histogram") as mock_histogram,
-            patch.object(self.monitor.metrics_collector, "record_gauge") as mock_gauge,
+            mocker.patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter,
+            mocker.patch.object(self.monitor.metrics_collector, "record_histogram") as mock_histogram,
+            mocker.patch.object(self.monitor.metrics_collector, "record_gauge") as mock_gauge,
         ):
             self.monitor.record_discovery_completion(discovery_id, self.test_result, duration, success=True)
 
@@ -110,12 +109,12 @@ class TestInvestmentDiscoveryMonitor:
             mock_histogram.assert_called_with("discovery.duration", duration, tags={"asset_type": "stock"})
             mock_gauge.assert_called_with("discovery.a_plus_count", 1, tags={"asset_type": "stock"})
 
-    def test_should_record_failed_discovery_completion(self):
+    def test_should_record_failed_discovery_completion(self, mocker):
         """Test recording failed discovery completion."""
         discovery_id = "test_discovery_002"
         duration = 60.0
 
-        with patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter:
+        with mocker.patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter:
             self.monitor.record_discovery_completion(discovery_id, self.test_result, duration, success=False)
 
             # Check error tracking
@@ -126,29 +125,29 @@ class TestInvestmentDiscoveryMonitor:
             # Check metrics collector call
             mock_counter.assert_called_with("discovery.failed", tags={"asset_type": "stock"})
 
-    def test_should_record_validation_result(self):
+    def test_should_record_validation_result(self, mocker):
         """Test recording validation results."""
         symbol = "TEST"
         validation_passed = True
         validation_score = 0.85
 
         with (
-            patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter,
-            patch.object(self.monitor.metrics_collector, "record_gauge") as mock_gauge,
+            mocker.patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter,
+            mocker.patch.object(self.monitor.metrics_collector, "record_gauge") as mock_gauge,
         ):
             self.monitor.record_validation_result(symbol, validation_passed, validation_score)
 
             mock_counter.assert_called_with("validation.completed", tags={"result": "pass"})
             mock_gauge.assert_called_with("validation.score", validation_score, tags={"symbol": symbol})
 
-    def test_should_record_grade_change(self):
+    def test_should_record_grade_change(self, mocker):
         """Test recording grade changes."""
         symbol = "TEST"
         old_grade = "A+"
         new_grade = "B+"
         days_since_discovery = 30
 
-        with patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter:
+        with mocker.patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter:
             self.monitor.record_grade_change(symbol, old_grade, new_grade, days_since_discovery)
 
             # Check grade change tracking
@@ -162,15 +161,15 @@ class TestInvestmentDiscoveryMonitor:
                 "grade.changed", tags={"from_grade": old_grade, "to_grade": new_grade, "symbol": symbol}
             )
 
-    def test_should_record_recommendation_feedback(self):
+    def test_should_record_recommendation_feedback(self, mocker):
         """Test recording recommendation feedback."""
         symbol = "TEST"
         accepted = True
         portfolio_improvement = 0.15
 
         with (
-            patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter,
-            patch.object(self.monitor.metrics_collector, "record_gauge") as mock_gauge,
+            mocker.patch.object(self.monitor.metrics_collector, "record_counter") as mock_counter,
+            mocker.patch.object(self.monitor.metrics_collector, "record_gauge") as mock_gauge,
         ):
             self.monitor.record_recommendation_feedback(symbol, accepted, portfolio_improvement)
 
@@ -227,15 +226,15 @@ class TestInvestmentDiscoveryMonitor:
         assert performance_alerts[0]["severity"] == "warning"
         assert "Slow discovery time" in performance_alerts[0]["message"]
 
-    def test_should_get_dashboard_data(self):
+    def test_should_get_dashboard_data(self, mocker):
         """Test getting dashboard data."""
         # Set up some test data
         self.monitor.discovery_metrics.total_discoveries = 5
         self.monitor.discovery_metrics.a_plus_discoveries = 2
 
         with (
-            patch.object(self.monitor.metrics_collector, "get_performance_summary") as mock_perf,
-            patch.object(self.monitor.metrics_collector, "get_health_status") as mock_health,
+            mocker.patch.object(self.monitor.metrics_collector, "get_performance_summary") as mock_perf,
+            mocker.patch.object(self.monitor.metrics_collector, "get_health_status") as mock_health,
         ):
             mock_perf.return_value = {"test": "performance"}
             mock_health.return_value = {"status": "healthy"}
@@ -252,10 +251,10 @@ class TestInvestmentDiscoveryMonitor:
             assert dashboard_data["discovery_metrics"]["total_discoveries"] == 5
             assert dashboard_data["discovery_metrics"]["a_plus_discoveries"] == 2
 
-    def test_should_export_metrics_json(self):
+    def test_should_export_metrics_json(self, mocker):
         """Test exporting metrics in JSON format."""
-        with patch("builtins.open", create=True) as mock_open, patch("json.dump") as mock_json_dump:
-            mock_file = MagicMock()
+        with mocker.patch("builtins.open", create=True) as mock_open, mocker.patch("json.dump") as mock_json_dump:
+            mock_file = mocker.MagicMock()
             mock_open.return_value.__enter__.return_value = mock_file
 
             export_file = self.monitor.export_metrics("json")
@@ -316,7 +315,7 @@ class TestInvestmentDiscoveryMonitor:
 class TestGlobalMonitorFunctions:
     """Test cases for global monitor functions."""
 
-    def test_should_get_discovery_monitor_singleton(self):
+    def test_should_get_discovery_monitor_singleton(self, mocker):
         """Test getting discovery monitor singleton."""
         monitor1 = get_discovery_monitor()
         monitor2 = get_discovery_monitor()
@@ -324,10 +323,10 @@ class TestGlobalMonitorFunctions:
         assert monitor1 is monitor2
 
     @pytest.mark.asyncio
-    async def test_should_monitor_discovery_health(self):
+    async def test_should_monitor_discovery_health(self, mocker):
         """Test monitoring discovery health."""
-        with patch("finwiz.monitoring.investment_discovery_monitor.get_discovery_monitor") as mock_get_monitor:
-            mock_monitor = MagicMock()
+        with mocker.patch("finwiz.monitoring.investment_discovery_monitor.get_discovery_monitor") as mock_get_monitor:
+            mock_monitor = mocker.MagicMock()
             mock_monitor.check_alert_conditions.return_value = []
             mock_monitor.metrics_collector.get_health_status.return_value = {"status": "healthy"}
             mock_monitor.get_dashboard_data.return_value = {

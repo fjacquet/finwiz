@@ -13,7 +13,6 @@ Tests cover:
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import backtrader as bt
 import pandas as pd
@@ -426,10 +425,10 @@ class TestBacktestingEngine:
         return BacktestConfig(initial_capital=100000.0, commission_pct=0.001, stop_loss_pct=0.05, take_profit_pct=0.15)
 
     @pytest.fixture
-    def backtesting_engine(self, config):
+    def backtesting_engine(self, config, mocker):
         """Create BacktestingEngine instance for testing."""
-        with patch("finwiz.quantitative.backtesting.HistoricalDataManager"):
-            return BacktestingEngine(config)
+        mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
+        return BacktestingEngine(config)
 
     @pytest.fixture
     def sample_ohlcv_data(self):
@@ -476,16 +475,16 @@ class TestBacktestingEngine:
         assert backtesting_engine.cerebro is None  # Not initialized until backtest runs
         assert backtesting_engine.results == []
 
-    @patch("finwiz.quantitative.backtesting.HistoricalDataManager")
-    def test_should_run_strategy_backtest_successfully(self, mock_data_manager, sample_ohlcv_data):
+    def test_should_run_strategy_backtest_successfully(self, sample_ohlcv_data, mocker):
         """Test successful strategy backtesting."""
         # Arrange
         config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
         engine = BacktestingEngine(config)
 
         # Mock data manager
-        mock_data_manager_instance = MagicMock()
+        mock_data_manager_instance = mocker.MagicMock()
         mock_data_manager_instance.fetch_historical_data.return_value = sample_ohlcv_data
+        mock_data_manager = mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
         mock_data_manager.return_value = mock_data_manager_instance
         engine.data_manager = mock_data_manager_instance
 
@@ -508,15 +507,15 @@ class TestBacktestingEngine:
         # Verify data manager was called
         mock_data_manager_instance.fetch_historical_data.assert_called_once_with(symbol, start_date, end_date)
 
-    @patch("finwiz.quantitative.backtesting.HistoricalDataManager")
-    def test_should_handle_empty_data_gracefully(self, mock_data_manager):
+    def test_should_handle_empty_data_gracefully(self, mocker):
         """Test handling of empty data from data manager."""
         # Arrange
         config = BacktestConfig(initial_capital=100000.0)
+        mock_data_manager = mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
         engine = BacktestingEngine(config)
 
         # Mock data manager to return empty DataFrame
-        mock_data_manager_instance = MagicMock()
+        mock_data_manager_instance = mocker.MagicMock()
         mock_data_manager_instance.fetch_historical_data.return_value = pd.DataFrame()
         mock_data_manager.return_value = mock_data_manager_instance
         engine.data_manager = mock_data_manager_instance
@@ -529,15 +528,15 @@ class TestBacktestingEngine:
         with pytest.raises(ValueError, match="No data available"):
             engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date)
 
-    @patch("finwiz.quantitative.backtesting.HistoricalDataManager")
-    def test_should_handle_data_manager_errors(self, mock_data_manager):
+    def test_should_handle_data_manager_errors(self, mocker):
         """Test handling of data manager errors."""
         # Arrange
         config = BacktestConfig(initial_capital=100000.0)
+        mock_data_manager = mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
         engine = BacktestingEngine(config)
 
         # Mock data manager to raise exception
-        mock_data_manager_instance = MagicMock()
+        mock_data_manager_instance = mocker.MagicMock()
         mock_data_manager_instance.fetch_historical_data.side_effect = Exception("Network error")
         mock_data_manager.return_value = mock_data_manager_instance
         engine.data_manager = mock_data_manager_instance
@@ -631,15 +630,15 @@ class TestBacktestingEngine:
         assert var_95 is None
         assert cvar_95 is None
 
-    @patch("finwiz.quantitative.backtesting.HistoricalDataManager")
-    def test_should_run_multi_strategy_backtest_successfully(self, mock_data_manager, sample_ohlcv_data):
+    def test_should_run_multi_strategy_backtest_successfully(self, sample_ohlcv_data, mocker):
         """Test multi-strategy backtesting."""
         # Arrange
         config = BacktestConfig(initial_capital=100000.0)
+        mock_data_manager = mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
         engine = BacktestingEngine(config)
 
         # Mock data manager
-        mock_data_manager_instance = MagicMock()
+        mock_data_manager_instance = mocker.MagicMock()
         mock_data_manager_instance.fetch_historical_data.return_value = sample_ohlcv_data
         mock_data_manager.return_value = mock_data_manager_instance
         engine.data_manager = mock_data_manager_instance

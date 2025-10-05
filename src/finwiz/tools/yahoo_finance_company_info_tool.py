@@ -2,13 +2,10 @@
 
 import yfinance as yf
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class GetCompanyInfoInput(BaseModel):
-    """Input schema for getting company information."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'MSFT').")
+# Import schema from centralized location
+from finwiz.schemas.tools import GetCompanyInfoInput
 
 
 class YahooFinanceCompanyInfoTool(BaseTool):

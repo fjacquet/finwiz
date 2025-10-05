@@ -7,7 +7,6 @@ trade recommendations and report generation.
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -116,26 +115,26 @@ class TestPortfolioRebalancingIntegration:
         ]
 
     @pytest.fixture
-    def mock_price_service(self, sample_price_data):
+    def mock_price_service(self, mocker, sample_price_data):
         """Create mock price service."""
-        mock_service = AsyncMock(spec=PortfolioPriceService)
+        mock_service = mocker.AsyncMock(spec=PortfolioPriceService)
         mock_service.get_current_prices.return_value = sample_price_data
         mock_service.get_price_with_fallback.return_value = sample_price_data["AAPL"]
         mock_service.close.return_value = None
         return mock_service
 
     @pytest.fixture
-    def mock_portfolio_analyzer(self, sample_portfolio_analysis):
+    def mock_portfolio_analyzer(self, mocker, sample_portfolio_analysis):
         """Create mock portfolio analyzer."""
-        mock_analyzer = MagicMock(spec=PortfolioAnalyzer)
+        mock_analyzer = mocker.MagicMock(spec=PortfolioAnalyzer)
         mock_analyzer.analyze_current_portfolio.return_value = sample_portfolio_analysis
         mock_analyzer.identify_rebalancing_needs.return_value = []
         return mock_analyzer
 
     @pytest.fixture
-    def mock_rebalancing_engine(self, sample_trade_recommendations):
+    def mock_rebalancing_engine(self, mocker, sample_trade_recommendations):
         """Create mock rebalancing engine."""
-        mock_engine = MagicMock(spec=RebalancingEngine)
+        mock_engine = mocker.MagicMock(spec=RebalancingEngine)
         mock_engine.optimize_rebalancing_trades.return_value = OptimizedTrades(
             trades=sample_trade_recommendations,
             total_cost=25.56,
@@ -152,9 +151,9 @@ class TestPortfolioRebalancingIntegration:
         return mock_engine
 
     @pytest.fixture
-    def mock_report_generator(self):
+    def mock_report_generator(self, mocker):
         """Create mock report generator."""
-        mock_generator = MagicMock(spec=HTMLReportGenerator)
+        mock_generator = mocker.MagicMock(spec=HTMLReportGenerator)
         mock_generator.generate_html.return_value = "<html><body>Test Report</body></html>"
         mock_generator.clear_sections.return_value = None
         mock_generator.add_section.return_value = None
@@ -172,7 +171,7 @@ class TestPortfolioRebalancingIntegration:
 
     @pytest.mark.asyncio
     async def test_should_complete_full_rebalancing_workflow_when_valid_input_provided(
-        self, orchestrator, sample_portfolio_config, mock_price_service, mock_portfolio_analyzer, mock_rebalancing_engine
+        self, orchestrator, sample_portfolio_config, mock_price_service, mock_portfolio_analyzer, mock_rebalancing_engine, mocker
     ):
         """Test complete rebalancing workflow with valid inputs."""
         # Act
@@ -198,7 +197,9 @@ class TestPortfolioRebalancingIntegration:
         mock_rebalancing_engine.generate_enhanced_trade_recommendations.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_handle_missing_price_data_gracefully(self, orchestrator, sample_portfolio_config, mock_price_service):
+    async def test_should_handle_missing_price_data_gracefully(
+        self, orchestrator, sample_portfolio_config, mock_price_service, mocker
+    ):
         """Test handling of missing price data with fallback."""
         # Arrange
         mock_price_service.get_current_prices.return_value = {
@@ -217,7 +218,9 @@ class TestPortfolioRebalancingIntegration:
         assert mock_price_service.get_price_with_fallback.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_should_raise_error_when_price_data_unavailable(self, orchestrator, sample_portfolio_config, mock_price_service):
+    async def test_should_raise_error_when_price_data_unavailable(
+        self, orchestrator, sample_portfolio_config, mock_price_service, mocker
+    ):
         """Test error handling when price data is completely unavailable."""
         # Arrange
         mock_price_service.get_current_prices.return_value = {}
@@ -233,7 +236,7 @@ class TestPortfolioRebalancingIntegration:
 
     @pytest.mark.asyncio
     async def test_should_handle_optimization_failure_gracefully(
-        self, orchestrator, sample_portfolio_config, mock_rebalancing_engine
+        self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker
     ):
         """Test handling of optimization failures."""
         # Arrange
@@ -246,7 +249,9 @@ class TestPortfolioRebalancingIntegration:
         assert "Optimization failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_should_generate_html_report_successfully(self, orchestrator, sample_portfolio_config, mock_report_generator):
+    async def test_should_generate_html_report_successfully(
+        self, orchestrator, sample_portfolio_config, mock_report_generator, mocker
+    ):
         """Test HTML report generation."""
         # Arrange
         result = await orchestrator.rebalance_portfolio(sample_portfolio_config)
@@ -261,7 +266,9 @@ class TestPortfolioRebalancingIntegration:
         mock_report_generator.generate_html.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_generate_french_report_when_requested(self, orchestrator, sample_portfolio_config, mock_report_generator):
+    async def test_should_generate_french_report_when_requested(
+        self, orchestrator, sample_portfolio_config, mock_report_generator, mocker
+    ):
         """Test French report generation."""
         # Arrange
         result = await orchestrator.rebalance_portfolio(sample_portfolio_config)
@@ -277,7 +284,7 @@ class TestPortfolioRebalancingIntegration:
         assert "Portfolio Rebalancing Analysis" in kwargs["title"]
 
     @pytest.mark.asyncio
-    async def test_should_analyze_portfolio_without_trades(self, orchestrator, sample_portfolio_config):
+    async def test_should_analyze_portfolio_without_trades(self, orchestrator, sample_portfolio_config, mocker):
         """Test portfolio analysis without generating trades."""
         # Act
         analysis = await orchestrator.analyze_current_portfolio(sample_portfolio_config)
@@ -288,7 +295,9 @@ class TestPortfolioRebalancingIntegration:
         assert len(analysis.weightings) == 3
 
     @pytest.mark.asyncio
-    async def test_should_handle_empty_trade_recommendations(self, orchestrator, sample_portfolio_config, mock_rebalancing_engine):
+    async def test_should_handle_empty_trade_recommendations(
+        self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker
+    ):
         """Test handling when no trades are recommended."""
         # Arrange
         mock_rebalancing_engine.optimize_rebalancing_trades.return_value = OptimizedTrades(
@@ -311,7 +320,9 @@ class TestPortfolioRebalancingIntegration:
         assert result.overall_recommendation == RebalancingRecommendation.NO_ACTION
 
     @pytest.mark.asyncio
-    async def test_should_handle_high_urgency_positions(self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer):
+    async def test_should_handle_high_urgency_positions(
+        self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer, mocker
+    ):
         """Test handling of high urgency rebalancing needs."""
         # Arrange
         from finwiz.schemas.portfolio_rebalancing import RebalancingNeed
@@ -337,7 +348,9 @@ class TestPortfolioRebalancingIntegration:
         assert result.overall_recommendation == RebalancingRecommendation.REBALANCE_NOW
 
     @pytest.mark.asyncio
-    async def test_should_handle_high_transaction_costs(self, orchestrator, sample_portfolio_config, mock_rebalancing_engine):
+    async def test_should_handle_high_transaction_costs(
+        self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker
+    ):
         """Test handling when transaction costs are high relative to portfolio."""
         # Arrange
         mock_rebalancing_engine.optimize_rebalancing_trades.return_value = OptimizedTrades(
@@ -375,7 +388,7 @@ class TestPortfolioRebalancingIntegration:
         assert result.overall_recommendation == RebalancingRecommendation.MONITOR
 
     @pytest.mark.asyncio
-    async def test_should_handle_concurrent_operations(self, orchestrator, sample_portfolio_config):
+    async def test_should_handle_concurrent_operations(self, orchestrator, sample_portfolio_config, mocker):
         """Test handling of concurrent rebalancing operations."""
         # Act - Run multiple rebalancing operations concurrently
         tasks = [orchestrator.rebalance_portfolio(sample_portfolio_config) for _ in range(3)]
@@ -388,7 +401,7 @@ class TestPortfolioRebalancingIntegration:
             assert result.current_portfolio.total_value == 55000.0
 
     @pytest.mark.asyncio
-    async def test_should_cleanup_resources_properly(self, orchestrator, mock_price_service):
+    async def test_should_cleanup_resources_properly(self, orchestrator, mock_price_service, mocker):
         """Test proper resource cleanup."""
         # Act
         await orchestrator.close()
@@ -397,7 +410,9 @@ class TestPortfolioRebalancingIntegration:
         mock_price_service.close.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_handle_portfolio_analysis_error(self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer):
+    async def test_should_handle_portfolio_analysis_error(
+        self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer, mocker
+    ):
         """Test handling of portfolio analysis errors."""
         # Arrange
         from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError
@@ -411,7 +426,7 @@ class TestPortfolioRebalancingIntegration:
         assert "Analysis failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_should_validate_portfolio_configuration(self, orchestrator):
+    async def test_should_validate_portfolio_configuration(self, orchestrator, mocker):
         """Test validation of invalid portfolio configuration."""
         # Arrange - Invalid configuration with mismatched holdings and targets
         PortfolioConfiguration(
@@ -424,7 +439,7 @@ class TestPortfolioRebalancingIntegration:
             pass  # The error is raised during config creation above
 
     @pytest.mark.asyncio
-    async def test_should_handle_different_rebalancing_methods(self, orchestrator, sample_portfolio_config):
+    async def test_should_handle_different_rebalancing_methods(self, orchestrator, sample_portfolio_config, mocker):
         """Test different rebalancing methods."""
         # Test MINIMIZE_COSTS method
         sample_portfolio_config.rebalancing_method = RebalancingMethod.MINIMIZE_COSTS
@@ -442,7 +457,7 @@ class TestPortfolioRebalancingIntegration:
         assert result_risk.execution_summary.total_trades_required >= 0
 
     @pytest.mark.asyncio
-    async def test_should_handle_large_portfolio(self, orchestrator):
+    async def test_should_handle_large_portfolio(self, orchestrator, mocker):
         """Test handling of large portfolio with many positions."""
         # Arrange - Create large portfolio
         holdings = [Holding(symbol=f"STOCK{i:03d}", shares=100.0) for i in range(50)]
@@ -451,7 +466,7 @@ class TestPortfolioRebalancingIntegration:
         large_config = PortfolioConfiguration(holdings=holdings, target_weights=target_weights)
 
         # Mock price service to return prices for all symbols
-        orchestrator.price_service.get_current_prices = AsyncMock(
+        orchestrator.price_service.get_current_prices = mocker.AsyncMock(
             return_value={
                 f"STOCK{i:03d}": PriceData(symbol=f"STOCK{i:03d}", price=100.0, timestamp=datetime.now()) for i in range(50)
             }

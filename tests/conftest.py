@@ -8,6 +8,10 @@ des données de test réalistes et cohérentes.
 from typing import Any
 
 import pytest
+
+# Import the unittest mock blocker to prevent its usage
+# This will raise an error if any test tries to import unittest mock
+from conftest_unittest_blocker import UnittestMockBlocker  # noqa: F401
 from faker import Faker
 
 

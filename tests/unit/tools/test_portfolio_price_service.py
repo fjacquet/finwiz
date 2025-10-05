@@ -6,7 +6,6 @@ caching functionality, fallback mechanisms, and error handling.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from pydantic import ValidationError
@@ -26,25 +25,25 @@ class TestPortfolioPriceService:
     def mock_cache_manager(self, mocker):
         """Mock cache manager."""
         mock_cache = mocker.MagicMock()
-        mock_cache.get = AsyncMock(return_value=None)
-        mock_cache.set = AsyncMock()
-        mock_cache.delete = AsyncMock(return_value=True)
-        mock_cache.clear = AsyncMock(return_value=5)
-        mock_cache.get_stats = MagicMock(return_value={"hits": 10, "misses": 5})
+        mock_cache.get = mocker.AsyncMock(return_value=None)
+        mock_cache.set = mocker.AsyncMock()
+        mock_cache.delete = mocker.AsyncMock(return_value=True)
+        mock_cache.clear = mocker.AsyncMock(return_value=5)
+        mock_cache.get_stats = mocker.MagicMock(return_value={"hits": 10, "misses": 5})
         return mock_cache
 
     @pytest.fixture
     def mock_yahoo_tool(self, mocker):
         """Mock Yahoo Finance ticker info tool."""
         mock_tool = mocker.MagicMock()
-        mock_tool._run = MagicMock()
+        mock_tool._run = mocker.MagicMock()
         return mock_tool
 
     @pytest.fixture
     def mock_crypto_tool(self, mocker):
         """Mock enhanced crypto analysis tool."""
         mock_tool = mocker.MagicMock()
-        mock_tool._run = MagicMock()
+        mock_tool._run = mocker.MagicMock()
         return mock_tool
 
     @pytest.fixture

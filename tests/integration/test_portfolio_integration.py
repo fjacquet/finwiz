@@ -7,7 +7,6 @@ components, including shared caching and unified reporting.
 
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -112,7 +111,7 @@ class TestPortfolioIntegration:
         mock_run_with_rebalancing = mocker.patch("finwiz.orchestrators.portfolio_review.run_with_rebalancing")
         mock_run_with_rebalancing.return_value = (
             Path("/tmp/portfolio_review.json"),
-            MagicMock(model_dump=lambda: mock_rebalancing_result),
+            mocker.MagicMock(model_dump=lambda: mock_rebalancing_result),
         )
 
         # Mock file reading
@@ -161,7 +160,7 @@ class TestPortfolioIntegration:
         }
 
         # Mock HTML generator
-        mock_generator = MagicMock()
+        mock_generator = mocker.MagicMock()
         mock_generator.generate_unified_html.return_value = "<html>Test Report</html>"
         mock_generator.generate_html_fallback.return_value = "<html>Test Report</html>"
         mocker.patch("finwiz.tools.html_report_generator.HTMLReportGenerator", return_value=mock_generator)
@@ -198,10 +197,10 @@ class TestPortfolioCacheService:
     @pytest.fixture
     def cache_service(self, mocker):
         """Create cache service with mocked cache manager."""
-        mock_cache_manager = MagicMock()
-        mock_cache_manager.get = AsyncMock()
-        mock_cache_manager.set = AsyncMock()
-        mock_cache_manager.clear = AsyncMock()
+        mock_cache_manager = mocker.MagicMock()
+        mock_cache_manager.get = mocker.AsyncMock()
+        mock_cache_manager.set = mocker.AsyncMock()
+        mock_cache_manager.clear = mocker.AsyncMock()
 
         return PortfolioCacheService(cache_manager=mock_cache_manager)
 
@@ -259,10 +258,10 @@ class TestPortfolioCacheService:
         symbols = ["AAPL", "GOOGL", "MSFT"]
 
         # Mock price service
-        mock_price_service = MagicMock()
-        mock_price_data = MagicMock()
+        mock_price_service = mocker.MagicMock()
+        mock_price_data = mocker.MagicMock()
         mock_price_data.model_dump.return_value = {"price": 150.0}
-        mock_price_service.get_price_with_fallback = AsyncMock(return_value=mock_price_data)
+        mock_price_service.get_price_with_fallback = mocker.AsyncMock(return_value=mock_price_data)
 
         mocker.patch(
             "finwiz.tools.portfolio_price_service.PortfolioPriceService",
@@ -270,8 +269,8 @@ class TestPortfolioCacheService:
         )
 
         # Mock get_price_data to return None (not cached)
-        cache_service.get_price_data = AsyncMock(return_value=None)
-        cache_service.set_price_data = AsyncMock()
+        cache_service.get_price_data = mocker.AsyncMock(return_value=None)
+        cache_service.set_price_data = mocker.AsyncMock()
 
         # Act
         await cache_service.warm_portfolio_cache(symbols)
@@ -319,9 +318,9 @@ class TestSharedCachingIntegration:
         from finwiz.tools.portfolio_price_service import PortfolioPriceService
 
         # Mock shared cache service
-        mock_cache_service = MagicMock()
-        mock_cache_service.get_price_data = AsyncMock(return_value={"price": 150.0})
-        mock_cache_service.set_price_data = AsyncMock()
+        mock_cache_service = mocker.MagicMock()
+        mock_cache_service.get_price_data = mocker.AsyncMock(return_value={"price": 150.0})
+        mock_cache_service.set_price_data = mocker.AsyncMock()
 
         mocker.patch(
             "finwiz.tools.portfolio_price_service.get_portfolio_cache_service",
@@ -329,7 +328,7 @@ class TestSharedCachingIntegration:
         )
 
         # Mock Yahoo Finance tool
-        mock_yahoo_tool = MagicMock()
+        mock_yahoo_tool = mocker.MagicMock()
         mocker.patch(
             "finwiz.tools.portfolio_price_service.YahooFinanceTickerInfoTool",
             return_value=mock_yahoo_tool,
@@ -381,9 +380,9 @@ class TestSharedCachingIntegration:
             return {"result": "success"}
 
         # Mock cache service to raise exception
-        mock_cache_service = MagicMock()
-        mock_cache_service.cache_manager.get = AsyncMock(side_effect=Exception("Cache error"))
-        mock_cache_service.cache_manager.set = AsyncMock(side_effect=Exception("Cache error"))
+        mock_cache_service = mocker.MagicMock()
+        mock_cache_service.cache_manager.get = mocker.AsyncMock(side_effect=Exception("Cache error"))
+        mock_cache_service.cache_manager.set = mocker.AsyncMock(side_effect=Exception("Cache error"))
 
         mocker.patch(
             "finwiz.tools.portfolio_cache_service.get_portfolio_cache_service",

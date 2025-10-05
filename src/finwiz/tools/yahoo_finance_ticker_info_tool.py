@@ -1,19 +1,15 @@
 """Tool for fetching Yahoo Finance Ticker Information."""
 
-import logging
 from datetime import UTC, datetime
 
 import yfinance as yf
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
+from finwiz.schemas.tools import GetTickerInfoInput
+from finwiz.tools.logger import get_logger
 
-
-class GetTickerInfoInput(BaseModel):
-    """Input schema for getting ticker information."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')")
+logger = get_logger(__name__)
 
 
 class YahooFinanceTickerInfoTool(BaseTool):

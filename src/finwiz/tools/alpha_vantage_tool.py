@@ -14,9 +14,10 @@ from datetime import UTC, datetime
 import requests
 from crewai.tools import BaseTool
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.schemas.perplexity import SonarArticle
+from finwiz.schemas.tools import CompanyOverviewInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.api_decorators import api_tool
@@ -27,13 +28,6 @@ from finwiz.utils.rate_limiter import APIProvider
 logger = get_logger(__name__)
 
 load_dotenv()
-
-
-class CompanyOverviewInput(BaseModel):
-    """Input schema for the AlphaVantageCompanyOverviewTool."""
-
-    ticker: str = Field(..., description="The stock ticker symbol to get information for.")
-    include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
 class AlphaVantageCompanyOverviewTool(BaseTool):

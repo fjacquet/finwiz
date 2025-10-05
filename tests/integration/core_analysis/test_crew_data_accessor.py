@@ -6,7 +6,6 @@ consolidation and ticker validation consolidation with no file system access.
 """
 
 from datetime import datetime
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -19,10 +18,10 @@ class TestCrewDataAccessor:
     """Test suite for CrewDataAccessor with mocked data scenarios."""
 
     @pytest.fixture
-    def mock_integration_manager(self):
+    def mock_integration_manager(self, mocker):
         """Create a mock integration manager."""
-        manager = Mock(spec=CrewDataIntegrationManager)
-        manager.logger = Mock()
+        manager = mocker.Mock(spec=CrewDataIntegrationManager)
+        manager.logger = mocker.Mock()
         return manager
 
     @pytest.fixture
@@ -161,7 +160,9 @@ class TestCrewDataAccessor:
         assert result == {}
         mock_integration_manager.logger.error.assert_called()
 
-    def test_should_consolidate_market_sentiment_from_multiple_crews(self, data_accessor, mock_integration_manager, current_time):
+    def test_should_consolidate_market_sentiment_from_multiple_crews(
+        self, data_accessor, mock_integration_manager, current_time, mocker
+    ):
         """Test market sentiment consolidation across crews."""
         # Arrange
         stock_data = {
@@ -210,7 +211,7 @@ class TestCrewDataAccessor:
 
         mock_integration_manager.get_crew_data_with_freshness_check.side_effect = mock_get_crew_data
 
-        with patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
+        with mocker.patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
             datetime_mock.now.return_value = current_time
 
             # Act
@@ -243,12 +244,12 @@ class TestCrewDataAccessor:
             # Check data quality assessment
             assert result["data_quality"] in ["HIGH", "MEDIUM", "LOW", "INSUFFICIENT"]
 
-    def test_should_handle_missing_sentiment_data_gracefully(self, data_accessor, mock_integration_manager, current_time):
+    def test_should_handle_missing_sentiment_data_gracefully(self, mocker, data_accessor, mock_integration_manager, current_time):
         """Test sentiment consolidation when no sentiment data is available."""
         # Arrange
         mock_integration_manager.get_crew_data_with_freshness_check.return_value = None
 
-        with patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
+        with mocker.patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
             datetime_mock.now.return_value = current_time
 
             # Act
@@ -260,7 +261,9 @@ class TestCrewDataAccessor:
             assert len(result["crew_sentiments"]) == 0
             assert result["data_quality"] == "INSUFFICIENT"
 
-    def test_should_consolidate_ticker_validation_from_all_crews(self, data_accessor, mock_integration_manager, current_time):
+    def test_should_consolidate_ticker_validation_from_all_crews(
+        self, data_accessor, mock_integration_manager, current_time, mocker
+    ):
         """Test ticker validation consolidation across all crews."""
         # Arrange
         stock_data = {
@@ -328,7 +331,7 @@ class TestCrewDataAccessor:
 
         mock_integration_manager.get_crew_data_with_freshness_check.side_effect = mock_get_crew_data
 
-        with patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
+        with mocker.patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
             datetime_mock.now.return_value = current_time
 
             # Act
@@ -373,12 +376,12 @@ class TestCrewDataAccessor:
             assert len(failed["alternatives"]) == 2
             assert len(failed["recovery_suggestions"]) > 0
 
-    def test_should_handle_ticker_validation_errors_gracefully(self, data_accessor, mock_integration_manager, current_time):
+    def test_should_handle_ticker_validation_errors_gracefully(self, mocker, data_accessor, mock_integration_manager, current_time):
         """Test ticker validation consolidation error handling."""
         # Arrange
         mock_integration_manager.get_crew_data_with_freshness_check.side_effect = Exception("Validation error")
 
-        with patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
+        with mocker.patch("finwiz.integration.data_accessor.datetime") as datetime_mock:
             datetime_mock.now.return_value = current_time
 
             # Act
@@ -392,10 +395,10 @@ class TestCrewDataAccessor:
             assert "error" in result
             mock_integration_manager.logger.error.assert_called()
 
-    def test_should_provide_detailed_error_reporting_with_file_paths(self, data_accessor, mock_integration_manager):
+    def test_should_provide_detailed_error_reporting_with_file_paths(self, mocker, data_accessor, mock_integration_manager):
         """Test detailed error reporting with specific file paths."""
         # Arrange
-        mock_freshness_report = Mock()
+        mock_freshness_report = mocker.Mock()
         mock_freshness_report.fresh_data = ["stock"]
         mock_freshness_report.stale_data = ["etf"]
         mock_freshness_report.missing_data = ["crypto", "discovery"]
@@ -403,7 +406,7 @@ class TestCrewDataAccessor:
         mock_freshness_report.recommendations = ["Run missing crews", "Refresh stale data"]
 
         mock_integration_manager.check_data_freshness.return_value = mock_freshness_report
-        mock_integration_manager.output_dir = Mock()
+        mock_integration_manager.output_dir = mocker.Mock()
         mock_integration_manager.output_dir.__truediv__ = lambda self, other: f"/mock/output/{other}"
         mock_integration_manager.get_refresh_recommendations.return_value = ["crypto", "discovery", "etf"]
 
@@ -457,26 +460,26 @@ class TestCrewDataAccessor:
         assert result.integration_errors[0].error_type == IntegrationErrorType.ACCESS_ERROR
         assert "Data availability check failed" in result.integration_errors[0].error_message
 
-    def test_should_generate_stale_data_warnings_with_specific_ages(self, data_accessor, mock_integration_manager):
+    def test_should_generate_stale_data_warnings_with_specific_ages(self, mocker, data_accessor, mock_integration_manager):
         """Test generation of stale data warnings with specific age information."""
         # Arrange
-        mock_freshness_report = Mock()
+        mock_freshness_report = mocker.Mock()
         mock_freshness_report.stale_data = ["stock", "etf"]
 
         mock_integration_manager.check_data_freshness.return_value = mock_freshness_report
 
         # Mock freshness checker
-        mock_freshness_checker = Mock()
+        mock_freshness_checker = mocker.Mock()
         mock_integration_manager.freshness_checker = mock_freshness_checker
 
         # Mock freshness results for individual crews
-        def mock_freshness_check(crew_name, max_age_hours):
+        def mock_freshness_check(crew_name, max_age_hours, mocker):
             if crew_name == "stock":
-                result = Mock()
+                result = mocker.Mock()
                 result.freshness_status.age_hours = 36.5
                 return result
             elif crew_name == "etf":
-                result = Mock()
+                result = mocker.Mock()
                 result.freshness_status.age_hours = 48.2
                 return result
             return None

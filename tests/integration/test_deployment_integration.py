@@ -8,7 +8,6 @@ configuration validation, feature flags, monitoring, and API endpoints.
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -30,18 +29,19 @@ class TestDeploymentIntegration:
             "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key-12345678901234567890",
         }
 
-        with patch.dict(os.environ, mock_env, clear=True):
-            # Act
-            config_manager = get_configuration_manager()
-            result = config_manager.validate_startup_configuration()
+        mocker.patch.dict("os.environ", mock_env, clear=True)
 
-            # Assert
-            assert result is True
-            assert len(config_manager.api_keys) >= 4
-            assert "OpenAI" in config_manager.api_keys
-            assert "Serper" in config_manager.api_keys
-            assert "Firecrawl" in config_manager.api_keys
-            assert "Alpha Vantage" in config_manager.api_keys
+        # Act
+        config_manager = get_configuration_manager()
+        result = config_manager.validate_startup_configuration()
+
+        # Assert
+        assert result is True
+        assert len(config_manager.api_keys) >= 4
+        assert "OpenAI" in config_manager.api_keys
+        assert "Serper" in config_manager.api_keys
+        assert "Firecrawl" in config_manager.api_keys
+        assert "Alpha Vantage" in config_manager.api_keys
 
     def test_should_raise_configuration_error_when_required_keys_missing(self, mocker):
         """Test configuration validation fails when required keys are missing."""
@@ -51,7 +51,7 @@ class TestDeploymentIntegration:
             # Missing other required keys
         }
 
-        with patch.dict(os.environ, mock_env, clear=True):
+        with mocker.patch.dict(os.environ, mock_env, clear=True):
             # Act & Assert
             config_manager = get_configuration_manager()
             with pytest.raises(ConfigurationError) as exc_info:
@@ -71,7 +71,7 @@ class TestDeploymentIntegration:
             "FF_PORTFOLIO_REBALANCING_ROLLOUT": "50.0",
         }
 
-        with patch.dict(os.environ, mock_env, clear=True):
+        with mocker.patch.dict(os.environ, mock_env, clear=True):
             # Act
             feature_flags = get_feature_flags()
 
@@ -126,7 +126,7 @@ class TestDeploymentIntegration:
             project_root = Path(temp_dir)
 
             # Mock the project root path
-            with patch("finwiz.utils.configuration_manager.Path") as mock_path:
+            with mocker.patch("finwiz.utils.configuration_manager.Path") as mock_path:
                 mock_path.return_value.resolve.return_value.parents = [None, project_root]
 
                 # Act
@@ -147,7 +147,7 @@ class TestDeploymentIntegration:
             "FF_PORTFOLIO_REBALANCING_ROLLOUT": "25.0",
         }
 
-        with patch.dict(os.environ, mock_env, clear=True):
+        with mocker.patch.dict(os.environ, mock_env, clear=True):
             feature_flags = get_feature_flags()
 
             # Act - Test multiple user IDs to verify percentage rollout
@@ -172,7 +172,7 @@ class TestDeploymentIntegration:
             "FF_PORTFOLIO_REBALANCING": "true",
         }
 
-        with patch.dict(os.environ, mock_env, clear=True):
+        with mocker.patch.dict(os.environ, mock_env, clear=True):
             # Act
             config_manager = get_configuration_manager()
             summary = config_manager.get_configuration_summary()
@@ -196,7 +196,7 @@ class TestDeploymentIntegration:
                 "FF_PORTFOLIO_REBALANCING": "true" if env != "production" else "false",
             }
 
-            with patch.dict(os.environ, mock_env, clear=True):
+            with mocker.patch.dict(os.environ, mock_env, clear=True):
                 # Act
                 feature_flags = get_feature_flags()
 
@@ -222,7 +222,7 @@ class TestAPIIntegration:
             "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key-12345678901234567890",
         }
 
-        with patch.dict(os.environ, mock_env, clear=True):
+        with mocker.patch.dict(os.environ, mock_env, clear=True):
             # Act
             try:
                 from finwiz.api.app import create_app
@@ -252,7 +252,7 @@ class TestAPIIntegration:
             "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key-12345678901234567890",
         }
 
-        with patch.dict(os.environ, mock_env, clear=True):
+        with mocker.patch.dict(os.environ, mock_env, clear=True):
             # Act & Assert - Should not raise any errors
             from finwiz.utils.feature_flags import is_feature_enabled
 

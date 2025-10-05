@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from ..schemas.integration import APlusOpportunityCollection
+from finwiz.schemas.integration import APlusOpportunityCollection
 
 
 class APlusDataExtractor:

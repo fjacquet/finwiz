@@ -30,6 +30,7 @@ class TestAsyncTaskDecorator:
 
     def test_should_preserve_function_metadata_when_decorator_applied(self):
         """Test async_task decorator preserves function metadata."""
+
         # Arrange
         @async_task
         def test_function():
@@ -86,6 +87,7 @@ class TestSyncTaskDecorator:
 
     def test_should_preserve_function_metadata_when_decorator_applied(self):
         """Test sync_task decorator preserves function metadata."""
+
         # Arrange
         @sync_task
         def test_function():

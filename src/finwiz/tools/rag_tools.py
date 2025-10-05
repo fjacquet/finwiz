@@ -9,24 +9,13 @@ from typing import Any
 
 from crewai.tools import BaseTool as Tool
 from crewai_tools import RagTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
+
+# Import schema from centralized location
+from finwiz.schemas.tools import KnowledgeBaseInput
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
-
-
-class KnowledgeBaseInput(BaseModel):
-    """Input schema for Knowledge Base tool with optional parameters."""
-
-    query: str = Field(..., description="Search query for the knowledge base")
-    similarity_threshold: float | None = Field(
-        default=None,
-        description="Minimum similarity score for results (0.0 to 1.0)",
-    )
-    limit: int | None = Field(
-        default=None,
-        description="Maximum number of results to return",
-    )
 
 
 class KnowledgeBaseTool(Tool):

@@ -423,19 +423,32 @@ uv run python src/finwiz/main.py --discovery --asset-type etf
 
 Comprehensive documentation is available in the `docs/` directory:
 
-- **[Agent Handbook](docs/agent_handbook.md)**: Guidelines and standards for AI agents
-- **[Design Principles](docs/DESIGN_PRINCIPLES.md)**: Core architectural principles and patterns
-- **[Technical Reference](docs/reference.md)**: Complete API and configuration reference
-- **[Test Coverage Stabilization](docs/test_coverage_stabilization.md)**: Comprehensive guide to test infrastructure improvements and coverage measurement
-- **[Codebase Modernization](docs/codebase_modernization.md)**: Comprehensive guide to the modernization effort and improved architecture
-- **[Quantitative Analysis](docs/quantitative_analysis.md)**: Comprehensive guide to quantitative analysis framework
-- **[Portfolio Rebalancing User Guide](docs/portfolio_rebalancing_user_guide.md)**: Complete user guide for portfolio rebalancing
-- **[Portfolio Rebalancing Developer Guide](docs/portfolio_rebalancing_developer_guide.md)**: Developer guide for extending rebalancing functionality
-- **[Portfolio Rebalancing API Reference](docs/portfolio_rebalancing_api_reference.md)**: Complete API documentation for rebalancing system
-- **[Validation System](docs/validation_system.md)**: Data validation infrastructure guide
-- **[Caching System](docs/caching_system.md)**: Intelligent caching capabilities
-- **[Migration Guide](docs/migration_guide.md)**: Guide for upgrading to latest features
+### Core Documentation
+- **[Documentation Hub](docs/README.md)**: Central navigation for all documentation
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Complete development guide with CrewAI standards
+- **[Architecture Guide](docs/ARCHITECTURE.md)**: System architecture and design principles
+- **[API Reference](docs/API_REFERENCE.md)**: Complete API documentation for tools and schemas
+- **[User Guide](docs/USER_GUIDE.md)**: Deployment, operations, and migration guide
+
+### Feature Documentation
+- **[Portfolio Holdings Analysis](docs/portfolio_holdings_analysis_user_guide.md)**: Analyze your holdings with price targets and alternatives
+- **[Portfolio Rebalancing](docs/portfolio_rebalancing/)**: Intelligent portfolio rebalancing system
+- **[Investment Discovery](docs/investment_discovery/)**: Discover A+ investment opportunities
+- **[Quantitative Analysis](docs/quantitative_analysis.md)**: Professional-grade quantitative analysis framework
+
+### System Documentation
+- **[A+ Investment System](docs/APLUS_SYSTEM.md)**: A+ discovery, scoring, and monitoring
+- **[System Operations](docs/SYSTEM_OPERATIONS.md)**: Feedback learning, portfolio monitoring, integration
+- **[Perplexity Integration](docs/perplexity_sonar_integration_spec.md)**: Enhanced research capabilities
 - **[Schemas Documentation](docs/schemas/README.md)**: Pydantic models and JSON schemas
+
+### AI Development Standards
+AI agent guidelines are in `.kiro/steering/` for automatic guidance:
+- **agents.md**: Agent behavior and tool usage
+- **output-standards.md**: HTML formatting and French language
+- **validation.md**: Validation rules and criteria
+- **crewai-standards.md**: CrewAI development patterns
+- **testing-standards.md**: Testing best practices
 
 ## 🔧 Development
 

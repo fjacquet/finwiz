@@ -6,7 +6,6 @@ including alert creation, notification delivery, and escalation.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -81,34 +80,34 @@ class TestAlertManager:
         self.alert_manager = AlertManager(self.config)
 
     @pytest.mark.asyncio
-    async def test_should_create_alert_successfully(self):
+    async def test_should_create_alert_successfully(self, mocker):
         """Test creating an alert successfully."""
-        with patch.object(self.alert_manager, "_send_notifications", new_callable=AsyncMock) as mock_send:
-            alert = await self.alert_manager.create_alert(
-                AlertType.DISCOVERY_RATE,
-                AlertSeverity.WARNING,
-                "Low Discovery Rate",
-                "Discovery rate has dropped below threshold",
-                {"threshold": 5, "current": 2},
-            )
+        mock_send = mocker.patch.object(self.alert_manager, "_send_notifications", new_callable=mocker.AsyncMock)
+        alert = await self.alert_manager.create_alert(
+            AlertType.DISCOVERY_RATE,
+            AlertSeverity.WARNING,
+            "Low Discovery Rate",
+            "Discovery rate has dropped below threshold",
+            {"threshold": 5, "current": 2},
+        )
 
-            assert alert is not None
-            assert alert.type == AlertType.DISCOVERY_RATE
-            assert alert.severity == AlertSeverity.WARNING
-            assert alert.title == "Low Discovery Rate"
-            assert alert.message == "Discovery rate has dropped below threshold"
-            assert alert.metadata["threshold"] == 5
-            assert alert.metadata["current"] == 2
+        assert alert is not None
+        assert alert.type == AlertType.DISCOVERY_RATE
+        assert alert.severity == AlertSeverity.WARNING
+        assert alert.title == "Low Discovery Rate"
+        assert alert.message == "Discovery rate has dropped below threshold"
+        assert alert.metadata["threshold"] == 5
+        assert alert.metadata["current"] == 2
 
-            # Check that alert is stored
-            assert alert.id in self.alert_manager.active_alerts
-            assert len(self.alert_manager.alert_history) == 1
+        # Check that alert is stored
+        assert alert.id in self.alert_manager.active_alerts
+        assert len(self.alert_manager.alert_history) == 1
 
-            # Check that notifications were sent
-            mock_send.assert_called_once_with(alert)
+        # Check that notifications were sent
+        mock_send.assert_called_once_with(alert)
 
     @pytest.mark.asyncio
-    async def test_should_rate_limit_alerts(self):
+    async def test_should_rate_limit_alerts(self, mocker):
         """Test alert rate limiting."""
         # Create alerts up to the limit
         for i in range(self.config.max_alerts_per_hour):
@@ -118,35 +117,35 @@ class TestAlertManager:
             assert alert is not None
 
         # Next alert should be rate limited
-        with patch.object(self.alert_manager, "_send_notifications", new_callable=AsyncMock):
-            rate_limited_alert = await self.alert_manager.create_alert(
-                AlertType.DISCOVERY_RATE, AlertSeverity.WARNING, "Rate Limited Alert", "This should be rate limited"
-            )
-            assert rate_limited_alert is None
+        mocker.patch.object(self.alert_manager, "_send_notifications", new_callable=mocker.AsyncMock)
+        rate_limited_alert = await self.alert_manager.create_alert(
+            AlertType.DISCOVERY_RATE, AlertSeverity.WARNING, "Rate Limited Alert", "This should be rate limited"
+        )
+        assert rate_limited_alert is None
 
     @pytest.mark.asyncio
-    async def test_should_resolve_alert_successfully(self):
+    async def test_should_resolve_alert_successfully(self, mocker):
         """Test resolving an alert successfully."""
         # Create an alert first
-        with patch.object(self.alert_manager, "_send_notifications", new_callable=AsyncMock):
-            alert = await self.alert_manager.create_alert(
-                AlertType.ERROR_RATE, AlertSeverity.CRITICAL, "High Error Rate", "Error rate exceeded threshold"
-            )
+        mocker.patch.object(self.alert_manager, "_send_notifications", new_callable=mocker.AsyncMock)
+        alert = await self.alert_manager.create_alert(
+            AlertType.ERROR_RATE, AlertSeverity.CRITICAL, "High Error Rate", "Error rate exceeded threshold"
+        )
 
         # Resolve the alert
-        with patch.object(self.alert_manager, "_send_resolution_notification", new_callable=AsyncMock) as mock_resolution:
-            success = await self.alert_manager.resolve_alert(alert.id, "Issue fixed")
+        mock_resolution = mocker.patch.object(self.alert_manager, "_send_resolution_notification", new_callable=mocker.AsyncMock)
+        success = await self.alert_manager.resolve_alert(alert.id, "Issue fixed")
 
-            assert success is True
-            assert alert.resolved is True
-            assert alert.resolved_at is not None
-            assert alert.metadata["resolution_message"] == "Issue fixed"
+        assert success is True
+        assert alert.resolved is True
+        assert alert.resolved_at is not None
+        assert alert.metadata["resolution_message"] == "Issue fixed"
 
-            # Check that alert is removed from active alerts
-            assert alert.id not in self.alert_manager.active_alerts
+        # Check that alert is removed from active alerts
+        assert alert.id not in self.alert_manager.active_alerts
 
-            # Check that resolution notification was sent
-            mock_resolution.assert_called_once_with(alert)
+        # Check that resolution notification was sent
+        mock_resolution.assert_called_once_with(alert)
 
     @pytest.mark.asyncio
     async def test_should_fail_to_resolve_nonexistent_alert(self):
@@ -155,62 +154,62 @@ class TestAlertManager:
         assert success is False
 
     @pytest.mark.asyncio
-    async def test_should_escalate_alert_successfully(self):
+    async def test_should_escalate_alert_successfully(self, mocker):
         """Test escalating an alert successfully."""
         # Create a critical alert
-        with patch.object(self.alert_manager, "_send_notifications", new_callable=AsyncMock):
-            alert = await self.alert_manager.create_alert(
-                AlertType.SYSTEM_HEALTH, AlertSeverity.CRITICAL, "System Down", "System is not responding"
-            )
+        mocker.patch.object(self.alert_manager, "_send_notifications", new_callable=mocker.AsyncMock)
+        alert = await self.alert_manager.create_alert(
+            AlertType.SYSTEM_HEALTH, AlertSeverity.CRITICAL, "System Down", "System is not responding"
+        )
 
         # Escalate the alert
-        with patch.object(self.alert_manager, "_send_escalation_notification", new_callable=AsyncMock) as mock_escalation:
-            success = await self.alert_manager.escalate_alert(alert.id)
+        mock_escalation = mocker.patch.object(self.alert_manager, "_send_escalation_notification", new_callable=mocker.AsyncMock)
+        success = await self.alert_manager.escalate_alert(alert.id)
 
-            assert success is True
-            assert alert.escalated is True
-            assert alert.escalated_at is not None
+        assert success is True
+        assert alert.escalated is True
+        assert alert.escalated_at is not None
 
-            # Check that escalation notification was sent
-            mock_escalation.assert_called_once_with(alert)
+        # Check that escalation notification was sent
+        mock_escalation.assert_called_once_with(alert)
 
     @pytest.mark.asyncio
-    async def test_should_not_escalate_already_escalated_alert(self):
+    async def test_should_not_escalate_already_escalated_alert(self, mocker):
         """Test not escalating an already escalated alert."""
         # Create and escalate an alert
-        with patch.object(self.alert_manager, "_send_notifications", new_callable=AsyncMock):
-            alert = await self.alert_manager.create_alert(
-                AlertType.QUALITY, AlertSeverity.CRITICAL, "Quality Issue", "Quality metrics degraded"
-            )
+        mocker.patch.object(self.alert_manager, "_send_notifications", new_callable=mocker.AsyncMock)
+        alert = await self.alert_manager.create_alert(
+            AlertType.QUALITY, AlertSeverity.CRITICAL, "Quality Issue", "Quality metrics degraded"
+        )
 
-        with patch.object(self.alert_manager, "_send_escalation_notification", new_callable=AsyncMock):
-            await self.alert_manager.escalate_alert(alert.id)
+        mocker.patch.object(self.alert_manager, "_send_escalation_notification", new_callable=mocker.AsyncMock)
+        await self.alert_manager.escalate_alert(alert.id)
 
         # Try to escalate again
-        with patch.object(self.alert_manager, "_send_escalation_notification", new_callable=AsyncMock) as mock_escalation:
-            success = await self.alert_manager.escalate_alert(alert.id)
+        mock_escalation = mocker.patch.object(self.alert_manager, "_send_escalation_notification", new_callable=mocker.AsyncMock)
+        success = await self.alert_manager.escalate_alert(alert.id)
 
-            assert success is True  # Returns True but doesn't escalate again
-            mock_escalation.assert_not_called()
+        assert success is True  # Returns True but doesn't escalate again
+        mock_escalation.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_should_check_escalations_for_old_critical_alerts(self):
+    async def test_should_check_escalations_for_old_critical_alerts(self, mocker):
         """Test checking escalations for old critical alerts."""
         # Create a critical alert with old timestamp
-        with patch.object(self.alert_manager, "_send_notifications", new_callable=AsyncMock):
-            alert = await self.alert_manager.create_alert(
-                AlertType.PERFORMANCE, AlertSeverity.CRITICAL, "Performance Issue", "System performance degraded"
-            )
+        mocker.patch.object(self.alert_manager, "_send_notifications", new_callable=mocker.AsyncMock)
+        alert = await self.alert_manager.create_alert(
+            AlertType.PERFORMANCE, AlertSeverity.CRITICAL, "Performance Issue", "System performance degraded"
+        )
 
         # Manually set timestamp to be old enough for escalation
         alert.timestamp = datetime.now() - timedelta(minutes=35)
 
         # Check escalations
-        with patch.object(self.alert_manager, "_send_escalation_notification", new_callable=AsyncMock) as mock_escalation:
-            await self.alert_manager.check_escalations()
+        mock_escalation = mocker.patch.object(self.alert_manager, "_send_escalation_notification", new_callable=mocker.AsyncMock)
+        await self.alert_manager.check_escalations()
 
-            assert alert.escalated is True
-            mock_escalation.assert_called_once_with(alert)
+        assert alert.escalated is True
+        mock_escalation.assert_called_once_with(alert)
 
     def test_should_get_active_alerts_all(self):
         """Test getting all active alerts."""
@@ -330,7 +329,7 @@ class TestAlertManager:
         assert self.alert_manager._check_rate_limit(alert_type) is True
 
     @pytest.mark.asyncio
-    async def test_should_send_email_notification(self):
+    async def test_should_send_email_notification(self, mocker):
         """Test sending email notification."""
         alert = Alert(
             id="email_test",
@@ -341,18 +340,18 @@ class TestAlertManager:
             timestamp=datetime.now(),
         )
 
-        with patch("smtplib.SMTP") as mock_smtp:
-            mock_server = MagicMock()
-            mock_smtp.return_value.__enter__.return_value = mock_server
+        mock_smtp = mocker.patch("smtplib.SMTP")
+        mock_server = mocker.MagicMock()
+        mock_smtp.return_value.__enter__.return_value = mock_server
 
-            await self.alert_manager._send_email_notification(alert)
+        await self.alert_manager._send_email_notification(alert)
 
-            # Check that SMTP was used
-            mock_smtp.assert_called_once_with(self.config.smtp_host, self.config.smtp_port)
-            mock_server.send_message.assert_called_once()
+        # Check that SMTP was used
+        mock_smtp.assert_called_once_with(self.config.smtp_host, self.config.smtp_port)
+        mock_server.send_message.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_send_webhook_notifications(self):
+    async def test_should_send_webhook_notifications(self, mocker):
         """Test sending webhook notifications."""
         alert = Alert(
             id="webhook_test",
@@ -363,15 +362,15 @@ class TestAlertManager:
             timestamp=datetime.now(),
         )
 
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_response = MagicMock()
-            mock_response.raise_for_status.return_value = None
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
+        mock_client = mocker.patch("httpx.AsyncClient")
+        mock_response = mocker.MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
 
-            await self.alert_manager._send_webhook_notifications(alert)
+        await self.alert_manager._send_webhook_notifications(alert)
 
-            # Check that HTTP POST was made
-            mock_client.return_value.__aenter__.return_value.post.assert_called_once()
+        # Check that HTTP POST was made
+        mock_client.return_value.__aenter__.return_value.post.assert_called_once()
 
 
 class TestGlobalAlertFunctions:
@@ -385,31 +384,31 @@ class TestGlobalAlertFunctions:
         assert manager1 is manager2
 
     @pytest.mark.asyncio
-    async def test_should_send_discovery_alert(self):
+    async def test_should_send_discovery_alert(self, mocker):
         """Test sending discovery alert via global function."""
-        with patch("finwiz.monitoring.alerting.get_alert_manager") as mock_get_manager:
-            mock_manager = MagicMock()
-            mock_manager.create_alert = AsyncMock(return_value=MagicMock())
-            mock_get_manager.return_value = mock_manager
+        mock_get_manager = mocker.patch("finwiz.monitoring.alerting.get_alert_manager")
+        mock_manager = mocker.MagicMock()
+        mock_manager.create_alert = mocker.AsyncMock(return_value=mocker.MagicMock())
+        mock_get_manager.return_value = mock_manager
 
-            alert = await send_discovery_alert(
-                AlertType.DISCOVERY_RATE, AlertSeverity.WARNING, "Test Alert", "Test message", {"test": "metadata"}
-            )
+        alert = await send_discovery_alert(
+            AlertType.DISCOVERY_RATE, AlertSeverity.WARNING, "Test Alert", "Test message", {"test": "metadata"}
+        )
 
-            assert alert is not None
-            mock_manager.create_alert.assert_called_once_with(
-                AlertType.DISCOVERY_RATE, AlertSeverity.WARNING, "Test Alert", "Test message", {"test": "metadata"}
-            )
+        assert alert is not None
+        mock_manager.create_alert.assert_called_once_with(
+            AlertType.DISCOVERY_RATE, AlertSeverity.WARNING, "Test Alert", "Test message", {"test": "metadata"}
+        )
 
     @pytest.mark.asyncio
-    async def test_should_resolve_discovery_alert(self):
+    async def test_should_resolve_discovery_alert(self, mocker):
         """Test resolving discovery alert via global function."""
-        with patch("finwiz.monitoring.alerting.get_alert_manager") as mock_get_manager:
-            mock_manager = MagicMock()
-            mock_manager.resolve_alert = AsyncMock(return_value=True)
-            mock_get_manager.return_value = mock_manager
+        mock_get_manager = mocker.patch("finwiz.monitoring.alerting.get_alert_manager")
+        mock_manager = mocker.MagicMock()
+        mock_manager.resolve_alert = mocker.AsyncMock(return_value=True)
+        mock_get_manager.return_value = mock_manager
 
-            success = await resolve_discovery_alert("test_alert_id", "Test resolution")
+        success = await resolve_discovery_alert("test_alert_id", "Test resolution")
 
-            assert success is True
-            mock_manager.resolve_alert.assert_called_once_with("test_alert_id", "Test resolution")
+        assert success is True
+        mock_manager.resolve_alert.assert_called_once_with("test_alert_id", "Test resolution")

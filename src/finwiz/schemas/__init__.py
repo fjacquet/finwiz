@@ -4,9 +4,23 @@ Typed data contracts for FinWiz inter-agent communication and reporter inputs.
 Modules:
 - common: shared enums and standardized risk model
 - stock: Ten-K insights and market sentiment models
+- crypto: cryptocurrency analysis models
+- etf: ETF analysis models
 - report: aggregate input for the final tool-less reporter
+- quantitative: quantitative analysis and backtesting models
+- integration: system integration and validation models
+- tools: tool input validation schemas
+- api: FastAPI request/response models
 """
 
+# Core domain schemas
+# Organized schema modules
+from . import (
+    api,  # noqa: F401
+    integration,  # noqa: F401
+    quantitative,  # noqa: F401
+    tools,  # noqa: F401
+)
 from .common import RiskAssessmentStandardized, RiskLevel  # noqa: F401
 from .crypto import CryptoRisk, CryptoThesis  # noqa: F401
 from .etf import ETFFactsheet, ETFTopHolding  # noqa: F401
@@ -43,13 +57,9 @@ from .portfolio_rebalancing import (  # noqa: F401
     UrgencyLevel,
 )
 from .quantitative import (  # noqa: F401
-    EnhancedCryptoAnalysis,
-    EnhancedETFAnalysis,
-    EnhancedStockAnalysis,
-    QuantitativeBacktestResult,
-    QuantitativePerformanceMetrics,
-    QuantitativeRecommendation,
-    QuantitativeTechnicalAnalysis,
+    BacktestResult,
+    PerformanceMetrics,
+    TechnicalAnalysisResult,
 )
 from .report import ReporterInput  # noqa: F401
 from .session import AnalysisRecord, ClientProfile, FinancialPlan, SessionMetadata  # noqa: F401

@@ -260,4 +260,3 @@
   - Add quantitative metrics to crew output schemas and validation
   - Write integration tests for quantitative analysis workflow
   - _Requirements: 12.8_
-

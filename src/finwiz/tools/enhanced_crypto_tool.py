@@ -12,24 +12,19 @@ from typing import Any
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.schemas.perplexity import SonarArticle
+from finwiz.schemas.tools import (
+    CryptoRiskScoringInput,
+    CryptoThesisInput,
+    EnhancedCryptoAnalysisInput,
+)
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.feature_flags import get_feature_flags
 
 logger = get_logger(__name__)
-
-
-class EnhancedCryptoAnalysisInput(BaseModel):
-    """Input schema for Enhanced Crypto Analysis Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
-    include_thesis: bool = Field(default=True, description="Whether to generate investment thesis")
-    include_risk_assessment: bool = Field(default=True, description="Whether to perform risk assessment")
-    max_thesis_bullets: int = Field(default=10, ge=3, le=20, description="Maximum number of thesis bullets")
-    include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
 class EnhancedCryptoAnalysisTool(BaseTool):
@@ -523,12 +518,6 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             return []
 
 
-class CryptoThesisInput(BaseModel):
-    """Input schema for Crypto Thesis Generator Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
-
-
 class CryptoThesisGeneratorTool(BaseTool):
     """
     Specialized tool for crypto investment thesis generation.
@@ -551,12 +540,6 @@ class CryptoThesisGeneratorTool(BaseTool):
             "message": "Use EnhancedCryptoAnalysisTool for comprehensive thesis generation",
             "methodology": "Structured thesis bullets with market analysis and citations",
         }
-
-
-class CryptoRiskScoringInput(BaseModel):
-    """Input schema for Crypto Risk Scoring Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
 
 
 class CryptoRiskScoringTool(BaseTool):

@@ -8,7 +8,6 @@ validation of quantitative metrics.
 
 import json
 from datetime import datetime
-from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -61,9 +60,9 @@ class TestQuantitativeAnalysisIntegration:
         """Create quantitative analysis tool instance."""
         return QuantitativeAnalysisTool()
 
-    def test_stock_quantitative_analysis_comprehensive(self, quantitative_tool, mock_historical_data):
+    def test_stock_quantitative_analysis_comprehensive(self, quantitative_tool, mock_historical_data, mocker):
         """Test comprehensive quantitative analysis for stocks."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             result_json = quantitative_tool._run(symbol="AAPL", asset_class="stock", analysis_type="comprehensive", timeframe="1y")
 
             # Parse result
@@ -110,9 +109,9 @@ class TestQuantitativeAnalysisIntegration:
             assert 0 <= rec.confidence <= 1
             assert rec.methodology == "quantitative_analysis"
 
-    def test_etf_quantitative_analysis_comprehensive(self, quantitative_tool, mock_historical_data):
+    def test_etf_quantitative_analysis_comprehensive(self, quantitative_tool, mock_historical_data, mocker):
         """Test comprehensive quantitative analysis for ETFs."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             result_json = quantitative_tool._run(symbol="SPY", asset_class="etf", analysis_type="comprehensive", timeframe="2y")
 
             # Parse result
@@ -131,9 +130,9 @@ class TestQuantitativeAnalysisIntegration:
             assert etf_analysis.tracking_error_analysis is None  # Not implemented in basic version
             assert etf_analysis.benchmark_correlation is None  # Not implemented in basic version
 
-    def test_crypto_quantitative_analysis_comprehensive(self, quantitative_tool, mock_historical_data):
+    def test_crypto_quantitative_analysis_comprehensive(self, quantitative_tool, mock_historical_data, mocker):
         """Test comprehensive quantitative analysis for cryptocurrencies."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             result_json = quantitative_tool._run(
                 symbol="BTC-USD", asset_class="crypto", analysis_type="comprehensive", timeframe="1y"
             )
@@ -154,10 +153,10 @@ class TestQuantitativeAnalysisIntegration:
             assert crypto_analysis.volatility_analysis is None  # Not implemented in basic version
             assert crypto_analysis.correlation_analysis is None  # Not implemented in basic version
 
-    def test_technical_analysis_only(self, quantitative_tool, mock_historical_data):
+    def test_technical_analysis_only(self, mocker, quantitative_tool, mock_historical_data):
         """Test technical analysis only mode."""
-        with patch("finwiz.tools.quantitative_analysis_tool.get_historical_data_manager") as mock_data_manager_factory:
-            mock_data_manager = Mock()
+        with mocker.patch("finwiz.tools.quantitative_analysis_tool.get_historical_data_manager") as mock_data_manager_factory:
+            mock_data_manager = mocker.Mock()
             mock_data_manager.fetch_historical_data.return_value = mock_historical_data
             mock_data_manager_factory.return_value = mock_data_manager
 
@@ -175,9 +174,9 @@ class TestQuantitativeAnalysisIntegration:
             assert tech_analysis.bearish_signals_count >= 0
             assert tech_analysis.neutral_signals_count >= 0
 
-    def test_backtest_analysis_only(self, quantitative_tool, mock_historical_data):
+    def test_backtest_analysis_only(self, quantitative_tool, mock_historical_data, mocker):
         """Test backtesting analysis only mode."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             result_json = quantitative_tool._run(symbol="GOOGL", asset_class="stock", analysis_type="backtest", timeframe="1y")
 
             # Parse result
@@ -194,9 +193,9 @@ class TestQuantitativeAnalysisIntegration:
             assert isinstance(backtest_result.backtest_start_date, datetime)
             assert isinstance(backtest_result.backtest_end_date, datetime)
 
-    def test_performance_analysis_only(self, quantitative_tool, mock_historical_data):
+    def test_performance_analysis_only(self, quantitative_tool, mock_historical_data, mocker):
         """Test performance analysis only mode."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             result_json = quantitative_tool._run(symbol="TSLA", asset_class="stock", analysis_type="performance", timeframe="1y")
 
             # Parse result
@@ -213,28 +212,30 @@ class TestQuantitativeAnalysisIntegration:
             assert isinstance(perf_metrics.volatility, float)
             assert perf_metrics.total_days > 0
 
-    def test_error_handling_no_data(self, quantitative_tool):
+    def test_error_handling_no_data(self, quantitative_tool, mocker):
         """Test error handling when no data is available."""
         empty_data = pd.DataFrame()
 
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=empty_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=empty_data):
             result = quantitative_tool._run(symbol="INVALID", asset_class="stock", analysis_type="comprehensive", timeframe="1y")
 
             assert "No data available" in result
 
-    def test_error_handling_invalid_symbol(self, quantitative_tool):
+    def test_error_handling_invalid_symbol(self, quantitative_tool, mocker):
         """Test error handling for invalid symbols."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", side_effect=Exception("Symbol not found")):
+        with mocker.patch.object(
+            quantitative_tool.data_manager, "fetch_historical_data", side_effect=Exception("Symbol not found")
+        ):
             result = quantitative_tool._run(symbol="INVALID123", asset_class="stock", analysis_type="comprehensive", timeframe="1y")
 
             assert "Error fetching data" in result
 
-    def test_different_timeframes(self, quantitative_tool, mock_historical_data):
+    def test_different_timeframes(self, quantitative_tool, mock_historical_data, mocker):
         """Test analysis with different timeframes."""
         timeframes = ["1y", "2y", "5y"]
 
         for timeframe in timeframes:
-            with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+            with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
                 result_json = quantitative_tool._run(
                     symbol="AAPL", asset_class="stock", analysis_type="technical", timeframe=timeframe
                 )
@@ -244,17 +245,17 @@ class TestQuantitativeAnalysisIntegration:
                 tech_analysis = QuantitativeTechnicalAnalysis(**result_dict)
                 assert tech_analysis.symbol == "AAPL"
 
-    def test_recommendation_generation_logic(self, quantitative_tool, mock_historical_data):
+    def test_recommendation_generation_logic(self, mocker, quantitative_tool, mock_historical_data):
         """Test recommendation generation logic with different scenarios."""
         # Mock technical analysis result with strong buy signal
-        mock_tech_result = Mock()
+        mock_tech_result = mocker.Mock()
         mock_tech_result.overall_signal.value = "STRONG_BUY"
         mock_tech_result.overall_confidence = 0.8
         mock_tech_result.bullish_signals_count = 5
         mock_tech_result.bearish_signals_count = 1
 
         # Mock backtest result with good performance
-        mock_backtest_result = Mock()
+        mock_backtest_result = mocker.Mock()
         mock_backtest_result.annualized_return = 15.0
         mock_backtest_result.sharpe_ratio = 1.5
         mock_backtest_result.max_drawdown = -10.0
@@ -262,7 +263,7 @@ class TestQuantitativeAnalysisIntegration:
         mock_backtest_result.var_95 = -2.5
 
         # Mock performance metrics
-        mock_perf_metrics = Mock()
+        mock_perf_metrics = mocker.Mock()
 
         # Test recommendation generation
         recommendation = quantitative_tool._generate_recommendation(
@@ -275,9 +276,9 @@ class TestQuantitativeAnalysisIntegration:
         assert "STRONG_BUY" in recommendation.technical_signal
         assert recommendation.target_return == 15.0
 
-    def test_schema_validation_comprehensive(self, quantitative_tool, mock_historical_data):
+    def test_schema_validation_comprehensive(self, quantitative_tool, mock_historical_data, mocker):
         """Test comprehensive schema validation for all analysis types."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             # Test all asset classes with comprehensive analysis
             asset_classes = [
                 ("AAPL", "stock", EnhancedStockAnalysis),
@@ -303,12 +304,12 @@ class TestQuantitativeAnalysisIntegration:
                 assert isinstance(analysis.analysis_timestamp, datetime)
 
     @pytest.mark.integration
-    def test_crew_integration_workflow(self, quantitative_tool, mock_historical_data):
+    def test_crew_integration_workflow(self, quantitative_tool, mock_historical_data, mocker):
         """Test the complete workflow as it would be used by crews."""
         # Simulate crew workflow: screening -> technical analysis -> risk assessment
         symbols = ["AAPL", "MSFT", "GOOGL"]
 
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             results = []
 
             for symbol in symbols:
@@ -350,9 +351,9 @@ class TestQuantitativeAnalysisIntegration:
                 perf = QuantitativePerformanceMetrics(**result["performance"])
                 assert perf.symbol == result["symbol"]
 
-    def test_quantitative_metrics_consistency(self, quantitative_tool, mock_historical_data):
+    def test_quantitative_metrics_consistency(self, quantitative_tool, mock_historical_data, mocker):
         """Test consistency of quantitative metrics across different analysis types."""
-        with patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             # Get comprehensive analysis
             comp_result_json = quantitative_tool._run(
                 symbol="AAPL", asset_class="stock", analysis_type="comprehensive", timeframe="1y"

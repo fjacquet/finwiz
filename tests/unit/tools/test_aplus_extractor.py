@@ -6,7 +6,6 @@ discovery crew markdown files with full mocking to avoid file system dependencie
 """
 
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
 
@@ -150,13 +149,11 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
         # Assert
         assert result is None
 
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.read_text")
-    def test_should_extract_stock_opportunities_when_valid_file_exists(
-        self, mock_read_text, mock_exists, extractor, sample_stock_content
-    ):
+    def test_should_extract_stock_opportunities_when_valid_file_exists(self, mocker, extractor, sample_stock_content):
         """Test extraction of stock opportunities from markdown file."""
         # Arrange
+        mock_exists = mocker.patch("pathlib.Path.exists")
+        mock_read_text = mocker.patch("pathlib.Path.read_text")
         mock_exists.return_value = True
         mock_read_text.return_value = sample_stock_content
 
@@ -189,15 +186,11 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
         assert adbe["grade"] == "A"
         assert adbe["confidence"] >= 0.8
 
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.read_text")
-    def test_should_extract_etf_opportunities_when_valid_file_exists(
-        self, mock_read_text, mock_exists, extractor, sample_etf_content
-    ):
+    def test_should_extract_etf_opportunities_when_valid_file_exists(self, mocker, extractor, sample_etf_content):
         """Test extraction of ETF opportunities from markdown file."""
         # Arrange
-        mock_exists.return_value = True
-        mock_read_text.return_value = sample_etf_content
+        mock_exists = mocker.patch("pathlib.Path.exists", return_value=True)
+        mock_read_text = mocker.patch("pathlib.Path.read_text", return_value=sample_etf_content)
 
         # Act
         opportunities = extractor._extract_etf_opportunities()
@@ -224,15 +217,11 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
         assert cspx["symbol"] == "CSPX"
         assert cspx["grade"] == "A+"
 
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.read_text")
-    def test_should_extract_crypto_opportunities_when_valid_file_exists(
-        self, mock_read_text, mock_exists, extractor, sample_crypto_content
-    ):
+    def test_should_extract_crypto_opportunities_when_valid_file_exists(self, mocker, extractor, sample_crypto_content):
         """Test extraction of crypto opportunities from markdown file."""
         # Arrange
-        mock_exists.return_value = True
-        mock_read_text.return_value = sample_crypto_content
+        mock_exists = mocker.patch("pathlib.Path.exists", return_value=True)
+        mock_read_text = mocker.patch("pathlib.Path.read_text", return_value=sample_crypto_content)
 
         # Act
         opportunities = extractor._extract_crypto_opportunities()
@@ -262,11 +251,10 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
         assert sol["grade"] == "A"
         assert sol["confidence"] >= 0.8
 
-    @patch("pathlib.Path.exists")
-    def test_should_return_empty_list_when_file_missing(self, mock_exists, extractor):
+    def test_should_return_empty_list_when_file_missing(self, mocker, extractor):
         """Test extraction returns empty list when files are missing."""
         # Arrange
-        mock_exists.return_value = False
+        mock_exists = mocker.patch("pathlib.Path.exists", return_value=False)
 
         # Act
         stock_opportunities = extractor._extract_stock_opportunities()
@@ -278,11 +266,11 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
         assert etf_opportunities == []
         assert crypto_opportunities == []
 
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.read_text")
-    def test_should_handle_file_read_errors_gracefully(self, mock_read_text, mock_exists, extractor):
+    def test_should_handle_file_read_errors_gracefully(self, mocker, extractor):
         """Test extraction handles file read errors gracefully."""
         # Arrange
+        mock_exists = mocker.patch("pathlib.Path.exists")
+        mock_read_text = mocker.patch("pathlib.Path.read_text")
         mock_exists.return_value = True
         mock_read_text.side_effect = OSError("File read error")
 
@@ -292,11 +280,11 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
         # Assert
         assert opportunities == []
 
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.read_text")
     def test_should_extract_complete_aplus_collection_when_all_files_exist(
-        self, mock_read_text, mock_exists, extractor, sample_stock_content, sample_etf_content, sample_crypto_content
+        self, mocker, extractor, sample_stock_content, sample_etf_content, sample_crypto_content
     ):
+        mock_exists = mocker.patch("pathlib.Path.exists")
+        mock_read_text = mocker.patch("pathlib.Path.read_text")
         """Test complete A+ opportunities extraction from all files."""
         # Arrange
         mock_exists.return_value = True
@@ -515,13 +503,11 @@ Top 5 A+ Grade Crypto Candidates — Institutional Analysis
         assert is_valid is False
         assert any("Duplicate symbols found" in error for error in errors)
 
-    @patch("pathlib.Path.exists")
-    @patch("pathlib.Path.read_text")
-    def test_should_handle_extraction_errors_gracefully(self, mock_read_text, mock_exists, extractor):
+    def test_should_handle_extraction_errors_gracefully(self, mocker, extractor):
         """Test extraction handles unexpected errors gracefully."""
         # Arrange
-        mock_exists.return_value = True
-        mock_read_text.side_effect = Exception("Unexpected error")
+        mock_exists = mocker.patch("pathlib.Path.exists", return_value=True)
+        mock_read_text = mocker.patch("pathlib.Path.read_text", side_effect=Exception("Unexpected error"))
 
         # Act
         collection = extractor.extract_aplus_opportunities()

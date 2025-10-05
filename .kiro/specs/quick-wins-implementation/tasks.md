@@ -234,7 +234,8 @@
 
 ## Notes
 
-**Completed Work:**
+__Completed Work:__
+
 - ✅ All 5 quick wins have been implemented successfully
 - ✅ Tool factories are in place and being used by all crews
 - ✅ Agent validators (@final_reporter) are applied to report crew
@@ -245,13 +246,15 @@
 - ✅ Unit tests passing for new modules (tool_factories, agent_validators, task_decorators, logging_helpers)
 - ✅ mypy configuration in place and passing for new modules
 
-**Outstanding Issues:**
+__Outstanding Issues:__
+
 - ⚠️ Test coverage is at 13%, far below the 65% target (need ~52% more coverage)
 - ⚠️ Type hints need to be added to existing modules (tools, crews, orchestrators, quantitative)
 - ⚠️ Python version mismatch: running 3.12.9 but mypy.ini specifies 3.10
 - ⚠️ README documentation needs to be updated with quick wins patterns
 
-**Priority Actions:**
+__Priority Actions:__
+
 1. Fix crew unit test failures (30 tests failing due to outdated mocks)
 2. Improve test coverage significantly (focus on high-value modules: tools, quantitative, integration, orchestrators)
 3. Add type hints to existing modules to reach 80% coverage (start with tools and crews)

@@ -11,7 +11,7 @@ from typing import Any
 
 import pandas as pd
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.quantitative.backtesting import (
     BacktestingEngine,
@@ -24,31 +24,9 @@ from finwiz.quantitative.performance import (
     get_performance_analyzer,
 )
 from finwiz.quantitative.technical import TechnicalAnalysisEngine
-from finwiz.schemas.quantitative import (
-    EnhancedCryptoAnalysis,
-    EnhancedETFAnalysis,
-    EnhancedStockAnalysis,
-    QuantitativeBacktestResult,
-    QuantitativePerformanceMetrics,
-    QuantitativeRecommendation,
-    QuantitativeTechnicalAnalysis,
-)
+from finwiz.schemas import quantitative as quant_schemas
+from finwiz.schemas.tools import QuantitativeAnalysisInput
 from finwiz.tools.logger import get_logger
-
-logger = get_logger(__name__)
-
-
-class QuantitativeAnalysisInput(BaseModel):
-    """Input schema for quantitative analysis tool."""
-
-    symbol: str = Field(..., description="Symbol to analyze (e.g., AAPL, SPY, BTC-USD)")
-    asset_class: str = Field(..., description="Asset class: 'stock', 'etf', or 'crypto'")
-    analysis_type: str = Field(
-        default="comprehensive", description="Type of analysis: 'technical', 'backtest', 'performance', or 'comprehensive'"
-    )
-    timeframe: str = Field(default="1y", description="Analysis timeframe (e.g., '1y', '2y', '5y')")
-    strategy: str = Field(default="sma_crossover", description="Strategy for backtesting")
-    benchmark: str | None = Field(None, description="Benchmark symbol for comparison")
 
 
 class QuantitativeAnalysisTool(BaseTool):
@@ -162,7 +140,7 @@ class QuantitativeAnalysisTool(BaseTool):
             tech_result = technical_engine.analyze_symbol(data, input_data.symbol, timeframe="1d")
 
             # Convert to simplified schema
-            quant_tech = QuantitativeTechnicalAnalysis(
+            quant_tech = quant_schemas.QuantitativeTechnicalAnalysis(
                 symbol=input_data.symbol,
                 timeframe="1d",
                 overall_signal=tech_result.overall_signal.value,
@@ -218,7 +196,7 @@ class QuantitativeAnalysisTool(BaseTool):
             )
 
             # Convert to simplified schema
-            quant_backtest = QuantitativeBacktestResult(
+            quant_backtest = quant_schemas.QuantitativeBacktestResult(
                 symbol=input_data.symbol,
                 strategy_name=backtest_result.strategy_name,
                 total_return=backtest_result.total_return,
@@ -254,7 +232,7 @@ class QuantitativeAnalysisTool(BaseTool):
             perf_report = performance_analyzer.analyze_performance(returns, strategy_name=f"{input_data.symbol}_analysis")
 
             # Convert to simplified schema
-            quant_perf = QuantitativePerformanceMetrics(
+            quant_perf = quant_schemas.QuantitativePerformanceMetrics(
                 symbol=input_data.symbol,
                 total_return=perf_report.performance_metrics.total_return,
                 annualized_return=perf_report.performance_metrics.annualized_return,
@@ -296,7 +274,7 @@ class QuantitativeAnalysisTool(BaseTool):
             # Technical analysis
             tech_result = technical_engine.analyze_symbol(data, input_data.symbol, timeframe="1d")
 
-            quant_tech = QuantitativeTechnicalAnalysis(
+            quant_tech = quant_schemas.QuantitativeTechnicalAnalysis(
                 symbol=input_data.symbol,
                 timeframe="1d",
                 overall_signal=tech_result.overall_signal.value,
@@ -316,7 +294,7 @@ class QuantitativeAnalysisTool(BaseTool):
                 strategy_params={"short_period": 20, "long_period": 50},
             )
 
-            quant_backtest = QuantitativeBacktestResult(
+            quant_backtest = quant_schemas.QuantitativeBacktestResult(
                 symbol=input_data.symbol,
                 strategy_name=backtest_result.strategy_name,
                 total_return=backtest_result.total_return,
@@ -337,7 +315,7 @@ class QuantitativeAnalysisTool(BaseTool):
             returns = data["Close"].pct_change().dropna()
             perf_report = performance_analyzer.analyze_performance(returns, strategy_name=f"{input_data.symbol}_analysis")
 
-            quant_perf = QuantitativePerformanceMetrics(
+            quant_perf = quant_schemas.QuantitativePerformanceMetrics(
                 symbol=input_data.symbol,
                 total_return=perf_report.performance_metrics.total_return,
                 annualized_return=perf_report.performance_metrics.annualized_return,
@@ -361,7 +339,7 @@ class QuantitativeAnalysisTool(BaseTool):
 
             # Create comprehensive result based on asset class
             if input_data.asset_class.lower() == "stock":
-                result = EnhancedStockAnalysis(
+                result = quant_schemas.EnhancedStockAnalysis(
                     ticker=input_data.symbol,
                     technical_analysis=quant_tech,
                     backtest_result=quant_backtest,
@@ -369,7 +347,7 @@ class QuantitativeAnalysisTool(BaseTool):
                     quantitative_recommendation=recommendation,
                 )
             elif input_data.asset_class.lower() == "etf":
-                result = EnhancedETFAnalysis(
+                result = quant_schemas.EnhancedETFAnalysis(
                     ticker=input_data.symbol,
                     technical_analysis=quant_tech,
                     backtest_result=quant_backtest,
@@ -377,7 +355,7 @@ class QuantitativeAnalysisTool(BaseTool):
                     quantitative_recommendation=recommendation,
                 )
             else:  # crypto
-                result = EnhancedCryptoAnalysis(
+                result = quant_schemas.EnhancedCryptoAnalysis(
                     symbol=input_data.symbol,
                     technical_analysis=quant_tech,
                     backtest_result=quant_backtest,
@@ -394,7 +372,7 @@ class QuantitativeAnalysisTool(BaseTool):
 
     def _generate_recommendation(
         self, symbol: str, tech_result: Any, backtest_result: Any, perf_metrics: Any
-    ) -> QuantitativeRecommendation:
+    ) -> "quant_schemas.QuantitativeRecommendation":
         """Generate investment recommendation based on quantitative analysis."""
         # Determine recommendation based on signals
         tech_signal = tech_result.overall_signal.value
@@ -420,7 +398,7 @@ class QuantitativeAnalysisTool(BaseTool):
         else:
             risk_assessment = "Moderate risk profile"
 
-        return QuantitativeRecommendation(
+        return quant_schemas.QuantitativeRecommendation(
             symbol=symbol,
             recommendation=recommendation,
             confidence=confidence,

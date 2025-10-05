@@ -16,7 +16,9 @@ class TestMinimalBackwardCompatibility:
     def test_main_flow_classes_importable(self):
         """Test that main flow classes can be imported."""
         try:
-            from finwiz.main import FinwizFlow, FinwizState, kickoff, plot
+            from finwiz.core.app_initializer import kickoff
+            from finwiz.flow_state import FinwizState
+            from finwiz.flows.flow_orchestrator import FinwizFlow, plot
 
             # Verify classes and functions exist
             assert FinwizFlow is not None
@@ -96,7 +98,7 @@ class TestMinimalBackwardCompatibility:
 
     def test_flow_state_structure_unchanged(self):
         """Test that FinwizState structure remains unchanged."""
-        from finwiz.main import FinwizState
+        from finwiz.flow_state import FinwizState
 
         # Create state instance
         state = FinwizState()
@@ -114,14 +116,14 @@ class TestMinimalBackwardCompatibility:
     def test_environment_variables_compatibility(self, mocker):
         """Test that environment variable handling remains compatible."""
         # Test portfolio review environment variable
-        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "true"})
+        mocker.patch.dict("os.environ", {"PORTFOLIO_REVIEW_ENABLED": "true"})
         assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "true"
 
-        mocker.patch.dict(os.environ, {"PORTFOLIO_REVIEW_ENABLED": "false"})
+        mocker.patch.dict("os.environ", {"PORTFOLIO_REVIEW_ENABLED": "false"})
         assert os.getenv("PORTFOLIO_REVIEW_ENABLED") == "false"
 
         # Test that missing environment variables are handled gracefully
-        mocker.patch.dict(os.environ, {}, clear=True)
+        mocker.patch.dict("os.environ", {}, clear=True)
         # Should not raise exceptions when environment variables are missing
         portfolio_enabled = (os.getenv("PORTFOLIO_REVIEW_ENABLED") or "true").strip().lower() in {"1", "true", "yes", "on"}
         assert portfolio_enabled is True  # Default behavior
@@ -216,7 +218,8 @@ class TestMinimalBackwardCompatibility:
     def test_flow_initialization_basic(self, mocker):
         """Test that FinwizFlow can be initialized."""
         try:
-            from finwiz.main import FinwizFlow, FinwizState
+            from finwiz.flow_state import FinwizState
+            from finwiz.flows.flow_orchestrator import FinwizFlow
 
             # Mock environment variables to avoid configuration errors
             mocker.patch.dict(
@@ -286,7 +289,8 @@ class TestMinimalBackwardCompatibility:
     def test_existing_api_structure_maintained(self):
         """Test that existing API structure is maintained."""
         # Test that key functions and classes maintain their expected signatures
-        from finwiz.main import kickoff, plot
+        from finwiz.core.app_initializer import kickoff
+        from finwiz.flows.flow_orchestrator import plot
         from finwiz.orchestrators.portfolio_review import run as run_portfolio_review
         from finwiz.schemas.validate import validate_reporter_input
 
@@ -297,9 +301,10 @@ class TestMinimalBackwardCompatibility:
         assert callable(validate_reporter_input)
 
         # Test that classes maintain expected structure
+        from finwiz.flow_state import FinwizState
+        from finwiz.flows.flow_orchestrator import FinwizFlow
         from finwiz.integration.data_accessor import CrewDataAccessor
         from finwiz.integration.manager import CrewDataIntegrationManager
-        from finwiz.main import FinwizFlow, FinwizState
 
         # Verify classes are instantiable (API compatibility)
         assert FinwizFlow is not None

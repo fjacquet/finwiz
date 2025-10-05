@@ -8,12 +8,7 @@ freshness, and generating validation reports.
 from datetime import datetime
 from typing import Any
 
-from ..schemas.integration import (
-    DataAvailabilityReport,
-    DataAvailabilityStatus,
-    IntegrationError,
-    IntegrationErrorType,
-)
+from finwiz.schemas.integration import DataAvailabilityReport, DataAvailabilityStatus, IntegrationError, IntegrationErrorType
 
 
 class DataValidator:

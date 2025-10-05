@@ -7,24 +7,19 @@ and consistent methodology for stocks, ETFs, and cryptocurrencies.
 
 import re
 from datetime import datetime, timedelta
-from typing import Any, Literal
+from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+# Import schemas from centralized location
+from finwiz.schemas.tools import (
+    CrossAssetSentimentComparatorInput,
+    StandardizedSentimentInput,
+)
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-class StandardizedSentimentInput(BaseModel):
-    """Input schema for Standardized Sentiment Analysis Tool."""
-
-    symbol: str = Field(..., description="The asset symbol (stock ticker, ETF, or crypto)")
-    asset_class: Literal["stock", "etf", "crypto"] = Field(..., description="Type of asset being analyzed")
-    max_articles: int = Field(default=50, ge=10, le=100, description="Maximum number of articles to analyze")
-    days_back: int = Field(default=30, ge=7, le=90, description="Number of days to look back for news")
-    include_trending: bool = Field(default=True, description="Whether to extract trending topics")
 
 
 class StandardizedSentimentAnalysisTool(BaseTool):
@@ -501,13 +496,6 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                 )
 
         return top_pos, top_neg
-
-
-class CrossAssetSentimentComparatorInput(BaseModel):
-    """Input schema for Cross-Asset Sentiment Comparator Tool."""
-
-    symbols: list[str] = Field(..., description="List of asset symbols to compare")
-    asset_classes: list[str] = Field(..., description="List of asset classes corresponding to symbols")
 
 
 class CrossAssetSentimentComparatorTool(BaseTool):

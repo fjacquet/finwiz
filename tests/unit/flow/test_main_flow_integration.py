@@ -7,7 +7,7 @@ into the main FinwizFlow orchestration.
 
 from datetime import datetime
 
-from finwiz.main import FinwizFlow
+from finwiz.flows.flow_orchestrator import FinwizFlow
 from finwiz.schemas.integration import DataAvailabilityReport, DataAvailabilityStatus
 
 

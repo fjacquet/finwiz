@@ -9,23 +9,13 @@ import asyncio
 from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from finwiz.schemas.tools import EnhancedSentimentInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.sentiment_calculations import SentimentCalculator
 from finwiz.tools.sentiment_formatting import SentimentResponseFormatter
 from finwiz.tools.sentiment_sources import SentimentDataSources
-
-logger = get_logger(__name__)
-
-
-class EnhancedSentimentInput(BaseModel):
-    """Input schema for enhanced sentiment analysis."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')")
-    asset_type: str = Field("stock", description="Asset type: 'stock', 'etf', or 'crypto'")
-    days_back: int = Field(7, description="Number of days to look back for news (1-30)")
-    max_articles: int = Field(20, description="Maximum number of articles to analyze (5-50)")
 
 
 class EnhancedSentimentAnalysisTool(BaseTool):
@@ -116,3 +106,6 @@ class EnhancedSentimentAnalysisTool(BaseTool):
         except Exception as e:
             logger.error(f"Error in enhanced sentiment analysis for {ticker}: {str(e)}")
             return self.formatter.format_error_response(ticker, asset_type, str(e))
+
+
+logger = get_logger(__name__)

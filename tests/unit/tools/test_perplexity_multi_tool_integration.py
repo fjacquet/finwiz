@@ -8,7 +8,6 @@ and testing error handling and graceful degradation scenarios across all integra
 
 import asyncio
 import datetime
-from unittest.mock import AsyncMock, Mock
 
 from finwiz.schemas.perplexity import SonarArticle, SonarSearchResult
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
@@ -89,8 +88,8 @@ class TestMultiToolIntegrationScenarios:
         tool = EnhancedSentimentAnalysisTool()
         mocker.patch.object(tool, "_get_news_data", return_value=yahoo_articles)
 
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(return_value=sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(return_value=sonar_result)
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Act
@@ -156,8 +155,8 @@ class TestMultiToolIntegrationScenarios:
         tool = EnhancedSentimentAnalysisTool()
         mocker.patch.object(tool, "_get_news_data", return_value=yahoo_articles)
 
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(return_value=sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(return_value=sonar_result)
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Act
@@ -291,8 +290,8 @@ class TestMultiToolIntegrationScenarios:
         )
 
         # Mock integration for technical analysis
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_technical_analysis = AsyncMock(return_value=sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_technical_analysis = mocker.AsyncMock(return_value=sonar_result)
 
         # Act - Simulate technical analysis tool integration
         result = asyncio.run(mock_integration.search_technical_analysis(ticker="AAPL", asset_type="stock", max_results=10))
@@ -347,8 +346,8 @@ class TestMultiToolIntegrationScenarios:
         )
 
         # Mock integration for fundamental analysis
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_fundamental_analysis = AsyncMock(return_value=sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_fundamental_analysis = mocker.AsyncMock(return_value=sonar_result)
 
         # Act - Simulate fundamental analysis tool integration
         result = asyncio.run(mock_integration.search_fundamental_analysis(ticker="AAPL", asset_type="stock", max_results=10))
@@ -402,8 +401,8 @@ class TestMultiToolIntegrationScenarios:
 
         for error_type, error_message in failure_scenarios:
             # Mock Perplexity integration to fail with specific error
-            mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-            mock_integration.search_sentiment_news = AsyncMock(side_effect=Exception(error_message))
+            mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+            mock_integration.search_sentiment_news = mocker.AsyncMock(side_effect=Exception(error_message))
             mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
             # Act
@@ -456,8 +455,8 @@ class TestMultiToolIntegrationScenarios:
         tool = EnhancedSentimentAnalysisTool()
         mocker.patch.object(tool, "_get_news_data", return_value=yahoo_articles)
 
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(return_value=sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(return_value=sonar_result)
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Act
@@ -512,8 +511,8 @@ class TestMultiToolIntegrationScenarios:
         tool = EnhancedSentimentAnalysisTool()
         mocker.patch.object(tool, "_get_news_data", return_value=yahoo_articles)
 
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(return_value=sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(return_value=sonar_result)
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Act
@@ -576,9 +575,9 @@ class TestMultiToolIntegrationScenarios:
         mocker.patch.object(tool, "_get_news_data", return_value=yahoo_articles)
 
         # Mock integration with mixed results
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(return_value=successful_sonar_result)
-        mock_integration.search_technical_analysis = AsyncMock(return_value=failed_sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(return_value=successful_sonar_result)
+        mock_integration.search_technical_analysis = mocker.AsyncMock(return_value=failed_sonar_result)
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Act - Test sentiment analysis (should succeed)

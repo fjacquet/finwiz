@@ -5,10 +5,8 @@ This module tests the configuration loading and environment variable
 override functionality for the crew data integration system.
 """
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 import yaml
@@ -67,7 +65,7 @@ class TestIntegrationConfiguration:
         finally:
             config_path.unlink()
 
-    def test_should_override_with_environment_variables(self):
+    def test_should_override_with_environment_variables(self, mocker):
         """Test that environment variables override configuration file values."""
         # Arrange
         config_data = {
@@ -90,7 +88,7 @@ class TestIntegrationConfiguration:
         }
 
         try:
-            with patch.dict(os.environ, env_vars):
+            with mocker.patch.dict("os.environ", env_vars):
                 # Act
                 config = load_integration_config(config_path)
 
@@ -103,7 +101,7 @@ class TestIntegrationConfiguration:
         finally:
             config_path.unlink()
 
-    def test_should_handle_crew_specific_freshness_thresholds(self):
+    def test_should_handle_crew_specific_freshness_thresholds(self, mocker):
         """Test crew-specific freshness threshold configuration."""
         # Arrange
         env_vars = {
@@ -112,7 +110,7 @@ class TestIntegrationConfiguration:
             "FINWIZ_CRYPTO_MAX_AGE_HOURS": "6",
         }
 
-        with patch.dict(os.environ, env_vars):
+        with mocker.patch.dict("os.environ", env_vars):
             # Act
             config = load_integration_config()
 
@@ -120,7 +118,7 @@ class TestIntegrationConfiguration:
             # The current implementation may need to be enhanced to support this
             assert config.default_max_age_hours == 24  # Default unchanged
 
-    def test_should_handle_boolean_environment_variables(self):
+    def test_should_handle_boolean_environment_variables(self, mocker):
         """Test proper handling of boolean environment variables."""
         # Arrange
         test_cases = [
@@ -138,14 +136,14 @@ class TestIntegrationConfiguration:
         ]
 
         for env_value, expected_bool in test_cases:
-            with patch.dict(os.environ, {"FINWIZ_INTEGRATION_STRICT_VALIDATION": env_value}):
+            with mocker.patch.dict("os.environ", {"FINWIZ_INTEGRATION_STRICT_VALIDATION": env_value}):
                 # Act
                 config = load_integration_config()
 
                 # Assert
                 assert config.strict_validation == expected_bool, f"Failed for env_value: {env_value}"
 
-    def test_should_handle_integer_environment_variables(self):
+    def test_should_handle_integer_environment_variables(self, mocker):
         """Test proper handling of integer environment variables."""
         # Arrange
         env_vars = {
@@ -154,7 +152,7 @@ class TestIntegrationConfiguration:
             "FINWIZ_INTEGRATION_RETRY_DELAY": "10",
         }
 
-        with patch.dict(os.environ, env_vars):
+        with mocker.patch.dict("os.environ", env_vars):
             # Act
             config = load_integration_config()
 
@@ -279,14 +277,14 @@ class TestIntegrationConfiguration:
         finally:
             config_path.unlink()
 
-    def test_should_validate_configuration_values(self):
+    def test_should_validate_configuration_values(self, mocker):
         """Test validation of configuration values."""
         # Arrange - Test with invalid values
         env_vars = {
             "FINWIZ_INTEGRATION_DEFAULT_MAX_AGE_HOURS": "-1",  # Invalid negative value
         }
 
-        with patch.dict(os.environ, env_vars):
+        with mocker.patch.dict("os.environ", env_vars):
             # Act
             config = load_integration_config()
 

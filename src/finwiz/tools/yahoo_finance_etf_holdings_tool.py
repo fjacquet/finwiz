@@ -2,13 +2,10 @@
 
 import yfinance as yf
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class GetETFHoldingsInput(BaseModel):
-    """Input schema for getting ETF holdings."""
-
-    ticker: str = Field(..., description="The ETF ticker symbol (e.g., 'VTI', 'SPY').")
+# Import schema from centralized location
+from finwiz.schemas.tools import GetETFHoldingsInput
 
 
 class YahooFinanceETFHoldingsTool(BaseTool):

@@ -12,9 +12,10 @@ from typing import Any
 
 import yfinance as yf
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.schemas.perplexity import SonarArticle
+from finwiz.schemas.tools import EnhancedTechnicalAnalysisInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.tools.technical_analyzer import TechnicalAnalyzer
@@ -22,15 +23,6 @@ from finwiz.tools.technical_models import PriceData
 from finwiz.utils.feature_flags import get_feature_flags
 
 logger = get_logger(__name__)
-
-
-class EnhancedTechnicalAnalysisInput(BaseModel):
-    """Input schema for enhanced technical analysis."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'SPY', 'BTC-USD')")
-    asset_type: str = Field("stock", description="Asset type: 'stock', 'etf', or 'crypto'")
-    lookback_days: int = Field(100, description="Number of days of price data to analyze (50-365)")
-    include_perplexity: bool = Field(True, description="Whether to include Perplexity Sonar insights")
 
 
 class EnhancedTechnicalAnalyzerTool(BaseTool):

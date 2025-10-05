@@ -1,24 +1,15 @@
 """Tool for fetching Yahoo Finance Ticker History."""
 
-import logging
 from datetime import UTC, datetime
 
 import yfinance as yf
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
+from finwiz.schemas.tools import GetTickerHistoryInput
+from finwiz.tools.logger import get_logger
 
-
-class GetTickerHistoryInput(BaseModel):
-    """Input schema for getting ticker price history."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')")
-    period: str = Field("1y", description="Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max")
-    interval: str = Field(
-        "1d",
-        description="Valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo",
-    )
+logger = get_logger(__name__)
 
 
 class YahooFinanceHistoryTool(BaseTool):

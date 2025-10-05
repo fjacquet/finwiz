@@ -27,6 +27,21 @@ test-all: ## Run all tests including integration
 test-coverage: ## Run tests with coverage report
 	uv run pytest tests/unit/ --cov=src/finwiz --cov-report=html --cov-report=term
 
+check-unittest-mock: ## Check for banned unittest.mock usage
+	@echo "🔍 Checking for banned unittest.mock imports..."
+	@if grep -r "^[[:space:]]*from unittest\.mock import\|^[[:space:]]*import unittest\.mock" tests/ --include="*.py" -n; then \
+		echo ""; \
+		echo "❌ ERROR: unittest.mock found in test files!"; \
+		echo ""; \
+		echo "✅ Use pytest-mock instead:"; \
+		echo "   def test_example(mocker):"; \
+		echo "       mock_obj = mocker.patch('module.function')"; \
+		echo ""; \
+		exit 1; \
+	else \
+		echo "✅ No unittest.mock imports found"; \
+	fi
+
 test-watch: ## Run tests in watch mode
 	uv run pytest-watch tests/unit/
 
@@ -38,6 +53,10 @@ format: ## Format code
 
 lint-fix: ## Run linting with auto-fix
 	uv run ruff check . --fix
+
+lint-all: ## Run linting with auto-fix
+	make lint-fix
+	make format 
 
 quality: ## Run all quality checks
 	uv run ruff check . && uv run ruff format . && uv run pytest tests/unit/

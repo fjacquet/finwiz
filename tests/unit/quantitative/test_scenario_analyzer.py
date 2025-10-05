@@ -5,8 +5,6 @@ Tests scenario analysis functionality including what-if analysis,
 sensitivity analysis, Monte Carlo simulations, and scenario comparisons.
 """
 
-from unittest.mock import AsyncMock
-
 import numpy as np
 import pytest
 
@@ -26,8 +24,8 @@ from finwiz.schemas.portfolio_rebalancing import (
     AlternativeScenario,
     Holding,
     PortfolioConfiguration,
-    RebalancingMethod,
 )
+from finwiz.schemas.rebalancing.enums import RebalancingMethod
 
 
 class TestScenarioParameters:
@@ -68,19 +66,17 @@ class TestSensitivityResult:
         result = SensitivityResult(
             parameter_name="tolerance_band",
             parameter_values=parameter_values,
-            outcome_values=outcome_values,
-            sensitivity_score=7.5,
-            optimal_value=0.02,
-            confidence_interval=(0.015, 0.025),
+            impact_on_return=[0.08, 0.09, 0.07, 0.06],
+            impact_on_risk=[0.15, 0.14, 0.16, 0.18],
+            impact_on_cost=[100, 95, 85, 70],
         )
 
         # Assert
         assert result.parameter_name == "tolerance_band"
         assert result.parameter_values == parameter_values
-        assert result.outcome_values == outcome_values
-        assert result.sensitivity_score == 7.5
-        assert result.optimal_value == 0.02
-        assert result.confidence_interval == (0.015, 0.025)
+        assert result.impact_on_return == [0.08, 0.09, 0.07, 0.06]
+        assert result.impact_on_risk == [0.15, 0.14, 0.16, 0.18]
+        assert result.impact_on_cost == [100, 95, 85, 70]
 
 
 class TestMonteCarloResult:
@@ -94,24 +90,22 @@ class TestMonteCarloResult:
         result = MonteCarloResult(
             num_simulations=1000,
             time_horizon_days=252,
-            mean_portfolio_value=105000.0,
-            median_portfolio_value=104000.0,
-            std_portfolio_value=15000.0,
-            value_at_risk_95=-12000.0,
-            expected_shortfall_95=-18000.0,
-            probability_of_loss=0.25,
+            annual_volatility=0.15,
+            annual_return=0.08,
             mean_rebalancing_frequency=4.2,
+            std_rebalancing_frequency=1.5,
             mean_transaction_costs=850.0,
-            rebalancing_benefit=2500.0,
-            percentiles=percentiles,
+            std_transaction_costs=200.0,
+            mean_final_value=105000.0,
+            std_final_value=15000.0,
         )
 
         # Assert
         assert result.num_simulations == 1000
         assert result.time_horizon_days == 252
-        assert result.mean_portfolio_value == 105000.0
-        assert result.probability_of_loss == 0.25
-        assert result.percentiles == percentiles
+        assert result.annual_volatility == 0.15
+        assert result.annual_return == 0.08
+        assert result.mean_final_value == 105000.0
 
     def test_should_reject_invalid_probability_when_out_of_range(self):
         # Arrange & Act & Assert
@@ -138,22 +132,20 @@ class TestScenarioComparison:
     def test_should_create_valid_comparison_when_valid_data_provided(self):
         # Act
         comparison = ScenarioComparison(
-            base_scenario="High Tolerance",
-            alternative_scenario="Low Tolerance",
+            scenario_1_name="High Tolerance",
+            scenario_2_name="Low Tolerance",
             return_difference=0.005,
             risk_difference=-0.2,
             cost_difference=150.0,
-            risk_adjusted_return_difference=0.008,
-            efficiency_score=7.5,
-            preferred_scenario="Low Tolerance",
-            rationale="Lower risk with acceptable cost increase",
+            recommendation="Low Tolerance",
+            confidence_level=0.85,
         )
 
         # Assert
-        assert comparison.base_scenario == "High Tolerance"
-        assert comparison.alternative_scenario == "Low Tolerance"
-        assert comparison.preferred_scenario == "Low Tolerance"
-        assert len(comparison.rationale) >= 20
+        assert comparison.scenario_1_name == "High Tolerance"
+        assert comparison.scenario_2_name == "Low Tolerance"
+        assert comparison.recommendation == "Low Tolerance"
+        assert comparison.confidence_level == 0.85
 
 
 class TestScenarioAnalyzer:
@@ -188,10 +180,10 @@ class TestScenarioAnalyzer:
         return ScenarioAnalyzer()
 
     @pytest.fixture
-    def mock_rebalancing_engine(self):
+    def mock_rebalancing_engine(self, mocker):
         """Create mock rebalancing engine."""
-        engine = AsyncMock()
-        engine.optimize_rebalancing_trades = AsyncMock()
+        engine = mocker.AsyncMock()
+        engine.optimize_rebalancing_trades = mocker.AsyncMock()
         return engine
 
     def test_should_initialize_analyzer_when_created(self, scenario_analyzer):
@@ -216,7 +208,7 @@ class TestScenarioAnalyzer:
 
         # Assert
         assert isinstance(result, ScenarioAnalysisReport)
-        assert len(result.what_if_scenarios) > 0
+        assert len(result.scenarios) > 0
         assert len(result.sensitivity_results) > 0
         assert result.monte_carlo_result is not None
 
@@ -503,9 +495,11 @@ class TestScenarioAnalyzer:
         assert "transaction costs" in summary
 
     @pytest.mark.asyncio
-    async def test_should_handle_analysis_failure_gracefully_when_error_occurs(self, scenario_analyzer, sample_portfolio_config):
+    async def test_should_handle_analysis_failure_gracefully_when_error_occurs(
+        self, scenario_analyzer, sample_portfolio_config, mocker
+    ):
         # Arrange
-        failing_engine = AsyncMock()
+        failing_engine = mocker.AsyncMock()
         failing_engine.optimize_rebalancing_trades.side_effect = Exception("API Error")
 
         # Act

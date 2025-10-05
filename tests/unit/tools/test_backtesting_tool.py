@@ -7,7 +7,6 @@ risk-adjusted performance metrics, and validation criteria.
 
 import json
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -171,9 +170,9 @@ class TestBacktestingTool:
         return BacktestingTool()
 
     @pytest.fixture
-    def mock_backtest_result(self):
+    def mock_backtest_result(self, mocker):
         """Create mock backtest result."""
-        mock_result = MagicMock()
+        mock_result = mocker.MagicMock()
         mock_result.strategy_name = "SimpleMovingAverageStrategy"
         mock_result.total_return = 25.5
         mock_result.annualized_return = 12.8
@@ -240,22 +239,21 @@ class TestBacktestingTool:
         assert "comprehensive historical backtesting" in backtesting_tool.description.lower()
         assert backtesting_tool.args_schema == BacktestingInput
 
-    @patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
-    @patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
-    @patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
-    def test_should_run_basic_backtest_successfully(
-        self, mock_perf_analyzer, mock_data_manager, mock_backtesting_engine, backtesting_tool, mock_backtest_result
-    ):
+    def test_should_run_basic_backtest_successfully(self, mocker, backtesting_tool, mock_backtest_result):
         """Test successful basic backtesting execution."""
         # Arrange
-        mock_engine = MagicMock()
+        mock_backtesting_engine = mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
+        mock_data_manager = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        mock_perf_analyzer = mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
+
+        mock_engine = mocker.MagicMock()
         mock_engine.run_strategy_backtest.return_value = mock_backtest_result
         mock_backtesting_engine.return_value = mock_engine
 
-        mock_dm = MagicMock()
+        mock_dm = mocker.MagicMock()
         mock_data_manager.return_value = mock_dm
 
-        mock_pa = MagicMock()
+        mock_pa = mocker.MagicMock()
         mock_perf_analyzer.return_value = mock_pa
 
         # Act
@@ -277,29 +275,28 @@ class TestBacktestingTool:
         call_args = mock_engine.run_strategy_backtest.call_args
         assert call_args.kwargs["symbol"] == "AAPL"
 
-    @patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
-    @patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
-    @patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
     def test_should_perform_regime_analysis_when_enabled(
         self,
-        mock_perf_analyzer,
-        mock_data_manager,
-        mock_backtesting_engine,
+        mocker,
         backtesting_tool,
         mock_backtest_result,
         mock_benchmark_data,
     ):
         """Test regime analysis functionality."""
         # Arrange
-        mock_engine = MagicMock()
+        mock_backtesting_engine = mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
+        mock_data_manager = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        mock_perf_analyzer = mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
+
+        mock_engine = mocker.MagicMock()
         mock_engine.run_strategy_backtest.return_value = mock_backtest_result
         mock_backtesting_engine.return_value = mock_engine
 
-        mock_dm = MagicMock()
+        mock_dm = mocker.MagicMock()
         mock_dm.fetch_historical_data.return_value = mock_benchmark_data
         mock_data_manager.return_value = mock_dm
 
-        mock_pa = MagicMock()
+        mock_pa = mocker.MagicMock()
         mock_perf_analyzer.return_value = mock_pa
 
         # Act
@@ -410,11 +407,11 @@ class TestBacktestingTool:
         assert isinstance(regimes, list)
         assert len(regimes) == 0  # Should return empty list for invalid data
 
-    @patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
-    def test_should_handle_backtesting_errors_gracefully(self, mock_backtesting_engine, backtesting_tool):
+    def test_should_handle_backtesting_errors_gracefully(self, mocker, backtesting_tool):
         """Test error handling in backtesting execution."""
         # Arrange
-        mock_engine = MagicMock()
+        mock_backtesting_engine = mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
+        mock_engine = mocker.MagicMock()
         mock_engine.run_strategy_backtest.side_effect = Exception("Backtesting failed")
         mock_backtesting_engine.return_value = mock_engine
 
@@ -424,10 +421,10 @@ class TestBacktestingTool:
         # Assert
         assert "Error performing backtesting" in result
 
-    def test_should_validate_high_performing_strategy(self, backtesting_tool):
+    def test_should_validate_high_performing_strategy(self, mocker, backtesting_tool):
         """Test validation of a high-performing strategy."""
         # Arrange
-        high_perf_result = MagicMock()
+        high_perf_result = mocker.MagicMock()
         high_perf_result.annualized_return = 15.0  # Above 8% minimum
         high_perf_result.sharpe_ratio = 1.5  # Above 1.0 minimum
         high_perf_result.max_drawdown = -10.0  # Above -25% limit
@@ -469,10 +466,10 @@ class TestBacktestingTool:
         assert validation_passed is True
         assert any("passed" in note.lower() for note in validation_notes)
 
-    def test_should_validate_poor_performing_strategy(self, backtesting_tool):
+    def test_should_validate_poor_performing_strategy(self, mocker, backtesting_tool):
         """Test validation of a poor-performing strategy."""
         # Arrange
-        poor_perf_result = MagicMock()
+        poor_perf_result = mocker.MagicMock()
         poor_perf_result.annualized_return = 3.0  # Below 8% minimum
         poor_perf_result.sharpe_ratio = 0.5  # Below 1.0 minimum
         poor_perf_result.max_drawdown = -30.0  # Below -25% limit

@@ -1,3 +1,101 @@
+# Individual Holding Analysis Tasks
+analyze_holding_task:
+  description: >
+    Analyze individual portfolio holding using appropriate crew (stock/ETF/crypto) and map outputs to schema.
+
+    This task coordinates deep analysis for a single holding by checking for cached crew analysis, 
+    triggering fresh analysis if needed, and mapping crew outputs to the portfolio review schema.
+
+    1. Use HoldingAnalyzerOrchestrator to check for cached analysis (< 7 days old).
+    2. If cache miss or stale, trigger appropriate crew based on asset class:
+       - Stock holdings → stock_crew
+       - ETF holdings → etf_crew
+       - Crypto holdings → crypto_crew
+    3. Map crew-specific outputs to standardized schema:
+       - fundamental_analysis: Extract key metrics and insights
+       - technical_analysis: Extract indicators and patterns
+       - sec_citations: Extract regulatory filings (stocks only)
+    4. Set data_freshness indicator (fresh/recent/stale).
+    5. Handle failures gracefully with baseline analysis fallback.
+
+    INPUT: Ticker symbol, asset class, currency, holding name
+    OUTPUT: HoldingAnalysis object with crew data mapped to schema
+  expected_output: >
+    Complete HoldingAnalysis object with fundamental/technical analysis, SEC citations (if applicable), 
+    data freshness indicator, and crew analysis source. Include confidence level and composite score.
+  agent: holding_analyzer
+  async_execution: true
+
+calculate_price_targets_task:
+  description: >
+    Calculate actionable buy/sell price targets for a portfolio holding.
+
+    This task generates specific price targets that investors can use to execute trades, including 
+    buy-on-dip levels, profit-taking targets, and stop-loss levels for risk management.
+
+    1. Use PriceTargetCalculator to calculate fair value estimate:
+       - Stocks: DCF, P/E, book value methods
+       - ETFs: NAV analysis with tracking error adjustment
+       - Crypto: Technical analysis (fair value less applicable)
+    2. Calculate technical support and resistance levels from price history.
+    3. Generate buy targets based on recommendation:
+       - KEEP: Accumulation levels on dips
+       - BUY: Initial entry and scale-in levels
+       - SELL: Not applicable
+    4. Generate sell targets for all recommendations:
+       - Profit-taking levels at resistance
+       - Stop-loss for risk management
+    5. Provide clear rationale in French for each target level.
+    6. Ensure all targets are in holding's native currency.
+
+    INPUT: Ticker, asset class, current price, price history, fundamental data, recommendation
+    OUTPUT: PriceTargets object with buy/sell/stop-loss levels and rationale
+  expected_output: >
+    Complete PriceTargets object with current price, fair value estimate, buy targets (primary/secondary), 
+    sell targets (primary/secondary), stop-loss level, support/resistance levels, calculation method, 
+    confidence level, and French rationale for each target.
+  agent: price_target_specialist
+  async_execution: true
+  depends_on:
+    - analyze_holding_task
+
+find_alternatives_task:
+  description: >
+    Find better investment alternatives for underperforming holdings (graded below B).
+
+    This task identifies superior alternatives that match the holding's sector/exposure while 
+    offering better fundamentals, lower costs, or higher quality. Prioritizes A+ candidates 
+    from the investment discovery crew.
+
+    1. Use AlternativeFinder to check if holding needs alternatives (grade < B).
+    2. Search for A+ candidates from discovery crew outputs matching:
+       - Same asset class
+       - Similar sector/exposure
+       - Better metrics (lower fees, better fundamentals, higher liquidity)
+    3. For each alternative found, calculate:
+       - Grade improvement (e.g., D to A+ = 6 levels)
+       - Expense ratio savings (ETFs)
+       - Fundamental improvements (stocks)
+       - Liquidity improvements (crypto)
+    4. Generate transition strategy based on grade improvement:
+       - Immediate: For 4+ level improvements
+       - Gradual: For 2-3 level improvements
+       - Tax-optimized: For 1 level improvement
+    5. Provide tax implications and expected benefits in French.
+    6. Limit to top 2-3 alternatives per holding.
+
+    INPUT: Holding profile (ticker, grade, asset class, sector, metrics)
+    OUTPUT: List of Alternative objects with transition strategies
+  expected_output: >
+    List of 0-3 Alternative objects for holdings graded below B. Each alternative includes ticker, 
+    name, grade, composite score, key metrics, thesis bullets, transition strategy (immediate/gradual/
+    tax-optimized), tax implications, and expected improvements (expense ratio savings, fundamental 
+    improvements, or liquidity improvements). Empty list for holdings graded B or above.
+  agent: alternative_researcher
+  async_execution: true
+  depends_on:
+    - analyze_holding_task
+
 # Portfolio Analysis Tasks
 portfolio_analysis_task:
   description: >
@@ -7,16 +105,20 @@ portfolio_analysis_task:
     accurate market-weighted allocations, and identification of deviations from target weightings.
 
     1. Retrieve current market prices for all portfolio holdings as of {full_date}.
-    2. Calculate total portfolio value and individual position weightings.
-    3. Compare current weightings against target allocations to identify drift.
-    4. Analyze portfolio risk characteristics and concentration metrics.
-    5. Identify positions that require rebalancing based on tolerance thresholds.
-    6. Use the "Quantitative Analysis Tool" with analysis_type="portfolio" to perform:
+    2. For each holding, use HoldingAnalyzerOrchestrator to get deep analysis:
+       - Check for cached crew analysis (< 7 days old)
+       - Trigger appropriate crew (stock/ETF/crypto) if needed
+       - Map crew outputs to portfolio schema
+    3. Calculate total portfolio value and individual position weightings.
+    4. Compare current weightings against target allocations to identify drift.
+    5. Analyze portfolio risk characteristics and concentration metrics.
+    6. Identify positions that require rebalancing based on tolerance thresholds.
+    7. Use the "Quantitative Analysis Tool" with analysis_type="portfolio" to perform:
        - Portfolio composition analysis with sector and asset class breakdowns
        - Risk metrics calculation including portfolio beta, volatility, and correlation analysis
        - Performance attribution analysis for current vs target allocations
        - Diversification metrics and concentration risk assessment
-    7. Store portfolio analysis results in the knowledge base for team collaboration.
+    8. Store portfolio analysis results in the knowledge base for team collaboration.
 
     Today is {full_date}. Ensure your analysis reflects current market conditions and prices.
     Use the portfolio configuration provided in the input parameters.
@@ -25,10 +127,15 @@ portfolio_analysis_task:
   expected_output: >
     A comprehensive portfolio analysis including current weightings, target deviations, 
     risk metrics, and positions requiring rebalancing. Include quantitative portfolio 
-    metrics and risk assessment.
+    metrics and risk assessment. Each holding should have deep analysis from appropriate 
+    crew (stock/ETF/crypto) with data freshness indicators.
   agent: portfolio_analyst
   output_file: "output/portfolio/portfolio_composition_analysis.md"
   async_execution: true
+  depends_on:
+    - analyze_holding_task
+    - calculate_price_targets_task
+    - find_alternatives_task
 
 # Rebalancing Optimization Tasks
 rebalancing_optimization_task:
@@ -39,26 +146,35 @@ rebalancing_optimization_task:
     needed to bring the portfolio back into alignment with target weightings.
 
     1. Retrieve portfolio analysis results from the previous task and knowledge base.
-    2. Calculate required trade quantities for each position to achieve target weightings.
-    3. Optimize trade recommendations to minimize total transaction costs and market impact.
-    4. Consider available capital constraints and minimum trade size requirements.
-    5. Prioritize trades based on deviation magnitude and cost-benefit analysis.
-    6. Use the "Quantitative Analysis Tool" with analysis_type="optimization" to perform:
+    2. For each holding, use PriceTargetCalculator to get actionable price targets:
+       - Buy targets (accumulation levels)
+       - Sell targets (profit-taking levels)
+       - Stop-loss levels (risk management)
+    3. For underperforming holdings (grade < B), use AlternativeFinder to identify:
+       - A+ alternatives from discovery crew
+       - Better sector/exposure matches
+       - Lower-cost alternatives (ETFs)
+       - Transition strategies (immediate/gradual/tax-optimized)
+    4. Calculate required trade quantities for each position to achieve target weightings.
+    5. Optimize trade recommendations to minimize total transaction costs and market impact.
+    6. Consider available capital constraints and minimum trade size requirements.
+    7. Prioritize trades based on deviation magnitude and cost-benefit analysis.
+    8. Use the "Quantitative Analysis Tool" with analysis_type="optimization" to perform:
        - Multi-objective portfolio optimization with cost minimization
        - Constraint handling for capital limits, position sizes, and trading restrictions
        - Scenario analysis for different rebalancing approaches
        - Sensitivity analysis for parameter variations
-    7. Generate detailed trade recommendations with rationale and cost estimates.
-    8. Store optimization results and trade recommendations in the knowledge base.
+    9. Generate detailed trade recommendations with rationale and cost estimates.
+    10. Store optimization results and trade recommendations in the knowledge base.
 
     Consider transaction costs, market impact, and practical trading constraints in your optimization.
     Ensure recommendations are actionable and cost-effective.
 
-    OUTPUT: Return specific trade recommendations with quantities, costs, and optimization rationale.
+    OUTPUT: Return specific trade recommendations with quantities, costs, price targets, alternatives, and optimization rationale.
   expected_output: >
     Detailed trade recommendations including buy/sell quantities, estimated costs, 
-    priority rankings, and optimization analysis. Include cost-benefit analysis 
-    and alternative scenarios.
+    priority rankings, and optimization analysis. Include price targets for each holding, 
+    alternatives for underperforming positions, transition strategies, and cost-benefit analysis.
   agent: rebalancing_strategist
   output_file: "output/portfolio/rebalancing_trade_recommendations.md"
   async_execution: true
@@ -74,29 +190,36 @@ risk_validation_task:
     to ensure compliance with risk management policies and investment mandates.
 
     1. Retrieve trade recommendations from the rebalancing optimization task.
-    2. Assess concentration risk and position size limits for proposed portfolio changes.
-    3. Validate compliance with investment policy constraints and risk tolerance parameters.
-    4. Analyze potential market impact and liquidity risks of recommended trades.
-    5. Evaluate tax implications and regulatory considerations for proposed changes.
-    6. Use the "Quantitative Analysis Tool" with analysis_type="risk" to perform:
+    2. For each holding, use PositionSizingTool to calculate optimal position sizes:
+       - Risk-based sizing (high/medium/low risk)
+       - Correlation with existing portfolio
+       - Concentration limits (single stock 10%, sector 35%)
+       - Sizing actions (add/trim/hold/exit)
+    3. Validate that recommended allocations sum to 100% across portfolio.
+    4. Assess concentration risk and position size limits for proposed portfolio changes.
+    5. Validate compliance with investment policy constraints and risk tolerance parameters.
+    6. Analyze potential market impact and liquidity risks of recommended trades.
+    7. Evaluate tax implications and regulatory considerations for proposed changes.
+    8. Use the "Quantitative Analysis Tool" with analysis_type="risk" to perform:
        - Value at Risk (VaR) and Conditional VaR calculations for the rebalanced portfolio
        - Stress testing and scenario analysis for adverse market conditions
        - Risk-adjusted performance projections and Sharpe ratio analysis
        - Correlation and beta analysis for the proposed portfolio composition
-    7. Generate risk assessment scores using standardized 1-10 risk scoring methodology.
-    8. Provide risk mitigation recommendations and alternative approaches if needed.
-    9. Store risk validation results and compliance status in the knowledge base.
+    9. Generate risk assessment scores using standardized 1-10 risk scoring methodology.
+    10. Provide risk mitigation recommendations and alternative approaches if needed.
+    11. Store risk validation results and compliance status in the knowledge base.
 
     Follow the standardized risk assessment framework and ensure all recommendations 
     comply with established risk management policies.
 
-    OUTPUT: Return comprehensive risk validation with compliance status and mitigation strategies.
+    OUTPUT: Return comprehensive risk validation with compliance status, position sizing recommendations, and mitigation strategies.
   expected_output: >
     A detailed risk assessment of rebalancing recommendations including compliance validation, 
-    risk scores, stress test results, and mitigation strategies. The report should be formatted 
-    in professional HTML with clear risk indicators and actionable recommendations.
+    risk scores, stress test results, position sizing recommendations, and mitigation strategies. 
+    The report should be formatted in professional HTML with clear risk indicators and actionable recommendations.
     Also include a machine-readable JSON appendix containing:
     - risk_assessments[] matching the RiskAssessmentStandardized schema
+    - position_sizing_recommendations[] with optimal allocations
     - compliance_validation with detailed policy adherence analysis
     - quantitative_risk_metrics[] with comprehensive risk analysis results
   agent: risk_manager

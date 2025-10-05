@@ -10,7 +10,7 @@ from datetime import datetime
 
 import pytest
 
-from finwiz.main import FinwizFlow
+from finwiz.flows.flow_orchestrator import FinwizFlow
 
 
 class TestCoreAnalysisPerformance:

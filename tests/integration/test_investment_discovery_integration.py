@@ -11,12 +11,11 @@ Requirements tested:
 """
 
 import json
-from unittest.mock import MagicMock
 
 import pytest
 
 from finwiz.crews.investment_discovery_crew.investment_discovery_crew import InvestmentDiscoveryCrew
-from finwiz.main import FinwizFlow
+from finwiz.flows.flow_orchestrator import FinwizFlow
 from finwiz.schemas.investment_discovery import APlusDiscoveryResult, OptimizationResult, ValidationResult
 
 
@@ -393,7 +392,7 @@ class TestInvestmentDiscoveryIntegration:
         crew = InvestmentDiscoveryCrew()
 
         # Mock crew kickoff method
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.return_value = {
             "etf_discovery": mock_discovery_results["etf"],
             "stock_discovery": mock_discovery_results["stock"],
@@ -445,8 +444,8 @@ class TestInvestmentDiscoveryIntegration:
         mock_feature_flag.return_value = True
 
         # Mock investment discovery crew
-        mock_crew = MagicMock()
-        mock_crew_result = MagicMock()
+        mock_crew = mocker.MagicMock()
+        mock_crew_result = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.return_value = mock_crew_result
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -512,7 +511,7 @@ class TestInvestmentDiscoveryIntegration:
         mock_feature_flag.return_value = True
 
         # Mock investment discovery crew to raise exception
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.side_effect = Exception("Crew execution failed")
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -535,7 +534,7 @@ class TestInvestmentDiscoveryIntegration:
         mocker.patch("pathlib.Path.write_text")
 
         # Mock crew execution to trigger file operations
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.return_value = {"status": "completed"}
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -579,12 +578,12 @@ class TestInvestmentDiscoveryIntegration:
         from finwiz.crews.report_crew.report_crew import ReportCrew
 
         # Mock report crew
-        mock_report_crew = MagicMock()
+        mock_report_crew = mocker.MagicMock()
         mock_report_crew.crew.return_value.kickoff.return_value = "<html>Test Report</html>"
         mocker.patch("finwiz.crews.report_crew.report_crew.ReportCrew", return_value=mock_report_crew)
 
         # Mock DirectoryReadTool to simulate discovery results availability
-        mock_directory_tool = MagicMock()
+        mock_directory_tool = mocker.MagicMock()
         mock_directory_tool.run.return_value = json.dumps(mock_discovery_results)
         mocker.patch("crewai_tools.DirectoryReadTool", return_value=mock_directory_tool)
 
@@ -616,7 +615,7 @@ class TestInvestmentDiscoveryIntegration:
             "crypto_discovery": {"status": "failed", "error": "Rate limit exceeded"},
         }
 
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.return_value = partial_results
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -658,7 +657,7 @@ class TestInvestmentDiscoveryIntegration:
         mocker.patch.object(crew, "report_generation_task", side_effect=track_execution("report_generation"))
 
         # Mock crew execution
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.return_value = {"status": "completed"}
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -720,7 +719,7 @@ class TestInvestmentDiscoveryDataFlow:
         mock_feature_flag.return_value = True
 
         # Mock investment discovery crew
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.return_value = {"status": "completed"}
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -766,7 +765,7 @@ class TestInvestmentDiscoveryDataFlow:
         mock_feature_flag.return_value = True
 
         # Mock investment discovery crew
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.return_value = {"status": "completed"}
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -802,7 +801,7 @@ class TestInvestmentDiscoveryDataFlow:
             (output_dir / "a_plus_cryptos.md").write_text("# Crypto Discovery Results\n\nFound 2 A+ cryptos")
             return {"status": "completed"}
 
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.side_effect = mock_kickoff
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -834,7 +833,7 @@ class TestInvestmentDiscoveryErrorHandling:
         crew = InvestmentDiscoveryCrew()
 
         # Mock API failure
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.side_effect = Exception("API rate limit exceeded")
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -849,7 +848,7 @@ class TestInvestmentDiscoveryErrorHandling:
         invalid_portfolio_data = {"invalid": "data"}
 
         # Mock crew to handle invalid data
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.return_value = {"status": "failed", "error": "Invalid portfolio data"}
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -866,7 +865,7 @@ class TestInvestmentDiscoveryErrorHandling:
         crew = InvestmentDiscoveryCrew()
 
         # Mock crew to handle missing inputs
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.return_value = {"status": "failed", "error": "Missing required inputs"}
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -893,7 +892,7 @@ class TestInvestmentDiscoveryErrorHandling:
         mock_feature_flag.return_value = True
 
         # Mock investment discovery crew to fail
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.side_effect = Exception("Discovery failed")
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -1246,7 +1245,7 @@ class TestInvestmentDiscoveryWorkflowEndToEnd:
         mock_feature_flag.return_value = True
 
         # Mock investment discovery crew with comprehensive results
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         complete_workflow_result = {
             "discovery_phase": {
                 "etf_discovery": mock_discovery_results["etf"],
@@ -1318,7 +1317,7 @@ class TestInvestmentDiscoveryWorkflowEndToEnd:
             "phases_failed": ["crypto_discovery"],
         }
 
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.return_value = partial_success_result
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -1369,7 +1368,7 @@ class TestInvestmentDiscoveryWorkflowEndToEnd:
             "data_integrity_checks": "passed",
         }
 
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.return_value = workflow_result
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -1477,7 +1476,7 @@ class TestAgentInteractionsAndTaskDependencies:
         mock_report_task.return_value.execute = mock_task_execution("report_generation")
 
         # Mock crew execution
-        mock_crew_instance = MagicMock()
+        mock_crew_instance = mocker.MagicMock()
         mock_crew_instance.kickoff.return_value = {"execution_log": execution_log}
         mocker.patch.object(crew, "crew", return_value=mock_crew_instance)
 
@@ -1524,7 +1523,7 @@ class TestAgentInteractionsAndTaskDependencies:
         crew = InvestmentDiscoveryCrew()
 
         # Mock agent communication failure
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.side_effect = Exception("Agent communication timeout")
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -1545,7 +1544,7 @@ class TestAgentInteractionsAndTaskDependencies:
             "schema_validation": "passed",
         }
 
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.kickoff.return_value = schema_compliant_result
         mocker.patch.object(crew, "crew", return_value=mock_crew)
 
@@ -1676,7 +1675,7 @@ class TestPortfolioReviewSystemIntegration:
         mock_feature_flag.return_value = True
 
         # Mock file reading in the crew
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.return_value = {"status": "data_read_successfully"}
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -1739,7 +1738,7 @@ class TestPortfolioReviewSystemIntegration:
             },
         }
 
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.return_value = improvement_focused_result
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -1789,7 +1788,7 @@ class TestPortfolioReviewSystemIntegration:
         mock_feature_flag.return_value = True
 
         # Mock crew to handle invalid data
-        mock_crew = MagicMock()
+        mock_crew = mocker.MagicMock()
         mock_crew.crew.return_value.kickoff.side_effect = Exception("Invalid portfolio data format")
         mocker.patch(
             "finwiz.crews.investment_discovery_crew.investment_discovery_crew.InvestmentDiscoveryCrew",
@@ -1863,7 +1862,7 @@ class TestReportGenerationWithAPlusRecommendations:
         from finwiz.crews.report_crew.report_crew import ReportCrew
 
         # Mock report crew
-        mock_report_crew = MagicMock()
+        mock_report_crew = mocker.MagicMock()
         expected_report_html = """
         <html>
         <head><title>FinWiz Investment Discovery Report</title></head>
@@ -1939,7 +1938,7 @@ class TestReportGenerationWithAPlusRecommendations:
         </section>
         """
 
-        mock_report_crew = MagicMock()
+        mock_report_crew = mocker.MagicMock()
         mock_report_crew.crew.return_value.kickoff.return_value = comparison_report_html
         mocker.patch("finwiz.crews.report_crew.report_crew.ReportCrew", return_value=mock_report_crew)
 
@@ -1988,7 +1987,7 @@ class TestReportGenerationWithAPlusRecommendations:
         </html>
         """
 
-        mock_report_crew = MagicMock()
+        mock_report_crew = mocker.MagicMock()
         mock_report_crew.crew.return_value.kickoff.return_value = french_report_html
         mocker.patch("finwiz.crews.report_crew.report_crew.ReportCrew", return_value=mock_report_crew)
 
@@ -2038,7 +2037,7 @@ class TestReportGenerationWithAPlusRecommendations:
         </section>
         """
 
-        mock_report_crew = MagicMock()
+        mock_report_crew = mocker.MagicMock()
         mock_report_crew.crew.return_value.kickoff.return_value = no_recommendations_html
         mocker.patch("finwiz.crews.report_crew.report_crew.ReportCrew", return_value=mock_report_crew)
 

@@ -42,7 +42,7 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
     try:
         # Import CrewAI agent module - we'll patch its LLM handling
         from crewai.agent import Agent as CrewAIAgent
-        
+
         # Try to import OpenAI adapter if it exists
         try:
             from crewai.llms.adapters.openai import OpenAIAdapter
@@ -140,6 +140,7 @@ def initialize_retry_mechanism(max_retries: int = 5, timeout: int = 180) -> None
         # Note: The exact module path may vary by CrewAI version
         try:
             from crewai.llm import OpenAIChat
+
             if hasattr(OpenAIChat, "client") and hasattr(OpenAIChat.client, "timeout"):
                 OpenAIChat.client.timeout = httpx.Timeout(timeout)
                 logger.info(f"Set CrewAI OpenAIChat client timeout to {timeout} seconds")

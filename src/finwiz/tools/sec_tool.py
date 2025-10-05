@@ -6,35 +6,16 @@ outputs including filing URL, filed date, and cited excerpts.
 """
 
 import os
-from typing import Any, Literal
+from typing import Any
 
 import requests
 from crewai.tools import BaseTool
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-try:  # defer optional dependency
-    from unstructured.partition.html import partition_html  # type: ignore
-except Exception:  # pragma: no cover - provide a minimal fallback
-
-    def partition_html(text: str) -> list[Any]:  # type: ignore
-        """Fallback partitioner: return the raw HTML as a single chunk."""
-        return [text]
-
-
-# Defer importing QueryApi to runtime to keep module import lightweight and testable
-QueryApi = None  # will be assigned to sec_api.QueryApi on first use
-
-
-class SECFilingSearchInput(BaseModel):
-    """Input schema for SECFilingSearchTool."""
-
-    ticker: str = Field(..., description="The stock ticker symbol, e.g., AAPL")
-    form_type: Literal["10-K", "10-Q"] = Field(..., description="SEC form type to search (10-K or 10-Q)")
-    question: str = Field(..., description="What you want to find in the filing (natural language)")
-    top_k: int = Field(4, ge=1, le=10, description="Number of excerpts to return")
+from finwiz.schemas.tools import SECFilingSearchInput
 
 
 class SECFilingSearchTool(BaseTool):
@@ -144,4 +125,16 @@ class SECFilingSearchTool(BaseTool):
     def _retrieve_excerpts(self, docs: list[Any], question: str, top_k: int) -> list[str]:
         retriever = FAISS.from_documents(docs, OpenAIEmbeddings()).as_retriever()
         results = retriever.get_relevant_documents(question, top_k=top_k)
-        return [r.page_content for r in results]
+
+
+try:  # defer optional dependency
+    from unstructured.partition.html import partition_html  # type: ignore
+except Exception:  # pragma: no cover - provide a minimal fallback
+
+    def partition_html(text: str) -> list[Any]:  # type: ignore
+        """Fallback partitioner: return the raw HTML as a single chunk."""
+        return [text]
+
+
+# Defer importing QueryApi to runtime to keep module import lightweight and testable
+QueryApi = None  # will be assigned to sec_api.QueryApi on first use

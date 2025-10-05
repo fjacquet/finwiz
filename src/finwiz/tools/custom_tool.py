@@ -7,13 +7,10 @@ tailored to specific project needs.
 """
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class MyCustomToolInput(BaseModel):
-    """Input schema for MyCustomTool."""
-
-    argument: str = Field(..., description="Description of the argument.")
+# Import schema from centralized location
+from finwiz.schemas.tools import MyCustomToolInput
 
 
 class MyCustomTool(BaseTool):

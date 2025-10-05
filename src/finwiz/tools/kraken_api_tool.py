@@ -9,16 +9,10 @@ import json
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class TickerInfoInput(BaseModel):
-    """Input schema for the KrakenTickerInfoTool."""
-
-    pair: str = Field(
-        ...,
-        description="The cryptocurrency pair to get ticker information for (e.g., 'XXBTZUSD').",
-    )
+# Import schema from centralized location
+from finwiz.schemas.tools import TickerInfoInput
 
 
 class KrakenTickerInfoTool(BaseTool):

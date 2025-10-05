@@ -16,6 +16,7 @@ from email.mime.text import MIMEText
 from enum import Enum
 from typing import Any
 
+from bs4 import BeautifulSoup
 from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.quantitative.portfolio_monitor import AlertSeverity, PortfolioAlert
@@ -195,7 +196,7 @@ class EmailNotificationProvider(NotificationProvider):
         return bool(re.match(pattern, recipient))
 
     def _create_html_email(self, alert: PortfolioAlert, message: str) -> str:
-        """Create HTML email content."""
+        """Create HTML email content using bs4."""
         severity_colors = {
             AlertSeverity.INFO: "#17a2b8",
             AlertSeverity.WARNING: "#ffc107",
@@ -205,41 +206,94 @@ class EmailNotificationProvider(NotificationProvider):
 
         color = severity_colors.get(alert.severity, "#6c757d")
 
-        html = f"""
-        <html>
-        <head>
-            <style>
+        # Create soup and HTML structure
+        soup = BeautifulSoup("", "html.parser")
+        html = soup.new_tag("html")
+
+        # Create head with styles
+        head = soup.new_tag("head")
+        style = soup.new_tag("style")
+        style.string = f"""
                 body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; }}
                 .header {{ background-color: {color}; color: white; padding: 15px; border-radius: 5px; }}
                 .content {{ padding: 20px; border: 1px solid #ddd; border-radius: 5px; margin-top: 10px; }}
                 .positions {{ background-color: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; }}
                 .actions {{ background-color: #e9ecef; padding: 10px; border-radius: 3px; margin: 10px 0; }}
                 .footer {{ margin-top: 20px; font-size: 12px; color: #6c757d; }}
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h2>FinWiz Portfolio Alert - {alert.severity.value}</h2>
-                <p>{alert.title}</p>
-            </div>
-
-            <div class="content">
-                <p><strong>Portfolio:</strong> {alert.portfolio_id}</p>
-                <p><strong>Alert Time:</strong> {alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</p>
-                <p><strong>Message:</strong> {alert.message}</p>
-
-                {self._format_affected_positions_html(alert)}
-                {self._format_recommended_actions_html(alert)}
-            </div>
-
-            <div class="footer">
-                <p>This is an automated notification from FinWiz Portfolio Monitoring System.</p>
-                <p>Please do not reply to this email.</p>
-            </div>
-        </body>
-        </html>
         """
-        return html
+        head.append(style)
+
+        # Create body
+        body = soup.new_tag("body")
+
+        # Create header section
+        header_div = soup.new_tag("div", **{"class": "header"})
+        header_h2 = soup.new_tag("h2")
+        header_h2.string = f"FinWiz Portfolio Alert - {alert.severity.value}"
+        header_div.append(header_h2)
+
+        header_p = soup.new_tag("p")
+        header_p.string = alert.title
+        header_div.append(header_p)
+
+        # Create content section
+        content_div = soup.new_tag("div", **{"class": "content"})
+
+        # Portfolio info
+        portfolio_p = soup.new_tag("p")
+        portfolio_strong = soup.new_tag("strong")
+        portfolio_strong.string = "Portfolio:"
+        portfolio_p.append(portfolio_strong)
+        portfolio_p.append(f" {alert.portfolio_id}")
+        content_div.append(portfolio_p)
+
+        # Alert time
+        time_p = soup.new_tag("p")
+        time_strong = soup.new_tag("strong")
+        time_strong.string = "Alert Time:"
+        time_p.append(time_strong)
+        time_p.append(f" {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+        content_div.append(time_p)
+
+        # Message
+        message_p = soup.new_tag("p")
+        message_strong = soup.new_tag("strong")
+        message_strong.string = "Message:"
+        message_p.append(message_strong)
+        message_p.append(f" {alert.message}")
+        content_div.append(message_p)
+
+        # Add affected positions and recommended actions
+        positions_html = self._format_affected_positions_html(alert)
+        if positions_html:
+            positions_soup = BeautifulSoup(positions_html, "html.parser")
+            content_div.extend(positions_soup.contents)
+
+        actions_html = self._format_recommended_actions_html(alert)
+        if actions_html:
+            actions_soup = BeautifulSoup(actions_html, "html.parser")
+            content_div.extend(actions_soup.contents)
+
+        # Create footer
+        footer_div = soup.new_tag("div", **{"class": "footer"})
+        footer_p1 = soup.new_tag("p")
+        footer_p1.string = "This is an automated notification from FinWiz Portfolio Monitoring System."
+        footer_div.append(footer_p1)
+
+        footer_p2 = soup.new_tag("p")
+        footer_p2.string = "Please do not reply to this email."
+        footer_div.append(footer_p2)
+
+        # Assemble the document
+        body.append(header_div)
+        body.append(content_div)
+        body.append(footer_div)
+
+        html.append(head)
+        html.append(body)
+        soup.append(html)
+
+        return soup.prettify(formatter="html")
 
     def _create_text_email(self, alert: PortfolioAlert, message: str) -> str:
         """Create plain text email content."""
@@ -265,27 +319,59 @@ Please do not reply to this email.
         return text.strip()
 
     def _format_affected_positions_html(self, alert: PortfolioAlert) -> str:
-        """Format affected positions for HTML email."""
+        """Format affected positions for HTML email using bs4."""
         if not alert.affected_positions:
             return ""
 
-        positions_html = "<div class='positions'><h4>Affected Positions:</h4><ul>"
+        soup = BeautifulSoup("", "html.parser")
+        positions_div = soup.new_tag("div", **{"class": "positions"})
+
+        # Create header
+        h4 = soup.new_tag("h4")
+        h4.string = "Affected Positions:"
+        positions_div.append(h4)
+
+        # Create list
+        ul = soup.new_tag("ul")
         for symbol in alert.affected_positions:
             deviation = alert.current_deviations.get(symbol, 0.0)
-            positions_html += f"<li><strong>{symbol}</strong>: {deviation:+.1%} deviation</li>"
-        positions_html += "</ul></div>"
-        return positions_html
+
+            li = soup.new_tag("li")
+            strong = soup.new_tag("strong")
+            strong.string = symbol
+            li.append(strong)
+            li.append(f": {deviation:+.1%} deviation")
+            ul.append(li)
+
+        positions_div.append(ul)
+        soup.append(positions_div)
+
+        return str(soup)
 
     def _format_recommended_actions_html(self, alert: PortfolioAlert) -> str:
-        """Format recommended actions for HTML email."""
+        """Format recommended actions for HTML email using bs4."""
         if not alert.recommended_actions:
             return ""
 
-        actions_html = "<div class='actions'><h4>Recommended Actions:</h4><ul>"
+        soup = BeautifulSoup("", "html.parser")
+        actions_div = soup.new_tag("div", **{"class": "actions"})
+
+        # Create header
+        h4 = soup.new_tag("h4")
+        h4.string = "Recommended Actions:"
+        actions_div.append(h4)
+
+        # Create list
+        ul = soup.new_tag("ul")
         for action in alert.recommended_actions:
-            actions_html += f"<li>{action}</li>"
-        actions_html += "</ul></div>"
-        return actions_html
+            li = soup.new_tag("li")
+            li.string = action  # bs4 automatically escapes content
+            ul.append(li)
+
+        actions_div.append(ul)
+        soup.append(actions_div)
+
+        return str(soup)
 
     def _format_affected_positions_text(self, alert: PortfolioAlert) -> str:
         """Format affected positions for text email."""

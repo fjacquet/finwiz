@@ -14,24 +14,18 @@ from typing import Any
 import requests
 from bs4 import BeautifulSoup
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ValidationError
 
 from finwiz.schemas.perplexity import SonarArticle
+from finwiz.schemas.tools import (
+    EnhancedETFAnalysisInput,
+    ETFTrackingAnalysisInput,
+)
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.feature_flags import get_feature_flags
 
 logger = get_logger(__name__)
-
-
-class EnhancedETFAnalysisInput(BaseModel):
-    """Input schema for Enhanced ETF Analysis Tool."""
-
-    ticker: str = Field(..., description="The ETF ticker symbol, e.g., SPY, VTI")
-    include_holdings: bool = Field(default=True, description="Whether to extract top holdings")
-    include_risk_assessment: bool = Field(default=True, description="Whether to perform risk assessment")
-    max_holdings: int = Field(default=10, ge=1, le=50, description="Maximum number of holdings to extract")
-    include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
 class EnhancedETFAnalysisTool(BaseTool):
@@ -575,12 +569,6 @@ class EnhancedETFAnalysisTool(BaseTool):
 
             PerplexityFeatureFlagTracker.record_operation_failure(ticker, "etf", "integration_error")
             return []
-
-
-class ETFTrackingAnalysisInput(BaseModel):
-    """Input schema for ETF Tracking Analysis Tool."""
-
-    ticker: str = Field(..., description="The ETF ticker symbol, e.g., SPY, VTI")
 
 
 class ETFTrackingAnalysisTool(BaseTool):

@@ -8,7 +8,6 @@ of edge cases, error scenarios, and integration points.
 
 import json
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -129,36 +128,36 @@ class TestMarketScreeningToolComprehensive:
         """Set up test fixtures."""
         self.tool = MarketScreeningTool()
 
-    def test_should_handle_large_screening_universe_efficiently(self):
+    def test_should_handle_large_screening_universe_efficiently(self, mocker):
         """Test performance with large screening universe."""
         # Mock a large universe
-        with patch.object(self.tool, "_get_etf_universe") as mock_universe:
-            large_universe = {
-                "symbols": [f"ETF{i:04d}" for i in range(1000)],  # 1000 ETFs
-                "count": 1000,
-                "sources": ["Mock Source"],
-            }
-            mock_universe.return_value = large_universe
+        mock_universe = mocker.patch.object(self.tool, "_get_etf_universe")
+        large_universe = {
+            "symbols": [f"ETF{i:04d}" for i in range(1000)],  # 1000 ETFs
+            "count": 1000,
+            "sources": ["Mock Source"],
+        }
+        mock_universe.return_value = large_universe
 
-            # Mock market data to avoid actual API calls
-            with patch.object(self.tool, "_get_basic_market_data") as mock_data:
-                mock_data.return_value = {
-                    "symbol": "TEST",
-                    "expense_ratio": 0.05,
-                    "aum": 5e9,
-                    "tracking_error": 0.001,
-                    "history_years": 5,
-                    "asset_type": "etf",
-                }
+        # Mock market data to avoid actual API calls
+        mock_data = mocker.patch.object(self.tool, "_get_basic_market_data")
+        mock_data.return_value = {
+            "symbol": "TEST",
+            "expense_ratio": 0.05,
+            "aum": 5e9,
+            "tracking_error": 0.001,
+            "history_years": 5,
+            "asset_type": "etf",
+        }
 
-                result = self.tool._run(asset_type="etf", max_candidates=10)
+        result = self.tool._run(asset_type="etf", max_candidates=10)
 
-                assert "screening_result" in result
-                assert result["summary"]["total_screened"] == 1000
+        assert "screening_result" in result
+        assert result["summary"]["total_screened"] == 1000
 
-    def test_should_handle_api_failures_gracefully(self):
+    def test_should_handle_api_failures_gracefully(self, mocker):
         """Test handling of API failures during screening."""
-        with patch.object(self.tool, "_get_basic_market_data") as mock_data:
+        with mocker.patch.object(self.tool, "_get_basic_market_data") as mock_data:
             # Simulate API failures for some symbols
             def side_effect(symbol, asset_type):
                 if symbol in ["FAIL1", "FAIL2"]:
@@ -173,7 +172,7 @@ class TestMarketScreeningToolComprehensive:
             mock_data.side_effect = side_effect
 
             # Mock universe with some failing symbols
-            with patch.object(self.tool, "_get_etf_universe") as mock_universe:
+            with mocker.patch.object(self.tool, "_get_etf_universe") as mock_universe:
                 mock_universe.return_value = {
                     "symbols": ["GOOD1", "FAIL1", "GOOD2", "FAIL2", "GOOD3"],
                     "count": 5,
@@ -207,9 +206,9 @@ class TestMarketScreeningToolComprehensive:
         result = self.tool._run(asset_type="stock", screening_criteria=high_criteria)
         assert result["summary"]["candidates_found"] >= 0  # Likely 0 due to impossible criteria
 
-    def test_should_handle_empty_market_data_responses(self):
+    def test_should_handle_empty_market_data_responses(self, mocker):
         """Test handling of empty market data responses."""
-        with patch.object(self.tool, "_get_basic_market_data") as mock_data:
+        with mocker.patch.object(self.tool, "_get_basic_market_data") as mock_data:
             mock_data.return_value = {}  # Empty response
 
             result = self.tool._run(asset_type="etf", max_candidates=5)
@@ -217,13 +216,13 @@ class TestMarketScreeningToolComprehensive:
             assert "screening_result" in result
             # Should handle empty data gracefully
 
-    def test_should_cache_market_data_efficiently(self):
+    def test_should_cache_market_data_efficiently(self, mocker):
         """Test market data caching efficiency."""
         # First call should populate cache
         data1 = self.tool._get_basic_market_data("SPY", "etf")
 
         # Mock the actual data fetching to verify cache usage
-        with patch.object(self.tool, "_get_etf_market_data") as mock_fetch:
+        with mocker.patch.object(self.tool, "_get_etf_market_data") as mock_fetch:
             mock_fetch.return_value = {"different": "data"}
 
             # Second call should use cache, not call mock
@@ -267,13 +266,14 @@ class TestBacktestingToolComprehensive:
         """Set up test fixtures."""
         self.tool = BacktestingTool()
 
-    @patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
-    @patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
-    @patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
-    def test_should_handle_insufficient_historical_data(self, mock_perf_analyzer, mock_data_manager, mock_backtesting_engine):
+    def test_should_handle_insufficient_historical_data(self, mocker):
         """Test handling when insufficient historical data is available."""
         # Mock insufficient data scenario
-        mock_engine = MagicMock()
+        mock_backtesting_engine = mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
+        mock_data_manager = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        mock_perf_analyzer = mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
+
+        mock_engine = mocker.MagicMock()
         mock_engine.run_strategy_backtest.side_effect = Exception("Insufficient data")
         mock_backtesting_engine.return_value = mock_engine
 
@@ -323,10 +323,10 @@ class TestBacktestingToolComprehensive:
         regime_types = [r["type"] for r in regimes]
         assert len(set(regime_types)) > 1  # Should have different regime types
 
-    def test_should_validate_strategy_with_extreme_performance(self):
+    def test_should_validate_strategy_with_extreme_performance(self, mocker):
         """Test validation with extreme performance scenarios."""
         # Extremely good performance
-        excellent_result = MagicMock()
+        excellent_result = mocker.MagicMock()
         excellent_result.annualized_return = 50.0  # 50% annual return
         excellent_result.sharpe_ratio = 3.0  # Excellent Sharpe
         excellent_result.max_drawdown = -2.0  # Very low drawdown
@@ -338,7 +338,7 @@ class TestBacktestingToolComprehensive:
         assert validation_score >= 0.7  # Should pass validation threshold
 
         # Extremely poor performance
-        terrible_result = MagicMock()
+        terrible_result = mocker.MagicMock()
         terrible_result.annualized_return = -20.0  # Losing money
         terrible_result.sharpe_ratio = -0.5  # Negative Sharpe
         terrible_result.max_drawdown = -80.0  # Massive drawdown
@@ -367,10 +367,10 @@ class TestBacktestingToolComprehensive:
         assert isinstance(regimes, list)
         # May return empty list or fallback regime
 
-    def test_should_calculate_additional_metrics_with_edge_cases(self):
+    def test_should_calculate_additional_metrics_with_edge_cases(self, mocker):
         """Test additional metrics calculation with edge cases."""
         # Mock result with edge case data
-        edge_case_result = MagicMock()
+        edge_case_result = mocker.MagicMock()
         edge_case_result.annualized_return = 0.0  # Zero return
         edge_case_result.benchmark_return = 0.0  # Zero benchmark
         edge_case_result.portfolio_values = {
@@ -393,7 +393,7 @@ class TestBacktestingToolComprehensive:
             (10, 3000),  # 10 years should have ~3650 days
         ],
     )
-    def test_should_calculate_correct_date_ranges(self, period_years, expected_min_days):
+    def test_should_calculate_correct_date_ranges(self, mocker, period_years, expected_min_days):
         """Test correct date range calculation for different periods."""
         end_date = datetime.now()
         start_date = end_date - timedelta(days=period_years * 365)
@@ -401,9 +401,9 @@ class TestBacktestingToolComprehensive:
         actual_days = (end_date - start_date).days
         assert actual_days >= expected_min_days
 
-    def test_should_handle_strategy_with_no_trades(self):
+    def test_should_handle_strategy_with_no_trades(self, mocker):
         """Test handling of strategy that generates no trades."""
-        no_trades_result = MagicMock()
+        no_trades_result = mocker.MagicMock()
         no_trades_result.total_trades = 0
         no_trades_result.win_rate = 0.0
         no_trades_result.trades = []
@@ -428,10 +428,10 @@ class TestToolsIntegration:
         self.screening_tool = MarketScreeningTool()
         self.backtesting_tool = BacktestingTool()
 
-    def test_should_integrate_screening_with_a_plus_scoring(self):
+    def test_should_integrate_screening_with_a_plus_scoring(self, mocker):
         """Test integration between screening and A+ scoring."""
         # Mock the A+ scorer in screening tool
-        with patch.object(self.screening_tool._a_plus_scorer, "_run") as mock_scorer:
+        with mocker.patch.object(self.screening_tool._a_plus_scorer, "_run") as mock_scorer:
             mock_scorer.return_value = {
                 "composite_score": 0.92,
                 "is_a_plus_candidate": True,
@@ -446,10 +446,10 @@ class TestToolsIntegration:
             # Should have integrated with A+ scorer
             assert "screening_result" in result
 
-    def test_should_handle_tool_chain_errors_gracefully(self):
+    def test_should_handle_tool_chain_errors_gracefully(self, mocker):
         """Test error handling in tool chain integration."""
         # Simulate error in A+ scoring during screening
-        with patch.object(self.screening_tool._a_plus_scorer, "_run") as mock_scorer:
+        with mocker.patch.object(self.screening_tool._a_plus_scorer, "_run") as mock_scorer:
             mock_scorer.side_effect = Exception("A+ scoring failed")
 
             result = self.screening_tool._run(asset_type="stock", include_detailed_analysis=True)
@@ -457,7 +457,7 @@ class TestToolsIntegration:
             # Should handle A+ scoring errors gracefully
             assert "screening_result" in result or "error" in result
 
-    def test_should_maintain_data_consistency_across_tools(self):
+    def test_should_maintain_data_consistency_across_tools(self, mocker):
         """Test data consistency when using multiple tools."""
         # Test same symbol across different tools
         symbol = "AAPL"
@@ -476,8 +476,8 @@ class TestToolsIntegration:
         assert a_plus_result["asset_type"] == "stock"
 
         # Mock backtesting for the same symbol
-        with patch("finwiz.tools.backtesting_tool.get_backtesting_engine") as mock_engine:
-            mock_result = MagicMock()
+        with mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine") as mock_engine:
+            mock_result = mocker.MagicMock()
             mock_result.strategy_name = "TestStrategy"
             mock_result.total_return = 25.0
             mock_result.annualized_return = 12.0
@@ -497,19 +497,19 @@ class TestToolsIntegration:
             mock_result.portfolio_values = {}
             mock_result.trades = []
 
-            mock_engine_instance = MagicMock()
+            mock_engine_instance = mocker.MagicMock()
             mock_engine_instance.run_strategy_backtest.return_value = mock_result
             mock_engine.return_value = mock_engine_instance
 
-            with patch("finwiz.tools.backtesting_tool.get_historical_data_manager"):
-                with patch("finwiz.tools.backtesting_tool.get_performance_analyzer"):
+            with mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager"):
+                with mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer"):
                     backtest_result_json = self.backtesting_tool._run(symbol=symbol, include_regime_analysis=False)
                     backtest_result = json.loads(backtest_result_json)
 
                     # Symbol should be consistent across tools
                     assert backtest_result["symbol"] == symbol
 
-    def test_should_handle_concurrent_tool_usage(self):
+    def test_should_handle_concurrent_tool_usage(self, mocker):
         """Test concurrent usage of multiple tools."""
         import threading
 
@@ -529,11 +529,11 @@ class TestToolsIntegration:
             except Exception as e:
                 results["errors"].append(e)
 
-        def run_backtesting():
+        def run_backtesting(mocker):
             try:
-                with patch("finwiz.tools.backtesting_tool.get_backtesting_engine"):
-                    with patch("finwiz.tools.backtesting_tool.get_historical_data_manager"):
-                        with patch("finwiz.tools.backtesting_tool.get_performance_analyzer"):
+                with mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine"):
+                    with mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager"):
+                        with mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer"):
                             result = self.backtesting_tool._run(symbol="TEST3", include_regime_analysis=False)
                             results["backtesting"].append(result)
             except Exception as e:

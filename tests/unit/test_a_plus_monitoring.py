@@ -6,7 +6,6 @@ alert generation, performance tracking, and automated re-evaluation triggers.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock
 
 import pytest
 from pydantic import ValidationError
@@ -58,7 +57,7 @@ class TestAPlusMonitoringSystem:
     def mock_notification_service(self, mocker):
         """Mock notification service."""
         mock_service = mocker.Mock(spec=NotificationService)
-        mock_service.send_alert = AsyncMock()
+        mock_service.send_alert = mocker.AsyncMock()
         return mock_service
 
     @pytest.fixture

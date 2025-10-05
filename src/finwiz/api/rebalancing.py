@@ -9,35 +9,13 @@ from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
-from finwiz.schemas.portfolio_rebalancing import (
-    PortfolioConfiguration,
-    RebalancingResult,
-)
+from finwiz.schemas.api import RebalancingRequest, RebalancingResponse
 from finwiz.tools.logger import get_logger
 from finwiz.utils.feature_flags import is_feature_enabled
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/rebalancing", tags=["Portfolio Rebalancing"])
-
-
-class RebalancingRequest(BaseModel):
-    """Request model for portfolio rebalancing analysis."""
-
-    portfolio_config: PortfolioConfiguration = Field(..., description="Portfolio configuration")
-    available_capital: float = Field(default=0.0, description="Available capital for rebalancing")
-
-    model_config = {"extra": "forbid"}
-
-
-class RebalancingResponse(BaseModel):
-    """Response model for portfolio rebalancing analysis."""
-
-    success: bool = Field(..., description="Whether the analysis was successful")
-    result: RebalancingResult | None = Field(None, description="Rebalancing analysis result")
-    error: str | None = Field(None, description="Error message if analysis failed")
-
-    model_config = {"extra": "forbid"}
 
 
 class PortfolioAnalysisResponse(BaseModel):

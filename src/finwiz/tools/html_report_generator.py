@@ -2,7 +2,8 @@
 HTML Report Generator for FinWiz financial analysis reports.
 
 This module provides HTML-first output standards with UTF-8 encoding,
-emoji support, and French report section requirements.
+emoji support, and French report section requirements using BeautifulSoup4
+for secure HTML generation.
 """
 
 import logging
@@ -10,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from bs4 import BeautifulSoup
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -126,24 +128,48 @@ class HTMLReportGenerator:
         positions_count = len(portfolio_data.get("weightings", {}))
         risk_score = portfolio_data.get("risk_metrics", {}).get("concentration_risk", 0)
 
-        content = f"""
-        <div class="portfolio-overview">
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <h4>💰 Total Portfolio Value</h4>
-                    <p class="metric-value">${total_value:,.2f}</p>
-                </div>
-                <div class="metric-card">
-                    <h4>📊 Number of Positions</h4>
-                    <p class="metric-value">{positions_count}</p>
-                </div>
-                <div class="metric-card">
-                    <h4>⚠️ Risk Score</h4>
-                    <p class="metric-value">{risk_score:.1f}/10</p>
-                </div>
-            </div>
-        </div>
-        """
+        # Create HTML using BeautifulSoup4
+        soup = BeautifulSoup("", "html.parser")
+
+        # Main container
+        overview_div = soup.new_tag("div", **{"class": "portfolio-overview"})
+        metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+
+        # Total Portfolio Value card
+        value_card = soup.new_tag("div", **{"class": "metric-card"})
+        value_h4 = soup.new_tag("h4")
+        value_h4.string = "💰 Total Portfolio Value"
+        value_p = soup.new_tag("p", **{"class": "metric-value"})
+        value_p.string = f"${total_value:,.2f}"
+        value_card.append(value_h4)
+        value_card.append(value_p)
+
+        # Number of Positions card
+        positions_card = soup.new_tag("div", **{"class": "metric-card"})
+        positions_h4 = soup.new_tag("h4")
+        positions_h4.string = "📊 Number of Positions"
+        positions_p = soup.new_tag("p", **{"class": "metric-value"})
+        positions_p.string = str(positions_count)
+        positions_card.append(positions_h4)
+        positions_card.append(positions_p)
+
+        # Risk Score card
+        risk_card = soup.new_tag("div", **{"class": "metric-card"})
+        risk_h4 = soup.new_tag("h4")
+        risk_h4.string = "⚠️ Risk Score"
+        risk_p = soup.new_tag("p", **{"class": "metric-value"})
+        risk_p.string = f"{risk_score:.1f}/10"
+        risk_card.append(risk_h4)
+        risk_card.append(risk_p)
+
+        # Assemble the structure
+        metrics_grid.append(value_card)
+        metrics_grid.append(positions_card)
+        metrics_grid.append(risk_card)
+        overview_div.append(metrics_grid)
+
+        # Convert to string
+        content = str(overview_div)
         self.add_section("Portfolio Overview", content, emoji_key="portfolio", order=1)
 
     def add_rebalancing_summary_section(self, rebalancing_data: dict[str, Any]) -> None:
@@ -162,27 +188,57 @@ class HTMLReportGenerator:
         rec_emoji = "🚀" if recommendation == "REBALANCE_NOW" else "👀" if recommendation == "MONITOR" else "⏰"
         rec_class = recommendation.lower().replace("_", "-")
 
-        content = f"""
-        <div class="rebalancing-summary">
-            <div class="recommendation-banner {rec_class}">
-                <h3>{rec_emoji} Recommendation: {recommendation.replace("_", " ").title()}</h3>
-            </div>
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <h4>🔄 Trades Required</h4>
-                    <p class="metric-value">{execution_summary.get("total_trades_required", 0)}</p>
-                </div>
-                <div class="metric-card">
-                    <h4>💸 Transaction Costs</h4>
-                    <p class="metric-value">${cost_analysis.get("total_transaction_costs", 0):.2f}</p>
-                </div>
-                <div class="metric-card">
-                    <h4>⏱️ Execution Time</h4>
-                    <p class="metric-value">{execution_summary.get("estimated_execution_time", "N/A")}</p>
-                </div>
-            </div>
-        </div>
-        """
+        # Create HTML using BeautifulSoup4
+        soup = BeautifulSoup("", "html.parser")
+
+        # Main container
+        summary_div = soup.new_tag("div", **{"class": "rebalancing-summary"})
+
+        # Recommendation banner
+        banner_div = soup.new_tag("div", **{"class": f"recommendation-banner {rec_class}"})
+        banner_h3 = soup.new_tag("h3")
+        banner_h3.string = f"{rec_emoji} Recommendation: {recommendation.replace('_', ' ').title()}"
+        banner_div.append(banner_h3)
+
+        # Metrics grid
+        metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+
+        # Trades Required card
+        trades_card = soup.new_tag("div", **{"class": "metric-card"})
+        trades_h4 = soup.new_tag("h4")
+        trades_h4.string = "🔄 Trades Required"
+        trades_p = soup.new_tag("p", **{"class": "metric-value"})
+        trades_p.string = str(execution_summary.get("total_trades_required", 0))
+        trades_card.append(trades_h4)
+        trades_card.append(trades_p)
+
+        # Transaction Costs card
+        costs_card = soup.new_tag("div", **{"class": "metric-card"})
+        costs_h4 = soup.new_tag("h4")
+        costs_h4.string = "💸 Transaction Costs"
+        costs_p = soup.new_tag("p", **{"class": "metric-value"})
+        costs_p.string = f"${cost_analysis.get('total_transaction_costs', 0):.2f}"
+        costs_card.append(costs_h4)
+        costs_card.append(costs_p)
+
+        # Execution Time card
+        time_card = soup.new_tag("div", **{"class": "metric-card"})
+        time_h4 = soup.new_tag("h4")
+        time_h4.string = "⏱️ Execution Time"
+        time_p = soup.new_tag("p", **{"class": "metric-value"})
+        time_p.string = execution_summary.get("estimated_execution_time", "N/A")
+        time_card.append(time_h4)
+        time_card.append(time_p)
+
+        # Assemble the structure
+        metrics_grid.append(trades_card)
+        metrics_grid.append(costs_card)
+        metrics_grid.append(time_card)
+        summary_div.append(banner_div)
+        summary_div.append(metrics_grid)
+
+        # Convert to string
+        content = str(summary_div)
         self.add_section("Rebalancing Summary", content, emoji_key="financial", order=2)
 
     def add_trade_recommendations_section(self, trades: list[dict[str, Any]]) -> None:
@@ -193,50 +249,86 @@ class HTMLReportGenerator:
             trades: List of trade recommendations
 
         """
+        # Create HTML using BeautifulSoup4
+        soup = BeautifulSoup("", "html.parser")
+
         if not trades:
-            content = "<p>No trades required - portfolio is within tolerance bands.</p>"
+            # Simple paragraph for no trades
+            p = soup.new_tag("p")
+            p.string = "No trades required - portfolio is within tolerance bands."
+            content = str(p)
         else:
             # Sort trades by priority
             sorted_trades = sorted(trades, key=lambda x: x.get("priority", 10))
 
-            rows = []
+            # Create trades container
+            container_div = soup.new_tag("div", **{"class": "trades-container"})
+            table = soup.new_tag("table", **{"class": "trades-table"})
+
+            # Create table header
+            thead = soup.new_tag("thead")
+            header_row = soup.new_tag("tr")
+            headers = ["Symbol", "Action", "Quantity", "Price", "Trade Value", "Est. Cost", "Priority"]
+
+            for header_text in headers:
+                th = soup.new_tag("th")
+                th.string = header_text
+                header_row.append(th)
+
+            thead.append(header_row)
+            table.append(thead)
+
+            # Create table body
+            tbody = soup.new_tag("tbody")
+
             for trade in sorted_trades:
                 action = trade.get("action", "HOLD")
                 action_emoji = "🟢" if action == "BUY" else "🔴" if action == "SELL" else "⚪"
                 action_class = action.lower()
 
-                rows.append(f"""
-                <tr class="trade-row {action_class}">
-                    <td>{action_emoji} {trade.get("symbol", "N/A")}</td>
-                    <td class="action-cell">{action}</td>
-                    <td class="number-cell">{trade.get("quantity", 0):.2f}</td>
-                    <td class="currency-cell">${trade.get("current_price", 0):.2f}</td>
-                    <td class="currency-cell">${trade.get("trade_value", 0):,.2f}</td>
-                    <td class="currency-cell">${trade.get("total_estimated_cost", 0):.2f}</td>
-                    <td class="priority-cell">{trade.get("priority", "N/A")}</td>
-                </tr>
-                """)
+                # Create row
+                tr = soup.new_tag("tr", **{"class": f"trade-row {action_class}"})
 
-            content = f"""
-            <div class="trades-container">
-                <table class="trades-table">
-                    <thead>
-                        <tr>
-                            <th>Symbol</th>
-                            <th>Action</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>Trade Value</th>
-                            <th>Est. Cost</th>
-                            <th>Priority</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {"".join(rows)}
-                    </tbody>
-                </table>
-            </div>
-            """
+                # Symbol cell
+                symbol_td = soup.new_tag("td")
+                symbol_td.string = f"{action_emoji} {trade.get('symbol', 'N/A')}"
+                tr.append(symbol_td)
+
+                # Action cell
+                action_td = soup.new_tag("td", **{"class": "action-cell"})
+                action_td.string = action
+                tr.append(action_td)
+
+                # Quantity cell
+                quantity_td = soup.new_tag("td", **{"class": "number-cell"})
+                quantity_td.string = f"{trade.get('quantity', 0):.2f}"
+                tr.append(quantity_td)
+
+                # Price cell
+                price_td = soup.new_tag("td", **{"class": "currency-cell"})
+                price_td.string = f"${trade.get('current_price', 0):.2f}"
+                tr.append(price_td)
+
+                # Trade Value cell
+                value_td = soup.new_tag("td", **{"class": "currency-cell"})
+                value_td.string = f"${trade.get('trade_value', 0):,.2f}"
+                tr.append(value_td)
+
+                # Est. Cost cell
+                cost_td = soup.new_tag("td", **{"class": "currency-cell"})
+                cost_td.string = f"${trade.get('total_estimated_cost', 0):.2f}"
+                tr.append(cost_td)
+
+                # Priority cell
+                priority_td = soup.new_tag("td", **{"class": "priority-cell"})
+                priority_td.string = str(trade.get("priority", "N/A"))
+                tr.append(priority_td)
+
+                tbody.append(tr)
+
+            table.append(tbody)
+            container_div.append(table)
+            content = str(container_div)
 
         self.add_section("Trade Recommendations", content, emoji_key="opportunity", order=3)
 
@@ -247,7 +339,7 @@ class HTMLReportGenerator:
 
     def generate_html(self, title: str = "FinWiz Financial Report", language: str = "en") -> str:
         """
-        Generate the complete HTML report.
+        Generate the complete HTML report using BeautifulSoup4.
 
         Args:
             title: Report title
@@ -263,12 +355,36 @@ class HTMLReportGenerator:
         # Generate report content
         report_content = self._generate_report_content(title, language)
 
-        # Insert content into template
-        html_report = template_content.replace("<!-- Content will be inserted here -->", report_content)
+        # Use BeautifulSoup to properly insert content and update attributes
+        soup = BeautifulSoup(template_content, "html.parser")
 
-        # Update title and language
-        html_report = html_report.replace("<title>Financial Report</title>", f"<title>{title}</title>")
-        html_report = html_report.replace('lang="en"', f'lang="{language}"')
+        # Update title
+        title_tag = soup.find("title")
+        if title_tag:
+            title_tag.string = title
+
+        # Update language attribute
+        html_tag = soup.find("html")
+        if html_tag:
+            html_tag["lang"] = language
+
+        # Find content insertion point and replace
+        content_comment = soup.find(string=lambda text: text and "Content will be inserted here" in text)
+        if content_comment:
+            # Parse the report content and insert it
+            content_soup = BeautifulSoup(report_content, "html.parser")
+            # Replace the comment with the parsed content
+            content_comment.replace_with(*content_soup.contents)
+        else:
+            # Fallback: find container div and insert content there
+            container = soup.find("div", class_="container")
+            if container:
+                content_soup = BeautifulSoup(report_content, "html.parser")
+                container.clear()
+                container.extend(content_soup.contents)
+
+        # Generate final HTML with proper formatting
+        html_report = soup.prettify(formatter="html")
 
         logger.info(f"Generated HTML report with {len(self.sections)} sections")
         return html_report
@@ -397,34 +513,67 @@ class HTMLReportGenerator:
 </html>"""
 
     def _generate_report_content(self, title: str, language: str) -> str:
-        """Generate the main report content."""
+        """Generate the main report content using BeautifulSoup4."""
         current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Sort sections by order
         sorted_sections = sorted(self.sections, key=lambda x: x.order)
 
+        # Create HTML using BeautifulSoup4
+        soup = BeautifulSoup("", "html.parser")
+
         # Generate header
-        content = f"""
-        <h1>📊 {title}</h1>
-        <p><strong>{"Date" if language == "en" else "Date"}:</strong> {current_date}</p>
-        <p><strong>{"Language" if language == "en" else "Langue"}:</strong> {language.upper()}</p>
-        """
+        h1 = soup.new_tag("h1")
+        h1.string = f"📊 {title}"
+
+        date_p = soup.new_tag("p")
+        date_strong = soup.new_tag("strong")
+        date_strong.string = "Date" if language == "en" else "Date"
+        date_p.append(date_strong)
+        date_p.append(f": {current_date}")
+
+        lang_p = soup.new_tag("p")
+        lang_strong = soup.new_tag("strong")
+        lang_strong.string = "Language" if language == "en" else "Langue"
+        lang_p.append(lang_strong)
+        lang_p.append(f": {language.upper()}")
+
+        # Create main container
+        main_div = soup.new_tag("div")
+        main_div.append(h1)
+        main_div.append(date_p)
+        main_div.append(lang_p)
 
         # Generate sections
         for section in sorted_sections:
-            emoji_prefix = f'<span class="emoji">{section.emoji}</span>' if section.emoji else ""
             section_class = "section"
 
             # Add special styling for French sections
             if section.title in self.FRENCH_SECTIONS.values():
                 section_class += " french-section"
 
-            content += f"""
-            <div class="{section_class}">
-                <h2>{emoji_prefix}{section.title}</h2>
-                <div>{section.content}</div>
-            </div>
-            """
+            section_div = soup.new_tag("div", **{"class": section_class})
+
+            # Create section header
+            h2 = soup.new_tag("h2")
+            if section.emoji:
+                emoji_span = soup.new_tag("span", **{"class": "emoji"})
+                emoji_span.string = section.emoji
+                h2.append(emoji_span)
+                h2.append(f" {section.title}")  # Add space and title as text
+            else:
+                h2.string = section.title
+
+            # Create section content div
+            content_div = soup.new_tag("div")
+            # Parse the existing HTML content and append it
+            content_soup = BeautifulSoup(section.content, "html.parser")
+            for element in content_soup:
+                content_div.append(element)
+
+            section_div.append(h2)
+            section_div.append(content_div)
+            main_div.append(section_div)
 
         # Add disclaimer
         disclaimer_text = (
@@ -435,13 +584,16 @@ class HTMLReportGenerator:
             "Veuillez consulter un conseiller financier qualifié avant de prendre des décisions d'investissement."
         )
 
-        content += f"""
-        <div class="disclaimer">
-            <p><strong>{"Disclaimer" if language == "en" else "Avertissement"}:</strong> {disclaimer_text}</p>
-        </div>
-        """
+        disclaimer_div = soup.new_tag("div", **{"class": "disclaimer"})
+        disclaimer_p = soup.new_tag("p")
+        disclaimer_strong = soup.new_tag("strong")
+        disclaimer_strong.string = "Disclaimer" if language == "en" else "Avertissement"
+        disclaimer_p.append(disclaimer_strong)
+        disclaimer_p.append(f": {disclaimer_text}")
+        disclaimer_div.append(disclaimer_p)
+        main_div.append(disclaimer_div)
 
-        return content
+        return str(main_div)
 
     def validate_html_output(self, html_content: str) -> dict[str, Any]:
         """
@@ -456,8 +608,8 @@ class HTMLReportGenerator:
         """
         issues = []
 
-        # Check for UTF-8 encoding declaration
-        if 'charset="UTF-8"' not in html_content and "charset=UTF-8" not in html_content:
+        # Check for UTF-8 encoding declaration (case insensitive)
+        if 'charset="utf-8"' not in html_content.lower() and "charset=utf-8" not in html_content.lower():
             issues.append("Missing UTF-8 encoding declaration")
 
         # Check for proper DOCTYPE
@@ -483,7 +635,7 @@ class HTMLReportGenerator:
         return {
             "is_valid": len(issues) == 0,
             "issues": issues,
-            "has_utf8": 'charset="UTF-8"' in html_content,
+            "has_utf8": 'charset="utf-8"' in html_content.lower(),
             "has_french_sections": french_section_found,
             "has_emojis": any(emoji in html_content for emoji in self.EMOJI_MAP.values()),
         }
@@ -555,7 +707,7 @@ class HTMLReportGenerator:
 
     def generate_html_fallback(self, title: str, language: str = "en") -> str:
         """
-        Generate HTML report using fallback template.
+        Generate HTML report using fallback template with BeautifulSoup4.
 
         Args:
             title: Report title
@@ -569,61 +721,108 @@ class HTMLReportGenerator:
             # Sort sections by order
             sorted_sections = sorted(self.sections, key=lambda x: x.order)
 
-            # Build HTML content
-            sections_html = []
-            for section in sorted_sections:
-                section_html = f"""
-                <div class="section">
-                    <h2 class="section-title">
-                        {section.emoji + " " if section.emoji else ""}{section.title}
-                    </h2>
-                    <div class="section-content">
-                        {section.content}
-                    </div>
-                </div>
-                """
-                sections_html.append(section_html)
+            # Create HTML document using BeautifulSoup4
+            soup = BeautifulSoup("", "html.parser")
 
-            # Basic HTML template
-            html_content = f"""
-            <!DOCTYPE html>
-            <html lang="{language}">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>{title}</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                    .section {{ margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; }}
-                    .section-title {{ color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }}
-                    table {{ width: 100%; border-collapse: collapse; }}
-                    th, td {{ padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }}
-                    th {{ background-color: #f2f2f2; }}
-                    .keep {{ color: #27ae60; font-weight: bold; }}
-                    .sell {{ color: #e74c3c; font-weight: bold; }}
-                    .buy {{ background-color: #d5f4e6; }}
-                    .metric-card {{ background: #f8f9fa; padding: 1rem; margin: 0.5rem; border-radius: 5px; }}
-                    .recommendation-banner {{ padding: 1rem; border-radius: 5px; margin: 1rem 0; text-align: center; }}
-                    .rebalance-now {{ background-color: #e74c3c; color: white; }}
-                    .rebalance-soon {{ background-color: #f39c12; color: white; }}
-                    .monitor {{ background-color: #3498db; color: white; }}
-                    .no-action {{ background-color: #27ae60; color: white; }}
-                </style>
-            </head>
-            <body>
-                <h1>{title}</h1>
-                <p>Generated on {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
-                {"".join(sections_html)}
-                <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd; text-align: center; color: #666;">
-                    <p>Generated by FinWiz Portfolio Analysis System</p>
-                </footer>
-            </body>
-            </html>
+            # Create DOCTYPE and html structure
+            html = soup.new_tag("html", lang=language)
+
+            # Create head
+            head = soup.new_tag("head")
+
+            # Meta tags
+            charset_meta = soup.new_tag("meta", charset="UTF-8")
+            viewport_meta = soup.new_tag("meta", name="viewport", content="width=device-width, initial-scale=1.0")
+            title_tag = soup.new_tag("title")
+            title_tag.string = title
+
+            # CSS styles
+            style_tag = soup.new_tag("style")
+            style_tag.string = """
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; }
+                .section-title { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+                th { background-color: #f2f2f2; }
+                .keep { color: #27ae60; font-weight: bold; }
+                .sell { color: #e74c3c; font-weight: bold; }
+                .buy { background-color: #d5f4e6; }
+                .metric-card { background: #f8f9fa; padding: 1rem; margin: 0.5rem; border-radius: 5px; }
+                .recommendation-banner { padding: 1rem; border-radius: 5px; margin: 1rem 0; text-align: center; }
+                .rebalance-now { background-color: #e74c3c; color: white; }
+                .rebalance-soon { background-color: #f39c12; color: white; }
+                .monitor { background-color: #3498db; color: white; }
+                .no-action { background-color: #27ae60; color: white; }
             """
+
+            head.append(charset_meta)
+            head.append(viewport_meta)
+            head.append(title_tag)
+            head.append(style_tag)
+
+            # Create body
+            body = soup.new_tag("body")
+
+            # Main title
+            h1 = soup.new_tag("h1")
+            h1.string = title
+            body.append(h1)
+
+            # Generated date
+            date_p = soup.new_tag("p")
+            date_p.string = f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            body.append(date_p)
+
+            # Add sections
+            for section in sorted_sections:
+                section_div = soup.new_tag("div", **{"class": "section"})
+
+                # Section title
+                section_h2 = soup.new_tag("h2", **{"class": "section-title"})
+                section_title_text = f"{section.emoji + ' ' if section.emoji else ''}{section.title}"
+                section_h2.string = section_title_text
+
+                # Section content
+                content_div = soup.new_tag("div", **{"class": "section-content"})
+                # Parse existing HTML content and append
+                content_soup = BeautifulSoup(section.content, "html.parser")
+                for element in content_soup:
+                    content_div.append(element)
+
+                section_div.append(section_h2)
+                section_div.append(content_div)
+                body.append(section_div)
+
+            # Footer
+            footer = soup.new_tag(
+                "footer", style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd; text-align: center; color: #666;"
+            )
+            footer_p = soup.new_tag("p")
+            footer_p.string = "Generated by FinWiz Portfolio Analysis System"
+            footer.append(footer_p)
+            body.append(footer)
+
+            # Assemble document
+            html.append(head)
+            html.append(body)
+            soup.append(html)
+
+            # Generate final HTML with proper DOCTYPE
+            html_content = "<!DOCTYPE html>\n" + soup.prettify(formatter="html")
 
             logger.info(f"Generated fallback HTML report with {len(self.sections)} sections")
             return html_content
 
         except Exception as e:
             logger.error(f"Error generating fallback HTML report: {e}")
-            return f"<html><body><h1>Error generating report: {e}</h1></body></html>"
+            # Even error handling uses bs4
+            error_soup = BeautifulSoup("", "html.parser")
+            html = error_soup.new_tag("html")
+            body = error_soup.new_tag("body")
+            h1 = error_soup.new_tag("h1")
+            h1.string = f"Error generating report: {e}"
+            body.append(h1)
+            html.append(body)
+            error_soup.append(html)
+            return "<!DOCTYPE html>\n" + error_soup.prettify(formatter="html")

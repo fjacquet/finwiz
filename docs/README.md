@@ -1,174 +1,197 @@
-# FinWiz Documentation Index
+# FinWiz Documentation
 
-Welcome to the FinWiz documentation! This index helps you find the right documentation for your needs.
+Welcome to the FinWiz documentation. This is your central navigation hub for all documentation.
+
+## 🚀 Quick Start
+
+New to FinWiz? Start here:
+
+1. **[Installation & Setup](../README.md#getting-started)** - Get FinWiz running
+2. **[User Guide](#user-guides)** - Learn how to use FinWiz features
+3. **[Developer Guide](DEVELOPER_GUIDE.md)** - Start developing with FinWiz
 
 ## 📚 Core Documentation
 
-### Getting Started
-- **[Main README](../README.md)** - Project overview, installation, and quick start
-- **[Development Guide](DEVELOPMENT_GUIDE.md)** - Comprehensive guide for developers (NEW!)
-- **[Design Principles](DESIGN_PRINCIPLES.md)** - Core architectural principles and patterns
+### For Developers
 
-### Development
-- **[Agent Handbook](agent_handbook.md)** - Guidelines and standards for AI agents
-- **[Technical Reference](reference.md)** - Complete API and configuration reference
-- **[Migration Guide](migration_guide.md)** - Guide for upgrading to latest features
+- **[Developer Guide](DEVELOPER_GUIDE.md)** - Complete development guide
+  - Quick start and setup
+  - CrewAI development standards
+  - Testing standards
+  - Code quality standards
+  - Common patterns
 
-### Testing & Quality
-- **[Test Coverage Stabilization](test_coverage_stabilization.md)** - Test infrastructure and coverage
-- **[Faker Migration Guide](faker_migration_guide.md)** - Test data generation patterns
+- **[Architecture Guide](ARCHITECTURE.md)** - System architecture and design
+  - Design principles
+  - System architecture
+  - Core systems (validation, caching, feature flags)
+  - Data flow
+  - Modernization history
 
-## 🏗️ Architecture & Systems
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation
+  - Crews
+  - Tools
+  - Schemas
+  - Utilities
+  - Configuration
 
-### Core Systems
-- **[Validation System](validation_system.md)** - Data validation infrastructure
-- **[Caching System](caching_system.md)** - Intelligent caching capabilities
-- **[Integration System Configuration](integration_system_configuration.md)** - Data integration setup
+- **[User Guide](USER_GUIDE.md)** - Deployment, operations, and migration
+  - Installation and deployment
+  - Daily operations
+  - Monitoring and maintenance
+  - Migration guide
 
-### Specialized Systems
-- **[Quantitative Analysis](quantitative_analysis.md)** - Quantitative analysis framework
-- **[Portfolio Monitoring System](portfolio_monitoring_system.md)** - Portfolio monitoring
-- **[Feedback Learning System](feedback_learning_system.md)** - Feedback and learning
+### For AI Agents
 
-## 📊 Feature Documentation
+AI agent guidelines are now in `.kiro/steering/` for automatic guidance during development. See the [Steering Files](#standards-in-kirosteering) section below.
+
+## 📖 User Guides
 
 ### Portfolio Management
-- **[Portfolio Rebalancing User Guide](portfolio_rebalancing_user_guide.md)** - User guide for rebalancing
-- **[Portfolio Rebalancing Developer Guide](portfolio_rebalancing_developer_guide.md)** - Developer guide
-- **[Portfolio Rebalancing API Reference](portfolio_rebalancing_api_reference.md)** - API documentation
+
+- **[Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md)** - Analyze your holdings
+  - Understanding your portfolio report
+  - Interpreting price targets
+  - Evaluating alternative investments
+  - A+ improvement roadmap
+  - Position sizing recommendations
+
+- **[Portfolio Rebalancing](portfolio_rebalancing/)** - Rebalance your portfolio
+  - [User Guide](portfolio_rebalancing/user_guide.md)
+  - [Developer Guide](portfolio_rebalancing/developer_guide.md)
+  - [API Reference](portfolio_rebalancing/api_reference.md)
 
 ### Investment Discovery
-- **[Investment Discovery Index](investment_discovery_index.md)** - Complete A+ discovery documentation
-- **[Investment Discovery User Guide](investment_discovery_user_guide.md)** - User guide
-- **[Investment Discovery Developer Guide](investment_discovery_developer_guide.md)** - Developer guide
-- **[Investment Discovery API Reference](investment_discovery_api_reference.md)** - API reference
-- **[Investment Discovery Quick Reference](investment_discovery_quick_reference.md)** - Quick commands
-- **[Investment Discovery FAQ](investment_discovery_faq.md)** - Common questions
-- **[Investment Discovery Troubleshooting](investment_discovery_troubleshooting_guide.md)** - Troubleshooting
 
-### Specialized Features
-- **[A+ Monitoring System](a_plus_monitoring_system.md)** - A+ investment monitoring
-- **[A+ Scoring Tool](a_plus_scoring_tool.md)** - Scoring methodology
-- **[Perplexity Sonar Integration](perplexity_sonar_integration_spec.md)** - Perplexity integration
+- **[Investment Discovery](investment_discovery/)** - Discover A+ opportunities
+  - [User Guide](investment_discovery/user_guide.md)
+  - [Developer Guide](investment_discovery/developer_guide.md)
+  - [API Reference](investment_discovery/api_reference.md)
+  - [FAQ](investment_discovery/faq.md)
 
-## 🔧 Tools & Utilities
+### Quantitative Analysis
 
-### Feature Flags & Configuration
-- **[Feature Flags Guide](feature_flags_guide.md)** - Feature flag system
-- **[Schema Enhancements Guide](schema_enhancements_guide.md)** - Schema improvements
-- **[Validation Criteria](validation_criteria.md)** - Validation rules
+- **[Quantitative Analysis](quantitative_analysis.md)** - Professional-grade analysis
+  - Backtesting engine
+  - Technical analysis
+  - Portfolio optimization
+  - Performance analytics
 
-### Knowledge Base
-- **[Knowledge Base Maintenance](knowledge_base_maintenance.md)** - KB maintenance guide
+## 🔧 System Documentation
 
-## 🚀 Deployment & Operations
+### Core Systems
 
-- **[Deployment Guide](deployment_guide.md)** - Deployment procedures
-- **[Operational Runbook](operational_runbook.md)** - Operations guide
-- **[Output Formatting Guide](output_formatting_guide.md)** - Report formatting
+- **[A+ Investment System](APLUS_SYSTEM.md)** - A+ discovery, scoring, and monitoring
+- **[System Operations](SYSTEM_OPERATIONS.md)** - Feedback learning, portfolio monitoring, knowledge base, integration
+- **[Perplexity Sonar Integration](perplexity_sonar_integration_spec.md)** - Enhanced research capabilities
 
-## 📖 Schemas & Data Models
+### Standards (in `.kiro/steering/`)
 
-- **[Schemas Documentation](schemas/README.md)** - Pydantic models and JSON schemas
+AI development standards are now in steering files for automatic guidance:
 
-## 🎓 CrewAI Best Practices
+- **agents.md** - Agent behavior guidelines
+- **output-standards.md** - Output formatting standards
+- **validation.md** - Validation rules and criteria
+- **crewai-standards.md** - CrewAI development patterns
+- **testing-standards.md** - Testing best practices
 
-- **[CrewAI Compliance Checklist](crewai_compliance_checklist.md)** - Compliance checklist
-- **[CrewAI Feature Usage Guide](crewai_feature_usage_guide.md)** - Feature usage
-- **[CrewAI Spirit](crewai_spirit.md)** - Philosophy and principles
+## 📦 Reference
 
-## 📝 Historical Documents
+### Schemas
 
-These documents capture historical context and completed work:
+- **[Schemas Documentation](schemas/)** - Pydantic models and JSON schemas
 
-### Improvement Summaries
-- **[Codebase Modernization](codebase_modernization.md)** - Modernization achievements
-- **[Quick Wins Implementation](QUICK_WINS_IMPLEMENTATION.md)** - Quick wins guide (SUPERSEDED by Development Guide)
-- **[Codebase Analysis Summary](CODEBASE_ANALYSIS_SUMMARY.md)** - Historical analysis
-- **[Coverage Improvement Summary](COVERAGE_IMPROVEMENT_SUMMARY.md)** - Coverage progress
-- **[DevOps Fixes Summary](DEVOPS_FIXES_SUMMARY.md)** - DevOps fixes
+### Change Requests
 
-### Test Reports
-- **[Final Test Summary](FINAL_TEST_SUMMARY.md)** - Test results
-- **[Test Quality Report](TEST_QUALITY_REPORT.md)** - Test quality metrics
-- **[Integration Test Status](INTEGRATION_TEST_STATUS.md)** - Integration test status
-- **[Portfolio Rebalancing Test Summary](portfolio_rebalancing_test_summary.md)** - Rebalancing tests
+- **[Change Requests](change_requests/)** - Historical change requests
 
-### Compliance & Quality
-- **[CrewAI Compliance Report](CrewAI_Compliance_Report.md)** - Compliance report
-- **[Documentation Updates](DOCUMENTATION_UPDATES.md)** - Documentation changes
-- **[Knowledge Base Tool Fix Summary](KNOWLEDGE_BASE_TOOL_FIX_SUMMARY.md)** - KB fixes
-- **[Logging Integration Verification](logging_integration_verification.md)** - Logging verification
+### Historical Documentation
 
-### Specifications
-- **[FinWiz Improvement Specification](FINWIZ_IMPROVEMENT_SPECIFICATION.md)** - Comprehensive improvement plan
+- **[Archive](archive/)** - Historical documentation and reports
 
-## 🗂️ Subdirectories
+## 🎯 By Use Case
 
-- **[change_requests/](change_requests/)** - Change request documents
-- **[fixes/](fixes/)** - Bug fix documentation
-- **[schemas/](schemas/)** - JSON schemas and examples
+### I want to
 
-## 🔍 Finding What You Need
+**Analyze my portfolio**
+→ [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md)
 
-### I want to...
+**Rebalance my portfolio**
+→ [Portfolio Rebalancing](portfolio_rebalancing/)
 
-**Get started with development**
-→ Start with [Development Guide](DEVELOPMENT_GUIDE.md)
+**Find new investment opportunities**
+→ [Investment Discovery](investment_discovery/)
 
-**Understand the architecture**
-→ Read [Design Principles](DESIGN_PRINCIPLES.md)
+**Run quantitative analysis**
+→ [Quantitative Analysis](quantitative_analysis.md)
+
+**Develop a new feature**
+→ [Developer Guide](DEVELOPER_GUIDE.md) + [Architecture Guide](ARCHITECTURE.md)
+
+**Create a new crew**
+→ [Developer Guide](DEVELOPER_GUIDE.md#crewai-development-standards)
+
+**Understand the codebase**
+→ [Architecture Guide](ARCHITECTURE.md)
 
 **Write tests**
-→ See [Test Coverage Stabilization](test_coverage_stabilization.md)
+→ [Developer Guide](DEVELOPER_GUIDE.md#testing-standards)
 
-**Add a new feature**
-→ Follow [Development Guide](DEVELOPMENT_GUIDE.md) patterns
+**Integrate an external service**
+→ [Architecture Guide](ARCHITECTURE.md#integration-patterns)
 
-**Deploy to production**
-→ Use [Deployment Guide](deployment_guide.md)
+## 📝 Implementation Summaries
 
-**Troubleshoot issues**
-→ Check [Operational Runbook](operational_runbook.md)
+Recent feature implementations:
 
-**Understand CrewAI patterns**
-→ Read [Agent Handbook](agent_handbook.md) and [CrewAI Spirit](crewai_spirit.md)
+- **[Task 1.1](../TASK_1.1_IMPLEMENTATION_SUMMARY.md)** - Core analysis tools and schema enhancements
+- **[Task 1.2](../TASK_1.2_IMPLEMENTATION_SUMMARY.md)** - Price target calculation and recommendations
+- **[Task 1.3](../TASK_1.3_IMPLEMENTATION_SUMMARY.md)** - Alternative finder and A+ integration
 
-**Work with portfolios**
-→ See [Portfolio Rebalancing User Guide](portfolio_rebalancing_user_guide.md)
+## 🔍 Search Tips
 
-**Discover A+ investments**
-→ Start with [Investment Discovery Index](investment_discovery_index.md)
+- Use your IDE's search (Cmd/Ctrl+Shift+F) to search across all documentation
+- Check the [API Reference](API_REFERENCE.md) for specific tool/schema documentation
+- Check the [Archive](archive/) for historical context
 
-## 📊 Documentation Status
+## 📞 Getting Help
 
-| Category | Status | Last Updated |
-|----------|--------|--------------|
-| Core Documentation | ✅ Current | 2025-02-10 |
-| Development Guides | ✅ Current | 2025-02-10 |
-| API References | ✅ Current | 2025-02-10 |
-| Testing Guides | ✅ Current | 2025-02-10 |
-| Historical Documents | 📦 Archived | Various |
-
-## 🤝 Contributing to Documentation
-
-When adding new documentation:
-
-1. **Follow the structure** - Use existing docs as templates
-2. **Update this index** - Add your document to the appropriate section
-3. **Use clear titles** - Make it easy to find
-4. **Include examples** - Show, don't just tell
-5. **Keep it current** - Update when code changes
-
-## 📞 Need Help?
-
-- Check the [FAQ](investment_discovery_faq.md) for common questions
-- Review the [Troubleshooting Guide](investment_discovery_troubleshooting_guide.md)
-- Consult the [Development Guide](DEVELOPMENT_GUIDE.md) for patterns
-- Open an issue if you can't find what you need
+- **Issues**: Report bugs or request features on GitHub
+- **Questions**: Check the [Investment Discovery FAQ](investment_discovery/faq.md)
+- **Updates**: Follow release notes for new features
 
 ---
 
-**Last Updated:** 2025-02-10  
-**Documentation Version:** 2.0  
-**Total Documents:** 50+
+**Documentation Version**: 2.0  
+**Last Updated**: 2025-03-10  
+**Total Documents**: ~30 (down from 60+)
+
+## Recent Changes
+
+### 2025-03-10: Phase 2 Documentation Consolidation
+
+**Phase 2 Complete** - Further consolidation and steering integration:
+
+- Reduced from ~30 files to ~20 core files (33% reduction)
+- Created 3 consolidated guides: USER_GUIDE.md, APLUS_SYSTEM.md, SYSTEM_OPERATIONS.md
+- Moved 5 standards to `.kiro/steering/` for AI guidance
+- Archived 6 more redundant files
+- Total reduction: 60+ files → ~20 files (67% reduction)
+
+**Steering Files Created**:
+
+- `agents.md` - Agent behavior guidelines
+- `output-standards.md` - Output formatting standards
+- `validation.md` - Validation rules
+- `crewai-standards.md` - CrewAI patterns
+- `testing-standards.md` - Testing standards
+
+### 2025-03-10: Phase 1 Documentation Consolidation
+
+- Consolidated 60+ files to ~30 core files
+- Created organized subdirectories for features
+- Archived 20+ historical documents
+- Created comprehensive navigation hub
+- Merged developer guides into single DEVELOPER_GUIDE.md
+- Merged architecture docs into single ARCHITECTURE.md
+- Created consolidated API_REFERENCE.md

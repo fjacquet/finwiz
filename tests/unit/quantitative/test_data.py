@@ -13,7 +13,6 @@ import pickle
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -382,15 +381,15 @@ class TestHistoricalDataManager:
         with pytest.raises(ValueError, match="Invalid interval"):
             data_manager._validate_inputs("AAPL", start_date, end_date, "invalid")
 
-    @patch("yfinance.Ticker")
-    def test_should_fetch_data_from_yfinance_successfully(self, mock_ticker, data_manager, sample_yfinance_data):
+    def test_should_fetch_data_from_yfinance_successfully(self, data_manager, sample_yfinance_data, mocker):
         """Test successful data fetching from yfinance."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
 
         # Mock yfinance response
-        mock_ticker_instance = MagicMock()
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
         mock_ticker_instance.history.return_value = sample_yfinance_data
         mock_ticker.return_value = mock_ticker_instance
 
@@ -404,15 +403,15 @@ class TestHistoricalDataManager:
         mock_ticker.assert_called_once_with(symbol)
         mock_ticker_instance.history.assert_called_once()
 
-    @patch("yfinance.Ticker")
-    def test_should_cache_data_after_fetching(self, mock_ticker, data_manager, sample_yfinance_data):
+    def test_should_cache_data_after_fetching(self, data_manager, sample_yfinance_data, mocker):
         """Test that data is cached after successful fetch."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
 
         # Mock yfinance response
-        mock_ticker_instance = MagicMock()
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
         mock_ticker_instance.history.return_value = sample_yfinance_data
         mock_ticker.return_value = mock_ticker_instance
 
@@ -430,15 +429,15 @@ class TestHistoricalDataManager:
         assert metadata["symbol"] == symbol
         assert metadata["row_count"] == len(sample_yfinance_data)
 
-    @patch("yfinance.Ticker")
-    def test_should_use_cached_data_when_available(self, mock_ticker, data_manager, sample_yfinance_data):
+    def test_should_use_cached_data_when_available(self, data_manager, sample_yfinance_data, mocker):
         """Test that cached data is used when available and valid."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
 
         # Mock yfinance response
-        mock_ticker_instance = MagicMock()
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
         mock_ticker_instance.history.return_value = sample_yfinance_data
         mock_ticker.return_value = mock_ticker_instance
 
@@ -459,7 +458,7 @@ class TestHistoricalDataManager:
         # Results should be identical
         pd.testing.assert_frame_equal(result1, result2)
 
-    def test_should_force_refresh_when_requested(self, data_manager, sample_yfinance_data):
+    def test_should_force_refresh_when_requested(self, data_manager, sample_yfinance_data, mocker):
         """Test force refresh bypasses cache."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
@@ -481,17 +480,17 @@ class TestHistoricalDataManager:
             "quality_score": 0.9,
         }
 
-        with patch("yfinance.Ticker") as mock_ticker:
-            mock_ticker_instance = MagicMock()
-            mock_ticker_instance.history.return_value = sample_yfinance_data
-            mock_ticker.return_value = mock_ticker_instance
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
+        mock_ticker_instance.history.return_value = sample_yfinance_data
+        mock_ticker.return_value = mock_ticker_instance
 
-            # Force refresh should call yfinance despite cache
-            data_manager.fetch_historical_data(symbol, start_date, end_date, force_refresh=True)
+        # Force refresh should call yfinance despite cache
+        data_manager.fetch_historical_data(symbol, start_date, end_date, force_refresh=True)
 
-            mock_ticker.assert_called_once_with(symbol)
+        mock_ticker.assert_called_once_with(symbol)
 
-    def test_should_handle_expired_cache(self, data_manager, sample_yfinance_data):
+    def test_should_handle_expired_cache(self, data_manager, sample_yfinance_data, mocker):
         """Test that expired cache entries are ignored."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
@@ -515,40 +514,40 @@ class TestHistoricalDataManager:
             "quality_score": 0.9,
         }
 
-        with patch("yfinance.Ticker") as mock_ticker:
-            mock_ticker_instance = MagicMock()
-            mock_ticker_instance.history.return_value = sample_yfinance_data
-            mock_ticker.return_value = mock_ticker_instance
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
+        mock_ticker_instance.history.return_value = sample_yfinance_data
+        mock_ticker.return_value = mock_ticker_instance
 
-            # Should fetch from yfinance due to expired cache
-            data_manager.fetch_historical_data(symbol, start_date, end_date)
+        # Should fetch from yfinance due to expired cache
+        data_manager.fetch_historical_data(symbol, start_date, end_date)
 
-            mock_ticker.assert_called_once_with(symbol)
+        mock_ticker.assert_called_once_with(symbol)
 
-    @patch("yfinance.Ticker")
-    def test_should_handle_yfinance_errors_gracefully(self, mock_ticker, data_manager):
+    def test_should_handle_yfinance_errors_gracefully(self, data_manager, mocker):
         """Test error handling when yfinance fails."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
 
         # Mock yfinance to raise exception
-        mock_ticker_instance = MagicMock()
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
         mock_ticker_instance.history.side_effect = Exception("Network error")
         mock_ticker.return_value = mock_ticker_instance
 
         with pytest.raises(RuntimeError, match="Failed to fetch data"):
             data_manager.fetch_historical_data(symbol, start_date, end_date)
 
-    @patch("yfinance.Ticker")
-    def test_should_handle_empty_yfinance_response(self, mock_ticker, data_manager):
+    def test_should_handle_empty_yfinance_response(self, data_manager, mocker):
         """Test handling of empty response from yfinance."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
 
         # Mock yfinance to return empty DataFrame
-        mock_ticker_instance = MagicMock()
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
         mock_ticker_instance.history.return_value = pd.DataFrame()
         mock_ticker.return_value = mock_ticker_instance
 
@@ -653,15 +652,15 @@ class TestHistoricalDataManager:
         assert cache_info.data_provider == DataProvider.YFINANCE
         assert cache_info.quality_score == 0.9
 
-    @patch("yfinance.Ticker")
-    def test_should_generate_data_quality_report(self, mock_ticker, data_manager, sample_yfinance_data):
+    def test_should_generate_data_quality_report(self, data_manager, sample_yfinance_data, mocker):
         """Test data quality report generation."""
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
 
         # Mock yfinance response
-        mock_ticker_instance = MagicMock()
+        mock_ticker = mocker.patch("yfinance.Ticker")
+        mock_ticker_instance = mocker.MagicMock()
         mock_ticker_instance.history.return_value = sample_yfinance_data
         mock_ticker.return_value = mock_ticker_instance
 

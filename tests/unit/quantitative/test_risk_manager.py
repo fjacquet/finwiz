@@ -6,7 +6,6 @@ tax-loss harvesting awareness, and position size validation.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import Mock
 
 import pytest
 
@@ -187,11 +186,13 @@ class TestRiskManager:
         # Assert
         assert risk_manager.config.concentration_limits.max_single_position == 0.15
 
-    def test_should_detect_concentration_violations_when_position_exceeds_limit(self, risk_manager, sample_portfolio_config):
+    def test_should_detect_concentration_violations_when_position_exceeds_limit(
+        self, risk_manager, sample_portfolio_config, mocker
+    ):
         """Test detection of concentration limit violations."""
         # Arrange
         # Create result with high concentration
-        high_concentration_result = Mock()
+        high_concentration_result = mocker.Mock()
         high_concentration_result.projected_portfolio.weightings = {
             "AAPL": 0.60,  # Very high concentration to ensure risk score > 5
             "GOOGL": 0.20,
@@ -410,11 +411,11 @@ class TestRiskManager:
         assert is_safe is True
         assert len(blocking_issues) == 0
 
-    def test_should_block_unsafe_rebalancing_when_critical_risks_present(self, risk_manager, sample_portfolio_config):
+    def test_should_block_unsafe_rebalancing_when_critical_risks_present(self, risk_manager, sample_portfolio_config, mocker):
         """Test blocking of unsafe rebalancing scenarios."""
         # Arrange
         # Create unsafe rebalancing result with extreme concentration
-        unsafe_result = Mock()
+        unsafe_result = mocker.Mock()
         unsafe_result.projected_portfolio.weightings = {
             "AAPL": 0.80,  # Extreme concentration
             "GOOGL": 0.10,
@@ -505,10 +506,10 @@ class TestRiskManager:
         high_vol_risk = risk_manager._calculate_volatility_risk(0.50)
         assert high_vol_risk > 7.0
 
-    def test_should_recommend_tolerance_adjustment_for_high_volatility(self, risk_manager):
+    def test_should_recommend_tolerance_adjustment_for_high_volatility(self, risk_manager, mocker):
         """Test tolerance adjustment recommendations for high volatility."""
         # Arrange
-        volatility_warning = Mock()
+        volatility_warning = mocker.Mock()
         volatility_warning.warning_type = RiskWarningType.VOLATILITY
         volatility_warning.risk_level = RiskLevel.HIGH
 
@@ -519,18 +520,18 @@ class TestRiskManager:
         assert adjustment is not None
         assert adjustment >= 0.08
 
-    def test_should_recommend_frequency_based_on_risk_level(self, risk_manager):
+    def test_should_recommend_frequency_based_on_risk_level(self, risk_manager, mocker):
         """Test rebalancing frequency recommendations based on risk levels."""
         # Test high risk scenario
         high_risk_warnings = [
-            Mock(risk_level=RiskLevel.HIGH),
-            Mock(risk_level=RiskLevel.HIGH),
-            Mock(risk_level=RiskLevel.CRITICAL),
+            mocker.Mock(risk_level=RiskLevel.HIGH),
+            mocker.Mock(risk_level=RiskLevel.HIGH),
+            mocker.Mock(risk_level=RiskLevel.CRITICAL),
         ]
         frequency = risk_manager._recommend_rebalancing_frequency(high_risk_warnings, 0.40)
         assert "Delay" in frequency or "risks subside" in frequency
 
         # Test low risk scenario
-        low_risk_warnings = [Mock(risk_level=RiskLevel.LOW)]
+        low_risk_warnings = [mocker.Mock(risk_level=RiskLevel.LOW)]
         frequency = risk_manager._recommend_rebalancing_frequency(low_risk_warnings, 0.15)
         assert "Monthly" in frequency or "standard" in frequency

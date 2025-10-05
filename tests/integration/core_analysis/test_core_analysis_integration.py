@@ -6,13 +6,12 @@ and the main flow orchestration.
 """
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 import pytest
 
+from finwiz.flows.flow_orchestrator import FinwizFlow
 from finwiz.integration.data_accessor import CrewDataAccessor
 from finwiz.integration.manager import CrewDataIntegrationManager
-from finwiz.main import FinwizFlow
 from finwiz.utils.core_analysis_error_handler import CoreAnalysisErrorHandler
 
 
@@ -130,32 +129,31 @@ class TestCoreAnalysisIntegration:
         result = integration_manager.store_crew_output("stock", invalid_output)
         assert result is True  # Integration manager is permissive
 
-    @patch("finwiz.main.is_feature_enabled")
-    @patch("finwiz.main.CryptoCrew")
-    @patch("finwiz.main.StockCrew")
-    @patch("finwiz.main.EtfCrew")
-    def test_should_integrate_all_crews_in_flow(
-        self, mock_etf_crew_class, mock_stock_crew_class, mock_crypto_crew_class, mock_feature_enabled, mock_crew_outputs
-    ):
+    def test_should_integrate_all_crews_in_flow(self, mocker, mock_crew_outputs):
         """Test that all crews integrate properly in the main flow."""
+        # Mock the crews and feature flags
+        mock_feature_enabled = mocker.patch("finwiz.main.is_feature_enabled")
+        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
+        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
+        mock_etf_crew_class = mocker.patch("finwiz.main.EtfCrew")
         # Mock feature flags
         mock_feature_enabled.return_value = True
 
         # Mock crew instances and results
-        mock_crypto_crew = MagicMock()
-        mock_crypto_result = MagicMock()
+        mock_crypto_crew = mocker.MagicMock()
+        mock_crypto_result = mocker.MagicMock()
         mock_crypto_result.raw = str(mock_crew_outputs["crypto"])
         mock_crypto_crew.crew().kickoff.return_value = mock_crypto_result
         mock_crypto_crew_class.return_value = mock_crypto_crew
 
-        mock_stock_crew = MagicMock()
-        mock_stock_result = MagicMock()
+        mock_stock_crew = mocker.MagicMock()
+        mock_stock_result = mocker.MagicMock()
         mock_stock_result.raw = str(mock_crew_outputs["stock"])
         mock_stock_crew.crew().kickoff.return_value = mock_stock_result
         mock_stock_crew_class.return_value = mock_stock_crew
 
-        mock_etf_crew = MagicMock()
-        mock_etf_result = MagicMock()
+        mock_etf_crew = mocker.MagicMock()
+        mock_etf_result = mocker.MagicMock()
         mock_etf_result.raw = str(mock_crew_outputs["etf"])
         mock_etf_crew.crew().kickoff.return_value = mock_etf_result
         mock_etf_crew_class.return_value = mock_etf_crew
@@ -344,9 +342,10 @@ class TestCoreAnalysisIntegration:
             assert isinstance(crew_data["confidence"], float)
             assert 0.0 <= crew_data["confidence"] <= 1.0
 
-    @patch("finwiz.main.is_feature_enabled")
-    def test_should_handle_feature_flag_combinations(self, mock_feature_enabled):
+    def test_should_handle_feature_flag_combinations(self, mocker):
         """Test that different feature flag combinations work properly."""
+        # Mock feature flags
+        mock_feature_enabled = mocker.patch("finwiz.main.is_feature_enabled")
 
         # Test with only stock analysis enabled
         def mock_feature_side_effect(feature_name):
@@ -356,9 +355,9 @@ class TestCoreAnalysisIntegration:
 
         flow = FinwizFlow()
 
-        with patch("finwiz.main.StockCrew") as mock_stock_crew_class:
-            mock_stock_crew = MagicMock()
-            mock_result = MagicMock()
+        with mocker.patch("finwiz.main.StockCrew") as mock_stock_crew_class:
+            mock_stock_crew = mocker.MagicMock()
+            mock_result = mocker.MagicMock()
             mock_result.raw = "Stock analysis only"
             mock_stock_crew.crew().kickoff.return_value = mock_result
             mock_stock_crew_class.return_value = mock_stock_crew

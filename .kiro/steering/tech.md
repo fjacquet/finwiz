@@ -7,20 +7,47 @@ inclusion: always
 ## Core Technology Stack
 
 **Framework**: CrewAI Flow with Python 3.10+, managed by `uv` package manager
-**Code Quality**: Ruff (110 char limit), pytest with pytest-mock
+**Code Quality**: Ruff (110 char limit), pytest with pytest-mock (unittest.mock BANNED)
 **Data Validation**: Pydantic v2 strict mode, schemas in `src/finwiz/schemas/`
 
 ### Essential Commands
+
 ```bash
 uv run python src/finwiz/main.py    # Run application
 uv run pytest -m "not integration"  # Unit tests only
 ruff check . && ruff format .        # Lint and format
+make check-unittest-mock             # Check for banned unittest.mock
 ```
+
+### unittest.mock is BANNED ⛔
+
+**CRITICAL**: `unittest.mock` is completely banned with 4-layer enforcement:
+
+1. **Ruff TID rules** - Automatic detection in linting
+2. **Pre-commit hook** - Blocks commits with unittest.mock
+3. **Runtime blocker** - Raises ImportError on import
+4. **Manual check** - `make check-unittest-mock`
+
+**Only pytest-mock is allowed:**
+
+```python
+# ✅ CORRECT - Always use this
+def test_example(mocker):
+    mock_obj = mocker.patch('module.function')
+    mock_obj.return_value = 'test'
+
+# ❌ BANNED - Will be blocked by enforcement
+from unittest.mock import patch, Mock
+```
+
+**Docs**: `docs/TESTING_ENFORCEMENT.md`, `docs/UNITTEST_MOCK_BLACKLIST.md`
 
 ## Architecture Patterns
 
 ### CrewAI Structure (Required)
+
 All crews must follow this exact structure:
+
 ```
 src/finwiz/crews/{crew_name}/
 ├── {crew_name}.py          # @agent, @task, @crew decorators
@@ -30,12 +57,14 @@ src/finwiz/crews/{crew_name}/
 ```
 
 ### File Organization
+
 - **Python files**: `snake_case.py`
-- **Schema files**: `PascalCase.schema.json` 
+- **Schema files**: `PascalCase.schema.json`
 - **Config files**: `kebab-case.yaml`
 - **Import order**: stdlib → third-party → local (blank line separated)
 
 ### Code Standards
+
 ```python
 # Required: Type hints for public methods
 async def analyze_stock(ticker: str) -> StockAnalysis:
@@ -52,6 +81,7 @@ async def analyze_stock(ticker: str) -> StockAnalysis:
 ## Testing Requirements
 
 ### Mandatory Patterns
+
 - **Mock all external calls**: APIs, file system, network requests
 - **Test naming**: `test_should_{behavior}_when_{condition}`
 - **Structure**: Arrange-Act-Assert with clear assertions
@@ -75,7 +105,9 @@ def test_should_return_buy_recommendation_when_strong_metrics(mocker):
 ## Data Validation & Security
 
 ### Pydantic Models (Strict)
+
 All inputs/outputs must use Pydantic v2 with strict validation:
+
 ```python
 from pydantic import BaseModel, Field
 
@@ -86,6 +118,7 @@ class TickerInput(BaseModel):
 ```
 
 ### Environment Variables (Required)
+
 - `OPENAI_API_KEY`, `SERPER_API_KEY`, `FIRECRAWL_API_KEY`, `ALPHA_VANTAGE_API_KEY`
 - Never log API keys or sensitive data
 - Fail fast with clear messages if keys missing
@@ -93,6 +126,7 @@ class TickerInput(BaseModel):
 ## Performance Patterns
 
 ### Async Operations (Required for I/O)
+
 ```python
 # Use asyncio.gather() for parallel operations
 results = await asyncio.gather(
@@ -107,6 +141,7 @@ async with httpx.AsyncClient(timeout=30.0) as client:
 ```
 
 ### Memory Management
+
 - Process large datasets in chunks
 - Use generators for streaming data
 - Always use context managers for file operations

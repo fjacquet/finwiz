@@ -11,8 +11,8 @@ from typing import Any
 from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
 
-from ..schemas.integration import CrewOutputMetadata
-from ..validation.result import ValidationResult as BaseValidationResult
+from finwiz.schemas.integration import CrewOutputMetadata
+from finwiz.validation.result import ValidationResult as BaseValidationResult
 
 
 class ValidationRules:

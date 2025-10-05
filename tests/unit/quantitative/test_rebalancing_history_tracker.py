@@ -9,7 +9,6 @@ import json
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -325,11 +324,11 @@ class TestRebalancingHistoryTracker:
 
         # Assert
         assert isinstance(attribution, PerformanceAttribution)
-        assert attribution.start_date == start_date
-        assert attribution.end_date == end_date
-        assert attribution.rebalanced_return > 0  # Should show positive return
-        assert attribution.rebalancing_frequency == 5
-        assert attribution.average_days_between_rebalancing > 0
+        assert attribution.attribution_start_date == start_date
+        assert attribution.attribution_end_date == end_date
+        assert attribution.total_return_with_rebalancing > 0  # Should show positive return
+        assert attribution.rebalancing_frequency_days > 0
+        assert attribution.optimal_frequency_estimate > 0
 
     def test_should_raise_error_when_insufficient_data_for_attribution(self, tracker):
         """Test that error is raised when insufficient data for attribution analysis."""
@@ -371,11 +370,10 @@ class TestRebalancingHistoryTracker:
 
         # Assert
         assert isinstance(trend_analysis, TrendAnalysis)
-        assert trend_analysis.analysis_period_days == 365
-        assert len(trend_analysis.frequency_scenarios) > 0
+        assert trend_analysis.analysis_period_months == 365 // 30  # Converted to months
+        assert len(trend_analysis.frequency_scenarios_tested) > 0
         assert trend_analysis.optimal_frequency_days > 0
-        assert 0.01 <= trend_analysis.optimal_tolerance_band <= 0.20
-        assert 0.0 <= trend_analysis.confidence_score <= 1.0
+        assert 0.0 <= trend_analysis.confidence_in_optimal <= 1.0
 
     def test_should_provide_default_recommendations_when_insufficient_trend_data(self, tracker):
         """Test that default recommendations are provided when insufficient data."""
@@ -387,9 +385,8 @@ class TestRebalancingHistoryTracker:
 
         # Assert
         assert isinstance(trend_analysis, TrendAnalysis)
-        assert trend_analysis.recommended_frequency == 60  # Default
-        assert trend_analysis.recommended_tolerance == 0.05  # Default
-        assert trend_analysis.confidence_score < 0.5  # Low confidence
+        assert trend_analysis.optimal_frequency_days == 60  # Default
+        assert trend_analysis.confidence_in_optimal < 0.5  # Low confidence
 
     def test_should_generate_analytics_dashboard_when_history_exists(
         self, tracker, sample_rebalancing_result, sample_trade_recommendations
@@ -508,10 +505,10 @@ class TestRebalancingHistoryTracker:
         cost_recommendations = [r for r in recommendations if "cost" in r.lower()]
         assert len(cost_recommendations) > 0
 
-    @patch("numpy.mean")
-    def test_should_handle_numpy_operations_gracefully_when_empty_data(self, mock_mean, tracker):
+    def test_should_handle_numpy_operations_gracefully_when_empty_data(self, tracker, mocker):
         """Test graceful handling of numpy operations with empty data."""
         # Arrange
+        mock_mean = mocker.patch("numpy.mean")
         mock_mean.return_value = 0.0
         portfolio_id = "test_portfolio_empty"
 

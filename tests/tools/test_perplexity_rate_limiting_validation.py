@@ -5,8 +5,6 @@ Focused tests for exponential backoff, circuit breaker behavior, and
 performance validation to ensure compliance with requirements.
 """
 
-from unittest.mock import AsyncMock
-
 import pytest
 
 from finwiz.tools.perplexity_analysis_integration import (
@@ -43,7 +41,7 @@ class TestPerplexityRateLimitingAndFailures:
         ]
 
         # Mock sleep to avoid actual delays in tests
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = await mock_integration.search_financial_news(
@@ -66,7 +64,7 @@ class TestPerplexityRateLimitingAndFailures:
             for _ in range(5)  # More failures than max retries
         ]
 
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = await mock_integration.search_financial_news(
@@ -88,7 +86,7 @@ class TestPerplexityRateLimitingAndFailures:
             '{"choices": [{"message": {"content": "Success"}}], "citations": []}',
         ]
 
-        mock_sleep = mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+        mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = await mock_integration.search_financial_news(

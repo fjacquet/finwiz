@@ -9,8 +9,14 @@ import os
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from finwiz.schemas.tools import (
+    CoinInfoInput,
+    CryptocurrencyHistoricalInput,
+    CryptocurrencyListInput,
+    CryptocurrencyNewsInput,
+)
 from finwiz.tools.logger import get_logger
 from finwiz.utils.api_decorators import api_tool
 from finwiz.utils.rate_limiter import APIProvider
@@ -23,39 +29,6 @@ CMC_BASE_URL = "https://pro-api.coinmarketcap.com/v1"
 
 class CoinMarketCapException(Exception):
     """Exception raised for CoinMarketCap API errors."""
-
-
-class CoinInfoInput(BaseModel):
-    """Input schema for CoinMarketCapInfoTool."""
-
-    symbol: str = Field(..., description="Cryptocurrency symbol/ticker (e.g., BTC, ETH, SOL)")
-
-
-class CryptocurrencyListInput(BaseModel):
-    """Input schema for CoinMarketCapListTool."""
-
-    limit: int = Field(25, description="Number of cryptocurrencies to return (default: 25, max: 100)")
-    sort: str = Field(
-        "market_cap",
-        description="Sort cryptocurrencies by: 'market_cap', 'volume_24h', 'price', or 'percent_change_24h'",
-    )
-
-
-class CryptocurrencyHistoricalInput(BaseModel):
-    """Input schema for CoinMarketCapHistoricalTool."""
-
-    symbol: str = Field(..., description="Cryptocurrency symbol/ticker (e.g., BTC, ETH, SOL)")
-    time_period: str = Field(
-        "30d",
-        description="Time period for historical data: '24h', '7d', '30d', '3m', '1y', or 'ytd'",
-    )
-
-
-class CryptocurrencyNewsInput(BaseModel):
-    """Input schema for CoinMarketCapNewsTool."""
-
-    symbol: str | None = Field(None, description="Cryptocurrency symbol to get news for (optional)")
-    limit: int = Field(10, description="Number of news articles to return (default: 10, max: 100)")
 
 
 class CoinMarketCapInfoTool(BaseTool):

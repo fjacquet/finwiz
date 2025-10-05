@@ -8,7 +8,6 @@ and startup configuration validation.
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -77,10 +76,10 @@ class TestConfigurationManager:
             # Cleanup
             Path(temp_env_file).unlink()
 
-    def test_should_validate_required_api_keys_successfully(self):
+    def test_should_validate_required_api_keys_successfully(self, mocker):
         """Test successful validation of all required API keys."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -175,10 +174,10 @@ class TestConfigurationManager:
         assert "environment variables" in guidance
         assert "Example .env file:" in guidance
 
-    def test_should_get_api_key_for_configured_service(self):
+    def test_should_get_api_key_for_configured_service(self, mocker):
         """Test getting API key for a configured service."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -196,7 +195,7 @@ class TestConfigurationManager:
             # Assert
             assert api_key == "sk-test-openai-key-1234567890"
 
-    def test_should_return_none_for_unconfigured_service(self):
+    def test_should_return_none_for_unconfigured_service(self, mocker):
         """Test that None is returned for unconfigured services."""
         # Arrange
         config_manager = ConfigurationManager()
@@ -207,10 +206,10 @@ class TestConfigurationManager:
         # Assert
         assert api_key is None
 
-    def test_should_check_service_availability(self):
+    def test_should_check_service_availability(self, mocker):
         """Test checking if a service is available."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -226,10 +225,10 @@ class TestConfigurationManager:
             assert config_manager.is_service_available("OpenAI") is True
             assert config_manager.is_service_available("NonExistentService") is False
 
-    def test_should_provide_configuration_summary(self):
+    def test_should_provide_configuration_summary(self, mocker):
         """Test getting comprehensive configuration summary."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -281,10 +280,10 @@ class TestConfigurationManager:
             # Directory should exist after validation (may have been created)
             assert dir_path.exists() or True  # Allow for existing directories
 
-    def test_should_perform_comprehensive_startup_validation(self):
+    def test_should_perform_comprehensive_startup_validation(self, mocker):
         """Test comprehensive startup validation."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -314,7 +313,7 @@ class TestConfigurationManager:
 class TestConfigurationManagerConvenienceFunctions:
     """Test suite for convenience functions."""
 
-    def test_should_get_configuration_manager_singleton(self):
+    def test_should_get_configuration_manager_singleton(self, mocker):
         """Test that get_configuration_manager returns singleton instance."""
         # Arrange & Act
         manager1 = get_configuration_manager()
@@ -323,10 +322,10 @@ class TestConfigurationManagerConvenienceFunctions:
         # Assert
         assert manager1 is manager2
 
-    def test_should_validate_startup_configuration_via_convenience_function(self):
+    def test_should_validate_startup_configuration_via_convenience_function(self, mocker):
         """Test validate_startup_configuration convenience function."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -341,10 +340,10 @@ class TestConfigurationManagerConvenienceFunctions:
             # Assert
             assert isinstance(result, bool)
 
-    def test_should_get_api_key_via_convenience_function(self):
+    def test_should_get_api_key_via_convenience_function(self, mocker):
         """Test get_api_key convenience function."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -361,10 +360,10 @@ class TestConfigurationManagerConvenienceFunctions:
             # Assert
             assert api_key == "sk-test-openai-key-1234567890"
 
-    def test_should_check_service_availability_via_convenience_function(self):
+    def test_should_check_service_availability_via_convenience_function(self, mocker):
         """Test is_service_available convenience function."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -470,10 +469,10 @@ class TestConfigurationManagerIntegration:
         assert result is True
         assert "Chart-img" in config_manager.api_keys
 
-    def test_should_handle_mixed_required_and_optional_keys(self):
+    def test_should_handle_mixed_required_and_optional_keys(self, mocker):
         """Test handling of mixed required and optional API keys."""
         # Arrange
-        with patch.dict(
+        with mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",

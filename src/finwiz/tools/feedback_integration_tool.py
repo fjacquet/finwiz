@@ -10,7 +10,6 @@ import asyncio
 from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
 
 from finwiz.schemas.feedback import (
     PerformanceFeedback,
@@ -19,44 +18,15 @@ from finwiz.schemas.feedback import (
     UserFeedback,
 )
 from finwiz.schemas.investment_discovery import APlusCriteria
+from finwiz.schemas.tools import (
+    CriteriaOptimizationInput,
+    FeedbackCollectionInput,
+    PerformanceTrackingInput,
+)
 from finwiz.services.feedback_service import get_feedback_service
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-class FeedbackCollectionInput(BaseModel):
-    """Input for collecting user feedback on recommendations."""
-
-    user_id: str = Field(..., description="User identifier")
-    recommendation_id: str = Field(..., description="Recommendation ID")
-    symbol: str = Field(..., description="Investment symbol")
-    asset_type: str = Field(..., description="Asset type (etf, stock, crypto)")
-    outcome: str = Field(..., description="User outcome (accepted, rejected, etc.)")
-    sentiment: str = Field(..., description="User sentiment (positive, negative, etc.)")
-    confidence_rating: int = Field(..., ge=1, le=5, description="User confidence (1-5)")
-    reasons: list[str] = Field(default_factory=list, description="Reasons for decision")
-    user_comments: str = Field(default="", description="Optional user comments")
-
-
-class PerformanceTrackingInput(BaseModel):
-    """Input for tracking performance of accepted recommendations."""
-
-    recommendation_id: str = Field(..., description="Original recommendation ID")
-    symbol: str = Field(..., description="Investment symbol")
-    holding_period_days: int = Field(..., ge=1, description="Days since investment")
-    absolute_return: float = Field(..., description="Absolute return percentage")
-    benchmark_return: float = Field(..., description="Benchmark return")
-    current_grade: str = Field(..., description="Current grade")
-    grade_maintained: bool = Field(..., description="Whether A+ grade maintained")
-
-
-class CriteriaOptimizationInput(BaseModel):
-    """Input for optimizing A+ criteria based on feedback."""
-
-    current_criteria: dict[str, Any] = Field(..., description="Current A+ criteria")
-    analysis_period_days: int = Field(default=90, description="Days to analyze")
-    force_adjustment: bool = Field(default=False, description="Force adjustment regardless of timing")
 
 
 class FeedbackCollectionTool(BaseTool):

@@ -101,18 +101,22 @@ Cette spec définit le développement d'agents IA spécialisés dans la découve
 ## Edge Cases et Considérations
 
 ### Gestion des Conflits
+
 - Que faire si un investissement A+ ne correspond pas au profil de risque de l'utilisateur ?
 - Comment gérer les investissements A+ avec des corrélations élevées ?
 
 ### Limites Réglementaires
+
 - Respect des restrictions UCITS pour les investisseurs européens
 - Gestion des limites de concentration par position
 
 ### Performance du Système
+
 - Optimisation des requêtes de screening sur de grandes bases de données
 - Mise en cache des résultats de scoring pour éviter les recalculs
 
 ### Personnalisation
+
 - Adaptation des critères A+ selon le profil d'investisseur (conservateur, équilibré, agressif)
 - Prise en compte des préférences ESG et d'impact
 

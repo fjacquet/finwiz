@@ -14,9 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..schemas.integration import (
-    CrewOutputMetadata,
-)
+from finwiz.schemas.integration import CrewOutputMetadata
 
 
 class StorageResult(BaseModel):

@@ -5,7 +5,6 @@ Tests cover portfolio drift monitoring, alert generation, and health dashboard f
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -22,7 +21,6 @@ from finwiz.schemas.portfolio_rebalancing import (
     Holding,
     PortfolioConfiguration,
     RebalancingNeed,
-    TradeAction,
 )
 
 
@@ -33,7 +31,9 @@ class TestPortfolioMonitor:
     def mock_price_service(self, mocker):
         """Mock price service."""
         mock_service = mocker.patch("finwiz.quantitative.portfolio_monitor.PortfolioPriceService")
-        mock_service.return_value.get_current_prices = AsyncMock(return_value={"AAPL": 150.0, "GOOGL": 2500.0, "MSFT": 300.0})
+        mock_service.return_value.get_current_prices = mocker.AsyncMock(
+            return_value={"AAPL": 150.0, "GOOGL": 2500.0, "MSFT": 300.0}
+        )
         return mock_service.return_value
 
     @pytest.fixture
@@ -67,9 +67,8 @@ class TestPortfolioMonitor:
                 target_weight=0.4,
                 deviation=-0.05,
                 tolerance_band=0.05,
-                exceeds_tolerance=False,
+                needs_rebalancing=False,
                 urgency_score=0.3,
-                recommended_action=TradeAction.HOLD,
             ),
             RebalancingNeed(
                 symbol="GOOGL",
@@ -77,9 +76,8 @@ class TestPortfolioMonitor:
                 target_weight=0.4,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
+                needs_rebalancing=True,
                 urgency_score=0.8,
-                recommended_action=TradeAction.SELL,
             ),
             RebalancingNeed(
                 symbol="MSFT",
@@ -87,9 +85,8 @@ class TestPortfolioMonitor:
                 target_weight=0.2,
                 deviation=-0.05,
                 tolerance_band=0.05,
-                exceeds_tolerance=False,
+                needs_rebalancing=False,
                 urgency_score=0.3,
-                recommended_action=TradeAction.HOLD,
             ),
         ]
 
@@ -140,12 +137,17 @@ class TestPortfolioMonitor:
 
     @pytest.mark.asyncio
     async def test_should_check_portfolio_drift_when_requested(
-        self, portfolio_monitor, mock_portfolio_analyzer, sample_portfolio_config, sample_rebalancing_needs
+        self, mocker, portfolio_monitor, mock_portfolio_analyzer, sample_portfolio_config, sample_rebalancing_needs
     ):
         """Test portfolio drift checking."""
         # Arrange
         portfolio_id = "test_portfolio"
-        mock_portfolio_analyzer.analyze_current_portfolio = AsyncMock()
+
+        # Create mock analysis result with weightings
+        mock_analysis = mocker.Mock()
+        mock_analysis.weightings = {"AAPL": 0.35, "GOOGL": 0.5, "MSFT": 0.15}
+
+        mock_portfolio_analyzer.analyze_current_portfolio.return_value = mock_analysis
         mock_portfolio_analyzer.identify_rebalancing_needs.return_value = sample_rebalancing_needs
 
         # Act
@@ -157,12 +159,12 @@ class TestPortfolioMonitor:
 
     @pytest.mark.asyncio
     async def test_should_generate_health_dashboard_when_requested(
-        self, portfolio_monitor, sample_portfolio_config, sample_rebalancing_needs
+        self, mocker, portfolio_monitor, sample_portfolio_config, sample_rebalancing_needs
     ):
         """Test health dashboard generation."""
         # Arrange
         portfolio_id = "test_portfolio"
-        portfolio_monitor.check_portfolio_drift = AsyncMock(return_value=sample_rebalancing_needs)
+        portfolio_monitor.check_portfolio_drift = mocker.AsyncMock(return_value=sample_rebalancing_needs)
 
         # Act
         dashboard = await portfolio_monitor.generate_health_dashboard(portfolio_id, sample_portfolio_config)
@@ -208,10 +210,10 @@ class TestPortfolioMonitor:
         # Assert
         assert urgency == UrgencyLevel.LOW
 
-    def test_should_determine_correct_urgency_when_critical_deviation(self, portfolio_monitor):
+    def test_should_determine_correct_urgency_when_critical_deviation(self, portfolio_monitor, mocker):
         """Test urgency determination with critical deviation."""
         # Arrange
-        positions_needing_attention = [MagicMock()]
+        positions_needing_attention = [mocker.MagicMock()]
         max_deviation = 0.25
 
         # Act
@@ -220,10 +222,10 @@ class TestPortfolioMonitor:
         # Assert
         assert urgency == UrgencyLevel.CRITICAL
 
-    def test_should_determine_correct_urgency_when_high_deviation(self, portfolio_monitor):
+    def test_should_determine_correct_urgency_when_high_deviation(self, portfolio_monitor, mocker):
         """Test urgency determination with high deviation."""
         # Arrange
-        positions_needing_attention = [MagicMock()]
+        positions_needing_attention = [mocker.MagicMock()]
         max_deviation = 0.18
 
         # Act
@@ -232,10 +234,10 @@ class TestPortfolioMonitor:
         # Assert
         assert urgency == UrgencyLevel.HIGH
 
-    def test_should_determine_correct_urgency_when_multiple_positions(self, portfolio_monitor):
+    def test_should_determine_correct_urgency_when_multiple_positions(self, portfolio_monitor, mocker):
         """Test urgency determination with multiple positions."""
         # Arrange
-        positions_needing_attention = [MagicMock(), MagicMock(), MagicMock()]
+        positions_needing_attention = [mocker.MagicMock(), mocker.MagicMock(), mocker.MagicMock()]
         max_deviation = 0.08
 
         # Act
@@ -554,9 +556,8 @@ class TestPortfolioHealthDashboard:
             target_weight=0.4,
             deviation=-0.05,
             tolerance_band=0.05,
-            exceeds_tolerance=True,
+            needs_rebalancing=True,
             urgency_score=0.8,
-            recommended_action=TradeAction.BUY,
         )
 
         # Act

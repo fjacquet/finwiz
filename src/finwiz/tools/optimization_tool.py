@@ -10,26 +10,10 @@ from typing import Any
 
 import numpy as np
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from finwiz.schemas.tools import OptimizationInput
 from finwiz.tools.logger import get_logger
-
-logger = get_logger(__name__)
-
-
-class OptimizationInput(BaseModel):
-    """Input model for portfolio optimization tool."""
-
-    assets: list[str] = Field(..., description="List of asset symbols to optimize")
-    expected_returns: dict[str, float] | None = Field(None, description="Expected returns for each asset (optional)")
-    risk_tolerance: float = Field(default=0.5, description="Risk tolerance (0.0 = risk averse, 1.0 = risk seeking)")
-    optimization_method: str = Field(
-        default="mean_variance", description="Optimization method: 'mean_variance', 'risk_parity', 'equal_weight'"
-    )
-    constraints: dict[str, Any] | None = Field(None, description="Additional constraints")
-    target_return: float | None = Field(None, description="Target return for optimization")
-    max_weight: float = Field(default=0.4, description="Maximum weight per asset")
-    min_weight: float = Field(default=0.0, description="Minimum weight per asset")
 
 
 class OptimizationTool(BaseTool):
@@ -282,3 +266,6 @@ class OptimizationTool(BaseTool):
 def get_optimization_tool() -> OptimizationTool:
     """Get an instance of the optimization tool."""
     return OptimizationTool()
+
+
+logger = get_logger(__name__)

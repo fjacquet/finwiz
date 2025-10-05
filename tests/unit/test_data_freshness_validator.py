@@ -6,7 +6,6 @@ age calculation, and market schedule adjustments.
 """
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import patch
 
 from finwiz.utils.data_freshness_validator import DataFreshnessValidator, FreshnessResult, MarketCalendar
 
@@ -177,7 +176,7 @@ class TestDataFreshnessValidator:
         assert result.age_hours is not None
         assert result.age_hours < 2
 
-    def test_should_adjust_age_for_weekend_data(self):
+    def test_should_adjust_age_for_weekend_data(self, mocker):
         """Test age adjustment for weekend data."""
         validator = DataFreshnessValidator(max_age_hours=24)
 
@@ -186,17 +185,17 @@ class TestDataFreshnessValidator:
         # Create a Saturday date for testing
         saturday = datetime(2024, 1, 6, 12, 0, 0, tzinfo=UTC)  # Saturday
 
-        with patch.object(validator.market_calendar, "is_weekend", return_value=True):
-            data = {
-                "symbol": "AAPL",
-                "timestamp": saturday.isoformat(),  # Use the Saturday timestamp
-            }
+        mocker.patch.object(validator.market_calendar, "is_weekend", return_value=True)
+        data = {
+            "symbol": "AAPL",
+            "timestamp": saturday.isoformat(),  # Use the Saturday timestamp
+        }
 
-            result = validator.validate_data_freshness(data, "test_source")
+        result = validator.validate_data_freshness(data, "test_source")
 
-            # Should be considered fresh due to weekend adjustment (30 * 0.7 = 21 hours)
-            assert result.effective_age_hours is not None
-            assert result.effective_age_hours < result.age_hours
+        # Should be considered fresh due to weekend adjustment (30 * 0.7 = 21 hours)
+        assert result.effective_age_hours is not None
+        assert result.effective_age_hours < result.age_hours
 
     def test_should_add_freshness_metadata_to_dict(self):
         """Test adding freshness metadata to data dictionary."""

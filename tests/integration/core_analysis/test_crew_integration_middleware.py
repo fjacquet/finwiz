@@ -10,7 +10,6 @@ import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -29,27 +28,29 @@ class TestCrewIntegrationMiddleware:
         shutil.rmtree(temp_dir)
 
     @pytest.fixture
-    def mock_integration_manager(self):
+    def mock_integration_manager(self, mocker):
         """Create mock integration manager."""
-        manager = MagicMock()
+        manager = mocker.MagicMock()
         manager.get_crew_data_with_freshness_check.return_value = {"test": "data"}
-        manager.freshness_checker.check_data_freshness_for_crew.return_value = MagicMock(freshness_status=MagicMock(is_fresh=True))
-        manager.coordinate_crew_execution = AsyncMock(
+        manager.freshness_checker.check_data_freshness_for_crew.return_value = mocker.MagicMock(
+            freshness_status=mocker.MagicMock(is_fresh=True)
+        )
+        manager.coordinate_crew_execution = mocker.AsyncMock(
             return_value=ExecutionResult(success=True, executed_crews=["test_crew"], failed_crews=[], execution_time=1.0, errors=[])
         )
         return manager
 
     @pytest.fixture
-    def mock_data_accessor(self):
+    def mock_data_accessor(self, mocker):
         """Create mock data accessor."""
-        accessor = MagicMock()
+        accessor = mocker.MagicMock()
         return accessor
 
     @pytest.fixture
-    def mock_validation_pipeline(self):
+    def mock_validation_pipeline(self, mocker):
         """Create mock validation pipeline."""
-        pipeline = MagicMock()
-        pipeline.validate_crew_output = AsyncMock(return_value=MagicMock(is_valid=True, errors=[], warnings=[]))
+        pipeline = mocker.MagicMock()
+        pipeline.validate_crew_output = mocker.AsyncMock(return_value=mocker.MagicMock(is_valid=True, errors=[], warnings=[]))
         return pipeline
 
     @pytest.fixture
@@ -91,11 +92,11 @@ class TestCrewIntegrationMiddleware:
         # Assert
         assert test_hook in middleware.execution_hooks["pre_execution"]
 
-    def test_should_raise_error_for_invalid_hook_type(self, middleware):
+    def test_should_raise_error_for_invalid_hook_type(self, middleware, mocker):
         """Test error handling for invalid hook types."""
 
         # Arrange
-        async def test_hook(context):
+        async def test_hook(context, mocker):
             pass
 
         # Act & Assert
@@ -103,7 +104,7 @@ class TestCrewIntegrationMiddleware:
             middleware.register_hook("invalid_hook", test_hook)
 
     @pytest.mark.anyio
-    async def test_should_validate_dependencies_successfully_when_all_available(self, middleware, mock_integration_manager):
+    async def test_should_validate_dependencies_successfully_when_all_available(self, middleware, mock_integration_manager, mocker):
         """Test successful dependency validation when all dependencies are available."""
         # Arrange
         crew_name = "test_crew"
@@ -129,7 +130,7 @@ class TestCrewIntegrationMiddleware:
         assert context.dependencies == dependencies
 
     @pytest.mark.anyio
-    async def test_should_detect_missing_dependencies(self, middleware, mock_integration_manager):
+    async def test_should_detect_missing_dependencies(self, middleware, mock_integration_manager, mocker):
         """Test detection of missing dependencies."""
         # Arrange
         crew_name = "test_crew"
@@ -156,17 +157,17 @@ class TestCrewIntegrationMiddleware:
         assert "Missing required dependencies" in result.errors[0]
 
     @pytest.mark.anyio
-    async def test_should_detect_stale_dependencies(self, middleware, mock_integration_manager):
+    async def test_should_detect_stale_dependencies(self, mocker, middleware, mock_integration_manager):
         """Test detection of stale dependencies."""
         # Arrange
         crew_name = "test_crew"
         dependencies = ["stock", "stale_crew"]
 
         # Configure mock to return stale data
-        def mock_freshness_check(crew, max_age):
+        def mock_freshness_check(crew, max_age, mocker):
             if crew == "stale_crew":
-                return MagicMock(freshness_status=MagicMock(is_fresh=False))
-            return MagicMock(freshness_status=MagicMock(is_fresh=True))
+                return mocker.MagicMock(freshness_status=mocker.MagicMock(is_fresh=False))
+            return mocker.MagicMock(freshness_status=mocker.MagicMock(is_fresh=True))
 
         mock_integration_manager.freshness_checker.check_data_freshness_for_crew.side_effect = mock_freshness_check
 
@@ -181,7 +182,7 @@ class TestCrewIntegrationMiddleware:
         assert "Stale dependencies detected" in result.warnings[0]
 
     @pytest.mark.anyio
-    async def test_should_handle_pre_execution_errors_gracefully(self, middleware, mock_integration_manager):
+    async def test_should_handle_pre_execution_errors_gracefully(self, middleware, mock_integration_manager, mocker):
         """Test error handling in pre-execution hook."""
         # Arrange
         crew_name = "test_crew"
@@ -200,7 +201,7 @@ class TestCrewIntegrationMiddleware:
         assert "Missing required dependencies" in result.errors[0]
 
     @pytest.mark.anyio
-    async def test_should_store_crew_output_successfully(self, middleware, mock_validation_pipeline):
+    async def test_should_store_crew_output_successfully(self, middleware, mock_validation_pipeline, mocker):
         """Test successful crew output storage and validation."""
         # Arrange
         crew_name = "test_crew"
@@ -255,7 +256,7 @@ class TestCrewIntegrationMiddleware:
         assert execution_id not in middleware.active_executions
 
     @pytest.mark.anyio
-    async def test_should_handle_validation_failures(self, middleware, mock_validation_pipeline):
+    async def test_should_handle_validation_failures(self, middleware, mock_validation_pipeline, mocker):
         """Test handling of validation failures in post-execution."""
         # Arrange
         crew_name = "test_crew"
@@ -263,8 +264,8 @@ class TestCrewIntegrationMiddleware:
         crew_output = {"invalid": "data"}
 
         # Configure validation to fail
-        mock_validation_pipeline.validate_crew_output = AsyncMock(
-            return_value=MagicMock(is_valid=False, errors=["Invalid schema"], warnings=["Missing field"])
+        mock_validation_pipeline.validate_crew_output = mocker.AsyncMock(
+            return_value=mocker.MagicMock(is_valid=False, errors=["Invalid schema"], warnings=["Missing field"])
         )
 
         # First run pre-execution to create context

@@ -1052,6 +1052,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "backtrader" },
+    { name = "beautifulsoup4" },
     { name = "bs4" },
     { name = "crewai", extra = ["tools"] },
     { name = "crewai-tools" },
@@ -1105,6 +1106,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "backtrader", specifier = ">=1.9.78.123" },
+    { name = "beautifulsoup4", specifier = ">=4.14.2" },
     { name = "bs4", specifier = ">=0.0.2" },
     { name = "crewai", extras = ["tools"], specifier = ">=0.120.1,<1.0.0" },
     { name = "crewai-tools", specifier = ">=0.46.0" },

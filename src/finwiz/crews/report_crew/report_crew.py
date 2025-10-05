@@ -480,6 +480,7 @@ class ReportCrew:
 
         Returns:
             List of validated ticker symbols
+
         """
         tickers = set()
 
@@ -545,6 +546,7 @@ class ReportCrew:
 
         Raises:
             ValueError: If hallucinated tickers are detected
+
         """
         # Common hallucinated ticker patterns
         hallucinated_patterns = ["ABC", "XYZ", "LMN", "TEST", "EXAMPLE", "SAMPLE", "TICKER", "STOCK", "ETF", "CRYPTO"]

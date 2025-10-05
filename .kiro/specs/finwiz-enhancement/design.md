@@ -86,12 +86,14 @@ graph TB
 ### 1. Schema Validation System
 
 #### Core Components
+
 - **ValidationManager**: Central validation orchestrator
 - **SchemaRegistry**: Registry of all Pydantic models
 - **ContractValidator**: Validates inter-crew data contracts
 - **StrictnessController**: Manages validation modes (off/warn/error)
 
 #### Key Interfaces
+
 ```python
 class ValidationManager:
     def validate_crew_output(self, data: dict, crew_type: str) -> ValidationResult
@@ -106,6 +108,7 @@ class ValidationResult:
 ```
 
 #### Design Rationale
+
 - **Pydantic v2 with `extra='forbid'`**: Prevents schema drift by rejecting unknown fields
 - **Graduated strictness modes**: Allows gradual rollout without breaking existing workflows
 - **Centralized validation**: Single point of control for all validation logic
@@ -114,6 +117,7 @@ class ValidationResult:
 ### 2. Enhanced Financial Analysis Tools
 
 #### Multi-Source Sentiment Analysis
+
 ```python
 class SentimentAnalyzer:
     def analyze_multi_source(self, ticker: str) -> SentimentResult
@@ -122,6 +126,7 @@ class SentimentAnalyzer:
 ```
 
 #### Advanced Technical Analysis
+
 ```python
 class TechnicalAnalyzer:
     def calculate_fibonacci_levels(self, price_data: PriceData) -> FibonacciLevels
@@ -130,6 +135,7 @@ class TechnicalAnalyzer:
 ```
 
 #### Chart Integration
+
 ```python
 class ChartAnalyzer:
     def generate_visual_analysis(self, ticker: str) -> ChartAnalysis
@@ -137,6 +143,7 @@ class ChartAnalyzer:
 ```
 
 #### Design Rationale
+
 - **Multi-source integration**: Reduces single-point-of-failure and improves accuracy
 - **Confluence detection**: Identifies high-probability trading signals
 - **Visual pattern recognition**: Leverages LLM capabilities for chart analysis
@@ -145,6 +152,7 @@ class ChartAnalyzer:
 ### 3. Crew Architecture Compliance
 
 #### Report Crew Constraints
+
 ```python
 class ReportCrew:
     tools: List = []  # Enforced empty tools list
@@ -157,6 +165,7 @@ class ReportCrew:
 ```
 
 #### Data Flow Validation
+
 ```python
 class CrewOrchestrator:
     def validate_crew_contracts(self) -> ContractValidationResult
@@ -165,6 +174,7 @@ class CrewOrchestrator:
 ```
 
 #### Design Rationale
+
 - **Tool isolation**: Prevents architectural violations in the reporter
 - **Contract validation**: Ensures consistent data flow between crews
 - **HTML standardization**: Maintains consistent output quality and accessibility
@@ -173,6 +183,7 @@ class CrewOrchestrator:
 ### 4. Testing & Quality Assurance Framework
 
 #### Contract Testing
+
 ```python
 class ContractTestSuite:
     def test_yaml_configuration_completeness(self) -> None
@@ -181,6 +192,7 @@ class ContractTestSuite:
 ```
 
 #### Integration Testing
+
 ```python
 class IntegrationTestSuite:
     def test_api_error_handling(self) -> None
@@ -189,6 +201,7 @@ class IntegrationTestSuite:
 ```
 
 #### Output Validation Testing
+
 ```python
 class OutputValidationSuite:
     def test_html_formatting_compliance(self) -> None
@@ -197,6 +210,7 @@ class OutputValidationSuite:
 ```
 
 #### Design Rationale
+
 - **Layered testing approach**: Unit, integration, and contract tests serve different purposes
 - **Mock-first strategy**: Prevents external dependencies in test execution
 - **Performance constraints**: Tests must complete quickly for developer productivity
@@ -205,6 +219,7 @@ class OutputValidationSuite:
 ### 5. Configuration & Environment Management
 
 #### Configuration System
+
 ```python
 class ConfigurationManager:
     """Centralized configuration management with validation and error handling."""
@@ -503,6 +518,7 @@ class GracefulDegradationManager:
 ```
 
 #### Caching Layer
+
 ```python
 class CacheManager:
     """Enhanced caching system with TTL and intelligent invalidation."""
@@ -604,6 +620,7 @@ class CacheManager:
 ```
 
 #### Design Rationale
+
 - **Comprehensive validation**: Validates API keys at startup with actual API calls to catch configuration issues early
 - **Standardized environment variables**: Consistent naming across all integrations with clear documentation
 - **Intelligent caching**: Reduces API costs and improves performance with configurable TTL and size limits
@@ -615,6 +632,7 @@ class CacheManager:
 ### 6. Enhanced Crew Capabilities
 
 #### Stock Crew Enhancements
+
 ```python
 class EnhancedStockCrew:
     def extract_10k_insights(self, ticker: str) -> TenKInsights
@@ -623,6 +641,7 @@ class EnhancedStockCrew:
 ```
 
 #### ETF Crew Enhancements
+
 ```python
 class EnhancedETFCrew:
     def parse_factsheet_data(self, etf_symbol: str) -> ETFFactsheet
@@ -631,6 +650,7 @@ class EnhancedETFCrew:
 ```
 
 #### Crypto Crew Enhancements
+
 ```python
 class EnhancedCryptoCrew:
     def generate_investment_thesis(self, crypto_symbol: str) -> CryptoThesis
@@ -639,6 +659,7 @@ class EnhancedCryptoCrew:
 ```
 
 #### Design Rationale
+
 - **Consistent analytical depth**: Each crew provides comprehensive analysis in its domain
 - **Standardized risk scoring**: Enables cross-asset comparison
 - **Rich data extraction**: Maximizes value from available data sources
@@ -647,6 +668,7 @@ class EnhancedCryptoCrew:
 ### 7. Performance & Scalability
 
 #### Asynchronous Execution
+
 ```python
 class AsyncTaskManager:
     async def execute_parallel_tasks(self, tasks: List[Task]) -> List[TaskResult]
@@ -655,6 +677,7 @@ class AsyncTaskManager:
 ```
 
 #### Rate Limiting & Throttling
+
 ```python
 class RateLimitManager:
     def throttle_api_calls(self, api_name: str) -> None
@@ -663,6 +686,7 @@ class RateLimitManager:
 ```
 
 #### Design Rationale
+
 - **Selective async execution**: I/O-bound tasks run asynchronously, final tasks remain synchronous
 - **Intelligent throttling**: Prevents API rate limit violations
 - **Graceful degradation**: System continues with available data when services are unavailable
@@ -671,6 +695,7 @@ class RateLimitManager:
 ### 8. Persistent Financial Planning Session
 
 #### Session Management
+
 ```python
 class SessionManager:
     SESSION_FILE_PATH = "report/finwiz_family_financial_plan.html"
@@ -683,6 +708,7 @@ class SessionManager:
 ```
 
 #### Data Persistence
+
 ```python
 class PersistenceLayer:
     def save_financial_plan(self, plan: FinancialPlan) -> None
@@ -691,6 +717,7 @@ class PersistenceLayer:
 ```
 
 #### Session Loading Logic
+
 ```python
 class SessionLoader:
     def initialize_session(self) -> FinancialPlan:
@@ -711,6 +738,7 @@ class SessionLoader:
 ```
 
 #### Design Rationale
+
 - **HTML-based persistence**: Leverages existing report format for session storage at `report/finwiz_family_financial_plan.html`
 - **Graceful recovery**: Handles corrupted or missing session files with automatic fallback to new session
 - **Incremental updates**: Allows modification of existing plans without starting over
@@ -720,6 +748,7 @@ class SessionLoader:
 ### 9. Quantitative Analysis & Backtesting Framework
 
 #### Backtesting Engine
+
 ```python
 class BacktestingEngine:
     def __init__(self, framework: str = "backtrader"):
@@ -773,6 +802,7 @@ class BacktestingEngine:
 ```
 
 #### Technical Analysis Integration
+
 ```python
 class TALibWrapper:
     """Wrapper for TA-Lib technical analysis library."""
@@ -884,6 +914,7 @@ class QuantLibWrapper:
 ```
 
 #### Data Management
+
 ```python
 class FinancialDataManager:
     def __init__(self):
@@ -975,6 +1006,7 @@ class DataQualityValidator:
 ```
 
 #### Performance Analysis
+
 ```python
 class PerformanceAnalyzer:
     def __init__(self):
@@ -1112,6 +1144,7 @@ class CustomAnalyticsEngine:
 ```
 
 #### Design Rationale
+
 - **Professional-grade libraries**: Uses industry-standard tools (TA-Lib, Backtrader, QuantLib, cvxpy, scipy.optimize) for institutional-quality analysis
 - **Modular architecture**: Each component can be used independently or as part of comprehensive backtesting workflow
 - **Data quality focus**: Validates input data to ensure reliable backtesting results with comprehensive quality checks
@@ -1126,6 +1159,7 @@ class CustomAnalyticsEngine:
 ### Core Schema Definitions
 
 #### Validation Models
+
 ```python
 class ValidationMode(str, Enum):
     OFF = "off"
@@ -1141,6 +1175,7 @@ class ReporterInput(BaseModel):
 ```
 
 #### Enhanced Analysis Models
+
 ```python
 class SentimentResult(BaseModel):
     weighted_score: float = Field(..., ge=-1.0, le=1.0)
@@ -1156,6 +1191,7 @@ class TechnicalAnalysis(BaseModel):
 ```
 
 #### Session Models
+
 ```python
 class FinancialPlan(BaseModel):
     plan_id: str
@@ -1168,6 +1204,7 @@ class FinancialPlan(BaseModel):
 ```
 
 #### Quantitative Analysis Models
+
 ```python
 class TradingStrategy(BaseModel):
     name: str
@@ -1296,6 +1333,7 @@ class Plot(BaseModel):
 ```
 
 #### Code Quality Models
+
 ```python
 class QualityResult(BaseModel):
     ruff_compliant: bool
@@ -1434,6 +1472,7 @@ class UnsupportedInstrumentError(Exception):
 ## Error Handling
 
 ### Validation Error Handling
+
 ```python
 class ValidationErrorHandler:
     def handle_schema_violation(self, error: ValidationError) -> ErrorResponse
@@ -1442,6 +1481,7 @@ class ValidationErrorHandler:
 ```
 
 ### API Error Handling
+
 ```python
 class APIErrorHandler:
     def handle_rate_limit_exceeded(self, api_name: str) -> RetryStrategy
@@ -1450,6 +1490,7 @@ class APIErrorHandler:
 ```
 
 ### Code Quality Error Handling
+
 ```python
 class CodeQualityErrorHandler:
     def handle_ruff_violations(self, violations: List[RuffViolation]) -> RemediationPlan
@@ -1467,6 +1508,7 @@ class MockingGuidance(BaseModel):
 ```
 
 ### Design Rationale
+
 - **Graceful degradation**: System continues operating with partial functionality
 - **Detailed error reporting**: Provides actionable information for troubleshooting with clear stack traces
 - **Automatic recovery**: Implements retry and fallback strategies
@@ -1479,12 +1521,14 @@ class MockingGuidance(BaseModel):
 ### Test Categories
 
 #### Unit Tests
+
 - **Schema validation logic**: Test Pydantic model behavior with dynamic data
 - **Business logic**: Test analysis algorithms and calculations using Faker-generated inputs
 - **Utility functions**: Test helper and formatting functions with varied test cases
 - **Error handling**: Test exception scenarios and recovery with realistic edge cases
 
 #### Dynamic Test Data Strategy
+
 All tests must use the Faker library for generating realistic test data instead of static identifiers:
 
 ```python
@@ -1504,6 +1548,7 @@ def test_should_validate_ticker_input_when_valid_symbol_provided(faker):
 ```
 
 #### pytest-mock Standardization (Required)
+
 All external API interactions must be mocked using pytest-mock exclusively, never unittest.mock:
 
 ```python
@@ -1525,6 +1570,7 @@ def test_should_return_analysis_when_api_succeeds(mocker, faker):
 ```
 
 #### External Call Mocking Enforcement
+
 All external API calls must be mocked to prevent real network requests during testing:
 
 ```python
@@ -1573,6 +1619,7 @@ class TestMockingEnforcement:
 ```
 
 #### Code Quality Standards Integration
+
 All tests must adhere to strict quality standards:
 
 ```python
@@ -1606,9 +1653,8 @@ class TestCodeQualityCompliance:
         mock_api.assert_called_once()  # Verify no real external calls
 ```
 
-
-
 #### Contract Tests
+
 - **YAML configuration**: Validate all required keys are present
 - **Schema compatibility**: Test backward compatibility of models
 - **Inter-crew contracts**: Validate data exchange formats
@@ -1617,6 +1663,7 @@ class TestCodeQualityCompliance:
 ### Code Quality & Test Infrastructure
 
 #### Code Quality Standards
+
 ```python
 class CodeQualityManager:
     REQUIRED_STANDARDS = {
@@ -1640,6 +1687,7 @@ class CodeQualityManager:
 ```
 
 #### Test Performance Requirements
+
 ```python
 class TestPerformanceMonitor:
     MAX_TEST_SUITE_TIME = 5.0  # seconds
@@ -1661,6 +1709,7 @@ class TestPerformanceMonitor:
 ```
 
 #### Design Rationale for Code Quality
+
 - **Ruff Enforcement**: Ensures consistent code style and catches potential issues early
 - **Performance Constraints**: Fast test execution improves developer productivity and CI/CD pipeline efficiency
 - **pytest-mock Standardization**: Eliminates confusion between mocking libraries and ensures consistent behavior
@@ -1672,6 +1721,7 @@ class TestPerformanceMonitor:
 ### Test Infrastructure
 
 #### Dynamic Test Data Generation
+
 ```python
 class TestDataFactory:
     def __init__(self):
@@ -1699,6 +1749,7 @@ class TestDataFactory:
 ```
 
 #### Mock Strategy with pytest-mock
+
 ```python
 class APITestMocks:
     @staticmethod
@@ -1730,6 +1781,7 @@ class APITestMocks:
 ```
 
 #### Test Fixtures
+
 ```python
 class TestFixtures:
     def mock_api_responses(self) -> Dict[str, Any]
@@ -1738,6 +1790,7 @@ class TestFixtures:
 ```
 
 #### Design Rationale for Dynamic Testing
+
 - **Faker Integration**: Generates realistic, varied test data to improve test coverage and catch edge cases
 - **pytest-mock Standardization**: Consistent mocking approach across all tests with explicit behavior specification, completely replacing unittest.mock
 - **Realistic Data Patterns**: Test data mirrors real-world scenarios without hardcoded values
@@ -1748,17 +1801,20 @@ class TestFixtures:
 ## Deployment Considerations
 
 ### Environment Configuration
+
 - **Development**: Full validation with detailed logging
 - **Staging**: Production-like validation with performance monitoring  
 - **Production**: Optimized validation with minimal logging overhead
 
 ### Feature Rollout Strategy
+
 - **Phase 1**: Schema validation with warn mode
 - **Phase 2**: Enhanced tools with feature flags
 - **Phase 3**: Full validation enforcement
 - **Phase 4**: Performance optimizations and monitoring
 
 ### Monitoring & Observability
+
 - **Validation metrics**: Track validation success/failure rates
 - **Performance metrics**: Monitor execution times and resource usage
 - **Error tracking**: Aggregate and analyze error patterns

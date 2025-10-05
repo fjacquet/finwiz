@@ -4,14 +4,10 @@ import datetime
 
 import yfinance as yf
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class GetTickerNewsInput(BaseModel):
-    """Input schema for getting news for a ticker."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'BTC-USD').")
-    limit: int = Field(5, description="Maximum number of news items to return.")
+# Import schema from centralized location
+from finwiz.schemas.tools import GetTickerNewsInput
 
 
 class YahooFinanceNewsTool(BaseTool):

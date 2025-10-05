@@ -10,36 +10,13 @@ from datetime import datetime
 from typing import Any, Literal
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+# Import schemas from centralized location
+from finwiz.schemas.tools import MarketScreeningInput, MarketScreeningResult
 from finwiz.tools.screening_criteria import ScreeningCriteria
-from finwiz.tools.screening_ranking import ScreeningCandidate, ScreeningRanking
+from finwiz.tools.screening_ranking import ScreeningRanking
 from finwiz.tools.screening_utils import ScreeningUtils
-
-
-class MarketScreeningInput(BaseModel):
-    """Input schema for Market Screening Tool."""
-
-    asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of assets to screen")
-    screening_criteria: dict[str, Any] = Field(default_factory=dict, description="Custom screening criteria (overrides defaults)")
-    market_region: str = Field(default="global", description="Market region to screen (global, us, eu, etc.)")
-    max_candidates: int = Field(default=50, ge=1, le=500, description="Maximum number of candidates to return")
-    min_a_plus_score: float = Field(default=0.85, ge=0.0, le=1.0, description="Minimum A+ score threshold")
-    include_detailed_analysis: bool = Field(default=False, description="Whether to include detailed A+ analysis for each candidate")
-
-
-class MarketScreeningResult(BaseModel):
-    """Result from market screening operation."""
-
-    asset_type: Literal["etf", "stock", "crypto"]
-    screening_criteria: dict[str, Any]
-    market_region: str
-    total_screened: int
-    candidates_found: int
-    a_plus_candidates: int
-    candidates: list[ScreeningCandidate]
-    screening_timestamp: datetime
-    data_sources: list[str]
 
 
 class MarketScreeningTool(BaseTool):

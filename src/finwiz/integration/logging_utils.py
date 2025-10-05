@@ -5,14 +5,9 @@ Specialized logging utilities for the crew data integration system.
 """
 
 # Import all classes and functions from the split modules for backward compatibility
-from .log_config import (
-    DataLineageTracker,
-    IntegrationLogger,
-    LogAnalyzer,
-    integration_logger,
-    lineage_tracker,
-    log_analyzer,
-)
+from .data_lineage import DataLineageTracker
+from .log_analyzer import LogAnalyzer
+from .log_config import IntegrationLogger, integration_logger, lineage_tracker, log_analyzer
 from .log_formatters import IntegrationLogFormatter, StructuredFormatter
 from .log_handlers import IntegrationLogHandler
 

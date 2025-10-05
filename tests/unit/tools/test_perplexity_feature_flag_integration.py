@@ -7,7 +7,6 @@ analysis tools, ensuring proper fallback behavior and success/failure tracking.
 
 import asyncio
 import os
-from unittest.mock import AsyncMock, Mock
 
 from finwiz.schemas.perplexity import SonarArticle, SonarSearchResult
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
@@ -138,8 +137,8 @@ class TestPerplexityFeatureFlagIntegration:
         mocker.patch.object(tool, "_get_news_data", return_value=mock_yahoo_data)
 
         # Mock the Perplexity integration
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(return_value=mock_sonar_result)
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(return_value=mock_sonar_result)
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Act
@@ -154,7 +153,7 @@ class TestPerplexityFeatureFlagIntegration:
     def test_should_record_success_when_perplexity_succeeds(self, mocker):
         """Test feature flag success recording for successful Perplexity calls."""
         # Arrange
-        mock_feature_flags = Mock(spec=FeatureFlags)
+        mock_feature_flags = mocker.Mock(spec=FeatureFlags)
         mocker.patch("finwiz.utils.feature_flags.get_feature_flags", return_value=mock_feature_flags)
 
         # Act
@@ -166,7 +165,7 @@ class TestPerplexityFeatureFlagIntegration:
     def test_should_record_failure_when_perplexity_fails(self, mocker):
         """Test feature flag failure recording for API errors and timeouts."""
         # Arrange
-        mock_feature_flags = Mock(spec=FeatureFlags)
+        mock_feature_flags = mocker.Mock(spec=FeatureFlags)
         mocker.patch("finwiz.utils.feature_flags.get_feature_flags", return_value=mock_feature_flags)
 
         # Act
@@ -178,7 +177,7 @@ class TestPerplexityFeatureFlagIntegration:
     def test_should_check_circuit_breaker_status(self, mocker):
         """Test circuit breaker status checking integration."""
         # Arrange
-        mock_feature_flags = Mock(spec=FeatureFlags)
+        mock_feature_flags = mocker.Mock(spec=FeatureFlags)
         mock_feature_flags.is_enabled.return_value = True
         mock_feature_flags.get_flag_status.return_value = {
             "circuit_breaker": {"is_open": False, "failure_count": 2},
@@ -225,8 +224,8 @@ class TestPerplexityFeatureFlagIntegration:
         mocker.patch.object(tool, "_get_news_data", return_value=mock_yahoo_data)
 
         # Mock Perplexity integration to fail
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(side_effect=Exception("API Error"))
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(side_effect=Exception("API Error"))
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Mock feature flag tracker
@@ -278,8 +277,8 @@ class TestPerplexityFeatureFlagIntegration:
         mocker.patch.object(tool, "_get_news_data", return_value=mock_yahoo_data)
 
         # Mock Perplexity integration to fail
-        mock_integration = Mock(spec=PerplexityAnalysisIntegration)
-        mock_integration.search_sentiment_news = AsyncMock(side_effect=Exception("Network timeout"))
+        mock_integration = mocker.Mock(spec=PerplexityAnalysisIntegration)
+        mock_integration.search_sentiment_news = mocker.AsyncMock(side_effect=Exception("Network timeout"))
         mocker.patch.object(tool, "_get_perplexity_integration", return_value=mock_integration)
 
         # Act - This should not raise an exception

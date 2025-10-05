@@ -9,20 +9,12 @@ from datetime import datetime
 from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from finwiz.schemas.tools import DeFiMetricsInput
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-class DeFiMetricsInput(BaseModel):
-    """Input schema for DeFi Metrics Tool."""
-
-    symbol: str = Field(..., description="The DeFi token symbol, e.g., UNI, AAVE, COMP")
-    include_tvl_analysis: bool = Field(default=True, description="Include Total Value Locked analysis")
-    include_yield_metrics: bool = Field(default=True, description="Include yield farming metrics")
-    include_governance_analysis: bool = Field(default=True, description="Include governance token analysis")
 
 
 class DeFiMetricsTool(BaseTool):

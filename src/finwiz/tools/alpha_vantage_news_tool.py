@@ -9,22 +9,13 @@ Docs: https://www.alphavantage.co/documentation/#news-sentiment
 from __future__ import annotations
 
 import os
-from typing import Literal
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class AlphaVantageNewsInput(BaseModel):
-    """Input schema for Alpha Vantage News Sentiment tool."""
-
-    tickers: str = Field(..., description="Comma-separated tickers, e.g., AAPL,MSFT or BTC")
-    sort: Literal["LATEST", "EARLIEST", "RELEVANCE"] = Field("LATEST", description="Sorting strategy for results")
-    time_from: str | None = Field(None, description="ISO8601 start time (YYYYMMDDTHHMM)")
-    time_to: str | None = Field(None, description="ISO8601 end time (YYYYMMDDTHHMM)")
-    limit: int | None = Field(50, description="Max number of items to return")
-    topics: str | None = Field(None, description="Comma-separated topics filter (e.g., technology,financial_markets)")
+# Import schema from centralized location
+from finwiz.schemas.tools import AlphaVantageNewsInput
 
 
 class AlphaVantageNewsSentimentTool(BaseTool):

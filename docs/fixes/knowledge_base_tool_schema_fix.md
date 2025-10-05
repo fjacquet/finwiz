@@ -25,6 +25,7 @@ def _run(self, query: str, similarity_threshold: float | None = None, limit: int
 ```
 
 The schema incorrectly shows:
+
 ```python
 {
     'query': FieldInfo(annotation=str, required=True),
@@ -127,6 +128,7 @@ All tests pass successfully.
 ### Affected Components
 
 All crews using RAG tools are now fixed:
+
 - ✅ Stock Crew (`collection_suffix="stock"`)
 - ✅ ETF Crew (`collection_suffix="etf"`)
 - ✅ Crypto Crew (`collection_suffix="crypto"`)
@@ -141,6 +143,7 @@ All crews using RAG tools are now fixed:
 ## Usage Examples
 
 ### Basic Query (Only Required Parameter)
+
 ```python
 tools = get_rag_tools()
 kb_tool = tools[0]
@@ -150,6 +153,7 @@ result = kb_tool._run(query="What are the technical indicators for Bitcoin?")
 ```
 
 ### Query with Similarity Threshold
+
 ```python
 result = kb_tool._run(
     query="What are the technical indicators for Bitcoin?",
@@ -158,6 +162,7 @@ result = kb_tool._run(
 ```
 
 ### Query with All Parameters
+
 ```python
 result = kb_tool._run(
     query="What are the technical indicators for Bitcoin?",
@@ -193,4 +198,4 @@ This is a **workaround** for a bug in the upstream `crewai_tools` library. Consi
   - `src/finwiz/tools/rag_tools.py` (added KnowledgeBaseTool wrapper)
   - `tests/unit/tools/test_rag_tools.py` (added schema validation tests)
   - `tests/unit/tools/test_knowledge_base_tool.py` (new comprehensive test file)
-- **Pydantic Documentation:** https://errors.pydantic.dev/2.11/v/missing
+- **Pydantic Documentation:** <https://errors.pydantic.dev/2.11/v/missing>

@@ -11,13 +11,17 @@ This module provides comprehensive quantitative analysis capabilities including:
 - Stock screening and fundamental analysis
 """
 
-from .backtesting import BacktestingEngine, get_backtesting_engine
-from .backtesting_models import (
+# Import models from centralized schemas
+from finwiz.schemas.quantitative import (
     BacktestResult,
-    PositionSizingMethod,
     Trade,
     TradeStatus,
     TradeType,
+)
+
+from .backtesting import BacktestingEngine, get_backtesting_engine
+from .backtesting_models import (
+    PositionSizingMethod,  # Keep local enums that aren't in schemas
 )
 from .backtesting_strategies import (
     SimpleMovingAverageStrategy,

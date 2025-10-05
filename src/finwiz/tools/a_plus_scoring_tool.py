@@ -10,76 +10,16 @@ from datetime import datetime
 from typing import Any, Literal
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from finwiz.utils.grading_system import GradeInfo, score_to_grade
-
-
-class APlusScoringInput(BaseModel):
-    """Input schema for A+ Investment Scoring Tool."""
-
-    symbol: str = Field(..., description="Investment symbol (e.g., AAPL, SPY, BTC-USD)")
-    asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of asset to score")
-    fundamental_data: dict[str, Any] = Field(default_factory=dict, description="Fundamental data for the investment")
-    market_context: dict[str, Any] = Field(default_factory=dict, description="Current market context and conditions")
-    custom_criteria: dict[str, float] = Field(default_factory=dict, description="Custom scoring criteria weights")
-
-
-class MarketRegime(BaseModel):
-    """Current market regime assessment."""
-
-    regime_type: Literal["bull", "bear", "sideways", "volatile"] = "sideways"
-    vix_level: float = Field(default=20.0, ge=0.0, le=100.0)
-    inflation_rate: float = Field(default=3.0, ge=-5.0, le=20.0)
-    interest_rate_trend: Literal["rising", "falling", "stable"] = "stable"
-    market_stress_level: Literal["low", "medium", "high"] = "medium"
-
-
-class ScoringCriteria(BaseModel):
-    """Dynamic scoring criteria that adapt to market conditions."""
-
-    # ETF Criteria
-    etf_max_expense_ratio: float = Field(default=0.15, ge=0.0, le=2.0)
-    etf_min_aum: float = Field(default=1e9, ge=1e6, le=1e12)
-    etf_max_tracking_error: float = Field(default=0.002, ge=0.0, le=0.1)
-    etf_min_history_years: int = Field(default=3, ge=1, le=20)
-
-    # Stock Criteria
-    stock_min_roe: float = Field(default=0.20, ge=0.0, le=1.0)
-    stock_min_revenue_growth: float = Field(default=0.15, ge=-0.5, le=2.0)
-    stock_max_debt_to_equity: float = Field(default=0.3, ge=0.0, le=5.0)
-    stock_min_market_cap: float = Field(default=1e9, ge=1e6, le=1e13)
-
-    # Crypto Criteria
-    crypto_min_market_cap: float = Field(default=10e9, ge=1e6, le=1e13)
-    crypto_min_daily_volume: float = Field(default=500e6, ge=1e6, le=1e12)
-    crypto_min_age_months: int = Field(default=36, ge=1, le=200)
-
-
-class APlusScore(BaseModel):
-    """Comprehensive A+ score with detailed breakdown."""
-
-    symbol: str
-    asset_type: Literal["etf", "stock", "crypto"]
-    composite_score: float = Field(ge=0.0, le=1.0)
-    grade_info: GradeInfo
-
-    # Component scores
-    fundamental_score: float = Field(ge=0.0, le=1.0)
-    technical_score: float = Field(ge=0.0, le=1.0)
-    quality_score: float = Field(ge=0.0, le=1.0)
-    risk_score: float = Field(ge=0.0, le=1.0)
-
-    # Detailed analysis
-    strengths: list[str] = Field(default_factory=list, max_length=10)
-    weaknesses: list[str] = Field(default_factory=list, max_length=10)
-    a_plus_rationale: str = Field(min_length=50)
-    confidence_level: float = Field(ge=0.0, le=1.0)
-
-    # Market context
-    market_regime: MarketRegime
-    scoring_criteria: ScoringCriteria
-    analysis_timestamp: datetime
+# Import schemas from centralized location
+from finwiz.schemas.tools import (
+    APlusScore,
+    APlusScoringInput,
+    MarketRegime,
+    ScoringCriteria,
+)
+from finwiz.utils.grading_system import score_to_grade
 
 
 class APlusScoringTool(BaseTool):

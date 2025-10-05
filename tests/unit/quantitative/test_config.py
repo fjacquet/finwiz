@@ -8,7 +8,6 @@ and environment variable management for the quantitative analysis framework.
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -174,10 +173,12 @@ class TestQuantConfig:
 
         assert "Extra inputs are not permitted" in str(exc_info.value)
 
-    @patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_alpha_key"})
-    def test_should_load_api_keys_from_environment_when_available(self):
+    def test_should_load_api_keys_from_environment_when_available(self, mocker):
         """Test loading API keys from environment variables."""
-        # Arrange & Act
+        # Arrange
+        mocker.patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_alpha_key"})
+
+        # Act
         config = QuantConfig()
 
         # Assert
@@ -198,10 +199,10 @@ class TestQuantConfig:
         assert yfinance_config.provider == DataProvider.YFINANCE
         assert nonexistent_config is None
 
-    @patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_key"})
-    def test_should_identify_available_providers_when_api_keys_present(self):
+    def test_should_identify_available_providers_when_api_keys_present(self, mocker):
         """Test identification of available data providers."""
         # Arrange
+        mocker.patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_key"})
         config = QuantConfig()
 
         # Act
@@ -211,10 +212,10 @@ class TestQuantConfig:
         assert DataProvider.YFINANCE in available_providers  # No API key required
         assert DataProvider.ALPHA_VANTAGE in available_providers  # API key provided
 
-    def test_should_identify_unavailable_providers_when_api_keys_missing(self):
+    def test_should_identify_unavailable_providers_when_api_keys_missing(self, mocker):
         """Test identification of unavailable providers when API keys are missing."""
         # Arrange
-        with patch.dict(os.environ, {}, clear=True):
+        with mocker.patch.dict(os.environ, {}, clear=True):
             config = QuantConfig()
 
         # Act
@@ -478,10 +479,10 @@ class TestScreenerConfig:
 class TestQuantitativeConfigManager:
     """Test QuantitativeConfigManager functionality."""
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_initialize_manager_when_created(self, mock_get_feature_flags):
+    def test_should_initialize_manager_when_created(self, mocker):
         """Test initialization of QuantitativeConfigManager."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -494,15 +495,20 @@ class TestQuantitativeConfigManager:
         assert manager.screener_config is not None
         assert manager.feature_flags is not None
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    @patch.dict(
-        os.environ, {"QUANT_PRIMARY_DATA_PROVIDER": "alpha_vantage", "QUANT_LOOKBACK_DAYS": "500", "QUANT_RISK_FREE_RATE": "0.03"}
-    )
-    def test_should_load_config_from_environment_when_available(self, mock_get_feature_flags):
+    def test_should_load_config_from_environment_when_available(self, mocker):
         """Test loading configuration from environment variables."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
+        mocker.patch.dict(
+            os.environ,
+            {
+                "QUANT_PRIMARY_DATA_PROVIDER": "alpha_vantage",
+                "QUANT_LOOKBACK_DAYS": "500",
+                "QUANT_RISK_FREE_RATE": "0.03",
+            },
+        )
 
         # Act
         manager = QuantitativeConfigManager()
@@ -512,15 +518,16 @@ class TestQuantitativeConfigManager:
         assert manager.quant_config.default_lookback_days == 500
         assert manager.quant_config.risk_free_rate == 0.03
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    @patch.dict(
-        os.environ, {"BACKTEST_INITIAL_CAPITAL": "250000", "BACKTEST_COMMISSION_PCT": "0.002", "BACKTEST_FRAMEWORK": "zipline"}
-    )
-    def test_should_load_backtest_config_from_environment_when_available(self, mock_get_feature_flags):
+    def test_should_load_backtest_config_from_environment_when_available(self, mocker):
         """Test loading backtesting configuration from environment variables."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
+
+        mocker.patch.dict(
+            os.environ, {"BACKTEST_INITIAL_CAPITAL": "250000", "BACKTEST_COMMISSION_PCT": "0.002", "BACKTEST_FRAMEWORK": "zipline"}
+        )
 
         # Act
         manager = QuantitativeConfigManager()
@@ -530,13 +537,14 @@ class TestQuantitativeConfigManager:
         assert manager.backtest_config.commission_pct == 0.002
         assert manager.backtest_config.framework == BacktestFramework.ZIPLINE
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    @patch.dict(os.environ, {"SCREENER_MIN_MARKET_CAP": "5000000000", "SCREENER_MAX_RESULTS": "25"})
-    def test_should_load_screener_config_from_environment_when_available(self, mock_get_feature_flags):
+    def test_should_load_screener_config_from_environment_when_available(self, mocker):
         """Test loading screener configuration from environment variables."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
+
+        mocker.patch.dict(os.environ, {"SCREENER_MIN_MARKET_CAP": "5000000000", "SCREENER_MAX_RESULTS": "25"})
 
         # Act
         manager = QuantitativeConfigManager()
@@ -545,10 +553,10 @@ class TestQuantitativeConfigManager:
         assert manager.screener_config.min_market_cap == 5e9
         assert manager.screener_config.max_results == 25
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_return_feature_flag_status_when_requested(self, mock_get_feature_flags):
+    def test_should_return_feature_flag_status_when_requested(self, mocker):
         """Test checking feature flag status."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.side_effect = lambda flag: {
             "quantitative_analysis": True,
@@ -563,13 +571,14 @@ class TestQuantitativeConfigManager:
         assert manager.is_backtesting_enabled() is False
         assert manager.is_screening_enabled() is True
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    @patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_key"})
-    def test_should_validate_configuration_successfully_when_providers_available(self, mock_get_feature_flags):
+    def test_should_validate_configuration_successfully_when_providers_available(self, mocker):
         """Test successful configuration validation."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
+
+        mocker.patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_key"})
 
         manager = QuantitativeConfigManager()
 
@@ -579,28 +588,28 @@ class TestQuantitativeConfigManager:
         # Assert
         assert is_valid is True
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_fail_validation_when_no_providers_available(self, mock_get_feature_flags):
+    def test_should_fail_validation_when_no_providers_available(self, mocker):
         """Test configuration validation failure when no providers are available."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        with patch.dict(os.environ, {}, clear=True):
-            # Create config with no available providers
-            with patch.object(QuantConfig, "get_available_providers", return_value=[]):
-                manager = QuantitativeConfigManager()
+        mocker.patch.dict(os.environ, {}, clear=True)
+        # Create config with no available providers
+        mocker.patch.object(QuantConfig, "get_available_providers", return_value=[])
+        manager = QuantitativeConfigManager()
 
-                # Act
-                is_valid = manager.validate_configuration()
+        # Act
+        is_valid = manager.validate_configuration()
 
-                # Assert
-                assert is_valid is False
+        # Assert
+        assert is_valid is False
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_return_configuration_summary_when_requested(self, mock_get_feature_flags):
+    def test_should_return_configuration_summary_when_requested(self, mocker):
         """Test getting configuration summary."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.side_effect = lambda flag: {
             "quantitative_analysis": True,
@@ -630,10 +639,10 @@ class TestQuantitativeConfigManager:
 class TestGlobalConfigurationFunctions:
     """Test global configuration management functions."""
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_return_singleton_manager_when_requested(self, mock_get_feature_flags):
+    def test_should_return_singleton_manager_when_requested(self, mocker):
         """Test that global configuration manager returns singleton instance."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -644,10 +653,10 @@ class TestGlobalConfigurationFunctions:
         # Assert
         assert manager1 is manager2  # Same instance
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_return_quant_config_when_requested(self, mock_get_feature_flags):
+    def test_should_return_quant_config_when_requested(self, mocker):
         """Test convenience function for getting quantitative config."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -658,10 +667,10 @@ class TestGlobalConfigurationFunctions:
         assert isinstance(config, QuantConfig)
         assert config.primary_data_provider == DataProvider.YFINANCE
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_return_backtest_config_when_requested(self, mock_get_feature_flags):
+    def test_should_return_backtest_config_when_requested(self, mocker):
         """Test convenience function for getting backtest config."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -672,10 +681,10 @@ class TestGlobalConfigurationFunctions:
         assert isinstance(config, BacktestConfig)
         assert config.framework == BacktestFramework.BACKTRADER
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    def test_should_return_screener_config_when_requested(self, mock_get_feature_flags):
+    def test_should_return_screener_config_when_requested(self, mocker):
         """Test convenience function for getting screener config."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -690,13 +699,14 @@ class TestGlobalConfigurationFunctions:
 class TestEnvironmentVariableHandling:
     """Test environment variable handling and error cases."""
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    @patch.dict(os.environ, {"QUANT_LOOKBACK_DAYS": "invalid_number"})
-    def test_should_use_default_when_invalid_environment_value_provided(self, mock_get_feature_flags):
+    def test_should_use_default_when_invalid_environment_value_provided(self, mocker):
         """Test handling of invalid environment variable values."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
+
+        mocker.patch.dict(os.environ, {"QUANT_LOOKBACK_DAYS": "invalid_number"})
 
         # Act
         manager = QuantitativeConfigManager()
@@ -705,13 +715,14 @@ class TestEnvironmentVariableHandling:
         # Should use default value when environment variable is invalid
         assert manager.quant_config.default_lookback_days == 252  # Default value
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    @patch.dict(os.environ, {"BACKTEST_INITIAL_CAPITAL": "not_a_number"})
-    def test_should_use_default_when_invalid_backtest_environment_value_provided(self, mock_get_feature_flags):
+    def test_should_use_default_when_invalid_backtest_environment_value_provided(self, mocker):
         """Test handling of invalid backtesting environment variable values."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
+
+        mocker.patch.dict(os.environ, {"BACKTEST_INITIAL_CAPITAL": "not_a_number"})
 
         # Act
         manager = QuantitativeConfigManager()
@@ -720,13 +731,14 @@ class TestEnvironmentVariableHandling:
         # Should use default value when environment variable is invalid
         assert manager.backtest_config.initial_capital == 100000.0  # Default value
 
-    @patch("finwiz.quantitative.config.get_feature_flags")
-    @patch.dict(os.environ, {"SCREENER_MAX_RESULTS": "not_an_integer"})
-    def test_should_use_default_when_invalid_screener_environment_value_provided(self, mock_get_feature_flags):
+    def test_should_use_default_when_invalid_screener_environment_value_provided(self, mocker):
         """Test handling of invalid screener environment variable values."""
         # Arrange
+        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
+
+        mocker.patch.dict(os.environ, {"SCREENER_MAX_RESULTS": "not_an_integer"})
 
         # Act
         manager = QuantitativeConfigManager()

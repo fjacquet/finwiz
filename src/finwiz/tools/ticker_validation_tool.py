@@ -12,19 +12,12 @@ from typing import Any, Literal
 import requests
 import yfinance as yf
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
+# Import schema from centralized location
+from finwiz.schemas.tools import TickerValidationInput
 
 AssetClass = Literal["stock", "etf", "crypto", "auto"]
-
-
-class TickerValidationInput(BaseModel):
-    """Input schema for TickerExistenceValidationTool."""
-
-    symbol: str = Field(..., description="Ticker or symbol, e.g., 'AAPL', 'SPY', 'BTC'")
-    asset_class: AssetClass = Field(
-        default="auto",
-        description="Asset class: stock | etf | crypto | auto (auto-detect via Yahoo)",
-    )
 
 
 class TickerExistenceValidationTool(BaseTool):

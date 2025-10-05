@@ -6,7 +6,6 @@ bond pricing, and risk analytics using both Black-Scholes and QuantLib models.
 """
 
 import math
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -72,12 +71,12 @@ class TestDerivativesPricer:
         assert hasattr(pricer, "config")
         assert hasattr(pricer, "_quantlib_available")
 
-    def test_check_quantlib_availability(self, pricer):
+    def test_check_quantlib_availability(self, pricer, mocker):
         """Test QuantLib availability check."""
         # Test with QuantLib not available (default case)
-        with patch("finwiz.quantitative.derivatives.logger"):
-            availability = pricer._check_quantlib_availability()
-            assert isinstance(availability, bool)
+        mocker.patch("finwiz.quantitative.derivatives.logger")
+        availability = pricer._check_quantlib_availability()
+        assert isinstance(availability, bool)
 
     def test_price_call_option_black_scholes(self, pricer, call_option_params):
         """Test call option pricing using Black-Scholes model."""
@@ -119,23 +118,22 @@ class TestDerivativesPricer:
         assert result.pricing_model == PricingModel.BLACK_SCHOLES
         assert result.option_price > 0
 
-    @patch("finwiz.quantitative.derivatives.logger")
-    def test_option_pricing_quantlib_mock(self, mock_logger, pricer, call_option_params):
+    def test_option_pricing_quantlib_mock(self, pricer, call_option_params, mocker):
         """Test option pricing with mocked QuantLib."""
         # Mock QuantLib availability
         pricer._quantlib_available = True
 
         # Mock QuantLib modules
-        mock_ql = MagicMock()
-        mock_ql.Settings.instance.return_value.evaluationDate = MagicMock()
-        mock_ql.Date.todaysDate.return_value = MagicMock()
-        mock_ql.PlainVanillaPayoff.return_value = MagicMock()
+        mock_ql = mocker.MagicMock()
+        mock_ql.Settings.instance.return_value.evaluationDate = mocker.MagicMock()
+        mock_ql.Date.todaysDate.return_value = mocker.MagicMock()
+        mock_ql.PlainVanillaPayoff.return_value = mocker.MagicMock()
         mock_ql.Option.Call = 1
-        mock_ql.EuropeanExercise.return_value = MagicMock()
-        mock_ql.VanillaOption.return_value = MagicMock()
+        mock_ql.EuropeanExercise.return_value = mocker.MagicMock()
+        mock_ql.VanillaOption.return_value = mocker.MagicMock()
 
         # Mock option methods
-        mock_option = MagicMock()
+        mock_option = mocker.MagicMock()
         mock_option.NPV.return_value = 5.0
         mock_option.delta.return_value = 0.6
         mock_option.gamma.return_value = 0.02
@@ -145,7 +143,9 @@ class TestDerivativesPricer:
 
         mock_ql.VanillaOption.return_value = mock_option
 
-        with patch.dict("sys.modules", {"QuantLib": mock_ql}):
+        import sys
+
+        with mocker.patch.dict(sys.modules, {"QuantLib": mock_ql}):
             result = pricer._price_option_quantlib(call_option_params, PricingModel.BINOMIAL)
 
             assert isinstance(result, OptionPricingResult)

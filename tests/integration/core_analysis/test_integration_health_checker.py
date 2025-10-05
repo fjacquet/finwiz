@@ -7,7 +7,6 @@ Tests the health checking functionality for the crew data integration system.
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -47,15 +46,16 @@ class TestIntegrationHealthChecker:
         assert health_checker.output_dir == custom_dir
         assert health_checker.integration_dir == custom_dir / "integration"
 
-    @patch("finwiz.integration.health_checker.psutil.cpu_percent")
-    @patch("finwiz.integration.health_checker.psutil.virtual_memory")
-    @patch("finwiz.integration.health_checker.psutil.disk_usage")
-    def test_should_check_system_resources_when_healthy(self, mock_disk, mock_memory, mock_cpu):
+    def test_should_check_system_resources_when_healthy(self, mocker):
         """Test system resource checking when resources are healthy."""
         # Arrange
+        mock_cpu = mocker.patch("finwiz.integration.health_checker.psutil.cpu_percent")
+        mock_memory = mocker.patch("finwiz.integration.health_checker.psutil.virtual_memory")
+        mock_disk = mocker.patch("finwiz.integration.health_checker.psutil.disk_usage")
+
         mock_cpu.return_value = 25.0
-        mock_memory.return_value = Mock(percent=30.0, available=8 * 1024**3)
-        mock_disk.return_value = Mock(percent=40.0, free=100 * 1024**3)
+        mock_memory.return_value = mocker.Mock(percent=30.0, available=8 * 1024**3)
+        mock_disk.return_value = mocker.Mock(percent=40.0, free=100 * 1024**3)
 
         health_checker = IntegrationHealthChecker()
 
@@ -71,15 +71,16 @@ class TestIntegrationHealthChecker:
         assert result.details["memory_percent"] == 30.0
         assert result.details["disk_percent"] == 40.0
 
-    @patch("finwiz.integration.health_checker.psutil.cpu_percent")
-    @patch("finwiz.integration.health_checker.psutil.virtual_memory")
-    @patch("finwiz.integration.health_checker.psutil.disk_usage")
-    def test_should_detect_critical_resource_usage(self, mock_disk, mock_memory, mock_cpu):
+    def test_should_detect_critical_resource_usage(self, mocker):
         """Test system resource checking when resources are critical."""
         # Arrange
+        mock_cpu = mocker.patch("finwiz.integration.health_checker.psutil.cpu_percent")
+        mock_memory = mocker.patch("finwiz.integration.health_checker.psutil.virtual_memory")
+        mock_disk = mocker.patch("finwiz.integration.health_checker.psutil.disk_usage")
+
         mock_cpu.return_value = 95.0
-        mock_memory.return_value = Mock(percent=95.0, available=1 * 1024**3)
-        mock_disk.return_value = Mock(percent=95.0, free=5 * 1024**3)
+        mock_memory.return_value = mocker.Mock(percent=95.0, available=1 * 1024**3)
+        mock_disk.return_value = mocker.Mock(percent=95.0, free=5 * 1024**3)
 
         health_checker = IntegrationHealthChecker()
 
@@ -310,11 +311,12 @@ class TestIntegrationHealthChecker:
             assert "check_timestamp" in result
             assert result["overall_status"] in ["healthy", "warning", "critical"]
 
-    @patch("finwiz.integration.health_checker.DataFreshnessChecker")
-    def test_should_perform_comprehensive_health_check(self, mock_freshness_checker):
+    def test_should_perform_comprehensive_health_check(self, mocker):
         """Test comprehensive health check functionality."""
         # Arrange
-        mock_freshness_report = Mock()
+        mock_freshness_checker = mocker.patch("finwiz.integration.health_checker.FreshnessChecker")
+
+        mock_freshness_report = mocker.Mock()
         mock_freshness_report.fresh_data = ["stock"]
         mock_freshness_report.stale_data = ["etf"]
         mock_freshness_report.missing_data = ["crypto"]
