@@ -7,6 +7,7 @@ Basic data models for holdings, configuration, and price data.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -20,8 +21,8 @@ class Holding(BaseModel):
 
     symbol: str = Field(..., description="Stock/ETF/Crypto symbol", min_length=1, max_length=10)
     shares: float = Field(..., gt=0, description="Number of shares held")
-    cost_basis: float | None = Field(None, gt=0, description="Average cost basis per share")
-    acquisition_date: datetime | None = Field(None, description="Date of acquisition")
+    cost_basis: Optional[float] = Field(None, gt=0, description="Average cost basis per share")
+    acquisition_date: Optional[datetime] = Field(None, description="Date of acquisition")
 
     @field_validator("symbol")
     @classmethod

@@ -5,7 +5,7 @@ This module contains Pydantic models for validating inputs to various FinWiz too
 All tool input schemas should be defined here for consistency and maintainability.
 """
 
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -40,7 +40,7 @@ class CryptocurrencyHistoricalInput(BaseModel):
 class CryptocurrencyNewsInput(BaseModel):
     """Input schema for CoinMarketCapNewsTool."""
 
-    symbol: str | None = Field(None, description="Cryptocurrency symbol to get news for (optional)")
+    symbol: Optional[str] = Field(None, description="Cryptocurrency symbol to get news for (optional)")
     limit: int = Field(10, description="Number of news articles to return (default: 10, max: 100)")
 
 
@@ -62,10 +62,10 @@ class AlphaVantageNewsInput(BaseModel):
 
     tickers: str = Field(..., description="Comma-separated ticker symbols")
     sort: str = Field("LATEST", description="Sort order: LATEST, EARLIEST, RELEVANCE")
-    time_from: str | None = Field(None, description="ISO8601 start time (YYYYMMDDTHHMM)")
-    time_to: str | None = Field(None, description="ISO8601 end time (YYYYMMDDTHHMM)")
-    limit: int | None = Field(50, description="Max number of items to return")
-    topics: str | None = Field(None, description="Comma-separated topics filter (e.g., technology,financial_markets)")
+    time_from: Optional[str] = Field(None, description="ISO8601 start time (YYYYMMDDTHHMM)")
+    time_to: Optional[str] = Field(None, description="ISO8601 end time (YYYYMMDDTHHMM)")
+    limit: Optional[int] = Field(50, description="Max number of items to return")
+    topics: Optional[str] = Field(None, description="Comma-separated topics filter (e.g., technology,financial_markets)")
 
 
 class CompanyOverviewInput(BaseModel):
@@ -91,11 +91,11 @@ class TwelveDataIndicatorInput(BaseModel):
     symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, BTC/USD, SPY")
     interval: str = Field("1day", description="Interval, e.g., 1min, 5min, 1h, 1day")
     indicator: Literal["rsi", "macd", "bbands"] = Field(..., description="Indicator to fetch from Twelve Data")
-    length: int | None = Field(None, description="Window length for indicators like RSI/BBANDS")
-    fast_period: int | None = Field(None, description="Fast period for MACD")
-    slow_period: int | None = Field(None, description="Slow period for MACD")
-    signal_period: int | None = Field(None, description="Signal period for MACD")
-    outputsize: int | None = Field(100, description="Number of data points to return (max depends on plan)")
+    length: Optional[int] = Field(None, description="Window length for indicators like RSI/BBANDS")
+    fast_period: Optional[int] = Field(None, description="Fast period for MACD")
+    slow_period: Optional[int] = Field(None, description="Slow period for MACD")
+    signal_period: Optional[int] = Field(None, description="Signal period for MACD")
+    outputsize: Optional[int] = Field(100, description="Number of data points to return (max depends on plan)")
 
 
 # Sentiment Analysis Tool Inputs
@@ -240,11 +240,11 @@ class KnowledgeBaseInput(BaseModel):
     """Input schema for Knowledge Base tool with optional parameters."""
 
     query: str = Field(..., description="Search query for the knowledge base")
-    similarity_threshold: float | None = Field(
+    similarity_threshold: Optional[float] = Field(
         default=None,
         description="Minimum similarity score for results (0.0 to 1.0)",
     )
-    limit: int | None = Field(
+    limit: Optional[int] = Field(
         default=None,
         description="Maximum number of results to return",
     )
@@ -261,7 +261,7 @@ class RiskAssessmentInput(BaseModel):
     """Input model for risk assessment tool."""
 
     assets: list[str] = Field(..., description="List of asset symbols to assess")
-    portfolio_weights: dict[str, float] | None = Field(
+    portfolio_weights: Optional[dict[str, float]] = Field(
         None, description="Portfolio weights for each asset (if assessing portfolio risk)"
     )
     assessment_type: str = Field(
@@ -303,8 +303,8 @@ class PerplexitySearchInput(BaseModel):
         "sonar-pro",
         description=("Perplexity model to use (e.g., sonar-pro). Use higher tiers only if your account has access."),
     )
-    top_k: int | None = Field(5, description="Maximum number of web results to retrieve (1-10 typical).")
-    search_recency: str | None = Field(
+    top_k: Optional[int] = Field(5, description="Maximum number of web results to retrieve (1-10 typical).")
+    search_recency: Optional[str] = Field(
         None,
         description="Recency filter such as 'day', 'week', or 'month'. Leave empty for default behaviour.",
     )
@@ -396,13 +396,13 @@ class OptimizationInput(BaseModel):
     """Input model for portfolio optimization tool."""
 
     assets: list[str] = Field(..., description="List of asset symbols to optimize")
-    expected_returns: dict[str, float] | None = Field(None, description="Expected returns for each asset (optional)")
+    expected_returns: Optional[dict[str, float]] = Field(None, description="Expected returns for each asset (optional)")
     risk_tolerance: float = Field(default=0.5, description="Risk tolerance (0.0 = risk averse, 1.0 = risk seeking)")
     optimization_method: str = Field(
         default="mean_variance", description="Optimization method: 'mean_variance', 'risk_parity', 'equal_weight'"
     )
-    constraints: dict[str, Any] | None = Field(None, description="Additional constraints")
-    target_return: float | None = Field(None, description="Target return for optimization")
+    constraints: Optional[dict[str, Any]] = Field(None, description="Additional constraints")
+    target_return: Optional[float] = Field(None, description="Target return for optimization")
 
 
 # Portfolio Rebalancing Tool Inputs
@@ -411,7 +411,7 @@ class PortfolioRebalancingInput(BaseModel):
 
     holdings: list[dict[str, Any]] = Field(..., description="List of portfolio holdings with symbol and shares")
     target_weights: dict[str, float] = Field(..., description="Target percentage weights for each symbol")
-    tolerance_bands: dict[str, float] | None = Field(default=None, description="Tolerance bands for each position")
+    tolerance_bands: Optional[dict[str, float]] = Field(default=None, description="Tolerance bands for each position")
     available_capital: float = Field(default=0.0, description="Available capital for rebalancing")
     global_tolerance: float = Field(default=0.05, description="Default tolerance band (5% = ±5%)")
 
