@@ -32,99 +32,257 @@ class TestAPlusDataExtractor:
     @pytest.fixture
     def sample_stock_content(self):
         """Sample stock A+ opportunities content."""
-        return """
-Top 15 A+ Stock Candidates — Comprehensive Analysis
-
-1) NVIDIA (NVDA) — A+ grade
-- Fundamental summary:
-  - ROE (3y): ~45%; Revenue CAGR (5y): ~36%; D/E: ~0.18
-  - A+ Tool score: 0.98; Quality/ROIC leadership
-- Portfolio correlation and allocation:
-  - 5y beta ~1.6, corr vs SPY ~0.65; high idiosyncratic alpha
-  - Optimal allocation: 5–8% for aggressive growth; 2–4% for balanced mandates
-- Compatibility:
-  - Fits growth-maximizing equity sleeve, tolerates volatility
-
-2) Broadcom (AVGO) — A+ grade
-- Fundamentals:
-  - ROE ~40%; 5y CAGR ~20%; D/E ~0.29
-  - A+ score: 0.96
-- Portfolio/correlation:
-  - 5y beta ~1.2; corr ~0.72. Less volatile than NVDA
-  - Allocation: 4–6% aggressive; 2–4% balanced
-- Compatibility:
-  - Strong cash compounder with AI lever; fits core growth
-
-3) Adobe (ADBE) — A grade (near A+)
-- Fundamentals:
-  - ROE ~32%; 5y CAGR ~16%; D/E ~0.22
-  - A+ score: 0.93
-- Portfolio:
-  - Beta ~1.1; corr ~0.78 vs SPY; core quality growth exposure
-  - Allocation: 3–4% aggressive; 2–3% balanced
-- Compatibility:
-  - Strong fit for durable cash generative software
-"""
+        return """{
+  "asset_type": "stock",
+  "total_screened": 100,
+  "candidates_found": 3,
+  "discovery_timestamp": "2025-10-06T21:00:00",
+  "average_score": 0.96,
+  "a_plus_percentage": 3.0,
+  "screening_efficiency": 3.0,
+  "a_plus_candidates": [
+    {
+      "candidate": {
+        "symbol": "NVDA",
+        "name": "NVIDIA",
+        "asset_type": "stock",
+        "current_price": 450.0,
+        "market_cap": 1100000000000,
+        "preliminary_score": 0.98,
+        "final_score": 0.98,
+        "grade": "A+",
+        "grade_description": "Exceptional quality",
+        "recommended_action": "Strong buy",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "Yahoo Finance",
+        "risk_assessment": {
+          "score": 3.5,
+          "category": "Medium",
+          "factors": ["Market volatility"]
+        }
+      },
+      "composite_score": 0.98,
+      "confidence_level": 0.95,
+      "rationale": ["ROE 45%", "Revenue CAGR 36%"],
+      "key_metrics": {"roe": 45.0, "revenue_growth": 36.0}
+    },
+    {
+      "candidate": {
+        "symbol": "AVGO",
+        "name": "Broadcom",
+        "asset_type": "stock",
+        "current_price": 850.0,
+        "market_cap": 400000000000,
+        "preliminary_score": 0.96,
+        "final_score": 0.96,
+        "grade": "A+",
+        "grade_description": "Exceptional quality",
+        "recommended_action": "Buy",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "Yahoo Finance",
+        "risk_assessment": {
+          "score": 3.0,
+          "category": "Medium",
+          "factors": ["Market risk"]
+        }
+      },
+      "composite_score": 0.96,
+      "confidence_level": 0.92,
+      "rationale": ["ROE 40%", "Revenue CAGR 20%"],
+      "key_metrics": {"roe": 40.0, "revenue_growth": 20.0}
+    },
+    {
+      "candidate": {
+        "symbol": "ADBE",
+        "name": "Adobe",
+        "asset_type": "stock",
+        "current_price": 550.0,
+        "market_cap": 250000000000,
+        "preliminary_score": 0.93,
+        "final_score": 0.93,
+        "grade": "A",
+        "grade_description": "High quality",
+        "recommended_action": "Buy",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "Yahoo Finance",
+        "risk_assessment": {
+          "score": 2.5,
+          "category": "Low-Medium",
+          "factors": ["Stable business"]
+        }
+      },
+      "composite_score": 0.93,
+      "confidence_level": 0.90,
+      "rationale": ["ROE 32%", "Revenue CAGR 16%"],
+      "key_metrics": {"roe": 32.0, "revenue_growth": 16.0}
+    }
+  ]
+}"""
 
     @pytest.fixture
     def sample_etf_content(self):
         """Sample ETF A+ opportunities content."""
-        return """
-A+ Grade Global UCITS ETF Opportunities – Top 10 (Ranked)
-
-1) VWCE – Vanguard FTSE All-World UCITS ETF (Acc)
-- A+ Score/Grade: 0.962 (A+)
-- Cost: TER 0.22% (net expense est. ~0.19% after lending)
-- Liquidity: AUM ~$17.5B; average spreads ~2 bps
-- Use Case: One-ticket global equity (developed + EM)
-- Comparison/Replacement:
-  - If holding IWDA+EMIM, VWCE can replace both for simplicity
-
-2) IWDA – iShares Core MSCI World UCITS ETF (Acc)
-- A+ Score/Grade: 0.958 (A+)
-- Cost: TER 0.20% (net ~0.17% after lending)
-- Liquidity: AUM ~$60B; spreads ~1 bp
-- Use Case: Core developed markets. Pair with EIMI/EMIM
-- Comparison/Replacement:
-  - Versus VEVE: lower TER and generally tighter spreads
-
-3) CSPX – iShares Core S&P 500 UCITS ETF (Acc)
-- A+ Score/Grade: 0.957 (A+)
-- Cost: TER 0.07% (net ~0.065% after lending)
-- Liquidity: AUM ~$65B; spreads ~0.5 bp
-- Use Case: US large-cap core exposure
-"""
+        return """{
+  "asset_type": "etf",
+  "total_screened": 200,
+  "candidates_found": 3,
+  "discovery_timestamp": "2025-10-06T21:00:00",
+  "average_score": 0.96,
+  "a_plus_percentage": 1.5,
+  "screening_efficiency": 1.5,
+  "a_plus_candidates": [
+    {
+      "candidate": {
+        "symbol": "VWCE",
+        "name": "Vanguard FTSE All-World UCITS ETF",
+        "asset_type": "etf",
+        "current_price": 105.0,
+        "market_cap": 17500000000,
+        "preliminary_score": 0.962,
+        "final_score": 0.962,
+        "grade": "A+",
+        "grade_description": "Exceptional ETF",
+        "recommended_action": "Core holding",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "Yahoo Finance"
+      },
+      "composite_score": 0.962,
+      "confidence_level": 0.95,
+      "rationale": ["Low TER 0.22%", "Global diversification"],
+      "key_metrics": {"ter": 0.0022, "aum_usd": 17500000000}
+    },
+    {
+      "candidate": {
+        "symbol": "IWDA",
+        "name": "iShares Core MSCI World UCITS ETF",
+        "asset_type": "etf",
+        "current_price": 75.0,
+        "market_cap": 60000000000,
+        "preliminary_score": 0.958,
+        "final_score": 0.958,
+        "grade": "A+",
+        "grade_description": "Exceptional ETF",
+        "recommended_action": "Core holding",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "Yahoo Finance"
+      },
+      "composite_score": 0.958,
+      "confidence_level": 0.94,
+      "rationale": ["Low TER 0.20%", "Developed markets"],
+      "key_metrics": {"ter": 0.0020, "aum_usd": 60000000000}
+    },
+    {
+      "candidate": {
+        "symbol": "CSPX",
+        "name": "iShares Core S&P 500 UCITS ETF",
+        "asset_type": "etf",
+        "current_price": 450.0,
+        "market_cap": 65000000000,
+        "preliminary_score": 0.957,
+        "final_score": 0.957,
+        "grade": "A+",
+        "grade_description": "Exceptional ETF",
+        "recommended_action": "Core holding",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "Yahoo Finance"
+      },
+      "composite_score": 0.957,
+      "confidence_level": 0.93,
+      "rationale": ["Ultra-low TER 0.07%", "S&P 500 exposure"],
+      "key_metrics": {"ter": 0.0007, "aum_usd": 65000000000}
+    }
+  ]
+}"""
 
     @pytest.fixture
     def sample_crypto_content(self):
         """Sample crypto A+ opportunities content."""
-        return """
-Top 5 A+ Grade Crypto Candidates — Institutional Analysis
-
-1) Bitcoin (BTC-USD)
-- Composite A+ Score: 0.98 (Grade: A+)
-- Grading rationale: Deepest liquidity, strongest regulatory clarity
-- Allocation recommendation:
-  - Suggested weight: 2.0% of total portfolio
-- Rebalancing strategy:
-  - If crypto allocation hits 5%, BTC acts as core ballast
-
-2) Ethereum (ETH-USD)
-- Composite A+ Score: 0.96 (Grade: A+)
-- Grading rationale: Smart contract leader with deflationary tokenomics
-- Allocation recommendation:
-  - Suggested weight: 1.5% of total portfolio
-- Rebalancing strategy:
-  - If crypto at 5% cap, adjust ETH between 1.2–1.8% band
-
-3) Solana (SOL-USD)
-- Composite Score: 0.93 (Grade: A)
-- Grading rationale: High-throughput L1 with strong payments momentum
-- Allocation recommendation:
-  - Suggested weight: 0.7% of total portfolio
-- Rebalancing strategy:
-  - Within 5% cap, rotate between SOL and LINK
-"""
+        return """{
+  "asset_type": "crypto",
+  "total_screened": 50,
+  "candidates_found": 3,
+  "discovery_timestamp": "2025-10-06T21:00:00",
+  "average_score": 0.96,
+  "a_plus_percentage": 6.0,
+  "screening_efficiency": 6.0,
+  "a_plus_candidates": [
+    {
+      "candidate": {
+        "symbol": "BTC-USD",
+        "name": "Bitcoin",
+        "asset_type": "crypto",
+        "current_price": 65000.0,
+        "market_cap": 1200000000000,
+        "preliminary_score": 0.98,
+        "final_score": 0.98,
+        "grade": "A+",
+        "grade_description": "Exceptional crypto",
+        "recommended_action": "Core crypto holding",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "CoinMarketCap",
+        "risk_assessment": {
+          "score": 7.0,
+          "category": "High",
+          "factors": ["Volatility"]
+        }
+      },
+      "composite_score": 0.98,
+      "confidence_level": 0.95,
+      "rationale": ["Deepest liquidity", "Regulatory clarity"],
+      "key_metrics": {"market_cap": 1200000000000, "volume_24h": 30000000000}
+    },
+    {
+      "candidate": {
+        "symbol": "ETH-USD",
+        "name": "Ethereum",
+        "asset_type": "crypto",
+        "current_price": 3500.0,
+        "market_cap": 420000000000,
+        "preliminary_score": 0.96,
+        "final_score": 0.96,
+        "grade": "A+",
+        "grade_description": "Exceptional crypto",
+        "recommended_action": "Core crypto holding",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "CoinMarketCap",
+        "risk_assessment": {
+          "score": 7.5,
+          "category": "High",
+          "factors": ["Volatility", "Smart contract risk"]
+        }
+      },
+      "composite_score": 0.96,
+      "confidence_level": 0.93,
+      "rationale": ["Smart contract leader", "Deflationary tokenomics"],
+      "key_metrics": {"market_cap": 420000000000, "volume_24h": 15000000000}
+    },
+    {
+      "candidate": {
+        "symbol": "SOL-USD",
+        "name": "Solana",
+        "asset_type": "crypto",
+        "current_price": 150.0,
+        "market_cap": 65000000000,
+        "preliminary_score": 0.93,
+        "final_score": 0.93,
+        "grade": "A",
+        "grade_description": "High quality crypto",
+        "recommended_action": "Satellite holding",
+        "discovery_date": "2025-10-06T21:00:00",
+        "data_source": "CoinMarketCap",
+        "risk_assessment": {
+          "score": 8.0,
+          "category": "High",
+          "factors": ["High volatility", "Network stability"]
+        }
+      },
+      "composite_score": 0.93,
+      "confidence_level": 0.88,
+      "rationale": ["High-throughput L1", "Strong payments momentum"],
+      "key_metrics": {"market_cap": 65000000000, "volume_24h": 2000000000}
+    }
+  ]
+}"""
 
     def test_should_initialize_extractor_when_valid_output_dir_provided(self, mock_output_dir):
         """Test extractor initialization with valid output directory."""

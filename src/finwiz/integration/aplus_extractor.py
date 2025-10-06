@@ -126,7 +126,7 @@ class APlusDataExtractor:
                 confidence = item.get("confidence_level", 0.8)
 
                 # Extract risk assessment
-                risk_assessment = candidate.get("risk_assessment", {})
+                risk_assessment = candidate.get("risk_assessment") or {}
                 risk_score = risk_assessment.get("score", 5.0)
 
                 # Extract key metrics for allocation recommendation
@@ -248,7 +248,7 @@ class APlusDataExtractor:
                 confidence = item.get("confidence_level", 0.8)
 
                 # Extract risk assessment
-                risk_assessment = candidate.get("risk_assessment", {})
+                risk_assessment = candidate.get("risk_assessment") or {}
                 risk_score = risk_assessment.get("score", 7.0)
 
                 rationale = item.get("rationale", [])
