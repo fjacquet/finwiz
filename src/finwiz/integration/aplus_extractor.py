@@ -5,8 +5,8 @@ This module extracts A+ investment opportunities from discovery crew outputs
 and structures them for integration into the reporting system.
 """
 
+import json
 import logging
-import re
 from datetime import datetime
 from pathlib import Path
 
@@ -97,8 +97,8 @@ class APlusDataExtractor:
             return None
 
     def _extract_stock_opportunities(self) -> list[dict[str, any]]:
-        """Extract A+ stock opportunities from a_plus_stocks.md file."""
-        stock_file = self.discovery_dir / "a_plus_stocks.md"
+        """Extract A+ stock opportunities from a_plus_stocks.json file."""
+        stock_file = self.discovery_dir / "a_plus_stocks.json"
 
         if not stock_file.exists():
             self.logger.warning(f"Stock A+ file not found: {stock_file}")
@@ -106,38 +106,45 @@ class APlusDataExtractor:
 
         try:
             content = stock_file.read_text(encoding="utf-8")
+            data = json.loads(content)
             opportunities = []
 
-            # Pattern to match stock entries with A+ grades
-            # Matches: "1) NVIDIA (NVDA) — A+ grade" or "2) Broadcom (AVGO) — A+ grade"
-            stock_pattern = r"(\d+)\)\s+([^(]+)\s*\(([^)]+)\)\s*—\s*(A\+|A)\s+grade"
+            # Extract from a_plus_candidates array
+            candidates = data.get("a_plus_candidates", [])
 
-            matches = re.finditer(stock_pattern, content, re.IGNORECASE | re.MULTILINE)
+            for idx, item in enumerate(candidates):
+                candidate = item.get("candidate", {})
 
-            for match in matches:
-                rank = int(match.group(1))
-                company_name = match.group(2).strip()
-                symbol = match.group(3).strip()
-                grade = match.group(4).strip()
+                # Only include A+ and A grades
+                grade = candidate.get("grade", "")
+                if grade not in ["A+", "A"]:
+                    continue
 
-                # Extract additional details for this stock
-                stock_details = self._extract_stock_details(content, symbol, company_name)
+                symbol = candidate.get("symbol", "")
+                company_name = candidate.get("name", "")
+                composite_score = item.get("composite_score", 0.0)
+                confidence = item.get("confidence_level", 0.8)
+
+                # Extract risk assessment
+                risk_assessment = candidate.get("risk_assessment", {})
+                risk_score = risk_assessment.get("score", 5.0)
+
+                # Extract key metrics for allocation recommendation
+                key_metrics = item.get("key_metrics", {})
+                rationale = item.get("rationale", [])
 
                 opportunity = {
                     "symbol": symbol,
                     "company_name": company_name,
                     "grade": grade,
-                    "rank": rank,
-                    "allocation_recommendation": stock_details.get("allocation", ""),
-                    "replacement_note": stock_details.get("replacement", ""),
-                    "risk_score": stock_details.get("risk_score", 5),
-                    "confidence": stock_details.get("confidence", 0.8),
+                    "rank": idx + 1,
+                    "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
+                    "replacement_note": candidate.get("recommended_action", ""),
+                    "risk_score": risk_score,
+                    "confidence": confidence,
                 }
 
                 opportunities.append(opportunity)
-
-            # Sort by rank
-            opportunities.sort(key=lambda x: x["rank"])
 
             self.logger.info(f"Extracted {len(opportunities)} stock A+ opportunities")
             return opportunities
@@ -147,8 +154,8 @@ class APlusDataExtractor:
             return []
 
     def _extract_etf_opportunities(self) -> list[dict[str, any]]:
-        """Extract A+ ETF opportunities from a_plus_etfs.md file."""
-        etf_file = self.discovery_dir / "a_plus_etfs.md"
+        """Extract A+ ETF opportunities from a_plus_etfs.json file."""
+        etf_file = self.discovery_dir / "a_plus_etfs.json"
 
         if not etf_file.exists():
             self.logger.warning(f"ETF A+ file not found: {etf_file}")
@@ -156,43 +163,53 @@ class APlusDataExtractor:
 
         try:
             content = etf_file.read_text(encoding="utf-8")
+            data = json.loads(content)
             opportunities = []
 
-            # Pattern to match ETF entries with A+ grades
-            # Matches: "1) VWCE – Vanguard FTSE All-World UCITS ETF (Acc)"
-            etf_pattern = r"(\d+)\)\s+([A-Z0-9]+)\s*[–-]\s*([^(]+)(?:\([^)]*\))?"
+            # Extract from a_plus_candidates array
+            candidates = data.get("a_plus_candidates", [])
 
-            matches = re.finditer(etf_pattern, content, re.MULTILINE)
+            for idx, item in enumerate(candidates):
+                candidate = item.get("candidate", {})
 
-            for match in matches:
-                rank = int(match.group(1))
-                symbol = match.group(2).strip()
-                fund_name = match.group(3).strip()
+                # Only include A+ and A grades
+                grade = candidate.get("grade", "")
+                if grade not in ["A+", "A"]:
+                    continue
 
-                # Extract grade from the content section for this ETF
-                grade = self._extract_etf_grade(content, symbol)
+                symbol = candidate.get("symbol", "")
+                fund_name = candidate.get("name", "")
+                composite_score = item.get("composite_score", 0.0)
+                confidence = item.get("confidence_level", 0.9)
 
-                # Only include A+ and A grade ETFs
-                if grade in ["A+", "A"]:
-                    # Extract additional details for this ETF
-                    etf_details = self._extract_etf_details(content, symbol, fund_name)
+                # Extract key metrics
+                key_metrics = item.get("key_metrics", {})
+                ter = key_metrics.get("ter", 0.0)
+                aum = key_metrics.get("aum_usd", 0)
 
-                    opportunity = {
-                        "symbol": symbol,
-                        "fund_name": fund_name,
-                        "grade": grade,
-                        "rank": rank,
-                        "allocation_recommendation": etf_details.get("allocation", ""),
-                        "replacement_note": etf_details.get("replacement", ""),
-                        "ter": etf_details.get("ter", 0.0),
-                        "aum": etf_details.get("aum", ""),
-                        "confidence": etf_details.get("confidence", 0.9),
-                    }
+                # Format AUM
+                if aum >= 1e9:
+                    aum_str = f"${aum / 1e9:.1f}B"
+                elif aum >= 1e6:
+                    aum_str = f"${aum / 1e6:.1f}M"
+                else:
+                    aum_str = f"${aum:,.0f}"
 
-                    opportunities.append(opportunity)
+                rationale = item.get("rationale", [])
 
-            # Sort by rank
-            opportunities.sort(key=lambda x: x["rank"])
+                opportunity = {
+                    "symbol": symbol,
+                    "fund_name": fund_name,
+                    "grade": grade,
+                    "rank": idx + 1,
+                    "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
+                    "replacement_note": candidate.get("recommended_action", ""),
+                    "ter": ter,
+                    "aum": aum_str,
+                    "confidence": confidence,
+                }
+
+                opportunities.append(opportunity)
 
             self.logger.info(f"Extracted {len(opportunities)} ETF A+ opportunities")
             return opportunities
@@ -202,8 +219,8 @@ class APlusDataExtractor:
             return []
 
     def _extract_crypto_opportunities(self) -> list[dict[str, any]]:
-        """Extract A+ crypto opportunities from a_plus_crypto.md file."""
-        crypto_file = self.discovery_dir / "a_plus_crypto.md"
+        """Extract A+ crypto opportunities from a_plus_crypto.json file."""
+        crypto_file = self.discovery_dir / "a_plus_crypto.json"
 
         if not crypto_file.exists():
             self.logger.warning(f"Crypto A+ file not found: {crypto_file}")
@@ -211,42 +228,43 @@ class APlusDataExtractor:
 
         try:
             content = crypto_file.read_text(encoding="utf-8")
+            data = json.loads(content)
             opportunities = []
 
-            # Pattern to match crypto entries with A+ grades
-            # Matches: "1) Bitcoin (BTC-USD)" or "2) Ethereum (ETH-USD)"
-            crypto_pattern = r"(\d+)\)\s+([^(]+)\s*\(([^)]+)\)"
+            # Extract from a_plus_candidates array
+            candidates = data.get("a_plus_candidates", [])
 
-            matches = re.finditer(crypto_pattern, content, re.MULTILINE)
+            for idx, item in enumerate(candidates):
+                candidate = item.get("candidate", {})
 
-            for match in matches:
-                rank = int(match.group(1))
-                crypto_name = match.group(2).strip()
-                symbol = match.group(3).strip()
+                # Only include A+ and A grades
+                grade = candidate.get("grade", "")
+                if grade not in ["A+", "A", "A-"]:
+                    continue
 
-                # Extract grade from the content section for this crypto
-                grade = self._extract_crypto_grade(content, symbol, crypto_name)
+                symbol = candidate.get("symbol", "")
+                crypto_name = candidate.get("name", "")
+                composite_score = item.get("composite_score", 0.0)
+                confidence = item.get("confidence_level", 0.8)
 
-                # Only include A+ and A grade cryptos
-                if grade in ["A+", "A", "A-"]:
-                    # Extract additional details for this crypto
-                    crypto_details = self._extract_crypto_details(content, symbol, crypto_name)
+                # Extract risk assessment
+                risk_assessment = candidate.get("risk_assessment", {})
+                risk_score = risk_assessment.get("score", 7.0)
 
-                    opportunity = {
-                        "symbol": symbol.replace("-USD", ""),  # Clean symbol
-                        "crypto_name": crypto_name,
-                        "grade": grade,
-                        "rank": rank,
-                        "allocation_recommendation": crypto_details.get("allocation", ""),
-                        "replacement_note": crypto_details.get("replacement", ""),
-                        "risk_score": crypto_details.get("risk_score", 7),
-                        "confidence": crypto_details.get("confidence", 0.8),
-                    }
+                rationale = item.get("rationale", [])
 
-                    opportunities.append(opportunity)
+                opportunity = {
+                    "symbol": symbol.replace("-USD", ""),  # Clean symbol
+                    "crypto_name": crypto_name,
+                    "grade": grade,
+                    "rank": idx + 1,
+                    "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
+                    "replacement_note": candidate.get("recommended_action", ""),
+                    "risk_score": risk_score,
+                    "confidence": confidence,
+                }
 
-            # Sort by rank
-            opportunities.sort(key=lambda x: x["rank"])
+                opportunities.append(opportunity)
 
             self.logger.info(f"Extracted {len(opportunities)} crypto A+ opportunities")
             return opportunities
@@ -254,191 +272,6 @@ class APlusDataExtractor:
         except Exception as e:
             self.logger.error(f"Failed to extract crypto opportunities: {str(e)}", exc_info=True)
             return []
-
-    def _extract_stock_details(self, content: str, symbol: str, company_name: str) -> dict[str, any]:
-        """Extract detailed information for a specific stock."""
-        details = {}
-
-        try:
-            # Find the section for this stock
-            section_pattern = rf"{re.escape(company_name)}\s*\({re.escape(symbol)}\).*?(?=\d+\)|$)"
-            section_match = re.search(section_pattern, content, re.DOTALL | re.IGNORECASE)
-
-            if section_match:
-                section_content = section_match.group(0)
-
-                # Extract allocation recommendation
-                allocation_match = re.search(r"Optimal allocation:\s*([^.]+)", section_content, re.IGNORECASE)
-                if allocation_match:
-                    details["allocation"] = allocation_match.group(1).strip()
-
-                # Extract replacement/compatibility info
-                replacement_match = re.search(r"Compatibility:\s*([^.]+)", section_content, re.IGNORECASE)
-                if replacement_match:
-                    details["replacement"] = replacement_match.group(1).strip()
-
-                # Extract confidence from A+ score (multiple patterns)
-                score_patterns = [r"A\+\s+Tool\s+score:\s*([\d.]+)", r"A\+\s+score:\s*([\d.]+)", r"score:\s*([\d.]+)"]
-
-                for pattern in score_patterns:
-                    score_match = re.search(pattern, section_content, re.IGNORECASE)
-                    if score_match:
-                        score = float(score_match.group(1))
-                        details["confidence"] = min(score, 1.0)  # Ensure it's between 0 and 1
-                        break
-
-                # Default confidence if not found
-                if "confidence" not in details:
-                    details["confidence"] = 0.8
-
-                # Estimate risk score from content
-                if "high volatility" in section_content.lower() or "high beta" in section_content.lower():
-                    details["risk_score"] = 8
-                elif "moderate" in section_content.lower():
-                    details["risk_score"] = 6
-                else:
-                    details["risk_score"] = 5
-
-        except Exception as e:
-            self.logger.warning(f"Failed to extract details for {symbol}: {str(e)}")
-
-        return details
-
-    def _extract_etf_grade(self, content: str, symbol: str) -> str:
-        """Extract the grade for a specific ETF."""
-        try:
-            # Look for grade in the ETF section
-            grade_pattern = rf"{re.escape(symbol)}.*?Grade:\s*(A\+|A|A-)"
-            grade_match = re.search(grade_pattern, content, re.IGNORECASE | re.DOTALL)
-
-            if grade_match:
-                return grade_match.group(1)
-
-            # Alternative pattern: "A+ Score/Grade: 0.962 (A+)"
-            alt_pattern = rf"{re.escape(symbol)}.*?Score/Grade:.*?\((A\+|A|A-)\)"
-            alt_match = re.search(alt_pattern, content, re.IGNORECASE | re.DOTALL)
-
-            if alt_match:
-                return alt_match.group(1)
-
-        except Exception as e:
-            self.logger.warning(f"Failed to extract grade for ETF {symbol}: {str(e)}")
-
-        return "A"  # Default grade
-
-    def _extract_etf_details(self, content: str, symbol: str, fund_name: str) -> dict[str, any]:
-        """Extract detailed information for a specific ETF."""
-        details = {}
-
-        try:
-            # Find the section for this ETF
-            section_pattern = rf"{re.escape(symbol)}.*?(?=\d+\)|$)"
-            section_match = re.search(section_pattern, content, re.DOTALL | re.IGNORECASE)
-
-            if section_match:
-                section_content = section_match.group(0)
-
-                # Extract TER (Total Expense Ratio) - multiple patterns
-                ter_patterns = [r"TER\s*([\d.]+)%", r"Cost:\s*TER\s*([\d.]+)%"]
-
-                for pattern in ter_patterns:
-                    ter_match = re.search(pattern, section_content, re.IGNORECASE)
-                    if ter_match:
-                        details["ter"] = float(ter_match.group(1))
-                        break
-
-                # Extract AUM
-                aum_match = re.search(r"AUM\s*[~$]*([^;]+)", section_content, re.IGNORECASE)
-                if aum_match:
-                    details["aum"] = aum_match.group(1).strip()
-
-                # Extract replacement notes
-                replacement_match = re.search(r"Replacement.*?:\s*([^.]+)", section_content, re.IGNORECASE)
-                if replacement_match:
-                    details["replacement"] = replacement_match.group(1).strip()
-
-                # Extract use case as allocation recommendation
-                use_case_match = re.search(r"Use Case:\s*([^.]+)", section_content, re.IGNORECASE)
-                if use_case_match:
-                    details["allocation"] = use_case_match.group(1).strip()
-
-                # High confidence for ETFs due to standardized structure
-                details["confidence"] = 0.9
-
-        except Exception as e:
-            self.logger.warning(f"Failed to extract details for ETF {symbol}: {str(e)}")
-
-        return details
-
-    def _extract_crypto_grade(self, content: str, symbol: str, crypto_name: str) -> str:
-        """Extract the grade for a specific crypto."""
-        try:
-            # Look for grade in the crypto section
-            grade_pattern = rf"{re.escape(crypto_name)}.*?Grade:\s*(A\+|A|A-)"
-            grade_match = re.search(grade_pattern, content, re.IGNORECASE | re.DOTALL)
-
-            if grade_match:
-                return grade_match.group(1)
-
-            # Alternative pattern: "Composite A+ Score: 0.98 (Grade: A+)"
-            alt_pattern = rf"{re.escape(crypto_name)}.*?Grade:\s*(A\+|A|A-)\)"
-            alt_match = re.search(alt_pattern, content, re.IGNORECASE | re.DOTALL)
-
-            if alt_match:
-                return alt_match.group(1)
-
-        except Exception as e:
-            self.logger.warning(f"Failed to extract grade for crypto {symbol}: {str(e)}")
-
-        return "A"  # Default grade
-
-    def _extract_crypto_details(self, content: str, symbol: str, crypto_name: str) -> dict[str, any]:
-        """Extract detailed information for a specific crypto."""
-        details = {}
-
-        try:
-            # Find the section for this crypto
-            section_pattern = rf"{re.escape(crypto_name)}.*?(?=\d+\)|$)"
-            section_match = re.search(section_pattern, content, re.DOTALL | re.IGNORECASE)
-
-            if section_match:
-                section_content = section_match.group(0)
-
-                # Extract allocation recommendation - multiple patterns
-                allocation_patterns = [
-                    r"Suggested weight:\s*([^.]+)",
-                    r"Allocation recommendation:\s*-\s*Suggested weight:\s*([^.]+)",
-                ]
-
-                for pattern in allocation_patterns:
-                    allocation_match = re.search(pattern, section_content, re.IGNORECASE)
-                    if allocation_match:
-                        details["allocation"] = allocation_match.group(1).strip()
-                        break
-
-                # Extract replacement strategy
-                replacement_match = re.search(r"Rebalancing strategy:\s*([^.]+)", section_content, re.IGNORECASE)
-                if replacement_match:
-                    details["replacement"] = replacement_match.group(1).strip()
-
-                # Extract confidence from composite score
-                score_match = re.search(r"Composite.*?Score:\s*([\d.]+)", section_content, re.IGNORECASE)
-                if score_match:
-                    score = float(score_match.group(1))
-                    details["confidence"] = min(score, 1.0)  # Ensure it's between 0 and 1
-
-                # Crypto risk scores are generally higher
-                if "high risk" in section_content.lower() or "medium risk" in section_content.lower():
-                    details["risk_score"] = 8
-                elif "low risk" in section_content.lower():
-                    details["risk_score"] = 6
-                else:
-                    details["risk_score"] = 7  # Default for crypto
-
-        except Exception as e:
-            self.logger.warning(f"Failed to extract details for crypto {symbol}: {str(e)}")
-
-        return details
 
     def _generate_discovery_summary(self, stocks: list[dict], etfs: list[dict], cryptos: list[dict]) -> str:
         """Generate a summary of the discovery analysis."""

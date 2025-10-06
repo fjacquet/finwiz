@@ -251,15 +251,15 @@ class ReportCrew:
             tools=[],
         )
 
-    @final_reporter
-    @agent
-    def translator(self) -> Agent:
-        """Create translator agent that converts English reports to French while preserving layout."""
-        return Agent(
-            config=self.agents_config["translator"],
-            tools=[],  # No tools - only consumes upstream HTML context
-            verbose=True,
-        )
+    # @final_reporter
+    # @agent
+    # def translator(self) -> Agent:
+    #     """Create translator agent that converts English reports to French while preserving layout."""
+    #     return Agent(
+    #         config=self.agents_config["translator"],
+    #         tools=[],  # No tools - only consumes upstream HTML context
+    #         verbose=True,
+    #     )
 
     @async_task
     @task
@@ -322,7 +322,7 @@ class ReportCrew:
             self.portfolio_allocator(),
             self.risk_manager(),
             self.investment_reporter(),
-            self.translator(),
+            # self.translator(),
         ]
 
         tasks = [
@@ -330,7 +330,7 @@ class ReportCrew:
             self.optimal_portfolio_allocation_task(),
             self.risk_assessment_mitigation_task(),
             self.comprehensive_investment_report_task(),
-            self.translation_task(),
+            # self.translation_task(),
         ]
 
         # Validate tool restrictions before creating crew
