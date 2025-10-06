@@ -16,14 +16,23 @@ market_technical_analysis_task:
     3. Examine historical patterns indicating growth potential, considering 
     the present market context as of {full_date}.
 
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the MarketTrend object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "trends", "analysis", etc.
+    - The JSON must match the MarketTrend schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - market_sentiment: MUST be one of: "bullish", "bearish", "neutral", "mixed" (lowercase)
+    
     OUTPUT: Return a structured JSON output conforming to the MarketTrend schema.
   expected_output: >
     A structured analysis of current stock market trends and emerging sectors with
     growth potential, conforming to the MarketTrend Pydantic schema.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: market_technical_analyst
   output_pydantic: MarketTrend
   output_file: "output/stock/stock_market_trends.json"
-  output_json: true
   async_execution: true
 
 # Stock Screening Tasks
@@ -78,6 +87,14 @@ stock_screening_task:
     conditions. IMPORTANT: Use only real, existing stocks with accurate ticker
     symbols.
 
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the StockScreeningResult object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "stocks", etc.
+    - The JSON must match the StockScreeningResult schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - sentiment.counts keys: MUST be exactly "pos", "neu", "neg" (NOT "Bullish", "Bearish", "Neutral")
+    
     OUTPUT: Return a structured JSON output conforming to the StockScreeningResult schema.
   expected_output: >
     A structured list of 10 emerging stocks with potential, conforming to the 
@@ -89,10 +106,10 @@ stock_screening_task:
     - The counts field MUST use exactly these keys: "pos", "neu", "neg" (NOT "Bullish", "Bearish", etc.)
     - All dates must be in ISO format with timezone (e.g., "2025-09-27T00:00:00Z")
     - Follow the exact schema structure shown in the example files
+    - Return the object directly without any wrapper fields
   agent: market_technical_analyst
   output_pydantic: StockScreeningResult
   output_file: "output/stock/emerging_stocks_analysis.json"
-  output_json: true
   async_execution: true
   depends_on:
     - market_technical_analysis_task
@@ -151,15 +168,24 @@ technical_detail_task:
 
     Ensure your AI analysis reflects the company's status as of {full_date}.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the StockTechnicalAnalysis object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "analysis", "results", etc.
+    - The JSON must match the StockTechnicalAnalysis schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase)
+    
     OUTPUT: Return a structured JSON output conforming to the StockTechnicalAnalysis schema.
   expected_output: >
     A structured technical assessment of each stock conforming to the StockTechnicalAnalysis 
     Pydantic schema. Include financial metrics, 10-K insights with SEC citations, quantitative 
     analysis with backtesting results, and investment recommendations.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: market_technical_analyst
   output_pydantic: StockTechnicalAnalysis
   output_file: "output/stock/stock_technical_details.json"
-  output_json: true
   async_execution: true
   depends_on:
     - stock_screening_task
@@ -230,6 +256,8 @@ stock_risk_assessment_task:
     Also include a machine-readable JSON appendix containing:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ticker
     - quantitative_risk_metrics[] with comprehensive risk analysis for each ticker
+    The report should be formatted in HTML with emojis for better
+    visualization.
   agent: investment_risk_analyst
   output_file: "output/stock/stock_investment_risk_strategy_en.html"
   async_execution: true

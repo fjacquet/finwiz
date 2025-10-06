@@ -15,11 +15,17 @@ from typing import Any
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
-from finwiz.schemas.etf import ETFFactsheet, ETFTopHolding
+from finwiz.schemas.etf import (
+    ETFFactsheet,
+    ETFMarketTrend,
+    ETFScreeningResult,
+    ETFTechnicalAnalysis,
+    ETFTopHolding,
+)
 from finwiz.tools.tool_factories import get_etf_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
@@ -64,12 +70,16 @@ class EtfCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
-        super().__init__()
+        # Make Pydantic models available for CrewAI resolution BEFORE super().__init__()
+        # Use the @output_pydantic decorator to mark them for CrewAI
+        self.ETFTopHolding = output_pydantic(ETFTopHolding)
+        self.ETFFactsheet = output_pydantic(ETFFactsheet)
+        self.ETFMarketTrend = output_pydantic(ETFMarketTrend)
+        self.ETFScreeningResult = output_pydantic(ETFScreeningResult)
+        self.ETFTechnicalAnalysis = output_pydantic(ETFTechnicalAnalysis)
+        self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
 
-        # Make Pydantic models available for CrewAI resolution
-        self.ETFTopHolding = ETFTopHolding
-        self.ETFFactsheet = ETFFactsheet
-        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+        super().__init__()
 
         # Initialize structured logger
         self.crew_logger = CrewLogger("EtfCrew")

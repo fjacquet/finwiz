@@ -12,11 +12,17 @@ from typing import Any
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
-from finwiz.schemas.stock import MarketSentiment, TenKInsight
+from finwiz.schemas.stock import (
+    MarketSentiment,
+    MarketTrend,
+    StockScreeningResult,
+    StockTechnicalAnalysis,
+    TenKInsight,
+)
 from finwiz.tools.logger import get_logger
 from finwiz.tools.tool_factories import get_stock_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
@@ -65,12 +71,16 @@ class StockCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
-        super().__init__()
+        # Make Pydantic models available for CrewAI resolution BEFORE super().__init__()
+        # Use the @output_pydantic decorator to mark them for CrewAI
+        self.MarketSentiment = output_pydantic(MarketSentiment)
+        self.MarketTrend = output_pydantic(MarketTrend)
+        self.StockScreeningResult = output_pydantic(StockScreeningResult)
+        self.StockTechnicalAnalysis = output_pydantic(StockTechnicalAnalysis)
+        self.TenKInsight = output_pydantic(TenKInsight)
+        self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
 
-        # Make Pydantic models available for CrewAI resolution
-        self.MarketSentiment = MarketSentiment
-        self.TenKInsight = TenKInsight
-        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+        super().__init__()
 
         # Initialize structured logger
         self.crew_logger = CrewLogger("StockCrew")

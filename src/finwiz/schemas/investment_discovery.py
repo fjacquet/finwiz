@@ -6,7 +6,7 @@ validation outcomes, and portfolio optimization recommendations.
 """
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -29,20 +29,28 @@ class APlusCriteria(BaseModel):
     """Dynamic A+ scoring criteria that adapt to market conditions."""
 
     # ETF Criteria
-    etf_max_expense_ratio: float = Field(default=0.15, ge=0.0, le=2.0, description="Maximum acceptable expense ratio for ETFs")
-    etf_min_aum: float = Field(default=1e9, ge=1e6, le=1e12, description="Minimum AUM for ETF liquidity")
-    etf_max_tracking_error: float = Field(default=0.002, ge=0.0, le=0.1, description="Maximum tracking error tolerance")
+    etf_max_expense_ratio: float = Field(
+        default=0.15, ge=0.0, le=2.0, description="Maximum expense ratio (decimal, e.g., 0.15 = 15%)"
+    )
+    etf_min_aum: float = Field(default=1e9, ge=1e6, le=1e12, description="Minimum AUM for ETF liquidity in USD")
+    etf_max_tracking_error: float = Field(
+        default=0.002, ge=0.0, le=0.1, description="Maximum tracking error (decimal, e.g., 0.002 = 0.2%)"
+    )
     etf_min_history_years: int = Field(default=3, ge=1, le=20, description="Minimum operating history in years")
 
-    # Stock Criteria
-    stock_min_roe: float = Field(default=0.20, ge=0.0, le=1.0, description="Minimum return on equity")
-    stock_min_revenue_growth: float = Field(default=0.15, ge=-0.5, le=2.0, description="Minimum revenue growth rate")
+    # Stock Criteria - Accept percentage format (0-100)
+    stock_min_roe: float = Field(
+        default=20.0, ge=0.0, le=100.0, description="Minimum return on equity (percentage, e.g., 20 = 20%)"
+    )
+    stock_min_revenue_growth: float = Field(
+        default=15.0, ge=-50.0, le=200.0, description="Minimum revenue growth rate (percentage, e.g., 15 = 15%)"
+    )
     stock_max_debt_to_equity: float = Field(default=0.3, ge=0.0, le=5.0, description="Maximum debt-to-equity ratio")
-    stock_min_market_cap: float = Field(default=1e9, ge=1e6, le=1e13, description="Minimum market capitalization")
+    stock_min_market_cap: float = Field(default=1e9, ge=1e6, le=1e13, description="Minimum market capitalization in USD")
 
     # Crypto Criteria
-    crypto_min_market_cap: float = Field(default=10e9, ge=1e6, le=1e13, description="Minimum crypto market cap")
-    crypto_min_daily_volume: float = Field(default=500e6, ge=1e6, le=1e12, description="Minimum daily trading volume")
+    crypto_min_market_cap: float = Field(default=10e9, ge=1e6, le=1e13, description="Minimum crypto market cap in USD")
+    crypto_min_daily_volume: float = Field(default=500e6, ge=1e5, le=1e12, description="Minimum daily trading volume in USD")
     crypto_min_age_months: int = Field(default=36, ge=1, le=200, description="Minimum age in months")
 
     # Market regime adjustments applied
@@ -57,7 +65,7 @@ class InvestmentCandidate(BaseModel):
     name: str = Field(..., description="Full name of the investment")
     asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of asset")
     current_price: float = Field(..., gt=0, description="Current market price")
-    market_cap: float | None = Field(None, description="Market capitalization in USD")
+    market_cap: Optional[float] = Field(None, description="Market capitalization in USD")
     preliminary_score: float = Field(..., ge=0.0, le=1.0, description="Initial A+ score")
     final_score: float = Field(..., ge=0.0, le=1.0, description="Final A+ score after validation")
     grade: Grade = Field(..., description="Letter grade from FinWiz grading system (A+ to F)")
@@ -65,7 +73,7 @@ class InvestmentCandidate(BaseModel):
     recommended_action: str = Field(..., description="Recommended action based on grade")
     discovery_date: datetime = Field(default_factory=datetime.now, description="When the candidate was discovered")
     data_source: str = Field(..., description="Primary data source used for analysis")
-    risk_assessment: RiskAssessmentStandardized | None = Field(None, description="Standardized risk assessment")
+    risk_assessment: Optional[RiskAssessmentStandardized] = Field(None, description="Standardized risk assessment")
 
 
 class APlusAnalysis(BaseModel):
@@ -83,8 +91,8 @@ class APlusAnalysis(BaseModel):
     key_metrics: dict[str, Any] = Field(default_factory=dict, description="Important financial metrics")
     competitive_advantages: list[str] = Field(default_factory=list, description="Competitive moats and advantages")
     risk_factors: list[str] = Field(default_factory=list, description="Key risk considerations")
-    market_context: MarketRegime | None = Field(None, description="Market regime during analysis")
-    criteria_used: APlusCriteria | None = Field(None, description="Scoring criteria applied")
+    market_context: Optional[MarketRegime] = Field(None, description="Market regime during analysis")
+    criteria_used: Optional[APlusCriteria] = Field(None, description="Scoring criteria applied")
 
 
 class APlusDiscoveryResult(BaseModel):
@@ -106,7 +114,7 @@ class APlusDiscoveryResult(BaseModel):
     a_plus_percentage: float = Field(..., ge=0.0, le=100.0, description="Percentage of screened investments achieving A+")
 
     # UCITS compliance for ETFs (European investors)
-    ucits_compliant_count: int | None = Field(None, description="Number of UCITS-compliant ETFs found")
+    ucits_compliant_count: Optional[int] = Field(None, description="Number of UCITS-compliant ETFs found")
     ucits_compliant_symbols: list[str] = Field(default_factory=list, description="UCITS-compliant symbols")
 
     # Recommendations
@@ -149,8 +157,8 @@ class ValidationResult(BaseModel):
 class PortfolioImprovement(BaseModel):
     """A specific portfolio improvement recommendation."""
 
-    current_holding: str | None = Field(None, description="Current holding to replace (if any)")
-    current_grade: Grade | None = Field(None, description="Current holding grade (if replacing)")
+    current_holding: Optional[str] = Field(None, description="Current holding to replace (if any)")
+    current_grade: Optional[Grade] = Field(None, description="Current holding grade (if replacing)")
     recommended_investment: str = Field(..., description="Recommended A+ investment symbol")
     recommended_grade: Grade = Field(..., description="Grade of recommended investment")
     improvement_type: Literal["replacement", "addition", "rebalancing"] = Field(..., description="Type of improvement")
@@ -161,7 +169,7 @@ class PortfolioImprovement(BaseModel):
     rationale: str = Field(..., description="Detailed rationale for the improvement")
     risk_impact: RiskAssessmentStandardized = Field(..., description="Impact on portfolio risk profile")
     cost_analysis: dict[str, float] = Field(default_factory=dict, description="Transaction costs and fees")
-    expected_annual_benefit: float | None = Field(None, description="Expected annual benefit in percentage points")
+    expected_annual_benefit: Optional[float] = Field(None, description="Expected annual benefit in percentage points")
 
 
 class OptimizationResult(BaseModel):

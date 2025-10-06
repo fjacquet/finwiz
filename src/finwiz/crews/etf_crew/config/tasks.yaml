@@ -1,6 +1,9 @@
 # ETF Market Analysis Tasks
 etf_market_trends_task:
   description: >
+    FIRST: Read the schema file src/finwiz/schemas/etf.py (ETFMarketTrend class) to understand 
+    the exact output format required.
+    
     Research and identify current market trends and emerging sectors in the ETF space.
     
     1. Identify key ETF market trends
@@ -12,14 +15,20 @@ etf_market_trends_task:
     
     Today is {full_date}. Ensure your analysis reflects current market conditions.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the ETFMarketTrend object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "trends", "analysis", etc.
+    - The JSON must match the ETFMarketTrend schema exactly
+    
     OUTPUT: Return a structured JSON output conforming to the ETFMarketTrend schema.
   expected_output: >
     A structured analysis of current ETF market trends conforming to the ETFMarketTrend 
     Pydantic schema. Include growth trends, global factors, and market insights.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: market_etf_analyst
   output_pydantic: ETFMarketTrend
   output_file: "output/etf/etf_market_trends.json"
-  output_json: true
   async_execution: true
 
 # ETF Screening Tasks
@@ -68,19 +77,31 @@ etf_screening_task:
     IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your AI analysis 
     is current as of {full_date}.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the ETFScreeningResult object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "etfs", etc.
+    - The JSON must match the ETFScreeningResult schema exactly
+    
     OUTPUT: Return a structured JSON output conforming to the ETFScreeningResult schema.
   expected_output: >
     A structured list of 10 stable, diversified ETFs conforming to the ETFScreeningResult 
     Pydantic schema. Include analysis, validation status, and AI-driven insights.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: market_etf_analyst
   output_pydantic: ETFScreeningResult
   output_file: "output/etf/high_potential_etfs.json"
-  output_json: true
   async_execution: true
 
 # ETF Technical Detail Tasks
 etf_technical_detail_task:
   description: >
+    FIRST: Read the schema files:
+    - src/finwiz/schemas/etf.py (ETFTechnicalAnalysis and ETFFactsheet classes)
+    - docs/schemas/ETFFactsheet.schema.json
+    - docs/schemas/examples/etf_factsheet.example.json
+    to understand the exact output format required.
+    
     Perform detailed technical analysis on each of the 10 selected ETFs from the screening task.
     
     1. Analyze replication methods and lending practices, considering any recent changes as of {full_date}.
@@ -103,6 +124,15 @@ etf_technical_detail_task:
        - Use asset_class="etf" and analysis_type="comprehensive" for complete ETF analysis
     9. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the ETFTechnicalAnalysis object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "analysis", "results", etc.
+    - The JSON must match the ETFTechnicalAnalysis schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - factsheet.replication_method: MUST be one of: "physical", "synthetic", "optimized", "other" (lowercase)
+    - quantitative_metrics.recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase, if provided)
+    
     OUTPUT: Return a structured JSON output conforming to the ETFTechnicalAnalysis schema.
   expected_output: >
     A structured technical assessment of each ETF conforming to the ETFTechnicalAnalysis 
@@ -114,10 +144,10 @@ etf_technical_detail_task:
     - Read docs/schemas/examples/etf_factsheet.example.json for correct format
     - Follow the exact schema structure shown in the example files
     - Ensure all required fields are included with correct data types
+    - Return the object directly without any wrapper fields
   agent: market_etf_analyst
   output_pydantic: ETFTechnicalAnalysis
   output_file: "output/etf/etf_technical_details.json"
-  output_json: true
   async_execution: true
   depends_on:
     - etf_screening_task
@@ -125,6 +155,11 @@ etf_technical_detail_task:
 # Risk Analysis Tasks
 etf_risk_assessment_task:
   description: >
+    FIRST: Read the schema files:
+    - src/finwiz/schemas/common.py (RiskAssessmentStandardized class)
+    - docs/schemas/RiskAssessmentStandardized.schema.json
+    to understand the exact output format required.
+    
     Evaluate risks for each of the 10 ETFs identified in previous tasks.
     
     1. Use the "Enhanced ETF Analysis Tool" with risk assessment enabled to perform standardized risk scoring.
@@ -147,6 +182,10 @@ etf_risk_assessment_task:
        - Include top positive/negative headlines with URLs and dates
        - Ensure sentiment scoring consistency with stock and crypto analysis
     
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - risk_assessment.scale: MUST be "0_5" (for 0-5 scale, this is the default and standard)
+    - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
+    
     Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is based on information available as of {full_date}.
   expected_output: >
     A detailed risk profile for each ETF covering volatility, concentration, liquidity, counterparty, and regulatory risks.
@@ -154,7 +193,7 @@ etf_risk_assessment_task:
     Also include a machine-readable JSON appendix containing:
     - risk_assessments[] matching the RiskAssessmentStandardized schema for each ETF
   agent: risk_assessor
-  output_file: "output/etf/etf_risk_assessment.md"
+  output_file: "output/etf/etf_risk_assessment.json"
   async_execution: false
   depends_on:
     - etf_technical_detail_task

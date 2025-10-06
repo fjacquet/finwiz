@@ -111,7 +111,7 @@ All schemas are ready. Now we need to update crew task configurations to use the
   - Verify no `AttributeError` from modern union types
   - _Requirements: 9.3, 9.4_
 
-- [ ]* 7. Write unit tests for error handlers
+- [x] 7. Write unit tests for error handlers
   - Create `tests/unit/utils/test_json_error_handlers.py`
   - Test JSON parsing error handling
   - Test schema validation error handling
@@ -149,7 +149,16 @@ All schemas are ready. Now we need to update crew task configurations to use the
   - Test intermediate JSON outputs and final HTML
   - _Requirements: 1.1, 1.2, 4.1, 4.2, 4.4, 7.1, 7.2, 7.3_
 
-- [ ] 14. Run manual migration tests
+- [x] 14. Fix crew task configuration issues discovered during testing
+  - Fix `output_json` configuration in all crew task YAML files
+  - Change `output_json: true` to `output_json: <SchemaClassName>` (must match `output_pydantic`)
+  - **Affected crews**: Crypto, ETF, Investment Discovery, Report
+  - **Stock Crew**: Fix tool configuration issue with `market_technical_analyst` agent
+  - Verify all task configurations follow correct CrewAI format
+  - Test with `crewai flow kickoff` to ensure no KeyError exceptions
+  - _Requirements: 3.1, 3.2, 3.3, 9.3, 9.4_
+
+- [ ] 15. Run manual migration tests
   - Execute Stock Crew with test ticker
   - Execute ETF Crew with test ticker
   - Execute Crypto Crew with test symbol
@@ -160,33 +169,33 @@ All schemas are ready. Now we need to update crew task configurations to use the
   - Check for validation errors
   - _Requirements: 1.1, 1.2, 4.1, 4.2, 7.1, 7.2, 7.3_
 
-- [ ] 15. Performance benchmarking
+- [ ] 16. Performance benchmarking
   - Create performance test script
   - Benchmark JSON parsing vs markdown parsing
   - Verify ≥2x improvement in parsing speed
   - Document results
   - _Requirements: 1.1, 1.2, 4.1, 4.2_
 
-- [ ] 16. Update main flow orchestration (if needed)
+- [ ] 17. Update main flow orchestration (if needed)
   - Review orchestration code in `src/finwiz/main.py`
   - Update for JSON handling if necessary
   - Ensure context passing works with JSON
   - _Requirements: 4.1, 4.2, 4.4_
 
-- [ ] 17. Final integration testing
+- [ ] 18. Final integration testing
   - Run full test suite: `uv run pytest`
   - Execute all crews end-to-end with real data
   - Verify all success criteria met
   - Document any issues
   - _Requirements: 1.1, 1.2, 4.1, 4.2, 4.4, 7.1, 7.2, 7.3_
 
-- [ ] 18. Update project documentation
+- [ ] 19. Update project documentation
   - Update README.md with JSON-first architecture
   - Add links to schema documentation
   - Update developer guide
   - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 19. Production deployment preparation
+- [ ] 20. Production deployment preparation
   - Create deployment checklist
   - Prepare rollback plan
   - Set up monitoring for JSON validation errors

@@ -8,7 +8,7 @@ including the FinancialPlan model and related structures for session persistence
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -39,11 +39,11 @@ class ClientProfile(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    name: str | None = None
-    age: int | None = Field(None, ge=0, le=150)
-    investment_horizon: str | None = None
-    monthly_budget: str | None = None
-    risk_tolerance: str | None = None
+    name: Optional[str] = None
+    age: Optional[int] = Field(None, ge=0, le=150)
+    investment_horizon: Optional[str] = None
+    monthly_budget: Optional[str] = None
+    risk_tolerance: Optional[str] = None
     currency: str = Field(default="CHF")
 
 
@@ -85,4 +85,4 @@ class SessionMetadata(BaseModel):
     file_size: int
     last_modified: datetime
     is_corrupted: bool = False
-    corruption_reason: str | None = None
+    corruption_reason: Optional[str] = None

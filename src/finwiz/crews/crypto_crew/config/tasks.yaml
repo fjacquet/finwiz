@@ -36,6 +36,14 @@ market_analysis_task:
     - Use AI to extract trending topics and assess their relevance to investment decisions
     - Provide AI-generated confidence intervals and uncertainty acknowledgments
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the CryptoMarketAnalysis object directly - do NOT wrap it in additional fields
+    - Do NOT add "data", "results", "analysis", or any wrapper fields
+    - The JSON must match the CryptoMarketAnalysis schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - market_sentiment: MUST be one of: "bullish", "bearish", "neutral", "mixed" (lowercase, no other values allowed)
+    
     OUTPUT: Return a structured JSON output conforming to the CryptoMarketAnalysis schema.
   expected_output: >
     A structured list of the top 10 promising cryptocurrencies conforming to the 
@@ -46,10 +54,10 @@ market_analysis_task:
     - Read docs/schemas/CryptoThesis.schema.json and docs/schemas/examples/crypto_thesis.example.json
     - Follow the exact schema structure shown in the example files
     - Ensure all required fields are included with correct data types
+    - Return the object directly without wrapper fields
   agent: market_analyst
   output_pydantic: CryptoMarketAnalysis
   output_file: "output/crypto/crypto_market_analysis.json"
-  output_json: true
   async_execution: true
 
 technical_analysis_task:
@@ -68,15 +76,27 @@ technical_analysis_task:
       * Support and resistance level identification with price targets
     - Generate charts with the "Chart-img Generator" tool and embed returned data URLs directly in the report.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the CryptoTechnicalAnalysis object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "analysis", etc.
+    - The JSON must match the CryptoTechnicalAnalysis schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - volume_trend: MUST be one of: "increasing", "decreasing", "stable" (lowercase)
+    - trend_direction: MUST be one of: "bullish", "bearish", "neutral", "mixed" (lowercase)
+    - trend_strength: MUST be one of: "strong", "moderate", "weak" (lowercase)
+    - recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase)
+    
     OUTPUT: Return a structured JSON output conforming to the CryptoTechnicalAnalysis schema.
   expected_output: >
     A structured technical analysis report for the top 10 cryptocurrencies conforming to 
     the CryptoTechnicalAnalysis Pydantic schema. Include chart patterns, key price levels, 
     technical indicators, and entry/exit points.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: technical_analyst
   output_pydantic: CryptoTechnicalAnalysis
   output_file: "output/crypto/crypto_technical_analysis.json"
-  output_json: true
   async_execution: true
   depends_on:
     - market_analysis_task
@@ -103,15 +123,29 @@ risk_assessment_task:
     - Extract trending topics relevant to cryptocurrency markets and regulatory developments
     - Include top positive/negative headlines with URLs and dates using consistent format
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the CryptoRiskProfile object directly - do NOT wrap it in additional fields
+    - Do NOT add "profiles", "metadata", "data", or any wrapper fields
+    - The JSON must match the CryptoRiskProfile schema exactly with these top-level fields:
+      schema_version, symbol, name, assessment_date, risk_assessment, volatility_risk,
+      regulatory_risk, technology_risk, market_risk, adoption_risk, quantitative_risk_metrics,
+      tokenomics_assessment, risk_mitigation_strategies, risk_summary
+    - Example: {"schema_version": 1, "symbol": "BTC", "name": "Bitcoin", ...}
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - risk_assessment.scale: MUST be one of: "0_5", "L_M_H", "L_M_H_VH" (use "0_5" for 0-5 scale)
+    - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values)
+    
     OUTPUT: Return a structured JSON output conforming to the CryptoRiskProfile schema.
   expected_output: >
     A structured comprehensive risk assessment report for each of the top 10 cryptocurrencies 
     conforming to the CryptoRiskProfile Pydantic schema. Include potential risks, mitigation 
     strategies, and standardized risk scores (0-5 scale) with crypto-specific methodology.
+    
+    IMPORTANT: Return the CryptoRiskProfile object directly without any wrapper fields.
   agent: risk_assessor
   output_pydantic: CryptoRiskProfile
   output_file: "output/crypto/crypto_risk_assessment.json"
-  output_json: true
   async_execution: true
   depends_on:
     - technical_analysis_task
@@ -137,16 +171,28 @@ investment_strategy_task:
     Provide recommendations for asset allocation, position sizing, and clear
     investment thesis with proper risk-adjusted returns analysis.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the CryptoInvestmentStrategy object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "strategy", "recommendations", etc.
+    - The JSON must match the CryptoInvestmentStrategy schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - time_horizon: MUST be one of: "short", "medium", "long" (lowercase)
+    - recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase)
+    - risk_assessment.scale: MUST be "0_5" (for 0-5 scale)
+    - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized)
+    
     OUTPUT: Return a structured JSON output conforming to the CryptoInvestmentStrategy schema.
   expected_output: >
     A structured detailed investment strategy document conforming to the CryptoInvestmentStrategy 
     Pydantic schema. Include asset allocation, risk management, long-term outlook, standardized 
     risk scores (0-5 scale), quantitative analysis results with backtesting performance, and 
     technical signals for each cryptocurrency.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: investment_strategist
   output_pydantic: CryptoInvestmentStrategy
   output_file: "output/crypto/crypto_investment_strategy.json"
-  output_json: true
   async_execution: true
   depends_on:
     - risk_assessment_task

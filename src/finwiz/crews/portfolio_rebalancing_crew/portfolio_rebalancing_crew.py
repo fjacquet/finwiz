@@ -8,12 +8,14 @@ recommendations, and validate risk constraints.
 
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
-from finwiz.schemas.portfolio_review import PortfolioReview
+from finwiz.schemas.portfolio_review import Alternative, HoldingDecision, PortfolioReview, PriceTargets
+from finwiz.schemas.rebalancing.analysis import PortfolioAnalysis
+from finwiz.schemas.rebalancing.enums import RebalancingRecommendation
 from finwiz.tools.alternative_finder_tool import AlternativeFinder
 from finwiz.tools.enhanced_sec_tool import StandardizedRiskScoringTool
 from finwiz.tools.holding_analyzer_orchestrator import HoldingAnalyzerOrchestrator
@@ -109,8 +111,14 @@ class PortfolioRebalancingCrew:
             self.tasks_config = yaml.safe_load(f)
 
         # Make Pydantic models available for CrewAI resolution (BEFORE super().__init__())
-        self.PortfolioReview = PortfolioReview
-        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+        # Use the @output_pydantic decorator to mark them for CrewAI
+        self.PortfolioReview = output_pydantic(PortfolioReview)
+        self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
+        self.HoldingDecision = output_pydantic(HoldingDecision)
+        self.PriceTargets = output_pydantic(PriceTargets)
+        self.Alternative = output_pydantic(Alternative)
+        self.PortfolioAnalysis = output_pydantic(PortfolioAnalysis)
+        self.RebalancingRecommendation = output_pydantic(RebalancingRecommendation)
 
         super().__init__()
 

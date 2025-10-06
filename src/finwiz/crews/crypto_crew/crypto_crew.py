@@ -10,10 +10,16 @@ from pathlib import Path
 from typing import Any
 
 from crewai import LLM, Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, output_pydantic, task
 
 from finwiz.schemas.common import RiskAssessmentStandardized
-from finwiz.schemas.crypto import CryptoThesis
+from finwiz.schemas.crypto import (
+    CryptoInvestmentStrategy,
+    CryptoMarketAnalysis,
+    CryptoRiskProfile,
+    CryptoTechnicalAnalysis,
+    CryptoThesis,
+)
 from finwiz.tools.tool_factories import get_crypto_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
@@ -51,11 +57,16 @@ class CryptoCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
-        super().__init__()
+        # Make Pydantic models available for CrewAI resolution BEFORE super().__init__()
+        # Use the @output_pydantic decorator to mark them for CrewAI
+        self.CryptoThesis = output_pydantic(CryptoThesis)
+        self.CryptoMarketAnalysis = output_pydantic(CryptoMarketAnalysis)
+        self.CryptoTechnicalAnalysis = output_pydantic(CryptoTechnicalAnalysis)
+        self.CryptoRiskProfile = output_pydantic(CryptoRiskProfile)
+        self.CryptoInvestmentStrategy = output_pydantic(CryptoInvestmentStrategy)
+        self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
 
-        # Make Pydantic models available for CrewAI resolution
-        self.CryptoThesis = CryptoThesis
-        self.RiskAssessmentStandardized = RiskAssessmentStandardized
+        super().__init__()
 
         # Initialize structured logger
         self.crew_logger = CrewLogger("CryptoCrew")

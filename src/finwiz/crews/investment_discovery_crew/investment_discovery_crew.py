@@ -9,10 +9,15 @@ of exceptional investment opportunities.
 
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
+from finwiz.schemas.investment_discovery import (
+    APlusDiscoveryResult,
+    OptimizationResult,
+    ValidationResult,
+)
 from finwiz.tools.feedback_integration_tool import get_feedback_tools
 from finwiz.tools.finance_tools import (
     get_crypto_research_tools,
@@ -104,6 +109,12 @@ class InvestmentDiscoveryCrew:
 
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
+
+        # Make Pydantic models available for CrewAI resolution BEFORE super().__init__()
+        # Use the @output_pydantic decorator to mark them for CrewAI
+        self.APlusDiscoveryResult = output_pydantic(APlusDiscoveryResult)
+        self.ValidationResult = output_pydantic(ValidationResult)
+        self.OptimizationResult = output_pydantic(OptimizationResult)
 
         super().__init__()
 

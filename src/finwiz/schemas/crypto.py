@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -52,10 +52,10 @@ class CryptoCandidate(BaseModel):
 
     symbol: str = Field(min_length=2, max_length=10, description="Crypto symbol (e.g., BTC, ETH)")
     name: str = Field(description="Full cryptocurrency name")
-    market_cap: float | None = Field(None, gt=0, description="Market capitalization in USD")
-    current_price: float | None = Field(None, gt=0, description="Current price in USD")
-    volume_24h: float | None = Field(None, ge=0, description="24-hour trading volume in USD")
-    price_change_24h: float | None = Field(None, description="24-hour price change percentage")
+    market_cap: Optional[float] = Field(None, gt=0, description="Market capitalization in USD")
+    current_price: Optional[float] = Field(None, gt=0, description="Current price in USD")
+    volume_24h: Optional[float] = Field(None, ge=0, description="24-hour trading volume in USD")
+    price_change_24h: Optional[float] = Field(None, description="24-hour price change percentage")
     selection_rationale: str = Field(description="Why this crypto was selected", min_length=20)
     confidence_level: float = Field(ge=0.0, le=1.0, description="Confidence in selection")
 
@@ -82,16 +82,16 @@ class CryptoTechnicalIndicators(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     symbol: str = Field(min_length=2, max_length=10)
-    rsi: float | None = Field(None, ge=0.0, le=100.0, description="Relative Strength Index")
-    macd: float | None = Field(None, description="MACD indicator value")
-    macd_signal: float | None = Field(None, description="MACD signal line")
-    bollinger_upper: float | None = Field(None, gt=0, description="Bollinger Bands upper bound")
-    bollinger_lower: float | None = Field(None, gt=0, description="Bollinger Bands lower bound")
-    moving_avg_50: float | None = Field(None, gt=0, description="50-day moving average")
-    moving_avg_200: float | None = Field(None, gt=0, description="200-day moving average")
+    rsi: Optional[float] = Field(None, ge=0.0, le=100.0, description="Relative Strength Index")
+    macd: Optional[float] = Field(None, description="MACD indicator value")
+    macd_signal: Optional[float] = Field(None, description="MACD signal line")
+    bollinger_upper: Optional[float] = Field(None, gt=0, description="Bollinger Bands upper bound")
+    bollinger_lower: Optional[float] = Field(None, gt=0, description="Bollinger Bands lower bound")
+    moving_avg_50: Optional[float] = Field(None, gt=0, description="50-day moving average")
+    moving_avg_200: Optional[float] = Field(None, gt=0, description="200-day moving average")
     support_levels: list[float] = Field(default_factory=list, description="Support price levels")
     resistance_levels: list[float] = Field(default_factory=list, description="Resistance price levels")
-    volume_trend: Literal["increasing", "decreasing", "stable"] | None = Field(None, description="Volume trend")
+    volume_trend: Optional[Literal["increasing", "decreasing", "stable"]] = Field(None, description="Volume trend")
 
 
 class CryptoTechnicalAnalysis(BaseModel):
@@ -105,7 +105,7 @@ class CryptoTechnicalAnalysis(BaseModel):
     analysis_date: date = Field(description="Date of analysis")
 
     # Technical indicators
-    technical_indicators: CryptoTechnicalIndicators | None = Field(None, description="Technical indicators")
+    technical_indicators: Optional[CryptoTechnicalIndicators] = Field(None, description="Technical indicators")
 
     # Price analysis
     entry_points: list[float] = Field(default_factory=list, description="Potential entry price points")
@@ -116,8 +116,10 @@ class CryptoTechnicalAnalysis(BaseModel):
     chart_patterns: list[str] = Field(default_factory=list, description="Identified chart patterns", max_length=10)
 
     # Trend analysis
-    trend_direction: Literal["bullish", "bearish", "neutral", "mixed"] | None = Field(None, description="Overall trend direction")
-    trend_strength: Literal["strong", "moderate", "weak"] | None = Field(None, description="Trend strength")
+    trend_direction: Optional[Literal["bullish", "bearish", "neutral", "mixed"]] = Field(
+        None, description="Overall trend direction"
+    )
+    trend_strength: Optional[Literal["strong", "moderate", "weak"]] = Field(None, description="Trend strength")
 
     # Overall assessment
     technical_summary: str = Field(description="Technical analysis summary", min_length=50)
@@ -129,16 +131,16 @@ class CryptoQuantitativeMetrics(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     symbol: str = Field(min_length=2, max_length=10)
-    sharpe_ratio: float | None = Field(None, description="Sharpe ratio")
-    sortino_ratio: float | None = Field(None, description="Sortino ratio")
-    max_drawdown: float | None = Field(None, le=0.0, description="Maximum drawdown percentage")
-    volatility: float | None = Field(None, ge=0.0, description="Annualized volatility")
-    var_95: float | None = Field(None, description="Value at Risk (95% confidence)")
-    cvar_95: float | None = Field(None, description="Conditional Value at Risk (95% confidence)")
-    correlation_with_btc: float | None = Field(None, ge=-1.0, le=1.0, description="Correlation with Bitcoin")
-    expected_return: float | None = Field(None, description="Expected annual return")
-    recommendation: Literal["BUY", "HOLD", "SELL"] | None = Field(None, description="Investment recommendation")
-    confidence: float | None = Field(None, ge=0.0, le=1.0, description="Recommendation confidence")
+    sharpe_ratio: Optional[float] = Field(None, description="Sharpe ratio")
+    sortino_ratio: Optional[float] = Field(None, description="Sortino ratio")
+    max_drawdown: Optional[float] = Field(None, le=0.0, description="Maximum drawdown percentage")
+    volatility: Optional[float] = Field(None, ge=0.0, description="Annualized volatility")
+    var_95: Optional[float] = Field(None, description="Value at Risk (95% confidence)")
+    cvar_95: Optional[float] = Field(None, description="Conditional Value at Risk (95% confidence)")
+    correlation_with_btc: Optional[float] = Field(None, ge=-1.0, le=1.0, description="Correlation with Bitcoin")
+    expected_return: Optional[float] = Field(None, description="Expected annual return")
+    recommendation: Optional[Literal["BUY", "HOLD", "SELL"]] = Field(None, description="Investment recommendation")
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Recommendation confidence")
 
 
 class CryptoRiskProfile(BaseModel):
@@ -167,7 +169,7 @@ class CryptoRiskProfile(BaseModel):
     )
 
     # Tokenomics
-    tokenomics_assessment: str | None = Field(None, description="Tokenomics and supply dynamics assessment")
+    tokenomics_assessment: Optional[str] = Field(None, description="Tokenomics and supply dynamics assessment")
 
     # Risk mitigation
     risk_mitigation_strategies: list[str] = Field(default_factory=list, description="Risk mitigation strategies", max_length=10)
@@ -193,17 +195,19 @@ class CryptoInvestmentStrategy(BaseModel):
     risk_assessment: RiskAssessmentStandardized = Field(description="Standardized risk assessment")
 
     # Quantitative analysis
-    quantitative_metrics: CryptoQuantitativeMetrics | None = Field(None, description="Quantitative analysis metrics")
+    quantitative_metrics: Optional[CryptoQuantitativeMetrics] = Field(None, description="Quantitative analysis metrics")
 
     # Strategy details
-    recommended_allocation: float | None = Field(None, ge=0.0, le=100.0, description="Recommended portfolio allocation percentage")
-    position_sizing: str | None = Field(None, description="Position sizing recommendations")
+    recommended_allocation: Optional[float] = Field(
+        None, ge=0.0, le=100.0, description="Recommended portfolio allocation percentage"
+    )
+    position_sizing: Optional[str] = Field(None, description="Position sizing recommendations")
     entry_strategy: str = Field(description="Entry strategy details", min_length=20)
     exit_strategy: str = Field(description="Exit strategy details", min_length=20)
     time_horizon: Literal["short", "medium", "long"] = Field(description="Investment time horizon")
 
     # Risk management
-    stop_loss_level: float | None = Field(None, gt=0, description="Recommended stop-loss price level")
+    stop_loss_level: Optional[float] = Field(None, gt=0, description="Recommended stop-loss price level")
     take_profit_levels: list[float] = Field(default_factory=list, description="Take-profit price levels")
     risk_management_tactics: list[str] = Field(default_factory=list, description="Risk management tactics", max_length=10)
 

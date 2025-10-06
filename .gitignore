@@ -9,7 +9,7 @@ db/
 lib/
 logs/
 old/
-# output/
+output/
 search/indexed/
 search/results/
 data/

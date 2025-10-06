@@ -6,7 +6,7 @@ This model is referenced by YAML prompts and used for JSON Schema export.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,5 +24,5 @@ class ValidatedTicker(BaseModel):
     symbol: str = Field(min_length=1, max_length=15)
     asset_class: Literal["stock", "etf", "crypto"]
     valid: bool
-    reason: str | None = None
+    reason: Optional[str] = None
     meta: dict[str, Any] = Field(default_factory=dict)

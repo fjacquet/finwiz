@@ -1,5 +1,9 @@
 etf_discovery_task:
   description: >
+    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and 
+    docs/schemas/examples/aplus_discovery_result.example.json to understand the exact 
+    output format required.
+    
     Scan global ETF markets to identify A+ grade opportunities with exceptional
     characteristics. Focus on low-cost, well-diversified ETFs with strong tracking
     records and UCITS compatibility for European investors.
@@ -17,6 +21,23 @@ etf_discovery_task:
     for detailed evaluation. Validate all tickers and perform comprehensive analysis
     using Enhanced ETF Analysis Tool.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "discoveries", etc.
+    - The JSON must match the APlusDiscoveryResult schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - asset_type: MUST be "etf" (lowercase, no other values allowed)
+    - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization, target A+ grade for all candidates)
+    
+    RISK ASSESSMENT FORMAT (CRITICAL):
+    For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
+    - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
+    - score: MUST be a float between 0.0 and 5.0 (e.g., 1.0, 1.5, 2.0)
+    - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
+    - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
+    - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
+    
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
     
   expected_output: >
@@ -25,14 +46,18 @@ etf_discovery_task:
     (A+ target: ≥ 0.95), cost analysis, tracking performance, liquidity metrics, 
     UCITS compliance status, and replacement recommendations.
     
+    IMPORTANT: Return the object directly without any wrapper fields.
+    
   agent: etf_discovery_agent
   output_pydantic: APlusDiscoveryResult
   output_file: "output/discovery/a_plus_etfs.json"
-  output_json: true
   async_execution: true
 
 stock_discovery_task:
   description: >
+    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and 
+    docs/schemas/MarketRegime.schema.json to understand the exact output format required.
+    
     Identify individual stocks with A+ potential through comprehensive fundamental
     analysis. Focus on companies with exceptional competitive moats, strong financials,
     and sustainable growth prospects that maximize returns for the equity portion.
@@ -64,6 +89,32 @@ stock_discovery_task:
     10-K/10-Q fundamental analysis, and Portfolio Analysis Tool for correlation
     and allocation optimization.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "discoveries", etc.
+    - The JSON must match the APlusDiscoveryResult schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - asset_type: MUST be "stock" (lowercase, no other values allowed)
+    - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization, target A+ grade for all candidates)
+    - regime_type: MUST be one of: "bull", "bear", "sideways", "volatile" (lowercase, no other values allowed)
+    - interest_rate_trend: MUST be one of: "rising", "falling", "stable" (lowercase, no other values allowed)
+    - market_stress_level: MUST be one of: "low", "medium", "high" (lowercase, no other values allowed)
+    
+    RISK ASSESSMENT FORMAT (CRITICAL):
+    For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
+    - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
+    - score: MUST be a float between 0.0 and 5.0 (e.g., 1.75, 2.0, 2.25)
+    - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
+    - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
+    - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
+    
+    CRITERIA FORMAT (CRITICAL):
+    For discovery_criteria and criteria_used fields, use APlusCriteria schema:
+    - stock_min_roe: Use percentage format (e.g., 20 for 20%, not 0.20)
+    - stock_min_revenue_growth: Use percentage format (e.g., 15 for 15%, not 0.15)
+    - crypto_min_daily_volume: Must be >= 100000 (1e5)
+    
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
     
   expected_output: >
@@ -72,16 +123,20 @@ stock_discovery_task:
     analysis, growth prospects, risk factors, valuation assessment, portfolio correlation 
     analysis, and optimal allocation suggestions.
     
+    IMPORTANT: Return the object directly without any wrapper fields.
+    
   agent: stock_discovery_agent
   output_pydantic: APlusDiscoveryResult
   output_file: "output/discovery/a_plus_stocks.json"
-  output_json: true
   async_execution: true
   depends_on:
     - etf_discovery_task
 
 crypto_discovery_task:
   description: >
+    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and 
+    docs/schemas/PortfolioImprovement.schema.json to understand the exact output format required.
+    
     Discover A+ grade cryptocurrencies with strong fundamentals and institutional
     adoption potential. Focus on digital assets with real utility, strong tokenomics,
     and regulatory compliance potential across multiple jurisdictions.
@@ -118,6 +173,29 @@ crypto_discovery_task:
     for comprehensive evaluation, DeFi Metrics Tool for protocol analysis, and
     A+ Scoring Tool for final grading assessment.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "discoveries", etc.
+    - The JSON must match the APlusDiscoveryResult schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - asset_type: MUST be "crypto" (lowercase, no other values allowed)
+    - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization, target A+ grade for all candidates)
+    - improvement_type: MUST be one of: "replacement", "addition", "rebalancing" (lowercase, no other values allowed)
+    - implementation_priority: MUST be one of: "high", "medium", "low" (lowercase, no other values allowed)
+    
+    RISK ASSESSMENT FORMAT (CRITICAL):
+    For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
+    - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
+    - score: MUST be a float between 0.0 and 5.0 (e.g., 2.0, 2.5, 3.0)
+    - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
+    - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
+    - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
+    
+    CRITERIA FORMAT (CRITICAL):
+    For discovery_criteria and criteria_used fields, use APlusCriteria schema:
+    - crypto_min_daily_volume: Must be >= 100000 (1e5)
+    
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
     
   expected_output: >
@@ -126,10 +204,11 @@ crypto_discovery_task:
     institutional adoption metrics, DeFi protocol metrics, regulatory risk assessment, 
     acquisition strategy recommendations, and allocation recommendations within 5% limit.
     
+    IMPORTANT: Return the object directly without any wrapper fields.
+    
   agent: crypto_discovery_agent
   output_pydantic: APlusDiscoveryResult
   output_file: "output/discovery/a_plus_crypto.json"
-  output_json: true
   async_execution: true
   depends_on:
     - stock_discovery_task
@@ -150,6 +229,11 @@ validation_task:
     
     Reject any candidates that fail validation criteria.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the ValidationResult object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "validation", "results", etc.
+    - The JSON must match the ValidationResult schema exactly
+    
     OUTPUT: Return a structured JSON output conforming to the ValidationResult schema.
     
   expected_output: >
@@ -158,10 +242,11 @@ validation_task:
     Drawdown), performance across different market regimes, stress test results, final 
     validation status (PASS/FAIL), and detailed rationale for any rejections.
     
+    IMPORTANT: Return the object directly without any wrapper fields.
+    
   agent: validation_agent
   output_pydantic: ValidationResult
   output_file: "output/discovery/validation_report.json"
-  output_json: true
   async_execution: true
   depends_on:
     - crypto_discovery_task
@@ -207,6 +292,15 @@ optimization_task:
     for allocation calculations, Risk Assessment Tool for impact analysis, and
     integration with existing grading system for grade improvement calculations.
     
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the OptimizationResult object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "optimization", "results", etc.
+    - The JSON must match the OptimizationResult schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - risk_assessment.scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
+    - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
+    
     OUTPUT: Return a structured JSON output conforming to the OptimizationResult schema.
     
   expected_output: >
@@ -217,10 +311,11 @@ optimization_task:
     transaction cost analysis, regulatory compliance verification, and monitoring 
     recommendations.
     
+    IMPORTANT: Return the object directly without any wrapper fields.
+    
   agent: portfolio_optimization_agent
   output_pydantic: OptimizationResult
   output_file: "output/discovery/optimization_report.json"
-  output_json: true
   async_execution: true
   depends_on:
     - validation_task

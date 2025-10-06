@@ -1,6 +1,8 @@
 # Individual Holding Analysis Tasks
 analyze_holding_task:
   description: >
+    FIRST: Read the schema file docs/schemas/HoldingDecision.schema.json to understand the exact output format required.
+    
     Analyze individual portfolio holding using appropriate crew (stock/ETF/crypto) and map outputs to schema.
 
     This task coordinates deep analysis for a single holding by checking for cached crew analysis, 
@@ -19,15 +21,29 @@ analyze_holding_task:
     5. Handle failures gracefully with baseline analysis fallback.
 
     INPUT: Ticker symbol, asset class, currency, holding name
+    
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the HoldingDecision object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "analysis", etc.
+    - The JSON must match the HoldingDecision schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - decision: MUST be one of: "KEEP", "SELL" (uppercase, no other values allowed)
+    - asset_class: MUST be one of: "stock", "etf", "crypto" (lowercase, no other values allowed)
+    - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization and plus signs)
+    - risk.scale: MUST be "0_5" (for 0-5 scale, not "L_M_H" or "L_M_H_VH")
+    - risk.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized first letter only)
+    
     OUTPUT: Return a structured JSON output conforming to the HoldingDecision schema.
   expected_output: >
     A structured complete HoldingDecision object conforming to the HoldingDecision Pydantic 
     schema. Include fundamental/technical analysis, SEC citations (if applicable), data 
     freshness indicator, crew analysis source, confidence level, and composite score.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: holding_analyzer
   output_pydantic: HoldingDecision
   output_file: "output/portfolio/holding_analysis.json"
-  output_json: true
   async_execution: true
 
 calculate_price_targets_task:
@@ -53,22 +69,31 @@ calculate_price_targets_task:
     6. Ensure all targets are in holding's native currency.
 
     INPUT: Ticker, asset class, current price, price history, fundamental data, recommendation
+    
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the PriceTargets object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "targets", etc.
+    - The JSON must match the PriceTargets schema exactly
+    
     OUTPUT: Return a structured JSON output conforming to the PriceTargets schema.
   expected_output: >
     A structured complete PriceTargets object conforming to the PriceTargets Pydantic schema. 
     Include current price, fair value estimate, buy targets (primary/secondary), sell targets 
     (primary/secondary), stop-loss level, support/resistance levels, calculation method, 
     confidence level, and French rationale for each target.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: price_target_specialist
   output_pydantic: PriceTargets
   output_file: "output/portfolio/price_targets.json"
-  output_json: true
   async_execution: true
   depends_on:
     - analyze_holding_task
 
 find_alternatives_task:
   description: >
+    FIRST: Read the schema file docs/schemas/Alternative.schema.json to understand the exact output format required.
+    
     Find better investment alternatives for underperforming holdings (graded below B).
 
     This task identifies superior alternatives that match the holding's sector/exposure while 
@@ -93,16 +118,27 @@ find_alternatives_task:
     6. Limit to top 2-3 alternatives per holding.
 
     INPUT: Holding profile (ticker, grade, asset class, sector, metrics)
+    
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the Alternative object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "alternatives", etc.
+    - The JSON must match the Alternative schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - asset_class: MUST be one of: "stock", "etf", "crypto" (lowercase, no other values allowed)
+    - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization and plus signs)
+    
     OUTPUT: Return a structured JSON output conforming to the Alternative schema.
   expected_output: >
     A structured list of 0-3 Alternative objects conforming to the Alternative Pydantic schema 
     for holdings graded below B. Each alternative includes ticker, name, grade, composite score, 
     key metrics, thesis bullets, transition strategy (immediate/gradual/tax-optimized), tax 
     implications, and expected improvements. Empty list for holdings graded B or above.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: alternative_researcher
   output_pydantic: Alternative
   output_file: "output/portfolio/alternatives.json"
-  output_json: true
   async_execution: true
   depends_on:
     - analyze_holding_task
@@ -134,16 +170,25 @@ portfolio_analysis_task:
     Today is {full_date}. Ensure your analysis reflects current market conditions and prices.
     Use the portfolio configuration provided in the input parameters.
 
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the PortfolioAnalysis object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "analysis", etc.
+    - The JSON must match the PortfolioAnalysis schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - For any position sizing recommendations, sizing_action: MUST be one of: "add", "trim", "hold", "exit" (lowercase, no other values allowed)
+    
     OUTPUT: Return a structured JSON output conforming to the PortfolioAnalysis schema.
   expected_output: >
     A structured comprehensive portfolio analysis conforming to the PortfolioAnalysis Pydantic 
     schema. Include current weightings, target deviations, risk metrics, positions requiring 
     rebalancing, quantitative portfolio metrics, and risk assessment. Each holding should have 
     deep analysis from appropriate crew with data freshness indicators.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: portfolio_analyst
   output_pydantic: PortfolioAnalysis
   output_file: "output/portfolio/portfolio_composition_analysis.json"
-  output_json: true
   async_execution: true
   depends_on:
     - analyze_holding_task
@@ -183,16 +228,26 @@ rebalancing_optimization_task:
     Consider transaction costs, market impact, and practical trading constraints in your optimization.
     Ensure recommendations are actionable and cost-effective.
 
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the RebalancingRecommendation object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "results", "recommendations", etc.
+    - The JSON must match the RebalancingRecommendation schema exactly
+    
+    REQUIRED ENUM VALUES (use EXACTLY these values):
+    - For any risk assessments, risk_assessment.scale: MUST be "0_5" (for 0-5 scale, not "L_M_H" or "L_M_H_VH")
+    - For any risk assessments, risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized first letter only)
+    
     OUTPUT: Return a structured JSON output conforming to the RebalancingRecommendation schema.
   expected_output: >
     A structured detailed trade recommendations conforming to the RebalancingRecommendation 
     Pydantic schema. Include buy/sell quantities, estimated costs, priority rankings, 
     optimization analysis, price targets for each holding, alternatives for underperforming 
     positions, transition strategies, and cost-benefit analysis.
+    
+    IMPORTANT: Return the object directly without any wrapper fields.
   agent: rebalancing_strategist
   output_pydantic: RebalancingRecommendation
   output_file: "output/portfolio/rebalancing_trade_recommendations.json"
-  output_json: true
   async_execution: true
   depends_on:
     - portfolio_analysis_task

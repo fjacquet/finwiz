@@ -18,13 +18,16 @@ from typing import Any
 # Third-party imports
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, output_json, output_pydantic, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
 # Local application imports
 from finwiz.integration.data_accessor import CrewDataAccessor
 from finwiz.integration.manager import CrewDataIntegrationManager
+from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.rebalancing.core import PortfolioConfiguration
+from finwiz.schemas.report import ReporterInput
 from finwiz.tools.file_conversion_tools import HtmlToPdfTool  # Added for PDF conversion
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.utils.agent_validators import final_reporter
@@ -74,7 +77,14 @@ class ReportCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
+        # Make Pydantic models available for CrewAI resolution BEFORE super().__init__()
+        # Use both @output_json and @output_pydantic decorators for JSON-first architecture
+        self.ReporterInput = output_pydantic(output_json(ReporterInput))
+        self.PortfolioConfiguration = output_pydantic(output_json(PortfolioConfiguration))
+        self.RiskAssessmentStandardized = output_pydantic(output_json(RiskAssessmentStandardized))
+
         super().__init__(*args, **kwargs)
+
         self.tool_validator = ToolRestrictionValidator()
         self.input_validator = ReporterInputValidator()
 
@@ -287,13 +297,13 @@ class ReportCrew:
             verbose=True,
         )
 
-    @sync_task
-    @task
-    def translation_task(self) -> Task:
-        """Task to translate the English report to French while preserving layout."""
-        return Task(
-            config=self.tasks_config["translation_task"],
-        )
+    # @sync_task
+    # @task
+    # def translation_task(self) -> Task:
+    #     """Task to translate the English report to French while preserving layout."""
+    #     return Task(
+    #         config=self.tasks_config["translation_task"],
+    #     )
 
     @crew
     def crew(self) -> Crew:

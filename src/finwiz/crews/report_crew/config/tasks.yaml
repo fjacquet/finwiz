@@ -68,10 +68,15 @@ comprehensive_financial_integration_task:
     source attribution, A+ opportunities with allocation recommendations, and clear handling 
     of missing or stale data. The document must include verifiable data and references with 
     proper data lineage. DO NOT include any ticker symbols not in validated_tickers_list[].
+    
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the ReporterInput object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "report", "analysis", etc.
+    - The JSON must match the ReporterInput schema exactly
+    - Return the object directly without any wrapper fields
   agent: financial_integration_analyst
   output_pydantic: ReporterInput
   output_file: "output/report/consolidated_financial_analysis.json"
-  output_json: true
   async_execution: true
 
 # Task 2: Optimal Portfolio Allocation
@@ -96,6 +101,13 @@ optimal_portfolio_allocation_task:
     8. Handle graceful degradation if A+ opportunities are unavailable.
     9. Justify each allocation choice with reference to integrated data sources.
     10. Ensure the portfolio is diversified and balances growth potential with capital preservation.
+    
+    CRITICAL OUTPUT REQUIREMENTS:
+    - All holdings MUST have shares > 0 (never use 0.0 for shares)
+    - Calculate actual share quantities based on CHF amounts and current prices
+    - rebalancing_method MUST be one of: MINIMIZE_TRADES, MINIMIZE_COSTS, RISK_AWARE, TAX_EFFICIENT
+    - target_weights MUST sum to 1.0 (100%) or less
+    - Each holding symbol MUST have a corresponding target_weight
 
     Data Integration Features:
     - Use A+ opportunity allocation recommendations to optimize portfolio quality
@@ -104,6 +116,12 @@ optimal_portfolio_allocation_task:
     - Incorporate consolidated risk assessments from all crews
     - Handle missing data gracefully with alternative recommendations
 
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the PortfolioConfiguration object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "portfolio", "allocation", etc.
+    - The JSON must match the PortfolioConfiguration schema exactly
+    - Return the object directly without any wrapper fields
+    
     OUTPUT: A detailed portfolio allocation plan with A+ opportunity integration.
   expected_output: >
     A specific and actionable portfolio allocation plan incorporating A+ opportunities and
@@ -113,7 +131,6 @@ optimal_portfolio_allocation_task:
   agent: portfolio_allocator
   output_pydantic: PortfolioConfiguration
   output_file: "output/report/optimal_portfolio_allocation.json"
-  output_json: true
   async_execution: true
   depends_on:
     - comprehensive_financial_integration_task
@@ -148,6 +165,12 @@ risk_assessment_mitigation_task:
     - Data freshness status and staleness warnings
     - Cross-crew risk correlation analysis
 
+    CRITICAL OUTPUT FORMAT:
+    - Return ONLY the RiskAssessmentStandardized object directly - do NOT wrap it in additional fields
+    - Do NOT add wrapper fields like "data", "risk", "assessment", etc.
+    - The JSON must match the RiskAssessmentStandardized schema exactly
+    - Return the object directly without any wrapper fields
+    
     OUTPUT: A comprehensive risk assessment with integrated data and sentiment analysis.
   expected_output: >
     A detailed report identifying key risks using consolidated data from all crews.
@@ -157,7 +180,6 @@ risk_assessment_mitigation_task:
   agent: risk_manager
   output_pydantic: RiskAssessmentStandardized
   output_file: "output/report/risk_assessment_and_mitigation.json"
-  output_json: true
   async_execution: true
   depends_on:
     - optimal_portfolio_allocation_task
@@ -317,20 +339,20 @@ comprehensive_investment_report_task:
   # The HtmlToPdfTool is designed to take the HTML file path as its direct argument.
   # No separate output_file is needed here as the tool handles PDF saving.
 
-translation_task:
-  description: >
-    Translate the comprehensive English investment report to French
-    while preserving the exact HTML structure, CSS styling, emojis, and formatting.
-    Maintain all technical financial terminology accuracy and professional tone.
-    Do not modify the HTML structure, CSS classes, or visual elements - only translate
-    the text content within HTML tags.
-  expected_output: >
-    A complete French translation of the investment report with
-    identical HTML structure, formatting, and visual elements. All financial
-    terminology should be accurately translated while maintaining professional
-    investment report standards.
-  agent: translator
-  output_file: "output/finwiz_family_financial_plan_fr.html"
-  async_execution: false
-  depends_on:
-    - comprehensive_investment_report_task
+# translation_task:
+#   description: >
+#     Translate the comprehensive English investment report to French
+#     while preserving the exact HTML structure, CSS styling, emojis, and formatting.
+#     Maintain all technical financial terminology accuracy and professional tone.
+#     Do not modify the HTML structure, CSS classes, or visual elements - only translate
+#     the text content within HTML tags.
+#   expected_output: >
+#     A complete French translation of the investment report with
+#     identical HTML structure, formatting, and visual elements. All financial
+#     terminology should be accurately translated while maintaining professional
+#     investment report standards.
+#   agent: translator
+#   output_file: "output/finwiz_family_financial_plan_fr.html"
+#   async_execution: false
+#   depends_on:
+#     - comprehensive_investment_report_task
