@@ -202,8 +202,54 @@ class PerplexityAnalysisIntegration:
                 if "date" in search_filters:
                     search_params["search_recency"] = search_filters["date"]
 
-                # Execute search using existing tool
-                response = self.perplexity_tool._run(**search_params)
+                # Execute search using Perplexity Search API (not chat completions)
+                import requests
+                import json
+
+                api_key = os.getenv("PPLX_API_KEY")
+                if not api_key:
+                    raise PerplexityAPIError(401, "PPLX_API_KEY not set")
+
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                }
+
+                # Use the /search endpoint for structured results
+                payload = {
+                    "query": search_params["query"],
+                    "max_results": min(search_params.get("top_k", 10), 20),  # API max is 20
+                    "max_tokens_per_page": 1024,
+                }
+
+                # Add country filter if available
+                if "country" in search_filters:
+                    payload["country"] = search_filters["country"]
+
+                http_response = requests.post(
+                    "https://api.perplexity.ai/search", headers=headers, data=json.dumps(payload), timeout=30
+                )
+                http_response.raise_for_status()
+
+                # Convert search results to the format expected by the parser
+                search_data = http_response.json()
+
+                # Transform search results into citation format for compatibility
+                citations = []
+                for result in search_data.get("results", []):
+                    citations.append(
+                        {
+                            "title": result.get("title", ""),
+                            "url": result.get("url", ""),
+                            "snippet": result.get("snippet", ""),
+                            "date": result.get("date", ""),
+                            "last_updated": result.get("last_updated", ""),
+                        }
+                    )
+
+                # Create response in expected format
+                response_data = {"citations": citations, "results": search_data.get("results", [])}
+                response = json.dumps(response_data, indent=2, ensure_ascii=False)
 
                 if response.startswith("Error:"):
                     # Convert tool error to proper exception

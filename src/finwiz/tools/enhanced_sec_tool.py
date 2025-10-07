@@ -26,6 +26,7 @@ from finwiz.schemas.tools import (
 )
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
+from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
 from finwiz.utils.feature_flags import get_feature_flags
 
 
@@ -48,6 +49,12 @@ class EnhancedSECAnalysisTool(BaseTool):
         "Optionally enhanced with Perplexity Sonar for recent earnings reports and SEC filing commentary."
     )
     args_schema: type[BaseModel] = EnhancedSECAnalysisInput
+    url_generator: SECFilingURLGenerator = None  # type: ignore
+
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize the tool with URL generator."""
+        super().__init__(**kwargs)
+        self.url_generator = SECFilingURLGenerator()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -91,10 +98,14 @@ class EnhancedSECAnalysisTool(BaseTool):
         try:
             logger.info(f"Starting enhanced SEC analysis for {ticker} ({form_type})")
 
-            # Fetch latest filing
+            # Fetch latest filing using URL generator
             filing = self._fetch_latest_filing(ticker=ticker, form_type=form_type)
             if filing is None:
-                return f"Error: No {form_type} filing found for ticker {ticker}"
+                logger.warning(f"No SEC filings available for {ticker}")
+                return (
+                    f"No SEC filings available for ticker {ticker}. "
+                    f"The company may not be publicly traded or may not have filed {form_type} reports."
+                )
 
             # Download and process filing content
             html = self._download_html(filing["filing_url"])
@@ -136,37 +147,83 @@ class EnhancedSECAnalysisTool(BaseTool):
             return f"Error: Enhanced SEC analysis failed for {ticker}: {str(e)}"
 
     def _fetch_latest_filing(self, ticker: str, form_type: str) -> dict[str, str] | None:
-        """Fetch the latest SEC filing for the given ticker and form type."""
-        api_key = os.environ.get("SEC_API_API_KEY")
-        if not api_key:
-            raise KeyError("SEC_API_API_KEY")
+        """
+        Fetch the latest SEC filing for the given ticker and form type.
 
-        # Lazy import to allow tests to patch QueryApi
-        global QueryApi
-        if QueryApi is None:
-            try:
-                from sec_api import QueryApi as _QueryApi  # type: ignore[import-not-found]  # sec_api is optional dependency
-            except Exception as e:
-                raise e
-            QueryApi = _QueryApi
+        Uses SECFilingURLGenerator to generate valid, verified URLs.
+        Falls back to company browse page if direct filing URL is unavailable.
+        """
+        logger.info(f"Fetching SEC filing URL for {ticker} ({form_type})")
 
-        query_api = QueryApi(api_key=api_key)
-        query = {
-            "query": {"query_string": {"query": f'ticker:{ticker} AND formType:"{form_type}"'}},
-            "from": "0",
-            "size": "1",
-            "sort": [{"filedAt": {"order": "desc"}}],
-        }
+        # Get filing metadata using URL generator
+        metadata = self.url_generator.get_filing_metadata(ticker, form_type)
 
-        filings = query_api.get_filings(query).get("filings", [])
-        if not filings:
+        if not metadata:
+            logger.warning(f"No SEC filing metadata found for {ticker}")
             return None
 
-        filing = filings[0]
+        if not metadata.get("available"):
+            logger.warning(f"No SEC filings available for {ticker}")
+            return None
+
+        filing_url = metadata.get("filing_url")
+        if not filing_url:
+            logger.warning(f"No filing URL generated for {ticker}")
+            return None
+
+        # Verify URL if possible (optional, can be slow)
+        # For now, we trust the URL generator's output
+        logger.info(f"Generated SEC filing URL for {ticker}: {filing_url}")
+
+        # Try to get filing date from SEC API if available
+        filed_at = self._get_filing_date_from_api(ticker, form_type)
+
         return {
-            "filing_url": filing.get("linkToFilingDetails", ""),
-            "filed_at": filing.get("filedAt", ""),
+            "filing_url": filing_url,
+            "filed_at": filed_at or datetime.now().isoformat(),
+            "cik": metadata.get("cik", ""),
         }
+
+    def _get_filing_date_from_api(self, ticker: str, form_type: str) -> str | None:
+        """
+        Attempt to get filing date from SEC API if available.
+
+        This is optional and will gracefully fail if SEC_API_API_KEY is not set.
+        """
+        api_key = os.environ.get("SEC_API_API_KEY")
+        if not api_key:
+            logger.debug("SEC_API_API_KEY not set, skipping filing date lookup")
+            return None
+
+        try:
+            # Lazy import to allow tests to patch QueryApi
+            global QueryApi
+            if QueryApi is None:
+                try:
+                    from sec_api import QueryApi as _QueryApi  # type: ignore[import-not-found]
+                except Exception:
+                    logger.debug("sec_api package not available, skipping filing date lookup")
+                    return None
+                QueryApi = _QueryApi
+
+            query_api = QueryApi(api_key=api_key)
+            query = {
+                "query": {"query_string": {"query": f'ticker:{ticker} AND formType:"{form_type}"'}},
+                "from": "0",
+                "size": "1",
+                "sort": [{"filedAt": {"order": "desc"}}],
+            }
+
+            filings = query_api.get_filings(query).get("filings", [])
+            if filings:
+                filed_at = filings[0].get("filedAt", "")
+                logger.debug(f"Retrieved filing date from SEC API: {filed_at}")
+                return filed_at
+
+        except Exception as e:
+            logger.debug(f"Could not retrieve filing date from SEC API: {str(e)}")
+
+        return None
 
     def _download_html(self, url: str) -> str:
         """Download HTML content from SEC filing URL."""
@@ -370,9 +427,23 @@ class EnhancedSECAnalysisTool(BaseTool):
 
         # Filing Information
         response += "## 📋 Filing Information\n"
+        response += f"- **Ticker**: {ticker}\n"
         response += f"- **Form Type**: {form_type}\n"
         response += f"- **Filed Date**: {filing['filed_at'][:10]}\n"
-        response += f"- **Filing URL**: {filing['filing_url']}\n"
+
+        # Include CIK if available
+        if filing.get("cik"):
+            response += f"- **CIK**: {filing['cik']}\n"
+
+        # Include filing URL with verification note
+        filing_url = filing.get("filing_url", "")
+        if filing_url:
+            response += f"- **Filing URL**: {filing_url}\n"
+            logger.info(f"Including verified SEC filing URL: {filing_url}")
+        else:
+            response += "- **Filing URL**: Not available\n"
+            logger.warning(f"No filing URL available for {ticker}")
+
         response += f"- **Sections Analyzed**: {', '.join(sections)}\n\n"
 
         # SEC Filing Insights

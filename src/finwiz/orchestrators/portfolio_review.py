@@ -2,23 +2,23 @@
 
 from __future__ import annotations
 
-import csv
 import json
+import logging
 import os
-from collections.abc import Iterable
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from bs4 import BeautifulSoup
 
-from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.orchestrators.portfolio_holdings_processor import (
+    PortfolioHoldingsProcessor,
+    ProcessingSummary,
+)
 from finwiz.schemas.portfolio_review import (
     HoldingDecision,
     PortfolioReview,
 )
-from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.utils.cache_manager import get_cache_manager
 from finwiz.utils.grading_system import (
     get_grade_css_styles,
@@ -26,7 +26,7 @@ from finwiz.utils.grading_system import (
     score_to_grade,
 )
 
-AssetClass = Literal["stock", "etf"]
+logger = logging.getLogger(__name__)
 
 
 # --- Configuration helpers ---
@@ -37,12 +37,13 @@ def _get_env(name: str, default: str) -> str:
     return (os.getenv(name) or default).strip()
 
 
-def get_csv_paths() -> tuple[Path, Path]:
-    """Get CSV file paths for ETF and stock data."""
+def get_csv_paths() -> tuple[Path, Path, Path]:
+    """Get CSV file paths for ETF, stock, and crypto data."""
     project_root = Path(__file__).resolve().parents[3]
     etf_csv = Path(_get_env("PORTFOLIO_ETF_CSV", str(project_root / "data/etf.csv")))
     stock_csv = Path(_get_env("PORTFOLIO_STOCK_CSV", str(project_root / "data/stock.csv")))
-    return etf_csv, stock_csv
+    crypto_csv = Path(_get_env("PORTFOLIO_CRYPTO_CSV", str(project_root / "data/crypto.csv")))
+    return etf_csv, stock_csv, crypto_csv
 
 
 def get_thresholds() -> tuple[float, float, int]:
@@ -67,134 +68,132 @@ def get_thresholds() -> tuple[float, float, int]:
     )
 
 
-# --- Ingestion & normalization ---
-
-
-def normalize_ticker(raw: str) -> str:
-    """Normalize ticker symbol by removing prefixes."""
-    s = (raw or "").strip()
-    if s.upper().startswith("YAHOO:"):
-        return s.split(":", 1)[1]
-    return s
-
-
-@dataclass
-class RawHolding:
-    """Raw holding data from CSV."""
-
-    asset_class: AssetClass
-    name: str
-    ticker: str
-    currency: str
-
-
-def read_csv_holdings(path: Path, asset_class: AssetClass) -> list[RawHolding]:
-    """Read holdings from CSV file."""
-    holdings: list[RawHolding] = []
-    if not path.exists():
-        return holdings
-    with path.open(newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            name = (row.get("Name") or "").strip()
-            ticker = normalize_ticker(row.get("Ticker") or "")
-            currency = (row.get("Currency") or "").strip()
-            if not name or not ticker:
-                continue
-            holdings.append(RawHolding(asset_class=asset_class, name=name, ticker=ticker, currency=currency))
-    return holdings
-
-
-# --- Validation and basic scoring ---
-
-
-def validate_symbol(symbol: str, asset_class: AssetClass) -> dict:
-    """Validate symbol existence using ticker validation tool."""
-    tool = TickerExistenceValidationTool()
-    return tool._run(symbol=symbol, asset_class=asset_class)  # use internal run for programmatic call
-
-
-def basic_composite_score(valid: bool, asset_class: AssetClass) -> float:
-    """Calculate basic composite score based on validity and asset class."""
-    # Placeholder: prefer valid listings; ETFs get slight baseline boost for diversification
-    base = 0.6 if valid else 0.0
-    if asset_class == "etf" and valid:
-        base += 0.05
-    return min(base, 1.0)
-
-
-def basic_risk(valid: bool) -> RiskAssessmentStandardized:
-    """Generate basic risk assessment based on validity."""
-    if valid:
-        return RiskAssessmentStandardized(score=2.0, level="Medium", risk_factors=["Baseline placeholder"])
-    return RiskAssessmentStandardized(score=5.0, level="Very High", risk_factors=["Invalid or unknown exchange"])
-
-
-# --- Builder ---
+# --- Builder using PortfolioHoldingsProcessor ---
 
 
 def build_portfolio_review(
-    raw_holdings: Iterable[RawHolding],
     *,
     base_currency: str = "CHF",
-) -> PortfolioReview:
-    """Build portfolio review from raw holdings."""
+    stock_csv: Path | None = None,
+    etf_csv: Path | None = None,
+    crypto_csv: Path | None = None,
+) -> tuple[PortfolioReview, ProcessingSummary]:
+    """
+    Build portfolio review using PortfolioHoldingsProcessor.
+
+    This ensures ALL holdings from CSV files are processed and included,
+    even if validation fails.
+
+    Args:
+        base_currency: Base currency for the portfolio
+        stock_csv: Path to stock holdings CSV
+        etf_csv: Path to ETF holdings CSV
+        crypto_csv: Path to crypto holdings CSV
+
+    Returns:
+        Tuple of (PortfolioReview, ProcessingSummary)
+
+    """
     keep_threshold, _delta, _max_step = get_thresholds()
 
-    decisions: list[HoldingDecision] = []
-    for rh in raw_holdings:
-        v = validate_symbol(rh.ticker, rh.asset_class)
-        valid = bool(v.get("valid"))
-        score = basic_composite_score(valid, rh.asset_class)
-        decision = "KEEP" if score >= keep_threshold else "SELL"
-        risk = basic_risk(valid)
-        rationale: list[str] = []
-        if valid:
-            rationale.append("Ticker validated on Yahoo; baseline confidence")
-        else:
-            rationale.append(f"Validation failed: {v.get('reason')}")
-        citations: list[str] = []
-        src = v.get("meta", {}).get("source")
-        if src == "yahoo":
-            citations.append("Yahoo Finance")
-        elif src == "coinbase":
-            citations.append("Coinbase Products API")
+    # Initialize processor
+    processor = PortfolioHoldingsProcessor()
 
-        # Get grade information
-        grade_info = score_to_grade(score)
+    # Load ALL holdings from CSV files
+    logger.info("Loading holdings from CSV files")
+    raw_holdings = processor.load_all_holdings(
+        stock_csv=stock_csv,
+        etf_csv=etf_csv,
+        crypto_csv=crypto_csv,
+    )
 
-        decisions.append(
-            HoldingDecision(
-                asset_class=rh.asset_class,
-                name=rh.name,
-                ticker=rh.ticker,
-                currency=rh.currency or base_currency,
-                decision=decision,  # type: ignore[arg-type]
-                composite_score=score,
-                grade=grade_info.grade,  # type: ignore[arg-type]
-                grade_description=grade_info.description,
-                recommended_action=grade_info.action,
-                risk=risk,
-                rationale_bullets=rationale,
-                citations=citations,
-                alternatives=[],  # placeholder; to be filled by screeners
-            )
-        )
+    logger.info(f"Loaded {len(raw_holdings)} total holdings from CSV files")
 
-    return PortfolioReview(
+    # Process ALL holdings (including those that fail validation)
+    logger.info("Processing all holdings")
+    decisions = processor.process_holdings(
+        holdings=raw_holdings,
+        base_currency=base_currency,
+        keep_threshold=keep_threshold,
+    )
+
+    logger.info(f"Processed {len(decisions)} holdings")
+
+    # Get processing summary
+    summary = processor.get_processing_summary()
+
+    # Log summary statistics
+    logger.info(
+        f"Processing complete: {summary.processed_successfully} successful, "
+        f"{summary.processed_with_warnings} with warnings, "
+        f"{summary.failed_to_process} failed"
+    )
+
+    if summary.validation_failures:
+        logger.warning(f"Validation failures: {len(summary.validation_failures)}")
+        for ticker, reason in summary.validation_failures:
+            logger.warning(f"  - {ticker}: {reason}")
+
+    # Create portfolio review
+    review = PortfolioReview(
         as_of=datetime.now(UTC),
         base_currency=base_currency,
         holdings=decisions,
     )
 
+    return review, summary
+
 
 # --- I/O helpers ---
 
 
-def save_review_json(review: PortfolioReview, out_path: Path) -> None:
-    """Save portfolio review to JSON file."""
+def save_review_json(
+    review: PortfolioReview,
+    out_path: Path,
+    summary: ProcessingSummary | None = None,
+) -> None:
+    """
+    Save portfolio review to JSON file with optional processing summary.
+
+    Args:
+        review: Portfolio review to save
+        out_path: Output file path
+        summary: Optional processing summary to include
+
+    """
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(review.model_dump_json(indent=2), encoding="utf-8")
+
+    # Create output data with proper datetime serialization
+    output_data = {
+        "portfolio_review": json.loads(review.model_dump_json()),
+        "processing_summary": None,
+    }
+
+    # Add processing summary if provided
+    if summary:
+        output_data["processing_summary"] = {
+            "total_holdings": summary.total_holdings,
+            "processed_successfully": summary.processed_successfully,
+            "processed_with_warnings": summary.processed_with_warnings,
+            "failed_to_process": summary.failed_to_process,
+            "by_asset_class": summary.by_asset_class,
+            "validation_failures": [
+                {"ticker": ticker, "reason": reason} for ticker, reason in summary.validation_failures
+            ],
+            "excluded_holdings": [
+                {"ticker": ticker, "reason": reason} for ticker, reason in summary.excluded_holdings
+            ],
+        }
+
+        logger.info(
+            f"Saved portfolio review with processing summary: "
+            f"{summary.total_holdings} total, "
+            f"{summary.processed_successfully} successful, "
+            f"{summary.processed_with_warnings} warnings, "
+            f"{summary.failed_to_process} failed"
+        )
+
+    out_path.write_text(json.dumps(output_data, indent=2), encoding="utf-8")
 
 
 async def run_with_rebalancing(
@@ -214,16 +213,28 @@ async def run_with_rebalancing(
         Tuple of (review_path, rebalancing_result)
 
     """
-    # Run standard portfolio review
-    etf_csv, stock_csv = get_csv_paths()
-    etfs = read_csv_holdings(etf_csv, "etf")
-    stocks = read_csv_holdings(stock_csv, "stock")
-    review = build_portfolio_review([*etfs, *stocks])
+    # Get CSV paths
+    etf_csv, stock_csv, crypto_csv = get_csv_paths()
 
-    # Save portfolio review
+    # Run portfolio review using PortfolioHoldingsProcessor
+    logger.info("Running portfolio review with holdings processor")
+    review, summary = build_portfolio_review(
+        stock_csv=stock_csv,
+        etf_csv=etf_csv,
+        crypto_csv=crypto_csv,
+    )
+
+    # Log count of holdings processed vs. holdings in CSV
+    logger.info(
+        f"Holdings processed: {len(review.holdings)} decisions generated "
+        f"from {summary.total_holdings} CSV entries"
+    )
+    logger.info(f"By asset class: {summary.by_asset_class}")
+
+    # Save portfolio review with processing summary
     project_root = Path(__file__).resolve().parents[3]
     out = project_root / "output" / "portfolio" / "portfolio_review.json"
-    save_review_json(review, out)
+    save_review_json(review, out, summary)
 
     rebalancing_result = None
 
@@ -275,14 +286,29 @@ async def run_with_rebalancing(
 
 def run() -> Path:
     """Run standard portfolio review process."""
-    etf_csv, stock_csv = get_csv_paths()
-    etfs = read_csv_holdings(etf_csv, "etf")
-    stocks = read_csv_holdings(stock_csv, "stock")
-    review = build_portfolio_review([*etfs, *stocks])
+    # Get CSV paths
+    etf_csv, stock_csv, crypto_csv = get_csv_paths()
 
+    # Run portfolio review using PortfolioHoldingsProcessor
+    logger.info("Running portfolio review with holdings processor")
+    review, summary = build_portfolio_review(
+        stock_csv=stock_csv,
+        etf_csv=etf_csv,
+        crypto_csv=crypto_csv,
+    )
+
+    # Log count of holdings processed vs. holdings in CSV
+    logger.info(
+        f"Holdings processed: {len(review.holdings)} decisions generated "
+        f"from {summary.total_holdings} CSV entries"
+    )
+    logger.info(f"By asset class: {summary.by_asset_class}")
+
+    # Save portfolio review with processing summary
     project_root = Path(__file__).resolve().parents[3]
     out = project_root / "output" / "portfolio" / "portfolio_review.json"
-    save_review_json(review, out)
+    save_review_json(review, out, summary)
+
     return out
 
 
@@ -385,8 +411,16 @@ class EnhancedPortfolioReviewOrchestrator:
 
     def _add_portfolio_review_sections(self, generator: Any, review_data: dict[str, Any]) -> None:
         """Add portfolio review sections to the report."""
-        # Portfolio overview
-        holdings = review_data.get("holdings", [])
+        # Extract holdings and processing summary
+        if "portfolio_review" in review_data:
+            # New format with processing summary
+            holdings = review_data["portfolio_review"].get("holdings", [])
+            processing_summary = review_data.get("processing_summary")
+        else:
+            # Legacy format
+            holdings = review_data.get("holdings", [])
+            processing_summary = None
+
         keep_count = sum(1 for h in holdings if h.get("decision") == "KEEP")
         sell_count = sum(1 for h in holdings if h.get("decision") == "SELL")
 
@@ -435,10 +469,69 @@ class EnhancedPortfolioReviewOrchestrator:
         overview_div.append(metrics_grid)
         soup.append(overview_div)
 
+        # Add processing summary if available
+        if processing_summary:
+            summary_div = soup.new_tag("div", **{"class": "processing-summary"})
+
+            summary_title = soup.new_tag("h4")
+            summary_title.string = "Processing Summary"
+            summary_div.append(summary_title)
+
+            # Processing metrics
+            summary_list = soup.new_tag("ul")
+
+            # Total processed
+            total_li = soup.new_tag("li")
+            total_li.string = f"Total holdings in CSV: {processing_summary['total_holdings']}"
+            summary_list.append(total_li)
+
+            # Successfully processed
+            success_li = soup.new_tag("li")
+            success_li.string = (
+                f"Successfully processed: {processing_summary['processed_successfully']}"
+            )
+            summary_list.append(success_li)
+
+            # Warnings
+            if processing_summary["processed_with_warnings"] > 0:
+                warning_li = soup.new_tag("li")
+                warning_li.string = (
+                    f"Processed with warnings: {processing_summary['processed_with_warnings']}"
+                )
+                summary_list.append(warning_li)
+
+            # Failed
+            if processing_summary["failed_to_process"] > 0:
+                failed_li = soup.new_tag("li")
+                failed_li.string = f"Failed to process: {processing_summary['failed_to_process']}"
+                summary_list.append(failed_li)
+
+            # By asset class
+            by_class_li = soup.new_tag("li")
+            by_class_li.string = f"By asset class: {processing_summary['by_asset_class']}"
+            summary_list.append(by_class_li)
+
+            summary_div.append(summary_list)
+
+            # Validation failures
+            if processing_summary.get("validation_failures"):
+                failures_title = soup.new_tag("h5")
+                failures_title.string = "Validation Issues"
+                summary_div.append(failures_title)
+
+                failures_list = soup.new_tag("ul")
+                for failure in processing_summary["validation_failures"]:
+                    failure_li = soup.new_tag("li")
+                    failure_li.string = f"{failure['ticker']}: {failure['reason']}"
+                    failures_list.append(failure_li)
+                summary_div.append(failures_list)
+
+            soup.append(summary_div)
+
         overview_content = soup.prettify(formatter="html")
         generator.add_section("Portfolio Overview", overview_content, "portfolio", order=1)
 
-        # Holdings analysis
+        # Holdings analysis with validation status
         holdings_content = self._generate_holdings_table(holdings)
         generator.add_section("Holdings Analysis", holdings_content, "analysis", order=2)
 
@@ -579,7 +672,16 @@ class EnhancedPortfolioReviewOrchestrator:
         # Table header
         thead = soup.new_tag("thead")
         header_row = soup.new_tag("tr")
-        headers = ["Ticker", "Nom", "Type", "Décision", "Note", "Action Recommandée", "Risque"]
+        headers = [
+            "Ticker",
+            "Nom",
+            "Type",
+            "Décision",
+            "Note",
+            "Action Recommandée",
+            "Risque",
+            "Statut Validation",
+        ]
         for header_text in headers:
             th = soup.new_tag("th")
             th.string = header_text
@@ -636,6 +738,21 @@ class EnhancedPortfolioReviewOrchestrator:
             td_risk = soup.new_tag("td")
             td_risk.string = f"{risk_score:.1f}/10"
             tr.append(td_risk)
+
+            # Validation status cell
+            td_validation = soup.new_tag("td")
+            data_freshness = holding.get("data_freshness", "unknown")
+            if data_freshness == "fresh":
+                validation_span = soup.new_tag("span", **{"class": "validation-fresh"})
+                validation_span.string = "✅ Valid"
+            elif data_freshness == "stale":
+                validation_span = soup.new_tag("span", **{"class": "validation-stale"})
+                validation_span.string = "⚠️ Warning"
+            else:
+                validation_span = soup.new_tag("span", **{"class": "validation-unknown"})
+                validation_span.string = "❓ Unknown"
+            td_validation.append(validation_span)
+            tr.append(td_validation)
 
             tbody.append(tr)
 

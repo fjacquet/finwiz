@@ -17,6 +17,7 @@
 - **Quantitative Analysis Framework**: Professional-grade backtesting engine with Backtrader, technical analysis with TA-Lib, portfolio optimization, derivatives pricing, and performance analytics.
 - **Persistent Financial Planning**: Loads and updates existing financial plans from previous sessions.
 - **Advanced Data Validation**: Centralized validation system with ValidationManager, SchemaRegistry, configurable strictness modes (off/warn/error), and structured error handling with detailed context.
+- **Data Quality Assurance**: Source-level data validation with transparent error handling, ensuring zero hallucinated URLs, complete portfolio processing, and clear communication when data is unavailable.
 - **Intelligent Caching System**: Advanced caching layer with TTL support, multiple backends (memory/file/hybrid), and performance monitoring.
 - **Dynamic Test Data Framework**: Faker-based test data generation with pytest-mock integration for reliable, deterministic testing.
 - **Comprehensive Testing**: Extensive test coverage with unit tests, integration tests, and mocked external dependencies for reliable CI/CD.
@@ -218,6 +219,7 @@ For portfolio analysis functionality, create CSV files with your holdings:
 2. **Stock Holdings**: Create `data/stock.csv` with columns: Name, Ticker, Currency
 
 Example CSV format:
+
 ```csv
 Name,Ticker,Currency
 Apple Inc,AAPL,USD
@@ -235,7 +237,7 @@ FinWiz is composed of several specialized crews:
 - **ETF Crew**: Specializes in Exchange-Traded Funds (ETFs), analyzing market trends, screening for suitable funds, and assessing risk to provide investment strategies.
 - **Portfolio Rebalancing Crew**: Provides intelligent portfolio rebalancing analysis with trade recommendations, cost optimization, and risk management.
 - **Investment Discovery Crew**: Proactively discovers A+ grade investment opportunities across all asset classes using specialized agents for ETFs, stocks, crypto, validation, and portfolio optimization.
-- **Report Crew**: Consolidates all analysis into comprehensive HTML reports with no external tools, ensuring clean separation of concerns.
+- **Report Crew**: Consolidates all analysis into comprehensive HTML reports with enhanced data extraction including backtesting metrics, market context indicators, discovery methodology details, and performance aggregation. Uses no external tools, ensuring clean separation of concerns.
 
 ## 📊 Portfolio Analysis
 
@@ -252,6 +254,7 @@ FinWiz includes automated portfolio review capabilities:
 FinWiz provides a comprehensive portfolio rebalancing system with professional-grade optimization and analysis:
 
 ### Core Features
+
 - **Intelligent Trade Recommendations**: Generate optimal buy/sell recommendations to maintain target allocations
 - **Multiple Optimization Strategies**: Choose from minimize trades, minimize costs, or risk-aware rebalancing methods
 - **Transaction Cost Analysis**: Comprehensive cost modeling including commissions, spreads, and market impact
@@ -260,17 +263,20 @@ FinWiz provides a comprehensive portfolio rebalancing system with professional-g
 - **Historical Tracking**: Monitor rebalancing effectiveness and performance attribution over time
 
 ### Rebalancing Methods
+
 - **MINIMIZE_TRADES**: Reduces the number of transactions (ideal for high-cost accounts)
 - **MINIMIZE_COSTS**: Optimizes for lowest total transaction costs
 - **RISK_AWARE**: Considers risk metrics and concentration limits
 
 ### Key Components
+
 - **Portfolio Configuration Management**: Save/load configurations with versioning
 - **Real-time Portfolio Monitoring**: Continuous drift monitoring with automated alerts
 - **Comprehensive Reporting**: Detailed HTML reports with interactive elements and PDF export
 - **Performance Analytics**: Track rebalancing impact with before/after comparisons
 
 ### Usage Example
+
 ```python
 from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
 from finwiz.schemas.portfolio_rebalancing import PortfolioConfiguration, Holding
@@ -304,6 +310,7 @@ html_report = await orchestrator.generate_rebalancing_report(result)
 FinWiz includes a comprehensive quantitative analysis framework built on professional-grade financial libraries for institutional-quality analysis:
 
 ### Backtesting Engine
+
 - **Backtrader Integration**: Professional backtesting framework with strategy development capabilities
 - **Strategy Framework**: Base classes for custom trading strategies with built-in risk management
 - **Performance Metrics**: Comprehensive analysis including Sharpe ratio, maximum drawdown, VaR, and CVaR
@@ -311,6 +318,7 @@ FinWiz includes a comprehensive quantitative analysis framework built on profess
 - **Trade Analysis**: Detailed trade-by-trade statistics with win rates and profit factors
 
 ### Technical Analysis Engine
+
 - **TA-Lib Integration**: Professional technical analysis with 150+ indicators
 - **Signal Generation**: Automated buy/sell signal generation with confidence scoring and strength classification
 - **Confluence Detection**: Identify zones where multiple indicators align for high-probability setups
@@ -318,6 +326,7 @@ FinWiz includes a comprehensive quantitative analysis framework built on profess
 - **Supported Indicators**: SMA, EMA, RSI, MACD, Bollinger Bands, Stochastic, ATR, ADX, CCI, Williams %R, Fibonacci retracements
 
 ### Portfolio Optimization
+
 - **Modern Portfolio Theory**: Mean-variance optimization with efficient frontier calculation
 - **Risk Parity**: Equal risk contribution portfolio construction
 - **Black-Litterman Model**: Bayesian approach incorporating market views
@@ -325,6 +334,7 @@ FinWiz includes a comprehensive quantitative analysis framework built on profess
 - **Constraint Support**: Weight bounds, sector limits, and turnover constraints
 
 ### Derivatives Pricing
+
 - **QuantLib Integration**: Professional derivatives pricing library (optional)
 - **Options Pricing**: Black-Scholes, binomial, and Monte Carlo models
 - **Greeks Calculation**: Delta, gamma, theta, vega, and rho for comprehensive risk management
@@ -332,6 +342,7 @@ FinWiz includes a comprehensive quantitative analysis framework built on profess
 - **Implied Volatility**: Newton-Raphson method for market-implied volatility calculation
 
 ### Stock Screening
+
 - **Multi-Universe Support**: Screen across S&P 500, NASDAQ 100, Russell 2000, Dow 30, and custom lists
 - **Fundamental Screening**: Filter based on P/E ratios, ROE, debt levels, and growth metrics
 - **Technical Screening**: Screen based on technical indicators and momentum patterns
@@ -339,6 +350,7 @@ FinWiz includes a comprehensive quantitative analysis framework built on profess
 - **Predefined Screens**: Value, growth, dividend, and quality stock screens
 
 ### Performance Analytics
+
 - **Risk-Adjusted Metrics**: Sharpe, Sortino, Calmar, and Information ratios
 - **Drawdown Analysis**: Maximum drawdown, recovery time, and underwater curves
 - **Benchmark Comparison**: Alpha, beta, tracking error, and relative performance analysis
@@ -350,12 +362,14 @@ FinWiz includes a comprehensive quantitative analysis framework built on profess
 FinWiz provides sophisticated financial analysis through specialized tools:
 
 ### Technical Analysis
+
 - **Multi-Indicator Synthesis**: RSI, MACD, Bollinger Bands analysis via Twelve Data API
 - **Chart Generation**: Visual chart analysis using Chart-img API with base64 embedding
 - **Pattern Recognition**: LLM-based technical pattern identification
 - **Support/Resistance**: Automated level detection and confluence analysis
 
 ### Sentiment Analysis
+
 - **Standardized Methodology**: Consistent sentiment analysis across all asset classes (stocks, ETFs, crypto)
 - **Multi-Source Integration**: Alpha Vantage, Yahoo Finance, CoinMarketCap news aggregation with asset-specific sources
 - **Perplexity Sonar Enhancement**: Optional integration with Perplexity Sonar Search for enhanced research capabilities with circuit breaker protection
@@ -364,13 +378,23 @@ FinWiz provides sophisticated financial analysis through specialized tools:
 - **Article Deduplication**: Intelligent removal of duplicate articles based on headline similarity
 - **Impact Assessment**: Top positive/negative articles with scores and citations for transparency
 
+### Enhanced Data Extraction for Reports
+
+- **Backtesting Metrics**: Extracts annualized returns, Sharpe ratios, max drawdown, win rates, and regime-specific performance from validation results
+- **Market Context Indicators**: Captures VIX levels, inflation rates, interest rate trends, market regime types, and stress levels
+- **Discovery Methodology**: Documents screening criteria, validation statistics, score breakdowns, and data sources used
+- **Performance Aggregation**: Aggregates metrics by asset type and market regime, calculates portfolio impact, identifies top opportunities
+- **Comprehensive Integration**: All enhanced data seamlessly integrated into consolidated reporter input for rich, data-driven reports
+
 ### Data Validation & Quality
+
 - **Schema Enforcement**: Strict Pydantic v2 models with `extra='forbid'` validation
 - **Configurable Validation**: Off/warn/error modes for different deployment environments
 - **Contract Testing**: Automated validation of data contracts between crews
 - **Error Handling**: Graceful degradation with detailed error reporting
 
 ### Performance & Caching
+
 - **Intelligent Caching**: Multi-backend caching system (memory/file/hybrid) with configurable TTL
 - **Cache Strategies**: LRU, LFU, TTL, and adaptive eviction strategies
 - **Performance Monitoring**: Comprehensive cache statistics and hit rate tracking
@@ -386,11 +410,68 @@ To improve performance, FinWiz leverages asynchronous task execution for I/O-bou
 
 ---
 
+## 🛡️ Data Quality Assurance
+
+FinWiz implements comprehensive data quality controls to ensure report accuracy and reliability:
+
+### Core Principles
+
+- **Fail Fast**: Reject invalid data at the source rather than attempting to fix it downstream
+- **Transparency**: Always communicate when data is unavailable instead of generating fake data
+- **No Hallucinations**: Never generate fake URLs, metrics, or data to fill gaps
+- **Completeness**: Process all available data, even if some validation checks fail
+- **Traceability**: Log all data decisions and rejections for debugging and auditing
+
+### Key Features
+
+- **Valid SEC Filing URLs**: Automatic generation and verification of SEC EDGAR URLs with fallback to company browse pages
+- **Complete Portfolio Processing**: All holdings from CSV files are processed and included in reports, with validation status indicators
+- **Real Sentiment Data**: Only real news sources with valid, accessible URLs are used in sentiment analysis
+- **A+ Discovery Integration**: Clear messaging when discovery hasn't run or no opportunities found
+- **Complete Backtesting Metrics**: All metrics extracted or clearly marked as "Not calculated" (never fake data)
+- **Data Availability Tracking**: Comprehensive tracking of data sources with freshness warnings for stale data (>7 days)
+
+### Data Quality Components
+
+```python
+# SEC Filing URL Generation
+from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
+generator = SECFilingURLGenerator()
+url = generator.get_filing_url("AAPL", "10-K")  # Returns None if unavailable
+
+# Portfolio Holdings Processing
+from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+processor = PortfolioHoldingsProcessor()
+holdings = processor.load_all_holdings()  # Loads ALL holdings from CSV
+processed = processor.process_holdings(holdings)  # Processes ALL, including invalid
+
+# A+ Discovery Access
+from finwiz.integration.aplus_discovery_accessor import APlusDiscoveryAccessor
+accessor = APlusDiscoveryAccessor()
+if accessor.has_discovery_results():
+    results = accessor.load_discovery_results()
+
+# Data Availability Tracking
+from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
+tracker = DataAvailabilityTracker()
+tracker.track_data_source("sentiment", "available", age_hours=2)
+summary = tracker.get_availability_summary()
+```
+
+### Documentation
+
+- **[Data Quality Guide](docs/DATA_QUALITY_GUIDE.md)**: Comprehensive guide for maintaining data quality
+- **[API Reference](docs/API_REFERENCE.md)**: Data quality component documentation
+- **[Spec](. kiro/specs/report-data-quality-fixes/)**: Implementation specification and tasks
+
+---
+
 ## 🎯 A+ Investment Discovery
 
 FinWiz's A+ Investment Discovery system transforms passive portfolio evaluation into proactive opportunity discovery. The system uses specialized AI agents to scan global markets and identify exceptional investments with A+ grades (score ≥ 0.95).
 
 ### Quick Start
+
 ```bash
 # Discover A+ opportunities across all asset types
 uv run python src/finwiz/main.py --discovery
@@ -400,6 +481,7 @@ uv run python src/finwiz/main.py --discovery --asset-type etf
 ```
 
 ### Key Features
+
 - **Proactive Discovery**: Scans 3,000+ ETFs, thousands of stocks, and top cryptocurrencies
 - **Rigorous Validation**: 5+ year backtesting across multiple market regimes
 - **Dynamic Criteria**: Adapts to market conditions (inflation, volatility, interest rates)
@@ -407,11 +489,13 @@ uv run python src/finwiz/main.py --discovery --asset-type etf
 - **Portfolio Integration**: Seamlessly integrates discoveries with existing portfolio analysis
 
 ### A+ Criteria Examples
+
 - **ETFs**: Expense ratio ≤0.15%, AUM ≥$1B, tracking error ≤0.20%
 - **Stocks**: ROE ≥20%, revenue growth ≥15%, debt/equity ≤0.3
 - **Crypto**: Market cap ≥$10B, institutional adoption, real utility
 
 ### Documentation
+
 - **[📖 Complete User Guide](docs/investment_discovery_user_guide.md)**: Comprehensive guide with examples
 - **[🚀 Quick Reference](docs/investment_discovery_quick_reference.md)**: Essential commands and criteria
 - **[❓ FAQ](docs/investment_discovery_faq.md)**: Common questions and troubleshooting
@@ -424,6 +508,7 @@ uv run python src/finwiz/main.py --discovery --asset-type etf
 Comprehensive documentation is available in the `docs/` directory:
 
 ### Core Documentation
+
 - **[Documentation Hub](docs/README.md)**: Central navigation for all documentation
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Complete development guide with CrewAI standards
 - **[Architecture Guide](docs/ARCHITECTURE.md)**: System architecture and design principles
@@ -431,19 +516,28 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[User Guide](docs/USER_GUIDE.md)**: Deployment, operations, and migration guide
 
 ### Feature Documentation
+
+- **[Data Quality Guide](docs/DATA_QUALITY_GUIDE.md)**: Comprehensive guide for maintaining data quality and handling missing data
 - **[Portfolio Holdings Analysis](docs/portfolio_holdings_analysis_user_guide.md)**: Analyze your holdings with price targets and alternatives
 - **[Portfolio Rebalancing](docs/portfolio_rebalancing/)**: Intelligent portfolio rebalancing system
 - **[Investment Discovery](docs/investment_discovery/)**: Discover A+ investment opportunities
 - **[Quantitative Analysis](docs/quantitative_analysis.md)**: Professional-grade quantitative analysis framework
+- **[Enhanced Data Extraction](docs/ENHANCED_DATA_EXTRACTION.md)**: Backtesting metrics, market context, and methodology extraction for reports
+- **[Report Crew Examples](docs/REPORT_CREW_ENHANCED_EXAMPLES.md)**: Practical examples for using enhanced data in reports
+- **[Crew Data Integration Quick Start](docs/CREW_DATA_INTEGRATION_QUICK_START.md)**: Quick reference for data integration system
+- **[Crew Data Integration Index](docs/CREW_DATA_INTEGRATION_INDEX.md)**: Complete guide to the data integration system
 
 ### System Documentation
+
 - **[A+ Investment System](docs/APLUS_SYSTEM.md)**: A+ discovery, scoring, and monitoring
 - **[System Operations](docs/SYSTEM_OPERATIONS.md)**: Feedback learning, portfolio monitoring, integration
 - **[Perplexity Integration](docs/perplexity_sonar_integration_spec.md)**: Enhanced research capabilities
 - **[Schemas Documentation](docs/schemas/README.md)**: Pydantic models and JSON schemas
 
 ### AI Development Standards
+
 AI agent guidelines are in `.kiro/steering/` for automatic guidance:
+
 - **agents.md**: Agent behavior and tool usage
 - **output-standards.md**: HTML formatting and French language
 - **validation.md**: Validation rules and criteria
@@ -457,6 +551,7 @@ AI agent guidelines are in `.kiro/steering/` for automatic guidance:
 FinWiz maintains high code quality standards through comprehensive testing and static analysis.
 
 **Essential Commands:**
+
 ```bash
 # Linting and formatting
 ruff check . && ruff format .
@@ -497,12 +592,14 @@ ignore_missing_imports = True
 ```
 
 **Type Hint Standards:**
+
 - Use modern Python 3.12+ syntax: `str | None` instead of `Optional[str]`
 - All public functions must have type hints
 - Return types must be explicitly specified
 - Use `from typing import Any` for complex types
 
 **Example:**
+
 ```python
 from crewai.tools import BaseTool
 
@@ -516,6 +613,7 @@ def get_stock_crew_tools(
 ```
 
 ### Test Infrastructure
+
 - **Framework**: pytest with pytest-mock (never unittest.mock)
 - **Test Data**: Faker library for realistic, dynamic test data generation
 - **Mocking Strategy**: All external dependencies mocked (APIs, file system, LLM calls)
@@ -524,6 +622,7 @@ def get_stock_crew_tools(
 - **Coverage Reporting**: HTML and terminal formats with detailed line-by-line analysis
 
 ### Performance Monitoring
+
 - **Cache Statistics**: Monitor hit rates and performance metrics
 - **Validation Metrics**: Track validation errors and warnings
 - **API Rate Limits**: Automatic throttling and retry strategies
@@ -538,6 +637,7 @@ FinWiz implements several standardized patterns to ensure code quality, consiste
 Tool factories provide centralized, standardized tool initialization for all crews, eliminating code duplication and ensuring consistent configuration.
 
 **Usage Example:**
+
 ```python
 from finwiz.tools.tool_factories import get_stock_crew_tools
 
@@ -550,11 +650,13 @@ tools = get_stock_crew_tools(
 ```
 
 **Available Factories:**
+
 - `get_stock_crew_tools()` - Stock analysis tools (research, quantitative, RAG, schema access)
 - `get_crypto_crew_tools()` - Cryptocurrency analysis tools
 - `get_etf_crew_tools()` - ETF analysis tools
 
 **Benefits:**
+
 - Centralized tool configuration
 - Consistent tool sets across crews
 - Easy to add/remove tools globally
@@ -565,6 +667,7 @@ tools = get_stock_crew_tools(
 The `@final_reporter` decorator enforces architectural constraints by validating that final reporter agents have no tools at initialization time.
 
 **Usage Example:**
+
 ```python
 from finwiz.utils.agent_validators import final_reporter
 from crewai import Agent, agent
@@ -581,12 +684,14 @@ def investment_reporter(self) -> Agent:
 ```
 
 **Why This Matters:**
+
 - Final reporters should only consume upstream context
 - Prevents accidental tool assignment to reporters
 - Enforces separation of concerns (research vs. reporting)
 - Raises `FinalReporterError` with clear message if violated
 
 **Error Example:**
+
 ```python
 # This will raise FinalReporterError
 @final_reporter
@@ -606,6 +711,7 @@ def bad_reporter(self) -> Agent:
 Task decorators explicitly mark tasks as async or sync, preventing common errors where final tasks are incorrectly configured as async.
 
 **Usage Example:**
+
 ```python
 from finwiz.utils.task_decorators import async_task, sync_task
 from crewai import Task, task
@@ -630,10 +736,12 @@ def final_report_task(self) -> Task:
 ```
 
 **Decorator Types:**
+
 - `@async_task` - Sets `async_execution=True` for parallel execution
 - `@sync_task` - Sets `async_execution=False` for sequential execution
 
 **Best Practices:**
+
 - Use `@async_task` for independent research/analysis tasks
 - Use `@sync_task` for final tasks in sequential workflows
 - Decorators log configuration for debugging
@@ -647,6 +755,7 @@ When using `Process.sequential`, the final task **must be synchronous**. The `@s
 The `CrewLogger` class provides consistent, structured logging across all crews for better observability and debugging.
 
 **Usage Example:**
+
 ```python
 from finwiz.utils.logging_helpers import CrewLogger
 import time
@@ -672,11 +781,13 @@ class StockCrew:
 ```
 
 **CrewLogger Methods:**
+
 - `log_start(inputs)` - Log crew execution start with input parameters
 - `log_complete(duration)` - Log successful completion with execution time
 - `log_error(error)` - Log errors with full exception info
 
 **Structured Log Fields:**
+
 ```python
 # log_start output
 {
@@ -705,6 +816,7 @@ class StockCrew:
 ```
 
 **Benefits:**
+
 - Consistent logging format across all crews
 - Easy to parse and analyze logs
 - Automatic duration tracking
@@ -716,6 +828,7 @@ class StockCrew:
 FinWiz uses comprehensive type hints with mypy for static type checking, improving code quality and developer experience.
 
 **Configuration (`mypy.ini`):**
+
 ```ini
 [mypy]
 python_version = 3.10
@@ -739,6 +852,7 @@ ignore_missing_imports = True
 ```
 
 **Type Hint Standards:**
+
 ```python
 # Use modern Python 3.12+ syntax
 from crewai.tools import BaseTool
@@ -763,6 +877,7 @@ def get_rag_tools(
 ```
 
 **Running mypy:**
+
 ```bash
 # Check specific modules
 uv run mypy src/finwiz/tools/tool_factories.py
@@ -775,6 +890,7 @@ uv run mypy src/finwiz/
 ```
 
 **Benefits:**
+
 - Early error detection (compile-time vs runtime)
 - Better IDE autocomplete and IntelliSense
 - Self-documenting code
@@ -782,6 +898,7 @@ uv run mypy src/finwiz/
 - Improved code maintainability
 
 **Type Hint Best Practices:**
+
 - Use `str | None` instead of `Optional[str]` (Python 3.12+)
 - Always specify return types for public functions
 - Use `list[Type]` instead of `List[Type]` (Python 3.12+)
@@ -800,6 +917,7 @@ The quick wins implementation provides five key improvements to the FinWiz codeb
 5. **Type Hints** - Comprehensive type hints with mypy for static type checking
 
 These patterns improve:
+
 - **Code Consistency**: From 60% to 90%
 - **Type Coverage**: From 40% to 80%
 - **CrewAI Compliance**: From 85% to 95%
@@ -807,6 +925,7 @@ These patterns improve:
 - **Maintainability**: Reduced duplication, clearer intent, better documentation
 
 **Getting Started with Quick Wins:**
+
 ```bash
 # Install mypy for type checking
 uv add --dev mypy
@@ -826,6 +945,5 @@ For more details on the quick wins implementation, see the [Quick Wins Implement
 ---
 
 Happy analyzing!
-
 
 export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_FALLBACK_LIBRARY_PATH

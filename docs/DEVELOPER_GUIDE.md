@@ -529,14 +529,143 @@ uv run pytest --profile
 python -m cProfile -o profile.stats src/finwiz/main.py
 ```
 
+## Data Quality Standards
+
+### Core Principles
+
+1. **Fail Fast**: Reject invalid data at the source
+2. **Transparency**: Clearly communicate when data is unavailable
+3. **No Hallucinations**: Never generate fake data to fill gaps
+4. **Completeness**: Process all available data
+5. **Traceability**: Log all data decisions
+
+### Data Validation at Source
+
+**Always validate data before use**:
+
+```python
+from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
+
+generator = SECFilingURLGenerator()
+
+# Get valid URL or None
+url = generator.get_filing_url(ticker="AAPL", filing_type="10-K")
+
+if url is None:
+    # Handle missing data transparently
+    return "No SEC filings available"
+else:
+    # Use validated URL
+    return f"Filing available at: {url}"
+```
+
+### Handling Missing Data
+
+**Never generate fake data**:
+
+```python
+# ✅ Correct - Return None or clear message
+def get_backtesting_metrics(ticker: str) -> BacktestingMetrics | None:
+    metrics = extract_metrics(ticker)
+    if metrics is None:
+        logger.info(f"No backtesting data available for {ticker}")
+        return None
+    return metrics
+
+# ❌ Incorrect - Generate fake data
+def get_backtesting_metrics(ticker: str) -> BacktestingMetrics:
+    metrics = extract_metrics(ticker)
+    if metrics is None:
+        # DON'T DO THIS
+        return BacktestingMetrics(
+            annualized_return="Données non disponibles",
+            sharpe_ratio="N/A"
+        )
+    return metrics
+```
+
+### Data Availability Tracking
+
+**Track all data sources**:
+
+```python
+from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
+
+tracker = DataAvailabilityTracker()
+
+# Track each data source
+tracker.track_data_source("sentiment", "available", age_hours=2)
+tracker.track_data_source("sec_filings", "unavailable", age_hours=0)
+tracker.track_data_source("backtesting", "available", age_hours=48)
+
+# Get summary for report
+summary = tracker.get_availability_summary()
+warnings = tracker.get_freshness_warnings()
+```
+
+### Complete Data Processing
+
+**Process all available data**:
+
+```python
+from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+
+processor = PortfolioHoldingsProcessor()
+
+# Load ALL holdings from CSV files
+holdings = processor.load_all_holdings()
+
+# Process ALL holdings, including those that fail validation
+processed = processor.process_holdings(holdings)
+
+# Track what was excluded and why
+summary = processor.get_processing_summary()
+logger.info(f"Processed {summary.total_processed} of {summary.total_holdings} holdings")
+logger.info(f"Excluded {summary.total_excluded} holdings: {summary.exclusion_reasons}")
+```
+
+### URL Validation
+
+**Verify URLs before including in reports**:
+
+```python
+from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
+
+generator = SECFilingURLGenerator()
+
+# Generate URL
+url = generator.get_filing_url(ticker="AAPL", filing_type="10-K")
+
+if url and generator.verify_url(url):
+    # URL is valid and accessible
+    include_in_report(url)
+else:
+    # URL is invalid or inaccessible
+    include_in_report("No SEC filings available")
+```
+
+### Data Quality Checklist
+
+Before accepting any data:
+
+- [ ] Data validated at source
+- [ ] Invalid data rejected with logging
+- [ ] Missing data returns None (not fake data)
+- [ ] All data sources tracked
+- [ ] Freshness checked (warn if >7 days)
+- [ ] Complete processing (no silent exclusions)
+- [ ] URLs verified before use
+- [ ] Clear messaging when data unavailable
+
 ## See Also
 
 - [Architecture Guide](ARCHITECTURE.md) - System design and patterns
 - [API Reference](API_REFERENCE.md) - Complete API documentation
 - [Agent Handbook](agent_handbook.md) - Agent guidelines
 - [Testing Guide](test_coverage_stabilization.md) - Comprehensive testing guide
+- [Data Quality Guide](DATA_QUALITY_GUIDE.md) - Data quality best practices
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2025-03-10
+**Version**: 2.1  
+**Last Updated**: 2025-01-07

@@ -107,6 +107,7 @@ AI agent guidelines are now in `.kiro/steering/` for automatic guidance during d
 
 ### Core Systems
 
+- **[Data Quality Guide](DATA_QUALITY_GUIDE.md)** - Comprehensive guide for maintaining data quality and handling missing data
 - **[A+ Investment System](APLUS_SYSTEM.md)** - A+ discovery, scoring, and monitoring
 - **[System Operations](SYSTEM_OPERATIONS.md)** - Feedback learning, portfolio monitoring, knowledge base, integration
 - **[Perplexity Sonar Integration](perplexity_sonar_integration_spec.md)** - Enhanced research capabilities
@@ -150,6 +151,9 @@ AI development standards are now in steering files for automatic guidance:
 
 **Run quantitative analysis**
 → [Quantitative Analysis](quantitative_analysis.md)
+
+**Ensure data quality in reports**
+→ [Data Quality Guide](DATA_QUALITY_GUIDE.md)
 
 **Use enhanced data in reports**
 → [Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md) + [Report Examples](REPORT_CREW_ENHANCED_EXAMPLES.md)
@@ -199,6 +203,35 @@ These files are preserved for reference but not needed for daily development.
 **Total Documents**: 16 core files + organized archive (down from 60+)
 
 ## Recent Changes
+
+### 2025-01-07: Data Quality Assurance Implementation
+
+**New Feature** - Comprehensive data quality controls for report accuracy:
+
+- Added `DATA_QUALITY_GUIDE.md` - Complete guide for maintaining data quality
+- Implemented 5 new data quality components:
+  - `SECFilingURLGenerator` - Valid SEC filing URLs with verification
+  - `PortfolioHoldingsProcessor` - Complete portfolio processing
+  - `APlusDiscoveryAccessor` - Reliable A+ discovery access
+  - `BacktestingMetricsExtractor` - Complete metrics extraction
+  - `DataAvailabilityTracker` - Data source tracking and freshness warnings
+- Updated API_REFERENCE.md with data quality components
+- Updated README.md with data quality section
+
+**Core Principles**:
+- Fail Fast: Reject invalid data at source
+- Transparency: Clear communication when data unavailable
+- No Hallucinations: Never generate fake data
+- Completeness: Process all available data
+- Traceability: Log all data decisions
+
+**Benefits**:
+- Zero hallucinated URLs in reports
+- All SEC URLs verified or marked unavailable
+- 100% portfolio holdings processed
+- Clear A+ discovery status
+- Complete backtesting metrics or marked "Not calculated"
+- Data availability summary in all reports
 
 ### 2025-01-07: Documentation Cleanup & Consolidation
 

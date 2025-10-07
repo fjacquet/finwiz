@@ -11,6 +11,40 @@ comprehensive_financial_integration_task:
     6. If you cannot find a ticker in validated_tickers_list, DO NOT mention it
     7. If validated_tickers_list has fewer than 3 tickers, acknowledge the limitation
     
+    ⚠️ DATA QUALITY AND TRANSPARENCY RULES ⚠️
+    
+    1. **USE NEW DATA ACCESSORS**: All data must be accessed through validated accessors:
+       - SECFilingURLGenerator for SEC filing URLs (never hardcode URLs)
+       - PortfolioHoldingsProcessor for portfolio data (processes ALL holdings)
+       - APlusDiscoveryAccessor for A+ opportunities (checks if discovery ran)
+       - BacktestingMetricsExtractor for backtesting data (handles missing metrics)
+       - DataAvailabilityTracker for data source status (tracks freshness)
+    
+    2. **DISPLAY "DATA NOT AVAILABLE" INSTEAD OF GENERATING FAKE DATA**:
+       - When SEC filings are unavailable: Display "No SEC filings available"
+       - When A+ discovery hasn't run: Display inputs.discovery_status.message
+       - When backtesting data is missing: Display inputs.backtesting_status.message
+       - When sentiment data is unavailable: Display "Sentiment data not available"
+       - NEVER generate fake URLs, fake metrics, or placeholder data
+    
+    3. **INCLUDE DATA AVAILABILITY SUMMARY**:
+       - Use inputs.data_availability_summary for comprehensive status
+       - Display total_sources, available_sources, unavailable_sources, stale_sources
+       - Show source_details for each data source (status, age, record count)
+       - Include this summary in report footer and annexes section
+    
+    4. **SHOW FRESHNESS WARNINGS**:
+       - Use inputs.data_availability_summary.freshness_warnings
+       - Display warnings for data older than 7 days with ⚠️ icon
+       - Indicate data age in days/hours
+       - Recommend refreshing stale data sources
+    
+    5. **TRANSPARENT ERROR HANDLING**:
+       - When data is missing: Explain why and what it means
+       - When validation fails: Show which holdings failed and why
+       - When URLs are invalid: Display "URL not available" instead of broken links
+       - Always provide context for missing or incomplete data
+    
     VERIFIED DATA SOURCES (use ONLY these):
     - inputs.validated_tickers_list[] - The ONLY tickers you are allowed to use
     - inputs.stock_analysis_data - Analysis for tickers in validated_tickers_list
@@ -37,15 +71,34 @@ comprehensive_financial_integration_task:
     Key Steps:
     1. Access integrated data context containing consolidated crew outputs with metadata and freshness status.
     2. FIRST: Review inputs.validated_tickers_list[] - these are the ONLY tickers you may use.
-    3. Review SEC/EDGAR citations with filing dates and excerpts from stock analysis (ONLY for validated tickers).
-    4. Analyze market sentiment data with aggregated scores and top 3 sources with URLs and dates.
+    3. **REVIEW SEC/EDGAR CITATIONS** (ONLY for validated tickers):
+       - Use ONLY URLs provided by SECFilingURLGenerator (never hardcode URLs)
+       - If URL is None or empty: Display "No SEC filings available" for that ticker
+       - Verify all SEC URLs are in current EDGAR format (not old formats)
+       - Include filing dates and excerpts ONLY when URLs are valid
+       - Never generate fake CIK numbers or filing URLs
+    4. **ANALYZE MARKET SENTIMENT DATA**:
+       - Use aggregated scores and top 3 sources with URLs and dates
+       - If sentiment data is unavailable: Display "Sentiment data not available"
+       - Verify all news URLs are real and accessible (no example.com or test URLs)
+       - Include publication dates and confidence scores when available
     5. Use ONLY ticker symbols from inputs.validated_tickers_list[] - verify each ticker before mentioning it.
-    6. Review A+ opportunities from discovery crew with allocation recommendations and replacement notes.
-    7. **EXTRACT BACKTESTING RESULTS**: From discovery crew validation results, extract:
-       - annualized_return, sharpe_ratio, max_drawdown, win_rate for each A+ candidate
-       - Regime-specific performance (bull/bear/sideways markets) with consistency scores
-       - Risk-adjusted metrics (Sortino ratio, Calmar ratio) when available
-       - Backtest period length and total trades executed
+    6. **ACCESS A+ DISCOVERY DATA**: Use inputs.discovery_status and inputs.aplus_discovery_results:
+       - Check inputs.discovery_status.has_results to determine if discovery ran
+       - If has_results is False, display: inputs.discovery_status.message (e.g., "A+ discovery not run - use --discovery flag")
+       - If has_results is True but no opportunities: display "No A+ opportunities found in current analysis"
+       - If opportunities exist: use inputs.aplus_discovery_results for complete opportunity data
+       - Use inputs.aplus_opportunities_summary for human-readable summary
+    7. **ACCESS BACKTESTING DATA**: Use inputs.backtesting_status and inputs.backtesting_data:
+       - Check inputs.backtesting_status.has_data to determine if backtesting data is available
+       - If has_data is False, display: inputs.backtesting_status.message (e.g., "Backtesting data not available - discovery not run")
+       - If has_data is True: use inputs.backtesting_data for metrics by candidate
+       - For each candidate in inputs.backtesting_data:
+         * metrics: annualized_return, sharpe_ratio, sortino_ratio, calmar_ratio, max_drawdown, win_rate
+         * formatted_display: Human-readable formatted string
+         * available_metrics: Dict with None for unavailable metrics
+       - Use inputs.backtesting_summary for aggregate statistics across all candidates
+       - Display "Not calculated" for metrics that are None (not "Données non disponibles")
     8. **EXTRACT MARKET CONTEXT**: From discovery crew outputs, extract:
        - regime_type (bull/bear/sideways/volatile)
        - vix_level and VIX percentile (historical context)
@@ -74,7 +127,11 @@ comprehensive_financial_integration_task:
     - Stock crew data: 10-K insights, validated tickers, SEC citations, market sentiments
     - ETF crew data: validated ETFs, factsheets, holdings analysis, risk assessments  
     - Crypto crew data: validated symbols, crypto theses, market analysis
-    - Discovery crew data: A+ opportunities, portfolio improvements, optimization results
+    - Discovery crew data (via APlusDiscoveryAccessor):
+      * inputs.discovery_status: Status of discovery execution (has_results, message, status)
+      * inputs.aplus_discovery_results: Complete discovery results if available
+      * inputs.aplus_opportunities_summary: Human-readable summary of opportunities
+      * Handles three states: not_run, no_opportunities, available
     - Consolidated market sentiment: aggregated scores, top sources with attribution
     - Consolidated ticker validation: validation status, alternatives for failed validations
 
@@ -87,12 +144,24 @@ comprehensive_financial_integration_task:
     
     1. SEC/EDGAR citations with filing dates (ONLY for validated tickers)
     2. Market sentiment analysis with source attribution
-    3. A+ opportunities with allocation recommendations
-    4. **BACKTESTING METRICS**: For each A+ candidate:
-       - Annualized return, Sharpe ratio, max drawdown, win rate
-       - Regime-specific performance across bull/bear/sideways markets
-       - Risk-adjusted metrics (Sortino, Calmar ratios)
-       - Backtest period and trade statistics
+    3. **A+ DISCOVERY STATUS AND OPPORTUNITIES**:
+       - Discovery status: "available", "not_run", or "no_opportunities"
+       - If not_run: Clear message "A+ discovery not run - use --discovery flag"
+       - If no_opportunities: "No A+ opportunities found in current analysis"
+       - If available: Complete opportunity data with allocation recommendations
+    4. **BACKTESTING STATUS AND METRICS**:
+       - Backtesting status: "available", "not_available", or "error"
+       - If not_available: Clear message from inputs.backtesting_status.message
+       - If available: For each A+ candidate from inputs.backtesting_data:
+         * Annualized return (or "Not calculated" if None)
+         * Sharpe ratio (or "Not calculated" if None)
+         * Sortino ratio (or "Not calculated" if None)
+         * Calmar ratio (or "Not calculated" if None)
+         * Max drawdown (or "Not calculated" if None)
+         * Win rate (or "Not calculated" if None)
+         * Backtest period and total trades
+       - Summary statistics from inputs.backtesting_summary if available
+       - NEVER use "Données non disponibles" - use "Not calculated" for None values
     5. **MARKET CONTEXT INDICATORS**:
        - Current market regime type and VIX levels
        - Inflation rate and interest rate trends
@@ -345,15 +414,23 @@ comprehensive_investment_report_task:
       - Synthèse 10-K 📄 (UNIQUEMENT pour tickers dans validated_tickers_list[] - citations SEC avec URLs réelles, dates de dépôt vérifiées, et extraits des sections: Business Overview, MD&A, Risk Factors, Liquidité, Segments)
 
     ⭐ 3.1. Opportunités A+ Découvertes (du système d'intégration)
-      - Utilisez les données A+ du contexte intégré `aplus_opportunities` si disponible
-      - ETF A+ recommandés avec notes d'allocation et de remplacement
-      - Actions A+ recommandées avec recommandations d'allocation
-      - Crypto A+ recommandés avec analyse de confiance
-      - Score de confiance global des opportunités A+
-      - Recommandations de remplacement pour améliorer les positions existantes
-      - Nouvelles opportunités d'investissement A+ à considérer
-      - Impact sur la diversification et le profil de risque
-      - Horodatage de validation des opportunités A+
+      - **VÉRIFIER LE STATUT DE DÉCOUVERTE**: Utilisez inputs.discovery_status pour déterminer l'état
+      - **SI discovery_status.has_results est False**: 
+        * Afficher le message: inputs.discovery_status.message
+        * Exemple: "A+ discovery not run - use --discovery flag to enable discovery analysis"
+        * Ne pas inventer de fausses opportunités
+      - **SI discovery_status.has_results est True MAIS aucune opportunité**:
+        * Afficher: "No A+ opportunities found in current analysis"
+        * Expliquer que l'analyse a été effectuée mais aucun actif n'a atteint le grade A+
+      - **SI des opportunités existent** (inputs.aplus_discovery_results):
+        * ETF A+ recommandés avec notes d'allocation et de remplacement
+        * Actions A+ recommandées avec recommandations d'allocation
+        * Crypto A+ recommandés avec analyse de confiance
+        * Score de confiance global des opportunités A+
+        * Recommandations de remplacement pour améliorer les positions existantes
+        * Nouvelles opportunités d'investissement A+ à considérer
+        * Impact sur la diversification et le profil de risque
+        * Horodatage de validation des opportunités A+
 
     💰 4. Allocation de Portefeuille
        - Répartition par classe d'actifs 📊
@@ -365,13 +442,20 @@ comprehensive_investment_report_task:
       - Niveau de risque global du portefeuille ⚠️ (consolidé de tous les crews)
       - Facteurs de risque par classe d'actifs 🔍 (avec évaluations standardisées)
       - **Analyse de Performance Backtesting** 📊 (NOUVELLE SECTION):
-        * Tableau récapitulatif des métriques de backtesting pour chaque candidat A+
-        * Colonnes: Ticker | Rendement Annualisé | Sharpe Ratio | Drawdown Max | Taux de Réussite
-        * Performance par régime de marché (haussier/baissier/latéral)
-        * Scores de cohérence entre régimes (>70% = excellent, 60-70% = bon, <60% = préoccupant)
-        * Métriques ajustées au risque: Sortino, Calmar ratios
-        * Période de backtesting et nombre de transactions
-        * Identification des meilleurs/pires performers
+        * **VÉRIFIER LE STATUT DE BACKTESTING**: Utilisez inputs.backtesting_status pour déterminer l'état
+        * **SI backtesting_status.has_data est False**:
+          - Afficher le message: inputs.backtesting_status.message
+          - Exemple: "Backtesting data not available - discovery not run"
+          - Ne pas inventer de fausses métriques
+        * **SI backtesting_status.has_data est True**:
+          - Tableau récapitulatif des métriques pour chaque candidat de inputs.backtesting_data
+          - Colonnes: Ticker | Rendement Annualisé | Sharpe Ratio | Sortino Ratio | Calmar Ratio | Drawdown Max | Taux de Réussite
+          - Pour chaque métrique: afficher la valeur réelle OU "Non calculé" si None
+          - JAMAIS utiliser "Données non disponibles" - toujours "Non calculé" pour None
+          - Utiliser formatted_display de chaque candidat pour affichage formaté
+          - Période de backtesting et nombre de transactions (si disponibles)
+          - Statistiques récapitulatives de inputs.backtesting_summary si disponible
+          - Explication claire quand les métriques sont incomplètes
       - **Contexte de Marché & Analyse de Régime** 🌐 (NOUVELLE SECTION):
         * Type de régime actuel: Haussier/Baissier/Latéral/Volatile
         * Niveau VIX actuel et percentile historique
@@ -388,10 +472,16 @@ comprehensive_investment_report_task:
         * Analyse par crew (stock, crypto) avec nombre de sources
 
     📦 Revue du portefeuille: Conserver ou Vendre (section spéciale)
+      - **UTILISER PortfolioHoldingsProcessor**: Toutes les positions sont traitées via le processeur
       - Utilisez exclusivement le contexte JSON injecté `portfolio_review` (inputs.portfolio_review). Aucun outil ni appel externe.
+      - **INCLURE TOUTES LES POSITIONS**: Le processeur garantit que 100% des positions CSV sont incluses
       - Pour chaque ligne détenue: affichez Nom, Ticker, Décision (KEEP/SELL), Score composite, et Risque (score et niveau).
+      - **AFFICHER LE STATUT DE VALIDATION**: Indiquer si la position a réussi ou échoué la validation
+      - Si validation échouée: Afficher la raison et les alternatives suggérées
       - Si la décision est SELL, proposez jusqu'à 3 alternatives issues du JSON avec score et risque, avec puces synthétiques.
-      - Affichez un tableau récapitulatif (Nom | Ticker | Décision | Score | Risque) et une courte analyse globale.
+      - **RÉSUMÉ DE TRAITEMENT**: Afficher le nombre de positions traitées vs positions dans les CSV
+      - Affichez un tableau récapitulatif (Nom | Ticker | Décision | Score | Risque | Statut Validation) et une courte analyse globale.
+      - **SI DES POSITIONS SONT MANQUANTES**: Expliquer pourquoi et afficher les positions exclues avec raisons
       - Contexte JSON injecté (ne pas appeler d'outils; utilisez le contenu ci‑dessous tel quel) :
         ```json
         {portfolio_review}
@@ -446,14 +536,95 @@ comprehensive_investment_report_task:
          * Crews avec données fraîches vs périmées
          * Avertissements de données périmées avec âge en heures
          * Recommandations de rafraîchissement par ordre de priorité
-       - Rapport de Disponibilité des Données:
+       - **Rapport de Disponibilité des Données** 📊 (NOUVELLE SECTION REQUISE):
+         * **UTILISER DataAvailabilityTracker via inputs.data_availability_summary**
+         * **CETTE SECTION EST OBLIGATOIRE - NE JAMAIS L'OMETTRE**
          * Statut global: COMPLETE/PARTIAL/INSUFFICIENT
-         * Données manquantes par crew avec suggestions de récupération
-         * Erreurs d'intégration avec actions de récupération
+         * Résumé des sources de données:
+           - Total de sources suivies: inputs.data_availability_summary.total_sources
+           - Sources disponibles: inputs.data_availability_summary.available_sources (✅)
+           - Sources indisponibles: inputs.data_availability_summary.unavailable_sources (❌)
+           - Sources périmées (>7 jours): inputs.data_availability_summary.stale_sources (⚠️)
+         * Détails par source (de inputs.data_availability_summary.source_details):
+           - stock_crew: Statut, âge des données (heures), nombre d'enregistrements
+           - etf_crew: Statut, âge des données (heures), nombre d'enregistrements
+           - crypto_crew: Statut, âge des données (heures), nombre d'enregistrements
+           - portfolio_review: Statut, âge des données (heures), nombre de positions traitées
+           - aplus_discovery: Statut, nombre d'opportunités trouvées
+           - backtesting: Statut, nombre de candidats testés avec métriques
+           - sentiment_analysis: Statut, âge des données, nombre de sources
+           - sec_filings: Statut, nombre de tickers avec filings disponibles
+         * **Avertissements de fraîcheur** (de inputs.data_availability_summary.freshness_warnings):
+           - Afficher chaque avertissement avec icône ⚠️
+           - Indiquer l'âge des données en jours/heures
+           - Recommander le rafraîchissement si données > 7 jours
+           - Expliquer l'impact potentiel de données périmées sur l'analyse
+         * **Transparence sur les données manquantes**:
+           - Pour chaque source indisponible: Expliquer pourquoi (pas exécuté, erreur, etc.)
+           - Indiquer l'impact sur l'analyse (ex: "Analyse crypto limitée - données non disponibles")
+           - Suggérer des actions (ex: "Exécuter avec --discovery pour obtenir les opportunités A+")
+         * **Statut de Découverte A+**:
+           - État: available/not_run/no_opportunities
+           - Message de statut clair pour l'utilisateur
+           - Si not_run: Indiquer comment activer la découverte (--discovery flag)
+           - Si no_opportunities: Expliquer que l'analyse n'a trouvé aucun actif A+
+         * **Statut de Backtesting**:
+           - État: available/not_available/error (de inputs.backtesting_status.status)
+           - Message de statut: inputs.backtesting_status.message
+           - Si not_available: Expliquer que le backtesting nécessite la découverte
+           - Si available: Nombre de candidats avec données de backtesting
+           - Métriques disponibles vs manquantes par candidat
+         * **Utiliser inputs.data_availability_summary_formatted pour affichage formaté**:
+           - Inclure le résumé formaté dans une section <pre> ou tableau HTML
+           - Ajouter des icônes de statut: ✅ (disponible), ⚠️ (périmé), ❌ (indisponible)
+         * Horodatage du résumé: inputs.data_availability_summary.summary_timestamp
 
     Utilisez généreusement les emojis, icônes et éléments visuels pour améliorer la lisibilité.
     Incluez des en-têtes de section clairs, des listes à puces et des tableaux le cas échéant.
     Assurez-vous que le rapport est adapté aux mobiles et s'imprime bien.
+    
+    **PIED DE PAGE DU RAPPORT** (REQUIS):
+    - **INCLURE LE RÉSUMÉ DE DISPONIBILITÉ DES DONNÉES** (obligatoire)
+    - Utiliser inputs.data_availability_summary_formatted pour le contenu
+    - Afficher les icônes de statut: ✅ disponible, ⚠️ périmé, ❌ indisponible
+    - Indiquer le nombre total de sources et leur statut
+    - Lister les avertissements de fraîcheur s'il y en a
+    - Ajouter l'horodatage de génération du rapport
+    - **TRANSPARENCE TOTALE**: Le pied de page doit clairement indiquer quelles données sont disponibles/manquantes
+    
+    ⚠️ RÈGLES STRICTES - PAS DE GÉNÉRATION DE DONNÉES ⚠️
+    
+    1. **JAMAIS GÉNÉRER DE FAUSSES DONNÉES**:
+       - Ne jamais inventer des URLs SEC/EDGAR
+       - Ne jamais créer de faux numéros CIK
+       - Ne jamais générer de fausses métriques de backtesting
+       - Ne jamais inventer des scores de sentiment
+       - Ne jamais créer de fausses opportunités A+
+    
+    2. **TOUJOURS AFFICHER "NON DISPONIBLE" QUAND LES DONNÉES MANQUENT**:
+       - SEC filings: "No SEC filings available" ou "SEC data not available"
+       - A+ discovery: Afficher inputs.discovery_status.message (ex: "A+ discovery not run")
+       - Backtesting: Afficher inputs.backtesting_status.message (ex: "Backtesting data not available")
+       - Sentiment: "Sentiment data not available" si aucune source
+       - Portfolio: "Portfolio data incomplete" avec détails sur les positions manquantes
+    
+    3. **EXPLIQUER POURQUOI LES DONNÉES MANQUENT**:
+       - Discovery pas exécuté: "Use --discovery flag to enable A+ opportunity discovery"
+       - Backtesting indisponible: "Backtesting requires discovery to be run first"
+       - SEC filings introuvables: "No recent SEC filings found for this ticker"
+       - Sentiment indisponible: "No recent news articles found for sentiment analysis"
+    
+    4. **UTILISER LES ACCESSEURS DE DONNÉES**:
+       - SECFilingURLGenerator: Pour tous les URLs SEC (jamais hardcodés)
+       - APlusDiscoveryAccessor: Pour vérifier si discovery a été exécuté
+       - BacktestingMetricsExtractor: Pour extraire les métriques (None si manquantes)
+       - DataAvailabilityTracker: Pour le statut de toutes les sources
+    
+    5. **VALIDATION DES URLS**:
+       - Tous les URLs doivent être vérifiés avant inclusion
+       - URLs invalides ou None: Afficher "URL not available"
+       - Ne jamais inclure d'URLs de test (example.com, test.com, etc.)
+       - Tous les URLs SEC doivent être au format EDGAR actuel
   expected_output: |
     Un rapport HTML magnifiquement formaté et riche en emojis qui présente le plan financier
     de la famille de manière engageante et facile à comprendre. Le rapport doit être
@@ -462,13 +633,45 @@ comprehensive_investment_report_task:
     à tous les membres de la famille.
     Le rapport doit être en français.
     
+    **EXIGENCES DE QUALITÉ DES DONNÉES** (CRITIQUES):
+    
+    1. **ZÉRO URLS HALLUCINÉS**: Tous les URLs SEC/EDGAR doivent être réels et vérifiés
+       - Utiliser SECFilingURLGenerator pour tous les URLs SEC
+       - Si URL est None: Afficher "No SEC filings available"
+       - Jamais d'URLs hardcodés ou inventés
+    
+    2. **TRANSPARENCE TOTALE SUR LES DONNÉES MANQUANTES**:
+       - Afficher clairement "Data not available" quand applicable
+       - Expliquer pourquoi les données manquent
+       - Indiquer comment obtenir les données manquantes (ex: --discovery flag)
+    
+    3. **RÉSUMÉ DE DISPONIBILITÉ DES DONNÉES OBLIGATOIRE**:
+       - Section dédiée dans les annexes avec inputs.data_availability_summary
+       - Pied de page avec résumé formaté (inputs.data_availability_summary_formatted)
+       - Icônes de statut: ✅ disponible, ⚠️ périmé, ❌ indisponible
+    
+    4. **AVERTISSEMENTS DE FRAÎCHEUR**:
+       - Afficher tous les avertissements de inputs.data_availability_summary.freshness_warnings
+       - Indiquer l'âge des données en jours/heures
+       - Recommander le rafraîchissement si > 7 jours
+    
+    5. **PORTFOLIO COMPLET**:
+       - Inclure 100% des positions des fichiers CSV
+       - Afficher le statut de validation pour chaque position
+       - Expliquer les positions exclues avec raisons
+       - Résumé: positions traitées vs positions dans CSV
+    
     **NOUVELLES SECTIONS REQUISES**:
     
     1. **Section "Analyse de Performance Backtesting"** 📊:
-       - Tableau avec métriques de backtesting pour chaque candidat A+
-       - Tableaux de comparaison de performance par régime de marché
-       - Graphiques ou visualisations des scores de cohérence
-       - Identification claire des meilleurs/pires performers
+       - **VÉRIFIER inputs.backtesting_status.has_data AVANT d'afficher**
+       - Si has_data est False: Afficher inputs.backtesting_status.message
+       - Si has_data est True:
+         * Tableau avec métriques de backtesting pour chaque candidat de inputs.backtesting_data
+         * Afficher valeurs réelles OU "Non calculé" pour None (JAMAIS "Données non disponibles")
+         * Inclure explication quand métriques sont incomplètes
+         * Statistiques récapitulatives de inputs.backtesting_summary si disponible
+         * Identification des meilleurs/pires performers basée sur Sharpe ratio
     
     2. **Section "Contexte de Marché & Analyse de Régime"** 🌐:
        - Indicateurs VIX actuels avec contexte historique

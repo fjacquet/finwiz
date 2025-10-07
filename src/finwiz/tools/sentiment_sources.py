@@ -19,10 +19,74 @@ logger = get_logger(__name__)
 
 class SentimentDataSources:
     """Handles integration with various sentiment data sources."""
+    
+    # Forbidden URL patterns that indicate hallucinations
+    FORBIDDEN_URL_PATTERNS = [
+        "example.com",
+        "test.com",
+        "sample.com",
+        "placeholder.com",
+        "dummy.com",
+        "fake.com",
+        "mock.com",
+    ]
 
     def __init__(self) -> None:
         """Initialize sentiment data sources."""
         self.logger = logger
+    
+    def _is_valid_url(self, url: str) -> bool:
+        """
+        Validate that URL is real and not a placeholder.
+        
+        Args:
+            url: URL to validate
+            
+        Returns:
+            True if URL is valid, False otherwise
+        """
+        if not url:
+            return False
+        
+        # Check for forbidden patterns
+        url_lower = url.lower()
+        for pattern in self.FORBIDDEN_URL_PATTERNS:
+            if pattern in url_lower:
+                self.logger.warning(f"Rejected URL with forbidden pattern '{pattern}': {url}")
+                return False
+        
+        # Check for valid protocol
+        if not url.startswith(("http://", "https://")):
+            self.logger.warning(f"Rejected URL with invalid protocol: {url}")
+            return False
+        
+        return True
+    
+    def _filter_valid_articles(self, articles: list[dict]) -> list[dict]:
+        """
+        Filter out articles with invalid URLs.
+        
+        Args:
+            articles: List of article dictionaries
+            
+        Returns:
+            Filtered list with only valid articles
+        """
+        valid_articles = []
+        rejected_count = 0
+        
+        for article in articles:
+            url = article.get("link", "")
+            if self._is_valid_url(url):
+                valid_articles.append(article)
+            else:
+                rejected_count += 1
+                self.logger.debug(f"Rejected article with invalid URL: {article.get('title', 'Unknown')}")
+        
+        if rejected_count > 0:
+            self.logger.info(f"Filtered out {rejected_count} articles with invalid URLs")
+        
+        return valid_articles
 
     def get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -68,9 +132,12 @@ class SentimentDataSources:
 
             # Limit to max_articles
             limited_news = news[:max_articles]
+            
+            # Filter out articles with invalid URLs
+            valid_news = self._filter_valid_articles(limited_news)
 
-            self.logger.info(f"Retrieved {len(limited_news)} news articles for {ticker}")
-            return limited_news
+            self.logger.info(f"Retrieved {len(valid_news)} valid news articles for {ticker} (filtered from {len(limited_news)})")
+            return valid_news
 
         except Exception as e:
             self.logger.error(f"Error fetching news data for {ticker}: {e}")
@@ -133,12 +200,18 @@ class SentimentDataSources:
         # Convert Sonar articles to Yahoo Finance format
         for sonar_article in sonar_articles:
             try:
+                # Get URL and validate it
+                url = getattr(sonar_article, "url", "")
+                if not self._is_valid_url(url):
+                    self.logger.debug(f"Skipping Sonar article with invalid URL: {getattr(sonar_article, 'title', 'Unknown')}")
+                    continue
+                
                 # Convert Sonar article to unified format
                 unified_article = {
                     "title": getattr(sonar_article, "title", ""),
                     "summary": getattr(sonar_article, "summary", ""),
                     "publisher": getattr(sonar_article, "domain", "Perplexity Sonar"),
-                    "link": getattr(sonar_article, "url", ""),
+                    "link": url,
                     "providerPublishTime": self._convert_sonar_timestamp(sonar_article),
                     "source": "perplexity_sonar",
                 }

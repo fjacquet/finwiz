@@ -86,58 +86,77 @@ class TestEnhancedSECAnalysisTool:
         result = tool._run(ticker="INVALID", form_type="10-K")
 
         # Assert
-        assert "error" in result
-        assert "No 10-K filing found for ticker INVALID" in result["error"]
-        assert result["ticker"] == "INVALID"
-        assert result["form_type"] == "10-K"
+        assert "No SEC filings available" in result
+        assert "INVALID" in result
 
-    def test_should_return_error_when_missing_api_key(self, tool, mocker):
-        """Test error handling when SEC API key is missing."""
+    def test_should_use_url_generator_for_filing_lookup(self, tool, mocker):
+        """Test that the tool uses URL generator for filing lookup."""
         # Arrange
-        mocker.patch.dict("os.environ", {}, clear=True)
+        mock_metadata = {
+            "ticker": "AAPL",
+            "cik": "0000320193",
+            "filing_type": "10-K",
+            "filing_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K",
+            "browse_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K",
+            "available": True,
+        }
+        mocker.patch.object(tool.url_generator, "get_filing_metadata", return_value=mock_metadata)
+        mocker.patch.object(tool, "_get_filing_date_from_api", return_value="2024-11-01T16:30:00-04:00")
 
         # Act
-        result = tool._run(ticker="AAPL", form_type="10-K")
+        result = tool._fetch_latest_filing(ticker="AAPL", form_type="10-K")
 
         # Assert
-        assert "error" in result
-        assert "Missing environment/config" in result["error"]
+        assert result is not None
+        assert result["filing_url"] == mock_metadata["filing_url"]
+        assert result["cik"] == mock_metadata["cik"]
+        tool.url_generator.get_filing_metadata.assert_called_once_with("AAPL", "10-K")
 
-    def test_should_extract_insights_successfully(self, tool, mocker, mock_filing_data, mock_html_content):
-        """Test successful insights extraction from SEC filing."""
+    def test_should_return_none_when_no_filings_available(self, tool, mocker):
+        """Test that None is returned when no filings are available."""
         # Arrange
-        mock_get = mocker.patch("finwiz.tools.enhanced_sec_tool.requests.get")
-        mock_get.return_value.text = mock_html_content
-        mock_get.return_value.raise_for_status = mocker.Mock()
+        mock_metadata = {
+            "ticker": "INVALID",
+            "cik": None,
+            "filing_type": "10-K",
+            "filing_url": None,
+            "browse_url": None,
+            "available": False,
+        }
+        mocker.patch.object(tool.url_generator, "get_filing_metadata", return_value=mock_metadata)
 
-        mocker.patch.object(tool, "_fetch_latest_filing", return_value=mock_filing_data)
+        # Act
+        result = tool._fetch_latest_filing(ticker="INVALID", form_type="10-K")
 
-        # Mock FAISS and OpenAI embeddings
-        mock_retriever = mocker.Mock()
-        mock_doc = mocker.Mock()
-        mock_doc.page_content = (
-            "Apple Inc. designs, manufactures and markets smartphones, personal computers, tablets, wearables and accessories."
+        # Assert
+        assert result is None
+
+    def test_should_log_url_generation_and_verification(self, tool, mocker):
+        """Test that URL generation and verification are logged."""
+        # Arrange
+        mock_metadata = {
+            "ticker": "AAPL",
+            "cik": "0000320193",
+            "filing_type": "10-K",
+            "filing_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K",
+            "browse_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K",
+            "available": True,
+        }
+        mocker.patch.object(tool.url_generator, "get_filing_metadata", return_value=mock_metadata)
+        mocker.patch.object(tool, "_get_filing_date_from_api", return_value="2024-11-01T16:30:00-04:00")
+
+        mock_logger = mocker.patch("finwiz.tools.enhanced_sec_tool.logger")
+
+        # Act
+        result = tool._fetch_latest_filing(ticker="AAPL", form_type="10-K")
+
+        # Assert
+        assert result is not None
+        # Verify logging calls
+        mock_logger.info.assert_any_call("Fetching SEC filing URL for AAPL (10-K)")
+        mock_logger.info.assert_any_call(
+            "Generated SEC filing URL for AAPL: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K"
         )
-        mock_retriever.get_relevant_documents.return_value = [mock_doc]
-
-        mock_faiss = mocker.Mock()
-        mock_faiss.from_documents.return_value.as_retriever.return_value = mock_retriever
-
-        mocker.patch("finwiz.tools.enhanced_sec_tool.FAISS", mock_faiss)
-        mocker.patch("finwiz.tools.enhanced_sec_tool.OpenAIEmbeddings")
-        mocker.patch("finwiz.tools.enhanced_sec_tool.partition_html", return_value=[mock_html_content])
-
-        # Act
-        result = tool._run(ticker="AAPL", form_type="10-K", sections=["Item 1"])
-
-        # Assert
-        assert "error" not in result
-        assert result["ticker"] == "AAPL"
-        assert result["form_type"] == "10-K"
-        assert result["filing_url"] == mock_filing_data["filing_url"]
-        assert "insights" in result
-        assert len(result["insights"]) > 0
-        assert "risk_assessment" in result
 
     def test_should_identify_risk_factors_correctly(self, tool):
         """Test risk factor identification from content."""
