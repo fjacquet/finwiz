@@ -31,6 +31,12 @@ from .logging_utils import (
     log_analyzer,
 )
 from .manager import CrewDataIntegrationManager
+from .market_context_extractor import (
+    MacroIndicators,
+    MarketContextExtractor,
+    MarketContextSummary,
+    VIXIndicators,
+)
 from .validation_scripts import (
     DataIntegrityValidator,
     DependencyValidator,
@@ -66,4 +72,8 @@ __all__ = [
     "DependencyValidator",
     "PerformanceValidator",
     "run_all_validations",
+    "MarketContextExtractor",
+    "MarketContextSummary",
+    "VIXIndicators",
+    "MacroIndicators",
 ]

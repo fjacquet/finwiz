@@ -88,3 +88,39 @@ The FinWiz reporting system currently suffers from communication breakdowns betw
 3. WHEN the Report crew starts THEN it SHALL log all available upstream data sources and any missing components
 4. WHEN integration issues occur THEN the system SHALL provide concrete next steps for resolution
 5. WHEN debugging data flow THEN developers SHALL have access to data lineage and transformation logs
+
+### Requirement 8
+
+**User Story:** As a financial analyst, I want reports to include comprehensive backtesting performance metrics from A+ opportunities, so that I can evaluate investment recommendations based on historical performance data.
+
+#### Acceptance Criteria
+
+1. WHEN the Discovery crew identifies A+ opportunities THEN it SHALL include backtesting results with annualized_return, sharpe_ratio, max_drawdown, and win_rate
+2. WHEN backtesting data is available THEN it SHALL include regime consistency scores showing performance across bull/bear/sideways markets
+3. WHEN the Report crew generates output THEN it SHALL extract and display backtesting performance metrics in a dedicated section
+4. WHEN backtesting results are presented THEN they SHALL include performance comparison tables across different market regimes
+5. IF backtesting data is unavailable THEN the system SHALL clearly indicate this limitation and its impact on recommendation confidence
+
+### Requirement 9
+
+**User Story:** As a financial analyst, I want reports to include current market context indicators (VIX, inflation, interest rates, regime type), so that I can understand the market environment influencing investment recommendations.
+
+#### Acceptance Criteria
+
+1. WHEN the Discovery crew performs analysis THEN it SHALL capture market context including regime_type, vix_level, inflation_rate, and interest_rate_trend
+2. WHEN market context is available THEN it SHALL include market_stress_level assessment
+3. WHEN the Report crew generates output THEN it SHALL extract and display market context indicators in risk assessment and allocation sections
+4. WHEN market context is presented THEN it SHALL explain how current conditions influence allocation recommendations
+5. IF market context data is unavailable THEN the system SHALL use conservative assumptions and document this limitation
+
+### Requirement 10
+
+**User Story:** As a financial analyst, I want reports to include the discovery methodology details (screening criteria, thresholds, validation statistics), so that I can understand how A+ opportunities were identified and validated.
+
+#### Acceptance Criteria
+
+1. WHEN the Discovery crew performs screening THEN it SHALL store discovery criteria including ROE thresholds, debt ratios, market cap minimums, and revenue growth requirements
+2. WHEN discovery is complete THEN it SHALL include screening statistics showing total assets screened vs candidates found
+3. WHEN the Report crew generates output THEN it SHALL extract and display discovery methodology in a dedicated section
+4. WHEN methodology is presented THEN it SHALL include fundamental_score and technical_score breakdowns for each A+ candidate
+5. WHEN validation results are available THEN the report SHALL include validation success rates and failure analysis with alternative suggestions

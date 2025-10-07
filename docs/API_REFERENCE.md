@@ -367,6 +367,172 @@ class RiskAssessmentStandardized(BaseModel):
 
 ## Utilities
 
+### Enhanced Data Extraction
+
+#### CrewDataAccessor
+
+Unified interface for accessing crew data with enhanced extraction capabilities.
+
+**Location**: `src/finwiz/integration/data_accessor.py`
+
+**Usage**:
+
+```python
+from finwiz.integration.data_accessor import CrewDataAccessor
+
+accessor = CrewDataAccessor(integration_manager)
+
+# Get enhanced data
+backtesting = accessor.get_backtesting_metrics()
+market_context = accessor.get_market_context()
+methodology = accessor.get_discovery_methodology()
+performance = accessor.get_performance_report()
+
+# Get consolidated reporter input with all enhanced data
+consolidated = accessor.get_consolidated_reporter_input(
+    max_age_hours=24,
+    current_portfolio_grade=0.70
+)
+```
+
+**Features**:
+
+- Backtesting metrics extraction from validation results
+- Market context indicators (VIX, inflation, rates, regime)
+- Discovery methodology details (criteria, statistics, scores)
+- Performance aggregation by asset type and regime
+- Graceful degradation when data unavailable
+
+**See**: [Enhanced Data Extraction Documentation](ENHANCED_DATA_EXTRACTION.md)
+
+#### BacktestingDataExtractor
+
+Extracts backtesting performance metrics from validation results.
+
+**Location**: `src/finwiz/integration/backtesting_extractor.py`
+
+**Usage**:
+
+```python
+from finwiz.integration.backtesting_extractor import BacktestingDataExtractor
+
+extractor = BacktestingDataExtractor(logger=logger)
+
+# Extract metrics for specific symbol
+metrics = extractor.extract_backtesting_metrics(validation_result, "AAPL")
+
+# Extract regime performance
+regime_perf = extractor.extract_regime_performance(validation_result)
+
+# Get performance summary
+summary = extractor.get_performance_summary(validation_results)
+```
+
+**Extracted Metrics**:
+
+- Annualized return, Sharpe ratio, max drawdown, win rate
+- Regime-specific performance (bull/bear/sideways)
+- Risk-adjusted metrics (Sortino, Calmar ratios)
+- Consistency scores across regimes
+
+#### MarketContextExtractor
+
+Extracts market context indicators from discovery results.
+
+**Location**: `src/finwiz/integration/market_context_extractor.py`
+
+**Usage**:
+
+```python
+from finwiz.integration.market_context_extractor import MarketContextExtractor
+
+extractor = MarketContextExtractor(logger=logger)
+
+# Extract market regime
+regime = extractor.extract_market_regime(discovery_result)
+
+# Extract VIX indicators
+vix = extractor.extract_vix_indicators(discovery_result)
+
+# Get complete context summary
+summary = extractor.get_market_context_summary(discovery_result)
+```
+
+**Extracted Indicators**:
+
+- Market regime type (bull/bear/sideways/volatile)
+- VIX levels and percentiles
+- Inflation rate and interest rate trends
+- Market stress level assessment
+- Allocation implications
+
+#### DiscoveryMethodologyExtractor
+
+Extracts discovery methodology details from discovery results.
+
+**Location**: `src/finwiz/integration/discovery_methodology_extractor.py`
+
+**Usage**:
+
+```python
+from finwiz.integration.discovery_methodology_extractor import DiscoveryMethodologyExtractor
+
+extractor = DiscoveryMethodologyExtractor(logger=logger)
+
+# Extract screening criteria
+criteria = extractor.extract_screening_criteria(discovery_result)
+
+# Extract validation statistics
+stats = extractor.extract_validation_statistics(discovery_result)
+
+# Get methodology summary
+summary = extractor.get_methodology_summary(discovery_result)
+```
+
+**Extracted Details**:
+
+- Screening criteria and thresholds
+- Validation statistics (screened, found, passed)
+- Fundamental and technical score breakdowns
+- Data sources used
+
+#### PerformanceMetricsAggregator
+
+Aggregates performance metrics across asset types and regimes.
+
+**Location**: `src/finwiz/integration/performance_metrics_aggregator.py`
+
+**Usage**:
+
+```python
+from finwiz.integration.performance_metrics_aggregator import PerformanceMetricsAggregator
+
+aggregator = PerformanceMetricsAggregator(backtesting_extractor, logger=logger)
+
+# Aggregate by asset type
+by_asset = aggregator.aggregate_by_asset_type(validation_results, asset_type_map)
+
+# Aggregate by regime
+by_regime = aggregator.aggregate_by_regime(validation_results)
+
+# Calculate portfolio impact
+impact = aggregator.calculate_portfolio_impact(validation_results, current_grade=0.70)
+
+# Generate comprehensive report
+report = aggregator.generate_performance_report(
+    validation_results,
+    asset_type_map,
+    current_portfolio_grade=0.70
+)
+```
+
+**Aggregation Features**:
+
+- Metrics by asset type (ETF/stock/crypto)
+- Metrics by market regime
+- Portfolio impact calculations
+- Top opportunities identification
+
 ### Validation Manager
 
 Centralized validation system.
@@ -476,8 +642,11 @@ stock_analysis_task:
 - [Architecture Guide](ARCHITECTURE.md) - System architecture
 - [Agent Handbook](agent_handbook.md) - Agent guidelines
 - [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - User guide
+- [Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md) - Backtesting, market context, and methodology extraction
+- [Report Crew Examples](REPORT_CREW_ENHANCED_EXAMPLES.md) - Practical examples for enhanced data usage
+- [Crew Data Integration Index](CREW_DATA_INTEGRATION_INDEX.md) - Complete data integration guide
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2025-03-10
+**Version**: 2.1  
+**Last Updated**: 2025-01-07

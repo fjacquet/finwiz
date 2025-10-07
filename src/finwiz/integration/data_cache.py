@@ -169,6 +169,12 @@ class DataCache:
         """
         Get consolidated data for report generation including A+ opportunities and core analysis.
 
+        This method now includes enhanced data extraction:
+        - Backtesting performance metrics from validation results
+        - Market context indicators (VIX, inflation, interest rates, regime type)
+        - Discovery methodology details (screening criteria, validation statistics)
+        - Performance report aggregating metrics across asset types and regimes
+
         Args:
             max_age_hours: Maximum acceptable age in hours
 

@@ -82,6 +82,25 @@ Robust error handling that provides clear diagnostics and recovery options.
 - Graceful degradation with partial data
 - Recovery recommendations for common issues
 
+#### 6. Enhanced Data Extraction System (Requirements 8, 9, 10)
+
+Advanced data extraction components that extract rich analytical data from upstream crews for comprehensive reporting.
+
+**Key Responsibilities:**
+
+- Extract backtesting performance metrics from discovery crew validation results
+- Extract market context indicators (VIX, inflation, interest rates, regime type)
+- Extract discovery methodology details (screening criteria, thresholds, validation statistics)
+- Provide structured access to fundamental and technical scores for A+ candidates
+- Enable regime-specific performance analysis across bull/bear/sideways markets
+
+**Components:**
+
+- **BacktestingDataExtractor**: Extracts and structures backtesting results from ValidationResult
+- **MarketContextExtractor**: Extracts market regime and context indicators from APlusDiscoveryResult
+- **DiscoveryMethodologyExtractor**: Extracts screening criteria and validation statistics
+- **PerformanceMetricsAggregator**: Aggregates performance metrics across asset types and regimes
+
 ## Components and Interfaces
 
 ### 1. CrewDataIntegrationManager
@@ -180,6 +199,54 @@ class CrewIntegrationMiddleware:
     def store_crew_output(self, crew_name: str, output: BaseModel) -> StorageResult
 ```
 
+### 5. Enhanced Data Extractors (Requirements 8, 9, 10)
+
+```python
+class BacktestingDataExtractor:
+    """Extracts backtesting performance metrics from discovery crew validation results."""
+    
+    def __init__(self, data_accessor: CrewDataAccessor):
+        self.data_accessor = data_accessor
+        
+    def extract_backtesting_metrics(self) -> BacktestingMetrics
+    def extract_regime_performance(self) -> Dict[str, RegimePerformance]
+    def extract_risk_adjusted_metrics(self) -> RiskAdjustedMetrics
+    def get_performance_summary(self) -> BacktestingSummary
+
+class MarketContextExtractor:
+    """Extracts market context indicators from discovery crew outputs."""
+    
+    def __init__(self, data_accessor: CrewDataAccessor):
+        self.data_accessor = data_accessor
+        
+    def extract_market_regime(self) -> MarketRegime
+    def extract_vix_indicators(self) -> VIXIndicators
+    def extract_macro_indicators(self) -> MacroIndicators
+    def get_market_context_summary(self) -> MarketContextSummary
+
+class DiscoveryMethodologyExtractor:
+    """Extracts discovery methodology details and validation statistics."""
+    
+    def __init__(self, data_accessor: CrewDataAccessor):
+        self.data_accessor = data_accessor
+        
+    def extract_screening_criteria(self) -> APlusCriteria
+    def extract_validation_statistics(self) -> ValidationStatistics
+    def extract_fundamental_technical_scores(self) -> Dict[str, ScoreBreakdown]
+    def get_methodology_summary(self) -> MethodologySummary
+
+class PerformanceMetricsAggregator:
+    """Aggregates performance metrics across asset types and regimes."""
+    
+    def __init__(self, backtesting_extractor: BacktestingDataExtractor):
+        self.backtesting_extractor = backtesting_extractor
+        
+    def aggregate_by_asset_type(self) -> Dict[str, PerformanceMetrics]
+    def aggregate_by_regime(self) -> Dict[str, PerformanceMetrics]
+    def calculate_portfolio_impact(self) -> PortfolioImpactMetrics
+    def generate_performance_report(self) -> PerformanceReport
+```
+
 ## Data Models
 
 ### Core Integration Models
@@ -261,6 +328,153 @@ class DataAvailabilityReport(BaseModel):
     stale_data: List[str]
     integration_errors: List[IntegrationError]
     overall_status: Literal["COMPLETE", "PARTIAL", "INSUFFICIENT"]
+```
+
+### Enhanced Data Extraction Models (Requirements 8, 9, 10)
+
+```python
+class BacktestingMetrics(BaseModel):
+    """Backtesting performance metrics from discovery crew validation."""
+    annualized_return: float = Field(..., description="Annualized return percentage")
+    sharpe_ratio: float = Field(..., description="Sharpe ratio")
+    max_drawdown: float = Field(..., le=0, description="Maximum drawdown percentage")
+    win_rate: float = Field(..., ge=0, le=1, description="Win rate percentage")
+    sortino_ratio: Optional[float] = Field(None, description="Sortino ratio")
+    calmar_ratio: Optional[float] = Field(None, description="Calmar ratio")
+    backtest_period_years: int = Field(..., ge=1, description="Years of backtesting data")
+    total_trades: Optional[int] = Field(None, description="Total number of trades")
+
+class RegimePerformance(BaseModel):
+    """Performance metrics for a specific market regime."""
+    regime_type: Literal["bull", "bear", "sideways", "volatile"]
+    annualized_return: float
+    sharpe_ratio: float
+    max_drawdown: float
+    win_rate: float
+    consistency_score: float = Field(ge=0, le=1, description="Performance consistency")
+
+class RiskAdjustedMetrics(BaseModel):
+    """Risk-adjusted performance metrics."""
+    sharpe_ratio: float
+    sortino_ratio: float
+    calmar_ratio: float
+    information_ratio: Optional[float] = None
+    alpha: Optional[float] = None
+    beta: Optional[float] = None
+
+class BacktestingSummary(BaseModel):
+    """Summary of backtesting results across all A+ candidates."""
+    total_candidates_tested: int
+    average_metrics: BacktestingMetrics
+    regime_performance: Dict[str, RegimePerformance]
+    best_performer: str = Field(..., description="Symbol of best performer")
+    worst_performer: str = Field(..., description="Symbol of worst performer")
+
+class MarketRegime(BaseModel):
+    """Current market regime assessment."""
+    regime_type: Literal["bull", "bear", "sideways", "volatile"]
+    vix_level: float = Field(ge=0, le=100)
+    inflation_rate: float = Field(ge=-5, le=20)
+    interest_rate_trend: Literal["rising", "falling", "stable"]
+    market_stress_level: Literal["low", "medium", "high"]
+    assessment_date: datetime
+
+class VIXIndicators(BaseModel):
+    """VIX volatility indicators."""
+    current_vix: float
+    vix_percentile: float = Field(ge=0, le=100, description="Historical percentile")
+    vix_trend: Literal["rising", "falling", "stable"]
+    volatility_regime: Literal["low", "normal", "elevated", "extreme"]
+
+class MacroIndicators(BaseModel):
+    """Macroeconomic indicators."""
+    inflation_rate: float
+    interest_rate: float
+    interest_rate_trend: Literal["rising", "falling", "stable"]
+    gdp_growth: Optional[float] = None
+    unemployment_rate: Optional[float] = None
+
+class MarketContextSummary(BaseModel):
+    """Summary of market context for reporting."""
+    market_regime: MarketRegime
+    vix_indicators: VIXIndicators
+    macro_indicators: MacroIndicators
+    risk_environment: Literal["favorable", "neutral", "challenging"]
+    allocation_implications: List[str] = Field(description="How context affects allocations")
+
+class APlusCriteria(BaseModel):
+    """Discovery screening criteria and thresholds."""
+    # ETF criteria
+    etf_max_expense_ratio: float = Field(default=0.15, ge=0, le=2.0)
+    etf_min_aum: float = Field(default=1e9, ge=1e6, le=1e12)
+    etf_max_tracking_error: float = Field(default=0.002, ge=0, le=0.1)
+    etf_min_history_years: int = Field(default=3, ge=1, le=20)
+    # Stock criteria
+    stock_min_roe: float = Field(default=0.20, ge=0, le=1.0)
+    stock_min_revenue_growth: float = Field(default=0.15, ge=-0.5, le=2.0)
+    stock_max_debt_to_equity: float = Field(default=0.3, ge=0, le=5.0)
+    stock_min_market_cap: float = Field(default=1e9, ge=1e6, le=1e13)
+    # Crypto criteria
+    crypto_min_market_cap: float = Field(default=1e10, ge=1e6, le=1e13)
+    crypto_min_daily_volume: float = Field(default=5e8, ge=1e6, le=1e12)
+    crypto_min_age_months: int = Field(default=36, ge=1, le=200)
+    # Regime adjustment
+    regime_adjusted: bool = Field(default=False)
+    adjustment_rationale: str = Field(default="")
+
+class ValidationStatistics(BaseModel):
+    """Validation statistics from discovery crew."""
+    total_screened: int = Field(ge=0, description="Total assets screened")
+    candidates_found: int = Field(ge=0, description="A+ candidates found")
+    passed_validation: int = Field(ge=0, description="Candidates that passed validation")
+    failed_validation: int = Field(ge=0, description="Candidates that failed validation")
+    validation_rate: float = Field(ge=0, le=1, description="Percentage that passed")
+    screening_efficiency: float = Field(ge=0, le=100, description="Quality candidates found %")
+
+class ScoreBreakdown(BaseModel):
+    """Fundamental and technical score breakdown for a candidate."""
+    symbol: str
+    fundamental_score: float = Field(ge=0, le=1)
+    technical_score: float = Field(ge=0, le=1)
+    quality_score: float = Field(ge=0, le=1)
+    risk_score: float = Field(ge=0, le=1)
+    composite_score: float = Field(ge=0, le=1)
+    grade: Literal["A+", "A", "B+", "B", "C+", "C", "D", "F"]
+
+class MethodologySummary(BaseModel):
+    """Summary of discovery methodology for reporting."""
+    screening_criteria: APlusCriteria
+    validation_statistics: ValidationStatistics
+    score_breakdowns: Dict[str, ScoreBreakdown]
+    methodology_notes: List[str] = Field(description="Key methodology points")
+    data_sources: List[str] = Field(description="Data sources used")
+
+class PerformanceMetrics(BaseModel):
+    """Aggregated performance metrics."""
+    asset_type: Literal["etf", "stock", "crypto", "all"]
+    count: int
+    average_return: float
+    average_sharpe: float
+    average_max_drawdown: float
+    average_win_rate: float
+    best_performer: Optional[str] = None
+    worst_performer: Optional[str] = None
+
+class PortfolioImpactMetrics(BaseModel):
+    """Portfolio-level impact metrics from A+ opportunities."""
+    expected_grade_improvement: float = Field(description="Expected grade improvement %")
+    expected_return_improvement: float = Field(description="Expected return improvement %")
+    risk_impact: Literal["reduced", "neutral", "increased"]
+    diversification_impact: Literal["improved", "neutral", "reduced"]
+    implementation_complexity: Literal["low", "medium", "high"]
+
+class PerformanceReport(BaseModel):
+    """Comprehensive performance report."""
+    by_asset_type: Dict[str, PerformanceMetrics]
+    by_regime: Dict[str, PerformanceMetrics]
+    portfolio_impact: PortfolioImpactMetrics
+    top_opportunities: List[str] = Field(description="Top 5 opportunities by score")
+    report_timestamp: datetime
 ```
 
 ## Error Handling

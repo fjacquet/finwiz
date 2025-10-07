@@ -41,14 +41,34 @@ comprehensive_financial_integration_task:
     4. Analyze market sentiment data with aggregated scores and top 3 sources with URLs and dates.
     5. Use ONLY ticker symbols from inputs.validated_tickers_list[] - verify each ticker before mentioning it.
     6. Review A+ opportunities from discovery crew with allocation recommendations and replacement notes.
-    7. Identify overlapping recommendations or complementary strategies across asset classes.
-    8. Evaluate the rationale and evidence provided for each recommendation, including A+ discovery insights.
-    9. Prioritize opportunities based on potential returns, risk profile, and alignment with family goals.
-    10. Ensure all analysis considers the 1000 CHF monthly budget constraint.
-    11. Handle graceful degradation for missing or stale data with clear warnings.
-    12. Include data availability status and freshness warnings in the analysis.
-    13. Produce a comprehensive analysis with proper source attribution and data lineage.
-    14. FINAL CHECK: Verify every ticker mentioned is in inputs.validated_tickers_list[].
+    7. **EXTRACT BACKTESTING RESULTS**: From discovery crew validation results, extract:
+       - annualized_return, sharpe_ratio, max_drawdown, win_rate for each A+ candidate
+       - Regime-specific performance (bull/bear/sideways markets) with consistency scores
+       - Risk-adjusted metrics (Sortino ratio, Calmar ratio) when available
+       - Backtest period length and total trades executed
+    8. **EXTRACT MARKET CONTEXT**: From discovery crew outputs, extract:
+       - regime_type (bull/bear/sideways/volatile)
+       - vix_level and VIX percentile (historical context)
+       - inflation_rate and interest_rate_trend (rising/falling/stable)
+       - market_stress_level (low/medium/high)
+       - Assessment date for context indicators
+    9. **EXTRACT DISCOVERY CRITERIA**: From discovery crew methodology, extract:
+       - Screening thresholds: ROE minimums, debt ratios, market cap requirements
+       - Revenue growth requirements and expense ratio thresholds
+       - Regime adjustment information and rationale
+       - Validation statistics: total screened, candidates found, pass/fail rates
+    10. **EXTRACT SCORE BREAKDOWNS**: For each A+ candidate, extract:
+       - fundamental_score and technical_score (0-1 scale)
+       - quality_score and risk_score components
+       - composite_score and assigned grade (A+, A, B+, etc.)
+    11. Identify overlapping recommendations or complementary strategies across asset classes.
+    12. Evaluate the rationale and evidence provided for each recommendation, including A+ discovery insights.
+    13. Prioritize opportunities based on potential returns, risk profile, backtesting performance, and alignment with family goals.
+    14. Ensure all analysis considers the 1000 CHF monthly budget constraint.
+    15. Handle graceful degradation for missing or stale data with clear warnings.
+    16. Include data availability status and freshness warnings in the analysis.
+    17. Produce a comprehensive analysis with proper source attribution and data lineage.
+    18. FINAL CHECK: Verify every ticker mentioned is in inputs.validated_tickers_list[].
 
     Data Sources (accessed through integrated context):
     - Stock crew data: 10-K insights, validated tickers, SEC citations, market sentiments
@@ -63,11 +83,28 @@ comprehensive_financial_integration_task:
   expected_output: >
     A structured analytical document that consolidates findings from all specialized crews
     using the integrated data system. CRITICAL: Every ticker symbol mentioned must be from
-    inputs.validated_tickers_list[] - NO exceptions. The document should include SEC/EDGAR 
-    citations with filing dates (ONLY for validated tickers), market sentiment analysis with 
-    source attribution, A+ opportunities with allocation recommendations, and clear handling 
-    of missing or stale data. The document must include verifiable data and references with 
-    proper data lineage. DO NOT include any ticker symbols not in validated_tickers_list[].
+    inputs.validated_tickers_list[] - NO exceptions. The document should include:
+    
+    1. SEC/EDGAR citations with filing dates (ONLY for validated tickers)
+    2. Market sentiment analysis with source attribution
+    3. A+ opportunities with allocation recommendations
+    4. **BACKTESTING METRICS**: For each A+ candidate:
+       - Annualized return, Sharpe ratio, max drawdown, win rate
+       - Regime-specific performance across bull/bear/sideways markets
+       - Risk-adjusted metrics (Sortino, Calmar ratios)
+       - Backtest period and trade statistics
+    5. **MARKET CONTEXT INDICATORS**:
+       - Current market regime type and VIX levels
+       - Inflation rate and interest rate trends
+       - Market stress level assessment
+    6. **DISCOVERY METHODOLOGY**:
+       - Screening criteria and thresholds used
+       - fundamental_score and technical_score for each candidate
+       - Validation statistics and success rates
+    7. Clear handling of missing or stale data with warnings
+    8. Verifiable data and references with proper data lineage
+    
+    DO NOT include any ticker symbols not in validated_tickers_list[].
     
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the ReporterInput object directly - do NOT wrap it in additional fields
@@ -94,13 +131,34 @@ optimal_portfolio_allocation_task:
     1. Review the consolidated analysis with integrated data and A+ opportunities.
     2. Incorporate A+ opportunity allocation recommendations and replacement notes.
     3. Use validated ticker symbols from consolidated ticker validation results.
-    4. Determine appropriate asset class weightings (stocks, ETFs, crypto) based on integrated risk assessments.
-    5. Select specific investments from validated opportunities, prioritizing A+ discoveries.
-    6. Allocate the 1000 CHF monthly budget across validated investments, specifying exact CHF amounts.
-    7. Include portfolio allocation updates based on A+ opportunity recommendations.
-    8. Handle graceful degradation if A+ opportunities are unavailable.
-    9. Justify each allocation choice with reference to integrated data sources.
-    10. Ensure the portfolio is diversified and balances growth potential with capital preservation.
+    4. **USE BACKTESTING SHARPE RATIOS FOR WEIGHTING**: 
+       - Weight allocations based on risk-adjusted returns (Sharpe ratios) from backtesting
+       - Prioritize candidates with Sharpe > 1.5 for higher allocations
+       - Reduce allocations for candidates with Sharpe < 1.0
+       - Consider Sortino and Calmar ratios for downside risk assessment
+    5. **USE REGIME CONSISTENCY FOR ASSET SELECTION**:
+       - Prioritize assets with consistency_score > 0.7 across all regimes
+       - Include regime-specific performers for diversification
+       - Balance bull-market performers with bear-market defensive assets
+       - Consider sideways market performance for stability
+    6. **APPLY MARKET CONTEXT FOR ALLOCATION ADJUSTMENTS**:
+       - In bull markets (low VIX): Increase growth allocation, reduce defensive positions
+       - In bear markets (high VIX): Increase defensive allocation, reduce growth exposure
+       - Rising rates: Favor value stocks, reduce growth/tech exposure
+       - High inflation: Increase commodity/real asset exposure
+       - Market stress (high): Shift to quality/defensive assets
+    7. **USE TECHNICAL SCORES FOR ENTRY TIMING**:
+       - technical_score > 0.7: Consider immediate entry
+       - technical_score 0.5-0.7: Gradual entry over 2-3 months
+       - technical_score < 0.5: Wait for better technical setup
+       - Combine with fundamental_score for overall conviction
+    8. Determine appropriate asset class weightings (stocks, ETFs, crypto) based on integrated risk assessments and market context.
+    9. Select specific investments from validated opportunities, prioritizing A+ discoveries with strong backtesting.
+    10. Allocate the 1000 CHF monthly budget across validated investments, specifying exact CHF amounts.
+    11. Include portfolio allocation updates based on A+ opportunity recommendations and backtesting performance.
+    12. Handle graceful degradation if A+ opportunities or backtesting data are unavailable.
+    13. Justify each allocation choice with reference to backtesting metrics, regime consistency, market context, and technical scores.
+    14. Ensure the portfolio is diversified and balances growth potential with capital preservation based on current market regime.
     
     CRITICAL OUTPUT REQUIREMENTS:
     - All holdings MUST have shares > 0 (never use 0.0 for shares)
@@ -125,9 +183,16 @@ optimal_portfolio_allocation_task:
     OUTPUT: A detailed portfolio allocation plan with A+ opportunity integration.
   expected_output: >
     A specific and actionable portfolio allocation plan incorporating A+ opportunities and
-    validated ticker symbols. The plan must include exact CHF amounts for each investment,
-    percentage allocations, A+ opportunity integration, replacement recommendations,
-    and clear justification for choices based on integrated data sources.
+    validated ticker symbols. The plan must include:
+    
+    1. Exact CHF amounts for each investment with percentage allocations
+    2. **BACKTESTING-BASED WEIGHTINGS**: Allocation percentages justified by Sharpe ratios and risk-adjusted returns
+    3. **REGIME CONSISTENCY CONSIDERATIONS**: Asset selection based on multi-regime performance
+    4. **MARKET CONTEXT ADJUSTMENTS**: Defensive vs growth balance based on current VIX, rates, and regime
+    5. **TECHNICAL TIMING RECOMMENDATIONS**: Entry timing (immediate/gradual/wait) based on technical scores
+    6. A+ opportunity integration with replacement recommendations
+    7. Clear justification for choices referencing backtesting data, regime analysis, and market context
+    8. Diversification across regimes and market conditions
   agent: portfolio_allocator
   output_pydantic: PortfolioConfiguration
   output_file: "output/report/optimal_portfolio_allocation.json"
@@ -149,13 +214,36 @@ risk_assessment_mitigation_task:
     1. Analyze consolidated risk assessments from stock, ETF, and crypto crews.
     2. Incorporate market sentiment analysis to assess sentiment-based risks.
     3. Evaluate A+ opportunity risk profiles and their impact on portfolio risk.
-    4. Assess portfolio-level risks using integrated data from all asset classes.
-    5. Identify risks specific to validated ticker symbols and their validation status.
-    6. Analyze data freshness risks and their impact on decision quality.
-    7. Develop actionable mitigation strategies for each significant risk category.
-    8. Include sentiment-based risk monitoring using top sentiment sources.
-    9. Recommend specific actions based on integrated risk data.
-    10. Handle graceful degradation for missing risk data with conservative assumptions.
+    4. **EXTRACT MAX DRAWDOWN FOR DOWNSIDE RISK**:
+       - Extract max_drawdown from backtesting results for each A+ candidate
+       - Identify candidates with drawdown > -25% as high downside risk
+       - Calculate portfolio-level expected maximum drawdown
+       - Use drawdown data to size positions appropriately
+       - Consider Calmar ratio (return/drawdown) for risk-adjusted assessment
+    5. **USE VIX AND MARKET STRESS FOR RISK ENVIRONMENT**:
+       - vix_level < 15: Low volatility environment, normal risk tolerance
+       - vix_level 15-25: Moderate volatility, balanced risk approach
+       - vix_level > 25: High volatility, defensive positioning required
+       - market_stress_level (low/medium/high): Adjust risk exposure accordingly
+       - VIX percentile: Historical context for current volatility levels
+    6. **EXTRACT REGIME-SPECIFIC RISKS**:
+       - Bull market risks: Overvaluation, momentum reversal, rate sensitivity
+       - Bear market risks: Drawdown extension, liquidity concerns, forced selling
+       - Sideways market risks: Range-bound frustration, whipsaw losses
+       - Volatile market risks: Gap risk, stop-loss failures, emotional decisions
+       - Assess performance consistency across regimes for stability
+    7. **INCLUDE VALIDATION FAILURE RATES AND ALTERNATIVES**:
+       - Report validation failure rates by asset class
+       - Identify tickers with validation issues and their alternatives
+       - Assess data quality risks from failed validations
+       - Recommend backup options for high-risk validations
+    8. Assess portfolio-level risks using integrated data from all asset classes.
+    9. Identify risks specific to validated ticker symbols and their validation status.
+    10. Analyze data freshness risks and their impact on decision quality.
+    11. Develop actionable mitigation strategies for each significant risk category based on backtesting and market context.
+    12. Include sentiment-based risk monitoring using top sentiment sources.
+    13. Recommend specific actions based on integrated risk data, drawdown analysis, and regime-specific risks.
+    14. Handle graceful degradation for missing risk data with conservative assumptions.
 
     Integrated Risk Data Sources:
     - Consolidated risk assessments from all crews with standardized risk scores
@@ -174,9 +262,31 @@ risk_assessment_mitigation_task:
     OUTPUT: A comprehensive risk assessment with integrated data and sentiment analysis.
   expected_output: >
     A detailed report identifying key risks using consolidated data from all crews.
-    The report must include market sentiment-based risks, A+ opportunity risk analysis,
-    ticker validation risks, data freshness risks, and practical mitigation strategies
-    with reference to integrated data sources and sentiment analysis.
+    The report must include:
+    
+    1. Market sentiment-based risks with source attribution
+    2. A+ opportunity risk analysis with risk scores
+    3. **BACKTESTING DOWNSIDE RISK DATA**:
+       - Maximum drawdown for each candidate and portfolio-level
+       - Drawdown duration and recovery time analysis
+       - Calmar ratios for risk-adjusted return assessment
+       - Position sizing recommendations based on drawdown tolerance
+    4. **MARKET CONTEXT RISK ASSESSMENT**:
+       - VIX-based volatility risk levels (low/moderate/high)
+       - Market stress level impact on portfolio
+       - Interest rate and inflation risk implications
+       - Current regime-specific risk factors
+    5. **REGIME-SPECIFIC RISK ANALYSIS**:
+       - Bull market risks: Overvaluation, momentum reversal
+       - Bear market risks: Extended drawdowns, liquidity
+       - Sideways market risks: Range-bound frustration
+       - Volatile market risks: Gap risk, stop-loss failures
+    6. **VALIDATION RISKS**:
+       - Ticker validation failure rates by asset class
+       - Alternative suggestions for failed validations
+       - Data quality risks and mitigation
+    7. Ticker validation risks and data freshness risks
+    8. Practical mitigation strategies with reference to backtesting data and market context
   agent: risk_manager
   output_pydantic: RiskAssessmentStandardized
   output_file: "output/report/risk_assessment_and_mitigation.json"
@@ -254,8 +364,23 @@ comprehensive_investment_report_task:
     🛡️ 5. Évaluation et Gestion des Risques
       - Niveau de risque global du portefeuille ⚠️ (consolidé de tous les crews)
       - Facteurs de risque par classe d'actifs 🔍 (avec évaluations standardisées)
-      - Stratégies d'atténuation 🛡️ (basées sur l'analyse intégrée)
-      - Scénarios de stress tests 🌪️
+      - **Analyse de Performance Backtesting** 📊 (NOUVELLE SECTION):
+        * Tableau récapitulatif des métriques de backtesting pour chaque candidat A+
+        * Colonnes: Ticker | Rendement Annualisé | Sharpe Ratio | Drawdown Max | Taux de Réussite
+        * Performance par régime de marché (haussier/baissier/latéral)
+        * Scores de cohérence entre régimes (>70% = excellent, 60-70% = bon, <60% = préoccupant)
+        * Métriques ajustées au risque: Sortino, Calmar ratios
+        * Période de backtesting et nombre de transactions
+        * Identification des meilleurs/pires performers
+      - **Contexte de Marché & Analyse de Régime** 🌐 (NOUVELLE SECTION):
+        * Type de régime actuel: Haussier/Baissier/Latéral/Volatile
+        * Niveau VIX actuel et percentile historique
+        * Indicateurs macro: Taux d'inflation, tendance des taux d'intérêt
+        * Niveau de stress du marché: Faible/Moyen/Élevé
+        * Implications pour l'allocation (défensif vs croissance)
+        * Environnement de risque: Favorable/Neutre/Difficile
+      - Stratégies d'atténuation 🛡️ (basées sur l'analyse intégrée et le backtesting)
+      - Scénarios de stress tests 🌪️ (avec données de drawdown historiques)
       - Sentiment du Marché (du système d'intégration) 📰:
         * Scores agrégés: Positif/Neutre/Négatif avec pourcentages
         * Top 3 sources de sentiment avec URLs, dates de publication et scores de confiance
@@ -290,6 +415,27 @@ comprehensive_investment_report_task:
         - Contacts importants 📞
     
     📎 Annexes & Prochaines étapes
+       - **Méthodologie de Découverte** 🔬 (NOUVELLE SECTION):
+         * Critères de sélection utilisés:
+           - Seuils ROE, ratios d'endettement, capitalisation minimale
+           - Exigences de croissance des revenus, ratios de frais
+           - Ajustements de régime et justification
+         * Statistiques de validation:
+           - Total d'actifs examinés vs candidats trouvés
+           - Taux de réussite/échec de validation
+           - Efficacité du processus de sélection
+         * Répartition des scores pour chaque candidat A+:
+           - Score fondamental (0-1) et score technique (0-1)
+           - Score de qualité et score de risque
+           - Score composite et grade attribué (A+, A, B+, etc.)
+         * Sources de données utilisées pour la découverte
+       - **Insights d'Optimisation** 💡 (NOUVELLE SECTION):
+         * Résultats de validation avec taux de réussite
+         * Amélioration attendue du grade du portefeuille
+         * Impact sur la diversification et le profil de risque
+         * Complexité de mise en œuvre (faible/moyenne/élevée)
+         * Top 5 opportunités par score composite
+         * Suggestions d'alternatives pour les validations échouées
        - Validation des Tickers (du système d'intégration consolidé):
          * Tickers d'actions validés avec statut de validation et sources
          * ETFs validés avec métadonnées de validation
@@ -315,6 +461,34 @@ comprehensive_investment_report_task:
     mise en page professionnelle qui rend les informations financières complexes accessibles
     à tous les membres de la famille.
     Le rapport doit être en français.
+    
+    **NOUVELLES SECTIONS REQUISES**:
+    
+    1. **Section "Analyse de Performance Backtesting"** 📊:
+       - Tableau avec métriques de backtesting pour chaque candidat A+
+       - Tableaux de comparaison de performance par régime de marché
+       - Graphiques ou visualisations des scores de cohérence
+       - Identification claire des meilleurs/pires performers
+    
+    2. **Section "Contexte de Marché & Analyse de Régime"** 🌐:
+       - Indicateurs VIX actuels avec contexte historique
+       - Indicateurs macro (inflation, taux d'intérêt) avec tendances
+       - Évaluation du niveau de stress du marché
+       - Implications pour l'allocation d'actifs (défensif vs croissance)
+    
+    3. **Section "Méthodologie de Découverte"** 🔬:
+       - Critères de sélection et seuils utilisés
+       - Statistiques de validation (total examiné, candidats trouvés, taux de réussite)
+       - Répartition des scores (fondamental, technique, qualité, risque) pour chaque candidat
+       - Sources de données utilisées
+    
+    4. **Section "Insights d'Optimisation"** 💡:
+       - Résultats de validation avec taux de réussite/échec
+       - Amélioration attendue du grade du portefeuille
+       - Impact sur la diversification et le risque
+       - Complexité de mise en œuvre
+       - Top 5 opportunités par score composite
+    
     Inclure une annexe "Corrections et Suggestions — Validation des Tickers" fondée exclusivement
     sur les annexes JSON validées des équipes (validated_tickers[], validated_etfs[], validated_symbols[]),
     ainsi qu'un court bloc JSON récapitulatif. Aucun appel externe supplémentaire ne doit être effectué.

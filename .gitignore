@@ -16,5 +16,4 @@ data/
 cache/
 .gitignore
 .DS_Store
- .python-version
 .python-version

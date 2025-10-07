@@ -77,6 +77,32 @@ AI agent guidelines are now in `.kiro/steering/` for automatic guidance during d
   - Portfolio optimization
   - Performance analytics
 
+### Enhanced Data Extraction
+
+- **[Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md)** - Comprehensive data extraction for reports
+  - Backtesting metrics extraction
+  - Market context indicators
+  - Discovery methodology details
+  - Performance aggregation
+
+- **[Report Crew Examples](REPORT_CREW_ENHANCED_EXAMPLES.md)** - Practical usage examples
+  - Backtesting metrics in reports
+  - Market context in risk assessment
+  - Discovery methodology documentation
+  - Performance aggregation examples
+
+- **[Crew Data Integration Quick Start](CREW_DATA_INTEGRATION_QUICK_START.md)** - Quick reference guide
+  - Basic usage patterns
+  - Common patterns
+  - Extractor methods
+  - HTML report generation
+
+- **[Crew Data Integration Index](CREW_DATA_INTEGRATION_INDEX.md)** - Complete navigation
+  - Documentation structure
+  - Learning paths
+  - Use case guides
+  - Quick links
+
 ## 🔧 System Documentation
 
 ### Core Systems
@@ -125,6 +151,9 @@ AI development standards are now in steering files for automatic guidance:
 **Run quantitative analysis**
 → [Quantitative Analysis](quantitative_analysis.md)
 
+**Use enhanced data in reports**
+→ [Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md) + [Report Examples](REPORT_CREW_ENHANCED_EXAMPLES.md)
+
 **Develop a new feature**
 → [Developer Guide](DEVELOPER_GUIDE.md) + [Architecture Guide](ARCHITECTURE.md)
 
@@ -140,13 +169,16 @@ AI development standards are now in steering files for automatic guidance:
 **Integrate an external service**
 → [Architecture Guide](ARCHITECTURE.md#integration-patterns)
 
-## 📝 Implementation Summaries
+## 📝 Historical Documentation
 
-Recent feature implementations:
+Historical implementation summaries and reports are now organized in the archive:
 
-- **[Task 1.1](../TASK_1.1_IMPLEMENTATION_SUMMARY.md)** - Core analysis tools and schema enhancements
-- **[Task 1.2](../TASK_1.2_IMPLEMENTATION_SUMMARY.md)** - Price target calculation and recommendations
-- **[Task 1.3](../TASK_1.3_IMPLEMENTATION_SUMMARY.md)** - Alternative finder and A+ integration
+- **[Implementation Summaries](archive/implementation_summaries/)** - Task implementation records
+- **[Fix Reports](archive/fix_reports/)** - Bug fix documentation
+- **[Consolidation Reports](archive/consolidation_reports/)** - Documentation consolidation history
+- **[Testing Documentation](archive/testing/)** - Testing implementation history
+
+These files are preserved for reference but not needed for daily development.
 
 ## 🔍 Search Tips
 
@@ -162,11 +194,48 @@ Recent feature implementations:
 
 ---
 
-**Documentation Version**: 2.0  
-**Last Updated**: 2025-03-10  
-**Total Documents**: ~30 (down from 60+)
+**Documentation Version**: 2.2  
+**Last Updated**: 2025-01-07  
+**Total Documents**: 16 core files + organized archive (down from 60+)
 
 ## Recent Changes
+
+### 2025-01-07: Documentation Cleanup & Consolidation
+
+**Major Cleanup Complete** - Reduced clutter and improved organization:
+
+- Reduced main docs/ from 50 files to 16 core files (68% reduction)
+- Moved 29 historical files to organized archive:
+  - 12 implementation summaries → `archive/implementation_summaries/`
+  - 9 fix reports → `archive/fix_reports/`
+  - 5 consolidation reports → `archive/consolidation_reports/`
+  - 3 testing docs → `archive/testing/`
+- Improved discoverability and maintainability
+- Preserved all historical documentation for reference
+
+**Benefits**:
+- Easier to find current documentation
+- Clear separation of current vs historical
+- Reduced cognitive load
+- Better organization
+
+### 2025-01-07: Enhanced Data Extraction Documentation
+
+**New Feature Documentation** - Comprehensive enhanced data extraction system:
+
+- Added `ENHANCED_DATA_EXTRACTION.md` - Complete technical reference for all extractors
+- Added `REPORT_CREW_ENHANCED_EXAMPLES.md` - 5 practical examples with production-ready code
+- Added `CREW_DATA_INTEGRATION_QUICK_START.md` - Quick reference guide
+- Added `CREW_DATA_INTEGRATION_INDEX.md` - Complete navigation hub
+- Updated API_REFERENCE.md with new extractor utilities
+- Updated README.md with enhanced data extraction features
+
+**New Capabilities**:
+
+- Backtesting metrics extraction (returns, Sharpe, drawdown, win rates)
+- Market context indicators (VIX, inflation, rates, regime type)
+- Discovery methodology details (criteria, statistics, scores)
+- Performance aggregation (by asset type and regime)
 
 ### 2025-03-10: Phase 2 Documentation Consolidation
 
