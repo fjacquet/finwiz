@@ -4,21 +4,20 @@ Complete guide for developers working on the FinWiz codebase.
 
 ## Table of Contents
 
-1. [Quick Start](#quick-start)
-2. [Architecture Overview](#architecture-overview)
-3. [CrewAI Development Standards](#crewai-development-standards)
-4. [Testing Standards](#testing-standards)
-5. [Code Quality Standards](#code-quality-standards)
-6. [Common Patterns](#common-patterns)
-7. [Troubleshooting](#troubleshooting)
+1.  [Quick Start](#quick-start)
+2.  [Architecture Overview](#architecture-overview)
+3.  [Core Development Standards](#core-development-standards)
+4.  [Common Patterns](#common-patterns)
+5.  [Troubleshooting](#troubleshooting)
+6.  [See Also](#see-also)
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.12+
-- `uv` package manager
-- API keys (see `.env.example`)
+-   Python 3.12+
+-   `uv` package manager
+-   API keys (see `.env.example`)
 
 ### Setup
 
@@ -89,345 +88,34 @@ All crews must follow this structure:
 src/finwiz/crews/{crew_name}/
 ├── {crew_name}.py          # @agent, @task, @crew decorators
 └── config/
-    ├── agents.yaml         # Agent configurations  
+    ├── agents.yaml         # Agent configurations
     └── tasks.yaml          # Task definitions
 ```
 
 ### File Naming Conventions
 
-- **Python files**: `snake_case.py`
-- **Schema files**: `PascalCase.schema.json`
-- **Config files**: `kebab-case.yaml`
-- **Import order**: stdlib → third-party → local (blank line separated)
+-   **Python files**: `snake_case.py`
+-   **Schema files**: `PascalCase.schema.json`
+-   **Config files**: `kebab-case.yaml`
+-   **Import order**: stdlib → third-party → local (blank line separated)
 
-## CrewAI Development Standards
+## Core Development Standards
 
-### Agent Configuration
+FinWiz development is guided by a comprehensive set of standards that are automatically enforced by the AI agent during development. These standards ensure code quality, consistency, and maintainability.
 
-```python
-from crewai import Agent, agent
-from finwiz.tools.tool_factories import get_stock_crew_tools
+For detailed rules and implementation patterns, refer to the official steering files:
 
-@agent
-def stock_analyst(self) -> Agent:
-    return Agent(
-        config=self.agents_config["stock_analyst"],
-        tools=get_stock_crew_tools(
-            include_rag=True,
-            include_quantitative=True,
-            collection_suffix="stock"
-        ),
-        verbose=True
-    )
-```
-
-### Task Configuration
-
-```yaml
-# config/tasks.yaml
-stock_analysis_task:
-  description: "Analyze stock with quantitative metrics"
-  expected_output: "Structured analysis with risk assessment"
-  output_pydantic: "TenKInsight"  # Use FinWiz schema
-  output_json: true
-  agent: stock_analyst
-  async_execution: true
-```
-
-### Crew Configuration
-
-```python
-from crewai import Crew, crew, Process
-
-@crew
-def crew(self) -> Crew:
-    return Crew(
-        agents=self.agents,
-        tasks=self.tasks,
-        process=Process.sequential,
-        verbose=True,
-        respect_context_window=True,
-        max_rpm=20
-    )
-```
-
-### Required Tools by Crew Type
-
-**Stock Crew**:
-
-- `QuantitativeAnalysisTool(asset_class="stock")`
-- `EnhancedSECAnalysisTool`
-- `TickerValidationTool`
-- `StandardizedSentimentTool`
-- RAG tools via `get_rag_tools()`
-
-**ETF Crew**:
-
-- `QuantitativeAnalysisTool(asset_class="etf")`
-- `EnhancedETFAnalysisTool`
-- `TickerValidationTool`
-- `StandardizedSentimentTool`
-- RAG tools via `get_rag_tools()`
-
-**Crypto Crew**:
-
-- `QuantitativeAnalysisTool(asset_class="crypto")`
-- `EnhancedCryptoAnalysisTool`
-- `CoinMarketCapTool`
-- `TickerValidationTool`
-- RAG tools via `get_rag_tools()`
-
-**Report Crew** (SPECIAL):
-
-- Final reporters must have **empty tools list** (`tools=[]`)
-- Only consume upstream context
-- No external API calls
-
-### CrewAI Compliance Checklist
-
-When creating or modifying crews:
-
-- [ ] Follows standard crew structure
-- [ ] Uses `@agent`, `@task`, `@crew` decorators
-- [ ] Agent configs in `agents.yaml`
-- [ ] Task configs in `tasks.yaml`
-- [ ] Uses tool factories for tool assignment
-- [ ] Uses `output_pydantic` with FinWiz schemas
-- [ ] I/O-bound tasks have `async_execution: true`
-- [ ] Final task has `async_execution: false`
-- [ ] Final reporters have empty tools list
-- [ ] Generates `RiskAssessmentStandardized` objects
-
-## Testing Standards
-
-### Test Organization
-
-```
-tests/
-├── unit/               # Unit tests (fast, mocked)
-├── integration/        # Integration tests (slow, real APIs)
-├── fixtures/           # Shared test fixtures
-└── conftest.py        # pytest configuration
-```
-
-### Test Naming Convention
-
-```python
-def test_should_{behavior}_when_{condition}():
-    """Test that describes expected behavior."""
-    # Arrange
-    # Act
-    # Assert
-```
-
-### Mocking Strategy
-
-**Always use `pytest-mock`, never `unittest.mock`**:
-
-```python
-def test_should_return_buy_recommendation_when_strong_metrics(mocker):
-    # Arrange
-    mock_api = mocker.patch('finwiz.tools.yahoo_finance_tool.get_data')
-    mock_api.return_value = {'pe_ratio': 15, 'growth': 0.25}
-    
-    # Act
-    result = analyze_stock('AAPL')
-    
-    # Assert
-    assert result.recommendation == 'BUY'
-    mock_api.assert_called_once_with('AAPL')
-```
-
-### Test Requirements
-
-- **Mock all external calls**: APIs, file system, network requests
-- **Fast execution**: Unit tests < 5 seconds per suite
-- **Independence**: No shared state between tests
-- **Arrange-Act-Assert**: Clear test structure
-- **Descriptive names**: `test_should_{behavior}_when_{condition}`
-
-### Test Data Generation
-
-Use Faker for realistic test data:
-
-```python
-from faker import Faker
-
-fake = Faker()
-
-def test_portfolio_analysis():
-    # Generate realistic test data
-    ticker = fake.stock_symbol()
-    price = fake.pyfloat(min_value=10, max_value=1000)
-    # ... test logic
-```
-
-### Running Tests
-
-```bash
-# Unit tests only (fast)
-uv run pytest -m "not integration"
-
-# Integration tests (requires API keys)
-uv run pytest -m integration
-
-# Specific test file
-uv run pytest tests/unit/tools/test_alternative_finder_tool.py
-
-# With coverage
-uv run pytest --cov=src/finwiz --cov-report=html
-
-# Verbose output
-uv run pytest -v
-```
-
-## Code Quality Standards
-
-### Type Hints
-
-**Required for all public methods**:
-
-```python
-def analyze_stock(
-    ticker: str,
-    asset_class: AssetClass,
-    current_price: float
-) -> StockAnalysis:
-    """Analyze stock with proper type hints."""
-    ...
-```
-
-**Use modern Python 3.12+ syntax**:
-
-```python
-# ✅ Correct
-def get_price(ticker: str) -> float | None:
-    ...
-
-# ❌ Avoid
-from typing import Optional
-def get_price(ticker: str) -> Optional[float]:
-    ...
-```
-
-### Pydantic Models
-
-**Use strict validation**:
-
-```python
-from pydantic import BaseModel, Field
-
-class TickerInput(BaseModel):
-    symbol: str = Field(..., pattern=r'^[A-Z]{1,5}$')
-    
-    model_config = {
-        "str_strip_whitespace": True,
-        "str_upper": True,
-        "extra": "forbid"  # Prevent schema drift
-    }
-```
-
-### Error Handling
-
-```python
-class FinWizError(Exception):
-    """Base exception for FinWiz application."""
-    pass
-
-class InvalidTickerError(FinWizError):
-    """Raised when ticker symbol is invalid."""
-    
-    def __init__(self, ticker: str):
-        super().__init__(f"Invalid ticker symbol: {ticker}")
-        self.ticker = ticker
-```
-
-### Logging
-
-```python
-from finwiz.tools.logger import get_logger
-
-logger = get_logger(__name__)
-
-logger.info("Analyzing holding", extra={
-    "ticker": ticker,
-    "asset_class": asset_class,
-    "cache_hit": cache_hit
-})
-```
-
-### Code Style
-
-- **Line limit**: 110 characters
-- **Docstrings**: Google style for all public classes/methods
-- **Imports**: Grouped and sorted (stdlib, third-party, local)
-- **Variables**: Descriptive names (`analysis_result` not `ar`)
-
-### HTML Generation Standards
-
-**MANDATORY: Use BeautifulSoup4 for all HTML generation**
-
-```python
-from bs4 import BeautifulSoup, Tag
-
-def generate_report(title: str, data: dict) -> str:
-    """Generate HTML report using bs4 for security and maintainability."""
-    soup = BeautifulSoup("", "html.parser")
-    html = soup.new_tag("html")
-    
-    head = soup.new_tag("head")
-    title_tag = soup.new_tag("title")
-    title_tag.string = title  # Automatic XSS escaping
-    head.append(title_tag)
-    
-    body = soup.new_tag("body")
-    h1 = soup.new_tag("h1")
-    h1.string = title
-    body.append(h1)
-    
-    # User data is automatically escaped
-    p = soup.new_tag("p")
-    p.string = data['content']  # Safe from XSS
-    body.append(p)
-    
-    html.append(head)
-    html.append(body)
-    soup.append(html)
-    
-    return soup.prettify(formatter="html")  # UTF-8 safe output
-```
-
-**HTML Generation Rules**:
-
-- ✅ **REQUIRED**: Use `bs4.BeautifulSoup` and `bs4.Tag` objects
-- ✅ **REQUIRED**: Use `.prettify(formatter="html")` for UTF-8 output
-- ✅ **REQUIRED**: Rely on bs4's automatic XSS escaping for user data
-- ❌ **FORBIDDEN**: String concatenation (`f"<html>{content}</html>"`)
-- ❌ **FORBIDDEN**: Manual HTML building (`html += "<div>"`)
-- ❌ **FORBIDDEN**: `.format()` or `%` formatting for HTML
-
-**Security Benefits**:
-
-- Automatic HTML entity escaping prevents XSS vulnerabilities
-- Proper UTF-8 encoding handling
-- Well-formed HTML structure guaranteed
-- Better code readability and maintainability
-
-### Linting and Formatting
-
-```bash
-# Check and format
-ruff check . && ruff format .
-
-# Type checking
-uv run mypy src/finwiz/
-```
+-   **[Technology & Code Quality](/.kiro/steering/tech.md)**: Core technology stack, code standards, and quality requirements.
+-   **[Testing Standards](/.kiro/steering/testing-standards.md)**: Rules for writing tests, including mocking strategies and naming conventions.
+-   **[CrewAI Standards](/.kiro/steering/crewai-standards.md)**: Best practices for building agents, tasks, and crews.
+-   **[Output & Formatting](/.kiro/steering/output-standards.md)**: Standards for generating HTML reports and other outputs.
+-   **[Data Validation](/.kiro/steering/validation.md)**: Rules for data validation, schema compliance, and error handling.
 
 ## Common Patterns
 
 ### Tool Factories
 
-Centralize tool initialization:
+Centralize tool initialization for consistency and maintainability.
 
 ```python
 from finwiz.tools.tool_factories import get_stock_crew_tools
@@ -441,7 +129,7 @@ tools = get_stock_crew_tools(
 
 ### Agent Validators
 
-Enforce architectural constraints:
+Enforce architectural constraints, such as ensuring final reporters have no tools.
 
 ```python
 from finwiz.utils.agent_validators import final_reporter
@@ -458,31 +146,23 @@ def investment_reporter(self) -> Agent:
 
 ### Validation Manager
 
-Use centralized validation:
+Use a centralized validation manager for all data checks.
 
 ```python
 from finwiz.validation import get_validation_manager
 
 manager = get_validation_manager()
-
-# Validate crew output
 result = manager.validate_crew_output(data, "stock", "analysis")
-if result.is_valid:
-    processed_data = result.sanitized_data
-else:
-    for error in result.errors:
-        logger.error(f"Validation error: {error.message}")
 ```
 
 ### Async Operations
 
-Use async for I/O-bound operations:
+Use `asyncio.gather` for concurrent I/O-bound operations to improve performance.
 
 ```python
 import asyncio
 
 async def analyze_holdings(tickers: list[str]) -> list[Analysis]:
-    # Parallel analysis
     results = await asyncio.gather(
         *[analyze_ticker(ticker) for ticker in tickers]
     )
@@ -497,175 +177,22 @@ async def analyze_holdings(tickers: list[str]) -> list[Analysis]:
 **Solution**: Install in editable mode: `uv pip install -e .`
 
 **Issue**: Type checking errors with CrewAI
-**Solution**: Add to `mypy.ini`:
-
-```ini
-[mypy-crewai.*]
-ignore_missing_imports = True
-```
+**Solution**: Add `ignore_missing_imports = True` for `crewai.*` in `mypy.ini`.
 
 **Issue**: Validation errors in production
-**Solution**: Check `VALIDATION_STRICTNESS` environment variable (off/warn/error)
+**Solution**: Check the `VALIDATION_STRICTNESS` environment variable (off/warn/error).
 
-**Issue**: Cache not working
-**Solution**: Check `CACHE_BACKEND` and `CACHE_TTL` environment variables
+### Debugging
 
-### Debug Mode
-
-Enable verbose logging:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-### Performance Profiling
-
-```bash
-# Profile test execution
-uv run pytest --profile
-
-# Profile application
-python -m cProfile -o profile.stats src/finwiz/main.py
-```
-
-## Data Quality Standards
-
-### Core Principles
-
-1. **Fail Fast**: Reject invalid data at the source
-2. **Transparency**: Clearly communicate when data is unavailable
-3. **No Hallucinations**: Never generate fake data to fill gaps
-4. **Completeness**: Process all available data
-5. **Traceability**: Log all data decisions
-
-### Data Validation at Source
-
-**Always validate data before use**:
-
-```python
-from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
-
-generator = SECFilingURLGenerator()
-
-# Get valid URL or None
-url = generator.get_filing_url(ticker="AAPL", filing_type="10-K")
-
-if url is None:
-    # Handle missing data transparently
-    return "No SEC filings available"
-else:
-    # Use validated URL
-    return f"Filing available at: {url}"
-```
-
-### Handling Missing Data
-
-**Never generate fake data**:
-
-```python
-# ✅ Correct - Return None or clear message
-def get_backtesting_metrics(ticker: str) -> BacktestingMetrics | None:
-    metrics = extract_metrics(ticker)
-    if metrics is None:
-        logger.info(f"No backtesting data available for {ticker}")
-        return None
-    return metrics
-
-# ❌ Incorrect - Generate fake data
-def get_backtesting_metrics(ticker: str) -> BacktestingMetrics:
-    metrics = extract_metrics(ticker)
-    if metrics is None:
-        # DON'T DO THIS
-        return BacktestingMetrics(
-            annualized_return="Données non disponibles",
-            sharpe_ratio="N/A"
-        )
-    return metrics
-```
-
-### Data Availability Tracking
-
-**Track all data sources**:
-
-```python
-from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
-
-tracker = DataAvailabilityTracker()
-
-# Track each data source
-tracker.track_data_source("sentiment", "available", age_hours=2)
-tracker.track_data_source("sec_filings", "unavailable", age_hours=0)
-tracker.track_data_source("backtesting", "available", age_hours=48)
-
-# Get summary for report
-summary = tracker.get_availability_summary()
-warnings = tracker.get_freshness_warnings()
-```
-
-### Complete Data Processing
-
-**Process all available data**:
-
-```python
-from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
-
-processor = PortfolioHoldingsProcessor()
-
-# Load ALL holdings from CSV files
-holdings = processor.load_all_holdings()
-
-# Process ALL holdings, including those that fail validation
-processed = processor.process_holdings(holdings)
-
-# Track what was excluded and why
-summary = processor.get_processing_summary()
-logger.info(f"Processed {summary.total_processed} of {summary.total_holdings} holdings")
-logger.info(f"Excluded {summary.total_excluded} holdings: {summary.exclusion_reasons}")
-```
-
-### URL Validation
-
-**Verify URLs before including in reports**:
-
-```python
-from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
-
-generator = SECFilingURLGenerator()
-
-# Generate URL
-url = generator.get_filing_url(ticker="AAPL", filing_type="10-K")
-
-if url and generator.verify_url(url):
-    # URL is valid and accessible
-    include_in_report(url)
-else:
-    # URL is invalid or inaccessible
-    include_in_report("No SEC filings available")
-```
-
-### Data Quality Checklist
-
-Before accepting any data:
-
-- [ ] Data validated at source
-- [ ] Invalid data rejected with logging
-- [ ] Missing data returns None (not fake data)
-- [ ] All data sources tracked
-- [ ] Freshness checked (warn if >7 days)
-- [ ] Complete processing (no silent exclusions)
-- [ ] URLs verified before use
-- [ ] Clear messaging when data unavailable
+Enable verbose logging for detailed output:
+`import logging; logging.basicConfig(level=logging.DEBUG)`
 
 ## See Also
 
-- [Architecture Guide](ARCHITECTURE.md) - System design and patterns
-- [API Reference](API_REFERENCE.md) - Complete API documentation
-- [Agent Handbook](agent_handbook.md) - Agent guidelines
-- [Testing Guide](test_coverage_stabilization.md) - Comprehensive testing guide
-- [Data Quality Guide](DATA_QUALITY_GUIDE.md) - Data quality best practices
+-   [Architecture Guide](ARCHITECTURE.md) - System design and patterns.
+-   [API Reference](API_REFERENCE.md) - Complete API documentation.
+-   [Data Quality Guide](DATA_QUALITY_GUIDE.md) - Best practices for ensuring data quality.
 
 ---
-
-**Version**: 2.1  
-**Last Updated**: 2025-01-07
+**Version**: 2.2
+**Last Updated**: 2025-10-07
