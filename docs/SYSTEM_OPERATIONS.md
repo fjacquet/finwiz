@@ -7,7 +7,9 @@ Complete guide for FinWiz system operations including feedback learning, portfol
 1. [Feedback Learning System](#feedback-learning-system)
 2. [Portfolio Monitoring](#portfolio-monitoring)
 3. [Knowledge Base Strategy](#knowledge-base-strategy)
-4. [Integration Configuration](#integration-configuration)
+4. [Intelligent Caching System](#intelligent-caching-system)
+5. [Feature Flags & Configuration](#feature-flags--configuration)
+6. [Integration Configuration](#integration-configuration)
 
 ## Feedback Learning System
 
@@ -240,32 +242,243 @@ FinWiz uses **real-time information retrieval** instead of a static knowledge ba
 - `CoinMarketCapTool` - Crypto data
 - `PerplexitySearchTool` - Enhanced research (optional)
 
-### Caching Strategy
+## Intelligent Caching System
 
-To optimize performance, FinWiz implements intelligent caching:
+The FinWiz caching system provides intelligent caching capabilities to improve performance, reduce API costs, and enhance system responsiveness. It supports multiple backends, configurable strategies, and comprehensive performance monitoring.
+
+### Architecture Overview
+
+The caching system consists of:
+
+1. **CacheManager**: Central orchestrator for all caching operations
+2. **Multiple Backends**: Memory, file, and hybrid storage options
+3. **Eviction Strategies**: TTL, LRU, LFU, and adaptive algorithms
+4. **Performance Monitoring**: Comprehensive statistics and hit rate tracking
+5. **Cache Warming**: Pre-loading of frequently accessed data
+
+### Core Components
+
+#### CacheManager
+
+The `CacheManager` class provides the main interface for caching operations:
 
 ```python
-# Cache configuration
-CACHE_BACKEND=hybrid        # Memory + file
-CACHE_TTL=2700             # 45 minutes
-CACHE_STRATEGY=ttl         # Time-based eviction
+from finwiz.utils.cache_manager import get_cache_manager, CacheConfig
+
+# Get the global cache manager instance
+cache = get_cache_manager()
+
+# Basic operations
+await cache.set("key", {"data": "value"}, ttl=3600)
+result = await cache.get("key")
+await cache.delete("key")
+
+# Bulk operations
+await cache.clear()  # Clear all entries
+await cache.cleanup_expired()  # Remove expired entries
 ```
 
-**Cache TTL by Data Type**:
+#### Cache Configuration
 
-- Price data: 1 hour
-- News articles: 6 hours
-- SEC filings: 24 hours
-- Company fundamentals: 24 hours
-- Technical indicators: 1 hour
+Configure caching behavior through `CacheConfig`:
 
-### Best Practices
+```python
+from finwiz.utils.cache_manager import CacheConfig, CacheBackend, CacheStrategy
 
-1. **Use Caching**: Enable hybrid caching for best performance
-2. **Respect Rate Limits**: Configure max_rpm appropriately
-3. **Fallback Strategy**: Implement graceful degradation
-4. **Monitor Costs**: Track API usage and costs
-5. **Data Freshness**: Validate data timestamps
+config = CacheConfig(
+    backend=CacheBackend.HYBRID,        # memory, file, or hybrid
+    default_ttl=2700,                   # 45 minutes default TTL
+    max_memory_items=1000,              # Memory cache size limit
+    max_file_size_mb=100,               # File cache size limit
+    cache_directory="cache",            # Cache file directory
+    strategy=CacheStrategy.TTL,         # Eviction strategy
+    enable_compression=True,            # Compress cached data
+    auto_cleanup=True,                  # Automatic cleanup
+    cleanup_interval=3600,              # Cleanup every hour
+    hit_rate_threshold=0.7              # Minimum effective hit rate
+)
+
+cache = CacheManager(config)
+```
+
+### Cache Backends
+
+#### Memory Backend (`CacheBackend.MEMORY`)
+
+- **Pros**: Fastest access, no disk I/O
+- **Cons**: Limited by available RAM, data lost on restart
+- **Use Case**: Temporary data, high-frequency access patterns
+
+#### File Backend (`CacheBackend.FILE`)
+
+- **Pros**: Persistent across restarts, larger capacity
+- **Cons**: Slower than memory, disk I/O overhead
+- **Use Case**: Long-term caching, large datasets
+
+#### Hybrid Backend (`CacheBackend.HYBRID`) - Recommended
+
+- **Pros**: Combines speed of memory with persistence of files
+- **Cons**: Slightly more complex management
+- **Use Case**: Production environments, balanced performance
+
+### Eviction Strategies
+
+#### TTL (Time-To-Live) - Default
+
+- Removes entries when they exceed their TTL
+- Simple and predictable behavior
+- Good for time-sensitive data
+
+#### LRU (Least Recently Used)
+
+- Removes least recently accessed entries
+- Good for access pattern-based caching
+- Maintains frequently used data
+
+#### LFU (Least Frequently Used)
+
+- Removes least frequently accessed entries
+- Good for popularity-based caching
+- Keeps most popular data in cache
+
+#### Adaptive
+
+- Dynamically adjusts strategy based on access patterns
+- Combines multiple strategies for optimal performance
+- Best for varied workloads
+
+### Environment Configuration
+
+Configure caching through environment variables:
+
+```bash
+# Cache backend configuration
+CACHE_BACKEND=hybrid                    # memory, file, hybrid
+CACHE_TTL=2700                         # Default TTL in seconds
+CACHE_MAX_MEMORY_ITEMS=1000            # Memory cache size limit
+CACHE_MAX_FILE_SIZE_MB=100             # File cache size limit
+CACHE_DIRECTORY=cache                  # Cache directory path
+CACHE_STRATEGY=ttl                     # ttl, lru, lfu, adaptive
+CACHE_AUTO_CLEANUP=true                # Enable auto cleanup
+CACHE_CLEANUP_INTERVAL=3600            # Cleanup interval in seconds
+CACHE_ENABLE_COMPRESSION=true          # Enable data compression
+CACHE_HIT_RATE_THRESHOLD=0.7           # Minimum effective hit rate
+```
+
+## Feature Flags & Configuration
+
+This guide explains how to use the feature flag system and configuration manager in FinWiz for gradual rollouts, graceful degradation, and environment management.
+
+### Overview
+
+The FinWiz feature flag system provides:
+
+- **Environment-based configuration** for gradual rollouts
+- **Circuit breaker patterns** for service reliability
+- **Graceful degradation** when services fail
+- **Centralized API key management** with validation
+- **Multiple evaluation strategies** (boolean, percentage, user lists, time windows)
+
+### Quick Start
+
+#### Basic Feature Flag Usage
+
+```python
+from finwiz.utils.feature_flags import is_feature_enabled, execute_with_feature_flag
+
+# Check if a feature is enabled
+if is_feature_enabled("enhanced_sentiment_analysis"):
+    result = perform_enhanced_analysis()
+else:
+    result = perform_basic_analysis()
+
+# Execute with automatic fallback
+result = execute_with_feature_flag(
+    "enhanced_sentiment_analysis",
+    primary_function=perform_enhanced_analysis,
+    fallback_function=perform_basic_analysis,
+    ticker="AAPL"
+)
+```
+
+#### Configuration Management
+
+```python
+from finwiz.utils.configuration_manager import validate_startup_configuration, get_api_key
+
+# Validate all required API keys at startup
+try:
+    validate_startup_configuration()
+    print("✅ All required API keys configured")
+except ConfigurationError as e:
+    print(f"❌ Configuration error: {e.remediation_guidance}")
+
+# Get API key for a service
+openai_key = get_api_key("OpenAI")
+if openai_key:
+    # Use the API key
+    pass
+```
+
+### Environment Variables
+
+#### Feature Flag Configuration
+
+Control feature flags using environment variables:
+
+```bash
+# Enable/disable features
+FF_ENHANCED_SENTIMENT=true
+FF_ADVANCED_TECHNICAL=false
+FF_CHART_ANALYSIS=true
+FF_TWELVE_DATA=true
+FF_PERPLEXITY_RESEARCH=false
+
+# Percentage rollouts (0-100)
+FF_ENHANCED_SENTIMENT_ROLLOUT=75.0
+FF_ADVANCED_TECHNICAL_ROLLOUT=50.0
+
+# Circuit breaker thresholds
+FF_CHART_BREAKER_THRESHOLD=3
+FF_CHART_BREAKER_TIMEOUT=300
+FF_TWELVE_DATA_BREAKER_THRESHOLD=5
+FF_PERPLEXITY_BREAKER_THRESHOLD=5
+FF_PERPLEXITY_BREAKER_TIMEOUT=300
+```
+
+#### API Key Configuration
+
+Configure required API keys:
+
+```bash
+# Required keys
+OPENAI_API_KEY=sk-your-openai-key-here
+SERPER_API_KEY=your-serper-key-here
+FIRECRAWL_API_KEY=your-firecrawl-key-here
+ALPHA_VANTAGE_API_KEY=your-alpha-vantage-key-here
+
+# Optional keys (controlled by feature flags)
+CHART_IMG_API_KEY=your-chart-img-key-here
+TWELVE_DATA_API_KEY=your-twelve-data-key-here
+COINMARKETCAP_API_KEY=your-coinmarketcap-key-here
+KRAKEN_API_KEY=your-kraken-key-here
+PPLX_API_KEY=your-perplexity-api-key-here
+```
+
+### Circuit Breaker Pattern
+
+The circuit breaker pattern automatically disables failing services:
+
+```python
+# Configure circuit breaker
+degradation_manager = get_degradation_manager()
+degradation_manager.update_service_config(
+    "external_api",
+    error_threshold=5,        # Open circuit after 5 failures
+    circuit_breaker_timeout=300,  # Wait 5 minutes before retry
+    recovery_threshold=2      # Close circuit after 2 successes
+)
+```
 
 ## Integration Configuration
 
@@ -346,25 +559,6 @@ FINWIZ_GRACEFUL_DEGRADATION=true
 - **Discovery**: 72 hours (weekly discovery runs)
 - **Portfolio**: 168 hours (weekly reviews)
 
-**Freshness Checking**:
-
-```python
-from finwiz.integration.data_accessor import DataAccessor
-
-accessor = DataAccessor()
-
-# Check if data is fresh
-is_fresh = accessor.is_data_fresh(
-    crew_type="stock",
-    ticker="AAPL",
-    max_age_hours=24
-)
-
-if not is_fresh:
-    # Trigger new analysis
-    await accessor.trigger_crew_analysis("stock", "AAPL")
-```
-
 ### Validation
 
 **Validation Modes**:
@@ -373,55 +567,17 @@ if not is_fresh:
 - `strict_validation=false`: Warn on validation errors
 - `continue_on_warnings=true`: Continue despite warnings
 
-**Validation Process**:
-
-1. Schema validation (Pydantic)
-2. Data freshness check
-3. Required field validation
-4. Data type validation
-5. Business rule validation
-
 ### Error Handling
 
 **Retry Strategy**:
 
-```python
-# Automatic retry with exponential backoff
-max_retries: 3
-retry_delay: 2  # seconds (doubles each retry)
-
-# Retry sequence: 2s, 4s, 8s
-```
+- Automatic retry with exponential backoff (max_retries: 3, retry_delay: 2s)
 
 **Graceful Degradation**:
 
 - Use cached data if available
 - Fall back to baseline analysis
 - Continue with partial data
-- Log warnings for manual review
-
-### Monitoring
-
-**Integration Metrics**:
-
-```python
-from finwiz.integration.data_accessor import DataAccessor
-
-accessor = DataAccessor()
-metrics = accessor.get_integration_metrics()
-
-print(f"Total requests: {metrics['total_requests']}")
-print(f"Cache hit rate: {metrics['cache_hit_rate']:.2%}")
-print(f"Average latency: {metrics['avg_latency_ms']}ms")
-print(f"Error rate: {metrics['error_rate']:.2%}")
-```
-
-**Health Check**:
-
-```bash
-# Check integration system health
-uv run python -c "from finwiz.integration.data_accessor import DataAccessor; print(DataAccessor().health_check())"
-```
 
 ## Best Practices
 
@@ -430,32 +586,24 @@ uv run python -c "from finwiz.integration.data_accessor import DataAccessor; pri
 1. **Collect Regularly**: Prompt users for feedback after recommendations
 2. **Track Performance**: Monitor all A+ investments for at least 1 year
 3. **Review Insights**: Monthly review of learning insights
-4. **Validate Changes**: Backtest all criteria adjustments
-5. **Document Decisions**: Keep audit trail of criteria changes
 
 ### Portfolio Monitoring
 
 1. **Set Appropriate Thresholds**: Balance sensitivity vs noise
 2. **Configure Quiet Hours**: Respect user preferences
 3. **Test Notifications**: Verify email/SMS delivery
-4. **Review Alerts**: Weekly review of alert patterns
-5. **Adjust Rules**: Refine monitoring rules based on experience
 
-### Knowledge Base
+### Knowledge Base & Caching
 
 1. **Enable Caching**: Use hybrid caching for performance
 2. **Monitor Costs**: Track API usage and costs
 3. **Validate Freshness**: Check data timestamps
-4. **Implement Fallbacks**: Graceful degradation on API failures
-5. **Rate Limit**: Respect API rate limits
 
 ### Integration
 
 1. **Configure Freshness**: Set appropriate thresholds per crew
 2. **Enable Validation**: Use strict validation in production
 3. **Monitor Metrics**: Track cache hit rate and latency
-4. **Handle Errors**: Implement retry and fallback strategies
-5. **Log Everything**: Enable structured logging for debugging
 
 ---
 
