@@ -95,17 +95,17 @@ class ReportCrew:
         self.output_dir = Path("output")
         self.integration_manager = CrewDataIntegrationManager(self.output_dir)
         self.data_accessor = CrewDataAccessor(self.integration_manager)
-        
+
         # Initialize A+ discovery accessor
         self.discovery_accessor = APlusDiscoveryAccessor(output_dir=self.output_dir)
-        
+
         # Initialize backtesting data extractor
         self.backtesting_extractor = BacktestingDataExtractor(logger=logger)
-        
+
         # Initialize data availability tracker
         self.availability_tracker = DataAvailabilityTracker(
             stale_threshold_hours=168.0,  # 7 days
-            logger=logger
+            logger=logger,
         )
 
         # Initialize tools with data availability checking
@@ -206,71 +206,63 @@ class ReportCrew:
         try:
             # Clear previous tracking
             self.availability_tracker.clear_tracked_sources()
-            
+
             # Get consolidated reporter input with all integrated data
             integrated_data = self.data_accessor.get_consolidated_reporter_input(max_age_hours)
 
             # Track crew data availability
             availability_report = self.data_accessor.check_data_availability(max_age_hours)
-            
+
             # Track stock crew data
             if availability_report.stock_available:
                 self.availability_tracker.track_data_source(
                     source="stock_crew",
                     status="available",
                     age_hours=availability_report.stock_age_hours,
-                    record_count=len(integrated_data.get("stock_analysis_data", []))
+                    record_count=len(integrated_data.get("stock_analysis_data", [])),
                 )
             else:
                 self.availability_tracker.track_data_source(
-                    source="stock_crew",
-                    status="unavailable",
-                    error_message="Stock crew data not found"
+                    source="stock_crew", status="unavailable", error_message="Stock crew data not found"
                 )
-            
+
             # Track ETF crew data
             if availability_report.etf_available:
                 self.availability_tracker.track_data_source(
                     source="etf_crew",
                     status="available",
                     age_hours=availability_report.etf_age_hours,
-                    record_count=len(integrated_data.get("etf_analysis_data", []))
+                    record_count=len(integrated_data.get("etf_analysis_data", [])),
                 )
             else:
                 self.availability_tracker.track_data_source(
-                    source="etf_crew",
-                    status="unavailable",
-                    error_message="ETF crew data not found"
+                    source="etf_crew", status="unavailable", error_message="ETF crew data not found"
                 )
-            
+
             # Track crypto crew data
             if availability_report.crypto_available:
                 self.availability_tracker.track_data_source(
                     source="crypto_crew",
                     status="available",
                     age_hours=availability_report.crypto_age_hours,
-                    record_count=len(integrated_data.get("crypto_analysis_data", []))
+                    record_count=len(integrated_data.get("crypto_analysis_data", [])),
                 )
             else:
                 self.availability_tracker.track_data_source(
-                    source="crypto_crew",
-                    status="unavailable",
-                    error_message="Crypto crew data not found"
+                    source="crypto_crew", status="unavailable", error_message="Crypto crew data not found"
                 )
-            
+
             # Track portfolio data
             if availability_report.portfolio_available:
                 self.availability_tracker.track_data_source(
                     source="portfolio_review",
                     status="available",
                     age_hours=availability_report.portfolio_age_hours,
-                    record_count=len(integrated_data.get("portfolio_review", {}).get("holdings", []))
+                    record_count=len(integrated_data.get("portfolio_review", {}).get("holdings", [])),
                 )
             else:
                 self.availability_tracker.track_data_source(
-                    source="portfolio_review",
-                    status="unavailable",
-                    error_message="Portfolio review data not found"
+                    source="portfolio_review", status="unavailable", error_message="Portfolio review data not found"
                 )
 
             # Add data availability information
@@ -278,168 +270,151 @@ class ReportCrew:
 
             # Add stale data warnings
             integrated_data["stale_data_warnings"] = self.data_accessor.get_stale_data_warnings(max_age_hours)
-            
+
             # Add A+ discovery data with proper status handling
             discovery_status = self._get_discovery_status()
             integrated_data["discovery_status"] = discovery_status
-            
+
             if discovery_status["has_results"]:
                 # Load discovery results
                 discovery_results = self.discovery_accessor.load_discovery_results()
                 if discovery_results:
                     integrated_data["aplus_discovery_results"] = discovery_results
                     integrated_data["aplus_opportunities_summary"] = self.discovery_accessor.get_opportunities_summary()
-                    
+
                     # Track discovery data as available
                     self.availability_tracker.track_data_source(
-                        source="aplus_discovery",
-                        status="available",
-                        record_count=len(discovery_results.get('opportunities', []))
+                        source="aplus_discovery", status="available", record_count=len(discovery_results.get("opportunities", []))
                     )
-                    
-                    logger.info(f"Loaded A+ discovery results: {len(discovery_results.get('opportunities', []))} opportunities found")
+
+                    logger.info(
+                        f"Loaded A+ discovery results: {len(discovery_results.get('opportunities', []))} opportunities found"
+                    )
                 else:
                     integrated_data["aplus_discovery_results"] = None
                     integrated_data["aplus_opportunities_summary"] = "No A+ opportunities found in current analysis"
-                    
+
                     # Track discovery as available but with no opportunities
-                    self.availability_tracker.track_data_source(
-                        source="aplus_discovery",
-                        status="available",
-                        record_count=0
-                    )
-                    
+                    self.availability_tracker.track_data_source(source="aplus_discovery", status="available", record_count=0)
+
                     logger.info("Discovery results exist but no opportunities found")
             else:
                 integrated_data["aplus_discovery_results"] = None
                 integrated_data["aplus_opportunities_summary"] = discovery_status["message"]
-                
+
                 # Track discovery as unavailable
                 self.availability_tracker.track_data_source(
-                    source="aplus_discovery",
-                    status="unavailable",
-                    error_message=discovery_status["message"]
+                    source="aplus_discovery", status="unavailable", error_message=discovery_status["message"]
                 )
-                
+
                 logger.info(f"A+ discovery not available: {discovery_status['message']}")
-            
+
             # Add backtesting data with proper status handling
             backtesting_data = self._extract_backtesting_data()
             integrated_data["backtesting_status"] = {
                 "has_data": backtesting_data["has_backtesting_data"],
                 "message": backtesting_data["message"],
-                "status": backtesting_data["status"]
+                "status": backtesting_data["status"],
             }
-            
+
             if backtesting_data["has_backtesting_data"]:
                 integrated_data["backtesting_data"] = backtesting_data["backtesting_by_candidate"]
                 integrated_data["backtesting_summary"] = backtesting_data.get("summary")
-                
+
                 # Track backtesting data as available
                 self.availability_tracker.track_data_source(
-                    source="backtesting",
-                    status="available",
-                    record_count=backtesting_data.get("total_candidates", 0)
+                    source="backtesting", status="available", record_count=backtesting_data.get("total_candidates", 0)
                 )
-                
+
                 logger.info(f"Loaded backtesting data for {backtesting_data['total_candidates']} candidates")
             else:
                 integrated_data["backtesting_data"] = None
                 integrated_data["backtesting_summary"] = None
-                
+
                 # Track backtesting as unavailable
                 self.availability_tracker.track_data_source(
-                    source="backtesting",
-                    status="unavailable",
-                    error_message=backtesting_data["message"]
+                    source="backtesting", status="unavailable", error_message=backtesting_data["message"]
                 )
-                
+
                 logger.info(f"Backtesting data not available: {backtesting_data['message']}")
-            
+
             # Generate data availability summary
             availability_summary = self.availability_tracker.get_availability_summary()
             integrated_data["data_availability_summary"] = availability_summary.model_dump()
-            integrated_data["data_availability_summary_formatted"] = self.availability_tracker.format_summary_for_report(availability_summary)
-            
+            integrated_data["data_availability_summary_formatted"] = self.availability_tracker.format_summary_for_report(
+                availability_summary
+            )
+
             logger.info(
                 "Integrated data context prepared for report generation",
                 extra={
                     "total_sources": availability_summary.total_sources,
                     "available_sources": availability_summary.available_sources,
                     "unavailable_sources": availability_summary.unavailable_sources,
-                    "stale_sources": availability_summary.stale_sources
-                }
+                    "stale_sources": availability_summary.stale_sources,
+                },
             )
-            
+
             return integrated_data
 
         except Exception as e:
             logger.error(f"Failed to get integrated data context: {str(e)}", exc_info=True)
-            
+
             # Track error in availability tracker
             self.availability_tracker.track_data_source(
-                source="data_integration",
-                status="unavailable",
-                error_message=f"Data integration failed: {str(e)}"
+                source="data_integration", status="unavailable", error_message=f"Data integration failed: {str(e)}"
             )
-            
+
             # Generate error summary
             error_summary = self.availability_tracker.get_availability_summary()
-            
+
             return {
                 "error": f"Data integration failed: {str(e)}",
                 "fallback_mode": True,
                 "data_availability_report": None,
                 "stale_data_warnings": [f"Data integration error: {str(e)}"],
-                "discovery_status": {
-                    "has_results": False,
-                    "message": f"Discovery data unavailable due to error: {str(e)}"
-                },
+                "discovery_status": {"has_results": False, "message": f"Discovery data unavailable due to error: {str(e)}"},
                 "data_availability_summary": error_summary.model_dump(),
-                "data_availability_summary_formatted": self.availability_tracker.format_summary_for_report(error_summary)
+                "data_availability_summary_formatted": self.availability_tracker.format_summary_for_report(error_summary),
             }
-    
+
     def _get_discovery_status(self) -> dict[str, Any]:
         """
         Get A+ discovery status with clear messaging.
-        
+
         Returns:
             Dictionary with discovery status information
         """
         has_results = self.discovery_accessor.has_discovery_results()
-        
+
         if has_results:
-            return {
-                "has_results": True,
-                "message": "A+ discovery results available",
-                "status": "available"
-            }
+            return {"has_results": True, "message": "A+ discovery results available", "status": "available"}
         else:
             return {
                 "has_results": False,
                 "message": "A+ discovery not run - use --discovery flag to enable discovery analysis",
-                "status": "not_run"
+                "status": "not_run",
             }
-    
+
     def _safe_get_metric(self, vr_data: dict[str, Any], key: str) -> float | None:
         """
         Safely extract a metric from validation result dict.
-        
+
         Args:
             vr_data: Validation result dictionary
             key: Key to extract
-            
+
         Returns:
             Float value or None if not available or invalid
         """
         value = vr_data.get(key)
         if value is None:
             return None
-        
+
         # Check for string placeholders
         if isinstance(value, str):
             return None
-        
+
         try:
             float_value = float(value)
             # Check for reasonable range
@@ -448,7 +423,7 @@ class ReportCrew:
             return float_value
         except (ValueError, TypeError):
             return None
-    
+
     def _calculate_calmar_from_dict(self, vr_data: dict[str, Any]) -> float | None:
         """Calculate Calmar ratio from validation result dict."""
         # Try to get annualized return from validation details
@@ -458,35 +433,35 @@ class ReportCrew:
             returns = [d.get("annualized_return") for d in validation_details if d.get("annualized_return") is not None]
             if returns:
                 annualized_return = sum(returns) / len(returns)
-        
+
         # If not in details, try direct field
         if annualized_return is None:
             annualized_return = self._safe_get_metric(vr_data, "annualized_return")
-        
+
         max_dd = self._safe_get_metric(vr_data, "average_max_drawdown")
-        
+
         if annualized_return is None or max_dd is None:
             return None
-        
+
         abs_max_dd = abs(max_dd)
         if abs_max_dd == 0:
             return None
-        
+
         return annualized_return / abs_max_dd
-    
+
     def _extract_total_trades_from_dict(self, vr_data: dict[str, Any]) -> int | None:
         """Extract total trades from validation result dict."""
         validation_details = vr_data.get("validation_details", [])
         if not validation_details:
             return None
-        
+
         trades = [d.get("total_trades", 0) for d in validation_details if "total_trades" in d]
         return sum(trades) if trades else None
-    
+
     def _extract_backtesting_data(self) -> dict[str, Any]:
         """
         Extract backtesting data from discovery results using the backtesting extractor.
-        
+
         Returns:
             Dictionary with backtesting data and status
         """
@@ -497,9 +472,9 @@ class ReportCrew:
                 return {
                     "has_backtesting_data": False,
                     "message": "Backtesting data not available - discovery not run",
-                    "status": "not_available"
+                    "status": "not_available",
                 }
-            
+
             # Load discovery results
             discovery_results = self.discovery_accessor.load_discovery_results()
             if not discovery_results:
@@ -507,9 +482,9 @@ class ReportCrew:
                 return {
                     "has_backtesting_data": False,
                     "message": "Backtesting data not available - discovery results could not be loaded",
-                    "status": "not_available"
+                    "status": "not_available",
                 }
-            
+
             # Extract validation results from discovery data
             validation_results = discovery_results.get("validation_results", [])
             if not validation_results:
@@ -517,28 +492,30 @@ class ReportCrew:
                 return {
                     "has_backtesting_data": False,
                     "message": "Backtesting data not available - no validation results in discovery",
-                    "status": "not_available"
+                    "status": "not_available",
                 }
-            
+
             # Extract backtesting metrics for each candidate
             backtesting_by_candidate = {}
             all_metrics = []
-            
+
             for vr_data in validation_results:
                 try:
                     # Work directly with dict data - don't try to convert to ValidationResult
                     # as it may not have all required fields
                     symbol = vr_data.get("symbol", "UNKNOWN")
-                    
+
                     # Extract annualized return from validation details if not in top level
                     annualized_return = self._safe_get_metric(vr_data, "annualized_return")
                     if annualized_return is None:
                         validation_details = vr_data.get("validation_details", [])
                         if validation_details:
-                            returns = [d.get("annualized_return") for d in validation_details if d.get("annualized_return") is not None]
+                            returns = [
+                                d.get("annualized_return") for d in validation_details if d.get("annualized_return") is not None
+                            ]
                             if returns:
                                 annualized_return = sum(returns) / len(returns)
-                    
+
                     # Extract win rate from validation details if not in top level
                     win_rate = self._safe_get_metric(vr_data, "win_rate")
                     if win_rate is None:
@@ -547,7 +524,7 @@ class ReportCrew:
                             rates = [d.get("win_rate") for d in validation_details if d.get("win_rate") is not None]
                             if rates:
                                 win_rate = sum(rates) / len(rates)
-                    
+
                     # Extract metrics directly from the dict
                     metrics_dict = {
                         "annualized_return": annualized_return,
@@ -557,25 +534,26 @@ class ReportCrew:
                         "max_drawdown": self._safe_get_metric(vr_data, "average_max_drawdown"),
                         "win_rate": win_rate,
                         "backtest_period_years": vr_data.get("backtest_period_years"),
-                        "total_trades": self._extract_total_trades_from_dict(vr_data)
+                        "total_trades": self._extract_total_trades_from_dict(vr_data),
                     }
-                    
+
                     # Create BacktestingMetrics from the extracted data
                     from finwiz.integration.backtesting_extractor import BacktestingMetrics
+
                     metrics = BacktestingMetrics(**metrics_dict)
-                    
+
                     if metrics:
                         backtesting_by_candidate[symbol] = {
                             "metrics": metrics.model_dump(),
                             "formatted_display": self.backtesting_extractor.format_for_display(metrics),
-                            "available_metrics": self.backtesting_extractor.get_available_metrics(metrics)
+                            "available_metrics": self.backtesting_extractor.get_available_metrics(metrics),
                         }
                         all_metrics.append(metrics)
                         logger.info(f"Extracted backtesting metrics for {symbol}")
                 except Exception as e:
                     logger.error(f"Failed to extract backtesting metrics for validation result: {e}")
                     continue
-            
+
             # Generate summary if we have metrics
             summary = None
             if all_metrics:
@@ -584,11 +562,20 @@ class ReportCrew:
                 summary_data = {
                     "total_candidates_tested": len(all_metrics),
                     "candidates_with_data": len([m for m in all_metrics if m.annualized_return is not None]),
-                    "average_annualized_return": sum(m.annualized_return for m in all_metrics if m.annualized_return is not None) / len([m for m in all_metrics if m.annualized_return is not None]) if any(m.annualized_return is not None for m in all_metrics) else None,
-                    "average_sharpe_ratio": sum(m.sharpe_ratio for m in all_metrics if m.sharpe_ratio is not None) / len([m for m in all_metrics if m.sharpe_ratio is not None]) if any(m.sharpe_ratio is not None for m in all_metrics) else None,
-                    "average_max_drawdown": sum(m.max_drawdown for m in all_metrics if m.max_drawdown is not None) / len([m for m in all_metrics if m.max_drawdown is not None]) if any(m.max_drawdown is not None for m in all_metrics) else None,
+                    "average_annualized_return": sum(m.annualized_return for m in all_metrics if m.annualized_return is not None)
+                    / len([m for m in all_metrics if m.annualized_return is not None])
+                    if any(m.annualized_return is not None for m in all_metrics)
+                    else None,
+                    "average_sharpe_ratio": sum(m.sharpe_ratio for m in all_metrics if m.sharpe_ratio is not None)
+                    / len([m for m in all_metrics if m.sharpe_ratio is not None])
+                    if any(m.sharpe_ratio is not None for m in all_metrics)
+                    else None,
+                    "average_max_drawdown": sum(m.max_drawdown for m in all_metrics if m.max_drawdown is not None)
+                    / len([m for m in all_metrics if m.max_drawdown is not None])
+                    if any(m.max_drawdown is not None for m in all_metrics)
+                    else None,
                 }
-            
+
             if backtesting_by_candidate:
                 logger.info(f"Successfully extracted backtesting data for {len(backtesting_by_candidate)} candidates")
                 return {
@@ -597,30 +584,26 @@ class ReportCrew:
                     "status": "available",
                     "backtesting_by_candidate": backtesting_by_candidate,
                     "summary": summary_data if summary else None,
-                    "total_candidates": len(backtesting_by_candidate)
+                    "total_candidates": len(backtesting_by_candidate),
                 }
             else:
                 logger.warning("No backtesting metrics could be extracted from validation results")
                 return {
                     "has_backtesting_data": False,
                     "message": "Backtesting data not available - metrics could not be extracted",
-                    "status": "not_available"
+                    "status": "not_available",
                 }
-                
+
         except Exception as e:
             logger.error(f"Failed to extract backtesting data: {e}", exc_info=True)
-            return {
-                "has_backtesting_data": False,
-                "message": f"Backtesting data extraction failed: {str(e)}",
-                "status": "error"
-            }
+            return {"has_backtesting_data": False, "message": f"Backtesting data extraction failed: {str(e)}", "status": "error"}
 
     @agent
     def financial_integration_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["financial_integration_analyst"],
             verbose=True,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for complex financial integration decisions
             tools=self.tools,
         )
 
@@ -631,7 +614,7 @@ class ReportCrew:
             config=self.agents_config["portfolio_allocator"],
             verbose=True,
             tools=self.tools,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for optimal portfolio allocation decisions
         )
 
     @agent
@@ -641,7 +624,7 @@ class ReportCrew:
             config=self.agents_config["risk_manager"],
             verbose=True,
             tools=self.tools,
-            reasoning=False,
+            reasoning=True,  # Enable AI reasoning for risk assessment and mitigation decisions
         )
 
     @final_reporter

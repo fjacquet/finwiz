@@ -121,6 +121,7 @@ class CryptoCrew:
             config=self.agents_config["research_director"],
             tools=[],
             verbose=True,
+            reasoning=True,  # Enable AI reasoning for research consolidation decisions
             llm=self._get_configured_llm(),
         )
 
