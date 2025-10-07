@@ -125,15 +125,15 @@ class CryptoCrew:
             llm=self._get_configured_llm(),
         )
 
-    @agent
-    def translator(self) -> Agent:
-        """Create translator agent that converts English reports to French while preserving layout."""
-        return Agent(
-            config=self.agents_config["translator"],
-            tools=[],  # No tools - only consumes upstream HTML context
-            verbose=True,
-            llm=self._get_configured_llm(),
-        )
+    # @agent
+    # def translator(self) -> Agent:
+    #     """Create translator agent that converts English reports to French while preserving layout."""
+    #     return Agent(
+    #         config=self.agents_config["translator"],
+    #         tools=[],  # No tools - only consumes upstream HTML context
+    #         verbose=True,
+    #         llm=self._get_configured_llm(),
+    #     )
 
     @async_task
     @task
@@ -168,13 +168,13 @@ class CryptoCrew:
             config=self.tasks_config["final_report_task"],
         )
 
-    @sync_task
-    @task
-    def translation_task(self) -> Task:
-        """Task to translate the English report to French while preserving layout."""
-        return Task(
-            config=self.tasks_config["translation_task"],
-        )
+    # @sync_task
+    # @task
+    # def translation_task(self) -> Task:
+    #     """Task to translate the English report to French while preserving layout."""
+    #     return Task(
+    #         config=self.tasks_config["translation_task"],
+    #     )
 
     @crew
     def crew(self) -> Crew:

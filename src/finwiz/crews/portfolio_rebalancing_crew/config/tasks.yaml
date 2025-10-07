@@ -299,40 +299,40 @@ risk_validation_task:
   depends_on:
     - rebalancing_optimization_task
 
-# Translation Task
-translation_task:
-  description: >
-    Translate the English portfolio rebalancing report to French while preserving exact HTML structure and styling.
+# # Translation Task
+# translation_task:
+#   description: >
+#     Translate the English portfolio rebalancing report to French while preserving exact HTML structure and styling.
 
-    This task involves professional translation of the comprehensive portfolio rebalancing analysis 
-    from English to French, maintaining all technical accuracy and visual formatting.
+#     This task involves professional translation of the comprehensive portfolio rebalancing analysis 
+#     from English to French, maintaining all technical accuracy and visual formatting.
 
-    1. Receive the complete HTML portfolio rebalancing report from the risk validation task.
-    2. Translate all text content from English to French while preserving:
-       - Exact HTML structure and all HTML tags
-       - All CSS classes, IDs, and styling attributes
-       - All numerical data, percentages, and financial metrics (unchanged)
-       - All table structures, headers, and data organization
-       - All chart titles, axis labels, and data point labels
-    3. Ensure accurate translation of financial terminology:
-       - Portfolio management and rebalancing terms
-       - Risk assessment and compliance terminology
-       - Investment strategy and optimization language
-       - Quantitative analysis and statistical terms
-    4. Maintain professional tone and technical precision in French.
-    5. Preserve all JSON appendices exactly as provided (no translation of structured data).
-    6. Ensure the translated report maintains the same visual appearance and functionality.
+#     1. Receive the complete HTML portfolio rebalancing report from the risk validation task.
+#     2. Translate all text content from English to French while preserving:
+#        - Exact HTML structure and all HTML tags
+#        - All CSS classes, IDs, and styling attributes
+#        - All numerical data, percentages, and financial metrics (unchanged)
+#        - All table structures, headers, and data organization
+#        - All chart titles, axis labels, and data point labels
+#     3. Ensure accurate translation of financial terminology:
+#        - Portfolio management and rebalancing terms
+#        - Risk assessment and compliance terminology
+#        - Investment strategy and optimization language
+#        - Quantitative analysis and statistical terms
+#     4. Maintain professional tone and technical precision in French.
+#     5. Preserve all JSON appendices exactly as provided (no translation of structured data).
+#     6. Ensure the translated report maintains the same visual appearance and functionality.
 
-    CRITICAL: Do not modify any HTML structure, CSS styling, or numerical data. 
-    Only translate the text content while preserving all formatting and technical elements.
+#     CRITICAL: Do not modify any HTML structure, CSS styling, or numerical data. 
+#     Only translate the text content while preserving all formatting and technical elements.
 
-    OUTPUT: Return the complete French version of the portfolio rebalancing report.
-  expected_output: >
-    A complete French translation of the portfolio rebalancing report maintaining exact HTML structure, 
-    CSS styling, and technical accuracy. All financial terms should be properly translated while 
-    preserving numerical data and formatting.
-  agent: translator
-  output_file: "output/portfolio/portfolio_rebalancing_report_french.html"
-  async_execution: false
-  depends_on:
-    - risk_validation_task
+#     OUTPUT: Return the complete French version of the portfolio rebalancing report.
+#   expected_output: >
+#     A complete French translation of the portfolio rebalancing report maintaining exact HTML structure, 
+#     CSS styling, and technical accuracy. All financial terms should be properly translated while 
+#     preserving numerical data and formatting.
+#   agent: translator
+#   output_file: "output/portfolio/portfolio_rebalancing_report_french.html"
+#   async_execution: false
+#   depends_on:
+#     - risk_validation_task

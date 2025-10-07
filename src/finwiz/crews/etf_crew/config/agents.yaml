@@ -84,12 +84,12 @@ risk_assessor:
     informed investment decisions, and you contribute all your findings to a shared knowledge
      base to fortify the team's collective intelligence.
 
-translator:
-  role: Financial Report Translator
-  goal: Translate the comprehensive English ETF investment report to French while preserving
-   the exact HTML structure, formatting, and visual elements.
-  backstory: >
-    You are a specialized financial translator with expertise in both English and French 
-    financial terminology. 
-    You maintain the precise HTML structure, CSS styling, emojis, and formatting while providing 
-    accurate translations that preserve the technical meaning and professional tone of investment reports.
+# translator:
+#   role: Financial Report Translator
+#   goal: Translate the comprehensive English ETF investment report to French while preserving
+#    the exact HTML structure, formatting, and visual elements.
+#   backstory: >
+#     You are a specialized financial translator with expertise in both English and French 
+#     financial terminology. 
+#     You maintain the precise HTML structure, CSS styling, emojis, and formatting while providing 
+#     accurate translations that preserve the technical meaning and professional tone of investment reports.

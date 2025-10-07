@@ -111,15 +111,15 @@ class StockCrew:
             llm=self._get_configured_llm(),
         )
 
-    @agent
-    def translator(self) -> Agent:
-        """Create translator agent that converts English reports to French while preserving layout."""
-        return Agent(
-            config=self.agents_config["translator"],
-            tools=[],  # No tools - only consumes upstream HTML context
-            verbose=True,
-            llm=self._get_configured_llm(),
-        )
+    # @agent
+    # def translator(self) -> Agent:
+    #     """Create translator agent that converts English reports to French while preserving layout."""
+    #     return Agent(
+    #         config=self.agents_config["translator"],
+    #         tools=[],  # No tools - only consumes upstream HTML context
+    #         verbose=True,
+    #         llm=self._get_configured_llm(),
+    #     )
 
     @async_task
     @task
@@ -148,7 +148,7 @@ class StockCrew:
             verbose=True,
         )
 
-    @async_task
+    @sync_task
     @task
     def stock_risk_assessment_task(self) -> Task:
         """Assess key risks for recommended tickers and mitigation actions."""
@@ -157,13 +157,13 @@ class StockCrew:
             verbose=True,
         )
 
-    @sync_task
-    @task
-    def translation_task(self) -> Task:
-        """Task to translate the English report to French while preserving layout."""
-        return Task(
-            config=self.tasks_config["translation_task"],
-        )
+    # @sync_task
+    # @task
+    # def translation_task(self) -> Task:
+    #     """Task to translate the English report to French while preserving layout."""
+    #     return Task(
+    #         config=self.tasks_config["translation_task"],
+    #     )
 
     @crew
     def crew(self) -> Crew:

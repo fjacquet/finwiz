@@ -182,14 +182,14 @@ class PortfolioRebalancingCrew:
             reasoning=False,
         )
 
-    @agent
-    def translator(self) -> Agent:
-        """Create translator agent that converts English reports to French while preserving layout."""
-        return Agent(
-            config=self.agents_config["translator"],
-            tools=[],  # No tools - only consumes upstream HTML context
-            verbose=True,
-        )
+    # @agent
+    # def translator(self) -> Agent:
+    #     """Create translator agent that converts English reports to French while preserving layout."""
+    #     return Agent(
+    #         config=self.agents_config["translator"],
+    #         tools=[],  # No tools - only consumes upstream HTML context
+    #         verbose=True,
+    #     )
 
     @async_task
     @task
@@ -236,7 +236,7 @@ class PortfolioRebalancingCrew:
             verbose=True,
         )
 
-    @async_task
+    @sync_task
     @task
     def risk_validation_task(self) -> Task:
         """Validate rebalancing recommendations against risk constraints."""
@@ -245,13 +245,13 @@ class PortfolioRebalancingCrew:
             verbose=True,
         )
 
-    @sync_task
-    @task
-    def translation_task(self) -> Task:
-        """Task to translate the English report to French while preserving layout."""
-        return Task(
-            config=self.tasks_config["translation_task"],
-        )
+    # @sync_task
+    # @task
+    # def translation_task(self) -> Task:
+    #     """Task to translate the English report to French while preserving layout."""
+    #     return Task(
+    #         config=self.tasks_config["translation_task"],
+    #     )
 
     @crew
     def crew(self) -> Crew:

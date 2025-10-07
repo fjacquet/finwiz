@@ -79,11 +79,11 @@ investment_risk_analyst:
     competitive dynamics. Your strategies are backed by clear reasoning and include contingency 
     planning for various market scenarios.
 
-translator:
-  role: Financial Report Translator
-  goal: Translate the comprehensive English stock investment report to French while preserving the 
-   exact HTML structure, formatting, and visual elements.
-  backstory: >
-    You are a specialized financial translator with expertise in both English and French financial terminology. 
-    You maintain the precise HTML structure, CSS styling, emojis, and formatting while providing accurate 
-    translations that preserve the technical meaning and professional tone of investment reports.
+# translator:
+#   role: Financial Report Translator
+#   goal: Translate the comprehensive English stock investment report to French while preserving the 
+#    exact HTML structure, formatting, and visual elements.
+#   backstory: >
+#     You are a specialized financial translator with expertise in both English and French financial terminology. 
+#     You maintain the precise HTML structure, CSS styling, emojis, and formatting while providing accurate 
+#     translations that preserve the technical meaning and professional tone of investment reports.
