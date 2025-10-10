@@ -20,6 +20,7 @@ from finwiz.schemas.crypto import (
     CryptoTechnicalAnalysis,
     CryptoThesis,
 )
+from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_crypto_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
@@ -29,12 +30,13 @@ from finwiz.utils.task_decorators import async_task, sync_task
 current_script_path = Path(__file__).resolve()
 crew_dir = current_script_path.parent
 
-# Get standardized tool set for crypto crew
-research_tools = get_crypto_crew_tools(
+# Get standardized tool set for crypto crew and make them robust
+raw_research_tools = get_crypto_crew_tools(
     include_rag=True,
     include_quantitative=True,
     collection_suffix="crypto",
 )
+research_tools = make_tools_robust(raw_research_tools)
 
 
 @CrewBase
@@ -80,7 +82,7 @@ class CryptoCrew:
         return Agent(
             config=self.agents_config["market_analyst"],
             tools=research_tools,
-            reasoning=True,  # Enable AI reasoning for market analysis decisions
+            reasoning=False,  # Enable AI reasoning for market analysis decisions
             verbose=True,
             llm=self._get_configured_llm(),
         )
@@ -90,7 +92,7 @@ class CryptoCrew:
         return Agent(
             config=self.agents_config["technical_analyst"],
             tools=research_tools,
-            reasoning=True,  # Enable AI reasoning for technical analysis decisions
+            reasoning=False,  # Enable AI reasoning for technical analysis decisions
             verbose=True,
             llm=self._get_configured_llm(),
         )
@@ -101,7 +103,7 @@ class CryptoCrew:
             config=self.agents_config["risk_assessor"],
             tools=research_tools,
             verbose=True,
-            reasoning=True,  # Enable AI reasoning for risk assessment decisions
+            reasoning=False,  # Enable AI reasoning for risk assessment decisions
             llm=self._get_configured_llm(),
         )
 
@@ -111,7 +113,7 @@ class CryptoCrew:
             config=self.agents_config["investment_strategist"],
             tools=research_tools,
             verbose=True,
-            reasoning=True,  # Enable AI reasoning for investment strategy decisions
+            reasoning=False,  # Enable AI reasoning for investment strategy decisions
             llm=self._get_configured_llm(),
         )
 
@@ -121,7 +123,7 @@ class CryptoCrew:
             config=self.agents_config["research_director"],
             tools=[],
             verbose=True,
-            reasoning=True,  # Enable AI reasoning for research consolidation decisions
+            reasoning=False,  # Enable AI reasoning for research consolidation decisions
             llm=self._get_configured_llm(),
         )
 

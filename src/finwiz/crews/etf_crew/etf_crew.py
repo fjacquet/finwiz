@@ -26,6 +26,7 @@ from finwiz.schemas.etf import (
     ETFTechnicalAnalysis,
     ETFTopHolding,
 )
+from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_etf_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
@@ -33,12 +34,13 @@ from finwiz.utils.task_decorators import async_task, sync_task
 
 load_dotenv()
 
-# Get standardized tool set for ETF crew
-tools = get_etf_crew_tools(
+# Get standardized tool set for ETF crew and make them robust
+raw_tools = get_etf_crew_tools(
     include_rag=True,
     include_quantitative=True,
     collection_suffix="etf",
 )
+tools = make_tools_robust(raw_tools)
 
 
 @CrewBase
@@ -94,7 +96,7 @@ class EtfCrew:
             config=self.agents_config["market_etf_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=True,  # Enable AI reasoning for ETF analysis decisions
+            reasoning=False,  # Disable reasoning to prevent infinite planning loops (same issue as stock crew)
             llm=self._get_configured_llm(),
         )
 
@@ -104,7 +106,7 @@ class EtfCrew:
             config=self.agents_config["risk_assessor"],
             verbose=True,
             tools=tools,
-            reasoning=True,  # Enable AI reasoning for risk assessment decisions
+            reasoning=False,  # Keep reasoning enabled - useful for risk assessment and investment strategy
             llm=self._get_configured_llm(),
         )
 

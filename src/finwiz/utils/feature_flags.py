@@ -153,7 +153,7 @@ class FeatureFlags:
             ),
             "quantitative_analysis": FeatureFlagConfig(
                 name="quantitative_analysis",
-                enabled=self._get_env_bool("FF_QUANTITATIVE_ANALYSIS", False),
+                enabled=self._get_env_bool("FF_QUANTITATIVE_ANALYSIS", True),
                 strategy=FeatureFlagStrategy.PERCENTAGE,
                 rollout_percentage=self._get_env_float("FF_QUANTITATIVE_ANALYSIS_ROLLOUT", 0.0),
                 fallback_strategy=FallbackStrategy.DISABLE,
@@ -161,7 +161,7 @@ class FeatureFlags:
             ),
             "quantitative_backtesting": FeatureFlagConfig(
                 name="quantitative_backtesting",
-                enabled=self._get_env_bool("FF_QUANTITATIVE_BACKTESTING", False),
+                enabled=self._get_env_bool("FF_QUANTITATIVE_BACKTESTING", True),
                 strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
                 circuit_breaker_threshold=self._get_env_int("FF_BACKTEST_BREAKER_THRESHOLD", 3),
                 circuit_breaker_timeout=self._get_env_int("FF_BACKTEST_BREAKER_TIMEOUT", 600),
@@ -170,28 +170,28 @@ class FeatureFlags:
             ),
             "stock_screening": FeatureFlagConfig(
                 name="stock_screening",
-                enabled=self._get_env_bool("FF_STOCK_SCREENING", False),
+                enabled=self._get_env_bool("FF_STOCK_SCREENING", True),
                 strategy=FeatureFlagStrategy.BOOLEAN,
                 fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
                 description="Fundamental analysis stock screening",
             ),
             "portfolio_optimization": FeatureFlagConfig(
                 name="portfolio_optimization",
-                enabled=self._get_env_bool("FF_PORTFOLIO_OPTIMIZATION", False),
+                enabled=self._get_env_bool("FF_PORTFOLIO_OPTIMIZATION", True),
                 strategy=FeatureFlagStrategy.BOOLEAN,
                 fallback_strategy=FallbackStrategy.DISABLE,
                 description="Modern portfolio theory optimization",
             ),
             "derivatives_pricing": FeatureFlagConfig(
                 name="derivatives_pricing",
-                enabled=self._get_env_bool("FF_DERIVATIVES_PRICING", False),
+                enabled=self._get_env_bool("FF_DERIVATIVES_PRICING", True),
                 strategy=FeatureFlagStrategy.BOOLEAN,
                 fallback_strategy=FallbackStrategy.DISABLE,
                 description="QuantLib derivatives pricing capabilities",
             ),
             "portfolio_rebalancing": FeatureFlagConfig(
                 name="portfolio_rebalancing",
-                enabled=self._get_env_bool("FF_PORTFOLIO_REBALANCING", False),
+                enabled=self._get_env_bool("FF_PORTFOLIO_REBALANCING", True),
                 strategy=FeatureFlagStrategy.PERCENTAGE,
                 rollout_percentage=self._get_env_float("FF_PORTFOLIO_REBALANCING_ROLLOUT", 0.0),
                 fallback_strategy=FallbackStrategy.DISABLE,
@@ -199,7 +199,7 @@ class FeatureFlags:
             ),
             "rebalancing_monitoring": FeatureFlagConfig(
                 name="rebalancing_monitoring",
-                enabled=self._get_env_bool("FF_REBALANCING_MONITORING", False),
+                enabled=self._get_env_bool("FF_REBALANCING_MONITORING", True),
                 strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
                 circuit_breaker_threshold=self._get_env_int("FF_REBALANCING_BREAKER_THRESHOLD", 3),
                 circuit_breaker_timeout=self._get_env_int("FF_REBALANCING_BREAKER_TIMEOUT", 300),
@@ -208,7 +208,7 @@ class FeatureFlags:
             ),
             "rebalancing_api": FeatureFlagConfig(
                 name="rebalancing_api",
-                enabled=self._get_env_bool("FF_REBALANCING_API", False),
+                enabled=self._get_env_bool("FF_REBALANCING_API", True),
                 strategy=FeatureFlagStrategy.BOOLEAN,
                 fallback_strategy=FallbackStrategy.DISABLE,
                 description="REST API endpoints for portfolio rebalancing",

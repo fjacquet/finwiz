@@ -203,4 +203,49 @@ def get_grade_css_styles() -> str:
         padding: 15px;
         margin: 10px 0;
     }
+
+    .analysis-summary {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 10px 0;
+    }
+
+    .analysis-deep {
+        color: #1e40af;
+        font-weight: bold;
+    }
+
+    .analysis-quick {
+        color: #6b7280;
+    }
+
+    .scores-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.85em;
+    }
+
+    .scores-list li {
+        padding: 2px 0;
+    }
+
+    .alternatives-available {
+        color: #10b981;
+        font-weight: bold;
+    }
+
+    .alternatives-list {
+        list-style: none;
+        padding: 5px 0 0 0;
+        margin: 0;
+        font-size: 0.85em;
+    }
+
+    .alternatives-list li {
+        padding: 2px 0;
+        color: #059669;
+    }
     """

@@ -329,7 +329,11 @@ class PortfolioHoldingsProcessor:
 
     def _calculate_score(self, is_valid: bool, asset_class: AssetClass) -> float:
         """
-        Calculate composite score for a holding.
+        Calculate composite score for a holding using improved shallow validation.
+
+        This method provides more realistic scores for validated holdings when deep
+        analysis is not enabled. The scoring assumes that holdings in a portfolio
+        are generally reasonable investments that passed initial screening.
 
         Args:
             is_valid: Whether the holding passed validation
@@ -338,13 +342,29 @@ class PortfolioHoldingsProcessor:
         Returns:
             Composite score between 0.0 and 1.0
 
-        """
-        # Base score depends on validation
-        base = 0.6 if is_valid else 0.3
+        Scoring Logic:
+            - Valid holdings: 0.75 base (B grade) - assumes reasonable quality
+            - ETFs: +0.05 for diversification benefit
+            - Invalid holdings: 0.3 (F grade) - requires manual review
 
-        # ETFs get a slight boost for diversification
-        if asset_class == "etf" and is_valid:
+        """
+        if not is_valid:
+            # Invalid holdings get low score - requires manual review
+            return 0.3
+
+        # Base score for validated holdings - assumes reasonable quality
+        # This gives a B grade (75%) which is appropriate for holdings that:
+        # - Passed ticker validation
+        # - Are in an active portfolio
+        # - Haven't been analyzed in depth yet
+        base = 0.75
+
+        # ETFs get a slight boost for diversification benefit
+        if asset_class == "etf":
             base += 0.05
+
+        # Stocks and crypto maintain base score
+        # Deep analysis will provide more accurate scoring when enabled
 
         return min(base, 1.0)
 
@@ -399,18 +419,25 @@ class PortfolioHoldingsProcessor:
         """
         rationale: list[str] = []
 
+        # Add analysis depth indicator
+        rationale.append("⚡ Validation rapide (analyse superficielle)")
+        rationale.append("💡 Activez DEEP_PORTFOLIO_ANALYSIS=true pour une analyse complète")
+
         if is_valid:
-            rationale.append("✅ Ticker validated successfully")
+            rationale.append("✅ Ticker validé avec succès")
             source = validation_result.get("meta", {}).get("source", "unknown")
-            rationale.append(f"Data source: {source}")
+            rationale.append(f"Source de données: {source}")
+            rationale.append("📊 Note basée sur la validation du ticker uniquement")
+            rationale.append("🔍 L'analyse approfondie fournira des métriques détaillées")
         else:
-            rationale.append("⚠️ Ticker validation failed")
+            rationale.append("⚠️ Échec de la validation du ticker")
             reason = validation_result.get("reason", "Unknown reason")
-            rationale.append(f"Validation issue: {reason}")
-            rationale.append("Included in report for transparency")
+            rationale.append(f"Problème de validation: {reason}")
+            rationale.append("📋 Inclus dans le rapport pour transparence")
+            rationale.append("🔧 Révision manuelle requise")
 
         # Add source information
-        rationale.append(f"Source: {Path(holding.source_file).name}, line {holding.line_number}")
+        rationale.append(f"📁 Source: {Path(holding.source_file).name}, ligne {holding.line_number}")
 
         return rationale
 

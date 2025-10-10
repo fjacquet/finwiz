@@ -15,7 +15,9 @@ class CryptoThesis(BaseModel):
 
     schema_version: int = 1
 
-    symbol: str = Field(min_length=2, max_length=10, description="Crypto symbol, e.g., BTC")
+    symbol: str = Field(
+        min_length=2, max_length=30, description="Crypto symbol or portfolio identifier, e.g., BTC or CRYPTO_PORTFOLIO"
+    )
     thesis_bullets: list[str] = Field(default_factory=list, max_length=20)
     references: list[str] = Field(default_factory=list, description="List of reference URLs")
 
@@ -27,11 +29,11 @@ class CryptoThesis(BaseModel):
 
         url_pattern = re.compile(
             r"^https?://"  # http:// or https://
-            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,}\.?|"  # domain (allow any TLD length)
             r"localhost|"  # localhost...
             r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
             r"(?::\d+)?"  # optional port
-            r"(?:/?|[/?]\S+)$",
+            r"(?:/?|[/?]\S*)?$",  # optional path (allow empty path)
             re.IGNORECASE,
         )
 
@@ -130,10 +132,12 @@ class CryptoQuantitativeMetrics(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    symbol: str = Field(min_length=2, max_length=10)
+    symbol: str = Field(min_length=2, max_length=30, description="Crypto symbol or portfolio identifier")
     sharpe_ratio: Optional[float] = Field(None, description="Sharpe ratio")
     sortino_ratio: Optional[float] = Field(None, description="Sortino ratio")
-    max_drawdown: Optional[float] = Field(None, le=0.0, description="Maximum drawdown percentage")
+    max_drawdown: Optional[float] = Field(
+        None, le=0.0, description="Maximum drawdown as negative percentage (e.g., -0.62 for 62% drawdown)"
+    )
     volatility: Optional[float] = Field(None, ge=0.0, description="Annualized volatility")
     var_95: Optional[float] = Field(None, description="Value at Risk (95% confidence)")
     cvar_95: Optional[float] = Field(None, description="Conditional Value at Risk (95% confidence)")
@@ -184,8 +188,8 @@ class CryptoInvestmentStrategy(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     schema_version: int = 1
-    symbol: str = Field(min_length=2, max_length=10)
-    name: str = Field(description="Full cryptocurrency name")
+    symbol: str = Field(min_length=2, max_length=30, description="Crypto symbol or portfolio identifier")
+    name: str = Field(description="Full cryptocurrency name or portfolio name")
     strategy_date: date = Field(description="Date of strategy creation")
 
     # Investment thesis

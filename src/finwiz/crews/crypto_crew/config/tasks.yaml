@@ -171,6 +171,20 @@ investment_strategy_task:
     Provide recommendations for asset allocation, position sizing, and clear
     investment thesis with proper risk-adjusted returns analysis.
     
+    CRITICAL SCHEMA CONSTRAINTS:
+    - symbol: Maximum 30 characters (e.g., "BTC" or "TOP10PORT" for portfolios)
+    - investment_thesis.symbol: Same as above, maximum 30 characters
+    - investment_thesis.references: MUST be valid URLs starting with http:// or https://
+      * URLs MUST end with a trailing slash if no path (e.g., "https://polygon.technology/")
+      * OR have a valid path (e.g., "https://ethereum.org/en/")
+      * Examples of VALID URLs:
+        - "https://glassnode.com/"
+        - "https://ethereum.org/en/"
+        - "https://polygon.technology/"
+        - "https://cardano.org/"
+    - quantitative_metrics.max_drawdown: MUST be NEGATIVE or zero (e.g., -0.62 for 62% drawdown, NOT 0.62)
+    - quantitative_metrics.symbol: Same as symbol field, maximum 30 characters
+    
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the CryptoInvestmentStrategy object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "strategy", "recommendations", etc.

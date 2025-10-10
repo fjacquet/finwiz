@@ -33,6 +33,7 @@ from finwiz.schemas.rebalancing.core import PortfolioConfiguration
 from finwiz.schemas.report import ReporterInput
 from finwiz.tools.file_conversion_tools import HtmlToPdfTool  # Added for PDF conversion
 from finwiz.tools.rag_tools import get_rag_tools
+from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.logging_helpers import CrewLogger
 from finwiz.utils.task_decorators import async_task, sync_task
@@ -45,8 +46,9 @@ load_dotenv()
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Get RAG tools for knowledge retrieval and storage
-rag_tools = get_rag_tools(collection_suffix="report")
+# Get RAG tools for knowledge retrieval and storage and make them robust
+raw_rag_tools = get_rag_tools(collection_suffix="report")
+rag_tools = make_tools_robust(raw_rag_tools)
 
 html_to_pdf_tool = HtmlToPdfTool()  # Tool instance for PDF conversion
 
@@ -192,12 +194,13 @@ class ReportCrew:
                 FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
             ]
 
-    def get_integrated_data_context(self, max_age_hours: int = 24) -> dict[str, Any]:
+    def get_integrated_data_context(self, max_age_hours: int = 24, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Get integrated data context for report generation.
 
         Args:
             max_age_hours: Maximum acceptable age in hours for data
+            inputs: Optional inputs from Flow state containing crew data
 
         Returns:
             Dictionary containing consolidated data and metadata
@@ -254,12 +257,41 @@ class ReportCrew:
 
             # Track portfolio data
             if availability_report.portfolio_available:
+                portfolio_holdings = integrated_data.get("portfolio_review", {}).get("holdings", [])
                 self.availability_tracker.track_data_source(
                     source="portfolio_review",
                     status="available",
                     age_hours=availability_report.portfolio_age_hours,
-                    record_count=len(integrated_data.get("portfolio_review", {}).get("holdings", [])),
+                    record_count=len(portfolio_holdings),
                 )
+                
+                # Track deep analysis statistics from portfolio holdings
+                deep_analysis_count = sum(1 for h in portfolio_holdings if h.get("crew_analysis_used"))
+                holdings_with_alternatives = sum(1 for h in portfolio_holdings if h.get("alternatives"))
+                
+                if deep_analysis_count > 0:
+                    self.availability_tracker.track_data_source(
+                        source="deep_portfolio_analysis",
+                        status="available",
+                        record_count=deep_analysis_count,
+                    )
+                    logger.info(f"Deep portfolio analysis available for {deep_analysis_count} holdings")
+                    
+                    # Add deep analysis summary to integrated data
+                    integrated_data["deep_analysis_summary"] = {
+                        "total_holdings": len(portfolio_holdings),
+                        "deep_analysis_count": deep_analysis_count,
+                        "shallow_analysis_count": len(portfolio_holdings) - deep_analysis_count,
+                        "holdings_with_alternatives": holdings_with_alternatives,
+                        "deep_analysis_percentage": (deep_analysis_count / len(portfolio_holdings) * 100) if portfolio_holdings else 0,
+                    }
+                else:
+                    self.availability_tracker.track_data_source(
+                        source="deep_portfolio_analysis",
+                        status="unavailable",
+                        error_message="No deep analysis performed on portfolio holdings",
+                    )
+                    integrated_data["deep_analysis_summary"] = None
             else:
                 self.availability_tracker.track_data_source(
                     source="portfolio_review", status="unavailable", error_message="Portfolio review data not found"
@@ -272,24 +304,49 @@ class ReportCrew:
             integrated_data["stale_data_warnings"] = self.data_accessor.get_stale_data_warnings(max_age_hours)
 
             # Add A+ discovery data with proper status handling
-            discovery_status = self._get_discovery_status()
+            # Pass inputs to check Flow state first before file-based checking
+            discovery_status = self._get_discovery_status(inputs)
             integrated_data["discovery_status"] = discovery_status
 
             if discovery_status["has_results"]:
-                # Load discovery results
-                discovery_results = self.discovery_accessor.load_discovery_results()
+                # FIRST: Try to get discovery results from Flow state inputs
+                discovery_results = None
+                if inputs:
+                    if inputs.get("aplus_opportunities"):
+                        discovery_results = inputs["aplus_opportunities"]
+                        logger.info("Using discovery results from Flow state (aplus_opportunities)")
+                    elif inputs.get("investment_discovery_structured"):
+                        discovery_results = inputs["investment_discovery_structured"]
+                        logger.info("Using discovery results from Flow state (investment_discovery_structured)")
+                
+                # SECOND: Fall back to file-based loading if not in inputs
+                if not discovery_results:
+                    discovery_results = self.discovery_accessor.load_discovery_results()
+                    if discovery_results:
+                        logger.info("Loaded discovery results from files")
+                
                 if discovery_results:
                     integrated_data["aplus_discovery_results"] = discovery_results
-                    integrated_data["aplus_opportunities_summary"] = self.discovery_accessor.get_opportunities_summary()
+                    
+                    # Generate summary from results
+                    if hasattr(self.discovery_accessor, 'get_opportunities_summary'):
+                        integrated_data["aplus_opportunities_summary"] = self.discovery_accessor.get_opportunities_summary()
+                    else:
+                        # Generate basic summary from results
+                        total_opportunities = 0
+                        if isinstance(discovery_results, dict):
+                            for key in ["stocks", "etfs", "crypto"]:
+                                if key in discovery_results:
+                                    candidates = discovery_results[key].get("a_plus_candidates", [])
+                                    total_opportunities += len(candidates)
+                        integrated_data["aplus_opportunities_summary"] = f"{total_opportunities} A+ opportunities found"
 
                     # Track discovery data as available
                     self.availability_tracker.track_data_source(
-                        source="aplus_discovery", status="available", record_count=len(discovery_results.get("opportunities", []))
+                        source="aplus_discovery", status="available", record_count=total_opportunities if 'total_opportunities' in locals() else 0
                     )
 
-                    logger.info(
-                        f"Loaded A+ discovery results: {len(discovery_results.get('opportunities', []))} opportunities found"
-                    )
+                    logger.info(f"Discovery results available with opportunities")
                 else:
                     integrated_data["aplus_discovery_results"] = None
                     integrated_data["aplus_opportunities_summary"] = "No A+ opportunities found in current analysis"
@@ -310,7 +367,8 @@ class ReportCrew:
                 logger.info(f"A+ discovery not available: {discovery_status['message']}")
 
             # Add backtesting data with proper status handling
-            backtesting_data = self._extract_backtesting_data()
+            # Pass inputs to check Flow state first before file-based checking
+            backtesting_data = self._extract_backtesting_data(inputs)
             integrated_data["backtesting_status"] = {
                 "has_data": backtesting_data["has_backtesting_data"],
                 "message": backtesting_data["message"],
@@ -340,7 +398,8 @@ class ReportCrew:
 
             # Generate data availability summary
             availability_summary = self.availability_tracker.get_availability_summary()
-            integrated_data["data_availability_summary"] = availability_summary.model_dump()
+            # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
+            integrated_data["data_availability_summary"] = availability_summary.model_dump(mode='json')
             integrated_data["data_availability_summary_formatted"] = self.availability_tracker.format_summary_for_report(
                 availability_summary
             )
@@ -374,22 +433,58 @@ class ReportCrew:
                 "data_availability_report": None,
                 "stale_data_warnings": [f"Data integration error: {str(e)}"],
                 "discovery_status": {"has_results": False, "message": f"Discovery data unavailable due to error: {str(e)}"},
-                "data_availability_summary": error_summary.model_dump(),
+                # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
+                "data_availability_summary": error_summary.model_dump(mode='json'),
                 "data_availability_summary_formatted": self.availability_tracker.format_summary_for_report(error_summary),
             }
 
-    def _get_discovery_status(self) -> dict[str, Any]:
+    def _get_discovery_status(self, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Get A+ discovery status with clear messaging.
+        
+        Checks for discovery data in this order:
+        1. Flow state inputs (aplus_opportunities)
+        2. Flow state inputs (investment_discovery_structured)
+        3. File-based discovery accessor (fallback)
+
+        Args:
+            inputs: Optional inputs from Flow state containing discovery data
 
         Returns:
             Dictionary with discovery status information
         """
+        # FIRST: Check if discovery data was provided in Flow state inputs
+        if inputs:
+            # Check for aplus_opportunities in inputs
+            if inputs.get("aplus_opportunities"):
+                logger.info("Discovery data found in Flow state (aplus_opportunities)")
+                return {
+                    "has_results": True,
+                    "message": "A+ discovery results available",
+                    "status": "available"
+                }
+            
+            # Check for investment_discovery_structured in inputs
+            if inputs.get("investment_discovery_structured"):
+                logger.info("Discovery data found in Flow state (investment_discovery_structured)")
+                return {
+                    "has_results": True,
+                    "message": "A+ discovery results available",
+                    "status": "available"
+                }
+        
+        # SECOND: Fall back to file-based checking
         has_results = self.discovery_accessor.has_discovery_results()
 
         if has_results:
-            return {"has_results": True, "message": "A+ discovery results available", "status": "available"}
+            logger.info("Discovery data found via file-based accessor")
+            return {
+                "has_results": True,
+                "message": "A+ discovery results available",
+                "status": "available"
+            }
         else:
+            logger.info("No discovery data found in inputs or files")
             return {
                 "has_results": False,
                 "message": "A+ discovery not run - use --discovery flag to enable discovery analysis",
@@ -458,32 +553,51 @@ class ReportCrew:
         trades = [d.get("total_trades", 0) for d in validation_details if "total_trades" in d]
         return sum(trades) if trades else None
 
-    def _extract_backtesting_data(self) -> dict[str, Any]:
+    def _extract_backtesting_data(self, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Extract backtesting data from discovery results using the backtesting extractor.
+        
+        Checks for backtesting data in this order:
+        1. Flow state inputs (aplus_opportunities)
+        2. Flow state inputs (investment_discovery_structured)
+        3. File-based discovery accessor (fallback)
+
+        Args:
+            inputs: Optional inputs from Flow state containing discovery data
 
         Returns:
             Dictionary with backtesting data and status
         """
         try:
-            # Check if discovery results exist
-            if not self.discovery_accessor.has_discovery_results():
-                logger.info("No discovery results available for backtesting extraction")
-                return {
-                    "has_backtesting_data": False,
-                    "message": "Backtesting data not available - discovery not run",
-                    "status": "not_available",
-                }
-
-            # Load discovery results
-            discovery_results = self.discovery_accessor.load_discovery_results()
+            # FIRST: Try to get discovery results from Flow state inputs
+            discovery_results = None
+            if inputs:
+                if inputs.get("aplus_opportunities"):
+                    discovery_results = inputs["aplus_opportunities"]
+                    logger.info("Using discovery results from Flow state (aplus_opportunities) for backtesting extraction")
+                elif inputs.get("investment_discovery_structured"):
+                    discovery_results = inputs["investment_discovery_structured"]
+                    logger.info("Using discovery results from Flow state (investment_discovery_structured) for backtesting extraction")
+            
+            # SECOND: Fall back to file-based loading if not in inputs
             if not discovery_results:
-                logger.info("Discovery results exist but could not be loaded")
-                return {
-                    "has_backtesting_data": False,
-                    "message": "Backtesting data not available - discovery results could not be loaded",
-                    "status": "not_available",
-                }
+                if not self.discovery_accessor.has_discovery_results():
+                    logger.info("No discovery results available for backtesting extraction")
+                    return {
+                        "has_backtesting_data": False,
+                        "message": "Backtesting data not available - discovery not run",
+                        "status": "not_available",
+                    }
+
+                # Load discovery results from files
+                discovery_results = self.discovery_accessor.load_discovery_results()
+                if not discovery_results:
+                    logger.info("Discovery results exist but could not be loaded")
+                    return {
+                        "has_backtesting_data": False,
+                        "message": "Backtesting data not available - discovery results could not be loaded",
+                        "status": "not_available",
+                    }
 
             # Extract validation results from discovery data
             validation_results = discovery_results.get("validation_results", [])
@@ -544,7 +658,8 @@ class ReportCrew:
 
                     if metrics:
                         backtesting_by_candidate[symbol] = {
-                            "metrics": metrics.model_dump(),
+                            # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
+                            "metrics": metrics.model_dump(mode='json'),
                             "formatted_display": self.backtesting_extractor.format_for_display(metrics),
                             "available_metrics": self.backtesting_extractor.get_available_metrics(metrics),
                         }
@@ -603,7 +718,7 @@ class ReportCrew:
         return Agent(
             config=self.agents_config["financial_integration_analyst"],
             verbose=True,
-            reasoning=True,  # Enable AI reasoning for complex financial integration decisions
+            reasoning=False,  # Enable AI reasoning for complex financial integration decisions
             tools=self.tools,
         )
 
@@ -614,7 +729,7 @@ class ReportCrew:
             config=self.agents_config["portfolio_allocator"],
             verbose=True,
             tools=self.tools,
-            reasoning=True,  # Enable AI reasoning for optimal portfolio allocation decisions
+            reasoning=False,  # Enable AI reasoning for optimal portfolio allocation decisions
         )
 
     @agent
@@ -624,7 +739,7 @@ class ReportCrew:
             config=self.agents_config["risk_manager"],
             verbose=True,
             tools=self.tools,
-            reasoning=True,  # Enable AI reasoning for risk assessment and mitigation decisions
+            reasoning=False,  # Enable AI reasoning for risk assessment and mitigation decisions
         )
 
     @final_reporter
@@ -761,10 +876,10 @@ class ReportCrew:
         start_time = time.time()
 
         try:
-            # Prepare integrated context
-            integrated_context = self.prepare_crew_context(max_age_hours)
+            # Prepare integrated context, passing inputs to check Flow state first
+            integrated_context = self.prepare_crew_context(max_age_hours, inputs)
 
-            # Merge with provided inputs
+            # Merge with provided inputs (for any additional data not already integrated)
             if inputs:
                 integrated_context.update(inputs)
 
@@ -801,20 +916,21 @@ class ReportCrew:
         """
         self.input_validator.validate_reporter_context(context)
 
-    def prepare_crew_context(self, max_age_hours: int = 24) -> dict[str, Any]:
+    def prepare_crew_context(self, max_age_hours: int = 24, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Prepare integrated context for crew execution.
 
         Args:
             max_age_hours: Maximum acceptable age in hours for data
+            inputs: Optional inputs from Flow state containing crew data
 
         Returns:
             Dictionary containing all integrated data and metadata for crew execution
 
         """
         try:
-            # Get integrated data context
-            integrated_context = self.get_integrated_data_context(max_age_hours)
+            # Get integrated data context, passing inputs to check Flow state first
+            integrated_context = self.get_integrated_data_context(max_age_hours, inputs)
 
             # Validate the integrated context
             self.validate_reporter_input(integrated_context)

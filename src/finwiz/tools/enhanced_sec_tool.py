@@ -85,13 +85,26 @@ class EnhancedSECAnalysisTool(BaseTool):
 
     def _run(
         self,
-        ticker: str,
+        ticker: str = None,
         form_type: str = "10-K",
         sections: list[str] = None,
         risk_assessment: bool = True,
         include_perplexity: bool = True,
+        **kwargs: Any,
     ) -> str:
         """Execute enhanced SEC filing analysis."""
+        # Handle malformed input from LLM
+        if ticker is None and kwargs:
+            # Try to extract ticker from kwargs
+            ticker = kwargs.get("ticker") or kwargs.get("symbol")
+            form_type = kwargs.get("form_type", form_type)
+            sections = kwargs.get("sections", sections)
+            risk_assessment = kwargs.get("risk_assessment", risk_assessment)
+            include_perplexity = kwargs.get("include_perplexity", include_perplexity)
+        
+        if ticker is None:
+            return "Error: ticker parameter is required"
+        
         if sections is None:
             sections = ["Item 1", "Item 1A", "Item 7"]
 
@@ -226,7 +239,12 @@ class EnhancedSECAnalysisTool(BaseTool):
         return None
 
     def _download_html(self, url: str) -> str:
-        """Download HTML content from SEC filing URL."""
+        """
+        Download HTML content from SEC filing URL.
+        
+        SEC.gov requires a proper User-Agent with contact information.
+        See: https://www.sec.gov/os/accessing-edgar-data
+        """
         headers = {
             "Accept": (
                 "text/html,application/xhtml+xml,application/xml;q=0.9,"
@@ -235,11 +253,7 @@ class EnhancedSECAnalysisTool(BaseTool):
             ),
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
-            "User-Agent": (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
+            "User-Agent": "FinWiz/1.0 (contact@finwiz.com)",
         }
         resp = requests.get(url, headers=headers, timeout=30)
         resp.raise_for_status()

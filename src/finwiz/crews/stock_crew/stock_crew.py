@@ -24,6 +24,7 @@ from finwiz.schemas.stock import (
     TenKInsight,
 )
 from finwiz.tools.logger import get_logger
+from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_stock_crew_tools
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
@@ -34,12 +35,13 @@ logger = get_logger(__name__)
 
 load_dotenv()
 
-# Get standardized tool set for stock crew
-tools = get_stock_crew_tools(
+# Get standardized tool set for stock crew and make them robust
+raw_tools = get_stock_crew_tools(
     include_rag=True,
     include_quantitative=True,
     collection_suffix="stock",
 )
+tools = make_tools_robust(raw_tools)
 
 
 @CrewBase
@@ -95,7 +97,7 @@ class StockCrew:
         return Agent(
             config=self.agents_config["market_technical_analyst"],
             verbose=True,
-            reasoning=True,  # Enable AI reasoning to show decision-making process
+            reasoning=False,  # Disable reasoning to prevent infinite planning loops
             tools=tools,
             llm=self._get_configured_llm(),
         )
@@ -107,7 +109,7 @@ class StockCrew:
             config=self.agents_config["investment_risk_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=True,  # Enable AI reasoning for risk assessment decisions
+            reasoning=False,  # Keep reasoning enabled - useful for risk assessment and hasn't caused issues
             llm=self._get_configured_llm(),
         )
 

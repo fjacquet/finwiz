@@ -117,9 +117,28 @@ stock_screening_task:
 # Technical Detail Tasks
 technical_detail_task:
   description: >
-    As an AI financial analyst, perform detailed technical analysis on each of the 10 selected stocks 
-    using advanced reasoning and decision-making capabilities. Demonstrate clear AI thinking throughout 
-    your analysis process.
+    As an AI financial analyst, perform detailed technical analysis on each of the 10 stocks 
+    identified in the previous stock_screening_task. Use the ticker symbols from the 
+    StockScreeningResult context to analyze each stock using advanced reasoning and 
+    decision-making capabilities.
+
+    CRITICAL CONTEXT USAGE:
+    - The previous task (stock_screening_task) has provided the 10 ticker symbols in the context
+    - Check your context/memory for the StockScreeningResult from the previous task
+    - If you can see the tickers in the context, use those
+    - If the context is not available, analyze these 10 blue-chip stocks: AAPL, MSFT, GOOGL, AMZN, NVDA, JPM, JNJ, PG, XOM, MA
+    - Do NOT search the knowledge base
+    - Do NOT use file listing tools
+    - Do NOT use "Read a file's content" tool
+    - START ANALYSIS IMMEDIATELY with the tickers (from context or the default list above)
+
+    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
+    - NEVER EVER pass JSON arrays like [{...}, {...}] to ANY tool
+    - NEVER pass JSON strings to tools  
+    - ALWAYS call tools with simple key=value parameters: tool(ticker="AAPL")
+    - Call each tool ONCE PER TICKER individually
+    - Do NOT use "List files in directory" or "Read a file's content" tools
+    - Use ONLY the analysis tools: Enhanced SEC Analysis, Quantitative Analysis, etc.
 
     AI REASONING REQUIREMENTS:
     - Apply intelligent reasoning to interpret financial data and technical indicators
@@ -143,6 +162,12 @@ technical_detail_task:
        - Use intelligent analysis of competitive moats and market positioning
        - Generate insights on innovation capacity and future growth drivers
     5. AI-enhanced 10-K extraction: Use the "Enhanced SEC Analysis Tool" with intelligent interpretation:
+       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
+         * ticker: "AAPL" (one ticker at a time)
+         * form_type: "10-K"
+         * sections: ["Item 1", "Item 1A", "Item 7"]
+         * risk_assessment: true
+         * include_perplexity: true
        - Apply AI reasoning to extract and synthesize insights from SEC filings
        - Generate intelligent summaries of Business Overview, Risk Factors, MD&A, and Market Risk Disclosures
        - Use AI to identify material year-over-year changes and their implications
@@ -152,6 +177,12 @@ technical_detail_task:
        - Generate insights on technical patterns and their implications
        - Use AI to synthesize multiple indicator signals into coherent analysis
     7. AI-enhanced quantitative analysis: Use the "Quantitative Analysis Tool" with intelligent interpretation:
+       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
+         * symbol: "AAPL" (one ticker at a time)
+         * asset_class: "stock"
+         * analysis_type: "comprehensive"
+         * timeframe: "1y"
+         * strategy: "sma_crossover"
        - Apply AI reasoning to interpret backtesting results and performance metrics
        - Generate AI-driven investment recommendations based on quantitative insights
        - Use reasoning to assess risk-adjusted performance and portfolio fit
@@ -197,6 +228,12 @@ stock_risk_assessment_task:
     reasoning and intelligent decision-making. Your analysis should demonstrate clear AI thinking 
     and provide insights that go beyond simple rule-based risk scoring.
 
+    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
+    - NEVER pass JSON arrays or multiple tickers to tools
+    - ALWAYS call each tool ONCE PER TICKER individually
+    - Use the exact parameter names and formats shown in the instructions below
+    - Tools expect individual parameters, NOT JSON strings or arrays
+
     AI REASONING REQUIREMENTS:
     - Apply intelligent risk assessment that considers complex interdependencies
     - Provide clear AI-generated insights on risk factors and their potential impacts
@@ -204,8 +241,17 @@ stock_risk_assessment_task:
     - Show adaptive risk analysis based on current market conditions and company-specific factors
     - Generate risk mitigation strategies based on AI reasoning
 
+    CRITICAL: Use the stocks from the technical_detail_task output (context). Do NOT ask for user input.
+    Extract the ticker symbols and analyze each one.
+
     AI-DRIVEN RISK ASSESSMENT PROCESS:
     1. AI-enhanced SEC analysis: Use the "Enhanced SEC Analysis Tool" with intelligent interpretation:
+       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
+         * ticker: "AAPL" (one ticker at a time)
+         * form_type: "10-K"
+         * sections: ["Item 1A", "Item 7", "Item 7A"]
+         * risk_assessment: true
+         * include_perplexity: false
        - Apply AI reasoning to extract and synthesize risk factors from 10-K filings
        - Generate intelligent risk categorization and impact assessment
        - Use AI to identify emerging risks not explicitly stated in filings
@@ -225,13 +271,29 @@ stock_risk_assessment_task:
        - Use reasoning to evaluate management quality and corporate governance
        - Generate insights on governance risks and their potential impacts
     7. AI-enhanced risk scoring: Apply the "Standardized Risk Scoring Tool" with intelligent interpretation:
+       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
+         * symbol: "AAPL" (one ticker at a time)
+         * asset_class: "stock"
+         * risk_factors: ["list", "of", "identified", "risks"]
        - Use AI reasoning to generate consistent 0-5 risk scores with clear justification
        - Provide AI-generated confidence levels and uncertainty acknowledgments
-    8. AI-driven quantitative risk assessment: Use tools with intelligent interpretation:
+    8. AI-driven quantitative risk assessment: Use the "Quantitative Analysis Tool" with intelligent interpretation:
+       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
+         * symbol: "AAPL" (one ticker at a time)
+         * asset_class: "stock"
+         * analysis_type: "comprehensive"
+         * timeframe: "1y"
+         * strategy: "sma_crossover"
        - Apply AI reasoning to interpret VaR, drawdown analysis, and risk-adjusted metrics
        - Generate AI insights on portfolio risk contributions and correlations
        - Use reasoning to assess risk-adjusted performance in current market context
     9. AI-enhanced sentiment risk analysis: Use the "Standardized Sentiment Analysis Tool" with intelligent interpretation:
+       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
+         * symbol: "AAPL" (one ticker at a time)
+         * asset_class: "stock"
+         * max_articles: 50
+         * days_back: 90
+         * include_trending: true
        - Apply AI reasoning to analyze sentiment trends and their risk implications
        - Generate insights on sentiment-driven risks and market perception risks
        - Use AI to identify sentiment patterns that may indicate emerging risks

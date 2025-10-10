@@ -265,6 +265,146 @@ retry_delay = 2  # seconds (doubles each retry)
 7. **Error Handling**: Implement graceful degradation
 8. **Logging**: Enable `verbose=True` for debugging
 
+## CrewAI Flow Integration (CRITICAL)
+
+### Flow Architecture Compliance
+
+**CRITICAL LESSON**: Always follow CrewAI Flow documentation patterns exactly. Mixing patterns leads to architectural inconsistencies.
+
+### Proper Flow State Management
+
+```python
+# ✅ CORRECT - Structured Flow state with Pydantic
+from pydantic import BaseModel
+from crewai.flow import Flow
+
+class FinwizState(BaseModel):
+    portfolio_review: Optional[Dict[str, Any]] = None
+    deep_analysis_results: Dict[str, DeepAnalysisResult] = {}
+    deep_analysis_success: bool = False
+
+class FinwizFlow(Flow[FinwizState]):
+    # Flow methods use self.state (structured)
+    def analyze_data(self):
+        self.state.deep_analysis_success = True
+        return {"results": "data"}
+
+# ❌ WRONG - Unstructured dict state
+class BadFlow(Flow):
+    def analyze_data(self):
+        self.inputs["some_key"] = "value"  # Unstructured, error-prone
+```
+
+### Proper Flow Method Signatures
+
+```python
+# ✅ CORRECT - Flow methods return data for downstream listeners
+@listen("check_portfolio")
+def analyze_holdings_deep(self) -> dict[str, Any]:
+    # Process data
+    results = {"analysis": analysis_data}
+    
+    # Update structured state
+    self.state.deep_analysis_results = results
+    
+    # Return for downstream Flow methods
+    return results
+
+@listen("analyze_holdings_deep")
+def match_alternatives(self, analysis_data: dict[str, Any]) -> dict[str, Any]:
+    # Receive data from upstream Flow method as parameter
+    holdings = analysis_data.get("analysis", {})
+    
+    # Process and return
+    return {"alternatives": alternatives_data}
+
+# ❌ WRONG - No return values, only state updates
+@listen("check_portfolio")
+def bad_analyze(self) -> None:  # Should return dict
+    self.inputs["results"] = data  # Should use self.state
+    # No return value for downstream methods
+```
+
+### Direct Crew Execution Pattern
+
+```python
+# ✅ CORRECT - Direct crew instantiation and execution
+from finwiz.crews.stock_crew.stock_crew import StockCrew
+
+def analyze_stock(self, ticker: str):
+    crew = StockCrew()
+    result = crew.crew().kickoff(inputs={"ticker": ticker})
+    return result
+
+# ❌ WRONG - Using crew_factory (mixed patterns)
+def bad_analyze_stock(self, ticker: str):
+    result_data = self.crew_factory.execute_stock_crew(inputs)  # Inconsistent
+    return result_data
+```
+
+### Flow State Access After Execution
+
+```python
+# ✅ CORRECT - Access structured state after Flow execution
+flow = FinwizFlow()
+result = flow.kickoff()
+
+# Access final state with type safety
+final_state = flow.state
+for ticker, analysis in final_state.deep_analysis_results.items():
+    print(f"{ticker}: {analysis.grade}")
+
+# ❌ WRONG - Accessing unstructured inputs
+bad_results = flow.inputs.get("deep_analysis_results", {})  # Error-prone
+```
+
+### Flow Integration Checklist
+
+When integrating with CrewAI Flow:
+
+- [ ] **Structured State**: Use `Flow[StateModel]` with Pydantic models
+- [ ] **Method Signatures**: Flow methods return `dict[str, Any]` for downstream listeners
+- [ ] **Parameter Passing**: Listeners receive upstream data as method parameters
+- [ ] **State Updates**: Use `self.state` (structured) not `self.inputs` (unstructured)
+- [ ] **Crew Execution**: Direct instantiation with `crew.kickoff()`, not factory patterns
+- [ ] **Data Flow**: Return values from Flow methods, not just state updates
+- [ ] **Type Safety**: Pydantic validation for all Flow state fields
+- [ ] **Documentation Compliance**: Follow exact CrewAI Flow documentation patterns
+
+### Common Flow Integration Mistakes
+
+❌ **State Management**:
+
+- Using `self.inputs` dict instead of structured `self.state`
+- Missing return values from Flow methods
+- Not receiving parameters in listener methods
+
+❌ **Crew Execution**:
+
+- Using `crew_factory` instead of direct crew instantiation
+- Mixing execution patterns within the same codebase
+
+❌ **Data Passing**:
+
+- Only updating state without returning data
+- Not following listener parameter patterns
+- Inconsistent data flow between methods
+
+❌ **Type Safety**:
+
+- Using unstructured dicts instead of Pydantic models
+- Missing type annotations for Flow state fields
+- No validation for Flow state updates
+
+### Flow Architecture Benefits
+
+✅ **Type Safety**: Pydantic models prevent data corruption
+✅ **Data Integrity**: Structured state ensures consistent data access
+✅ **Framework Compliance**: Follows CrewAI Flow best practices
+✅ **Maintainability**: Clear data flow and type definitions
+✅ **Debugging**: Structured state makes debugging easier
+✅ **IDE Support**: Type hints enable better autocomplete and error detection
+
 ## Anti-Patterns (Avoid)
 
 ❌ **Hardcoded tool lists** - Use tool factories instead
@@ -274,8 +414,13 @@ retry_delay = 2  # seconds (doubles each retry)
 ❌ **No rate limiting** - Always configure max_rpm
 ❌ **Circular dependencies** - Check task sequencing
 ❌ **Missing validation** - Always validate outputs
+❌ **Unstructured Flow state** - Use Pydantic models with `Flow[StateModel]`
+❌ **Missing Flow method return values** - Always return data for downstream listeners
+❌ **Mixed crew execution patterns** - Use direct instantiation consistently
+❌ **Ignoring CrewAI Flow documentation** - Follow patterns exactly
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2025-03-10
+**Version**: 3.0  
+**Last Updated**: 2025-01-08  
+**Major Update**: Added CrewAI Flow integration standards and compliance requirements

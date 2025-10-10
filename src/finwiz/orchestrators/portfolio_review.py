@@ -68,6 +68,117 @@ def get_thresholds() -> tuple[float, float, int]:
     )
 
 
+# --- Helper functions for Flow state integration ---
+
+
+def _merge_deep_analysis_from_flow_state(
+    decisions: list[HoldingDecision],
+    flow_state: Any,
+) -> list[HoldingDecision]:
+    """
+    Merge deep analysis data from Flow state into HoldingDecision objects.
+
+    Args:
+        decisions: List of HoldingDecision objects from portfolio processor
+        flow_state: Flow state containing deep analysis results and alternatives
+
+    Returns:
+        Updated list of HoldingDecision objects with deep analysis data
+
+    """
+    # Check if deep analysis data exists in Flow state
+    if not hasattr(flow_state, "deep_analysis_results"):
+        logger.info("No deep analysis results in Flow state")
+        return decisions
+
+    deep_analysis_results = flow_state.deep_analysis_results
+    portfolio_alternatives = getattr(flow_state, "portfolio_alternatives", {})
+
+    if not deep_analysis_results:
+        logger.info("Deep analysis results dict is empty")
+        return decisions
+
+    logger.info(f"Merging deep analysis data for {len(deep_analysis_results)} holdings")
+
+    # Track statistics
+    merged_count = 0
+    alternatives_added_count = 0
+
+    # Merge deep analysis data into each decision
+    for decision in decisions:
+        ticker = decision.ticker
+
+        # Check if we have deep analysis for this ticker
+        if ticker in deep_analysis_results:
+            analysis = deep_analysis_results[ticker]
+
+            # Update composite score and grade from crew analysis
+            decision.composite_score = analysis.composite_score
+            decision.grade = analysis.grade
+
+            # Update crew analysis metadata
+            decision.crew_analysis_used = analysis.crew_name
+            decision.analysis_date = analysis.analyzed_at
+            decision.data_freshness = "fresh" if not analysis.cached else "recent"
+
+            # Add detailed metrics to rationale if available
+            if analysis.fundamental_score is not None:
+                decision.rationale_bullets.append(f"Score Fondamental: {analysis.fundamental_score:.2f}")
+
+            if analysis.technical_score is not None:
+                decision.rationale_bullets.append(f"Score Technique: {analysis.technical_score:.2f}")
+
+            if analysis.risk_score is not None:
+                decision.rationale_bullets.append(f"Score de Risque: {analysis.risk_score:.1f}/5.0")
+
+            # Add cache status to rationale
+            if analysis.cached:
+                decision.rationale_bullets.append("Analyse mise en cache (données récentes)")
+
+            merged_count += 1
+            logger.debug(f"Merged deep analysis for {ticker}: {analysis.grade} ({analysis.composite_score:.2f})")
+
+        # Add alternatives if available
+        if ticker in portfolio_alternatives:
+            alternatives_data = portfolio_alternatives[ticker]
+
+            # Convert alternatives data to Alternative objects
+            from finwiz.schemas.portfolio_review import Alternative
+
+            for alt_data in alternatives_data:
+                try:
+                    alternative = Alternative(**alt_data)
+                    decision.alternatives.append(alternative)
+                    alternatives_added_count += 1
+                except Exception as e:
+                    logger.warning(f"Failed to create Alternative object for {ticker}: {e}")
+                    continue
+
+            decision.has_a_plus_opportunities = len(decision.alternatives) > 0
+
+            logger.debug(f"Added {len(decision.alternatives)} alternatives for {ticker}")
+
+    logger.info(f"Deep analysis merge complete: {merged_count} holdings updated, {alternatives_added_count} alternatives added")
+
+    return decisions
+
+
+def get_flow_state_from_context() -> Any | None:
+    """
+    Get current Flow state from execution context.
+
+    This is a helper function to access Flow state after Flow execution.
+    Returns None if no Flow state is available.
+
+    Returns:
+        Flow state object or None
+
+    """
+    # This will be set by the Flow execution context
+    # For now, return None - will be populated by Flow integration
+    return None
+
+
 # --- Builder using PortfolioHoldingsProcessor ---
 
 
@@ -77,18 +188,21 @@ def build_portfolio_review(
     stock_csv: Path | None = None,
     etf_csv: Path | None = None,
     crypto_csv: Path | None = None,
+    flow_state: Any | None = None,
 ) -> tuple[PortfolioReview, ProcessingSummary]:
     """
     Build portfolio review using PortfolioHoldingsProcessor.
 
     This ensures ALL holdings from CSV files are processed and included,
-    even if validation fails.
+    even if validation fails. If flow_state is provided, merges deep analysis
+    data from Flow execution.
 
     Args:
         base_currency: Base currency for the portfolio
         stock_csv: Path to stock holdings CSV
         etf_csv: Path to ETF holdings CSV
         crypto_csv: Path to crypto holdings CSV
+        flow_state: Optional Flow state containing deep analysis results
 
     Returns:
         Tuple of (PortfolioReview, ProcessingSummary)
@@ -134,6 +248,11 @@ def build_portfolio_review(
         for ticker, reason in summary.validation_failures:
             logger.warning(f"  - {ticker}: {reason}")
 
+    # Merge deep analysis data from Flow state if available
+    if flow_state is not None:
+        logger.info("Merging deep analysis data from Flow state")
+        decisions = _merge_deep_analysis_from_flow_state(decisions, flow_state)
+
     # Create portfolio review
     review = PortfolioReview(
         as_of=datetime.now(UTC),
@@ -142,6 +261,101 @@ def build_portfolio_review(
     )
 
     return review, summary
+
+
+def _merge_deep_analysis_from_flow_state(decisions: list[HoldingDecision], flow_state: Any) -> list[HoldingDecision]:
+    """
+    Merge deep analysis results from Flow state into HoldingDecision objects.
+
+    This function enriches portfolio decisions with:
+    - Crew analysis metadata (crew_analysis_used, analysis_date)
+    - Composite scores and grades from deep analysis
+    - A+ alternatives for underperforming holdings
+
+    Args:
+        decisions: List of HoldingDecision objects from portfolio processor
+        flow_state: Flow state containing deep_analysis_results and portfolio_alternatives
+
+    Returns:
+        Updated list of HoldingDecision objects with merged deep analysis data
+
+    """
+    try:
+        # Access deep analysis results from structured Flow state
+        deep_analysis_results = getattr(flow_state, "deep_analysis_results", {})
+        portfolio_alternatives = getattr(flow_state, "portfolio_alternatives", {})
+
+        if not deep_analysis_results:
+            logger.info("No deep analysis results available in Flow state")
+            return decisions
+
+        # Statistics tracking
+        holdings_with_deep_analysis = 0
+        holdings_with_alternatives = 0
+
+        # Merge deep analysis data into each HoldingDecision
+        for decision in decisions:
+            ticker = decision.ticker
+
+            # Check if we have deep analysis for this ticker
+            if ticker in deep_analysis_results:
+                deep_result = deep_analysis_results[ticker]
+
+                # Update HoldingDecision with deep analysis data
+                decision.crew_analysis_used = deep_result.crew_name
+                decision.analysis_date = deep_result.analyzed_at
+                decision.composite_score = deep_result.composite_score
+                decision.grade = deep_result.grade
+
+                # Update grade description and recommended action using grading system
+                grade_info = score_to_grade(deep_result.composite_score)
+                decision.grade_description = grade_info.description
+                decision.recommended_action = grade_info.action
+
+                # Update data freshness
+                decision.data_freshness = "fresh" if not deep_result.cached else "recent"
+
+                holdings_with_deep_analysis += 1
+                logger.debug(
+                    f"Merged deep analysis for {ticker}: grade={deep_result.grade}, "
+                    f"score={deep_result.composite_score:.3f}, crew={deep_result.crew_name}"
+                )
+
+            # Check if we have alternatives for this ticker
+            if ticker in portfolio_alternatives:
+                alternatives_data = portfolio_alternatives[ticker]
+
+                # Convert alternative dictionaries to Alternative objects
+                from finwiz.schemas.portfolio_review import Alternative
+
+                alternatives = []
+                for alt_dict in alternatives_data:
+                    try:
+                        alternative = Alternative.model_validate(alt_dict)
+                        alternatives.append(alternative)
+                    except Exception as e:
+                        logger.warning(f"Failed to validate alternative for {ticker}: {e}")
+                        continue
+
+                # Update HoldingDecision with alternatives
+                if alternatives:
+                    decision.alternatives = alternatives[:3]  # Limit to top 3
+                    decision.has_a_plus_opportunities = True
+                    holdings_with_alternatives += 1
+                    logger.debug(f"Added {len(alternatives)} alternatives for {ticker}")
+
+        # Log merge statistics
+        logger.info(
+            f"Deep analysis merge complete: {holdings_with_deep_analysis} holdings with deep analysis, "
+            f"{holdings_with_alternatives} holdings with alternatives"
+        )
+
+        return decisions
+
+    except Exception as e:
+        logger.error(f"Error merging deep analysis from Flow state: {e}", exc_info=True)
+        # Return decisions unchanged on error (graceful degradation)
+        return decisions
 
 
 # --- I/O helpers ---
@@ -177,12 +391,8 @@ def save_review_json(
             "processed_with_warnings": summary.processed_with_warnings,
             "failed_to_process": summary.failed_to_process,
             "by_asset_class": summary.by_asset_class,
-            "validation_failures": [
-                {"ticker": ticker, "reason": reason} for ticker, reason in summary.validation_failures
-            ],
-            "excluded_holdings": [
-                {"ticker": ticker, "reason": reason} for ticker, reason in summary.excluded_holdings
-            ],
+            "validation_failures": [{"ticker": ticker, "reason": reason} for ticker, reason in summary.validation_failures],
+            "excluded_holdings": [{"ticker": ticker, "reason": reason} for ticker, reason in summary.excluded_holdings],
         }
 
         logger.info(
@@ -200,6 +410,7 @@ async def run_with_rebalancing(
     target_weights: dict[str, float] | None = None,
     available_capital: float = 0.0,
     include_rebalancing: bool = True,
+    flow_state: Any | None = None,
 ) -> tuple[Path, dict[str, Any] | None]:
     """
     Run portfolio review process with optional rebalancing analysis.
@@ -208,6 +419,7 @@ async def run_with_rebalancing(
         target_weights: Target allocation weights for rebalancing
         available_capital: Available capital for rebalancing
         include_rebalancing: Whether to include rebalancing analysis
+        flow_state: Optional Flow state containing deep analysis results
 
     Returns:
         Tuple of (review_path, rebalancing_result)
@@ -222,13 +434,11 @@ async def run_with_rebalancing(
         stock_csv=stock_csv,
         etf_csv=etf_csv,
         crypto_csv=crypto_csv,
+        flow_state=flow_state,
     )
 
     # Log count of holdings processed vs. holdings in CSV
-    logger.info(
-        f"Holdings processed: {len(review.holdings)} decisions generated "
-        f"from {summary.total_holdings} CSV entries"
-    )
+    logger.info(f"Holdings processed: {len(review.holdings)} decisions generated from {summary.total_holdings} CSV entries")
     logger.info(f"By asset class: {summary.by_asset_class}")
 
     # Save portfolio review with processing summary
@@ -284,8 +494,17 @@ async def run_with_rebalancing(
     return out, rebalancing_result
 
 
-def run() -> Path:
-    """Run standard portfolio review process."""
+def run(flow_state: Any | None = None) -> Path:
+    """
+    Run standard portfolio review process.
+
+    Args:
+        flow_state: Optional Flow state containing deep analysis results
+
+    Returns:
+        Path to saved portfolio review JSON
+
+    """
     # Get CSV paths
     etf_csv, stock_csv, crypto_csv = get_csv_paths()
 
@@ -295,13 +514,11 @@ def run() -> Path:
         stock_csv=stock_csv,
         etf_csv=etf_csv,
         crypto_csv=crypto_csv,
+        flow_state=flow_state,
     )
 
     # Log count of holdings processed vs. holdings in CSV
-    logger.info(
-        f"Holdings processed: {len(review.holdings)} decisions generated "
-        f"from {summary.total_holdings} CSV entries"
-    )
+    logger.info(f"Holdings processed: {len(review.holdings)} decisions generated from {summary.total_holdings} CSV entries")
     logger.info(f"By asset class: {summary.by_asset_class}")
 
     # Save portfolio review with processing summary
@@ -487,17 +704,13 @@ class EnhancedPortfolioReviewOrchestrator:
 
             # Successfully processed
             success_li = soup.new_tag("li")
-            success_li.string = (
-                f"Successfully processed: {processing_summary['processed_successfully']}"
-            )
+            success_li.string = f"Successfully processed: {processing_summary['processed_successfully']}"
             summary_list.append(success_li)
 
             # Warnings
             if processing_summary["processed_with_warnings"] > 0:
                 warning_li = soup.new_tag("li")
-                warning_li.string = (
-                    f"Processed with warnings: {processing_summary['processed_with_warnings']}"
-                )
+                warning_li.string = f"Processed with warnings: {processing_summary['processed_with_warnings']}"
                 summary_list.append(warning_li)
 
             # Failed
@@ -669,6 +882,24 @@ class EnhancedPortfolioReviewOrchestrator:
         # Create holdings table
         table = soup.new_tag("table", **{"class": "holdings-table"})
 
+        # Count deep vs shallow analysis
+        deep_count = sum(1 for h in holdings if h.get("crew_analysis_used"))
+        shallow_count = len(holdings) - deep_count
+
+        # Add analysis depth summary
+        if deep_count > 0:
+            analysis_summary = soup.new_tag("div", **{"class": "analysis-summary"})
+            summary_title = soup.new_tag("h4")
+            summary_title.string = "📊 Profondeur d'Analyse"
+            analysis_summary.append(summary_title)
+
+            summary_p = soup.new_tag("p")
+            summary_p.append(f"🔍 Analyse Approfondie: {deep_count} positions | ")
+            summary_p.append(f"⚡ Validation Rapide: {shallow_count} positions")
+            analysis_summary.append(summary_p)
+
+            soup.append(analysis_summary)
+
         # Table header
         thead = soup.new_tag("thead")
         header_row = soup.new_tag("tr")
@@ -676,11 +907,12 @@ class EnhancedPortfolioReviewOrchestrator:
             "Ticker",
             "Nom",
             "Type",
+            "Analyse",
             "Décision",
             "Note",
-            "Action Recommandée",
+            "Scores",
             "Risque",
-            "Statut Validation",
+            "Alternatives A+",
         ]
         for header_text in headers:
             th = soup.new_tag("th")
@@ -698,6 +930,10 @@ class EnhancedPortfolioReviewOrchestrator:
 
             # Get grade information
             grade_info = score_to_grade(composite_score)
+
+            # Check if deep analysis was used
+            crew_analysis_used = holding.get("crew_analysis_used")
+            is_deep_analysis = crew_analysis_used is not None
 
             # Create table row
             tr = soup.new_tag("tr")
@@ -717,6 +953,23 @@ class EnhancedPortfolioReviewOrchestrator:
             td_asset.string = holding.get("asset_class", "N/A").upper()
             tr.append(td_asset)
 
+            # Analysis depth indicator cell
+            td_analysis = soup.new_tag("td")
+            if is_deep_analysis:
+                analysis_span = soup.new_tag("span", **{"class": "analysis-deep"})
+                analysis_span.string = "🔍 Deep"
+                td_analysis.append(analysis_span)
+                # Add crew name as tooltip
+                if crew_analysis_used:
+                    crew_small = soup.new_tag("small")
+                    crew_small.string = f" ({crew_analysis_used})"
+                    td_analysis.append(crew_small)
+            else:
+                analysis_span = soup.new_tag("span", **{"class": "analysis-quick"})
+                analysis_span.string = "⚡ Quick"
+                td_analysis.append(analysis_span)
+            tr.append(td_analysis)
+
             # Decision cell
             td_decision = soup.new_tag("td", **{"class": decision_class})
             td_decision.string = holding.get("decision", "N/A")
@@ -729,30 +982,52 @@ class EnhancedPortfolioReviewOrchestrator:
             td_grade.append(grade_span)
             tr.append(td_grade)
 
-            # Action cell
-            td_action = soup.new_tag("td")
-            td_action.string = grade_info.action
-            tr.append(td_action)
+            # Scores cell (show detailed metrics if available from deep analysis)
+            td_scores = soup.new_tag("td")
+            if is_deep_analysis:
+                # Extract scores from rationale bullets
+                rationale_bullets = holding.get("rationale_bullets", [])
+                scores_list = soup.new_tag("ul", **{"class": "scores-list"})
+                for bullet in rationale_bullets:
+                    if "Score" in bullet or "score" in bullet:
+                        score_li = soup.new_tag("li")
+                        score_li.string = bullet
+                        scores_list.append(score_li)
+                if scores_list.contents:
+                    td_scores.append(scores_list)
+                else:
+                    td_scores.string = f"{composite_score:.2f}"
+            else:
+                td_scores.string = f"{composite_score:.2f}"
+            tr.append(td_scores)
 
             # Risk cell
             td_risk = soup.new_tag("td")
             td_risk.string = f"{risk_score:.1f}/10"
             tr.append(td_risk)
 
-            # Validation status cell
-            td_validation = soup.new_tag("td")
-            data_freshness = holding.get("data_freshness", "unknown")
-            if data_freshness == "fresh":
-                validation_span = soup.new_tag("span", **{"class": "validation-fresh"})
-                validation_span.string = "✅ Valid"
-            elif data_freshness == "stale":
-                validation_span = soup.new_tag("span", **{"class": "validation-stale"})
-                validation_span.string = "⚠️ Warning"
+            # Alternatives cell
+            td_alternatives = soup.new_tag("td")
+            alternatives = holding.get("alternatives", [])
+            if alternatives:
+                alt_count = len(alternatives)
+                alt_span = soup.new_tag("span", **{"class": "alternatives-available"})
+                alt_span.string = f"💎 {alt_count} A+ disponible{'s' if alt_count > 1 else ''}"
+                td_alternatives.append(alt_span)
+
+                # Add alternatives list
+                alt_list = soup.new_tag("ul", **{"class": "alternatives-list"})
+                for alt in alternatives[:3]:  # Show top 3
+                    alt_li = soup.new_tag("li")
+                    alt_ticker = alt.get("ticker", "N/A")
+                    alt_grade = alt.get("grade", "A+")
+                    alt_score = alt.get("composite_score", 0)
+                    alt_li.string = f"{alt_ticker} ({alt_grade}, {alt_score:.2f})"
+                    alt_list.append(alt_li)
+                td_alternatives.append(alt_list)
             else:
-                validation_span = soup.new_tag("span", **{"class": "validation-unknown"})
-                validation_span.string = "❓ Unknown"
-            td_validation.append(validation_span)
-            tr.append(td_validation)
+                td_alternatives.string = "-"
+            tr.append(td_alternatives)
 
             tbody.append(tr)
 
