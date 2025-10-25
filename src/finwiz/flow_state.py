@@ -15,6 +15,13 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Import ValidationError for error tracking
+try:
+    from finwiz.validation.result import ValidationError
+except ImportError:
+    # Fallback if validation module not available
+    ValidationError = None  # type: ignore
+
 
 class DeepAnalysisResult(BaseModel):
     """Result from deep crew analysis of a portfolio holding."""
@@ -22,7 +29,7 @@ class DeepAnalysisResult(BaseModel):
     ticker: str = Field(..., description="Stock/ETF/crypto ticker symbol")
     asset_class: str = Field(..., description="Asset class (stock, etf, crypto)")
     crew_name: str = Field(..., description="Name of crew that performed analysis")
-    analyzed_at: datetime = Field(..., description="When analysis was performed")
+    analysis_timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(), description="When analysis was performed (ISO format)")
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Composite score (0.0-1.0)")
     grade: str = Field(..., description="Letter grade (A+ to F)")
     
@@ -31,8 +38,20 @@ class DeepAnalysisResult(BaseModel):
     technical_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
     risk_score: Optional[float] = Field(None, ge=0.0, le=5.0, description="Risk score (0-5 scale)")
     
+    # Data quality and freshness
+    data_freshness_hours: float = Field(..., ge=0.0, description="Age of market data in hours")
+    confidence_level: float = Field(..., ge=0.0, le=1.0, description="Confidence level in analysis (0.0-1.0)")
+    warnings: List[str] = Field(default_factory=list, description="List of analysis warnings")
+    
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")
+    
+    model_config = {
+        "extra": "forbid",
+        "str_strip_whitespace": True,
+        "ser_json_timedelta": "iso8601",
+        "ser_json_bytes": "base64"
+    }
 
 
 class FinwizState(BaseModel):
@@ -161,7 +180,38 @@ class FinwizState(BaseModel):
         description="Formatted data availability summary for report display"
     )
     
-    model_config = {"extra": "allow"}  # Allow CrewAI Flow to add internal fields (StateWithId wrapper)
+    # ===== RESILIENCE TRACKING FIELDS (NEW) =====
+    
+    # Progress tracking
+    total_holdings: int = Field(default=0, description="Total number of holdings to analyze")
+    holdings_processed: int = Field(default=0, description="Number of holdings processed so far")
+    holdings_remaining: int = Field(default=0, description="Number of holdings remaining to process")
+    current_ticker: str = Field(default="", description="Currently processing ticker")
+    progress_percentage: float = Field(default=0.0, ge=0.0, le=100.0, description="Overall progress percentage")
+    
+    # Timing fields (stored as ISO format strings for JSON serialization compatibility)
+    flow_start_time: str = Field(default_factory=lambda: datetime.now().isoformat(), description="When the flow execution started (ISO format)")
+    last_checkpoint_time: Optional[str] = Field(None, description="Last checkpoint timestamp (ISO format)")
+    estimated_time_remaining: float = Field(default=0.0, ge=0.0, description="Estimated seconds remaining")
+    
+    # Error tracking
+    failed_holdings: List[str] = Field(default_factory=list, description="List of tickers that failed analysis")
+    retry_counts: Dict[str, int] = Field(default_factory=dict, description="Retry count per ticker")
+    timeout_holdings: List[str] = Field(default_factory=list, description="List of tickers that timed out")
+    
+    # Error classification (using ValidationError if available)
+    retryable_errors: List[Any] = Field(default_factory=list, description="List of retryable ValidationError objects")
+    non_retryable_errors: List[Any] = Field(default_factory=list, description="List of non-retryable ValidationError objects")
+    
+    # Resume metadata
+    resume_from_checkpoint: bool = Field(default=False, description="Whether this is a resumed execution")
+    checkpoint_uuid: Optional[str] = Field(None, description="UUID of checkpoint being resumed from")
+    
+    model_config = {
+        "extra": "allow",  # Allow CrewAI Flow to add internal fields (StateWithId wrapper)
+        "ser_json_timedelta": "iso8601",
+        "ser_json_bytes": "base64"
+    }
 
 
 class FlowStateManager:
@@ -201,15 +251,40 @@ class FlowStateManager:
 
     def check_core_analysis_availability(self, state: FinwizState) -> dict[str, Any]:
         """Check which core analysis crews are available and their status."""
-        stock_available = state.stock_analysis_success or (
-            state.stock_analysis_fallback and state.stock_analysis_result is not None
-        )
-        etf_available = state.etf_analysis_success or (
-            state.etf_analysis_fallback and state.etf_analysis_result is not None
-        )
-        crypto_available = state.crypto_analysis_success or (
-            state.crypto_analysis_fallback and state.crypto_analysis_result is not None
-        )
+        # Import here to avoid circular imports
+        from .integration.manager import CrewDataIntegrationManager
+        
+        # Create integration manager to check actual data availability
+        integration_manager = CrewDataIntegrationManager()
+        
+        # Check actual data availability in the integration system
+        stock_available = False
+        etf_available = False
+        crypto_available = False
+        
+        try:
+            # Check if data actually exists in the integration system
+            stock_data = integration_manager.get_crew_data_with_freshness_check("stock", max_age_hours=24, warn_on_stale=False)
+            stock_available = stock_data is not None
+            
+            etf_data = integration_manager.get_crew_data_with_freshness_check("etf", max_age_hours=24, warn_on_stale=False)
+            etf_available = etf_data is not None
+            
+            crypto_data = integration_manager.get_crew_data_with_freshness_check("crypto", max_age_hours=24, warn_on_stale=False)
+            crypto_available = crypto_data is not None
+            
+        except Exception as e:
+            # Fallback to state flags if integration system check fails
+            self.logger.warning(f"Failed to check actual data availability, falling back to state flags: {e}")
+            stock_available = state.stock_analysis_success or (
+                state.stock_analysis_fallback and state.stock_analysis_result is not None
+            )
+            etf_available = state.etf_analysis_success or (
+                state.etf_analysis_fallback and state.etf_analysis_result is not None
+            )
+            crypto_available = state.crypto_analysis_success or (
+                state.crypto_analysis_fallback and state.crypto_analysis_result is not None
+            )
 
         available_crews = []
         if stock_available:
@@ -219,6 +294,7 @@ class FlowStateManager:
         if crypto_available:
             available_crews.append("crypto")
 
+        # Check for failed crews based on state flags (these are still relevant)
         failed_crews = []
         if state.stock_analysis_error:
             failed_crews.append("stock")
@@ -227,6 +303,7 @@ class FlowStateManager:
         if state.crypto_analysis_error:
             failed_crews.append("crypto")
 
+        # Check for disabled crews based on state flags
         disabled_crews = []
         if state.stock_analysis_disabled:
             disabled_crews.append("stock")
@@ -373,10 +450,11 @@ class FlowStateManager:
 
         try:
             # Process each core analysis type
+            crew_data_dict = consolidated_data.get("consolidated_crew_data", consolidated_data)
             for crew_type in ["stock", "etf", "crypto"]:
-                if crew_type in consolidated_data:
+                if crew_type in crew_data_dict:
                     summary["available_analyses"].append(crew_type)
-                    crew_data = consolidated_data[crew_type]
+                    crew_data = crew_data_dict[crew_type]
 
                     # Extract recommendations
                     if "raw_output" in crew_data:
@@ -424,9 +502,10 @@ class FlowStateManager:
                     summary["overall_market_sentiment"] = "neutral"
 
             # Extract major risk factors
+            crew_data_dict = consolidated_data.get("consolidated_crew_data", consolidated_data)
             for crew_type in ["stock", "etf", "crypto"]:
-                if crew_type in consolidated_data:
-                    crew_data = consolidated_data[crew_type]
+                if crew_type in crew_data_dict:
+                    crew_data = crew_data_dict[crew_type]
                     if "raw_output" in crew_data:
                         raw_output = str(crew_data["raw_output"]).lower()
                         # Look for risk-related keywords

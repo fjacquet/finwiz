@@ -38,16 +38,20 @@ def kickoff() -> None:
     logger.info("Starting FinWiz analysis workflow")
 
     try:
-        # Step 1: Initialize and validate configuration
+        # Step 1: Validate template variables in crew configurations
+        from finwiz.validation import validate_template_variables_at_startup
+        validate_template_variables_at_startup()
+
+        # Step 2: Initialize and validate configuration
         initialize_configuration()
 
-        # Step 2: Initialize session management
+        # Step 3: Initialize session management
         financial_plan = initialize_session_management()
 
-        # Step 3: Initialize environment and retry mechanism
+        # Step 4: Initialize environment and retry mechanism
         initialize_environment()
 
-        # Step 4: Create and start the flow with session data
+        # Step 5: Create and start the flow with session data
         logger.info("Creating FinWiz flow with session integration")
 
         # Create flow state and prepare session data for flow inputs
@@ -61,7 +65,7 @@ def kickoff() -> None:
         finwiz_flow = FinwizFlow(state=flow_state)
         logger.debug("FinwizFlow instance created with FinwizState")
 
-        # Step 5: Execute the flow
+        # Step 6: Execute the flow
         logger.info("🚀 Starting FinWiz analysis execution")
         finwiz_flow.kickoff()
         logger.info("✅ FinWiz analysis workflow completed successfully")

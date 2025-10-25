@@ -8,6 +8,7 @@ escalation procedures for production deployment.
 
 import asyncio
 import json
+import os
 import smtplib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -113,29 +114,29 @@ class AlertManager:
         config_manager = get_configuration_manager()
 
         # Email configuration
-        self.config.smtp_host = config_manager.get_setting("SMTP_HOST", self.config.smtp_host)
-        self.config.smtp_port = int(config_manager.get_setting("SMTP_PORT", str(self.config.smtp_port)))
-        self.config.smtp_username = config_manager.get_setting("SMTP_USERNAME", self.config.smtp_username)
-        self.config.smtp_password = config_manager.get_setting("SMTP_PASSWORD", self.config.smtp_password)
+        self.config.smtp_host = os.getenv("SMTP_HOST", self.config.smtp_host)
+        self.config.smtp_port = int(os.getenv("SMTP_PORT", str(self.config.smtp_port)))
+        self.config.smtp_username = os.getenv("SMTP_USERNAME", self.config.smtp_username)
+        self.config.smtp_password = os.getenv("SMTP_PASSWORD", self.config.smtp_password)
 
         # Recipients
-        email_recipients = config_manager.get_setting("ALERT_EMAIL_RECIPIENTS", "")
+        email_recipients = os.getenv("ALERT_EMAIL_RECIPIENTS", "")
         if email_recipients:
             self.config.email_recipients = [email.strip() for email in email_recipients.split(",")]
 
-        critical_recipients = config_manager.get_setting("ALERT_CRITICAL_RECIPIENTS", "")
+        critical_recipients = os.getenv("ALERT_CRITICAL_RECIPIENTS", "")
         if critical_recipients:
             self.config.critical_recipients = [email.strip() for email in critical_recipients.split(",")]
 
         # Webhook URLs
-        webhook_urls = config_manager.get_setting("ALERT_WEBHOOK_URLS", "")
+        webhook_urls = os.getenv("ALERT_WEBHOOK_URLS", "")
         if webhook_urls:
             self.config.webhook_urls = [url.strip() for url in webhook_urls.split(",")]
 
         # Feature flags
-        self.config.email_enabled = config_manager.get_setting("ALERT_EMAIL_ENABLED", "true").lower() == "true"
-        self.config.webhook_enabled = config_manager.get_setting("ALERT_WEBHOOK_ENABLED", "true").lower() == "true"
-        self.config.escalation_enabled = config_manager.get_setting("ALERT_ESCALATION_ENABLED", "true").lower() == "true"
+        self.config.email_enabled = os.getenv("ALERT_EMAIL_ENABLED", "true").lower() == "true"
+        self.config.webhook_enabled = os.getenv("ALERT_WEBHOOK_ENABLED", "true").lower() == "true"
+        self.config.escalation_enabled = os.getenv("ALERT_ESCALATION_ENABLED", "true").lower() == "true"
 
     async def create_alert(
         self, alert_type: AlertType, severity: AlertSeverity, title: str, message: str, metadata: dict[str, Any] | None = None

@@ -2,6 +2,8 @@
 
 Standards for developing CrewAI crews, agents, and tasks in FinWiz.
 
+**See also:** [CrewAI Best Practices](crewai-best-practices.md) for comprehensive patterns on Flow state management, agent reasoning, crew planning, and collaboration.
+
 ## Crew Structure (Required)
 
 All crews must follow this exact structure:

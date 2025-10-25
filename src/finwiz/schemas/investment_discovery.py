@@ -8,7 +8,7 @@ validation outcomes, and portfolio optimization recommendations.
 from datetime import datetime
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .common import RiskAssessmentStandardized
 from .portfolio_review import Grade
@@ -16,6 +16,8 @@ from .portfolio_review import Grade
 
 class MarketRegime(BaseModel):
     """Current market regime assessment for A+ discovery."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     regime_type: Literal["bull", "bear", "sideways", "volatile"] = Field(..., description="Current market regime")
     vix_level: float = Field(..., ge=0.0, le=100.0, description="VIX volatility index level")
@@ -27,6 +29,8 @@ class MarketRegime(BaseModel):
 
 class APlusCriteria(BaseModel):
     """Dynamic A+ scoring criteria that adapt to market conditions."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     # ETF Criteria
     etf_max_expense_ratio: float = Field(
@@ -61,6 +65,8 @@ class APlusCriteria(BaseModel):
 class InvestmentCandidate(BaseModel):
     """A candidate investment discovered through A+ screening."""
 
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
     symbol: str = Field(..., description="Investment symbol (e.g., AAPL, SPY, BTC-USD)")
     name: str = Field(..., description="Full name of the investment")
     asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of asset")
@@ -78,6 +84,8 @@ class InvestmentCandidate(BaseModel):
 
 class APlusAnalysis(BaseModel):
     """Detailed A+ analysis for an investment candidate."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     candidate: InvestmentCandidate
     fundamental_score: float = Field(..., ge=0.0, le=1.0, description="Fundamental analysis score")
@@ -97,6 +105,8 @@ class APlusAnalysis(BaseModel):
 
 class APlusDiscoveryResult(BaseModel):
     """Result from A+ investment discovery process."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of assets analyzed")
     total_screened: int = Field(..., ge=0, description="Total number of investments screened")
@@ -129,6 +139,8 @@ class APlusDiscoveryResult(BaseModel):
 class ValidationResult(BaseModel):
     """Result from A+ candidate validation process."""
 
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
     total_candidates: int = Field(..., ge=0, description="Total candidates validated")
     passed_validation: int = Field(..., ge=0, description="Candidates that passed validation")
     failed_validation: int = Field(..., ge=0, description="Candidates that failed validation")
@@ -157,6 +169,8 @@ class ValidationResult(BaseModel):
 class PortfolioImprovement(BaseModel):
     """A specific portfolio improvement recommendation."""
 
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
     current_holding: Optional[str] = Field(None, description="Current holding to replace (if any)")
     current_grade: Optional[Grade] = Field(None, description="Current holding grade (if replacing)")
     recommended_investment: str = Field(..., description="Recommended A+ investment symbol")
@@ -174,6 +188,8 @@ class PortfolioImprovement(BaseModel):
 
 class OptimizationResult(BaseModel):
     """Result from portfolio optimization with A+ discoveries."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     current_portfolio_grade: Grade = Field(..., description="Current portfolio letter grade")
     optimized_portfolio_grade: Grade = Field(..., description="Projected portfolio grade after improvements")

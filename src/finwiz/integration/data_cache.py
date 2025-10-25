@@ -103,11 +103,25 @@ class DataCache:
                 )
 
                 if crew_data:
-                    consolidated[crew_name] = crew_data
+                    # Validate that the data is not empty
+                    if isinstance(crew_data, dict) and len(crew_data) > 0:
+                        consolidated[crew_name] = crew_data
+                        self.logger.debug(
+                            f"Successfully retrieved {crew_name} crew data",
+                            extra={"data_size": len(str(crew_data)), "keys": list(crew_data.keys())[:5]}
+                        )
+                    else:
+                        self.logger.warning(
+                            f"Retrieved {crew_name} crew data but it appears empty",
+                            extra={"data_type": type(crew_data), "data_length": len(crew_data) if hasattr(crew_data, '__len__') else 'N/A'}
+                        )
                 else:
                     self.logger.warning(f"No data available for {crew_name} crew")
 
-            self.logger.info(f"Consolidated data from {len(consolidated)} crews")
+            self.logger.info(
+                f"Consolidated data from {len(consolidated)} crews",
+                extra={"crews": list(consolidated.keys())}
+            )
 
             # Serialize datetime objects for CrewAI compatibility
             serialized_consolidated = serialize_datetime_objects(consolidated)

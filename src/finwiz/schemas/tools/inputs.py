@@ -98,6 +98,23 @@ class TwelveDataIndicatorInput(BaseModel):
     outputsize: int | None = Field(100, description="Number of data points to return (max depends on plan)")
 
 
+class TwelveDataMultiIndicatorInput(BaseModel):
+    """Input schema for fetching multiple technical indicators in one call."""
+
+    symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, BTC/USD, SPY")
+    interval: str = Field("1day", description="Interval, e.g., 1min, 5min, 1h, 1day")
+    indicators: list[Literal["rsi", "macd", "bbands"]] = Field(
+        ..., description="List of indicators to fetch (e.g., ['rsi', 'macd', 'bbands'])"
+    )
+    rsi_period: int = Field(14, description="Period for RSI calculation")
+    macd_fast: int = Field(12, description="Fast period for MACD")
+    macd_slow: int = Field(26, description="Slow period for MACD")
+    macd_signal: int = Field(9, description="Signal period for MACD")
+    bbands_period: int = Field(20, description="Period for Bollinger Bands")
+    bbands_stddev: int = Field(2, description="Standard deviation for Bollinger Bands")
+    outputsize: int = Field(100, description="Number of data points to return (max depends on plan)")
+
+
 # Sentiment Analysis Tool Inputs
 class EnhancedSentimentInput(BaseModel):
     """Input schema for enhanced sentiment analysis."""

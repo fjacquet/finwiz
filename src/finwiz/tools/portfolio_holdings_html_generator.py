@@ -4,13 +4,14 @@ French HTML Report Generator for Portfolio Holdings Analysis.
 This module generates comprehensive French HTML reports for portfolio holdings
 with price targets, alternatives, position sizing, and A+ improvement roadmap.
 
-Note: Uses f-string HTML generation to match existing codebase patterns.
-For future enhancement, consider migrating to BeautifulSoup for better HTML handling.
+Uses BeautifulSoup for HTML generation to ensure proper structure and security.
 """
 
 import logging
 from datetime import datetime
 from pathlib import Path
+
+from bs4 import BeautifulSoup
 
 from finwiz.schemas.portfolio_review import (
     PortfolioReview,
@@ -187,23 +188,62 @@ class PortfolioHoldingsHTMLGenerator:
         for holding in portfolio_review.holdings:
             freshness_counts[holding.data_freshness] += 1
         
-        # Build crew status list
-        crew_status = []
+        # Build crew status list using BeautifulSoup
+        soup = BeautifulSoup("", "html.parser")
+        crew_status_ul = soup.new_tag("ul")
+        
         for crew_name, count in crew_counts.items():
             if crew_name != "None" and count > 0:
-                crew_status.append(f"<li>✅ <strong>{crew_name}</strong>: {count} positions analysées</li>")
+                li = soup.new_tag("li")
+                li.append("✅ ")
+                strong = soup.new_tag("strong")
+                strong.string = crew_name
+                li.append(strong)
+                li.append(f": {count} positions analysées")
+                crew_status_ul.append(li)
         
         if crew_counts["None"] > 0:
-            crew_status.append(f"<li>⚡ <strong>Validation Rapide</strong>: {crew_counts['None']} positions</li>")
+            li = soup.new_tag("li")
+            li.append("⚡ ")
+            strong = soup.new_tag("strong")
+            strong.string = "Validation Rapide"
+            li.append(strong)
+            li.append(f": {crew_counts['None']} positions")
+            crew_status_ul.append(li)
         
-        # Build freshness status
-        freshness_status = []
+        crew_status_html = str(crew_status_ul)
+        
+        # Build freshness status using BeautifulSoup
+        freshness_status_ul = soup.new_tag("ul")
+        
         if freshness_counts["fresh"] > 0:
-            freshness_status.append(f"<li>🟢 <strong>Données fraîches</strong>: {freshness_counts['fresh']} positions</li>")
+            li = soup.new_tag("li")
+            li.append("🟢 ")
+            strong = soup.new_tag("strong")
+            strong.string = "Données fraîches"
+            li.append(strong)
+            li.append(f": {freshness_counts['fresh']} positions")
+            freshness_status_ul.append(li)
+            
         if freshness_counts["recent"] > 0:
-            freshness_status.append(f"<li>🟡 <strong>Données récentes</strong>: {freshness_counts['recent']} positions</li>")
+            li = soup.new_tag("li")
+            li.append("🟡 ")
+            strong = soup.new_tag("strong")
+            strong.string = "Données récentes"
+            li.append(strong)
+            li.append(f": {freshness_counts['recent']} positions")
+            freshness_status_ul.append(li)
+            
         if freshness_counts["stale"] > 0:
-            freshness_status.append(f"<li>🔴 <strong>Données anciennes</strong>: {freshness_counts['stale']} positions</li>")
+            li = soup.new_tag("li")
+            li.append("🔴 ")
+            strong = soup.new_tag("strong")
+            strong.string = "Données anciennes"
+            li.append(strong)
+            li.append(f": {freshness_counts['stale']} positions")
+            freshness_status_ul.append(li)
+        
+        freshness_status_html = str(freshness_status_ul)
         
         return f"""
         <div class="data-completeness">
@@ -211,16 +251,12 @@ class PortfolioHoldingsHTMLGenerator:
             
             <div style="margin:15px 0">
                 <h4 style="color:#2c3e50;margin-bottom:10px">Équipes d'Analyse Utilisées</h4>
-                <ul>
-                    {"".join(crew_status)}
-                </ul>
+                {crew_status_html}
             </div>
             
             <div style="margin:15px 0">
                 <h4 style="color:#2c3e50;margin-bottom:10px">Fraîcheur des Données</h4>
-                <ul>
-                    {"".join(freshness_status)}
-                </ul>
+                {freshness_status_html}
             </div>
             
             <div style="margin:15px 0">

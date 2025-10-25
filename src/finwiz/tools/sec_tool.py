@@ -10,7 +10,7 @@ from typing import Any
 
 import requests
 from crewai.tools import BaseTool
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from pydantic import BaseModel
@@ -123,8 +123,8 @@ class SECFilingSearchTool(BaseTool):
         return splitter.create_documents([content])
 
     def _retrieve_excerpts(self, docs: list[Any], question: str, top_k: int) -> list[str]:
-        retriever = FAISS.from_documents(docs, OpenAIEmbeddings()).as_retriever()
-        results = retriever.get_relevant_documents(question, top_k=top_k)
+        retriever = FAISS.from_documents(docs, OpenAIEmbeddings()).as_retriever(search_kwargs={"k": top_k})
+        results = retriever.invoke(question)
 
 
 try:  # defer optional dependency

@@ -6,6 +6,7 @@ centralizing crew initialization logic and providing consistent error handling.
 """
 
 import json
+import os
 from datetime import datetime
 from typing import Any
 
@@ -17,6 +18,7 @@ from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
 from finwiz.tools.logger import get_logger
 from finwiz.utils.core_analysis_error_handler import CoreAnalysisErrorHandler
+from finwiz.utils.crew_output_cache import get_crew_output_cache
 from finwiz.utils.feature_flags import is_feature_enabled
 
 logger = get_logger(__name__)
@@ -38,11 +40,42 @@ class CrewFactory:
         self.error_handler = error_handler
         self.logger = get_logger(__name__)
 
+        # Initialize crew output cache
+        cache_enabled = os.getenv("CREW_CACHE_ENABLED", "true").lower() == "true"
+        cache_max_age_hours = int(os.getenv("CREW_CACHE_MAX_AGE_HOURS", "24"))
+
+        self.cache_enabled = cache_enabled
+        self.output_cache = get_crew_output_cache(max_age_hours=cache_max_age_hours) if cache_enabled else None
+
+        if cache_enabled:
+            self.logger.info(f"Crew output caching enabled (max age: {cache_max_age_hours}h)")
+        else:
+            self.logger.info("Crew output caching disabled")
+
     def execute_crypto_crew(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute cryptocurrency analysis crew with error handling."""
         if not is_feature_enabled("crypto_analysis"):
             self.logger.info("Crypto analysis disabled via feature flag")
             return {"crypto_analysis_disabled": True}
+
+        # Check for cached output first
+        if self.cache_enabled and self.output_cache:
+            cached_data = self.output_cache.get_cached_crew_output("crypto")
+            if cached_data:
+                # Wrap cached data in expected structure before storing
+                wrapped_cached_data = self._wrap_cached_data_for_storage(cached_data, "crypto")
+
+                # Store wrapped cached data in integration system
+                self.integration_manager.store_crew_output("crypto", wrapped_cached_data)
+
+                # Return success response with cached data
+                return {
+                    "crypto_analysis_result": json.dumps(cached_data),
+                    "core_analysis_completed": True,
+                    "crypto_analysis_success": True,
+                    "crypto_analysis_cached": True,
+                    "cache_age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
+                }
 
         start_time = datetime.now()
 
@@ -59,6 +92,7 @@ class CrewFactory:
                 "crypto_analysis_result": str(result.raw) if hasattr(result, "raw") else str(result),
                 "core_analysis_completed": True,
                 "crypto_analysis_success": True,
+                "crypto_analysis_cached": False,
             }
 
             self.logger.info("Cryptocurrency analysis crew completed successfully")
@@ -100,6 +134,25 @@ class CrewFactory:
             self.logger.info("Stock analysis disabled via feature flag")
             return {"stock_analysis_disabled": True}
 
+        # Check for cached output first
+        if self.cache_enabled and self.output_cache:
+            cached_data = self.output_cache.get_cached_crew_output("stock")
+            if cached_data:
+                # Wrap cached data in expected structure before storing
+                wrapped_cached_data = self._wrap_cached_data_for_storage(cached_data, "stock")
+
+                # Store wrapped cached data in integration system
+                self.integration_manager.store_crew_output("stock", wrapped_cached_data)
+
+                # Return success response with cached data
+                return {
+                    "stock_analysis_result": json.dumps(cached_data),
+                    "core_analysis_completed": True,
+                    "stock_analysis_success": True,
+                    "stock_analysis_cached": True,
+                    "cache_age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
+                }
+
         start_time = datetime.now()
 
         try:
@@ -115,6 +168,7 @@ class CrewFactory:
                 "stock_analysis_result": str(result.raw) if hasattr(result, "raw") else str(result),
                 "core_analysis_completed": True,
                 "stock_analysis_success": True,
+                "stock_analysis_cached": False,
             }
 
             self.logger.info("Stock analysis crew completed successfully")
@@ -155,6 +209,25 @@ class CrewFactory:
         if not is_feature_enabled("etf_analysis"):
             self.logger.info("ETF analysis disabled via feature flag")
             return {"etf_analysis_disabled": True}
+
+        # Check for cached output first
+        if self.cache_enabled and self.output_cache:
+            cached_data = self.output_cache.get_cached_crew_output("etf")
+            if cached_data:
+                # Wrap cached data in expected structure before storing
+                wrapped_cached_data = self._wrap_cached_data_for_storage(cached_data, "etf")
+
+                # Store wrapped cached data in integration system
+                self.integration_manager.store_crew_output("etf", wrapped_cached_data)
+
+                # Return success response with cached data
+                return {
+                    "etf_analysis_result": json.dumps(cached_data),
+                    "core_analysis_completed": True,
+                    "etf_analysis_success": True,
+                    "etf_analysis_cached": True,
+                    "cache_age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
+                }
 
         start_time = datetime.now()
 
@@ -283,19 +356,46 @@ class CrewFactory:
         try:
             self.logger.info("Starting report generation crew")
 
-            # Initialize Report crew and validate inputs
+            # Debug: Log what keys are in inputs
+            self.logger.info(f"Inputs keys received: {list(inputs.keys())[:30]}")
+            if "portfolio_review" in inputs:
+                self.logger.info("✅ portfolio_review found in inputs")
+            else:
+                self.logger.warning("❌ portfolio_review NOT found in inputs - this will cause template variable error")
+
+            # Initialize Report crew
             report_crew = ReportCrew()
 
-            # Validate reporter input using the crew's validator (with error handling)
+            # CRITICAL: Prepare crew context with validated tickers
+            # This extracts tickers from upstream crew data and prevents hallucination
             try:
-                report_crew.validate_reporter_input(inputs)
-                self.logger.info("Reporter input validation passed")
-            except Exception as e:
-                self.logger.warning(f"Reporter input validation warning: {e}")
-                # Continue with graceful degradation as per ReporterInputValidator design
+                prepared_context = report_crew.prepare_crew_context(max_age_hours=24, inputs=inputs)
+                ticker_count = prepared_context.get('ticker_count', 0)
 
-            # Execute the report crew
-            report_crew.crew().kickoff(inputs=inputs)
+                # Check for insufficient tickers warning
+                if prepared_context.get('insufficient_tickers', False):
+                    self.logger.warning(
+                        f"Proceeding with limited report generation: {ticker_count} validated tickers (recommended: 3+)"
+                    )
+                else:
+                    self.logger.info(f"Crew context prepared with {ticker_count} validated tickers")
+
+                # Debug: Check if portfolio_review is in prepared context
+                if "portfolio_review" in prepared_context:
+                    self.logger.info("✅ portfolio_review preserved in prepared_context")
+                else:
+                    self.logger.error("❌ portfolio_review NOT in prepared_context - template variable error will occur")
+
+            except Exception as e:
+                self.logger.error(f"Failed to prepare crew context: {e}", exc_info=True)
+                return {
+                    "report_generation_error": f"Context preparation failed: {e}",
+                    "report_generation_success": False,
+                    "error_type": "context_preparation_failed",
+                }
+
+            # Execute the report crew with prepared context
+            report_crew.crew().kickoff(inputs=prepared_context)
 
             self.logger.info("Report generation completed successfully")
             return {"report_generation_success": True}
@@ -438,3 +538,36 @@ class CrewFactory:
         except Exception as e:
             self.logger.warning(f"Failed to extract market context from core analysis: {e}")
             return market_context
+
+    def _wrap_cached_data_for_storage(self, cached_data: dict[str, Any], crew_name: str) -> dict[str, Any]:
+        """
+        Wrap cached crew data in the expected storage structure.
+
+        This ensures cached data has the same structure as fresh crew outputs,
+        preventing validation errors in the data consolidation validator.
+
+        Args:
+            cached_data: Raw cached data (Pydantic model output)
+            crew_name: Name of the crew
+
+        Returns:
+            Wrapped data with expected structure (raw_output, json_dict, pydantic, tasks_output)
+
+        """
+        return {
+            "raw_output": json.dumps(cached_data, indent=2, default=str),
+            "json_dict": cached_data,
+            "pydantic": cached_data,  # Already in dict form from cache
+            "tasks_output": [],  # Cached data doesn't have task-level details
+            "metadata": {
+                "crew_name": crew_name,
+                "storage_timestamp": datetime.now().isoformat(),
+                "integration_version": "1.0",
+                "data_source": "cache",
+                "data_freshness": {
+                    "stored_at": datetime.now().isoformat(),
+                    "is_fresh": True,
+                    "age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
+                },
+            },
+        }

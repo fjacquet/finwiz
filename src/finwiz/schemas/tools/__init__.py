@@ -65,6 +65,7 @@ from .inputs import (
     # Validation inputs
     TickerValidationInput,
     TwelveDataIndicatorInput,
+    TwelveDataMultiIndicatorInput,
 )
 
 __all__ = [
@@ -81,6 +82,7 @@ __all__ = [
     # Technical analysis inputs
     "EnhancedTechnicalAnalysisInput",
     "TwelveDataIndicatorInput",
+    "TwelveDataMultiIndicatorInput",
     # Sentiment analysis inputs
     "EnhancedSentimentInput",
     "StandardizedSentimentInput",

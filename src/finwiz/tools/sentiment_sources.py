@@ -13,6 +13,7 @@ from finwiz.schemas.perplexity import SonarArticle
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.utils.url_validator import get_url_validator
 
 logger = get_logger(__name__)
 
@@ -34,6 +35,7 @@ class SentimentDataSources:
     def __init__(self) -> None:
         """Initialize sentiment data sources."""
         self.logger = logger
+        self.url_validator = get_url_validator()
     
     def _is_valid_url(self, url: str) -> bool:
         """
@@ -45,22 +47,8 @@ class SentimentDataSources:
         Returns:
             True if URL is valid, False otherwise
         """
-        if not url:
-            return False
-        
-        # Check for forbidden patterns
-        url_lower = url.lower()
-        for pattern in self.FORBIDDEN_URL_PATTERNS:
-            if pattern in url_lower:
-                self.logger.warning(f"Rejected URL with forbidden pattern '{pattern}': {url}")
-                return False
-        
-        # Check for valid protocol
-        if not url.startswith(("http://", "https://")):
-            self.logger.warning(f"Rejected URL with invalid protocol: {url}")
-            return False
-        
-        return True
+        # Use centralized URL validator
+        return self.url_validator.is_valid_url(url, "sentiment article")
     
     def _filter_valid_articles(self, articles: list[dict]) -> list[dict]:
         """

@@ -30,33 +30,55 @@ class RobustToolWrapper:
         Returns:
             Cleaned dictionary matching schema
         """
-        # Case 1: Already a clean dict
-        if isinstance(raw_input, dict):
-            return raw_input
-
-        # Case 2: JSON string
+        # Case 1: JSON string - parse it first
         if isinstance(raw_input, str):
             try:
                 parsed = json.loads(raw_input)
                 raw_input = parsed
+                logger.info(f"Parsed JSON string, got type: {type(raw_input)}")
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse JSON string: {raw_input[:200]}")
                 return {}
 
-        # Case 3: JSON array - take first non-empty item
+        # Case 2: JSON array - take first non-empty dict
         if isinstance(raw_input, list):
             logger.warning(f"Tool received array with {len(raw_input)} items, extracting first valid item")
+            logger.debug(f"Repaired JSON: {json.dumps(raw_input, indent=2)[:500]}")
 
             for item in raw_input:
+                # Recursively parse each item
+                if isinstance(item, str):
+                    try:
+                        item = json.loads(item)
+                    except json.JSONDecodeError:
+                        continue
+
                 if isinstance(item, dict) and item:
-                    # Check if it has actual parameter values (not just nested dicts)
+                    # Check if it looks like actual tool parameters
+                    # Skip items that look like error responses (have 'status', 'error', 'message' keys)
+                    error_indicators = {'status', 'error', 'message', 'items'}
+                    if error_indicators.intersection(item.keys()) and len(item) <= 3:
+                        logger.debug(f"Skipping error/status dict: {list(item.keys())}")
+                        continue
+                    
+                    # Skip items that look like validation results (have 'valid', 'reason', 'meta' keys)
+                    validation_indicators = {'valid', 'reason', 'meta'}
+                    if validation_indicators.issubset(item.keys()):
+                        logger.debug(f"Skipping validation result dict: {list(item.keys())}")
+                        continue
+                    
+                    # Check if it has actual parameter values (not just nested dicts/lists)
                     if any(not isinstance(v, (dict, list)) for v in item.values()):
-                        logger.info(f"Using first valid item from array: {item}")
+                        logger.info(f"Using first valid item from array: {list(item.keys())}")
                         return item
 
-            # If all items are empty or nested, return empty
+            # If no valid items found, return empty
             logger.warning("No valid items found in array")
             return {}
+
+        # Case 3: Already a dict - return it
+        if isinstance(raw_input, dict):
+            return raw_input
 
         # Case 4: Unknown type
         logger.error(f"Unexpected input type: {type(raw_input)}")

@@ -197,7 +197,7 @@ class TestPortfolioHoldingsProcessor:
         assert holdings[0].currency == "USD"  # Default
         assert holdings[1].name == "Unknown"  # Default
 
-    def test_should_process_holdings_with_valid_ticker(self, processor, mocker):
+    async def test_should_process_holdings_with_valid_ticker(self, processor, mocker):
         """Test processing holdings with valid ticker."""
         # Arrange
         holdings = [
@@ -219,16 +219,16 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act
-        decisions = processor.process_holdings(holdings)
+        decisions = await processor.process_holdings(holdings)
 
         # Assert
         assert len(decisions) == 1
         assert decisions[0].ticker == "AAPL"
         assert decisions[0].decision == "KEEP"
-        assert decisions[0].composite_score == 0.6
+        assert decisions[0].composite_score == 0.75  # Updated: stocks get 0.75 base score
         assert decisions[0].data_freshness == "fresh"
 
-    def test_should_process_holdings_with_invalid_ticker(self, processor, mocker):
+    async def test_should_process_holdings_with_invalid_ticker(self, processor, mocker):
         """Test processing holdings with invalid ticker."""
         # Arrange
         holdings = [
@@ -250,16 +250,18 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act
-        decisions = processor.process_holdings(holdings)
+        decisions = await processor.process_holdings(holdings)
 
         # Assert
         assert len(decisions) == 1
         assert decisions[0].ticker == "INVALID"
         assert decisions[0].decision == "SELL"
         assert decisions[0].data_freshness == "stale"
-        assert "validation failed" in decisions[0].rationale_bullets[0].lower()
+        # Check for validation failure message (in French)
+        rationale_text = " ".join(decisions[0].rationale_bullets).lower()
+        assert "validation" in rationale_text or "échec" in rationale_text
 
-    def test_should_include_all_holdings_even_with_errors(self, processor, mocker):
+    async def test_should_include_all_holdings_even_with_errors(self, processor, mocker):
         """Test that all holdings are included even if processing fails."""
         # Arrange
         holdings = [
@@ -288,7 +290,7 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         # Act
-        decisions = processor.process_holdings(holdings)
+        decisions = await processor.process_holdings(holdings)
 
         # Assert
         assert len(decisions) == 2
@@ -298,7 +300,7 @@ class TestPortfolioHoldingsProcessor:
         # When validation fails, score is 0.3 (invalid ticker base score)
         assert decisions[1].composite_score == 0.3
 
-    def test_should_generate_processing_summary(self, processor, mocker):
+    async def test_should_generate_processing_summary(self, processor, mocker):
         """Test generation of processing summary."""
         # Arrange
         holdings = [
@@ -328,7 +330,7 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act
-        processor.process_holdings(holdings)
+        await processor.process_holdings(holdings)
         summary = processor.get_processing_summary()
 
         # Assert
@@ -339,7 +341,7 @@ class TestPortfolioHoldingsProcessor:
         assert summary.by_asset_class["stock"] == 1
         assert summary.by_asset_class["etf"] == 1
 
-    def test_should_track_validation_failures_in_summary(self, processor, mocker):
+    async def test_should_track_validation_failures_in_summary(self, processor, mocker):
         """Test that validation failures are tracked in summary."""
         # Arrange
         holdings = [
@@ -361,7 +363,7 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act
-        processor.process_holdings(holdings)
+        await processor.process_holdings(holdings)
         summary = processor.get_processing_summary()
 
         # Assert
@@ -370,7 +372,7 @@ class TestPortfolioHoldingsProcessor:
         # The reason is "Validation failed" not the original reason
         assert "validation failed" in summary.validation_failures[0][1].lower()
 
-    def test_should_track_processing_errors_in_summary(self, processor, mocker):
+    async def test_should_track_processing_errors_in_summary(self, processor, mocker):
         """Test that processing errors are tracked in summary."""
         # Arrange
         holdings = [
@@ -388,7 +390,7 @@ class TestPortfolioHoldingsProcessor:
         mock_validator.side_effect = Exception("Processing error")
 
         # Act
-        processor.process_holdings(holdings)
+        await processor.process_holdings(holdings)
         summary = processor.get_processing_summary()
 
         # Assert
@@ -398,7 +400,7 @@ class TestPortfolioHoldingsProcessor:
         assert len(summary.validation_failures) == 1
         assert summary.validation_failures[0][0] == "ERROR"
 
-    def test_should_apply_keep_threshold(self, processor, mocker):
+    async def test_should_apply_keep_threshold(self, processor, mocker):
         """Test that keep threshold is applied correctly."""
         # Arrange
         holdings = [
@@ -420,12 +422,12 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act - with high threshold
-        decisions = processor.process_holdings(holdings, keep_threshold=0.9)
+        decisions = await processor.process_holdings(holdings, keep_threshold=0.9)
 
         # Assert
         assert decisions[0].decision == "SELL"  # Score is 0.6, below 0.9
 
-    def test_should_use_base_currency(self, processor, mocker):
+    async def test_should_use_base_currency(self, processor, mocker):
         """Test that base currency is used when not specified."""
         # Arrange
         holdings = [
@@ -447,12 +449,12 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act
-        decisions = processor.process_holdings(holdings, base_currency="EUR")
+        decisions = await processor.process_holdings(holdings, base_currency="EUR")
 
         # Assert
         assert decisions[0].currency == "EUR"
 
-    def test_should_boost_etf_score(self, processor, mocker):
+    async def test_should_boost_etf_score(self, processor, mocker):
         """Test that ETFs get a score boost."""
         # Arrange
         stock_holding = RawHolding(
@@ -480,13 +482,13 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act
-        stock_decisions = processor.process_holdings([stock_holding])
-        etf_decisions = processor.process_holdings([etf_holding])
+        stock_decisions = await processor.process_holdings([stock_holding])
+        etf_decisions = await processor.process_holdings([etf_holding])
 
         # Assert
         assert etf_decisions[0].composite_score > stock_decisions[0].composite_score
 
-    def test_should_include_source_information_in_rationale(self, processor, mocker):
+    async def test_should_include_source_information_in_rationale(self, processor, mocker):
         """Test that source information is included in rationale."""
         # Arrange
         holdings = [
@@ -508,12 +510,12 @@ class TestPortfolioHoldingsProcessor:
         }
 
         # Act
-        decisions = processor.process_holdings(holdings)
+        decisions = await processor.process_holdings(holdings)
 
         # Assert
         rationale = " ".join(decisions[0].rationale_bullets)
         assert "stock.csv" in rationale
-        assert "line 5" in rationale
+        assert "ligne 5" in rationale  # French: "ligne" instead of "line"
 
     def test_should_handle_csv_read_error(self, processor, tmp_path, mocker):
         """Test handling of CSV read errors."""

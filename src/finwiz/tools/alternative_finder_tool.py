@@ -102,18 +102,36 @@ class AlternativeFinder:
         alternatives = []
 
         # Step 1: Check A+ discovery crew outputs
+        self.logger.info(f"Step 1: Searching for A+ alternatives for {holding.ticker} (grade: {holding.grade})")
         aplus_alternatives = self._find_aplus_alternatives(holding)
-        alternatives.extend(aplus_alternatives)
+        if aplus_alternatives:
+            self.logger.info(f"Found {len(aplus_alternatives)} A+ alternatives for {holding.ticker}")
+            alternatives.extend(aplus_alternatives)
+        else:
+            self.logger.warning(
+                f"No A+ alternatives found for {holding.ticker} from discovery crew. "
+                f"Check if discovery crew has run and generated A+ candidates for {holding.asset_class}."
+            )
 
         # Step 2: Find same-sector alternatives (if not enough A+ found)
         if len(alternatives) < max_alternatives:
+            self.logger.info(f"Step 2: Searching for sector alternatives for {holding.ticker} (need {max_alternatives - len(alternatives)} more)")
             sector_alternatives = self._find_sector_alternatives(holding)
-            alternatives.extend(sector_alternatives)
+            if sector_alternatives:
+                self.logger.info(f"Found {len(sector_alternatives)} sector alternatives for {holding.ticker}")
+                alternatives.extend(sector_alternatives)
+            else:
+                self.logger.info(f"No sector alternatives found for {holding.ticker} (feature not yet implemented)")
 
         # Step 3: Find lower-cost alternatives for ETFs
         if holding.asset_class == "etf" and len(alternatives) < max_alternatives:
+            self.logger.info(f"Step 3: Searching for lower-cost ETF alternatives for {holding.ticker}")
             cost_alternatives = self._find_lower_cost_etf_alternatives(holding)
-            alternatives.extend(cost_alternatives)
+            if cost_alternatives:
+                self.logger.info(f"Found {len(cost_alternatives)} lower-cost alternatives for {holding.ticker}")
+                alternatives.extend(cost_alternatives)
+            else:
+                self.logger.info(f"No lower-cost alternatives found for {holding.ticker} (feature not yet implemented)")
 
         # Remove duplicates and limit to max
         seen_tickers = set()
@@ -125,13 +143,29 @@ class AlternativeFinder:
                 if len(unique_alternatives) >= max_alternatives:
                     break
 
-        self.logger.info(
-            "Found alternatives",
-            extra={
-                "ticker": holding.ticker,
-                "alternatives_count": len(unique_alternatives),
-            },
-        )
+        # Log final result with detailed information
+        if unique_alternatives:
+            self.logger.info(
+                f"✅ Found {len(unique_alternatives)} alternatives for {holding.ticker}",
+                extra={
+                    "ticker": holding.ticker,
+                    "grade": holding.grade,
+                    "alternatives_count": len(unique_alternatives),
+                    "alternatives": [alt.ticker for alt in unique_alternatives],
+                },
+            )
+        else:
+            self.logger.warning(
+                f"⚠️ No alternatives found for {holding.ticker} (grade: {holding.grade}). "
+                f"Reasons: 1) Discovery crew may not have run, 2) No A+ candidates match asset class, "
+                f"3) Sector/cost matching not yet implemented. "
+                f"Consider running discovery crew with --discovery flag.",
+                extra={
+                    "ticker": holding.ticker,
+                    "grade": holding.grade,
+                    "asset_class": holding.asset_class,
+                },
+            )
 
         return unique_alternatives
 
@@ -142,7 +176,10 @@ class AlternativeFinder:
         # Check for latest discovery output
         latest_file = self.discovery_output_dir / "discovery_latest.json"
         if not latest_file.exists():
-            self.logger.info("No discovery crew output found")
+            self.logger.warning(
+                f"No discovery crew output found at {latest_file}. "
+                f"Run analysis with --discovery flag to generate A+ alternatives."
+            )
             return alternatives
 
         try:
@@ -152,11 +189,27 @@ class AlternativeFinder:
             # Extract A+ opportunities
             pydantic_output = discovery_data.get("pydantic", {})
             if not pydantic_output:
+                self.logger.warning(
+                    f"Discovery output exists but has no pydantic data. "
+                    f"File: {latest_file}"
+                )
                 return alternatives
 
             # Look for A+ stocks/ETFs/crypto based on asset class
             aplus_field = f"aplus_{holding.asset_class}s"  # aplus_stocks, aplus_etfs, aplus_cryptos
             aplus_items = pydantic_output.get(aplus_field, [])
+
+            if not aplus_items:
+                self.logger.info(
+                    f"No A+ {holding.asset_class}s found in discovery output. "
+                    f"Field '{aplus_field}' is empty or missing."
+                )
+                return alternatives
+
+            self.logger.info(
+                f"Found {len(aplus_items)} A+ {holding.asset_class}s in discovery output, "
+                f"filtering for alternatives to {holding.ticker}"
+            )
 
             for item in aplus_items:
                 if isinstance(item, dict):
@@ -168,11 +221,26 @@ class AlternativeFinder:
                         )
                         if alternative:
                             alternatives.append(alternative)
+                            self.logger.info(
+                                f"Created alternative: {ticker} (grade: {item.get('grade', 'N/A')}) "
+                                f"for {holding.ticker}"
+                            )
+                    elif ticker == holding.ticker:
+                        self.logger.debug(
+                            f"Skipping {ticker} as it's the same as current holding"
+                        )
+
+            if not alternatives:
+                self.logger.warning(
+                    f"Found {len(aplus_items)} A+ {holding.asset_class}s but none are suitable "
+                    f"alternatives for {holding.ticker} (all may be the same ticker or failed validation)"
+                )
 
         except Exception as e:
             self.logger.error(
-                "Error reading discovery output",
-                extra={"error": str(e)},
+                f"Error reading discovery output from {latest_file}: {e}",
+                extra={"error": str(e), "file": str(latest_file)},
+                exc_info=True,
             )
 
         return alternatives

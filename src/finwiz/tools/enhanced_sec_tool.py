@@ -13,7 +13,7 @@ from typing import Any
 
 import requests
 from crewai.tools import BaseTool
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from pydantic import BaseModel
@@ -28,6 +28,7 @@ from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
 from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.utils.url_validator import get_url_validator
 
 
 class EnhancedSECAnalysisTool(BaseTool):
@@ -49,12 +50,16 @@ class EnhancedSECAnalysisTool(BaseTool):
         "Optionally enhanced with Perplexity Sonar for recent earnings reports and SEC filing commentary."
     )
     args_schema: type[BaseModel] = EnhancedSECAnalysisInput
-    url_generator: SECFilingURLGenerator = None  # type: ignore
+    url_generator: Any = None  # URL generator instance
+    url_validator: Any = None  # URL validator instance
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialize the tool with URL generator."""
         super().__init__(**kwargs)
-        self.url_generator = SECFilingURLGenerator()
+        if self.url_generator is None:
+            self.url_generator = SECFilingURLGenerator()
+        if self.url_validator is None:
+            self.url_validator = get_url_validator()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -280,8 +285,8 @@ class EnhancedSECAnalysisTool(BaseTool):
         query = section_queries.get(section, f"information about {section}")
 
         # Use vector similarity search to find relevant content
-        retriever = FAISS.from_documents(docs, OpenAIEmbeddings()).as_retriever()
-        results = retriever.get_relevant_documents(query, k=3)
+        retriever = FAISS.from_documents(docs, OpenAIEmbeddings()).as_retriever(search_kwargs={"k": 3})
+        results = retriever.invoke(query)
 
         insights = []
         for i, result in enumerate(results):
@@ -449,14 +454,20 @@ class EnhancedSECAnalysisTool(BaseTool):
         if filing.get("cik"):
             response += f"- **CIK**: {filing['cik']}\n"
 
-        # Include filing URL with verification note
+        # Include filing URL with validation and helpful context
         filing_url = filing.get("filing_url", "")
-        if filing_url:
-            response += f"- **Filing URL**: {filing_url}\n"
-            logger.info(f"Including verified SEC filing URL: {filing_url}")
+        if filing_url and self.url_validator.is_valid_url(filing_url, f"SEC filing {ticker}"):
+            response += f"- **SEC Filings Page**: {filing_url}\n"
+            response += f"  _(Browse page showing all {form_type} filings for {ticker}. Click on the most recent filing date to view the full document.)_\n"
+            logger.info(f"Including validated SEC filing URL: {filing_url}")
         else:
-            response += "- **Filing URL**: Not available\n"
-            logger.warning(f"No filing URL available for {ticker}")
+            # Provide fallback with manual search instructions
+            response += f"- **SEC Filings**: Search manually at https://www.sec.gov/edgar/searchedgar/companysearch.html\n"
+            response += f"  _(Enter ticker '{ticker}' and filter by '{form_type}' to find recent filings)_\n"
+            if filing_url:
+                logger.warning(f"Invalid filing URL for {ticker}: {filing_url}")
+            else:
+                logger.warning(f"No filing URL available for {ticker}")
 
         response += f"- **Sections Analyzed**: {', '.join(sections)}\n\n"
 

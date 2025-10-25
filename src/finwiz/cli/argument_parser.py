@@ -6,13 +6,16 @@ This module handles command-line interface setup, configuration validation,
 session management, and environment initialization.
 """
 
+import argparse
 import os
+from typing import Optional
 
 from dotenv import load_dotenv
 
 from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 from finwiz.tools.logger import get_logger
 from finwiz.utils.configuration_manager import ConfigurationError, get_configuration_manager
+from finwiz.utils.flow_state_manager import FlowStateManager
 from finwiz.utils.session_manager import SessionManager, SessionParsingError
 
 logger = get_logger(__name__)
@@ -135,3 +138,163 @@ def cleanup_session_environment() -> None:
     for var in session_env_vars:
         os.environ.pop(var, None)
     logger.debug("Session environment variables cleaned up")
+
+
+def parse_arguments() -> argparse.Namespace:
+    """
+    Parse command-line arguments for FinWiz application.
+
+    Returns:
+        Parsed arguments namespace with resume_uuid and no_resume flags
+    """
+    parser = argparse.ArgumentParser(
+        description="FinWiz - AI-powered financial analysis platform",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Start fresh analysis (default)
+  python -m finwiz.main
+
+  # Resume from specific UUID
+  python -m finwiz.main --resume-uuid abc123def456
+
+  # Force fresh start (skip resume prompt)
+  python -m finwiz.main --no-resume
+
+Resume States:
+  Flow states are stored in ~/.crewai/state/
+  States older than 24 hours are marked as stale but can still be resumed.
+        """,
+    )
+
+    parser.add_argument(
+        "--resume-uuid",
+        type=str,
+        metavar="UUID",
+        help="Resume from specific flow state UUID (e.g., abc123def456)",
+    )
+
+    parser.add_argument(
+        "--no-resume",
+        action="store_true",
+        help="Force fresh start, skip resume prompt even if states exist",
+    )
+
+    return parser.parse_args()
+
+
+def initialize_flow_with_resume(args: Optional[argparse.Namespace] = None) -> "FinwizFlow":
+    """
+    Initialize FinwizFlow with resume capability based on CLI arguments.
+
+    This function handles three scenarios:
+    1. --no-resume flag: Force fresh start
+    2. --resume-uuid provided: Load specific UUID
+    3. Neither flag: Discover states and prompt user interactively
+
+    Args:
+        args: Parsed command-line arguments (if None, will parse from sys.argv)
+
+    Returns:
+        FinwizFlow instance (fresh or with loaded state)
+
+    Raises:
+        SystemExit: If invalid UUID provided or user cancels
+    """
+    from finwiz.flow_state import FinwizState
+    from finwiz.flows.flow_orchestrator import FinwizFlow
+
+    # Parse arguments if not provided
+    if args is None:
+        args = parse_arguments()
+
+    # Scenario 1: Force fresh start
+    if args.no_resume:
+        logger.info("--no-resume flag set, starting fresh flow")
+        flow_state = FinwizState()
+        return FinwizFlow(state=flow_state)
+
+    # Initialize state manager
+    state_manager = FlowStateManager()
+
+    # Scenario 2: Specific UUID provided
+    if args.resume_uuid:
+        logger.info(f"--resume-uuid provided: {args.resume_uuid}")
+
+        # Load state data
+        state_data = state_manager.load_flow_state_by_uuid(args.resume_uuid)
+
+        if state_data is None:
+            logger.error(f"❌ Failed to load state for UUID: {args.resume_uuid}")
+            logger.error("State file not found or corrupted")
+            logger.error("Available options:")
+            logger.error("  1. Check UUID spelling")
+            logger.error("  2. Use --no-resume to start fresh")
+            logger.error("  3. Run without arguments to see available states")
+            raise SystemExit(1)
+
+        # Create state from loaded data
+        try:
+            flow_state = FinwizState(**state_data)
+            flow_state.resume_from_checkpoint = True
+            flow_state.checkpoint_uuid = args.resume_uuid
+
+            logger.info(f"✅ Successfully loaded state for UUID: {args.resume_uuid}")
+            logger.info(f"Progress: {flow_state.holdings_processed}/{flow_state.total_holdings} holdings")
+
+            return FinwizFlow(state=flow_state)
+
+        except Exception as e:
+            logger.error(f"❌ Failed to create flow state from loaded data: {e}")
+            logger.error("State data may be incompatible with current FinwizState schema")
+            logger.error("Use --no-resume to start fresh")
+            raise SystemExit(1) from e
+
+    # Scenario 3: Interactive mode - discover and prompt
+    logger.info("Checking for existing flow states...")
+    states = state_manager.discover_persisted_states()
+
+    if not states:
+        logger.info("No existing flow states found, starting fresh")
+        flow_state = FinwizState()
+        return FinwizFlow(state=flow_state)
+
+    # Prompt user for selection
+    try:
+        selected_uuid = state_manager.prompt_user_for_resume(states)
+
+        if selected_uuid is None:
+            # User chose to start fresh
+            logger.info("User selected fresh start")
+            flow_state = FinwizState()
+            return FinwizFlow(state=flow_state)
+
+        # Load selected state
+        state_data = state_manager.load_flow_state_by_uuid(selected_uuid)
+
+        if state_data is None:
+            logger.error(f"❌ Failed to load selected state: {selected_uuid}")
+            logger.error("Starting fresh as fallback")
+            flow_state = FinwizState()
+            return FinwizFlow(state=flow_state)
+
+        # Create state from loaded data
+        try:
+            flow_state = FinwizState(**state_data)
+            flow_state.resume_from_checkpoint = True
+            flow_state.checkpoint_uuid = selected_uuid
+
+            logger.info(f"✅ Resuming from UUID: {selected_uuid}")
+            logger.info(f"Progress: {flow_state.holdings_processed}/{flow_state.total_holdings} holdings")
+
+            return FinwizFlow(state=flow_state)
+
+        except Exception as e:
+            logger.error(f"❌ Failed to create flow state from loaded data: {e}")
+            logger.error("Starting fresh as fallback")
+            flow_state = FinwizState()
+            return FinwizFlow(state=flow_state)
+
+    except (KeyboardInterrupt, SystemExit):
+        # User cancelled or error occurred
+        raise

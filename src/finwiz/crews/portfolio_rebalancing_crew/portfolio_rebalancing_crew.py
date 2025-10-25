@@ -128,7 +128,7 @@ class PortfolioRebalancingCrew:
         return Agent(
             config=self.agents_config["holding_analyzer"],
             verbose=True,
-            reasoning=False,
+            reasoning=True,
             tools=holding_analysis_tools,
         )
 
@@ -138,7 +138,7 @@ class PortfolioRebalancingCrew:
         return Agent(
             config=self.agents_config["price_target_specialist"],
             verbose=True,
-            reasoning=False,
+            reasoning=True,
             tools=holding_analysis_tools,
         )
 
@@ -148,7 +148,7 @@ class PortfolioRebalancingCrew:
         return Agent(
             config=self.agents_config["alternative_researcher"],
             verbose=True,
-            reasoning=False,
+            reasoning=True,
             tools=holding_analysis_tools,
         )
 
@@ -158,7 +158,7 @@ class PortfolioRebalancingCrew:
         return Agent(
             config=self.agents_config["portfolio_analyst"],
             verbose=True,
-            reasoning=False,
+            reasoning=True,
             tools=holding_analysis_tools,
         )
 
@@ -169,7 +169,7 @@ class PortfolioRebalancingCrew:
             config=self.agents_config["rebalancing_strategist"],
             verbose=True,
             tools=holding_analysis_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     @agent
@@ -179,7 +179,7 @@ class PortfolioRebalancingCrew:
             config=self.agents_config["risk_manager"],
             verbose=True,
             tools=holding_analysis_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     # @agent
@@ -380,12 +380,18 @@ class PortfolioRebalancingCrew:
             if hasattr(analysis, "grade"):
                 from finwiz.tools.alternative_finder_tool import HoldingProfile
 
+                # Extract risk score with proper None handling
+                risk_score = getattr(analysis, "risk_score", None)
+                if risk_score is None:
+                    risk_score = 2.5  # Default risk score
+                
                 profile = HoldingProfile(
                     ticker=holding["ticker"],
                     name=holding.get("name", holding["ticker"]),
                     asset_class=holding["asset_class"],
                     grade=getattr(analysis, "grade", "C"),
                     composite_score=analysis.composite_score,
+                    risk_score=risk_score,
                 )
                 alternatives = alternative_finder.find_alternatives(profile)
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -249,14 +249,31 @@ class CryptoCrewOutput(BaseModel):
 
 
 # Discovery and Integration-Specific Schemas
+class APlusOpportunity(BaseModel):
+    """Single A+ opportunity with full data."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    symbol: str = Field(..., description="Ticker symbol")
+    name: str = Field(..., description="Company/fund name")
+    grade: str = Field(..., description="Investment grade (A+, A, etc.)")
+    composite_score: float = Field(ge=0.0, le=1.0, description="Composite quality score")
+    confidence: float = Field(ge=0.0, le=1.0, description="Confidence in recommendation")
+    risk_score: float = Field(ge=0.0, le=10.0, description="Risk score (0-10 scale)")
+    allocation_recommendation: str = Field(default="", description="Allocation guidance")
+    replacement_note: str = Field(default="", description="What this might replace")
+    rationale: list[str] = Field(default_factory=list, description="Investment rationale points")
+    key_metrics: dict[str, Any] = Field(default_factory=dict, description="Key financial metrics")
+
+
 class APlusOpportunityCollection(BaseModel):
     """Collection of A+ opportunities with metadata."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    etf_opportunities: list[str] = Field(default_factory=list, description="List of A+ ETF opportunities")
-    stock_opportunities: list[str] = Field(default_factory=list, description="List of A+ stock opportunities")
-    crypto_opportunities: list[str] = Field(default_factory=list, description="List of A+ crypto opportunities")
+    etf_opportunities: list[APlusOpportunity] = Field(default_factory=list, description="List of A+ ETF opportunities")
+    stock_opportunities: list[APlusOpportunity] = Field(default_factory=list, description="List of A+ stock opportunities")
+    crypto_opportunities: list[APlusOpportunity] = Field(default_factory=list, description="List of A+ crypto opportunities")
     discovery_summary: str = Field(min_length=10, description="Summary of the discovery analysis")
     confidence_score: float = Field(ge=0.0, le=1.0, description="Confidence score for the opportunities (0.0 to 1.0)")
     validation_timestamp: datetime = Field(description="When the opportunities were validated")
@@ -264,6 +281,8 @@ class APlusOpportunityCollection(BaseModel):
         default_factory=list, description="Allocation recommendations for each opportunity"
     )
     replacement_notes: list[str] = Field(default_factory=list, description="Notes about what each opportunity might replace")
+    market_context: dict[str, Any] | None = Field(None, description="Market context data (VIX, regime, etc.)")
+    backtesting_metrics: dict[str, Any] | None = Field(None, description="Backtesting performance metrics")
 
 
 class IntegrationErrorType(str, Enum):

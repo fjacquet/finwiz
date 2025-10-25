@@ -125,7 +125,7 @@ class InvestmentDiscoveryCrew:
             config=self.agents_config["etf_discovery_agent"],
             verbose=True,
             tools=etf_discovery_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     @agent
@@ -135,7 +135,7 @@ class InvestmentDiscoveryCrew:
             config=self.agents_config["stock_discovery_agent"],
             verbose=True,
             tools=stock_discovery_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     @agent
@@ -145,7 +145,7 @@ class InvestmentDiscoveryCrew:
             config=self.agents_config["crypto_discovery_agent"],
             verbose=True,
             tools=crypto_discovery_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     @agent
@@ -155,7 +155,7 @@ class InvestmentDiscoveryCrew:
             config=self.agents_config["portfolio_optimization_agent"],
             verbose=True,
             tools=portfolio_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     @agent
@@ -177,7 +177,7 @@ class InvestmentDiscoveryCrew:
             config=self.agents_config["validation_agent"],
             verbose=True,
             tools=validation_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     @agent
@@ -187,7 +187,7 @@ class InvestmentDiscoveryCrew:
             config=self.agents_config["feedback_learning_agent"],
             verbose=True,
             tools=feedback_tools + [quantitative_tool] + rag_tools,
-            reasoning=False,
+            reasoning=True,
         )
 
     @async_task

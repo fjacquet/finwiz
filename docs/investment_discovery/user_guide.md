@@ -381,3 +381,312 @@ R : Le système génère automatiquement des rapports de comparaison avec métri
 ---
 
 *Ce guide est mis à jour régulièrement. Version actuelle : 1.0 - Septembre 2025*
+
+---
+
+# A+ System Overview, Monitoring, and Integration
+
+## Overview
+
+The A+ Investment System identifies and monitors exceptional investment opportunities with scores ≥ 0.95. It consists of three integrated components:
+
+1. **Discovery**: Proactively finds A+ opportunities across ETFs, stocks, and crypto
+2. **Scoring**: Evaluates investments using comprehensive multi-factor analysis
+3. **Monitoring**: Continuously tracks A+ investments to ensure quality maintenance
+
+
+## A+ Monitoring
+
+### Continuous Monitoring
+
+**Key Features**:
+
+- Automated re-evaluation (default: weekly)
+- Grade degradation detection
+- Market regime awareness
+- Performance tracking
+- Alert system
+
+### Alert System
+
+**Alert Severity Levels**:
+
+- **Critical**: A+ → C or below (immediate action)
+- **High**: A+ → B (review within 24 hours)
+- **Medium**: A+ → B+ (review within week)
+- **Low**: Minor score decrease (monitor)
+
+**Alert Triggers**:
+
+- Grade degradation
+- Performance below benchmark
+- Risk score increase
+- Fundamental deterioration
+
+### Performance Tracking
+
+**Tracked Metrics**:
+
+- Total return
+- Alpha vs benchmark
+- Sharpe ratio
+- Maximum drawdown
+- Grade maintenance duration
+- Volatility
+
+### Usage
+
+**Start Monitoring**:
+
+```python
+from finwiz.services.a_plus_monitoring_service import get_monitoring_service
+
+service = get_monitoring_service()
+await service.start_service()
+```
+
+**Add Investments**:
+
+```python
+# Process discovery results
+discovery_result = await investment_discovery_crew.run()
+await service.process_discovery_results(discovery_result)
+```
+
+**Get Status**:
+
+```python
+# Get monitoring dashboard
+dashboard = await service.get_monitoring_dashboard()
+
+print(f"Total monitored: {dashboard['performance_summary']['total_investments']}")
+print(f"A+ maintained: {dashboard['performance_summary']['a_plus_count']}")
+print(f"Degraded: {dashboard['performance_summary']['degraded_count']}")
+```
+
+**CLI Operations**:
+
+```bash
+# Start monitoring
+uv run python -m finwiz.tools.a_plus_monitoring_cli start
+
+# Check status
+uv run python -m finwiz.tools.a_plus_monitoring_cli status
+
+# Get alerts
+uv run python -m finwiz.tools.a_plus_monitoring_cli alerts
+
+# Stop monitoring
+uv run python -m finwiz.tools.a_plus_monitoring_cli stop
+```
+
+
+## Portfolio Integration
+
+### Discovery Integration
+
+**Automatic A+ Discovery**:
+
+```bash
+# Run discovery across all asset types
+uv run python src/finwiz/main.py --discovery
+
+# Discover specific asset type
+uv run python src/finwiz/main.py --discovery --asset-type etf
+```
+
+**Output**:
+
+- `output/discovery/discovery_latest.json` - Latest A+ opportunities
+- `output/discovery/discovery_YYYY-MM-DD.json` - Timestamped results
+- `output/discovery/discovery_report.html` - HTML report
+
+### Alternative Finder Integration
+
+The `AlternativeFinder` tool prioritizes A+ candidates when suggesting alternatives for underperforming holdings:
+
+```python
+from finwiz.tools.alternative_finder_tool import AlternativeFinder
+
+finder = AlternativeFinder()
+
+# Finds A+ alternatives from discovery crew
+alternatives = finder.find_alternatives(holding, max_alternatives=3)
+
+# A+ candidates are marked
+for alt in alternatives:
+    if alt.is_a_plus_candidate:
+        print(f"A+ Alternative: {alt.ticker} (Grade: {alt.grade})")
+```
+
+### Portfolio Review Integration
+
+A+ opportunities are integrated into portfolio reviews:
+
+1. **Current Holdings**: Graded using A+ scoring system
+2. **Alternatives**: A+ candidates suggested for underperforming holdings
+3. **Improvement Roadmap**: Phased plan to increase A+ allocation
+
+**Target A+ Allocation**:
+
+- Conservative: 20-30% A+ holdings
+- Moderate: 30-40% A+ holdings
+- Aggressive: 40-50% A+ holdings
+
+### Monitoring Integration
+
+**Automatic Monitoring**:
+
+- A+ discoveries automatically added to monitoring
+- Portfolio holdings graded A+ are monitored
+- Alerts integrated into portfolio reports
+
+**Monitoring Dashboard**:
+
+```python
+from finwiz.orchestrators.a_plus_monitoring_orchestrator import APlusMonitoringOrchestrator
+
+orchestrator = APlusMonitoringOrchestrator()
+dashboard = await orchestrator.get_monitoring_dashboard()
+
+# Dashboard includes:
+# - Performance summary
+# - Active alerts
+# - Grade distribution
+# - Recent degradations
+# - Replacement suggestions
+```
+
+## Best Practices
+### Portfolio Integration
+
+1. **Gradual Transition**: Don't rush to 100% A+ allocation
+2. **Tax Considerations**: Use tax-optimized transition strategies
+3. **Rebalance Regularly**: Quarterly rebalancing recommended
+4. **Maintain Diversification**: Don't sacrifice diversification for A+ grade
+
+## Configuration
+
+### Environment Variables
+
+```bash
+# A+ Discovery
+DISCOVERY_ENABLED=true
+DISCOVERY_FREQUENCY=weekly
+
+# A+ Monitoring
+MONITORING_ENABLED=true
+MONITORING_INTERVAL=weekly
+MONITORING_ALERT_THRESHOLD=24  # hours
+
+# A+ Scoring
+APLUS_THRESHOLD=0.95
+APLUS_CUSTOM_CRITERIA={}
+```
+
+### Monitoring Configuration
+
+```python
+# config/monitoring.yaml
+monitoring:
+  enabled: true
+  interval: weekly
+  alert_thresholds:
+    critical: 24  # hours
+    high: 72
+    medium: 168
+  performance_tracking:
+    enabled: true
+    benchmarks:
+      etf: "SPY"
+      stock: "^GSPC"
+      crypto: "BTC-USD"
+```
+
+## See Also
+
+- [Investment Discovery Documentation](investment_discovery/) - Complete discovery guide
+- [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - Portfolio analysis
+- [Alternative Finder](API_REFERENCE.md#alternativefinder) - Alternative finding tool
+- [API Reference](API_REFERENCE.md) - Complete API documentation
+
+---
+
+**Version**: 2.0  
+
+## Best Practices
+
+### Discovery
+
+1. **Run Monthly**: Full discovery on first Monday of each month
+2. **Review Results**: Manually review A+ candidates before adding to portfolio
+3. **Diversify**: Don't concentrate in single A+ opportunity
+4. **Monitor Criteria**: Understand why each investment is A+ rated
+
+### Scoring
+
+1. **Use Market Context**: Always provide current market conditions
+2. **Custom Criteria**: Adjust criteria for your risk tolerance
+3. **Validate Results**: Cross-check with other sources
+4. **Understand Components**: Review individual score components
+
+### Monitoring
+
+1. **Weekly Reviews**: Check monitoring dashboard weekly
+2. **Act on Alerts**: Respond to critical alerts within 24 hours
+3. **Track Performance**: Review performance metrics monthly
+4. **Update Criteria**: Adjust monitoring criteria as markets change
+
+### Portfolio Integration
+
+1. **Gradual Transition**: Don't rush to 100% A+ allocation
+2. **Tax Considerations**: Use tax-optimized transition strategies
+3. **Rebalance Regularly**: Quarterly rebalancing recommended
+4. **Maintain Diversification**: Don't sacrifice diversification for A+ grade
+
+
+## Configuration
+
+### Environment Variables
+
+```bash
+# A+ Discovery
+DISCOVERY_ENABLED=true
+DISCOVERY_FREQUENCY=weekly
+
+# A+ Monitoring
+MONITORING_ENABLED=true
+MONITORING_INTERVAL=weekly
+MONITORING_ALERT_THRESHOLD=24  # hours
+
+# A+ Scoring
+APLUS_THRESHOLD=0.95
+APLUS_CUSTOM_CRITERIA={}
+```
+
+### Monitoring Configuration
+
+```python
+# config/monitoring.yaml
+monitoring:
+  enabled: true
+  interval: weekly
+  alert_thresholds:
+    critical: 24  # hours
+    high: 72
+    medium: 168
+  performance_tracking:
+    enabled: true
+    benchmarks:
+      etf: "SPY"
+      stock: "^GSPC"
+      crypto: "BTC-USD"
+```
+
+## See Also
+
+- [Investment Discovery Documentation](investment_discovery/) - Complete discovery guide
+- [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - Portfolio analysis
+- [Alternative Finder](API_REFERENCE.md#alternativefinder) - Alternative finding tool
+- [API Reference](API_REFERENCE.md) - Complete API documentation
+

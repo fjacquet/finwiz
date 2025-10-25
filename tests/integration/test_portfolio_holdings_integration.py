@@ -330,12 +330,18 @@ class TestPortfolioHoldingsIntegration:
 
                 grade = score_to_grade(analysis.composite_score).grade
 
+                # Extract risk score with proper None handling
+                risk_score = getattr(analysis, "risk_score", None)
+                if risk_score is None:
+                    risk_score = 2.5  # Default risk score
+                
                 profile = HoldingProfile(
                     ticker=analysis.ticker,
                     name=analysis.name,
                     asset_class=analysis.asset_class,
                     grade=grade,
                     composite_score=analysis.composite_score,
+                    risk_score=risk_score,
                     expense_ratio=analysis.fundamental_analysis.get("expense_ratio") if analysis.fundamental_analysis else None,
                 )
 
@@ -437,12 +443,18 @@ class TestPortfolioHoldingsIntegration:
             if analysis.composite_score < 0.70:
                 from finwiz.tools.alternative_finder_tool import HoldingProfile
 
+                # Extract risk score with proper None handling
+                risk_score = getattr(analysis, "risk_score", None)
+                if risk_score is None:
+                    risk_score = 2.5  # Default risk score
+                
                 profile = HoldingProfile(
                     ticker=analysis.ticker,
                     name=analysis.name,
                     asset_class=analysis.asset_class,
                     grade=grade,
                     composite_score=analysis.composite_score,
+                    risk_score=risk_score,
                 )
                 alternatives = alternative_finder.find_alternatives(profile, max_alternatives=3)
                 portfolio_review["summary"]["underperforming_count"] += 1

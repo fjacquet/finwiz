@@ -422,6 +422,18 @@ FinWiz implements comprehensive data quality controls to ensure report accuracy 
 - **Completeness**: Process all available data, even if some validation checks fail
 - **Traceability**: Log all data decisions and rejections for debugging and auditing
 
+### Data Flow Architecture
+
+FinWiz follows a strict data flow from generation to report:
+
+1. **Data Generation**: Crews generate rich analysis with proper grades and scores
+2. **Data Storage**: Crew outputs stored in `output/{crew_name}/` directories
+3. **Data Retrieval**: `DataConsolidationValidator` ensures data can be retrieved
+4. **Data Merge**: `DeepAnalysisDataMerger` merges analysis into portfolio holdings
+5. **Report Generation**: `ReportDataValidator` ensures complete inputs before generating reports
+
+Each phase includes validation and fail-fast error handling to prevent data corruption.
+
 ### Key Features
 
 - **Valid SEC Filing URLs**: Automatic generation and verification of SEC EDGAR URLs with fallback to company browse pages
@@ -458,11 +470,28 @@ tracker.track_data_source("sentiment", "available", age_hours=2)
 summary = tracker.get_availability_summary()
 ```
 
+### Data Quality Verification
+
+Verify data quality after each run:
+
+```bash
+# Run automated verification
+./scripts/verify_data_quality.sh
+
+# Expected output:
+# ✅ Crew outputs exist
+# ✅ Portfolio review has actual grades (not all Grade D)
+# ✅ Report has no example.com URLs
+# ✅ Report has no "NOT PROVIDED" messages
+# ✅ Data quality score: 95%
+```
+
 ### Documentation
 
+- **[Data Flow and Quality Guide](docs/DATA_FLOW_AND_QUALITY.md)**: Complete guide to data flow, quality requirements, error handling, and troubleshooting
 - **[Data Quality Guide](docs/DATA_QUALITY_GUIDE.md)**: Comprehensive guide for maintaining data quality
 - **[API Reference](docs/API_REFERENCE.md)**: Data quality component documentation
-- **[Spec](. kiro/specs/report-data-quality-fixes/)**: Implementation specification and tasks
+- **[Spec](.kiro/specs/report-data-quality-fixes/)**: Implementation specification and tasks
 
 ---
 
@@ -517,6 +546,7 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ### Feature Documentation
 
+- **[Data Flow and Quality Guide](docs/DATA_FLOW_AND_QUALITY.md)**: Complete guide to data flow architecture, quality requirements, fail-fast error handling, verification, debugging, and troubleshooting
 - **[Data Quality Guide](docs/DATA_QUALITY_GUIDE.md)**: Comprehensive guide for maintaining data quality and handling missing data
 - **[Portfolio Holdings Analysis](docs/portfolio_holdings_analysis_user_guide.md)**: Analyze your holdings with price targets and alternatives
 - **[Portfolio Rebalancing](docs/portfolio_rebalancing/)**: Intelligent portfolio rebalancing system

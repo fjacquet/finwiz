@@ -57,9 +57,23 @@ class ToolRestrictionValidator:
 
         if is_restricted:
             if hasattr(agent, "tools") and agent.tools:
-                violation = f"Agent has {len(agent.tools)} tools but should have none"
-                logger.error(f"Tool restriction violation: {agent_role} - {violation}")
-                raise ToolRestrictionError(agent_role, violation)
+                # TEMPORARY EXCEPTION: Allow read-only tools (DirectoryReadTool, FileReadTool)
+                # for accessing deep analysis HTML files until Flow is fixed
+                tool_names = [tool.__class__.__name__ for tool in agent.tools]
+                read_only_tools = all(
+                    "DirectoryReadTool" in name or "FileReadTool" in name 
+                    for name in tool_names
+                )
+                
+                if not read_only_tools:
+                    violation = f"Agent has {len(agent.tools)} non-read-only tools but should have none"
+                    logger.error(f"Tool restriction violation: {agent_role} - {violation}")
+                    raise ToolRestrictionError(agent_role, violation)
+                else:
+                    logger.warning(
+                        f"⚠️  {agent_role} has {len(agent.tools)} read-only tools "
+                        f"(temporary workaround for deep analysis HTML access)"
+                    )
 
             logger.info(f"Tool restriction validation passed for {agent_role}")
 

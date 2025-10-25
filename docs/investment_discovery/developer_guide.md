@@ -740,3 +740,163 @@ class PortfolioDataProtection:
 ---
 
 This developer guide provides comprehensive technical documentation for extending and customizing the A+ Investment Discovery system. For user-facing documentation, see the [User Guide](investment_discovery_user_guide.md).
+
+---
+
+# A+ Scoring Methodology
+
+## A+ Scoring
+
+### Core Principles
+
+1. **Multi-Dimensional Analysis**: Each investment is evaluated across four key dimensions
+2. **Dynamic Adaptation**: Criteria adjust based on market conditions and regimes
+3. **Asset-Specific Optimization**: Different scoring models for ETFs, stocks, and crypto
+4. **Risk-Adjusted Quality**: Emphasis on sustainable, high-quality investments
+5. **Quantitative Rigor**: Data-driven approach with statistical validation
+
+### Scoring Framework
+
+**Composite Score Components**:
+
+- **Fundamental Score** (35%): Asset-specific financial metrics
+- **Technical Score** (20%): Momentum, trend strength, and technical indicators
+- **Quality Score** (30%): Management, governance, structural quality
+- **Risk Score** (15%): Risk-adjusted evaluation
+
+**A+ Threshold**: Composite score ≥ 0.95
+
+### Asset-Specific Criteria & Scoring
+
+#### ETFs (A+ Criteria)
+
+- Expense ratio ≤ 0.15% (broad market) or ≤ 0.25% (specialized)
+- AUM ≥ $1 billion
+- Tracking error ≤ 0.20% (3-year)
+- History ≥ 3 years
+- UCITS compliant (for European investors)
+
+```python
+def calculate_etf_fundamental_score(data: dict) -> float:
+    """
+    ETF fundamental scoring based on cost efficiency and structure quality.
+    """
+    expense_score = max(0, 1 - (data['expense_ratio'] / 0.15))
+    aum_score = min(1, data['aum'] / 1e9)
+    tracking_score = max(0, 1 - (data['tracking_error'] / 0.002))
+    history_score = min(1, data['history_years'] / 5)
+    
+    return (expense_score * 0.4 + aum_score * 0.3 + 
+            tracking_score * 0.2 + history_score * 0.1)
+```
+
+#### Stocks (A+ Criteria)
+
+- ROE ≥ 20% (maintained 3+ years)
+- Revenue growth ≥ 15% annually (5-year)
+- Debt/equity ≤ 0.3
+- Positive and growing free cash flow
+- Dominant market position in growing sector
+
+```python
+def calculate_stock_fundamental_score(data: dict) -> float:
+    """
+    Stock fundamental scoring based on profitability and growth.
+    """
+    roe_score = min(1, data['roe'] / 0.20)
+    growth_score = min(1, data['revenue_growth'] / 0.15)
+    debt_score = max(0, 1 - (data['debt_to_equity'] / 0.3))
+    fcf_score = 1.0 if data['fcf_positive'] else 0.0
+    margin_score = min(1, data['profit_margin'] / 0.10)
+    
+    return (roe_score * 0.3 + growth_score * 0.25 + debt_score * 0.2 + 
+            fcf_score * 0.15 + margin_score * 0.1)
+```
+
+#### Crypto (A+ Criteria)
+
+- Market cap ≥ $10 billion
+- Daily volume ≥ $500 million
+- Institutional adoption proven
+- Real utility and use cases
+- Active development team
+
+```python
+def calculate_crypto_fundamental_score(data: dict) -> float:
+    """
+    Crypto fundamental scoring based on adoption and utility.
+    """
+    mcap_score = min(1, data['market_cap'] / 10e9)
+    volume_score = min(1, data['daily_volume'] / 500e6)
+    age_score = min(1, data['age_months'] / 36)
+    adoption_score = 1.0 if data['institutional_adoption'] else 0.0
+    utility_score = 1.0 if data['real_utility'] else 0.0
+    
+    return (mcap_score * 0.3 + volume_score * 0.2 + age_score * 0.2 + 
+            adoption_score * 0.15 + utility_score * 0.15)
+```
+
+### Dynamic Criteria Adjustment
+
+**Market Regime Adaptation**:
+
+**High Inflation (>4%)**:
+
+- Prioritize real assets (REITs, commodities)
+- Emphasize pricing power for stocks
+- Adjust nominal growth thresholds
+
+**Rising Interest Rates**:
+
+- Tighten criteria for REITs and utilities
+- Favor low-debt companies
+- Adjust valuation models
+
+**High Volatility (VIX >25)**:
+
+- Increase quality requirements
+- Emphasize defensive characteristics
+- Tighten risk score thresholds
+
+### Usage
+
+**Basic Scoring**:
+
+```python
+from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
+
+tool = APlusScoringTool()
+
+result = tool._run(
+    symbol="VTI",
+    asset_type="etf",
+    fundamental_data={
+        "expense_ratio": 0.03,
+        "aum": 300e9,
+        "tracking_error": 0.0005,
+        "history_years": 20
+    },
+    market_context={"vix": 18, "inflation": 2.8}
+)
+
+print(f"Grade: {result['grade']}")
+print(f"A+ Candidate: {result['is_a_plus_candidate']}")
+print(f"Composite Score: {result['analysis_summary']['composite_score']:.3f}")
+```
+
+**Custom Criteria**:
+
+```python
+custom_criteria = {
+    "etf_max_expense_ratio": 0.05,  # Stricter
+    "stock_min_roe": 0.30           # Higher ROE
+}
+
+result = tool._run(
+    symbol="SPY",
+    asset_type="etf",
+    fundamental_data=etf_data,
+    custom_criteria=custom_criteria
+)
+```
+

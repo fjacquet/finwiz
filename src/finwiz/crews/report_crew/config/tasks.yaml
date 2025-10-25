@@ -1,3 +1,21 @@
+# ============================================================================
+# REQUIRED ENUM VALUES
+# ============================================================================
+# This section documents all enum values used in Pydantic output schemas.
+# These values must match exactly with the schema definitions.
+#
+# ReporterInput Schema Enums:
+#   - No enums (uses nested schemas)
+#
+# PortfolioConfiguration Schema Enums:
+#   - rebalancing_method: MINIMIZE_TRADES | MINIMIZE_COSTS | RISK_AWARE | TAX_EFFICIENT
+#
+# RiskAssessmentStandardized Schema Enums:
+#   - risk_level: VERY_LOW | LOW | MODERATE | HIGH | VERY_HIGH
+#   - risk_category: MARKET | CREDIT | LIQUIDITY | OPERATIONAL | REGULATORY | OTHER
+#
+# ============================================================================
+
 # Task 1: Comprehensive Financial Integration and Opportunity Identification
 comprehensive_financial_integration_task:
   description: |
@@ -366,6 +384,26 @@ risk_assessment_mitigation_task:
 # Task 4: Comprehensive Investment Report and Implementation Plan
 comprehensive_investment_report_task:
   description: |
+    ⚠️⚠️⚠️ MOST CRITICAL RULE - READ THIS FIRST ⚠️⚠️⚠️
+    
+    **PORTFOLIO GRADES ARE WRONG - USE REAL GRADES FROM deep_analysis_html_content**
+    
+    The portfolio_review.holdings[] data has FAKE placeholder grades (all 0.7/C).
+    The REAL grades are in inputs.deep_analysis_html_content[ticker].
+    
+    FOR EVERY HOLDING YOU MENTION:
+    1. Look up ticker in inputs.deep_analysis_html_content[ticker]
+    2. Use deep_analysis_html_content[ticker]['grade'] (e.g., "A-", "A", "B+")
+    3. Use deep_analysis_html_content[ticker]['composite_score'] (e.g., 0.82, 0.86)
+    4. NEVER use portfolio_review.holdings[].grade or .composite_score (they are fake 0.7/C)
+    
+    Example:
+    - AAPL: Use deep_analysis_html_content["AAPL"] = {grade: "A-", composite_score: 0.82} ✅
+    - MSFT: Use deep_analysis_html_content["MSFT"] = {grade: "A", composite_score: 0.86} ✅
+    - DO NOT use portfolio_review grade C/0.7 ❌
+    
+    ---
+    
     ⚠️ CRITICAL ANTI-HALLUCINATION RULES ⚠️
     
     1. You MUST ONLY use ticker symbols from inputs.validated_tickers_list[]
@@ -380,6 +418,27 @@ comprehensive_investment_report_task:
     
     ---
     
+    ⚠️ CRITICAL URL REQUIREMENTS - READ FIRST ⚠️
+    
+    **ABSOLUTE PROHIBITION ON FAKE URLS**:
+    - ❌ NEVER EVER use example.com, test.com, sample.com, or any placeholder URLs
+    - ❌ NEVER invent or hallucinate URLs - if you don't have a real URL, write "Source: Internal analysis" or "URL not available"
+    - ✅ ONLY use real URLs from upstream data (sentiment tools, SEC filings, etc.)
+    - ✅ If sentiment data has no URL: write "Source: [Tool Name] - URL not provided"
+    - ✅ For SEC data: Use SECFilingURLGenerator or write "SEC EDGAR Database (search at sec.gov/edgar)"
+    
+    **EXAMPLES OF CORRECT CITATIONS**:
+    - ✅ "Apple reports strong iPhone sales" — Source: Yahoo Finance News — 2025-10-25 — score: 0.9
+    - ✅ "Services revenue beats estimates" — Source: Alpha Vantage News API — 2025-10-24 — score: 0.85
+    - ✅ "Azure growth accelerates" — Source: Perplexity Sonar — 2025-10-22 — score: 0.88
+    
+    **EXAMPLES OF FORBIDDEN CITATIONS**:
+    - ❌ "Apple reports strong iPhone sales" — https://news.example.com/apple-earnings-2025
+    - ❌ "Services revenue beats estimates" — https://test.com/apple-services-2025
+    - ❌ Any URL containing example.com, test.com, sample.com, placeholder.com
+    
+    NOW PROCEED WITH THE TASK:
+    
     Compile all findings using the integrated data system to create a comprehensive investment report
     with SEC/EDGAR citations, market sentiment analysis, A+ opportunities, and validated ticker symbols.
     Generate a visually appealing HTML report that leverages all integrated data sources.
@@ -387,6 +446,7 @@ comprehensive_investment_report_task:
     The report must be in French.
 
     Integrated Data Usage:
+    - **READ DEEP ANALYSIS HTML FILES** for real grades and scores (portfolio_review has placeholders)
     - Use SEC/EDGAR citations with filing URLs, dates, and excerpts from integrated stock data
     - Include market sentiment analysis with aggregated scores and top 3 sources with attribution
     - Incorporate A+ opportunities with allocation recommendations and replacement notes

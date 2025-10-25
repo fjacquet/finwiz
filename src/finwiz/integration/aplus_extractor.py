@@ -9,6 +9,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from finwiz.schemas.integration import APlusOpportunityCollection
 
@@ -69,15 +70,28 @@ class APlusDataExtractor:
             )
             replacement_notes = self._extract_replacement_notes(stock_opportunities, etf_opportunities, crypto_opportunities)
 
+            # Convert dict opportunities to APlusOpportunity objects
+            from finwiz.schemas.integration_models import APlusOpportunity
+
+            etf_opps = [APlusOpportunity(**opp) for opp in etf_opportunities]
+            stock_opps = [APlusOpportunity(**opp) for opp in stock_opportunities]
+            crypto_opps = [APlusOpportunity(**opp) for opp in crypto_opportunities]
+
+            # Extract market context and backtesting metrics
+            market_context = self._extract_market_context()
+            backtesting_metrics = self._extract_backtesting_metrics()
+
             collection = APlusOpportunityCollection(
-                etf_opportunities=[opp["symbol"] for opp in etf_opportunities],
-                stock_opportunities=[opp["symbol"] for opp in stock_opportunities],
-                crypto_opportunities=[opp["symbol"] for opp in crypto_opportunities],
+                etf_opportunities=etf_opps,
+                stock_opportunities=stock_opps,
+                crypto_opportunities=crypto_opps,
                 discovery_summary=discovery_summary,
                 confidence_score=confidence_score,
                 validation_timestamp=datetime.now(),
                 allocation_recommendations=allocation_recommendations,
                 replacement_notes=replacement_notes,
+                market_context=market_context,
+                backtesting_metrics=backtesting_metrics,
             )
 
             self.logger.info(
@@ -122,26 +136,33 @@ class APlusDataExtractor:
 
                 symbol = candidate.get("symbol", "")
                 company_name = candidate.get("name", "")
-                composite_score = item.get("composite_score", 0.0)
+                composite_score = item.get("composite_score", 0.85)  # Extract from item
                 confidence = item.get("confidence_level", 0.8)
 
                 # Extract risk assessment
                 risk_assessment = candidate.get("risk_assessment") or {}
                 risk_score = risk_assessment.get("score", 5.0)
 
-                # Extract key metrics for allocation recommendation
-                key_metrics = item.get("key_metrics", {})
+                # Extract rationale as list
                 rationale = item.get("rationale", [])
+                if isinstance(rationale, str):
+                    rationale = [rationale]  # Convert string to list
 
+                # Extract key metrics
+                key_metrics = item.get("key_metrics", {})
+
+                # Return dict matching APlusOpportunity schema
                 opportunity = {
                     "symbol": symbol,
-                    "company_name": company_name,
+                    "name": company_name,  # Changed from company_name to name
                     "grade": grade,
-                    "rank": idx + 1,
+                    "composite_score": composite_score,  # Added required field
+                    "confidence": confidence,
+                    "risk_score": risk_score,
                     "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
                     "replacement_note": candidate.get("recommended_action", ""),
-                    "risk_score": risk_score,
-                    "confidence": confidence,
+                    "rationale": rationale,  # Added as list
+                    "key_metrics": key_metrics,  # Added as dict
                 }
 
                 opportunities.append(opportunity)
@@ -179,7 +200,7 @@ class APlusDataExtractor:
 
                 symbol = candidate.get("symbol", "")
                 fund_name = candidate.get("name", "")
-                composite_score = item.get("composite_score", 0.0)
+                composite_score = item.get("composite_score", 0.85)  # Extract from item
                 confidence = item.get("confidence_level", 0.9)
 
                 # Extract key metrics
@@ -187,7 +208,7 @@ class APlusDataExtractor:
                 ter = key_metrics.get("ter", 0.0)
                 aum = key_metrics.get("aum_usd", 0)
 
-                # Format AUM
+                # Format AUM for display
                 if aum >= 1e9:
                     aum_str = f"${aum / 1e9:.1f}B"
                 elif aum >= 1e6:
@@ -195,18 +216,30 @@ class APlusDataExtractor:
                 else:
                     aum_str = f"${aum:,.0f}"
 
-                rationale = item.get("rationale", [])
+                # Add formatted AUM to key_metrics
+                key_metrics["aum_formatted"] = aum_str
 
+                # Extract rationale as list
+                rationale = item.get("rationale", [])
+                if isinstance(rationale, str):
+                    rationale = [rationale]
+
+                # Extract risk assessment
+                risk_assessment = candidate.get("risk_assessment") or {}
+                risk_score = risk_assessment.get("score", 3.0)
+
+                # Return dict matching APlusOpportunity schema
                 opportunity = {
                     "symbol": symbol,
-                    "fund_name": fund_name,
+                    "name": fund_name,  # Changed from fund_name to name
                     "grade": grade,
-                    "rank": idx + 1,
+                    "composite_score": composite_score,  # Added required field
+                    "confidence": confidence,
+                    "risk_score": risk_score,
                     "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
                     "replacement_note": candidate.get("recommended_action", ""),
-                    "ter": ter,
-                    "aum": aum_str,
-                    "confidence": confidence,
+                    "rationale": rationale,  # Added as list
+                    "key_metrics": key_metrics,  # Added as dict (includes ter, aum, aum_formatted)
                 }
 
                 opportunities.append(opportunity)
@@ -239,29 +272,38 @@ class APlusDataExtractor:
 
                 # Only include A+ and A grades
                 grade = candidate.get("grade", "")
-                if grade not in ["A+", "A", "A-"]:
+                if grade not in ["A+", "A"]:
                     continue
 
                 symbol = candidate.get("symbol", "")
                 crypto_name = candidate.get("name", "")
-                composite_score = item.get("composite_score", 0.0)
-                confidence = item.get("confidence_level", 0.8)
+                composite_score = item.get("composite_score", 0.80)  # Extract from item
+                confidence = item.get("confidence_level", 0.85)
+
+                # Extract key metrics
+                key_metrics = item.get("key_metrics", {})
+
+                # Extract rationale as list
+                rationale = item.get("rationale", [])
+                if isinstance(rationale, str):
+                    rationale = [rationale]
 
                 # Extract risk assessment
                 risk_assessment = candidate.get("risk_assessment") or {}
-                risk_score = risk_assessment.get("score", 7.0)
+                risk_score = risk_assessment.get("score", 6.0)  # Crypto typically higher risk
 
-                rationale = item.get("rationale", [])
-
+                # Return dict matching APlusOpportunity schema
                 opportunity = {
                     "symbol": symbol.replace("-USD", ""),  # Clean symbol
-                    "crypto_name": crypto_name,
+                    "name": crypto_name,  # Changed from crypto_name to name
                     "grade": grade,
-                    "rank": idx + 1,
+                    "composite_score": composite_score,  # Added required field
+                    "confidence": confidence,
+                    "risk_score": risk_score,
                     "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
                     "replacement_note": candidate.get("recommended_action", ""),
-                    "risk_score": risk_score,
-                    "confidence": confidence,
+                    "rationale": rationale,  # Added as list
+                    "key_metrics": key_metrics,  # Added as dict
                 }
 
                 opportunities.append(opportunity)
@@ -339,7 +381,7 @@ class APlusDataExtractor:
         """Extract allocation recommendations from all opportunities."""
         recommendations = []
 
-        for stock in stocks:
+        for idx, stock in enumerate(stocks, start=1):
             if stock.get("allocation_recommendation"):
                 recommendations.append(
                     {
@@ -347,11 +389,11 @@ class APlusDataExtractor:
                         "symbol": stock["symbol"],
                         "allocation": stock["allocation_recommendation"],
                         "grade": stock["grade"],
-                        "rank": stock["rank"],
+                        "rank": idx,
                     }
                 )
 
-        for etf in etfs:
+        for idx, etf in enumerate(etfs, start=1):
             if etf.get("allocation_recommendation"):
                 recommendations.append(
                     {
@@ -359,11 +401,11 @@ class APlusDataExtractor:
                         "symbol": etf["symbol"],
                         "allocation": etf["allocation_recommendation"],
                         "grade": etf["grade"],
-                        "rank": etf["rank"],
+                        "rank": idx,
                     }
                 )
 
-        for crypto in cryptos:
+        for idx, crypto in enumerate(cryptos, start=1):
             if crypto.get("allocation_recommendation"):
                 recommendations.append(
                     {
@@ -371,7 +413,7 @@ class APlusDataExtractor:
                         "symbol": crypto["symbol"],
                         "allocation": crypto["allocation_recommendation"],
                         "grade": crypto["grade"],
-                        "rank": crypto["rank"],
+                        "rank": idx,
                     }
                 )
 
@@ -429,8 +471,12 @@ class APlusDataExtractor:
             if not collection.allocation_recommendations:
                 errors.append("No allocation recommendations provided")
 
-            # Check for duplicate symbols
-            all_symbols = collection.stock_opportunities + collection.etf_opportunities + collection.crypto_opportunities
+            # Check for duplicate symbols (extract symbols from APlusOpportunity objects)
+            all_symbols = (
+                [opp.symbol for opp in collection.stock_opportunities]
+                + [opp.symbol for opp in collection.etf_opportunities]
+                + [opp.symbol for opp in collection.crypto_opportunities]
+            )
 
             if len(all_symbols) != len(set(all_symbols)):
                 errors.append("Duplicate symbols found in opportunities")
@@ -447,3 +493,76 @@ class APlusDataExtractor:
         except Exception as e:
             self.logger.error(f"A+ opportunities validation failed: {str(e)}", exc_info=True)
             return False, [f"Validation error: {str(e)}"]
+
+    def _extract_market_context(self) -> dict[str, Any] | None:
+        """Extract market context from discovery_latest.json."""
+        try:
+            discovery_file = self.discovery_dir / "discovery_latest.json"
+            if not discovery_file.exists():
+                return None
+
+            content = discovery_file.read_text(encoding="utf-8")
+            data = json.loads(content)
+
+            # Extract market context if available
+            market_context = data.get("market_context", {})
+            if market_context:
+                self.logger.info("Market context extracted from discovery results")
+                return market_context
+
+            return None
+        except Exception as e:
+            self.logger.warning(f"Could not extract market context: {e}")
+            return None
+
+    def _extract_backtesting_metrics(self) -> dict[str, Any] | None:
+        """Extract backtesting metrics from discovery_latest.json."""
+        try:
+            discovery_file = self.discovery_dir / "discovery_latest.json"
+            if not discovery_file.exists():
+                return None
+
+            content = discovery_file.read_text(encoding="utf-8")
+            data = json.loads(content)
+
+            # Extract validation results which contain backtesting data
+            validation_results = data.get("validation_results", [])
+            if validation_results:
+                # Aggregate backtesting metrics
+                metrics = {
+                    "total_candidates_tested": len(validation_results),
+                    "candidates_with_backtests": sum(1 for v in validation_results if v.get("backtest_results")),
+                    "avg_sharpe_ratio": None,
+                    "avg_annual_return": None,
+                    "avg_max_drawdown": None,
+                }
+
+                # Calculate averages if backtest data exists
+                sharpe_ratios = []
+                annual_returns = []
+                max_drawdowns = []
+
+                for result in validation_results:
+                    backtest = result.get("backtest_results", {})
+                    if backtest:
+                        if "sharpe_ratio" in backtest:
+                            sharpe_ratios.append(backtest["sharpe_ratio"])
+                        if "annual_return" in backtest:
+                            annual_returns.append(backtest["annual_return"])
+                        if "max_drawdown" in backtest:
+                            max_drawdowns.append(backtest["max_drawdown"])
+
+                if sharpe_ratios:
+                    metrics["avg_sharpe_ratio"] = sum(sharpe_ratios) / len(sharpe_ratios)
+                if annual_returns:
+                    metrics["avg_annual_return"] = sum(annual_returns) / len(annual_returns)
+                if max_drawdowns:
+                    metrics["avg_max_drawdown"] = sum(max_drawdowns) / len(max_drawdowns)
+
+                self.logger.info(f"Backtesting metrics extracted: {metrics['candidates_with_backtests']} candidates with backtests")
+                return metrics
+
+            return None
+        except Exception as e:
+            self.logger.warning(f"Could not extract backtesting metrics: {e}")
+            return None

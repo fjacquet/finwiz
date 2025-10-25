@@ -1,0 +1,277 @@
+# ============================================================================
+# REQUIRED ENUM VALUES
+# ============================================================================
+# This section documents all enum values used in Pydantic output schemas.
+# These values must match exactly with the schema definitions.
+#
+# DeepAnalysisResult Schema Enums:
+#   - grade: A+ | A | A- | B+ | B | B- | C+ | C | C- | D+ | D | D- | F
+#   - recommendation: BUY | HOLD | SELL
+#   - asset_class: stock | etf | crypto
+#
+# RiskAssessmentStandardized Schema Enums:
+#   - risk_level: VERY_LOW | LOW | MODERATE | HIGH | VERY_HIGH
+#   - risk_category: MARKET | CREDIT | LIQUIDITY | OPERATIONAL | REGULATORY | OTHER
+#
+# ============================================================================
+
+deep_analysis_task:
+  description: >
+    CRITICAL: SINGLE TICKER MODE - Analyze ONLY the ticker provided: {ticker}
+    
+    As an AI-driven deep asset analyst, perform comprehensive analysis on the single ticker 
+    {ticker} of asset class {asset_class}. Use your reasoning capabilities to provide 
+    deep insights beyond surface-level metrics.
+
+    CRITICAL DATE CONTEXT:
+    - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
+    - All analysis must reflect market conditions as of {full_date}, NOT historical dates
+
+    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
+    - NEVER pass JSON arrays or multiple tickers to tools
+    - ALWAYS call each tool ONCE with the single ticker: {ticker}
+    - Use exact parameter names: ticker="{ticker}", symbol="{ticker}", asset_class="{asset_class}"
+    
+    📊 API EFFICIENCY PATTERNS (CRITICAL):
+    ✅ ACCEPTABLE:
+    - Fetch price data and store in context with timestamp for downstream tasks
+    - Use batch APIs when tools support it (e.g., multiple indicators in one call)
+    - Share data via context to avoid redundant fetches
+    
+    ❌ NOT ACCEPTABLE:
+    - Using 24-hour cached prices for real-time decisions
+    - Using stale sentiment data (>15 minutes old)
+    - Skipping data fetches to save costs
+    
+    CONTEXT SHARING:
+    - Store fetched price data in context: context["price_data"] = {{"data": prices, "timestamp": now}}
+    - Include timestamps for freshness validation by downstream tasks
+    - Downstream tasks will check freshness before reusing (max_age_minutes=5)
+
+    AI-DRIVEN ANALYSIS PROCESS (for {ticker} only):
+    1. Validate ticker existence using Ticker Validation Tool
+    2. For stocks: Use Enhanced SEC Analysis Tool with parameters:
+       - ticker: "{ticker}"
+       - form_type: "10-K"
+       - sections: ["Item 1", "Item 1A", "Item 7"]
+       - risk_assessment: true
+       - include_perplexity: false  # ⚡ OPTIMIZED: Disabled to reduce API latency
+    3. For all asset classes: Use Quantitative Analysis Tool with parameters:
+       - symbol: "{ticker}"
+       - asset_class: "{asset_class}"
+       - analysis_type: "comprehensive"
+       - timeframe: "1y"
+       - strategy: "sma_crossover"
+    4. Use Standardized Sentiment Analysis Tool with parameters:
+       - symbol: "{ticker}"
+       - asset_class: "{asset_class}"
+       - max_articles: 20  # ⚡ OPTIMIZED: Reduced from 50 to speed up analysis
+       - days_back: 30  # ⚡ OPTIMIZED: Reduced from 90 to focus on recent sentiment
+       - include_trending: true
+    5. Apply AI reasoning to synthesize all data sources
+    6. Generate composite score (0.0-1.0) and letter grade (A+ to F)
+
+    AI OUTPUT REQUIREMENTS:
+    - Include explicit AI reasoning for assessments
+    - Provide confidence levels based on AI analysis
+    - Demonstrate understanding of market interconnections
+    - Show adaptive thinking for current market conditions as of {full_date}
+    - Generate actionable insights that reflect AI decision-making
+
+    CRITICAL OUTPUT FORMAT:
+    - Return structured analysis with composite_score and grade
+    - Include fundamental_score, technical_score if applicable
+    - Provide clear recommendation (BUY/HOLD/SELL)
+    - Include data source citations with dates
+  expected_output: >
+    A comprehensive deep analysis for ticker {ticker} including:
+    - Composite score (0.0-1.0) and letter grade (A+ to F)
+    - Fundamental analysis (if applicable)
+    - Technical analysis with quantitative metrics
+    - Sentiment analysis with market perception
+    - Clear investment recommendation with rationale
+    - AI reasoning and confidence levels
+  agent: asset_analyst
+  async_execution: true  # ✅ Parallel I/O: Enable async for independent data fetching
+
+technical_analysis_task:
+  description: >
+    CRITICAL: SINGLE TICKER MODE - Analyze technical indicators for ONLY: {ticker}
+    
+    Perform detailed technical analysis on the single ticker {ticker} of asset class 
+    {asset_class} using advanced quantitative methods.
+
+    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
+    - Call Quantitative Analysis Tool ONCE with these exact parameters:
+      * symbol: "{ticker}"
+      * asset_class: "{asset_class}"
+      * analysis_type: "comprehensive"
+      * timeframe: "1y"
+      * strategy: "sma_crossover"
+    - NEVER pass arrays or JSON strings
+    
+    📊 SMART BATCHING (FUTURE ENHANCEMENT):
+    NOTE: Current TwelveDataIndicatorTool requires individual calls per indicator.
+    Future enhancement will support batch operations: indicators=["RSI", "MACD", "BB"]
+    
+    CURRENT APPROACH:
+    - Call tool once per indicator (RSI, MACD, BB)
+    - Store results in context to avoid redundant fetches
+    - Downstream tasks reuse from context if fresh (max_age=5min)
+    
+    🔄 CONTEXT SHARING (CRITICAL):
+    - Check context for price_data from deep_analysis_task
+    - Validate freshness: if timestamp < 5 minutes old, reuse data
+    - Re-fetch if stale: if not is_fresh(context["price_data"]["timestamp"], max_age=5): refetch()
+    - Store your own data with timestamps for downstream tasks
+
+    ANALYSIS REQUIREMENTS:
+    - RSI, MACD, Bollinger Bands interpretation
+    - Support/resistance levels
+    - Trend analysis and momentum indicators
+    - Backtesting results with risk-adjusted metrics
+    - Buy/sell signals with confidence levels
+
+    AI REASONING:
+    - Apply intelligent interpretation of technical signals
+    - Synthesize multiple indicators into coherent analysis
+    - Provide AI-generated confidence levels
+  expected_output: >
+    Detailed technical analysis for {ticker} including:
+    - Multi-indicator technical assessment
+    - Backtesting results with performance metrics
+    - Risk-adjusted returns (Sharpe ratio, max drawdown)
+    - Clear buy/sell signals with confidence
+    - AI reasoning for technical recommendations
+  agent: asset_analyst
+  async_execution: true  # ✅ Parallel I/O: Enable async for independent data fetching
+  depends_on:
+    - deep_analysis_task
+
+risk_assessment_task:
+  description: >
+    CRITICAL: SINGLE TICKER MODE - Assess risks for ONLY: {ticker}
+    
+    Evaluate comprehensive risks for the single ticker {ticker} of asset class {asset_class} 
+    using AI-driven risk assessment methodology.
+
+    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
+    - For stocks: Call Enhanced SEC Analysis Tool ONCE with parameters:
+      * ticker: "{ticker}"
+      * form_type: "10-K"
+      * sections: ["Item 1A", "Item 7", "Item 7A"]
+      * risk_assessment: true
+      * include_perplexity: false  # ⚡ Already disabled for performance
+    - Call Quantitative Analysis Tool ONCE for risk metrics:
+      * symbol: "{ticker}"
+      * asset_class: "{asset_class}"
+      * analysis_type: "comprehensive"
+      * timeframe: "1y"
+    - NEVER pass arrays or JSON strings
+
+    AI-DRIVEN RISK ASSESSMENT:
+    1. Identify systematic vs. idiosyncratic risks
+    2. Evaluate financial stability and leverage risks
+    3. Assess regulatory and compliance risks
+    4. Analyze competitive and market positioning risks
+    5. Calculate VaR, drawdown, and risk-adjusted metrics
+    6. Generate standardized risk score (0-5 scale)
+
+    AI OUTPUT REQUIREMENTS:
+    - Explicit AI reasoning for each risk factor
+    - Risk scenarios with probability assessments
+    - Risk mitigation strategies
+    - Confidence levels and uncertainty acknowledgments
+  expected_output: >
+    Comprehensive risk assessment for {ticker} including:
+    - Standardized risk score (0-5 scale: 0=Very Low, 5=Very High)
+    - Systematic and idiosyncratic risk breakdown
+    - Financial, regulatory, competitive risk analysis
+    - Quantitative risk metrics (VaR, drawdown, volatility)
+    - Risk mitigation recommendations
+    - AI reasoning and confidence levels
+  agent: risk_assessor
+  async_execution: true  # ✅ Parallel I/O: Enable async for independent data fetching
+  depends_on:
+    - technical_analysis_task
+
+final_report_task:
+  description: >
+    CRITICAL: SINGLE TICKER MODE - Generate report for ONLY: {ticker}
+    
+    Transform all upstream analysis into a comprehensive, professional HTML report for 
+    the single ticker {ticker} of asset class {asset_class}.
+
+    🚨 NO TOOLS - Consume only upstream context 🚨
+    - Use results from deep_analysis_task
+    - Use results from technical_analysis_task
+    - Use results from risk_assessment_task
+    - NEVER call any tools directly
+
+    REPORT STRUCTURE (French language):
+    1. Executive Summary (Résumé Exécutif)
+       - Ticker: {ticker}
+       - Asset Class: {asset_class}
+       - Composite Score and Grade
+       - Clear Recommendation (ACHETER/CONSERVER/VENDRE)
+    
+    2. Detailed Analysis (Analyse Détaillée)
+       - Fundamental Analysis (if applicable)
+       - Technical Analysis with charts
+       - Sentiment Analysis
+       - AI Reasoning and Insights
+    
+    3. Risk Assessment (Évaluation des Risques)
+       - Risk Score (0-5 scale)
+       - Risk Breakdown
+       - Mitigation Strategies
+    
+    4. Investment Recommendation (Recommandation d'Investissement)
+       - Clear Action (BUY/HOLD/SELL)
+       - Price Targets (if applicable)
+       - Time Horizon
+       - Confidence Level
+    
+    5. Data Sources (Sources de Données)
+       - CRITICAL: Use ONLY real data sources from upstream analysis
+       - For price data: "Yahoo Finance API" or "TwelveData API" (based on actual tool used)
+       - For sentiment: List actual sources (Yahoo Finance News, Perplexity Sonar, etc.)
+       - For SEC data: Include the actual SEC filing URL from EnhancedSECAnalysisTool output
+         * Format: "SEC EDGAR Database — Form {form_type} — [View Filings](URL_FROM_TOOL_OUTPUT)"
+         * The URL is a browse page where users can click on the most recent filing
+         * If no URL available: "SEC EDGAR Database — Form {form_type} (search at sec.gov/edgar)"
+       - For technical indicators: "TwelveData Indicators API" or "TA-Lib calculations"
+       - Include as-of date: {full_date}
+       - NEVER use placeholder URLs like "example.com" or "finwiz.example.com"
+       - If source is unknown, state "Internal calculation" or "Derived from market data"
+
+    HTML FORMATTING:
+    - Professional FinWiz branding
+    - Responsive design (mobile-friendly)
+    - Emojis for visual appeal (📊 📈 📉 💰 ⚠️ 🎯)
+    - Color-coded grades (A+=green, F=red)
+    - Print-friendly CSS
+    - UTF-8 encoding for French characters
+
+    QUALITY CHECKLIST:
+    - ✅ Single ticker only: {ticker}
+    - ✅ French language throughout
+    - ✅ Professional formatting
+    - ✅ Clear recommendation
+    - ✅ Comprehensive risk assessment
+    - ✅ Real data source citations (NO example.com URLs)
+    - ✅ AI reasoning transparency
+    - ✅ Actual tool names cited (Yahoo Finance, TwelveData, SEC EDGAR, etc.)
+  expected_output: >
+    A complete, professional HTML report for {ticker} in French, including:
+    - Executive summary with grade and recommendation
+    - Detailed analysis sections
+    - Risk assessment with mitigation strategies
+    - Clear investment recommendation
+    - Data source citations
+    - Professional formatting with emojis and color coding
+  agent: investment_reporter
+  output_file: "output/deep_analysis/{ticker}_deep_analysis_{asset_class}.html"
+  async_execution: false  # ❌ Must be synchronous: CrewAI requirement for final task
+  depends_on:
+    - risk_assessment_task

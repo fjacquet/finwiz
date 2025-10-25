@@ -1,8 +1,17 @@
 """
 Defines the Crypto Crew for cryptocurrency research.
 
+DISCOVERY CREW - Designed to identify top 10 promising cryptocurrencies.
+
 This module initializes and configures the crypto analysis crew, including agents,
 _tasks, and tools.
+
+Purpose: Discovery of NEW crypto opportunities (not single-ticker deep analysis)
+Use Case: "Find me promising DeFi projects"
+Output: Top 10 cryptocurrencies with analysis
+Runs: AFTER portfolio analysis to find new opportunities
+
+For single-ticker deep analysis of existing crypto holdings, use DeepAnalysisCrew instead.
 """
 
 import time
@@ -41,7 +50,16 @@ research_tools = make_tools_robust(raw_research_tools)
 
 @CrewBase
 class CryptoCrew:
-    """Crypto crew for cryptocurrency analysis."""
+    """
+    Crypto crew for cryptocurrency analysis.
+
+    DISCOVERY CREW - Identifies top 10 promising cryptocurrencies.
+
+    Purpose: Discovery of NEW crypto opportunities
+    Input: Crypto screening criteria (market cap, volume, adoption)
+    Output: Top 10 cryptocurrencies with comprehensive analysis
+    NOT for: Analyzing specific crypto you already own (use DeepAnalysisCrew)
+    """
 
     def __init__(self) -> None:
         """Set configuration paths before calling super().__init__()."""
@@ -82,7 +100,7 @@ class CryptoCrew:
         return Agent(
             config=self.agents_config["market_analyst"],
             tools=research_tools,
-            reasoning=False,  # Enable AI reasoning for market analysis decisions
+            reasoning=True,  # Enable AI reasoning for market analysis decisions
             verbose=True,
             llm=self._get_configured_llm(),
         )
@@ -92,7 +110,7 @@ class CryptoCrew:
         return Agent(
             config=self.agents_config["technical_analyst"],
             tools=research_tools,
-            reasoning=False,  # Enable AI reasoning for technical analysis decisions
+            reasoning=True,  # Enable AI reasoning for technical analysis decisions
             verbose=True,
             llm=self._get_configured_llm(),
         )
@@ -103,7 +121,7 @@ class CryptoCrew:
             config=self.agents_config["risk_assessor"],
             tools=research_tools,
             verbose=True,
-            reasoning=False,  # Enable AI reasoning for risk assessment decisions
+            reasoning=True,  # Enable AI reasoning for risk assessment decisions
             llm=self._get_configured_llm(),
         )
 
@@ -113,7 +131,7 @@ class CryptoCrew:
             config=self.agents_config["investment_strategist"],
             tools=research_tools,
             verbose=True,
-            reasoning=False,  # Enable AI reasoning for investment strategy decisions
+            reasoning=True,  # Enable AI reasoning for investment strategy decisions
             llm=self._get_configured_llm(),
         )
 
@@ -123,7 +141,7 @@ class CryptoCrew:
             config=self.agents_config["research_director"],
             tools=[],
             verbose=True,
-            reasoning=False,  # Enable AI reasoning for research consolidation decisions
+            reasoning=True,  # Enable AI reasoning for research consolidation decisions
             llm=self._get_configured_llm(),
         )
 

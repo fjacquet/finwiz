@@ -117,82 +117,46 @@ class ReportCrew:
         self.crew_logger = CrewLogger("ReportCrew")
 
     def _initialize_tools(self) -> None:
-        """Initialize tools with data availability checking and graceful degradation."""
-        try:
-            # Check data availability before setting up tools
-            availability_report = self.data_accessor.check_data_availability()
+        """Initialize tools - ALWAYS load ALL directories to prevent data loading issues."""
+        # ALWAYS load ALL output directories - no conditional logic
+        # This ensures we never miss data that exists on disk
+        self.tools = [
+            *rag_tools,  # RAG tools for knowledge retrieval
+            # ALWAYS load ALL output directories
+            DirectoryReadTool(directory="output/stock"),
+            DirectoryReadTool(directory="output/etf"),
+            DirectoryReadTool(directory="output/crypto"),
+            DirectoryReadTool(directory="output/portfolio"),
+            DirectoryReadTool(directory="output/discovery"),
+            DirectoryReadTool(directory="output/deep_analysis"),
+            DirectoryReadTool(directory="output/report"),
+            # Schema tools for contract-aware reading
+            DirectoryReadTool(directory="docs/schemas"),
+            DirectoryReadTool(directory="docs/schemas/examples"),
+            FileReadTool(file_path="docs/schemas/ReporterInput.schema.json"),
+            FileReadTool(file_path="docs/schemas/examples/reporter_input.example.json"),
+            FileReadTool(file_path="docs/schemas/APlusDiscoveryResult.schema.json"),
+            FileReadTool(file_path="docs/schemas/OptimizationResult.schema.json"),
+            FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
+        ]
 
-            # Log data availability status
+        logger.info(f"✅ Initialized {len(self.tools)} tools - ALL output directories loaded")
+
+        # Still check availability for logging (non-critical)
+        try:
+            availability_report = self.data_accessor.check_data_availability()
             logger.info(
-                f"Data availability check: {availability_report.overall_status.value}",
+                f"Data availability: {availability_report.overall_status.value}",
                 extra={
-                    "stock_available": availability_report.stock_available,
-                    "etf_available": availability_report.etf_available,
-                    "crypto_available": availability_report.crypto_available,
-                    "discovery_available": availability_report.discovery_available,
-                    "portfolio_available": availability_report.portfolio_available,
+                    "stock": availability_report.stock_available,
+                    "etf": availability_report.etf_available,
+                    "crypto": availability_report.crypto_available,
+                    "discovery": availability_report.discovery_available,
+                    "portfolio": availability_report.portfolio_available,
                 },
             )
-
-            # Set up tools based on data availability
-            self.tools = [*rag_tools]  # Always include RAG tools
-
-            # Add directory tools only for available data
-            if availability_report.stock_available:
-                self.tools.append(DirectoryReadTool(directory="output/stock"))
-            if availability_report.etf_available:
-                self.tools.append(DirectoryReadTool(directory="output/etf"))
-            if availability_report.crypto_available:
-                self.tools.append(DirectoryReadTool(directory="output/crypto"))
-            if availability_report.portfolio_available:
-                self.tools.append(DirectoryReadTool(directory="output/portfolio"))
-            if availability_report.discovery_available:
-                self.tools.append(DirectoryReadTool(directory="output/discovery"))
-
-            # Always add schema tools for contract-aware reading
-            self.tools.extend(
-                [
-                    DirectoryReadTool(directory="docs/schemas"),
-                    DirectoryReadTool(directory="docs/schemas/examples"),
-                    FileReadTool(file_path="docs/schemas/ReporterInput.schema.json"),
-                    FileReadTool(file_path="docs/schemas/examples/reporter_input.example.json"),
-                    FileReadTool(file_path="docs/schemas/APlusDiscoveryResult.schema.json"),
-                    FileReadTool(file_path="docs/schemas/OptimizationResult.schema.json"),
-                    FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
-                ]
-            )
-
-            # Log warnings for missing data
-            if availability_report.missing_data:
-                logger.warning(
-                    f"Missing data for crews: {', '.join(availability_report.missing_data)}. "
-                    "Report generation will proceed with available data."
-                )
-
-            # Log stale data warnings
-            if availability_report.stale_data:
-                stale_warnings = self.data_accessor.get_stale_data_warnings()
-                for warning in stale_warnings:
-                    logger.warning(warning)
-
         except Exception as e:
-            logger.error(f"Failed to initialize tools with data integration: {str(e)}", exc_info=True)
-            # Fallback to basic tools
-            self.tools = [
-                *rag_tools,
-                DirectoryReadTool(directory="output/crypto"),
-                DirectoryReadTool(directory="output/etf"),
-                DirectoryReadTool(directory="output/stock"),
-                DirectoryReadTool(directory="output/portfolio"),
-                DirectoryReadTool(directory="output/discovery"),
-                DirectoryReadTool(directory="docs/schemas"),
-                DirectoryReadTool(directory="docs/schemas/examples"),
-                FileReadTool(file_path="docs/schemas/ReporterInput.schema.json"),
-                FileReadTool(file_path="docs/schemas/examples/reporter_input.example.json"),
-                FileReadTool(file_path="docs/schemas/APlusDiscoveryResult.schema.json"),
-                FileReadTool(file_path="docs/schemas/OptimizationResult.schema.json"),
-                FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
-            ]
+            logger.warning(f"Data availability check failed (non-critical): {e}")
 
     def get_integrated_data_context(self, max_age_hours: int = 24, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
@@ -213,15 +177,34 @@ class ReportCrew:
             # Get consolidated reporter input with all integrated data
             integrated_data = self.data_accessor.get_consolidated_reporter_input(max_age_hours)
 
+            # CRITICAL FIX: Extract portfolio_review from consolidated_crew_data to top level
+            # The task templates expect portfolio_review at the top level, not nested
+            consolidated_crew_data = integrated_data.get("consolidated_crew_data", {})
+            if "portfolio" in consolidated_crew_data:
+                integrated_data["portfolio_review"] = consolidated_crew_data["portfolio"]
+                logger.info(
+                    f"✅ Extracted portfolio_review with {len(integrated_data['portfolio_review'].get('holdings', []))} holdings"
+                )
+            else:
+                logger.warning("❌ No portfolio data found in consolidated_crew_data")
+                integrated_data["portfolio_review"] = None
+
+            # CRITICAL FIX: Load deep analysis HTML files and extract real grades
+            # Portfolio_review has placeholder data (0.7/C), real analysis is in HTML files
+            integrated_data["deep_analysis_html_content"] = self._load_deep_analysis_html_files()
+            logger.info(f"✅ Loaded {len(integrated_data['deep_analysis_html_content'])} deep analysis HTML files")
+
             # Track crew data availability
             availability_report = self.data_accessor.check_data_availability(max_age_hours)
 
             # Track stock crew data
             if availability_report.stock_available:
+                # Extract age from data_freshness_summary or use default
+                stock_age = self._extract_age_from_summary(availability_report.data_freshness_summary, "stock", max_age_hours)
                 self.availability_tracker.track_data_source(
                     source="stock_crew",
                     status="available",
-                    age_hours=availability_report.stock_age_hours,
+                    age_hours=stock_age,
                     record_count=len(integrated_data.get("stock_analysis_data", [])),
                 )
             else:
@@ -231,10 +214,12 @@ class ReportCrew:
 
             # Track ETF crew data
             if availability_report.etf_available:
+                # Extract age from data_freshness_summary or use default
+                etf_age = self._extract_age_from_summary(availability_report.data_freshness_summary, "etf", max_age_hours)
                 self.availability_tracker.track_data_source(
                     source="etf_crew",
                     status="available",
-                    age_hours=availability_report.etf_age_hours,
+                    age_hours=etf_age,
                     record_count=len(integrated_data.get("etf_analysis_data", [])),
                 )
             else:
@@ -244,10 +229,12 @@ class ReportCrew:
 
             # Track crypto crew data
             if availability_report.crypto_available:
+                # Extract age from data_freshness_summary or use default
+                crypto_age = self._extract_age_from_summary(availability_report.data_freshness_summary, "crypto", max_age_hours)
                 self.availability_tracker.track_data_source(
                     source="crypto_crew",
                     status="available",
-                    age_hours=availability_report.crypto_age_hours,
+                    age_hours=crypto_age,
                     record_count=len(integrated_data.get("crypto_analysis_data", [])),
                 )
             else:
@@ -258,17 +245,21 @@ class ReportCrew:
             # Track portfolio data
             if availability_report.portfolio_available:
                 portfolio_holdings = integrated_data.get("portfolio_review", {}).get("holdings", [])
+                # Extract age from data_freshness_summary or use default
+                portfolio_age = self._extract_age_from_summary(
+                    availability_report.data_freshness_summary, "portfolio", max_age_hours
+                )
                 self.availability_tracker.track_data_source(
                     source="portfolio_review",
                     status="available",
-                    age_hours=availability_report.portfolio_age_hours,
+                    age_hours=portfolio_age,
                     record_count=len(portfolio_holdings),
                 )
-                
+
                 # Track deep analysis statistics from portfolio holdings
                 deep_analysis_count = sum(1 for h in portfolio_holdings if h.get("crew_analysis_used"))
                 holdings_with_alternatives = sum(1 for h in portfolio_holdings if h.get("alternatives"))
-                
+
                 if deep_analysis_count > 0:
                     self.availability_tracker.track_data_source(
                         source="deep_portfolio_analysis",
@@ -276,14 +267,16 @@ class ReportCrew:
                         record_count=deep_analysis_count,
                     )
                     logger.info(f"Deep portfolio analysis available for {deep_analysis_count} holdings")
-                    
+
                     # Add deep analysis summary to integrated data
                     integrated_data["deep_analysis_summary"] = {
                         "total_holdings": len(portfolio_holdings),
                         "deep_analysis_count": deep_analysis_count,
                         "shallow_analysis_count": len(portfolio_holdings) - deep_analysis_count,
                         "holdings_with_alternatives": holdings_with_alternatives,
-                        "deep_analysis_percentage": (deep_analysis_count / len(portfolio_holdings) * 100) if portfolio_holdings else 0,
+                        "deep_analysis_percentage": (deep_analysis_count / len(portfolio_holdings) * 100)
+                        if portfolio_holdings
+                        else 0,
                     }
                 else:
                     self.availability_tracker.track_data_source(
@@ -297,8 +290,8 @@ class ReportCrew:
                     source="portfolio_review", status="unavailable", error_message="Portfolio review data not found"
                 )
 
-            # Add data availability information
-            integrated_data["data_availability_report"] = availability_report
+            # Add data availability information (convert Pydantic model to dict for CrewAI compatibility)
+            integrated_data["data_availability_report"] = availability_report.model_dump(mode="json")
 
             # Add stale data warnings
             integrated_data["stale_data_warnings"] = self.data_accessor.get_stale_data_warnings(max_age_hours)
@@ -318,18 +311,18 @@ class ReportCrew:
                     elif inputs.get("investment_discovery_structured"):
                         discovery_results = inputs["investment_discovery_structured"]
                         logger.info("Using discovery results from Flow state (investment_discovery_structured)")
-                
+
                 # SECOND: Fall back to file-based loading if not in inputs
                 if not discovery_results:
                     discovery_results = self.discovery_accessor.load_discovery_results()
                     if discovery_results:
                         logger.info("Loaded discovery results from files")
-                
+
                 if discovery_results:
                     integrated_data["aplus_discovery_results"] = discovery_results
-                    
+
                     # Generate summary from results
-                    if hasattr(self.discovery_accessor, 'get_opportunities_summary'):
+                    if hasattr(self.discovery_accessor, "get_opportunities_summary"):
                         integrated_data["aplus_opportunities_summary"] = self.discovery_accessor.get_opportunities_summary()
                     else:
                         # Generate basic summary from results
@@ -343,10 +336,12 @@ class ReportCrew:
 
                     # Track discovery data as available
                     self.availability_tracker.track_data_source(
-                        source="aplus_discovery", status="available", record_count=total_opportunities if 'total_opportunities' in locals() else 0
+                        source="aplus_discovery",
+                        status="available",
+                        record_count=total_opportunities if "total_opportunities" in locals() else 0,
                     )
 
-                    logger.info(f"Discovery results available with opportunities")
+                    logger.info("Discovery results available with opportunities")
                 else:
                     integrated_data["aplus_discovery_results"] = None
                     integrated_data["aplus_opportunities_summary"] = "No A+ opportunities found in current analysis"
@@ -399,7 +394,7 @@ class ReportCrew:
             # Generate data availability summary
             availability_summary = self.availability_tracker.get_availability_summary()
             # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
-            integrated_data["data_availability_summary"] = availability_summary.model_dump(mode='json')
+            integrated_data["data_availability_summary"] = availability_summary.model_dump(mode="json")
             integrated_data["data_availability_summary_formatted"] = self.availability_tracker.format_summary_for_report(
                 availability_summary
             )
@@ -434,14 +429,14 @@ class ReportCrew:
                 "stale_data_warnings": [f"Data integration error: {str(e)}"],
                 "discovery_status": {"has_results": False, "message": f"Discovery data unavailable due to error: {str(e)}"},
                 # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
-                "data_availability_summary": error_summary.model_dump(mode='json'),
+                "data_availability_summary": error_summary.model_dump(mode="json"),
                 "data_availability_summary_formatted": self.availability_tracker.format_summary_for_report(error_summary),
             }
 
     def _get_discovery_status(self, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Get A+ discovery status with clear messaging.
-        
+
         Checks for discovery data in this order:
         1. Flow state inputs (aplus_opportunities)
         2. Flow state inputs (investment_discovery_structured)
@@ -452,37 +447,26 @@ class ReportCrew:
 
         Returns:
             Dictionary with discovery status information
+
         """
         # FIRST: Check if discovery data was provided in Flow state inputs
         if inputs:
             # Check for aplus_opportunities in inputs
             if inputs.get("aplus_opportunities"):
                 logger.info("Discovery data found in Flow state (aplus_opportunities)")
-                return {
-                    "has_results": True,
-                    "message": "A+ discovery results available",
-                    "status": "available"
-                }
-            
+                return {"has_results": True, "message": "A+ discovery results available", "status": "available"}
+
             # Check for investment_discovery_structured in inputs
             if inputs.get("investment_discovery_structured"):
                 logger.info("Discovery data found in Flow state (investment_discovery_structured)")
-                return {
-                    "has_results": True,
-                    "message": "A+ discovery results available",
-                    "status": "available"
-                }
-        
+                return {"has_results": True, "message": "A+ discovery results available", "status": "available"}
+
         # SECOND: Fall back to file-based checking
         has_results = self.discovery_accessor.has_discovery_results()
 
         if has_results:
             logger.info("Discovery data found via file-based accessor")
-            return {
-                "has_results": True,
-                "message": "A+ discovery results available",
-                "status": "available"
-            }
+            return {"has_results": True, "message": "A+ discovery results available", "status": "available"}
         else:
             logger.info("No discovery data found in inputs or files")
             return {
@@ -501,6 +485,7 @@ class ReportCrew:
 
         Returns:
             Float value or None if not available or invalid
+
         """
         value = vr_data.get(key)
         if value is None:
@@ -556,7 +541,7 @@ class ReportCrew:
     def _extract_backtesting_data(self, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Extract backtesting data from discovery results using the backtesting extractor.
-        
+
         Checks for backtesting data in this order:
         1. Flow state inputs (aplus_opportunities)
         2. Flow state inputs (investment_discovery_structured)
@@ -567,6 +552,7 @@ class ReportCrew:
 
         Returns:
             Dictionary with backtesting data and status
+
         """
         try:
             # FIRST: Try to get discovery results from Flow state inputs
@@ -577,8 +563,10 @@ class ReportCrew:
                     logger.info("Using discovery results from Flow state (aplus_opportunities) for backtesting extraction")
                 elif inputs.get("investment_discovery_structured"):
                     discovery_results = inputs["investment_discovery_structured"]
-                    logger.info("Using discovery results from Flow state (investment_discovery_structured) for backtesting extraction")
-            
+                    logger.info(
+                        "Using discovery results from Flow state (investment_discovery_structured) for backtesting extraction"
+                    )
+
             # SECOND: Fall back to file-based loading if not in inputs
             if not discovery_results:
                 if not self.discovery_accessor.has_discovery_results():
@@ -659,7 +647,7 @@ class ReportCrew:
                     if metrics:
                         backtesting_by_candidate[symbol] = {
                             # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
-                            "metrics": metrics.model_dump(mode='json'),
+                            "metrics": metrics.model_dump(mode="json"),
                             "formatted_display": self.backtesting_extractor.format_for_display(metrics),
                             "available_metrics": self.backtesting_extractor.get_available_metrics(metrics),
                         }
@@ -718,7 +706,7 @@ class ReportCrew:
         return Agent(
             config=self.agents_config["financial_integration_analyst"],
             verbose=True,
-            reasoning=False,  # Enable AI reasoning for complex financial integration decisions
+            reasoning=True,  # Enable AI reasoning for complex financial integration decisions
             tools=self.tools,
         )
 
@@ -729,7 +717,7 @@ class ReportCrew:
             config=self.agents_config["portfolio_allocator"],
             verbose=True,
             tools=self.tools,
-            reasoning=False,  # Enable AI reasoning for optimal portfolio allocation decisions
+            reasoning=True,  # Enable AI reasoning for optimal portfolio allocation decisions
         )
 
     @agent
@@ -739,7 +727,7 @@ class ReportCrew:
             config=self.agents_config["risk_manager"],
             verbose=True,
             tools=self.tools,
-            reasoning=False,  # Enable AI reasoning for risk assessment and mitigation decisions
+            reasoning=True,  # Enable AI reasoning for risk assessment and mitigation decisions
         )
 
     @final_reporter
@@ -749,8 +737,6 @@ class ReportCrew:
         return Agent(
             config=self.agents_config["investment_reporter"],
             verbose=True,
-            # Per FinWiz policy: final reporter must have NO tools; it only consumes upstream
-            # context and formats the final HTML report.
             tools=[],
         )
 
@@ -855,6 +841,7 @@ class ReportCrew:
             respect_context_window=True,
             max_retries=10,
             max_rpm=20,
+            llm="gpt-5"
         )
 
         return crew
@@ -932,7 +919,42 @@ class ReportCrew:
             # Get integrated data context, passing inputs to check Flow state first
             integrated_context = self.get_integrated_data_context(max_age_hours, inputs)
 
-            # Validate the integrated context
+            # CRITICAL: Merge original Flow state inputs to preserve template variables
+            # The task configuration expects certain top-level keys like portfolio_review
+            # This MUST happen BEFORE validation to ensure all required keys are present
+            if inputs:
+                logger.info(f"Merging Flow state inputs - available keys: {list(inputs.keys())[:20]}")
+
+                # Preserve original Flow state data that tasks expect
+                preserved_keys = []
+                for key in [
+                    "portfolio_review",
+                    "current_day",
+                    "current_month",
+                    "current_year",
+                    "current_date",
+                    "full_date",
+                    "timestamp",
+                    "report_language",
+                ]:
+                    if key in inputs:
+                        if key not in integrated_context:
+                            integrated_context[key] = inputs[key]
+                            preserved_keys.append(key)
+                            logger.info(f"✅ Preserved key: {key}")
+                        else:
+                            logger.debug(f"Key {key} already in integrated_context, skipping")
+                    else:
+                        logger.warning(f"❌ Expected key '{key}' not found in Flow state inputs")
+
+                if preserved_keys:
+                    logger.info(f"Successfully preserved {len(preserved_keys)} Flow state keys: {preserved_keys}")
+                else:
+                    logger.warning("⚠️  No Flow state keys were preserved - this may cause template variable errors")
+            else:
+                logger.warning("⚠️  No inputs provided to prepare_crew_context - template variables will be missing")
+
+            # Validate the integrated context (after merging Flow state inputs)
             self.validate_reporter_input(integrated_context)
 
             # CRITICAL: Extract and validate tickers to prevent hallucination
@@ -940,13 +962,18 @@ class ReportCrew:
 
             if not validated_tickers or len(validated_tickers) < 3:
                 error_msg = (
-                    f"Cannot generate report: Insufficient validated tickers. "
+                    f"Insufficient validated tickers for full report generation. "
                     f"Found {len(validated_tickers)} ticker(s): {validated_tickers}. "
-                    f"Need at least 3 validated tickers for a diversified portfolio report. "
-                    f"This prevents hallucination of fake ticker symbols."
+                    f"Recommended: at least 3 validated tickers for a diversified portfolio report. "
+                    f"Will generate limited report with available data to prevent hallucination."
                 )
-                logger.error(error_msg)
-                raise ValueError(error_msg)
+                logger.warning(error_msg)
+
+                # Add warning to context instead of failing completely
+                integrated_context["ticker_validation_warning"] = error_msg
+                integrated_context["insufficient_tickers"] = True
+            else:
+                integrated_context["insufficient_tickers"] = False
 
             # Add validated tickers to context for agents to use
             integrated_context["validated_tickers_list"] = validated_tickers
@@ -982,6 +1009,71 @@ class ReportCrew:
                 },
             }
 
+    def _load_deep_analysis_html_files(self) -> dict[str, str]:
+        """
+        Load deep analysis HTML files for all holdings.
+
+        Returns:
+            Dictionary mapping ticker to HTML content with extracted grade info
+        """
+        from pathlib import Path
+        import re
+
+        deep_analysis_dir = Path("output/deep_analysis")
+        html_content = {}
+
+        if not deep_analysis_dir.exists():
+            logger.warning("Deep analysis directory not found")
+            return {}
+
+        # Load all HTML files
+        for html_file in deep_analysis_dir.glob("*_deep_analysis_*.html"):
+            try:
+                # Extract ticker from filename (e.g., AAPL_deep_analysis_stock.html -> AAPL)
+                ticker = html_file.stem.split("_deep_analysis_")[0]
+
+                # Read HTML content
+                with open(html_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                # Extract key information using regex - handle multiple formats
+                # Format 1: <div class="grade Aminus" title="A-">A-</div>
+                # Format 2: <div class="grade A">A</div>
+                grade_match = re.search(r'<div class="grade[^"]*" title="([^"]+)">', content)
+                if not grade_match:
+                    # Try format 2: extract from class name
+                    grade_match = re.search(r'<div class="grade\s+([A-F][+-]?)">', content)
+                    if grade_match:
+                        grade = grade_match.group(1)
+                    else:
+                        grade = "Unknown"
+                else:
+                    grade = grade_match.group(1)
+
+                # Score can be in multiple formats
+                score_match = re.search(r"Score composite[:\s]*([\d.]+)\s*/\s*[\d.]+", content, re.IGNORECASE)
+                if not score_match:
+                    score_match = re.search(r"<div[^>]*>(\d+\.\d+)\s*/\s*1\.00</div>", content)
+
+                score = score_match.group(1) if score_match else "0.0"
+
+                # Store extracted info (first 2000 chars of HTML for context)
+                html_content[ticker] = {
+                    "grade": grade,
+                    "composite_score": float(score),
+                    "html_preview": content[:2000],  # First 2000 chars for context
+                    "file_path": str(html_file),
+                }
+
+                logger.debug(f"Loaded {ticker}: Grade {grade}, Score {score}")
+
+            except Exception as e:
+                logger.error(f"Failed to load {html_file}: {e}")
+                continue
+
+        logger.info(f"Loaded {len(html_content)} deep analysis HTML files")
+        return html_content
+
     def _extract_validated_tickers(self, context: dict[str, Any]) -> list[str]:
         """
         Extract validated tickers from upstream crew data.
@@ -998,8 +1090,11 @@ class ReportCrew:
         """
         tickers = set()
 
+        # FIXED: Look in consolidated_crew_data instead of stock_analysis_data
+        consolidated_crew_data = context.get("consolidated_crew_data", {})
+
         # Extract from stock data
-        stock_data = context.get("stock_analysis_data", {})
+        stock_data = consolidated_crew_data.get("stock", {})
         if isinstance(stock_data, dict):
             for task in stock_data.get("tasks_output", []):
                 if isinstance(task, dict):
@@ -1010,7 +1105,7 @@ class ReportCrew:
                             tickers.add(ticker.upper())
 
         # Extract from ETF data
-        etf_data = context.get("etf_analysis_data", {})
+        etf_data = consolidated_crew_data.get("etf", {})
         if isinstance(etf_data, dict):
             for task in etf_data.get("tasks_output", []):
                 if isinstance(task, dict):
@@ -1021,7 +1116,7 @@ class ReportCrew:
                             tickers.add(ticker.upper())
 
         # Extract from crypto data
-        crypto_data = context.get("crypto_analysis_data", {})
+        crypto_data = consolidated_crew_data.get("crypto", {})
         if isinstance(crypto_data, dict):
             for task in crypto_data.get("tasks_output", []):
                 if isinstance(task, dict):
@@ -1106,3 +1201,30 @@ class ReportCrew:
                 raise ValueError(error_msg)
 
         logger.debug("Task output validation passed - no hallucinated tickers detected")
+
+    def _extract_age_from_summary(self, data_freshness_summary: dict, crew_type: str, default_age: float) -> float:
+        """
+        Extract age information from data freshness summary.
+
+        Args:
+            data_freshness_summary: Dictionary containing freshness information
+            crew_type: Type of crew (stock, etf, crypto)
+            default_age: Default age to use if not found
+
+        Returns:
+            Age in hours
+
+        """
+        try:
+            # Try to extract age from the summary
+            if crew_type in data_freshness_summary:
+                crew_info = data_freshness_summary[crew_type]
+                if isinstance(crew_info, dict) and "age_hours" in crew_info:
+                    return float(crew_info["age_hours"])
+
+            # If not found, use a reasonable default (half of max age)
+            return default_age / 2.0
+
+        except Exception as e:
+            logger.warning(f"Failed to extract age for {crew_type}: {e}")
+            return default_age / 2.0

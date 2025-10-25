@@ -1,3 +1,10 @@
+# ============================================================================
+# DISCOVERY CREW - Designed to screen and identify top 10 assets
+# ============================================================================
+# For single-ticker deep analysis, use DeepAnalysisCrew instead
+# Runs AFTER portfolio analysis to find NEW opportunities
+# ============================================================================
+
 # ETF Market Analysis Tasks
 etf_market_trends_task:
   description: >
@@ -34,47 +41,40 @@ etf_market_trends_task:
 # ETF Screening Tasks
 etf_screening_task:
   description: >
-    As an AI-driven ETF analyst, use advanced reasoning to screen and identify the top 10 most stable 
-    and diversified ETFs for long-term investment. Apply intelligent decision-making that goes beyond 
-    simple metric-based screening.
-
-    AI REASONING REQUIREMENTS:
-    - Apply intelligent reasoning to evaluate ETF quality and investment potential
-    - Provide clear AI-generated rationale for each ETF selection or rejection
-    - Demonstrate understanding of ETF structures, market dynamics, and investor needs
-    - Show adaptive thinking based on current market conditions as of {full_date}
-    - Generate insights that synthesize multiple factors intelligently
+    Screen and identify the top 10 most stable and diversified ETFs for long-term investment.
     
     CRITICAL DATE CONTEXT:
     - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
     - All analysis must reflect market conditions as of {full_date}, NOT historical dates
     - When searching or analyzing, use {full_date} as the current date context
 
-    AI-DRIVEN SCREENING PROCESS:
-    1. Use AI reasoning to screen ETFs using stability and diversification metrics:
-       - Apply intelligent interpretation of volatility, tracking error, and correlation data
-       - Generate insights on diversification quality and risk-return profiles
-    2. Apply AI assessment of cost efficiency and tax implications:
-       - Use reasoning to evaluate expense ratios in context of fund value proposition
-       - Generate insights on tax efficiency and total cost of ownership
-    3. Use AI reasoning to assess fund reliability and operational quality:
-       - Apply intelligent evaluation of tracking error, fund size, and liquidity
-       - Generate insights on operational risks and fund management quality
-    4. Apply AI decision-making to select optimal ETFs:
-       - Use reasoning to balance multiple factors and investor objectives
-       - Generate insights on portfolio fit and strategic allocation
+    SCREENING PROCESS:
+    1. Screen ETFs using stability and diversification metrics:
+       - Evaluate volatility, tracking error, and correlation data
+       - Assess diversification quality and risk-return profiles
+    2. Assess cost efficiency and tax implications:
+       - Evaluate expense ratios in context of fund value proposition
+       - Consider tax efficiency and total cost of ownership
+    3. Assess fund reliability and operational quality:
+       - Evaluate tracking error, fund size, and liquidity
+       - Consider operational risks and fund management quality
+    4. Select optimal ETFs:
+       - Balance multiple factors and investor objectives
+       - Consider portfolio fit and strategic allocation
     5. Validate each proposed ETF ticker using the "Ticker Existence Validation Tool":
+       - Pass ONLY the ticker symbol and asset_class to the tool
+       - Example input: {"symbol": "VOO", "asset_class": "etf"}
+       - Do NOT pass the validation result back to the tool
        - Use Yahoo Finance existence and ensure quoteType is ETF
        - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
 
-    AI OUTPUT REQUIREMENTS:
-    - Include explicit AI reasoning for each ETF selection
-    - Provide AI-generated confidence levels and risk assessments
-    - Demonstrate intelligent synthesis of quantitative and qualitative factors
-    - Show adaptive thinking for current market conditions as of {full_date}
-    - Generate actionable insights based on AI decision-making
+    OUTPUT REQUIREMENTS:
+    - Include clear rationale for each ETF selection
+    - Provide confidence levels and risk assessments
+    - Synthesize quantitative and qualitative factors
+    - Provide actionable insights
 
-    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your AI analysis 
+    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your analysis 
     is current as of {full_date}.
     
     CRITICAL OUTPUT FORMAT:

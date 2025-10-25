@@ -7,7 +7,7 @@ Welcome to the FinWiz documentation. This is your central navigation hub for all
 New to FinWiz? Start here:
 
 1. **[Installation & Setup](../README.md#getting-started)** - Get FinWiz running
-2. **[User Guide](#user-guides)** - Learn how to use FinWiz features
+2. **[User Guide](USER_GUIDE.md)** - Learn how to use FinWiz features
 3. **[Developer Guide](DEVELOPER_GUIDE.md)** - Start developing with FinWiz
 
 ## 📚 Core Documentation
@@ -37,7 +37,7 @@ New to FinWiz? Start here:
 
 - **[User Guide](USER_GUIDE.md)** - Deployment, operations, and migration
   - Installation and deployment
-  - Daily operations
+  - Daily operations and advanced system configuration
   - Monitoring and maintenance
   - Migration guide
 
@@ -79,38 +79,15 @@ AI agent guidelines are now in `.kiro/steering/` for automatic guidance during d
 
 ### Enhanced Data Extraction
 
-- **[Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md)** - Comprehensive data extraction for reports
-  - Backtesting metrics extraction
-  - Market context indicators
-  - Discovery methodology details
-  - Performance aggregation
-
-- **[Report Crew Examples](REPORT_CREW_ENHANCED_EXAMPLES.md)** - Practical usage examples
-  - Backtesting metrics in reports
-  - Market context in risk assessment
-  - Discovery methodology documentation
-  - Performance aggregation examples
-
-- **[Crew Data Integration Quick Start](CREW_DATA_INTEGRATION_QUICK_START.md)** - Quick reference guide
-  - Basic usage patterns
-  - Common patterns
-  - Extractor methods
-  - HTML report generation
-
-- **[Crew Data Integration Index](CREW_DATA_INTEGRATION_INDEX.md)** - Complete navigation
-  - Documentation structure
-  - Learning paths
-  - Use case guides
-  - Quick links
+- **[Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md)** - A comprehensive guide to the data extraction system, including a quick start, technical reference, and practical examples for building reports.
 
 ## 🔧 System Documentation
 
 ### Core Systems
 
-- **[Data Quality Guide](DATA_QUALITY_GUIDE.md)** - Comprehensive guide for maintaining data quality and handling missing data
-- **[A+ Investment System](APLUS_SYSTEM.md)** - A+ discovery, scoring, and monitoring
-- **[System Operations](SYSTEM_OPERATIONS.md)** - Feedback learning, portfolio monitoring, knowledge base, integration
-- **[Perplexity Sonar Integration](perplexity_sonar_integration_spec.md)** - Enhanced research capabilities
+- **[Data Quality Guide](DATA_QUALITY_GUIDE.md)** - Comprehensive guide for maintaining data quality and handling missing data.
+- **[Complete Analysis Guide](COMPLETE_ANALYSIS_GUIDE.md)** - How to run a full analysis and ensure data is up-to-date.
+- **[Perplexity Sonar Integration](perplexity_sonar_integration_spec.md)** - Enhanced research capabilities.
 
 ### Standards (in `.kiro/steering/`)
 
@@ -156,7 +133,7 @@ AI development standards are now in steering files for automatic guidance:
 → [Data Quality Guide](DATA_QUALITY_GUIDE.md)
 
 **Use enhanced data in reports**
-→ [Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md) + [Report Examples](REPORT_CREW_ENHANCED_EXAMPLES.md)
+→ [Enhanced Data Extraction](ENHANCED_DATA_EXTRACTION.md)
 
 **Develop a new feature**
 → [Developer Guide](DEVELOPER_GUIDE.md) + [Architecture Guide](ARCHITECTURE.md)
@@ -198,11 +175,17 @@ These files are preserved for reference but not needed for daily development.
 
 ---
 
-**Documentation Version**: 2.2  
-**Last Updated**: 2025-01-07  
-**Total Documents**: 16 core files + organized archive (down from 60+)
+**Documentation Version**: 2.3
+**Last Updated**: 2025-10-11
 
 ## Recent Changes
+
+### 2025-10-11: Documentation Consolidation
+
+- **Consolidated Guides**: Merged several redundant documents to create single sources of truth. `SYSTEM_OPERATIONS.md` was merged into `USER_GUIDE.md`, and `APLUS_SYSTEM.md` was merged into the `investment_discovery` guides.
+- **Consolidated Data Extraction Guides**: Merged `CREW_DATA_INTEGRATION_INDEX.md`, `CREW_DATA_INTEGRATION_QUICK_START.md`, and `REPORT_CREW_ENHANCED_EXAMPLES.md` into a single, comprehensive `ENHANCED_DATA_EXTRACTION.md` guide.
+- **Archived Files**: Moved numerous historical task summaries, fix reports, and migration guides to the `docs/archive/` directory to declutter the main documentation.
+- **Improved Navigation**: Updated this README to provide a cleaner, more intuitive navigation structure with fewer top-level links.
 
 ### 2025-01-07: Data Quality Assurance Implementation
 

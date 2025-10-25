@@ -1,10 +1,19 @@
 """
 Define the Stock Crew for stock market research.
 
+DISCOVERY CREW - Designed to screen and identify top 10 promising stocks.
+
 This module configures agents (Market Analyst, Fundamental Analyst,
 Risk Assessor, Investment Strategist, Research Director) and their
 tasks to identify promising stock investments and provide detailed
 recommendations.
+
+Purpose: Discovery of NEW stock opportunities (not single-ticker deep analysis)
+Use Case: "Find me the best growth stocks"
+Output: Top 10 stocks with analysis
+Runs: AFTER portfolio analysis to find new opportunities
+
+For single-ticker deep analysis of existing holdings, use DeepAnalysisCrew instead.
 """
 
 import time
@@ -49,8 +58,15 @@ class StockCrew:
     """
     StockCrew - Expert stock market research team.
 
+    DISCOVERY CREW - Screens and identifies top 10 promising stocks.
+
     Specialized in identifying high-potential stock investments and
     providing detailed, evidence-based investment recommendations.
+
+    Purpose: Discovery of NEW stock opportunities
+    Input: Market screening criteria
+    Output: Top 10 stocks with comprehensive analysis
+    NOT for: Analyzing specific holdings you already own (use DeepAnalysisCrew)
     """
 
     agents: list[BaseAgent]
@@ -97,7 +113,7 @@ class StockCrew:
         return Agent(
             config=self.agents_config["market_technical_analyst"],
             verbose=True,
-            reasoning=False,  # Disable reasoning to prevent infinite planning loops
+            reasoning=True,  # Disable reasoning to prevent infinite planning loops
             tools=tools,
             llm=self._get_configured_llm(),
         )
@@ -109,7 +125,7 @@ class StockCrew:
             config=self.agents_config["investment_risk_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=False,  # Keep reasoning enabled - useful for risk assessment and hasn't caused issues
+            reasoning=True,  # Keep reasoning enabled - useful for risk assessment and hasn't caused issues
             llm=self._get_configured_llm(),
         )
 

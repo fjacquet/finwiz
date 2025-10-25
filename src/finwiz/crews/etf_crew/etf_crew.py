@@ -1,6 +1,8 @@
 """
 Expert team for Exchange-Traded Fund (ETF) research.
 
+DISCOVERY CREW - Designed to screen and identify top 10 stable ETFs.
+
 This module configures agents (Market Analyst, ETF Specialist, Risk Assessor,
 Investment Strategist, Research Director, Quality Control Specialist) and their
 tasks to identify high-potential ETFs and provide detailed investment
@@ -8,6 +10,13 @@ recommendations. The crew follows a KISS (Keep It Simple, Stupid) approach with
 DRY (Don't Repeat Yourself) principles and includes a dedicated Quality Control
 agent to ensure consistent output quality. ETF investment analysis crew using
 the CrewAI framework.
+
+Purpose: Discovery of NEW ETF opportunities (not single-ticker deep analysis)
+Use Case: "Find me low-cost diversified ETFs"
+Output: Top 10 ETFs with factsheet analysis
+Runs: AFTER portfolio analysis to find new opportunities
+
+For single-ticker deep analysis of existing ETF holdings, use DeepAnalysisCrew instead.
 """
 
 import time
@@ -48,8 +57,15 @@ class EtfCrew:
     """
     EtfCrew - Expert ETF trading research team.
 
+    DISCOVERY CREW - Screens and identifies top 10 stable ETFs.
+
     Specialized in identifying high-potential ETFs and providing
     detailed investment recommendations to maximize returns.
+
+    Purpose: Discovery of NEW ETF opportunities
+    Input: ETF screening criteria (expense ratio, AUM, tracking error)
+    Output: Top 10 ETFs with factsheet analysis
+    NOT for: Analyzing specific ETFs you already own (use DeepAnalysisCrew)
     """
 
     agents: list[BaseAgent]
@@ -106,19 +122,9 @@ class EtfCrew:
             config=self.agents_config["risk_assessor"],
             verbose=True,
             tools=tools,
-            reasoning=False,  # Keep reasoning enabled - useful for risk assessment and investment strategy
+            reasoning=False,  # Disable reasoning to prevent infinite planning loops
             llm=self._get_configured_llm(),
         )
-
-    # @agent
-    # def translator(self) -> Agent:
-    #     """Create translator agent that converts English reports to French while preserving layout."""
-    #     return Agent(
-    #         config=self.agents_config["translator"],
-    #         tools=[],  # No tools - only consumes upstream HTML context
-    #         verbose=True,
-    #         llm=self._get_configured_llm(),
-    #     )
 
     @async_task
     @task
@@ -135,6 +141,7 @@ class EtfCrew:
         return Task(
             config=self.tasks_config["etf_screening_task"],
             verbose=True,
+            reasoning=False,  # Disable reasoning to prevent infinite loops
         )
 
     @async_task
@@ -144,6 +151,7 @@ class EtfCrew:
             config=self.tasks_config["etf_technical_detail_task"],
             verbose=True,
             output_pydantic=ETFFactsheet,
+            reasoning=False,  # Disable reasoning to prevent infinite loops
         )
 
     @async_task
@@ -153,12 +161,17 @@ class EtfCrew:
             config=self.tasks_config["etf_risk_assessment_task"],
             verbose=True,
             output_pydantic=RiskAssessmentStandardized,
+            reasoning=False,  # Disable reasoning to prevent infinite loops
         )
 
     @sync_task
     @task
     def etf_investment_strategy_task(self) -> Task:
-        return Task(config=self.tasks_config["etf_investment_strategy_task"], verbose=True)
+        return Task(
+            config=self.tasks_config["etf_investment_strategy_task"],
+            verbose=True,
+            reasoning=False,  # Disable reasoning to prevent infinite loops
+        )
 
     # @sync_task
     # @task

@@ -1,3 +1,10 @@
+# ============================================================================
+# DISCOVERY CREW - Designed to screen and identify top 10 assets
+# ============================================================================
+# For single-ticker deep analysis, use DeepAnalysisCrew instead
+# Runs AFTER portfolio analysis to find NEW opportunities
+# ============================================================================
+
 market_analysis_task:
   description: >
     IMPORTANT: Today's date is {full_date}. Use this as your current date reference for all analysis.

@@ -2,40 +2,21 @@
 
 ## Overview
 
-This design document outlines the restoration of the core financial analysis capabilities (cryptocurrency, stock, and ETF analysis crews) to the FinWiz platform while ensuring seamless integration with all existing features including data integration, portfolio rebalancing, investment discovery, quantitative backtesting, and feature enforcement systems.
+This design document addresses the critical data consolidation bug where core analysis data is missing despite crews being marked as available, and outlines the integration of discovery results into the final report. The design focuses on fixing the data retrieval system, ensuring proper data flow between Flow state and report generation, and maintaining backward compatibility with all existing features.
 
-The design maintains FinWiz's architectural principles while ensuring that AI agents drive the analysis process, data freshness is maintained within 24 hours, and all existing features continue to function without disruption. The restoration will transform FinWiz back into a comprehensive financial analysis platform that leverages the full power of CrewAI's intelligent agent system.
+The key issues addressed are:
+
+1. **Data Consolidation Bug**: Core analysis crews execute successfully but their outputs are not retrieved by the data consolidation system, causing "Core analysis data missing" warnings and portfolio holdings receiving fallback grade D values
+2. **Discovery Results Integration**: Investment discovery results are not passed from Flow state to the report crew, causing "Discovery status not provided" messages despite successful discovery execution
+3. **Missing Required Inputs**: Several required inputs (validated_tickers_list, discovery_status, backtesting_status, data_availability_summary_formatted) are not passed to the report crew, causing "INSUFFICIENT / PARTIAL" validation errors
+
+The design maintains FinWiz's architectural principles while ensuring that data flows correctly through the system, AI agents drive the analysis process, and all existing features continue to function without disruption.
 
 ## Architecture
 
-### Current Flow Layout (Suboptimal)
+### Current Flow Architecture
 
-```mermaid
-graph TB
-    DV[validate_data_integration]
-    PR[check_portfolio] 
-    PRC[check_portfolio_rebalancing]
-    IDC[check_investment_discovery]
-    PV[pre_validate_reporter_input]
-    RC[report]
-    
-    DV --> PR
-    DV --> PRC
-    PR --> IDC
-    PRC --> IDC
-    IDC --> PV
-    PV --> RC
-    
-    style DV fill:#ffcdd2
-    style PR fill:#ffcdd2
-    style PRC fill:#ffcdd2
-    
-    note1[Missing: Core Analysis Crews]
-    note2[Issue: No parallel execution]
-    note3[Issue: Portfolio analysis without market data]
-```
-
-### Improved Flow Layout Architecture
+The current FinWiz flow has the following structure:
 
 ```mermaid
 graph TB
@@ -44,99 +25,315 @@ graph TB
         DV[validate_data_integration]
     end
     
-    subgraph "Phase 2: Core Market Analysis (Parallel)"
-        SC[check_stock - AI Driven]
-        EC[check_etf - AI Driven] 
-        CC[check_crypto - AI Driven]
-    end
-    
-    subgraph "Phase 3: Portfolio Analysis (Parallel)"
+    subgraph "Phase 2: Portfolio Analysis"
         PR[check_portfolio]
         PRC[check_portfolio_rebalancing]
     end
     
-    subgraph "Phase 4: Advanced Analysis"
+    subgraph "Phase 3: Investment Discovery (Optional)"
         IDC[check_investment_discovery]
+        SC[check_stock - Discovery Crew]
+        EC[check_etf - Discovery Crew]
+        CC[check_crypto - Discovery Crew]
     end
     
-    subgraph "Phase 5: Report Generation"
+    subgraph "Phase 4: Report Generation"
         PV[pre_validate_reporter_input]
         RC[report - Final Report Generation]
     end
     
     START --> DV
-    
-    DV --> SC
-    DV --> EC  
-    DV --> CC
-    
-    SC --> PR
-    EC --> PR
-    CC --> PR
-    
-    SC --> PRC
-    EC --> PRC
-    CC --> PRC
+    DV --> PR
+    DV --> PRC
     
     PR --> IDC
     PRC --> IDC
     
-    IDC --> PV
+    IDC --> SC
+    IDC --> EC
+    IDC --> CC
+    
+    SC --> PV
+    EC --> PV
+    CC --> PV
+    
     PV --> RC
     
-    style SC fill:#e1f5fe
-    style EC fill:#e1f5fe
-    style CC fill:#e1f5fe
     style PR fill:#f3e5f5
     style PRC fill:#f3e5f5
     style IDC fill:#fff3e0
+    style SC fill:#e1f5fe
+    style EC fill:#e1f5fe
+    style CC fill:#e1f5fe
     style RC fill:#e8f5e8
 ```
+
+### Key Architecture Notes
+
+**Current Implementation:**
+
+1. **Discovery Crews (check_stock, check_etf, check_crypto)**: These are "top 10" screening crews that find A+ investment opportunities across the market. They are NOT core analysis crews that analyze specific tickers.
+
+2. **Dual-Crew Architecture**: The system has two types of crews:
+   - **Discovery Crews**: Screen markets to find "top 10" A+ opportunities (existing)
+   - **Deep Analysis Crew**: Analyze specific portfolio holdings (existing, separate from discovery)
+
+3. **Data Consolidation Bug**: The critical issue is that crew outputs are stored successfully but not retrieved by `get_crew_data_with_freshness_check()`, causing:
+   - "Core analysis data missing" warnings
+   - Portfolio holdings receiving fallback grade D values
+   - Empty consolidated_data despite successful crew execution
+
+4. **Discovery Results Not Integrated**: Discovery crew results exist in Flow state but are not passed to the report crew, causing:
+   - "Discovery status not provided" messages
+   - Missing A+ opportunities in final report
+   - "INSUFFICIENT / PARTIAL" validation errors for missing required inputs
 
 ### Flow Execution Phases
 
 **Phase 1: Initialization (Sequential)**
-
 - Data integration validation and system health checks
 
-**Phase 2: Core Analysis (Parallel)**  
-
-- Stock, ETF, and Crypto crews execute simultaneously for maximum efficiency
-- Each crew performs AI-driven analysis with fresh market data
-
-**Phase 3: Portfolio Analysis (Parallel)**
-
+**Phase 2: Portfolio Analysis (Parallel)**
 - Portfolio review and rebalancing execute in parallel
-- Both can leverage core analysis results from Phase 2
+- Use existing portfolio holdings data
 
-**Phase 4: Advanced Analysis (Sequential)**
+**Phase 3: Investment Discovery (Optional, Sequential)**
+- Discovery crews screen markets for "top 10" A+ opportunities
+- Runs only when --discovery flag is enabled
+- Results stored in Flow state (aplus_opportunities, investment_discovery_structured)
 
-- Investment discovery uses all previous analysis results
-- Identifies A+ opportunities based on comprehensive market data
-
-**Phase 5: Report Generation (Sequential)**
-
+**Phase 4: Report Generation (Sequential)**
 - Consolidates all analysis into final comprehensive report
+- **CRITICAL**: Must receive ALL required inputs from Flow state
 - Maintains tool-free reporter architecture
 
 ### Design Principles
 
-1. **AI-First Analysis**: CrewAI agents are the primary decision makers, using tools for data gathering but applying LLM reasoning for insights
-2. **Non-Breaking Integration**: All existing features continue to work unchanged
-3. **Data Freshness Enforcement**: All market data must be ≤24 hours old
-4. **Parallel Execution**: Core analysis crews run in parallel for optimal performance
-5. **Graceful Degradation**: System continues with partial data when services fail
-6. **Feature Flag Control**: All restored functionality can be enabled/disabled independently
+1. **Fix Data Retrieval Bug**: Ensure crew outputs stored successfully can be retrieved by the data consolidation system
+2. **Complete Data Flow**: All Flow state data must be passed to downstream crews, especially the report crew
+3. **AI-First Analysis**: CrewAI agents are the primary decision makers, using tools for data gathering but applying LLM reasoning for insights
+4. **Non-Breaking Integration**: All existing features continue to work unchanged, including the dual-crew architecture (discovery + deep analysis)
+5. **Data Freshness Enforcement**: All market data must be ≤24 hours old
+6. **Graceful Degradation**: System continues with partial data when services fail
+7. **Feature Flag Control**: All functionality can be enabled/disabled independently
+8. **Backward Compatibility**: Maintain existing discovery crew behavior (finding "top 10" opportunities)
 
 ## Components and Interfaces
 
-### 1. Restored Core Analysis Crews
+### 1. Data Consolidation Bug Fix
 
-#### Stock Crew Enhancement
+#### Problem Analysis
+
+The data consolidation system has a critical bug where crew outputs are stored successfully but cannot be retrieved:
 
 ```python
-class RestoredStockCrew:
-    """AI-driven stock analysis crew with comprehensive tool integration."""
+# Current Issue: get_crew_data_with_freshness_check() returns None
+consolidated_data = {}
+for crew_name in ["stock", "etf", "crypto"]:
+    crew_data = registry_manager.get_crew_data_with_freshness_check(crew_name)
+    if crew_data:
+        consolidated_data[crew_name] = crew_data
+    else:
+        logger.warning(f"No data found for {crew_name} crew")  # Always triggers
+
+# Result: consolidated_data is always empty despite successful crew execution
+```
+
+#### Root Cause Investigation
+
+The bug occurs in the data retrieval chain:
+
+1. **Crew Output Storage**: Crews store outputs with correct metadata
+2. **Registry Manager Query**: `get_crew_data_with_freshness_check()` queries for stored data
+3. **File System Lookup**: Method searches for crew output files in expected directory
+4. **Retrieval Failure**: Files exist but are not found/parsed correctly
+
+Potential causes:
+- Incorrect file path construction
+- Mismatched crew name keys (e.g., "stock_crew" vs "stock")
+- JSON parsing errors
+- File permission issues
+- Timestamp/metadata format mismatches
+
+#### Solution Design
+
+```python
+class DataConsolidationFix:
+    """Fix for data consolidation retrieval bug."""
+    
+    def debug_crew_data_retrieval(self, crew_name: str) -> dict[str, Any]:
+        """
+        Debug why crew data retrieval fails.
+        
+        Returns diagnostic information about:
+        - Expected file paths
+        - Actual files found
+        - File permissions
+        - JSON parsing results
+        - Metadata validation
+        """
+        diagnostics = {
+            "crew_name": crew_name,
+            "expected_paths": [],
+            "found_files": [],
+            "parsing_errors": [],
+            "metadata_issues": [],
+        }
+        
+        # Check expected directory structure
+        base_dir = Path("data/crew_outputs")  # Adjust based on actual config
+        expected_dir = base_dir / crew_name
+        diagnostics["expected_paths"].append(str(expected_dir))
+        
+        # List actual files
+        if expected_dir.exists():
+            for file_path in expected_dir.glob("*.json"):
+                diagnostics["found_files"].append(str(file_path))
+                
+                # Try parsing each file
+                try:
+                    with open(file_path, "r") as f:
+                        data = json.load(f)
+                        
+                    # Validate metadata
+                    if "timestamp" not in data:
+                        diagnostics["metadata_issues"].append(
+                            f"{file_path.name}: Missing timestamp"
+                        )
+                    if "crew_name" not in data:
+                        diagnostics["metadata_issues"].append(
+                            f"{file_path.name}: Missing crew_name"
+                        )
+                        
+                except json.JSONDecodeError as e:
+                    diagnostics["parsing_errors"].append(
+                        f"{file_path.name}: {str(e)}"
+                    )
+                except Exception as e:
+                    diagnostics["parsing_errors"].append(
+                        f"{file_path.name}: {str(e)}"
+                    )
+        else:
+            diagnostics["metadata_issues"].append(
+                f"Directory does not exist: {expected_dir}"
+            )
+        
+        return diagnostics
+    
+    def fix_crew_name_mapping(self) -> dict[str, str]:
+        """
+        Fix crew name mapping between storage and retrieval.
+        
+        Returns mapping of storage keys to retrieval keys.
+        """
+        # Investigate actual crew names used during storage
+        # vs names used during retrieval
+        
+        return {
+            "stock_crew": "stock",  # Example mapping
+            "etf_crew": "etf",
+            "crypto_crew": "crypto",
+        }
+    
+    def verify_file_permissions(self, file_path: Path) -> dict[str, Any]:
+        """Verify file can be read."""
+        return {
+            "exists": file_path.exists(),
+            "is_file": file_path.is_file(),
+            "readable": os.access(file_path, os.R_OK),
+            "size": file_path.stat().st_size if file_path.exists() else 0,
+        }
+    
+    def fix_json_parsing(self, file_path: Path) -> dict[str, Any] | None:
+        """
+        Attempt to parse JSON with error recovery.
+        
+        Handles common JSON issues:
+        - Trailing commas
+        - Single quotes instead of double quotes
+        - Unescaped characters
+        """
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            
+            # Try standard parsing first
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                # Try fixing common issues
+                content = content.replace("'", '"')  # Single to double quotes
+                content = re.sub(r',\s*}', '}', content)  # Remove trailing commas
+                content = re.sub(r',\s*]', ']', content)
+                
+                return json.loads(content)
+                
+        except Exception as e:
+            logger.error(f"Failed to parse {file_path}: {e}")
+            return None
+```
+
+#### Testing Strategy
+
+```python
+def test_should_retrieve_stored_crew_data():
+    """Test that stored crew outputs can be retrieved."""
+    # Arrange
+    registry_manager = RegistryManager()
+    
+    # Store test data
+    test_data = {
+        "ticker": "AAPL",
+        "analysis": "Test analysis",
+        "timestamp": datetime.now().isoformat(),
+        "crew_name": "stock",
+    }
+    registry_manager.store_crew_output("stock", test_data)
+    
+    # Act
+    retrieved_data = registry_manager.get_crew_data_with_freshness_check("stock")
+    
+    # Assert
+    assert retrieved_data is not None
+    assert retrieved_data["ticker"] == "AAPL"
+    assert retrieved_data["crew_name"] == "stock"
+
+def test_should_handle_missing_crew_data_gracefully():
+    """Test graceful handling when crew data doesn't exist."""
+    # Arrange
+    registry_manager = RegistryManager()
+    
+    # Act
+    retrieved_data = registry_manager.get_crew_data_with_freshness_check("nonexistent")
+    
+    # Assert
+    assert retrieved_data is None  # Should return None, not raise exception
+
+def test_should_verify_file_system_structure():
+    """Test that crew output directory structure is correct."""
+    # Arrange
+    base_dir = Path("data/crew_outputs")
+    
+    # Act & Assert
+    assert base_dir.exists(), "Crew outputs directory should exist"
+    
+    for crew_name in ["stock", "etf", "crypto"]:
+        crew_dir = base_dir / crew_name
+        assert crew_dir.exists(), f"{crew_name} directory should exist"
+```
+
+### 2. Existing Crew Architecture (No Changes Required)
+
+The existing crews (StockCrew, ETFCrew, CryptoCrew) are discovery crews that screen markets for "top 10" A+ opportunities. These crews do NOT need to be modified or "restored" - they are working as designed. The issue is with data retrieval, not crew functionality.
+
+#### Existing Discovery Crew Pattern (Reference Only)
+
+```python
+class ExistingStockCrew:
+    """
+    Existing discovery crew that screens for top 10 stock opportunities.
+    NO CHANGES REQUIRED - This is for reference only.
+    """
     
     def __init__(self):
         self.data_integration = CrewDataIntegrationManager()
@@ -219,11 +416,14 @@ class RestoredStockCrew:
         ]
 ```
 
-#### ETF Crew Enhancement
+#### Existing ETF Discovery Crew (Reference Only)
 
 ```python
-class RestoredETFCrew:
-    """AI-driven ETF analysis crew with enhanced factsheet parsing."""
+class ExistingETFCrew:
+    """
+    Existing discovery crew that screens for top 10 ETF opportunities.
+    NO CHANGES REQUIRED - This is for reference only.
+    """
     
     @agent
     def etf_researcher(self) -> Agent:
@@ -272,11 +472,14 @@ class RestoredETFCrew:
         return [FreshnessValidatedTool(tool, self.freshness_validator) for tool in tools]
 ```
 
-#### Crypto Crew Enhancement
+#### Existing Crypto Discovery Crew (Reference Only)
 
 ```python
-class RestoredCryptoCrew:
-    """AI-driven cryptocurrency analysis crew with market dynamics focus."""
+class ExistingCryptoCrew:
+    """
+    Existing discovery crew that screens for top 10 crypto opportunities.
+    NO CHANGES REQUIRED - This is for reference only.
+    """
     
     @agent
     def crypto_researcher(self) -> Agent:
@@ -462,228 +665,243 @@ class FreshnessValidatedTool(BaseTool):
 
 ### 3. Flow Orchestration Integration
 
-#### Enhanced FinwizFlow
+#### Current FinwizFlow (With Bug Fixes)
+
+The existing FinwizFlow implementation needs minimal changes - primarily fixing data retrieval and ensuring complete data passing to the report crew:
 
 ```python
-class EnhancedFinwizFlow(Flow[FinwizState]):
-    """Enhanced flow with restored core analysis crews."""
-    
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        
-        # Initialize feature flags
-        self.feature_flags = FeatureFlags()
-        
-        # Initialize data integration (existing)
-        self.integration_manager = CrewDataIntegrationManager()
-        self.data_accessor = CrewDataAccessor(self.integration_manager)
-        
-        # Initialize freshness validation (new)
-        self.freshness_validator = DataFreshnessValidator(max_age_hours=24)
-        
-        # Initialize restored crews
-        self.stock_crew = RestoredStockCrew() if self.feature_flags.is_enabled('stock_analysis') else None
-        self.etf_crew = RestoredETFCrew() if self.feature_flags.is_enabled('etf_analysis') else None
-        self.crypto_crew = RestoredCryptoCrew() if self.feature_flags.is_enabled('crypto_analysis') else None
-        
-        logger.info("Enhanced FinwizFlow initialized with restored core analysis crews")
+class FinwizFlow(Flow[FinwizState]):
+    """
+    Existing flow with bug fixes for data consolidation and discovery integration.
+    NO MAJOR ARCHITECTURAL CHANGES - Only fixing data retrieval and passing.
+    """
     
     @start()
     def validate_data_integration(self) -> None:
-        """Validate data integration system before crew execution (EXISTING)."""
+        """Validate data integration system before crew execution (EXISTING - NO CHANGES)."""
         # Existing implementation remains unchanged
         pass
     
     @listen(validate_data_integration)
-    def execute_core_analysis(self) -> None:
-        """Execute core analysis crews in parallel (RESTORED)."""
-        if not any([self.stock_crew, self.etf_crew, self.crypto_crew]):
-            logger.info("No core analysis crews enabled, skipping core analysis")
-            return
-        
-        try:
-            logger.info("Starting parallel execution of core analysis crews")
-            
-            # Prepare inputs with freshness requirements
-            analysis_inputs = {
-                **self.inputs,
-                'freshness_required': True,
-                'max_data_age_hours': 24,
-                'require_ai_reasoning': True  # Ensure AI agents drive analysis
-            }
-            
-            # Execute enabled crews in parallel
-            crew_results = {}
-            
-            if self.stock_crew and self.feature_flags.is_enabled('stock_analysis'):
-                logger.info("Executing Stock Crew with AI-driven analysis")
-                stock_result = self.stock_crew.crew().kickoff(inputs=analysis_inputs)
-                crew_results['stock'] = stock_result
-                self.inputs['stock_analysis_result'] = str(stock_result.raw) if hasattr(stock_result, 'raw') else str(stock_result)
-            
-            if self.etf_crew and self.feature_flags.is_enabled('etf_analysis'):
-                logger.info("Executing ETF Crew with AI-driven analysis")
-                etf_result = self.etf_crew.crew().kickoff(inputs=analysis_inputs)
-                crew_results['etf'] = etf_result
-                self.inputs['etf_analysis_result'] = str(etf_result.raw) if hasattr(etf_result, 'raw') else str(etf_result)
-            
-            if self.crypto_crew and self.feature_flags.is_enabled('crypto_analysis'):
-                logger.info("Executing Crypto Crew with AI-driven analysis")
-                crypto_result = self.crypto_crew.crew().kickoff(inputs=analysis_inputs)
-                crew_results['crypto'] = crypto_result
-                self.inputs['crypto_analysis_result'] = str(crypto_result.raw) if hasattr(crypto_result, 'raw') else str(crypto_result)
-            
-            # Store results in data integration system
-            for crew_type, result in crew_results.items():
-                self.integration_manager.store_crew_output(crew_type, result)
-            
-            # Update data availability status
-            self.inputs['core_analysis_completed'] = True
-            self.inputs['core_analysis_crews'] = list(crew_results.keys())
-            
-            logger.info(f"Core analysis completed for crews: {list(crew_results.keys())}")
-            
-        except Exception as e:
-            logger.error(f"Core analysis execution failed: {e}", exc_info=True)
-            # Continue with graceful degradation
-            self.inputs['core_analysis_error'] = str(e)
-            self.inputs['core_analysis_completed'] = False
-    
-    @listen(execute_core_analysis)
     def check_portfolio(self) -> None:
-        """Run portfolio keep-or-sell review (EXISTING - UNCHANGED)."""
+        """Run portfolio keep-or-sell review (EXISTING - NO CHANGES)."""
         # Existing implementation remains unchanged
         pass
     
-    @listen(and_(check_portfolio, execute_core_analysis))
+    @listen(validate_data_integration)
     def check_portfolio_rebalancing(self) -> None:
-        """Run portfolio rebalancing analysis (EXISTING - ENHANCED)."""
-        # Enhanced to use core analysis results
-        if not self.feature_flags.is_enabled("portfolio_rebalancing"):
-            logger.info("Portfolio rebalancing disabled via feature flag")
+        """Run portfolio rebalancing analysis (EXISTING - NO CHANGES)."""
+        # Existing implementation remains unchanged
+        pass
+    
+    @listen(and_(check_portfolio, check_portfolio_rebalancing))
+    def check_investment_discovery(self) -> None:
+        """
+        Run investment discovery analysis (EXISTING - ENSURE STATE STORAGE).
+        
+        CRITICAL: Ensure discovery results are stored in Flow state:
+        - self.state.aplus_opportunities
+        - self.state.investment_discovery_structured
+        - self.state.investment_discovery_result
+        - self.state.investment_discovery_available
+        """
+        if not self.feature_flags.is_enabled("investment_discovery"):
+            logger.info("Investment discovery disabled via feature flag")
+            self.state.investment_discovery_available = False
             return
         
         try:
-            # Check if we have core analysis results
-            core_analysis_available = self.inputs.get('core_analysis_completed', False)
+            logger.info("Running investment discovery crews")
             
-            if core_analysis_available:
-                logger.info("Running portfolio rebalancing with core analysis integration")
-                
-                # Prepare enhanced inputs with core analysis
-                crew_inputs = {
-                    "full_date": datetime.now().strftime("%B %d, %Y"),
-                    "portfolio_data": self.inputs.get("portfolio_review", {}),
-                    "target_allocations": self.inputs.get("target_allocations", {}),
-                    "tolerance_bands": self.inputs.get("tolerance_bands", {}),
-                    "available_capital": self.inputs.get("available_capital", 0.0),
-                    # Enhanced with core analysis results
-                    "stock_analysis": self.inputs.get("stock_analysis_result"),
-                    "etf_analysis": self.inputs.get("etf_analysis_result"),
-                    "crypto_analysis": self.inputs.get("crypto_analysis_result"),
-                    "market_conditions": self._extract_market_conditions()
-                }
-            else:
-                # Fallback to existing behavior
-                crew_inputs = {
-                    "full_date": datetime.now().strftime("%B %d, %Y"),
-                    "portfolio_data": self.inputs.get("portfolio_review", {}),
-                    "target_allocations": self.inputs.get("target_allocations", {}),
-                    "tolerance_bands": self.inputs.get("tolerance_bands", {}),
-                    "available_capital": self.inputs.get("available_capital", 0.0),
-                }
+            # Execute discovery crews (existing logic)
+            # ... existing implementation ...
             
-            # Execute portfolio rebalancing crew (existing)
-            portfolio_rebalancing_crew = PortfolioRebalancingCrew()
-            result = portfolio_rebalancing_crew.crew().kickoff(inputs=crew_inputs)
+            # CRITICAL: Store results in Flow state for report crew
+            self.state.aplus_opportunities = aplus_results
+            self.state.investment_discovery_structured = structured_results
+            self.state.investment_discovery_result = raw_result
+            self.state.investment_discovery_available = True
             
-            # Store results (existing pattern)
-            if hasattr(result, "raw"):
-                self.inputs["portfolio_rebalancing_result"] = str(result.raw)
-            else:
-                self.inputs["portfolio_rebalancing_result"] = str(result)
-            self.inputs["portfolio_rebalancing_available"] = True
-            
-            logger.info("Portfolio rebalancing analysis completed with core analysis integration")
+            logger.info("Investment discovery completed and stored in Flow state")
             
         except Exception as e:
-            logger.error(f"Portfolio rebalancing analysis failed: {e}")
-            self.inputs["portfolio_rebalancing_available"] = False
-    
-    def _extract_market_conditions(self) -> Dict[str, Any]:
-        """Extract market conditions from core analysis results."""
-        conditions = {}
-        
-        if self.inputs.get("stock_analysis_result"):
-            # Extract market sentiment and trends from stock analysis
-            conditions["stock_market_sentiment"] = "Available from stock analysis"
-        
-        if self.inputs.get("etf_analysis_result"):
-            # Extract sector trends from ETF analysis
-            conditions["sector_trends"] = "Available from ETF analysis"
-        
-        if self.inputs.get("crypto_analysis_result"):
-            # Extract crypto market dynamics
-            conditions["crypto_market_dynamics"] = "Available from crypto analysis"
-        
-        return conditions
-    
-    # All other existing methods remain unchanged
-    @listen(and_(check_portfolio, check_portfolio_rebalancing))
-    def check_investment_discovery(self) -> None:
-        """Run investment discovery analysis (EXISTING - ENHANCED)."""
-        # Enhanced to leverage core analysis results
-        pass
+            logger.error(f"Investment discovery failed: {e}")
+            self.state.investment_discovery_available = False
     
     @listen(check_investment_discovery)
     def pre_validate_reporter_input(self) -> None:
-        """Validate ReporterInput payload (EXISTING - ENHANCED)."""
-        # Enhanced to include core analysis data
+        """Validate ReporterInput payload (EXISTING - MINIMAL CHANGES)."""
+        # Existing validation logic
+        # Ensure consolidated_data includes discovery results if available
         pass
     
     @listen(pre_validate_reporter_input)
-    def report(self) -> None:
-        """Generate consolidated report (EXISTING - ENHANCED)."""
-        # Enhanced to include core analysis insights
-        pass
-```
-
-### 4. Feature Flag Integration
-
-#### Enhanced Feature Flags
-
-```python
-class EnhancedFeatureFlags(FeatureFlags):
-    """Enhanced feature flags with core analysis crew controls."""
-    
-    def _load_feature_flags(self) -> Dict[str, bool]:
-        """Load feature flags including core analysis crews."""
-        base_flags = super()._load_feature_flags()
+    def report(self) -> dict[str, Any]:
+        """
+        Generate consolidated report (EXISTING - FIX DATA PASSING).
         
-        # Add core analysis crew flags
-        core_analysis_flags = {
-            'stock_analysis': self._get_flag('FINWIZ_FF_STOCK_ANALYSIS', True),
-            'etf_analysis': self._get_flag('FINWIZ_FF_ETF_ANALYSIS', True),
-            'crypto_analysis': self._get_flag('FINWIZ_FF_CRYPTO_ANALYSIS', True),
-            'core_analysis_parallel': self._get_flag('FINWIZ_FF_CORE_PARALLEL', True),
-            'data_freshness_validation': self._get_flag('FINWIZ_FF_DATA_FRESHNESS', True),
-            'ai_driven_analysis': self._get_flag('FINWIZ_FF_AI_DRIVEN', True),
+        CRITICAL FIXES:
+        1. Pass ALL Flow state fields to report crew inputs
+        2. Extract validated_tickers_list from portfolio_review
+        3. Construct discovery_status and backtesting_status objects
+        4. Include data_availability_summary_formatted
+        """
+        try:
+            logger.info("Generating consolidated report with complete data integration")
+            
+            # Extract validated tickers from portfolio review
+            validated_tickers_list = self._extract_validated_tickers()
+            
+            # Construct status objects
+            discovery_status = self._construct_discovery_status()
+            backtesting_status = self._construct_backtesting_status()
+            
+            # Prepare crew inputs with ALL required fields
+            crew_inputs = {
+                # Basic metadata
+                "full_date": datetime.now().strftime("%B %d, %Y"),
+                "current_date": self.state.current_date,
+                "report_language": self.state.report_language,
+                
+                # Portfolio data
+                "portfolio_review": self.state.portfolio_review,
+                
+                # CRITICAL: Discovery results from Flow state
+                "aplus_opportunities": self.state.aplus_opportunities,
+                "investment_discovery_structured": self.state.investment_discovery_structured,
+                "investment_discovery_result": self.state.investment_discovery_result,
+                "investment_discovery_available": self.state.investment_discovery_available,
+                
+                # CRITICAL: Required inputs that were missing
+                "validated_tickers_list": validated_tickers_list,
+                "discovery_status": discovery_status,
+                "backtesting_status": backtesting_status,
+                "data_availability_summary_formatted": self.state.data_availability_summary_formatted,
+                
+                # Rebalancing results
+                "portfolio_rebalancing_result": self.state.portfolio_rebalancing_result,
+                "portfolio_rebalancing_available": self.state.portfolio_rebalancing_available,
+                
+                # Consolidated data
+                "consolidated_data": self.state.consolidated_data,
+                "integrated_data_available": self.state.integrated_data_available,
+                
+                # Additional state fields
+                "data_availability_summary": self.state.data_availability_summary,
+                "core_analysis_summary": self.state.core_analysis_summary,
+                "market_sentiment": self.state.market_sentiment,
+            }
+            
+            # Log what we're passing for debugging
+            logger.info(
+                "Passing complete inputs to report crew",
+                extra={
+                    "has_aplus_opportunities": crew_inputs["aplus_opportunities"] is not None,
+                    "discovery_available": crew_inputs["investment_discovery_available"],
+                    "validated_tickers_count": len(validated_tickers_list),
+                    "discovery_status": discovery_status["status"],
+                }
+            )
+            
+            # Execute report crew with complete inputs
+            report_crew = ReportCrew()
+            result = report_crew.crew().kickoff(inputs=crew_inputs)
+            
+            # Store result in state
+            if hasattr(result, "raw"):
+                self.state.final_report = str(result.raw)
+            else:
+                self.state.final_report = str(result)
+            
+            logger.info("Report generation completed with complete data integration")
+            
+            return {
+                "report_generated": True,
+                "discovery_included": self.state.investment_discovery_available,
+                "inputs_complete": True,
+            }
+            
+        except Exception as e:
+            logger.error(f"Report generation failed: {e}", exc_info=True)
+            self.state.report_error = str(e)
+            return {"report_generated": False, "error": str(e)}
+    
+    def _extract_validated_tickers(self) -> list[str]:
+        """Extract validated tickers from portfolio review."""
+        validated_tickers = []
+        
+        if self.state.portfolio_review:
+            portfolio_data = self.state.portfolio_review
+            
+            # Handle dict format
+            if isinstance(portfolio_data, dict) and "holdings" in portfolio_data:
+                validated_tickers = [
+                    h.get("ticker") for h in portfolio_data["holdings"] 
+                    if h.get("ticker")
+                ]
+            # Handle Pydantic model format
+            elif hasattr(portfolio_data, "holdings"):
+                validated_tickers = [
+                    h.ticker for h in portfolio_data.holdings 
+                    if hasattr(h, "ticker")
+                ]
+        
+        return validated_tickers
+    
+    def _construct_discovery_status(self) -> dict[str, Any]:
+        """Construct discovery status object from Flow state."""
+        return {
+            "has_results": self.state.investment_discovery_available or False,
+            "message": (
+                "A+ discovery results available" 
+                if self.state.investment_discovery_available 
+                else "Discovery not run - use --discovery flag"
+            ),
+            "status": (
+                "available" 
+                if self.state.investment_discovery_available 
+                else "not_run"
+            ),
+        }
+    
+    def _construct_backtesting_status(self) -> dict[str, Any]:
+        """Construct backtesting status object from consolidated data."""
+        backtesting_status = {
+            "has_data": False,
+            "message": "Backtesting data not available",
+            "status": "not_available",
         }
         
-        return {**base_flags, **core_analysis_flags}
+        if self.state.consolidated_data:
+            backtesting_data = self.state.consolidated_data.get("backtesting_data")
+            if backtesting_data:
+                backtesting_status = {
+                    "has_data": True,
+                    "message": "Backtesting data available",
+                    "status": "available",
+                }
+        
+        return backtesting_status
+```
+
+### 4. Feature Flag Integration (Existing - No Changes)
+
+The existing feature flag system already supports controlling discovery crews and other features. No changes are required to the feature flag system for this bug fix.
+
+```python
+class FeatureFlags:
+    """
+    Existing feature flags system (NO CHANGES REQUIRED).
     
-    def get_enabled_core_crews(self) -> List[str]:
-        """Get list of enabled core analysis crews."""
-        enabled_crews = []
-        
-        if self.is_enabled('stock_analysis'):
-            enabled_crews.append('stock')
-        if self.is_enabled('etf_analysis'):
-            enabled_crews.append('etf')
-        if self.is_enabled('crypto_analysis'):
-            enabled_crews.append('crypto')
-        
-        return enabled_crews
+    Already supports:
+    - investment_discovery: Enable/disable discovery crews
+    - portfolio_rebalancing: Enable/disable rebalancing
+    - data_freshness_validation: Enable/disable freshness checks
+    """
+    
+    def is_enabled(self, feature_name: str) -> bool:
+        """Check if feature is enabled."""
+        return self.flags.get(feature_name, False)
 ```
 
 ## Data Models
@@ -1028,3 +1246,463 @@ pytest tests/unit/ tests/integration/ --cov=src/finwiz --cov-report=html
 - **🛡️ Reliable**: Consistent test patterns and practices
 
 This design ensures that the restored core analysis crews integrate seamlessly with all existing FinWiz features while providing enhanced AI-driven analysis capabilities with proper data freshness validation and graceful degradation strategies.
+
+
+## Discovery Results Integration
+
+### Problem Statement
+
+The investment discovery crews execute successfully and find A+ opportunities, but these results are not being properly passed to the report crew. Additionally, several other required inputs are missing, causing the report crew to show "INSUFFICIENT / PARTIAL" errors. The specific issues are:
+
+1. **Discovery Data Not Passed**: `aplus_opportunities` and `investment_discovery_structured` are not included in crew inputs
+2. **Missing validated_tickers_list**: List of validated tickers from portfolio review not passed
+3. **Missing discovery_status**: Discovery status object not constructed and passed
+4. **Missing backtesting_status**: Backtesting status object not constructed and passed
+5. **Missing data_availability_summary_formatted**: Formatted data availability summary not passed
+
+These missing inputs cause the report crew to show "Discovery status not provided" messages and "INSUFFICIENT / PARTIAL" validation errors, even when the data exists in the Flow state.
+
+### Root Cause Analysis
+
+1. **Flow State Not Passed**: The `report()` method in `flow_orchestrator.py` does not pass discovery-related state fields to the report crew inputs
+2. **Missing Data Keys**: The report crew expects multiple required inputs that are not being passed from Flow state:
+   - `aplus_opportunities` - Discovery results
+   - `investment_discovery_structured` - Structured discovery data
+   - `validated_tickers_list` - List of validated tickers
+   - `discovery_status` - Discovery execution status
+   - `backtesting_status` - Backtesting data status
+   - `data_availability_summary_formatted` - Formatted availability summary
+3. **Incomplete Data Flow**: Discovery results and other data are stored in Flow state but not propagated to downstream crew execution
+4. **No Status Construction**: Status objects (discovery_status, backtesting_status) need to be constructed from Flow state before passing to report crew
+5. **Missing Data Extraction**: Validated tickers need to be extracted from portfolio_review before passing to report crew
+
+### Solution Design
+
+#### Enhanced Flow State to Report Crew Data Passing
+
+```python
+@listen("pre_validate_reporter_input")
+def report(self) -> dict[str, Any]:
+    """Generate consolidated report with ALL required inputs from Flow state."""
+    try:
+        logger.info("Generating consolidated report with complete data integration")
+        
+        # Extract validated tickers from portfolio review or consolidated data
+        validated_tickers_list = []
+        if self.state.portfolio_review:
+            portfolio_data = self.state.portfolio_review
+            if isinstance(portfolio_data, dict) and "holdings" in portfolio_data:
+                validated_tickers_list = [
+                    h.get("ticker") for h in portfolio_data["holdings"] 
+                    if h.get("ticker")
+                ]
+            elif hasattr(portfolio_data, "holdings"):
+                validated_tickers_list = [
+                    h.ticker for h in portfolio_data.holdings 
+                    if hasattr(h, "ticker")
+                ]
+        
+        # Construct discovery_status from Flow state
+        discovery_status = {
+            "has_results": self.state.investment_discovery_available or False,
+            "message": (
+                "A+ discovery results available" 
+                if self.state.investment_discovery_available 
+                else "Discovery not run - use --discovery flag"
+            ),
+            "status": (
+                "available" 
+                if self.state.investment_discovery_available 
+                else "not_run"
+            ),
+        }
+        
+        # Construct backtesting_status from consolidated data or state
+        backtesting_status = {
+            "has_data": False,
+            "message": "Backtesting data not available",
+            "status": "not_available",
+        }
+        
+        # Check if backtesting data exists in consolidated data
+        if self.state.consolidated_data:
+            backtesting_data = self.state.consolidated_data.get("backtesting_data")
+            if backtesting_data:
+                backtesting_status = {
+                    "has_data": True,
+                    "message": "Backtesting data available",
+                    "status": "available",
+                }
+        
+        # Prepare crew inputs with ALL required fields
+        crew_inputs = {
+            # Basic metadata
+            "full_date": datetime.now().strftime("%B %d, %Y"),
+            "current_date": self.state.current_date,
+            "current_day": self.state.current_day,
+            "current_month": self.state.current_month,
+            "current_year": self.state.current_year,
+            "timestamp": self.state.timestamp,
+            "report_language": self.state.report_language,
+            
+            # Portfolio data
+            "portfolio_review": self.state.portfolio_review,
+            
+            # CRITICAL: Discovery results from Flow state
+            "aplus_opportunities": self.state.aplus_opportunities,
+            "investment_discovery_structured": self.state.investment_discovery_structured,
+            "investment_discovery_result": self.state.investment_discovery_result,
+            "investment_discovery_available": self.state.investment_discovery_available,
+            
+            # CRITICAL: Required inputs that were missing
+            "validated_tickers_list": validated_tickers_list,
+            "discovery_status": discovery_status,
+            "backtesting_status": backtesting_status,
+            "data_availability_summary_formatted": self.state.data_availability_summary_formatted,
+            
+            # Rebalancing results
+            "portfolio_rebalancing_result": self.state.portfolio_rebalancing_result,
+            "portfolio_rebalancing_available": self.state.portfolio_rebalancing_available,
+            
+            # Consolidated data
+            "consolidated_data": self.state.consolidated_data,
+            "integrated_data_available": self.state.integrated_data_available,
+            
+            # Data availability information
+            "data_availability_summary": self.state.data_availability_summary,
+            
+            # Core analysis summary
+            "core_analysis_summary": self.state.core_analysis_summary,
+            "core_analysis_status": self.state.core_analysis_status,
+            
+            # Market context
+            "market_sentiment": self.state.market_sentiment,
+            "ticker_validation": self.state.ticker_validation,
+            
+            # Additional state fields
+            "portfolio_allocation_updates": self.state.portfolio_allocation_updates,
+            "aplus_availability_status": self.state.aplus_availability_status,
+        }
+        
+        # Log what we're passing to help with debugging
+        logger.info(
+            "Passing complete inputs to report crew",
+            extra={
+                "has_aplus_opportunities": crew_inputs["aplus_opportunities"] is not None,
+                "has_discovery_structured": crew_inputs["investment_discovery_structured"] is not None,
+                "discovery_available": crew_inputs["investment_discovery_available"],
+                "validated_tickers_count": len(validated_tickers_list),
+                "discovery_status": discovery_status["status"],
+                "backtesting_status": backtesting_status["status"],
+                "has_data_availability_summary": crew_inputs["data_availability_summary_formatted"] is not None,
+            }
+        )
+        
+        # Execute report crew with complete inputs
+        report_crew = ReportCrew()
+        result = report_crew.crew().kickoff(inputs=crew_inputs)
+        
+        # Store result in state
+        if hasattr(result, "raw"):
+            self.state.final_report = str(result.raw)
+        else:
+            self.state.final_report = str(result)
+        
+        logger.info("Report generation completed with complete data integration")
+        
+        return {
+            "report_generated": True,
+            "discovery_included": self.state.investment_discovery_available,
+            "inputs_complete": True,
+        }
+        
+    except Exception as e:
+        logger.error(f"Report generation failed: {e}", exc_info=True)
+        self.state.report_error = str(e)
+        return {"report_generated": False, "error": str(e)}
+```
+
+#### Enhanced Report Crew Discovery Data Extraction
+
+```python
+def _get_discovery_status(self, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
+    """
+    Get A+ discovery status with proper Flow state integration.
+    
+    Checks for discovery data in this order:
+    1. Flow state inputs (aplus_opportunities) - PRIMARY
+    2. Flow state inputs (investment_discovery_structured) - SECONDARY
+    3. Flow state inputs (investment_discovery_available) - STATUS CHECK
+    4. File-based discovery accessor (fallback) - LEGACY
+    """
+    if not inputs:
+        logger.warning("No inputs provided to _get_discovery_status")
+        return {
+            "has_results": False,
+            "message": "No inputs provided to report crew",
+            "status": "error"
+        }
+    
+    # Check if discovery was explicitly marked as available
+    discovery_available = inputs.get("investment_discovery_available", False)
+    
+    if not discovery_available:
+        logger.info("Discovery marked as not available in Flow state")
+        return {
+            "has_results": False,
+            "message": "A+ discovery not run - use --discovery flag to enable",
+            "status": "not_run"
+        }
+    
+    # Check for aplus_opportunities (preferred format)
+    aplus_opportunities = inputs.get("aplus_opportunities")
+    if aplus_opportunities:
+        logger.info("Discovery data found in Flow state (aplus_opportunities)")
+        return {
+            "has_results": True,
+            "message": "A+ discovery results available",
+            "status": "available",
+            "data_source": "flow_state_aplus"
+        }
+    
+    # Check for investment_discovery_structured (alternative format)
+    discovery_structured = inputs.get("investment_discovery_structured")
+    if discovery_structured and discovery_structured.get("has_a_plus_analysis"):
+        logger.info("Discovery data found in Flow state (investment_discovery_structured)")
+        return {
+            "has_results": True,
+            "message": "A+ discovery results available",
+            "status": "available",
+            "data_source": "flow_state_structured"
+        }
+    
+    # Check for raw discovery result
+    discovery_result = inputs.get("investment_discovery_result")
+    if discovery_result:
+        logger.info("Discovery data found in Flow state (investment_discovery_result)")
+        return {
+            "has_results": True,
+            "message": "A+ discovery results available",
+            "status": "available",
+            "data_source": "flow_state_result"
+        }
+    
+    # Fallback to file-based checking (legacy support)
+    has_results = self.discovery_accessor.has_discovery_results()
+    if has_results:
+        logger.info("Discovery data found via file-based accessor (legacy)")
+        return {
+            "has_results": True,
+            "message": "A+ discovery results available",
+            "status": "available",
+            "data_source": "file_based"
+        }
+    
+    # Discovery was marked as available but no data found
+    logger.warning("Discovery marked as available but no data found in any source")
+    return {
+        "has_results": False,
+        "message": "Discovery data missing despite being marked as available",
+        "status": "data_missing"
+    }
+```
+
+#### Enhanced Discovery Data Extraction
+
+```python
+def _extract_discovery_results(self, inputs: dict[str, Any]) -> dict[str, Any] | None:
+    """
+    Extract discovery results from Flow state inputs.
+    
+    Handles multiple data formats:
+    - aplus_opportunities (APlusOpportunitySection)
+    - investment_discovery_structured (dict with opportunities)
+    - investment_discovery_result (raw crew output)
+    """
+    # Try aplus_opportunities first (structured format)
+    aplus_opportunities = inputs.get("aplus_opportunities")
+    if aplus_opportunities:
+        logger.info("Extracting discovery results from aplus_opportunities")
+        
+        # Handle both dict and Pydantic model formats
+        if hasattr(aplus_opportunities, "model_dump"):
+            return aplus_opportunities.model_dump()
+        elif isinstance(aplus_opportunities, dict):
+            return aplus_opportunities
+    
+    # Try investment_discovery_structured (alternative format)
+    discovery_structured = inputs.get("investment_discovery_structured")
+    if discovery_structured and discovery_structured.get("has_a_plus_analysis"):
+        logger.info("Extracting discovery results from investment_discovery_structured")
+        
+        # Convert to aplus_opportunities format
+        return {
+            "has_a_plus_analysis": True,
+            "total_opportunities_found": (
+                len(discovery_structured.get("etf_opportunities", []))
+                + len(discovery_structured.get("stock_opportunities", []))
+                + len(discovery_structured.get("crypto_opportunities", []))
+            ),
+            "etf_opportunities": discovery_structured.get("etf_opportunities", []),
+            "stock_opportunities": discovery_structured.get("stock_opportunities", []),
+            "crypto_opportunities": discovery_structured.get("crypto_opportunities", []),
+        }
+    
+    # Try raw discovery result (last resort)
+    discovery_result = inputs.get("investment_discovery_result")
+    if discovery_result:
+        logger.info("Extracting discovery results from raw investment_discovery_result")
+        
+        # Parse raw result to extract opportunities
+        # This is a fallback and may require text parsing
+        return {
+            "has_a_plus_analysis": True,
+            "raw_result": discovery_result,
+            "note": "Extracted from raw crew output"
+        }
+    
+    logger.warning("No discovery results found in any input format")
+    return None
+```
+
+### Data Flow Diagram
+
+```mermaid
+graph TB
+    subgraph "Phase 4: Investment Discovery"
+        ID[check_investment_discovery]
+        ID_EXEC[Execute Discovery Crews]
+        ID_STORE[Store in Flow State]
+    end
+    
+    subgraph "Flow State"
+        STATE_APLUS[state.aplus_opportunities]
+        STATE_STRUCT[state.investment_discovery_structured]
+        STATE_RESULT[state.investment_discovery_result]
+        STATE_AVAIL[state.investment_discovery_available]
+    end
+    
+    subgraph "Phase 6: Report Generation"
+        REPORT[report method]
+        PREP_INPUTS[Prepare crew_inputs]
+        REPORT_CREW[ReportCrew.kickoff]
+        EXTRACT[Extract Discovery Data]
+        DISPLAY[Display in Report]
+    end
+    
+    ID --> ID_EXEC
+    ID_EXEC --> ID_STORE
+    
+    ID_STORE --> STATE_APLUS
+    ID_STORE --> STATE_STRUCT
+    ID_STORE --> STATE_RESULT
+    ID_STORE --> STATE_AVAIL
+    
+    STATE_APLUS --> PREP_INPUTS
+    STATE_STRUCT --> PREP_INPUTS
+    STATE_RESULT --> PREP_INPUTS
+    STATE_AVAIL --> PREP_INPUTS
+    
+    REPORT --> PREP_INPUTS
+    PREP_INPUTS --> REPORT_CREW
+    REPORT_CREW --> EXTRACT
+    EXTRACT --> DISPLAY
+    
+    style STATE_APLUS fill:#e1f5fe
+    style STATE_STRUCT fill:#e1f5fe
+    style STATE_RESULT fill:#e1f5fe
+    style STATE_AVAIL fill:#e1f5fe
+    style PREP_INPUTS fill:#fff3e0
+    style DISPLAY fill:#e8f5e8
+```
+
+### Testing Strategy
+
+#### Unit Tests
+
+```python
+def test_should_pass_discovery_data_to_report_crew(mocker):
+    """Test that discovery data is passed from Flow state to report crew."""
+    # Arrange
+    flow = FinwizFlow()
+    flow.state.aplus_opportunities = {
+        "has_a_plus_analysis": True,
+        "total_opportunities_found": 5,
+        "etf_opportunities": ["SPY", "QQQ"],
+        "stock_opportunities": ["AAPL", "MSFT", "GOOGL"],
+    }
+    flow.state.investment_discovery_available = True
+    
+    mock_report_crew = mocker.patch("finwiz.crews.report_crew.report_crew.ReportCrew")
+    
+    # Act
+    flow.report()
+    
+    # Assert
+    call_args = mock_report_crew.return_value.crew.return_value.kickoff.call_args
+    crew_inputs = call_args[1]["inputs"]
+    
+    assert "aplus_opportunities" in crew_inputs
+    assert crew_inputs["aplus_opportunities"]["total_opportunities_found"] == 5
+    assert crew_inputs["investment_discovery_available"] is True
+
+def test_should_extract_discovery_results_from_inputs(mocker):
+    """Test that report crew extracts discovery results from inputs."""
+    # Arrange
+    report_crew = ReportCrew()
+    inputs = {
+        "aplus_opportunities": {
+            "has_a_plus_analysis": True,
+            "etf_opportunities": ["SPY"],
+            "stock_opportunities": ["AAPL", "MSFT"],
+        },
+        "investment_discovery_available": True,
+    }
+    
+    # Act
+    discovery_status = report_crew._get_discovery_status(inputs)
+    
+    # Assert
+    assert discovery_status["has_results"] is True
+    assert discovery_status["status"] == "available"
+    assert discovery_status["data_source"] == "flow_state_aplus"
+```
+
+#### Integration Tests
+
+```python
+def test_should_include_discovery_in_final_report(tmp_path):
+    """Test end-to-end discovery integration in report."""
+    # Arrange
+    flow = FinwizFlow()
+    
+    # Simulate discovery execution
+    flow.state.aplus_opportunities = {
+        "has_a_plus_analysis": True,
+        "total_opportunities_found": 3,
+        "etf_opportunities": ["SPY"],
+        "stock_opportunities": ["AAPL", "MSFT"],
+    }
+    flow.state.investment_discovery_available = True
+    
+    # Act
+    result = flow.report()
+    
+    # Assert
+    assert result["report_generated"] is True
+    assert result["discovery_included"] is True
+    assert "SPY" in flow.state.final_report
+    assert "AAPL" in flow.state.final_report
+    assert "Discovery status not provided" not in flow.state.final_report
+```
+
+### Benefits
+
+1. **Complete Data Flow**: Discovery results flow from execution → Flow state → report crew → final report
+2. **Multiple Format Support**: Handles aplus_opportunities, investment_discovery_structured, and raw results
+3. **Clear Status Messages**: Users see accurate status based on actual discovery execution
+4. **Backward Compatible**: Maintains file-based fallback for legacy support
+5. **Robust Error Handling**: Gracefully handles missing or malformed discovery data
+6. **Testable**: Clear data flow makes testing straightforward
+
+This design ensures that when discovery crews execute successfully, their results are properly integrated into the final report, providing users with actionable A+ investment opportunities.

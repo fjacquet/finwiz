@@ -324,18 +324,19 @@ class TestAPlusDataExtractor:
         # Check first opportunity (NVIDIA)
         nvda = opportunities[0]
         assert nvda["symbol"] == "NVDA"
-        assert nvda["company_name"] == "NVIDIA"
+        assert nvda["name"] == "NVIDIA"
         assert nvda["grade"] == "A+"
-        assert nvda["rank"] == 1
-        # The allocation and replacement extraction may not work perfectly with test data
-        assert nvda["confidence"] >= 0.8  # Should have some confidence
+        assert nvda["composite_score"] >= 0.85
+        assert nvda["confidence"] >= 0.8
+        assert "rationale" in nvda
+        assert "key_metrics" in nvda
 
         # Check second opportunity (Broadcom)
         avgo = opportunities[1]
         assert avgo["symbol"] == "AVGO"
-        assert avgo["company_name"] == "Broadcom"
+        assert avgo["name"] == "Broadcom"
         assert avgo["grade"] == "A+"
-        assert avgo["rank"] == 2
+        assert avgo["composite_score"] >= 0.85
         assert avgo["confidence"] >= 0.8
 
         # Check third opportunity (Adobe - A grade)
@@ -359,16 +360,17 @@ class TestAPlusDataExtractor:
         # Check first opportunity (VWCE)
         vwce = opportunities[0]
         assert vwce["symbol"] == "VWCE"
-        assert vwce["fund_name"] == "Vanguard FTSE All-World UCITS ETF"
+        assert vwce["name"] == "Vanguard FTSE All-World UCITS ETF"
         assert vwce["grade"] == "A+"
-        assert vwce["rank"] == 1
-        # TER extraction may not work perfectly with test data
-        assert vwce["ter"] >= 0.0
+        assert vwce["composite_score"] >= 0.85
+        assert "key_metrics" in vwce
+        assert "rationale" in vwce
 
         # Check second opportunity (IWDA)
         iwda = opportunities[1]
         assert iwda["symbol"] == "IWDA"
         assert iwda["grade"] == "A+"
+        assert iwda["composite_score"] >= 0.85
 
         # Check third opportunity (CSPX)
         cspx = opportunities[2]
@@ -390,16 +392,17 @@ class TestAPlusDataExtractor:
         # Check first opportunity (Bitcoin)
         btc = opportunities[0]
         assert btc["symbol"] == "BTC"  # Should strip -USD
-        assert btc["crypto_name"] == "Bitcoin"
+        assert btc["name"] == "Bitcoin"
         assert btc["grade"] == "A+"
-        assert btc["rank"] == 1
-        # Allocation extraction may not work perfectly with test data
+        assert btc["composite_score"] >= 0.80
         assert btc["confidence"] >= 0.8
+        assert "rationale" in btc
+        assert "key_metrics" in btc
 
         # Check second opportunity (Ethereum)
         eth = opportunities[1]
         assert eth["symbol"] == "ETH"
-        assert eth["crypto_name"] == "Ethereum"
+        assert eth["name"] == "Ethereum"
         assert eth["grade"] == "A+"
         assert eth["confidence"] >= 0.8
 
@@ -467,21 +470,24 @@ class TestAPlusDataExtractor:
         assert collection is not None
         assert isinstance(collection, APlusOpportunityCollection)
 
-        # Check extracted opportunities
+        # Check extracted opportunities (now APlusOpportunity objects, not strings)
         assert len(collection.stock_opportunities) == 3
-        assert "NVDA" in collection.stock_opportunities
-        assert "AVGO" in collection.stock_opportunities
-        assert "ADBE" in collection.stock_opportunities
+        stock_symbols = [opp.symbol for opp in collection.stock_opportunities]
+        assert "NVDA" in stock_symbols
+        assert "AVGO" in stock_symbols
+        assert "ADBE" in stock_symbols
 
         assert len(collection.etf_opportunities) == 3
-        assert "VWCE" in collection.etf_opportunities
-        assert "IWDA" in collection.etf_opportunities
-        assert "CSPX" in collection.etf_opportunities
+        etf_symbols = [opp.symbol for opp in collection.etf_opportunities]
+        assert "VWCE" in etf_symbols
+        assert "IWDA" in etf_symbols
+        assert "CSPX" in etf_symbols
 
         assert len(collection.crypto_opportunities) == 3
-        assert "BTC" in collection.crypto_opportunities
-        assert "ETH" in collection.crypto_opportunities
-        assert "SOL" in collection.crypto_opportunities
+        crypto_symbols = [opp.symbol for opp in collection.crypto_opportunities]
+        assert "BTC" in crypto_symbols
+        assert "ETH" in crypto_symbols
+        assert "SOL" in crypto_symbols
 
         # Check metadata
         assert collection.confidence_score > 0.8  # Should be high with many A+ opportunities
@@ -594,10 +600,81 @@ class TestAPlusDataExtractor:
     def test_should_validate_aplus_opportunities_successfully_when_complete_data(self, extractor):
         """Test validation of complete A+ opportunities collection."""
         # Arrange
+        from finwiz.schemas.integration_models import APlusOpportunity
+
+        etf_opps = [
+            APlusOpportunity(
+                symbol="VWCE",
+                name="Vanguard FTSE All-World",
+                grade="A+",
+                composite_score=0.96,
+                confidence=0.95,
+                risk_score=3.0,
+                rationale=["Low TER", "Global diversification"],
+                key_metrics={"ter": 0.0022},
+            ),
+            APlusOpportunity(
+                symbol="IWDA",
+                name="iShares Core MSCI World",
+                grade="A+",
+                composite_score=0.95,
+                confidence=0.94,
+                risk_score=3.0,
+                rationale=["Low TER", "Developed markets"],
+                key_metrics={"ter": 0.0020},
+            ),
+        ]
+
+        stock_opps = [
+            APlusOpportunity(
+                symbol="NVDA",
+                name="NVIDIA",
+                grade="A+",
+                composite_score=0.98,
+                confidence=0.95,
+                risk_score=3.5,
+                rationale=["ROE 45%", "Revenue CAGR 36%"],
+                key_metrics={"roe": 45.0},
+            ),
+            APlusOpportunity(
+                symbol="AVGO",
+                name="Broadcom",
+                grade="A+",
+                composite_score=0.96,
+                confidence=0.92,
+                risk_score=3.0,
+                rationale=["ROE 40%", "Revenue CAGR 20%"],
+                key_metrics={"roe": 40.0},
+            ),
+        ]
+
+        crypto_opps = [
+            APlusOpportunity(
+                symbol="BTC",
+                name="Bitcoin",
+                grade="A+",
+                composite_score=0.98,
+                confidence=0.95,
+                risk_score=7.0,
+                rationale=["Deepest liquidity", "Regulatory clarity"],
+                key_metrics={"market_cap": 1200000000000},
+            ),
+            APlusOpportunity(
+                symbol="ETH",
+                name="Ethereum",
+                grade="A+",
+                composite_score=0.96,
+                confidence=0.93,
+                risk_score=7.5,
+                rationale=["Smart contract leader", "Deflationary tokenomics"],
+                key_metrics={"market_cap": 420000000000},
+            ),
+        ]
+
         collection = APlusOpportunityCollection(
-            etf_opportunities=["VWCE", "IWDA"],
-            stock_opportunities=["NVDA", "AVGO"],
-            crypto_opportunities=["BTC", "ETH"],
+            etf_opportunities=etf_opps,
+            stock_opportunities=stock_opps,
+            crypto_opportunities=crypto_opps,
             discovery_summary=(
                 "Comprehensive analysis identified 6 high-quality opportunities with strong fundamentals and growth potential."
             ),
@@ -643,10 +720,46 @@ class TestAPlusDataExtractor:
     def test_should_detect_duplicate_symbols_in_validation(self, extractor):
         """Test validation detects duplicate symbols across asset types."""
         # Arrange
+        from finwiz.schemas.integration_models import APlusOpportunity
+
+        # Create duplicate NVDA in both ETF and stock (unrealistic but tests validation)
+        nvda_etf = APlusOpportunity(
+            symbol="NVDA",
+            name="NVIDIA ETF",
+            grade="A+",
+            composite_score=0.96,
+            confidence=0.95,
+            risk_score=3.0,
+            rationale=["Test"],
+            key_metrics={},
+        )
+
+        nvda_stock = APlusOpportunity(
+            symbol="NVDA",
+            name="NVIDIA",
+            grade="A+",
+            composite_score=0.98,
+            confidence=0.95,
+            risk_score=3.5,
+            rationale=["Test"],
+            key_metrics={},
+        )
+
+        btc = APlusOpportunity(
+            symbol="BTC",
+            name="Bitcoin",
+            grade="A+",
+            composite_score=0.98,
+            confidence=0.95,
+            risk_score=7.0,
+            rationale=["Test"],
+            key_metrics={},
+        )
+
         collection = APlusOpportunityCollection(
-            etf_opportunities=["NVDA"],  # Duplicate symbol (should be ETF symbol)
-            stock_opportunities=["NVDA"],  # Same symbol in stocks
-            crypto_opportunities=["BTC"],
+            etf_opportunities=[nvda_etf],
+            stock_opportunities=[nvda_stock],
+            crypto_opportunities=[btc],
             discovery_summary="Analysis identified opportunities with duplicate symbols for testing validation.",
             confidence_score=0.8,
             validation_timestamp=datetime.now(),

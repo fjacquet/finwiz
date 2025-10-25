@@ -111,14 +111,21 @@ class TickerExistenceValidationTool(BaseTool):
             r.raise_for_status()
             products: list[dict[str, Any]] = r.json()
             listed_pairs = [p.get("id") for p in products if isinstance(p.get("id"), str)]
-            exists = any(str(pid).startswith(f"{sym}-") for pid in listed_pairs)
+            
+            # Check if the symbol itself is in the list (e.g., BTC-USD)
+            # or if any pair starts with the symbol (e.g., BTC matches BTC-USD, BTC-EUR)
+            exists = sym in listed_pairs or any(str(pid).startswith(f"{sym}-") for pid in listed_pairs)
+            
+            # Find matching pairs for metadata
+            matching_pairs = [pid for pid in listed_pairs if pid == sym or str(pid).startswith(f"{sym}-")]
+            
             return {
                 "symbol": sym,
                 "asset_class": "crypto",
                 "valid": exists,
                 "reason": None if exists else "not_listed_on_coinbase",
                 "meta": {
-                    "pairs": [pid for pid in listed_pairs if str(pid).startswith(f"{sym}-")][:10],
+                    "pairs": matching_pairs[:10],
                     "source": "coinbase",
                 },
             }

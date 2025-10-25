@@ -18,6 +18,7 @@ from finwiz.schemas.tools import (
     StandardizedSentimentInput,
 )
 from finwiz.tools.logger import get_logger
+from finwiz.utils.url_validator import get_url_validator
 
 logger = get_logger(__name__)
 
@@ -40,6 +41,13 @@ class StandardizedSentimentAnalysisTool(BaseTool):
         "across all asset classes including weighted scoring and trending topics."
     )
     args_schema: type[BaseModel] = StandardizedSentimentInput
+    url_validator: Any = None  # URL validator instance
+    
+    def __init__(self, **kwargs):
+        """Initialize tool with URL validator."""
+        super().__init__(**kwargs)
+        if self.url_validator is None:
+            self.url_validator = get_url_validator()
 
     def _run(
         self, symbol: str, asset_class: str, max_articles: int = 50, days_back: int = 30, include_trending: bool = True
@@ -155,15 +163,21 @@ class StandardizedSentimentAnalysisTool(BaseTool):
 
                             # Convert Sonar articles to standardized format
                             for sonar_article in sonar_result.results:
-                                articles.append(
-                                    {
-                                        "headline": sonar_article.title,
-                                        "url": sonar_article.url,
-                                        "date": datetime.now() - timedelta(days=1),  # Approximate date
-                                        "source": sonar_article.publisher or "Perplexity",
-                                        "content": sonar_article.summary,
-                                    }
-                                )
+                                # Validate URL before including article
+                                if self.url_validator.is_valid_url(sonar_article.url, f"Perplexity article {symbol}"):
+                                    articles.append(
+                                        {
+                                            "headline": sonar_article.title,
+                                            "url": sonar_article.url,
+                                            "date": datetime.now() - timedelta(days=1),  # Approximate date
+                                            "source": sonar_article.publisher or "Perplexity",
+                                            "content": sonar_article.summary,
+                                        }
+                                    )
+                                else:
+                                    logger.warning(
+                                        f"Skipping Perplexity article with invalid URL: {sonar_article.title}"
+                                    )
 
                             if articles:
                                 return articles[:max_count]

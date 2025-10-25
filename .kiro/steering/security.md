@@ -4,53 +4,41 @@ inclusion: always
 
 # Security & Type Safety Standards
 
-## Type Safety with mypy
+Critical security practices and type safety requirements for FinWiz development.
 
-FinWiz uses strict `mypy` configuration to catch bugs before runtime and improve code maintainability.
+## Type Safety (mypy strict mode)
 
 ### Required Type Annotations
 
-All public functions and methods must have complete type annotations:
+All public functions and methods MUST have complete type annotations:
 
 ```python
-# ✅ CORRECT - Full type annotations
+# ✅ CORRECT
 def analyze_stock(ticker: str, period: int = 365) -> StockAnalysis:
-    """Analyze stock with specified lookback period."""
     return StockAnalysis(ticker=ticker, period=period)
 
-# ✅ CORRECT - Explicit None return
 def log_analysis(ticker: str) -> None:
-    """Log analysis to file."""
     logger.info(f"Analyzing {ticker}")
 
-# ❌ INCORRECT - Missing return type
+# ❌ WRONG - Missing return type
 def analyze_stock(ticker: str):
     return StockAnalysis(ticker=ticker)
 ```
 
-### Type Annotation Rules
+**Rules:**
+- Return type required (use `-> None` if no return)
+- All parameters must have type hints
+- Use `typing` module: `Optional`, `Union`, `List`, `Dict`, `Any`
+- Use `# type: ignore` only with explanatory comment
 
-- **Return types required**: All functions must specify return type, use `-> None` if no return value
-- **Parameter types required**: All parameters must have type hints
-- **Complex types**: Use `typing` module for `Optional`, `Union`, `List`, `Dict`, etc.
-- **Type stubs**: Prefer type stubs for third-party libraries without types
-- **Last resort**: Use `# type: ignore` only when necessary, with explanatory comment
+## API Key Security (CRITICAL)
 
-### Benefits
+### Environment Variables Only
 
-- **Bug prevention**: Catch `TypeError` and `AttributeError` before runtime
-- **Self-documenting**: Function signatures serve as always-current documentation
-- **IDE support**: Better autocomplete, navigation, and error detection
-- **Safe refactoring**: Type checker identifies all affected code when changing interfaces
-
-## API Key Security
-
-### Environment Variables (Required)
-
-All API keys must be stored in environment variables, never hardcoded:
+NEVER hardcode API keys:
 
 ```python
-# ✅ CORRECT - Load from environment
+# ✅ CORRECT
 import os
 from dotenv import load_dotenv
 
@@ -59,43 +47,40 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY environment variable not set")
 
-# ❌ INCORRECT - Hardcoded key
+# ❌ WRONG - Hardcoded
 api_key = "sk-proj-abc123..."
 ```
 
-### Required API Keys
+### Required Environment Variables
 
-- `OPENAI_API_KEY` - OpenAI API access
-- `SERPER_API_KEY` - Serper search API
-- `FIRECRAWL_API_KEY` - Firecrawl web scraping
-- `ALPHA_VANTAGE_API_KEY` - Alpha Vantage financial data
-- `TWELVE_DATA_API_KEY` - Twelve Data market data
-- `PERPLEXITY_API_KEY` - Perplexity search API
+- `OPENAI_API_KEY` - OpenAI API
+- `SERPER_API_KEY` - Serper search
+- `FIRECRAWL_API_KEY` - Web scraping
+- `ALPHA_VANTAGE_API_KEY` - Financial data
+- `TWELVE_DATA_API_KEY` - Market data
+- `PERPLEXITY_API_KEY` - Search API
 
 ### Logging Security
 
-Never log sensitive information:
+NEVER log full API keys:
 
 ```python
-# ✅ CORRECT - Mask sensitive data
-logger.info(f"API call with key: {api_key[:8]}...")
+# ✅ CORRECT - Masked (first 8 chars only)
+logger.info(f"Using API key: {api_key[:8]}...")
 
-# ❌ INCORRECT - Exposes full key
-logger.info(f"API call with key: {api_key}")
+# ❌ WRONG - Full key exposed
+logger.info(f"API key: {api_key}")
 ```
 
-## Input Validation
+## Input Validation (Pydantic v2 strict)
 
-### Pydantic Models (Required)
-
-All external inputs must be validated using Pydantic v2 strict models:
+### All External Inputs Must Be Validated
 
 ```python
 from pydantic import BaseModel, Field, field_validator
 
 class TickerInput(BaseModel):
-    """Validated ticker input."""
-    symbol: str = Field(..., pattern=r'^[A-Z]{1,5}$', description="Stock ticker")
+    symbol: str = Field(..., pattern=r'^[A-Z]{1,5}$')
     
     model_config = {
         "str_strip_whitespace": True,
@@ -111,108 +96,97 @@ class TickerInput(BaseModel):
         return v.upper()
 ```
 
-### Validation Rules
-
-- **Strict mode**: Use `extra='forbid'` to reject unknown fields
-- **Field validation**: Use `Field()` with constraints (pattern, min_length, ge, le)
-- **Custom validators**: Use `@field_validator` for complex validation logic
-- **Sanitization**: Strip whitespace, normalize case, remove special characters
-- **Error messages**: Provide clear, actionable error messages
+**Validation Requirements:**
+- `extra='forbid'` - Reject unknown fields
+- `Field()` constraints - pattern, min_length, ge, le
+- `@field_validator` - Complex validation logic
+- Sanitize inputs - Strip whitespace, normalize case
+- Clear error messages - Actionable feedback
 
 ## Data Privacy
 
-### Personal Financial Information
-
-Never log or expose personal financial data:
+### Never Log Personal Financial Data
 
 ```python
-# ✅ CORRECT - Anonymized logging
+# ✅ CORRECT - Anonymized
 logger.info(f"Analyzing portfolio with {len(holdings)} holdings")
 
-# ❌ INCORRECT - Exposes personal data
+# ❌ WRONG - Exposes personal data
 logger.info(f"Analyzing portfolio: {holdings}")
 ```
 
 ### Error Messages
 
-Provide generic error messages to users, detailed logs internally:
+Generic to users, detailed internally:
 
 ```python
-# ✅ CORRECT - Generic user message, detailed internal log
+# ✅ CORRECT
 try:
     result = api_call(ticker)
 except Exception as e:
     logger.error(f"API call failed for {ticker}: {e}", exc_info=True)
     raise ValueError("Unable to fetch data. Please try again later.")
 
-# ❌ INCORRECT - Exposes internal details
+# ❌ WRONG - Exposes internals
 except Exception as e:
     raise ValueError(f"API call to {api_url} failed: {e}")
 ```
 
-## Rate Limiting & API Safety
+## Rate Limiting & Timeouts
 
-### Implement Rate Limiting
-
-Respect API rate limits to avoid service disruption:
+### Rate Limiting (Required)
 
 ```python
 from finwiz.utils.rate_limiter import RateLimiter
 
-# Configure rate limiter
-limiter = RateLimiter(max_calls=20, period=60)  # 20 calls per minute
+limiter = RateLimiter(max_calls=20, period=60)
 
 @limiter.limit
 async def fetch_stock_data(ticker: str) -> dict:
-    """Fetch stock data with rate limiting."""
     return await api_client.get(f"/stock/{ticker}")
 ```
 
-### Timeout Configuration
+### Timeouts (Required)
 
-Always set timeouts for external API calls:
+Always set explicit timeouts:
 
 ```python
-import httpx
-
-# ✅ CORRECT - Explicit timeout
+# ✅ CORRECT
 async with httpx.AsyncClient(timeout=30.0) as client:
     response = await client.get(url)
 
-# ❌ INCORRECT - No timeout (can hang indefinitely)
+# ❌ WRONG - Can hang indefinitely
 async with httpx.AsyncClient() as client:
     response = await client.get(url)
 ```
-
-## Dependency Security
-
-### Regular Updates
-
-Keep dependencies updated to patch security vulnerabilities:
-
-```bash
-# Update dependencies
-uv sync --upgrade
-
-# Check for security vulnerabilities
-uv pip list --outdated
-```
-
-### Trusted Sources
-
-Only use dependencies from trusted sources (PyPI, verified publishers).
 
 ## Security Checklist
 
 Before committing code:
 
-- [ ] All API keys in environment variables
-- [ ] No sensitive data in logs
-- [ ] All inputs validated with Pydantic models
-- [ ] All functions have type annotations
+- [ ] API keys in environment variables only
+- [ ] No sensitive data in logs (mask keys, anonymize financial data)
+- [ ] All inputs validated with Pydantic strict models
+- [ ] All public functions have type annotations
 - [ ] Rate limiting configured for API calls
-- [ ] Timeouts set for external requests
-- [ ] Error messages don't expose internal details
-- [ ] No hardcoded credentials or secrets
-- [ ] Dependencies are up to date
+- [ ] Timeouts set for all external requests (30s default)
+- [ ] Error messages generic to users, detailed internally
+- [ ] No hardcoded credentials
 - [ ] `mypy` passes with no errors
+
+## Quick Reference
+
+| Security Concern | Solution |
+|-----------------|----------|
+| API keys | Environment variables + validation at startup |
+| Sensitive logs | Mask keys (first 8 chars), anonymize financial data |
+| Input validation | Pydantic v2 strict mode with `extra='forbid'` |
+| Type safety | Full annotations, `mypy` strict mode |
+| Rate limits | `RateLimiter` decorator, CrewAI `max_rpm=20` |
+| Timeouts | `httpx.AsyncClient(timeout=30.0)` |
+| Error messages | Generic to users, detailed to logs |
+
+---
+
+**Version**: 2.1  
+**Last Updated**: 2025-10-18
