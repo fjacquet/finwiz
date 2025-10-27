@@ -153,6 +153,8 @@ docs-serve:
 docs-build:
 	@echo "🔨 Building documentation site..."
 	uv run mkdocs build --clean
+	@touch site/.nojekyll
+	@echo "✅ Created .nojekyll for GitHub Pages compatibility"
 
 docs-build-production:
 	@echo "🏭 Building documentation for production..."

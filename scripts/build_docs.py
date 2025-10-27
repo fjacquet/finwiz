@@ -114,6 +114,11 @@ class DocumentationBuilder:
             if result.stdout:
                 print("MkDocs output:", result.stdout)
 
+            # Create .nojekyll file to disable GitHub Pages Jekyll processing
+            nojekyll_file = self.build_dir / ".nojekyll"
+            nojekyll_file.touch()
+            print("✅ Created .nojekyll file for GitHub Pages compatibility")
+
             print("✅ MkDocs build completed")
             return True
 

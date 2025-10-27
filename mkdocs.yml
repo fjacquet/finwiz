@@ -171,6 +171,7 @@ nav:
   - How-to Guides:
     - Setup Environment: how-to/setup_environment.md
     - Configure API Keys: how-to/configure_api_keys.md
+    - Deploy to GitHub Pages: how-to/github-pages-mkdocs.md
     - Performance Optimization: how-to/performance_optimization.md
     - Troubleshooting: how-to/troubleshooting.md
   - Reference:
