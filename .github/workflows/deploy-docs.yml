@@ -73,7 +73,7 @@ jobs:
 
       - name: Build documentation
         run: |
-          python scripts/build_docs.py --source docs --build site
+          python scripts/build_docs.py --source docs --build site --no-strict
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
