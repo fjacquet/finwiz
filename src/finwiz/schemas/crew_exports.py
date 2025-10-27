@@ -18,6 +18,7 @@ from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.crypto import CryptoThesis
 from finwiz.schemas.etf import ETFFactsheet, ETFTopHolding
 from finwiz.schemas.portfolio_review import Grade
+from finwiz.schemas.python_analysis import PythonDeepAnalysisResult
 from finwiz.schemas.rebalancing import TradeRecommendation
 from finwiz.schemas.stock import TenKInsight
 
@@ -270,9 +271,16 @@ class ConsolidatedReportExport(BaseModel):
     stock_analyses: list[StockCrewExport] = Field(default_factory=list, description="All stock analysis results")
     etf_analyses: list[ETFCrewExport] = Field(default_factory=list, description="All ETF analysis results")
     crypto_analyses: list[CryptoCrewExport] = Field(default_factory=list, description="All crypto analysis results")
-    deep_analyses: list[DeepAnalysisCrewExport] = Field(default_factory=list, description="All deep analysis results")
+    deep_analyses: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult] = Field(
+        default_factory=list, description="All deep analysis results (CrewAI or Python)"
+    )
     discovery_results: Optional[DiscoveryCrewExport] = Field(None, description="Investment discovery results (single)")
     rebalancing_results: Optional[RebalancingCrewExport] = Field(None, description="Portfolio rebalancing results (single)")
+
+    # Additional Data (optional, set by consolidator)
+    portfolio_data: Optional[dict[str, Any]] = Field(None, description="Portfolio review data")
+    aplus_opportunities: Optional[dict[str, Any]] = Field(None, description="A+ investment opportunities")
+    backtesting_data: Optional[dict[str, Any]] = Field(None, description="Backtesting results")
 
     # Execution Metadata
     crew_execution_status: dict[str, str] = Field(

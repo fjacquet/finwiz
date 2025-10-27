@@ -477,7 +477,6 @@ feedback_learning_task:
     
   agent: feedback_learning_agent
   output_file: "output/discovery/feedback_learning_report.json"
-  output_json: true
   async_execution: false
   depends_on:
     - report_generation_task

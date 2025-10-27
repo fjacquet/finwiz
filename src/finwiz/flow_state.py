@@ -223,6 +223,7 @@ class FinwizState(BaseModel):
     estimated_time_remaining: float = Field(default=0.0, ge=0.0, description="Estimated seconds remaining")
 
     # Error tracking
+    errors: list[str] = Field(default_factory=list, description="List of error messages from flow execution")
     failed_holdings: list[str] = Field(default_factory=list, description="List of tickers that failed analysis")
     retry_counts: dict[str, int] = Field(default_factory=dict, description="Retry count per ticker")
     timeout_holdings: list[str] = Field(default_factory=list, description="List of tickers that timed out")

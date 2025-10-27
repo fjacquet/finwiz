@@ -42,6 +42,7 @@ from finwiz.schemas.crew_exports import (
     RebalancingCrewExport,
     StockCrewExport,
 )
+from finwiz.schemas.python_analysis import PythonDeepAnalysisResult
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -153,12 +154,10 @@ class ReportConsolidator:
             consolidated.crew_execution_status["crypto_crew"] = status
             logger.info(f"Crypto crew consolidation: {status} ({len(consolidated.crypto_analyses)} exports)")
 
-        # Consolidate deep analyses
+        # Consolidate deep analyses (supports both Python and CrewAI)
         if "deep_analysis_crew" in crew_export_paths:
             logger.info(f"Consolidating {len(crew_export_paths['deep_analysis_crew'])} deep analyses")
-            consolidated.deep_analyses = self._load_exports(
-                crew_export_paths["deep_analysis_crew"], DeepAnalysisCrewExport, crew_name="deep_analysis_crew"
-            )
+            consolidated.deep_analyses = self._load_deep_analysis_exports(crew_export_paths["deep_analysis_crew"])
             status = "completed" if consolidated.deep_analyses else "failed"
             consolidated.crew_execution_status["deep_analysis_crew"] = status
             logger.info(f"Deep analysis crew consolidation: {status} ({len(consolidated.deep_analyses)} exports)")
@@ -372,5 +371,103 @@ class ReportConsolidator:
         # Log warning if no valid exports loaded
         if len(file_paths) > 0 and len(exports) == 0:
             logger.warning(f"No valid {schema_name} exports loaded from {len(file_paths)} files")
+
+        return exports
+
+    def _load_deep_analysis_exports(
+        self, file_paths: list[str]
+    ) -> list[DeepAnalysisCrewExport | PythonDeepAnalysisResult]:
+        """
+        Load deep analysis exports with automatic schema detection.
+
+        Supports both CrewAI deep analysis exports and Python analyzer results.
+        Automatically detects which schema to use based on the crew_name field.
+
+        Args:
+            file_paths: List of file paths to load
+
+        Returns:
+            List of validated export objects (mixed CrewAI and Python)
+
+        """
+        exports: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult] = []
+
+        logger.debug(f"Loading {len(file_paths)} deep analysis files with auto-detection")
+
+        for path_str in file_paths:
+            path = Path(path_str)
+
+            if not path.exists():
+                error_msg = f"Export file not found: {path}"
+                logger.warning(error_msg)
+                if hasattr(self, "_validation_errors"):
+                    self._validation_errors.append(
+                        {"crew": "deep_analysis_crew", "file": str(path), "error_type": "missing_file", "message": error_msg}
+                    )
+                continue
+
+            try:
+                # Read and parse JSON
+                data = json.loads(path.read_text(encoding="utf-8"))
+
+                # Detect schema based on crew_name
+                crew_name = data.get("crew_name", "")
+
+                if crew_name == "PythonDeepAnalyzer":
+                    # Python analyzer output
+                    export = PythonDeepAnalysisResult.model_validate(data)
+                    logger.debug(f"✅ Validated {path} as PythonDeepAnalysisResult")
+                else:
+                    # CrewAI deep analysis output
+                    export = DeepAnalysisCrewExport.model_validate(data)
+                    logger.debug(f"✅ Validated {path} as DeepAnalysisCrewExport")
+
+                exports.append(export)
+
+            except ValidationError as e:
+                # Log detailed validation errors
+                schema_name = "PythonDeepAnalysisResult" if crew_name == "PythonDeepAnalyzer" else "DeepAnalysisCrewExport"
+                logger.error(f"Validation failed for {path} against {schema_name}:")
+                validation_details = []
+                for error in e.errors():
+                    field_path = " -> ".join(str(loc) for loc in error["loc"])
+                    error_detail = f"Field '{field_path}': {error['msg']}"
+                    logger.error(f"  {error_detail}")
+                    validation_details.append(error_detail)
+
+                if hasattr(self, "_validation_errors"):
+                    self._validation_errors.append(
+                        {
+                            "crew": "deep_analysis_crew",
+                            "file": str(path),
+                            "error_type": "validation_error",
+                            "schema": schema_name,
+                            "details": validation_details,
+                            "message": f"Validation failed: {len(validation_details)} field errors",
+                        }
+                    )
+
+                logger.warning(f"Skipping invalid export {path}")
+
+            except json.JSONDecodeError as e:
+                error_msg = f"Invalid JSON in {path}: {e}"
+                logger.error(error_msg)
+                if hasattr(self, "_validation_errors"):
+                    self._validation_errors.append(
+                        {"crew": "deep_analysis_crew", "file": str(path), "error_type": "json_parse_error", "message": error_msg}
+                    )
+
+            except Exception as e:
+                error_msg = f"Failed to load {path}: {e}"
+                logger.error(error_msg, exc_info=True)
+                if hasattr(self, "_validation_errors"):
+                    self._validation_errors.append(
+                        {"crew": "deep_analysis_crew", "file": str(path), "error_type": "unexpected_error", "message": error_msg}
+                    )
+
+        logger.info(f"Loaded {len(exports)}/{len(file_paths)} valid deep analysis exports")
+
+        if len(file_paths) > 0 and len(exports) == 0:
+            logger.warning(f"No valid deep analysis exports loaded from {len(file_paths)} files")
 
         return exports

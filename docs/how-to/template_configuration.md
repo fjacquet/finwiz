@@ -45,7 +45,8 @@ src/finwiz/templates/
 
 All report templates extend the base template:
 
-```jinja2
+```jinja
+{%raw%}
 {% extends "crew_reports/base.html" %}
 
 {% block title %}Analyse Approfondie {{ ticker }} - FinWiz{% endblock %}
@@ -53,6 +54,7 @@ All report templates extend the base template:
 {% block content %}
 <!-- Template-specific content -->
 {% endblock %}
+{%endraw%}
 ```
 
 ## Deep Analysis Template Structure
@@ -211,7 +213,8 @@ body {
 
 Templates dynamically show relevant metrics based on asset class:
 
-```jinja2
+```jinja
+{%raw%}
 <!-- Stock-specific metrics -->
 {% if asset_class == 'stock' %}
     {% if fundamental_details.roe is defined %}
@@ -241,13 +244,15 @@ Templates dynamically show relevant metrics based on asset class:
     </div>
     {% endif %}
 {% endif %}
+{%endraw%}
 ```
 
 ### Conditional Formatting
 
 Templates include conditional CSS classes based on values:
 
-```jinja2
+```jinja
+{%raw%}
 <!-- Risk-based color coding -->
 <p class="metric-value {% if technical_details.rsi < 30 %}risk-high{% elif technical_details.rsi > 70 %}risk-high{% else %}risk-low{% endif %}">
     {{ "%.1f"|format(technical_details.rsi) }}
@@ -258,6 +263,7 @@ Templates include conditional CSS classes based on values:
     {% if recommendation == 'BUY' %}✅{% elif recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
     <strong>{{ recommendation }}</strong> - Grade {{ grade }}
 </p>
+{%endraw%}
 ```
 
 **CSS Classes:**
@@ -281,7 +287,8 @@ Templates include conditional CSS classes based on values:
 To add a new section to the template:
 
 1. **Define the section structure**:
-```jinja2
+```jinja
+{%raw%}
 <!-- New Performance Metrics Section -->
 <div class="section performance-metrics">
     <h2>📈 Métriques de Performance</h2>
@@ -296,6 +303,7 @@ To add a new section to the template:
     </div>
     {% endif %}
 </div>
+{%endraw%}
 ```
 
 2. **Add corresponding CSS**:
@@ -365,7 +373,8 @@ jinja_env.filters['risk_level'] = risk_level_text
 
 Create specialized templates by extending the base:
 
-```jinja2
+```jinja
+{%raw%}
 <!-- etf_deep_analysis_report.html.j2 -->
 {% extends "crew_reports/deep_analysis_report.html.j2" %}
 
@@ -397,6 +406,7 @@ Create specialized templates by extending the base:
     {% endif %}
 </div>
 {% endblock %}
+{%endraw%}
 ```
 
 ## Report Generation
