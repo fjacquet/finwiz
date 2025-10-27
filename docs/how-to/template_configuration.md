@@ -689,7 +689,8 @@ template_data = {
 ```
 
 **Issue**: Formatting errors
-```jinja2
+```jinja
+{%raw%}
 <!-- Solution: Use safe filters and error handling -->
 {{ value|default("N/A") }}
 {{ percentage_value|default(0)|round(1) }}%
@@ -698,6 +699,7 @@ template_data = {
 {% else %}
     <p>Données non disponibles</p>
 {% endif %}
+{%endraw%}
 ```
 
 ### Debug Mode
