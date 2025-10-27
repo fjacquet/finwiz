@@ -11,7 +11,6 @@ import pytest
 
 from finwiz.integration.backtesting_extractor import BacktestingDataExtractor, RegimePerformance
 from finwiz.integration.performance_metrics_aggregator import (
-    PerformanceMetrics,
     PerformanceMetricsAggregator,
     PortfolioImpactMetrics,
 )
@@ -81,9 +80,7 @@ class TestPerformanceMetricsAggregator:
         assert aggregator.backtesting_extractor == mock_backtesting_extractor
         assert aggregator.logger is not None
 
-    def test_should_aggregate_by_asset_type_when_single_type(
-        self, aggregator, sample_validation_result, asset_type_map
-    ):
+    def test_should_aggregate_by_asset_type_when_single_type(self, aggregator, sample_validation_result, asset_type_map):
         """Test aggregation by asset type with single asset type."""
         # Act
         result = aggregator.aggregate_by_asset_type([sample_validation_result], asset_type_map)
@@ -202,9 +199,7 @@ class TestPerformanceMetricsAggregator:
         # Assert
         assert result == {}
 
-    def test_should_calculate_portfolio_impact_when_high_quality_opportunities(
-        self, aggregator, sample_validation_result
-    ):
+    def test_should_calculate_portfolio_impact_when_high_quality_opportunities(self, aggregator, sample_validation_result):
         """Test portfolio impact calculation with high-quality opportunities."""
         # Act
         result = aggregator.calculate_portfolio_impact([sample_validation_result], current_portfolio_grade=0.70)
@@ -284,9 +279,7 @@ class TestPerformanceMetricsAggregator:
         mock_backtesting_extractor.extract_regime_performance.return_value = mock_regime_perf
 
         # Act
-        result = aggregator.generate_performance_report(
-            [sample_validation_result], asset_type_map, current_portfolio_grade=0.70
-        )
+        result = aggregator.generate_performance_report([sample_validation_result], asset_type_map, current_portfolio_grade=0.70)
 
         # Assert
         assert result.total_candidates_analyzed == 3
@@ -297,9 +290,7 @@ class TestPerformanceMetricsAggregator:
         assert result.data_quality_score > 0
         assert isinstance(result.report_timestamp, datetime)
 
-    def test_should_identify_top_opportunities_correctly(
-        self, aggregator, mock_backtesting_extractor, sample_validation_result
-    ):
+    def test_should_identify_top_opportunities_correctly(self, aggregator, mock_backtesting_extractor, sample_validation_result):
         """Test identification of top opportunities by composite score."""
         # Arrange - Mock regime performance to return empty dict
         mock_backtesting_extractor.extract_regime_performance.return_value = {}
@@ -314,9 +305,7 @@ class TestPerformanceMetricsAggregator:
         # MSFT should be first (highest Sharpe * return composite)
         assert result.top_opportunities[0] == "MSFT"
 
-    def test_should_calculate_data_quality_score_correctly(
-        self, aggregator, mock_backtesting_extractor, sample_validation_result
-    ):
+    def test_should_calculate_data_quality_score_correctly(self, aggregator, mock_backtesting_extractor, sample_validation_result):
         """Test data quality score calculation."""
         # Arrange - Mock regime performance to return empty dict
         mock_backtesting_extractor.extract_regime_performance.return_value = {}
@@ -331,9 +320,7 @@ class TestPerformanceMetricsAggregator:
         assert result.data_quality_score > 0.8
         assert result.data_quality_score <= 1.0
 
-    def test_should_handle_multiple_validation_results(
-        self, aggregator, mock_backtesting_extractor, asset_type_map
-    ):
+    def test_should_handle_multiple_validation_results(self, aggregator, mock_backtesting_extractor, asset_type_map):
         """Test aggregation with multiple validation results."""
         # Arrange
         validation_results = [

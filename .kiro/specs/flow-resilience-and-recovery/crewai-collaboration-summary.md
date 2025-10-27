@@ -316,7 +316,7 @@ investment_reporter = Agent(
 - **Time**: 5-15 seconds per delegation/question
 - **API Calls**: 1-2 additional LLM calls per collaboration
 - **Tokens**: ~200-500 tokens per interaction
-- **Cost**: $0.0001-0.0003 per interaction (gpt-4o-mini)
+- **Cost**: $0.0001-0.0003 per interaction (gpt-5-mini)
 
 ### For FinWiz Deep Analysis (66 holdings)
 - If 10% of analyses involve delegation: 6-7 collaborations

@@ -335,9 +335,7 @@ class TestBacktestingSummaryGeneration:
         assert report_data["best_performer"] != ""
         assert report_data["worst_performer"] != ""
 
-    def test_should_handle_validation_results_with_different_metrics(
-        self, extractor: BacktestingDataExtractor
-    ) -> None:
+    def test_should_handle_validation_results_with_different_metrics(self, extractor: BacktestingDataExtractor) -> None:
         """Test handling validation results with varying metric availability."""
         # Arrange - Results with different available metrics
         result1 = ValidationResult(
@@ -406,9 +404,7 @@ class TestBacktestingSummaryGeneration:
         expected_sortino = (2.3 * 3 + 2.4 * 2) / 5
         assert abs(summary.average_metrics.sortino_ratio - expected_sortino) < 0.01
 
-    def test_should_handle_empty_validation_details_gracefully(
-        self, extractor: BacktestingDataExtractor
-    ) -> None:
+    def test_should_handle_empty_validation_details_gracefully(self, extractor: BacktestingDataExtractor) -> None:
         """Test handling when validation details are empty."""
         # Arrange
         result = ValidationResult(

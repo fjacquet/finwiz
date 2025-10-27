@@ -1,0 +1,7 @@
+nav:
+  - index.md
+  - Crews: crews.md
+  - Tools: tools.md
+  - Flows: flows.md
+  - Schemas: schemas.md
+  - Configuration: configuration.md

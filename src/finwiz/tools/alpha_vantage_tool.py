@@ -68,13 +68,35 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
             return None
 
-    def _run(self, ticker: str, include_perplexity: bool = True) -> str:
-        """Execute the tool to fetch company overview data."""
-        try:
-            logger.info(f"Fetching Alpha Vantage company overview for {ticker} with optional Perplexity enhancement")
+    def _run(self, ticker: str, include_perplexity: bool = True, prefetched_data: dict | None = None) -> str:
+        """
+        Execute the tool to fetch company overview data.
 
-            # Get Alpha Vantage data
-            alpha_vantage_data = asyncio.run(self._fetch_company_overview(ticker))
+        Args:
+            ticker: Stock ticker symbol
+            include_perplexity: Whether to include Perplexity Sonar insights
+            prefetched_data: Optional pre-fetched Alpha Vantage data from batch operation
+
+        Returns:
+            Formatted company overview string
+
+        """
+        try:
+            # Check for pre-fetched data first
+            if prefetched_data is not None and ticker in prefetched_data:
+                logger.debug(f"Using pre-fetched Alpha Vantage data for {ticker} (source: batch)")
+                alpha_vantage_data = prefetched_data[ticker]
+
+                # If it's already a string (JSON), use it directly
+                if isinstance(alpha_vantage_data, str):
+                    pass
+                else:
+                    # Convert dict to JSON string
+                    alpha_vantage_data = json.dumps(alpha_vantage_data, indent=2)
+            else:
+                # Fall back to live API call
+                logger.info(f"Fetching Alpha Vantage company overview for {ticker} with optional Perplexity enhancement")
+                alpha_vantage_data = asyncio.run(self._fetch_company_overview(ticker))
 
             # Optionally get Perplexity fundamental insights
             perplexity_insights = []

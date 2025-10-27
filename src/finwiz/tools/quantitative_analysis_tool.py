@@ -56,6 +56,7 @@ class QuantitativeAnalysisTool(BaseTool):
         timeframe: str = "1y",
         strategy: str = "sma_crossover",
         benchmark: str | None = None,
+        prefetched_data: pd.DataFrame | None = None,
     ) -> str:
         """
         Execute quantitative analysis.
@@ -67,6 +68,7 @@ class QuantitativeAnalysisTool(BaseTool):
             timeframe: Analysis timeframe (e.g., '1y', '2y', '5y')
             strategy: Strategy for backtesting
             benchmark: Benchmark symbol for comparison
+            prefetched_data: Optional pre-fetched historical data from batch operation
 
         Returns:
             JSON string with quantitative analysis results
@@ -103,14 +105,20 @@ class QuantitativeAnalysisTool(BaseTool):
             else:
                 start_date = end_date - timedelta(days=365)  # Default to 1 year
 
-            # Fetch historical data
-            try:
-                data = data_manager.fetch_historical_data(input_data.symbol, start_date, end_date)
-                if data.empty:
-                    return f"No data available for {input_data.symbol}"
-            except Exception as e:
-                logger.error(f"Error fetching data for {input_data.symbol}: {e}")
-                return f"Error fetching data: {str(e)}"
+            # Use pre-fetched data if available, otherwise fetch from API
+            if prefetched_data is not None and not prefetched_data.empty:
+                logger.debug(f"Using pre-fetched data for {input_data.symbol} (source: batch)")
+                data = prefetched_data
+            else:
+                # Fetch historical data from API
+                logger.debug(f"Fetching live data for {input_data.symbol} (source: API)")
+                try:
+                    data = data_manager.fetch_historical_data(input_data.symbol, start_date, end_date)
+                    if data.empty:
+                        return f"No data available for {input_data.symbol}"
+                except Exception as e:
+                    logger.error(f"Error fetching data for {input_data.symbol}: {e}")
+                    return f"Error fetching data: {str(e)}"
 
             # Perform analysis based on type
             if input_data.analysis_type == "technical":

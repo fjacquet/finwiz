@@ -40,6 +40,7 @@ def kickoff() -> None:
     try:
         # Step 1: Validate template variables in crew configurations
         from finwiz.validation import validate_template_variables_at_startup
+
         validate_template_variables_at_startup()
 
         # Step 2: Initialize and validate configuration

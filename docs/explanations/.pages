@@ -1,0 +1,10 @@
+nav:
+  - index.md
+  - Architecture: ARCHITECTURE.md
+  - Design Principles: design_principles.md
+  - Data Flow: data_flow.md
+  - Deep Analysis: deep_analysis.md
+  - Report Generation: report_generation.md
+  - AI Architecture: ai_architecture.md
+  - Investment Methodology: investment_methodology.md
+  - Risk Framework: risk_framework.md

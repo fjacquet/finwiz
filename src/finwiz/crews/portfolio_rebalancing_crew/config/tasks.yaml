@@ -336,3 +336,89 @@ risk_validation_task:
 #   async_execution: false
 #   depends_on:
 #     - risk_validation_task
+
+# Export Generation Task
+generate_export_task:
+  description: >
+    Consolidate all portfolio rebalancing findings from context into a RebalancingCrewExport object.
+    
+    CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
+    from previous tasks to extract all required information.
+    
+    CONTEXT SOURCES:
+    - analyze_holding_task: Individual holding analysis results
+    - calculate_price_targets_task: Price target calculations
+    - find_alternatives_task: Alternative investment options
+    - portfolio_analysis_task: Current portfolio composition and metrics
+    - rebalancing_optimization_task: Optimal allocation and trade recommendations
+    - risk_validation_task: Risk validation and performance projections
+    
+    REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
+    1. Input Summary:
+       - holdings_analyzed: Count of current holdings analyzed
+       - deep_analyses_reviewed: Count of deep analyses performed
+       - opportunities_discovered: Count of A+ alternatives found
+    
+    2. Current State:
+       - current_allocation: Dict[ticker, percentage] from portfolio_analysis_task
+       - current_total_value: Total portfolio value from portfolio_analysis_task
+    
+    3. Optimization Results:
+       - target_allocation: Dict[ticker, percentage] from rebalancing_optimization_task
+       - trades_required: List[TradeRecommendation] from rebalancing_optimization_task
+         * Each trade must have: action (BUY/SELL/HOLD), ticker, asset_class, quantity, rationale
+    
+    4. Performance Metrics:
+       - expected_return: Expected annual return (percentage) from risk_validation_task
+       - expected_risk: Expected volatility (percentage) from risk_validation_task
+       - sharpe_ratio: Risk-adjusted return metric from risk_validation_task
+    
+    5. Improvement Analysis:
+       - improvement_summary: How rebalancing improves portfolio (min 50 chars)
+       - risk_reduction: Expected risk reduction (percentage points)
+       - return_improvement: Expected return improvement (percentage points)
+    
+    6. data_sources (list of strings):
+       - List all data sources used: ["Yahoo Finance", "Portfolio Analysis", "Quantitative Analysis", etc.]
+    
+    7. report_html_path (string):
+       - Set to: "output/reports/{session_id}/rebalancing_crew/rebalancing_report.html"
+    
+    8. report_json_path (string):
+       - Set to: "output/reports/{session_id}/rebalancing_crew/rebalancing_export.json"
+    
+    METADATA FIELDS (auto-populated):
+    - crew_name: "rebalancing_crew" (default)
+    - ticker: "N/A" (not applicable for rebalancing - portfolio-level)
+    - asset_class: "portfolio" (default)
+    - session_id: From input parameter {session_id}
+    - analysis_date: Current timestamp (auto-generated)
+    
+    OUTPUT FORMAT:
+    - Return a valid RebalancingCrewExport Pydantic object
+    - All fields must conform to schema validation
+    - Use extra='forbid' - no additional fields allowed
+    - Ensure all required fields are present
+    
+    VALIDATION:
+    - holdings_analyzed must be >= 0
+    - deep_analyses_reviewed must be >= 0
+    - opportunities_discovered must be >= 0
+    - current_total_value must be > 0
+    - current_allocation percentages must sum to ~100%
+    - target_allocation percentages must sum to ~100%
+    - Each trade.action must be one of: BUY, SELL, HOLD
+    - improvement_summary must be at least 50 characters
+    - All nested objects must conform to their schemas
+    
+    Today is {full_date}. Use this date for analysis_date if not auto-generated.
+  expected_output: >
+    A validated RebalancingCrewExport Pydantic object containing current allocation,
+    target allocation, required trades, performance metrics, and improvement analysis.
+    The object will be automatically saved to JSON at the specified report_json_path.
+  agent: investment_reporter
+  output_pydantic: RebalancingCrewExport
+  output_json: true
+  async_execution: false
+  depends_on:
+    - risk_validation_task

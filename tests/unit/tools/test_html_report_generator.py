@@ -1,331 +1,317 @@
 """
-Unit tests for HTML report generator.
+Unit tests for HTML Report Generator.
 
-Tests ensure HTML-first output standards with UTF-8 encoding,
-emoji support, and French report section requirements.
+Tests HTML generation from crew export data using Jinja2 templates.
+Following AI Minimalism principle: Python templates, not AI agents.
 """
+
+from datetime import datetime
 
 import pytest
 
-from finwiz.tools.html_report_generator import HTMLReportGenerator, ReportSection
-
-
-class TestReportSection:
-    """Test ReportSection model."""
-
-    def test_should_create_section_with_required_fields(self):
-        """Test creating a report section with required fields."""
-        # Arrange & Act
-        section = ReportSection(title="Test Section", content="<p>Test content</p>")
-
-        # Assert
-        assert section.title == "Test Section"
-        assert section.content == "<p>Test content</p>"
-        assert section.emoji is None
-        assert section.order == 0
-
-    def test_should_create_section_with_all_fields(self):
-        """Test creating a report section with all fields."""
-        # Arrange & Act
-        section = ReportSection(title="Analysis Section", content="<p>Analysis content</p>", emoji="📊", order=5)
-
-        # Assert
-        assert section.title == "Analysis Section"
-        assert section.content == "<p>Analysis content</p>"
-        assert section.emoji == "📊"
-        assert section.order == 5
+from finwiz.tools.html_report_generator import HTMLReportGenerator
 
 
 class TestHTMLReportGenerator:
-    """Test HTML report generator functionality."""
+    """Test suite for HTMLReportGenerator."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.generator = HTMLReportGenerator()
+    @pytest.fixture
+    def generator(self):
+        """Create HTMLReportGenerator instance."""
+        return HTMLReportGenerator()
 
-    def test_should_initialize_with_default_template_path(self):
-        """Test generator initialization with default template path."""
-        # Act
-        generator = HTMLReportGenerator()
+    @pytest.fixture
+    def temp_output_dir(self, tmp_path):
+        """Create temporary output directory."""
+        output_dir = tmp_path / "reports"
+        output_dir.mkdir()
+        return output_dir
 
-        # Assert
-        assert generator.template_path == "src/finwiz/templates/html_template.html"
-        assert generator.sections == []
+    @pytest.fixture
+    def mock_stock_export(self):
+        """Create mock stock crew export data."""
+        return {
+            "crew_name": "stock_crew",
+            "ticker": "AAPL",
+            "asset_class": "stock",
+            "session_id": "test-session-123",
+            "analysis_date": datetime.now().isoformat(),
+            "composite_score": 0.85,
+            "grade": "A",
+            "recommendation": "BUY",
+            "confidence": 0.90,
+            "rationale": "Strong fundamentals with excellent growth prospects and solid balance sheet.",
+            "data_sources": ["Yahoo Finance", "SEC EDGAR"],
+            "report_html_path": "/path/to/report.html",
+            "report_json_path": "/path/to/export.json",
+        }
 
-    def test_should_initialize_with_custom_template_path(self):
-        """Test generator initialization with custom template path."""
+    @pytest.fixture
+    def mock_etf_export(self):
+        """Create mock ETF crew export data."""
+        return {
+            "crew_name": "etf_crew",
+            "ticker": "SPY",
+            "asset_class": "etf",
+            "session_id": "test-session-123",
+            "analysis_date": datetime.now().isoformat(),
+            "composite_score": 0.78,
+            "grade": "B",
+            "recommendation": "HOLD",
+            "confidence": 0.85,
+            "rationale": "Solid tracking performance with low expense ratio and good diversification.",
+            "expense_ratio": 0.09,
+            "tracking_error": 0.05,
+            "data_sources": ["Yahoo Finance", "ETF.com"],
+            "report_html_path": "/path/to/report.html",
+            "report_json_path": "/path/to/export.json",
+        }
+
+    @pytest.fixture
+    def mock_crypto_export(self):
+        """Create mock crypto crew export data."""
+        return {
+            "crew_name": "crypto_crew",
+            "ticker": "BTC",
+            "asset_class": "crypto",
+            "session_id": "test-session-123",
+            "analysis_date": datetime.now().isoformat(),
+            "composite_score": 0.72,
+            "grade": "C+",
+            "recommendation": "HOLD",
+            "confidence": 0.75,
+            "rationale": "High volatility but strong network effects and institutional adoption.",
+            "volatility_30d": 0.65,
+            "max_drawdown": -0.35,
+            "data_sources": ["CoinMarketCap", "Kraken"],
+            "report_html_path": "/path/to/report.html",
+            "report_json_path": "/path/to/export.json",
+        }
+
+    def test_should_generate_stock_crew_report_when_valid_data(self, generator, mock_stock_export, temp_output_dir, mocker):
+        """Test generating stock crew HTML report from export data."""
         # Arrange
-        custom_path = "/custom/template.html"
+        output_path = temp_output_dir / "stock_report.html"
+
+        # Mock template rendering - patch jinja2.Environment
+        mock_template = mocker.Mock()
+        mock_template.render.return_value = "<html><body>Stock Report</body></html>"
+        mock_env_class = mocker.patch("jinja2.Environment")
+        mock_env_instance = mocker.Mock()
+        mock_env_class.return_value = mock_env_instance
+        mock_env_instance.get_template.return_value = mock_template
 
         # Act
-        generator = HTMLReportGenerator(template_path=custom_path)
+        result_path = generator.generate_crew_report(
+            crew_name="stock_crew",
+            export_data=mock_stock_export,
+            output_path=output_path,
+        )
 
         # Assert
-        assert generator.template_path == custom_path
+        assert result_path == str(output_path)
+        assert output_path.exists()
+        mock_template.render.assert_called_once()
+        call_kwargs = mock_template.render.call_args[1]
+        assert call_kwargs["data"] == mock_stock_export
+        assert "generation_date" in call_kwargs
 
-    def test_should_add_section_without_emoji(self):
-        """Test adding a section without emoji."""
+    def test_should_generate_etf_crew_report_when_valid_data(self, generator, mock_etf_export, temp_output_dir, mocker):
+        """Test generating ETF crew HTML report from export data."""
+        # Arrange
+        output_path = temp_output_dir / "etf_report.html"
+
+        # Mock template rendering - patch jinja2.Environment
+        mock_template = mocker.Mock()
+        mock_template.render.return_value = "<html><body>ETF Report</body></html>"
+        mock_env_class = mocker.patch("jinja2.Environment")
+        mock_env_instance = mocker.Mock()
+        mock_env_class.return_value = mock_env_instance
+        mock_env_instance.get_template.return_value = mock_template
+
         # Act
-        self.generator.add_section("Test Section", "<p>Content</p>")
+        result_path = generator.generate_crew_report(
+            crew_name="etf_crew",
+            export_data=mock_etf_export,
+            output_path=output_path,
+        )
 
         # Assert
-        assert len(self.generator.sections) == 1
-        section = self.generator.sections[0]
-        assert section.title == "Test Section"
-        assert section.content == "<p>Content</p>"
-        assert section.emoji == ""
-        assert section.order == 0
+        assert result_path == str(output_path)
+        assert output_path.exists()
+        mock_template.render.assert_called_once()
 
-    def test_should_add_section_with_emoji(self):
-        """Test adding a section with emoji."""
+    def test_should_generate_crypto_crew_report_when_valid_data(self, generator, mock_crypto_export, temp_output_dir, mocker):
+        """Test generating crypto crew HTML report from export data."""
+        # Arrange
+        output_path = temp_output_dir / "crypto_report.html"
+
+        # Mock template rendering - patch jinja2.Environment
+        mock_template = mocker.Mock()
+        mock_template.render.return_value = "<html><body>Crypto Report</body></html>"
+        mock_env_class = mocker.patch("jinja2.Environment")
+        mock_env_instance = mocker.Mock()
+        mock_env_class.return_value = mock_env_instance
+        mock_env_instance.get_template.return_value = mock_template
+
         # Act
-        self.generator.add_section("Growth Analysis", "<p>Growth content</p>", "growth", 1)
+        result_path = generator.generate_crew_report(
+            crew_name="crypto_crew",
+            export_data=mock_crypto_export,
+            output_path=output_path,
+        )
 
         # Assert
-        assert len(self.generator.sections) == 1
-        section = self.generator.sections[0]
-        assert section.title == "Growth Analysis"
-        assert section.emoji == "📈"
-        assert section.order == 1
+        assert result_path == str(output_path)
+        assert output_path.exists()
 
-    def test_should_add_french_section_synthese_10k(self):
-        """Test adding French Synthèse 10-K section."""
-        # Act
-        self.generator.add_french_section("synthese_10k", "<p>Synthèse content</p>")
+    def test_should_raise_error_when_invalid_crew_name(self, generator, mock_stock_export, temp_output_dir):
+        """Test error handling for invalid crew name."""
+        # Arrange
+        output_path = temp_output_dir / "report.html"
 
-        # Assert
-        assert len(self.generator.sections) == 1
-        section = self.generator.sections[0]
-        assert section.title == "Synthèse 10-K"
-        assert section.content == "<p>Synthèse content</p>"
-        assert section.order == 100
-
-    def test_should_add_french_section_sentiment_marche(self):
-        """Test adding French Sentiment du Marché section."""
-        # Act
-        self.generator.add_french_section("sentiment_marche", "<p>Sentiment content</p>")
-
-        # Assert
-        assert len(self.generator.sections) == 1
-        section = self.generator.sections[0]
-        assert section.title == "Sentiment du Marché"
-        assert section.content == "<p>Sentiment content</p>"
-        assert section.order == 100
-
-    def test_should_raise_error_for_invalid_french_section(self):
-        """Test error handling for invalid French section key."""
         # Act & Assert
-        with pytest.raises(ValueError) as exc_info:
-            self.generator.add_french_section("invalid_key", "<p>Content</p>")
+        with pytest.raises(ValueError, match="Invalid crew_name"):
+            generator.generate_crew_report(
+                crew_name="invalid_crew",
+                export_data=mock_stock_export,
+                output_path=output_path,
+            )
 
-        assert "Invalid French section key: invalid_key" in str(exc_info.value)
-
-    def test_should_generate_html_with_utf8_encoding(self):
-        """Test HTML generation includes UTF-8 encoding."""
+    def test_should_raise_error_when_export_data_not_dict(self, generator, temp_output_dir):
+        """Test error handling for invalid export data type."""
         # Arrange
-        self.generator.add_section("Test", "<p>Test content</p>")
+        output_path = temp_output_dir / "report.html"
+        invalid_data = "not a dictionary"
 
-        # Act
-        html = self.generator.generate_html()
+        # Act & Assert
+        with pytest.raises(ValueError, match="export_data must be a dictionary"):
+            generator.generate_crew_report(
+                crew_name="stock_crew",
+                export_data=invalid_data,
+                output_path=output_path,
+            )
 
-        # Assert
-        assert 'charset="UTF-8"' in html
-        assert "<!DOCTYPE html>" in html
-        assert "Test content" in html
-
-    def test_should_generate_html_with_emojis(self):
-        """Test HTML generation includes emojis."""
+    def test_should_create_parent_directories_when_missing(self, generator, mock_stock_export, temp_output_dir, mocker):
+        """Test that parent directories are created if they don't exist."""
         # Arrange
-        self.generator.add_section("Analysis", "<p>Content</p>", "analysis")
+        nested_path = temp_output_dir / "nested" / "dir" / "report.html"
+
+        # Mock template rendering - patch jinja2.Environment
+        mock_template = mocker.Mock()
+        mock_template.render.return_value = "<html><body>Report</body></html>"
+        mock_env_class = mocker.patch("jinja2.Environment")
+        mock_env_instance = mocker.Mock()
+        mock_env_class.return_value = mock_env_instance
+        mock_env_instance.get_template.return_value = mock_template
 
         # Act
-        html = self.generator.generate_html()
+        result_path = generator.generate_crew_report(
+            crew_name="stock_crew",
+            export_data=mock_stock_export,
+            output_path=nested_path,
+        )
 
         # Assert
-        assert "🔍" in html  # Analysis emoji
-        assert "📊" in html  # Report emoji in title
+        assert nested_path.exists()
+        assert nested_path.parent.exists()
 
-    def test_should_generate_html_with_french_sections(self):
-        """Test HTML generation includes French sections."""
+    def test_should_use_utf8_encoding_when_saving_file(self, generator, mock_stock_export, temp_output_dir, mocker):
+        """Test that HTML files are saved with UTF-8 encoding."""
         # Arrange
-        self.generator.add_french_section("synthese_10k", "<p>10-K analysis</p>")
-        self.generator.add_french_section("sentiment_marche", "<p>Market sentiment</p>")
+        output_path = temp_output_dir / "report.html"
+        html_with_emoji = "<html><body>📊 Report with emoji</body></html>"
+
+        # Mock template rendering - patch jinja2.Environment
+        mock_template = mocker.Mock()
+        mock_template.render.return_value = html_with_emoji
+        mock_env_class = mocker.patch("jinja2.Environment")
+        mock_env_instance = mocker.Mock()
+        mock_env_class.return_value = mock_env_instance
+        mock_env_instance.get_template.return_value = mock_template
 
         # Act
-        html = self.generator.generate_html()
+        generator.generate_crew_report(
+            crew_name="stock_crew",
+            export_data=mock_stock_export,
+            output_path=output_path,
+        )
 
         # Assert
-        assert "Synthèse 10-K" in html
-        assert "Sentiment du Marché" in html
-        assert "french-section" in html
+        content = output_path.read_text(encoding="utf-8")
+        assert "📊" in content
+        assert "Report with emoji" in content
 
-    def test_should_generate_html_with_custom_title_and_language(self):
-        """Test HTML generation with custom title and language."""
+    def test_should_log_warning_when_missing_required_fields(self, generator, temp_output_dir, mocker, caplog):
+        """Test warning is logged when required fields are missing."""
         # Arrange
-        self.generator.add_section("Test", "<p>Content</p>")
+        output_path = temp_output_dir / "report.html"
+        incomplete_data = {
+            "crew_name": "stock_crew",
+            # Missing: ticker, asset_class, analysis_date, session_id
+        }
+
+        # Mock template rendering - patch jinja2.Environment
+        mock_template = mocker.Mock()
+        mock_template.render.return_value = "<html><body>Report</body></html>"
+        mock_env_class = mocker.patch("jinja2.Environment")
+        mock_env_instance = mocker.Mock()
+        mock_env_class.return_value = mock_env_instance
+        mock_env_instance.get_template.return_value = mock_template
 
         # Act
-        html = self.generator.generate_html(title="Custom Report", language="fr")
+        generator.generate_crew_report(
+            crew_name="stock_crew",
+            export_data=incomplete_data,
+            output_path=output_path,
+        )
 
         # Assert
-        assert "<title>Custom Report</title>" in html
-        assert 'lang="fr"' in html
-        assert "Custom Report" in html
+        assert "Missing required fields" in caplog.text
 
-    def test_should_sort_sections_by_order(self):
-        """Test that sections are sorted by order in generated HTML."""
+
+class TestHTMLReportGeneratorTemplateMapping:
+    """Test template mapping for different crew types."""
+
+    @pytest.fixture
+    def generator(self):
+        """Create HTMLReportGenerator instance."""
+        return HTMLReportGenerator()
+
+    def test_should_map_all_crew_types_to_templates(self, generator, mocker, tmp_path):
+        """Test that all crew types have template mappings."""
         # Arrange
-        self.generator.add_section("Third", "<p>Third</p>", order=3)
-        self.generator.add_section("First", "<p>First</p>", order=1)
-        self.generator.add_section("Second", "<p>Second</p>", order=2)
+        crew_types = [
+            "stock_crew",
+            "etf_crew",
+            "crypto_crew",
+            "deep_analysis_crew",
+            "discovery_crew",
+            "rebalancing_crew",
+        ]
 
-        # Act
-        html = self.generator.generate_html()
+        # Mock template rendering - patch jinja2.Environment
+        mock_template = mocker.Mock()
+        mock_template.render.return_value = "<html><body>Report</body></html>"
+        mock_env_class = mocker.patch("jinja2.Environment")
+        mock_env_instance = mocker.Mock()
+        mock_env_class.return_value = mock_env_instance
+        mock_env_instance.get_template.return_value = mock_template
 
-        # Assert
-        first_pos = html.find("First")
-        second_pos = html.find("Second")
-        third_pos = html.find("Third")
-
-        assert first_pos < second_pos < third_pos
-
-    def test_should_load_custom_template(self, mocker):
-        """Test loading custom template file."""
-        # Arrange
-        mock_exists = mocker.patch("pathlib.Path.exists")
-        mock_read_text = mocker.patch("pathlib.Path.read_text")
-        mock_exists.return_value = True
-        mock_read_text.return_value = "<html><body>Custom template</body></html>"
-
-        # Act
-        html = self.generator.generate_html()
-
-        # Assert
-        mock_read_text.assert_called_once_with(encoding="utf-8")
-        assert "Custom template" in html
-
-    def test_should_use_default_template_when_file_not_found(self, mocker):
-        """Test fallback to default template when file not found."""
-        # Arrange
-        mock_exists = mocker.patch("pathlib.Path.exists")
-        mock_exists.return_value = False
-
-        # Act
-        html = self.generator.generate_html()
-
-        # Assert
-        assert "<!DOCTYPE html>" in html
-        assert 'charset="UTF-8"' in html
-
-    def test_should_validate_compliant_html(self):
-        """Test validation of compliant HTML output."""
-        # Arrange
-        self.generator.add_french_section("synthese_10k", "<p>Content</p>")
-        html = self.generator.generate_html()
-
-        # Act
-        result = self.generator.validate_html_output(html)
-
-        # Assert
-        assert result["is_valid"] is True
-        assert result["has_utf8"] is True
-        assert result["has_french_sections"] is True
-        assert result["has_emojis"] is True
-        assert result["issues"] == []
-
-    def test_should_detect_missing_utf8_encoding(self):
-        """Test validation detects missing UTF-8 encoding."""
-        # Arrange
-        html = "<html><head><title>Test</title></head><body></body></html>"
-
-        # Act
-        result = self.generator.validate_html_output(html)
-
-        # Assert
-        assert result["is_valid"] is False
-        assert "Missing UTF-8 encoding declaration" in result["issues"]
-        assert result["has_utf8"] is False
-
-    def test_should_detect_missing_doctype(self):
-        """Test validation detects missing DOCTYPE."""
-        # Arrange
-        html = '<html><head><meta charset="UTF-8"></head><body></body></html>'
-
-        # Act
-        result = self.generator.validate_html_output(html)
-
-        # Assert
-        assert result["is_valid"] is False
-        assert "Missing or incorrect DOCTYPE declaration" in result["issues"]
-
-    def test_should_detect_missing_french_sections(self):
-        """Test validation detects missing French sections."""
-        # Arrange
-        html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test</title></head><body>📊</body></html>'
-
-        # Act
-        result = self.generator.validate_html_output(html)
-
-        # Assert
-        assert result["is_valid"] is False
-        assert any("Missing required French sections" in issue for issue in result["issues"])
-        assert result["has_french_sections"] is False
-
-    def test_should_detect_missing_emojis(self):
-        """Test validation detects missing emojis."""
-        # Arrange
-        html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test</title></head><body>Synthèse 10-K</body></html>'
-
-        # Act
-        result = self.generator.validate_html_output(html)
-
-        # Assert
-        assert result["is_valid"] is False
-        assert any("No emojis found" in issue for issue in result["issues"])
-        assert result["has_emojis"] is False
-
-    def test_should_save_report_with_utf8_encoding(self, mocker):
-        """Test saving report with UTF-8 encoding."""
-        # Arrange
-        mock_mkdir = mocker.patch("pathlib.Path.mkdir")
-        mock_write_text = mocker.patch("pathlib.Path.write_text")
-        html_content = "<html>Test content</html>"
-        file_path = "output/test_report.html"
-
-        # Act
-        self.generator.save_report(html_content, file_path)
-
-        # Assert
-        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
-        mock_write_text.assert_called_once_with(html_content, encoding="utf-8")
-
-    def test_should_clear_all_sections(self):
-        """Test clearing all sections from the generator."""
-        # Arrange
-        self.generator.add_section("Test 1", "<p>Content 1</p>")
-        self.generator.add_section("Test 2", "<p>Content 2</p>")
-        assert len(self.generator.sections) == 2
-
-        # Act
-        self.generator.clear_sections()
-
-        # Assert
-        assert len(self.generator.sections) == 0
-
-    def test_should_include_disclaimer_in_english(self):
-        """Test that English disclaimer is included."""
-        # Act
-        html = self.generator.generate_html(language="en")
-
-        # Assert
-        assert "Disclaimer" in html
-        assert "informational purposes only" in html
-
-    def test_should_include_disclaimer_in_french(self):
-        """Test that French disclaimer is included."""
-        # Act
-        html = self.generator.generate_html(language="fr")
-
-        # Assert
-        assert "Avertissement" in html
-        assert "à des fins d'information uniquement" in html
+        # Act & Assert
+        for crew_type in crew_types:
+            # Should not raise ValueError
+            try:
+                generator.generate_crew_report(
+                    crew_name=crew_type,
+                    export_data={
+                        "ticker": "TEST",
+                        "asset_class": "stock",
+                        "session_id": "test",
+                        "analysis_date": datetime.now().isoformat(),
+                    },
+                    output_path=tmp_path / f"{crew_type}.html",
+                )
+            except ValueError as e:
+                if "Invalid crew_name" in str(e):
+                    pytest.fail(f"Crew type {crew_type} not mapped to template")

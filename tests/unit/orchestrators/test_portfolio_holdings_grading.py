@@ -25,14 +25,10 @@ class TestPortfolioHoldingsGrading:
     @pytest.fixture
     def mock_validator(self, mocker):
         """Mock the ticker validation tool."""
-        mock = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         return mock
 
-    def test_should_assign_b_grade_to_valid_stock_with_shallow_validation(
-        self, processor, mocker
-    ):
+    def test_should_assign_b_grade_to_valid_stock_with_shallow_validation(self, processor, mocker):
         """Test that valid stocks receive B grade (75%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -59,9 +55,7 @@ class TestPortfolioHoldingsGrading:
         assert decision.grade == "B", f"Expected B grade, got {decision.grade}"
         assert decision.decision == "KEEP", "Valid stock with B grade should be KEEP"
 
-    def test_should_assign_b_grade_to_msft_with_shallow_validation(
-        self, processor, mocker
-    ):
+    def test_should_assign_b_grade_to_msft_with_shallow_validation(self, processor, mocker):
         """Test that MSFT receives B grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -88,9 +82,7 @@ class TestPortfolioHoldingsGrading:
         assert decision.grade == "B"
         assert decision.decision == "KEEP"
 
-    def test_should_assign_b_grade_to_asml_with_shallow_validation(
-        self, processor, mocker
-    ):
+    def test_should_assign_b_grade_to_asml_with_shallow_validation(self, processor, mocker):
         """Test that ASML receives B grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -117,9 +109,7 @@ class TestPortfolioHoldingsGrading:
         assert decision.grade == "B"
         assert decision.decision == "KEEP"
 
-    def test_should_assign_b_plus_grade_to_valid_etf_with_shallow_validation(
-        self, processor, mocker
-    ):
+    def test_should_assign_b_plus_grade_to_valid_etf_with_shallow_validation(self, processor, mocker):
         """Test that valid ETFs receive B+ grade (80%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -173,9 +163,7 @@ class TestPortfolioHoldingsGrading:
         assert decision.grade == "F", f"Expected F grade, got {decision.grade}"
         assert decision.decision == "SELL"
 
-    def test_should_include_shallow_validation_warning_in_rationale(
-        self, processor, mocker
-    ):
+    def test_should_include_shallow_validation_warning_in_rationale(self, processor, mocker):
         """Test that rationale includes shallow validation warning."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -243,9 +231,7 @@ class TestPortfolioHoldingsGrading:
         grade_info = score_to_grade(score)
         assert grade_info.grade == "F"
 
-    def test_should_process_multiple_quality_stocks_with_b_grades(
-        self, processor, mocker
-    ):
+    def test_should_process_multiple_quality_stocks_with_b_grades(self, processor, mocker):
         """Test processing multiple high-quality stocks."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -292,9 +278,7 @@ class TestPortfolioHoldingsGrading:
             assert decision.composite_score == 0.75
             assert decision.decision == "KEEP"
 
-    def test_should_indicate_data_freshness_as_fresh_for_valid_holdings(
-        self, processor, mocker
-    ):
+    def test_should_indicate_data_freshness_as_fresh_for_valid_holdings(self, processor, mocker):
         """Test that valid holdings have 'fresh' data freshness."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -319,9 +303,7 @@ class TestPortfolioHoldingsGrading:
         # Assert
         assert decision.data_freshness == "fresh"
 
-    def test_should_indicate_data_freshness_as_stale_for_invalid_holdings(
-        self, processor, mocker
-    ):
+    def test_should_indicate_data_freshness_as_stale_for_invalid_holdings(self, processor, mocker):
         """Test that invalid holdings have 'stale' data freshness."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")

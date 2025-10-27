@@ -5,8 +5,6 @@ Unit tests for portfolio review orchestrator.
 import json
 from pathlib import Path
 
-import pytest
-
 from finwiz.orchestrators.portfolio_review import (
     build_portfolio_review,
     get_csv_paths,
@@ -21,18 +19,13 @@ class TestPortfolioReview:
         """Test that all holdings from CSV files are processed."""
         # Arrange - Create test CSV files
         stock_csv = tmp_path / "stock.csv"
-        stock_csv.write_text(
-            "Name,Ticker,Currency\n"
-            "Apple Inc.,AAPL,USD\n"
-            "Microsoft Corp.,MSFT,USD\n"
-            "Invalid Stock,INVALID,USD\n"
-        )
+        stock_csv.write_text("Name,Ticker,Currency\nApple Inc.,AAPL,USD\nMicrosoft Corp.,MSFT,USD\nInvalid Stock,INVALID,USD\n")
 
         etf_csv = tmp_path / "etf.csv"
-        etf_csv.write_text("Name,Ticker,Currency\n" "S&P 500 ETF,SPY,USD\n" "Tech ETF,QQQ,USD\n")
+        etf_csv.write_text("Name,Ticker,Currency\nS&P 500 ETF,SPY,USD\nTech ETF,QQQ,USD\n")
 
         crypto_csv = tmp_path / "crypto.csv"
-        crypto_csv.write_text("Name,Ticker,Currency\n" "Bitcoin,BTC-USD,USD\n")
+        crypto_csv.write_text("Name,Ticker,Currency\nBitcoin,BTC-USD,USD\n")
 
         # Mock validation to return success for known tickers
         def mock_validate(symbol, asset_class):
@@ -40,9 +33,7 @@ class TestPortfolioReview:
                 return {"valid": True, "meta": {"source": "yahoo"}}
             return {"valid": False, "reason": "Ticker not found"}
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.side_effect = mock_validate
 
         # Act
@@ -64,16 +55,14 @@ class TestPortfolioReview:
         """Test that validation status is included for each holding."""
         # Arrange
         stock_csv = tmp_path / "stock.csv"
-        stock_csv.write_text("Name,Ticker,Currency\n" "Apple Inc.,AAPL,USD\n" "Invalid,BAD,USD\n")
+        stock_csv.write_text("Name,Ticker,Currency\nApple Inc.,AAPL,USD\nInvalid,BAD,USD\n")
 
         def mock_validate(symbol, asset_class):
             if symbol == "AAPL":
                 return {"valid": True, "meta": {"source": "yahoo"}}
             return {"valid": False, "reason": "Not found"}
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.side_effect = mock_validate
 
         # Act
@@ -93,11 +82,9 @@ class TestPortfolioReview:
         """Test that count of holdings processed vs CSV is logged."""
         # Arrange
         stock_csv = tmp_path / "stock.csv"
-        stock_csv.write_text("Name,Ticker,Currency\n" "Apple Inc.,AAPL,USD\n" "Microsoft,MSFT,USD\n")
+        stock_csv.write_text("Name,Ticker,Currency\nApple Inc.,AAPL,USD\nMicrosoft,MSFT,USD\n")
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
 
         # Act
@@ -114,16 +101,14 @@ class TestPortfolioReview:
         """Test that processing summary is included in saved report."""
         # Arrange
         stock_csv = tmp_path / "stock.csv"
-        stock_csv.write_text("Name,Ticker,Currency\n" "Apple Inc.,AAPL,USD\n" "Invalid,BAD,USD\n")
+        stock_csv.write_text("Name,Ticker,Currency\nApple Inc.,AAPL,USD\nInvalid,BAD,USD\n")
 
         def mock_validate(symbol, asset_class):
             if symbol == "AAPL":
                 return {"valid": True, "meta": {"source": "yahoo"}}
             return {"valid": False, "reason": "Not found"}
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.side_effect = mock_validate
 
         review, summary = build_portfolio_review(stock_csv=stock_csv)
@@ -149,11 +134,9 @@ class TestPortfolioReview:
         """Test that holdings are included even if validation fails."""
         # Arrange
         stock_csv = tmp_path / "stock.csv"
-        stock_csv.write_text("Name,Ticker,Currency\n" "Invalid Stock,INVALID,USD\n")
+        stock_csv.write_text("Name,Ticker,Currency\nInvalid Stock,INVALID,USD\n")
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.return_value = {
             "valid": False,
             "reason": "Ticker not found",
@@ -174,9 +157,7 @@ class TestPortfolioReview:
         stock_csv = tmp_path / "stock.csv"
         stock_csv.write_text("Name,Ticker,Currency\n")  # Header only
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
 
         # Act
         review, summary = build_portfolio_review(stock_csv=stock_csv)
@@ -190,9 +171,7 @@ class TestPortfolioReview:
         # Arrange
         stock_csv = tmp_path / "nonexistent.csv"
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
 
         # Act
         review, summary = build_portfolio_review(stock_csv=stock_csv)
@@ -205,14 +184,12 @@ class TestPortfolioReview:
         """Test that holdings are tracked by asset class."""
         # Arrange
         stock_csv = tmp_path / "stock.csv"
-        stock_csv.write_text("Name,Ticker,Currency\n" "Apple,AAPL,USD\n" "Microsoft,MSFT,USD\n")
+        stock_csv.write_text("Name,Ticker,Currency\nApple,AAPL,USD\nMicrosoft,MSFT,USD\n")
 
         etf_csv = tmp_path / "etf.csv"
-        etf_csv.write_text("Name,Ticker,Currency\n" "S&P 500,SPY,USD\n")
+        etf_csv.write_text("Name,Ticker,Currency\nS&P 500,SPY,USD\n")
 
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
 
         # Act

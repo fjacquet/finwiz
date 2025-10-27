@@ -28,6 +28,7 @@ from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.crew_exports import ETFCrewExport
 from finwiz.schemas.etf import (
     ETFFactsheet,
     ETFMarketTrend,
@@ -37,6 +38,7 @@ from finwiz.schemas.etf import (
 )
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_etf_crew_tools
+from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
 from finwiz.utils.task_decorators import async_task, sync_task
@@ -126,6 +128,17 @@ class EtfCrew:
             llm=self._get_configured_llm(),
         )
 
+    @final_reporter
+    @agent
+    def investment_reporter(self) -> Agent:
+        """Consolidate analysis findings into ETFCrewExport."""
+        return Agent(
+            config=self.agents_config["investment_reporter"],
+            tools=[],  # MUST be empty - enforced by @final_reporter decorator
+            verbose=True,
+            llm=self._get_configured_llm(),
+        )
+
     @async_task
     @task
     def etf_market_trends_task(self) -> Task:
@@ -171,6 +184,16 @@ class EtfCrew:
             config=self.tasks_config["etf_investment_strategy_task"],
             verbose=True,
             reasoning=False,  # Disable reasoning to prevent infinite loops
+        )
+
+    @sync_task
+    @task
+    def generate_export_task(self) -> Task:
+        """Generate ETFCrewExport JSON from all analysis findings."""
+        return Task(
+            config=self.tasks_config["generate_export_task"],
+            output_pydantic=ETFCrewExport,
+            verbose=True,
         )
 
     # @sync_task

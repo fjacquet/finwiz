@@ -93,9 +93,7 @@ class TestInitializeFlowWithResume:
         mocker.patch("finwiz.flow_state.FinwizState", mock_state_class)
         return mock_state_class
 
-    def test_should_start_fresh_when_no_resume_flag_set(
-        self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state
-    ):
+    def test_should_start_fresh_when_no_resume_flag_set(self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state):
         """Test that --no-resume flag forces fresh start."""
         # Arrange
         args = argparse.Namespace(resume_uuid=None, no_resume=True)
@@ -110,9 +108,7 @@ class TestInitializeFlowWithResume:
         mock_finwiz_flow.assert_called_once_with(state=mock_state_instance)
         mock_flow_state_manager.discover_persisted_states.assert_not_called()
 
-    def test_should_load_specific_uuid_when_provided(
-        self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state
-    ):
+    def test_should_load_specific_uuid_when_provided(self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state):
         """Test loading specific UUID via --resume-uuid."""
         # Arrange
         test_uuid = "abc123def456"
@@ -152,9 +148,7 @@ class TestInitializeFlowWithResume:
         assert exc_info.value.code == 1
         mock_flow_state_manager.load_flow_state_by_uuid.assert_called_once_with(test_uuid)
 
-    def test_should_start_fresh_when_no_states_found(
-        self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state
-    ):
+    def test_should_start_fresh_when_no_states_found(self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state):
         """Test starting fresh when no persisted states exist."""
         # Arrange
         args = argparse.Namespace(resume_uuid=None, no_resume=False)
@@ -171,9 +165,7 @@ class TestInitializeFlowWithResume:
         mock_finwiz_state.assert_called_once()
         mock_finwiz_flow.assert_called_once_with(state=mock_state_instance)
 
-    def test_should_prompt_user_when_states_exist(
-        self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state
-    ):
+    def test_should_prompt_user_when_states_exist(self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state):
         """Test interactive prompt when states exist."""
         # Arrange
         args = argparse.Namespace(resume_uuid=None, no_resume=False)
@@ -212,9 +204,7 @@ class TestInitializeFlowWithResume:
         assert mock_state_instance.resume_from_checkpoint is True
         assert mock_state_instance.checkpoint_uuid == "state1"
 
-    def test_should_start_fresh_when_user_selects_fresh(
-        self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state
-    ):
+    def test_should_start_fresh_when_user_selects_fresh(self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state):
         """Test starting fresh when user selects 'Start Fresh' option."""
         # Arrange
         args = argparse.Namespace(resume_uuid=None, no_resume=False)
@@ -234,9 +224,7 @@ class TestInitializeFlowWithResume:
         mock_finwiz_state.assert_called_once()
         mock_finwiz_flow.assert_called_once_with(state=mock_state_instance)
 
-    def test_should_fallback_to_fresh_when_load_fails(
-        self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state
-    ):
+    def test_should_fallback_to_fresh_when_load_fails(self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state):
         """Test fallback to fresh start when state loading fails."""
         # Arrange
         args = argparse.Namespace(resume_uuid=None, no_resume=False)
@@ -270,9 +258,7 @@ class TestInitializeFlowWithResume:
         with pytest.raises(KeyboardInterrupt):
             initialize_flow_with_resume(args)
 
-    def test_should_exit_when_state_creation_fails_with_uuid(
-        self, mocker, mock_flow_state_manager, mock_finwiz_state
-    ):
+    def test_should_exit_when_state_creation_fails_with_uuid(self, mocker, mock_flow_state_manager, mock_finwiz_state):
         """Test error handling when FinwizState creation fails with loaded data."""
         # Arrange
         test_uuid = "abc123def456"

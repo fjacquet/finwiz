@@ -6,7 +6,6 @@ inflation rates, interest rate trends, and macroeconomic indicators.
 """
 
 import logging
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -39,9 +38,7 @@ class MarketContextSummary(BaseModel):
     vix_indicators: VIXIndicators = Field(..., description="VIX volatility indicators")
     macro_indicators: MacroIndicators = Field(..., description="Macroeconomic indicators")
     risk_environment: str = Field(..., description="Risk environment (favorable/neutral/challenging)")
-    allocation_implications: list[str] = Field(
-        default_factory=list, description="How context affects allocations"
-    )
+    allocation_implications: list[str] = Field(default_factory=list, description="How context affects allocations")
 
 
 class MarketContextExtractor:
@@ -122,8 +119,7 @@ class MarketContextExtractor:
             )
 
             self.logger.info(
-                f"Extracted VIX indicators: {current_vix:.2f} "
-                f"({vix_percentile:.1f}th percentile, {volatility_regime} regime)"
+                f"Extracted VIX indicators: {current_vix:.2f} ({vix_percentile:.1f}th percentile, {volatility_regime} regime)"
             )
             return indicators
 

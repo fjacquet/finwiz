@@ -1,0 +1,479 @@
+/* FinWiz Documentation Custom Styles */
+
+/* Root variables for consistent theming */
+:root {
+  --finwiz-primary: #2563eb;
+  --finwiz-accent: #3b82f6;
+  --finwiz-success: #10b981;
+  --finwiz-warning: #f59e0b;
+  --finwiz-error: #ef4444;
+  --finwiz-gray: #6b7280;
+}
+
+/* Custom color classes for financial grades */
+.grade-a-plus {
+  color: var(--finwiz-success);
+  font-weight: bold;
+}
+
+.grade-a {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.grade-b {
+  color: var(--finwiz-warning);
+  font-weight: 500;
+}
+
+.grade-c {
+  color: #f97316;
+}
+
+.grade-d {
+  color: var(--finwiz-error);
+}
+
+.grade-f {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+/* Financial data tables */
+.financial-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.financial-table th {
+  background-color: var(--finwiz-primary);
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.financial-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.financial-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] .financial-table tr:hover {
+  background-color: #374151;
+}
+
+[data-md-color-scheme="slate"] .financial-table td {
+  border-bottom-color: #4b5563;
+}
+
+/* Code block enhancements */
+.highlight .hll {
+  background-color: #ffffcc;
+}
+
+/* Custom admonition for financial warnings */
+.md-typeset .admonition.financial-warning,
+.md-typeset details.financial-warning {
+  border-color: var(--finwiz-warning);
+}
+
+.md-typeset .financial-warning > .admonition-title,
+.md-typeset .financial-warning > summary {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: var(--finwiz-warning);
+}
+
+.md-typeset .financial-warning > .admonition-title::before,
+.md-typeset .financial-warning > summary::before {
+  background-color: var(--finwiz-warning);
+  -webkit-mask-image: var(--md-admonition-icon--warning);
+  mask-image: var(--md-admonition-icon--warning);
+}
+
+/* Schema documentation styling */
+.schema-property {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border-left: 3px solid var(--finwiz-accent);
+  background-color: #f8fafc;
+}
+
+[data-md-color-scheme="slate"] .schema-property {
+  background-color: #1e293b;
+}
+
+.schema-property-name {
+  font-weight: 600;
+  color: var(--finwiz-primary);
+}
+
+.schema-property-type {
+  font-family: var(--md-code-font);
+  font-size: 0.85em;
+  color: var(--finwiz-gray);
+}
+
+/* Navigation enhancements */
+.md-nav__item--active > .md-nav__link {
+  color: var(--finwiz-primary);
+}
+
+/* Custom button styles */
+.finwiz-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: var(--finwiz-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.finwiz-button:hover {
+  background-color: #1d4ed8;
+  color: white;
+}
+
+/* Mobile and accessibility optimizations */
+
+/* Enhanced responsive design */
+@media screen and (max-width: 768px) {
+  .financial-table {
+    font-size: 0.8rem;
+    overflow-x: auto;
+    display: block;
+    white-space: nowrap;
+  }
+  
+  .financial-table th,
+  .financial-table td {
+    padding: 0.5rem;
+    min-width: 100px;
+  }
+  
+  /* Stack content cards on mobile */
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  /* Improve search on mobile */
+  .search-filters {
+    padding: 4px 8px;
+  }
+  
+  .search-filter-btn {
+    margin-right: 4px;
+    margin-bottom: 4px;
+    padding: 6px 8px;
+    font-size: 0.75em;
+  }
+  
+  /* Better touch targets */
+  .md-nav__link {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Improve code blocks on mobile */
+  .highlight {
+    overflow-x: auto;
+  }
+  
+  pre code {
+    white-space: pre;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  /* Extra small screens */
+  .financial-table {
+    font-size: 0.75rem;
+  }
+  
+  .content-card {
+    padding: 0.75rem;
+  }
+  
+  /* Smaller search elements */
+  .search-help {
+    font-size: 0.75em;
+    padding: 4px 8px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .grade-a-plus,
+  .grade-a {
+    color: #006600;
+    font-weight: bold;
+  }
+  
+  .grade-d,
+  .grade-f {
+    color: #cc0000;
+    font-weight: bold;
+  }
+  
+  .search-highlight {
+    background-color: #ffff00;
+    color: #000000;
+    outline: 2px solid #000000;
+  }
+  
+  .finwiz-button {
+    border: 2px solid #000000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .search-filter-btn,
+  .finwiz-button,
+  .content-card {
+    transition: none;
+  }
+  
+  .md-nav__link {
+    transition: none;
+  }
+}
+
+/* Focus management for accessibility */
+.md-nav__link:focus,
+.search-filter-btn:focus,
+.finwiz-button:focus {
+  outline: 2px solid var(--finwiz-primary);
+  outline-offset: 2px;
+}
+
+/* Skip link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--finwiz-primary);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Improve table accessibility */
+.financial-table caption {
+  font-weight: bold;
+  text-align: left;
+  padding: 0.5rem 0;
+  color: var(--finwiz-primary);
+}
+
+/* Better form controls */
+input[type="search"]:focus {
+  outline: 2px solid var(--finwiz-primary);
+  outline-offset: 1px;
+}
+
+/* Improve link visibility */
+a:focus {
+  outline: 2px solid var(--finwiz-primary);
+  outline-offset: 1px;
+}
+
+/* Dark mode accessibility improvements */
+[data-md-color-scheme="slate"] .search-highlight {
+  background-color: #fbbf24;
+  color: #000000;
+}
+
+[data-md-color-scheme="slate"] .grade-a-plus,
+[data-md-color-scheme="slate"] .grade-a {
+  color: #34d399;
+}
+
+[data-md-color-scheme="slate"] .grade-d,
+[data-md-color-scheme="slate"] .grade-f {
+  color: #f87171;
+}
+
+/* Footer accessibility section */
+.md-footer-accessibility {
+  padding: 1rem 0;
+  border-top: 1px solid var(--md-default-fg-color--lightest);
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--md-default-fg-color--light);
+}
+
+.md-footer-accessibility p {
+  margin: 0.5rem 0;
+}
+
+.md-footer-accessibility kbd {
+  background: var(--md-default-fg-color--lightest);
+  border: 1px solid var(--md-default-fg-color--light);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 0.7em;
+  font-family: var(--md-code-font);
+}
+
+/* Enhanced mobile navigation */
+@media screen and (max-width: 768px) {
+  .md-footer-accessibility {
+    padding: 0.5rem 0;
+    font-size: 0.75rem;
+  }
+  
+  /* Improve mobile menu accessibility */
+  .md-nav--primary .md-nav__item {
+    border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  }
+  
+  .md-nav--primary .md-nav__link {
+    padding: 1rem;
+    min-height: 48px;
+  }
+}
+
+/* Search enhancements */
+.search-highlight {
+  background-color: var(--md-accent-fg-color);
+  color: var(--md-accent-bg-color);
+  padding: 1px 2px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+.search-filters {
+  background: var(--md-default-bg-color);
+}
+
+.search-filter-btn {
+  transition: all 0.2s ease;
+}
+
+.search-filter-btn:hover {
+  background: var(--md-primary-fg-color--light) !important;
+  border-color: var(--md-primary-fg-color) !important;
+}
+
+.search-category {
+  font-family: var(--md-code-font);
+}
+
+.search-help {
+  border-top: 1px solid var(--md-default-fg-color--lightest);
+  background: var(--md-code-bg-color);
+}
+
+.search-help kbd {
+  background: var(--md-default-fg-color--lightest);
+  border: 1px solid var(--md-default-fg-color--light);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.7em;
+  font-family: var(--md-code-font);
+}
+
+/* Tag styling */
+.md-tags {
+  margin: 1rem 0;
+}
+
+.md-tag {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  margin: 0.1rem 0.2rem 0.1rem 0;
+  background-color: var(--finwiz-accent);
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.md-tag:hover {
+  background-color: var(--finwiz-primary);
+  color: white;
+}
+
+/* Content discovery enhancements */
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.content-card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: var(--md-default-bg-color);
+  transition: box-shadow 0.2s;
+}
+
+.content-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.content-card h3 {
+  margin-top: 0;
+  color: var(--finwiz-primary);
+}
+
+.content-card .category-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: var(--finwiz-gray);
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* Print styles */
+@media print {
+  .financial-table {
+    break-inside: avoid;
+  }
+  
+  .schema-property {
+    break-inside: avoid;
+  }
+  
+  .search-filters,
+  .search-help {
+    display: none;
+  }
+}

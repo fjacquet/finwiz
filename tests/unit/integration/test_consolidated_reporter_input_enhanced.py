@@ -140,12 +140,8 @@ class TestConsolidatedReporterInputEnhanced:
             "data_sources": ["discovery"],
             "total_data_points": 1,
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
-        mocker.patch.object(
-            data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
+        mocker.patch.object(data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation)
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -165,12 +161,8 @@ class TestConsolidatedReporterInputEnhanced:
             "consolidated_crew_data": {"discovery": mock_discovery_data_with_validation},
             "core_analysis_summary": {},
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
-        mocker.patch.object(
-            data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
+        mocker.patch.object(data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation)
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -190,12 +182,8 @@ class TestConsolidatedReporterInputEnhanced:
             "consolidated_crew_data": {"discovery": mock_discovery_data_with_validation},
             "core_analysis_summary": {},
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
-        mocker.patch.object(
-            data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
+        mocker.patch.object(data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation)
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -215,17 +203,11 @@ class TestConsolidatedReporterInputEnhanced:
             "consolidated_crew_data": {"discovery": mock_discovery_data_with_validation},
             "core_analysis_summary": {},
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
-        mocker.patch.object(
-            data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
+        mocker.patch.object(data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation)
 
         # Act
-        result = data_accessor.get_consolidated_reporter_input(
-            max_age_hours=24, current_portfolio_grade=0.70
-        )
+        result = data_accessor.get_consolidated_reporter_input(max_age_hours=24, current_portfolio_grade=0.70)
 
         # Assert
         assert "performance_report" in result
@@ -233,18 +215,14 @@ class TestConsolidatedReporterInputEnhanced:
         assert "total_candidates_analyzed" in result["performance_report"]
         assert "portfolio_impact" in result["performance_report"]
 
-    def test_should_handle_missing_discovery_data_gracefully(
-        self, data_accessor: CrewDataAccessor, mocker
-    ) -> None:
+    def test_should_handle_missing_discovery_data_gracefully(self, data_accessor: CrewDataAccessor, mocker) -> None:
         """Test that missing discovery data doesn't break consolidated reporter input."""
         # Arrange
         base_reporter_input = {
             "consolidated_crew_data": {},
             "core_analysis_summary": {},
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
         mocker.patch.object(data_accessor, "get_discovery_data", return_value=None)
 
         # Act
@@ -269,33 +247,23 @@ class TestConsolidatedReporterInputEnhanced:
             "consolidated_crew_data": {"discovery": mock_discovery_data_with_validation},
             "core_analysis_summary": {},
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
 
-        mock_get_performance_report = mocker.patch.object(
-            data_accessor, "get_performance_report", return_value={"test": "data"}
-        )
+        mock_get_performance_report = mocker.patch.object(data_accessor, "get_performance_report", return_value={"test": "data"})
 
         # Act
-        result = data_accessor.get_consolidated_reporter_input(
-            max_age_hours=24, current_portfolio_grade=0.65
-        )
+        result = data_accessor.get_consolidated_reporter_input(max_age_hours=24, current_portfolio_grade=0.65)
 
         # Assert
         mock_get_performance_report.assert_called_once_with(24, 0.65)
         assert result["performance_report"] == {"test": "data"}
 
-    def test_should_return_base_input_when_enhanced_extraction_fails(
-        self, data_accessor: CrewDataAccessor, mocker
-    ) -> None:
+    def test_should_return_base_input_when_enhanced_extraction_fails(self, data_accessor: CrewDataAccessor, mocker) -> None:
         """Test that base reporter input is returned even if enhanced extraction fails."""
         # Arrange
         base_input = {"consolidated_crew_data": {}, "core_analysis_summary": {}}
         mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_input)
-        mocker.patch.object(
-            data_accessor, "get_backtesting_metrics", side_effect=Exception("Extraction failed")
-        )
+        mocker.patch.object(data_accessor, "get_backtesting_metrics", side_effect=Exception("Extraction failed"))
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -318,21 +286,14 @@ class TestConsolidatedReporterInputEnhanced:
             "consolidated_crew_data": {"discovery": mock_discovery_data_with_validation},
             "core_analysis_summary": {},
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
-        mocker.patch.object(
-            data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
+        mocker.patch.object(data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation)
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
 
         # Assert
-        assert any(
-            "Enhanced reporter input generated with additional data" in record.message
-            for record in caplog.records
-        )
+        assert any("Enhanced reporter input generated with additional data" in record.message for record in caplog.records)
 
     def test_should_include_all_enhanced_data_fields_in_result(
         self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker
@@ -343,12 +304,8 @@ class TestConsolidatedReporterInputEnhanced:
             "consolidated_crew_data": {"discovery": mock_discovery_data_with_validation},
             "core_analysis_summary": {},
         }
-        mocker.patch.object(
-            data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input
-        )
-        mocker.patch.object(
-            data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation
-        )
+        mocker.patch.object(data_accessor.cache, "get_consolidated_reporter_input", return_value=base_reporter_input)
+        mocker.patch.object(data_accessor, "get_discovery_data", return_value=mock_discovery_data_with_validation)
 
         # Act
         result = data_accessor.get_consolidated_reporter_input(max_age_hours=24)
@@ -363,9 +320,7 @@ class TestConsolidatedReporterInputEnhanced:
         assert "consolidated_crew_data" in result
         assert "core_analysis_summary" in result
 
-    def test_should_maintain_backward_compatibility_with_existing_fields(
-        self, data_accessor: CrewDataAccessor, mocker
-    ) -> None:
+    def test_should_maintain_backward_compatibility_with_existing_fields(self, data_accessor: CrewDataAccessor, mocker) -> None:
         """Test that existing fields in reporter input are not affected by enhanced data."""
         # Arrange
         base_input = {

@@ -29,7 +29,7 @@
 
 **Solution**:
 
-- Updated `.env` file to use `gpt-4o-mini` (valid OpenAI model)
+- Updated `.env` file to use `gpt-5-mini` (valid OpenAI model)
 - Changed both `MODEL` and `OPENAI_MODEL_NAME` environment variables
 
 **Files Modified**:
@@ -95,8 +95,8 @@ MODEL=openai/gpt-5-mini
 OPENAI_MODEL_NAME=gpt-5-mini
 
 # After (valid)
-MODEL=openai/gpt-4o-mini
-OPENAI_MODEL_NAME=gpt-4o-mini
+MODEL=openai/gpt-5-mini
+OPENAI_MODEL_NAME=gpt-5-mini
 ```
 
 ## Testing

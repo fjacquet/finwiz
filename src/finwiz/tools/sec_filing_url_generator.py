@@ -7,12 +7,8 @@ with CIK lookup, URL verification, and proper fallback handling.
 Uses sec-edgar-downloader for reliable filing downloads.
 """
 
-import json
-from pathlib import Path
-
 import httpx
 from pydantic import BaseModel, Field
-from sec_edgar_downloader import Downloader
 
 from finwiz.tools.logger import get_logger
 from finwiz.utils.url_validator import get_url_validator
@@ -200,70 +196,65 @@ class SECFilingURLGenerator:
     def get_direct_filing_url(self, ticker: str, filing_type: str = "10-K") -> dict | None:
         """
         Get direct URL to actual filing document using SEC EDGAR API.
-        
+
         Uses the official SEC API method as documented:
         1. Get CIK from ticker using company_tickers.json
         2. Get filing metadata from submissions/CIK{cik}.json
         3. Construct direct document URL from accessionNumber and primaryDocument
-        
+
         Args:
             ticker: Stock ticker symbol
             filing_type: SEC filing type (e.g., '10-K', '10-Q')
-        
+
         Returns:
             Dictionary with direct_url, browse_url, filing_date, etc. or None
+
         """
         ticker = ticker.upper().strip()
         filing_type = filing_type.upper().strip()
-        
+
         cik = self.get_cik(ticker)
         if not cik:
             logger.warning(f"Cannot get direct filing URL for {ticker}: CIK not found")
             return None
-        
+
         try:
             # Use SEC EDGAR API to get filing metadata
             # Format: https://data.sec.gov/submissions/CIK{cik}.json
             url = f"https://data.sec.gov/submissions/CIK{cik}.json"
-            
+
             # CRITICAL: SEC requires proper User-Agent with contact info
             # Format: CompanyName Name email@company.com
-            headers = {
-                "User-Agent": "FinWiz Financial Analysis Tool contact@finwiz.com",
-                "Accept": "application/json"
-            }
-            
+            headers = {"User-Agent": "FinWiz Financial Analysis Tool contact@finwiz.com", "Accept": "application/json"}
+
             with httpx.Client(timeout=self.timeout) as client:
                 response = client.get(url, headers=headers)
                 response.raise_for_status()
                 data = response.json()
-            
+
             # Find latest filing of requested type in recent filings
             filings = data.get("filings", {}).get("recent", {})
             forms = filings.get("form", [])
-            
+
             for i, form in enumerate(forms):
                 if form == filing_type:
                     accession = filings["accessionNumber"][i]
                     primary_doc = filings["primaryDocument"][i]
                     filing_date = filings["filingDate"][i]
                     report_date = filings.get("reportDate", [None] * len(forms))[i]
-                    
+
                     # Construct direct document URL
                     # Format: https://www.sec.gov/Archives/edgar/data/{CIK}/{accession_no_dash}/{primary_doc}
                     accession_no_dash = accession.replace("-", "")
                     cik_no_zeros = str(int(cik))  # Remove leading zeros
-                    
-                    direct_url = (
-                        f"https://www.sec.gov/Archives/edgar/data/"
-                        f"{cik_no_zeros}/{accession_no_dash}/{primary_doc}"
-                    )
-                    
+
+                    direct_url = f"https://www.sec.gov/Archives/edgar/data/{cik_no_zeros}/{accession_no_dash}/{primary_doc}"
+
                     # Also provide browse URL for user reference
                     browse_url = self.get_company_browse_url(cik, filing_type)
-                    
+
                     logger.info(f"Found direct filing URL for {ticker} {filing_type}: {direct_url}")
-                    
+
                     return {
                         "direct_url": direct_url,
                         "browse_url": browse_url,
@@ -274,12 +265,12 @@ class SECFilingURLGenerator:
                         "cik": cik,
                         "ticker": ticker,
                         "filing_type": filing_type,
-                        "available": True
+                        "available": True,
                     }
-            
+
             logger.warning(f"No {filing_type} filings found for {ticker}")
             return None
-            
+
         except Exception as e:
             logger.error(f"Failed to get direct filing URL for {ticker}: {e}")
             return None
@@ -287,7 +278,7 @@ class SECFilingURLGenerator:
     def get_filing_metadata(self, ticker: str, filing_type: str = "10-K") -> dict | None:
         """
         Get filing metadata including URL, CIK, and filing type.
-        
+
         Now uses get_direct_filing_url() to get actual document URLs.
 
         Args:
@@ -303,7 +294,7 @@ class SECFilingURLGenerator:
 
         # Try to get direct filing URL first
         direct_filing = self.get_direct_filing_url(ticker, filing_type)
-        
+
         if direct_filing:
             return {
                 "ticker": ticker,
@@ -315,7 +306,7 @@ class SECFilingURLGenerator:
                 "filing_date": direct_filing["filing_date"],
                 "available": True,
             }
-        
+
         # Fallback to browse URL only
         cik = self.get_cik(ticker)
         if not cik:
@@ -323,11 +314,8 @@ class SECFilingURLGenerator:
             return None
 
         browse_url = self.get_company_browse_url(cik, filing_type)
-        
-        logger.warning(
-            f"Could not get direct filing URL for {ticker} ({filing_type}), "
-            f"returning browse URL only"
-        )
+
+        logger.warning(f"Could not get direct filing URL for {ticker} ({filing_type}), returning browse URL only")
 
         return {
             "ticker": ticker,

@@ -26,6 +26,7 @@ def analyze_stock(ticker: str):
 ```
 
 **Rules:**
+
 - Return type required (use `-> None` if no return)
 - All parameters must have type hints
 - Use `typing` module: `Optional`, `Union`, `List`, `Dict`, `Any`
@@ -53,12 +54,20 @@ api_key = "sk-proj-abc123..."
 
 ### Required Environment Variables
 
+**Core APIs (Required):**
+
 - `OPENAI_API_KEY` - OpenAI API
 - `SERPER_API_KEY` - Serper search
 - `FIRECRAWL_API_KEY` - Web scraping
 - `ALPHA_VANTAGE_API_KEY` - Financial data
-- `TWELVE_DATA_API_KEY` - Market data
-- `PERPLEXITY_API_KEY` - Search API
+
+**Enhanced Features (Optional):**
+
+- `TWELVE_DATA_API_KEY` - Market data (technical analysis)
+- `PPLX_API_KEY` - Perplexity search (enhanced research)
+- `SEC_API_API_KEY` - SEC filings (optional, see sec-api.md for status)
+- `CHART_IMG_API_KEY` - Chart generation
+- `COINMARKETCAP_API_KEY` - Cryptocurrency data
 
 ### Logging Security
 
@@ -97,6 +106,7 @@ class TickerInput(BaseModel):
 ```
 
 **Validation Requirements:**
+
 - `extra='forbid'` - Reject unknown fields
 - `Field()` constraints - pattern, min_length, ge, le
 - `@field_validator` - Complex validation logic

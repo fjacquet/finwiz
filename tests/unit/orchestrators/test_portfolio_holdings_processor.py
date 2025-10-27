@@ -6,13 +6,11 @@ processing all holdings including failed validations, and generating processing 
 """
 
 import csv
-from pathlib import Path
 
 import pytest
+
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,
-    ProcessingResult,
-    ProcessingSummary,
     RawHolding,
 )
 
@@ -129,9 +127,7 @@ class TestPortfolioHoldingsProcessor:
         assert holdings[0].ticker == "BTC-USD"
         assert holdings[0].name == "Bitcoin"
 
-    def test_should_load_all_holdings_from_multiple_files(
-        self, processor, sample_stock_csv, sample_etf_csv, sample_crypto_csv
-    ):
+    def test_should_load_all_holdings_from_multiple_files(self, processor, sample_stock_csv, sample_etf_csv, sample_crypto_csv):
         """Test loading holdings from all CSV files."""
         # Act
         holdings = processor.load_all_holdings(

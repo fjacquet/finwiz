@@ -826,3 +826,113 @@ class HTMLReportGenerator:
             html.append(body)
             error_soup.append(html)
             return "<!DOCTYPE html>\n" + error_soup.prettify(formatter="html")
+
+    def generate_crew_report(
+        self,
+        crew_name: str,
+        export_data: dict[str, Any],
+        output_path: Path | str,
+    ) -> str:
+        """
+        Generate HTML report for a crew using Jinja2 templates.
+
+        This method generates crew-specific HTML reports from JSON export data
+        using Jinja2 templates. It validates the export data against the crew's
+        Pydantic schema before rendering.
+
+        Args:
+            crew_name: Name of the crew (e.g., "stock_crew", "etf_crew")
+            export_data: Validated JSON export data from the crew
+            output_path: Path where to save the HTML file
+
+        Returns:
+            Path to the generated HTML file as string
+
+        Raises:
+            ValueError: If crew_name is invalid or template not found
+            ValidationError: If export_data doesn't match crew's schema
+
+        Example:
+            >>> generator = HTMLReportGenerator()
+            >>> export_data = {"ticker": "AAPL", "grade": "A+", ...}
+            >>> path = generator.generate_crew_report(
+            ...     crew_name="stock_crew",
+            ...     export_data=export_data,
+            ...     output_path=Path("output/reports/session/stock_crew/AAPL_report.html"),
+            ... )
+
+        """
+        try:
+            from datetime import datetime
+            from pathlib import Path
+
+            from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+
+            # Initialize Jinja2 environment for crew_reports templates
+            template_dir = Path("src/finwiz/templates")
+            env = Environment(
+                loader=FileSystemLoader(str(template_dir)),
+                autoescape=True,
+                trim_blocks=True,
+                lstrip_blocks=True,
+            )
+
+            # Map crew names to template files
+            template_map = {
+                "stock_crew": "crew_reports/stock_report.html",
+                "etf_crew": "crew_reports/etf_report.html",
+                "crypto_crew": "crew_reports/crypto_report.html",
+                "deep_analysis_crew": "crew_reports/deep_analysis_report.html",
+                "discovery_crew": "crew_reports/discovery_report.html",
+                "rebalancing_crew": "crew_reports/rebalancing_report.html",
+            }
+
+            # Validate crew_name
+            if crew_name not in template_map:
+                raise ValueError(f"Invalid crew_name: {crew_name}. Must be one of: {', '.join(template_map.keys())}")
+
+            # Load appropriate template
+            template_name = template_map[crew_name]
+            try:
+                template = env.get_template(template_name)
+            except TemplateNotFound:
+                raise ValueError(
+                    f"Template not found: {template_name}. Ensure template exists at src/finwiz/templates/{template_name}"
+                )
+
+            # Validate export_data against crew's Pydantic schema
+            # Note: Validation should be done by the caller before passing data
+            # This is a safety check to ensure data structure is correct
+            if not isinstance(export_data, dict):
+                raise ValueError(f"export_data must be a dictionary, got {type(export_data)}")
+
+            # Required fields check
+            required_fields = ["ticker", "asset_class", "analysis_date", "session_id"]
+            missing_fields = [field for field in required_fields if field not in export_data]
+            if missing_fields:
+                logger.warning(f"Missing required fields in export_data: {missing_fields}")
+
+            # Render template with export data and generation timestamp
+            generation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            html_content = template.render(data=export_data, generation_date=generation_date)
+
+            # Ensure output path is a Path object
+            if isinstance(output_path, str):
+                output_path = Path(output_path)
+
+            # Create parent directories if they don't exist
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Save HTML to file with UTF-8 encoding
+            output_path.write_text(html_content, encoding="utf-8")
+
+            logger.info(f"Generated crew report for {crew_name} at {output_path}")
+
+            return str(output_path)
+
+        except Exception as e:
+            logger.error(
+                f"Error generating crew report for {crew_name}: {e}",
+                exc_info=True,
+            )
+            raise

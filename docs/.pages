@@ -1,0 +1,6 @@
+nav:
+  - index.md
+  - Tutorials: tutorials/
+  - How-to Guides: how-to/
+  - Reference: reference/
+  - Explanations: explanations/

@@ -68,14 +68,10 @@ class TestCrewDataAccessorExtractorInitialization:
         assert data_accessor.methodology_extractor.logger == data_accessor.logger
         assert data_accessor.performance_aggregator.logger == data_accessor.logger
 
-    def test_should_link_backtesting_extractor_to_performance_aggregator(
-        self, data_accessor: CrewDataAccessor
-    ) -> None:
+    def test_should_link_backtesting_extractor_to_performance_aggregator(self, data_accessor: CrewDataAccessor) -> None:
         """Test that PerformanceMetricsAggregator has reference to BacktestingDataExtractor."""
         # Assert
-        assert (
-            data_accessor.performance_aggregator.backtesting_extractor == data_accessor.backtesting_extractor
-        )
+        assert data_accessor.performance_aggregator.backtesting_extractor == data_accessor.backtesting_extractor
 
     def test_should_initialize_all_extractors_with_integration_manager(
         self, integration_manager: CrewDataIntegrationManager
@@ -103,9 +99,7 @@ class TestCrewDataAccessorExtractorInitialization:
         # Assert
         assert any("CrewDataAccessor initialized with enhanced extractors" in record.message for record in caplog.records)
 
-    def test_should_maintain_backward_compatibility_with_existing_components(
-        self, data_accessor: CrewDataAccessor
-    ) -> None:
+    def test_should_maintain_backward_compatibility_with_existing_components(self, data_accessor: CrewDataAccessor) -> None:
         """Test that existing components (cache, validator) are still initialized."""
         # Assert - Existing components should still be present
         assert hasattr(data_accessor, "cache")

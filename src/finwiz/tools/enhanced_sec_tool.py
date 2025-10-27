@@ -13,9 +13,9 @@ from typing import Any
 
 import requests
 from crewai.tools import BaseTool
-from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_text_splitters import CharacterTextSplitter
 from pydantic import BaseModel
 
 from finwiz.schemas.common import RiskLevel
@@ -106,10 +106,10 @@ class EnhancedSECAnalysisTool(BaseTool):
             sections = kwargs.get("sections", sections)
             risk_assessment = kwargs.get("risk_assessment", risk_assessment)
             include_perplexity = kwargs.get("include_perplexity", include_perplexity)
-        
+
         if ticker is None:
             return "Error: ticker parameter is required"
-        
+
         if sections is None:
             sections = ["Item 1", "Item 1A", "Item 7"]
 
@@ -246,7 +246,7 @@ class EnhancedSECAnalysisTool(BaseTool):
     def _download_html(self, url: str) -> str:
         """
         Download HTML content from SEC filing URL.
-        
+
         SEC.gov requires a proper User-Agent with contact information.
         See: https://www.sec.gov/os/accessing-edgar-data
         """
@@ -462,7 +462,7 @@ class EnhancedSECAnalysisTool(BaseTool):
             logger.info(f"Including validated SEC filing URL: {filing_url}")
         else:
             # Provide fallback with manual search instructions
-            response += f"- **SEC Filings**: Search manually at https://www.sec.gov/edgar/searchedgar/companysearch.html\n"
+            response += "- **SEC Filings**: Search manually at https://www.sec.gov/edgar/searchedgar/companysearch.html\n"
             response += f"  _(Enter ticker '{ticker}' and filter by '{form_type}' to find recent filings)_\n"
             if filing_url:
                 logger.warning(f"Invalid filing URL for {ticker}: {filing_url}")

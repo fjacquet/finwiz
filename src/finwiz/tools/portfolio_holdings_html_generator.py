@@ -75,18 +75,18 @@ class PortfolioHoldingsHTMLGenerator:
         # Count deep vs shallow analysis
         deep_count = sum(1 for h in portfolio_review.holdings if h.crew_analysis_used)
         shallow_count = len(portfolio_review.holdings) - deep_count
-        
+
         # Count grade distribution
         grade_counts = {}
         for grade in ["A+", "A", "B", "C", "D", "F"]:
             grade_counts[grade] = sum(1 for h in portfolio_review.holdings if h.grade == grade)
-        
+
         # Count holdings with alternatives
         holdings_with_alternatives = sum(1 for h in portfolio_review.holdings if h.alternatives)
-        
+
         # Calculate potential improvement
         potential_improvement = portfolio_review.portfolio_grade_improvement_potential
-        
+
         # Calculate average risk reduction potential
         avg_risk_reduction = 0.0
         if holdings_with_alternatives > 0:
@@ -95,11 +95,11 @@ class PortfolioHoldingsHTMLGenerator:
                 if h.alternatives:
                     current_risk = h.risk.overall_risk_score
                     for alt in h.alternatives:
-                        alt_risk = alt.risk_score if hasattr(alt, 'risk_score') else current_risk
+                        alt_risk = alt.risk_score if hasattr(alt, "risk_score") else current_risk
                         risk_reductions.append(max(0, current_risk - alt_risk))
             if risk_reductions:
                 avg_risk_reduction = sum(risk_reductions) / len(risk_reductions)
-        
+
         # Build grade distribution bars
         grade_bars = []
         max_count = max(grade_counts.values()) if grade_counts.values() else 1
@@ -121,7 +121,7 @@ class PortfolioHoldingsHTMLGenerator:
                     </div>
                 </div>
 """)
-        
+
         return f"""
         <div class="improvement-summary">
             <h2>📊 Résumé d'Amélioration du Portefeuille</h2>
@@ -168,13 +168,8 @@ class PortfolioHoldingsHTMLGenerator:
     def _generate_data_completeness_section(self, portfolio_review: PortfolioReview) -> str:
         """Generate data completeness section showing which crews ran and data sources."""
         # Count by crew type
-        crew_counts = {
-            "StockCrew": 0,
-            "EtfCrew": 0,
-            "CryptoCrew": 0,
-            "None": 0
-        }
-        
+        crew_counts = {"StockCrew": 0, "EtfCrew": 0, "CryptoCrew": 0, "None": 0}
+
         for holding in portfolio_review.holdings:
             if holding.crew_analysis_used:
                 crew_name = holding.crew_analysis_used.replace("_", " ").title().replace(" ", "")
@@ -182,16 +177,16 @@ class PortfolioHoldingsHTMLGenerator:
                     crew_counts[crew_name] += 1
             else:
                 crew_counts["None"] += 1
-        
+
         # Count data freshness
         freshness_counts = {"fresh": 0, "recent": 0, "stale": 0}
         for holding in portfolio_review.holdings:
             freshness_counts[holding.data_freshness] += 1
-        
+
         # Build crew status list using BeautifulSoup
         soup = BeautifulSoup("", "html.parser")
         crew_status_ul = soup.new_tag("ul")
-        
+
         for crew_name, count in crew_counts.items():
             if crew_name != "None" and count > 0:
                 li = soup.new_tag("li")
@@ -201,7 +196,7 @@ class PortfolioHoldingsHTMLGenerator:
                 li.append(strong)
                 li.append(f": {count} positions analysées")
                 crew_status_ul.append(li)
-        
+
         if crew_counts["None"] > 0:
             li = soup.new_tag("li")
             li.append("⚡ ")
@@ -210,12 +205,12 @@ class PortfolioHoldingsHTMLGenerator:
             li.append(strong)
             li.append(f": {crew_counts['None']} positions")
             crew_status_ul.append(li)
-        
+
         crew_status_html = str(crew_status_ul)
-        
+
         # Build freshness status using BeautifulSoup
         freshness_status_ul = soup.new_tag("ul")
-        
+
         if freshness_counts["fresh"] > 0:
             li = soup.new_tag("li")
             li.append("🟢 ")
@@ -224,7 +219,7 @@ class PortfolioHoldingsHTMLGenerator:
             li.append(strong)
             li.append(f": {freshness_counts['fresh']} positions")
             freshness_status_ul.append(li)
-            
+
         if freshness_counts["recent"] > 0:
             li = soup.new_tag("li")
             li.append("🟡 ")
@@ -233,7 +228,7 @@ class PortfolioHoldingsHTMLGenerator:
             li.append(strong)
             li.append(f": {freshness_counts['recent']} positions")
             freshness_status_ul.append(li)
-            
+
         if freshness_counts["stale"] > 0:
             li = soup.new_tag("li")
             li.append("🔴 ")
@@ -242,9 +237,9 @@ class PortfolioHoldingsHTMLGenerator:
             li.append(strong)
             li.append(f": {freshness_counts['stale']} positions")
             freshness_status_ul.append(li)
-        
+
         freshness_status_html = str(freshness_status_ul)
-        
+
         return f"""
         <div class="data-completeness">
             <h3>📋 Complétude des Données</h3>
@@ -564,16 +559,16 @@ class PortfolioHoldingsHTMLGenerator:
         alt_sections = []
         for holding in holdings_with_alternatives:
             holding_color = self.GRADE_COLORS.get(holding.grade, "#95a5a6")
-            
+
             alt_items = []
             for alt in holding.alternatives:
                 alt_color = self.GRADE_COLORS.get(alt.grade, "#95a5a6")
                 score_improvement = alt.composite_score - holding.composite_score
                 improvement_text = f"{holding.grade} → {alt.grade}, +{score_improvement:.2f} amélioration du score"
-                
+
                 # Extract rationale (first 200 chars)
                 rationale_preview = alt.rationale[:200] + "..." if len(alt.rationale) > 200 else alt.rationale
-                
+
                 alt_items.append(f"""
                 <div class="alternative-item">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">

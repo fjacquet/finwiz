@@ -1,0 +1,7 @@
+nav:
+  - "Setup and Deployment Guide": setup-deployment-guide.md
+  - "Content Creation Guide": content-creation-guide.md
+  - "Content Governance": content-governance.md
+  - "Style Guide": style-guide.md
+  - "Troubleshooting Guide": troubleshooting-guide.md
+  - "Content Audit Schedule": content-audit-schedule.md

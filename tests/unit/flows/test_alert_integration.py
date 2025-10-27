@@ -5,10 +5,11 @@ Tests the critical failure alert functionality when deep analysis
 experiences high failure rates.
 """
 
-import pytest
 from datetime import datetime
 
-from finwiz.monitoring.alerting import AlertManager, AlertType, AlertSeverity
+import pytest
+
+from finwiz.monitoring.alerting import AlertManager, AlertSeverity, AlertType
 
 
 class TestAlertManagerIntegration:
@@ -22,13 +23,13 @@ class TestAlertManagerIntegration:
         mock_config_manager = mocker.Mock()
         mock_config_manager.get_setting = mocker.Mock(side_effect=lambda key, default: default)
         mocker.patch("finwiz.monitoring.alerting.get_configuration_manager", return_value=mock_config_manager)
-        
+
         alert_manager = AlertManager()
-        
+
         failed_holdings = ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "META"]
         total_holdings = 10
         failure_rate = len(failed_holdings) / total_holdings
-        
+
         # Act
         alert = await alert_manager.create_alert(
             alert_type=AlertType.ERROR_RATE,
@@ -67,10 +68,10 @@ class TestAlertManagerIntegration:
         # Arrange
         failed_holdings = ["TICK1", "TICK2", "TICK3", "TICK4", "TICK5", "TICK6", "TICK7", "TICK8", "TICK9", "TICK10", "TICK11"]
         total_holdings = 20
-        
+
         # Act
         failure_rate = len(failed_holdings) / total_holdings
-        
+
         # Assert
         assert failure_rate == 0.55  # 11/20
         assert failure_rate > 0.5  # Should trigger alert
@@ -83,9 +84,9 @@ class TestAlertManagerIntegration:
         mock_config_manager = mocker.Mock()
         mock_config_manager.get_setting = mocker.Mock(side_effect=lambda key, default: default)
         mocker.patch("finwiz.monitoring.alerting.get_configuration_manager", return_value=mock_config_manager)
-        
+
         alert_manager = AlertManager()
-        
+
         # Act
         alert = await alert_manager.create_alert(
             alert_type=AlertType.ERROR_RATE,
@@ -124,13 +125,13 @@ class TestAlertManagerIntegration:
         # Arrange
         failed_holdings = []
         total_holdings = 0
-        
+
         # Act - Calculate failure rate with zero holdings
         if total_holdings > 0:
             failure_rate = len(failed_holdings) / total_holdings
         else:
             failure_rate = 0.0
-        
+
         # Assert - should not trigger alert (no division by zero)
         assert failure_rate == 0.0
         assert failure_rate <= 0.5  # Would not trigger alert

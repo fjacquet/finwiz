@@ -39,7 +39,7 @@ class TestRateLimiter:
         # Assert
         assert APIProvider.ALPHA_VANTAGE in limiter.config
         assert limiter.config[APIProvider.ALPHA_VANTAGE].requests_per_minute == 5
-        assert limiter.config[APIProvider.YAHOO_FINANCE].requests_per_minute == 60
+        assert limiter.config[APIProvider.YAHOO_FINANCE].requests_per_minute == 600  # 10 requests per second
 
     def test_should_initialize_with_custom_config(self):
         """Test rate limiter initialization with custom configuration."""
@@ -52,6 +52,17 @@ class TestRateLimiter:
         # Assert
         assert limiter.config[APIProvider.ALPHA_VANTAGE].requests_per_minute == 10
         assert limiter.config[APIProvider.ALPHA_VANTAGE].requests_per_hour == 1000
+
+    def test_should_support_premium_tier_providers(self):
+        """Test that premium tier providers are configured correctly."""
+        # Arrange & Act
+        limiter = RateLimiter()
+
+        # Assert - Premium tiers should exist in config
+        assert APIProvider.ALPHA_VANTAGE_PREMIUM in limiter.config
+        assert limiter.config[APIProvider.ALPHA_VANTAGE_PREMIUM].requests_per_minute == 75
+        assert APIProvider.TWELVE_DATA_PREMIUM in limiter.config
+        assert limiter.config[APIProvider.TWELVE_DATA_PREMIUM].requests_per_minute == 800
 
     @pytest.mark.asyncio
     async def test_should_allow_request_within_limits(self):

@@ -370,10 +370,10 @@ class CrewFactory:
             # This extracts tickers from upstream crew data and prevents hallucination
             try:
                 prepared_context = report_crew.prepare_crew_context(max_age_hours=24, inputs=inputs)
-                ticker_count = prepared_context.get('ticker_count', 0)
+                ticker_count = prepared_context.get("ticker_count", 0)
 
                 # Check for insufficient tickers warning
-                if prepared_context.get('insufficient_tickers', False):
+                if prepared_context.get("insufficient_tickers", False):
                     self.logger.warning(
                         f"Proceeding with limited report generation: {ticker_count} validated tickers (recommended: 3+)"
                     )

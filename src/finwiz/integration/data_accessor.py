@@ -142,9 +142,7 @@ class CrewDataAccessor:
         """
         return self.cache.get_aplus_opportunities(max_age_hours)
 
-    def get_consolidated_reporter_input(
-        self, max_age_hours: int = 24, current_portfolio_grade: float = 0.70
-    ) -> dict[str, Any]:
+    def get_consolidated_reporter_input(self, max_age_hours: int = 24, current_portfolio_grade: float = 0.70) -> dict[str, Any]:
         """
         Get consolidated data for report generation including A+ opportunities and core analysis.
 
@@ -243,9 +241,7 @@ class CrewDataAccessor:
             summary = self.backtesting_extractor.get_performance_summary(vr_objects)
 
             if summary:
-                self.logger.info(
-                    f"Extracted backtesting metrics: {summary.total_candidates_tested} candidates tested"
-                )
+                self.logger.info(f"Extracted backtesting metrics: {summary.total_candidates_tested} candidates tested")
                 return summary.model_dump()
 
             return None
@@ -346,9 +342,7 @@ class CrewDataAccessor:
             self.logger.error(f"Failed to extract discovery methodology: {e}")
             return None
 
-    def get_performance_report(
-        self, max_age_hours: int = 24, current_portfolio_grade: float = 0.70
-    ) -> dict[str, Any] | None:
+    def get_performance_report(self, max_age_hours: int = 24, current_portfolio_grade: float = 0.70) -> dict[str, Any] | None:
         """
         Get comprehensive performance report aggregating metrics across asset types and regimes.
 

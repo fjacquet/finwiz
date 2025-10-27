@@ -376,6 +376,9 @@ class RegistryManager:
         """
         Get crew data with automatic freshness validation and warnings.
 
+        For crew types (stock, etf, crypto), consolidates individual ticker analyses
+        into crew-level summaries. For specific files, returns the individual file.
+
         Args:
             crew_name: Name of the crew whose data to retrieve
             max_age_hours: Maximum acceptable age in hours
@@ -398,9 +401,6 @@ class RegistryManager:
                 self.logger.warning(f"No output files found for {crew_name} crew")
                 return None
 
-            # Get the newest file
-            newest_file = max(output_files, key=lambda f: f.stat().st_mtime)
-
             # Check freshness
             freshness_result = self.freshness_checker.check_data_freshness_for_crew(crew_name, max_age_hours)
 
@@ -413,7 +413,7 @@ class RegistryManager:
                             "crew_name": crew_name,
                             "age_hours": age_hours,
                             "max_age_hours": max_age_hours,
-                            "file_path": str(newest_file),
+                            "file_count": len(output_files),
                         },
                     )
                 elif freshness_result.freshness_status.refresh_recommended and warn_on_stale:
@@ -423,17 +423,113 @@ class RegistryManager:
                         extra={"crew_name": crew_name, "age_hours": age_hours, "max_age_hours": max_age_hours},
                     )
 
-            # Load and return the data
-            with open(newest_file, encoding="utf-8") as f:
-                data = json.load(f)
-
-            self.logger.debug(f"Successfully loaded data for {crew_name} crew from {newest_file}")
-            return data
+            # For crew types (stock, etf, crypto), consolidate individual ticker files
+            if crew_name in ["stock", "etf", "crypto"]:
+                return self._consolidate_crew_ticker_files(crew_name, output_files)
+            else:
+                # For other crew types, return the newest single file
+                newest_file = max(output_files, key=lambda f: f.stat().st_mtime)
+                with open(newest_file, encoding="utf-8") as f:
+                    data = json.load(f)
+                self.logger.debug(f"Successfully loaded data for {crew_name} crew from {newest_file}")
+                return data
 
         except Exception as e:
             error_msg = f"Failed to get data for {crew_name} crew: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return None
+
+    def _consolidate_crew_ticker_files(self, crew_name: str, output_files: list) -> dict:
+        """
+        Consolidate individual ticker analysis files into crew-level summary.
+
+        Args:
+            crew_name: Name of the crew (stock, etf, crypto)
+            output_files: List of JSON files to consolidate
+
+        Returns:
+            Dictionary containing consolidated crew data with metadata
+
+        """
+        from datetime import datetime
+
+        consolidated_data = {
+            "crew_name": crew_name,  # Top-level crew_name for validator compatibility
+            "execution_id": f"consolidated-{crew_name}-{int(datetime.now().timestamp())}",
+            "asset_class": crew_name,
+            "analysis_timestamp": datetime.now().isoformat(),
+            "metadata": {
+                "crew_name": crew_name,
+                "consolidation_timestamp": datetime.now().isoformat(),
+                "total_tickers": len(output_files),
+                "consolidation_method": "ticker_aggregation",
+            },
+            "ticker_analyses": {},
+            "summary_statistics": {
+                "total_analyses": 0,
+                "grade_distribution": {},
+                "average_composite_score": 0.0,
+                "recommendations": {"BUY": 0, "HOLD": 0, "SELL": 0},
+            },
+        }
+
+        total_score = 0.0
+        valid_analyses = 0
+
+        try:
+            for file_path in output_files:
+                try:
+                    with open(file_path, encoding="utf-8") as f:
+                        ticker_data = json.load(f)
+
+                    ticker = ticker_data.get("ticker", file_path.stem.split("_")[0])
+                    consolidated_data["ticker_analyses"][ticker] = ticker_data
+
+                    # Update summary statistics
+                    if "composite_score" in ticker_data:
+                        total_score += float(ticker_data["composite_score"])
+                        valid_analyses += 1
+
+                    if "grade" in ticker_data:
+                        grade = ticker_data["grade"]
+                        consolidated_data["summary_statistics"]["grade_distribution"][grade] = (
+                            consolidated_data["summary_statistics"]["grade_distribution"].get(grade, 0) + 1
+                        )
+
+                    if "recommendation" in ticker_data:
+                        rec = ticker_data["recommendation"]
+                        if rec in consolidated_data["summary_statistics"]["recommendations"]:
+                            consolidated_data["summary_statistics"]["recommendations"][rec] += 1
+
+                except Exception as e:
+                    self.logger.warning(f"Failed to load ticker file {file_path}: {e}")
+                    continue
+
+            # Calculate averages
+            consolidated_data["summary_statistics"]["total_analyses"] = valid_analyses
+            if valid_analyses > 0:
+                consolidated_data["summary_statistics"]["average_composite_score"] = total_score / valid_analyses
+
+            self.logger.info(
+                f"Consolidated {crew_name} crew data: {valid_analyses} ticker analyses, "
+                f"avg score: {consolidated_data['summary_statistics']['average_composite_score']:.3f}"
+            )
+
+            return consolidated_data
+
+        except Exception as e:
+            self.logger.error(f"Failed to consolidate {crew_name} crew data: {e}")
+            # Return minimal valid structure
+            return {
+                "metadata": {
+                    "crew_name": crew_name,
+                    "consolidation_timestamp": datetime.now().isoformat(),
+                    "total_tickers": 0,
+                    "consolidation_error": str(e),
+                },
+                "ticker_analyses": {},
+                "summary_statistics": {"total_analyses": 0},
+            }
 
     def get_refresh_recommendations(self, max_age_hours: int = 24) -> list[str]:
         """

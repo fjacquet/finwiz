@@ -268,7 +268,7 @@ class TestIntegrationScenarios:
         mock_filing = {
             "filing_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K",
             "filed_at": "2024-01-01",
-            "cik": "0000320193"
+            "cik": "0000320193",
         }
 
         mocker.patch.object(tool, "_fetch_latest_filing", return_value=mock_filing)
@@ -306,22 +306,22 @@ class TestIntegrationScenarios:
         mock_filing = {
             "filing_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K",
             "filed_at": "2024-01-01",
-            "cik": "0000320193"
+            "cik": "0000320193",
         }
 
         mocker.patch.object(tool, "_fetch_latest_filing", return_value=mock_filing)
         mocker.patch.object(tool, "_download_html", return_value="<html>test</html>")
-        
+
         # Mock document processing
         mock_doc = mocker.Mock()
         mock_doc.page_content = "Test content"
-        
+
         mock_retriever = mocker.Mock()
         mock_retriever.get_relevant_documents.return_value = [mock_doc]
-        
+
         mock_faiss = mocker.Mock()
         mock_faiss.from_documents.return_value.as_retriever.return_value = mock_retriever
-        
+
         mocker.patch("finwiz.tools.enhanced_sec_tool.FAISS", mock_faiss)
         mocker.patch("finwiz.tools.enhanced_sec_tool.OpenAIEmbeddings")
         mocker.patch("finwiz.tools.enhanced_sec_tool.partition_html", return_value=["test"])
@@ -334,4 +334,6 @@ class TestIntegrationScenarios:
         assert "Error" not in result
         assert "AAPL" in result
         # When risk_assessment=False, the Risk Assessment section should not be present
-        assert "Risk Assessment" not in result or "Risk Assessment" in result  # May or may not be present depending on implementation
+        assert (
+            "Risk Assessment" not in result or "Risk Assessment" in result
+        )  # May or may not be present depending on implementation

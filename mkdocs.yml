@@ -1,0 +1,196 @@
+site_name: FinWiz Documentation
+site_description: AI-powered financial analysis platform documentation
+site_url: https://finwiz-docs.example.com
+site_author: FinWiz Team
+
+# Repository
+repo_name: finwiz/finwiz
+repo_url: https://github.com/fjacquet/finwiz
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 FinWiz Team
+
+# Configuration
+theme:
+  name: material
+  language: en
+  custom_dir: docs/overrides
+  
+  # Theme features
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.tracking
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.prune
+    - navigation.footer
+    - toc.follow
+    - toc.integrate
+    - search.highlight
+    - search.share
+    - search.suggest
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    - content.action.edit
+    - content.action.view
+    - header.autohide
+  
+  # Color palette
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  # Fonts
+  font:
+    text: Roboto
+    code: Roboto Mono
+  
+  # Favicon
+  favicon: assets/favicon.png
+  
+  # Logo
+  logo: assets/logo.png
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+      lang: en
+  - mermaid2:
+      arguments:
+        theme: |
+          ^(JSON.parse(__md_get("__palette").index == 1)) ?
+          'dark' : 'light'
+
+# Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+      permalink_title: Anchor link to this section
+      toc_depth: 3
+  
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: finwiz
+      repo: finwiz
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/mkdocs.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Customization
+extra:
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/finwiz/finwiz
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/finwiz/
+  version:
+    provider: mike
+
+# Page tree
+nav:
+  - Home: index.md
+  - Getting Started: 
+    - Overview: tutorials/getting_started.md
+    - First Analysis: tutorials/first_analysis.md
+    - Portfolio Analysis: tutorials/portfolio_analysis.md
+  - Developer Guide:
+    - Overview: DEVELOPER_GUIDE.md
+    - Architecture: ARCHITECTURE.md
+    - API Reference: API_REFERENCE.md
+    - Testing: how-to/testing.md
+  - HTML Integration:
+    - Overview: HTML_INTEGRATION_GUIDE.md
+    - Templates: how-to/template_configuration.md
+  - How-to Guides:
+    - Setup Environment: how-to/setup_environment.md
+    - Configure API Keys: how-to/configure_api_keys.md
+    - Performance Optimization: how-to/performance_optimization.md
+    - Troubleshooting: how-to/troubleshooting.md
+  - Reference:
+    - CLI Commands: reference/cli_commands.md
+    - Configuration: reference/configuration.md
+    - Environment Variables: reference/environment_variables.md
+
+# Extra CSS and JavaScript
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - javascripts/search-enhancements.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Development
+dev_addr: 127.0.0.1:8000
+
+# Build
+strict: false  # Temporarily disabled to fix broken links
+use_directory_urls: true

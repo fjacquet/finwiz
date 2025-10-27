@@ -86,20 +86,21 @@ class PortfolioHoldingsProcessor:
             Normalized ticker symbol
 
         Requirements: 19.3 (Crypto Ticker Normalization)
+
         """
         s = (raw or "").strip()
-        
+
         # Remove YAHOO: prefix if present
         if s.upper().startswith("YAHOO:"):
             s = s.split(":", 1)[1]
-        
+
         # Requirement 19.3: Add -USD suffix for crypto tickers if not already present
         if asset_class == "crypto" and s and not s.endswith("-USD"):
             # Only add suffix if it's a simple ticker (no existing suffix)
             if "-" not in s:
                 logger.debug(f"Normalizing crypto ticker: {s} → {s}-USD")
                 return f"{s}-USD"
-        
+
         return s
 
     def load_all_holdings(
@@ -170,8 +171,7 @@ class PortfolioHoldingsProcessor:
 
                     # Log every row we encounter
                     logger.debug(
-                        f"CSV line {line_num}: name='{name}', ticker='{ticker}', "
-                        f"currency='{currency}', asset_class='{asset_class}'"
+                        f"CSV line {line_num}: name='{name}', ticker='{ticker}', currency='{currency}', asset_class='{asset_class}'"
                     )
 
                     # Skip completely empty rows
@@ -236,10 +236,7 @@ class PortfolioHoldingsProcessor:
         # Process all holdings in parallel with concurrency limit
         async def process_with_semaphore(idx: int, holding: RawHolding) -> tuple[int, HoldingDecision, ProcessingResult]:
             async with semaphore:
-                logger.debug(
-                    f"Processing holding {idx}/{len(holdings)}: "
-                    f"{holding.ticker} ({holding.name}) - {holding.asset_class}"
-                )
+                logger.debug(f"Processing holding {idx}/{len(holdings)}: {holding.ticker} ({holding.name}) - {holding.asset_class}")
 
                 try:
                     decision = await self._process_single_holding(holding, base_currency, keep_threshold)
@@ -294,14 +291,9 @@ class PortfolioHoldingsProcessor:
         # Calculate performance metrics
         elapsed = time.time() - start_time
         speedup = (len(holdings) * 1.0) / elapsed if elapsed > 0 else 0  # Assume 1s per holding sequential
-        
-        logger.info(
-            f"Completed processing {len(decisions)} holdings in {elapsed:.2f}s "
-            f"(~{speedup:.1f}x speedup vs sequential)"
-        )
-        logger.info(
-            f"Processed in ~{len(holdings) / parallel_limit:.1f} batches of {parallel_limit} concurrent holdings"
-        )
+
+        logger.info(f"Completed processing {len(decisions)} holdings in {elapsed:.2f}s (~{speedup:.1f}x speedup vs sequential)")
+        logger.info(f"Processed in ~{len(holdings) / parallel_limit:.1f} batches of {parallel_limit} concurrent holdings")
 
         return decisions
 
@@ -602,10 +594,7 @@ class PortfolioHoldingsProcessor:
             asset_class = result.holding.asset_class
             by_asset_class[asset_class] = by_asset_class.get(asset_class, 0) + 1
 
-        logger.info(
-            f"Processing summary: total={total}, successful={successful}, "
-            f"warnings={warnings}, failed={failed}"
-        )
+        logger.info(f"Processing summary: total={total}, successful={successful}, warnings={warnings}, failed={failed}")
 
         return ProcessingSummary(
             total_holdings=total,

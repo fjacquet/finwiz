@@ -100,33 +100,64 @@ class DataConsolidationValidator:
             True if data structure is valid, False otherwise
 
         """
-        # Check for required fields
-        required_fields = ["metadata"]
+        # Check for required fields in current crew output format
+        # For consolidated data, we don't require 'ticker' since it represents multiple tickers
+        required_fields = ["crew_name", "execution_id", "asset_class", "analysis_timestamp"]
 
         for field in required_fields:
             if field not in data:
                 logger.error(f"Missing required field '{field}' in {crew_name} data")
                 return False
 
-        # Validate metadata structure
-        metadata = data.get("metadata", {})
-        if not isinstance(metadata, dict):
-            logger.error(f"Invalid metadata structure in {crew_name} data")
-            return False
-
-        # Check for crew_name in metadata
-        if "crew_name" in metadata:
-            stored_crew_name = metadata.get("crew_name")
+        # Validate crew_name matches expected
+        stored_crew_name = data.get("crew_name")
+        if stored_crew_name and crew_name not in ["stock", "etf", "crypto"]:
+            # For specific crew names, validate exact match
             if stored_crew_name != crew_name:
                 logger.error(f"Crew name mismatch: expected {crew_name}, got {stored_crew_name}")
                 return False
 
-        # Validate that data has some content (not just metadata)
-        content_fields = ["raw_output", "json_dict", "pydantic", "tasks_output"]
-        has_content = any(field in data for field in content_fields)
+        # For consolidated data, check for ticker_analyses and summary_statistics
+        if "ticker_analyses" in data and "summary_statistics" in data:
+            # This is consolidated data - validate the structure
+            ticker_analyses = data.get("ticker_analyses", {})
+            if not isinstance(ticker_analyses, dict):
+                logger.error(f"Invalid ticker_analyses structure in {crew_name} data")
+                return False
 
-        if not has_content:
-            logger.error(f"No content fields found in {crew_name} data. Expected at least one of: {content_fields}")
+            summary_stats = data.get("summary_statistics", {})
+            if not isinstance(summary_stats, dict):
+                logger.error(f"Invalid summary_statistics structure in {crew_name} data")
+                return False
+
+            # Check that we have some ticker analyses
+            if len(ticker_analyses) == 0:
+                logger.error(f"No ticker analyses found in consolidated {crew_name} data")
+                return False
+
+            logger.debug(f"Validated consolidated {crew_name} data with {len(ticker_analyses)} ticker analyses")
+            return True
+
+        # For individual ticker data, check for analysis fields
+        analysis_fields = ["composite_score", "grade", "recommendation", "rationale"]
+        has_analysis = any(field in data for field in analysis_fields)
+
+        if not has_analysis:
+            logger.error(f"No analysis fields found in {crew_name} data. Expected at least one of: {analysis_fields}")
             return False
+
+        # Validate essential analysis fields have valid values
+        if "composite_score" in data:
+            score = data.get("composite_score")
+            if not isinstance(score, (int, float)) or not (0.0 <= score <= 1.0):
+                logger.error(f"Invalid composite_score in {crew_name} data: {score}")
+                return False
+
+        if "grade" in data:
+            grade = data.get("grade")
+            valid_grades = ["A+", "A", "B+", "B", "C+", "C", "D+", "D", "F"]
+            if grade not in valid_grades:
+                logger.error(f"Invalid grade in {crew_name} data: {grade}")
+                return False
 
         return True

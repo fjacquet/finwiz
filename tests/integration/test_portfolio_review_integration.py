@@ -3,7 +3,6 @@ Integration tests for portfolio review with holdings processor.
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -22,13 +21,13 @@ class TestPortfolioReviewIntegration:
         data_dir.mkdir()
 
         stock_csv = data_dir / "stock.csv"
-        stock_csv.write_text("Name,Ticker,Currency\n" "Apple Inc.,AAPL,USD\n")
+        stock_csv.write_text("Name,Ticker,Currency\nApple Inc.,AAPL,USD\n")
 
         etf_csv = data_dir / "etf.csv"
-        etf_csv.write_text("Name,Ticker,Currency\n" "S&P 500,SPY,USD\n")
+        etf_csv.write_text("Name,Ticker,Currency\nS&P 500,SPY,USD\n")
 
         crypto_csv = data_dir / "crypto.csv"
-        crypto_csv.write_text("Name,Ticker,Currency\n" "Bitcoin,BTC-USD,USD\n")
+        crypto_csv.write_text("Name,Ticker,Currency\nBitcoin,BTC-USD,USD\n")
 
         # Mock environment variables
         mocker.patch.dict(
@@ -41,9 +40,7 @@ class TestPortfolioReviewIntegration:
         )
 
         # Mock validation
-        mock_validator = mocker.patch(
-            "finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool"
-        )
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
 
         # Mock output path

@@ -7,7 +7,7 @@ to ensure type safety and data integrity at all boundaries.
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar, Union
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -21,15 +21,15 @@ T = TypeVar("T", bound=BaseModel)
 class PydanticValidationError(Exception):
     """Raised when Pydantic validation fails during JSON loading."""
 
-    def __init__(self, message: str, validation_errors: Optional[list] = None):
+    def __init__(self, message: str, validation_errors: list | None = None):
         """Initialize with message and optional validation errors."""
         super().__init__(message)
         self.validation_errors = validation_errors or []
 
 
 def load_json_with_validation(
-    file_path: Union[str, Path],
-    model: Type[T],
+    file_path: str | Path,
+    model: type[T],
     strict: bool = True,
 ) -> T:
     """
@@ -50,10 +50,8 @@ def load_json_with_validation(
 
     Example:
         >>> from finwiz.schemas.portfolio_review import PortfolioReview
-        >>> portfolio = load_json_with_validation(
-        ...     "output/portfolio/portfolio_review.json",
-        ...     PortfolioReview
-        ... )
+        >>> portfolio = load_json_with_validation("output/portfolio/portfolio_review.json", PortfolioReview)
+
     """
     file_path = Path(file_path)
 
@@ -84,14 +82,14 @@ def load_json_with_validation(
         if strict:
             raise PydanticValidationError(error_msg, validation_errors=e.errors())
         else:
-            logger.warning(f"Continuing with unvalidated data due to strict=False")
+            logger.warning("Continuing with unvalidated data due to strict=False")
             # Return unvalidated data wrapped in model (best effort)
             return model.model_construct(**data)  # type: ignore
 
 
 def load_json_string_with_validation(
     json_string: str,
-    model: Type[T],
+    model: type[T],
     strict: bool = True,
 ) -> T:
     """
@@ -112,9 +110,9 @@ def load_json_string_with_validation(
     Example:
         >>> from finwiz.schemas.common import RiskAssessmentStandardized
         >>> risk = load_json_string_with_validation(
-        ...     '{"scale": "0_5", "score": 3.5, "level": "High", "risk_factors": []}',
-        ...     RiskAssessmentStandardized
+        ...     '{"scale": "0_5", "score": 3.5, "level": "High", "risk_factors": []}', RiskAssessmentStandardized
         ... )
+
     """
     logger.debug(f"Parsing JSON string with {model.__name__} validation")
 
@@ -139,14 +137,14 @@ def load_json_string_with_validation(
         if strict:
             raise PydanticValidationError(error_msg, validation_errors=e.errors())
         else:
-            logger.warning(f"Continuing with unvalidated data due to strict=False")
+            logger.warning("Continuing with unvalidated data due to strict=False")
             # Return unvalidated data wrapped in model (best effort)
             return model.model_construct(**data)  # type: ignore
 
 
 def load_json_dict_with_validation(
-    data: Dict[str, Any],
-    model: Type[T],
+    data: dict[str, Any],
+    model: type[T],
     strict: bool = True,
 ) -> T:
     """
@@ -169,6 +167,7 @@ def load_json_dict_with_validation(
         ...     {"ticker": "AAPL", "name": "Apple Inc.", ...},
         ...     HoldingDecision
         ... )
+
     """
     logger.debug(f"Validating dictionary against {model.__name__}")
 
@@ -186,13 +185,13 @@ def load_json_dict_with_validation(
         if strict:
             raise PydanticValidationError(error_msg, validation_errors=e.errors())
         else:
-            logger.warning(f"Continuing with unvalidated data due to strict=False")
+            logger.warning("Continuing with unvalidated data due to strict=False")
             # Return unvalidated data wrapped in model (best effort)
             return model.model_construct(**data)  # type: ignore
 
 
 def save_json_with_validation(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     model_instance: BaseModel,
     indent: int = 2,
 ) -> None:
@@ -210,10 +209,8 @@ def save_json_with_validation(
     Example:
         >>> from finwiz.schemas.portfolio_review import PortfolioReview
         >>> portfolio = PortfolioReview(...)
-        >>> save_json_with_validation(
-        ...     "output/portfolio/portfolio_review.json",
-        ...     portfolio
-        ... )
+        >>> save_json_with_validation("output/portfolio/portfolio_review.json", portfolio)
+
     """
     file_path = Path(file_path)
 
@@ -233,7 +230,7 @@ def save_json_with_validation(
 
 def validate_crew_output(
     crew_output: Any,
-    expected_model: Type[T],
+    expected_model: type[T],
     crew_name: str,
 ) -> T:
     """
@@ -252,11 +249,8 @@ def validate_crew_output(
 
     Example:
         >>> from finwiz.schemas.stock import StockScreeningResult
-        >>> result = validate_crew_output(
-        ...     crew_output_data,
-        ...     StockScreeningResult,
-        ...     "stock_crew"
-        ... )
+        >>> result = validate_crew_output(crew_output_data, StockScreeningResult, "stock_crew")
+
     """
     logger.debug(f"Validating {crew_name} output against {expected_model.__name__}")
 
@@ -275,9 +269,7 @@ def validate_crew_output(
             return load_json_dict_with_validation(crew_output, expected_model)
 
         # Unsupported type
-        raise PydanticValidationError(
-            f"Unsupported crew output type for {crew_name}: {type(crew_output)}"
-        )
+        raise PydanticValidationError(f"Unsupported crew output type for {crew_name}: {type(crew_output)}")
 
     except PydanticValidationError:
         raise

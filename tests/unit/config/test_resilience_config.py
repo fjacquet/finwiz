@@ -585,4 +585,3 @@ class TestResilienceConfig:
         assert config.flow_timeout == 9000
         assert isinstance(config.holding_timeout, int)
         assert isinstance(config.flow_timeout, int)
-

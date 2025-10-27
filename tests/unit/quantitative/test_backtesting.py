@@ -779,3 +779,360 @@ class TestRiskManagement:
 
         config_max = BacktestConfig(max_drawdown_limit=1.0)
         assert config_max.max_drawdown_limit == 1.0
+
+
+class TestStrategyExecution:
+    """Test strategy execution with sample price data."""
+
+    @pytest.fixture
+    def trending_up_data(self):
+        """Create sample price data with upward trend."""
+        dates = pd.date_range(start="2023-01-01", end="2023-06-30", freq="D")
+        num_dates = len(dates)
+
+        # Create upward trending prices
+        base_price = 100.0
+        prices = []
+        for i in range(num_dates):
+            # Add trend + noise
+            trend = base_price + (i * 0.2)  # Upward trend
+            noise = fake.pyfloat(min_value=-1, max_value=1, right_digits=2)
+            prices.append(max(1.0, trend + noise))
+
+        ohlc_data = []
+        for close_price in prices:
+            high = close_price * 1.01
+            low = close_price * 0.99
+            open_price = (high + low) / 2
+
+            ohlc_data.append(
+                {
+                    "Open": round(open_price, 2),
+                    "High": round(high, 2),
+                    "Low": round(low, 2),
+                    "Close": round(close_price, 2),
+                    "Volume": fake.pyint(min_value=1000000, max_value=5000000),
+                }
+            )
+
+        return pd.DataFrame(ohlc_data, index=dates)
+
+    @pytest.fixture
+    def trending_down_data(self):
+        """Create sample price data with downward trend."""
+        dates = pd.date_range(start="2023-01-01", end="2023-06-30", freq="D")
+        num_dates = len(dates)
+
+        # Create downward trending prices
+        base_price = 150.0
+        prices = []
+        for i in range(num_dates):
+            # Add trend + noise
+            trend = base_price - (i * 0.15)  # Downward trend
+            noise = fake.pyfloat(min_value=-1, max_value=1, right_digits=2)
+            prices.append(max(1.0, trend + noise))
+
+        ohlc_data = []
+        for close_price in prices:
+            high = close_price * 1.01
+            low = close_price * 0.99
+            open_price = (high + low) / 2
+
+            ohlc_data.append(
+                {
+                    "Open": round(open_price, 2),
+                    "High": round(high, 2),
+                    "Low": round(low, 2),
+                    "Close": round(close_price, 2),
+                    "Volume": fake.pyint(min_value=1000000, max_value=5000000),
+                }
+            )
+
+        return pd.DataFrame(ohlc_data, index=dates)
+
+    @pytest.fixture
+    def sideways_data(self):
+        """Create sample price data with sideways movement."""
+        dates = pd.date_range(start="2023-01-01", end="2023-06-30", freq="D")
+        num_dates = len(dates)
+
+        # Create sideways prices
+        base_price = 100.0
+        prices = []
+        for _ in range(num_dates):
+            # Random walk around base price
+            noise = fake.pyfloat(min_value=-2, max_value=2, right_digits=2)
+            prices.append(max(1.0, base_price + noise))
+
+        ohlc_data = []
+        for close_price in prices:
+            high = close_price * 1.01
+            low = close_price * 0.99
+            open_price = (high + low) / 2
+
+            ohlc_data.append(
+                {
+                    "Open": round(open_price, 2),
+                    "High": round(high, 2),
+                    "Low": round(low, 2),
+                    "Close": round(close_price, 2),
+                    "Volume": fake.pyint(min_value=1000000, max_value=5000000),
+                }
+            )
+
+        return pd.DataFrame(ohlc_data, index=dates)
+
+    def test_should_execute_sma_strategy_on_trending_up_data(self, trending_up_data, mocker):
+        """Test SMA strategy execution with upward trending data."""
+        # Arrange
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = trending_up_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "UPTREND"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(
+            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
+        )
+
+        # Assert
+        assert isinstance(result, BacktestResult)
+        assert result.strategy_name == "SimpleMovingAverageStrategy"
+        assert result.total_trades >= 0
+        # Note: Strategy may not generate trades if trend is too smooth
+        # The important thing is that it executes without errors
+
+    def test_should_execute_sma_strategy_on_trending_down_data(self, trending_down_data, mocker):
+        """Test SMA strategy execution with downward trending data."""
+        # Arrange
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = trending_down_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "DOWNTREND"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(
+            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
+        )
+
+        # Assert
+        assert isinstance(result, BacktestResult)
+        assert result.strategy_name == "SimpleMovingAverageStrategy"
+        # May be negative in downtrend (long-only strategy)
+        assert result.total_trades >= 0
+
+    def test_should_execute_mean_reversion_strategy_on_sideways_data(self, sideways_data, mocker):
+        """Test mean reversion strategy execution with sideways data."""
+        # Arrange
+        from finwiz.quantitative.backtesting_strategies import MeanReversionStrategy
+
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = sideways_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "SIDEWAYS"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(
+            MeanReversionStrategy, symbol, start_date, end_date, strategy_params={"period": 20, "devfactor": 2.0}
+        )
+
+        # Assert
+        assert isinstance(result, BacktestResult)
+        assert result.strategy_name == "MeanReversionStrategy"
+        assert result.total_trades >= 0
+
+    def test_should_generate_trades_matching_strategy_rules(self, trending_up_data, mocker):
+        """Test that trade generation matches strategy rules."""
+        # Arrange
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = trending_up_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "TEST"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(
+            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
+        )
+
+        # Assert - Verify trades follow strategy logic
+        if result.total_trades > 0:
+            # All trades should have valid entry/exit prices
+            for trade in result.trades:
+                assert trade.entry_price > 0
+                if trade.status == TradeStatus.CLOSED:
+                    assert trade.exit_price is not None
+                    assert trade.exit_price > 0
+                    assert trade.pnl is not None
+
+            # Verify trade types are correct (BUY for long-only strategy)
+            buy_trades = [t for t in result.trades if t.trade_type == TradeType.BUY]
+            assert len(buy_trades) > 0  # Should have buy trades in uptrend
+
+    def test_should_calculate_performance_metrics_correctly(self, trending_up_data, mocker):
+        """Test that performance metrics are calculated correctly."""
+        # Arrange
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = trending_up_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "METRICS"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date)
+
+        # Assert - Verify all key metrics are calculated
+        assert result.total_return is not None
+        assert result.annualized_return is not None
+        assert result.volatility >= 0
+        assert result.sharpe_ratio is not None
+        assert result.max_drawdown <= 0  # Drawdown should be negative or zero
+
+        # Verify win rate calculation
+        if result.total_trades > 0:
+            expected_win_rate = result.winning_trades / result.total_trades
+            assert abs(result.win_rate - expected_win_rate) < 0.01
+
+    def test_should_handle_no_trades_scenario(self, sideways_data, mocker):
+        """Test handling when strategy generates no trades."""
+        # Arrange
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        # Use enough data for the moving averages but with sideways movement
+        # This should result in few or no crossovers
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = sideways_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "NOTRADES"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(
+            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
+        )
+
+        # Assert
+        assert isinstance(result, BacktestResult)
+        # Sideways market may generate few or no trades
+        assert result.total_trades >= 0
+        assert result.winning_trades >= 0
+        assert result.losing_trades >= 0
+        assert result.win_rate >= 0.0
+        assert len(result.trades) >= 0
+
+    def test_should_handle_all_losing_trades_scenario(self, trending_down_data, mocker):
+        """Test handling when all trades are losing."""
+        # Arrange
+        config = BacktestConfig(
+            initial_capital=100000.0,
+            commission_pct=0.001,
+            stop_loss_pct=0.02,  # Tight stop loss
+        )
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = trending_down_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "LOSING"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(
+            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 5, "long_period": 10}
+        )
+
+        # Assert
+        assert isinstance(result, BacktestResult)
+        # In a strong downtrend, long-only strategy should lose money
+        assert result.total_return <= 0
+        assert result.final_value <= result.initial_capital
+
+    def test_should_compare_multiple_strategy_types(self, trending_up_data, mocker):
+        """Test comparison of multiple strategy types."""
+        # Arrange
+        from finwiz.quantitative.backtesting_strategies import MeanReversionStrategy
+
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = trending_up_data
+        engine.data_manager = mock_data_manager
+
+        strategies = [
+            (SimpleMovingAverageStrategy, {"short_period": 10, "long_period": 30}),
+            (MeanReversionStrategy, {"period": 20, "devfactor": 2.0}),
+        ]
+
+        symbol = "COMPARE"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        results = engine.run_multi_strategy_backtest(strategies, symbol, start_date, end_date)
+
+        # Assert
+        assert len(results) == 2
+        assert results[0].strategy_name == "SimpleMovingAverageStrategy"
+        assert results[1].strategy_name == "MeanReversionStrategy"
+
+        # Both should have valid results
+        for result in results:
+            assert result.initial_capital == 100000.0
+            assert result.final_value > 0
+            assert result.total_trades >= 0
+
+    def test_should_track_portfolio_values_over_time(self, trending_up_data, mocker):
+        """Test that portfolio values are tracked over time."""
+        # Arrange
+        config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001)
+        engine = BacktestingEngine(config)
+
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.return_value = trending_up_data
+        engine.data_manager = mock_data_manager
+
+        symbol = "PORTFOLIO"
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 6, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date)
+
+        # Assert
+        assert len(result.portfolio_values) > 0
+        # Portfolio values should be tracked daily
+        assert len(result.portfolio_values) >= 100  # At least 100 days of data

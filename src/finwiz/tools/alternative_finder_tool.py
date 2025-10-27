@@ -115,7 +115,9 @@ class AlternativeFinder:
 
         # Step 2: Find same-sector alternatives (if not enough A+ found)
         if len(alternatives) < max_alternatives:
-            self.logger.info(f"Step 2: Searching for sector alternatives for {holding.ticker} (need {max_alternatives - len(alternatives)} more)")
+            self.logger.info(
+                f"Step 2: Searching for sector alternatives for {holding.ticker} (need {max_alternatives - len(alternatives)} more)"
+            )
             sector_alternatives = self._find_sector_alternatives(holding)
             if sector_alternatives:
                 self.logger.info(f"Found {len(sector_alternatives)} sector alternatives for {holding.ticker}")
@@ -177,8 +179,7 @@ class AlternativeFinder:
         latest_file = self.discovery_output_dir / "discovery_latest.json"
         if not latest_file.exists():
             self.logger.warning(
-                f"No discovery crew output found at {latest_file}. "
-                f"Run analysis with --discovery flag to generate A+ alternatives."
+                f"No discovery crew output found at {latest_file}. Run analysis with --discovery flag to generate A+ alternatives."
             )
             return alternatives
 
@@ -189,10 +190,7 @@ class AlternativeFinder:
             # Extract A+ opportunities
             pydantic_output = discovery_data.get("pydantic", {})
             if not pydantic_output:
-                self.logger.warning(
-                    f"Discovery output exists but has no pydantic data. "
-                    f"File: {latest_file}"
-                )
+                self.logger.warning(f"Discovery output exists but has no pydantic data. File: {latest_file}")
                 return alternatives
 
             # Look for A+ stocks/ETFs/crypto based on asset class
@@ -201,8 +199,7 @@ class AlternativeFinder:
 
             if not aplus_items:
                 self.logger.info(
-                    f"No A+ {holding.asset_class}s found in discovery output. "
-                    f"Field '{aplus_field}' is empty or missing."
+                    f"No A+ {holding.asset_class}s found in discovery output. Field '{aplus_field}' is empty or missing."
                 )
                 return alternatives
 
@@ -222,13 +219,10 @@ class AlternativeFinder:
                         if alternative:
                             alternatives.append(alternative)
                             self.logger.info(
-                                f"Created alternative: {ticker} (grade: {item.get('grade', 'N/A')}) "
-                                f"for {holding.ticker}"
+                                f"Created alternative: {ticker} (grade: {item.get('grade', 'N/A')}) for {holding.ticker}"
                             )
                     elif ticker == holding.ticker:
-                        self.logger.debug(
-                            f"Skipping {ticker} as it's the same as current holding"
-                        )
+                        self.logger.debug(f"Skipping {ticker} as it's the same as current holding")
 
             if not alternatives:
                 self.logger.warning(

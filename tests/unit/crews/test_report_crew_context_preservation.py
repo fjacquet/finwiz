@@ -6,7 +6,6 @@ to prevent template variable errors and ensure discovery results are passed thro
 """
 
 import pytest
-from pathlib import Path
 
 
 class TestReportCrewContextPreservation:
@@ -16,29 +15,31 @@ class TestReportCrewContextPreservation:
     def mock_report_crew(self, mocker):
         """Create a mock ReportCrew instance."""
         # Mock the imports and dependencies
-        mocker.patch('finwiz.crews.report_crew.report_crew.CrewDataIntegrationManager')
-        mocker.patch('finwiz.crews.report_crew.report_crew.CrewDataAccessor')
-        mocker.patch('finwiz.crews.report_crew.report_crew.APlusDiscoveryAccessor')
-        mocker.patch('finwiz.crews.report_crew.report_crew.BacktestingDataExtractor')
-        mocker.patch('finwiz.crews.report_crew.report_crew.DataAvailabilityTracker')
-        mocker.patch('finwiz.crews.report_crew.report_crew.get_rag_tools', return_value=[])
-        mocker.patch('finwiz.crews.report_crew.report_crew.make_tools_robust', return_value=[])
-        
+        mocker.patch("finwiz.crews.report_crew.report_crew.CrewDataIntegrationManager")
+        mocker.patch("finwiz.crews.report_crew.report_crew.CrewDataAccessor")
+        mocker.patch("finwiz.crews.report_crew.report_crew.APlusDiscoveryAccessor")
+        mocker.patch("finwiz.crews.report_crew.report_crew.BacktestingDataExtractor")
+        mocker.patch("finwiz.crews.report_crew.report_crew.DataAvailabilityTracker")
+        mocker.patch("finwiz.crews.report_crew.report_crew.get_rag_tools", return_value=[])
+        mocker.patch("finwiz.crews.report_crew.report_crew.make_tools_robust", return_value=[])
+
         # Import after mocking
         from finwiz.crews.report_crew.report_crew import ReportCrew
-        
+
         # Create instance
         crew = ReportCrew()
-        
+
         # Mock the get_integrated_data_context method to return minimal data
-        crew.get_integrated_data_context = mocker.Mock(return_value={
-            "data_availability_report": {"overall_status": "available"},
-            "stale_data_warnings": [],
-        })
-        
+        crew.get_integrated_data_context = mocker.Mock(
+            return_value={
+                "data_availability_report": {"overall_status": "available"},
+                "stale_data_warnings": [],
+            }
+        )
+
         # Mock the validate_reporter_input method
         crew.validate_reporter_input = mocker.Mock()
-        
+
         return crew
 
     def test_should_preserve_portfolio_review_from_inputs(self, mock_report_crew):
@@ -56,10 +57,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "portfolio_review" in result, "portfolio_review should be preserved"
         assert result["portfolio_review"] == flow_inputs["portfolio_review"]
@@ -82,10 +83,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "aplus_opportunities" in result, "aplus_opportunities should be preserved"
         assert "investment_discovery_structured" in result, "investment_discovery_structured should be preserved"
@@ -108,10 +109,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "validated_tickers_list" in result, "validated_tickers_list should be constructed"
         assert isinstance(result["validated_tickers_list"], list)
@@ -130,10 +131,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "discovery_status" in result, "discovery_status should be constructed"
         assert result["discovery_status"]["has_results"] is True
@@ -147,10 +148,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "discovery_status" in result, "discovery_status should be constructed"
         assert result["discovery_status"]["has_results"] is False
@@ -170,10 +171,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "backtesting_status" in result, "backtesting_status should be constructed"
         assert result["backtesting_status"]["has_data"] is True
@@ -186,10 +187,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "backtesting_status" in result, "backtesting_status should be constructed"
         assert result["backtesting_status"]["has_data"] is False
@@ -207,13 +208,12 @@ class TestReportCrewContextPreservation:
             "timestamp": "2025-01-18T10:30:00",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
-        for key in ["current_day", "current_month", "current_year", "current_date", 
-                   "full_date", "timestamp", "report_language"]:
+        for key in ["current_day", "current_month", "current_year", "current_date", "full_date", "timestamp", "report_language"]:
             assert key in result, f"{key} should be preserved"
             assert result[key] == flow_inputs[key]
 
@@ -225,10 +225,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "data_availability_summary_formatted" in result
         assert result["data_availability_summary_formatted"] == flow_inputs["data_availability_summary_formatted"]
@@ -236,10 +236,10 @@ class TestReportCrewContextPreservation:
     def test_should_handle_missing_inputs_gracefully(self, mock_report_crew):
         """Test that missing inputs are handled gracefully without errors."""
         # Arrange - no inputs provided
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=None)
-        
+
         # Assert - should not raise exception
         assert isinstance(result, dict)
         assert "data_availability_report" in result  # From get_integrated_data_context
@@ -253,10 +253,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "portfolio_rebalancing_result" in result
         assert "portfolio_rebalancing_available" in result
@@ -274,10 +274,10 @@ class TestReportCrewContextPreservation:
             "current_date": "2025-01-18",
             "report_language": "fr",
         }
-        
+
         # Act
         result = mock_report_crew.prepare_crew_context(max_age_hours=24, inputs=flow_inputs)
-        
+
         # Assert
         assert "deep_analysis_results" in result
         assert "deep_analysis_success" in result

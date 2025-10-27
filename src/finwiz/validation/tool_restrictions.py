@@ -60,11 +60,8 @@ class ToolRestrictionValidator:
                 # TEMPORARY EXCEPTION: Allow read-only tools (DirectoryReadTool, FileReadTool)
                 # for accessing deep analysis HTML files until Flow is fixed
                 tool_names = [tool.__class__.__name__ for tool in agent.tools]
-                read_only_tools = all(
-                    "DirectoryReadTool" in name or "FileReadTool" in name 
-                    for name in tool_names
-                )
-                
+                read_only_tools = all("DirectoryReadTool" in name or "FileReadTool" in name for name in tool_names)
+
                 if not read_only_tools:
                     violation = f"Agent has {len(agent.tools)} non-read-only tools but should have none"
                     logger.error(f"Tool restriction violation: {agent_role} - {violation}")

@@ -255,9 +255,7 @@ class TestRegimePerformanceAnalysis:
         assert "bull" in regime_perf
         assert "bear" not in regime_perf
 
-    def test_should_calculate_consistency_from_win_rate_and_sharpe(
-        self, extractor: BacktestingDataExtractor
-    ) -> None:
+    def test_should_calculate_consistency_from_win_rate_and_sharpe(self, extractor: BacktestingDataExtractor) -> None:
         """Test consistency score calculation formula."""
         # Arrange
         regime_data = {
@@ -312,9 +310,7 @@ class TestRegimePerformanceAnalysis:
         assert consistency >= 0
         assert consistency <= 0.5  # Should be low due to poor performance
 
-    def test_should_aggregate_regime_performance_across_multiple_candidates(
-        self, extractor: BacktestingDataExtractor
-    ) -> None:
+    def test_should_aggregate_regime_performance_across_multiple_candidates(self, extractor: BacktestingDataExtractor) -> None:
         """Test aggregation of regime performance across multiple candidates."""
         # Arrange - Two validation results with different regime performance
         result1 = ValidationResult(

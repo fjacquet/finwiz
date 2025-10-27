@@ -40,9 +40,7 @@ class MethodologySummary(BaseModel):
 
     screening_criteria: APlusCriteria = Field(..., description="Criteria used for screening")
     validation_statistics: ValidationStatistics = Field(..., description="Validation statistics")
-    score_breakdowns: dict[str, ScoreBreakdown] = Field(
-        default_factory=dict, description="Score breakdowns by symbol"
-    )
+    score_breakdowns: dict[str, ScoreBreakdown] = Field(default_factory=dict, description="Score breakdowns by symbol")
     methodology_notes: list[str] = Field(default_factory=list, description="Key methodology points")
     data_sources: list[str] = Field(default_factory=list, description="Data sources used")
 
@@ -86,7 +84,7 @@ class DiscoveryMethodologyExtractor:
                 f"Extracted screening criteria: "
                 f"ETF expense ratio ≤{criteria.etf_max_expense_ratio:.2%}, "
                 f"Stock ROE ≥{criteria.stock_min_roe:.1f}%, "
-                f"Crypto market cap ≥${criteria.crypto_min_market_cap/1e9:.1f}B"
+                f"Crypto market cap ≥${criteria.crypto_min_market_cap / 1e9:.1f}B"
             )
             return criteria
 
@@ -138,9 +136,7 @@ class DiscoveryMethodologyExtractor:
             self.logger.error(f"Failed to extract validation statistics: {e}")
             return None
 
-    def extract_fundamental_technical_scores(
-        self, discovery_result: APlusDiscoveryResult
-    ) -> dict[str, ScoreBreakdown]:
+    def extract_fundamental_technical_scores(self, discovery_result: APlusDiscoveryResult) -> dict[str, ScoreBreakdown]:
         """
         Extract fundamental and technical score breakdowns for each A+ candidate.
 
@@ -200,9 +196,7 @@ class DiscoveryMethodologyExtractor:
                 return None
 
             # Generate methodology notes
-            methodology_notes = self._generate_methodology_notes(
-                discovery_result, screening_criteria, validation_statistics
-            )
+            methodology_notes = self._generate_methodology_notes(discovery_result, screening_criteria, validation_statistics)
 
             # Extract data sources
             data_sources = self._extract_data_sources(discovery_result)
@@ -244,7 +238,7 @@ class DiscoveryMethodologyExtractor:
         if asset_type == "etf":
             notes.append(
                 f"ETF criteria: expense ratio ≤{criteria.etf_max_expense_ratio:.2%}, "
-                f"AUM ≥${criteria.etf_min_aum/1e9:.1f}B, "
+                f"AUM ≥${criteria.etf_min_aum / 1e9:.1f}B, "
                 f"tracking error ≤{criteria.etf_max_tracking_error:.2%}"
             )
         elif asset_type == "stock":
@@ -255,8 +249,8 @@ class DiscoveryMethodologyExtractor:
             )
         elif asset_type == "crypto":
             notes.append(
-                f"Crypto criteria: market cap ≥${criteria.crypto_min_market_cap/1e9:.1f}B, "
-                f"daily volume ≥${criteria.crypto_min_daily_volume/1e6:.0f}M, "
+                f"Crypto criteria: market cap ≥${criteria.crypto_min_market_cap / 1e9:.1f}B, "
+                f"daily volume ≥${criteria.crypto_min_daily_volume / 1e6:.0f}M, "
                 f"age ≥{criteria.crypto_min_age_months} months"
             )
 
@@ -267,8 +261,7 @@ class DiscoveryMethodologyExtractor:
         # Market context note
         market_regime = discovery_result.market_context
         notes.append(
-            f"Analysis performed in {market_regime.regime_type} market with "
-            f"{market_regime.market_stress_level} stress level"
+            f"Analysis performed in {market_regime.regime_type} market with {market_regime.market_stress_level} stress level"
         )
 
         # Efficiency note
@@ -284,10 +277,7 @@ class DiscoveryMethodologyExtractor:
 
         # UCITS note for ETFs
         if asset_type == "etf" and discovery_result.ucits_compliant_count:
-            notes.append(
-                f"{discovery_result.ucits_compliant_count} UCITS-compliant ETFs found "
-                f"(suitable for European investors)"
-            )
+            notes.append(f"{discovery_result.ucits_compliant_count} UCITS-compliant ETFs found (suitable for European investors)")
 
         return notes
 
@@ -314,4 +304,3 @@ class DiscoveryMethodologyExtractor:
         data_sources.update(["CBOE VIX Index", "Federal Reserve Economic Data"])
 
         return sorted(list(data_sources))
-

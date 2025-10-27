@@ -28,7 +28,7 @@ my_crew = Crew(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `planning` | bool | False | Enable/disable crew planning |
-| `planning_llm` | str | "gpt-4o-mini" | LLM to use for planning |
+| `planning_llm` | str | "gpt-5-mini" | LLM to use for planning |
 
 ### Custom Planning LLM
 
@@ -106,7 +106,7 @@ A list with 10 bullet points of the most relevant information.
 ### ⚠️ OpenAI API Key Required
 
 **Default behavior:**
-- Planning uses `gpt-4o-mini` by default
+- Planning uses `gpt-5-mini` by default
 - Requires valid OpenAI API key
 - Even if your agents use different LLMs!
 
@@ -120,12 +120,12 @@ A list with 10 bullet points of the most relevant information.
 **Per crew execution:**
 - 1 planning call per crew iteration
 - Tokens: ~1000-3000 per plan (depends on crew complexity)
-- Model: gpt-4o-mini (default) or custom
+- Model: gpt-5-mini (default) or custom
 
 **For FinWiz deep analysis:**
 - 66 holdings × 1 crew each = 66 planning calls
 - Estimated: 66,000-200,000 tokens
-- Cost: ~$0.01-0.03 per execution (gpt-4o-mini)
+- Cost: ~$0.01-0.03 per execution (gpt-5-mini)
 
 ## Agent Reasoning vs Crew Planning
 
@@ -230,7 +230,7 @@ class InvestmentDiscoveryCrew(CrewBase):
             tasks=self.tasks,
             process=Process.sequential,
             planning=True,  # ✅ Coordinates screening workflow
-            planning_llm="gpt-4o-mini"
+            planning_llm="gpt-5-mini"
         )
 ```
 
@@ -240,7 +240,7 @@ class InvestmentDiscoveryCrew(CrewBase):
 - **Time**: Adds 10-30 seconds per crew execution
 - **API Calls**: 1 additional LLM call per execution
 - **Tokens**: ~1000-3000 tokens per plan
-- **Cost**: $0.0001-0.0003 per plan (gpt-4o-mini)
+- **Cost**: $0.0001-0.0003 per plan (gpt-5-mini)
 
 ### Optimization Strategies
 
@@ -276,7 +276,7 @@ crew = Crew(
     agents=agents,
     tasks=tasks,
     planning=True,
-    planning_llm="gpt-4o-mini"
+    planning_llm="gpt-5-mini"
 )
 
 # Look for log entries like:
@@ -312,7 +312,7 @@ result = crew.kickoff()
 ## Key Takeaways
 
 1. **Crew planning ≠ Agent reasoning** - Different scopes and purposes
-2. **OpenAI key required** - Default planning uses gpt-4o-mini
+2. **OpenAI key required** - Default planning uses gpt-5-mini
 3. **Cost implications** - Additional API calls per execution
 4. **Use selectively** - Best for multi-agent coordination
 5. **Not for high-volume** - Overhead multiplies with executions
@@ -323,7 +323,7 @@ result = crew.kickoff()
 
 - CrewAI Crew Planning Documentation (provided)
 - FinWiz existing crews: `deep_analysis.py`, `portfolio_rebalancing_crew/`
-- Cost analysis: OpenAI pricing for gpt-4o-mini
+- Cost analysis: OpenAI pricing for gpt-5-mini
 
 ---
 

@@ -146,29 +146,22 @@ class APlusDiscoveryAccessor:
             stock_candidates = results["stocks"].get("a_plus_candidates", [])
             if stock_candidates:
                 a_plus_stocks = [c for c in stock_candidates if c.get("candidate", {}).get("grade") == "A+"]
-                summary_parts.append(
-                    f"{len(stock_candidates)} stock opportunities ({len(a_plus_stocks)} A+ grade)"
-                )
+                summary_parts.append(f"{len(stock_candidates)} stock opportunities ({len(a_plus_stocks)} A+ grade)")
 
             # ETF opportunities
             etf_candidates = results["etfs"].get("a_plus_candidates", [])
             if etf_candidates:
                 a_plus_etfs = [c for c in etf_candidates if c.get("candidate", {}).get("grade") == "A+"]
-                summary_parts.append(
-                    f"{len(etf_candidates)} ETF opportunities ({len(a_plus_etfs)} A+ grade)"
-                )
+                summary_parts.append(f"{len(etf_candidates)} ETF opportunities ({len(a_plus_etfs)} A+ grade)")
 
             # Crypto opportunities
             crypto_candidates = results["crypto"].get("a_plus_candidates", [])
             if crypto_candidates:
                 a_plus_crypto = [c for c in crypto_candidates if c.get("candidate", {}).get("grade") == "A+"]
-                summary_parts.append(
-                    f"{len(crypto_candidates)} crypto opportunities ({len(a_plus_crypto)} A+ grade)"
-                )
+                summary_parts.append(f"{len(crypto_candidates)} crypto opportunities ({len(a_plus_crypto)} A+ grade)")
 
-            summary = (
-                f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: "
-                + ", ".join(summary_parts)
+            summary = f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: " + ", ".join(
+                summary_parts
             )
 
             self.logger.info("Generated opportunities summary", extra={"total_opportunities": total_opportunities})

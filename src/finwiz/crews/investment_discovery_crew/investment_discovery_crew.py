@@ -13,6 +13,7 @@ from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
+from finwiz.schemas.crew_exports import DiscoveryCrewExport
 from finwiz.schemas.investment_discovery import (
     APlusDiscoveryResult,
     OptimizationResult,
@@ -31,6 +32,7 @@ from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_to
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.risk_assessment_tool import get_risk_assessment_tool
+from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.task_decorators import async_task, sync_task
 
 load_dotenv()
@@ -190,6 +192,16 @@ class InvestmentDiscoveryCrew:
             reasoning=True,
         )
 
+    @final_reporter
+    @agent
+    def investment_reporter(self) -> Agent:
+        """Consolidate discovery findings into DiscoveryCrewExport."""
+        return Agent(
+            config=self.agents_config["investment_reporter"],
+            tools=[],  # MUST be empty - enforced by @final_reporter decorator
+            verbose=True,
+        )
+
     @async_task
     @task
     def etf_discovery_task(self) -> Task:
@@ -250,6 +262,16 @@ class InvestmentDiscoveryCrew:
         """Task for analyzing feedback and improving A+ criteria."""
         return Task(
             config=self.tasks_config["feedback_learning_task"],
+            verbose=True,
+        )
+
+    @sync_task
+    @task
+    def generate_export_task(self) -> Task:
+        """Generate DiscoveryCrewExport JSON from all discovery findings."""
+        return Task(
+            config=self.tasks_config["generate_export_task"],
+            output_pydantic=DiscoveryCrewExport,
             verbose=True,
         )
 

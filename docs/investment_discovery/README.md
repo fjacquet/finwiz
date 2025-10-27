@@ -110,7 +110,7 @@ The discovery system integrates with:
 ## See Also
 
 - [Portfolio Holdings Analysis](../portfolio_holdings_analysis_user_guide.md)
-- [Portfolio Rebalancing](../portfolio_rebalancing/)
+- [Portfolio Rebalancing](../portfolio_rebalancing/index.md)
 - [A+ Monitoring System](../a_plus_monitoring_system.md)
 - [A+ Scoring Tool](../a_plus_scoring_tool.md)
 

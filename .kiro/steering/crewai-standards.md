@@ -1,8 +1,6 @@
 # CrewAI Development Standards for FinWiz
 
-Standards for developing CrewAI crews, agents, and tasks in FinWiz.
-
-**See also:** [CrewAI Best Practices](crewai-best-practices.md) for comprehensive patterns on Flow state management, agent reasoning, crew planning, and collaboration.
+Comprehensive standards for developing CrewAI crews, agents, and tasks in FinWiz, including performance-optimized patterns for Flow state management, agent reasoning, crew planning, and multi-agent collaboration.
 
 ## Crew Structure (Required)
 
@@ -18,21 +16,19 @@ src/finwiz/crews/{crew_name}/
 
 ## Agent Configuration
 
-### Standard Pattern
+### Standard Agent Pattern
 
 ```python
 from crewai import Agent, agent
 from finwiz.tools.tool_factories import get_stock_crew_tools
 
 @agent
-def stock_analyst(self) -> Agent:
+def analyst(self) -> Agent:
     return Agent(
-        config=self.agents_config["stock_analyst"],
-        tools=get_stock_crew_tools(
-            include_rag=True,
-            include_quantitative=True,
-            collection_suffix="stock"
-        ),
+        config=self.agents_config["analyst"],
+        tools=get_stock_crew_tools(include_rag=True),
+        reasoning=True,
+        max_reasoning_attempts=3,  # Prevent infinite loops
         verbose=True
     )
 ```
@@ -40,10 +36,42 @@ def stock_analyst(self) -> Agent:
 ### Configuration File (agents.yaml)
 
 ```yaml
-stock_analyst:
-  role: "Stock Analyst"
-  goal: "Analyze stock fundamentals and provide investment recommendations"
-  backstory: "Expert financial analyst with deep knowledge of equity markets"
+analyst:
+  role: "Financial Analyst"
+  goal: "Analyze assets and provide investment recommendations"
+  backstory: "Expert analyst with deep market knowledge and quantitative skills"
+```
+
+### Agent Configuration Rules
+
+#### Reasoning
+
+- **Enable** (`reasoning=True`) for: Financial analysis, multi-step workflows
+- **Disable** (`reasoning=False`) for: Simple validators, final reporters
+- **Always** set `max_reasoning_attempts=3` when reasoning is enabled
+
+#### Delegation
+
+- **Enable** (`allow_delegation=True`) for: Lead/coordinator agents only
+- **Disable** (`allow_delegation=False`) for: Specialists, final reporters
+
+### Backstory Templates
+
+**Financial Analysis Agents:**
+
+```yaml
+backstory: >
+  Expert financial analyst with 15+ years experience in {asset_class} markets.
+  Specializes in fundamental analysis, risk assessment, and quantitative metrics.
+  Provides data-driven investment recommendations with clear rationale.
+```
+
+**Final Reporters:**
+
+```yaml
+backstory: >
+  Senior investment advisor who synthesizes analysis into actionable recommendations.
+  Consolidates findings from research teams WITHOUT external API calls.
 ```
 
 ### Tool Assignment Rules
@@ -142,6 +170,28 @@ stock_analysis_task:
 - No circular dependencies
 - Final task must be synchronous (`async_execution: false`)
 
+### Task Description Format
+
+For reasoning agents, include explicit mode and steps:
+
+```yaml
+analysis_task:
+  description: >
+    Perform comprehensive analysis of the provided {asset_class} ticker: {ticker}
+    
+    SINGLE TICKER MODE: Analyze ONE specific {asset_class}, not multiple assets.
+    The ticker {ticker} is provided as input. Do NOT request additional tickers.
+    
+    Required Steps:
+    1. Validate {ticker} using TickerValidationTool
+    2. Fetch {asset_class}-specific data for {ticker}
+    3. Calculate quantitative metrics for {ticker}
+    4. Generate standardized risk assessment for {ticker}
+    5. Provide BUY/HOLD/SELL recommendation with rationale
+```
+
+Key elements: "SINGLE TICKER MODE" declaration, repeat `{ticker}` variable throughout
+
 ## Crew Configuration
 
 ### Standard Pattern
@@ -175,9 +225,39 @@ def crew(self) -> Crew:
 - Final task must be synchronous (CrewAI requirement)
 - Implement caching for expensive operations
 
-## CrewAI Compliance Checklist
+## Implementation Checklist
 
-When creating or modifying crews:
+### Flow Implementation
+
+- [ ] Use `Flow[PydanticModel]` for structured state
+- [ ] All Flow methods return `dict[str, Any]`
+- [ ] Listeners receive upstream data as parameters
+- [ ] Never use `self.inputs` for state management
+- [ ] Use `@router` for conditional flow control
+
+### Agent Configuration
+
+- [ ] `reasoning=True` only for complex analysis
+- [ ] `max_reasoning_attempts=3` when reasoning enabled
+- [ ] `allow_delegation=True` only for coordinators
+- [ ] Final reporters: `tools=[]`, `allow_delegation=False`, `reasoning=False`
+- [ ] Use `@final_reporter` decorator for enforcement
+
+### Crew Setup
+
+- [ ] `planning=True` only when: 4+ agents, 6+ tasks, ≤3 runs
+- [ ] `max_rpm=20` for rate limiting
+- [ ] `respect_context_window=True` for context management
+- [ ] `verbose=True` for debugging
+
+### Performance Optimization
+
+- [ ] Disable reasoning for high-volume executions (66+ runs)
+- [ ] Disable planning for repeated crew runs
+- [ ] Use `async_execution=true` for I/O-bound tasks (except final task)
+- [ ] Consider execution volume when enabling features
+
+### CrewAI Compliance
 
 - [ ] Follows standard crew structure
 - [ ] Uses `@agent`, `@task`, `@crew` decorators
@@ -256,6 +336,94 @@ max_retries = 3
 retry_delay = 2  # seconds (doubles each retry)
 ```
 
+## Performance Optimization
+
+### Agent Reasoning (`reasoning=True`)
+
+#### When to Enable
+
+**Enable for:**
+- Complex multi-step analysis requiring planning
+- Error-prone operations needing recovery strategies
+- Tasks using multiple tools with dependencies
+- Single-execution deep analysis
+
+**Disable for:**
+- Simple validation (ticker format checks)
+- Direct API calls (single-step fetches)
+- Final reporters (consolidation only)
+- High-volume executions (66+ runs)
+- Time-sensitive operations
+
+**Performance Cost:** 5-15 seconds, 1-3 LLM calls, 500-2000 tokens per reasoning cycle
+
+### Crew Planning (`planning=True`)
+
+#### Decision Rule
+
+Enable planning when: `(agents >= 4) AND (tasks >= 6) AND (execution_volume <= 3)`
+
+**Enable for:**
+- Multi-agent coordination (4+ agents)
+- Complex workflows (6+ tasks)
+- Low-volume executions (≤3 runs)
+- Portfolio rebalancing (single execution)
+
+**Disable for:**
+- High-volume executions (66+ runs)
+- Single-agent crews
+- Simple workflows (<6 tasks)
+- Deep analysis crews (repeated per holding)
+
+#### Configuration Examples
+
+```python
+# High-volume execution - NO planning
+class DeepAnalysisCrew(CrewBase):
+    @crew
+    def crew(self) -> Crew:
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            planning=False,  # Overhead × 66 executions = too costly
+            max_rpm=20
+        )
+
+# Multi-agent coordination - YES planning
+class PortfolioRebalancingCrew(CrewBase):
+    @crew
+    def crew(self) -> Crew:
+        return Crew(
+            agents=[self.analyzer(), self.risk_assessor(), self.optimizer()],
+            tasks=self.tasks,
+            planning=True,
+            planning_llm="gpt-4o",
+            max_rpm=20
+        )
+```
+
+### Agent Delegation (`allow_delegation=True`)
+
+**Enable for:**
+- Coordinator/lead agents managing workflow
+- Multi-agent workflows with dependencies
+- Agents needing to ask questions
+
+**Disable for:**
+- Focused specialists (single responsibility)
+- Final reporters (consolidation only)
+- Single-purpose agents
+
+**Performance Cost:** 5-15 seconds per delegation, 1-2 LLM calls
+
+### Performance Decision Matrix
+
+| Feature | Enable When | Disable When | Cost per Use |
+|---------|-------------|--------------|--------------|
+| `reasoning=True` | Complex multi-step, error recovery | Simple validation, high-volume | 5-15s, 1-3 calls |
+| `planning=True` | 4+ agents, 6+ tasks, ≤3 runs | High-volume, single agent | Overhead × count |
+| `allow_delegation=True` | Coordinators, multi-agent | Specialists, reporters | 5-15s per delegation |
+
 ## Best Practices
 
 1. **Use Tool Factories**: Centralize tool initialization
@@ -266,6 +434,73 @@ retry_delay = 2  # seconds (doubles each retry)
 6. **Context Management**: Use `respect_context_window`
 7. **Error Handling**: Implement graceful degradation
 8. **Logging**: Enable `verbose=True` for debugging
+9. **Performance Optimization**: Consider execution volume when enabling features
+
+## Flow State Management (CRITICAL)
+
+### Mandatory Pattern: Structured State
+
+Always use Pydantic models for type-safe Flow state:
+
+```python
+from pydantic import BaseModel
+from crewai.flow.flow import Flow
+
+class MyFlowState(BaseModel):
+    """Type-safe state with validation."""
+    holdings_processed: int = 0
+    current_ticker: str = ""
+    results: dict[str, Any] = {}
+
+class MyFlow(Flow[MyFlowState]):
+    @start()
+    def initialize(self) -> dict[str, Any]:
+        self.state.holdings_processed = 0
+        return {"status": "initialized"}
+```
+
+**Non-Negotiable Rules:**
+- ✅ Use `Flow[PydanticModel]` for type safety
+- ✅ All Flow methods return `dict[str, Any]`
+- ✅ Access state via `self.state.field_name`
+- ❌ NEVER use `self.inputs` (unstructured, error-prone)
+
+### Data Flow Between Methods
+
+Listeners receive upstream data as parameters:
+
+```python
+@start()
+def generate_data(self) -> dict[str, Any]:
+    """Return data for downstream listeners."""
+    return {"ticker": "AAPL", "data": {...}}
+
+@listen(generate_data)
+def process_data(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
+    """Receive data from upstream as parameter."""
+    ticker = upstream_data["ticker"]
+    self.state.last_processed = ticker
+    return {"processed": True}
+```
+
+### Conditional Routing
+
+Use `@router` to direct flow based on state:
+
+```python
+@router(process_payment)
+def check_status(self, previous_result: dict[str, Any]) -> str:
+    """Return string to route to specific listener."""
+    if self.state.is_approved:
+        return "approved"
+    elif self.state.retry_count < 3:
+        return "retry"
+    return "rejected"
+
+@listen("approved")
+def handle_approval(self) -> dict[str, Any]:
+    return {"status": "success"}
+```
 
 ## CrewAI Flow Integration (CRITICAL)
 
@@ -407,8 +642,58 @@ When integrating with CrewAI Flow:
 ✅ **Debugging**: Structured state makes debugging easier
 ✅ **IDE Support**: Type hints enable better autocomplete and error detection
 
+## Common Patterns
+
+### Single-Execution Complex Analysis
+
+```python
+# Portfolio rebalancing (runs once)
+crew = Crew(
+    agents=[coordinator, analyst, optimizer],  # 3+ agents
+    tasks=self.tasks,  # 6+ tasks
+    planning=True,  # Complex coordination
+    reasoning=True,  # Complex decisions
+    max_rpm=20
+)
+```
+
+### High-Volume Simple Analysis
+
+```python
+# Deep analysis per holding (runs 66+ times)
+crew = Crew(
+    agents=[analyst],  # Single agent
+    tasks=self.tasks,  # Simple workflow
+    planning=False,  # Avoid overhead
+    reasoning=False,  # Fast execution
+    max_rpm=20
+)
+```
+
+### Multi-Agent Coordination
+
+```python
+# Coordinator delegates to specialists
+coordinator = Agent(
+    reasoning=True,
+    allow_delegation=True  # Can delegate
+)
+
+specialist = Agent(
+    reasoning=True,
+    allow_delegation=False  # Focused execution
+)
+```
+
 ## Anti-Patterns (Avoid)
 
+❌ **Using `self.inputs` instead of `self.state`**
+❌ **Flow methods not returning `dict[str, Any]`**
+❌ **Enabling reasoning for high-volume executions**
+❌ **Enabling planning for single-agent crews**
+❌ **Final reporters with non-empty tools**
+❌ **Missing `max_reasoning_attempts` when reasoning enabled**
+❌ **Delegation enabled for specialist agents**
 ❌ **Hardcoded tool lists** - Use tool factories instead
 ❌ **Tools in final reporter** - Must be empty
 ❌ **Async final task** - Must be synchronous
@@ -423,6 +708,7 @@ When integrating with CrewAI Flow:
 
 ---
 
-**Version**: 3.0  
-**Last Updated**: 2025-01-08  
-**Major Update**: Added CrewAI Flow integration standards and compliance requirements
+**Version**: 4.0  
+**Last Updated**: 2025-10-26  
+**Consolidated from**: crewai-best-practices.md, agents.md  
+**Major Update**: Comprehensive consolidation of CrewAI standards, performance optimization, and Flow patterns

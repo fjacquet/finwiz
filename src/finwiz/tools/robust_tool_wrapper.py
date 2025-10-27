@@ -29,6 +29,7 @@ class RobustToolWrapper:
 
         Returns:
             Cleaned dictionary matching schema
+
         """
         # Case 1: JSON string - parse it first
         if isinstance(raw_input, str):
@@ -56,17 +57,17 @@ class RobustToolWrapper:
                 if isinstance(item, dict) and item:
                     # Check if it looks like actual tool parameters
                     # Skip items that look like error responses (have 'status', 'error', 'message' keys)
-                    error_indicators = {'status', 'error', 'message', 'items'}
+                    error_indicators = {"status", "error", "message", "items"}
                     if error_indicators.intersection(item.keys()) and len(item) <= 3:
                         logger.debug(f"Skipping error/status dict: {list(item.keys())}")
                         continue
-                    
+
                     # Skip items that look like validation results (have 'valid', 'reason', 'meta' keys)
-                    validation_indicators = {'valid', 'reason', 'meta'}
+                    validation_indicators = {"valid", "reason", "meta"}
                     if validation_indicators.issubset(item.keys()):
                         logger.debug(f"Skipping validation result dict: {list(item.keys())}")
                         continue
-                    
+
                     # Check if it has actual parameter values (not just nested dicts/lists)
                     if any(not isinstance(v, (dict, list)) for v in item.values()):
                         logger.info(f"Using first valid item from array: {list(item.keys())}")
@@ -94,6 +95,7 @@ class RobustToolWrapper:
 
         Returns:
             Wrapped tool with robust input handling
+
         """
         original_run = tool._run
 
@@ -130,5 +132,6 @@ def make_tools_robust(tools: list[BaseTool]) -> list[BaseTool]:
 
     Returns:
         List of wrapped tools
+
     """
     return [RobustToolWrapper.wrap_tool(tool) for tool in tools]

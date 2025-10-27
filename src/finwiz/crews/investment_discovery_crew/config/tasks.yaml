@@ -49,7 +49,6 @@ etf_discovery_task:
     IMPORTANT: Return the object directly without any wrapper fields.
     
   agent: etf_discovery_agent
-  output_pydantic: APlusDiscoveryResult
   output_file: "output/discovery/a_plus_etfs.json"
   async_execution: true
 
@@ -126,7 +125,6 @@ stock_discovery_task:
     IMPORTANT: Return the object directly without any wrapper fields.
     
   agent: stock_discovery_agent
-  output_pydantic: APlusDiscoveryResult
   output_file: "output/discovery/a_plus_stocks.json"
   async_execution: true
   depends_on:
@@ -207,7 +205,6 @@ crypto_discovery_task:
     IMPORTANT: Return the object directly without any wrapper fields.
     
   agent: crypto_discovery_agent
-  output_pydantic: APlusDiscoveryResult
   output_file: "output/discovery/a_plus_crypto.json"
   async_execution: true
   depends_on:
@@ -245,7 +242,6 @@ validation_task:
     IMPORTANT: Return the object directly without any wrapper fields.
     
   agent: validation_agent
-  output_pydantic: ValidationResult
   output_file: "output/discovery/validation_report.json"
   async_execution: true
   depends_on:
@@ -314,7 +310,6 @@ optimization_task:
     IMPORTANT: Return the object directly without any wrapper fields.
     
   agent: portfolio_optimization_agent
-  output_pydantic: OptimizationResult
   output_file: "output/discovery/optimization_report.json"
   async_execution: true
   depends_on:
@@ -481,7 +476,96 @@ feedback_learning_task:
     - Quality assurance metrics for feedback data and learning algorithm performance
     
   agent: feedback_learning_agent
-  output_file: "output/discovery/feedback_learning_report.md"
+  output_file: "output/discovery/feedback_learning_report.json"
+  output_json: true
   async_execution: false
   depends_on:
     - report_generation_task
+
+# Export Generation Task
+generate_export_task:
+  description: >
+    Consolidate all A+ investment discovery findings from context into a DiscoveryCrewExport object.
+    
+    CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
+    from previous tasks to extract all required information.
+    
+    CONTEXT SOURCES:
+    - etf_discovery_task: A+ ETF opportunities
+    - stock_discovery_task: A+ stock opportunities
+    - crypto_discovery_task: A+ crypto opportunities
+    - validation_task: Backtesting validation results
+    - optimization_task: Portfolio optimization results
+    - report_generation_task: Consolidated discovery report
+    - feedback_learning_task: Refined A+ criteria
+    
+    REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
+    1. opportunities (List[DiscoveryOpportunity], max 10):
+       - Extract from discovery tasks context (etf, stock, crypto)
+       - Each opportunity must have:
+         * ticker: Investment ticker symbol
+         * name: Full name of the investment
+         * asset_class: "stock", "etf", or "crypto"
+         * composite_score: float >= 0.7 (A+ threshold)
+         * grade: "A+" (default for discoveries)
+         * rationale: Why this is an A+ opportunity (min 50 chars)
+       - Limit to top 10 opportunities across all asset classes
+    
+    2. screening_criteria (dict):
+       - Extract from validation_task context
+       - Include criteria used for A+ screening:
+         * Minimum composite_score threshold (0.7)
+         * Backtesting requirements (5 years, 8% return, Sharpe >= 1.0)
+         * Risk limits (max drawdown <= -25%)
+         * Consistency requirements (win rate >= 45%, regime consistency >= 60%)
+    
+    3. market_context (string, min 50 chars):
+       - Extract from discovery tasks context
+       - Describe market conditions during discovery
+       - Include sector trends, market sentiment, economic factors
+       - Reference current date: {full_date}
+    
+    4. data_sources (list of strings):
+       - List all data sources used in discovery:
+         * ETF: ["Yahoo Finance", "ETF.com", "Morningstar"]
+         * Stock: ["SEC EDGAR", "Yahoo Finance", "Alpha Vantage"]
+         * Crypto: ["CoinMarketCap", "Kraken", "CoinGecko"]
+         * Backtesting: ["Historical price data", "Quantitative analysis"]
+    
+    5. report_html_path (string):
+       - Set to: "output/reports/{session_id}/discovery_crew/discovery_report.html"
+    
+    6. report_json_path (string):
+       - Set to: "output/reports/{session_id}/discovery_crew/discovery_export.json"
+    
+    METADATA FIELDS (auto-populated):
+    - crew_name: "discovery_crew" (default)
+    - ticker: "N/A" (not applicable for discovery - portfolio-level)
+    - asset_class: "N/A" (multiple asset classes analyzed)
+    - session_id: From input parameter {session_id}
+    - analysis_date: Current timestamp (auto-generated)
+    
+    OUTPUT FORMAT:
+    - Return a valid DiscoveryCrewExport Pydantic object
+    - All fields must conform to schema validation
+    - Use extra='forbid' - no additional fields allowed
+    - Ensure all required fields are present
+    
+    VALIDATION:
+    - opportunities list must have max 10 items
+    - Each opportunity.composite_score must be >= 0.7 (A+ threshold)
+    - Each opportunity.grade must be "A+"
+    - Each opportunity.rationale must be at least 50 characters
+    - market_context must be at least 50 characters
+    - All nested objects must conform to their schemas
+    
+    Today is {full_date}. Use this date for analysis_date if not auto-generated.
+  expected_output: >
+    A validated DiscoveryCrewExport Pydantic object containing all A+ opportunities
+    discovered across ETFs, stocks, and cryptocurrencies, with screening criteria and
+    market context. The object will be automatically saved to JSON at the specified
+    report_json_path.
+  agent: investment_reporter
+  async_execution: false
+  depends_on:
+    - feedback_learning_task

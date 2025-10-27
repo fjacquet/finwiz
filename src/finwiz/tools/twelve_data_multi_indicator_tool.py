@@ -98,6 +98,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
 
         Returns:
             Formatted string with all indicator results
+
         """
         try:
             # Default to all indicators if none specified
@@ -208,9 +209,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
 
         return results
 
-    def _fetch_indicator(
-        self, symbol: str, interval: str, indicator: str, api_key: str, params: dict[str, Any]
-    ) -> str:
+    def _fetch_indicator(self, symbol: str, interval: str, indicator: str, api_key: str, params: dict[str, Any]) -> str:
         """Fetch a single indicator from Twelve Data API."""
         endpoint = f"{self.base_url}/{indicator}"
         request_params: dict[str, str | int] = {

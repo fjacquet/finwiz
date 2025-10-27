@@ -6,10 +6,10 @@ loading discovery data, and generating human-readable summaries.
 """
 
 import json
-from datetime import datetime
 from pathlib import Path
 
 import pytest
+
 from finwiz.integration.aplus_discovery_accessor import APlusDiscoveryAccessor
 
 
@@ -114,9 +114,7 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert result is False
 
-    def test_should_return_true_when_stock_discovery_exists(
-        self, accessor, sample_stock_discovery
-    ):
+    def test_should_return_true_when_stock_discovery_exists(self, accessor, sample_stock_discovery):
         """Test has_discovery_results returns True when stock file exists."""
         # Act
         result = accessor.has_discovery_results()
@@ -124,9 +122,7 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert result is True
 
-    def test_should_return_true_when_etf_discovery_exists(
-        self, accessor, sample_etf_discovery
-    ):
+    def test_should_return_true_when_etf_discovery_exists(self, accessor, sample_etf_discovery):
         """Test has_discovery_results returns True when ETF file exists."""
         # Act
         result = accessor.has_discovery_results()
@@ -134,9 +130,7 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert result is True
 
-    def test_should_return_true_when_crypto_discovery_exists(
-        self, accessor, sample_crypto_discovery
-    ):
+    def test_should_return_true_when_crypto_discovery_exists(self, accessor, sample_crypto_discovery):
         """Test has_discovery_results returns True when crypto file exists."""
         # Act
         result = accessor.has_discovery_results()
@@ -144,9 +138,7 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert result is True
 
-    def test_should_return_true_when_any_discovery_file_exists(
-        self, accessor, sample_stock_discovery, sample_etf_discovery
-    ):
+    def test_should_return_true_when_any_discovery_file_exists(self, accessor, sample_stock_discovery, sample_etf_discovery):
         """Test has_discovery_results returns True when any file exists."""
         # Act
         result = accessor.has_discovery_results()
@@ -212,9 +204,7 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert results is None
 
-    def test_should_include_loaded_timestamp(
-        self, accessor, sample_stock_discovery
-    ):
+    def test_should_include_loaded_timestamp(self, accessor, sample_stock_discovery):
         """Test that loaded_at timestamp is included."""
         # Act
         results = accessor.load_discovery_results()
@@ -250,9 +240,7 @@ class TestAPlusDiscoveryAccessor:
         assert "not run" in summary.lower()
         assert "--discovery" in summary
 
-    def test_should_generate_summary_when_no_opportunities(
-        self, accessor, sample_crypto_discovery
-    ):
+    def test_should_generate_summary_when_no_opportunities(self, accessor, sample_crypto_discovery):
         """Test summary generation when no opportunities found."""
         # Act
         summary = accessor.get_opportunities_summary()
@@ -260,9 +248,7 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert "no a+ opportunities found" in summary.lower()
 
-    def test_should_generate_summary_with_stock_opportunities(
-        self, accessor, sample_stock_discovery
-    ):
+    def test_should_generate_summary_with_stock_opportunities(self, accessor, sample_stock_discovery):
         """Test summary generation with stock opportunities."""
         # Act
         summary = accessor.get_opportunities_summary()
@@ -271,9 +257,7 @@ class TestAPlusDiscoveryAccessor:
         assert "2 stock opportunities" in summary.lower()
         assert "1 a+ grade" in summary.lower()
 
-    def test_should_generate_summary_with_etf_opportunities(
-        self, accessor, sample_etf_discovery
-    ):
+    def test_should_generate_summary_with_etf_opportunities(self, accessor, sample_etf_discovery):
         """Test summary generation with ETF opportunities."""
         # Act
         summary = accessor.get_opportunities_summary()
@@ -298,9 +282,7 @@ class TestAPlusDiscoveryAccessor:
         assert "stock" in summary.lower()
         assert "etf" in summary.lower()
 
-    def test_should_count_a_plus_grades_separately(
-        self, accessor, sample_stock_discovery
-    ):
+    def test_should_count_a_plus_grades_separately(self, accessor, sample_stock_discovery):
         """Test that A+ grades are counted separately from other grades."""
         # Act
         summary = accessor.get_opportunities_summary()
@@ -387,9 +369,7 @@ class TestAPlusDiscoveryAccessor:
     def test_should_handle_summary_generation_error(self, accessor, mocker):
         """Test handling of errors during summary generation."""
         # Arrange
-        mocker.patch.object(
-            accessor, "load_discovery_results", side_effect=Exception("Load error")
-        )
+        mocker.patch.object(accessor, "load_discovery_results", side_effect=Exception("Load error"))
 
         # Act
         summary = accessor.get_opportunities_summary()
@@ -401,7 +381,7 @@ class TestAPlusDiscoveryAccessor:
         """Test exception handling in has_discovery_results."""
         # Arrange - Create accessor with invalid path that will cause issues
         invalid_accessor = APlusDiscoveryAccessor(output_dir=tmp_path / "nonexistent")
-        
+
         # Mock the exists method to raise an exception
         mock_exists = mocker.patch.object(Path, "exists", side_effect=Exception("Check error"))
 

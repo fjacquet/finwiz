@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 class SentimentDataSources:
     """Handles integration with various sentiment data sources."""
-    
+
     # Forbidden URL patterns that indicate hallucinations
     FORBIDDEN_URL_PATTERNS = [
         "example.com",
@@ -36,33 +36,35 @@ class SentimentDataSources:
         """Initialize sentiment data sources."""
         self.logger = logger
         self.url_validator = get_url_validator()
-    
+
     def _is_valid_url(self, url: str) -> bool:
         """
         Validate that URL is real and not a placeholder.
-        
+
         Args:
             url: URL to validate
-            
+
         Returns:
             True if URL is valid, False otherwise
+
         """
         # Use centralized URL validator
         return self.url_validator.is_valid_url(url, "sentiment article")
-    
+
     def _filter_valid_articles(self, articles: list[dict]) -> list[dict]:
         """
         Filter out articles with invalid URLs.
-        
+
         Args:
             articles: List of article dictionaries
-            
+
         Returns:
             Filtered list with only valid articles
+
         """
         valid_articles = []
         rejected_count = 0
-        
+
         for article in articles:
             url = article.get("link", "")
             if self._is_valid_url(url):
@@ -70,10 +72,10 @@ class SentimentDataSources:
             else:
                 rejected_count += 1
                 self.logger.debug(f"Rejected article with invalid URL: {article.get('title', 'Unknown')}")
-        
+
         if rejected_count > 0:
             self.logger.info(f"Filtered out {rejected_count} articles with invalid URLs")
-        
+
         return valid_articles
 
     def get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
@@ -120,7 +122,7 @@ class SentimentDataSources:
 
             # Limit to max_articles
             limited_news = news[:max_articles]
-            
+
             # Filter out articles with invalid URLs
             valid_news = self._filter_valid_articles(limited_news)
 
@@ -193,7 +195,7 @@ class SentimentDataSources:
                 if not self._is_valid_url(url):
                     self.logger.debug(f"Skipping Sonar article with invalid URL: {getattr(sonar_article, 'title', 'Unknown')}")
                     continue
-                
+
                 # Convert Sonar article to unified format
                 unified_article = {
                     "title": getattr(sonar_article, "title", ""),

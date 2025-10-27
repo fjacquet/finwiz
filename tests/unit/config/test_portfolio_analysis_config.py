@@ -31,7 +31,7 @@ class TestPortfolioAnalysisConfig:
             cache_enabled=False,
             cache_ttl_hours=48,
             max_alternatives=3,
-            deep_analysis_batch_size=20
+            deep_analysis_batch_size=20,
         )
 
         # Assert
@@ -79,11 +79,7 @@ class TestPortfolioAnalysisConfig:
     def test_should_handle_whitespace_in_boolean_strings(self):
         """Test that whitespace is stripped from boolean strings."""
         # Act
-        config = PortfolioAnalysisConfig(
-            deep_analysis_enabled="  true  ",
-            enable_alternatives="  yes  ",
-            cache_enabled="  1  "
-        )
+        config = PortfolioAnalysisConfig(deep_analysis_enabled="  true  ", enable_alternatives="  yes  ", cache_enabled="  1  ")
 
         # Assert
         assert config.deep_analysis_enabled is True
@@ -163,14 +159,17 @@ class TestPortfolioAnalysisConfig:
     def test_should_load_from_env_with_all_variables_set(self, mocker):
         """Test loading configuration from environment variables."""
         # Arrange
-        mocker.patch.dict('os.environ', {
-            'DEEP_PORTFOLIO_ANALYSIS': 'true',
-            'PORTFOLIO_ENABLE_ALTERNATIVES': 'false',
-            'PORTFOLIO_CACHE_ENABLED': 'yes',
-            'PORTFOLIO_CACHE_TTL_HOURS': '48',
-            'PORTFOLIO_MAX_ALTERNATIVES': '7',
-            'PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE': '15'
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "DEEP_PORTFOLIO_ANALYSIS": "true",
+                "PORTFOLIO_ENABLE_ALTERNATIVES": "false",
+                "PORTFOLIO_CACHE_ENABLED": "yes",
+                "PORTFOLIO_CACHE_TTL_HOURS": "48",
+                "PORTFOLIO_MAX_ALTERNATIVES": "7",
+                "PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE": "15",
+            },
+        )
 
         # Act
         config = PortfolioAnalysisConfig.from_env()
@@ -186,7 +185,7 @@ class TestPortfolioAnalysisConfig:
     def test_should_use_defaults_when_env_variables_not_set(self, mocker):
         """Test that defaults are used when environment variables are not set."""
         # Arrange
-        mocker.patch.dict('os.environ', {}, clear=True)
+        mocker.patch.dict("os.environ", {}, clear=True)
 
         # Act
         config = PortfolioAnalysisConfig.from_env()
@@ -202,10 +201,7 @@ class TestPortfolioAnalysisConfig:
     def test_should_handle_partial_env_variables(self, mocker):
         """Test loading with only some environment variables set."""
         # Arrange
-        mocker.patch.dict('os.environ', {
-            'DEEP_PORTFOLIO_ANALYSIS': '1',
-            'PORTFOLIO_CACHE_TTL_HOURS': '72'
-        }, clear=True)
+        mocker.patch.dict("os.environ", {"DEEP_PORTFOLIO_ANALYSIS": "1", "PORTFOLIO_CACHE_TTL_HOURS": "72"}, clear=True)
 
         # Act
         config = PortfolioAnalysisConfig.from_env()
@@ -221,11 +217,14 @@ class TestPortfolioAnalysisConfig:
     def test_should_fallback_to_defaults_on_invalid_integer_values(self, mocker):
         """Test fallback to defaults when integer values are invalid."""
         # Arrange
-        mocker.patch.dict('os.environ', {
-            'PORTFOLIO_CACHE_TTL_HOURS': 'invalid',
-            'PORTFOLIO_MAX_ALTERNATIVES': 'not_a_number',
-            'PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE': 'abc'
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "PORTFOLIO_CACHE_TTL_HOURS": "invalid",
+                "PORTFOLIO_MAX_ALTERNATIVES": "not_a_number",
+                "PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE": "abc",
+            },
+        )
 
         # Act
         config = PortfolioAnalysisConfig.from_env()
@@ -238,11 +237,14 @@ class TestPortfolioAnalysisConfig:
     def test_should_fallback_to_defaults_on_out_of_range_values(self, mocker):
         """Test fallback to defaults when values are out of valid range."""
         # Arrange
-        mocker.patch.dict('os.environ', {
-            'PORTFOLIO_CACHE_TTL_HOURS': '200',  # > 168
-            'PORTFOLIO_MAX_ALTERNATIVES': '15',  # > 10
-            'PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE': '100'  # > 50
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "PORTFOLIO_CACHE_TTL_HOURS": "200",  # > 168
+                "PORTFOLIO_MAX_ALTERNATIVES": "15",  # > 10
+                "PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE": "100",  # > 50
+            },
+        )
 
         # Act
         config = PortfolioAnalysisConfig.from_env()
@@ -255,10 +257,8 @@ class TestPortfolioAnalysisConfig:
     def test_should_log_configuration_on_load(self, mocker):
         """Test that configuration is logged when loaded."""
         # Arrange
-        mock_logger = mocker.patch('finwiz.config.portfolio_analysis_config.logger')
-        mocker.patch.dict('os.environ', {
-            'DEEP_PORTFOLIO_ANALYSIS': 'true'
-        })
+        mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
+        mocker.patch.dict("os.environ", {"DEEP_PORTFOLIO_ANALYSIS": "true"})
 
         # Act
         PortfolioAnalysisConfig.from_env()
@@ -273,13 +273,9 @@ class TestPortfolioAnalysisConfig:
     def test_should_validate_config_without_warnings(self, mocker):
         """Test config validation with valid settings."""
         # Arrange
-        mock_logger = mocker.patch('finwiz.config.portfolio_analysis_config.logger')
+        mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
         config = PortfolioAnalysisConfig(
-            deep_analysis_enabled=True,
-            cache_enabled=True,
-            cache_ttl_hours=24,
-            deep_analysis_batch_size=10,
-            max_alternatives=5
+            deep_analysis_enabled=True, cache_enabled=True, cache_ttl_hours=24, deep_analysis_batch_size=10, max_alternatives=5
         )
 
         # Act
@@ -295,11 +291,8 @@ class TestPortfolioAnalysisConfig:
     def test_should_warn_when_deep_analysis_enabled_without_cache(self, mocker):
         """Test warning when deep analysis is enabled but cache is disabled."""
         # Arrange
-        mock_logger = mocker.patch('finwiz.config.portfolio_analysis_config.logger')
-        config = PortfolioAnalysisConfig(
-            deep_analysis_enabled=True,
-            cache_enabled=False
-        )
+        mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
+        config = PortfolioAnalysisConfig(deep_analysis_enabled=True, cache_enabled=False)
 
         # Act
         config.validate_config()
@@ -312,7 +305,7 @@ class TestPortfolioAnalysisConfig:
     def test_should_warn_when_cache_ttl_is_very_short(self, mocker):
         """Test warning when cache TTL is very short."""
         # Arrange
-        mock_logger = mocker.patch('finwiz.config.portfolio_analysis_config.logger')
+        mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
         config = PortfolioAnalysisConfig(cache_ttl_hours=3)
 
         # Act
@@ -326,7 +319,7 @@ class TestPortfolioAnalysisConfig:
     def test_should_warn_when_batch_size_is_large(self, mocker):
         """Test warning when batch size is large."""
         # Arrange
-        mock_logger = mocker.patch('finwiz.config.portfolio_analysis_config.logger')
+        mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
         config = PortfolioAnalysisConfig(deep_analysis_batch_size=25)
 
         # Act
@@ -340,7 +333,7 @@ class TestPortfolioAnalysisConfig:
     def test_should_warn_when_max_alternatives_is_high(self, mocker):
         """Test warning when max alternatives is high."""
         # Arrange
-        mock_logger = mocker.patch('finwiz.config.portfolio_analysis_config.logger')
+        mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
         config = PortfolioAnalysisConfig(max_alternatives=8)
 
         # Act
@@ -354,13 +347,9 @@ class TestPortfolioAnalysisConfig:
     def test_should_log_multiple_warnings(self, mocker):
         """Test that multiple warnings are logged when multiple issues exist."""
         # Arrange
-        mock_logger = mocker.patch('finwiz.config.portfolio_analysis_config.logger')
+        mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
         config = PortfolioAnalysisConfig(
-            deep_analysis_enabled=True,
-            cache_enabled=False,
-            cache_ttl_hours=2,
-            deep_analysis_batch_size=30,
-            max_alternatives=9
+            deep_analysis_enabled=True, cache_enabled=False, cache_ttl_hours=2, deep_analysis_batch_size=30, max_alternatives=9
         )
 
         # Act

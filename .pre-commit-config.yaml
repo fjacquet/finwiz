@@ -1,0 +1,60 @@
+# Pre-commit hooks for FinWiz
+# Install with: pre-commit install
+
+repos:
+  # Code formatting and linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.13
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  # Documentation checks
+  - repo: local
+    hooks:
+      - id: docs-validation
+        name: Documentation Validation
+        entry: python scripts/validate_docs.py
+        language: system
+        files: ^docs/.*\.md$
+        pass_filenames: false
+        
+      - id: mkdocs-build-check
+        name: MkDocs Build Check
+        entry: uv run mkdocs build --strict --clean
+        language: system
+        files: ^(docs/.*\.md|mkdocs\.yml)$
+        pass_filenames: false
+
+  # unittest.mock enforcement (only in test files, not documentation)
+  - repo: local
+    hooks:
+      - id: check-unittest-mock
+        name: Check for banned unittest.mock
+        entry: bash -c 'if grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.mock)" tests/ -r 2>/dev/null; then echo "❌ ERROR: unittest.mock found in tests/"; echo "Use pytest-mock instead. Import '\''mocker'\'' fixture in test functions."; exit 1; fi'
+        language: system
+        files: ^tests/.*\.py$
+        pass_filenames: false
+
+  # Python type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.17.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-PyYAML, types-requests]
+        args: [--config-file=pyproject.toml]
+        files: ^src/finwiz/.*\.py$

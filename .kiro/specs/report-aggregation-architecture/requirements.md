@@ -2,19 +2,101 @@
 
 ## Introduction
 
-This specification defines a reorganization of the FinWiz crew architecture to fix the broken data flow between analysis crews and the final report. The current architecture has crews performing analysis without generating complete outputs, leading to data loss and fallback values persisting in the final report. The new architecture will reorganize each crew to perform pillar tasks and generate BOTH a structured JSON output AND a complete HTML report. A new aggregator crew will then consolidate all crew outputs into a final comprehensive report.
+This specification defines a complete overhaul of the FinWiz architecture based on critical findings from the failed implementation attempt. The current implementation has fundamental architectural flaws that prevent it from delivering the promised outcomes:
+
+1. **AI-based deep analysis is still being used** instead of pure Python scoring
+2. **JSON exports are only cached, not properly output** to final directories
+3. **A+ discovery system is not integrated** with deep analysis results
+4. **Backtesting pipeline is disconnected** from discovery results
+5. **Final reports are still AI-generated** instead of Python template-based
+6. **Performance targets are not met** - no speed improvement achieved
+
+This updated specification addresses these critical failures with a **PURE PYTHON FIRST** approach that eliminates AI where deterministic calculations are sufficient, ensuring 10-20x speed improvements and 100% cost reduction for calculations.
 
 ## Glossary
 
-- **Crew**: An autonomous AI agent team that performs specific analysis tasks (e.g., StockCrew, ETFCrew, CryptoCrew, DeepAnalysisCrew)
-- **Report**: A complete HTML document containing analysis findings, recommendations, and data
-- **Aggregator Crew**: A new crew responsible for consolidating multiple crew reports into a single comprehensive report
-- **Flow**: The CrewAI Flow orchestrator that manages crew execution sequence and data passing
-- **Portfolio Review**: Analysis of existing holdings with keep/sell recommendations
-- **Deep Analysis**: Comprehensive analysis of individual holdings using specialized crews
-- **Discovery**: Process of finding new A+ investment opportunities
+- **Pure Python Analysis**: Deterministic calculations using Python functions instead of AI agents for scoring, grading, and recommendations
+- **DeepAnalysisScorer**: Python class that performs all deep analysis calculations without AI/LLM calls
+- **Python Report Generator**: Jinja2-based HTML generation replacing AI-based report creation
+- **Portfolio Deep Analyzer**: Pure Python system for analyzing multiple holdings concurrently
+- **AI Minimalism**: Design principle - use AI only for tasks requiring reasoning, use Python for deterministic tasks
+- **Crew**: An autonomous AI agent team (only used when AI reasoning is truly necessary)
+- **Flow**: The CrewAI Flow orchestrator that manages execution sequence and calls Python functions
+- **JSON Export**: Pydantic-validated data structure saved to output directory (not just cache)
+- **Template-Based Reporting**: HTML generation using Jinja2 templates instead of AI agents
+
+
+
+
+
 
 ## Requirements
+
+### Requirement 0: CRITICAL FIXES FOR IMPLEMENTATION FAILURES
+
+**User Story:** As a FinWiz stakeholder, I want the fundamental architectural failures identified in the implementation analysis to be fixed immediately, so that the system delivers the promised 10-20x speed improvement and 100% cost reduction.
+
+#### Acceptance Criteria - Replace AI Deep Analysis with Pure Python
+
+1. THE System SHALL completely replace `DeepAnalysisCrew` AI-based analysis with pure Python `PortfolioDeepAnalyzer`
+2. THE `PortfolioDeepAnalyzer` SHALL use the implemented `DeepAnalysisScorer` class for all calculations
+3. THE Flow SHALL call `analyze_portfolio_with_python()` function instead of executing AI crews
+4. THE Python analysis SHALL complete in seconds (not minutes) with 0 LLM calls for calculations
+5. THE Python analysis SHALL generate deterministic, reproducible results
+6. THE System SHALL eliminate the 5-task AI workflow: data_collection → technical_analysis → risk_assessment → final_report → export
+7. THE System SHALL replace it with 2-step Python workflow: data_extraction → python_scoring
+
+#### Acceptance Criteria - Fix JSON Export to Output Directory
+
+8. THE System SHALL save JSON exports to `output/` directory structure, NOT just cache
+9. THE JSON exports SHALL be saved to: `output/stock/`, `output/etf/`, `output/crypto/` directories
+10. THE System SHALL create consolidated JSON export at: `output/deep_analysis_consolidated_{session_id}.json`
+11. THE JSON files SHALL be accessible for backtesting and A+ discovery integration
+12. THE System SHALL NOT rely on cache-only storage that is invisible to downstream processes
+
+#### Acceptance Criteria - Integrate A+ Discovery with Deep Analysis Results
+
+13. THE A+ discovery system SHALL read deep analysis JSON exports from output directory
+14. THE System SHALL identify holdings with grades A+ and A from deep analysis results
+15. THE `has_a_plus_analysis` field SHALL be set to `true` when A+ holdings are found
+16. THE `total_opportunities_found` SHALL reflect actual count of A+ holdings from analysis
+17. THE A+ discovery SHALL NOT show 0 opportunities when A+ holdings exist in the portfolio
+
+#### Acceptance Criteria - Connect Backtesting Pipeline to Discovery Results
+
+18. THE backtesting pipeline SHALL read A+ opportunities from discovery JSON exports
+19. THE backtesting SHALL execute automatically when A+ candidates are available
+20. THE backtesting results SHALL be included in the final report
+21. THE System SHALL NOT show "Backtesting : Non exécuté / données non fournies" when candidates exist
+
+#### Acceptance Criteria - Replace AI Report Generation with Python Templates
+
+22. THE System SHALL use `PythonReportGenerator` class with Jinja2 templates for all HTML generation
+23. THE final report SHALL be generated by `generate_python_report()` function, NOT AI crews
+24. THE report generation SHALL complete in milliseconds using templates
+25. THE final report SHALL contain actual analysis data, NOT placeholder content
+26. THE System SHALL eliminate AI-based HTML generation that produces inconsistent results
+
+#### Acceptance Criteria - Achieve Performance Targets
+
+27. THE System SHALL achieve 10-20x speed improvement over current AI-based approach
+28. THE System SHALL complete 66-holding portfolio analysis in 10-30 minutes (vs current 3-6 hours)
+29. THE System SHALL achieve 100% cost reduction for calculations (0 LLM calls for scoring)
+30. THE System SHALL demonstrate measurable performance improvements in execution logs
+
+#### Acceptance Criteria - Integration Script for Validation
+
+31. THE System SHALL include `scripts/run_python_analysis.py` to demonstrate pure Python approach
+32. THE integration script SHALL load portfolio data, run Python analysis, and generate reports
+33. THE integration script SHALL log performance metrics proving speed and cost improvements
+34. THE integration script SHALL serve as validation that all components work together
+
+#### Acceptance Criteria - Compliance with AI Minimalism
+
+35. THE System SHALL follow AI Minimalism principle: use Python for deterministic tasks, AI only for reasoning
+36. THE System SHALL eliminate AI usage for: calculations, HTML generation, data validation, data transformation
+37. THE System SHALL use AI only for: complex synthesis requiring judgment (optional)
+38. THE System SHALL be ruthless: if Python can do it, use Python
 
 ### Requirement 1: Pydantic-Validated Export Objects for All Crews
 
@@ -242,3 +324,693 @@ This specification defines a reorganization of the FinWiz crew architecture to f
 5. THE FinancialExpertAggregatorCrew SHALL read and parse source files efficiently
 6. THE System SHALL maintain existing caching mechanisms to avoid redundant crew executions
 7. THE Flow SHALL use CrewAI's `@listen()` pattern with same trigger for parallel crew execution
+
+### Requirement 16: CrewAI Best Practices Compliance
+
+**User Story:** As a FinWiz developer, I want all crews and flows to follow CrewAI best practices for reasoning, planning, delegation, and state management, so that we achieve optimal performance and maintainability.
+
+#### Acceptance Criteria - Flow State Management
+
+1. THE Flow SHALL use structured Pydantic models for type-safe state management (`Flow[PydanticModel]`)
+2. THE Flow SHALL NEVER use `self.inputs` for state management (unstructured, error-prone)
+3. ALL Flow methods SHALL return `dict[str, Any]` for downstream listeners
+4. THE Flow listeners SHALL receive upstream data as method parameters
+5. THE Flow SHALL use `@router` decorator for conditional flow control based on state
+6. THE Flow state SHALL contain only orchestration metadata (file paths, status, timestamps, NOT large data objects)
+
+#### Acceptance Criteria - Agent Reasoning Configuration
+
+7. THE System SHALL enable `reasoning=True` ONLY for crews requiring complex multi-step analysis:
+   - ✅ Enable: investment_discovery_crew (complex multi-asset discovery)
+   - ✅ Enable: portfolio_rebalancing_crew (complex portfolio optimization)
+   - ✅ Enable: report_crew (complex data synthesis)
+   - ✅ Enable: crypto_crew, stock_crew, etf_crew (complex market analysis)
+   - ❌ Disable: deep_analysis_crew (high-volume execution: 66+ runs per portfolio)
+8. WHEN `reasoning=True` is enabled, THE Agent SHALL set `max_reasoning_attempts=3` to prevent infinite loops
+9. THE System SHALL disable reasoning for high-volume executions (66+ runs) to avoid performance overhead
+10. THE System SHALL disable reasoning for simple validation tasks (ticker format checks, data validation)
+11. THE System SHALL disable reasoning for final reporters (consolidation only, no new analysis)
+
+#### Acceptance Criteria - Crew Planning Configuration
+
+12. THE System SHALL enable `planning=True` ONLY when ALL conditions are met:
+    - Crew has 4+ agents AND
+    - Crew has 6+ tasks AND
+    - Execution volume ≤ 3 runs
+13. THE System SHALL enable planning for these crews:
+    - ✅ portfolio_rebalancing_crew (3+ agents, 4+ tasks, single execution)
+    - ✅ investment_discovery_crew (4 agents, 7 tasks, single execution)
+    - ✅ report_crew (4 agents, 4 tasks, single execution)
+14. THE System SHALL disable planning for these crews:
+    - ❌ deep_analysis_crew (runs 66+ times per portfolio - overhead × 66 is too costly)
+    - ❌ crypto_crew, stock_crew, etf_crew (simpler workflows, single execution)
+15. WHEN planning is enabled, THE Crew SHALL set `planning_llm="gpt-5-mini"` for optimal planning quality
+
+#### Acceptance Criteria - Agent Delegation Configuration
+
+16. THE System SHALL enable `allow_delegation=True` ONLY for coordinator/lead agents managing workflow
+17. THE System SHALL disable delegation for focused specialist agents (single responsibility)
+18. THE System SHALL disable delegation for final reporters (consolidation only)
+19. THE final reporter agents SHALL use `@final_reporter` decorator to enforce empty tools and no delegation
+
+#### Acceptance Criteria - Performance Cost Awareness
+
+20. THE System SHALL document performance costs for each feature:
+    - `reasoning=True`: 5-15 seconds, 1-3 LLM calls, 500-2000 tokens per cycle
+    - `planning=True`: Overhead × execution count (critical for high-volume crews)
+    - `allow_delegation=True`: 5-15 seconds per delegation, 1-2 LLM calls
+21. THE System SHALL optimize crew configurations based on execution volume:
+    - Single execution (1-3 runs): Enable reasoning, planning, delegation as needed
+    - High volume (66+ runs): Disable reasoning, planning, delegation for performance
+22. THE System SHALL use `async_execution=true` for I/O-bound tasks (except final task which must be synchronous)
+
+#### Acceptance Criteria - Configuration Matrix
+
+23. THE System SHALL implement the following configuration matrix:
+
+| Crew | Reasoning | Planning | Delegation | Execution Volume | Rationale |
+|------|-----------|----------|------------|------------------|-----------|
+| report_crew | Mixed | ✅ Enable | Mixed | 1 | 4 agents, 4 tasks, complex synthesis |
+| investment_discovery | ✅ Enable | ✅ Enable | ✅ Enable | 1 | 4 agents, 7 tasks, complex coordination |
+| portfolio_rebalancing | ✅ Enable | ✅ Enable | ✅ Enable | 1 | 3+ agents, 4+ tasks, optimization |
+| deep_analysis | ❌ Disable | ❌ Disable | ❌ Disable | 66+ | High volume - avoid overhead |
+| crypto_crew | ✅ Enable | ❌ Disable | Mixed | 1 | Complex analysis, simpler workflow |
+| stock_crew | ✅ Enable | ❌ Disable | Mixed | 1 | Complex analysis, simpler workflow |
+| etf_crew | ✅ Enable | ❌ Disable | Mixed | 1 | Complex analysis, simpler workflow |
+
+#### Acceptance Criteria - Anti-Patterns to Avoid
+
+24. THE System SHALL NOT use `self.inputs` for Flow state management
+25. THE System SHALL NOT enable reasoning for high-volume executions (66+ runs)
+26. THE System SHALL NOT enable planning for single-agent crews
+27. THE System SHALL NOT enable delegation for specialist agents or final reporters
+28. THE System SHALL NOT omit `max_reasoning_attempts` when reasoning is enabled
+29. THE System SHALL NOT use unstructured Flow state (always use Pydantic models)
+
+### Requirement 17: Batch Deep Analysis Execution for Performance Optimization
+
+**User Story:** As a FinWiz user, I want deep analysis of multiple portfolio holdings to execute concurrently in batches, so that analysis completes in minutes instead of hours.
+
+#### Acceptance Criteria - Batch Crew Execution
+
+1. THE System SHALL execute deep analysis crews in concurrent batches instead of sequentially
+2. THE Flow SHALL group holdings into batches of 5-10 tickers for concurrent execution
+3. WHEN analyzing 66 holdings, THE System SHALL create 7-14 concurrent batches (not 66 sequential runs)
+4. THE Flow SHALL use `asyncio.gather()` or CrewAI Flow parallel patterns for batch execution
+5. THE System SHALL configure batch size based on:
+   - API rate limits (20 requests per minute for most providers)
+   - Memory constraints (5-10 concurrent crews recommended)
+   - LLM provider concurrency limits
+6. THE Flow SHALL track batch execution progress (batch 1/7, batch 2/7, etc.)
+7. WHEN a ticker in a batch fails, THE System SHALL continue with remaining tickers in the batch
+8. THE System SHALL log batch execution metrics (batch size, duration, success rate)
+
+#### Acceptance Criteria - Batch API Query Optimization
+
+9. THE System SHALL implement batch API query tools where providers support it
+10. THE YahooFinanceBatchTool SHALL fetch data for multiple tickers in a single API call using `yf.download(tickers=['AAPL', 'MSFT', 'GOOGL'])`
+11. THE AlphaVantageBatchTool SHALL queue multiple ticker requests and execute with rate limiting
+12. THE QuantitativeAnalysisTool SHALL accept multiple tickers and process them efficiently
+13. WHEN batch API queries are available, THE Crew SHALL use batch tools instead of single-ticker tools
+14. THE batch tools SHALL return structured data with per-ticker results
+15. THE batch tools SHALL handle partial failures (some tickers succeed, some fail)
+16. THE batch tools SHALL validate all ticker symbols before making API calls
+
+#### Acceptance Criteria - Performance Targets
+
+17. THE System SHALL reduce deep analysis execution time from 3-6 hours to 20-40 minutes for 66 holdings
+18. THE System SHALL achieve 80%+ time reduction through batch processing
+19. THE System SHALL maintain data quality and validation standards in batch mode
+20. THE System SHALL log performance metrics comparing sequential vs batch execution
+21. THE System SHALL provide progress indicators during batch execution (e.g., "Analyzing batch 3/7: AAPL, MSFT, GOOGL, TSLA, NVDA")
+
+#### Acceptance Criteria - Batch Tool Implementation
+
+22. THE System SHALL create `YahooFinanceBatchTickerInfoTool` for fetching multiple ticker info in one call
+23. THE System SHALL create `YahooFinanceBatchHistoryTool` for fetching multiple ticker histories in one call
+24. THE System SHALL create `AlphaVantageBatchOverviewTool` with intelligent rate limiting for multiple tickers
+25. THE batch tools SHALL use Pydantic models for input validation (list of tickers)
+26. THE batch tools SHALL return `Dict[str, TickerData]` mapping ticker to results
+27. THE batch tools SHALL include error handling for individual ticker failures
+28. THE batch tools SHALL respect API rate limits (20 RPM for most providers)
+
+#### Acceptance Criteria - Deep Analysis Crew Batch Mode
+
+29. THE DeepAnalysisCrew SHALL support batch mode accepting multiple tickers as input
+30. WHEN in batch mode, THE DeepAnalysisCrew SHALL use batch API tools for data fetching
+31. THE DeepAnalysisCrew SHALL generate separate DeepAnalysisCrewExport for each ticker
+32. THE DeepAnalysisCrew SHALL save batch results to: `output/reports/{session_id}/deep_analysis/batch_{batch_num}/`
+33. THE DeepAnalysisCrew batch mode SHALL disable reasoning (`reasoning=False`) for performance
+34. THE DeepAnalysisCrew batch mode SHALL use simplified analysis workflow (core metrics only)
+35. THE DeepAnalysisCrew batch mode SHALL maintain validation and grading standards
+
+#### Acceptance Criteria - Flow Batch Orchestration
+
+36. THE Flow SHALL implement `analyze_holdings_deep_batch()` method for batch execution
+37. THE Flow method SHALL receive list of holdings and batch size as parameters
+38. THE Flow method SHALL split holdings into batches and execute concurrently
+39. THE Flow method SHALL use `@listen()` with batch completion tracking
+40. THE Flow method SHALL aggregate batch results into consolidated state
+41. THE Flow method SHALL handle batch failures gracefully (continue with successful batches)
+42. THE Flow method SHALL return batch execution summary (total tickers, successful, failed, duration)
+
+#### Acceptance Criteria - Batch Execution Monitoring
+
+43. THE System SHALL log batch execution start with ticker list
+44. THE System SHALL log batch execution progress (ticker 1/5 complete, ticker 2/5 complete)
+45. THE System SHALL log batch execution completion with metrics (duration, success rate)
+46. THE System SHALL track API call counts per batch for rate limit monitoring
+47. THE System SHALL provide real-time progress updates to user (optional)
+
+#### Acceptance Criteria - Backward Compatibility
+
+48. THE DeepAnalysisCrew SHALL support both single-ticker mode (existing) and batch mode (new)
+49. THE Flow SHALL detect execution mode based on input (single ticker vs list of tickers)
+50. THE System SHALL maintain existing single-ticker behavior for non-portfolio analysis
+51. THE System SHALL use batch mode automatically for portfolio deep analysis (66+ holdings)
+
+#### Acceptance Criteria - Error Handling and Resilience
+
+52. WHEN a batch fails completely, THE Flow SHALL retry with smaller batch size (divide by 2)
+53. WHEN individual tickers fail in a batch, THE System SHALL log failures and continue
+54. THE System SHALL collect all batch errors and report them in consolidated summary
+55. THE System SHALL NOT fail entire portfolio analysis due to single ticker failures
+56. THE System SHALL provide fallback to sequential execution if batch mode fails repeatedly
+
+#### Acceptance Criteria - Configuration and Tuning
+
+57. THE System SHALL expose batch configuration via environment variables:
+    - `DEEP_ANALYSIS_BATCH_SIZE` (default: 5)
+    - `DEEP_ANALYSIS_MAX_CONCURRENT_BATCHES` (default: 2)
+    - `DEEP_ANALYSIS_BATCH_MODE_ENABLED` (default: true)
+58. THE System SHALL validate batch configuration on startup
+59. THE System SHALL log batch configuration at Flow initialization
+60. THE System SHALL allow disabling batch mode for debugging (sequential fallback)
+
+#### Acceptance Criteria - Performance Metrics and Reporting
+
+61. THE System SHALL track and log batch execution metrics:
+    - Total execution time (batch vs sequential)
+    - Average time per ticker
+    - API calls per ticker
+    - Success rate per batch
+    - Memory usage per batch
+62. THE System SHALL generate batch execution report saved to: `output/reports/{session_id}/batch_execution_metrics.json`
+63. THE batch execution report SHALL include comparison to estimated sequential execution time
+64. THE System SHALL calculate and log time savings percentage
+
+#### Acceptance Criteria - API Rate Limit Management
+
+65. THE System SHALL implement intelligent rate limiting for batch API calls
+66. THE System SHALL respect provider-specific rate limits:
+    - Yahoo Finance: No strict limit, but throttle to 10 requests/second
+    - Alpha Vantage: 5 calls/minute (free tier), 75 calls/minute (premium)
+    - Twelve Data: 8 calls/minute (free tier), 800 calls/minute (premium)
+67. THE System SHALL queue batch requests and execute with appropriate delays
+68. THE System SHALL implement exponential backoff for rate limit errors
+69. THE System SHALL log rate limit events and retry attempts
+
+#### Acceptance Criteria - Memory Management
+
+70. THE System SHALL limit concurrent crew instances to prevent memory exhaustion
+71. THE System SHALL implement crew instance pooling for batch execution
+72. THE System SHALL clean up crew resources after batch completion
+73. THE System SHALL monitor memory usage and adjust batch size dynamically if needed
+74. THE System SHALL log memory usage warnings when approaching limitsLL log memory usage metrics per batch
+
+#### Acceptance Criteria - Testing and Validation
+
+75. THE System SHALL include unit tests for batch tool implementations
+76. THE System SHALL include integration tests for batch crew execution
+77. THE System SHALL include performance tests comparing batch vs sequential execution
+78. THE System SHALL validate batch results match single-ticker results (data quality)
+79. THE System SHALL test error handling for partial batch failures
+80. THE System SHALL test rate limit handling and retry logic
+
+### Requirement 18: Python-Based Scoring Engine for Deep Analysis
+
+**User Story:** As a FinWiz developer, I want deep analysis scoring calculations done in pure Python instead of AI reasoning, so that analysis is 10-20x faster, 100% deterministic, fully testable, and eliminates LLM costs for calculations.
+
+**Context:** Current deep analysis uses 5 AI tasks per ticker with extensive LLM reasoning for calculations that are fundamentally deterministic (composite scores, grades, risk scores, recommendations). Analysis from DATA_LOSS_ANALYSIS.md shows that AI provides minimal unique value beyond reformatting tool outputs into prose, while consuming 5-10 minutes and $0.05-0.10 per ticker.
+
+#### Acceptance Criteria - Python Scoring Engine
+
+1. THE System SHALL create a `DeepAnalysisScorer` class in `src/finwiz/scoring/deep_analysis_scorer.py`
+2. THE DeepAnalysisScorer SHALL implement deterministic calculation methods for:
+   - Composite score (0.0-1.0) using weighted formula: 40% fundamental + 30% technical + 30% risk
+   - Letter grade (A+ to F) based on composite score thresholds
+   - Investment recommendation (BUY/HOLD/SELL) based on grade and risk score
+   - Rationale text explaining the recommendation
+3. THE DeepAnalysisScorer SHALL calculate fundamental score from metrics:
+   - ROE bonus: +0.2 if >20%, +0.1 if >15%
+   - Debt penalty: -0.1 if debt/equity >0.5, -0.2 if >1.0
+   - Growth bonus: +0.2 if revenue growth >15%, +0.1 if >10%
+4. THE DeepAnalysisScorer SHALL calculate technical score from metrics:
+   - RSI analysis: +0.1 if 40-60 (neutral), -0.2 if <30 or >70
+   - Trend analysis: +0.3 if strong uptrend (SMA crossover), -0.3 if downtrend
+5. THE DeepAnalysisScorer SHALL calculate risk score (0-5 scale) from metrics:
+   - Base score: (volatility / 35) * 2.0
+   - Drawdown penalty: (abs(max_drawdown) / 50) * 1.5
+   - Beta adjustment: +0.5 if >1.5, -0.3 if <0.5
+6. THE DeepAnalysisScorer SHALL assign grades using thresholds:
+   - A+: ≥0.90, A: ≥0.85, A-: ≥0.80
+   - B+: ≥0.75, B: ≥0.70, B-: ≥0.65
+   - C+: ≥0.60, C: ≥0.55, C-: ≥0.50
+   - D+: ≥0.45, D: ≥0.40, D-: ≥0.35, F: <0.35
+7. THE DeepAnalysisScorer SHALL generate recommendations using rules:
+   - BUY: grade in [A+, A, A-] AND risk_score ≤ 3.0
+   - HOLD: grade in [B+, B] AND risk_score ≤ 3.5, OR grade in [B-, C+, C]
+   - SELL: grade in [D+, D, D-, F] OR risk_score > 4.0
+8. THE DeepAnalysisScorer SHALL be fully unit-testable with mock input data
+9. THE DeepAnalysisScorer SHALL complete all calculations in <1 second per ticker
+10. THE DeepAnalysisScorer SHALL produce deterministic results (same input = same output)
+
+#### Acceptance Criteria - Simplified Deep Analysis Crew
+
+11. THE DeepAnalysisCrew SHALL be simplified from 5 tasks to 2 tasks:
+    - Task 1: Data Collection (async) - Fetch all data using tools, store in context
+    - Task 2: Python Scoring (sync) - Use DeepAnalysisScorer to calculate results
+12. THE Data Collection task SHALL fetch data using existing tools:
+    - QuantitativeAnalysisTool for technical metrics
+    - EnhancedSECAnalysisTool / EnhancedETFAnalysisTool / EnhancedCryptoAnalysisTool for fundamentals
+    - StandardizedSentimentTool for sentiment data
+13. THE Data Collection task SHALL store fetched data in structured context dict
+14. THE Data Collection task SHALL NOT perform any AI reasoning or analysis
+15. THE Python Scoring task SHALL call DeepAnalysisScorer with fetched data
+16. THE Python Scoring task SHALL NOT use any AI reasoning or LLM calls
+17. THE Python Scoring task SHALL return DeepAnalysisResult Pydantic object
+18. THE DeepAnalysisCrew SHALL remove these AI tasks:
+    - ❌ deep_analysis_task (AI reasoning)
+    - ❌ technical_analysis_task (AI reasoning)
+    - ❌ risk_assessment_task (AI reasoning)
+    - ❌ final_report_task (AI HTML generation)
+    - ❌ generate_export_task (AI consolidation)
+19. THE DeepAnalysisCrew SHALL disable reasoning for all agents (`reasoning=False`)
+20. THE DeepAnalysisCrew SHALL complete analysis in 10-30 seconds per ticker (vs 5-10 minutes)
+
+#### Acceptance Criteria - Data Preservation
+
+21. THE Python scoring approach SHALL preserve ALL data from tool outputs:
+    - All raw metrics (volatility, beta, ROE, debt/equity, RSI, MACD, etc.)
+    - All sentiment data (sentiment_score, trending_topics, article_count)
+    - All technical indicators (support/resistance, trend direction)
+    - All fundamental data (revenue, earnings, cash flow)
+22. THE Python scoring approach SHALL preserve ALL calculation results:
+    - Composite score (0.0-1.0)
+    - Letter grade (A+ to F)
+    - Investment recommendation (BUY/HOLD/SELL)
+    - Risk score (0-5 scale)
+23. THE Python scoring approach SHALL generate template-based rationale text:
+    - Example: "BUY: Grade A- (0.82 composite score) with moderate risk (2.8/5). Strong fundamentals (ROE 22%) and positive technical momentum (SMA crossover)."
+24. THE System SHALL NOT lose any quantitative data by switching from AI to Python
+25. THE System SHALL trade AI prose for template-based summaries (acceptable tradeoff)
+
+#### Acceptance Criteria - What We Lose (Acceptable)
+
+26. THE System acknowledges losing these AI-generated outputs (low value):
+    - Natural language prose (can be replaced with Jinja2 templates)
+    - Generic AI statements like "strong fundamentals" (no unique insight)
+    - Arbitrary confidence levels (not statistically grounded)
+    - Inconsistent quality (sometimes good, often generic)
+    - Occasional creative insights (rare, unpredictable, not worth 5-10 min wait)
+27. THE System acknowledges these losses are acceptable because:
+    - Natural language can be templated (Jinja2)
+    - Generic statements provide no value
+    - Confidence levels were arbitrary
+    - Inconsistent quality is a bug, not a feature
+    - Rare insights don't justify 10-20x performance penalty
+
+#### Acceptance Criteria - What We Gain
+
+28. THE Python scoring approach SHALL provide these benefits:
+    - 10-20x faster execution (30 seconds vs 5-10 minutes per ticker)
+    - 100% cost reduction on LLM calls for scoring ($0 vs $0.05-0.10 per ticker)
+    - Deterministic results (same input = same output)
+    - Fully testable (unit tests for all scoring logic)
+    - Consistent quality (no AI variability)
+    - Maintainable (Python code vs prompt engineering)
+29. THE Python scoring approach SHALL reduce 66-holding portfolio analysis from:
+    - Current: 20-40 minutes (batch mode) or 3-6 hours (sequential)
+    - Target: 10-30 minutes (even without batch mode)
+30. THE Python scoring approach SHALL eliminate LLM costs for calculations:
+    - Current: $3.30-6.60 per 66-holding portfolio (66 × $0.05-0.10)
+    - Target: $0.00 for calculations (only API data costs remain)
+
+#### Acceptance Criteria - Hybrid Approach (Optional)
+
+31. THE System MAY implement optional AI summary generation for natural language polish:
+    - Step 1: Python calculates everything (10-30 seconds)
+    - Step 2: Optional single LLM call for prose summary (5-10 seconds)
+32. THE optional AI summary SHALL be configurable via environment variable:
+    - `DEEP_ANALYSIS_AI_SUMMARY=true` (enable AI prose)
+    - `DEEP_ANALYSIS_AI_SUMMARY=false` (use templates only, default)
+33. THE optional AI summary SHALL cost $0.01 per ticker (single LLM call)
+34. THE optional AI summary SHALL complete in 5-10 seconds
+35. THE hybrid approach SHALL provide total time of 15-40 seconds (vs 5-10 minutes)
+36. THE hybrid approach SHALL provide 80-90% cost savings ($0.01 vs $0.05-0.10)
+
+#### Acceptance Criteria - Performance Validation
+
+37. THE System SHALL measure and log performance metrics:
+    - Execution time per ticker (Python vs AI)
+    - LLM call count per ticker (Python vs AI)
+    - Cost per ticker (Python vs AI)
+    - Total time for 66-holding portfolio
+38. THE System SHALL validate scoring consistency:
+    - Python scores SHALL match AI scores within ±0.05 for composite score
+    - Python grades SHALL match AI grades (same thresholds)
+    - Python recommendations SHALL match AI recommendations (same logic)
+39. THE System SHALL include unit tests for DeepAnalysisScorer:
+    - Test composite score calculation with various inputs
+    - Test grade assignment for all thresholds
+    - Test recommendation logic for all scenarios
+    - Test edge cases (missing data, extreme values)
+40. THE System SHALL include integration tests comparing Python vs AI results:
+    - Same ticker analyzed with both approaches
+    - Validate scores, grades, recommendations match
+    - Validate performance improvement achieved
+
+#### Acceptance Criteria - Compliance with AI Minimalism
+
+41. THE Python scoring approach SHALL comply with AI Minimalism steering rule:
+    - "AI agents and AI tasks are tools, not the alpha and the omega"
+    - "Do not overengineer using AI agents. Use vanilla Python for deterministic, rule-based tasks"
+42. THE System SHALL use AI ONLY for tasks requiring reasoning:
+    - ❌ NOT for calculations (Python formulas)
+    - ❌ NOT for HTML generation (Jinja2 templates)
+    - ❌ NOT for data validation (Pydantic models)
+    - ❌ NOT for data transformation (Python functions)
+    - ✅ ONLY for complex synthesis requiring judgment (optional AI summary)
+43. THE System SHALL prioritize: quality > speed > cost savings (achieve all three)
+44. THE System SHALL be ruthless: if Python can do it, use Python
+
+### Requirement 19: Jinja2 Templates for Deep Analysis Reports
+
+**User Story:** As a FinWiz developer, I want deep analysis HTML reports generated using Jinja2 templates from Python scoring results, so that report generation is instant, free, deterministic, and maintainable.
+
+**Context:** Current deep analysis uses AI agents to generate HTML reports, which is slow (5-10 minutes), expensive ($0.05-0.10), non-deterministic, and violates AI Minimalism principle. HTML generation is a perfect use case for templates.
+
+#### Acceptance Criteria - Template Implementation
+
+1. THE System SHALL create Jinja2 template at `src/finwiz/templates/deep_analysis_report.html.j2`
+2. THE template SHALL accept DeepAnalysisResult data as input variables
+3. THE template SHALL generate professional French-language HTML report
+4. THE template SHALL include sections:
+   - Executive summary (Résumé Exécutif) with grade, score, recommendation
+   - Key metrics (Métriques Clés) with fundamental, technical, risk scores
+   - Rationale (Justification) explaining the recommendation
+   - Risk assessment (Évaluation des Risques) with risk factors
+   - Data sources (Sources de Données) with citations
+5. THE template SHALL include professional CSS styling:
+   - Light/dark mode support
+   - Responsive design (mobile-friendly)
+   - Color-coded grades (A+=green, F=red)
+   - Professional financial styling
+6. THE template SHALL use emojis strategically for visual appeal:
+   - 📊 for analysis sections
+   - 📈 for positive trends
+   - 📉 for negative trends
+   - ⚠️ for risk warnings
+   - 💰 for financial metrics
+7. THE template SHALL be maintainable by developers (not AI-generated)
+8. THE template SHALL support all asset classes (stock, ETF, crypto)
+
+#### Acceptance Criteria - Report Generator
+
+9. THE System SHALL create `DeepAnalysisReportGenerator` class in `src/finwiz/reporting/deep_analysis_report_generator.py`
+10. THE DeepAnalysisReportGenerator SHALL use Jinja2 Environment with FileSystemLoader
+11. THE DeepAnalysisReportGenerator SHALL load template from `src/finwiz/templates/`
+12. THE DeepAnalysisReportGenerator SHALL accept DeepAnalysisResult dict as input
+13. THE DeepAnalysisReportGenerator SHALL render template with input data
+14. THE DeepAnalysisReportGenerator SHALL return HTML string
+15. THE DeepAnalysisReportGenerator SHALL complete in milliseconds (not seconds)
+16. THE DeepAnalysisReportGenerator SHALL be unit-testable with mock data
+17. THE DeepAnalysisReportGenerator SHALL NOT make any LLM calls
+18. THE DeepAnalysisReportGenerator SHALL NOT make any external API calls
+
+#### Acceptance Criteria - Integration with Flow
+
+19. THE Flow SHALL call DeepAnalysisReportGenerator after Python scoring completes
+20. THE Flow SHALL pass DeepAnalysisResult to report generator
+21. THE Flow SHALL save generated HTML to: `output/reports/{session_id}/deep_analysis/{ticker}_report.html`
+22. THE Flow SHALL NOT use AI agents for HTML generation
+23. THE Flow SHALL NOT use CrewAI tasks for HTML generation
+24. THE HTML generation SHALL complete in <100ms per report
+
+#### Acceptance Criteria - Performance Comparison
+
+25. THE Jinja2 approach SHALL be 100-1000x faster than AI HTML generation:
+    - AI: 30-60 seconds per report
+    - Jinja2: <100ms per report
+26. THE Jinja2 approach SHALL eliminate LLM costs for HTML generation:
+    - AI: $0.01-0.02 per report
+    - Jinja2: $0.00 per report
+27. THE Jinja2 approach SHALL produce consistent, professional output
+28. THE Jinja2 approach SHALL be fully testable with unit tests
+
+#### Acceptance Criteria - Template Quality
+
+29. THE template SHALL produce professional-quality HTML reports
+30. THE template SHALL match or exceed AI-generated report quality
+31. THE template SHALL use proper French financial terminology
+32. THE template SHALL include all required sections and data
+33. THE template SHALL be print-friendly (CSS print styles)
+34. THE template SHALL be accessible (semantic HTML, ARIA labels)
+
+### Requirement 20: Pure Python Architecture Implementation
+
+**User Story:** As a FinWiz developer, I want a complete pure Python architecture that replaces AI crews with deterministic Python functions, so that analysis is fast, cheap, testable, and reliable.
+
+#### Acceptance Criteria - Portfolio Deep Analyzer
+
+1. THE System SHALL implement `PortfolioDeepAnalyzer` class in `src/finwiz/scoring/portfolio_deep_analyzer.py`
+2. THE PortfolioDeepAnalyzer SHALL analyze multiple holdings concurrently using Python threading
+3. THE PortfolioDeepAnalyzer SHALL use `DeepAnalysisScorer` for all calculations
+4. THE PortfolioDeepAnalyzer SHALL generate JSON exports for each holding
+5. THE PortfolioDeepAnalyzer SHALL update portfolio holdings with analysis results
+6. THE PortfolioDeepAnalyzer SHALL complete analysis in seconds, not minutes
+7. THE PortfolioDeepAnalyzer SHALL log performance metrics (time, holdings/second, cost)
+
+#### Acceptance Criteria - Python Report Generator
+
+8. THE System SHALL implement `PythonReportGenerator` class in `src/finwiz/reporting/python_report_generator.py`
+9. THE PythonReportGenerator SHALL use Jinja2 templates for HTML generation
+10. THE PythonReportGenerator SHALL generate professional French-language reports
+11. THE PythonReportGenerator SHALL include portfolio statistics and analysis summaries
+12. THE PythonReportGenerator SHALL support light/dark mode with responsive design
+13. THE PythonReportGenerator SHALL complete report generation in milliseconds
+14. THE PythonReportGenerator SHALL be fully testable with mock data
+
+#### Acceptance Criteria - Integration Functions
+
+15. THE System SHALL provide `analyze_portfolio_with_python()` convenience function
+16. THE System SHALL provide `generate_python_report()` convenience function
+17. THE integration functions SHALL be importable and callable from Flow methods
+18. THE integration functions SHALL handle all error cases gracefully
+19. THE integration functions SHALL return structured results with performance metrics
+
+#### Acceptance Criteria - Flow Integration
+
+20. THE Flow SHALL call Python functions directly instead of executing AI crews
+21. THE Flow SHALL pass portfolio holdings to `analyze_portfolio_with_python()`
+22. THE Flow SHALL pass analysis results to `generate_python_report()`
+23. THE Flow SHALL track execution in structured state (file paths, status, metrics)
+24. THE Flow SHALL complete entire analysis pipeline in minutes, not hours
+
+#### Acceptance Criteria - Directory Structure
+
+25. THE System SHALL create proper output directory structure:
+    - `output/stock/` for stock analysis JSON exports
+    - `output/etf/` for ETF analysis JSON exports  
+    - `output/crypto/` for crypto analysis JSON exports
+    - `output/deep_analysis_consolidated_{session_id}.json` for consolidated results
+26. THE System SHALL save final HTML report to `output/finwiz_family_financial_plan.html`
+27. THE System SHALL create report manifest with all generated files
+28. THE output files SHALL be accessible to backtesting and discovery systems
+
+#### Acceptance Criteria - Performance Validation
+
+29. THE Python architecture SHALL achieve 10-20x speed improvement over AI approach
+30. THE Python architecture SHALL achieve 100% cost reduction for calculations
+31. THE Python architecture SHALL produce deterministic, reproducible results
+32. THE Python architecture SHALL be fully unit-testable
+33. THE System SHALL log performance comparisons (Python vs AI metrics)
+
+#### Acceptance Criteria - Demonstration Script
+
+34. THE System SHALL include `scripts/run_python_analysis.py` demonstration script
+35. THE demonstration script SHALL showcase complete Python-based analysis pipeline
+36. THE demonstration script SHALL load portfolio data and run analysis
+37. THE demonstration script SHALL generate reports and log performance metrics
+38. THE demonstration script SHALL prove that all components work together correctly
+
+### Requirement 21: Performance Optimization Configuration
+
+**User Story:** As a FinWiz developer, I want configurable performance optimizations for deep analysis, so that I can balance speed, cost, and quality based on use case.
+
+**Context:** PERFORMANCE_OPTIMIZATION_GUIDE.md documents two existing optimizations (GPT-5-mini for risk assessment, minimal tool set) that provide 20-30% speedup. Combined with Python scoring, these optimizations can achieve 10-20x overall speedup.
+
+#### Acceptance Criteria - Configuration Options
+
+1. THE System SHALL support environment variable configuration for optimizations:
+   - `RISK_ASSESSMENT_USE_MINI=true` (use GPT-5-mini for risk assessment, default: true)
+   - `USE_MINIMAL_RISK_TOOLS=true` (use minimal tool set for risk assessor, default: true)
+   - `DEEP_ANALYSIS_AI_SUMMARY=false` (disable optional AI summary, default: false)
+   - `DEEP_ANALYSIS_BATCH_SIZE=5` (batch size for concurrent execution, default: 5)
+2. THE System SHALL log configuration status at startup
+3. THE System SHALL validate configuration values
+4. THE System SHALL provide sensible defaults for production use
+
+#### Acceptance Criteria - Optimization Modes
+
+5. THE System SHALL support three optimization modes:
+   - **Maximum Speed**: Python scoring + no AI summary + GPT-5-mini + minimal tools
+   - **Balanced**: Python scoring + optional AI summary + GPT-5-mini + minimal tools
+   - **Baseline**: AI scoring (for comparison/debugging)
+6. THE Maximum Speed mode SHALL complete in 10-30 seconds per ticker
+7. THE Balanced mode SHALL complete in 15-40 seconds per ticker
+8. THE Baseline mode SHALL complete in 5-10 minutes per ticker (current)
+
+#### Acceptance Criteria - Performance Monitoring
+
+9. THE System SHALL log performance metrics for each analysis:
+    - Execution time per ticker
+    - LLM call count
+    - API call count
+    - Cost estimate
+10. THE System SHALL track cumulative metrics for portfolio analysis:
+    - Total execution time
+    - Total LLM calls
+    - Total API calls
+    - Total cost estimate
+11. THE System SHALL compare actual vs baseline performance:
+    - Time savings percentage
+    - Cost savings percentage
+    - Speedup factor (e.g., "10x faster")
+
+#### Acceptance Criteria - Validation and Testing
+
+12. THE System SHALL validate that optimizations maintain accuracy:
+    - Scores within ±0.05 of baseline
+    - Grades match baseline
+    - Recommendations match baseline
+13. THE System SHALL include performance regression tests:
+    - Measure execution time for standard test cases
+    - Alert if performance degrades >10%
+    - Track performance trends over time
+14. THE System SHALL document performance characteristics:
+    - Expected execution time per mode
+    - Expected cost per mode
+    - Accuracy validation results
+
+---
+
+## Appendix: Implementation Failure Analysis and Corrective Action Plan
+
+### Executive Summary
+
+The initial implementation of the report aggregation architecture **FAILED** to deliver the promised outcomes. This document analyzes the critical failures and provides a corrective action plan based on a **PURE PYTHON FIRST** approach.
+
+### Critical Failures Identified
+
+#### 1. **No Speed Improvement Achieved**
+
+- **Problem**: Despite implementing Python-based scoring, execution still takes significant time
+- **Root Cause**: Deep analysis still uses AI crews (`DeepAnalysisCrew`) instead of pure Python
+- **Evidence**: Log shows "Executing DeepAnalysisCrew for AAPL" - this should be pure Python
+- **Impact**: No performance improvement, still 3-6 hours for portfolio analysis
+
+#### 2. **JSON Exports Missing from Output Directory**
+
+- **Problem**: ETF, crypto, and stock JSON exports only created in cache, not in final output
+- **Root Cause**: Export functionality not properly integrated into Flow
+- **Evidence**: No JSON files found in output directory, only portfolio review
+- **Impact**: Downstream systems (backtesting, discovery) cannot access analysis results
+
+#### 3. **A+ Discovery System Broken**
+
+- **Problem**: `total_opportunities_found: 0` and `has_a_plus_analysis: False`
+- **Root Cause**: A+ discovery not integrated with deep analysis results
+- **Evidence**: Portfolio shows basic validation only, no deep analysis scores
+- **Impact**: Users see "no opportunities" when A+ holdings actually exist
+
+#### 4. **Backtesting Pipeline Disconnected**
+
+- **Problem**: "Backtesting : Non exécuté / données non fournies"
+- **Root Cause**: Backtesting not connected to discovery results
+- **Evidence**: No backtesting data in output despite A+ candidates
+- **Impact**: Missing critical backtesting analysis in final report
+
+#### 5. **AI-Generated Reports Instead of Python Templates**
+
+- **Problem**: Final report generated by AI instead of Python templates
+- **Root Cause**: Report generation still uses AI crews
+- **Evidence**: Report shows AI-generated content, not template-based output
+- **Impact**: Inconsistent quality, slow generation, unnecessary LLM costs
+
+#### 6. **Placeholder Final Report**
+
+- **Problem**: `final_report.html` contains placeholder content
+- **Root Cause**: Python-based report generation not implemented or called
+- **Evidence**: Report contains generic content instead of actual analysis
+- **Impact**: Users receive meaningless reports with no real insights
+
+### Root Cause Analysis
+
+The fundamental issue is **architectural**: the system is still using AI crews for tasks that should be pure Python functions. This violates the AI Minimalism principle and prevents achieving the promised performance improvements.
+
+#### What Should Be Python (But Isn't)
+
+1. **Deep Analysis Scoring** - Currently AI crew, should be `DeepAnalysisScorer` class
+2. **HTML Report Generation** - Currently AI agents, should be Jinja2 templates
+3. **Data Consolidation** - Currently AI crew, should be Python functions
+4. **JSON Export Management** - Currently broken, should be Python file operations
+
+#### What Should Remain AI (If Necessary)
+
+1. **Complex Market Analysis** - Only if requiring genuine reasoning
+2. **Natural Language Synthesis** - Only as optional enhancement
+3. **Strategic Recommendations** - Only if requiring judgment beyond rules
+
+### Expected Outcomes
+
+#### Performance Improvements
+
+- **Speed**: 10-20x faster (10-30 minutes vs 3-6 hours)
+- **Cost**: 100% reduction for calculations ($0 vs $3.30-6.60)
+- **Reliability**: Deterministic results (same input = same output)
+- **Quality**: Consistent professional reports
+
+#### Functional Fixes
+
+- **JSON Exports**: Properly saved to output directories
+- **A+ Discovery**: Shows actual opportunities found
+- **Backtesting**: Executes when candidates available
+- **Final Report**: Contains real analysis data, not placeholders
+
+#### Architectural Benefits
+
+- **AI Minimalism Compliance**: Use Python for deterministic tasks
+- **Maintainability**: Python code is testable and debuggable
+- **Scalability**: Concurrent processing handles large portfolios
+- **Transparency**: All calculations are auditable
+
+### Success Criteria
+
+The implementation will be considered successful when:
+
+1. ✅ Portfolio analysis completes in 10-30 minutes (not 3-6 hours)
+2. ✅ JSON exports appear in output directories (not just cache)
+3. ✅ A+ discovery shows actual opportunities (not 0)
+4. ✅ Backtesting executes when candidates exist
+5. ✅ Final report contains real data (not placeholders)
+6. ✅ Total cost for calculations is $0 (not $3.30-6.60)
+7. ✅ Results are deterministic and reproducible
+
+### Conclusion
+
+The current AI-based approach has fundamentally failed to deliver promised outcomes. A **PURE PYTHON FIRST** approach is required to achieve the performance, cost, and reliability targets. This corrective action plan provides a clear path to success by eliminating AI where deterministic calculations are sufficient and reserving AI only for tasks requiring genuine reasoning.
+
+The key insight is: **If Python can do it, use Python. Be ruthless about eliminating unnecessary AI complexity.**
+
+

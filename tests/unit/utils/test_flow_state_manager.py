@@ -5,11 +5,12 @@ Tests state discovery, metadata extraction, user prompts, state loading,
 cleanup, and error handling with mocked file system and SQLite operations.
 """
 
-import pytest
-from pathlib import Path
-from datetime import datetime, timedelta
 import json
 import sqlite3
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 from finwiz.utils.flow_state_manager import FlowStateManager
 
@@ -79,9 +80,7 @@ class TestFlowStateManager:
             "is_stale": False,
         }
 
-        mocker.patch.object(
-            manager, "_extract_state_metadata", return_value=mock_metadata
-        )
+        mocker.patch.object(manager, "_extract_state_metadata", return_value=mock_metadata)
 
         # Act
         states = manager.discover_persisted_states()
@@ -147,14 +146,12 @@ class TestFlowStateManager:
         # Assert
         assert states == []  # Failed extraction returns empty list
 
-    def test_should_extract_metadata_from_valid_state_file(
-        self, manager, mocker, mock_state_file, sample_state_data
-    ):
+    def test_should_extract_metadata_from_valid_state_file(self, manager, mocker, mock_state_file, sample_state_data):
         """Test metadata extraction from valid SQLite state file."""
         # Arrange
         # Create the actual file so stat() works
         mock_state_file.touch()
-        
+
         mock_conn = mocker.MagicMock()
         mock_cursor = mocker.MagicMock()
 
@@ -181,14 +178,12 @@ class TestFlowStateManager:
         mock_cursor.execute.assert_called_once()
         mock_conn.close.assert_called_once()
 
-    def test_should_calculate_age_hours_correctly(
-        self, manager, mocker, mock_state_file, sample_state_data
-    ):
+    def test_should_calculate_age_hours_correctly(self, manager, mocker, mock_state_file, sample_state_data):
         """Test age calculation from flow_start_time."""
         # Arrange
         # Create the actual file so stat() works
         mock_state_file.touch()
-        
+
         # Set flow_start_time to 3 hours ago
         start_time = datetime.now() - timedelta(hours=3)
         sample_state_data["flow_start_time"] = start_time.isoformat()
@@ -207,14 +202,12 @@ class TestFlowStateManager:
         assert metadata is not None
         assert 2.9 < metadata["age_hours"] < 3.1  # Allow small variance
 
-    def test_should_mark_state_as_stale_when_older_than_24_hours(
-        self, manager, mocker, mock_state_file, sample_state_data
-    ):
+    def test_should_mark_state_as_stale_when_older_than_24_hours(self, manager, mocker, mock_state_file, sample_state_data):
         """Test is_stale flag is True when age > 24 hours."""
         # Arrange
         # Create the actual file so stat() works
         mock_state_file.touch()
-        
+
         start_time = datetime.now() - timedelta(hours=30)
         sample_state_data["flow_start_time"] = start_time.isoformat()
 
@@ -232,9 +225,7 @@ class TestFlowStateManager:
         assert metadata is not None
         assert metadata["is_stale"] is True
 
-    def test_should_return_none_when_no_state_data_in_db(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_return_none_when_no_state_data_in_db(self, manager, mocker, mock_state_file):
         """Test extraction returns None when SQLite query returns no rows."""
         # Arrange
         mock_conn = mocker.MagicMock()
@@ -251,14 +242,10 @@ class TestFlowStateManager:
         assert metadata is None
         mock_conn.close.assert_called_once()
 
-    def test_should_handle_sqlite_error_during_extraction(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_handle_sqlite_error_during_extraction(self, manager, mocker, mock_state_file):
         """Test extraction handles SQLite errors gracefully."""
         # Arrange
-        mocker.patch(
-            "sqlite3.connect", side_effect=sqlite3.Error("Database locked")
-        )
+        mocker.patch("sqlite3.connect", side_effect=sqlite3.Error("Database locked"))
 
         # Act
         metadata = manager._extract_state_metadata(mock_state_file)
@@ -266,9 +253,7 @@ class TestFlowStateManager:
         # Assert
         assert metadata is None
 
-    def test_should_handle_json_decode_error_during_extraction(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_handle_json_decode_error_during_extraction(self, manager, mocker, mock_state_file):
         """Test extraction handles JSON decode errors gracefully."""
         # Arrange
         mock_conn = mocker.MagicMock()
@@ -284,14 +269,12 @@ class TestFlowStateManager:
         # Assert
         assert metadata is None
 
-    def test_should_handle_missing_flow_start_time(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_handle_missing_flow_start_time(self, manager, mocker, mock_state_file):
         """Test extraction handles missing flow_start_time field."""
         # Arrange
         # Create the actual file so stat() works
         mock_state_file.touch()
-        
+
         state_data = {
             "holdings_processed": 5,
             "total_holdings": 10,
@@ -312,14 +295,12 @@ class TestFlowStateManager:
         assert metadata is not None
         assert metadata["age_hours"] == 0  # Default when missing
 
-    def test_should_calculate_progress_percentage_correctly(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_calculate_progress_percentage_correctly(self, manager, mocker, mock_state_file):
         """Test progress percentage calculation."""
         # Arrange
         # Create the actual file so stat() works
         mock_state_file.touch()
-        
+
         state_data = {
             "holdings_processed": 15,
             "total_holdings": 30,
@@ -340,14 +321,12 @@ class TestFlowStateManager:
         assert metadata is not None
         assert metadata["progress_pct"] == 50.0
 
-    def test_should_handle_zero_total_holdings(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_handle_zero_total_holdings(self, manager, mocker, mock_state_file):
         """Test progress percentage when total_holdings is 0."""
         # Arrange
         # Create the actual file so stat() works
         mock_state_file.touch()
-        
+
         state_data = {
             "holdings_processed": 0,
             "total_holdings": 0,
@@ -542,13 +521,11 @@ class TestFlowStateManager:
         with pytest.raises(SystemExit):
             manager.prompt_user_for_resume(states)
 
-    def test_should_load_state_by_uuid_successfully(
-        self, manager, mocker, mock_state_file, sample_state_data
-    ):
+    def test_should_load_state_by_uuid_successfully(self, manager, mocker, mock_state_file, sample_state_data):
         """Test loading state data by UUID."""
         # Arrange
         mock_state_file.touch()
-        
+
         mock_conn = mocker.MagicMock()
         mock_cursor = mocker.MagicMock()
         mock_cursor.fetchone.return_value = (json.dumps(sample_state_data),)
@@ -585,9 +562,7 @@ class TestFlowStateManager:
         # Assert
         assert state_data is None
 
-    def test_should_handle_json_decode_error_during_load(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_handle_json_decode_error_during_load(self, manager, mocker, mock_state_file):
         """Test load handles JSON decode errors gracefully."""
         # Arrange
         mock_state_file.touch()
@@ -605,9 +580,7 @@ class TestFlowStateManager:
         # Assert
         assert state_data is None
 
-    def test_should_return_none_when_no_state_data_during_load(
-        self, manager, mocker, mock_state_file
-    ):
+    def test_should_return_none_when_no_state_data_during_load(self, manager, mocker, mock_state_file):
         """Test load returns None when query returns no rows."""
         # Arrange
         mock_state_file.touch()
@@ -642,21 +615,32 @@ class TestFlowStateManager:
         recent_time = datetime.now() - timedelta(days=2)
 
         import os
+
         original_stat = os.stat
-        
+
         def mock_stat(path, *args, **kwargs):
             path_str = str(path)
             if "old-uuid" in path_str:
                 result = original_stat(path, *args, **kwargs)
                 # Create a new stat_result with modified mtime
                 import os
-                return os.stat_result((
-                    result.st_mode, result.st_ino, result.st_dev, result.st_nlink,
-                    result.st_uid, result.st_gid, result.st_size,
-                    result.st_atime, old_time.timestamp(), result.st_ctime
-                ))
+
+                return os.stat_result(
+                    (
+                        result.st_mode,
+                        result.st_ino,
+                        result.st_dev,
+                        result.st_nlink,
+                        result.st_uid,
+                        result.st_gid,
+                        result.st_size,
+                        result.st_atime,
+                        old_time.timestamp(),
+                        result.st_ctime,
+                    )
+                )
             return original_stat(path, *args, **kwargs)
-        
+
         mocker.patch("os.stat", side_effect=mock_stat)
 
         # Act
@@ -701,30 +685,41 @@ class TestFlowStateManager:
 
         # Mock file modification time to be old
         old_time = datetime.now() - timedelta(days=10)
-        
+
         import os
+
         original_stat = os.stat
-        
+
         def mock_stat(path, *args, **kwargs):
             path_str = str(path)
             if "old-uuid" in path_str:
                 result = original_stat(path, *args, **kwargs)
-                return os.stat_result((
-                    result.st_mode, result.st_ino, result.st_dev, result.st_nlink,
-                    result.st_uid, result.st_gid, result.st_size,
-                    result.st_atime, old_time.timestamp(), result.st_ctime
-                ))
+                return os.stat_result(
+                    (
+                        result.st_mode,
+                        result.st_ino,
+                        result.st_dev,
+                        result.st_nlink,
+                        result.st_uid,
+                        result.st_gid,
+                        result.st_size,
+                        result.st_atime,
+                        old_time.timestamp(),
+                        result.st_ctime,
+                    )
+                )
             return original_stat(path, *args, **kwargs)
-        
+
         mocker.patch("os.stat", side_effect=mock_stat)
 
         # Mock unlink to raise exception
         original_unlink = Path.unlink
+
         def mock_unlink(self, *args, **kwargs):
             if "old-uuid" in str(self):
                 raise OSError("Permission denied")
             return original_unlink(self, *args, **kwargs)
-        
+
         mocker.patch.object(Path, "unlink", mock_unlink)
 
         # Act
@@ -755,7 +750,7 @@ class TestFlowStateManager:
         # Arrange
         # Create the actual file so stat() works
         mock_state_file.touch()
-        
+
         state_data = {}  # Empty state data
 
         mock_conn = mocker.MagicMock()

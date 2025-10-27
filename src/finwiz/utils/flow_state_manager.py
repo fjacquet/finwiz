@@ -9,11 +9,11 @@ This module provides functionality to:
 - Clean up old state files
 """
 
-from pathlib import Path
-from datetime import datetime, timedelta
 import json
 import sqlite3
-from typing import Optional
+from datetime import datetime, timedelta
+from pathlib import Path
+
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -34,6 +34,7 @@ class FlowStateManager:
 
         Returns:
             List of state metadata dicts with: uuid, age_hours, progress, last_update
+
         """
         states = []
 
@@ -54,7 +55,7 @@ class FlowStateManager:
 
         return states
 
-    def _extract_state_metadata(self, state_file: Path) -> Optional[dict]:
+    def _extract_state_metadata(self, state_file: Path) -> dict | None:
         """
         Extract metadata from state file.
 
@@ -63,6 +64,7 @@ class FlowStateManager:
 
         Returns:
             Dict with metadata or None if extraction fails
+
         """
         try:
             conn = sqlite3.connect(str(state_file))
@@ -119,7 +121,7 @@ class FlowStateManager:
             logger.error(f"Failed to extract metadata from {state_file}: {e}")
             return None
 
-    def prompt_user_for_resume(self, states: list[dict]) -> Optional[str]:
+    def prompt_user_for_resume(self, states: list[dict]) -> str | None:
         """
         Prompt user to select a state to resume or start fresh.
 
@@ -128,6 +130,7 @@ class FlowStateManager:
 
         Returns:
             UUID to resume, or None to start fresh
+
         """
         if not states:
             return None
@@ -181,7 +184,7 @@ class FlowStateManager:
                 print("\n\n❌ Cancelled by user")
                 raise SystemExit(0)
 
-    def load_flow_state_by_uuid(self, uuid: str) -> Optional[dict]:
+    def load_flow_state_by_uuid(self, uuid: str) -> dict | None:
         """
         Load flow state data by UUID.
 
@@ -190,6 +193,7 @@ class FlowStateManager:
 
         Returns:
             State data dict or None if not found
+
         """
         state_file = self.state_dir / f"{uuid}.db"
 
@@ -237,6 +241,7 @@ class FlowStateManager:
 
         Returns:
             Number of files deleted
+
         """
         if not self.state_dir.exists():
             return 0

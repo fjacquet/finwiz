@@ -30,15 +30,9 @@ class DataAvailabilitySummary(BaseModel):
     available_sources: int = Field(..., ge=0, description="Number of available sources")
     unavailable_sources: int = Field(..., ge=0, description="Number of unavailable sources")
     stale_sources: int = Field(..., ge=0, description="Number of stale sources (>7 days)")
-    freshness_warnings: list[str] = Field(
-        default_factory=list, description="List of freshness warnings"
-    )
-    source_details: dict[str, SourceStatus] = Field(
-        default_factory=dict, description="Detailed status for each source"
-    )
-    summary_timestamp: datetime = Field(
-        default_factory=datetime.now, description="When summary was generated"
-    )
+    freshness_warnings: list[str] = Field(default_factory=list, description="List of freshness warnings")
+    source_details: dict[str, SourceStatus] = Field(default_factory=dict, description="Detailed status for each source")
+    summary_timestamp: datetime = Field(default_factory=datetime.now, description="When summary was generated")
 
 
 class DataAvailabilityTracker:
@@ -126,9 +120,7 @@ class DataAvailabilityTracker:
             )
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to track data source {source}: {str(e)}", exc_info=True
-            )
+            self.logger.error(f"Failed to track data source {source}: {str(e)}", exc_info=True)
 
     def get_availability_summary(self) -> DataAvailabilitySummary:
         """
@@ -140,15 +132,9 @@ class DataAvailabilityTracker:
         """
         try:
             total_sources = len(self._tracked_sources)
-            available_sources = sum(
-                1 for s in self._tracked_sources.values() if s.status == "available"
-            )
-            unavailable_sources = sum(
-                1 for s in self._tracked_sources.values() if s.status == "unavailable"
-            )
-            stale_sources = sum(
-                1 for s in self._tracked_sources.values() if s.status == "stale"
-            )
+            available_sources = sum(1 for s in self._tracked_sources.values() if s.status == "available")
+            unavailable_sources = sum(1 for s in self._tracked_sources.values() if s.status == "unavailable")
+            stale_sources = sum(1 for s in self._tracked_sources.values() if s.status == "stale")
 
             # Generate freshness warnings
             freshness_warnings = self.get_freshness_warnings()
@@ -176,9 +162,7 @@ class DataAvailabilityTracker:
             return summary
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to generate availability summary: {str(e)}", exc_info=True
-            )
+            self.logger.error(f"Failed to generate availability summary: {str(e)}", exc_info=True)
             # Return empty summary on error
             return DataAvailabilitySummary(
                 total_sources=0,
@@ -205,8 +189,7 @@ class DataAvailabilityTracker:
                 if source_status.status == "stale" and source_status.age_hours is not None:
                     age_days = source_status.age_hours / 24
                     warnings.append(
-                        f"{source_name}: Data is {age_days:.1f} days old "
-                        f"(threshold: {self.stale_threshold_hours / 24:.1f} days)"
+                        f"{source_name}: Data is {age_days:.1f} days old (threshold: {self.stale_threshold_hours / 24:.1f} days)"
                     )
 
                 # Unavailable data warning
@@ -217,9 +200,7 @@ class DataAvailabilityTracker:
             self.logger.debug(f"Generated {len(warnings)} freshness warnings")
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to generate freshness warnings: {str(e)}", exc_info=True
-            )
+            self.logger.error(f"Failed to generate freshness warnings: {str(e)}", exc_info=True)
             warnings.append("Error generating freshness warnings")
 
         return warnings
@@ -326,9 +307,7 @@ class DataAvailabilityTracker:
                     if source_status.record_count is not None:
                         count_str = f" - {source_status.record_count} records"
 
-                    lines.append(
-                        f"  {status_icon} {source_name}: {source_status.status}{age_str}{count_str}"
-                    )
+                    lines.append(f"  {status_icon} {source_name}: {source_status.status}{age_str}{count_str}")
 
             # Add freshness warnings
             if summary.freshness_warnings:
@@ -343,7 +322,5 @@ class DataAvailabilityTracker:
             return "\n".join(lines)
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to format summary for report: {str(e)}", exc_info=True
-            )
+            self.logger.error(f"Failed to format summary for report: {str(e)}", exc_info=True)
             return "Error formatting data availability summary"

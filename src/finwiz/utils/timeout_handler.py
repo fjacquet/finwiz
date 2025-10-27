@@ -12,14 +12,11 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 async def with_timeout[T](
-    coro: Callable[..., Coroutine[Any, Any, T]],
-    timeout_seconds: int,
-    operation_name: str,
-    **kwargs: Any
+    coro: Callable[..., Coroutine[Any, Any, T]], timeout_seconds: int, operation_name: str, **kwargs: Any
 ) -> T:
     """
     Execute coroutine with timeout enforcement.
@@ -46,19 +43,12 @@ async def with_timeout[T](
 
     """
     try:
-        logger.debug(
-            f"Starting {operation_name} with {timeout_seconds}s timeout"
-        )
-        result = await asyncio.wait_for(
-            coro(**kwargs),
-            timeout=timeout_seconds
-        )
+        logger.debug(f"Starting {operation_name} with {timeout_seconds}s timeout")
+        result = await asyncio.wait_for(coro(**kwargs), timeout=timeout_seconds)
         logger.debug(f"Completed {operation_name} within timeout")
         return result
     except TimeoutError:
-        logger.error(
-            f"Timeout: {operation_name} exceeded {timeout_seconds}s timeout"
-        )
+        logger.error(f"Timeout: {operation_name} exceeded {timeout_seconds}s timeout")
         raise
 
 
@@ -67,7 +57,7 @@ async def with_timeout_graceful[T](
     timeout_seconds: int,
     operation_name: str,
     fallback_value: Any = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> T | Any:
     """
     Execute coroutine with timeout and graceful fallback.
@@ -93,14 +83,7 @@ async def with_timeout_graceful[T](
 
     """
     try:
-        return await with_timeout(
-            coro,
-            timeout_seconds,
-            operation_name,
-            **kwargs
-        )
+        return await with_timeout(coro, timeout_seconds, operation_name, **kwargs)
     except TimeoutError:
-        logger.warning(
-            f"Timeout: {operation_name} - returning fallback value"
-        )
+        logger.warning(f"Timeout: {operation_name} - returning fallback value")
         return fallback_value

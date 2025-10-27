@@ -6,9 +6,7 @@ mechanisms in the data consolidation system.
 """
 
 import json
-import os
 from datetime import datetime, timedelta
-from pathlib import Path
 
 import pytest
 
@@ -408,10 +406,7 @@ class TestConcurrencyAndRaceConditions:
     def test_should_handle_simultaneous_writes_to_same_crew(self, integration_manager):
         """Test handling of simultaneous writes to the same crew."""
         # Arrange
-        outputs = [
-            {"raw_output": f"Output {i}", "timestamp": datetime.now().isoformat()}
-            for i in range(10)
-        ]
+        outputs = [{"raw_output": f"Output {i}", "timestamp": datetime.now().isoformat()} for i in range(10)]
 
         # Act - Simulate rapid successive writes
         results = []

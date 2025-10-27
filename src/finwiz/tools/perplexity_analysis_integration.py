@@ -203,8 +203,9 @@ class PerplexityAnalysisIntegration:
                     search_params["search_recency"] = search_filters["date"]
 
                 # Execute search using Perplexity Search API (not chat completions)
-                import requests
                 import json
+
+                import requests
 
                 api_key = os.getenv("PPLX_API_KEY")
                 if not api_key:

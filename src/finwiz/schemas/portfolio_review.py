@@ -145,7 +145,9 @@ class HoldingDecision(BaseModel):
         default_factory=list, max_length=5, description="A+ improvement suggestions for this holding"
     )
     has_a_plus_opportunities: bool = Field(default=False, description="Whether A+ improvement opportunities exist for this holding")
-    current_grade_potential: Optional[str] = Field(None, description="Assessment of current holding's potential for grade improvement")
+    current_grade_potential: Optional[str] = Field(
+        None, description="Assessment of current holding's potential for grade improvement"
+    )
 
     # NEW: Data freshness and crew analysis tracking
     data_freshness: Literal["fresh", "recent", "stale"] = Field(default="stale", description="Freshness of analysis data")

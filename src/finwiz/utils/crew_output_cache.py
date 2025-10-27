@@ -58,9 +58,7 @@ class CrewOutputCache:
         # Check if file is recent enough
         if not self._is_file_recent(recent_file):
             age_hours = self._get_file_age_hours(recent_file)
-            self.logger.info(
-                f"Cached {crew_name} output too old ({age_hours:.1f}h > {self.max_age_hours}h), will regenerate"
-            )
+            self.logger.info(f"Cached {crew_name} output too old ({age_hours:.1f}h > {self.max_age_hours}h), will regenerate")
             return None
 
         # Load and return the cached data
@@ -69,9 +67,7 @@ class CrewOutputCache:
                 data = json.load(f)
 
             age_hours = self._get_file_age_hours(recent_file)
-            self.logger.info(
-                f"✅ Using cached {crew_name} output from {recent_file.name} (age: {age_hours:.1f}h)"
-            )
+            self.logger.info(f"✅ Using cached {crew_name} output from {recent_file.name} (age: {age_hours:.1f}h)")
 
             # Add cache metadata
             data["_cache_metadata"] = {

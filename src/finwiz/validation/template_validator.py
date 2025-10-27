@@ -41,6 +41,7 @@ class TemplateVariableValidator:
 
         Args:
             crews_dir: Path to crews directory (defaults to src/finwiz/crews)
+
         """
         if crews_dir is None:
             # Default to src/finwiz/crews
@@ -63,6 +64,7 @@ class TemplateVariableValidator:
         Example:
             For "Analyze {ticker} of type {asset_class}"
             Returns: {"ticker", "asset_class"}
+
         """
         try:
             with open(tasks_yaml_path, encoding="utf-8") as f:
@@ -89,10 +91,7 @@ class TemplateVariableValidator:
 
             extract_variables(tasks_config)
 
-            logger.debug(
-                f"Found {len(variables)} template variables in {tasks_yaml_path.name}: "
-                f"{sorted(variables)}"
-            )
+            logger.debug(f"Found {len(variables)} template variables in {tasks_yaml_path.name}: {sorted(variables)}")
 
             return variables
 
@@ -109,6 +108,7 @@ class TemplateVariableValidator:
 
         Returns:
             List of info messages (empty if no template variables)
+
         """
         info = []
         crew_name = crew_dir.name
@@ -127,13 +127,9 @@ class TemplateVariableValidator:
             return info
 
         # Document required inputs
-        info.append(
-            f"✓ {crew_name}: Requires kickoff(inputs={{...}}) with: {sorted(template_variables)}"
-        )
+        info.append(f"✓ {crew_name}: Requires kickoff(inputs={{...}}) with: {sorted(template_variables)}")
 
-        logger.debug(
-            f"{crew_name}: Documented {len(template_variables)} required inputs"
-        )
+        logger.debug(f"{crew_name}: Documented {len(template_variables)} required inputs")
 
         return info
 
@@ -145,6 +141,7 @@ class TemplateVariableValidator:
             Tuple of (success, info_messages)
             - success: Always True (documentation only)
             - info_messages: List of documentation messages
+
         """
         all_info = []
 
@@ -166,9 +163,7 @@ class TemplateVariableValidator:
             all_info.extend(crew_info)
 
         if all_info:
-            logger.info(
-                f"📋 Documented template variables for {len(all_info)} crews"
-            )
+            logger.info(f"📋 Documented template variables for {len(all_info)} crews")
         else:
             logger.info("📋 No template variables found in any crews")
 
@@ -189,9 +184,7 @@ class TemplateVariableValidator:
             logger.info("\n📋 Crew Input Requirements:")
             for msg in info_messages:
                 logger.info(f"  {msg}")
-            logger.info(
-                "\n💡 Remember: Pass these inputs via crew.crew().kickoff(inputs={...})"
-            )
+            logger.info("\n💡 Remember: Pass these inputs via crew.crew().kickoff(inputs={...})")
         else:
             logger.info("✅ No template variables found (crews use no dynamic inputs)")
 

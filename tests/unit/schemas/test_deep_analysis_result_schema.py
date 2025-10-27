@@ -5,7 +5,7 @@ Tests the enhanced DeepAnalysisResult Pydantic schema with all required fields,
 validation rules, and the extra='forbid' configuration.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 from pydantic import ValidationError
@@ -23,9 +23,11 @@ class TestDeepAnalysisResultSchemaValidation:
             "ticker": "AAPL",
             "asset_class": "stock",
             "crew_name": "DeepAnalysisCrew",
-            "analysis_timestamp": datetime.now(),
+            "analysis_timestamp": datetime.now().isoformat().isoformat(),
             "composite_score": 0.85,
             "grade": "A",
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
             "data_freshness_hours": 2.5,
             "confidence_level": 0.9,
         }
@@ -55,6 +57,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 2.5,
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -72,12 +76,14 @@ class TestDeepAnalysisResultSchemaValidation:
             "ticker": "AAPL",
             "asset_class": "stock",
             "crew_name": "DeepAnalysisCrew",
-            "analysis_timestamp": datetime.now(),
+            "analysis_timestamp": datetime.now().isoformat(),
             "composite_score": 0.85,
             "grade": "A",
             "data_freshness_hours": 2.5,
             "confidence_level": 0.9,
             "unknown_field": "should_be_rejected",  # Extra field
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -97,6 +103,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "crew_name": "DeepAnalysisCrew",
             "composite_score": 0.5,
             "grade": "B",
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.8,
         }
@@ -118,6 +126,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "F",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.8,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -138,6 +148,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A+",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.8,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -158,6 +170,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.95,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -177,6 +191,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": -0.1,  # Invalid
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -197,6 +213,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 1.5,  # Invalid
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -217,6 +235,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 0.0,  # Zero is valid
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -236,6 +256,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": -1.0,  # Invalid
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -257,6 +279,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
             "risk_score": 2.5,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -277,6 +301,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
             "risk_score": 6.0,  # Invalid
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -302,6 +328,8 @@ class TestDeepAnalysisResultSchemaValidation:
                 "Reduced confidence due to stale data",
                 "Missing some technical indicators",
             ],
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -324,6 +352,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -368,6 +398,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "confidence_level": 0.9,
             "fundamental_score": 0.9,
             "technical_score": 0.8,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -389,6 +421,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
             "fundamental_score": 1.5,  # Invalid
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act & Assert
@@ -411,6 +445,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -423,7 +459,7 @@ class TestDeepAnalysisResultSchemaValidation:
     def test_should_default_analysis_timestamp_to_now(self):
         """Test that analysis_timestamp defaults to current time."""
         # Arrange
-        before_creation = datetime.now()
+        before_creation = datetime.now().isoformat()
         data_without_timestamp = {
             "ticker": "AAPL",
             "asset_class": "stock",
@@ -432,11 +468,13 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
         result = DeepAnalysisResult(**data_without_timestamp)
-        after_creation = datetime.now()
+        after_creation = datetime.now().isoformat()
 
         # Assert
         assert isinstance(result.analysis_timestamp, datetime)
@@ -454,6 +492,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
             "cached": True,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -473,6 +513,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -488,7 +530,7 @@ class TestDeepAnalysisResultSchemaValidation:
             "ticker": "AAPL",
             "asset_class": "stock",
             "crew_name": "DeepAnalysisCrew",
-            "analysis_timestamp": datetime.now(),
+            "analysis_timestamp": datetime.now().isoformat(),
             "composite_score": 0.87,
             "grade": "A",
             "fundamental_score": 0.9,
@@ -501,6 +543,8 @@ class TestDeepAnalysisResultSchemaValidation:
                 "Some indicators unavailable",
             ],
             "cached": False,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
 
         # Act
@@ -533,6 +577,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
             "warnings": ["Test warning"],
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
         result = DeepAnalysisResult(**data)
 
@@ -557,6 +603,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
+            "recommendation": "BUY",
+            "rationale": "Strong fundamentals and technical indicators",
         }
         result = DeepAnalysisResult(**data)
 

@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 
 from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
-from finwiz.flow_state import DeepAnalysisResult, FinwizState
+from finwiz.flow_state import DeepAnalysisResult
 from finwiz.flows.flow_orchestrator import FinwizFlow
 
 
@@ -57,7 +57,7 @@ class TestFlowSequence:
         # Create proper DeepAnalysisResult objects with all required fields
         # Use ISO format strings for analyzed_at (JSON serializable)
         now_iso = datetime.now().isoformat()
-        
+
         return {
             "AAPL": DeepAnalysisResult(
                 ticker="AAPL",
@@ -267,18 +267,12 @@ class TestFlowSequence:
         mock_pydantic.technical_score = 0.90
         mock_pydantic.risk_score = 2.5  # 0-5 scale
         # Make hasattr work correctly
-        mock_pydantic.configure_mock(**{
-            'fundamental_score': 0.85,
-            'technical_score': 0.90,
-            'risk_score': 2.5
-        })
+        mock_pydantic.configure_mock(**{"fundamental_score": 0.85, "technical_score": 0.90, "risk_score": 2.5})
         mock_result.pydantic = mock_pydantic
         mock_result.raw = None
 
         # Parse the result
-        analysis_result = flow._parse_crew_output_for_holding(
-            mock_result, "AAPL", "stock", "DeepAnalysisCrew"
-        )
+        analysis_result = flow._parse_crew_output_for_holding(mock_result, "AAPL", "stock", "DeepAnalysisCrew")
 
         # Verify scores extracted correctly
         assert analysis_result.ticker == "AAPL"
@@ -321,9 +315,7 @@ class TestFlowSequence:
         assert cached_result.analysis.composite_score == 0.88
         assert cached_result.is_fresh(24)
 
-    def test_run_deep_analysis_on_holdings_with_mocked_crew(
-        self, mocker, mock_portfolio_review_data
-    ):
+    def test_run_deep_analysis_on_holdings_with_mocked_crew(self, mocker, mock_portfolio_review_data):
         """Test _run_deep_analysis_on_holdings() with mocked DeepAnalysisCrew execution."""
         flow = FinwizFlow()
 
@@ -343,12 +335,9 @@ class TestFlowSequence:
         mock_crew_instance = mocker.Mock()
         mock_crew_result = mocker.Mock()
         mock_pydantic = mocker.Mock()
-        mock_pydantic.configure_mock(**{
-            'fundamental_score': 0.85,
-            'technical_score': 0.90,
-            'risk_score': 2.0,
-            'composite_score': 0.87
-        })
+        mock_pydantic.configure_mock(
+            **{"fundamental_score": 0.85, "technical_score": 0.90, "risk_score": 2.0, "composite_score": 0.87}
+        )
         mock_crew_result.pydantic = mock_pydantic
         mock_crew_result.raw = None
         mock_crew_instance.crew().kickoff.return_value = mock_crew_result
@@ -370,11 +359,10 @@ class TestFlowSequence:
         # Verify crew was called for each holding
         assert mock_crew_instance.crew().kickoff.call_count == 3
 
-    def test_match_alternatives_for_holdings_with_mocked_finder(
-        self, mocker, mock_deep_analysis_results
-    ):
-        """Test _match_alternatives_for_holdings() with mocked AlternativeFinder.
-        
+    def test_match_alternatives_for_holdings_with_mocked_finder(self, mocker, mock_deep_analysis_results):
+        """
+        Test _match_alternatives_for_holdings() with mocked AlternativeFinder.
+
         Note: This test verifies graceful error handling when alternative matching
         encounters issues with Pydantic models. The actual implementation catches
         exceptions and continues processing.
@@ -400,9 +388,7 @@ class TestFlowSequence:
         mock_finder_instance.find_alternatives.return_value = [mock_alternative]
 
         # Mock the AlternativeFinder class constructor
-        mock_finder_class = mocker.patch(
-            "finwiz.tools.alternative_finder_tool.AlternativeFinder"
-        )
+        mock_finder_class = mocker.patch("finwiz.tools.alternative_finder_tool.AlternativeFinder")
         mock_finder_class.return_value = mock_finder_instance
 
         # Mock HoldingProfile to avoid validation issues
@@ -421,9 +407,7 @@ class TestFlowSequence:
         # The implementation catches exceptions and logs errors, returning empty dict
         # This is expected behavior for graceful degradation
 
-    async def test_update_portfolio_review_with_enriched_data_with_mocked_builder(
-        self, mocker, tmp_path
-    ):
+    async def test_update_portfolio_review_with_enriched_data_with_mocked_builder(self, mocker, tmp_path):
         """Test _update_portfolio_review_with_enriched_data() with mocked portfolio builder."""
         flow = FinwizFlow()
 
@@ -449,9 +433,7 @@ class TestFlowSequence:
         assert flow.state.portfolio_review_json == str(portfolio_file)
         assert flow.state.portfolio_review is not None
 
-    async def test_flow_state_updates_correctly_after_each_phase(
-        self, mocker, mock_portfolio_review_data
-    ):
+    async def test_flow_state_updates_correctly_after_each_phase(self, mocker, mock_portfolio_review_data):
         """Verify Flow state updates correctly after each phase."""
         flow = FinwizFlow()
 
@@ -482,9 +464,7 @@ class TestFlowSequence:
         async def mock_update_portfolio(*args, **kwargs):
             return True
 
-        mocker.patch.object(
-            flow, "_update_portfolio_review_with_enriched_data", side_effect=mock_update_portfolio
-        )
+        mocker.patch.object(flow, "_update_portfolio_review_with_enriched_data", side_effect=mock_update_portfolio)
         mocker.patch.dict(os.environ, {"DEEP_PORTFOLIO_ANALYSIS": "true"})
 
         result = await flow.analyze_and_update_portfolio()
@@ -527,9 +507,7 @@ class TestFlowSequence:
         # Verify graceful degradation - returns empty results
         assert results == {}
 
-    def test_alternative_matching_failure_continues_without_alternatives(
-        self, mocker, mock_deep_analysis_results
-    ):
+    def test_alternative_matching_failure_continues_without_alternatives(self, mocker, mock_deep_analysis_results):
         """Test alternative matching failure continues without alternatives."""
         flow = FinwizFlow()
 
@@ -537,9 +515,7 @@ class TestFlowSequence:
         mock_finder_instance = mocker.Mock()
         mock_finder_instance.find_alternatives.side_effect = Exception("Alternative matching failed")
 
-        mock_finder_class = mocker.patch(
-            "finwiz.tools.alternative_finder_tool.AlternativeFinder"
-        )
+        mock_finder_class = mocker.patch("finwiz.tools.alternative_finder_tool.AlternativeFinder")
         mock_finder_class.return_value = mock_finder_instance
 
         # Mock HoldingProfile
@@ -622,20 +598,20 @@ class TestFlowSequence:
             async def wrapper(*args, **kwargs):
                 execution_order.append(name)
                 return {"success": True}
+
             return wrapper
 
         def track_sync_method(name):
             def wrapper(*args, **kwargs):
                 execution_order.append(name)
                 return {"success": True}
+
             return wrapper
 
         flow = FinwizFlow()
 
         # Mock methods to track execution (async for portfolio methods, sync for discovery)
-        mocker.patch.object(
-            flow, "check_portfolio", side_effect=track_async_method("check_portfolio")
-        )
+        mocker.patch.object(flow, "check_portfolio", side_effect=track_async_method("check_portfolio"))
         mocker.patch.object(
             flow,
             "analyze_and_update_portfolio",
@@ -703,9 +679,7 @@ class TestFlowSequence:
         async def mock_update_portfolio(*args, **kwargs):
             return True
 
-        mocker.patch.object(
-            flow, "_update_portfolio_review_with_enriched_data", side_effect=mock_update_portfolio
-        )
+        mocker.patch.object(flow, "_update_portfolio_review_with_enriched_data", side_effect=mock_update_portfolio)
 
         # Execute (async)
         result = await flow.analyze_and_update_portfolio()

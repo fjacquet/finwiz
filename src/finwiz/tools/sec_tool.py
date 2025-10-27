@@ -10,9 +10,9 @@ from typing import Any
 
 import requests
 from crewai.tools import BaseTool
-from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_text_splitters import CharacterTextSplitter
 from pydantic import BaseModel
 
 from finwiz.schemas.tools import SECFilingSearchInput

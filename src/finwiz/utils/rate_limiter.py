@@ -23,8 +23,10 @@ class APIProvider(str, Enum):
     """Supported API providers with their rate limits."""
 
     ALPHA_VANTAGE = "alpha_vantage"
+    ALPHA_VANTAGE_PREMIUM = "alpha_vantage_premium"
     YAHOO_FINANCE = "yahoo_finance"
     TWELVE_DATA = "twelve_data"
+    TWELVE_DATA_PREMIUM = "twelve_data_premium"
     CHART_IMG = "chart_img"
     COINMARKETCAP = "coinmarketcap"
     KRAKEN = "kraken"
@@ -59,24 +61,44 @@ DEFAULT_RATE_LIMITS: dict[APIProvider, RateLimitConfig] = {
         base_backoff=2.0,
         max_backoff=120.0,
     ),
-    APIProvider.YAHOO_FINANCE: RateLimitConfig(
-        requests_per_minute=60,
-        requests_per_hour=2000,
+    APIProvider.ALPHA_VANTAGE_PREMIUM: RateLimitConfig(
+        requests_per_minute=75,
+        requests_per_hour=4500,
+        requests_per_day=75000,
         burst_limit=10,
-        cooldown_seconds=1.0,
+        cooldown_seconds=0.8,  # 75 requests per minute
+        max_retries=3,
+        base_backoff=1.0,
+        max_backoff=60.0,
+    ),
+    APIProvider.YAHOO_FINANCE: RateLimitConfig(
+        requests_per_minute=600,  # 10 requests per second
+        requests_per_hour=36000,
+        burst_limit=20,
+        cooldown_seconds=0.1,  # 10 requests per second
         max_retries=3,
         base_backoff=1.0,
         max_backoff=30.0,
     ),
     APIProvider.TWELVE_DATA: RateLimitConfig(
         requests_per_minute=8,
-        requests_per_hour=800,
+        requests_per_hour=480,
         requests_per_day=800,
         burst_limit=3,
         cooldown_seconds=7.5,  # 8 requests per minute
         max_retries=3,
         base_backoff=2.0,
         max_backoff=60.0,
+    ),
+    APIProvider.TWELVE_DATA_PREMIUM: RateLimitConfig(
+        requests_per_minute=800,
+        requests_per_hour=48000,
+        requests_per_day=800000,
+        burst_limit=50,
+        cooldown_seconds=0.075,  # 800 requests per minute
+        max_retries=3,
+        base_backoff=0.5,
+        max_backoff=30.0,
     ),
     APIProvider.CHART_IMG: RateLimitConfig(
         requests_per_minute=30,
@@ -178,7 +200,13 @@ class RateLimiter:
 
             # Check if we're within rate limits
             if not self._check_rate_limits(history, config, now):
-                logger.warning(f"Rate limit exceeded for {provider}")
+                stats = self._get_current_stats(history, config, now)
+                logger.warning(
+                    f"Rate limit exceeded for {provider} - "
+                    f"Minute: {stats['minute_count']}/{config.requests_per_minute}, "
+                    f"Hour: {stats['hour_count']}/{config.requests_per_hour}, "
+                    f"Day: {stats['day_count']}/{config.requests_per_day}"
+                )
                 return False
 
             # Check cooldown period
@@ -187,7 +215,9 @@ class RateLimiter:
 
             if time_since_last < config.cooldown_seconds:
                 sleep_time = config.cooldown_seconds - time_since_last
-                logger.info(f"Throttling {provider} request, sleeping {sleep_time:.2f}s")
+                logger.info(
+                    f"Rate limit throttling for {provider}: sleeping {sleep_time:.2f}s (cooldown: {config.cooldown_seconds}s)"
+                )
                 await asyncio.sleep(sleep_time)
 
             # Record the request
@@ -201,18 +231,27 @@ class RateLimiter:
         while history and now - history[0].timestamp > 3600:
             history.popleft()
 
-    def _check_rate_limits(self, history: deque, config: RateLimitConfig, now: float) -> bool:
-        """Check if current request count is within limits."""
-        # Count requests in different time windows
+    def _get_current_stats(self, history: deque, config: RateLimitConfig, now: float) -> dict[str, int]:
+        """Get current request counts for different time windows."""
         minute_count = sum(1 for r in history if now - r.timestamp <= 60)
         hour_count = sum(1 for r in history if now - r.timestamp <= 3600)
         day_count = sum(1 for r in history if now - r.timestamp <= 86400)
 
+        return {
+            "minute_count": minute_count,
+            "hour_count": hour_count,
+            "day_count": day_count,
+        }
+
+    def _check_rate_limits(self, history: deque, config: RateLimitConfig, now: float) -> bool:
+        """Check if current request count is within limits."""
+        stats = self._get_current_stats(history, config, now)
+
         # Check against limits
         return not (
-            minute_count >= config.requests_per_minute
-            or (config.requests_per_hour > 0 and hour_count >= config.requests_per_hour)
-            or (config.requests_per_day > 0 and day_count >= config.requests_per_day)
+            stats["minute_count"] >= config.requests_per_minute
+            or (config.requests_per_hour > 0 and stats["hour_count"] >= config.requests_per_hour)
+            or (config.requests_per_day > 0 and stats["day_count"] >= config.requests_per_day)
         )
 
     async def wait_for_availability(self, provider: APIProvider, endpoint: str = "") -> None:
@@ -275,11 +314,15 @@ class RateLimiter:
 
     def record_failure(self, provider: APIProvider, endpoint: str, error: Exception) -> None:
         """Record a failed request for monitoring and adjustment."""
-        logger.warning(f"API request failed for {provider} {endpoint}: {error}")
+        logger.warning(f"Rate limit failure recorded for {provider} {endpoint}: {error}")
 
         # Update retry count
         key = f"{provider}:{endpoint}"
         self.retry_counts[key] += 1
+
+        # Log retry count if it's getting high
+        if self.retry_counts[key] >= 3:
+            logger.warning(f"High retry count for {provider} {endpoint}: {self.retry_counts[key]} failures")
 
     def get_stats(self, provider: APIProvider) -> dict[str, Any]:
         """Get rate limiting statistics for a provider."""
@@ -306,11 +349,33 @@ class RateLimiter:
 _rate_limiter: RateLimiter | None = None
 
 
-def get_rate_limiter() -> RateLimiter:
-    """Get the global rate limiter instance."""
+def get_rate_limiter(use_premium_tiers: bool = False) -> RateLimiter:
+    """
+    Get the global rate limiter instance.
+
+    Args:
+        use_premium_tiers: If True, use premium tier rate limits for supported providers
+
+    Returns:
+        Configured RateLimiter instance
+
+    """
     global _rate_limiter
     if _rate_limiter is None:
-        _rate_limiter = RateLimiter()
+        config = DEFAULT_RATE_LIMITS.copy()
+
+        # Check environment variables for premium tier configuration
+        import os
+
+        if use_premium_tiers or os.getenv("ALPHA_VANTAGE_PREMIUM", "false").lower() == "true":
+            logger.info("Using Alpha Vantage premium tier rate limits (75 calls/minute)")
+            config[APIProvider.ALPHA_VANTAGE] = config[APIProvider.ALPHA_VANTAGE_PREMIUM]
+
+        if use_premium_tiers or os.getenv("TWELVE_DATA_PREMIUM", "false").lower() == "true":
+            logger.info("Using Twelve Data premium tier rate limits (800 calls/minute)")
+            config[APIProvider.TWELVE_DATA] = config[APIProvider.TWELVE_DATA_PREMIUM]
+
+        _rate_limiter = RateLimiter(config)
     return _rate_limiter
 
 
@@ -357,12 +422,15 @@ async def with_rate_limit(provider: APIProvider, func: Callable, *args: Any, end
             limiter.record_failure(provider, endpoint, e)
 
             if not limiter.should_retry(provider, attempt, e):
-                logger.error(f"Final failure for {provider} {endpoint} after {attempt} attempts: {e}")
+                logger.error(f"Rate limit retry exhausted for {provider} {endpoint} - Failed after {attempt} attempts: {e}")
                 raise
 
             if attempt < max_retries:
                 delay = limiter.get_retry_delay(provider, attempt)
-                logger.info(f"Retrying {provider} {endpoint} in {delay:.2f}s (attempt {attempt + 1})")
+                logger.info(
+                    f"Rate limit retry for {provider} {endpoint} - "
+                    f"Attempt {attempt + 1}/{max_retries}, waiting {delay:.2f}s before retry"
+                )
                 await asyncio.sleep(delay)
 
     raise RuntimeError(f"All retry attempts failed for {provider} {endpoint}")

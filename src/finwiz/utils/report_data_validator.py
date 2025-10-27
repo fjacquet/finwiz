@@ -154,6 +154,7 @@ class ReportDataValidator:
             ReportValidationError: If portfolio contains fallback data
 
         Requirements: 16.1-16.8 (Data Structure Validation with Migration Support)
+
         """
         logger.info("=" * 80)
         logger.info("PORTFOLIO REVIEW DATA VALIDATION")
@@ -163,7 +164,7 @@ class ReportDataValidator:
         # Requirement 16.2: Try nested structure first (legacy format)
         holdings = portfolio_review.get("portfolio_review", {}).get("holdings", [])
         structure_type = "nested"
-        
+
         # Requirement 16.3: Fall back to flat structure (current format)
         if not holdings:
             holdings = portfolio_review.get("holdings", [])
@@ -173,19 +174,19 @@ class ReportDataValidator:
         if holdings:
             logger.info(f"✅ Found holdings using {structure_type} structure format")
             logger.info(f"   Holdings count: {len(holdings)}")
-        
+
         # Requirement 16.4-16.5: If neither structure contains holdings, provide diagnostic info
         if not holdings:
             # Requirement 16.4: Log available keys for debugging
             available_keys = list(portfolio_review.keys())
-            logger.error(f"❌ No holdings found in portfolio review")
+            logger.error("❌ No holdings found in portfolio review")
             logger.error(f"   Available top-level keys: {available_keys}")
-            
+
             # Check if nested structure exists but is empty
             if "portfolio_review" in portfolio_review:
                 nested_keys = list(portfolio_review["portfolio_review"].keys())
                 logger.error(f"   Available nested keys in ['portfolio_review']: {nested_keys}")
-            
+
             # Requirement 16.5: Raise error with diagnostic information
             error_message = (
                 f"Portfolio review contains no holdings\n\n"

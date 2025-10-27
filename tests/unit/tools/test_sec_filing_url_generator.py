@@ -6,6 +6,7 @@ CIK lookup, URL verification, and error handling.
 """
 
 import pytest
+
 from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
 
 

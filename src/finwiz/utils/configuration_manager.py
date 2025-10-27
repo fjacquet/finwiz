@@ -325,6 +325,9 @@ class ConfigurationManager:
             # Validate required directories exist
             self._validate_required_directories()
 
+            # Validate performance configuration
+            self._validate_performance_configuration()
+
             logger.info("Startup configuration validation completed successfully")
             return api_keys_valid
 
@@ -363,6 +366,22 @@ class ConfigurationManager:
             if not directory.exists():
                 directory.mkdir(parents=True, exist_ok=True)
                 logger.info(f"Created required directory: {directory}")
+
+    def _validate_performance_configuration(self) -> None:
+        """Validate performance optimization configuration."""
+        try:
+            from finwiz.utils.performance_config import get_performance_config_manager
+
+            # Initialize performance config manager (validates configuration)
+            perf_manager = get_performance_config_manager()
+
+            # Log performance configuration summary
+            config_summary = perf_manager.get_configuration_summary()
+            logger.info(f"Performance configuration validated: {config_summary['mode']} mode")
+
+        except Exception as e:
+            logger.error(f"Performance configuration validation failed: {e}")
+            raise
 
 
 # Global configuration manager instance

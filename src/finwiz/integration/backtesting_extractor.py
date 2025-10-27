@@ -53,9 +53,7 @@ class BacktestingSummary(BaseModel):
 
     total_candidates_tested: int = Field(..., ge=0, description="Total candidates tested")
     average_metrics: BacktestingMetrics = Field(..., description="Average metrics across all candidates")
-    regime_performance: dict[str, RegimePerformance] = Field(
-        default_factory=dict, description="Performance by market regime"
-    )
+    regime_performance: dict[str, RegimePerformance] = Field(default_factory=dict, description="Performance by market regime")
     best_performer: str = Field(..., description="Symbol of best performer")
     worst_performer: str = Field(..., description="Symbol of worst performer")
 
@@ -93,25 +91,13 @@ class BacktestingDataExtractor:
         """
         try:
             # Extract core metrics from validation result, using None for unavailable metrics
-            annualized_return = self._safe_extract_float(
-                self._calculate_average_return(validation_result), "annualized_return"
-            )
-            sharpe_ratio = self._safe_extract_float(
-                validation_result.average_sharpe_ratio, "sharpe_ratio"
-            )
-            sortino_ratio = self._safe_extract_float(
-                validation_result.average_sortino_ratio, "sortino_ratio"
-            )
-            max_drawdown = self._safe_extract_float(
-                validation_result.average_max_drawdown, "max_drawdown"
-            )
-            win_rate = self._safe_extract_float(
-                self._calculate_win_rate(validation_result), "win_rate"
-            )
-            calmar_ratio = self._safe_extract_float(
-                self._calculate_calmar_ratio(validation_result), "calmar_ratio"
-            )
-            
+            annualized_return = self._safe_extract_float(self._calculate_average_return(validation_result), "annualized_return")
+            sharpe_ratio = self._safe_extract_float(validation_result.average_sharpe_ratio, "sharpe_ratio")
+            sortino_ratio = self._safe_extract_float(validation_result.average_sortino_ratio, "sortino_ratio")
+            max_drawdown = self._safe_extract_float(validation_result.average_max_drawdown, "max_drawdown")
+            win_rate = self._safe_extract_float(self._calculate_win_rate(validation_result), "win_rate")
+            calmar_ratio = self._safe_extract_float(self._calculate_calmar_ratio(validation_result), "calmar_ratio")
+
             metrics = BacktestingMetrics(
                 annualized_return=annualized_return,
                 sharpe_ratio=sharpe_ratio,
@@ -126,13 +112,13 @@ class BacktestingDataExtractor:
             # Log which metrics are available and which are missing
             available = [k for k, v in metrics.model_dump().items() if v is not None]
             missing = [k for k, v in metrics.model_dump().items() if v is None]
-            
+
             self.logger.info(f"Extracted backtesting metrics: {len(available)} available, {len(missing)} missing")
             if available:
                 self.logger.info(f"Available metrics: {', '.join(available)}")
             if missing:
                 self.logger.warning(f"Missing metrics: {', '.join(missing)}")
-            
+
             return metrics
 
         except Exception as e:
@@ -189,7 +175,7 @@ class BacktestingDataExtractor:
             sharpe = self._safe_extract_float(validation_result.average_sharpe_ratio, "sharpe_ratio")
             sortino = self._safe_extract_float(validation_result.average_sortino_ratio, "sortino_ratio")
             calmar = self._safe_extract_float(self._calculate_calmar_ratio(validation_result), "calmar_ratio")
-            
+
             metrics = RiskAdjustedMetrics(
                 sharpe_ratio=sharpe,
                 sortino_ratio=sortino,
@@ -202,21 +188,19 @@ class BacktestingDataExtractor:
             # Log which metrics are available
             available = [k for k, v in metrics.model_dump().items() if v is not None]
             missing = [k for k, v in metrics.model_dump().items() if v is None]
-            
+
             if available:
                 self.logger.info(f"Extracted risk-adjusted metrics: {', '.join(available)}")
             if missing:
                 self.logger.warning(f"Missing risk-adjusted metrics: {', '.join(missing)}")
-            
+
             return metrics
 
         except Exception as e:
             self.logger.error(f"Failed to extract risk-adjusted metrics: {e}")
             return None
 
-    def get_performance_summary(
-        self, validation_results: list[ValidationResult]
-    ) -> BacktestingSummary | None:
+    def get_performance_summary(self, validation_results: list[ValidationResult]) -> BacktestingSummary | None:
         """
         Generate comprehensive backtesting summary across all validation results.
 
@@ -279,7 +263,7 @@ class BacktestingDataExtractor:
                 "backtest_period_years": None,
                 "total_trades": None,
             }
-        
+
         return metrics.model_dump()
 
     def format_for_display(self, metrics: BacktestingMetrics | None) -> str:
@@ -297,57 +281,57 @@ class BacktestingDataExtractor:
         """
         if metrics is None:
             return "Backtesting data not available"
-        
+
         lines = []
-        
+
         # Annualized Return
         if metrics.annualized_return is not None:
             lines.append(f"Annualized Return: {metrics.annualized_return:.2f}%")
         else:
             lines.append("Annualized Return: Not calculated")
-        
+
         # Sharpe Ratio
         if metrics.sharpe_ratio is not None:
             lines.append(f"Sharpe Ratio: {metrics.sharpe_ratio:.2f}")
         else:
             lines.append("Sharpe Ratio: Not calculated")
-        
+
         # Sortino Ratio
         if metrics.sortino_ratio is not None:
             lines.append(f"Sortino Ratio: {metrics.sortino_ratio:.2f}")
         else:
             lines.append("Sortino Ratio: Not calculated")
-        
+
         # Calmar Ratio
         if metrics.calmar_ratio is not None:
             lines.append(f"Calmar Ratio: {metrics.calmar_ratio:.2f}")
         else:
             lines.append("Calmar Ratio: Not calculated")
-        
+
         # Max Drawdown
         if metrics.max_drawdown is not None:
             lines.append(f"Max Drawdown: {metrics.max_drawdown:.2f}%")
         else:
             lines.append("Max Drawdown: Not calculated")
-        
+
         # Win Rate
         if metrics.win_rate is not None:
             lines.append(f"Win Rate: {metrics.win_rate * 100:.2f}%")
         else:
             lines.append("Win Rate: Not calculated")
-        
+
         # Backtest Period
         if metrics.backtest_period_years is not None:
             lines.append(f"Backtest Period: {metrics.backtest_period_years} years")
         else:
             lines.append("Backtest Period: Not specified")
-        
+
         # Total Trades
         if metrics.total_trades is not None:
             lines.append(f"Total Trades: {metrics.total_trades}")
         else:
             lines.append("Total Trades: Not calculated")
-        
+
         return "\n".join(lines)
 
     # Private helper methods
@@ -367,27 +351,21 @@ class BacktestingDataExtractor:
         if value is None:
             self.logger.debug(f"Metric '{metric_name}' is None")
             return None
-        
+
         # Check for string placeholders that should be None
         if isinstance(value, str):
-            self.logger.warning(
-                f"Metric '{metric_name}' is a string ('{value}'), converting to None"
-            )
+            self.logger.warning(f"Metric '{metric_name}' is a string ('{value}'), converting to None")
             return None
-        
+
         try:
             float_value = float(value)
             # Check for NaN or infinite values
             if not (-1e10 < float_value < 1e10):
-                self.logger.warning(
-                    f"Metric '{metric_name}' has invalid value {float_value}, converting to None"
-                )
+                self.logger.warning(f"Metric '{metric_name}' has invalid value {float_value}, converting to None")
                 return None
             return float_value
         except (ValueError, TypeError) as e:
-            self.logger.warning(
-                f"Could not convert metric '{metric_name}' to float: {e}, returning None"
-            )
+            self.logger.warning(f"Could not convert metric '{metric_name}' to float: {e}, returning None")
             return None
 
     def _calculate_average_return(self, validation_result: ValidationResult) -> float | None:
@@ -405,7 +383,7 @@ class BacktestingDataExtractor:
         if not returns:
             self.logger.debug("No annualized return values found in validation details")
             return None
-        
+
         return sum(returns) / len(returns)
 
     def _calculate_win_rate(self, validation_result: ValidationResult) -> float | None:
@@ -423,23 +401,23 @@ class BacktestingDataExtractor:
         if not win_rates:
             self.logger.debug("No win rate values found in validation details")
             return None
-        
+
         return sum(win_rates) / len(win_rates)
 
     def _calculate_calmar_ratio(self, validation_result: ValidationResult) -> float | None:
         """Calculate Calmar ratio (return / abs(max_drawdown))."""
         avg_return = self._calculate_average_return(validation_result)
         max_dd = validation_result.average_max_drawdown
-        
+
         if avg_return is None or max_dd is None:
             self.logger.debug("Cannot calculate Calmar ratio: missing return or drawdown data")
             return None
-        
+
         abs_max_dd = abs(max_dd)
         if abs_max_dd == 0:
             self.logger.debug("Cannot calculate Calmar ratio: max drawdown is zero")
             return None
-        
+
         return avg_return / abs_max_dd
 
     def _extract_total_trades(self, validation_result: ValidationResult) -> int | None:
@@ -447,11 +425,7 @@ class BacktestingDataExtractor:
         if not validation_result.validation_details:
             return None
 
-        trades = [
-            detail.get("total_trades", 0)
-            for detail in validation_result.validation_details
-            if "total_trades" in detail
-        ]
+        trades = [detail.get("total_trades", 0) for detail in validation_result.validation_details if "total_trades" in detail]
 
         return sum(trades) if trades else None
 
@@ -519,50 +493,29 @@ class BacktestingDataExtractor:
             for vr in validation_results
             if self._calculate_average_return(vr) is not None
         ]
-        avg_return = (
-            sum(r * c for r, c in returns) / sum(c for _, c in returns)
-            if returns else None
-        )
+        avg_return = sum(r * c for r, c in returns) / sum(c for _, c in returns) if returns else None
 
         sharpes = [
-            (vr.average_sharpe_ratio, vr.total_candidates)
-            for vr in validation_results
-            if vr.average_sharpe_ratio is not None
+            (vr.average_sharpe_ratio, vr.total_candidates) for vr in validation_results if vr.average_sharpe_ratio is not None
         ]
-        avg_sharpe = (
-            sum(s * c for s, c in sharpes) / sum(c for _, c in sharpes)
-            if sharpes else None
-        )
+        avg_sharpe = sum(s * c for s, c in sharpes) / sum(c for _, c in sharpes) if sharpes else None
 
         drawdowns = [
-            (vr.average_max_drawdown, vr.total_candidates)
-            for vr in validation_results
-            if vr.average_max_drawdown is not None
+            (vr.average_max_drawdown, vr.total_candidates) for vr in validation_results if vr.average_max_drawdown is not None
         ]
-        avg_drawdown = (
-            sum(d * c for d, c in drawdowns) / sum(c for _, c in drawdowns)
-            if drawdowns else None
-        )
+        avg_drawdown = sum(d * c for d, c in drawdowns) / sum(c for _, c in drawdowns) if drawdowns else None
 
         sortinos = [
-            (vr.average_sortino_ratio, vr.total_candidates)
-            for vr in validation_results
-            if vr.average_sortino_ratio is not None
+            (vr.average_sortino_ratio, vr.total_candidates) for vr in validation_results if vr.average_sortino_ratio is not None
         ]
-        avg_sortino = (
-            sum(s * c for s, c in sortinos) / sum(c for _, c in sortinos)
-            if sortinos else None
-        )
+        avg_sortino = sum(s * c for s, c in sortinos) / sum(c for _, c in sortinos) if sortinos else None
 
         win_rates = [
             (self._calculate_win_rate(vr), vr.total_candidates)
             for vr in validation_results
             if self._calculate_win_rate(vr) is not None
         ]
-        avg_win_rate = (
-            sum(w * c for w, c in win_rates) / sum(c for _, c in win_rates)
-            if win_rates else None
-        )
+        avg_win_rate = sum(w * c for w, c in win_rates) / sum(c for _, c in win_rates) if win_rates else None
 
         # Calculate Calmar ratio if we have both return and drawdown
         calmar = None
@@ -571,8 +524,7 @@ class BacktestingDataExtractor:
 
         # Use the most common backtest period
         backtest_years = max(
-            (vr.backtest_period_years for vr in validation_results if vr.backtest_period_years is not None),
-            default=None
+            (vr.backtest_period_years for vr in validation_results if vr.backtest_period_years is not None), default=None
         )
 
         return BacktestingMetrics(
@@ -586,9 +538,7 @@ class BacktestingDataExtractor:
             total_trades=None,  # Not aggregated
         )
 
-    def _aggregate_regime_performance(
-        self, validation_results: list[ValidationResult]
-    ) -> dict[str, RegimePerformance]:
+    def _aggregate_regime_performance(self, validation_results: list[ValidationResult]) -> dict[str, RegimePerformance]:
         """Aggregate regime performance across multiple validation results."""
         regime_data: dict[str, list[dict[str, Any]]] = {}
 

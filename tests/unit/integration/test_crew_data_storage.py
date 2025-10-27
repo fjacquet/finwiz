@@ -7,7 +7,6 @@ CrewDataIntegrationManager without requiring full crew execution.
 
 import json
 from datetime import datetime, timedelta
-from pathlib import Path
 
 import pytest
 
@@ -70,7 +69,7 @@ class TestCrewDataStorage:
 
         # Assert
         latest_file = integration_manager.output_dir / "test_crew" / "test_crew_latest.json"
-        with open(latest_file, "r") as f:
+        with open(latest_file) as f:
             stored_data = json.load(f)
 
         assert "raw_output" in stored_data
@@ -85,7 +84,7 @@ class TestCrewDataStorage:
 
         # Assert
         latest_file = integration_manager.output_dir / "test_crew" / "test_crew_latest.json"
-        with open(latest_file, "r") as f:
+        with open(latest_file) as f:
             stored_data = json.load(f)
 
         metadata = stored_data["metadata"]
@@ -120,7 +119,7 @@ class TestCrewDataStorage:
 
         # Assert
         latest_file = integration_manager.output_dir / "test_crew" / "test_crew_latest.json"
-        with open(latest_file, "r") as f:
+        with open(latest_file) as f:
             stored_data = json.load(f)
 
         assert stored_data["json_dict"]["ticker"] == "SECOND"
@@ -316,9 +315,7 @@ class TestCrewDataFreshnessCheck:
         integration_manager.store_crew_output("test_crew", output)
 
         # Act
-        result = integration_manager.get_crew_data_with_freshness_check(
-            "test_crew", max_age_hours=24, warn_on_stale=False
-        )
+        result = integration_manager.get_crew_data_with_freshness_check("test_crew", max_age_hours=24, warn_on_stale=False)
 
         # Assert
         # Behavior depends on implementation - may return None or stale data

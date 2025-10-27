@@ -6,6 +6,7 @@ RSI, MACD, and Bollinger Bands in a single API call.
 """
 
 import os
+
 from dotenv import load_dotenv
 
 from finwiz.tools.twelve_data_multi_indicator_tool import TwelveDataMultiIndicatorTool
@@ -178,11 +179,11 @@ def example_comparison():
     )
     elapsed_time = time.time() - start_time
 
-    print(f"  - Total API calls: 1")
+    print("  - Total API calls: 1")
     print(f"  - Actual time: {elapsed_time:.2f} seconds")
-    print(f"  - API credits used: 1")
+    print("  - API credits used: 1")
     print()
-    print(f"Savings: 66% fewer API calls, ~50-66% faster, 66% lower cost")
+    print("Savings: 66% fewer API calls, ~50-66% faster, 66% lower cost")
     print("\n")
 
 

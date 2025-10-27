@@ -27,8 +27,31 @@ class YahooFinanceHistoryTool(BaseTool):
     )
     args_schema: type[BaseModel] = GetTickerHistoryInput
 
-    def _run(self, ticker: str, period: str = "1y", interval: str = "1d") -> dict:
-        """Execute the Yahoo Finance historical data lookup."""
+    def _run(self, ticker: str, period: str = "1y", interval: str = "1d", prefetched_data: dict | None = None) -> dict:
+        """
+        Execute the Yahoo Finance historical data lookup.
+
+        Args:
+            ticker: Stock ticker symbol
+            period: Time period for historical data (e.g., '1y', '2y', '5y')
+            interval: Data interval (e.g., '1d', '1wk', '1mo')
+            prefetched_data: Optional pre-fetched historical data from batch operation
+
+        Returns:
+            Dictionary with historical price data and summary statistics
+
+        """
+        # Check for pre-fetched data first
+        if prefetched_data is not None and ticker in prefetched_data:
+            logger.debug(f"Using pre-fetched historical data for {ticker} (source: batch)")
+            cached_history = prefetched_data[ticker]
+
+            # Add source indicator for debugging
+            cached_history["data_source"] = "prefetched"
+            return cached_history
+
+        # Fall back to live API call
+        logger.debug(f"Fetching live historical data for {ticker} (source: API)")
         try:
             ticker_data = yf.Ticker(ticker)
             history = ticker_data.history(period=period, interval=interval)
@@ -82,6 +105,9 @@ class YahooFinanceHistoryTool(BaseTool):
                     logger.debug(f"Latest data point for {ticker}: {latest_date}")
                 except ValueError as e:
                     logger.warning(f"Could not parse latest date for {ticker}: {e}")
+
+            # Add source indicator
+            result["data_source"] = "live_api"
 
             return result
         except Exception as e:

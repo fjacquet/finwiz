@@ -1,0 +1,177 @@
+# Diátaxis Classification Rules for FinWiz Documentation Migration
+
+classification_rules:
+  tutorials:
+    patterns:
+      - "**/USER_GUIDE.md"
+      - "**/getting_started.md"
+      - "**/tutorial*.md"
+      - "**/user_guide.md"
+      - "**/portfolio_holdings_analysis_user_guide.md"
+    keywords: 
+      - "getting started"
+      - "tutorial"
+      - "walkthrough" 
+      - "step by step"
+      - "learn"
+      - "first time"
+      - "beginner"
+      - "introduction"
+    content_indicators:
+      - "follow these steps"
+      - "let's start"
+      - "first, we"
+      - "next, you"
+      - "now that you"
+    
+  how_to:
+    patterns:
+      - "**/BATCH_PROCESSING.md"
+      - "**/PERFORMANCE_*.md"
+      - "**/MEMORY_MANAGEMENT.md"
+      - "**/JINJA2_TEMPLATES.md"
+      - "**/PERFORMANCE_CONFIGURATION.md"
+      - "**/PERFORMANCE_OPTIMIZATION_GUIDE.md"
+      - "**/PYTHON_SCORING_ENGINE.md"
+      - "**/how-to/**"
+      - "**/deployment_guide.md"
+      - "**/setup*.md"
+      - "**/configure*.md"
+    keywords:
+      - "how to"
+      - "guide"
+      - "setup"
+      - "configure"
+      - "optimize"
+      - "install"
+      - "deploy"
+      - "troubleshoot"
+      - "fix"
+      - "solve"
+    content_indicators:
+      - "to achieve"
+      - "follow these steps"
+      - "here's how"
+      - "you can"
+      - "if you want to"
+    
+  reference:
+    patterns:
+      - "**/API_REFERENCE.md"
+      - "**/schemas/**"
+      - "**/reference/**"
+      - "**/*.schema.json"
+      - "**/api_reference.md"
+      - "**/developer_guide.md"
+      - "**/DEVELOPER_GUIDE.md"
+      - "**/quantitative_analysis.md"
+      - "**/IMPLEMENTATION_SUMMARIES.md"
+    keywords:
+      - "api"
+      - "reference"
+      - "schema"
+      - "specification"
+      - "parameters"
+      - "methods"
+      - "functions"
+      - "endpoints"
+      - "fields"
+      - "properties"
+    content_indicators:
+      - "parameters:"
+      - "returns:"
+      - "example:"
+      - "usage:"
+      - "syntax:"
+      - "options:"
+    
+  explanations:
+    patterns:
+      - "**/ARCHITECTURE.md"
+      - "**/explanations/**"
+      - "**/DESIGN_PRINCIPLES.md"
+      - "**/DATA_QUALITY_AND_FLOW_GUIDE.md"
+      - "**/DEEP_ANALYSIS_INTEGRATION.md"
+      - "**/REPORT_AGGREGATION_DEVELOPER_GUIDE.md"
+      - "**/REPORT_FILE_STRUCTURE.md"
+      - "**/README.md"
+      - "**/design*.md"
+      - "**/concept*.md"
+    keywords:
+      - "architecture"
+      - "concept"
+      - "design"
+      - "principle"
+      - "theory"
+      - "background"
+      - "overview"
+      - "understanding"
+      - "why"
+      - "philosophy"
+    content_indicators:
+      - "the reason"
+      - "this is because"
+      - "the concept"
+      - "understanding"
+      - "background"
+      - "philosophy"
+
+  archive:
+    patterns:
+      - "**/archive/**"
+      - "**/*_FIX*.md"
+      - "**/*_SUMMARY.md"
+      - "**/*_STATUS.md"
+      - "**/*_REPORT.md"
+      - "**/*_ANALYSIS.md"
+      - "**/*_IMPLEMENTATION.md"
+      - "**/SPEEDUP_*.md"
+      - "**/PHASE_*.md"
+      - "**/BATCH_PREFETCH_OPTIMIZATION.md"
+      - "**/DATA_LOSS_ANALYSIS.md"
+      - "**/TOOL_REMOVAL_IMPACT_ANALYSIS.md"
+    keywords:
+      - "fix"
+      - "summary"
+      - "status"
+      - "report"
+      - "analysis"
+      - "implementation"
+      - "completed"
+      - "deprecated"
+      - "obsolete"
+      - "legacy"
+    content_indicators:
+      - "this document is deprecated"
+      - "no longer maintained"
+      - "superseded by"
+      - "historical"
+
+# Content transformation rules
+transformation_rules:
+  front_matter:
+    add_title: true
+    add_description: true
+    add_category: true
+    add_tags: true
+    preserve_existing: true
+    
+  markdown_formatting:
+    standardize_headers: true
+    fix_code_blocks: true
+    normalize_links: true
+    add_toc: true
+    
+  content_validation:
+    check_links: true
+    validate_code_blocks: true
+    check_images: true
+    validate_schemas: true
+
+# Migration settings
+migration_settings:
+  backup_original: true
+  create_redirects: true
+  preserve_git_history: true
+  validate_after_migration: true
+  generate_report: true

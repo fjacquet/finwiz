@@ -13,8 +13,6 @@ from pydantic import BaseModel, Field
 
 from finwiz.integration.backtesting_extractor import (
     BacktestingDataExtractor,
-    BacktestingMetrics,
-    BacktestingSummary,
     RegimePerformance,
 )
 from finwiz.schemas.investment_discovery import ValidationResult
@@ -39,12 +37,8 @@ class PortfolioImpactMetrics(BaseModel):
     expected_grade_improvement: float = Field(description="Expected grade improvement percentage")
     expected_return_improvement: float = Field(description="Expected return improvement percentage")
     risk_impact: Literal["reduced", "neutral", "increased"] = Field(description="Impact on portfolio risk")
-    diversification_impact: Literal["improved", "neutral", "reduced"] = Field(
-        description="Impact on portfolio diversification"
-    )
-    implementation_complexity: Literal["low", "medium", "high"] = Field(
-        description="Complexity of implementing recommendations"
-    )
+    diversification_impact: Literal["improved", "neutral", "reduced"] = Field(description="Impact on portfolio diversification")
+    implementation_complexity: Literal["low", "medium", "high"] = Field(description="Complexity of implementing recommendations")
     total_opportunities: int = Field(ge=0, description="Total number of A+ opportunities")
     high_confidence_count: int = Field(ge=0, description="Number of high-confidence opportunities (Sharpe > 1.5)")
 
@@ -324,9 +318,7 @@ class PerformanceMetricsAggregator:
             validation_details=[detail],
         )
 
-    def _aggregate_validation_results(
-        self, validation_results: list[ValidationResult], category: str
-    ) -> PerformanceMetrics:
+    def _aggregate_validation_results(self, validation_results: list[ValidationResult], category: str) -> PerformanceMetrics:
         """Aggregate validation results into PerformanceMetrics."""
         if not validation_results:
             return PerformanceMetrics(
@@ -369,9 +361,7 @@ class PerformanceMetricsAggregator:
             worst_performer=worst_performer,
         )
 
-    def _aggregate_regime_performances(
-        self, regime_perfs: list[RegimePerformance], regime: str
-    ) -> PerformanceMetrics:
+    def _aggregate_regime_performances(self, regime_perfs: list[RegimePerformance], regime: str) -> PerformanceMetrics:
         """Aggregate regime performances into PerformanceMetrics."""
         count = len(regime_perfs)
 

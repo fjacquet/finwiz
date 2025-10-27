@@ -25,6 +25,7 @@ from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.crew_exports import StockCrewExport
 from finwiz.schemas.stock import (
     MarketSentiment,
     MarketTrend,
@@ -35,6 +36,7 @@ from finwiz.schemas.stock import (
 from finwiz.tools.logger import get_logger
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_stock_crew_tools
+from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
 from finwiz.utils.task_decorators import async_task, sync_task
@@ -129,6 +131,17 @@ class StockCrew:
             llm=self._get_configured_llm(),
         )
 
+    @final_reporter
+    @agent
+    def investment_reporter(self) -> Agent:
+        """Consolidate analysis findings into StockCrewExport."""
+        return Agent(
+            config=self.agents_config["investment_reporter"],
+            tools=[],  # MUST be empty - enforced by @final_reporter decorator
+            verbose=True,
+            llm=self._get_configured_llm(),
+        )
+
     # @agent
     # def translator(self) -> Agent:
     #     """Create translator agent that converts English reports to French while preserving layout."""
@@ -172,6 +185,16 @@ class StockCrew:
         """Assess key risks for recommended tickers and mitigation actions."""
         return Task(
             config=self.tasks_config["stock_risk_assessment_task"],
+            verbose=True,
+        )
+
+    @sync_task
+    @task
+    def generate_export_task(self) -> Task:
+        """Generate StockCrewExport JSON from all analysis findings."""
+        return Task(
+            config=self.tasks_config["generate_export_task"],
+            output_pydantic=StockCrewExport,
             verbose=True,
         )
 

@@ -841,7 +841,7 @@ class ReportCrew:
             respect_context_window=True,
             max_retries=10,
             max_rpm=20,
-            llm="gpt-5"
+            llm="gpt-5",
         )
 
         return crew
@@ -1015,9 +1015,10 @@ class ReportCrew:
 
         Returns:
             Dictionary mapping ticker to HTML content with extracted grade info
+
         """
-        from pathlib import Path
         import re
+        from pathlib import Path
 
         deep_analysis_dir = Path("output/deep_analysis")
         html_content = {}
@@ -1033,7 +1034,7 @@ class ReportCrew:
                 ticker = html_file.stem.split("_deep_analysis_")[0]
 
                 # Read HTML content
-                with open(html_file, "r", encoding="utf-8") as f:
+                with open(html_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Extract key information using regex - handle multiple formats

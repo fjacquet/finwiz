@@ -13,6 +13,7 @@ from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
 from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.crew_exports import RebalancingCrewExport
 from finwiz.schemas.portfolio_review import Alternative, HoldingDecision, PortfolioReview, PriceTargets
 from finwiz.schemas.rebalancing.analysis import PortfolioAnalysis
 from finwiz.schemas.rebalancing.enums import RebalancingRecommendation
@@ -29,6 +30,7 @@ from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.task_decorators import async_task, sync_task
 
 # Get logger for this module
@@ -182,6 +184,16 @@ class PortfolioRebalancingCrew:
             reasoning=True,
         )
 
+    @final_reporter
+    @agent
+    def investment_reporter(self) -> Agent:
+        """Consolidate rebalancing findings into RebalancingCrewExport."""
+        return Agent(
+            config=self.agents_config["investment_reporter"],
+            tools=[],  # MUST be empty - enforced by @final_reporter decorator
+            verbose=True,
+        )
+
     # @agent
     # def translator(self) -> Agent:
     #     """Create translator agent that converts English reports to French while preserving layout."""
@@ -242,6 +254,16 @@ class PortfolioRebalancingCrew:
         """Validate rebalancing recommendations against risk constraints."""
         return Task(
             config=self.tasks_config["risk_validation_task"],
+            verbose=True,
+        )
+
+    @sync_task
+    @task
+    def generate_export_task(self) -> Task:
+        """Generate RebalancingCrewExport JSON from all rebalancing findings."""
+        return Task(
+            config=self.tasks_config["generate_export_task"],
+            output_pydantic=RebalancingCrewExport,
             verbose=True,
         )
 
@@ -384,7 +406,7 @@ class PortfolioRebalancingCrew:
                 risk_score = getattr(analysis, "risk_score", None)
                 if risk_score is None:
                     risk_score = 2.5  # Default risk score
-                
+
                 profile = HoldingProfile(
                     ticker=holding["ticker"],
                     name=holding.get("name", holding["ticker"]),

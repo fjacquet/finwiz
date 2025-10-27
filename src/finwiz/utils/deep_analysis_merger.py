@@ -147,8 +147,8 @@ class DeepAnalysisDataMerger:
         return is_fallback
 
     def _merge_holding_with_analysis(
-        self, 
-        holding: HoldingDecision, 
+        self,
+        holding: HoldingDecision,
         analysis: DeepAnalysisResult,
         alternatives: list[dict] | None = None,
     ) -> HoldingDecision:
@@ -204,16 +204,12 @@ class DeepAnalysisDataMerger:
                         alternative_models.append(alt_model)
                     except Exception as e:
                         alt_ticker = alt_dict.get("ticker", "UNKNOWN")
-                        self.logger.warning(
-                            f"Failed to validate alternative {alt_ticker} for {holding.ticker}: {e}"
-                        )
+                        self.logger.warning(f"Failed to validate alternative {alt_ticker} for {holding.ticker}: {e}")
                         continue
 
                 if alternative_models:
                     merged.alternatives = alternative_models
-                    self.logger.info(
-                        f"Merged {len(alternative_models)} alternatives into {holding.ticker}"
-                    )
+                    self.logger.info(f"Merged {len(alternative_models)} alternatives into {holding.ticker}")
                 else:
                     self.logger.warning(
                         f"No valid alternatives could be merged for {holding.ticker} "

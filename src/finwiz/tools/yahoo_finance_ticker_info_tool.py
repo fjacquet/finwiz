@@ -27,8 +27,29 @@ class YahooFinanceTickerInfoTool(BaseTool):
     )
     args_schema: type[BaseModel] = GetTickerInfoInput
 
-    def _run(self, ticker: str) -> dict:
-        """Execute the Yahoo Finance ticker info lookup."""
+    def _run(self, ticker: str, prefetched_data: dict | None = None) -> dict:
+        """
+        Execute the Yahoo Finance ticker info lookup.
+
+        Args:
+            ticker: Stock ticker symbol
+            prefetched_data: Optional pre-fetched data from batch operation
+
+        Returns:
+            Dictionary with ticker information
+
+        """
+        # Check for pre-fetched data first
+        if prefetched_data is not None and ticker in prefetched_data:
+            logger.debug(f"Using pre-fetched data for {ticker} (source: batch)")
+            cached_info = prefetched_data[ticker]
+
+            # Add source indicator for debugging
+            cached_info["data_source"] = "prefetched"
+            return cached_info
+
+        # Fall back to live API call
+        logger.debug(f"Fetching live data for {ticker} (source: API)")
         try:
             ticker_data = yf.Ticker(ticker)
             info = ticker_data.info
@@ -69,6 +90,9 @@ class YahooFinanceTickerInfoTool(BaseTool):
             # Ensure timestamp is always included
             if "timestamp" not in cleaned_result:
                 cleaned_result["timestamp"] = result["timestamp"]
+
+            # Add source indicator
+            cleaned_result["data_source"] = "live_api"
 
             return cleaned_result
         except Exception as e:

@@ -5,7 +5,6 @@ Tests that the DataAvailabilityTracker is properly integrated into the report cr
 and tracks all data sources as they are accessed during report generation.
 """
 
-
 import pytest
 
 from finwiz.crews.report_crew.report_crew import ReportCrew
@@ -39,7 +38,7 @@ class TestReportCrewAvailabilityTracker:
             "stock_analysis_data": [{"ticker": "AAPL"}],
             "etf_analysis_data": [{"ticker": "SPY"}],
             "crypto_analysis_data": [],
-            "portfolio_review": {"holdings": [{"ticker": "AAPL"}]}
+            "portfolio_review": {"holdings": [{"ticker": "AAPL"}]},
         }
 
         return mock
@@ -49,9 +48,7 @@ class TestReportCrewAvailabilityTracker:
         """Create mock discovery accessor."""
         mock = mocker.Mock()
         mock.has_discovery_results.return_value = True
-        mock.load_discovery_results.return_value = {
-            "opportunities": [{"ticker": "MSFT", "grade": "A+"}]
-        }
+        mock.load_discovery_results.return_value = {"opportunities": [{"ticker": "MSFT", "grade": "A+"}]}
         mock.get_opportunities_summary.return_value = "1 A+ opportunity found"
         return mock
 
@@ -168,8 +165,8 @@ class TestReportCrewAvailabilityTracker:
                 "message": "Backtesting data available",
                 "status": "available",
                 "backtesting_by_candidate": {"MSFT": {}},
-                "total_candidates": 1
-            }
+                "total_candidates": 1,
+            },
         )
 
         # Act
@@ -190,8 +187,8 @@ class TestReportCrewAvailabilityTracker:
             return_value={
                 "has_backtesting_data": False,
                 "message": "Backtesting data not available - discovery not run",
-                "status": "not_available"
-            }
+                "status": "not_available",
+            },
         )
 
         # Act
@@ -259,11 +256,7 @@ class TestReportCrewAvailabilityTracker:
     def test_should_track_error_in_availability_tracker_on_exception(self, report_crew, mocker):
         """Test that errors are tracked in availability tracker."""
         # Arrange
-        mocker.patch.object(
-            report_crew.data_accessor,
-            "get_consolidated_reporter_input",
-            side_effect=Exception("Test error")
-        )
+        mocker.patch.object(report_crew.data_accessor, "get_consolidated_reporter_input", side_effect=Exception("Test error"))
 
         # Act
         context = report_crew.get_integrated_data_context(max_age_hours=24)
@@ -316,8 +309,7 @@ class TestReportCrewAvailabilityTracker:
         # Assert - Check that info was logged with summary counts
         mock_logger.info.assert_called()
         # Find the call with the summary message
-        calls = [call for call in mock_logger.info.call_args_list 
-                 if "Integrated data context prepared" in str(call)]
+        calls = [call for call in mock_logger.info.call_args_list if "Integrated data context prepared" in str(call)]
         assert len(calls) > 0, "Expected log message about integrated data context"
 
     def test_should_handle_missing_discovery_results_gracefully(self, report_crew):
@@ -346,8 +338,8 @@ class TestReportCrewAvailabilityTracker:
                 "message": "Available",
                 "status": "available",
                 "backtesting_by_candidate": {},
-                "total_candidates": 0
-            }
+                "total_candidates": 0,
+            },
         )
 
         # Act
@@ -355,15 +347,7 @@ class TestReportCrewAvailabilityTracker:
 
         # Assert
         tracked_sources = report_crew.availability_tracker.get_tracked_source_names()
-        expected_sources = [
-            "stock_crew",
-            "etf_crew",
-            "crypto_crew",
-            "portfolio_review",
-            "aplus_discovery",
-            "backtesting"
-        ]
+        expected_sources = ["stock_crew", "etf_crew", "crypto_crew", "portfolio_review", "aplus_discovery", "backtesting"]
 
         for source in expected_sources:
             assert source in tracked_sources, f"Expected source {source} not tracked"
-

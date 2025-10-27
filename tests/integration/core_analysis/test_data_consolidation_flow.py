@@ -6,7 +6,6 @@ for use in portfolio analysis and report generation.
 """
 
 from datetime import datetime
-from pathlib import Path
 
 import pytest
 
@@ -130,7 +129,7 @@ class TestDataConsolidationFlow:
 
             # Verify metadata
             metadata = retrieved["metadata"]
-            assert metadata["crew_name"] == crew_name, f"Crew name should match in metadata"
+            assert metadata["crew_name"] == crew_name, "Crew name should match in metadata"
             assert "storage_timestamp" in metadata, "Storage timestamp should be present"
             assert "data_freshness" in metadata, "Data freshness info should be present"
 
@@ -157,7 +156,7 @@ class TestDataConsolidationFlow:
             # Check freshness info
             freshness = data["metadata"]["data_freshness"]
             assert freshness["is_fresh"] is True, f"Data for {crew_name} should be marked as fresh"
-            assert freshness["age_hours"] == 0.0, f"Age should be 0 for just-stored data"
+            assert freshness["age_hours"] == 0.0, "Age should be 0 for just-stored data"
 
     def test_should_handle_missing_crew_data_gracefully(self, integration_manager):
         """Test that retrieval of non-existent crew data returns None."""

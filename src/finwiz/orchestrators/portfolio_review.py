@@ -395,7 +395,7 @@ def save_review_json(
             f"{summary.processed_with_warnings} warnings, "
             f"{summary.failed_to_process} failed"
         )
-        
+
         # Save processing summary to a separate file
         summary_path = out_path.parent / "portfolio_processing_summary.json"
         summary_data = {

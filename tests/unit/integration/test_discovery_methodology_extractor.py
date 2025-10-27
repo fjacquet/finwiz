@@ -544,4 +544,3 @@ class TestDiscoveryMethodologyExtractor:
         assert mock_logger.info.called
         info_calls = [str(call) for call in mock_logger.info.call_args_list]
         assert any("screening criteria" in str(call).lower() for call in info_calls)
-

@@ -17,7 +17,7 @@ This module provides structured logging methods for:
 import json
 import traceback
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from finwiz.tools.logger import get_logger
 
@@ -40,6 +40,7 @@ class EnhancedLogger:
 
         Args:
             component_name: Name of the component using this logger
+
         """
         self.component_name = component_name
         self.logger = get_logger(component_name)
@@ -48,9 +49,9 @@ class EnhancedLogger:
         self,
         crew_name: str,
         ticker: str,
-        inputs: Dict[str, Any],
+        inputs: dict[str, Any],
         exception: Exception,
-        asset_class: Optional[str] = None,
+        asset_class: str | None = None,
     ) -> None:
         """
         Log crew execution failure with full context.
@@ -63,6 +64,7 @@ class EnhancedLogger:
             asset_class: Asset class (stock, etf, crypto)
 
         Requirements: 18.1-18.2 (Crew Failure Logging)
+
         """
         # Get full traceback
         tb_str = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
@@ -102,9 +104,9 @@ class EnhancedLogger:
     def log_validation_failure(
         self,
         validation_type: str,
-        data_sample: Dict[str, Any],
-        errors: List[str],
-        field_path: Optional[str] = None,
+        data_sample: dict[str, Any],
+        errors: list[str],
+        field_path: str | None = None,
     ) -> None:
         """
         Log data validation failure with data samples.
@@ -116,6 +118,7 @@ class EnhancedLogger:
             field_path: Path to the field that failed validation
 
         Requirements: 18.4-18.5 (Validation Failure Logging)
+
         """
         # Truncate large data samples
         truncated_sample = self._truncate_data(data_sample, max_size=500)
@@ -145,9 +148,9 @@ class EnhancedLogger:
     def log_template_interpolation_failure(
         self,
         template_string: str,
-        available_variables: Dict[str, Any],
-        missing_variables: List[str],
-        crew_name: Optional[str] = None,
+        available_variables: dict[str, Any],
+        missing_variables: list[str],
+        crew_name: str | None = None,
     ) -> None:
         """
         Log template variable interpolation failure.
@@ -159,6 +162,7 @@ class EnhancedLogger:
             crew_name: Name of the crew (if applicable)
 
         Requirements: 18.3 (Template Interpolation Logging)
+
         """
         # Sanitize available variables
         sanitized_vars = self._sanitize_inputs(available_variables)
@@ -179,7 +183,7 @@ class EnhancedLogger:
             f"Template: {template_string[:200]}{'...' if len(template_string) > 200 else ''}\n"
             f"\nMissing Variables:\n"
             + "\n".join(f"  • {var}" for var in missing_variables)
-            + f"\n\nAvailable Variables:\n"
+            + "\n\nAvailable Variables:\n"
             + "\n".join(f"  • {var}" for var in sanitized_vars.keys())
             + f"\n{'=' * 80}"
         )
@@ -193,7 +197,7 @@ class EnhancedLogger:
         holdings_after: int,
         deep_analysis_count: int,
         success: bool,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """
         Log portfolio merge operation results.
@@ -206,6 +210,7 @@ class EnhancedLogger:
             error_message: Error message if merge failed
 
         Requirements: 18.6-18.7 (Portfolio Merge Logging)
+
         """
         status = "✅ SUCCESS" if success else "❌ FAILED"
 
@@ -246,9 +251,9 @@ class EnhancedLogger:
         ticker: str,
         asset_class: str,
         success: bool,
-        cache_path: Optional[str] = None,
-        error_message: Optional[str] = None,
-        age_hours: Optional[float] = None,
+        cache_path: str | None = None,
+        error_message: str | None = None,
+        age_hours: float | None = None,
     ) -> None:
         """
         Log cache operation (save, load, miss, stale).
@@ -263,6 +268,7 @@ class EnhancedLogger:
             age_hours: Age of cached data in hours (for load operations)
 
         Requirements: 18.8 (Cache Operation Logging)
+
         """
         status = "✅" if success else "❌"
 
@@ -298,10 +304,10 @@ class EnhancedLogger:
         self,
         api_name: str,
         endpoint: str,
-        status_code: Optional[int],
-        response_body: Optional[str],
-        exception: Optional[Exception] = None,
-        request_params: Optional[Dict[str, Any]] = None,
+        status_code: int | None,
+        response_body: str | None,
+        exception: Exception | None = None,
+        request_params: dict[str, Any] | None = None,
     ) -> None:
         """
         Log API call failure with request/response details.
@@ -315,6 +321,7 @@ class EnhancedLogger:
             request_params: Request parameters (sanitized)
 
         Requirements: 18.9 (API Call Failure Logging)
+
         """
         # Sanitize request params
         sanitized_params = self._sanitize_inputs(request_params or {})
@@ -360,11 +367,11 @@ class EnhancedLogger:
     def log_flow_halt_summary(
         self,
         reason: str,
-        succeeded_phases: List[str],
-        failed_phases: List[str],
+        succeeded_phases: list[str],
+        failed_phases: list[str],
         total_holdings: int,
         successful_holdings: int,
-        failed_holdings: List[str],
+        failed_holdings: list[str],
         execution_time_seconds: float,
     ) -> None:
         """
@@ -380,6 +387,7 @@ class EnhancedLogger:
             execution_time_seconds: Total execution time
 
         Requirements: 18.10 (Flow Halt Summary Logging)
+
         """
         success_rate = (successful_holdings / total_holdings * 100) if total_holdings > 0 else 0
 
@@ -407,9 +415,9 @@ class EnhancedLogger:
             f"  • Execution Time: {execution_time_seconds:.1f}s\n"
             f"\nSucceeded Phases:\n"
             + "\n".join(f"  ✅ {phase}" for phase in succeeded_phases)
-            + f"\n\nFailed Phases:\n"
+            + "\n\nFailed Phases:\n"
             + "\n".join(f"  ❌ {phase}" for phase in failed_phases)
-            + f"\n\nFailed Holdings:\n"
+            + "\n\nFailed Holdings:\n"
             + "\n".join(f"  • {ticker}" for ticker in failed_holdings)
             + f"\n{'=' * 80}"
         )
@@ -417,7 +425,7 @@ class EnhancedLogger:
         # Log structured data
         self.logger.debug(f"Flow halt context: {json.dumps(halt_context, indent=2)}")
 
-    def _sanitize_inputs(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _sanitize_inputs(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """
         Sanitize inputs by removing sensitive data like API keys.
 
@@ -426,6 +434,7 @@ class EnhancedLogger:
 
         Returns:
             Sanitized dictionary with sensitive data masked
+
         """
         sanitized = {}
         sensitive_keys = {"api_key", "apikey", "token", "password", "secret", "auth"}
@@ -453,6 +462,7 @@ class EnhancedLogger:
 
         Returns:
             Truncated data
+
         """
         try:
             data_str = json.dumps(data, default=str)
@@ -476,5 +486,6 @@ def get_enhanced_logger(component_name: str) -> EnhancedLogger:
 
     Returns:
         EnhancedLogger instance
+
     """
     return EnhancedLogger(component_name)

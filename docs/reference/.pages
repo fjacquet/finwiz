@@ -1,0 +1,13 @@
+nav:
+  - index.md
+  - API Reference: api/
+  - Schemas: schemas/
+  - CLI Commands: cli_commands.md
+  - Configuration: configuration.md
+  - Environment Variables: environment_variables.md
+  - Agent Configuration: agent_configuration.md
+  - Task Configuration: task_configuration.md
+  - Tool Configuration: tool_configuration.md
+  - Data Sources: data_sources.md
+  - Performance: performance.md
+  - Errors: errors.md

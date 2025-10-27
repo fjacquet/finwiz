@@ -9,7 +9,6 @@ import pytest
 from finwiz.integration.backtesting_extractor import (
     BacktestingDataExtractor,
     BacktestingMetrics,
-    RiskAdjustedMetrics,
 )
 from finwiz.schemas.investment_discovery import ValidationResult
 

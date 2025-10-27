@@ -125,9 +125,7 @@ def create_validation_error_from_exception(
 
     Example:
         >>> error = ConnectionError("Network unreachable")
-        >>> validation_error = create_validation_error_from_exception(
-        ...     error, "AAPL", 2
-        ... )
+        >>> validation_error = create_validation_error_from_exception(error, "AAPL", 2)
         >>> assert validation_error.error_type == "network"
         >>> assert validation_error.context["is_retryable"] is True
 

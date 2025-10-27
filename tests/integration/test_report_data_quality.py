@@ -3,7 +3,6 @@
 import pytest
 
 from finwiz.integration.aplus_discovery_accessor import APlusDiscoveryAccessor
-from finwiz.integration.backtesting_extractor import BacktestingDataExtractor
 from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
 from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
 
@@ -24,12 +23,7 @@ class TestReportDataQuality:
             "message": "No sentiment data available",
         }
 
-        tracker.track_data_source(
-            source="sentiment",
-            status="unavailable",
-            age_hours=0,
-            error_message="No articles found"
-        )
+        tracker.track_data_source(source="sentiment", status="unavailable", age_hours=0, error_message="No articles found")
 
         summary = tracker.get_availability_summary()
 
@@ -49,10 +43,7 @@ class TestReportDataQuality:
         filing_url = generator.get_filing_url("INVALID", "10-K")
 
         tracker.track_data_source(
-            source="sec_filings",
-            status="unavailable",
-            age_hours=0,
-            error_message="No filings found for INVALID"
+            source="sec_filings", status="unavailable", age_hours=0, error_message="No filings found for INVALID"
         )
 
         summary = tracker.get_availability_summary()
@@ -67,12 +58,7 @@ class TestReportDataQuality:
         tracker = DataAvailabilityTracker()
 
         # Simulate empty portfolio
-        tracker.track_data_source(
-            source="portfolio",
-            status="available",
-            age_hours=0,
-            record_count=0
-        )
+        tracker.track_data_source(source="portfolio", status="available", age_hours=0, record_count=0)
 
         availability_summary = tracker.get_availability_summary()
 
@@ -88,12 +74,7 @@ class TestReportDataQuality:
         results = accessor.load_discovery_results()
         summary_text = accessor.get_opportunities_summary()
 
-        tracker.track_data_source(
-            source="discovery",
-            status="unavailable",
-            age_hours=0,
-            error_message="Discovery not run"
-        )
+        tracker.track_data_source(source="discovery", status="unavailable", age_hours=0, error_message="Discovery not run")
 
         availability_summary = tracker.get_availability_summary()
 
@@ -108,12 +89,7 @@ class TestReportDataQuality:
         tracker = DataAvailabilityTracker()
 
         # Simulate incomplete backtesting with only 1 metric
-        tracker.track_data_source(
-            source="backtesting",
-            status="available",
-            age_hours=0,
-            record_count=1
-        )
+        tracker.track_data_source(source="backtesting", status="available", age_hours=0, record_count=1)
 
         availability_summary = tracker.get_availability_summary()
 
@@ -126,7 +102,7 @@ class TestReportDataQuality:
 
         mock_response = mocker.Mock()
         mock_response.status_code = 404
-        mocker.patch('requests.head', return_value=mock_response)
+        mocker.patch("requests.head", return_value=mock_response)
 
         url = generator.get_filing_url("FAKE", "10-K")
 
@@ -234,12 +210,7 @@ class TestReportDataQuality:
         tracker = DataAvailabilityTracker()
 
         # Simulate invalid backtesting data by tracking as unavailable
-        tracker.track_data_source(
-            source="backtesting",
-            status="unavailable",
-            age_hours=0,
-            error_message="Invalid data structure"
-        )
+        tracker.track_data_source(source="backtesting", status="unavailable", age_hours=0, error_message="Invalid data structure")
 
         summary = tracker.get_availability_summary()
 

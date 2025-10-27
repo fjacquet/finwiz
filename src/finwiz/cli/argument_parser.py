@@ -8,7 +8,6 @@ session management, and environment initialization.
 
 import argparse
 import os
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -146,6 +145,7 @@ def parse_arguments() -> argparse.Namespace:
 
     Returns:
         Parsed arguments namespace with resume_uuid and no_resume flags
+
     """
     parser = argparse.ArgumentParser(
         description="FinWiz - AI-powered financial analysis platform",
@@ -183,7 +183,7 @@ Resume States:
     return parser.parse_args()
 
 
-def initialize_flow_with_resume(args: Optional[argparse.Namespace] = None) -> "FinwizFlow":
+def initialize_flow_with_resume(args: argparse.Namespace | None = None) -> "FinwizFlow":
     """
     Initialize FinwizFlow with resume capability based on CLI arguments.
 
@@ -200,6 +200,7 @@ def initialize_flow_with_resume(args: Optional[argparse.Namespace] = None) -> "F
 
     Raises:
         SystemExit: If invalid UUID provided or user cancels
+
     """
     from finwiz.flow_state import FinwizState
     from finwiz.flows.flow_orchestrator import FinwizFlow

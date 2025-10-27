@@ -1,0 +1,261 @@
+{% extends "crew_reports/base.html" %}
+
+{% block title %}Analyse Approfondie {{ ticker }} - FinWiz{% endblock %}
+
+{% block content %}
+<h1>🔍 Analyse Approfondie: {{ ticker }}</h1>
+
+<div class="section">
+    <p><strong>Classe d'Actif:</strong> {{ asset_class|upper }}</p>
+    <p><strong>Date d'Analyse:</strong> {{ analysis_date.strftime('%Y-%m-%d %H:%M') if analysis_date else 'N/A' }}</p>
+    <p><strong>Session:</strong> {{ session_id }}</p>
+</div>
+
+<!-- Executive Summary -->
+<div class="section">
+    <h2>📋 Résumé Exécutif</h2>
+    <p>
+        L'analyse approfondie de <strong>{{ ticker }}</strong> révèle un actif de classe {{ asset_class|upper }} 
+        avec un score composite de <strong>{{ "%.1f"|format(composite_score * 100) }}%</strong> 
+        et une note de <strong>{{ grade }}</strong>.
+    </p>
+    <p>
+        Notre recommandation est de <strong>{{ recommendation }}</strong> cet actif 
+        avec un niveau de confiance de <strong>{{ "%.0f"|format(confidence * 100) }}%</strong>.
+    </p>
+</div>
+
+<!-- Recommendation Section -->
+<div class="section recommendation {{ recommendation|lower }}">
+    <h2>💡 Recommandation</h2>
+    <p class="grade-{{ grade|lower|replace('+', '-plus') }}" style="font-size: 1.5rem;">
+        {% if recommendation == 'BUY' %}✅{% elif recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
+        <strong>{{ recommendation }}</strong> - Grade {{ grade }}
+    </p>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Score Composite</h4>
+            <p class="metric-value">{{ "%.0f"|format(composite_score * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Niveau de Confiance</h4>
+            <p class="metric-value">{{ "%.0f"|format(confidence * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Score Fondamental</h4>
+            <p class="metric-value">{{ "%.0f"|format(fundamental_score * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Score Technique</h4>
+            <p class="metric-value">{{ "%.0f"|format(technical_score * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Score de Risque</h4>
+            <p class="metric-value">{{ "%.0f"|format(risk_score * 100) }}%</p>
+        </div>
+    </div>
+    <p><strong>Justification:</strong> {{ rationale }}</p>
+</div>
+
+<!-- Key Metrics Section -->
+<div class="section">
+    <h2>📊 Métriques Clés</h2>
+    
+    <!-- Fundamental Analysis -->
+    {% if fundamental_details %}
+    <h3>💰 Analyse Fondamentale</h3>
+    <div class="metrics-grid">
+        {% if asset_class == 'stock' %}
+            {% if fundamental_details.roe is defined %}
+            <div class="metric-card">
+                <h4>ROE (Rendement des Capitaux Propres)</h4>
+                <p class="metric-value">{{ "%.1f"|format(fundamental_details.roe * 100) }}%</p>
+            </div>
+            {% endif %}
+            {% if fundamental_details.debt_to_equity is defined %}
+            <div class="metric-card">
+                <h4>Ratio Dette/Capitaux</h4>
+                <p class="metric-value">{{ "%.2f"|format(fundamental_details.debt_to_equity) }}</p>
+            </div>
+            {% endif %}
+            {% if fundamental_details.revenue_growth is defined %}
+            <div class="metric-card">
+                <h4>Croissance du Chiffre d'Affaires</h4>
+                <p class="metric-value">{{ "%.1f"|format(fundamental_details.revenue_growth * 100) }}%</p>
+            </div>
+            {% endif %}
+            {% if fundamental_details.profit_margin is defined %}
+            <div class="metric-card">
+                <h4>Marge Bénéficiaire</h4>
+                <p class="metric-value">{{ "%.1f"|format(fundamental_details.profit_margin * 100) }}%</p>
+            </div>
+            {% endif %}
+        {% elif asset_class == 'etf' %}
+            {% if fundamental_details.expense_ratio is defined %}
+            <div class="metric-card">
+                <h4>Ratio de Frais</h4>
+                <p class="metric-value">{{ "%.2f"|format(fundamental_details.expense_ratio) }}%</p>
+            </div>
+            {% endif %}
+            {% if fundamental_details.tracking_error is defined %}
+            <div class="metric-card">
+                <h4>Erreur de Suivi</h4>
+                <p class="metric-value">{{ "%.2f"|format(fundamental_details.tracking_error) }}%</p>
+            </div>
+            {% endif %}
+            {% if fundamental_details.aum is defined %}
+            <div class="metric-card">
+                <h4>Actifs Sous Gestion</h4>
+                <p class="metric-value">${{ "%.1f"|format(fundamental_details.aum / 1e9) }}B</p>
+            </div>
+            {% endif %}
+        {% elif asset_class == 'crypto' %}
+            {% if fundamental_details.market_cap is defined %}
+            <div class="metric-card">
+                <h4>Capitalisation Boursière</h4>
+                <p class="metric-value">${{ "%.1f"|format(fundamental_details.market_cap / 1e9) }}B</p>
+            </div>
+            {% endif %}
+            {% if fundamental_details.volume_24h is defined %}
+            <div class="metric-card">
+                <h4>Volume 24h</h4>
+                <p class="metric-value">${{ "%.0f"|format(fundamental_details.volume_24h / 1e6) }}M</p>
+            </div>
+            {% endif %}
+            {% if fundamental_details.age_years is defined %}
+            <div class="metric-card">
+                <h4>Âge (années)</h4>
+                <p class="metric-value">{{ "%.1f"|format(fundamental_details.age_years) }}</p>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Technical Analysis -->
+    {% if technical_details %}
+    <h3>📈 Analyse Technique</h3>
+    <div class="metrics-grid">
+        {% if technical_details.rsi is defined %}
+        <div class="metric-card">
+            <h4>RSI</h4>
+            <p class="metric-value {% if technical_details.rsi < 30 %}risk-high{% elif technical_details.rsi > 70 %}risk-high{% else %}risk-low{% endif %}">
+                {{ "%.1f"|format(technical_details.rsi) }}
+            </p>
+        </div>
+        {% endif %}
+        {% if technical_details.trend_direction is defined %}
+        <div class="metric-card">
+            <h4>Direction de la Tendance</h4>
+            <p class="metric-value">{{ technical_details.trend_direction|replace('_', ' ')|title }}</p>
+        </div>
+        {% endif %}
+        {% if technical_details.current_price is defined and technical_details.moving_avg_50 is defined %}
+        <div class="metric-card">
+            <h4>Prix vs MA50</h4>
+            <p class="metric-value {% if technical_details.current_price > technical_details.moving_avg_50 %}risk-low{% else %}risk-high{% endif %}">
+                {{ "%.1f"|format((technical_details.current_price / technical_details.moving_avg_50 - 1) * 100) }}%
+            </p>
+        </div>
+        {% endif %}
+        {% if technical_details.macd_diff is defined %}
+        <div class="metric-card">
+            <h4>MACD Signal</h4>
+            <p class="metric-value {% if technical_details.macd_diff > 0 %}risk-low{% else %}risk-high{% endif %}">
+                {{ "Haussier" if technical_details.macd_diff > 0 else "Baissier" }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Risk Assessment Section -->
+<div class="section risk-assessment">
+    <h2>⚠️ Évaluation des Risques</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Score de Risque Global</h4>
+            <p class="metric-value {% if risk_score >= 0.7 %}risk-low{% elif risk_score >= 0.4 %}risk-medium{% else %}risk-high{% endif %}">
+                {{ "%.0f"|format(risk_score * 100) }}%
+            </p>
+            <small>{% if risk_score >= 0.7 %}Faible{% elif risk_score >= 0.4 %}Modéré{% else %}Élevé{% endif %}</small>
+        </div>
+        {% if risk_details.volatility is defined %}
+        <div class="metric-card">
+            <h4>Volatilité Annuelle</h4>
+            <p class="metric-value {% if risk_details.volatility <= 0.15 %}risk-low{% elif risk_details.volatility <= 0.30 %}risk-medium{% else %}risk-high{% endif %}">
+                {{ "%.1f"|format(risk_details.volatility * 100) }}%
+            </p>
+        </div>
+        {% endif %}
+        {% if risk_details.max_drawdown is defined %}
+        <div class="metric-card">
+            <h4>Drawdown Maximum</h4>
+            <p class="metric-value {% if risk_details.max_drawdown >= -0.20 %}risk-low{% elif risk_details.max_drawdown >= -0.35 %}risk-medium{% else %}risk-high{% endif %}">
+                {{ "%.1f"|format(risk_details.max_drawdown * 100) }}%
+            </p>
+        </div>
+        {% endif %}
+        {% if risk_details.beta is defined %}
+        <div class="metric-card">
+            <h4>Bêta (Sensibilité au Marché)</h4>
+            <p class="metric-value {% if risk_details.beta_deviation is defined and risk_details.beta_deviation <= 0.20 %}risk-low{% elif risk_details.beta_deviation is defined and risk_details.beta_deviation <= 0.40 %}risk-medium{% else %}risk-high{% endif %}">
+                {{ "%.2f"|format(risk_details.beta) }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <h3>Facteurs de Risque Identifiés</h3>
+    <ul>
+        {% if risk_details.volatility is defined and risk_details.volatility > 0.30 %}
+        <li>⚠️ Volatilité élevée ({{ "%.1f"|format(risk_details.volatility * 100) }}%)</li>
+        {% endif %}
+        {% if risk_details.max_drawdown is defined and risk_details.max_drawdown < -0.25 %}
+        <li>⚠️ Risque de perte significative (drawdown: {{ "%.1f"|format(risk_details.max_drawdown * 100) }}%)</li>
+        {% endif %}
+        {% if risk_details.beta is defined and (risk_details.beta > 1.5 or risk_details.beta < 0.5) %}
+        <li>⚠️ Sensibilité au marché {% if risk_details.beta > 1.5 %}élevée{% else %}faible{% endif %} (bêta: {{ "%.2f"|format(risk_details.beta) }})</li>
+        {% endif %}
+        {% if asset_class == 'crypto' %}
+        <li>⚠️ Actif cryptographique - volatilité et risque réglementaire élevés</li>
+        {% endif %}
+        {% if not (risk_details.volatility is defined and risk_details.max_drawdown is defined and risk_details.beta is defined) %}
+        <li>ℹ️ Profil de risque standard pour la classe d'actif {{ asset_class|upper }}</li>
+        {% endif %}
+    </ul>
+</div>
+
+<!-- Data Sources Section -->
+<div class="data-sources">
+    <h3>📚 Sources de Données</h3>
+    <ul>
+        {% if data_sources %}
+            {% for source in data_sources %}
+            <li>{{ source }}</li>
+            {% endfor %}
+        {% else %}
+            <li>Yahoo Finance API</li>
+            <li>Analyse quantitative interne</li>
+            <li>Moteur de scoring Python FinWiz</li>
+        {% endif %}
+    </ul>
+    <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem;">
+        <strong>Note:</strong> Ce rapport a été généré par le moteur de scoring Python de FinWiz, 
+        garantissant des résultats déterministes et reproductibles.
+    </p>
+</div>
+
+<!-- Report Metadata -->
+{% if report_json_path or report_html_path %}
+<div class="section" style="font-size: 0.9rem; color: var(--text-muted);">
+    {% if report_json_path %}
+    <p><strong>Rapport JSON:</strong> {{ report_json_path }}</p>
+    {% endif %}
+    {% if report_html_path %}
+    <p><strong>Rapport HTML:</strong> {{ report_html_path }}</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,54 +1,50 @@
 # ============================================================================
-# REQUIRED ENUM VALUES
+# SIMPLIFIED DEEP ANALYSIS CREW - PYTHON SCORING APPROACH
 # ============================================================================
-# This section documents all enum values used in Pydantic output schemas.
-# These values must match exactly with the schema definitions.
+# This configuration implements the Python scoring approach with only 2 tasks:
+# 1. data_collection_task (async) - Fetch all required data
+# 2. python_scoring_task (sync) - Call DeepAnalysisScorer for calculations
 #
-# DeepAnalysisResult Schema Enums:
-#   - grade: A+ | A | A- | B+ | B | B- | C+ | C | C- | D+ | D | D- | F
-#   - recommendation: BUY | HOLD | SELL
-#   - asset_class: stock | etf | crypto
+# REMOVED TASKS (replaced by Python scoring):
+# - deep_analysis_task (AI reasoning replaced by Python calculations)
+# - technical_analysis_task (AI reasoning replaced by Python calculations)  
+# - risk_assessment_task (AI reasoning replaced by Python calculations)
+# - final_report_task (AI reasoning replaced by Python template)
+# - generate_export_task (AI reasoning replaced by Python data consolidation)
 #
-# RiskAssessmentStandardized Schema Enums:
-#   - risk_level: VERY_LOW | LOW | MODERATE | HIGH | VERY_HIGH
-#   - risk_category: MARKET | CREDIT | LIQUIDITY | OPERATIONAL | REGULATORY | OTHER
-#
+# PERFORMANCE TARGETS:
+# - Execution time: 10-30 seconds (vs 5-10 minutes with AI)
+# - LLM calls: 0 for calculations (vs 15-25 with AI)
+# - Cost: $0 for calculations (vs $0.05-0.10 with AI)
 # ============================================================================
 
-deep_analysis_task:
+data_collection_task:
   description: >
-    CRITICAL: SINGLE TICKER MODE - Analyze ONLY the ticker provided: {ticker}
+    CRITICAL: SINGLE TICKER MODE - Collect ALL data for ticker: {ticker}
     
-    As an AI-driven deep asset analyst, perform comprehensive analysis on the single ticker 
-    {ticker} of asset class {asset_class}. Use your reasoning capabilities to provide 
-    deep insights beyond surface-level metrics.
+    As a data collection specialist, fetch ALL required data for the single ticker 
+    {ticker} of asset class {asset_class}. This task focuses ONLY on data collection,
+    with NO AI reasoning or analysis. All calculations will be done by Python scoring.
 
     CRITICAL DATE CONTEXT:
-    - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
-    - All analysis must reflect market conditions as of {full_date}, NOT historical dates
+    - TODAY'S DATE IS {full_date} - Use this as your reference point for data collection
+    - Collect current market data as of {full_date}
 
     ⚠️ CRITICAL TOOL USAGE RULES ⚠️
     - NEVER pass JSON arrays or multiple tickers to tools
     - ALWAYS call each tool ONCE with the single ticker: {ticker}
     - Use exact parameter names: ticker="{ticker}", symbol="{ticker}", asset_class="{asset_class}"
     
-    📊 API EFFICIENCY PATTERNS (CRITICAL):
-    ✅ ACCEPTABLE:
-    - Fetch price data and store in context with timestamp for downstream tasks
-    - Use batch APIs when tools support it (e.g., multiple indicators in one call)
-    - Share data via context to avoid redundant fetches
+    📊 BATCH MODE WITH PRE-FETCHED DATA (Requirement 17.32):
+    When running in batch mode, tools will automatically use pre-fetched data instead of 
+    making live API calls. This eliminates API latency and enables zero-latency execution.
     
-    ❌ NOT ACCEPTABLE:
-    - Using 24-hour cached prices for real-time decisions
-    - Using stale sentiment data (>15 minutes old)
-    - Skipping data fetches to save costs
-    
-    CONTEXT SHARING:
-    - Store fetched price data in context: context["price_data"] = {{"data": prices, "timestamp": now}}
-    - Include timestamps for freshness validation by downstream tasks
-    - Downstream tasks will check freshness before reusing (max_age_minutes=5)
+    PRE-FETCHED DATA SOURCES:
+    - Yahoo Finance: Price data, company info, historical data (pre-fetched in batch)
+    - Alpha Vantage: Company overview, fundamentals (pre-fetched with rate limiting)
+    - Tools will check for pre-fetched data first, then fall back to live API if needed
 
-    AI-DRIVEN ANALYSIS PROCESS (for {ticker} only):
+    DATA COLLECTION PROCESS (NO AI REASONING):
     1. Validate ticker existence using Ticker Validation Tool
     2. For stocks: Use Enhanced SEC Analysis Tool with parameters:
        - ticker: "{ticker}"
@@ -68,210 +64,158 @@ deep_analysis_task:
        - max_articles: 20  # ⚡ OPTIMIZED: Reduced from 50 to speed up analysis
        - days_back: 30  # ⚡ OPTIMIZED: Reduced from 90 to focus on recent sentiment
        - include_trending: true
-    5. Apply AI reasoning to synthesize all data sources
-    6. Generate composite score (0.0-1.0) and letter grade (A+ to F)
 
-    AI OUTPUT REQUIREMENTS:
-    - Include explicit AI reasoning for assessments
-    - Provide confidence levels based on AI analysis
-    - Demonstrate understanding of market interconnections
-    - Show adaptive thinking for current market conditions as of {full_date}
-    - Generate actionable insights that reflect AI decision-making
+    CRITICAL: NO AI ANALYSIS OR REASONING
+    - Do NOT interpret the data
+    - Do NOT calculate scores or grades
+    - Do NOT make recommendations
+    - ONLY collect and store raw data in structured context dict
 
-    CRITICAL OUTPUT FORMAT:
-    - Return structured analysis with composite_score and grade
-    - Include fundamental_score, technical_score if applicable
-    - Provide clear recommendation (BUY/HOLD/SELL)
-    - Include data source citations with dates
+    CONTEXT STORAGE FORMAT:
+    Store ALL collected data in context with this structure:
+    context["collected_data"] = {{
+        "ticker": "{ticker}",
+        "asset_class": "{asset_class}",
+        "collection_timestamp": "2025-01-25T10:30:00Z",
+        "ticker_validation": {{...}},
+        "quantitative_analysis": {{...}},
+        "sentiment_analysis": {{...}},
+        "sec_analysis": {{...}} (stocks only),
+        "etf_analysis": {{...}} (ETFs only),
+        "crypto_analysis": {{...}} (crypto only)
+    }}
   expected_output: >
-    A comprehensive deep analysis for ticker {ticker} including:
-    - Composite score (0.0-1.0) and letter grade (A+ to F)
-    - Fundamental analysis (if applicable)
-    - Technical analysis with quantitative metrics
-    - Sentiment analysis with market perception
-    - Clear investment recommendation with rationale
-    - AI reasoning and confidence levels
+    Raw data collection results for ticker {ticker} stored in structured context:
+    - Ticker validation results
+    - Quantitative analysis data (prices, indicators, metrics)
+    - Sentiment analysis data (scores, articles, trends)
+    - Asset-specific data (SEC filings for stocks, ETF data, crypto metrics)
+    - Collection timestamp and data sources
+    - NO analysis, scores, grades, or recommendations (handled by Python scoring)
   agent: asset_analyst
-  async_execution: true  # ✅ Parallel I/O: Enable async for independent data fetching
+  async_execution: true  # ✅ Parallel I/O: Enable async for data fetching
 
-technical_analysis_task:
+python_scoring_task:
   description: >
-    CRITICAL: SINGLE TICKER MODE - Analyze technical indicators for ONLY: {ticker}
+    CRITICAL: SINGLE TICKER MODE - Calculate scores for ticker: {ticker}
     
-    Perform detailed technical analysis on the single ticker {ticker} of asset class 
-    {asset_class} using advanced quantitative methods.
+    As a Python scoring specialist, use the DeepAnalysisScorer to calculate all scores,
+    grades, and recommendations for the single ticker {ticker} of asset class {asset_class}.
+    This task uses ONLY Python calculations with NO AI reasoning.
 
-    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
-    - Call Quantitative Analysis Tool ONCE with these exact parameters:
-      * symbol: "{ticker}"
-      * asset_class: "{asset_class}"
-      * analysis_type: "comprehensive"
-      * timeframe: "1y"
-      * strategy: "sma_crossover"
-    - NEVER pass arrays or JSON strings
-    
-    📊 SMART BATCHING (FUTURE ENHANCEMENT):
-    NOTE: Current TwelveDataIndicatorTool requires individual calls per indicator.
-    Future enhancement will support batch operations: indicators=["RSI", "MACD", "BB"]
-    
-    CURRENT APPROACH:
-    - Call tool once per indicator (RSI, MACD, BB)
-    - Store results in context to avoid redundant fetches
-    - Downstream tasks reuse from context if fresh (max_age=5min)
-    
-    🔄 CONTEXT SHARING (CRITICAL):
-    - Check context for price_data from deep_analysis_task
-    - Validate freshness: if timestamp < 5 minutes old, reuse data
-    - Re-fetch if stale: if not is_fresh(context["price_data"]["timestamp"], max_age=5): refetch()
-    - Store your own data with timestamps for downstream tasks
-
-    ANALYSIS REQUIREMENTS:
-    - RSI, MACD, Bollinger Bands interpretation
-    - Support/resistance levels
-    - Trend analysis and momentum indicators
-    - Backtesting results with risk-adjusted metrics
-    - Buy/sell signals with confidence levels
-
-    AI REASONING:
-    - Apply intelligent interpretation of technical signals
-    - Synthesize multiple indicators into coherent analysis
-    - Provide AI-generated confidence levels
-  expected_output: >
-    Detailed technical analysis for {ticker} including:
-    - Multi-indicator technical assessment
-    - Backtesting results with performance metrics
-    - Risk-adjusted returns (Sharpe ratio, max drawdown)
-    - Clear buy/sell signals with confidence
-    - AI reasoning for technical recommendations
-  agent: asset_analyst
-  async_execution: true  # ✅ Parallel I/O: Enable async for independent data fetching
-  depends_on:
-    - deep_analysis_task
-
-risk_assessment_task:
-  description: >
-    CRITICAL: SINGLE TICKER MODE - Assess risks for ONLY: {ticker}
-    
-    Evaluate comprehensive risks for the single ticker {ticker} of asset class {asset_class} 
-    using AI-driven risk assessment methodology.
-
-    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
-    - For stocks: Call Enhanced SEC Analysis Tool ONCE with parameters:
-      * ticker: "{ticker}"
-      * form_type: "10-K"
-      * sections: ["Item 1A", "Item 7", "Item 7A"]
-      * risk_assessment: true
-      * include_perplexity: false  # ⚡ Already disabled for performance
-    - Call Quantitative Analysis Tool ONCE for risk metrics:
-      * symbol: "{ticker}"
-      * asset_class: "{asset_class}"
-      * analysis_type: "comprehensive"
-      * timeframe: "1y"
-    - NEVER pass arrays or JSON strings
-
-    AI-DRIVEN RISK ASSESSMENT:
-    1. Identify systematic vs. idiosyncratic risks
-    2. Evaluate financial stability and leverage risks
-    3. Assess regulatory and compliance risks
-    4. Analyze competitive and market positioning risks
-    5. Calculate VaR, drawdown, and risk-adjusted metrics
-    6. Generate standardized risk score (0-5 scale)
-
-    AI OUTPUT REQUIREMENTS:
-    - Explicit AI reasoning for each risk factor
-    - Risk scenarios with probability assessments
-    - Risk mitigation strategies
-    - Confidence levels and uncertainty acknowledgments
-  expected_output: >
-    Comprehensive risk assessment for {ticker} including:
-    - Standardized risk score (0-5 scale: 0=Very Low, 5=Very High)
-    - Systematic and idiosyncratic risk breakdown
-    - Financial, regulatory, competitive risk analysis
-    - Quantitative risk metrics (VaR, drawdown, volatility)
-    - Risk mitigation recommendations
-    - AI reasoning and confidence levels
-  agent: risk_assessor
-  async_execution: true  # ✅ Parallel I/O: Enable async for independent data fetching
-  depends_on:
-    - technical_analysis_task
-
-final_report_task:
-  description: >
-    CRITICAL: SINGLE TICKER MODE - Generate report for ONLY: {ticker}
-    
-    Transform all upstream analysis into a comprehensive, professional HTML report for 
-    the single ticker {ticker} of asset class {asset_class}.
-
-    🚨 NO TOOLS - Consume only upstream context 🚨
-    - Use results from deep_analysis_task
-    - Use results from technical_analysis_task
-    - Use results from risk_assessment_task
+    🚨 NO TOOLS - Use ONLY context from data_collection_task 🚨
+    - Access collected_data from data_collection_task context
     - NEVER call any tools directly
+    - Use ONLY Python DeepAnalysisScorer for all calculations
 
-    REPORT STRUCTURE (French language):
-    1. Executive Summary (Résumé Exécutif)
-       - Ticker: {ticker}
-       - Asset Class: {asset_class}
-       - Composite Score and Grade
-       - Clear Recommendation (ACHETER/CONSERVER/VENDRE)
-    
-    2. Detailed Analysis (Analyse Détaillée)
-       - Fundamental Analysis (if applicable)
-       - Technical Analysis with charts
-       - Sentiment Analysis
-       - AI Reasoning and Insights
-    
-    3. Risk Assessment (Évaluation des Risques)
-       - Risk Score (0-5 scale)
-       - Risk Breakdown
-       - Mitigation Strategies
-    
-    4. Investment Recommendation (Recommandation d'Investissement)
-       - Clear Action (BUY/HOLD/SELL)
-       - Price Targets (if applicable)
-       - Time Horizon
-       - Confidence Level
-    
-    5. Data Sources (Sources de Données)
-       - CRITICAL: Use ONLY real data sources from upstream analysis
-       - For price data: "Yahoo Finance API" or "TwelveData API" (based on actual tool used)
-       - For sentiment: List actual sources (Yahoo Finance News, Perplexity Sonar, etc.)
-       - For SEC data: Include the actual SEC filing URL from EnhancedSECAnalysisTool output
-         * Format: "SEC EDGAR Database — Form {form_type} — [View Filings](URL_FROM_TOOL_OUTPUT)"
-         * The URL is a browse page where users can click on the most recent filing
-         * If no URL available: "SEC EDGAR Database — Form {form_type} (search at sec.gov/edgar)"
-       - For technical indicators: "TwelveData Indicators API" or "TA-Lib calculations"
-       - Include as-of date: {full_date}
-       - NEVER use placeholder URLs like "example.com" or "finwiz.example.com"
-       - If source is unknown, state "Internal calculation" or "Derived from market data"
+    PYTHON SCORING PROCESS:
+    1. Extract collected_data from context
+    2. Import and instantiate DeepAnalysisScorer
+    3. Call scorer.calculate_composite_score(ticker, asset_class, collected_data)
+    4. Generate DeepAnalysisCrewExport from scoring results
+    5. Store results in context for downstream tasks
 
-    HTML FORMATTING:
-    - Professional FinWiz branding
-    - Responsive design (mobile-friendly)
-    - Emojis for visual appeal (📊 📈 📉 💰 ⚠️ 🎯)
-    - Color-coded grades (A+=green, F=red)
-    - Print-friendly CSS
-    - UTF-8 encoding for French characters
+    CRITICAL: PRESERVE ALL DATA (Requirements 18.21-18.25)
+    Ensure ALL raw data is preserved in the final export:
+    - Raw metrics: volatility, beta, ROE, debt/equity, RSI, MACD, etc.
+    - Sentiment data: sentiment_score, trending_topics, article_count
+    - Technical indicators: support/resistance, trend direction
+    - Fundamental data: revenue, earnings, cash flow
+    - Calculation results: composite score, grade, recommendation, risk score
+    - Template-based rationale text (generated by DeepAnalysisScorer)
 
-    QUALITY CHECKLIST:
-    - ✅ Single ticker only: {ticker}
-    - ✅ French language throughout
-    - ✅ Professional formatting
-    - ✅ Clear recommendation
-    - ✅ Comprehensive risk assessment
-    - ✅ Real data source citations (NO example.com URLs)
-    - ✅ AI reasoning transparency
-    - ✅ Actual tool names cited (Yahoo Finance, TwelveData, SEC EDGAR, etc.)
+    SCORING COMPONENTS (handled by DeepAnalysisScorer):
+    - Fundamental Score (40%): ROE, debt, growth, margins (stocks) / expense ratio, tracking error (ETFs) / market cap, volume (crypto)
+    - Technical Score (30%): RSI, trend analysis, MACD momentum
+    - Risk Score (30%): Volatility, max drawdown, beta (converted to 0-1 scale where 1=low risk)
+    - Composite Score: Weighted average of above components
+    - Grade: A+ (≥0.85), A (≥0.75), B (≥0.65), C (≥0.55), D (≥0.45), F (<0.45)
+    - Recommendation: BUY (≥0.70), HOLD (0.50-0.70), SELL (<0.50)
+
+    PERFORMANCE TARGETS (Requirements 18.28-18.30):
+    - Execution time: 10-30 seconds (vs 5-10 minutes with AI)
+    - LLM calls: 0 for calculations (vs 15-25 with AI)
+    - Cost: $0 for calculations (vs $0.05-0.10 with AI)
+    - Speedup: 10-20x faster than AI approach
+    - Cost reduction: 100% for calculations
+
+    CONTEXT STORAGE FORMAT:
+    Store scoring results in context:
+    context["scoring_results"] = {{
+        "ticker": "{ticker}",
+        "asset_class": "{asset_class}",
+        "scoring_timestamp": "2025-01-25T10:30:00Z",
+        "deep_analysis_result": DeepAnalysisResult object,
+        "crew_export": DeepAnalysisCrewExport object,
+        "performance_metrics": {{
+            "execution_time_seconds": float,
+            "llm_calls_count": 0,
+            "calculation_cost_usd": 0.0
+        }}
+    }}
   expected_output: >
-    A complete, professional HTML report for {ticker} in French, including:
-    - Executive summary with grade and recommendation
-    - Detailed analysis sections
-    - Risk assessment with mitigation strategies
-    - Clear investment recommendation
-    - Data source citations
-    - Professional formatting with emojis and color coding
+    Python scoring results for ticker {ticker} including:
+    - DeepAnalysisResult with all component scores and details
+    - DeepAnalysisCrewExport ready for JSON serialization
+    - Composite score (0.0-1.0) and letter grade (A+ to F)
+    - Investment recommendation (BUY/HOLD/SELL) with confidence
+    - Template-based rationale explaining the recommendation
+    - All raw data preserved from data collection
+    - Performance metrics (execution time, LLM calls=0, cost=$0)
   agent: investment_reporter
-  output_file: "output/deep_analysis/{ticker}_deep_analysis_{asset_class}.html"
-  async_execution: false  # ❌ Must be synchronous: CrewAI requirement for final task
+  async_execution: false  # ❌ Must be synchronous: Final task requirement
   depends_on:
-    - risk_assessment_task
+    - data_collection_task
+
+# Optional AI Summary Task (Hybrid Approach)
+ai_summary_task:
+  description: >
+    OPTIONAL: Generate AI prose summary for ticker: {ticker} (HYBRID APPROACH)
+    
+    This task is ONLY executed when DEEP_ANALYSIS_AI_SUMMARY=true environment variable is set.
+    It provides a hybrid approach: Python scoring (fast, cheap) + optional AI summary (prose).
+
+    🚨 HYBRID APPROACH RULES 🚨
+    - Python scoring MUST complete first (python_scoring_task)
+    - This task adds AI-generated prose summary AFTER Python calculations
+    - Use context from python_scoring_task for all scores and data
+    - NEVER recalculate scores - only generate prose summary
+
+    PERFORMANCE TARGETS (Requirements 18.31-18.36):
+    - Total time: 15-40 seconds (Python scoring 10-30s + AI summary 5-10s)
+    - Cost: $0.01 per ticker (only for AI summary, not calculations)
+    - Cost savings: 80-90% vs full AI approach ($0.01 vs $0.05-0.10)
+    - Speedup: Still 8-15x faster than full AI approach
+
+    AI SUMMARY PROCESS:
+    1. Extract scoring results from python_scoring_task context
+    2. Extract detailed_analysis from python_scoring_task context
+    3. Generate professional prose summary using AI reasoning
+    4. Enhance rationale with AI-generated insights
+    5. Create narrative explanation of the Python-calculated scores
+    6. Store enhanced summary in context for potential downstream use
+
+    CRITICAL: NO RECALCULATION
+    - Do NOT recalculate any scores, grades, or recommendations
+    - Use ONLY the Python-calculated values from context
+    - Focus on generating compelling prose explanation
+    - Add market context and qualitative insights
+    - Enhance the template-based rationale with AI narrative
+
+    OUTPUT REQUIREMENTS:
+    - Enhanced rationale with AI-generated prose
+    - Market context and qualitative insights
+    - Professional investment narrative
+    - Clear explanation of Python-calculated scores
+    - French language for user-facing content
+  expected_output: >
+    AI-enhanced summary for ticker {ticker} including:
+    - Professional prose summary of Python-calculated results
+    - Enhanced rationale with market context and insights
+    - Qualitative analysis complementing quantitative scores
+    - Clear narrative explanation of recommendation
+    - All based on Python-calculated scores (no recalculation)
+  agent: investment_reporter
+  async_execution: false  # ❌ Must be synchronous: Optional final enhancement
+  depends_on:
+    - python_scoring_task

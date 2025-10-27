@@ -22,6 +22,7 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
 
 from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.crew_exports import CryptoCrewExport
 from finwiz.schemas.crypto import (
     CryptoInvestmentStrategy,
     CryptoMarketAnalysis,
@@ -31,6 +32,7 @@ from finwiz.schemas.crypto import (
 )
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_crypto_crew_tools
+from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
 from finwiz.utils.task_decorators import async_task, sync_task
@@ -145,6 +147,17 @@ class CryptoCrew:
             llm=self._get_configured_llm(),
         )
 
+    @final_reporter
+    @agent
+    def investment_reporter(self) -> Agent:
+        """Consolidate analysis findings into CryptoCrewExport."""
+        return Agent(
+            config=self.agents_config["investment_reporter"],
+            tools=[],  # MUST be empty - enforced by @final_reporter decorator
+            verbose=True,
+            llm=self._get_configured_llm(),
+        )
+
     # @agent
     # def translator(self) -> Agent:
     #     """Create translator agent that converts English reports to French while preserving layout."""
@@ -186,6 +199,16 @@ class CryptoCrew:
     def final_report_task(self) -> Task:
         return Task(
             config=self.tasks_config["final_report_task"],
+        )
+
+    @sync_task
+    @task
+    def generate_export_task(self) -> Task:
+        """Generate CryptoCrewExport JSON from all analysis findings."""
+        return Task(
+            config=self.tasks_config["generate_export_task"],
+            output_pydantic=CryptoCrewExport,
+            verbose=True,
         )
 
     # @sync_task

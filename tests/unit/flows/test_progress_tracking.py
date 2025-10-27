@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from finwiz.flow_state import FinwizState
 from finwiz.flows.flow_orchestrator import FinwizFlow
 
 
@@ -42,9 +41,7 @@ class TestProgressTracking:
 
         return flow
 
-    def test_should_calculate_progress_percentage_when_holdings_processed(
-        self, flow_instance
-    ):
+    def test_should_calculate_progress_percentage_when_holdings_processed(self, flow_instance):
         """Test that progress percentage is calculated correctly."""
         # Arrange
         flow_instance.state.holdings_processed = 5
@@ -56,9 +53,7 @@ class TestProgressTracking:
         # Assert
         assert flow_instance.state.progress_percentage == 50.0
 
-    def test_should_calculate_zero_progress_when_no_holdings_processed(
-        self, flow_instance
-    ):
+    def test_should_calculate_zero_progress_when_no_holdings_processed(self, flow_instance):
         """Test that progress is 0% when no holdings processed."""
         # Arrange
         flow_instance.state.holdings_processed = 0
@@ -70,9 +65,7 @@ class TestProgressTracking:
         # Assert
         assert flow_instance.state.progress_percentage == 0.0
 
-    def test_should_calculate_full_progress_when_all_holdings_processed(
-        self, flow_instance
-    ):
+    def test_should_calculate_full_progress_when_all_holdings_processed(self, flow_instance):
         """Test that progress is 100% when all holdings processed."""
         # Arrange
         flow_instance.state.holdings_processed = 10
@@ -84,9 +77,7 @@ class TestProgressTracking:
         # Assert
         assert flow_instance.state.progress_percentage == 100.0
 
-    def test_should_calculate_estimated_time_remaining_when_holdings_processed(
-        self, flow_instance
-    ):
+    def test_should_calculate_estimated_time_remaining_when_holdings_processed(self, flow_instance):
         """Test that estimated time remaining is calculated based on average time."""
         # Arrange
         # 100 seconds elapsed, 5 holdings processed = 20 seconds per holding
@@ -101,9 +92,7 @@ class TestProgressTracking:
         # Should be approximately 100 seconds (5 remaining * 20 sec/holding)
         assert 95 <= flow_instance.state.estimated_time_remaining <= 105
 
-    def test_should_set_zero_estimated_time_when_no_holdings_remaining(
-        self, flow_instance
-    ):
+    def test_should_set_zero_estimated_time_when_no_holdings_remaining(self, flow_instance):
         """Test that estimated time is 0 when no holdings remain."""
         # Arrange
         flow_instance.state.holdings_processed = 10
@@ -115,9 +104,7 @@ class TestProgressTracking:
         # Assert
         assert flow_instance.state.estimated_time_remaining == 0.0
 
-    def test_should_set_zero_estimated_time_when_no_holdings_processed(
-        self, flow_instance
-    ):
+    def test_should_set_zero_estimated_time_when_no_holdings_processed(self, flow_instance):
         """Test that estimated time is 0 when no holdings processed yet."""
         # Arrange
         flow_instance.state.holdings_processed = 0

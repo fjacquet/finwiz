@@ -42,7 +42,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
     )
     args_schema: type[BaseModel] = StandardizedSentimentInput
     url_validator: Any = None  # URL validator instance
-    
+
     def __init__(self, **kwargs):
         """Initialize tool with URL validator."""
         super().__init__(**kwargs)
@@ -175,9 +175,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                                         }
                                     )
                                 else:
-                                    logger.warning(
-                                        f"Skipping Perplexity article with invalid URL: {sonar_article.title}"
-                                    )
+                                    logger.warning(f"Skipping Perplexity article with invalid URL: {sonar_article.title}")
 
                             if articles:
                                 return articles[:max_count]

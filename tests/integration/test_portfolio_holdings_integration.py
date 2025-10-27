@@ -334,7 +334,7 @@ class TestPortfolioHoldingsIntegration:
                 risk_score = getattr(analysis, "risk_score", None)
                 if risk_score is None:
                     risk_score = 2.5  # Default risk score
-                
+
                 profile = HoldingProfile(
                     ticker=analysis.ticker,
                     name=analysis.name,
@@ -447,7 +447,7 @@ class TestPortfolioHoldingsIntegration:
                 risk_score = getattr(analysis, "risk_score", None)
                 if risk_score is None:
                     risk_score = 2.5  # Default risk score
-                
+
                 profile = HoldingProfile(
                     ticker=analysis.ticker,
                     name=analysis.name,

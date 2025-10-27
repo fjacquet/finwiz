@@ -351,3 +351,102 @@ stock_risk_assessment_task:
 #   depends_on:
 #     - stock_risk_assessment_task
 
+
+# Export Generation Task
+generate_export_task:
+  description: >
+    Consolidate all stock analysis findings from context into a StockCrewExport object.
+    
+    CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
+    from previous tasks to extract all required information.
+    
+    CONTEXT SOURCES:
+    - market_technical_analysis_task: Market trends and sentiment
+    - stock_screening_task: Stock screening results and market sentiment
+    - technical_detail_task: Technical analysis, 10-K insights, quantitative metrics
+    - stock_risk_assessment_task: Risk assessment and risk scores
+    
+    REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
+    1. fundamental_analysis (TenKInsight):
+       - Extract from technical_detail_task context
+       - Include business overview, financial metrics, growth prospects
+    
+    2. risk_assessment (RiskAssessmentStandardized):
+       - Extract from stock_risk_assessment_task context
+       - Include risk_score (0-5), risk_factors, systematic_risk, idiosyncratic_risk
+    
+    3. technical_indicators (dict):
+       - Extract from technical_detail_task context
+       - Include RSI, MACD, Bollinger Bands, moving averages
+    
+    4. composite_score (float 0.0-1.0):
+       - Calculate based on all analysis dimensions
+       - Weight: 40% fundamental, 30% technical, 30% risk
+       - Formula: (fundamental_score * 0.4) + (technical_score * 0.3) + ((5 - risk_score) / 5 * 0.3)
+    
+    5. grade (A+ to F):
+       - A+: composite_score >= 0.85
+       - A: composite_score >= 0.75
+       - B: composite_score >= 0.65
+       - C: composite_score >= 0.55
+       - D: composite_score >= 0.45
+       - F: composite_score < 0.45
+    
+    6. recommendation (BUY/HOLD/SELL):
+       - BUY: grade >= B AND positive technical signals
+       - HOLD: grade = C OR mixed signals
+       - SELL: grade <= D OR negative technical signals
+    
+    7. confidence (float 0.0-1.0):
+       - Based on data quality and consistency across analyses
+       - High confidence (0.8-1.0): All analyses agree, strong signals
+       - Medium confidence (0.5-0.8): Some disagreement, mixed signals
+       - Low confidence (0.0-0.5): Conflicting analyses, weak signals
+    
+    8. rationale (string, min 50 chars):
+       - Explain the recommendation based on all analysis findings
+       - Reference specific metrics and insights from context
+       - Address key strengths and weaknesses
+       - Mention risk factors and mitigation strategies
+    
+    9. data_sources (list of strings):
+       - List all data sources used: ["SEC EDGAR", "Yahoo Finance", "Alpha Vantage", etc.]
+    
+    10. report_html_path (string):
+        - Set to: "output/reports/{session_id}/stock_crew/{ticker}_report.html"
+    
+    11. report_json_path (string):
+        - Set to: "output/reports/{session_id}/stock_crew/{ticker}_export.json"
+    
+    METADATA FIELDS (auto-populated):
+    - crew_name: "stock_crew" (default)
+    - ticker: From input parameter {ticker}
+    - asset_class: "stock" (default)
+    - session_id: From input parameter {session_id}
+    - analysis_date: Current timestamp (auto-generated)
+    
+    OUTPUT FORMAT:
+    - Return a valid StockCrewExport Pydantic object
+    - All fields must conform to schema validation
+    - Use extra='forbid' - no additional fields allowed
+    - Ensure all required fields are present
+    
+    VALIDATION:
+    - composite_score must be between 0.0 and 1.0
+    - grade must be one of: A+, A, B, C, D, F
+    - recommendation must be one of: BUY, HOLD, SELL
+    - confidence must be between 0.0 and 1.0
+    - rationale must be at least 50 characters
+    - All nested objects must conform to their schemas
+    
+    Today is {full_date}. Use this date for analysis_date if not auto-generated.
+  expected_output: >
+    A validated StockCrewExport Pydantic object containing all analysis findings,
+    scores, grades, and recommendations. The object will be automatically saved
+    to JSON at the specified report_json_path.
+  agent: investment_reporter
+  output_pydantic: StockCrewExport
+  output_json: true
+  async_execution: false
+  depends_on:
+    - stock_risk_assessment_task

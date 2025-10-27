@@ -341,9 +341,7 @@ class TestMarketContextExtractor:
         assert summary.risk_environment == "favorable"
         assert len(summary.allocation_implications) > 0
 
-    def test_should_create_conservative_summary_when_data_missing(
-        self, extractor: MarketContextExtractor, mocker
-    ) -> None:
+    def test_should_create_conservative_summary_when_data_missing(self, extractor: MarketContextExtractor, mocker) -> None:
         """Test conservative summary creation when data is incomplete."""
         # Arrange - Mock methods to return None
         mocker.patch.object(extractor, "extract_market_regime", return_value=None)
@@ -378,9 +376,7 @@ class TestMarketContextExtractor:
         assert summary.vix_indicators.current_vix == 20.0
         assert any("conservative" in imp.lower() for imp in summary.allocation_implications)
 
-    def test_should_handle_extraction_errors_gracefully(
-        self, extractor: MarketContextExtractor, mocker
-    ) -> None:
+    def test_should_handle_extraction_errors_gracefully(self, extractor: MarketContextExtractor, mocker) -> None:
         """Test graceful error handling during extraction."""
         # Arrange - Create discovery result that will cause errors
         bad_discovery = mocker.Mock(spec=APlusDiscoveryResult)

@@ -6,7 +6,6 @@ proper recording and calculation of quality scores.
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
