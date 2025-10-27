@@ -3518,8 +3518,49 @@ class FinwizFlow(Flow[FinwizState]):
                 else:
                     portfolio_review = portfolio_review_data
 
-                # Extract deep analysis results
-                deep_analysis_results = state_dict.get("deep_analysis_results", {})
+                # Extract and transform deep analysis results
+                # The state contains dict[str, DeepAnalysisResult] but report generator expects
+                # a summary dict with successful_analyses, failed_analyses, total_holdings
+                raw_deep_analysis = state_dict.get("deep_analysis_results", {})
+
+                # Transform to expected format
+                deep_analysis_results = None
+                if raw_deep_analysis:
+                    successful_count = len(raw_deep_analysis)
+                    total_holdings = state_dict.get("total_holdings", successful_count)
+                    failed_count = total_holdings - successful_count
+
+                    # Calculate average composite score
+                    avg_score = (
+                        sum(r.composite_score for r in raw_deep_analysis.values()) / successful_count
+                        if successful_count > 0
+                        else 0.0
+                    )
+
+                    deep_analysis_results = {
+                        "successful_analyses": successful_count,
+                        "failed_analyses": failed_count,
+                        "total_holdings": total_holdings,
+                        "performance_metrics": {
+                            "average_composite_score": avg_score,
+                            "grade_distribution": self._calculate_grade_distribution(raw_deep_analysis),
+                            "analysis_method": "python_scorer",
+                        },
+                        "results_by_ticker": {
+                            ticker: {
+                                "ticker": result.ticker,
+                                "grade": result.grade,
+                                "composite_score": result.composite_score,
+                                "recommendation": result.recommendation,
+                                "asset_class": result.asset_class,
+                            }
+                            for ticker, result in raw_deep_analysis.items()
+                        },
+                    }
+
+                    logger.info(
+                        f"Transformed deep analysis: {successful_count} successful, {failed_count} failed, {total_holdings} total"
+                    )
 
                 # Generate Python-based report (Requirements 0.22, 0.23, 0.24, 0.25, 0.26)
                 session_id = self.state.session_id or "default"
@@ -3991,6 +4032,24 @@ class FinwizFlow(Flow[FinwizState]):
         self.state.crew_execution_status[crew_name] = "completed" if export_paths else "failed"
 
         logger.debug(f"Stored {len(export_paths)} export paths and {len(html_paths)} HTML paths for {crew_name}")
+
+    def _calculate_grade_distribution(self, deep_analysis_results: dict[str, Any]) -> dict[str, int]:
+        """
+        Calculate grade distribution from deep analysis results.
+
+        Args:
+            deep_analysis_results: Dictionary of DeepAnalysisResult objects keyed by ticker
+
+        Returns:
+            Dictionary with grade counts (e.g., {"A+": 10, "A": 5, "B": 3, ...})
+        """
+        grade_counts: dict[str, int] = {}
+
+        for result in deep_analysis_results.values():
+            grade = result.grade if hasattr(result, "grade") else result.get("grade", "N/A")
+            grade_counts[grade] = grade_counts.get(grade, 0) + 1
+
+        return grade_counts
 
     def _generate_error_report(self, error: Exception) -> None:
         """Generate a minimal error report when main report generation fails."""
