@@ -405,7 +405,7 @@ class PythonReportGenerator:
         sorted_holdings = sorted(holdings, key=lambda h: (h.grade, -h.composite_score))
 
         holdings_html = ""
-        for holding in sorted_holdings[:20]:  # Top 20 holdings
+        for holding in sorted_holdings:  # All holdings
             grade_class = f"grade-{holding.grade.lower().replace('+', '-plus')}"
 
             # Determine recommendation badge
@@ -447,7 +447,7 @@ class PythonReportGenerator:
       </tbody>
     </table>
     
-    <p class="small muted">Affichage des 20 premières positions triées par note et score.</p>
+    <p class="small muted">Affichage de toutes les positions triées par note et score.</p>
   </div>
         """
 
