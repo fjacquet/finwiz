@@ -35,9 +35,14 @@ class DeepAnalysisScorer:
     BUY_THRESHOLD = 0.70  # A- or better
     SELL_THRESHOLD = 0.50  # Below C
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the scoring engine."""
         self.logger = logger
+        # Data quality tracking (Task 3.2)
+        self._data_quality_metrics = None
+        self._current_ticker = None
+        # Data lineage tracking (Task 9.2)
+        self._lineage_tracker = None
 
     def calculate_composite_score(self, ticker: str, asset_class: str, data: dict[str, Any]) -> DeepAnalysisResult:
         """
@@ -52,8 +57,27 @@ class DeepAnalysisScorer:
             DeepAnalysisResult with scores, grade, and recommendation
 
         """
+        from finwiz.schemas.data_lineage import DataLineage
+        from finwiz.utils.data_quality_metrics import DataQualityMetrics
+
         try:
-            # Calculate component scores
+            # Initialize data quality tracking (Task 3.2)
+            self._data_quality_metrics = DataQualityMetrics()
+            self._current_ticker = ticker
+
+            # Initialize data lineage tracking (Task 9.2)
+            self._lineage_tracker = DataLineage(
+                ticker=ticker,
+                asset_class=asset_class,
+                scorer_version="1.0.0",  # TODO: Get from package version
+                formula_version="1.0.0",
+            )
+
+            # Define expected fields based on asset class
+            expected_fields = self._get_expected_fields(asset_class)
+            self._data_quality_metrics.set_expected_fields(expected_fields)
+
+            # Calculate component scores (with data quality tracking)
             fundamental_score, fundamental_details = self.calculate_fundamental_score(asset_class, data)
             technical_score, technical_details = self.calculate_technical_score(data)
             risk_score, risk_details = self.calculate_risk_score(data)
@@ -61,13 +85,61 @@ class DeepAnalysisScorer:
             # Calculate weighted composite score (40% + 30% + 30%)
             composite_score = 0.40 * fundamental_score + 0.30 * technical_score + 0.30 * risk_score
 
+            # Track composite score calculation in lineage (Task 9.2)
+            self._lineage_tracker.add_calculation(
+                step_id="composite_score",
+                step_name="composite_score",
+                inputs={
+                    "fundamental_score": fundamental_score,
+                    "technical_score": technical_score,
+                    "risk_score": risk_score,
+                },
+                calculation="Weighted average of component scores",
+                formula="0.40 * fundamental + 0.30 * technical + 0.30 * risk",
+                output=composite_score,
+                metadata={"weights": {"fundamental": 0.40, "technical": 0.30, "risk": 0.30}},
+            )
+
             # Assign grade and recommendation
             grade = self.assign_grade(composite_score)
+
+            # Track grade assignment in lineage (Task 9.2)
+            self._lineage_tracker.add_calculation(
+                step_id="grade_assignment",
+                step_name="grade",
+                inputs={"composite_score": composite_score},
+                calculation="Grade assignment based on composite score",
+                formula=f"grading_scale[{composite_score:.3f}]",
+                output=grade,
+                metadata={"grading_scale": self.GRADE_THRESHOLDS},
+            )
             recommendation = self.generate_recommendation(composite_score, grade)
             confidence = self._calculate_confidence(fundamental_score, technical_score, risk_score, data)
             rationale = self.generate_rationale(
                 ticker, asset_class, composite_score, grade, fundamental_details, technical_details, risk_details
             )
+
+            # Get data quality summary
+            data_quality_summary = self._data_quality_metrics.get_summary()
+
+            # Log data quality warnings if needed
+            quality_level = data_quality_summary["quality_level"]
+            if quality_level == "low":
+                self.logger.warning(
+                    f"⚠️ Low data quality for {ticker}: "
+                    f"completeness={data_quality_summary['completeness_score']:.1%}, "
+                    f"quality={data_quality_summary['quality_score']:.1%}"
+                )
+
+            # Finalize lineage with final values (Task 9.2)
+            self._lineage_tracker.final_values = {
+                "composite_score": composite_score,
+                "grade": grade,
+                "recommendation": recommendation,
+                "fundamental_score": fundamental_score,
+                "technical_score": technical_score,
+                "risk_score": risk_score,
+            }
 
             result = DeepAnalysisResult(
                 ticker=ticker,
@@ -85,13 +157,16 @@ class DeepAnalysisScorer:
                 confidence_level=confidence,
                 warnings=[],
                 cached=False,
+                data_quality=data_quality_summary,  # Task 2.1: Include data quality metrics
+                lineage=self._lineage_tracker.model_dump(),  # Task 9.2: Include complete data lineage
             )
 
-            # Log successful scoring
+            # Log successful scoring with data quality info
             self.logger.info(
                 f"✅ Python scoring completed for {ticker}: "
                 f"Grade {grade} ({composite_score:.3f}), "
-                f"Recommendation {recommendation} ({confidence:.1%} confidence)"
+                f"Recommendation {recommendation} ({confidence:.1%} confidence), "
+                f"Quality: {quality_level} ({data_quality_summary['completeness_score']:.1%} complete)"
             )
 
             return result
@@ -1021,13 +1096,86 @@ class DeepAnalysisScorer:
             cached=False,
         )
 
+    def _get_expected_fields(self, asset_class: str) -> list[str]:
+        """
+        Get list of expected fields based on asset class.
+
+        Args:
+            asset_class: Asset class (stock, etf, crypto)
+
+        Returns:
+            List of expected field names
+
+        """
+        common_fields = ["current_price", "volatility", "max_drawdown", "beta", "rsi", "macd", "macd_signal"]
+
+        if asset_class == "stock":
+            return common_fields + ["roe", "debt_to_equity", "revenue_growth", "profit_margin"]
+        elif asset_class == "etf":
+            return common_fields + ["expense_ratio", "tracking_error", "aum"]
+        elif asset_class == "crypto":
+            return common_fields + ["market_cap", "volume_24h", "age_years"]
+        else:
+            return common_fields
+
     def _safe_get_float(self, data: dict[str, Any], key: str, default: float) -> float:
-        """Safely extract float value from data dictionary."""
+        """
+        Safely extract float value from data dictionary with data quality tracking.
+
+        Args:
+            data: Data dictionary
+            key: Key to extract
+            default: Default value if key is missing or invalid
+
+        Returns:
+            Float value (either from data or default)
+
+        """
         try:
-            value = data.get(key, default)
+            value = data.get(key)
+
             if value is None:
+                # Field is missing - track it
+                if self._data_quality_metrics:
+                    self._data_quality_metrics.record_defaulted_field(key, default)
+
+                # Track default value in lineage (Task 9.2)
+                if self._lineage_tracker:
+                    self._lineage_tracker.add_source(
+                        source_id=f"default_{key}",
+                        source_type="default",
+                        source_name="Default Value",
+                        field_name=key,
+                        raw_value=default,
+                        metadata={"reason": "field_missing"},
+                    )
+
+                self.logger.warning(f"⚠️ Missing field '{key}' for {self._current_ticker}, using default {default}")
                 return default
-            return float(value)
-        except (ValueError, TypeError):
-            self.logger.warning(f"Invalid value for {key}: {data.get(key)}, using default {default}")
+
+            # Field exists - track as calculated
+            float_value = float(value)
+            if self._data_quality_metrics:
+                self._data_quality_metrics.record_calculated_field(key)
+
+            # Track data source in lineage (Task 9.2)
+            if self._lineage_tracker:
+                self._lineage_tracker.add_source(
+                    source_id=f"data_{key}",
+                    source_type="calculation",  # From crew output/calculation
+                    source_name="Crew Output",
+                    field_name=key,
+                    raw_value=value,
+                    metadata={"data_type": type(value).__name__},
+                )
+
+            return float_value
+
+        except (ValueError, TypeError) as e:
+            # Field exists but invalid - track as defaulted
+            if self._data_quality_metrics:
+                self._data_quality_metrics.record_defaulted_field(key, default)
+            self.logger.warning(
+                f"⚠️ Invalid value for '{key}' for {self._current_ticker}: {data.get(key)} ({e}), using default {default}"
+            )
             return default

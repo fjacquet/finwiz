@@ -297,6 +297,56 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+#### Configuring Pre-commit Hooks
+
+Pre-commit hooks enforce code quality standards before commits. Here's how to configure them properly.
+
+**unittest.mock Enforcement Hook**:
+
+The hook checks for banned `unittest.mock` usage. Use precise regex to avoid false positives:
+
+```yaml
+# .pre-commit-config.yaml
+- repo: local
+  hooks:
+    - id: check-unittest-mock
+      name: Check for unittest.mock usage
+      entry: bash -c 'if grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.mock)" tests/ -r 2>/dev/null; then echo "❌ unittest.mock is banned. Use pytest-mock instead."; exit 1; fi'
+      language: system
+      pass_filenames: false
+```
+
+**Pattern Breakdown**:
+- `^[[:space:]]*` - Match start of line with optional whitespace
+- `-E` - Use extended regex for better pattern matching
+- `\.` - Escaped dots for literal dot matching
+- Only matches actual import statements, not documentation or comments
+
+**Testing the Hook**:
+
+```bash
+# Test on actual imports (should fail)
+echo "from unittest.mock import Mock" > /tmp/test.py
+grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.mock)" /tmp/test.py
+# Result: Match found ✅
+
+# Test on documentation strings (should pass)
+echo '- **Testing**: pytest with pytest-mock (unittest.mock banned)' > /tmp/test.py
+grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.mock)" /tmp/test.py
+# Result: No match ✅
+
+# Test on comments (should pass)
+echo '# unittest.mock is banned' > /tmp/test.py
+grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.mock)" /tmp/test.py
+# Result: No match ✅
+```
+
+**Benefits**:
+- ✅ No false positives on documentation
+- ✅ No false positives on comments
+- ✅ Only catches actual import statements
+- ✅ Can mention unittest.mock in docs safely
+
 ### CI Pipeline
 
 ```yaml

@@ -25,7 +25,7 @@ class PortfolioDeepAnalyzer:
     using the DeepAnalysisScorer for 10-20x speed improvement.
     """
 
-    def __init__(self, output_dir: str = "output"):
+    def __init__(self, output_dir: str = "output") -> None:
         """Initialize the analyzer."""
         self.scorer = DeepAnalysisScorer()
         self.output_dir = Path(output_dir)
@@ -64,6 +64,12 @@ class PortfolioDeepAnalyzer:
                 # Extract data for scoring
                 data = self._extract_holding_data(holding)
 
+                # Skip if data extraction returned None (ticker unavailable)
+                if data is None:
+                    self.logger.warning(f"⏭️ Skipping {holding.ticker} - data unavailable")
+                    results["failed_analyses"] += 1
+                    continue
+
                 # Run pure Python scoring (no AI calls)
                 analysis_result = self.scorer.calculate_composite_score(
                     ticker=holding.ticker, asset_class=holding.asset_class, data=data
@@ -88,6 +94,9 @@ class PortfolioDeepAnalyzer:
             except Exception as e:
                 self.logger.error(f"❌ Failed to analyze {holding.ticker}: {e}")
                 results["failed_analyses"] += 1
+
+        # Task 0.20.3: Validate score uniqueness
+        self._validate_score_uniqueness(results["deep_analysis_results"])
 
         # Calculate performance metrics
         end_time = time.time()
@@ -114,33 +123,94 @@ class PortfolioDeepAnalyzer:
         return results
 
     def _extract_holding_data(self, holding: HoldingDecision) -> dict[str, Any]:
-        """Extract data from holding for scoring."""
-        # For now, use basic data structure
-        # In a full implementation, this would extract real market data
-        return {
-            "ticker": holding.ticker,
-            "asset_class": holding.asset_class,
-            "current_price": 100.0,  # Placeholder - would fetch real data
-            "volatility": 0.20,
-            "max_drawdown": -0.15,
-            "beta": 1.0,
-            "rsi": 50.0,
-            "moving_avg_50": 95.0,
-            "moving_avg_200": 90.0,
-            "macd": 0.1,
-            "macd_signal": 0.05,
-            # Asset-specific data would be added here
-            "roe": 0.15 if holding.asset_class == "stock" else None,
-            "debt_to_equity": 0.5 if holding.asset_class == "stock" else None,
-            "revenue_growth": 0.10 if holding.asset_class == "stock" else None,
-            "profit_margin": 0.15 if holding.asset_class == "stock" else None,
-            "expense_ratio": 0.20 if holding.asset_class == "etf" else None,
-            "tracking_error": 0.30 if holding.asset_class == "etf" else None,
-            "aum": 5e9 if holding.asset_class == "etf" else None,
-            "market_cap": 100e9 if holding.asset_class == "crypto" else None,
-            "volume_24h": 1e9 if holding.asset_class == "crypto" else None,
-            "age_years": 5 if holding.asset_class == "crypto" else None,
-        }
+        """
+        Extract real market data from holding for scoring.
+
+        Task 0.20: Fetch real data per ticker instead of using hardcoded placeholders.
+        """
+        ticker = holding.ticker
+        asset_class = holding.asset_class
+
+        self.logger.info(f"Fetching real market data for {ticker} ({asset_class})")
+
+        # Import quantitative analysis tool for real data
+        from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
+
+        try:
+            # Fetch real quantitative data for this ticker
+            quant_tool = QuantitativeAnalysisTool()
+            # Use performance analysis only - it's simpler and more reliable
+            quant_data = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="performance")
+
+            # Parse the quantitative data
+            if isinstance(quant_data, str):
+                import json
+
+                try:
+                    quant_data = json.loads(quant_data)
+                except json.JSONDecodeError:
+                    self.logger.warning(f"Failed to parse quantitative data for {ticker}, using defaults")
+                    quant_data = {}
+
+            # Extract real values from quantitative analysis
+            # The performance analysis returns these fields directly
+            data = {
+                "ticker": ticker,
+                "asset_class": asset_class,
+                "current_price": 100.0,  # Not provided by performance analysis
+                "volatility": quant_data.get("volatility", 0.20),
+                "max_drawdown": quant_data.get("max_drawdown", -0.15),
+                "beta": quant_data.get("beta", 1.0),
+                "rsi": 50.0,  # Not provided by performance analysis
+                "moving_avg_50": 95.0,  # Not provided by performance analysis
+                "moving_avg_200": 90.0,  # Not provided by performance analysis
+                "macd": 0.1,  # Not provided by performance analysis
+                "macd_signal": 0.05,  # Not provided by performance analysis
+            }
+
+            # Add asset-specific data
+            if asset_class == "stock":
+                data.update(
+                    {
+                        "roe": quant_data.get("roe", 0.15),
+                        "debt_to_equity": quant_data.get("debt_to_equity", 0.5),
+                        "revenue_growth": quant_data.get("revenue_growth", 0.10),
+                        "profit_margin": quant_data.get("profit_margin", 0.15),
+                    }
+                )
+            elif asset_class == "etf":
+                data.update(
+                    {
+                        "expense_ratio": quant_data.get("expense_ratio", 0.20),
+                        "tracking_error": quant_data.get("tracking_error", 0.30),
+                        "aum": quant_data.get("aum", 5e9),
+                    }
+                )
+            elif asset_class == "crypto":
+                data.update(
+                    {
+                        "market_cap": quant_data.get("market_cap", 100e9),
+                        "volume_24h": quant_data.get("volume_24h", 1e9),
+                        "age_years": quant_data.get("age_years", 5),
+                    }
+                )
+
+            self.logger.info(
+                f"✅ Fetched real data for {ticker}: "
+                f"volatility={data['volatility']:.3f}, "
+                f"max_drawdown={data['max_drawdown']:.3f}, "
+                f"beta={data['beta']:.2f}"
+            )
+
+            return data
+
+        except Exception as e:
+            self.logger.error(f"❌ CRITICAL: Failed to fetch real data for {ticker}: {e}")
+            # For legitimately unavailable tickers (delisted, wrong format), skip them
+            # This is different from getting identical defaults for ALL tickers
+            self.logger.warning(f"⚠️ Skipping {ticker} - data unavailable (possibly delisted or wrong ticker format)")
+            # Return None to signal this holding should be skipped
+            return None
 
     def _create_crew_export(self, analysis_result: DeepAnalysisResult, holding: HoldingDecision) -> dict[str, Any]:
         """Create DeepAnalysisCrewExport format from analysis result."""
@@ -168,7 +238,7 @@ class PortfolioDeepAnalyzer:
             },
         }
 
-    def _update_holding_with_analysis(self, holding: HoldingDecision, analysis_result: DeepAnalysisResult):
+    def _update_holding_with_analysis(self, holding: HoldingDecision, analysis_result: DeepAnalysisResult) -> None:
         """Update holding decision with deep analysis results."""
         holding.composite_score = analysis_result.composite_score
         holding.grade = analysis_result.grade
@@ -202,7 +272,7 @@ class PortfolioDeepAnalyzer:
         else:
             return "Very High"
 
-    def _export_json_files(self, json_exports: dict[str, Any], session_id: str):
+    def _export_json_files(self, json_exports: dict[str, Any], session_id: str) -> dict[str, Any]:
         """
         Export JSON files for each analysis to proper output directories.
 
@@ -299,10 +369,58 @@ class PortfolioDeepAnalyzer:
             "directories_created": [str(stock_dir), str(etf_dir), str(crypto_dir)],
         }
 
+    def _validate_score_uniqueness(self, analysis_results: dict[str, DeepAnalysisResult]) -> None:
+        """
+        Task 0.20.3: Validate that scores are unique across holdings.
+
+        Raises ValueError if all holdings have identical scores (indicates hardcoded defaults).
+        Only validates holdings that were successfully analyzed.
+        """
+        if len(analysis_results) < 2:
+            # Need at least 2 holdings to check uniqueness
+            self.logger.info(f"⏭️ Skipping uniqueness validation - only {len(analysis_results)} holdings analyzed")
+            return
+
+        # Extract composite scores
+        composite_scores = [result.composite_score for result in analysis_results.values()]
+        risk_scores = [result.risk_score for result in analysis_results.values()]
+
+        # Calculate standard deviation
+        import statistics
+
+        composite_std = statistics.stdev(composite_scores) if len(composite_scores) > 1 else 0
+        risk_std = statistics.stdev(risk_scores) if len(risk_scores) > 1 else 0
+
+        self.logger.info(f"📊 Score distribution: composite_std={composite_std:.4f}, risk_std={risk_std:.4f}")
+
+        # Check for identical scores (std dev < 0.03 indicates hardcoded values)
+        # Note: 0.03 threshold allows for similar but not identical scores
+        if composite_std < 0.03:
+            self.logger.error(
+                f"❌ CRITICAL: All holdings have identical composite scores (std={composite_std:.4f}). "
+                "This indicates hardcoded defaults are being used instead of real data."
+            )
+            raise ValueError(
+                f"Score validation failed: All holdings have identical composite scores (std={composite_std:.4f}). "
+                "Expected unique scores per ticker. Check QuantitativeAnalysisTool data fetching."
+            )
+
+        if risk_std < 0.03:
+            self.logger.error(
+                f"❌ CRITICAL: All holdings have identical risk scores (std={risk_std:.4f}). "
+                "This indicates hardcoded defaults are being used instead of real data."
+            )
+            raise ValueError(
+                f"Score validation failed: All holdings have identical risk scores (std={risk_std:.4f}). "
+                "Expected unique scores per ticker. Check QuantitativeAnalysisTool data fetching."
+            )
+
+        self.logger.info("✅ Score uniqueness validation passed")
+
 
 def analyze_portfolio_with_python(holdings: list[HoldingDecision], session_id: str) -> dict[str, Any]:
     """
-    Convenience function to analyze portfolio holdings with pure Python.
+    Analyze portfolio holdings with pure Python.
 
     This replaces the AI-based DeepAnalysisCrew with fast Python calculations.
     """

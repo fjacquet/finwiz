@@ -245,11 +245,25 @@ class AlternativeFinder:
         holding: HoldingProfile,
     ) -> Alternative | None:
         """Create Alternative object from A+ discovery item."""
+        from finwiz.exceptions.data_quality import MissingRequiredFieldError
+
         try:
             ticker = item.get("ticker", "")
             name = item.get("name", ticker)
-            composite_score = item.get("composite_score", 0.85)
-            grade = item.get("grade", "A+")
+
+            # NO DEFAULTS - require explicit values
+            if "composite_score" not in item or item["composite_score"] is None:
+                raise MissingRequiredFieldError(
+                    ticker=ticker, field="composite_score", context={"source": "aplus_discovery", "item_keys": list(item.keys())}
+                )
+
+            if "grade" not in item or item["grade"] is None:
+                raise MissingRequiredFieldError(
+                    ticker=ticker, field="grade", context={"source": "aplus_discovery", "item_keys": list(item.keys())}
+                )
+
+            composite_score = float(item["composite_score"])
+            grade = str(item["grade"])
 
             # Calculate expected improvement
             current_grade_value = self.grade_values.get(holding.grade, 5)

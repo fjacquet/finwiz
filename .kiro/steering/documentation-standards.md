@@ -1,3 +1,7 @@
+---
+inclusion: always
+---
+
 # Documentation Standards for FinWiz
 
 Comprehensive standards for creating, organizing, and maintaining technical documentation in the FinWiz project.

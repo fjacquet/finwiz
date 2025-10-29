@@ -39,6 +39,7 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 - [Setup Environment](how-to/setup_environment.md) - Environment configuration
 - [Performance Optimization](how-to/performance_optimization.md) - Speed up analysis
 - [Template Configuration](how-to/template_configuration.md) - Customize reports
+- [Use Python Pipeline](how-to/use_python_pipeline.md) - Fast, deterministic analysis
 
 ### 📖 [Reference](reference/index.md)
 
@@ -47,6 +48,7 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 - [API Reference](reference/API_REFERENCE.md) - Complete API documentation
 - [CLI Commands](reference/cli_commands.md) - Command-line interface
 - [Schema Documentation](reference/schemas/index.md) - Interactive data models
+- [Python Pipeline Integration](reference/integration/python_pipeline_integration.md) - Integration API reference
 
 ### 💡 [Explanations](explanations/index.md)
 
@@ -55,6 +57,7 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 - [Architecture](explanations/ARCHITECTURE.md) - System design overview
 - [Design Principles](explanations/design_principles.md) - Core philosophy
 - [Data Flow](explanations/data_flow.md) - Data processing architecture
+- [Python Pipeline Architecture](explanations/python_pipeline_architecture.md) - Pure Python analysis pipeline
 
 ## Documentation Features
 
@@ -74,6 +77,13 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 - **Deployment Automation**: GitHub Pages integration with staging environments
 
 ## Key Features
+
+### Pure Python Pipeline
+
+- **10-20x Faster**: Deterministic Python analysis vs AI-based processing
+- **100% Cost Reduction**: Zero LLM calls for portfolio analysis
+- **Deterministic Results**: Same input always produces same output
+- **Full Integration**: Deep analysis, A+ discovery, backtesting, and reporting
 
 ### Multi-Asset Analysis
 

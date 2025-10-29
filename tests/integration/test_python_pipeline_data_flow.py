@@ -17,7 +17,8 @@ import pytest
 from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 from finwiz.reporting.python_report_generator import generate_python_report
-from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview, RiskAssessment
+from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 from finwiz.scoring.portfolio_deep_analyzer import analyze_portfolio_with_python
 
 
@@ -39,7 +40,7 @@ class TestPythonPipelineDataFlow:
                 grade_description="Grade A+ - Exceptional AI leader",
                 recommended_action="BUY",
                 rationale_bullets=["AI market leader", "Strong growth", "Excellent margins"],
-                risk=RiskAssessment(score=2.8, level="Medium", risk_factors=["Tech volatility", "Competition"]),
+                risk=RiskAssessmentStandardized(score=2.8, level="Medium", risk_factors=["Tech volatility", "Competition"]),
                 alternatives=[],
             ),
             HoldingDecision(
@@ -53,7 +54,7 @@ class TestPythonPipelineDataFlow:
                 grade_description="Grade A+ - EV innovation leader",
                 recommended_action="BUY",
                 rationale_bullets=["EV market leader", "Innovation", "Strong brand"],
-                risk=RiskAssessment(score=3.2, level="Medium-High", risk_factors=["Volatility", "Regulatory risk"]),
+                risk=RiskAssessmentStandardized(score=3.2, level="High", risk_factors=["Volatility", "Regulatory risk"]),
                 alternatives=[],
             ),
             HoldingDecision(
@@ -67,7 +68,7 @@ class TestPythonPipelineDataFlow:
                 grade_description="Grade A - Strong tech ETF",
                 recommended_action="BUY",
                 rationale_bullets=["Tech exposure", "Low fees", "Liquidity"],
-                risk=RiskAssessment(score=2.5, level="Medium", risk_factors=["Tech concentration", "Market risk"]),
+                risk=RiskAssessmentStandardized(score=2.5, level="Medium", risk_factors=["Tech concentration", "Market risk"]),
                 alternatives=[],
             ),
             HoldingDecision(
@@ -81,7 +82,7 @@ class TestPythonPipelineDataFlow:
                 grade_description="Grade A+ - Leading smart contract platform",
                 recommended_action="BUY",
                 rationale_bullets=["Smart contracts", "DeFi ecosystem", "Network effects"],
-                risk=RiskAssessment(score=4.2, level="High", risk_factors=["Crypto volatility", "Regulatory uncertainty"]),
+                risk=RiskAssessmentStandardized(score=4.2, level="High", risk_factors=["Crypto volatility", "Regulatory uncertainty"]),
                 alternatives=[],
             ),
             HoldingDecision(
@@ -95,7 +96,7 @@ class TestPythonPipelineDataFlow:
                 grade_description="Grade D - Struggling traditional automaker",
                 recommended_action="SELL",
                 rationale_bullets=["Declining margins", "EV transition challenges", "Debt concerns"],
-                risk=RiskAssessment(score=3.8, level="High", risk_factors=["Industry disruption", "Financial stress"]),
+                risk=RiskAssessmentStandardized(score=3.8, level="High", risk_factors=["Industry disruption", "Financial stress"]),
                 alternatives=[],
             ),
         ]
@@ -188,9 +189,7 @@ class TestPythonPipelineDataFlow:
 
         # Should find A+ opportunities (NVDA, TSLA, ETH have A+ grades, QQQ has A)
         assert discovery_results["has_a_plus_analysis"] is True, "Should detect A+ analysis exists"
-        assert discovery_results["total_opportunities_found"] >= 3, (
-            f"Should find ≥3 A+ opportunities, found {discovery_results['total_opportunities_found']}"
-        )
+        assert discovery_results["total_opportunities_found"] >= 3, f"Should find ≥3 A+ opportunities, found {discovery_results['total_opportunities_found']}"
 
         # Verify specific A+ holdings are identified
         aplus_tickers = [h["ticker"] for h in discovery_results["aplus_holdings"]]
@@ -207,9 +206,7 @@ class TestPythonPipelineDataFlow:
         # Verify opportunity details
         for holding in discovery_results["aplus_holdings"]:
             assert holding["grade"] in ["A+", "A"], f"All opportunities should be A+ or A grade, found {holding['grade']}"
-            assert holding["composite_score"] >= 0.80, (
-                f"A+ opportunities should have high scores, {holding['ticker']} has {holding['composite_score']}"
-            )
+            assert holding["composite_score"] >= 0.80, f"A+ opportunities should have high scores, {holding['ticker']} has {holding['composite_score']}"
             assert "analysis_file" in holding, "Should reference source analysis file"
 
         print("✅ A+ Discovery Results:")
@@ -217,9 +214,7 @@ class TestPythonPipelineDataFlow:
         print(f"   📈 A+ tickers: {aplus_tickers}")
         print("   ✅ No false positives (D grade excluded)")
 
-    def test_should_execute_backtesting_when_aplus_candidates_exist(
-        self, aplus_portfolio_holdings, session_id, cleanup_output_files
-    ):
+    def test_should_execute_backtesting_when_aplus_candidates_exist(self, aplus_portfolio_holdings, session_id, cleanup_output_files):
         """
         Test that backtesting executes when A+ candidates are found.
 
@@ -236,9 +231,7 @@ class TestPythonPipelineDataFlow:
 
         # Should execute backtesting since A+ candidates exist
         assert backtesting_results["backtesting_executed"] is True, "Backtesting should execute when A+ candidates exist"
-        assert backtesting_results["candidates_count"] >= 3, (
-            f"Should have ≥3 candidates, found {backtesting_results['candidates_count']}"
-        )
+        assert backtesting_results["candidates_count"] >= 3, f"Should have ≥3 candidates, found {backtesting_results['candidates_count']}"
 
         # Verify backtesting results structure
         assert "results" in backtesting_results
@@ -279,9 +272,7 @@ class TestPythonPipelineDataFlow:
         print(f"   📈 Results generated: {len(backtesting_results['results'])}")
         print(f"   📄 Results file created: {results_file_path.exists()}")
 
-    def test_should_generate_final_report_with_actual_data_not_placeholders(
-        self, aplus_portfolio_holdings, session_id, cleanup_output_files
-    ):
+    def test_should_generate_final_report_with_actual_data_not_placeholders(self, aplus_portfolio_holdings, session_id, cleanup_output_files):
         """
         Test that final report contains real analysis data, not placeholders.
 
@@ -298,9 +289,7 @@ class TestPythonPipelineDataFlow:
 
         portfolio_review = PortfolioReview(as_of=datetime.now(), base_currency="USD", holdings=aplus_portfolio_holdings)
 
-        report_path = generate_python_report(
-            portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id
-        )
+        report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 
         # Verify report was generated
         assert report_path is not None
@@ -402,9 +391,7 @@ class TestPythonPipelineDataFlow:
 
         portfolio_review = PortfolioReview(as_of=datetime.now(), base_currency="USD", holdings=aplus_portfolio_holdings)
 
-        report_path = generate_python_report(
-            portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id
-        )
+        report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 
         assert Path(report_path).exists()
         print(f"      ✅ Final report generated: {Path(report_path).name}")
@@ -413,9 +400,7 @@ class TestPythonPipelineDataFlow:
         print("   5️⃣ Validating data consistency...")
 
         # A+ opportunities in discovery should match analysis results
-        analysis_aplus = [
-            ticker for ticker, result in analysis_results["deep_analysis_results"].items() if result.grade in ["A+", "A"]
-        ]
+        analysis_aplus = [ticker for ticker, result in analysis_results["deep_analysis_results"].items() if result.grade in ["A+", "A"]]
 
         discovery_aplus = [h["ticker"] for h in discovery_results["aplus_holdings"]]
 

@@ -20,7 +20,7 @@ from pathlib import Path
 class AnalysisVerifier:
     """Verify completeness and freshness of FinWiz analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.output_dir = Path("output")
         self.issues = []
         self.warnings = []

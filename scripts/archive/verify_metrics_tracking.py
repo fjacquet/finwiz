@@ -17,7 +17,7 @@ from pathlib import Path
 class MockState:
     """Mock Flow state for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.session_id = "test-session-123"
         self.batch_prefetch_metrics = {
             "total_tickers": 3,

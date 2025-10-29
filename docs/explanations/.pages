@@ -8,3 +8,4 @@ nav:
   - AI Architecture: ai_architecture.md
   - Investment Methodology: investment_methodology.md
   - Risk Framework: risk_framework.md
+  - Test Structure Evolution: test_structure_evolution.md

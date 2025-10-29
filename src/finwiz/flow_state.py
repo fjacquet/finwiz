@@ -45,15 +45,37 @@ class DeepAnalysisResult(BaseModel):
     technical_score: float | None = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
     risk_score: float | None = Field(None, ge=0.0, le=5.0, description="Risk score (0-5 scale)")
 
-    # Data quality and freshness
+    # Data quality and freshness (NEW - Task 2.1)
     data_freshness_hours: float = Field(..., ge=0.0, description="Age of market data in hours")
     confidence_level: float = Field(..., ge=0.0, le=1.0, description="Confidence level in analysis (0.0-1.0)")
     warnings: list[str] = Field(default_factory=list, description="List of analysis warnings")
+    data_quality: dict[str, Any] | None = Field(
+        None, description="Data quality metrics tracking calculated/defaulted/missing fields"
+    )
+
+    # Data lineage (NEW - Task 9.2)
+    lineage: dict[str, Any] | None = Field(
+        None, description="Complete data lineage from sources through calculations to final results"
+    )
 
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")
 
     model_config = {"extra": "forbid", "str_strip_whitespace": True, "ser_json_timedelta": "iso8601", "ser_json_bytes": "base64"}
+
+    @property
+    def quality_level(self) -> str:
+        """Get quality level from data_quality metrics."""
+        if self.data_quality and "quality_level" in self.data_quality:
+            return self.data_quality["quality_level"]
+        return "unknown"
+
+    @property
+    def completeness_score(self) -> float:
+        """Get completeness score from data_quality metrics."""
+        if self.data_quality and "completeness_score" in self.data_quality:
+            return self.data_quality["completeness_score"]
+        return 0.5  # Neutral if unknown
 
 
 class FinwizState(BaseModel):

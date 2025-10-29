@@ -94,7 +94,7 @@ class OptimizationValidator:
     # Performance degradation threshold
     PERFORMANCE_DEGRADATION_THRESHOLD = 10.0  # 10%
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize optimization validator."""
         self.perf_config = get_performance_config_manager()
         self.mode = self.perf_config.get_mode()

@@ -1,3 +1,7 @@
+---
+inclusion: always
+---
+
 # FinWiz Development Standards
 
 Comprehensive development standards for the FinWiz AI-powered financial analysis platform.

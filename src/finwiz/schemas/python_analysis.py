@@ -89,9 +89,7 @@ class PythonPortfolioAnalysisResult(BaseModel):
     weighted_grade: float = Field(..., ge=0.0, le=1.0, description="Value-weighted average grade score")
 
     # Holdings Analysis
-    holdings_by_grade: dict[str, int] = Field(
-        default_factory=dict, description="Count of holdings by grade (A+, A, B+, etc.)"
-    )
+    holdings_by_grade: dict[str, int] = Field(default_factory=dict, description="Count of holdings by grade (A+, A, B+, etc.)")
     holdings_by_recommendation: dict[str, int] = Field(
         default_factory=dict, description="Count of holdings by recommendation (BUY, HOLD, SELL)"
     )
@@ -103,4 +101,3 @@ class PythonPortfolioAnalysisResult(BaseModel):
     # Performance
     execution_time_seconds: float = Field(..., ge=0.0, description="Total analysis execution time")
     total_cost_usd: float = Field(default=0.0, ge=0.0, description="Total analysis cost (should be $0 for Python)")
-

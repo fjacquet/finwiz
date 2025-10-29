@@ -40,7 +40,7 @@ class URLValidator:
     # Valid URL protocols
     VALID_PROTOCOLS = ["http", "https"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize URL validator."""
         self.logger = logger
 

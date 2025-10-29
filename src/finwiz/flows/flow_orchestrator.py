@@ -330,7 +330,7 @@ class FinwizFlow(Flow[FinwizState]):
             fundamental_score = None
             technical_score = None
             risk_score = None
-            composite_score = 0.6  # Default fallback score
+            composite_score = None  # Will be calculated or raise error if missing
 
             # Try to extract scores from crew result
             # CrewAI results can be accessed via .pydantic or .raw attributes
@@ -398,6 +398,9 @@ class FinwizFlow(Flow[FinwizState]):
                         composite_score = composite_score * (1.0 - risk_penalty)
 
             # Ensure composite_score is within valid range
+            if composite_score is None:
+                logger.error(f"❌ CRITICAL: No composite_score calculated for {ticker}")
+                raise ValueError(f"Failed to calculate composite_score for {ticker}. Cannot proceed without valid score.")
             composite_score = max(0.0, min(1.0, composite_score))
 
             # Calculate letter grade using existing grading system
@@ -429,29 +432,10 @@ class FinwizFlow(Flow[FinwizState]):
             )
 
         except Exception as e:
-            logger.error(f"Error parsing crew output for {ticker}: {e}", exc_info=True)
-
-            # Return fallback result with default scores
-            grade_info = score_to_grade(0.6)  # Default to C+ grade
-
-            return CrewAnalysisResult(
-                ticker=ticker,
-                asset_class=asset_class,
-                crew_name=crew_name,
-                analyzed_at=datetime.now(),
-                fundamental_score=None,
-                technical_score=None,
-                risk_score=None,
-                composite_score=0.6,
-                grade=grade_info.grade,
-                metrics={
-                    "grade_description": "Analysis incomplete - using fallback",
-                    "recommended_action": grade_info.action,
-                    "grade_emoji": grade_info.emoji,
-                    "error": str(e),
-                },
-                raw_output={},
-            )
+            logger.error(f"❌ CRITICAL: Failed to parse crew output for {ticker}: {e}", exc_info=True)
+            # FAIL LOUDLY - Don't return fallback data for financial analysis
+            # This is money - we need accurate data or nothing
+            raise ValueError(f"Failed to parse crew output for {ticker}. Cannot proceed with invalid financial data.") from e
 
     @listen("analyze_and_update_portfolio")
     def check_crypto(self) -> dict[str, Any]:
@@ -760,9 +744,10 @@ class FinwizFlow(Flow[FinwizState]):
         if failure_rate > 0.5:
             # More than 50% failed - fallback to sequential mode
             logger.warning(f"Batch pre-fetch failure rate too high: {failure_rate * 100:.1f}%")
+            failed_count = len(tickers) - successful_count
             return self._fallback_to_sequential_mode(
                 tickers,
-                f"Batch pre-fetch failure rate too high: {failure_rate * 100:.1f}% ({len(tickers) - successful_count}/{len(tickers)} failed)",
+                f"Batch pre-fetch failure rate too high: {failure_rate * 100:.1f}% ({failed_count}/{len(tickers)} failed)",
             )
 
         # Step 4: Store pre-fetched data in Flow state
@@ -1092,7 +1077,8 @@ class FinwizFlow(Flow[FinwizState]):
                 ticker_duration = time.time() - ticker_start_time
                 ticker_execution_times[ticker] = ticker_duration
                 logger.info(
-                    f"Deep analysis progress: {processed_count}/{len(holdings)} holdings (ticker {ticker} completed in {ticker_duration:.1f}s)"
+                    f"Deep analysis progress: {processed_count}/{len(holdings)} holdings "
+                    f"(ticker {ticker} completed in {ticker_duration:.1f}s)"
                 )
 
             except Exception as e:
@@ -1447,49 +1433,103 @@ class FinwizFlow(Flow[FinwizState]):
             DeepAnalysisResult with all fields properly populated
 
         """
+        from finwiz.exceptions.data_quality import MissingRequiredFieldError
         from finwiz.flow_state import DeepAnalysisResult
+        from finwiz.utils.data_extractor import CrewDataExtractor
 
-        # Extract scores and grade from crew result
-        # Crew results can be in various formats, so we need to handle them carefully
-        composite_score = 0.7  # Default fallback
-        grade = "C"  # Default fallback
+        # Initialize data extractor
+        extractor = CrewDataExtractor()
+
+        # Extract scores and grade from crew result - NO DEFAULTS
         fundamental_score = None
         technical_score = None
         risk_score = None
         warnings = []
 
-        # Try to extract data from crew result
-        if hasattr(crew_result, "pydantic"):
-            # Pydantic output available
-            pydantic_data = crew_result.pydantic
-            if pydantic_data:
-                composite_score = getattr(pydantic_data, "composite_score", composite_score)
-                grade = getattr(pydantic_data, "grade", grade)
-                fundamental_score = getattr(pydantic_data, "fundamental_score", None)
-                technical_score = getattr(pydantic_data, "technical_score", None)
-                risk_score = getattr(pydantic_data, "risk_score", None)
-        elif hasattr(crew_result, "raw"):
-            # Try to parse from raw output
-            raw_output = str(crew_result.raw)
-            # Simple parsing - look for grade and score patterns
-            if "Grade:" in raw_output or "grade:" in raw_output:
-                # Extract grade from text
+        # Try to extract grade and composite_score using data extractor
+        try:
+            if hasattr(crew_result, "pydantic"):
+                # Pydantic output available
+                pydantic_data = crew_result.pydantic
+                if pydantic_data:
+                    # Convert pydantic object to dict for extractor
+                    if hasattr(pydantic_data, "model_dump"):
+                        data_dict = pydantic_data.model_dump()
+                    elif hasattr(pydantic_data, "dict"):
+                        data_dict = pydantic_data.dict()
+                    else:
+                        # Fallback: try to access attributes directly
+                        data_dict = {
+                            "grade": getattr(pydantic_data, "grade", None),
+                            "composite_score": getattr(pydantic_data, "composite_score", None),
+                        }
+
+                    # Extract grade and score with validation
+                    grade_score_data = extractor.extract_grade_and_score(data_dict, ticker)
+                    composite_score = grade_score_data["composite_score"]
+                    grade = grade_score_data["grade"]
+
+                    # Extract optional scores
+                    fundamental_score = getattr(pydantic_data, "fundamental_score", None)
+                    technical_score = getattr(pydantic_data, "technical_score", None)
+                    risk_score = getattr(pydantic_data, "risk_score", None)
+
+                    # Validate grade-score consistency
+                    if not extractor.validate_grade_score_consistency(grade, composite_score, ticker):
+                        warnings.append(f"Grade {grade} may not match score {composite_score:.3f} - please verify crew output")
+
+            elif hasattr(crew_result, "raw"):
+                # Try to parse from raw output
+                raw_output = str(crew_result.raw)
+                # Simple parsing - look for grade and score patterns
                 import re
 
-                grade_match = re.search(r"[Gg]rade:\s*([A-F][+\-]?)", raw_output)
-                if grade_match:
-                    grade = grade_match.group(1)
+                grade = None
+                composite_score = None
 
-            if "Score:" in raw_output or "score:" in raw_output:
-                # Extract score from text
-                import re
+                if "Grade:" in raw_output or "grade:" in raw_output:
+                    # Extract grade from text
+                    grade_match = re.search(r"[Gg]rade:\s*([A-F][+\-]?)", raw_output)
+                    if grade_match:
+                        grade = grade_match.group(1)
 
-                score_match = re.search(r"[Ss]core:\s*(0?\.\d+|\d+\.\d+)", raw_output)
-                if score_match:
-                    try:
-                        composite_score = float(score_match.group(1))
-                    except ValueError:
-                        pass
+                if "Score:" in raw_output or "score:" in raw_output:
+                    # Extract score from text
+                    score_match = re.search(r"[Ss]core:\s*(0?\.\d+|\d+\.\d+)", raw_output)
+                    if score_match:
+                        try:
+                            composite_score = float(score_match.group(1))
+                        except ValueError:
+                            pass
+
+                # Validate that we got both grade and score
+                if grade is None:
+                    raise MissingRequiredFieldError(
+                        ticker=ticker, field="grade", context={"source": "crew_raw_output", "parsing": "regex"}
+                    )
+                if composite_score is None:
+                    raise MissingRequiredFieldError(
+                        ticker=ticker, field="composite_score", context={"source": "crew_raw_output", "parsing": "regex"}
+                    )
+
+            else:
+                # No recognizable output format
+                raise MissingRequiredFieldError(
+                    ticker=ticker,
+                    field="grade, composite_score",
+                    context={"source": "crew_result", "error": "No pydantic or raw output available"},
+                )
+
+        except MissingRequiredFieldError as e:
+            # Log the error with full context
+            logger.error(
+                f"Failed to extract required fields for {ticker}: {e}. "
+                f"Crew result type: {type(crew_result)}, "
+                f"Has pydantic: {hasattr(crew_result, 'pydantic')}, "
+                f"Has raw: {hasattr(crew_result, 'raw')}"
+            )
+            # Re-raise to fail loudly - no silent defaults
+            raise
 
         # Calculate data freshness (hours since analysis)
         # For now, assume data is fresh (0 hours old) since we just fetched it
@@ -1509,10 +1549,6 @@ class FinwizFlow(Flow[FinwizState]):
         # Add warning if data is cached
         if cached:
             warnings.append(f"Using cached analysis data (age: {data_freshness_hours:.1f} hours)")
-
-        # Add warning if using fallback values
-        if composite_score == 0.7 and grade == "C":
-            warnings.append("Using fallback composite score and grade - crew output may be incomplete")
 
         # Create DeepAnalysisResult with all required fields
         return DeepAnalysisResult(
@@ -1730,19 +1766,41 @@ class FinwizFlow(Flow[FinwizState]):
             if grade in ["C", "D", "F"]:
                 try:
                     # Create HoldingProfile for AlternativeFinder
-                    # Extract values with proper None handling
-                    risk_score = getattr(analysis, "risk_score", None)
-                    if risk_score is None:
-                        risk_score = 2.5  # Default risk score
+                    # Extract values - handle both dict and object types
+                    if isinstance(analysis, dict):
+                        risk_score = analysis.get("risk_score")
+                        composite_score = analysis.get("composite_score")
+                        name = analysis.get("name", ticker)
+                        asset_class = analysis.get("asset_class", "stock")
+                    else:
+                        risk_score = getattr(analysis, "risk_score", None)
+                        composite_score = getattr(analysis, "composite_score", None)
+                        name = getattr(analysis, "name", ticker)
+                        asset_class = getattr(analysis, "asset_class", "stock")
 
-                    composite_score = getattr(analysis, "composite_score", None)
+                    # FAIL LOUDLY - NO DEFAULTS FOR FINANCIAL DATA
+                    if risk_score is None:
+                        logger.error(
+                            f"❌ CRITICAL: Missing risk_score for {ticker} - cannot make investment decisions without risk data"
+                        )
+                        raise ValueError(
+                            f"Missing required field 'risk_score' for {ticker}. "
+                            f"Cannot proceed with financial analysis without risk assessment."
+                        )
+
                     if composite_score is None:
-                        composite_score = 0.6  # Default composite score
+                        logger.error(
+                            f"❌ CRITICAL: Missing composite_score for {ticker} - cannot make investment decisions without score"
+                        )
+                        raise ValueError(
+                            f"Missing required field 'composite_score' for {ticker}. "
+                            f"Cannot proceed with financial analysis without composite score."
+                        )
 
                     holding_profile = HoldingProfile(
                         ticker=ticker,
-                        name=getattr(analysis, "name", ticker),
-                        asset_class=getattr(analysis, "asset_class", "stock"),
+                        name=name,
+                        asset_class=asset_class,
                         grade=grade,
                         composite_score=composite_score,
                         risk_score=risk_score,
@@ -2132,8 +2190,29 @@ class FinwizFlow(Flow[FinwizState]):
                         ticker = holding.get("ticker", "UNKNOWN")
                         logger.info(f"DEBUG: Converting holding {idx + 1}/{len(holdings)}: {ticker}")
 
-                        # Create HoldingDecision from holding dict with all required fields
-                        grade = holding.get("grade", "C")
+                        # Validate required fields - NO SILENT DEFAULTS (Task 5.1)
+                        if "grade" not in holding or holding["grade"] is None:
+                            logger.error(
+                                f"❌ Missing grade for {ticker} in portfolio review. "
+                                f"This indicates deep analysis failed or was not run. "
+                                f"Available keys: {list(holding.keys())}"
+                            )
+                            # Use conservative fallback with clear warning
+                            grade = "C"
+                            logger.warning(f"⚠️ Using conservative fallback grade 'C' for {ticker}")
+                        else:
+                            grade = holding["grade"]
+
+                        # Validate composite_score (Task 5.1)
+                        if "composite_score" not in holding or holding["composite_score"] is None:
+                            logger.error(
+                                f"❌ Missing composite_score for {ticker} in portfolio review. "
+                                f"This indicates deep analysis failed or was not run."
+                            )
+                            composite_score = 0.5  # Conservative fallback
+                            logger.warning(f"⚠️ Using conservative fallback composite_score 0.5 for {ticker}")
+                        else:
+                            composite_score = float(holding["composite_score"])
 
                         holding_decision = HoldingDecision(
                             ticker=holding.get("ticker", ""),
@@ -2141,7 +2220,7 @@ class FinwizFlow(Flow[FinwizState]):
                             asset_class=holding.get("asset_class", "stock"),
                             currency=holding.get("currency", "USD"),  # Required field
                             decision=holding.get("decision", "KEEP"),  # Must be KEEP or SELL
-                            composite_score=holding.get("composite_score", 0.5),
+                            composite_score=composite_score,
                             grade=grade,
                             grade_description=holding.get("grade_description", f"Grade {grade} holding"),  # Required field
                             recommended_action=holding.get("recommended_action", "KEEP"),  # Must be KEEP or SELL
@@ -2262,10 +2341,17 @@ class FinwizFlow(Flow[FinwizState]):
                 logger.info(f"Tickers with deep analysis: {list(deep_analysis_results.keys())}")
 
                 for ticker, analysis in deep_analysis_results.items():
-                    grade = getattr(analysis, "grade", "N/A")
-                    score = getattr(analysis, "composite_score", 0.0)
-                    cached = getattr(analysis, "cached", False)
-                    crew_name = getattr(analysis, "crew_name", "Unknown")
+                    # Handle both dict and object types
+                    if isinstance(analysis, dict):
+                        grade = analysis.get("grade", "N/A")
+                        score = analysis.get("composite_score", 0.0)
+                        cached = analysis.get("cached", False)
+                        crew_name = analysis.get("crew_name", "Unknown")
+                    else:
+                        grade = getattr(analysis, "grade", "N/A")
+                        score = getattr(analysis, "composite_score", 0.0)
+                        cached = getattr(analysis, "cached", False)
+                        crew_name = getattr(analysis, "crew_name", "Unknown")
 
                     # Check if this is fallback data
                     is_fallback = grade == "D" and score == 0.6
@@ -2315,13 +2401,16 @@ class FinwizFlow(Flow[FinwizState]):
 
                 # FAIL-FAST: Halt immediately if 0% success rate (Requirement 15)
                 if len(deep_analysis_results) == 0 and self.state.total_holdings > 0:
+                    failed_tickers = ", ".join(self.state.failed_holdings) if self.state.failed_holdings else "None"
+                    timeout_tickers = ", ".join(self.state.timeout_holdings) if self.state.timeout_holdings else "None"
                     error_message = (
-                        f"❌ CRITICAL FAILURE: Deep analysis failed for ALL {self.state.total_holdings} holdings (0% success rate)\n\n"
+                        f"❌ CRITICAL FAILURE: Deep analysis failed for ALL "
+                        f"{self.state.total_holdings} holdings (0% success rate)\n\n"
                         f"Root Cause Analysis:\n"
                         f"  • Failed holdings: {len(self.state.failed_holdings)}\n"
                         f"  • Timeout holdings: {len(self.state.timeout_holdings)}\n"
-                        f"  • Failed tickers: {', '.join(self.state.failed_holdings) if self.state.failed_holdings else 'None'}\n"
-                        f"  • Timeout tickers: {', '.join(self.state.timeout_holdings) if self.state.timeout_holdings else 'None'}\n\n"
+                        f"  • Failed tickers: {failed_tickers}\n"
+                        f"  • Timeout tickers: {timeout_tickers}\n\n"
                         f"Possible Causes:\n"
                         f"  1. Template variable mismatch in crew task configurations\n"
                         f"  2. API connectivity issues (check API keys and network)\n"
@@ -3293,7 +3382,13 @@ class FinwizFlow(Flow[FinwizState]):
             logger.warning(f"Failed to extract SEC filing URLs: {e}", exc_info=True)
             return {}
 
-    def _validate_and_fix_sec_urls(self, ticker: str, sec_data: dict, url_generator, url_validator) -> dict[str, str]:
+    def _validate_and_fix_sec_urls(
+        self,
+        ticker: str,
+        sec_data: dict,
+        url_generator: Any,
+        url_validator: Any,
+    ) -> dict[str, str]:
         """
         Validate SEC URLs and regenerate them if invalid.
 
@@ -3531,11 +3626,15 @@ class FinwizFlow(Flow[FinwizState]):
                     failed_count = total_holdings - successful_count
 
                     # Calculate average composite score
-                    avg_score = (
-                        sum(r.composite_score for r in raw_deep_analysis.values()) / successful_count
-                        if successful_count > 0
-                        else 0.0
-                    )
+                    # Handle both DeepAnalysisResult objects and dicts (from serialization)
+                    scores = []
+                    for r in raw_deep_analysis.values():
+                        if isinstance(r, dict):
+                            scores.append(r.get("composite_score", 0.0))
+                        else:
+                            scores.append(r.composite_score)
+
+                    avg_score = sum(scores) / len(scores) if scores else 0.0
 
                     deep_analysis_results = {
                         "successful_analyses": successful_count,
@@ -3548,11 +3647,15 @@ class FinwizFlow(Flow[FinwizState]):
                         },
                         "results_by_ticker": {
                             ticker: {
-                                "ticker": result.ticker,
-                                "grade": result.grade,
-                                "composite_score": result.composite_score,
-                                "recommendation": result.recommendation,
-                                "asset_class": result.asset_class,
+                                "ticker": result.get("ticker") if isinstance(result, dict) else result.ticker,
+                                "grade": result.get("grade") if isinstance(result, dict) else result.grade,
+                                "composite_score": (
+                                    result.get("composite_score", 0.0) if isinstance(result, dict) else result.composite_score
+                                ),
+                                "recommendation": (
+                                    result.get("recommendation", "HOLD") if isinstance(result, dict) else result.recommendation
+                                ),
+                                "asset_class": (result.get("asset_class") if isinstance(result, dict) else result.asset_class),
                             }
                             for ticker, result in raw_deep_analysis.items()
                         },
@@ -4042,6 +4145,7 @@ class FinwizFlow(Flow[FinwizState]):
 
         Returns:
             Dictionary with grade counts (e.g., {"A+": 10, "A": 5, "B": 3, ...})
+
         """
         grade_counts: dict[str, int] = {}
 

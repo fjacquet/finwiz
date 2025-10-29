@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from finwiz.schemas.quantitative import (
+from finwiz.schemas.quantitative_crew import (
     EnhancedCryptoAnalysis,
     EnhancedETFAnalysis,
     EnhancedStockAnalysis,

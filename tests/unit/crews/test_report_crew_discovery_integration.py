@@ -31,7 +31,7 @@ class TestReportCrewDiscoveryIntegration:
 
         # Create a simple object that mimics ReportCrew's discovery methods
         class MockReportCrew:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.discovery_accessor = mock_discovery_accessor
                 self.data_accessor = mock_data_accessor
 

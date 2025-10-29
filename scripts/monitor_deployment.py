@@ -19,7 +19,7 @@ from pathlib import Path
 class DeploymentMonitor:
     """Monitors deployment status and site health."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.status_file = Path("deployment_status.json")
 
     def check_status(self, environment: str = "production") -> dict:

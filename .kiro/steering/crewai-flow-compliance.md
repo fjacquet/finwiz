@@ -1,7 +1,7 @@
 ---
-inclusion: fileMatch
-fileMatchPattern: ['**/crews/**/*.py', '**/flows/**/*.py', '**/orchestrators/**/*.py']
+inclusion: always
 ---
+
 
 # CrewAI Flow Compliance Standards
 

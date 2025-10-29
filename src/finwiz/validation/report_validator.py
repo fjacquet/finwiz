@@ -57,7 +57,7 @@ class ReportValidator:
     # Common hallucinated ticker patterns
     SUSPICIOUS_TICKERS = ["ABC", "XYZ", "LMN", "TEST", "SAMPLE", "EXAMPLE", "DEMO", "FAKE", "MOCK", "DUMMY"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize validator."""
         self.current_date = datetime.now()
 

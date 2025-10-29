@@ -39,6 +39,58 @@ class APlusDataExtractor:
             "APlusDataExtractor initialized", extra={"output_dir": str(output_dir), "discovery_dir": str(self.discovery_dir)}
         )
 
+    def _clean_json_content(self, content: str) -> str:
+        """
+        Clean JSON content to fix common formatting issues.
+
+        Fixes:
+        - Python-style numeric literals with underscores (e.g., 1_000_000 -> 1000000)
+        - Trailing commas in arrays and objects
+        - Multiple consecutive commas
+
+        Args:
+            content: Raw JSON content string
+
+        Returns:
+            Cleaned JSON content string
+
+        """
+        import re
+
+        # Remove underscores from numeric literals
+        # Match numbers with underscores: 1_000_000, 20_000_000_000, etc.
+        content = re.sub(r"(\d)_(\d)", r"\1\2", content)
+
+        # Remove trailing commas before closing brackets/braces
+        # Fix: ,] -> ]
+        content = re.sub(r",\s*]", "]", content)
+        # Fix: ,} -> }
+        content = re.sub(r",\s*}", "}", content)
+
+        # Remove multiple consecutive commas
+        # Fix: ,, -> ,
+        content = re.sub(r",\s*,", ",", content)
+
+        # Remove stray characters after closing braces/brackets
+        # Fix: }% -> }, ]% -> ]
+        content = re.sub(r"([}\]])\s*[^,\s}\]]+\s*$", r"\1", content, flags=re.MULTILINE)
+
+        # Fix incomplete JSON - add missing closing braces/brackets
+        open_braces = content.count('{')
+        close_braces = content.count('}')
+        open_brackets = content.count('[')
+        close_brackets = content.count(']')
+
+        # Add missing closing braces
+        if open_braces > close_braces:
+            content = content.rstrip() + '\n' + ('}' * (open_braces - close_braces))
+
+        # Add missing closing brackets
+        if open_brackets > close_brackets:
+            content = content.rstrip() + '\n' + (']' * (open_brackets - close_brackets))
+
+        return content
+
     def extract_aplus_opportunities(self) -> APlusOpportunityCollection | None:
         """
         Extract A+ opportunities from all discovery crew files.
@@ -120,15 +172,27 @@ class APlusDataExtractor:
 
         try:
             content = stock_file.read_text(encoding="utf-8")
-            data = json.loads(content)
+            # Fix Python-style numeric literals (underscores) which are invalid in JSON
+            content = self._clean_json_content(content)
+            try:
+                data = json.loads(content)
+            except json.JSONDecodeError as e:
+                # Log the problematic area for debugging
+                lines = content.split('\n')
+                error_line = e.lineno - 1 if e.lineno <= len(lines) else len(lines) - 1
+                context_start = max(0, error_line - 2)
+                context_end = min(len(lines), error_line + 3)
+                context = '\n'.join(f"{i+1}: {lines[i]}" for i in range(context_start, context_end))
+                self.logger.error(
+                    f"JSON parsing error in {stock_file.name} at line {e.lineno}, column {e.colno}:\n{context}"
+                )
+                raise
             opportunities = []
 
-            # Extract from a_plus_candidates array
-            candidates = data.get("a_plus_candidates", [])
+            # Extract from candidates array (actual structure)
+            candidates = data.get("candidates", [])
 
-            for idx, item in enumerate(candidates):
-                candidate = item.get("candidate", {})
-
+            for idx, candidate in enumerate(candidates):
                 # Only include A+ and A grades
                 grade = candidate.get("grade", "")
                 if grade not in ["A+", "A"]:
@@ -136,33 +200,47 @@ class APlusDataExtractor:
 
                 symbol = candidate.get("symbol", "")
                 company_name = candidate.get("name", "")
-                composite_score = item.get("composite_score", 0.85)  # Extract from item
-                confidence = item.get("confidence_level", 0.8)
+
+                # Extract fundamentals for composite score calculation
+                fundamentals = candidate.get("fundamentals", {})
+                roe = fundamentals.get("roe_3y_avg", 0)
+                revenue_growth = fundamentals.get("revenue_cagr_5y", 0)
+                debt_ratio = fundamentals.get("debt_to_equity", 0)
+
+                # Calculate composite score from fundamentals
+                composite_score = min((roe / 20 * 0.4) + (revenue_growth / 15 * 0.4) + ((1 - min(debt_ratio, 1)) * 0.2), 1.0)
+                confidence = 0.85 if grade == "A+" else 0.75
 
                 # Extract risk assessment
                 risk_assessment = candidate.get("risk_assessment") or {}
                 risk_score = risk_assessment.get("score", 5.0)
 
-                # Extract rationale as list
-                rationale = item.get("rationale", [])
-                if isinstance(rationale, str):
-                    rationale = [rationale]  # Convert string to list
+                # Extract moat analysis as rationale
+                moat_analysis = candidate.get("moat_analysis", {})
+                moat_type = moat_analysis.get("moat_type", "")
+                moat_strength = moat_analysis.get("moat_strength", "")
+                rationale = [f"Moat: {moat_type}", f"Strength: {moat_strength}"] if moat_type else []
 
-                # Extract key metrics
-                key_metrics = item.get("key_metrics", {})
+                # Extract key metrics from fundamentals
+                key_metrics = {
+                    "roe_3y_avg": roe,
+                    "revenue_cagr_5y": revenue_growth,
+                    "debt_to_equity": debt_ratio,
+                    "market_cap_usd": candidate.get("market_cap_usd", 0),
+                }
 
                 # Return dict matching APlusOpportunity schema
                 opportunity = {
                     "symbol": symbol,
-                    "name": company_name,  # Changed from company_name to name
+                    "name": company_name,
                     "grade": grade,
-                    "composite_score": composite_score,  # Added required field
+                    "composite_score": composite_score,
                     "confidence": confidence,
                     "risk_score": risk_score,
-                    "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
-                    "replacement_note": candidate.get("recommended_action", ""),
-                    "rationale": rationale,  # Added as list
-                    "key_metrics": key_metrics,  # Added as dict
+                    "allocation_recommendation": moat_analysis.get("competitive_advantage", ""),
+                    "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
+                    "rationale": rationale,
+                    "key_metrics": key_metrics,
                 }
 
                 opportunities.append(opportunity)
@@ -184,15 +262,15 @@ class APlusDataExtractor:
 
         try:
             content = etf_file.read_text(encoding="utf-8")
+            # Fix Python-style numeric literals (underscores) which are invalid in JSON
+            content = self._clean_json_content(content)
             data = json.loads(content)
             opportunities = []
 
-            # Extract from a_plus_candidates array
-            candidates = data.get("a_plus_candidates", [])
+            # Extract from candidates array (actual structure)
+            candidates = data.get("candidates", [])
 
-            for idx, item in enumerate(candidates):
-                candidate = item.get("candidate", {})
-
+            for idx, candidate in enumerate(candidates):
                 # Only include A+ and A grades
                 grade = candidate.get("grade", "")
                 if grade not in ["A+", "A"]:
@@ -200,13 +278,16 @@ class APlusDataExtractor:
 
                 symbol = candidate.get("symbol", "")
                 fund_name = candidate.get("name", "")
-                composite_score = item.get("composite_score", 0.85)  # Extract from item
-                confidence = item.get("confidence_level", 0.9)
 
-                # Extract key metrics
-                key_metrics = item.get("key_metrics", {})
-                ter = key_metrics.get("ter", 0.0)
-                aum = key_metrics.get("aum_usd", 0)
+                # Extract cost metrics for composite score
+                cost_metrics = candidate.get("cost_metrics", {})
+                ter = cost_metrics.get("ter", 0.0)
+                aum = cost_metrics.get("aum_usd", 0)
+                tracking_error = cost_metrics.get("tracking_error_3y", 0.0)
+
+                # Calculate composite score from cost efficiency
+                composite_score = min((1 - ter) * 0.4 + (1 - tracking_error) * 0.4 + 0.2, 1.0)
+                confidence = 0.90 if grade == "A+" else 0.80
 
                 # Format AUM for display
                 if aum >= 1e9:
@@ -216,30 +297,37 @@ class APlusDataExtractor:
                 else:
                     aum_str = f"${aum:,.0f}"
 
-                # Add formatted AUM to key_metrics
-                key_metrics["aum_formatted"] = aum_str
-
-                # Extract rationale as list
-                rationale = item.get("rationale", [])
-                if isinstance(rationale, str):
-                    rationale = [rationale]
-
                 # Extract risk assessment
                 risk_assessment = candidate.get("risk_assessment") or {}
                 risk_score = risk_assessment.get("score", 3.0)
 
+                # Extract diversification as rationale
+                diversification = candidate.get("diversification", {})
+                holdings_count = diversification.get("holdings_count", 0)
+                top_10_concentration = diversification.get("top_10_concentration_pct", 0)
+                rationale = [f"Holdings: {holdings_count}", f"Top 10 concentration: {top_10_concentration}%"]
+
+                # Build key metrics
+                key_metrics = {
+                    "ter": ter,
+                    "aum_usd": aum,
+                    "aum_formatted": aum_str,
+                    "tracking_error_3y": tracking_error,
+                    "holdings_count": holdings_count,
+                }
+
                 # Return dict matching APlusOpportunity schema
                 opportunity = {
                     "symbol": symbol,
-                    "name": fund_name,  # Changed from fund_name to name
+                    "name": fund_name,
                     "grade": grade,
-                    "composite_score": composite_score,  # Added required field
+                    "composite_score": composite_score,
                     "confidence": confidence,
                     "risk_score": risk_score,
-                    "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
-                    "replacement_note": candidate.get("recommended_action", ""),
-                    "rationale": rationale,  # Added as list
-                    "key_metrics": key_metrics,  # Added as dict (includes ter, aum, aum_formatted)
+                    "allocation_recommendation": diversification.get("sector_breakdown", ""),
+                    "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
+                    "rationale": rationale,
+                    "key_metrics": key_metrics,
                 }
 
                 opportunities.append(opportunity)
@@ -261,15 +349,15 @@ class APlusDataExtractor:
 
         try:
             content = crypto_file.read_text(encoding="utf-8")
+            # Fix Python-style numeric literals (underscores) which are invalid in JSON
+            content = self._clean_json_content(content)
             data = json.loads(content)
             opportunities = []
 
-            # Extract from a_plus_candidates array
-            candidates = data.get("a_plus_candidates", [])
+            # Extract from candidates array (actual structure)
+            candidates = data.get("candidates", [])
 
-            for idx, item in enumerate(candidates):
-                candidate = item.get("candidate", {})
-
+            for idx, candidate in enumerate(candidates):
                 # Only include A+ and A grades
                 grade = candidate.get("grade", "")
                 if grade not in ["A+", "A"]:
@@ -277,33 +365,47 @@ class APlusDataExtractor:
 
                 symbol = candidate.get("symbol", "")
                 crypto_name = candidate.get("name", "")
-                composite_score = item.get("composite_score", 0.80)  # Extract from item
-                confidence = item.get("confidence_level", 0.85)
 
-                # Extract key metrics
-                key_metrics = item.get("key_metrics", {})
+                # Extract market metrics for composite score
+                market_cap = candidate.get("market_cap_usd", 0)
+                volume_24h = candidate.get("volume_24h_usd", 0)
 
-                # Extract rationale as list
-                rationale = item.get("rationale", [])
-                if isinstance(rationale, str):
-                    rationale = [rationale]
+                # Calculate composite score from market metrics
+                # Higher market cap and volume = higher score
+                market_cap_score = min(market_cap / 100e9, 1.0)  # Normalize to $100B
+                volume_score = min(volume_24h / 10e9, 1.0)  # Normalize to $10B daily volume
+                composite_score = (market_cap_score * 0.6 + volume_score * 0.4) * 0.9  # Max 0.9 for crypto
+                confidence = 0.85 if grade == "A+" else 0.75
 
                 # Extract risk assessment
                 risk_assessment = candidate.get("risk_assessment") or {}
                 risk_score = risk_assessment.get("score", 6.0)  # Crypto typically higher risk
 
+                # Extract technology as rationale
+                technology = candidate.get("technology", {})
+                consensus = technology.get("consensus_mechanism", "")
+                use_case = technology.get("primary_use_case", "")
+                rationale = [f"Consensus: {consensus}", f"Use case: {use_case}"] if consensus else []
+
+                # Build key metrics
+                key_metrics = {
+                    "market_cap_usd": market_cap,
+                    "volume_24h_usd": volume_24h,
+                    "consensus_mechanism": consensus,
+                }
+
                 # Return dict matching APlusOpportunity schema
                 opportunity = {
                     "symbol": symbol.replace("-USD", ""),  # Clean symbol
-                    "name": crypto_name,  # Changed from crypto_name to name
+                    "name": crypto_name,
                     "grade": grade,
-                    "composite_score": composite_score,  # Added required field
+                    "composite_score": composite_score,
                     "confidence": confidence,
                     "risk_score": risk_score,
-                    "allocation_recommendation": " ".join(rationale[:2]) if rationale else "",
-                    "replacement_note": candidate.get("recommended_action", ""),
-                    "rationale": rationale,  # Added as list
-                    "key_metrics": key_metrics,  # Added as dict
+                    "allocation_recommendation": technology.get("competitive_advantage", ""),
+                    "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
+                    "rationale": rationale,
+                    "key_metrics": key_metrics,
                 }
 
                 opportunities.append(opportunity)
@@ -502,6 +604,8 @@ class APlusDataExtractor:
                 return None
 
             content = discovery_file.read_text(encoding="utf-8")
+            # Fix Python-style numeric literals
+            content = self._clean_json_content(content)
             data = json.loads(content)
 
             # Extract market context if available
@@ -523,6 +627,8 @@ class APlusDataExtractor:
                 return None
 
             content = discovery_file.read_text(encoding="utf-8")
+            # Fix Python-style numeric literals
+            content = self._clean_json_content(content)
             data = json.loads(content)
 
             # Extract validation results which contain backtesting data

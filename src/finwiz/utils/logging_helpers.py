@@ -8,7 +8,7 @@ Usage:
     from finwiz.utils.logging_helpers import CrewLogger
 
     class MyCrew:
-        def __init__(self):
+        def __init__(self) -> None:
             self.logger = CrewLogger("MyCrew")
 
         def kickoff(self, inputs: dict) -> Any:

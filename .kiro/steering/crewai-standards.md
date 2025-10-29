@@ -1,6 +1,10 @@
+---
+inclusion: always
+---
+
 # CrewAI Development Standards for FinWiz
 
-Comprehensive standards for developing CrewAI crews, agents, and tasks in FinWiz, including performance-optimized patterns for Flow state management, agent reasoning, crew planning, and multi-agent collaboration.
+Standards for developing CrewAI crews, agents, tasks, and Flows in FinWiz, including performance optimization, state management, and architectural patterns.
 
 ## Crew Structure (Required)
 

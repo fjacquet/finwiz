@@ -315,8 +315,25 @@ class ReportConsolidator:
                 logger.debug(f"Reading {path}")
                 data = json.loads(path.read_text(encoding="utf-8"))
 
+                # Filter data to only include fields defined in the schema
+                # This handles cases where crew exports include extra fields (like raw CrewAI output)
+                schema_fields = schema_class.model_fields.keys()
+                filtered_data = {k: v for k, v in data.items() if k in schema_fields}
+
+                # Add default values for missing required fields if possible
+                if schema_name == "DiscoveryCrewExport":
+                    # Handle discovery crew exports that may be missing required fields
+                    if "session_id" not in filtered_data:
+                        filtered_data["session_id"] = self.session_id
+                    if "market_context" not in filtered_data:
+                        filtered_data["market_context"] = "Market context not available from discovery crew export"
+                    if "report_html_path" not in filtered_data:
+                        filtered_data["report_html_path"] = str(path.parent / "discovery_latest.html")
+                    if "report_json_path" not in filtered_data:
+                        filtered_data["report_json_path"] = str(path)
+
                 # Validate against Pydantic schema
-                export = schema_class.model_validate(data)
+                export = schema_class.model_validate(filtered_data)
                 exports.append(export)
                 logger.debug(f"Successfully validated {path} as {schema_name}")
 
@@ -374,9 +391,7 @@ class ReportConsolidator:
 
         return exports
 
-    def _load_deep_analysis_exports(
-        self, file_paths: list[str]
-    ) -> list[DeepAnalysisCrewExport | PythonDeepAnalysisResult]:
+    def _load_deep_analysis_exports(self, file_paths: list[str]) -> list[DeepAnalysisCrewExport | PythonDeepAnalysisResult]:
         """
         Load deep analysis exports with automatic schema detection.
 

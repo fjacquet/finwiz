@@ -112,7 +112,7 @@ Some more content here.
 
         # Create a mock page object
         class MockPage:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.title = "Test Page"
 
         processed_markdown = plugin.on_page_markdown(test_markdown, MockPage(), {}, [])

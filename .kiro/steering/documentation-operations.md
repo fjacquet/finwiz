@@ -1,3 +1,7 @@
+---
+inclusion: always
+---
+
 # Documentation Operations and Governance
 
 Operational procedures for managing, deploying, and maintaining the FinWiz MkDocs documentation site.

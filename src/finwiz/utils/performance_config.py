@@ -61,7 +61,7 @@ class OptimizationConfig:
 class PerformanceConfigManager:
     """Manager for performance optimization configuration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance configuration manager."""
         self.config = self._load_configuration()
         self._validate_configuration()

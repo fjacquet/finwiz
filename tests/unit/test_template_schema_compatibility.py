@@ -115,6 +115,7 @@ class TestTemplateSchemaCompatibility:
 
     def test_should_render_na_when_risk_score_is_none(self, risk_display_template: Template) -> None:
         """Test rendering when risk_score is None."""
+
         # Arrange - Create mock object without risk_score
         class MockAnalysisWithoutRisk:
             ticker = "UNKNOWN"
@@ -137,6 +138,7 @@ class TestTemplateSchemaCompatibility:
 
     def test_should_render_crewai_schema_with_nested_risk_assessment(self, risk_display_template: Template) -> None:
         """Test rendering with old CrewAI schema (nested risk_assessment)."""
+
         # Arrange - Mock object with nested risk_assessment
         class MockRiskAssessment:
             risk_score = 7  # 0-10 scale

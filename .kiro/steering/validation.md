@@ -1,3 +1,7 @@
+---
+inclusion: always
+---
+
 # Validation Standards for FinWiz
 
 Data validation rules and quality standards for FinWiz development.

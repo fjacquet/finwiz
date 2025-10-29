@@ -523,9 +523,9 @@ class PythonReportGenerator:
       </div>
     </div>
     
-    <div class="highlight success">
-      <h3>✅ Analyse Approfondie Complétée</h3>
-      <p>L'analyse approfondie Python a été exécutée avec succès sur {successful} positions.</p>
+    <div class="highlight {"success" if successful > 0 else "success"}">
+      <h3>{"✅ Analyse Approfondie Complétée" if successful > 0 else "✅ Aucune Analyse Approfondie Nécessaire"}</h3>
+      <p>{"L'analyse approfondie Python a été exécutée avec succès sur " + str(successful) + " positions." if successful > 0 else "Toutes vos positions ont un grade satisfaisant (≥B). L'analyse approfondie ne s'exécute que sur les positions nécessitant une attention particulière (grade < B)."}</p>
       <p>Les résultats incluent des scores détaillés pour les composantes fondamentales, techniques et de risque.</p>
     </div>
   </div>

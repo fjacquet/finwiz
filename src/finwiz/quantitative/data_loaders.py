@@ -296,7 +296,6 @@ class HistoricalDataManager:
             interval=interval,
             auto_adjust=True,
             prepost=False,
-            threads=True,
         )
 
         if data.empty:

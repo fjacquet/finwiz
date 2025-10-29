@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 class CrewExportMigrator:
     """Migrates crew export files from old format to new schema format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the migrator."""
         self.migrated_count = 0
         self.error_count = 0

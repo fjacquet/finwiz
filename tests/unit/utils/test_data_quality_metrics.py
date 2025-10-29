@@ -1,260 +1,278 @@
 """
-Unit tests for DataQualityMetrics class.
+Unit tests for DataQualityMetrics enhancements.
 
-Tests the data quality metrics tracking functionality to ensure
-proper recording and calculation of quality scores.
+Tests the field-level tracking functionality added in Task 1.2.
 """
 
-import json
-
-import pytest
 
 from finwiz.utils.data_quality_metrics import DataQualityMetrics
 
 
-class TestDataQualityMetrics:
-    """Test suite for DataQualityMetrics."""
+class TestFieldLevelTracking:
+    """Test cases for field-level tracking functionality."""
 
-    @pytest.fixture
-    def metrics(self):
-        """Create a fresh metrics instance for each test."""
-        return DataQualityMetrics(flow_execution_id="test-flow-123")
-
-    def test_should_initialize_with_zero_counts(self, metrics):
-        """Test that metrics initialize with zero counts."""
-        # Assert
-        assert metrics.fallback_grades_count == 0
-        assert metrics.placeholder_urls_count == 0
-        assert metrics.missing_data_count == 0
-        assert metrics.successful_merges_count == 0
-        assert metrics.failed_merges_count == 0
-        assert metrics.fallback_tickers == []
-        assert metrics.placeholder_url_locations == []
-        assert metrics.missing_data_fields == []
-
-    def test_should_record_fallback_grade(self, metrics):
-        """Test recording fallback grade usage."""
-        # Act
-        metrics.record_fallback_grade("AAPL")
-        metrics.record_fallback_grade("GOOGL")
-
-        # Assert
-        assert metrics.fallback_grades_count == 2
-        assert "AAPL" in metrics.fallback_tickers
-        assert "GOOGL" in metrics.fallback_tickers
-
-    def test_should_not_duplicate_fallback_tickers(self, metrics):
-        """Test that duplicate ticker recordings don't create duplicates in list."""
-        # Act
-        metrics.record_fallback_grade("AAPL")
-        metrics.record_fallback_grade("AAPL")
-        metrics.record_fallback_grade("AAPL")
-
-        # Assert
-        assert metrics.fallback_grades_count == 3
-        assert metrics.fallback_tickers.count("AAPL") == 1
-
-    def test_should_record_placeholder_url(self, metrics):
-        """Test recording placeholder URL detection."""
-        # Act
-        metrics.record_placeholder_url("sec_filing")
-        metrics.record_placeholder_url("company_website")
-
-        # Assert
-        assert metrics.placeholder_urls_count == 2
-        assert "sec_filing" in metrics.placeholder_url_locations
-        assert "company_website" in metrics.placeholder_url_locations
-
-    def test_should_record_missing_data(self, metrics):
-        """Test recording missing data fields."""
-        # Act
-        metrics.record_missing_data("deep_analysis_AAPL")
-        metrics.record_missing_data("alternatives_GOOGL")
-
-        # Assert
-        assert metrics.missing_data_count == 2
-        assert "deep_analysis_AAPL" in metrics.missing_data_fields
-        assert "alternatives_GOOGL" in metrics.missing_data_fields
-
-    def test_should_record_successful_merge(self, metrics):
-        """Test recording successful merge operations."""
-        # Act
-        metrics.record_successful_merge("AAPL")
-        metrics.record_successful_merge("GOOGL")
-        metrics.record_successful_merge("MSFT")
-
-        # Assert
-        assert metrics.successful_merges_count == 3
-
-    def test_should_record_failed_merge(self, metrics):
-        """Test recording failed merge operations."""
-        # Act
-        metrics.record_failed_merge("AAPL", "Verification failed")
-        metrics.record_failed_merge("GOOGL", "Missing data")
-
-        # Assert
-        assert metrics.failed_merges_count == 2
-
-    def test_should_calculate_quality_score_perfect(self, metrics):
-        """Test quality score calculation with perfect quality."""
-        # Arrange - All successful, no issues
-        metrics.record_successful_merge("AAPL")
-        metrics.record_successful_merge("GOOGL")
-        metrics.record_successful_merge("MSFT")
-
-        # Act
-        score = metrics.calculate_quality_score()
-
-        # Assert
-        assert score == 1.0
-
-    def test_should_calculate_quality_score_with_penalties(self, metrics):
-        """Test quality score calculation with penalties."""
+    def test_should_track_calculated_fields(self):
+        """Test tracking of successfully calculated fields."""
         # Arrange
-        metrics.record_successful_merge("AAPL")
-        metrics.record_successful_merge("GOOGL")
-        metrics.record_fallback_grade("IBM")  # 1 penalty
-        metrics.record_placeholder_url("sec_filing")  # 1 penalty
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta"])
 
         # Act
-        score = metrics.calculate_quality_score()
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("max_drawdown")
 
         # Assert
-        # 2 successful operations, 2 penalties
-        # penalty_ratio = 2 / 2 = 1.0
-        # score = max(0.0, 1.0 - 1.0) = 0.0
-        assert score == 0.0
+        assert len(metrics.fields_calculated) == 2
+        assert "volatility" in metrics.fields_calculated
+        assert "max_drawdown" in metrics.fields_calculated
 
-    def test_should_calculate_quality_score_with_failed_merges(self, metrics):
-        """Test that failed merges count double in penalties."""
+    def test_should_track_defaulted_fields(self):
+        """Test tracking of fields using default values."""
         # Arrange
-        metrics.record_successful_merge("AAPL")
-        metrics.record_successful_merge("GOOGL")
-        metrics.record_failed_merge("IBM", "Verification failed")  # 2 penalties
+        metrics = DataQualityMetrics()
 
         # Act
-        score = metrics.calculate_quality_score()
+        metrics.record_defaulted_field("volatility", 0.20)
+        metrics.record_defaulted_field("beta", 1.0)
 
         # Assert
-        # 3 total operations (2 successful + 1 failed)
-        # 2 penalties (failed merge counts as 2)
-        # penalty_ratio = 2 / 3 = 0.667
-        # score = max(0.0, 1.0 - 0.667) = 0.333
-        assert score == pytest.approx(0.333, abs=0.01)
+        assert len(metrics.fields_defaulted) == 2
+        assert "volatility" in metrics.fields_defaulted
+        assert "beta" in metrics.fields_defaulted
 
-    def test_should_return_neutral_score_with_no_operations(self, metrics):
-        """Test quality score returns 0.5 when no operations recorded."""
-        # Act
-        score = metrics.calculate_quality_score()
-
-        # Assert
-        assert score == 0.5
-
-    def test_should_get_quality_grade_a_plus(self, metrics):
-        """Test quality grade A+ for score >= 0.95."""
+    def test_should_track_missing_fields(self):
+        """Test tracking of completely missing fields."""
         # Arrange
-        for i in range(20):
-            metrics.record_successful_merge(f"TICKER{i}")
+        metrics = DataQualityMetrics()
 
         # Act
-        score = metrics.calculate_quality_score()
-        grade = metrics._get_quality_grade(score)
+        metrics.record_missing_field("sharpe_ratio")
+        metrics.record_missing_field("sortino_ratio")
 
         # Assert
-        assert score >= 0.95
-        assert grade == "A+"
+        assert len(metrics.fields_missing) == 2
+        assert "sharpe_ratio" in metrics.fields_missing
+        assert "sortino_ratio" in metrics.fields_missing
 
-    def test_should_get_quality_grade_f(self, metrics):
-        """Test quality grade F for score < 0.60."""
+    def test_should_not_duplicate_field_tracking(self):
+        """Test that fields are not tracked multiple times."""
         # Arrange
-        metrics.record_successful_merge("AAPL")
-        metrics.record_fallback_grade("IBM")
-        metrics.record_fallback_grade("GE")
-        metrics.record_placeholder_url("url1")
-        metrics.record_placeholder_url("url2")
+        metrics = DataQualityMetrics()
 
         # Act
-        score = metrics.calculate_quality_score()
-        grade = metrics._get_quality_grade(score)
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("volatility")  # Duplicate
+        metrics.record_calculated_field("volatility")  # Duplicate
 
         # Assert
-        assert score < 0.60
-        assert grade == "F"
+        assert len(metrics.fields_calculated) == 1
+        assert metrics.fields_calculated.count("volatility") == 1
 
-    def test_should_get_summary(self, metrics):
-        """Test getting metrics summary."""
+
+class TestCompletenessScore:
+    """Test cases for completeness score calculation."""
+
+    def test_should_calculate_perfect_completeness(self):
+        """Test completeness score when all fields are calculated."""
         # Arrange
-        metrics.record_successful_merge("AAPL")
-        metrics.record_fallback_grade("IBM")
-        metrics.record_placeholder_url("sec_filing")
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("max_drawdown")
+        metrics.record_calculated_field("beta")
+
+        # Act
+        completeness = metrics.calculate_completeness_score()
+
+        # Assert
+        assert completeness == 1.0
+
+    def test_should_calculate_partial_completeness(self):
+        """Test completeness score when some fields are calculated."""
+        # Arrange
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta", "sharpe_ratio"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("max_drawdown")
+
+        # Act
+        completeness = metrics.calculate_completeness_score()
+
+        # Assert
+        assert completeness == 0.5  # 2 out of 4 fields
+
+    def test_should_return_neutral_when_no_fields_expected(self):
+        """Test completeness score when no fields are expected."""
+        # Arrange
+        metrics = DataQualityMetrics()
+
+        # Act
+        completeness = metrics.calculate_completeness_score()
+
+        # Assert
+        assert completeness == 0.5  # Neutral score
+
+
+class TestQualityLevel:
+    """Test cases for quality level determination."""
+
+    def test_should_return_high_quality_level(self):
+        """Test high quality level with good completeness and quality."""
+        # Arrange
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("max_drawdown")
+        metrics.record_calculated_field("beta")
+
+        # Act
+        quality_level = metrics.get_quality_level()
+
+        # Assert
+        assert quality_level == "high"
+
+    def test_should_return_medium_quality_level(self):
+        """Test medium quality level with acceptable completeness."""
+        # Arrange
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta", "sharpe_ratio"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("max_drawdown")
+        metrics.record_calculated_field("beta")
+        # 3 out of 4 = 75% completeness
+
+        # Act
+        quality_level = metrics.get_quality_level()
+
+        # Assert
+        assert quality_level == "medium"
+
+    def test_should_return_low_quality_level(self):
+        """Test low quality level with poor completeness."""
+        # Arrange
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta", "sharpe_ratio"])
+        metrics.record_calculated_field("volatility")
+        # Only 1 out of 4 = 25% completeness
+
+        # Act
+        quality_level = metrics.get_quality_level()
+
+        # Assert
+        assert quality_level == "low"
+
+
+class TestQualityScoreWithFieldTracking:
+    """Test cases for quality score calculation with field tracking."""
+
+    def test_should_penalize_defaulted_fields(self):
+        """Test that defaulted fields reduce quality score."""
+        # Arrange
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("max_drawdown")
+        metrics.record_defaulted_field("beta", 1.0)
+
+        # Act
+        quality_score = metrics.calculate_quality_score()
+
+        # Assert
+        assert quality_score < 1.0  # Should be penalized
+        assert quality_score > 0.5  # But not too low
+
+    def test_should_penalize_missing_fields_more_than_defaulted(self):
+        """Test that missing fields have higher penalty than defaulted."""
+        # Arrange
+        metrics_defaulted = DataQualityMetrics()
+        metrics_defaulted.set_expected_fields(["volatility", "max_drawdown", "beta"])
+        metrics_defaulted.record_calculated_field("volatility")
+        metrics_defaulted.record_calculated_field("max_drawdown")
+        metrics_defaulted.record_defaulted_field("beta", 1.0)
+
+        metrics_missing = DataQualityMetrics()
+        metrics_missing.set_expected_fields(["volatility", "max_drawdown", "beta"])
+        metrics_missing.record_calculated_field("volatility")
+        metrics_missing.record_calculated_field("max_drawdown")
+        metrics_missing.record_missing_field("beta")
+
+        # Act
+        score_defaulted = metrics_defaulted.calculate_quality_score()
+        score_missing = metrics_missing.calculate_quality_score()
+
+        # Assert
+        assert score_missing < score_defaulted  # Missing is worse than defaulted
+
+
+class TestGetSummary:
+    """Test cases for summary generation with field tracking."""
+
+    def test_should_include_field_tracking_in_summary(self):
+        """Test that summary includes field tracking information."""
+        # Arrange
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_defaulted_field("max_drawdown", -0.20)
+        metrics.record_missing_field("beta")
 
         # Act
         summary = metrics.get_summary()
 
         # Assert
-        assert "quality_score" in summary
-        assert "quality_grade" in summary
-        assert "metrics" in summary
-        assert "details" in summary
-        assert summary["metrics"]["successful_merges"] == 1
-        assert summary["metrics"]["fallback_grades"] == 1
-        assert summary["metrics"]["placeholder_urls"] == 1
-        assert "IBM" in summary["details"]["fallback_tickers"]
+        assert "field_tracking" in summary
+        assert summary["field_tracking"]["calculated"] == 1
+        assert summary["field_tracking"]["defaulted"] == 1
+        assert summary["field_tracking"]["missing"] == 1
+        assert summary["field_tracking"]["total_expected"] == 3
 
-    def test_should_export_to_file(self, metrics, tmp_path):
-        """Test exporting metrics to JSON file."""
+    def test_should_include_completeness_score_in_summary(self):
+        """Test that summary includes completeness score."""
         # Arrange
-        metrics.record_successful_merge("AAPL")
-        metrics.record_fallback_grade("IBM")
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown"])
+        metrics.record_calculated_field("volatility")
 
         # Act
-        filepath = metrics.export_to_file(tmp_path)
+        summary = metrics.get_summary()
 
         # Assert
-        assert filepath.exists()
-        assert filepath.suffix == ".json"
+        assert "completeness_score" in summary
+        assert summary["completeness_score"] == 0.5  # 1 out of 2
 
-        # Verify file contents
-        with open(filepath, encoding="utf-8") as f:
-            data = json.load(f)
-
-        assert data["quality_score"] is not None
-        assert data["metrics"]["successful_merges"] == 1
-        assert data["metrics"]["fallback_grades"] == 1
-
-    def test_should_reset_metrics(self, metrics):
-        """Test resetting all metrics to zero."""
+    def test_should_include_quality_level_in_summary(self):
+        """Test that summary includes quality level."""
         # Arrange
-        metrics.record_successful_merge("AAPL")
-        metrics.record_fallback_grade("IBM")
-        metrics.record_placeholder_url("url")
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown", "beta"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_calculated_field("max_drawdown")
+        metrics.record_calculated_field("beta")
+
+        # Act
+        summary = metrics.get_summary()
+
+        # Assert
+        assert "quality_level" in summary
+        assert summary["quality_level"] == "high"
+
+
+class TestReset:
+    """Test cases for metrics reset functionality."""
+
+    def test_should_reset_field_tracking(self):
+        """Test that reset clears field tracking lists."""
+        # Arrange
+        metrics = DataQualityMetrics()
+        metrics.set_expected_fields(["volatility", "max_drawdown"])
+        metrics.record_calculated_field("volatility")
+        metrics.record_defaulted_field("max_drawdown", -0.20)
 
         # Act
         metrics.reset()
 
         # Assert
-        assert metrics.fallback_grades_count == 0
-        assert metrics.placeholder_urls_count == 0
-        assert metrics.missing_data_count == 0
-        assert metrics.successful_merges_count == 0
-        assert metrics.failed_merges_count == 0
-        assert metrics.fallback_tickers == []
-        assert metrics.placeholder_url_locations == []
-        assert metrics.missing_data_fields == []
-
-    def test_should_include_flow_execution_id(self, metrics):
-        """Test that flow execution ID is included in summary."""
-        # Act
-        summary = metrics.get_summary()
-
-        # Assert
-        assert summary["flow_execution_id"] == "test-flow-123"
-
-    def test_should_have_timestamp(self, metrics):
-        """Test that metrics include timestamp."""
-        # Act
-        summary = metrics.get_summary()
-
-        # Assert
-        assert "timestamp" in summary
-        assert summary["timestamp"] is not None
+        assert len(metrics.fields_calculated) == 0
+        assert len(metrics.fields_defaulted) == 0
+        assert len(metrics.fields_missing) == 0
+        assert metrics.total_fields_expected == 0

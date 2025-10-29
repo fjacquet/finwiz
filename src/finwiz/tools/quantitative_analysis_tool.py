@@ -24,7 +24,15 @@ from finwiz.quantitative.performance import (
     get_performance_analyzer,
 )
 from finwiz.quantitative.technical import TechnicalAnalysisEngine
-from finwiz.schemas import quantitative as quant_schemas
+from finwiz.schemas.quantitative_crew import (
+    EnhancedCryptoAnalysis,
+    EnhancedETFAnalysis,
+    EnhancedStockAnalysis,
+    QuantitativeBacktestResult,
+    QuantitativePerformanceMetrics,
+    QuantitativeRecommendation,
+    QuantitativeTechnicalAnalysis,
+)
 from finwiz.schemas.tools import QuantitativeAnalysisInput
 from finwiz.tools.logger import get_logger
 
@@ -128,9 +136,7 @@ class QuantitativeAnalysisTool(BaseTool):
             elif input_data.analysis_type == "performance":
                 result = self._perform_performance_analysis(data, input_data, performance_analyzer)
             else:  # comprehensive
-                result = self._perform_comprehensive_analysis(
-                    data, input_data, start_date, end_date, technical_engine, backtesting_engine, performance_analyzer
-                )
+                result = self._perform_comprehensive_analysis(data, input_data, start_date, end_date, technical_engine, backtesting_engine, performance_analyzer)
 
             logger.info(f"Quantitative analysis completed for {input_data.symbol}")
             return result
@@ -139,16 +145,14 @@ class QuantitativeAnalysisTool(BaseTool):
             logger.error(f"Error in quantitative analysis: {e}")
             return f"Error performing quantitative analysis: {str(e)}"
 
-    def _perform_technical_analysis(
-        self, data: pd.DataFrame, input_data: QuantitativeAnalysisInput, technical_engine: TechnicalAnalysisEngine
-    ) -> str:
+    def _perform_technical_analysis(self, data: pd.DataFrame, input_data: QuantitativeAnalysisInput, technical_engine: TechnicalAnalysisEngine) -> str:
         """Perform technical analysis."""
         try:
             # Run technical analysis
             tech_result = technical_engine.analyze_symbol(data, input_data.symbol, timeframe="1d")
 
             # Convert to simplified schema
-            quant_tech = quant_schemas.QuantitativeTechnicalAnalysis(
+            quant_tech = QuantitativeTechnicalAnalysis(
                 symbol=input_data.symbol,
                 timeframe="1d",
                 overall_signal=tech_result.overall_signal.value,
@@ -204,7 +208,7 @@ class QuantitativeAnalysisTool(BaseTool):
             )
 
             # Convert to simplified schema
-            quant_backtest = quant_schemas.QuantitativeBacktestResult(
+            quant_backtest = QuantitativeBacktestResult(
                 symbol=input_data.symbol,
                 strategy_name=backtest_result.strategy_name,
                 total_return=backtest_result.total_return,
@@ -228,9 +232,7 @@ class QuantitativeAnalysisTool(BaseTool):
             logger.error(f"Error in backtesting: {e}")
             return f"Backtesting error: {str(e)}"
 
-    def _perform_performance_analysis(
-        self, data: pd.DataFrame, input_data: QuantitativeAnalysisInput, performance_analyzer: PerformanceAnalyzer
-    ) -> str:
+    def _perform_performance_analysis(self, data: pd.DataFrame, input_data: QuantitativeAnalysisInput, performance_analyzer: PerformanceAnalyzer) -> str:
         """Perform performance analysis."""
         try:
             # Calculate returns
@@ -240,24 +242,25 @@ class QuantitativeAnalysisTool(BaseTool):
             perf_report = performance_analyzer.analyze_performance(returns, strategy_name=f"{input_data.symbol}_analysis")
 
             # Convert to simplified schema
-            quant_perf = quant_schemas.QuantitativePerformanceMetrics(
+            metrics = perf_report.strategy_metrics
+            quant_perf = QuantitativePerformanceMetrics(
                 symbol=input_data.symbol,
-                total_return=perf_report.performance_metrics.total_return,
-                annualized_return=perf_report.performance_metrics.annualized_return,
-                sharpe_ratio=perf_report.performance_metrics.sharpe_ratio,
-                sortino_ratio=perf_report.performance_metrics.sortino_ratio,
-                calmar_ratio=perf_report.performance_metrics.calmar_ratio,
-                max_drawdown=perf_report.performance_metrics.max_drawdown,
-                volatility=perf_report.performance_metrics.volatility,
-                var_95=perf_report.performance_metrics.var_95,
-                skewness=perf_report.performance_metrics.skewness,
-                kurtosis=perf_report.performance_metrics.kurtosis,
-                alpha=perf_report.performance_metrics.alpha,
-                beta=perf_report.performance_metrics.beta,
-                information_ratio=perf_report.performance_metrics.information_ratio,
-                start_date=perf_report.performance_metrics.start_date,
-                end_date=perf_report.performance_metrics.end_date,
-                total_days=perf_report.performance_metrics.total_days,
+                total_return=metrics.total_return,
+                annualized_return=metrics.annualized_return,
+                sharpe_ratio=metrics.sharpe_ratio,
+                sortino_ratio=metrics.sortino_ratio,
+                calmar_ratio=metrics.calmar_ratio,
+                max_drawdown=metrics.max_drawdown,
+                volatility=metrics.volatility,
+                var_95=metrics.var_95,
+                skewness=metrics.skewness,
+                kurtosis=metrics.kurtosis,
+                alpha=metrics.alpha if metrics.alpha is not None else 0.0,
+                beta=metrics.beta if metrics.beta is not None else 1.0,
+                information_ratio=metrics.information_ratio if metrics.information_ratio is not None else 0.0,
+                start_date=datetime.now(),
+                end_date=datetime.now(),
+                total_days=len(returns),
             )
 
             return quant_perf.model_dump_json(indent=2)
@@ -282,15 +285,15 @@ class QuantitativeAnalysisTool(BaseTool):
             # Technical analysis
             tech_result = technical_engine.analyze_symbol(data, input_data.symbol, timeframe="1d")
 
-            quant_tech = quant_schemas.QuantitativeTechnicalAnalysis(
+            quant_tech = QuantitativeTechnicalAnalysis(
                 symbol=input_data.symbol,
                 timeframe="1d",
                 overall_signal=tech_result.overall_signal.value,
                 overall_confidence=tech_result.overall_confidence,
                 signal_strength=tech_result.signal_strength.value,
-                bullish_signals_count=tech_result.bullish_signals_count,
-                bearish_signals_count=tech_result.bearish_signals_count,
-                neutral_signals_count=tech_result.neutral_signals_count,
+                bullish_signals_count=tech_result.bullish_signals,
+                bearish_signals_count=tech_result.bearish_signals,
+                neutral_signals_count=tech_result.neutral_signals,
             )
 
             # Backtesting
@@ -302,7 +305,7 @@ class QuantitativeAnalysisTool(BaseTool):
                 strategy_params={"short_period": 20, "long_period": 50},
             )
 
-            quant_backtest = quant_schemas.QuantitativeBacktestResult(
+            quant_backtest = QuantitativeBacktestResult(
                 symbol=input_data.symbol,
                 strategy_name=backtest_result.strategy_name,
                 total_return=backtest_result.total_return,
@@ -323,31 +326,30 @@ class QuantitativeAnalysisTool(BaseTool):
             returns = data["Close"].pct_change().dropna()
             perf_report = performance_analyzer.analyze_performance(returns, strategy_name=f"{input_data.symbol}_analysis")
 
-            quant_perf = quant_schemas.QuantitativePerformanceMetrics(
+            metrics = perf_report.strategy_metrics
+            quant_perf = QuantitativePerformanceMetrics(
                 symbol=input_data.symbol,
-                total_return=perf_report.performance_metrics.total_return,
-                annualized_return=perf_report.performance_metrics.annualized_return,
-                sharpe_ratio=perf_report.performance_metrics.sharpe_ratio,
-                sortino_ratio=perf_report.performance_metrics.sortino_ratio,
-                calmar_ratio=perf_report.performance_metrics.calmar_ratio,
-                max_drawdown=perf_report.performance_metrics.max_drawdown,
-                volatility=perf_report.performance_metrics.volatility,
-                var_95=perf_report.performance_metrics.var_95,
-                skewness=perf_report.performance_metrics.skewness,
-                kurtosis=perf_report.performance_metrics.kurtosis,
-                start_date=perf_report.performance_metrics.start_date,
-                end_date=perf_report.performance_metrics.end_date,
-                total_days=perf_report.performance_metrics.total_days,
+                total_return=metrics.total_return,
+                annualized_return=metrics.annualized_return,
+                sharpe_ratio=metrics.sharpe_ratio,
+                sortino_ratio=metrics.sortino_ratio,
+                calmar_ratio=metrics.calmar_ratio,
+                max_drawdown=metrics.max_drawdown,
+                volatility=metrics.volatility,
+                var_95=metrics.var_95,
+                skewness=metrics.skewness,
+                kurtosis=metrics.kurtosis,
+                start_date=datetime.now(),
+                end_date=datetime.now(),
+                total_days=len(returns),
             )
 
             # Generate recommendation
-            recommendation = self._generate_recommendation(
-                input_data.symbol, tech_result, backtest_result, perf_report.performance_metrics
-            )
+            recommendation = self._generate_recommendation(input_data.symbol, tech_result, backtest_result, metrics)
 
             # Create comprehensive result based on asset class
             if input_data.asset_class.lower() == "stock":
-                result = quant_schemas.EnhancedStockAnalysis(
+                result = EnhancedStockAnalysis(
                     ticker=input_data.symbol,
                     technical_analysis=quant_tech,
                     backtest_result=quant_backtest,
@@ -355,7 +357,7 @@ class QuantitativeAnalysisTool(BaseTool):
                     quantitative_recommendation=recommendation,
                 )
             elif input_data.asset_class.lower() == "etf":
-                result = quant_schemas.EnhancedETFAnalysis(
+                result = EnhancedETFAnalysis(
                     ticker=input_data.symbol,
                     technical_analysis=quant_tech,
                     backtest_result=quant_backtest,
@@ -363,7 +365,7 @@ class QuantitativeAnalysisTool(BaseTool):
                     quantitative_recommendation=recommendation,
                 )
             else:  # crypto
-                result = quant_schemas.EnhancedCryptoAnalysis(
+                result = EnhancedCryptoAnalysis(
                     symbol=input_data.symbol,
                     technical_analysis=quant_tech,
                     backtest_result=quant_backtest,
@@ -378,9 +380,7 @@ class QuantitativeAnalysisTool(BaseTool):
             logger.error(f"Error in comprehensive analysis: {e}")
             return f"Comprehensive analysis error: {str(e)}"
 
-    def _generate_recommendation(
-        self, symbol: str, tech_result: Any, backtest_result: Any, perf_metrics: Any
-    ) -> "quant_schemas.QuantitativeRecommendation":
+    def _generate_recommendation(self, symbol: str, tech_result: Any, backtest_result: Any, perf_metrics: Any) -> QuantitativeRecommendation:
         """Generate investment recommendation based on quantitative analysis."""
         # Determine recommendation based on signals
         tech_signal = tech_result.overall_signal.value
@@ -406,7 +406,7 @@ class QuantitativeAnalysisTool(BaseTool):
         else:
             risk_assessment = "Moderate risk profile"
 
-        return quant_schemas.QuantitativeRecommendation(
+        return QuantitativeRecommendation(
             symbol=symbol,
             recommendation=recommendation,
             confidence=confidence,

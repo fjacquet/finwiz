@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 class FlowStateManager:
     """Manages discovery and loading of persisted flow states."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize FlowStateManager with CrewAI default state directory."""
         # CrewAI stores state in ~/.crewai/state/ by default
         self.state_dir = Path.home() / ".crewai" / "state"

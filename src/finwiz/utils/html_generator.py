@@ -17,7 +17,7 @@ from .template_renderer import TemplateRenderer
 class HTMLGenerator:
     """Manages inline HTML generation for JSON outputs."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.renderer = TemplateRenderer()
         self.enabled = True
 

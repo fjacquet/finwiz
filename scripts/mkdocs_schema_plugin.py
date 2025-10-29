@@ -41,7 +41,7 @@ class SchemaDocsPlugin(BasePlugin):
         ("show_cross_refs", config_options.Type(bool, default=True)),
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.schemas: dict[str, dict] = {}
         self.examples: dict[str, dict] = {}

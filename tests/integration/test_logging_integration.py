@@ -19,7 +19,7 @@ from finwiz.crews.stock_crew.stock_crew import StockCrew
 class LogCapture:
     """Helper class to capture log records with extra fields."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the log record handler."""
         self.records = []
 

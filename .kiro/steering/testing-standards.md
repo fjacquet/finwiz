@@ -1,3 +1,7 @@
+---
+inclusion: always
+---
+
 # Testing Standards for FinWiz
 
 Comprehensive testing standards for FinWiz development.
