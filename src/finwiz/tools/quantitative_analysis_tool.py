@@ -158,9 +158,9 @@ class QuantitativeAnalysisTool(BaseTool):
                 overall_signal=tech_result.overall_signal.value,
                 overall_confidence=tech_result.overall_confidence,
                 signal_strength=tech_result.signal_strength.value,
-                bullish_signals_count=tech_result.bullish_signals_count,
-                bearish_signals_count=tech_result.bearish_signals_count,
-                neutral_signals_count=tech_result.neutral_signals_count,
+                bullish_signals_count=tech_result.bullish_signals,
+                bearish_signals_count=tech_result.bearish_signals,
+                neutral_signals_count=tech_result.neutral_signals,
             )
 
             # Extract key indicator values
@@ -418,8 +418,8 @@ class QuantitativeAnalysisTool(BaseTool):
             key_indicators={
                 "technical_signal": tech_signal,
                 "technical_confidence": tech_result.overall_confidence,
-                "bullish_signals": tech_result.bullish_signals_count,
-                "bearish_signals": tech_result.bearish_signals_count,
+                "bullish_signals": tech_result.bullish_signals,
+                "bearish_signals": tech_result.bearish_signals,
             },
             risk_metrics={
                 "max_drawdown": backtest_result.max_drawdown,

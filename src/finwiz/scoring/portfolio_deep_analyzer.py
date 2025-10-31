@@ -6,6 +6,7 @@ Implements the spec requirements for 10-20x speed improvement and 100% cost redu
 """
 
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
@@ -23,13 +24,32 @@ class PortfolioDeepAnalyzer:
 
     Replaces AI-based deep analysis with deterministic Python calculations
     using the DeepAnalysisScorer for 10-20x speed improvement.
+    
+    Now includes Supabase integration for caching and storage.
     """
 
     def __init__(self, output_dir: str = "output") -> None:
-        """Initialize the analyzer."""
+        """Initialize the analyzer with optional Supabase integration."""
         self.scorer = DeepAnalysisScorer()
         self.output_dir = Path(output_dir)
         self.logger = logger
+        
+        # Initialize Supabase cache service if enabled
+        self.cache_service = None
+        if os.getenv("SUPABASE_ENABLED", "false").lower() == "true":
+            try:
+                from finwiz.supabase.client import SupabaseClient
+                from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
+                from finwiz.supabase.services.cache_service import CacheService
+                
+                client = SupabaseClient()
+                repository = AnalysisRepository(client)
+                self.cache_service = CacheService(repository)
+                self.logger.info("✅ Supabase cache service initialized for Python analyzer")
+            except Exception as e:
+                self.logger.warning(f"⚠️ Supabase cache service initialization failed: {e}")
+                self.logger.info("Continuing without Supabase caching (graceful degradation)")
+                self.cache_service = None
 
     def analyze_portfolio_holdings(self, holdings: list[HoldingDecision], session_id: str) -> dict[str, Any]:
         """
@@ -61,17 +81,103 @@ class PortfolioDeepAnalyzer:
         # Process each holding
         for holding in holdings:
             try:
-                # Extract data for scoring
-                data = self._extract_holding_data(holding)
+                # Check Supabase cache first if available
+                cached_result = None
+                if self.cache_service:
+                    try:
+                        import asyncio
+                        # Check if we're already in an event loop
+                        try:
+                            loop = asyncio.get_running_loop()
+                            # We're in an async context, use create_task
+                            cached_analysis = asyncio.create_task(
+                                self.cache_service.repository.get_cached_analysis(
+                                    ticker=holding.ticker,
+                                    asset_class=holding.asset_class,
+                                    ttl_hours=int(os.getenv("ANALYSIS_CACHE_TTL_HOURS", "24"))
+                                )
+                            )
+                            cached_export = asyncio.run(asyncio.wait_for(cached_analysis, timeout=2.0))
+                        except RuntimeError:
+                            # No event loop running, create one
+                            cached_export = asyncio.run(
+                                self.cache_service.repository.get_cached_analysis(
+                                    ticker=holding.ticker,
+                                    asset_class=holding.asset_class,
+                                    ttl_hours=int(os.getenv("ANALYSIS_CACHE_TTL_HOURS", "24"))
+                                )
+                            )
+                        
+                        if cached_export:
+                            # Use cached result
+                            self.logger.info(f"✅ Cache HIT for {holding.ticker} - using cached analysis")
+                            # Convert cached export to DeepAnalysisResult
+                            cached_result = DeepAnalysisResult(
+                                ticker=cached_export.get("ticker", holding.ticker),
+                                asset_class=cached_export.get("asset_class", holding.asset_class),
+                                composite_score=cached_export.get("composite_score", 0.5),
+                                grade=cached_export.get("grade", "C"),
+                                recommendation=cached_export.get("recommendation", "HOLD"),
+                                confidence_level=cached_export.get("confidence", 0.5),
+                                rationale=cached_export.get("rationale", "Cached analysis"),
+                                fundamental_score=cached_export.get("fundamental_score", 0.5),
+                                technical_score=cached_export.get("technical_score", 0.5),
+                                risk_score=cached_export.get("risk_score", 0.5),
+                                risk_details=cached_export.get("risk_details", {}),
+                                fundamental_details=cached_export.get("fundamental_details", {}),
+                                technical_details=cached_export.get("technical_details", {}),
+                                data_freshness_hours=0.0,
+                            )
+                    except Exception as e:
+                        self.logger.warning(f"⚠️ Cache check failed for {holding.ticker}: {e}")
+                        cached_result = None
+                
+                # If not cached, perform fresh analysis
+                if cached_result is None:
+                    self.logger.info(f"🔄 Cache MISS for {holding.ticker} - performing fresh analysis")
+                    
+                    # Extract data for scoring
+                    data = self._extract_holding_data(holding)
 
-                # Skip if data extraction returned None (ticker unavailable)
-                if data is None:
-                    self.logger.warning(f"⏭️ Skipping {holding.ticker} - data unavailable")
-                    results["failed_analyses"] += 1
-                    continue
+                    # Skip if data extraction returned None (ticker unavailable)
+                    if data is None:
+                        self.logger.warning(f"⏭️ Skipping {holding.ticker} - data unavailable")
+                        results["failed_analyses"] += 1
+                        continue
 
-                # Run pure Python scoring (no AI calls)
-                analysis_result = self.scorer.calculate_composite_score(ticker=holding.ticker, asset_class=holding.asset_class, data=data)
+                    # Run pure Python scoring (no AI calls)
+                    analysis_result = self.scorer.calculate_composite_score(ticker=holding.ticker, asset_class=holding.asset_class, data=data)
+                    
+                    # Store in Supabase if available
+                    if self.cache_service:
+                        try:
+                            crew_export = self._create_crew_export(analysis_result, holding)
+                            # Handle event loop properly
+                            try:
+                                loop = asyncio.get_running_loop()
+                                # We're in an async context, schedule as background task
+                                asyncio.create_task(
+                                    self.cache_service.repository.store_analysis(
+                                        ticker=holding.ticker,
+                                        asset_class=holding.asset_class,
+                                        export_data=crew_export
+                                    )
+                                )
+                            except RuntimeError:
+                                # No event loop running, create one
+                                asyncio.run(
+                                    self.cache_service.repository.store_analysis(
+                                        ticker=holding.ticker,
+                                        asset_class=holding.asset_class,
+                                        export_data=crew_export
+                                    )
+                                )
+                            self.logger.info(f"💾 Stored analysis for {holding.ticker} in Supabase")
+                        except Exception as e:
+                            self.logger.warning(f"⚠️ Failed to store analysis in Supabase for {holding.ticker}: {e}")
+                else:
+                    # Use cached result
+                    analysis_result = cached_result
 
                 # Create crew export format
                 crew_export = self._create_crew_export(analysis_result, holding)
@@ -173,30 +279,30 @@ class PortfolioDeepAnalyzer:
                 "macd_signal": tech_data.get("macd_signal", 0.0),
             }
 
-            # Add asset-specific data
+            # Add asset-specific data from performance analysis
             if asset_class == "stock":
                 data.update(
                     {
-                        "roe": quant_data.get("roe", 0.15),
-                        "debt_to_equity": quant_data.get("debt_to_equity", 0.5),
-                        "revenue_growth": quant_data.get("revenue_growth", 0.10),
-                        "profit_margin": quant_data.get("profit_margin", 0.15),
+                        "roe": perf_data.get("roe", 0.15),
+                        "debt_to_equity": perf_data.get("debt_to_equity", 0.5),
+                        "revenue_growth": perf_data.get("revenue_growth", 0.10),
+                        "profit_margin": perf_data.get("profit_margin", 0.15),
                     }
                 )
             elif asset_class == "etf":
                 data.update(
                     {
-                        "expense_ratio": quant_data.get("expense_ratio", 0.20),
-                        "tracking_error": quant_data.get("tracking_error", 0.30),
-                        "aum": quant_data.get("aum", 5e9),
+                        "expense_ratio": perf_data.get("expense_ratio", 0.20),
+                        "tracking_error": perf_data.get("tracking_error", 0.30),
+                        "aum": perf_data.get("aum", 5e9),
                     }
                 )
             elif asset_class == "crypto":
                 data.update(
                     {
-                        "market_cap": quant_data.get("market_cap", 100e9),
-                        "volume_24h": quant_data.get("volume_24h", 1e9),
-                        "age_years": quant_data.get("age_years", 5),
+                        "market_cap": perf_data.get("market_cap", 100e9),
+                        "volume_24h": perf_data.get("volume_24h", 1e9),
+                        "age_years": perf_data.get("age_years", 5),
                     }
                 )
 
