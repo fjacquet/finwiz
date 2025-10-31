@@ -1038,10 +1038,10 @@ Planned optimizations:
 
 ## References
 
-- [Cache Manager Implementation](../src/finwiz/utils/cache_manager.py)
-- [Rate Limiter Implementation](../src/finwiz/utils/rate_limiter.py)
-- [Holding Analyzer Orchestrator](../src/finwiz/tools/holding_analyzer_orchestrator.py)
-- [Performance Tests](../tests/unit/tools/test_holding_analyzer_orchestrator_performance.py)
+- Cache Manager Implementation
+- Rate Limiter Implementation
+- Holding Analyzer Orchestrator
+- Performance Tests
 
 ---
 

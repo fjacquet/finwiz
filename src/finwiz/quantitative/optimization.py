@@ -240,9 +240,7 @@ class PortfolioOptimizer:
             elif method == OptimizationMethod.RISK_PARITY:
                 result = self.algorithms.optimize_risk_parity(returns, cov_matrix, constraints)
             elif method == OptimizationMethod.BLACK_LITTERMAN:
-                result = self.algorithms.optimize_black_litterman(
-                    returns, cov_matrix, inputs.risk_free_rate, constraints=constraints
-                )
+                result = self.algorithms.optimize_black_litterman(returns, cov_matrix, inputs.risk_free_rate, constraints=constraints)
             elif method == OptimizationMethod.HIERARCHICAL_RISK_PARITY:
                 result = self.algorithms.optimize_hierarchical_risk_parity(returns, cov_matrix, constraints)
             else:
@@ -257,9 +255,7 @@ class PortfolioOptimizer:
                 optimal_weights=result.tolist(),
                 symbols=inputs.symbols,
                 metrics=metrics,
-                objective_value=self.objective_calculator.calculate_objective_value(
-                    result, returns, cov_matrix, inputs.risk_free_rate, objective
-                ),
+                objective_value=self.objective_calculator.calculate_objective_value(result, returns, cov_matrix, inputs.risk_free_rate, objective),
                 optimization_method=method,
                 success=True,
                 message="Optimization completed successfully",
@@ -309,9 +305,7 @@ class PortfolioOptimizer:
         if not np.array_equal(cov_matrix, regularized_cov):
             inputs.covariance_matrix = regularized_cov.tolist()
 
-    def _calculate_portfolio_metrics(
-        self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float
-    ) -> PortfolioMetrics:
+    def _calculate_portfolio_metrics(self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float) -> PortfolioMetrics:
         """Calculate comprehensive portfolio metrics."""
         # Basic metrics
         portfolio_return = np.dot(weights, returns)
@@ -343,9 +337,7 @@ class PortfolioOptimizer:
             diversification_ratio=diversification_ratio,
         )
 
-    def generate_efficient_frontier(
-        self, inputs: PortfolioInputs, num_points: int = 50, method: OptimizationMethod = OptimizationMethod.MEAN_VARIANCE
-    ) -> EfficientFrontier:
+    def generate_efficient_frontier(self, inputs: PortfolioInputs, num_points: int = 50, method: OptimizationMethod = OptimizationMethod.MEAN_VARIANCE) -> EfficientFrontier:
         """
         Generate efficient frontier points.
 
@@ -415,9 +407,7 @@ class PortfolioOptimizer:
         """Optimize for minimum volatility at target return."""
         return self.algorithms.optimize_for_target_return(returns, cov_matrix, target_return)
 
-    def calculate_portfolio_attribution(
-        self, weights: np.ndarray, returns: np.ndarray, benchmark_weights: np.ndarray | None = None
-    ) -> dict[str, float]:
+    def calculate_portfolio_attribution(self, weights: np.ndarray, returns: np.ndarray, benchmark_weights: np.ndarray | None = None) -> dict[str, float]:
         """
         Calculate portfolio performance attribution.
 
@@ -491,14 +481,10 @@ class PortfolioOptimizer:
         return methods
 
     # Backward compatibility methods for tests
-    def _calculate_objective_value(
-        self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float, objective: ObjectiveFunction
-    ) -> float:
+    def _calculate_objective_value(self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float, objective: ObjectiveFunction) -> float:
         """Calculate objective function value (backward compatibility)."""
         return self.objective_calculator.calculate_objective_value(weights, returns, cov_matrix, risk_free_rate, objective)
 
-    def _optimize_risk_parity(
-        self, returns: np.ndarray, cov_matrix: np.ndarray, constraints: list[OptimizationConstraint] | None
-    ) -> np.ndarray:
+    def _optimize_risk_parity(self, returns: np.ndarray, cov_matrix: np.ndarray, constraints: list[OptimizationConstraint] | None) -> np.ndarray:
         """Optimize using risk parity (backward compatibility)."""
         return self.algorithms.optimize_risk_parity(returns, cov_matrix, constraints)

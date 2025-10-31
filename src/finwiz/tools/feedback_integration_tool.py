@@ -189,9 +189,7 @@ class CriteriaOptimizationTool(BaseTool):
             current_criteria = APlusCriteria.model_validate(input_data.current_criteria)
 
             # Attempt criteria adjustment
-            adjustment = await feedback_service.adjust_criteria_based_on_learning(
-                current_criteria=current_criteria, force_adjustment=input_data.force_adjustment
-            )
+            adjustment = await feedback_service.adjust_criteria_based_on_learning(current_criteria=current_criteria, force_adjustment=input_data.force_adjustment)
 
             if adjustment:
                 result = {

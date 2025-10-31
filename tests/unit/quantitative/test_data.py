@@ -182,9 +182,7 @@ class TestDataQualityValidator:
         end_date = datetime(2023, 12, 31)
 
         # Create data with fewer rows than minimum required
-        insufficient_data = pd.DataFrame(
-            {"Open": [100, 110], "High": [105, 115], "Low": [95, 105], "Close": [102, 112], "Volume": [1000000, 2000000]}
-        )
+        insufficient_data = pd.DataFrame({"Open": [100, 110], "High": [105, 115], "Low": [95, 105], "Close": [102, 112], "Volume": [1000000, 2000000]})
 
         report = validator.validate_data_quality(insufficient_data, symbol, start_date, end_date)
 

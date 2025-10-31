@@ -126,25 +126,19 @@ class QuantConfig(BaseModel):
     """
 
     # Data provider configuration
-    primary_data_provider: DataProvider = Field(
-        default=DataProvider.YFINANCE, description="Primary data provider for historical data"
-    )
+    primary_data_provider: DataProvider = Field(default=DataProvider.YFINANCE, description="Primary data provider for historical data")
 
     fallback_data_providers: list[DataProvider] = Field(
         default=[DataProvider.ALPHA_VANTAGE, DataProvider.TWELVE_DATA], description="Fallback data providers in order of preference"
     )
 
-    data_provider_configs: dict[DataProvider, DataProviderConfig] = Field(
-        default_factory=dict, description="Configuration for each data provider"
-    )
+    data_provider_configs: dict[DataProvider, DataProviderConfig] = Field(default_factory=dict, description="Configuration for each data provider")
 
     # Cache configuration
     cache_config: CacheConfig = Field(default_factory=CacheConfig, description="Data caching configuration")
 
     # Analysis parameters
-    default_lookback_days: int = Field(
-        default=252, ge=30, le=2520, description="Default lookback period in trading days (1 year = 252 days)"
-    )
+    default_lookback_days: int = Field(default=252, ge=30, le=2520, description="Default lookback period in trading days (1 year = 252 days)")
 
     min_data_points: int = Field(default=50, ge=20, description="Minimum data points required for analysis")
 
@@ -282,9 +276,7 @@ class BacktestConfig(BaseModel):
     # Capital and position sizing
     initial_capital: float = Field(default=100000.0, gt=0, description="Initial capital for backtesting")
 
-    position_sizing_method: str = Field(
-        default="fixed_amount", description="Position sizing method: fixed_amount, percent_of_portfolio, kelly_criterion"
-    )
+    position_sizing_method: str = Field(default="fixed_amount", description="Position sizing method: fixed_amount, percent_of_portfolio, kelly_criterion")
 
     max_position_size: float = Field(default=0.1, gt=0, le=1.0, description="Maximum position size as fraction of portfolio")
 
@@ -357,9 +349,7 @@ class ScreenerConfig(BaseModel):
     """
 
     # Screening universe
-    universe: list[str] = Field(
-        default=["SP500", "NASDAQ100", "RUSSELL2000"], description="Stock universe for screening (indices or custom lists)"
-    )
+    universe: list[str] = Field(default=["SP500", "NASDAQ100", "RUSSELL2000"], description="Stock universe for screening (indices or custom lists)")
 
     custom_symbols: list[str] = Field(default_factory=list, description="Custom list of symbols to screen")
 
@@ -607,9 +597,7 @@ class QuantitativeConfigManager:
             if not self.quant_config.is_provider_available(self.quant_config.primary_data_provider):
                 logger.warning(f"Primary data provider {self.quant_config.primary_data_provider} is not available")
                 # Check if fallback providers are available
-                fallback_available = any(
-                    self.quant_config.is_provider_available(provider) for provider in self.quant_config.fallback_data_providers
-                )
+                fallback_available = any(self.quant_config.is_provider_available(provider) for provider in self.quant_config.fallback_data_providers)
                 if not fallback_available:
                     logger.error("No fallback data providers are available")
                     return False

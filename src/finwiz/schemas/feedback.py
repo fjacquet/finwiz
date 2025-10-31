@@ -195,15 +195,9 @@ class FeedbackSummary(BaseModel):
     acceptance_trends: dict[str, float] = Field(default_factory=dict, description="Acceptance rate trends over time")
 
     # Performance analysis
-    performance_by_asset_type: dict[str, dict[str, float]] = Field(
-        default_factory=dict, description="Performance metrics by asset type"
-    )
-    top_performing_recommendations: list[dict[str, Any]] = Field(
-        default_factory=list, description="Best performing recommendations"
-    )
-    underperforming_recommendations: list[dict[str, Any]] = Field(
-        default_factory=list, description="Worst performing recommendations"
-    )
+    performance_by_asset_type: dict[str, dict[str, float]] = Field(default_factory=dict, description="Performance metrics by asset type")
+    top_performing_recommendations: list[dict[str, Any]] = Field(default_factory=list, description="Best performing recommendations")
+    underperforming_recommendations: list[dict[str, Any]] = Field(default_factory=list, description="Worst performing recommendations")
 
     # Learning insights
     key_insights: list[str] = Field(default_factory=list, description="Key insights from feedback analysis")

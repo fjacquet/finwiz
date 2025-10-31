@@ -104,9 +104,7 @@ class ValidationRules:
         except PydanticValidationError as e:
             for error in e.errors():
                 field_path = f"metadata.{'.'.join(str(loc) for loc in error['loc'])}"
-                result.add_error(
-                    field_path=field_path, error_type=error["type"], message=error["msg"], input_value=error.get("input")
-                )
+                result.add_error(field_path=field_path, error_type=error["type"], message=error["msg"], input_value=error.get("input"))
 
         return result
 
@@ -257,9 +255,7 @@ class ValidationRules:
 
         return issues
 
-    def validate_crew_schema(
-        self, crew_name: str, data: dict[str, Any], crew_schema_mapping: dict[str, type[BaseModel]]
-    ) -> BaseValidationResult:
+    def validate_crew_schema(self, crew_name: str, data: dict[str, Any], crew_schema_mapping: dict[str, type[BaseModel]]) -> BaseValidationResult:
         """
         Validate crew data against its schema.
 

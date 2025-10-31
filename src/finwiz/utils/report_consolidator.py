@@ -122,16 +122,12 @@ class ReportConsolidator:
         self._validation_errors: list[dict] = []
 
         # Initialize consolidated report
-        consolidated = ConsolidatedReportExport(
-            session_id=self.session_id, crew_execution_status={}, total_execution_time=0.0, errors=[]
-        )
+        consolidated = ConsolidatedReportExport(session_id=self.session_id, crew_execution_status={}, total_execution_time=0.0, errors=[])
 
         # Consolidate stock analyses
         if "stock_crew" in crew_export_paths:
             logger.info(f"Consolidating {len(crew_export_paths['stock_crew'])} stock analyses")
-            consolidated.stock_analyses = self._load_exports(
-                crew_export_paths["stock_crew"], StockCrewExport, crew_name="stock_crew"
-            )
+            consolidated.stock_analyses = self._load_exports(crew_export_paths["stock_crew"], StockCrewExport, crew_name="stock_crew")
             status = "completed" if consolidated.stock_analyses else "failed"
             consolidated.crew_execution_status["stock_crew"] = status
             logger.info(f"Stock crew consolidation: {status} ({len(consolidated.stock_analyses)} exports)")
@@ -147,9 +143,7 @@ class ReportConsolidator:
         # Consolidate crypto analyses
         if "crypto_crew" in crew_export_paths:
             logger.info(f"Consolidating {len(crew_export_paths['crypto_crew'])} crypto analyses")
-            consolidated.crypto_analyses = self._load_exports(
-                crew_export_paths["crypto_crew"], CryptoCrewExport, crew_name="crypto_crew"
-            )
+            consolidated.crypto_analyses = self._load_exports(crew_export_paths["crypto_crew"], CryptoCrewExport, crew_name="crypto_crew")
             status = "completed" if consolidated.crypto_analyses else "failed"
             consolidated.crew_execution_status["crypto_crew"] = status
             logger.info(f"Crypto crew consolidation: {status} ({len(consolidated.crypto_analyses)} exports)")
@@ -165,9 +159,7 @@ class ReportConsolidator:
         # Consolidate discovery results (single file)
         if "discovery_crew" in crew_export_paths:
             logger.info("Consolidating discovery crew results")
-            discovery_exports = self._load_exports(
-                crew_export_paths["discovery_crew"], DiscoveryCrewExport, crew_name="discovery_crew"
-            )
+            discovery_exports = self._load_exports(crew_export_paths["discovery_crew"], DiscoveryCrewExport, crew_name="discovery_crew")
             consolidated.discovery_results = discovery_exports[0] if discovery_exports else None
             status = "completed" if consolidated.discovery_results else "failed"
             consolidated.crew_execution_status["discovery_crew"] = status
@@ -176,9 +168,7 @@ class ReportConsolidator:
         # Consolidate rebalancing results (single file)
         if "rebalancing_crew" in crew_export_paths:
             logger.info("Consolidating rebalancing crew results")
-            rebalancing_exports = self._load_exports(
-                crew_export_paths["rebalancing_crew"], RebalancingCrewExport, crew_name="rebalancing_crew"
-            )
+            rebalancing_exports = self._load_exports(crew_export_paths["rebalancing_crew"], RebalancingCrewExport, crew_name="rebalancing_crew")
             consolidated.rebalancing_results = rebalancing_exports[0] if rebalancing_exports else None
             status = "completed" if consolidated.rebalancing_results else "failed"
             consolidated.crew_execution_status["rebalancing_crew"] = status
@@ -305,9 +295,7 @@ class ReportConsolidator:
                 logger.warning(error_msg)
                 # Track missing file error
                 if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {"crew": crew_name, "file": str(path), "error_type": "missing_file", "message": error_msg}
-                    )
+                    self._validation_errors.append({"crew": crew_name, "file": str(path), "error_type": "missing_file", "message": error_msg})
                 continue
 
             try:
@@ -369,9 +357,7 @@ class ReportConsolidator:
                 logger.error(error_msg)
                 # Track JSON parsing error
                 if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {"crew": crew_name, "file": str(path), "error_type": "json_parse_error", "message": error_msg}
-                    )
+                    self._validation_errors.append({"crew": crew_name, "file": str(path), "error_type": "json_parse_error", "message": error_msg})
 
             except Exception as e:
                 # Log any other unexpected errors
@@ -379,9 +365,7 @@ class ReportConsolidator:
                 logger.error(error_msg, exc_info=True)
                 # Track unexpected error
                 if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {"crew": crew_name, "file": str(path), "error_type": "unexpected_error", "message": error_msg}
-                    )
+                    self._validation_errors.append({"crew": crew_name, "file": str(path), "error_type": "unexpected_error", "message": error_msg})
 
         logger.info(f"Loaded {len(exports)}/{len(file_paths)} valid {schema_name} exports")
 
@@ -416,9 +400,7 @@ class ReportConsolidator:
                 error_msg = f"Export file not found: {path}"
                 logger.warning(error_msg)
                 if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {"crew": "deep_analysis_crew", "file": str(path), "error_type": "missing_file", "message": error_msg}
-                    )
+                    self._validation_errors.append({"crew": "deep_analysis_crew", "file": str(path), "error_type": "missing_file", "message": error_msg})
                 continue
 
             try:
@@ -468,17 +450,13 @@ class ReportConsolidator:
                 error_msg = f"Invalid JSON in {path}: {e}"
                 logger.error(error_msg)
                 if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {"crew": "deep_analysis_crew", "file": str(path), "error_type": "json_parse_error", "message": error_msg}
-                    )
+                    self._validation_errors.append({"crew": "deep_analysis_crew", "file": str(path), "error_type": "json_parse_error", "message": error_msg})
 
             except Exception as e:
                 error_msg = f"Failed to load {path}: {e}"
                 logger.error(error_msg, exc_info=True)
                 if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {"crew": "deep_analysis_crew", "file": str(path), "error_type": "unexpected_error", "message": error_msg}
-                    )
+                    self._validation_errors.append({"crew": "deep_analysis_crew", "file": str(path), "error_type": "unexpected_error", "message": error_msg})
 
         logger.info(f"Loaded {len(exports)}/{len(file_paths)} valid deep analysis exports")
 

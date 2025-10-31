@@ -85,9 +85,7 @@ class PortfolioOptimizationAlgorithms:
         # Add custom constraints based on objective type
         if constraints:
             for constraint in constraints:
-                constraint_type_str = (
-                    constraint.constraint_type if isinstance(constraint.constraint_type, str) else constraint.constraint_type.value
-                )
+                constraint_type_str = constraint.constraint_type if isinstance(constraint.constraint_type, str) else constraint.constraint_type.value
                 if constraint_type_str == "weight_bounds":
                     # Will be handled in bounds parameter
                     pass
@@ -102,9 +100,7 @@ class PortfolioOptimizationAlgorithms:
         x0 = np.array([1.0 / n_assets] * n_assets)
 
         # Optimize
-        result = optimize.minimize(
-            objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9}
-        )
+        result = optimize.minimize(objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9})
 
         if not result.success:
             logger.warning(f"Mean-variance optimization did not converge: {result.message}")
@@ -297,9 +293,7 @@ class PortfolioOptimizationAlgorithms:
         x0 = np.array([1.0 / n_assets] * n_assets)
 
         # Optimize
-        result = optimize.minimize(
-            objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9}
-        )
+        result = optimize.minimize(objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9})
 
         return result.x if result.success else None
 

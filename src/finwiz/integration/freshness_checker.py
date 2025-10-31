@@ -30,9 +30,7 @@ class FreshnessReport(BaseModel):
     fresh_data: list[str] = Field(default_factory=list, description="List of fresh data sources")
     stale_data: list[str] = Field(default_factory=list, description="List of stale data sources")
     missing_data: list[str] = Field(default_factory=list, description="List of missing data sources")
-    check_results: list[FreshnessCheckResult] = Field(
-        default_factory=list, description="Detailed check results for each data source"
-    )
+    check_results: list[FreshnessCheckResult] = Field(default_factory=list, description="Detailed check results for each data source")
     overall_status: str = Field(description="Overall freshness status")
     check_timestamp: datetime = Field(description="When the freshness check was performed")
     recommendations: list[str] = Field(default_factory=list, description="Recommendations for improving data freshness")
@@ -172,9 +170,7 @@ class DataFreshnessChecker:
                         if not freshness.is_fresh:
                             stale_files.append(file_path)
 
-            self.logger.info(
-                f"Found {len(stale_files)} stale files", extra={"max_age_hours": max_age_hours, "stale_count": len(stale_files)}
-            )
+            self.logger.info(f"Found {len(stale_files)} stale files", extra={"max_age_hours": max_age_hours, "stale_count": len(stale_files)})
 
             return stale_files
 
@@ -231,9 +227,7 @@ class DataFreshnessChecker:
                     crew_staleness[crew_dir] = float("inf")
 
             # Sort crews by dependency order first, then by staleness
-            sorted_crews = sorted(
-                self.crew_directories, key=lambda crew: (dependency_order.get(crew, 999), crew_staleness.get(crew, 0))
-            )
+            sorted_crews = sorted(self.crew_directories, key=lambda crew: (dependency_order.get(crew, 999), crew_staleness.get(crew, 0)))
 
             # Filter to only include crews that need refresh
             refresh_needed = [crew for crew in sorted_crews if crew_staleness.get(crew, 0) > max_age_hours]

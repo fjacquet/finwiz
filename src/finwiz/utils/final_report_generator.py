@@ -39,9 +39,7 @@ class FinalReportGenerator:
         self.template_dir = Path(template_dir)
 
         # Initialize Jinja2 environment
-        self.env = Environment(
-            loader=FileSystemLoader(str(self.template_dir)), autoescape=True, trim_blocks=True, lstrip_blocks=True
-        )
+        self.env = Environment(loader=FileSystemLoader(str(self.template_dir)), autoescape=True, trim_blocks=True, lstrip_blocks=True)
 
         logger.info(f"FinalReportGenerator initialized with template_dir: {template_dir}")
 

@@ -53,9 +53,7 @@ class NotificationPreferences(BaseModel):
     phone_number: str | None = Field(None, description="Phone number for SMS notifications")
 
     # Notification settings
-    enabled_notification_types: list[NotificationType] = Field(
-        default_factory=lambda: [NotificationType.EMAIL], description="Enabled notification types"
-    )
+    enabled_notification_types: list[NotificationType] = Field(default_factory=lambda: [NotificationType.EMAIL], description="Enabled notification types")
 
     # Alert level preferences
     email_alert_levels: list[AlertSeverity] = Field(
@@ -561,11 +559,7 @@ class NotificationService:
         """Check if user has exceeded notification rate limit."""
         # Count notifications sent in the last hour
         one_hour_ago = datetime.now() - timedelta(hours=1)
-        recent_notifications = [
-            record
-            for record in self.notification_history
-            if record.portfolio_id.startswith(user_id) and record.sent_timestamp >= one_hour_ago
-        ]
+        recent_notifications = [record for record in self.notification_history if record.portfolio_id.startswith(user_id) and record.sent_timestamp >= one_hour_ago]
 
         return len(recent_notifications) >= preferences.max_notifications_per_hour
 

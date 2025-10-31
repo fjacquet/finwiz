@@ -101,9 +101,7 @@ class MarketTrend(BaseModel):
     key_trends: list[str] = Field(description="Key market trends identified", max_length=20)
     growth_sectors: list[str] = Field(description="Emerging growth sectors", max_length=15)
     market_sentiment: Literal["bullish", "bearish", "neutral", "mixed"] = Field(description="Overall market sentiment")
-    economic_factors: list[str] = Field(
-        description="Global economic factors impacting markets", default_factory=list, max_length=10
-    )
+    economic_factors: list[str] = Field(description="Global economic factors impacting markets", default_factory=list, max_length=10)
     data_sources: list[str] = Field(description="Data sources used", default_factory=list)
 
 
@@ -228,9 +226,7 @@ class StockRiskProfile(BaseModel):
     governance_risk: str = Field(description="Corporate governance risk assessment", min_length=20)
 
     # Quantitative risk metrics
-    quantitative_risk_metrics: dict[str, Any] = Field(
-        default_factory=dict, description="Quantitative risk metrics (VaR, drawdown, etc.)"
-    )
+    quantitative_risk_metrics: dict[str, Any] = Field(default_factory=dict, description="Quantitative risk metrics (VaR, drawdown, etc.)")
 
     # Market sentiment
     sentiment: Optional[MarketSentiment] = Field(None, description="Market sentiment analysis")

@@ -352,9 +352,7 @@ class TestNotificationService:
         assert notification_service.user_preferences[user_id] == sample_preferences
 
     @pytest.mark.asyncio
-    async def test_should_send_email_notification_when_preferences_allow(
-        self, notification_service, sample_alert, sample_preferences, mocker
-    ):
+    async def test_should_send_email_notification_when_preferences_allow(self, notification_service, sample_alert, sample_preferences, mocker):
         """Test sending email notification when preferences allow."""
         # Arrange
         user_id = "test_user"

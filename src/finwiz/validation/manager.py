@@ -151,9 +151,7 @@ class ValidationManager:
         """Get current validation strictness mode."""
         return self._mode
 
-    def _validate_with_schema(
-        self, data: dict[str, Any], schema_class: type[BaseModel], result: ValidationResult
-    ) -> ValidationResult:
+    def _validate_with_schema(self, data: dict[str, Any], schema_class: type[BaseModel], result: ValidationResult) -> ValidationResult:
         """
         Validate data against a Pydantic schema.
 

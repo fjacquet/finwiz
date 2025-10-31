@@ -248,9 +248,7 @@ class APITestMocks:
         # Mock responses for both map and news endpoints
         map_response = mocker.AsyncMock()
         map_response.status = kwargs.get("map_status", 200)
-        map_response.json.return_value = {
-            "data": kwargs.get("map_data", [{"id": 1, "symbol": crypto_symbol, "name": f"{crypto_symbol} Name"}])
-        }
+        map_response.json.return_value = {"data": kwargs.get("map_data", [{"id": 1, "symbol": crypto_symbol, "name": f"{crypto_symbol} Name"}])}
 
         news_response = mocker.AsyncMock()
         news_response.status = kwargs.get("news_status", 200)

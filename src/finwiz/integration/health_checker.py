@@ -147,9 +147,7 @@ class IntegrationHealthChecker:
             return SystemHealthReport(
                 overall_status="critical",
                 check_timestamp=datetime.now(),
-                components=[
-                    HealthStatus(component="health_checker", status="critical", message=error_msg, last_check=datetime.now())
-                ],
+                components=[HealthStatus(component="health_checker", status="critical", message=error_msg, last_check=datetime.now())],
                 summary={"error": error_msg},
                 recommendations=["Fix health checker and retry"],
             )
@@ -222,9 +220,7 @@ class IntegrationHealthChecker:
                 if not json_files:
                     empty_crews.append(crew_name)
                 else:
-                    available_crews.append(
-                        {"crew": crew_name, "file_count": len(json_files), "files": [f.name for f in json_files]}
-                    )
+                    available_crews.append({"crew": crew_name, "file_count": len(json_files), "files": [f.name for f in json_files]})
 
             # Determine status
             total_crews = len(self.crew_names)
@@ -512,9 +508,7 @@ class IntegrationHealthChecker:
         for component in components:
             if component.status == "critical":
                 if component.component == "data_freshness":
-                    recommendations.append(
-                        f"Run crew executions to refresh stale data: {', '.join(component.details.get('stale_data', []))}"
-                    )
+                    recommendations.append(f"Run crew executions to refresh stale data: {', '.join(component.details.get('stale_data', []))}")
                 elif component.component == "data_availability":
                     missing = component.details.get("missing_crews", [])
                     if missing:

@@ -178,7 +178,7 @@ uv run pytest -m core_analysis              # Core analysis tests
 
 ### CrewAI Testing Standards
 
-The reorganization follows [CrewAI Testing Standards](../reference/testing_standards.md):
+The reorganization follows CrewAI Testing Standards:
 
 - **No full crew execution** in unit tests (causes hangs)
 - **Test configuration loading** from YAML files
@@ -290,9 +290,9 @@ The new structure is designed for easy extension:
 
 ## Related Documentation
 
-- [Testing Standards](../reference/testing_standards.md)
-- [CrewAI Standards](../reference/crewai_standards.md)
-- [Development Standards](../reference/development_standards.md)
+- Testing Standards
+- CrewAI Standards
+- Development Standards
 - [How to: Testing](../how-to/testing.md)
 
 ---

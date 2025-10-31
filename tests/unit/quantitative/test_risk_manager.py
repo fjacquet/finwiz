@@ -186,9 +186,7 @@ class TestRiskManager:
         # Assert
         assert risk_manager.config.concentration_limits.max_single_position == 0.15
 
-    def test_should_detect_concentration_violations_when_position_exceeds_limit(
-        self, risk_manager, sample_portfolio_config, mocker
-    ):
+    def test_should_detect_concentration_violations_when_position_exceeds_limit(self, risk_manager, sample_portfolio_config, mocker):
         """Test detection of concentration limit violations."""
         # Arrange
         # Create result with high concentration
@@ -211,9 +209,7 @@ class TestRiskManager:
         assert any("AAPL" in w.message for w in concentration_warnings)
         assert risk_assessment.concentration_risk > 4.0  # HHI calculation gives 4.25 for this scenario
 
-    def test_should_detect_excessive_turnover_when_trades_exceed_limit(
-        self, risk_manager, sample_portfolio_config, sample_rebalancing_result
-    ):
+    def test_should_detect_excessive_turnover_when_trades_exceed_limit(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test detection of excessive portfolio turnover."""
         # Arrange
         # Modify trade recommendations to create high turnover (>25% monthly limit)
@@ -265,9 +261,7 @@ class TestRiskManager:
         assert len(turnover_warnings) > 0
         assert risk_assessment.turnover_risk > 5.0
 
-    def test_should_recommend_wider_tolerance_when_volatility_high(
-        self, risk_manager, sample_portfolio_config, sample_rebalancing_result
-    ):
+    def test_should_recommend_wider_tolerance_when_volatility_high(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test volatility-based tolerance recommendations."""
         # Arrange
         high_volatility = 0.45  # 45% volatility
@@ -282,9 +276,7 @@ class TestRiskManager:
         assert risk_assessment.recommended_tolerance_adjustment is not None
         assert risk_assessment.recommended_tolerance_adjustment >= 0.10
 
-    def test_should_detect_tax_implications_when_short_term_gains_present(
-        self, risk_manager, sample_portfolio_config, sample_rebalancing_result
-    ):
+    def test_should_detect_tax_implications_when_short_term_gains_present(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test detection of tax implications for short-term gains."""
         # Arrange
         # Modify holding to have short-term gains
@@ -299,9 +291,7 @@ class TestRiskManager:
         assert len(tax_warnings) > 0
         assert any("short-term capital gains" in w.message for w in tax_warnings)
 
-    def test_should_detect_tax_loss_harvesting_opportunities(
-        self, risk_manager, sample_portfolio_config, sample_rebalancing_result
-    ):
+    def test_should_detect_tax_loss_harvesting_opportunities(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test detection of tax-loss harvesting opportunities."""
         # Arrange
         # Modify holding to have losses
@@ -345,9 +335,7 @@ class TestRiskManager:
         position_warnings = [w for w in risk_assessment.warnings if w.warning_type == RiskWarningType.POSITION_SIZE]
         assert len(position_warnings) > 0
 
-    def test_should_warn_about_market_impact_for_large_quantities(
-        self, risk_manager, sample_portfolio_config, sample_rebalancing_result
-    ):
+    def test_should_warn_about_market_impact_for_large_quantities(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test market impact warnings for large quantities."""
         # Arrange
         # Create trade with large quantity
@@ -389,9 +377,7 @@ class TestRiskManager:
         assert 0 <= risk_assessment.volatility_risk <= 10
         assert 0 <= risk_assessment.tax_efficiency_score <= 10
 
-    def test_should_recommend_appropriate_rebalancing_frequency(
-        self, risk_manager, sample_portfolio_config, sample_rebalancing_result
-    ):
+    def test_should_recommend_appropriate_rebalancing_frequency(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test rebalancing frequency recommendations."""
         # Act
         risk_assessment = risk_manager.assess_rebalancing_risks(sample_portfolio_config, sample_rebalancing_result)
@@ -400,9 +386,7 @@ class TestRiskManager:
         assert risk_assessment.rebalancing_frequency_recommendation is not None
         assert len(risk_assessment.rebalancing_frequency_recommendation) > 0
 
-    def test_should_validate_safe_rebalancing_when_no_critical_risks(
-        self, risk_manager, sample_portfolio_config, sample_rebalancing_result
-    ):
+    def test_should_validate_safe_rebalancing_when_no_critical_risks(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test validation of safe rebalancing scenarios."""
         # Act
         is_safe, blocking_issues = risk_manager.validate_rebalancing_safety(sample_portfolio_config, sample_rebalancing_result)

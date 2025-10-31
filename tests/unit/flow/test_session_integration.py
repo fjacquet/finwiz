@@ -65,9 +65,7 @@ class TestSessionIntegration:
         plan = initialize_session(self.test_report_path)
 
         analysis_results = {
-            "portfolio_data": {
-                "holdings": [{"name": "Test Stock", "ticker": "TEST", "decision": "KEEP", "composite_score": "0.75"}]
-            },
+            "portfolio_data": {"holdings": [{"name": "Test Stock", "ticker": "TEST", "decision": "KEEP", "composite_score": "0.75"}]},
             "recommendations": {"stocks": ["TEST - Test Stock"]},
         }
 

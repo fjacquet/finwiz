@@ -120,11 +120,7 @@ class LineageQuery:
             elif isinstance(item, CalculationStep):
                 result["calculations"].append(item)
 
-        logger.debug(
-            f"Retrieved lineage for {ticker} metric '{metric}': "
-            f"{len(result['transformations'])} transformations, "
-            f"{len(result['calculations'])} calculations"
-        )
+        logger.debug(f"Retrieved lineage for {ticker} metric '{metric}': {len(result['transformations'])} transformations, {len(result['calculations'])} calculations")
 
         return result
 
@@ -176,9 +172,7 @@ class LineageQuery:
             if input_lineage:
                 result["input_lineages"][input_name] = input_lineage
 
-        logger.debug(
-            f"Retrieved score lineage for {ticker} '{score_type}': {len(result['inputs'])} inputs, formula: {calc_step.formula}"
-        )
+        logger.debug(f"Retrieved score lineage for {ticker} '{score_type}': {len(result['inputs'])} inputs, formula: {calc_step.formula}")
 
         return result
 

@@ -59,9 +59,7 @@ class TALibWrappers:
         return talib.RSI(close_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
-    def macd(
-        close_prices: np.ndarray, fast: int = 12, slow: int = 26, signal: int = 9
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def macd(close_prices: np.ndarray, fast: int = 12, slow: int = 26, signal: int = 9) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         MACD (Moving Average Convergence Divergence) wrapper.
 
@@ -78,9 +76,7 @@ class TALibWrappers:
         return talib.MACD(close_prices.astype(np.float64), fastperiod=fast, slowperiod=slow, signalperiod=signal)
 
     @staticmethod
-    def bollinger_bands(
-        close_prices: np.ndarray, period: int = 20, std_dev: float = 2.0
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def bollinger_bands(close_prices: np.ndarray, period: int = 20, std_dev: float = 2.0) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Bollinger Bands wrapper.
 
@@ -110,14 +106,10 @@ class TALibWrappers:
             Array of ATR values
 
         """
-        return talib.ATR(
-            high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period
-        )
+        return talib.ATR(high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
-    def stochastic(
-        high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, k_period: int = 14, d_period: int = 3
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def stochastic(high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, k_period: int = 14, d_period: int = 3) -> tuple[np.ndarray, np.ndarray]:
         """
         Stochastic Oscillator wrapper.
 
@@ -156,9 +148,7 @@ class TALibWrappers:
             Array of ADX values
 
         """
-        return talib.ADX(
-            high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period
-        )
+        return talib.ADX(high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
     def cci(high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, period: int = 14) -> np.ndarray:
@@ -175,9 +165,7 @@ class TALibWrappers:
             Array of CCI values
 
         """
-        return talib.CCI(
-            high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period
-        )
+        return talib.CCI(high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
     def williams_r(high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, period: int = 14) -> np.ndarray:
@@ -194,9 +182,7 @@ class TALibWrappers:
             Array of Williams %R values
 
         """
-        return talib.WILLR(
-            high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period
-        )
+        return talib.WILLR(high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
     def obv(close_prices: np.ndarray, volume: np.ndarray) -> np.ndarray:
@@ -259,9 +245,7 @@ class TALibWrappers:
         return talib.TRIX(close_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
-    def dmi(
-        high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, period: int = 14
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def dmi(high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, period: int = 14) -> tuple[np.ndarray, np.ndarray]:
         """
         Directional Movement Index wrapper.
 
@@ -275,12 +259,8 @@ class TALibWrappers:
             Tuple of (Plus DI, Minus DI)
 
         """
-        plus_di = talib.PLUS_DI(
-            high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period
-        )
-        minus_di = talib.MINUS_DI(
-            high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period
-        )
+        plus_di = talib.PLUS_DI(high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period)
+        minus_di = talib.MINUS_DI(high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period)
         return plus_di, minus_di
 
     @staticmethod
@@ -300,9 +280,7 @@ class TALibWrappers:
         return talib.AROON(high_prices.astype(np.float64), low_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
-    def mfi(
-        high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, volume: np.ndarray, period: int = 14
-    ) -> np.ndarray:
+    def mfi(high_prices: np.ndarray, low_prices: np.ndarray, close_prices: np.ndarray, volume: np.ndarray, period: int = 14) -> np.ndarray:
         """
         Money Flow Index wrapper.
 
@@ -326,9 +304,7 @@ class TALibWrappers:
         )
 
     @staticmethod
-    def parabolic_sar(
-        high_prices: np.ndarray, low_prices: np.ndarray, acceleration: float = 0.02, maximum: float = 0.2
-    ) -> np.ndarray:
+    def parabolic_sar(high_prices: np.ndarray, low_prices: np.ndarray, acceleration: float = 0.02, maximum: float = 0.2) -> np.ndarray:
         """
         Parabolic SAR wrapper.
 

@@ -109,22 +109,16 @@ async def analyze_stock_with_feature_flags(ticker: str) -> dict[str, Any]:
     results = {"ticker": ticker, "analysis_components": {}}
 
     # Enhanced sentiment analysis with feature flag
-    sentiment_result = await execute_with_feature_flag(
-        "enhanced_sentiment_analysis", enhanced_sentiment_analysis, basic_sentiment_analysis, ticker=ticker
-    )
+    sentiment_result = await execute_with_feature_flag("enhanced_sentiment_analysis", enhanced_sentiment_analysis, basic_sentiment_analysis, ticker=ticker)
     results["analysis_components"]["sentiment"] = sentiment_result
 
     # Chart analysis with graceful degradation
-    chart_result = await execute_with_degradation(
-        "chart_img", chart_analysis, chart_analysis_fallback, cache_key=f"chart_{ticker}", ticker=ticker
-    )
+    chart_result = await execute_with_degradation("chart_img", chart_analysis, chart_analysis_fallback, cache_key=f"chart_{ticker}", ticker=ticker)
     results["analysis_components"]["chart"] = chart_result
 
     # Technical indicators with feature flag and degradation
     if get_feature_flags().is_enabled("twelve_data_integration"):
-        indicators_result = await execute_with_degradation(
-            "twelve_data", twelve_data_indicators, twelve_data_fallback, cache_key=f"indicators_{ticker}", ticker=ticker
-        )
+        indicators_result = await execute_with_degradation("twelve_data", twelve_data_indicators, twelve_data_fallback, cache_key=f"indicators_{ticker}", ticker=ticker)
         results["analysis_components"]["technical_indicators"] = indicators_result
     else:
         print(f"📊 Twelve Data integration disabled for {ticker}")

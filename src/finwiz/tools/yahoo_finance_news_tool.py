@@ -19,10 +19,7 @@ class YahooFinanceNewsTool(BaseTool):
     """
 
     name: str = "Yahoo Finance News Tool"
-    description: str = (
-        "Get recent news articles for stocks, ETFs, or cryptocurrencies, "
-        "including headlines, publishers, and links to full articles."
-    )
+    description: str = "Get recent news articles for stocks, ETFs, or cryptocurrencies, including headlines, publishers, and links to full articles."
     args_schema: type[BaseModel] = GetTickerNewsInput
 
     def _run(self, ticker: str, limit: int = 5) -> str:

@@ -20,9 +20,7 @@ from finwiz.tools.perplexity_performance_benchmark import PerplexityPerformanceB
 logger = get_logger(__name__)
 
 
-async def run_performance_benchmark(
-    test_cases: list[dict[str, Any]], iterations: int = 5, concurrent_requests: int = 1
-) -> dict[str, Any]:
+async def run_performance_benchmark(test_cases: list[dict[str, Any]], iterations: int = 5, concurrent_requests: int = 1) -> dict[str, Any]:
     """Run performance benchmark with specified parameters."""
     # Check API key availability
     api_key = os.getenv("PPLX_API_KEY")
@@ -39,9 +37,7 @@ async def run_performance_benchmark(
 
     try:
         # Run benchmark
-        result = await benchmark.benchmark_response_times(
-            test_cases=test_cases, iterations=iterations, concurrent_requests=concurrent_requests
-        )
+        result = await benchmark.benchmark_response_times(test_cases=test_cases, iterations=iterations, concurrent_requests=concurrent_requests)
 
         # Generate summary
         summary = result.get_performance_summary()
@@ -129,9 +125,7 @@ async def main() -> None:
 
     # Validate command
     validate_parser = subparsers.add_parser("validate", help="Validate performance requirements")
-    validate_parser.add_argument(
-        "--sample-size", "-s", type=int, default=15, help="Number of requests for validation (default: 15)"
-    )
+    validate_parser.add_argument("--sample-size", "-s", type=int, default=15, help="Number of requests for validation (default: 15)")
     validate_parser.add_argument("--output", "-o", type=str, help="Output file for results (JSON format)")
 
     # Quick test command
@@ -152,9 +146,7 @@ async def main() -> None:
     try:
         if args.command == "benchmark":
             test_cases = create_default_test_cases()
-            result = await run_performance_benchmark(
-                test_cases=test_cases, iterations=args.iterations, concurrent_requests=args.concurrent
-            )
+            result = await run_performance_benchmark(test_cases=test_cases, iterations=args.iterations, concurrent_requests=args.concurrent)
 
             if args.output:
                 with open(args.output, "w") as f:

@@ -45,9 +45,7 @@ class RebalancingResult(BaseModel):
     execution_summary: ExecutionSummary = Field(..., description="Execution requirements summary")
 
     # Alternative scenarios
-    alternative_scenarios: list[AlternativeScenario] = Field(
-        default_factory=list, max_length=3, description="Alternative rebalancing scenarios"
-    )
+    alternative_scenarios: list[AlternativeScenario] = Field(default_factory=list, max_length=3, description="Alternative rebalancing scenarios")
 
     # Recommendations
     overall_recommendation: RebalancingRecommendation = Field(..., description="Overall rebalancing recommendation")

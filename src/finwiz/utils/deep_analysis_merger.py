@@ -79,9 +79,7 @@ class DeepAnalysisDataMerger:
 
             # CRITICAL: Validate analysis has real data, not defaults
             if self._is_fallback_data(analysis):
-                raise DataMergeError(
-                    f"Deep analysis for {ticker} contains fallback data. Grade: {analysis.grade}, Score: {analysis.composite_score}"
-                )
+                raise DataMergeError(f"Deep analysis for {ticker} contains fallback data. Grade: {analysis.grade}, Score: {analysis.composite_score}")
 
             # Get alternatives for this ticker if available
             ticker_alternatives = None
@@ -93,9 +91,7 @@ class DeepAnalysisDataMerger:
 
             # Verify merge succeeded
             if not self._verify_merge(merged_holding, analysis):
-                raise DataMergeError(
-                    f"Merge verification failed for {ticker}. Expected grade {analysis.grade}, got {merged_holding.grade}"
-                )
+                raise DataMergeError(f"Merge verification failed for {ticker}. Expected grade {analysis.grade}, got {merged_holding.grade}")
 
             merged_holdings.append(merged_holding)
             merge_stats["merged"] += 1
@@ -103,18 +99,13 @@ class DeepAnalysisDataMerger:
             # Track alternatives merge
             if ticker_alternatives:
                 merge_stats["alternatives_merged"] += 1
-                self.logger.info(
-                    f"✅ Merged {ticker}: Grade {analysis.grade}, Score {analysis.composite_score:.2f}, "
-                    f"Alternatives: {len(ticker_alternatives)}"
-                )
+                self.logger.info(f"✅ Merged {ticker}: Grade {analysis.grade}, Score {analysis.composite_score:.2f}, Alternatives: {len(ticker_alternatives)}")
             else:
                 self.logger.info(f"✅ Merged {ticker}: Grade {analysis.grade}, Score {analysis.composite_score:.2f}")
 
         # CRITICAL: Fail if any holdings couldn't be merged
         if merge_stats["missing_analysis"]:
-            raise DataMergeError(
-                f"Failed to merge {len(merge_stats['missing_analysis'])} holdings: {merge_stats['missing_analysis']}"
-            )
+            raise DataMergeError(f"Failed to merge {len(merge_stats['missing_analysis'])} holdings: {merge_stats['missing_analysis']}")
 
         self.logger.info(
             f"Deep analysis merge complete: {merge_stats['merged']}/{merge_stats['total']} "
@@ -211,10 +202,7 @@ class DeepAnalysisDataMerger:
                     merged.alternatives = alternative_models
                     self.logger.info(f"Merged {len(alternative_models)} alternatives into {holding.ticker}")
                 else:
-                    self.logger.warning(
-                        f"No valid alternatives could be merged for {holding.ticker} "
-                        f"(validation failed for all {len(alternatives)} alternatives)"
-                    )
+                    self.logger.warning(f"No valid alternatives could be merged for {holding.ticker} (validation failed for all {len(alternatives)} alternatives)")
 
             except Exception as e:
                 self.logger.error(
@@ -225,10 +213,7 @@ class DeepAnalysisDataMerger:
         else:
             # Log when no alternatives are available for underperforming holdings
             if analysis.grade in ["C", "D", "F"]:
-                self.logger.info(
-                    f"No alternatives available for {holding.ticker} (grade: {analysis.grade}). "
-                    f"Consider running with --discovery flag to find A+ alternatives."
-                )
+                self.logger.info(f"No alternatives available for {holding.ticker} (grade: {analysis.grade}). Consider running with --discovery flag to find A+ alternatives.")
 
         # Note: HoldingDecision doesn't have has_deep_analysis field in the schema
         # but we set crew_analysis_used which indicates deep analysis was performed
@@ -247,11 +232,7 @@ class DeepAnalysisDataMerger:
             True if merge succeeded, False otherwise
 
         """
-        return (
-            merged.grade == analysis.grade
-            and merged.composite_score == analysis.composite_score
-            and merged.crew_analysis_used == analysis.crew_name
-        )
+        return merged.grade == analysis.grade and merged.composite_score == analysis.composite_score and merged.crew_analysis_used == analysis.crew_name
 
     def _get_grade_description(self, grade: str) -> str:
         """

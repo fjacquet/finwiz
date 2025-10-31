@@ -61,9 +61,7 @@ class TestDerivativesPricer:
     @pytest.fixture
     def bond_params(self):
         """Create bond parameters for testing."""
-        return BondParameters(
-            face_value=1000.0, coupon_rate=0.05, years_to_maturity=5.0, yield_to_maturity=0.04, coupon_frequency=2
-        )
+        return BondParameters(face_value=1000.0, coupon_rate=0.05, years_to_maturity=5.0, yield_to_maturity=0.04, coupon_frequency=2)
 
     def test_pricer_initialization(self, pricer):
         """Test derivatives pricer initialization."""

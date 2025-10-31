@@ -110,10 +110,7 @@ class RebalancingHistoryTracker:
             # Save to file
             self._save_history_entry(history_entry)
 
-            logger.info(
-                f"Recorded rebalancing action for portfolio {portfolio_id}: "
-                f"{positions_rebalanced} positions, ${total_costs:.2f} costs"
-            )
+            logger.info(f"Recorded rebalancing action for portfolio {portfolio_id}: {positions_rebalanced} positions, ${total_costs:.2f} costs")
 
             return entry_id
 
@@ -259,10 +256,7 @@ class RebalancingHistoryTracker:
                 position_contributions={},  # Default empty dict
             )
 
-            logger.info(
-                f"Performance attribution analysis completed for portfolio {portfolio_id}: "
-                f"Alpha: {rebalancing_alpha:.2%}, Net benefit: {net_benefit:.2%}"
-            )
+            logger.info(f"Performance attribution analysis completed for portfolio {portfolio_id}: Alpha: {rebalancing_alpha:.2%}, Net benefit: {net_benefit:.2%}")
 
             return attribution
 
@@ -320,9 +314,7 @@ class RebalancingHistoryTracker:
                 frequency_risk[freq_days] = risk
 
             # Find optimal frequency (maximize risk-adjusted return minus costs)
-            optimal_freq = max(
-                frequency_scenarios, key=lambda f: (frequency_performance[f] - frequency_costs[f]) / frequency_risk[f]
-            )
+            optimal_freq = max(frequency_scenarios, key=lambda f: (frequency_performance[f] - frequency_costs[f]) / frequency_risk[f])
 
             # Calculate optimal tolerance band based on historical deviations
             all_deviations = []
@@ -348,10 +340,7 @@ class RebalancingHistoryTracker:
                 performance_in_bear_markets={},  # Default empty dict
             )
 
-            logger.info(
-                f"Trend analysis completed for portfolio {portfolio_id}: "
-                f"Optimal frequency: {optimal_freq} days, Tolerance: {optimal_tolerance:.1%}"
-            )
+            logger.info(f"Trend analysis completed for portfolio {portfolio_id}: Optimal frequency: {optimal_freq} days, Tolerance: {optimal_tolerance:.1%}")
 
             return trend_analysis
 
@@ -396,13 +385,9 @@ class RebalancingHistoryTracker:
             most_rebalanced_symbols = [p.symbol for p in most_rebalanced]
 
             # Effectiveness metrics
-            avg_deviation_improvement = (
-                np.mean([entry.deviation_improvement for entry in history if entry.deviation_improvement > 0]) if history else 0.0
-            )
+            avg_deviation_improvement = np.mean([entry.deviation_improvement for entry in history if entry.deviation_improvement > 0]) if history else 0.0
 
-            success_rate = (
-                len([entry for entry in history if entry.execution_status == "COMPLETED"]) / len(history) if history else 0.0
-            )
+            success_rate = len([entry for entry in history if entry.execution_status == "COMPLETED"]) / len(history) if history else 0.0
 
             # Cost efficiency (higher is better)
             total_costs = sum(entry.total_transaction_costs for entry in history)
@@ -462,9 +447,7 @@ class RebalancingHistoryTracker:
         with open(history_file, "w", encoding="utf-8") as f:
             json.dump(history_data, f, indent=2, default=str)
 
-    def _simulate_frequency_performance(
-        self, history: list[RebalancingHistoryEntry], frequency_days: int
-    ) -> tuple[float, float, float]:
+    def _simulate_frequency_performance(self, history: list[RebalancingHistoryEntry], frequency_days: int) -> tuple[float, float, float]:
         """
         Simulate performance metrics for a given rebalancing frequency.
 
@@ -563,9 +546,7 @@ class RebalancingHistoryTracker:
         # Frequency-based recommendations
         if trend_analysis.confidence_score > 0.7:
             if trend_analysis.recommended_frequency != 60:  # Default 60 days
-                recommendations.append(
-                    f"Optimize rebalancing frequency to {trend_analysis.recommended_frequency} days based on historical analysis"
-                )
+                recommendations.append(f"Optimize rebalancing frequency to {trend_analysis.recommended_frequency} days based on historical analysis")
 
         # Risk-based recommendations
         if performance_attribution.risk_reduction < 0:

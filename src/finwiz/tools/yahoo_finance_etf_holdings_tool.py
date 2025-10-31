@@ -17,9 +17,7 @@ class YahooFinanceETFHoldingsTool(BaseTool):
     """
 
     name: str = "Yahoo Finance ETF Holdings Tool"
-    description: str = (
-        "Get detailed holdings information for ETFs, including top holdings, sector allocations, and asset breakdown."
-    )
+    description: str = "Get detailed holdings information for ETFs, including top holdings, sector allocations, and asset breakdown."
     args_schema: type[BaseModel] = GetETFHoldingsInput
 
     def _run(self, ticker: str) -> dict:

@@ -278,9 +278,7 @@ class TestTechnicalAnalyzer:
         indicator_signals = analyzer.algorithms.calculate_indicator_signals(trending_price_data)
         current_price = trending_price_data.closes[-1]
 
-        confluence_zones = analyzer.patterns.find_confluence_zones(
-            fibonacci_levels, support_resistance, indicator_signals, current_price
-        )
+        confluence_zones = analyzer.patterns.find_confluence_zones(fibonacci_levels, support_resistance, indicator_signals, current_price)
 
         # Verify structure
         assert isinstance(confluence_zones, list)
@@ -299,13 +297,9 @@ class TestTechnicalAnalyzer:
         fibonacci_levels = analyzer.algorithms.calculate_fibonacci_levels(sample_price_data)
         support_resistance = analyzer.patterns.identify_support_resistance(sample_price_data)
         indicator_signals = analyzer.algorithms.calculate_indicator_signals(sample_price_data)
-        confluence_zones = analyzer.patterns.find_confluence_zones(
-            fibonacci_levels, support_resistance, indicator_signals, sample_price_data.closes[-1]
-        )
+        confluence_zones = analyzer.patterns.find_confluence_zones(fibonacci_levels, support_resistance, indicator_signals, sample_price_data.closes[-1])
 
-        overall_signal, confidence = analyzer.patterns.determine_overall_signal(
-            fibonacci_levels, support_resistance, indicator_signals, confluence_zones
-        )
+        overall_signal, confidence = analyzer.patterns.determine_overall_signal(fibonacci_levels, support_resistance, indicator_signals, confluence_zones)
 
         # Verify signal
         assert overall_signal in ["buy", "sell", "neutral"]

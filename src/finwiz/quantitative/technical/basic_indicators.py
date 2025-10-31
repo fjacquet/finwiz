@@ -70,8 +70,7 @@ class BasicIndicators:
                         confidence=confidence,
                         timestamp=datetime.now(),
                         price_level=current_price,
-                        description=f"Price is {((current_price / current_sma - 1) * 100):.1f}% "
-                        f"{'above' if current_price > current_sma else 'below'} SMA({period})",
+                        description=f"Price is {((current_price / current_sma - 1) * 100):.1f}% {'above' if current_price > current_sma else 'below'} SMA({period})",
                         metadata={"sma_value": current_sma, "period": period},
                     )
                 )
@@ -132,8 +131,7 @@ class BasicIndicators:
                         confidence=confidence,
                         timestamp=datetime.now(),
                         price_level=current_price,
-                        description=f"Price is {((current_price / current_ema - 1) * 100):.1f}% "
-                        f"{'above' if current_price > current_ema else 'below'} EMA({period})",
+                        description=f"Price is {((current_price / current_ema - 1) * 100):.1f}% {'above' if current_price > current_ema else 'below'} EMA({period})",
                         metadata={"ema_value": current_ema, "period": period},
                     )
                 )
@@ -145,9 +143,7 @@ class BasicIndicators:
             metadata={"periods": periods},
         )
 
-    def calculate_rsi(
-        self, data: pd.DataFrame, period: int = 14, overbought: float = 70, oversold: float = 30
-    ) -> TechnicalIndicatorResult:
+    def calculate_rsi(self, data: pd.DataFrame, period: int = 14, overbought: float = 70, oversold: float = 30) -> TechnicalIndicatorResult:
         """
         Calculate Relative Strength Index using TA-Lib.
 

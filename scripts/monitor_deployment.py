@@ -74,9 +74,7 @@ class DeploymentMonitor:
             branch = "gh-pages-staging" if environment == "staging" else "gh-pages"
 
             # Get last commit info
-            result = subprocess.run(
-                ["git", "log", f"origin/{branch}", "-1", "--format=%H|%an|%ae|%ad|%s"], capture_output=True, text=True
-            )
+            result = subprocess.run(["git", "log", f"origin/{branch}", "-1", "--format=%H|%an|%ae|%ad|%s"], capture_output=True, text=True)
 
             if result.returncode == 0 and result.stdout.strip():
                 parts = result.stdout.strip().split("|")
@@ -183,9 +181,7 @@ class DeploymentMonitor:
             branch = "gh-pages-staging" if environment == "staging" else "gh-pages"
 
             # Get last 10 commits
-            result = subprocess.run(
-                ["git", "log", f"origin/{branch}", "-10", "--format=%H|%an|%ad|%s", "--date=iso"], capture_output=True, text=True
-            )
+            result = subprocess.run(["git", "log", f"origin/{branch}", "-10", "--format=%H|%an|%ad|%s", "--date=iso"], capture_output=True, text=True)
 
             if result.returncode == 0:
                 for line in result.stdout.strip().split("\n"):

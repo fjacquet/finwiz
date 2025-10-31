@@ -381,13 +381,13 @@ This provides:
 ## Related Topics
 
 - [Report Aggregation Architecture](REPORT_AGGREGATION_DEVELOPER_GUIDE.md) - Integration patterns
-- [AI Minimalism](../ai-minimalism.md) - Decision framework for AI vs Python
+- AI Minimalism - Decision framework for AI vs Python
 - [Performance Configuration](PERFORMANCE_CONFIGURATION.md) - Optimization settings
-- [Testing Standards](../testing-standards.md) - Unit testing approaches
+- Testing Standards - Unit testing approaches
 
 ## Further Reading
 
-- [Implementation Tasks](../../.kiro/specs/report-aggregation-architecture/tasks.md) - Detailed implementation plan
+- Implementation Tasks - Detailed implementation plan
 - [Flow Architecture](flow_architecture.md) - CrewAI Flow integration patterns
 - [Validation Framework](validation_framework.md) - Data quality assurance
 

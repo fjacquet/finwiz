@@ -298,9 +298,7 @@ class ConstraintHandler:
             OptimizationConstraint for sector limits
 
         """
-        return OptimizationConstraint(
-            constraint_type=ConstraintType.SECTOR_LIMITS, parameters={"sector_map": sector_map, "limits": sector_limits}
-        )
+        return OptimizationConstraint(constraint_type=ConstraintType.SECTOR_LIMITS, parameters={"sector_map": sector_map, "limits": sector_limits})
 
     def create_turnover_constraint(
         self,

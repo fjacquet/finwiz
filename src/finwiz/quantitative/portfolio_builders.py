@@ -33,9 +33,7 @@ class PortfolioBuilder:
         self.templates_path.mkdir(parents=True, exist_ok=True)
         self.logger = logger
 
-    def create_from_template(
-        self, template: ConfigurationTemplate, holdings: list[Holding], name: str, description: str = ""
-    ) -> dict[str, Any]:
+    def create_from_template(self, template: ConfigurationTemplate, holdings: list[Holding], name: str, description: str = "") -> dict[str, Any]:
         """
         Create a portfolio configuration from a template.
 
@@ -374,9 +372,7 @@ class PortfolioOptimizer:
         """Initialize portfolio optimizer."""
         self.logger = logger
 
-    def optimize_weights_for_risk_target(
-        self, holdings: list[Holding], target_risk: float, risk_data: dict[str, float] | None = None
-    ) -> dict[str, float]:
+    def optimize_weights_for_risk_target(self, holdings: list[Holding], target_risk: float, risk_data: dict[str, float] | None = None) -> dict[str, float]:
         """
         Optimize portfolio weights to achieve a target risk level.
 
@@ -411,9 +407,7 @@ class PortfolioOptimizer:
 
         return normalized_weights
 
-    def optimize_weights_for_return_target(
-        self, holdings: list[Holding], target_return: float, return_data: dict[str, float] | None = None
-    ) -> dict[str, float]:
+    def optimize_weights_for_return_target(self, holdings: list[Holding], target_return: float, return_data: dict[str, float] | None = None) -> dict[str, float]:
         """
         Optimize portfolio weights to achieve a target return.
 

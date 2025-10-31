@@ -348,9 +348,7 @@ class MissingDataHandler:
                 file_path = self.output_dir / expected_file
 
                 if not file_path.exists():
-                    scenario = self._create_missing_data_scenario(
-                        crew_name=crew_name, expected_path=str(file_path), data_type=f"{crew_name}_output"
-                    )
+                    scenario = self._create_missing_data_scenario(crew_name=crew_name, expected_path=str(file_path), data_type=f"{crew_name}_output")
                     missing_scenarios.append(scenario)
 
                     logger.info(f"Missing data detected: {crew_name} - {expected_file}")
@@ -461,9 +459,7 @@ class MissingDataHandler:
         warnings = []
 
         for scenario in missing_scenarios:
-            severity_prefix = {"critical": "🔴 CRITICAL", "high": "🟠 HIGH", "medium": "🟡 MEDIUM", "low": "🟢 LOW"}.get(
-                scenario.severity, "⚪ UNKNOWN"
-            )
+            severity_prefix = {"critical": "🔴 CRITICAL", "high": "🟠 HIGH", "medium": "🟡 MEDIUM", "low": "🟢 LOW"}.get(scenario.severity, "⚪ UNKNOWN")
 
             fallback_note = " (fallback available)" if scenario.fallback_available else " (no fallback)"
 
@@ -477,9 +473,7 @@ class MissingDataHandler:
 
         return warnings
 
-    def create_data_availability_report(
-        self, missing_scenarios: list[MissingDataScenario], recovery_actions: list[RecoveryAction]
-    ) -> DataAvailabilityReport:
+    def create_data_availability_report(self, missing_scenarios: list[MissingDataScenario], recovery_actions: list[RecoveryAction]) -> DataAvailabilityReport:
         """
         Create a comprehensive data availability report.
 
@@ -509,9 +503,7 @@ class MissingDataHandler:
                     crew_name=crew,
                     error_message=f"Missing {crew} crew output data",
                     expected_path=str(self.output_dir / f"{crew}/{crew}_output.json"),
-                    recovery_suggestions=[action.description for action in recovery_actions if crew in action.description.lower()][
-                        :3
-                    ],  # Limit to top 3 suggestions
+                    recovery_suggestions=[action.description for action in recovery_actions if crew in action.description.lower()][:3],  # Limit to top 3 suggestions
                     timestamp=datetime.now(),
                 )
                 integration_errors.append(error)

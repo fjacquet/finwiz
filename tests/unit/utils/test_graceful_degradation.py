@@ -71,9 +71,7 @@ class TestGracefulDegradationManager:
         # Arrange
         service_name = "test_service"
         self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, recovery_threshold=1)
-        self.manager.service_health[service_name] = ServiceHealth(
-            service_name=service_name, status=ServiceStatus.DEGRADED, error_count=2
-        )
+        self.manager.service_health[service_name] = ServiceHealth(service_name=service_name, status=ServiceStatus.DEGRADED, error_count=2)
 
         async def primary_func():
             return "success"
@@ -93,9 +91,7 @@ class TestGracefulDegradationManager:
         """Test handling of timeout errors."""
         # Arrange
         service_name = "test_service"
-        self.manager.degradation_configs[service_name] = DegradationConfig(
-            service_name=service_name, timeout_seconds=0.1, max_retries=1
-        )
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, timeout_seconds=0.1, max_retries=1)
 
         async def slow_func():
             await asyncio.sleep(0.2)  # Longer than timeout
@@ -139,9 +135,7 @@ class TestGracefulDegradationManager:
         """Test exponential backoff during retries."""
         # Arrange
         service_name = "test_service"
-        self.manager.degradation_configs[service_name] = DegradationConfig(
-            service_name=service_name, max_retries=2, retry_delay=0.1
-        )
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, max_retries=2, retry_delay=0.1)
 
         call_count = 0
 
@@ -172,9 +166,7 @@ class TestGracefulDegradationManager:
         # Mock cache manager
         mocker.patch.object(self.manager.cache_manager, "get", return_value=cached_data)
 
-        self.manager.degradation_configs[service_name] = DegradationConfig(
-            service_name=service_name, cache_fallback=True, max_retries=1
-        )
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, cache_fallback=True, max_retries=1)
 
         async def failing_func():
             raise Exception("Service unavailable")
@@ -318,12 +310,8 @@ class TestGracefulDegradationManager:
         # Arrange - Clear existing health data first
         self.manager.service_health.clear()
 
-        self.manager.service_health["healthy_service"] = ServiceHealth(
-            service_name="healthy_service", status=ServiceStatus.HEALTHY, degradation_level=DegradationLevel.NONE
-        )
-        self.manager.service_health["degraded_service"] = ServiceHealth(
-            service_name="degraded_service", status=ServiceStatus.DEGRADED, degradation_level=DegradationLevel.MODERATE
-        )
+        self.manager.service_health["healthy_service"] = ServiceHealth(service_name="healthy_service", status=ServiceStatus.HEALTHY, degradation_level=DegradationLevel.NONE)
+        self.manager.service_health["degraded_service"] = ServiceHealth(service_name="degraded_service", status=ServiceStatus.DEGRADED, degradation_level=DegradationLevel.MODERATE)
 
         # Act
         summary = self.manager.get_system_health_summary()
@@ -336,9 +324,7 @@ class TestGracefulDegradationManager:
         assert summary["overall_health"] == "degraded"  # At least one service is degraded
         # Le niveau de dégradation devrait être le maximum des services configurés
         expected_degradation = "moderate"  # Car degraded_service a DegradationLevel.MODERATE
-        assert summary["overall_degradation"] == expected_degradation, (
-            f"Expected {expected_degradation}, got {summary['overall_degradation']}"
-        )
+        assert summary["overall_degradation"] == expected_degradation, f"Expected {expected_degradation}, got {summary['overall_degradation']}"
 
     @pytest.mark.asyncio
     async def test_should_force_health_check_and_reset_circuit_breaker(self):
@@ -365,9 +351,7 @@ class TestGracefulDegradationManager:
         """Test updating service configuration at runtime."""
         # Arrange
         service_name = "test_service"
-        self.manager.degradation_configs[service_name] = DegradationConfig(
-            service_name=service_name, max_retries=3, timeout_seconds=30.0
-        )
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, max_retries=3, timeout_seconds=30.0)
 
         # Act
         success = self.manager.update_service_config(service_name, max_retries=5, timeout_seconds=60.0)
@@ -521,9 +505,7 @@ class TestGracefulDegradationIntegration:
         manager = GracefulDegradationManager()
         service_name = "integration_test_service"
 
-        manager.degradation_configs[service_name] = DegradationConfig(
-            service_name=service_name, error_threshold=2, max_retries=1, health_check_interval=0.1, recovery_threshold=1
-        )
+        manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, error_threshold=2, max_retries=1, health_check_interval=0.1, recovery_threshold=1)
 
         call_count = 0
 

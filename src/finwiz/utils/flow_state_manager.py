@@ -162,9 +162,7 @@ class FlowStateManager:
 
                     # Warn if stale
                     if selected["is_stale"]:
-                        confirm = (
-                            input(f"\n⚠️  State is {selected['age_hours']:.1f}h old (>24h). Resume anyway? (y/n): ").strip().lower()
-                        )
+                        confirm = input(f"\n⚠️  State is {selected['age_hours']:.1f}h old (>24h). Resume anyway? (y/n): ").strip().lower()
                         if confirm != "y":
                             continue
 

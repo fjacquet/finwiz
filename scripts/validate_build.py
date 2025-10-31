@@ -82,9 +82,7 @@ class BuildValidator:
         css_files = list(self.build_dir.rglob("*.css"))
         js_files = list(self.build_dir.rglob("*.js"))
 
-        self.validation_results["stats"].update(
-            {"html_files": len(html_files), "css_files": len(css_files), "js_files": len(js_files)}
-        )
+        self.validation_results["stats"].update({"html_files": len(html_files), "css_files": len(css_files), "js_files": len(js_files)})
 
         self._add_info(f"Found {len(html_files)} HTML files")
         self._add_info(f"Found {len(css_files)} CSS files")
@@ -305,9 +303,7 @@ class BuildValidator:
             for file_path, size_mb in large_files:
                 self._add_warning(f"Large file: {file_path.relative_to(self.build_dir)} ({size_mb:.2f}MB)")
 
-        self.validation_results["stats"].update(
-            {"total_size_mb": round(total_size_mb, 2), "file_count": file_count, "large_files": len(large_files)}
-        )
+        self.validation_results["stats"].update({"total_size_mb": round(total_size_mb, 2), "file_count": file_count, "large_files": len(large_files)})
 
     def _validate_accessibility(self) -> None:
         """Validate basic accessibility features."""
@@ -337,9 +333,7 @@ class BuildValidator:
                 # Check for heading structure
                 h1_count = len(re.findall(r"<h1[^>]*>", content))
                 if h1_count == 0:
-                    accessibility_issues.append(
-                        {"file": str(html_file.relative_to(self.build_dir)), "issue": "No H1 heading found", "element": None}
-                    )
+                    accessibility_issues.append({"file": str(html_file.relative_to(self.build_dir)), "issue": "No H1 heading found", "element": None})
                 elif h1_count > 1:
                     accessibility_issues.append(
                         {

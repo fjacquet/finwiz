@@ -1,6 +1,4 @@
-"""
-Unit tests for performance configuration module.
-"""
+"""Unit tests for performance configuration module."""
 
 import os
 

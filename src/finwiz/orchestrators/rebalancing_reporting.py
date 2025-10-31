@@ -377,9 +377,7 @@ class RebalancingReportGenerator:
         """Add risk analysis section."""
         soup = BeautifulSoup("", "html.parser")
 
-        risk_improvement_class = (
-            "improvement" if result.risk_improvement > 0 else "degradation" if result.risk_improvement < 0 else "neutral"
-        )
+        risk_improvement_class = "improvement" if result.risk_improvement > 0 else "degradation" if result.risk_improvement < 0 else "neutral"
 
         div = soup.new_tag("div", **{"class": "risk-analysis"})
 

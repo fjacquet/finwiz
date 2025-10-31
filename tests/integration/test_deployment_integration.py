@@ -300,9 +300,7 @@ class TestMonitoringIntegration:
         # Act - Record some successful and failed operations
         for i in range(10):
             success = i < 8  # 80% success rate
-            metrics_collector.record_operation_metrics(
-                "test_error_tracking", duration=0.1, success=success, error=None if success else "Test error"
-            )
+            metrics_collector.record_operation_metrics("test_error_tracking", duration=0.1, success=success, error=None if success else "Test error")
 
         # Assert
         performance_summary = metrics_collector.get_performance_summary()

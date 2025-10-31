@@ -36,9 +36,7 @@ def feedback_cli() -> None:
 @click.option("--recommendation-id", required=True, help="Recommendation ID")
 @click.option("--symbol", required=True, help="Investment symbol")
 @click.option("--asset-type", type=click.Choice(["etf", "stock", "crypto"]), required=True, help="Asset type")
-@click.option(
-    "--outcome", type=click.Choice(["accepted", "rejected", "partially_accepted", "deferred"]), required=True, help="User outcome"
-)
+@click.option("--outcome", type=click.Choice(["accepted", "rejected", "partially_accepted", "deferred"]), required=True, help="User outcome")
 @click.option(
     "--sentiment",
     type=click.Choice(["very_positive", "positive", "neutral", "negative", "very_negative"]),
@@ -252,9 +250,7 @@ def optimize_criteria(criteria_file: str, force: bool, dry_run: bool) -> None:
 
             if not dry_run:
                 # Perform actual optimization
-                adjustment = await feedback_service.adjust_criteria_based_on_learning(
-                    current_criteria=current_criteria, force_adjustment=force
-                )
+                adjustment = await feedback_service.adjust_criteria_based_on_learning(current_criteria=current_criteria, force_adjustment=force)
 
                 if adjustment:
                     click.echo("\n✅ Criteria adjustment made!")

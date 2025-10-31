@@ -145,9 +145,7 @@ def connect_backtesting_to_discovery_results(session_id: str) -> dict[str, Any]:
             }
 
             backtesting_results.append(backtest_result)
-            logger.info(
-                f"   ✅ {ticker}: Annual Return {backtest_result['annual_return']:.1%}, Sharpe {backtest_result['sharpe_ratio']:.2f}"
-            )
+            logger.info(f"   ✅ {ticker}: Annual Return {backtest_result['annual_return']:.1%}, Sharpe {backtest_result['sharpe_ratio']:.2f}")
 
         execution_time = time.time() - start_time
 

@@ -92,9 +92,7 @@ class TestRateLimiting:
         # For 3 tickers at 5 calls/minute: minimum time = (3-1) * 12 seconds = 24 seconds
         expected_min_time = (len(tickers) - 1) * (60 / 5)  # 12 seconds between calls
 
-        assert execution_time >= expected_min_time * 0.8, (
-            f"Execution time ({execution_time:.1f}s) too fast, rate limits not respected"
-        )
+        assert execution_time >= expected_min_time * 0.8, f"Execution time ({execution_time:.1f}s) too fast, rate limits not respected"
 
         # Verify Alpha Vantage data was fetched
         av_successful = 0
@@ -129,9 +127,7 @@ class TestRateLimiting:
         # Mock aiohttp session to simulate rate limit errors
         mock_response = mocker.AsyncMock()
         mock_response.status = 429  # Too Many Requests
-        mock_response.json = mocker.AsyncMock(
-            return_value={"Note": "Thank you for using Alpha Vantage! Our standard API call frequency is 5 calls per minute"}
-        )
+        mock_response.json = mocker.AsyncMock(return_value={"Note": "Thank you for using Alpha Vantage! Our standard API call frequency is 5 calls per minute"})
 
         mock_session = mocker.AsyncMock()
         mock_session.get = mocker.AsyncMock(return_value=mock_response)
@@ -345,9 +341,7 @@ class TestRateLimiting:
         time_no_av = time.time() - start_time
 
         # Test with Alpha Vantage (with rate limiting overhead) - but skip actual calls
-        prefetcher_with_av = BatchDataPreFetcher(
-            session_id=f"{session_id}_with_av", enable_alpha_vantage=True, alpha_vantage_rate_limit=5
-        )
+        prefetcher_with_av = BatchDataPreFetcher(session_id=f"{session_id}_with_av", enable_alpha_vantage=True, alpha_vantage_rate_limit=5)
 
         # For testing, we'll simulate the overhead without making actual API calls
         # by checking the configuration overhead

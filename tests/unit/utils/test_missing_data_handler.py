@@ -125,9 +125,7 @@ class TestMissingDataHandler:
         test_cases = [("stock", "high"), ("etf", "medium"), ("crypto", "medium"), ("discovery", "critical"), ("portfolio", "high")]
 
         for crew_name, expected_severity in test_cases:
-            scenario = handler._create_missing_data_scenario(
-                crew_name=crew_name, expected_path=f"/test/{crew_name}_output.json", data_type=f"{crew_name}_output"
-            )
+            scenario = handler._create_missing_data_scenario(crew_name=crew_name, expected_path=f"/test/{crew_name}_output.json", data_type=f"{crew_name}_output")
 
             assert scenario.severity == expected_severity
             assert scenario.crew_name == crew_name
@@ -376,9 +374,7 @@ class TestMissingDataHandler:
         recovery_actions = handler.suggest_recovery_actions(stock_scenarios)
 
         # Should not have duplicate actions for the same crew
-        stock_execute_actions = [
-            action for action in recovery_actions if "stock" in action.description.lower() and action.action_type == "execute_crew"
-        ]
+        stock_execute_actions = [action for action in recovery_actions if "stock" in action.description.lower() and action.action_type == "execute_crew"]
 
         # Should only have one execute action for stock crew despite multiple missing scenarios
         assert len(stock_execute_actions) <= 2  # execute_crew and check_inputs actions

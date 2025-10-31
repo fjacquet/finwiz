@@ -29,9 +29,7 @@ class DeepAnalysisResult(BaseModel):
     ticker: str = Field(..., description="Stock/ETF/crypto ticker symbol")
     asset_class: str = Field(..., description="Asset class (stock, etf, crypto)")
     crew_name: str = Field(..., description="Name of crew that performed analysis")
-    analysis_timestamp: str = Field(
-        default_factory=lambda: datetime.now().isoformat(), description="When analysis was performed (ISO format)"
-    )
+    analysis_timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(), description="When analysis was performed (ISO format)")
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Composite score (0.0-1.0)")
     grade: str = Field(..., description="Letter grade (A+ to F)")
 
@@ -49,14 +47,10 @@ class DeepAnalysisResult(BaseModel):
     data_freshness_hours: float = Field(..., ge=0.0, description="Age of market data in hours")
     confidence_level: float = Field(..., ge=0.0, le=1.0, description="Confidence level in analysis (0.0-1.0)")
     warnings: list[str] = Field(default_factory=list, description="List of analysis warnings")
-    data_quality: dict[str, Any] | None = Field(
-        None, description="Data quality metrics tracking calculated/defaulted/missing fields"
-    )
+    data_quality: dict[str, Any] | None = Field(None, description="Data quality metrics tracking calculated/defaulted/missing fields")
 
     # Data lineage (NEW - Task 9.2)
-    lineage: dict[str, Any] | None = Field(
-        None, description="Complete data lineage from sources through calculations to final results"
-    )
+    lineage: dict[str, Any] | None = Field(None, description="Complete data lineage from sources through calculations to final results")
 
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")
@@ -177,26 +171,20 @@ class FinwizState(BaseModel):
     crypto_fallback_strategy: str | None = None
 
     # Deep portfolio analysis results (NEW - from analyze_holdings_deep)
-    deep_analysis_results: dict[str, DeepAnalysisResult] = Field(
-        default_factory=dict, description="Deep analysis results keyed by ticker"
-    )
+    deep_analysis_results: dict[str, DeepAnalysisResult] = Field(default_factory=dict, description="Deep analysis results keyed by ticker")
     deep_analysis_success: bool = Field(default=False, description="Whether deep analysis completed successfully")
     deep_analysis_count: int = Field(default=0, description="Number of holdings analyzed deeply")
     deep_analysis_error: str | None = Field(None, description="Error message if deep analysis failed")
 
     # Alternative matching results (NEW - from match_alternatives)
-    portfolio_alternatives: dict[str, list[dict[str, Any]]] = Field(
-        default_factory=dict, description="A+ alternatives keyed by ticker"
-    )
+    portfolio_alternatives: dict[str, list[dict[str, Any]]] = Field(default_factory=dict, description="A+ alternatives keyed by ticker")
     alternatives_success: bool = Field(default=False, description="Whether alternative matching completed successfully")
     alternatives_count: int = Field(default=0, description="Number of alternatives found")
     alternatives_error: str | None = Field(None, description="Error message if alternative matching failed")
 
     # Data availability tracking (NEW - for reporter transparency)
     data_availability_summary: dict[str, Any] | None = Field(None, description="Summary of data source availability and freshness")
-    data_availability_summary_formatted: str | None = Field(
-        None, description="Formatted data availability summary for report display"
-    )
+    data_availability_summary_formatted: str | None = Field(None, description="Formatted data availability summary for report display")
 
     # ===== REPORT AGGREGATION ARCHITECTURE FIELDS (NEW) =====
 
@@ -219,14 +207,10 @@ class FinwizState(BaseModel):
     final_report_path: str | None = Field(None, description="Path to final French HTML report generated from consolidated data")
 
     # Crew execution status tracking (for error handling)
-    crew_execution_status: dict[str, str] = Field(
-        default_factory=dict, description="Execution status for each crew (completed/failed/pending)"
-    )
+    crew_execution_status: dict[str, str] = Field(default_factory=dict, description="Execution status for each crew (completed/failed/pending)")
 
     # Crew execution errors
-    crew_execution_errors: dict[str, str] = Field(
-        default_factory=dict, description="Error messages for failed crews keyed by crew name"
-    )
+    crew_execution_errors: dict[str, str] = Field(default_factory=dict, description="Error messages for failed crews keyed by crew name")
 
     # ===== RESILIENCE TRACKING FIELDS (NEW) =====
 
@@ -238,9 +222,7 @@ class FinwizState(BaseModel):
     progress_percentage: float = Field(default=0.0, ge=0.0, le=100.0, description="Overall progress percentage")
 
     # Timing fields (stored as ISO format strings for JSON serialization compatibility)
-    flow_start_time: str = Field(
-        default_factory=lambda: datetime.now().isoformat(), description="When the flow execution started (ISO format)"
-    )
+    flow_start_time: str = Field(default_factory=lambda: datetime.now().isoformat(), description="When the flow execution started (ISO format)")
     last_checkpoint_time: str | None = Field(None, description="Last checkpoint timestamp (ISO format)")
     estimated_time_remaining: float = Field(default=0.0, ge=0.0, description="Estimated seconds remaining")
 
@@ -264,9 +246,7 @@ class FinwizState(BaseModel):
     batch_prefetch_enabled: bool = Field(default=False, description="Whether batch data pre-fetching is enabled for deep analysis")
 
     # Pre-fetched data cache
-    prefetched_data: dict[str, dict[str, Any]] | None = Field(
-        None, description="Pre-fetched data for all tickers (keyed by ticker symbol)"
-    )
+    prefetched_data: dict[str, dict[str, Any]] | None = Field(None, description="Pre-fetched data for all tickers (keyed by ticker symbol)")
 
     # Batch pre-fetch performance metrics
     batch_prefetch_metrics: dict[str, Any] | None = Field(None, description="Performance metrics for batch pre-fetch operation")
@@ -337,13 +317,9 @@ class FlowStateManager:
         except Exception as e:
             # Fallback to state flags if integration system check fails
             self.logger.warning(f"Failed to check actual data availability, falling back to state flags: {e}")
-            stock_available = state.stock_analysis_success or (
-                state.stock_analysis_fallback and state.stock_analysis_result is not None
-            )
+            stock_available = state.stock_analysis_success or (state.stock_analysis_fallback and state.stock_analysis_result is not None)
             etf_available = state.etf_analysis_success or (state.etf_analysis_fallback and state.etf_analysis_result is not None)
-            crypto_available = state.crypto_analysis_success or (
-                state.crypto_analysis_fallback and state.crypto_analysis_result is not None
-            )
+            crypto_available = state.crypto_analysis_success or (state.crypto_analysis_fallback and state.crypto_analysis_result is not None)
 
         available_crews = []
         if stock_available:

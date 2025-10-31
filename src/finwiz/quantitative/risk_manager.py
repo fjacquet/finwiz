@@ -223,8 +223,7 @@ class RiskManager:
                         warning_type=RiskWarningType.CONCENTRATION,
                         risk_level=RiskLevel.HIGH if weight > 0.30 else RiskLevel.MEDIUM,
                         symbol=symbol,
-                        message=f"Position {symbol} would represent {weight:.1%} of portfolio, "
-                        f"exceeding {self.config.concentration_limits.max_single_position:.1%} limit",
+                        message=f"Position {symbol} would represent {weight:.1%} of portfolio, exceeding {self.config.concentration_limits.max_single_position:.1%} limit",
                         recommendation=f"Consider reducing target weight for {symbol} or increasing portfolio diversification",
                         impact_score=min(weight * 20, 10.0),
                     )
@@ -239,8 +238,7 @@ class RiskManager:
                     warning_type=RiskWarningType.CONCENTRATION,
                     risk_level=RiskLevel.MEDIUM,
                     symbol=None,
-                    message=f"Top 5 positions would represent {top_5_weight:.1%} of portfolio, "
-                    f"exceeding {self.config.concentration_limits.max_top_5_positions:.1%} limit",
+                    message=f"Top 5 positions would represent {top_5_weight:.1%} of portfolio, exceeding {self.config.concentration_limits.max_top_5_positions:.1%} limit",
                     recommendation="Consider increasing diversification across more positions",
                     impact_score=min((top_5_weight - 0.6) * 25, 10.0),
                 )
@@ -254,8 +252,7 @@ class RiskManager:
                     warning_type=RiskWarningType.CONCENTRATION,
                     risk_level=RiskLevel.HIGH,
                     symbol=None,
-                    message=f"Portfolio has only {num_positions} significant positions, "
-                    f"below minimum of {self.config.concentration_limits.min_number_positions}",
+                    message=f"Portfolio has only {num_positions} significant positions, below minimum of {self.config.concentration_limits.min_number_positions}",
                     recommendation="Consider adding more positions to improve diversification",
                     impact_score=8.0,
                 )
@@ -280,10 +277,8 @@ class RiskManager:
                     warning_type=RiskWarningType.TURNOVER,
                     risk_level=risk_level,
                     symbol=None,
-                    message=f"Rebalancing would result in {turnover_ratio:.1%} portfolio turnover, "
-                    f"exceeding {self.config.turnover_limits.max_monthly_turnover:.1%} monthly limit",
-                    recommendation="Consider phased rebalancing over multiple periods or "
-                    "increasing tolerance bands to reduce turnover",
+                    message=f"Rebalancing would result in {turnover_ratio:.1%} portfolio turnover, exceeding {self.config.turnover_limits.max_monthly_turnover:.1%} monthly limit",
+                    recommendation="Consider phased rebalancing over multiple periods or increasing tolerance bands to reduce turnover",
                     impact_score=min(turnover_ratio * 20, 10.0),
                 )
             )
@@ -293,8 +288,7 @@ class RiskManager:
                     warning_type=RiskWarningType.TURNOVER,
                     risk_level=RiskLevel.LOW,
                     symbol=None,
-                    message=f"Rebalancing would result in {turnover_ratio:.1%} portfolio turnover, "
-                    f"above {self.config.turnover_limits.warning_threshold:.1%} warning threshold",
+                    message=f"Rebalancing would result in {turnover_ratio:.1%} portfolio turnover, above {self.config.turnover_limits.warning_threshold:.1%} warning threshold",
                     recommendation="Monitor turnover frequency to avoid excessive trading costs",
                     impact_score=turnover_ratio * 10,
                 )
@@ -316,10 +310,8 @@ class RiskManager:
                     warning_type=RiskWarningType.VOLATILITY,
                     risk_level=RiskLevel.CRITICAL,
                     symbol=None,
-                    message=f"Market volatility is extremely high at {market_volatility:.1%}, "
-                    f"above {self.config.volatility_thresholds.extreme_volatility_threshold:.1%} threshold",
-                    recommendation="Consider delaying rebalancing until volatility subsides or "
-                    "using wider tolerance bands to avoid whipsaw trading",
+                    message=f"Market volatility is extremely high at {market_volatility:.1%}, above {self.config.volatility_thresholds.extreme_volatility_threshold:.1%} threshold",
+                    recommendation="Consider delaying rebalancing until volatility subsides or using wider tolerance bands to avoid whipsaw trading",
                     impact_score=9.0,
                 )
             )
@@ -329,8 +321,7 @@ class RiskManager:
                     warning_type=RiskWarningType.VOLATILITY,
                     risk_level=RiskLevel.HIGH,
                     symbol=None,
-                    message=f"Market volatility is high at {market_volatility:.1%}, "
-                    f"above {self.config.volatility_thresholds.high_volatility_threshold:.1%} threshold",
+                    message=f"Market volatility is high at {market_volatility:.1%}, above {self.config.volatility_thresholds.high_volatility_threshold:.1%} threshold",
                     recommendation="Consider using wider tolerance bands or phased rebalancing to reduce timing risk",
                     impact_score=6.0,
                 )
@@ -372,10 +363,8 @@ class RiskManager:
                                 warning_type=RiskWarningType.TAX_IMPLICATIONS,
                                 risk_level=RiskLevel.MEDIUM,
                                 symbol=trade.symbol,
-                                message=f"Selling {trade.symbol} would trigger short-term capital gains "
-                                f"of ${gain_loss:,.2f} (held {holding_days} days)",
-                                recommendation="Consider waiting until long-term holding period "
-                                "or using tax-loss harvesting opportunities",
+                                message=f"Selling {trade.symbol} would trigger short-term capital gains of ${gain_loss:,.2f} (held {holding_days} days)",
+                                recommendation="Consider waiting until long-term holding period or using tax-loss harvesting opportunities",
                                 impact_score=min(gain_loss / 1000, 8.0),
                             )
                         )
@@ -417,8 +406,7 @@ class RiskManager:
                         warning_type=RiskWarningType.POSITION_SIZE,
                         risk_level=RiskLevel.MEDIUM,
                         symbol=trade.symbol,
-                        message=f"Trade in {trade.symbol} represents {trade_percentage:.1%} "
-                        f"of total portfolio value (${trade.trade_value:,.2f})",
+                        message=f"Trade in {trade.symbol} represents {trade_percentage:.1%} of total portfolio value (${trade.trade_value:,.2f})",
                         recommendation="Consider splitting large trades across multiple periods to reduce market impact",
                         impact_score=min(trade_percentage * 50, 8.0),
                     )
@@ -607,9 +595,7 @@ class RiskManager:
         is_safe = len(blocking_issues) == 0
 
         self.logger.info(
-            f"Rebalancing safety validation: {'SAFE' if is_safe else 'UNSAFE'}, "
-            f"Risk score: {risk_assessment.overall_risk_score:.1f}/10, "
-            f"Warnings: {len(risk_assessment.warnings)}"
+            f"Rebalancing safety validation: {'SAFE' if is_safe else 'UNSAFE'}, Risk score: {risk_assessment.overall_risk_score:.1f}/10, Warnings: {len(risk_assessment.warnings)}"
         )
 
         return is_safe, blocking_issues

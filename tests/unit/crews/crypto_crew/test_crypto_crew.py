@@ -307,10 +307,7 @@ class TestCryptoCrew:
         with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
             # Mock result that includes tokenomics analysis
             mock_result = mocker.MagicMock()
-            mock_result.raw = (
-                f"Bitcoin tokenomics: {mock_crypto_data['circulating_supply']} "
-                f"of {mock_crypto_data['max_supply']} coins in circulation"
-            )
+            mock_result.raw = f"Bitcoin tokenomics: {mock_crypto_data['circulating_supply']} of {mock_crypto_data['max_supply']} coins in circulation"
             mock_kickoff.return_value = mock_result
 
             result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)

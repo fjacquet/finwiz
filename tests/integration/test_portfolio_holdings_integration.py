@@ -487,9 +487,7 @@ class TestPortfolioHoldingsIntegration:
             portfolio_review["holdings"].append(holding_entry)
 
             # Update grade distribution
-            portfolio_review["summary"]["grade_distribution"][grade] = (
-                portfolio_review["summary"]["grade_distribution"].get(grade, 0) + 1
-            )
+            portfolio_review["summary"]["grade_distribution"][grade] = portfolio_review["summary"]["grade_distribution"].get(grade, 0) + 1
 
             # Count A+ opportunities
             if any(alt.is_a_plus_candidate for alt in alternatives):
@@ -663,9 +661,7 @@ class TestPortfolioHoldingsIntegration:
             stats["grade_distribution"][grade] = stats["grade_distribution"].get(grade, 0) + 1
 
             # Asset class distribution
-            stats["asset_class_distribution"][holding.asset_class] = (
-                stats["asset_class_distribution"].get(holding.asset_class, 0) + 1
-            )
+            stats["asset_class_distribution"][holding.asset_class] = stats["asset_class_distribution"].get(holding.asset_class, 0) + 1
 
             # Count A+ and underperforming
             if grade == "A+":

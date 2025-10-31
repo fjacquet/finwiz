@@ -195,9 +195,7 @@ class TestCoreAnalysisIntegration:
 
         # Simulate crypto crew failure
         crypto_error = Exception("Crypto API connection failed")
-        fallback_response = error_handler.handle_crew_failure(
-            crew_name="crypto", error=crypto_error, inputs={"current_date": "2025-01-15"}, execution_time=5.0
-        )
+        fallback_response = error_handler.handle_crew_failure(crew_name="crypto", error=crypto_error, inputs={"current_date": "2025-01-15"}, execution_time=5.0)
 
         # Verify error handling
         assert fallback_response is not None

@@ -45,24 +45,18 @@ class PortfolioConfiguration(BaseModel):
     target_weights: dict[str, float] = Field(..., description="Target percentage weights for each symbol (0.0 to 1.0)")
 
     # Tolerance settings
-    tolerance_bands: dict[str, float] = Field(
-        default_factory=dict, description="Tolerance bands for each position (defaults to global tolerance)"
-    )
+    tolerance_bands: dict[str, float] = Field(default_factory=dict, description="Tolerance bands for each position (defaults to global tolerance)")
     global_tolerance: float = Field(default=0.05, gt=0.0, le=0.5, description="Default tolerance band (0.05 = ±5%)")
 
     # Capital constraints
-    available_capital: float = Field(
-        default=0.0, description="Available capital for rebalancing (positive=invest, negative=withdraw)"
-    )
+    available_capital: float = Field(default=0.0, description="Available capital for rebalancing (positive=invest, negative=withdraw)")
 
     # Trading parameters
     transaction_cost_rate: float = Field(default=0.001, ge=0.0, le=0.1, description="Transaction cost as percentage of trade value")
     min_trade_size: float = Field(default=0.01, gt=0.0, description="Minimum trade size to execute")
 
     # Optimization settings
-    rebalancing_method: RebalancingMethod = Field(
-        default=RebalancingMethod.MINIMIZE_TRADES, description="Rebalancing optimization method"
-    )
+    rebalancing_method: RebalancingMethod = Field(default=RebalancingMethod.MINIMIZE_TRADES, description="Rebalancing optimization method")
 
     @field_validator("target_weights")
     @classmethod

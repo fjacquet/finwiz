@@ -897,9 +897,7 @@ class TestStrategyExecution:
         end_date = datetime(2023, 6, 30)
 
         # Act
-        result = engine.run_strategy_backtest(
-            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
-        )
+        result = engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30})
 
         # Assert
         assert isinstance(result, BacktestResult)
@@ -923,9 +921,7 @@ class TestStrategyExecution:
         end_date = datetime(2023, 6, 30)
 
         # Act
-        result = engine.run_strategy_backtest(
-            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
-        )
+        result = engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30})
 
         # Assert
         assert isinstance(result, BacktestResult)
@@ -950,9 +946,7 @@ class TestStrategyExecution:
         end_date = datetime(2023, 6, 30)
 
         # Act
-        result = engine.run_strategy_backtest(
-            MeanReversionStrategy, symbol, start_date, end_date, strategy_params={"period": 20, "devfactor": 2.0}
-        )
+        result = engine.run_strategy_backtest(MeanReversionStrategy, symbol, start_date, end_date, strategy_params={"period": 20, "devfactor": 2.0})
 
         # Assert
         assert isinstance(result, BacktestResult)
@@ -974,9 +968,7 @@ class TestStrategyExecution:
         end_date = datetime(2023, 6, 30)
 
         # Act
-        result = engine.run_strategy_backtest(
-            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
-        )
+        result = engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30})
 
         # Assert - Verify trades follow strategy logic
         if result.total_trades > 0:
@@ -1038,9 +1030,7 @@ class TestStrategyExecution:
         end_date = datetime(2023, 6, 30)
 
         # Act
-        result = engine.run_strategy_backtest(
-            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30}
-        )
+        result = engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 10, "long_period": 30})
 
         # Assert
         assert isinstance(result, BacktestResult)
@@ -1070,9 +1060,7 @@ class TestStrategyExecution:
         end_date = datetime(2023, 6, 30)
 
         # Act
-        result = engine.run_strategy_backtest(
-            SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 5, "long_period": 10}
-        )
+        result = engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date, strategy_params={"short_period": 5, "long_period": 10})
 
         # Assert
         assert isinstance(result, BacktestResult)

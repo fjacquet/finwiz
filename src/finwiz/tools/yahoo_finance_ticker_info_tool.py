@@ -21,10 +21,7 @@ class YahooFinanceTickerInfoTool(BaseTool):
     """
 
     name: str = "Yahoo Finance Ticker Info Tool"
-    description: str = (
-        "Get current information about stocks, ETFs, or cryptocurrencies including price,"
-        " market cap, P/E ratio, volume, and other key stats."
-    )
+    description: str = "Get current information about stocks, ETFs, or cryptocurrencies including price, market cap, P/E ratio, volume, and other key stats."
     args_schema: type[BaseModel] = GetTickerInfoInput
 
     def _run(self, ticker: str, prefetched_data: dict | None = None) -> dict:

@@ -109,9 +109,7 @@ def load_json_string_with_validation(
 
     Example:
         >>> from finwiz.schemas.common import RiskAssessmentStandardized
-        >>> risk = load_json_string_with_validation(
-        ...     '{"scale": "0_5", "score": 3.5, "level": "High", "risk_factors": []}', RiskAssessmentStandardized
-        ... )
+        >>> risk = load_json_string_with_validation('{"scale": "0_5", "score": 3.5, "level": "High", "risk_factors": []}', RiskAssessmentStandardized)
 
     """
     logger.debug(f"Parsing JSON string with {model.__name__} validation")

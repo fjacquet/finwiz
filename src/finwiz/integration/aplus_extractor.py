@@ -35,9 +35,7 @@ class APlusDataExtractor:
         self.discovery_dir = output_dir / "discovery"
         self.logger = logging.getLogger(__name__)
 
-        self.logger.info(
-            "APlusDataExtractor initialized", extra={"output_dir": str(output_dir), "discovery_dir": str(self.discovery_dir)}
-        )
+        self.logger.info("APlusDataExtractor initialized", extra={"output_dir": str(output_dir), "discovery_dir": str(self.discovery_dir)})
 
     def _clean_json_content(self, content: str) -> str:
         """
@@ -76,18 +74,18 @@ class APlusDataExtractor:
         content = re.sub(r"([}\]])\s*[^,\s}\]]+\s*$", r"\1", content, flags=re.MULTILINE)
 
         # Fix incomplete JSON - add missing closing braces/brackets
-        open_braces = content.count('{')
-        close_braces = content.count('}')
-        open_brackets = content.count('[')
-        close_brackets = content.count(']')
+        open_braces = content.count("{")
+        close_braces = content.count("}")
+        open_brackets = content.count("[")
+        close_brackets = content.count("]")
 
         # Add missing closing braces
         if open_braces > close_braces:
-            content = content.rstrip() + '\n' + ('}' * (open_braces - close_braces))
+            content = content.rstrip() + "\n" + ("}" * (open_braces - close_braces))
 
         # Add missing closing brackets
         if open_brackets > close_brackets:
-            content = content.rstrip() + '\n' + (']' * (open_brackets - close_brackets))
+            content = content.rstrip() + "\n" + ("]" * (open_brackets - close_brackets))
 
         return content
 
@@ -117,9 +115,7 @@ class APlusDataExtractor:
             confidence_score = self._calculate_confidence_score(stock_opportunities, etf_opportunities, crypto_opportunities)
 
             # Extract allocation recommendations and replacement notes
-            allocation_recommendations = self._extract_allocation_recommendations(
-                stock_opportunities, etf_opportunities, crypto_opportunities
-            )
+            allocation_recommendations = self._extract_allocation_recommendations(stock_opportunities, etf_opportunities, crypto_opportunities)
             replacement_notes = self._extract_replacement_notes(stock_opportunities, etf_opportunities, crypto_opportunities)
 
             # Convert dict opportunities to APlusOpportunity objects
@@ -178,14 +174,12 @@ class APlusDataExtractor:
                 data = json.loads(content)
             except json.JSONDecodeError as e:
                 # Log the problematic area for debugging
-                lines = content.split('\n')
+                lines = content.split("\n")
                 error_line = e.lineno - 1 if e.lineno <= len(lines) else len(lines) - 1
                 context_start = max(0, error_line - 2)
                 context_end = min(len(lines), error_line + 3)
-                context = '\n'.join(f"{i+1}: {lines[i]}" for i in range(context_start, context_end))
-                self.logger.error(
-                    f"JSON parsing error in {stock_file.name} at line {e.lineno}, column {e.colno}:\n{context}"
-                )
+                context = "\n".join(f"{i + 1}: {lines[i]}" for i in range(context_start, context_end))
+                self.logger.error(f"JSON parsing error in {stock_file.name} at line {e.lineno}, column {e.colno}:\n{context}")
                 raise
             opportunities = []
 
@@ -438,13 +432,8 @@ class APlusDataExtractor:
             a_plus_cryptos = [c for c in cryptos if c["grade"] == "A+"]
             summary_parts.append(f"{len(cryptos)} crypto opportunities identified ({len(a_plus_cryptos)} A+ grade)")
 
-        summary = f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: " + ", ".join(
-            summary_parts
-        )
-        summary += (
-            ". Opportunities selected based on fundamental analysis, competitive moats, "
-            "valuation attractiveness, and portfolio integration potential."
-        )
+        summary = f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: " + ", ".join(summary_parts)
+        summary += ". Opportunities selected based on fundamental analysis, competitive moats, valuation attractiveness, and portfolio integration potential."
 
         return summary
 
@@ -554,9 +543,7 @@ class APlusDataExtractor:
 
         try:
             # Check if we have any opportunities
-            total_opportunities = (
-                len(collection.etf_opportunities) + len(collection.stock_opportunities) + len(collection.crypto_opportunities)
-            )
+            total_opportunities = len(collection.etf_opportunities) + len(collection.stock_opportunities) + len(collection.crypto_opportunities)
 
             if total_opportunities == 0:
                 errors.append("No A+ opportunities found in any asset class")

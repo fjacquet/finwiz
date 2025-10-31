@@ -48,10 +48,7 @@ def main() -> None:
 
     for symbol, trade_value, description in symbols_and_values:
         spread_estimate = analyzer.estimate_bid_ask_spread(symbol, trade_value)
-        print(
-            f"   {description} ({symbol}): {spread_estimate.estimated_spread_bps:.1f} bps, "
-            f"${spread_estimate.estimated_spread_cost:.2f} cost"
-        )
+        print(f"   {description} ({symbol}): {spread_estimate.estimated_spread_bps:.1f} bps, ${spread_estimate.estimated_spread_cost:.2f} cost")
 
     print("\n3. Testing market impact estimation:")
 
@@ -64,11 +61,7 @@ def main() -> None:
 
     for trade_value, description in trade_sizes:
         impact_estimate = analyzer.estimate_market_impact("AAPL", trade_value, portfolio_value)
-        print(
-            f"   {description}: {impact_estimate.impact_category}, "
-            f"{impact_estimate.estimated_impact_bps:.1f} bps, "
-            f"${impact_estimate.estimated_impact_cost:.2f} cost"
-        )
+        print(f"   {description}: {impact_estimate.impact_category}, {impact_estimate.estimated_impact_bps:.1f} bps, ${impact_estimate.estimated_impact_cost:.2f} cost")
 
     print("\n4. Testing comprehensive cost analysis:")
 

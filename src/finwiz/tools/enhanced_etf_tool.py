@@ -392,9 +392,7 @@ class EnhancedETFAnalysisTool(BaseTool):
 
         return holdings
 
-    def _perform_etf_risk_assessment(
-        self, ticker: str, factsheet_data: dict[str, Any], holdings_data: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _perform_etf_risk_assessment(self, ticker: str, factsheet_data: dict[str, Any], holdings_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Perform standardized risk assessment for ETF."""
         try:
             risk_factors = []
@@ -548,9 +546,7 @@ class EnhancedETFAnalysisTool(BaseTool):
             # Create ETF-specific search query
             query = f"{ticker} ETF fund performance holdings changes expense ratio tracking error"
 
-            sonar_result = await perplexity_integration.search_financial_news(
-                query=query, ticker=ticker, asset_type="etf", analysis_type="etf", max_results=6
-            )
+            sonar_result = await perplexity_integration.search_financial_news(query=query, ticker=ticker, asset_type="etf", analysis_type="etf", max_results=6)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity ETF insights for {ticker}")
@@ -580,9 +576,7 @@ class ETFTrackingAnalysisTool(BaseTool):
     """
 
     name: str = "ETF Tracking Analysis Tool"
-    description: str = (
-        "Analyze ETF tracking performance including tracking error, tracking difference, and performance attribution analysis."
-    )
+    description: str = "Analyze ETF tracking performance including tracking error, tracking difference, and performance attribution analysis."
     args_schema: type[BaseModel] = ETFTrackingAnalysisInput
 
     def _run(self, ticker: str, **kwargs: Any) -> dict[str, Any]:

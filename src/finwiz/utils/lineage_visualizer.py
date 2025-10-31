@@ -24,9 +24,7 @@ class LineageVisualizer:
         """Initialize lineage visualizer."""
         self.logger = logger
 
-    def generate_mermaid_flowchart(
-        self, lineage: DataLineage, direction: Literal["LR", "TD"] = "LR", include_values: bool = True
-    ) -> str:
+    def generate_mermaid_flowchart(self, lineage: DataLineage, direction: Literal["LR", "TD"] = "LR", include_values: bool = True) -> str:
         """
         Generate Mermaid.js flowchart diagram.
 
@@ -275,9 +273,7 @@ class LineageVisualizer:
 
         return "\n".join(lines)
 
-    def generate_html_with_diagram(
-        self, lineage: DataLineage, diagram_type: Literal["flowchart", "sequence", "graph"] = "flowchart"
-    ) -> str:
+    def generate_html_with_diagram(self, lineage: DataLineage, diagram_type: Literal["flowchart", "sequence", "graph"] = "flowchart") -> str:
         """
         Generate complete HTML page with embedded Mermaid.js diagram.
 

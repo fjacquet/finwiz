@@ -166,24 +166,15 @@ class MemoryManager:
         self.memory_samples.append(sample)
 
         # Log memory usage (Requirement 17.70)
-        logger.info(
-            f"Memory [{stage}]: {self._format_bytes(current_memory)} "
-            f"(Δ {self._format_bytes(delta_memory)}, Peak {self._format_bytes(self.peak_memory)})"
-        )
+        logger.info(f"Memory [{stage}]: {self._format_bytes(current_memory)} (Δ {self._format_bytes(delta_memory)}, Peak {self._format_bytes(self.peak_memory)})")
 
         # Warn if approaching limit (80% threshold)
         if current_memory > MAX_MEMORY_BYTES * 0.8:
-            logger.warning(
-                f"⚠️  Memory usage approaching limit: {memory_mb:.1f} MB / {MAX_MEMORY_MB} MB "
-                f"({memory_mb / MAX_MEMORY_MB * 100:.1f}%)"
-            )
+            logger.warning(f"⚠️  Memory usage approaching limit: {memory_mb:.1f} MB / {MAX_MEMORY_MB} MB ({memory_mb / MAX_MEMORY_MB * 100:.1f}%)")
 
         # Error if exceeding limit (Requirement 17.74)
         if not within_limit:
-            logger.error(
-                f"❌ Memory limit exceeded: {memory_mb:.1f} MB > {MAX_MEMORY_MB} MB "
-                f"(+{memory_mb - MAX_MEMORY_MB:.1f} MB over limit)"
-            )
+            logger.error(f"❌ Memory limit exceeded: {memory_mb:.1f} MB > {MAX_MEMORY_MB} MB (+{memory_mb - MAX_MEMORY_MB:.1f} MB over limit)")
 
         return sample
 
@@ -310,10 +301,7 @@ class MemoryManager:
         if within_limit:
             logger.info(f"✓ Memory constraints validated: Peak {peak_mb:.1f} MB <= {MAX_MEMORY_MB} MB")
         else:
-            logger.error(
-                f"✗ Memory constraints violated: Peak {peak_mb:.1f} MB > {MAX_MEMORY_MB} MB "
-                f"(+{peak_mb - MAX_MEMORY_MB:.1f} MB over limit)"
-            )
+            logger.error(f"✗ Memory constraints violated: Peak {peak_mb:.1f} MB > {MAX_MEMORY_MB} MB (+{peak_mb - MAX_MEMORY_MB:.1f} MB over limit)")
 
         return within_limit
 

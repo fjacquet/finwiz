@@ -440,9 +440,7 @@ class TwelveDataTransformers:
             signal_strength=signal_strength,
         )
 
-    def transform_macd_response(
-        self, api_response: dict[str, Any], symbol: str, interval: str, fast_period: int, slow_period: int, signal_period: int
-    ) -> MACDData:
+    def transform_macd_response(self, api_response: dict[str, Any], symbol: str, interval: str, fast_period: int, slow_period: int, signal_period: int) -> MACDData:
         """
         Transform MACD API response into structured data.
 
@@ -492,9 +490,7 @@ class TwelveDataTransformers:
             signal_strength=signal_strength,
         )
 
-    def transform_bollinger_response(
-        self, api_response: dict[str, Any], symbol: str, interval: str, time_period: int, std_dev: int
-    ) -> BollingerBandsData:
+    def transform_bollinger_response(self, api_response: dict[str, Any], symbol: str, interval: str, time_period: int, std_dev: int) -> BollingerBandsData:
         """
         Transform Bollinger Bands API response into structured data.
 
@@ -535,9 +531,7 @@ class TwelveDataTransformers:
             position_signal=position_signal,
         )
 
-    def transform_stochastic_response(
-        self, api_response: dict[str, Any], symbol: str, interval: str, fastkperiod: int, slowkperiod: int, slowdperiod: int
-    ) -> StochasticData:
+    def transform_stochastic_response(self, api_response: dict[str, Any], symbol: str, interval: str, fastkperiod: int, slowkperiod: int, slowdperiod: int) -> StochasticData:
         """
         Transform Stochastic API response into structured data.
 

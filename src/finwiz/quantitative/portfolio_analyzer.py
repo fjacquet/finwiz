@@ -256,9 +256,7 @@ class PortfolioAnalyzer:
             logger.error(f"Error calculating portfolio metrics: {e}")
             raise PortfolioAnalysisError(f"Failed to calculate portfolio metrics: {e}") from e
 
-    def analyze_current_portfolio(
-        self, holdings: list[Holding], prices: dict[str, PriceData], target_weights: dict[str, float] | None = None
-    ) -> PortfolioAnalysis:
+    def analyze_current_portfolio(self, holdings: list[Holding], prices: dict[str, PriceData], target_weights: dict[str, float] | None = None) -> PortfolioAnalysis:
         """
         Perform comprehensive analysis of current portfolio.
 

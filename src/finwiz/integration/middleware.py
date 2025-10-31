@@ -132,9 +132,7 @@ class CrewIntegrationMiddleware:
         self.execution_hooks[hook_type].append(hook_function)
         self.logger.info(f"Registered {hook_type} hook", extra={"hook_function": hook_function.__name__})
 
-    async def pre_execution_hook(
-        self, crew_name: str, dependencies: list[str], max_age_hours: int = 24, execution_id: str | None = None
-    ) -> PreExecutionResult:
+    async def pre_execution_hook(self, crew_name: str, dependencies: list[str], max_age_hours: int = 24, execution_id: str | None = None) -> PreExecutionResult:
         """
         Pre-execution hook for dependency validation and data preparation.
 
@@ -214,9 +212,7 @@ class CrewIntegrationMiddleware:
 
             return PreExecutionResult(can_proceed=False, dependencies_met=False, errors=[error_msg])
 
-    async def post_execution_hook(
-        self, execution_id: str, crew_output: dict[str, Any], execution_duration: float | None = None
-    ) -> PostExecutionResult:
+    async def post_execution_hook(self, execution_id: str, crew_output: dict[str, Any], execution_duration: float | None = None) -> PostExecutionResult:
         """
         Post-execution hook for data storage, validation, and metadata persistence.
 
@@ -238,9 +234,7 @@ class CrewIntegrationMiddleware:
                 raise ValueError(f"No execution context found for ID: {execution_id}")
 
             # Initialize result
-            result = PostExecutionResult(
-                storage_success=False, validation_success=False, metadata_stored=False, lineage_updated=False
-            )
+            result = PostExecutionResult(storage_success=False, validation_success=False, metadata_stored=False, lineage_updated=False)
 
             # Validate crew output
             validation_result = await self._validate_crew_output(context.crew_name, crew_output)
@@ -303,9 +297,7 @@ class CrewIntegrationMiddleware:
                 except Exception as hook_error:
                     self.logger.error(f"Error hook failed: {str(hook_error)}")
 
-            return PostExecutionResult(
-                storage_success=False, validation_success=False, metadata_stored=False, lineage_updated=False, errors=[error_msg]
-            )
+            return PostExecutionResult(storage_success=False, validation_success=False, metadata_stored=False, lineage_updated=False, errors=[error_msg])
 
     async def coordinate_crew_execution(self, crew_configs: list[CrewConfig]) -> ExecutionResult:
         """
@@ -393,9 +385,7 @@ class CrewIntegrationMiddleware:
                 schema_version=1,
             )
 
-    async def _store_crew_output(
-        self, context: CrewExecutionContext, crew_output: dict[str, Any], execution_duration: float | None
-    ) -> dict[str, Any]:
+    async def _store_crew_output(self, context: CrewExecutionContext, crew_output: dict[str, Any], execution_duration: float | None) -> dict[str, Any]:
         """Store crew output in the integration directory."""
         try:
             # Create crew-specific output directory

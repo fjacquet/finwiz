@@ -205,9 +205,7 @@ class BenchmarkAnalyzer:
             self.logger.error(f"Portfolio optimization failed: {e}")
             raise
 
-    def generate_efficient_frontier(
-        self, mu: pd.Series, S: pd.DataFrame, weight_bounds: tuple[float, float], n_points: int = 100
-    ) -> tuple[list[float], list[float], list[float]]:
+    def generate_efficient_frontier(self, mu: pd.Series, S: pd.DataFrame, weight_bounds: tuple[float, float], n_points: int = 100) -> tuple[list[float], list[float], list[float]]:
         """
         Generate efficient frontier data.
 
@@ -384,9 +382,7 @@ class BenchmarkAnalyzer:
             self.logger.error(f"Visualization generation failed: {e}")
             return None
 
-    def generate_optimization_visualization(
-        self, optimization_result: PortfolioOptimizationResult, save_path: str | None = None
-    ) -> Any | None:
+    def generate_optimization_visualization(self, optimization_result: PortfolioOptimizationResult, save_path: str | None = None) -> Any | None:
         """
         Generate portfolio optimization visualization.
 

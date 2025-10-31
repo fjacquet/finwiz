@@ -182,9 +182,7 @@ class ReportCrew:
             consolidated_crew_data = integrated_data.get("consolidated_crew_data", {})
             if "portfolio" in consolidated_crew_data:
                 integrated_data["portfolio_review"] = consolidated_crew_data["portfolio"]
-                logger.info(
-                    f"✅ Extracted portfolio_review with {len(integrated_data['portfolio_review'].get('holdings', []))} holdings"
-                )
+                logger.info(f"✅ Extracted portfolio_review with {len(integrated_data['portfolio_review'].get('holdings', []))} holdings")
             else:
                 logger.warning("❌ No portfolio data found in consolidated_crew_data")
                 integrated_data["portfolio_review"] = None
@@ -208,9 +206,7 @@ class ReportCrew:
                     record_count=len(integrated_data.get("stock_analysis_data", [])),
                 )
             else:
-                self.availability_tracker.track_data_source(
-                    source="stock_crew", status="unavailable", error_message="Stock crew data not found"
-                )
+                self.availability_tracker.track_data_source(source="stock_crew", status="unavailable", error_message="Stock crew data not found")
 
             # Track ETF crew data
             if availability_report.etf_available:
@@ -223,9 +219,7 @@ class ReportCrew:
                     record_count=len(integrated_data.get("etf_analysis_data", [])),
                 )
             else:
-                self.availability_tracker.track_data_source(
-                    source="etf_crew", status="unavailable", error_message="ETF crew data not found"
-                )
+                self.availability_tracker.track_data_source(source="etf_crew", status="unavailable", error_message="ETF crew data not found")
 
             # Track crypto crew data
             if availability_report.crypto_available:
@@ -238,17 +232,13 @@ class ReportCrew:
                     record_count=len(integrated_data.get("crypto_analysis_data", [])),
                 )
             else:
-                self.availability_tracker.track_data_source(
-                    source="crypto_crew", status="unavailable", error_message="Crypto crew data not found"
-                )
+                self.availability_tracker.track_data_source(source="crypto_crew", status="unavailable", error_message="Crypto crew data not found")
 
             # Track portfolio data
             if availability_report.portfolio_available:
                 portfolio_holdings = integrated_data.get("portfolio_review", {}).get("holdings", [])
                 # Extract age from data_freshness_summary or use default
-                portfolio_age = self._extract_age_from_summary(
-                    availability_report.data_freshness_summary, "portfolio", max_age_hours
-                )
+                portfolio_age = self._extract_age_from_summary(availability_report.data_freshness_summary, "portfolio", max_age_hours)
                 self.availability_tracker.track_data_source(
                     source="portfolio_review",
                     status="available",
@@ -274,9 +264,7 @@ class ReportCrew:
                         "deep_analysis_count": deep_analysis_count,
                         "shallow_analysis_count": len(portfolio_holdings) - deep_analysis_count,
                         "holdings_with_alternatives": holdings_with_alternatives,
-                        "deep_analysis_percentage": (deep_analysis_count / len(portfolio_holdings) * 100)
-                        if portfolio_holdings
-                        else 0,
+                        "deep_analysis_percentage": (deep_analysis_count / len(portfolio_holdings) * 100) if portfolio_holdings else 0,
                     }
                 else:
                     self.availability_tracker.track_data_source(
@@ -286,9 +274,7 @@ class ReportCrew:
                     )
                     integrated_data["deep_analysis_summary"] = None
             else:
-                self.availability_tracker.track_data_source(
-                    source="portfolio_review", status="unavailable", error_message="Portfolio review data not found"
-                )
+                self.availability_tracker.track_data_source(source="portfolio_review", status="unavailable", error_message="Portfolio review data not found")
 
             # Add data availability information (convert Pydantic model to dict for CrewAI compatibility)
             integrated_data["data_availability_report"] = availability_report.model_dump(mode="json")
@@ -355,9 +341,7 @@ class ReportCrew:
                 integrated_data["aplus_opportunities_summary"] = discovery_status["message"]
 
                 # Track discovery as unavailable
-                self.availability_tracker.track_data_source(
-                    source="aplus_discovery", status="unavailable", error_message=discovery_status["message"]
-                )
+                self.availability_tracker.track_data_source(source="aplus_discovery", status="unavailable", error_message=discovery_status["message"])
 
                 logger.info(f"A+ discovery not available: {discovery_status['message']}")
 
@@ -375,9 +359,7 @@ class ReportCrew:
                 integrated_data["backtesting_summary"] = backtesting_data.get("summary")
 
                 # Track backtesting data as available
-                self.availability_tracker.track_data_source(
-                    source="backtesting", status="available", record_count=backtesting_data.get("total_candidates", 0)
-                )
+                self.availability_tracker.track_data_source(source="backtesting", status="available", record_count=backtesting_data.get("total_candidates", 0))
 
                 logger.info(f"Loaded backtesting data for {backtesting_data['total_candidates']} candidates")
             else:
@@ -385,9 +367,7 @@ class ReportCrew:
                 integrated_data["backtesting_summary"] = None
 
                 # Track backtesting as unavailable
-                self.availability_tracker.track_data_source(
-                    source="backtesting", status="unavailable", error_message=backtesting_data["message"]
-                )
+                self.availability_tracker.track_data_source(source="backtesting", status="unavailable", error_message=backtesting_data["message"])
 
                 logger.info(f"Backtesting data not available: {backtesting_data['message']}")
 
@@ -395,9 +375,7 @@ class ReportCrew:
             availability_summary = self.availability_tracker.get_availability_summary()
             # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
             integrated_data["data_availability_summary"] = availability_summary.model_dump(mode="json")
-            integrated_data["data_availability_summary_formatted"] = self.availability_tracker.format_summary_for_report(
-                availability_summary
-            )
+            integrated_data["data_availability_summary_formatted"] = self.availability_tracker.format_summary_for_report(availability_summary)
 
             logger.info(
                 "Integrated data context prepared for report generation",
@@ -415,9 +393,7 @@ class ReportCrew:
             logger.error(f"Failed to get integrated data context: {str(e)}", exc_info=True)
 
             # Track error in availability tracker
-            self.availability_tracker.track_data_source(
-                source="data_integration", status="unavailable", error_message=f"Data integration failed: {str(e)}"
-            )
+            self.availability_tracker.track_data_source(source="data_integration", status="unavailable", error_message=f"Data integration failed: {str(e)}")
 
             # Generate error summary
             error_summary = self.availability_tracker.get_availability_summary()
@@ -563,9 +539,7 @@ class ReportCrew:
                     logger.info("Using discovery results from Flow state (aplus_opportunities) for backtesting extraction")
                 elif inputs.get("investment_discovery_structured"):
                     discovery_results = inputs["investment_discovery_structured"]
-                    logger.info(
-                        "Using discovery results from Flow state (investment_discovery_structured) for backtesting extraction"
-                    )
+                    logger.info("Using discovery results from Flow state (investment_discovery_structured) for backtesting extraction")
 
             # SECOND: Fall back to file-based loading if not in inputs
             if not discovery_results:
@@ -612,9 +586,7 @@ class ReportCrew:
                     if annualized_return is None:
                         validation_details = vr_data.get("validation_details", [])
                         if validation_details:
-                            returns = [
-                                d.get("annualized_return") for d in validation_details if d.get("annualized_return") is not None
-                            ]
+                            returns = [d.get("annualized_return") for d in validation_details if d.get("annualized_return") is not None]
                             if returns:
                                 annualized_return = sum(returns) / len(returns)
 
@@ -669,12 +641,10 @@ class ReportCrew:
                     / len([m for m in all_metrics if m.annualized_return is not None])
                     if any(m.annualized_return is not None for m in all_metrics)
                     else None,
-                    "average_sharpe_ratio": sum(m.sharpe_ratio for m in all_metrics if m.sharpe_ratio is not None)
-                    / len([m for m in all_metrics if m.sharpe_ratio is not None])
+                    "average_sharpe_ratio": sum(m.sharpe_ratio for m in all_metrics if m.sharpe_ratio is not None) / len([m for m in all_metrics if m.sharpe_ratio is not None])
                     if any(m.sharpe_ratio is not None for m in all_metrics)
                     else None,
-                    "average_max_drawdown": sum(m.max_drawdown for m in all_metrics if m.max_drawdown is not None)
-                    / len([m for m in all_metrics if m.max_drawdown is not None])
+                    "average_max_drawdown": sum(m.max_drawdown for m in all_metrics if m.max_drawdown is not None) / len([m for m in all_metrics if m.max_drawdown is not None])
                     if any(m.max_drawdown is not None for m in all_metrics)
                     else None,
                 }
@@ -979,9 +949,7 @@ class ReportCrew:
             integrated_context["validated_tickers_list"] = validated_tickers
             integrated_context["ticker_count"] = len(validated_tickers)
 
-            logger.info(
-                f"Validated {len(validated_tickers)} tickers for report generation", extra={"validated_tickers": validated_tickers}
-            )
+            logger.info(f"Validated {len(validated_tickers)} tickers for report generation", extra={"validated_tickers": validated_tickers})
 
             # Add execution metadata
             integrated_context["execution_metadata"] = {
@@ -1194,10 +1162,7 @@ class ReportCrew:
 
         for fake_company in fake_company_patterns:
             if fake_company in task_output:
-                error_msg = (
-                    f"Task output contains fake company name '{fake_company}'. "
-                    f"This indicates the agent is hallucinating company information."
-                )
+                error_msg = f"Task output contains fake company name '{fake_company}'. This indicates the agent is hallucinating company information."
                 logger.error(error_msg)
                 raise ValueError(error_msg)
 

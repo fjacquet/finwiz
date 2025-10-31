@@ -160,11 +160,7 @@ class TestReportCrewBacktestingIntegration:
     def test_should_log_flow_state_usage(self, report_crew, mocker, caplog):
         """Test that method logs when using Flow state data."""
         # Arrange
-        mock_discovery_results = {
-            "validation_results": [
-                {"symbol": "GOOGL", "average_sharpe_ratio": 1.6, "backtest_period_years": 5, "validation_details": []}
-            ]
-        }
+        mock_discovery_results = {"validation_results": [{"symbol": "GOOGL", "average_sharpe_ratio": 1.6, "backtest_period_years": 5, "validation_details": []}]}
 
         inputs = {"aplus_opportunities": mock_discovery_results}
 

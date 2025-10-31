@@ -27,9 +27,7 @@ class TestPerplexityIntegrationWrapper:
 
     def setup_method(self):
         """Set up test environment."""
-        self.config = PerplexityConfig(
-            api_key="test-key", timeout_seconds=30.0, max_retries=3, backoff_factor=2.0, rate_limit_buffer=5
-        )
+        self.config = PerplexityConfig(api_key="test-key", timeout_seconds=30.0, max_retries=3, backoff_factor=2.0, rate_limit_buffer=5)
 
     def test_should_initialize_with_api_key_available(self, mocker):
         """Test initialization when API key is available."""
@@ -98,11 +96,7 @@ class TestPerplexityIntegrationWrapper:
         mocker.patch.object(integration.perplexity_tool, "_run", return_value=json.dumps(mock_response))
 
         # Act
-        result = asyncio.run(
-            integration.search_financial_news(
-                query="AAPL earnings analysis", ticker="AAPL", asset_type="stock", analysis_type="sentiment", max_results=10
-            )
-        )
+        result = asyncio.run(integration.search_financial_news(query="AAPL earnings analysis", ticker="AAPL", asset_type="stock", analysis_type="sentiment", max_results=10))
 
         # Assert
         assert isinstance(result, SonarSearchResult)
@@ -530,9 +524,7 @@ class TestSonarArticleValidation:
     def test_should_strip_whitespace_from_strings(self):
         """Test automatic whitespace stripping."""
         # Arrange & Act
-        article = SonarArticle(
-            title="  Apple Earnings  ", url="https://example.com/test", summary="  Summary with spaces  ", publisher="  Reuters  "
-        )
+        article = SonarArticle(title="  Apple Earnings  ", url="https://example.com/test", summary="  Summary with spaces  ", publisher="  Reuters  ")
 
         # Assert
         assert article.title == "Apple Earnings"

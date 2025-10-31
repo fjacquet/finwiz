@@ -77,9 +77,7 @@ class SentimentResponseFormatter:
 
         if trending_topics:
             for i, topic in enumerate(trending_topics, 1):
-                response += (
-                    f"{i}. **{topic['topic']}** - {topic['article_count']} articles (relevance: {topic['average_relevance']:.2f})\n"
-                )
+                response += f"{i}. **{topic['topic']}** - {topic['article_count']} articles (relevance: {topic['average_relevance']:.2f})\n"
         else:
             response += "No significant trending topics identified.\n"
 
@@ -120,14 +118,10 @@ class SentimentResponseFormatter:
         response += f"- **Confidence Metric**: Based on sample size ({article_count} articles) and sentiment consistency\n"
 
         if sonar_articles:
-            response += (
-                f"- **Sonar Enhancement**: {len(sonar_articles)} articles with relevance scoring and content type analysis\n"
-            )
+            response += f"- **Sonar Enhancement**: {len(sonar_articles)} articles with relevance scoring and content type analysis\n"
 
         if sonar_fallback_used:
-            response += (
-                "\n⚠️ **Note**: Perplexity Sonar integration encountered issues; analysis based on Yahoo Finance data only.\n"
-            )
+            response += "\n⚠️ **Note**: Perplexity Sonar integration encountered issues; analysis based on Yahoo Finance data only.\n"
 
         # Add disclaimer
         response += "\n---\n"

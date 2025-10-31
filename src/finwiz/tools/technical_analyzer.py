@@ -59,14 +59,10 @@ class TechnicalAnalyzer:
         indicator_signals = self.algorithms.calculate_indicator_signals(price_data)
 
         # Find confluence zones using patterns module
-        confluence_zones = self.patterns.find_confluence_zones(
-            fibonacci_levels, support_resistance, indicator_signals, price_data.closes[-1]
-        )
+        confluence_zones = self.patterns.find_confluence_zones(fibonacci_levels, support_resistance, indicator_signals, price_data.closes[-1])
 
         # Determine overall signal using patterns module
-        overall_signal, signal_confidence = self.patterns.determine_overall_signal(
-            fibonacci_levels, support_resistance, indicator_signals, confluence_zones
-        )
+        overall_signal, signal_confidence = self.patterns.determine_overall_signal(fibonacci_levels, support_resistance, indicator_signals, confluence_zones)
 
         return TechnicalAnalysisResult(
             ticker=ticker,

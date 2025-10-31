@@ -481,9 +481,7 @@ class TestCalculateSupportResistanceTargets:
         """Test that resistance is above current price."""
         # Arrange
         # Need at least 20 data points for S/R
-        prices = pd.Series(
-            [100, 105, 110, 108, 115, 120, 118, 122, 125, 120, 115, 118, 122, 119, 116, 120, 123, 121, 118, 115, 117, 120]
-        )
+        prices = pd.Series([100, 105, 110, 108, 115, 120, 118, 122, 125, 120, 115, 118, 122, 119, 116, 120, 123, 121, 118, 115, 117, 120])
         current_price = 115.0
 
         # Act
@@ -508,9 +506,7 @@ class TestCalculateSupportResistanceTargets:
         """Test that last price is used when current_price not provided."""
         # Arrange
         # Need at least 20 data points
-        prices = pd.Series(
-            [100, 105, 110, 115, 120, 118, 122, 125, 123, 128, 130, 127, 132, 129, 126, 130, 133, 131, 128, 125, 127, 130]
-        )
+        prices = pd.Series([100, 105, 110, 115, 120, 118, 122, 125, 123, 128, 130, 127, 132, 129, 126, 130, 133, 131, 128, 125, 127, 130])
 
         # Act
         targets = calculate_support_resistance_targets(prices)
@@ -745,9 +741,7 @@ class TestPriceTargetEdgeCases:
         """Test technical targets with highly volatile prices."""
         # Arrange
         # Create volatile price series with enough data points
-        prices = pd.Series(
-            [100, 120, 90, 130, 85, 125, 95, 135, 80, 140, 75, 145, 70, 150, 65, 155, 60, 160, 55, 165, 50, 170, 45, 175]
-        )
+        prices = pd.Series([100, 120, 90, 130, 85, 125, 95, 135, 80, 140, 75, 145, 70, 150, 65, 155, 60, 160, 55, 165, 50, 170, 45, 175])
 
         # Act
         fib_target = calculate_technical_target(prices, method="fibonacci")

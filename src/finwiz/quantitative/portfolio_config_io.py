@@ -38,9 +38,7 @@ class PortfolioConfigurationIO:
         self.exports_path.mkdir(parents=True, exist_ok=True)
         self.logger = logger
 
-    def export_configuration(
-        self, config: PortfolioConfigurationVersion, export_path: Path | None = None, format_type: str = "json"
-    ) -> Path:
+    def export_configuration(self, config: PortfolioConfigurationVersion, export_path: Path | None = None, format_type: str = "json") -> Path:
         """
         Export a configuration to file.
 

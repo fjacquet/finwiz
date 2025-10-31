@@ -199,9 +199,7 @@ class TradeRecommendationSystem:
         if action == TradeAction.BUY:
             required_capital = final_trade_value + total_cost
             if required_capital > config.available_capital and config.available_capital > 0:
-                validation_errors.append(
-                    f"Required capital ${required_capital:.2f} exceeds available ${config.available_capital:.2f}"
-                )
+                validation_errors.append(f"Required capital ${required_capital:.2f} exceeds available ${config.available_capital:.2f}")
 
         # Validate against current holdings for sell orders
         if action == TradeAction.SELL:
@@ -356,10 +354,7 @@ class TradeRecommendationSystem:
         action_verb = "Buy" if calculation.action == TradeAction.BUY else "Sell"
 
         # Base rationale
-        rationale = (
-            f"{action_verb} {calculation.quantity:.2f} shares of {symbol} to rebalance "
-            f"from {current_weight:.1%} to {target_weight:.1%} target allocation. "
-        )
+        rationale = f"{action_verb} {calculation.quantity:.2f} shares of {symbol} to rebalance from {current_weight:.1%} to {target_weight:.1%} target allocation. "
 
         # Add priority context
         if priority.urgency_score >= 0.7:
@@ -405,9 +400,7 @@ class TradeRecommendationSystem:
 
         return None
 
-    def validate_trade_recommendations(
-        self, recommendations: list[TradeRecommendation], config: PortfolioConfiguration
-    ) -> tuple[list[TradeRecommendation], list[str]]:
+    def validate_trade_recommendations(self, recommendations: list[TradeRecommendation], config: PortfolioConfiguration) -> tuple[list[TradeRecommendation], list[str]]:
         """
         Validate trade recommendations to prevent invalid trades.
 
@@ -476,8 +469,6 @@ class TradeRecommendationSystem:
             else:
                 valid_recommendations.append(rec)
 
-        self.logger.info(
-            f"Validation complete: {len(valid_recommendations)}/{len(recommendations)} valid, {len(validation_errors)} errors"
-        )
+        self.logger.info(f"Validation complete: {len(valid_recommendations)}/{len(recommendations)} valid, {len(validation_errors)} errors")
 
         return valid_recommendations, validation_errors

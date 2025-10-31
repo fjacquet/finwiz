@@ -240,9 +240,7 @@ def generate_python_report(holdings: list[dict[str, Any]], deep_analysis_results
         # Generate report
         from finwiz.reporting.python_report_generator import generate_python_report
 
-        report_path = generate_python_report(
-            portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id
-        )
+        report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id)
 
         logger.info(f"✅ Report generated: {report_path}")
         return report_path

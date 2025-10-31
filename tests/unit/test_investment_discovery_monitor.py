@@ -44,9 +44,7 @@ class TestInvestmentDiscoveryMonitor:
         from finwiz.schemas.investment_discovery import APlusCriteria, MarketRegime
 
         self.test_criteria = APlusCriteria()
-        self.test_market_context = MarketRegime(
-            regime_type="bull", vix_level=15.0, inflation_rate=2.5, interest_rate_trend="stable", market_stress_level="low"
-        )
+        self.test_market_context = MarketRegime(regime_type="bull", vix_level=15.0, inflation_rate=2.5, interest_rate_trend="stable", market_stress_level="low")
 
         self.test_result = APlusDiscoveryResult(
             asset_type="stock",
@@ -157,9 +155,7 @@ class TestInvestmentDiscoveryMonitor:
             assert change["new_grade"] == new_grade
             assert change["days_since_discovery"] == days_since_discovery
 
-            mock_counter.assert_called_with(
-                "grade.changed", tags={"from_grade": old_grade, "to_grade": new_grade, "symbol": symbol}
-            )
+            mock_counter.assert_called_with("grade.changed", tags={"from_grade": old_grade, "to_grade": new_grade, "symbol": symbol})
 
     def test_should_record_recommendation_feedback(self, mocker):
         """Test recording recommendation feedback."""

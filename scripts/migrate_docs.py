@@ -628,9 +628,7 @@ source: "{source_path.relative_to(self.source_dir)}"
             warnings_count=len(warnings),
             total_size_bytes=total_size,
             processing_time_seconds=processing_time,
-            avg_processing_time_ms=sum(m.processing_time_ms or 0 for m in self.migration_results) / len(self.migration_results)
-            if self.migration_results
-            else 0,
+            avg_processing_time_ms=sum(m.processing_time_ms or 0 for m in self.migration_results) / len(self.migration_results) if self.migration_results else 0,
             category_distribution=category_distribution,
         )
 
@@ -641,9 +639,7 @@ source: "{source_path.relative_to(self.source_dir)}"
             if category_docs:
                 avg_confidence = sum(m.confidence_score for m in category_docs) / len(category_docs)
                 total_category_size = sum(m.file_size_bytes or 0 for m in category_docs)
-                success_rate = len([m for m in category_docs if m.validation_status == ValidationStatus.SUCCESS]) / len(
-                    category_docs
-                )
+                success_rate = len([m for m in category_docs if m.validation_status == ValidationStatus.SUCCESS]) / len(category_docs)
 
                 # Find common issues
                 all_issues = []
@@ -742,9 +738,7 @@ source: "{source_path.relative_to(self.source_dir)}"
                 }
                 for m in report.migrated_documents
             ],
-            "failed_migrations": [
-                {"source_path": m.source_path, "category": m.category.value, "issues": m.issues} for m in report.failed_migrations
-            ],
+            "failed_migrations": [{"source_path": m.source_path, "category": m.category.value, "issues": m.issues} for m in report.failed_migrations],
             "validation_errors": report.validation_errors,
         }
 

@@ -71,9 +71,7 @@ class TestRegimePerformanceAnalysis:
             average_sortino_ratio=2.0,
         )
 
-    def test_should_extract_all_regime_types(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_extract_all_regime_types(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test extraction of all market regime types."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -85,9 +83,7 @@ class TestRegimePerformanceAnalysis:
         assert "sideways" in regime_perf
         assert "volatile" in regime_perf
 
-    def test_should_create_regime_performance_models(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_create_regime_performance_models(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test that RegimePerformance models are created correctly."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -102,9 +98,7 @@ class TestRegimePerformanceAnalysis:
             assert hasattr(perf, "win_rate")
             assert hasattr(perf, "consistency_score")
 
-    def test_should_show_bull_market_outperformance(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_show_bull_market_outperformance(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test that bull market shows highest returns."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -117,9 +111,7 @@ class TestRegimePerformanceAnalysis:
         assert bull_return > sideways_return
         assert bull_return > bear_return
 
-    def test_should_show_bear_market_underperformance(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_show_bear_market_underperformance(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test that bear market shows lowest returns."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -132,9 +124,7 @@ class TestRegimePerformanceAnalysis:
         assert bear_return < bull_return
         assert bear_return < sideways_return
 
-    def test_should_calculate_consistency_scores_for_all_regimes(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_calculate_consistency_scores_for_all_regimes(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test consistency score calculation for all regimes."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -146,9 +136,7 @@ class TestRegimePerformanceAnalysis:
             if regime == "bull":
                 assert perf.consistency_score > 0.6
 
-    def test_should_show_higher_consistency_for_better_performance(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_show_higher_consistency_for_better_performance(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test that better performing regimes have higher consistency scores."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -161,9 +149,7 @@ class TestRegimePerformanceAnalysis:
         # than bear market (win_rate=0.35, sharpe=0.5)
         assert bull_consistency > bear_consistency
 
-    def test_should_extract_max_drawdown_for_each_regime(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_extract_max_drawdown_for_each_regime(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test max drawdown extraction for each regime."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -175,9 +161,7 @@ class TestRegimePerformanceAnalysis:
             if regime == "bear":
                 assert perf.max_drawdown == -25.0
 
-    def test_should_extract_win_rates_for_each_regime(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_extract_win_rates_for_each_regime(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test win rate extraction for each regime."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)
@@ -189,9 +173,7 @@ class TestRegimePerformanceAnalysis:
             if regime == "bull":
                 assert perf.win_rate == 0.75
 
-    def test_should_generate_performance_comparison_table_data(
-        self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult
-    ) -> None:
+    def test_should_generate_performance_comparison_table_data(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test generation of data suitable for performance comparison tables."""
         # Act
         regime_perf = extractor.extract_regime_performance(multi_regime_validation_result)

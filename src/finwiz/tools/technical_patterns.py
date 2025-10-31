@@ -211,9 +211,7 @@ class TechnicalPatterns:
                 pivots.append((i, lows[i]))
         return pivots
 
-    def _group_price_levels(
-        self, pivots: list[tuple[int, float]], price_data: PriceData, level_type: str
-    ) -> list[SupportResistanceLevel]:
+    def _group_price_levels(self, pivots: list[tuple[int, float]], price_data: PriceData, level_type: str) -> list[SupportResistanceLevel]:
         """Group similar price levels and calculate their strength."""
         if not pivots:
             return []

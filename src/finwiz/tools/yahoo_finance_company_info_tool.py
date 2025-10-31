@@ -17,9 +17,7 @@ class YahooFinanceCompanyInfoTool(BaseTool):
     """
 
     name: str = "Yahoo Finance Company Info Tool"
-    description: str = (
-        "Get detailed company information including business description, key financial metrics, and company profile."
-    )
+    description: str = "Get detailed company information including business description, key financial metrics, and company profile."
     args_schema: type[BaseModel] = GetCompanyInfoInput
 
     def _run(self, ticker: str) -> dict:
@@ -57,10 +55,6 @@ class YahooFinanceCompanyInfoTool(BaseTool):
             }
 
             # Clean up N/A values
-            return {
-                k: v if not isinstance(v, dict) else {k2: v2 for k2, v2 in v.items() if v2 != "N/A"}
-                for k, v in company_info.items()
-                if v != "N/A"
-            }
+            return {k: v if not isinstance(v, dict) else {k2: v2 for k2, v2 in v.items() if v2 != "N/A"} for k, v in company_info.items() if v != "N/A"}
         except Exception as e:
             return {"error": f"Failed to get company info for {ticker}: {str(e)}"}

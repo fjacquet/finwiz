@@ -55,9 +55,7 @@ class SchemaManager:
 
             # Try to convert using dict() for dataclasses or similar
             if hasattr(usage_metrics, "__dict__"):
-                return {
-                    key: value for key, value in usage_metrics.__dict__.items() if not key.startswith("_") and not callable(value)
-                }
+                return {key: value for key, value in usage_metrics.__dict__.items() if not key.startswith("_") and not callable(value)}
 
             # Fallback: convert to string representation
             return {"raw_usage_metrics": str(usage_metrics)}

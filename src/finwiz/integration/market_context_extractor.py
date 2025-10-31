@@ -76,11 +76,7 @@ class MarketContextExtractor:
             # Extract market regime directly from discovery result
             market_regime = discovery_result.market_context
 
-            self.logger.info(
-                f"Extracted market regime: {market_regime.regime_type}, "
-                f"VIX: {market_regime.vix_level:.2f}, "
-                f"Stress: {market_regime.market_stress_level}"
-            )
+            self.logger.info(f"Extracted market regime: {market_regime.regime_type}, VIX: {market_regime.vix_level:.2f}, Stress: {market_regime.market_stress_level}")
             return market_regime
 
         except Exception as e:
@@ -118,9 +114,7 @@ class MarketContextExtractor:
                 volatility_regime=volatility_regime,
             )
 
-            self.logger.info(
-                f"Extracted VIX indicators: {current_vix:.2f} ({vix_percentile:.1f}th percentile, {volatility_regime} regime)"
-            )
+            self.logger.info(f"Extracted VIX indicators: {current_vix:.2f} ({vix_percentile:.1f}th percentile, {volatility_regime} regime)")
             return indicators
 
         except Exception as e:
@@ -150,10 +144,7 @@ class MarketContextExtractor:
                 unemployment_rate=self._extract_unemployment_rate(discovery_result),
             )
 
-            self.logger.info(
-                f"Extracted macro indicators: Inflation {indicators.inflation_rate:.2f}%, "
-                f"Interest rate trend: {indicators.interest_rate_trend}"
-            )
+            self.logger.info(f"Extracted macro indicators: Inflation {indicators.inflation_rate:.2f}%, Interest rate trend: {indicators.interest_rate_trend}")
             return indicators
 
         except Exception as e:
@@ -185,9 +176,7 @@ class MarketContextExtractor:
             risk_environment = self._assess_risk_environment(market_regime, vix_indicators, macro_indicators)
 
             # Generate allocation implications
-            allocation_implications = self._generate_allocation_implications(
-                market_regime, vix_indicators, macro_indicators, risk_environment
-            )
+            allocation_implications = self._generate_allocation_implications(market_regime, vix_indicators, macro_indicators, risk_environment)
 
             summary = MarketContextSummary(
                 market_regime=market_regime,
@@ -197,10 +186,7 @@ class MarketContextExtractor:
                 allocation_implications=allocation_implications,
             )
 
-            self.logger.info(
-                f"Generated market context summary: {risk_environment} risk environment, "
-                f"{len(allocation_implications)} allocation implications"
-            )
+            self.logger.info(f"Generated market context summary: {risk_environment} risk environment, {len(allocation_implications)} allocation implications")
             return summary
 
         except Exception as e:
@@ -306,9 +292,7 @@ class MarketContextExtractor:
         # This can be enhanced when unemployment data is added to discovery results
         return None
 
-    def _assess_risk_environment(
-        self, market_regime: MarketRegime, vix_indicators: VIXIndicators, macro_indicators: MacroIndicators
-    ) -> str:
+    def _assess_risk_environment(self, market_regime: MarketRegime, vix_indicators: VIXIndicators, macro_indicators: MacroIndicators) -> str:
         """
         Assess overall risk environment based on all indicators.
 

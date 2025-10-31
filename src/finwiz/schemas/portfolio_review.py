@@ -37,9 +37,7 @@ class Alternative(BaseModel):
 
     # NEW: Transition strategy fields
     transition_strategy: str = Field(default="", description="Strategy for transitioning to this alternative")
-    swap_timing: Literal["immediate", "gradual", "tax_optimized"] = Field(
-        default="gradual", description="Recommended timing for swap"
-    )
+    swap_timing: Literal["immediate", "gradual", "tax_optimized"] = Field(default="gradual", description="Recommended timing for swap")
     tax_implications: str = Field(default="", description="Tax considerations for the swap")
     expected_cost_basis_impact: Optional[float] = Field(None, description="Expected impact on cost basis")
 
@@ -141,13 +139,9 @@ class HoldingDecision(BaseModel):
     position_sizing: Optional[PositionSizeRecommendation] = None
 
     # A+ improvement suggestions enhancement
-    a_plus_improvement_suggestions: list[APlusImprovementSuggestion] = Field(
-        default_factory=list, max_length=5, description="A+ improvement suggestions for this holding"
-    )
+    a_plus_improvement_suggestions: list[APlusImprovementSuggestion] = Field(default_factory=list, max_length=5, description="A+ improvement suggestions for this holding")
     has_a_plus_opportunities: bool = Field(default=False, description="Whether A+ improvement opportunities exist for this holding")
-    current_grade_potential: Optional[str] = Field(
-        None, description="Assessment of current holding's potential for grade improvement"
-    )
+    current_grade_potential: Optional[str] = Field(None, description="Assessment of current holding's potential for grade improvement")
 
     # NEW: Data freshness and crew analysis tracking
     data_freshness: Literal["fresh", "recent", "stale"] = Field(default="stale", description="Freshness of analysis data")
@@ -189,9 +183,7 @@ class PortfolioReview(BaseModel):
     holdings: list[HoldingDecision] = Field(default_factory=list)
 
     # A+ opportunities integration
-    a_plus_opportunities: APlusOpportunitySection = Field(
-        default_factory=APlusOpportunitySection, description="A+ investment opportunities identified for this portfolio"
-    )
+    a_plus_opportunities: APlusOpportunitySection = Field(default_factory=APlusOpportunitySection, description="A+ investment opportunities identified for this portfolio")
 
     # Portfolio-level A+ metrics
     current_a_plus_holdings_count: int = Field(default=0, description="Number of current A+ holdings")

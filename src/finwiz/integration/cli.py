@@ -142,10 +142,7 @@ def cmd_analyze(args: Any) -> None:
             if durations:
                 print("\nAverage Execution Times:")
                 for crew, duration_data in durations.items():
-                    print(
-                        f"  {crew}: {duration_data['average']:.2f}s "
-                        f"(min: {duration_data['min']:.2f}s, max: {duration_data['max']:.2f}s)"
-                    )
+                    print(f"  {crew}: {duration_data['average']:.2f}s (min: {duration_data['min']:.2f}s, max: {duration_data['max']:.2f}s)")
 
         elif args.type == "bottlenecks":
             # Identify bottlenecks
@@ -262,9 +259,7 @@ Examples:
 
     # Validate command
     validate_parser = subparsers.add_parser("validate", help="Run validation scripts")
-    validate_parser.add_argument(
-        "type", choices=["all", "integrity", "dependencies", "performance"], help="Type of validation to run"
-    )
+    validate_parser.add_argument("type", choices=["all", "integrity", "dependencies", "performance"], help="Type of validation to run")
     validate_parser.set_defaults(func=cmd_validate)
 
     # Status command

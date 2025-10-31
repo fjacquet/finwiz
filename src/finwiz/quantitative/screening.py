@@ -369,9 +369,7 @@ class StockScreener:
 
         return criteria_mapping.get(criteria)
 
-    def _calculate_scores(
-        self, stock_data_list: list[StockData], filters: list[ScreeningFilter]
-    ) -> list[tuple[StockData, ScreeningScore]]:
+    def _calculate_scores(self, stock_data_list: list[StockData], filters: list[ScreeningFilter]) -> list[tuple[StockData, ScreeningScore]]:
         """Calculate screening scores for stocks."""
         scored_stocks = []
 
@@ -448,9 +446,7 @@ class StockScreener:
             # Default scoring
             return min(max(value * 50, 0), 100)
 
-    def _sort_and_rank(
-        self, scored_stocks: list[tuple[StockData, ScreeningScore]], sort_by: str, sort_order: SortOrder
-    ) -> list[tuple[StockData, ScreeningScore]]:
+    def _sort_and_rank(self, scored_stocks: list[tuple[StockData, ScreeningScore]], sort_by: str, sort_order: SortOrder) -> list[tuple[StockData, ScreeningScore]]:
         """Sort and rank screening results."""
         # Sort by specified field
         if sort_by == "total_score":

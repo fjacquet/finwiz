@@ -97,9 +97,7 @@ class APlusDiscoveryAccessor:
 
             # Count total opportunities
             total_opportunities = (
-                len(results["stocks"].get("a_plus_candidates", []))
-                + len(results["etfs"].get("a_plus_candidates", []))
-                + len(results["crypto"].get("a_plus_candidates", []))
+                len(results["stocks"].get("a_plus_candidates", [])) + len(results["etfs"].get("a_plus_candidates", [])) + len(results["crypto"].get("a_plus_candidates", []))
             )
 
             results["total_opportunities"] = total_opportunities
@@ -160,9 +158,7 @@ class APlusDiscoveryAccessor:
                 a_plus_crypto = [c for c in crypto_candidates if c.get("candidate", {}).get("grade") == "A+"]
                 summary_parts.append(f"{len(crypto_candidates)} crypto opportunities ({len(a_plus_crypto)} A+ grade)")
 
-            summary = f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: " + ", ".join(
-                summary_parts
-            )
+            summary = f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: " + ", ".join(summary_parts)
 
             self.logger.info("Generated opportunities summary", extra={"total_opportunities": total_opportunities})
 

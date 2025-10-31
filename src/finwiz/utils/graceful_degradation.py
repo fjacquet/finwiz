@@ -92,9 +92,7 @@ class GracefulDegradationManager:
     def _initialize_default_configs(self) -> None:
         """Initialize default degradation configurations for FinWiz services."""
         default_services = {
-            "openai": DegradationConfig(
-                service_name="openai", max_retries=3, retry_delay=2.0, timeout_seconds=60.0, error_threshold=3, recovery_threshold=2
-            ),
+            "openai": DegradationConfig(service_name="openai", max_retries=3, retry_delay=2.0, timeout_seconds=60.0, error_threshold=3, recovery_threshold=2),
             "alpha_vantage": DegradationConfig(
                 service_name="alpha_vantage",
                 max_retries=5,
@@ -235,9 +233,7 @@ class GracefulDegradationManager:
         else:
             return func(*args, **kwargs)
 
-    async def _execute_fallback(
-        self, service_name: str, fallback_func: Callable | None, cache_key: str | None, *args: Any, **kwargs: Any
-    ) -> Any:
+    async def _execute_fallback(self, service_name: str, fallback_func: Callable | None, cache_key: str | None, *args: Any, **kwargs: Any) -> Any:
         """Execute fallback strategy for failed service."""
         config = self.degradation_configs.get(service_name)
         if not config:

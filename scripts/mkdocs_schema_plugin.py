@@ -260,11 +260,7 @@ class SchemaDocsPlugin(BasePlugin):
 
             # Required
             is_required = prop_name in required
-            required_badge = (
-                '<span class="badge badge-required">Required</span>'
-                if is_required
-                else '<span class="badge badge-optional">Optional</span>'
-            )
+            required_badge = '<span class="badge badge-required">Required</span>' if is_required else '<span class="badge badge-optional">Optional</span>'
             html_parts.append(f"<td>{required_badge}</td>")
 
             # Description

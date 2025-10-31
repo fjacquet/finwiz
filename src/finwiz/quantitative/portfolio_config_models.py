@@ -99,9 +99,7 @@ class ConfigurationTemplate(BaseModel):
     # Template configuration
     target_weights: dict[str, float] = Field(..., description="Default target weights")
     global_tolerance: float = Field(default=0.05, description="Default tolerance")
-    rebalancing_method: RebalancingMethod = Field(
-        default=RebalancingMethod.MINIMIZE_TRADES, description="Default rebalancing method"
-    )
+    rebalancing_method: RebalancingMethod = Field(default=RebalancingMethod.MINIMIZE_TRADES, description="Default rebalancing method")
 
     # Metadata
     created_at: datetime = Field(default_factory=datetime.now, description="Template creation date")

@@ -308,15 +308,11 @@ class TestTwelveDataTool:
 
         # Recent narrow bands (squeeze)
         for i in range(10):
-            bb_values.append(
-                BollingerBandsValue(datetime=f"2024-01-{15 - i:02d}", upper_band=102.0, middle_band=100.0, lower_band=98.0)
-            )
+            bb_values.append(BollingerBandsValue(datetime=f"2024-01-{15 - i:02d}", upper_band=102.0, middle_band=100.0, lower_band=98.0))
 
         # Historical wider bands
         for i in range(10, 25):
-            bb_values.append(
-                BollingerBandsValue(datetime=f"2024-01-{15 - i:02d}", upper_band=105.0, middle_band=100.0, lower_band=95.0)
-            )
+            bb_values.append(BollingerBandsValue(datetime=f"2024-01-{15 - i:02d}", upper_band=105.0, middle_band=100.0, lower_band=95.0))
 
         squeeze_signal = tool._analyze_bollinger_squeeze(bb_values)
         assert squeeze_signal == "squeeze"

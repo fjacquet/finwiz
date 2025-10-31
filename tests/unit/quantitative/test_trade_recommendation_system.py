@@ -138,9 +138,7 @@ class TestTradeRecommendationSystem:
         assert googl_rec.priority in [1, 2]
         assert len(googl_rec.rationale) >= 10
 
-    def test_should_return_empty_list_when_no_rebalancing_needed(
-        self, trade_system, sample_portfolio_analysis, sample_prices, sample_portfolio_config
-    ):
+    def test_should_return_empty_list_when_no_rebalancing_needed(self, trade_system, sample_portfolio_analysis, sample_prices, sample_portfolio_config):
         """Test that no recommendations are generated when no rebalancing is needed."""
         # Arrange - create needs with no positions exceeding tolerance
         no_rebalancing_needs = [
@@ -169,9 +167,7 @@ class TestTradeRecommendationSystem:
         # Assert
         assert len(recommendations) == 0
 
-    def test_should_calculate_correct_trade_quantities_for_fractional_shares(
-        self, trade_system, sample_portfolio_analysis, sample_prices, sample_portfolio_config
-    ):
+    def test_should_calculate_correct_trade_quantities_for_fractional_shares(self, trade_system, sample_portfolio_analysis, sample_prices, sample_portfolio_config):
         """Test fractional share quantity calculations."""
         # Arrange
         need = RebalancingNeed(
@@ -190,9 +186,7 @@ class TestTradeRecommendationSystem:
         high_capital_config.available_capital = 20000.0
 
         # Act
-        calculation = trade_system._calculate_trade_details(
-            need, sample_portfolio_analysis, sample_prices, high_capital_config, high_capital_config.holdings
-        )
+        calculation = trade_system._calculate_trade_details(need, sample_portfolio_analysis, sample_prices, high_capital_config, high_capital_config.holdings)
 
         # Assert
         assert calculation.is_valid
@@ -268,9 +262,7 @@ class TestTradeRecommendationSystem:
         ]
 
         # Act
-        priority_scores = trade_system._calculate_priority_scores(
-            calculations, needs, sample_portfolio_analysis, sample_portfolio_config
-        )
+        priority_scores = trade_system._calculate_priority_scores(calculations, needs, sample_portfolio_analysis, sample_portfolio_config)
 
         # Assert
         assert len(priority_scores) == 2
@@ -510,9 +502,7 @@ class TestTradeRecommendationSystem:
         assert len(errors) > 0
         assert any("capital" in error.lower() for error in errors)
 
-    def test_should_handle_invalid_price_data_gracefully(
-        self, trade_system, sample_rebalancing_needs, sample_portfolio_analysis, sample_portfolio_config
-    ):
+    def test_should_handle_invalid_price_data_gracefully(self, trade_system, sample_rebalancing_needs, sample_portfolio_analysis, sample_portfolio_config):
         """Test handling of invalid or missing price data."""
         # Arrange - prices with invalid data
         invalid_prices = {"AAPL": 0.0, "GOOGL": -100.0, "MSFT": 250.0}
@@ -565,9 +555,7 @@ class TestTradeRecommendationSystem:
         prices = {"AAPL": 150.0}
 
         # Act
-        calculation = trade_system._calculate_trade_details(
-            small_need, sample_portfolio_analysis, prices, sample_portfolio_config, sample_portfolio_config.holdings
-        )
+        calculation = trade_system._calculate_trade_details(small_need, sample_portfolio_analysis, prices, sample_portfolio_config, sample_portfolio_config.holdings)
 
         # Assert - should be invalid due to minimum trade size
         assert not calculation.is_valid

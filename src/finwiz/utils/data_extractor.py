@@ -56,9 +56,7 @@ class CrewDataExtractor:
 
         Example:
             >>> extractor = CrewDataExtractor()
-            >>> metrics = extractor.extract_quantitative_metrics(
-            ...     crew_output='{"performance_metrics": {"volatility": 0.25, "max_drawdown": -0.15}}', ticker="AAPL"
-            ... )
+            >>> metrics = extractor.extract_quantitative_metrics(crew_output='{"performance_metrics": {"volatility": 0.25, "max_drawdown": -0.15}}', ticker="AAPL")
             >>> print(metrics["volatility"])
             0.25
 
@@ -77,9 +75,7 @@ class CrewDataExtractor:
         perf_metrics = data.get("performance_metrics", {})
 
         if not perf_metrics:
-            self.logger.warning(
-                f"No performance_metrics section found in crew output for {ticker}. Available keys: {list(data.keys())}"
-            )
+            self.logger.warning(f"No performance_metrics section found in crew output for {ticker}. Available keys: {list(data.keys())}")
             # Try alternative locations
             perf_metrics = data.get("quantitative_analysis", {})
             if not perf_metrics:
@@ -95,10 +91,7 @@ class CrewDataExtractor:
                 missing_fields.append(field)
 
         if missing_fields:
-            self.logger.error(
-                f"Missing required metrics for {ticker}: {missing_fields}. "
-                f"Available keys in performance_metrics: {list(perf_metrics.keys())}"
-            )
+            self.logger.error(f"Missing required metrics for {ticker}: {missing_fields}. Available keys in performance_metrics: {list(perf_metrics.keys())}")
             raise MissingRequiredFieldError(
                 ticker=ticker,
                 field=", ".join(missing_fields),
@@ -119,16 +112,8 @@ class CrewDataExtractor:
                 "volatility": float(perf_metrics["volatility"]),
                 "max_drawdown": float(perf_metrics["max_drawdown"]),
                 "beta": float(perf_metrics["beta"]) if "beta" in perf_metrics and perf_metrics["beta"] is not None else None,
-                "sharpe_ratio": (
-                    float(perf_metrics["sharpe_ratio"])
-                    if "sharpe_ratio" in perf_metrics and perf_metrics["sharpe_ratio"] is not None
-                    else None
-                ),
-                "sortino_ratio": (
-                    float(perf_metrics["sortino_ratio"])
-                    if "sortino_ratio" in perf_metrics and perf_metrics["sortino_ratio"] is not None
-                    else None
-                ),
+                "sharpe_ratio": (float(perf_metrics["sharpe_ratio"]) if "sharpe_ratio" in perf_metrics and perf_metrics["sharpe_ratio"] is not None else None),
+                "sortino_ratio": (float(perf_metrics["sortino_ratio"]) if "sortino_ratio" in perf_metrics and perf_metrics["sortino_ratio"] is not None else None),
             }
 
             # Track data sources in lineage (Task 9.3)
@@ -157,9 +142,7 @@ class CrewDataExtractor:
                             )
 
             self.logger.info(
-                f"Successfully extracted quantitative metrics for {ticker}: "
-                f"volatility={extracted_metrics['volatility']:.3f}, "
-                f"max_drawdown={extracted_metrics['max_drawdown']:.3f}"
+                f"Successfully extracted quantitative metrics for {ticker}: volatility={extracted_metrics['volatility']:.3f}, max_drawdown={extracted_metrics['max_drawdown']:.3f}"
             )
 
             return extracted_metrics
@@ -202,16 +185,12 @@ class CrewDataExtractor:
         # Check for grade
         if "grade" not in data or data["grade"] is None:
             self.logger.error(f"Missing grade for {ticker}. Available keys: {list(data.keys())}")
-            raise MissingRequiredFieldError(
-                ticker=ticker, field="grade", context={"source": "crew_output", "available_keys": list(data.keys())}
-            )
+            raise MissingRequiredFieldError(ticker=ticker, field="grade", context={"source": "crew_output", "available_keys": list(data.keys())})
 
         # Check for composite_score
         if "composite_score" not in data or data["composite_score"] is None:
             self.logger.error(f"Missing composite_score for {ticker}. Available keys: {list(data.keys())}")
-            raise MissingRequiredFieldError(
-                ticker=ticker, field="composite_score", context={"source": "crew_output", "available_keys": list(data.keys())}
-            )
+            raise MissingRequiredFieldError(ticker=ticker, field="composite_score", context={"source": "crew_output", "available_keys": list(data.keys())})
 
         try:
             from datetime import datetime
@@ -252,9 +231,7 @@ class CrewDataExtractor:
                         formula="float(composite_score)",
                     )
 
-            self.logger.info(
-                f"Successfully extracted grade and score for {ticker}: grade={result['grade']}, score={result['composite_score']:.3f}"
-            )
+            self.logger.info(f"Successfully extracted grade and score for {ticker}: grade={result['grade']}, score={result['composite_score']:.3f}")
 
             return result
 
@@ -304,8 +281,6 @@ class CrewDataExtractor:
         is_consistent = grade == expected_grade
 
         if not is_consistent:
-            self.logger.warning(
-                f"Grade-score mismatch for {ticker}: grade={grade}, score={composite_score:.3f}, expected={expected_grade}"
-            )
+            self.logger.warning(f"Grade-score mismatch for {ticker}: grade={grade}, score={composite_score:.3f}, expected={expected_grade}")
 
         return is_consistent

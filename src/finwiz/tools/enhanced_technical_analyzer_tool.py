@@ -136,9 +136,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             return []
 
         try:
-            sonar_result = await perplexity_integration.search_technical_analysis(
-                ticker=ticker, asset_type=asset_type, max_results=8
-            )
+            sonar_result = await perplexity_integration.search_technical_analysis(ticker=ticker, asset_type=asset_type, max_results=8)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity technical insights for {ticker}")
@@ -158,9 +156,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             PerplexityFeatureFlagTracker.record_operation_failure(ticker, "technical", "integration_error")
             return []
 
-    def _format_enhanced_technical_response(
-        self, ticker: str, asset_type: str, technical_result: Any, perplexity_insights: list[SonarArticle]
-    ) -> str:
+    def _format_enhanced_technical_response(self, ticker: str, asset_type: str, technical_result: Any, perplexity_insights: list[SonarArticle]) -> str:
         """Format comprehensive enhanced technical analysis response."""
         response = f"# Enhanced Technical Analysis for {ticker} ({asset_type.upper()})\n\n"
 
@@ -218,9 +214,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             response += "\n## 🔧 Technical Indicators\n"
             for signal in technical_result.indicator_signals:
                 signal_emoji = "🟢" if signal.signal_type == "buy" else "🔴" if signal.signal_type == "sell" else "🟡"
-                response += (
-                    f"- {signal_emoji} **{signal.indicator_name}**: {signal.description} (Strength: {signal.strength:.2f})\n"
-                )
+                response += f"- {signal_emoji} **{signal.indicator_name}**: {signal.description} (Strength: {signal.strength:.2f})\n"
 
         # Confluence Zones
         if technical_result.confluence_zones:
@@ -244,9 +238,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             response += f"Recent technical analysis and analyst opinions ({len(perplexity_insights)} articles):\n\n"
 
             for i, article in enumerate(perplexity_insights, 1):
-                content_emoji = {"news": "📰", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(
-                    article.content_type, "📊"
-                )
+                content_emoji = {"news": "📰", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(article.content_type, "📊")
 
                 response += f"{i}. {content_emoji} **{article.title}**\n"
                 response += f"   - Publisher: {article.publisher}\n"

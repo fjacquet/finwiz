@@ -189,9 +189,7 @@ class BacktestingTool(BaseTool):
                 )
 
             # Calculate validation score and determine if passed
-            validation_score, validation_passed, validation_notes = self._validate_strategy(
-                backtest_result, additional_metrics, regime_analysis
-            )
+            validation_score, validation_passed, validation_notes = self._validate_strategy(backtest_result, additional_metrics, regime_analysis)
 
             # Create comprehensive result
             result = BacktestingResult(
@@ -272,9 +270,7 @@ class BacktestingTool(BaseTool):
                         additional_metrics["downside_deviation"] = downside_deviation
 
                         if downside_deviation > 0:
-                            additional_metrics["sortino_ratio"] = (backtest_result.annualized_return / 100 - 0.02) / (
-                                downside_deviation / 100
-                            )
+                            additional_metrics["sortino_ratio"] = (backtest_result.annualized_return / 100 - 0.02) / (downside_deviation / 100)
 
                     # Information ratio (if benchmark available)
                     if backtest_result.benchmark_return is not None:

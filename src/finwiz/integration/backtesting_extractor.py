@@ -230,10 +230,7 @@ class BacktestingDataExtractor:
                 worst_performer=worst,
             )
 
-            self.logger.info(
-                f"Generated backtesting summary for {total_candidates} candidates "
-                f"across {len(validation_results)} validation results"
-            )
+            self.logger.info(f"Generated backtesting summary for {total_candidates} candidates across {len(validation_results)} validation results")
             return summary
 
         except Exception as e:
@@ -375,9 +372,7 @@ class BacktestingDataExtractor:
             return None
 
         returns = [
-            detail.get("annualized_return")
-            for detail in validation_result.validation_details
-            if "annualized_return" in detail and detail.get("annualized_return") is not None
+            detail.get("annualized_return") for detail in validation_result.validation_details if "annualized_return" in detail and detail.get("annualized_return") is not None
         ]
 
         if not returns:
@@ -392,11 +387,7 @@ class BacktestingDataExtractor:
             self.logger.debug("No validation details available for win rate calculation")
             return None
 
-        win_rates = [
-            detail.get("win_rate")
-            for detail in validation_result.validation_details
-            if "win_rate" in detail and detail.get("win_rate") is not None
-        ]
+        win_rates = [detail.get("win_rate") for detail in validation_result.validation_details if "win_rate" in detail and detail.get("win_rate") is not None]
 
         if not win_rates:
             self.logger.debug("No win rate values found in validation details")
@@ -488,33 +479,19 @@ class BacktestingDataExtractor:
             )
 
         # Weighted average based on number of candidates, handling None values
-        returns = [
-            (self._calculate_average_return(vr), vr.total_candidates)
-            for vr in validation_results
-            if self._calculate_average_return(vr) is not None
-        ]
+        returns = [(self._calculate_average_return(vr), vr.total_candidates) for vr in validation_results if self._calculate_average_return(vr) is not None]
         avg_return = sum(r * c for r, c in returns) / sum(c for _, c in returns) if returns else None
 
-        sharpes = [
-            (vr.average_sharpe_ratio, vr.total_candidates) for vr in validation_results if vr.average_sharpe_ratio is not None
-        ]
+        sharpes = [(vr.average_sharpe_ratio, vr.total_candidates) for vr in validation_results if vr.average_sharpe_ratio is not None]
         avg_sharpe = sum(s * c for s, c in sharpes) / sum(c for _, c in sharpes) if sharpes else None
 
-        drawdowns = [
-            (vr.average_max_drawdown, vr.total_candidates) for vr in validation_results if vr.average_max_drawdown is not None
-        ]
+        drawdowns = [(vr.average_max_drawdown, vr.total_candidates) for vr in validation_results if vr.average_max_drawdown is not None]
         avg_drawdown = sum(d * c for d, c in drawdowns) / sum(c for _, c in drawdowns) if drawdowns else None
 
-        sortinos = [
-            (vr.average_sortino_ratio, vr.total_candidates) for vr in validation_results if vr.average_sortino_ratio is not None
-        ]
+        sortinos = [(vr.average_sortino_ratio, vr.total_candidates) for vr in validation_results if vr.average_sortino_ratio is not None]
         avg_sortino = sum(s * c for s, c in sortinos) / sum(c for _, c in sortinos) if sortinos else None
 
-        win_rates = [
-            (self._calculate_win_rate(vr), vr.total_candidates)
-            for vr in validation_results
-            if self._calculate_win_rate(vr) is not None
-        ]
+        win_rates = [(self._calculate_win_rate(vr), vr.total_candidates) for vr in validation_results if self._calculate_win_rate(vr) is not None]
         avg_win_rate = sum(w * c for w, c in win_rates) / sum(c for _, c in win_rates) if win_rates else None
 
         # Calculate Calmar ratio if we have both return and drawdown
@@ -523,9 +500,7 @@ class BacktestingDataExtractor:
             calmar = avg_return / abs(avg_drawdown)
 
         # Use the most common backtest period
-        backtest_years = max(
-            (vr.backtest_period_years for vr in validation_results if vr.backtest_period_years is not None), default=None
-        )
+        backtest_years = max((vr.backtest_period_years for vr in validation_results if vr.backtest_period_years is not None), default=None)
 
         return BacktestingMetrics(
             annualized_return=avg_return,

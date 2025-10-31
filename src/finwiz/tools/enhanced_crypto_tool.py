@@ -258,28 +258,18 @@ class EnhancedCryptoAnalysisTool(BaseTool):
 
             # Market position thesis
             if market_cap_rank <= 10:
-                thesis_bullets.append(
-                    f"{name} is a top-10 cryptocurrency by market capitalization, indicating strong market acceptance and liquidity"
-                )
+                thesis_bullets.append(f"{name} is a top-10 cryptocurrency by market capitalization, indicating strong market acceptance and liquidity")
             elif market_cap_rank <= 50:
-                thesis_bullets.append(
-                    f"{name} maintains a solid market position in the top 50 cryptocurrencies with established market presence"
-                )
+                thesis_bullets.append(f"{name} maintains a solid market position in the top 50 cryptocurrencies with established market presence")
             else:
-                thesis_bullets.append(
-                    f"{name} represents an emerging opportunity with potential for significant growth from current market position"
-                )
+                thesis_bullets.append(f"{name} represents an emerging opportunity with potential for significant growth from current market position")
 
             # Technology and use case thesis
             if "Smart Contract Platform" in categories or "smart contract" in description.lower():
-                thesis_bullets.append(
-                    "Strong technological foundation with smart contract capabilities enabling diverse DeFi and dApp ecosystems"
-                )
+                thesis_bullets.append("Strong technological foundation with smart contract capabilities enabling diverse DeFi and dApp ecosystems")
 
             if "DeFi" in categories or "defi" in description.lower():
-                thesis_bullets.append(
-                    "Positioned to benefit from the growing decentralized finance (DeFi) sector and yield farming opportunities"
-                )
+                thesis_bullets.append("Positioned to benefit from the growing decentralized finance (DeFi) sector and yield farming opportunities")
 
             if "Store of Value" in categories or symbol == "BTC":
                 thesis_bullets.append("Serves as a digital store of value and hedge against traditional financial system risks")
@@ -290,9 +280,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             # Supply dynamics thesis
             max_supply = crypto_data.get("max_supply")
             if max_supply:
-                thesis_bullets.append(
-                    f"Fixed maximum supply of {max_supply:,.0f} tokens creates scarcity value and potential deflationary pressure"
-                )
+                thesis_bullets.append(f"Fixed maximum supply of {max_supply:,.0f} tokens creates scarcity value and potential deflationary pressure")
             elif symbol == "BTC":
                 thesis_bullets.append("Capped supply of 21 million BTC creates digital scarcity similar to precious metals")
 
@@ -301,9 +289,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             price_change_30d = crypto_data.get("price_change_30d", 0)
 
             if price_change_7d > 10:
-                thesis_bullets.append(
-                    "Strong recent price momentum indicates positive market sentiment and potential trend continuation"
-                )
+                thesis_bullets.append("Strong recent price momentum indicates positive market sentiment and potential trend continuation")
             elif price_change_30d > 20:
                 thesis_bullets.append("Significant monthly gains demonstrate strong fundamental support and investor confidence")
 
@@ -312,9 +298,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
                 thesis_bullets.append("Widespread institutional adoption and integration into traditional financial products")
 
             if "Layer 1" in categories or symbol in ["ETH", "ADA", "SOL", "AVAX"]:
-                thesis_bullets.append(
-                    "Layer 1 blockchain infrastructure benefits from network effects and developer ecosystem growth"
-                )
+                thesis_bullets.append("Layer 1 blockchain infrastructure benefits from network effects and developer ecosystem growth")
 
             # Add generic thesis bullets if needed
             while len(thesis_bullets) < max_bullets:
@@ -495,9 +479,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             # Create crypto-specific search query
             query = f"{symbol} cryptocurrency regulatory updates adoption news blockchain technology"
 
-            sonar_result = await perplexity_integration.search_financial_news(
-                query=query, ticker=symbol, asset_type="crypto", analysis_type="crypto", max_results=6
-            )
+            sonar_result = await perplexity_integration.search_financial_news(query=query, ticker=symbol, asset_type="crypto", analysis_type="crypto", max_results=6)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity crypto insights for {symbol}")
@@ -527,9 +509,7 @@ class CryptoThesisGeneratorTool(BaseTool):
     """
 
     name: str = "Crypto Thesis Generator Tool"
-    description: str = (
-        "Generate structured investment thesis bullets for cryptocurrencies with proper citations and market analysis."
-    )
+    description: str = "Generate structured investment thesis bullets for cryptocurrencies with proper citations and market analysis."
     args_schema: type[BaseModel] = CryptoThesisInput
 
     def _run(self, symbol: str, **kwargs: Any) -> dict[str, Any]:
@@ -551,9 +531,7 @@ class CryptoRiskScoringTool(BaseTool):
     """
 
     name: str = "Crypto Risk Scoring Tool"
-    description: str = (
-        "Calculate standardized risk scores for cryptocurrencies on 1-10 scale with crypto-specific risk factors and methodology."
-    )
+    description: str = "Calculate standardized risk scores for cryptocurrencies on 1-10 scale with crypto-specific risk factors and methodology."
     args_schema: type[BaseModel] = CryptoRiskScoringInput
 
     def _run(self, symbol: str, **kwargs: Any) -> dict[str, Any]:

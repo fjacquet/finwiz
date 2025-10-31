@@ -34,9 +34,7 @@ class FeedbackAnalytics:
             return {}
 
         # Convert to DataFrame for efficient groupby operations
-        df = pd.DataFrame(
-            [{"grade": f.recommended_grade, "accepted": f.outcome == RecommendationOutcome.ACCEPTED} for f in feedback]
-        )
+        df = pd.DataFrame([{"grade": f.recommended_grade, "accepted": f.outcome == RecommendationOutcome.ACCEPTED} for f in feedback])
 
         # Use pandas groupby for efficient aggregation
         return df.groupby("grade")["accepted"].mean().to_dict()
@@ -48,9 +46,7 @@ class FeedbackAnalytics:
             return {"trend": 0.0, "recent_rate": 0.0, "historical_rate": 0.0}
 
         # Convert to DataFrame and sort by timestamp
-        df = pd.DataFrame(
-            [{"timestamp": f.timestamp, "accepted": f.outcome == RecommendationOutcome.ACCEPTED} for f in feedback]
-        ).sort_values("timestamp")
+        df = pd.DataFrame([{"timestamp": f.timestamp, "accepted": f.outcome == RecommendationOutcome.ACCEPTED} for f in feedback]).sort_values("timestamp")
 
         midpoint = len(df) // 2
 

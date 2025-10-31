@@ -150,9 +150,7 @@ class DocumentationBuilder:
         # Optimize images (basic optimization)
         image_files = list(self.build_dir.rglob("*.png")) + list(self.build_dir.rglob("*.jpg"))
 
-        self.build_stats.update(
-            {"css_files_optimized": len(css_files), "js_files_optimized": len(js_files), "image_files_found": len(image_files)}
-        )
+        self.build_stats.update({"css_files_optimized": len(css_files), "js_files_optimized": len(js_files), "image_files_found": len(image_files)})
 
         print(f"✅ Optimized {len(css_files)} CSS and {len(js_files)} JS files")
 
@@ -218,12 +216,7 @@ class DocumentationBuilder:
             return
 
         # Compress HTML, CSS, JS files
-        compressible_files = (
-            list(self.build_dir.rglob("*.html"))
-            + list(self.build_dir.rglob("*.css"))
-            + list(self.build_dir.rglob("*.js"))
-            + list(self.build_dir.rglob("*.json"))
-        )
+        compressible_files = list(self.build_dir.rglob("*.html")) + list(self.build_dir.rglob("*.css")) + list(self.build_dir.rglob("*.js")) + list(self.build_dir.rglob("*.json"))
 
         compressed_count = 0
         total_original_size = 0
@@ -254,9 +247,7 @@ class DocumentationBuilder:
             compression_ratio = (1 - total_compressed_size / total_original_size) * 100
             print(f"✅ Compressed {compressed_count} files ({compression_ratio:.1f}% size reduction)")
 
-        self.build_stats.update(
-            {"compressed_files": compressed_count, "compression_ratio": compression_ratio if compressed_count > 0 else 0}
-        )
+        self.build_stats.update({"compressed_files": compressed_count, "compression_ratio": compression_ratio if compressed_count > 0 else 0})
 
     def _validate_build(self) -> bool:
         """Validate the built documentation."""

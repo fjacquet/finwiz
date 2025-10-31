@@ -127,9 +127,7 @@ class TestPerplexityRateLimitingScenarios:
 
         # Act
         start_time = time.time()
-        result = await mock_integration.search_financial_news(
-            query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-        )
+        result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
         end_time = time.time()
 
         # Assert
@@ -155,9 +153,7 @@ class TestPerplexityRateLimitingScenarios:
         mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
-        result = await mock_integration.search_financial_news(
-            query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-        )
+        result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
         # Assert
         assert result.success is False
@@ -177,9 +173,7 @@ class TestPerplexityRateLimitingScenarios:
         mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
-        result = await mock_integration.search_financial_news(
-            query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-        )
+        result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
         # Assert
         assert result.success is True
@@ -213,9 +207,7 @@ class TestPerplexityRateLimitingScenarios:
             mock_tool._run.return_value = error_message
 
             # Act
-            result = await mock_integration.search_financial_news(
-                query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-            )
+            result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
             # Assert
             assert result.success is False
@@ -247,15 +239,11 @@ class TestPerplexityFailureScenarios:
         mock_tool._run.return_value = "Error: API failure"
 
         # Mock the feature flag tracker methods directly
-        mock_record_failure = mocker.patch(
-            "finwiz.tools.perplexity_analysis_integration.PerplexityFeatureFlagTracker.record_operation_failure"
-        )
+        mock_record_failure = mocker.patch("finwiz.tools.perplexity_analysis_integration.PerplexityFeatureFlagTracker.record_operation_failure")
 
         # Act - Execute multiple failed requests
         for _ in range(10):
-            result = await mock_integration.search_financial_news(
-                query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-            )
+            result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
             assert result.success is False
 
         # Assert - Verify failure tracking
@@ -275,9 +263,7 @@ class TestPerplexityFailureScenarios:
         mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
-        result = await mock_integration.search_financial_news(
-            query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-        )
+        result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
         # Assert
         assert result.success is True
@@ -318,9 +304,7 @@ class TestPerplexityFailureScenarios:
 
         # Act - Execute requests and count failures
         for i in range(5):
-            result = await mock_integration.search_financial_news(
-                query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-            )
+            result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
             if not result.success:
                 failure_count += 1

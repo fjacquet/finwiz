@@ -39,9 +39,7 @@ class IntegrationLogger:
     def log_crew_execution_start(self, crew_name: str, dependencies: list = None) -> None:
         """Log the start of crew execution."""
         extra_data = self.formatter.format_crew_execution_start(crew_name, dependencies)
-        self.logger.info(
-            f"Starting execution for crew: {crew_name}", extra=extra_data if self.config.enable_structured_logging else {}
-        )
+        self.logger.info(f"Starting execution for crew: {crew_name}", extra=extra_data if self.config.enable_structured_logging else {})
 
     def log_crew_execution_complete(self, crew_name: str, success: bool, execution_time: float, output_files: list = None) -> None:
         """Log the completion of crew execution."""
@@ -57,9 +55,7 @@ class IntegrationLogger:
         extra_data = self.formatter.format_data_validation(crew_name, is_valid, errors, warnings)
 
         if is_valid:
-            self.logger.info(
-                f"Data validation passed for crew: {crew_name}", extra=extra_data if self.config.enable_structured_logging else {}
-            )
+            self.logger.info(f"Data validation passed for crew: {crew_name}", extra=extra_data if self.config.enable_structured_logging else {})
         else:
             self.logger.error(
                 f"Data validation failed for crew: {crew_name} - {len(errors or [])} errors",
@@ -70,8 +66,7 @@ class IntegrationLogger:
         """Log data freshness check results."""
         extra_data = self.formatter.format_data_freshness_check(fresh_crews, stale_crews, missing_crews, overall_status)
         self.logger.info(
-            f"Data freshness check: {overall_status} - "
-            f"Fresh: {len(fresh_crews)}, Stale: {len(stale_crews)}, Missing: {len(missing_crews)}",
+            f"Data freshness check: {overall_status} - Fresh: {len(fresh_crews)}, Stale: {len(stale_crews)}, Missing: {len(missing_crews)}",
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
@@ -99,9 +94,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_data_access_operation(
-        self, operation: str, crew_name: str, success: bool, file_paths: list = None, error_message: str = None
-    ) -> None:
+    def log_data_access_operation(self, operation: str, crew_name: str, success: bool, file_paths: list = None, error_message: str = None) -> None:
         """Log data access operations for debugging integration issues."""
         extra_data = self.formatter.format_data_access_operation(operation, crew_name, success, file_paths, error_message)
 
@@ -116,13 +109,9 @@ class IntegrationLogger:
                 extra=extra_data if self.config.enable_structured_logging else {},
             )
 
-    def log_data_transformation(
-        self, crew_name: str, transformation_type: str, input_schema: str, output_schema: str, record_count: int = None
-    ) -> None:
+    def log_data_transformation(self, crew_name: str, transformation_type: str, input_schema: str, output_schema: str, record_count: int = None) -> None:
         """Log data transformation operations."""
-        extra_data = self.formatter.format_data_transformation(
-            crew_name, transformation_type, input_schema, output_schema, record_count
-        )
+        extra_data = self.formatter.format_data_transformation(crew_name, transformation_type, input_schema, output_schema, record_count)
         self.logger.info(
             f"Data transformation: {transformation_type} for crew {crew_name} ({input_schema} -> {output_schema})",
             extra=extra_data if self.config.enable_structured_logging else {},
@@ -137,13 +126,9 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_schema_validation_detail(
-        self, crew_name: str, schema_name: str, validation_errors: list, validation_warnings: list, field_validations: dict = None
-    ) -> None:
+    def log_schema_validation_detail(self, crew_name: str, schema_name: str, validation_errors: list, validation_warnings: list, field_validations: dict = None) -> None:
         """Log detailed schema validation results."""
-        extra_data = self.formatter.format_schema_validation_detail(
-            crew_name, schema_name, validation_errors, validation_warnings, field_validations
-        )
+        extra_data = self.formatter.format_schema_validation_detail(crew_name, schema_name, validation_errors, validation_warnings, field_validations)
 
         if validation_errors:
             self.logger.error(
@@ -161,9 +146,7 @@ class IntegrationLogger:
                 extra=extra_data if self.config.enable_structured_logging else {},
             )
 
-    def log_data_consolidation(
-        self, source_crews: list, target_file: str, success: bool, record_counts: dict = None, error_message: str = None
-    ) -> None:
+    def log_data_consolidation(self, source_crews: list, target_file: str, success: bool, record_counts: dict = None, error_message: str = None) -> None:
         """Log data consolidation operations."""
         extra_data = self.formatter.format_data_consolidation(source_crews, target_file, success, record_counts, error_message)
 
@@ -218,9 +201,7 @@ class IntegrationLogger:
                 extra=extra_data if self.config.enable_structured_logging else {},
             )
 
-    def log_error_recovery_attempt(
-        self, error_type: str, crew_name: str, recovery_action: str, success: bool, details: dict = None
-    ) -> None:
+    def log_error_recovery_attempt(self, error_type: str, crew_name: str, recovery_action: str, success: bool, details: dict = None) -> None:
         """Log error recovery attempts."""
         extra_data = self.formatter.format_error_recovery_attempt(error_type, crew_name, recovery_action, success, details)
 

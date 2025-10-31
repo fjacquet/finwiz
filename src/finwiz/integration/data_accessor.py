@@ -45,9 +45,7 @@ class CrewDataAccessor:
         self.backtesting_extractor = BacktestingDataExtractor(logger=self.logger)
         self.market_context_extractor = MarketContextExtractor(logger=self.logger)
         self.methodology_extractor = DiscoveryMethodologyExtractor(logger=self.logger)
-        self.performance_aggregator = PerformanceMetricsAggregator(
-            backtesting_extractor=self.backtesting_extractor, logger=self.logger
-        )
+        self.performance_aggregator = PerformanceMetricsAggregator(backtesting_extractor=self.backtesting_extractor, logger=self.logger)
 
         self.logger.info("CrewDataAccessor initialized with enhanced extractors")
 
@@ -284,10 +282,7 @@ class CrewDataAccessor:
             summary = self.market_context_extractor.get_market_context_summary(discovery_result)
 
             if summary:
-                self.logger.info(
-                    f"Extracted market context: {summary.market_regime.regime_type} regime, "
-                    f"{summary.risk_environment} risk environment"
-                )
+                self.logger.info(f"Extracted market context: {summary.market_regime.regime_type} regime, {summary.risk_environment} risk environment")
                 return summary.model_dump()
 
             return None
@@ -330,10 +325,7 @@ class CrewDataAccessor:
             summary = self.methodology_extractor.get_methodology_summary(discovery_result)
 
             if summary:
-                self.logger.info(
-                    f"Extracted methodology: {summary.validation_statistics.candidates_found} candidates found, "
-                    f"{len(summary.score_breakdowns)} score breakdowns"
-                )
+                self.logger.info(f"Extracted methodology: {summary.validation_statistics.candidates_found} candidates found, {len(summary.score_breakdowns)} score breakdowns")
                 return summary.model_dump()
 
             return None
@@ -391,10 +383,7 @@ class CrewDataAccessor:
             )
 
             if report:
-                self.logger.info(
-                    f"Generated performance report: {report.total_candidates_analyzed} candidates, "
-                    f"{len(report.top_opportunities)} top opportunities"
-                )
+                self.logger.info(f"Generated performance report: {report.total_candidates_analyzed} candidates, {len(report.top_opportunities)} top opportunities")
                 return report.model_dump()
 
             return None

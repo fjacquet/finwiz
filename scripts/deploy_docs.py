@@ -330,9 +330,7 @@ class DocumentationDeployer:
 
             result = subprocess.run(["git", "reset", "--hard", "HEAD~1"], capture_output=True, text=True, check=True)
 
-            result = subprocess.run(
-                ["git", "push", "--force-with-lease", "origin", branch], capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(["git", "push", "--force-with-lease", "origin", branch], capture_output=True, text=True, check=True)
 
             print(f"✅ {environment.title()} rollback completed")
             return True

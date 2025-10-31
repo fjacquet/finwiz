@@ -223,9 +223,7 @@ class ETFRiskProfile(BaseModel):
     regulatory_risk: str = Field(description="Regulatory and tax risk assessment", min_length=20)
 
     # Quantitative risk metrics
-    quantitative_risk_metrics: dict[str, Any] = Field(
-        default_factory=dict, description="Quantitative risk metrics (tracking error, correlation, etc.)"
-    )
+    quantitative_risk_metrics: dict[str, Any] = Field(default_factory=dict, description="Quantitative risk metrics (tracking error, correlation, etc.)")
 
     # Risk mitigation
     risk_mitigation_strategies: list[str] = Field(default_factory=list, description="Risk mitigation strategies", max_length=10)

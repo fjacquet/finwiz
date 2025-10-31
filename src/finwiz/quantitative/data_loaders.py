@@ -74,9 +74,7 @@ class HistoricalDataManager:
         self.cache_metadata_file = self.cache_dir / "cache_metadata.json"
         self.cache_metadata = self.data_processor.load_cache_metadata(self.cache_metadata_file)
 
-    def fetch_historical_data(
-        self, symbol: str, start_date: datetime, end_date: datetime, interval: str = "1d", force_refresh: bool = False
-    ) -> pd.DataFrame:
+    def fetch_historical_data(self, symbol: str, start_date: datetime, end_date: datetime, interval: str = "1d", force_refresh: bool = False) -> pd.DataFrame:
         """
         Fetch historical OHLCV data with caching and quality validation.
 
@@ -121,21 +119,15 @@ class HistoricalDataManager:
             if self.config.strict_validation:
                 critical_issues = [issue for issue in quality_report.issues if issue.severity == "critical"]
                 if critical_issues:
-                    raise RuntimeError(
-                        f"Critical data quality issues for {symbol}: {[issue.description for issue in critical_issues]}"
-                    )
+                    raise RuntimeError(f"Critical data quality issues for {symbol}: {[issue.description for issue in critical_issues]}")
 
         # Cache the data
         self._cache_data(symbol, start_date, end_date, interval, data, quality_report.quality_score)
 
-        self.logger.info(
-            f"Successfully fetched {len(data)} rows of data for {symbol} (quality score: {quality_report.quality_score:.2f})"
-        )
+        self.logger.info(f"Successfully fetched {len(data)} rows of data for {symbol} (quality score: {quality_report.quality_score:.2f})")
         return data
 
-    def get_data_quality_report(
-        self, symbol: str, start_date: datetime, end_date: datetime, interval: str = "1d"
-    ) -> DataQualityReport:
+    def get_data_quality_report(self, symbol: str, start_date: datetime, end_date: datetime, interval: str = "1d") -> DataQualityReport:
         """
         Get data quality report for specified symbol and date range.
 
@@ -276,9 +268,7 @@ class HistoricalDataManager:
 
         raise RuntimeError(f"Failed to fetch data for {symbol} from all available providers")
 
-    def _fetch_from_provider(
-        self, provider: DataProvider, symbol: str, start_date: datetime, end_date: datetime, interval: str
-    ) -> pd.DataFrame:
+    def _fetch_from_provider(self, provider: DataProvider, symbol: str, start_date: datetime, end_date: datetime, interval: str) -> pd.DataFrame:
         """Fetch data from specific provider."""
         if provider == DataProvider.YFINANCE:
             return self._fetch_from_yfinance(symbol, start_date, end_date, interval)
@@ -309,9 +299,7 @@ class HistoricalDataManager:
 
         return data
 
-    def _cache_data(
-        self, symbol: str, start_date: datetime, end_date: datetime, interval: str, data: pd.DataFrame, quality_score: float
-    ) -> None:
+    def _cache_data(self, symbol: str, start_date: datetime, end_date: datetime, interval: str, data: pd.DataFrame, quality_score: float) -> None:
         """Cache data to disk with metadata."""
         cache_key = self.data_processor.generate_cache_key(symbol, start_date, end_date, interval)
         cache_file = self.cache_dir / f"{cache_key}.pkl"
@@ -322,9 +310,7 @@ class HistoricalDataManager:
                 pickle.dump(data, f)
 
             # Update metadata
-            metadata_entry = self.data_processor.create_cache_metadata_entry(
-                symbol, start_date, end_date, interval, data, quality_score, cache_file
-            )
+            metadata_entry = self.data_processor.create_cache_metadata_entry(symbol, start_date, end_date, interval, data, quality_score, cache_file)
             self.cache_metadata[cache_key] = metadata_entry
 
             self.data_processor.save_cache_metadata(self.cache_metadata, self.cache_metadata_file)

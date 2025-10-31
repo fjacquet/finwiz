@@ -26,9 +26,7 @@ class RebalancingCalculator:
         """Initialize the rebalancing calculator."""
         self.logger = logger
 
-    async def calculate_projected_portfolio(
-        self, config: PortfolioConfiguration, current_analysis: Any, trades: list[Any], price_data: dict[str, Any]
-    ) -> Any:
+    async def calculate_projected_portfolio(self, config: PortfolioConfiguration, current_analysis: Any, trades: list[Any], price_data: dict[str, Any]) -> Any:
         """
         Calculate projected portfolio state after executing trades.
 
@@ -57,15 +55,12 @@ class RebalancingCalculator:
 
             # Recalculate deviations
             projected_analysis.deviations_from_target = {
-                symbol: projected_analysis.weightings.get(symbol, 0.0) - config.target_weights.get(symbol, 0.0)
-                for symbol in config.target_weights
+                symbol: projected_analysis.weightings.get(symbol, 0.0) - config.target_weights.get(symbol, 0.0) for symbol in config.target_weights
             }
 
             # Update positions needing rebalancing
             projected_analysis.positions_needing_rebalancing = [
-                symbol
-                for symbol, deviation in projected_analysis.deviations_from_target.items()
-                if abs(deviation) > config.tolerance_bands.get(symbol, config.global_tolerance)
+                symbol for symbol, deviation in projected_analysis.deviations_from_target.items() if abs(deviation) > config.tolerance_bands.get(symbol, config.global_tolerance)
             ]
 
             return projected_analysis

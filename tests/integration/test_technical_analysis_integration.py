@@ -228,9 +228,7 @@ class TestTechnicalAnalysisIntegration:
 
     def test_confluence_zone_detection(self, realistic_stock_data):
         """Test confluence zone detection with multiple indicators."""
-        result = calculate_technical_indicators(
-            realistic_stock_data, "AAPL", [TechnicalIndicator.RSI, TechnicalIndicator.MACD, TechnicalIndicator.SMA]
-        )
+        result = calculate_technical_indicators(realistic_stock_data, "AAPL", [TechnicalIndicator.RSI, TechnicalIndicator.MACD, TechnicalIndicator.SMA])
 
         # Check if confluence zones were detected
         if len(result.confluence_zones) > 0:
@@ -307,9 +305,7 @@ class TestTechnicalAnalysisIntegration:
 
         df = pd.DataFrame(trending_data, index=dates)
 
-        result = calculate_technical_indicators(
-            df, "TREND_TEST", [TechnicalIndicator.SMA, TechnicalIndicator.RSI, TechnicalIndicator.MACD]
-        )
+        result = calculate_technical_indicators(df, "TREND_TEST", [TechnicalIndicator.SMA, TechnicalIndicator.RSI, TechnicalIndicator.MACD])
 
         # With clear uptrend, should have more bullish signals
         assert result.bullish_signals_count >= result.bearish_signals_count

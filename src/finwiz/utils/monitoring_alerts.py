@@ -142,9 +142,7 @@ class AlertManager:
         # Dispatch alert
         await self._dispatch_alert(MonitoringEvent.GRADE_DEGRADATION, alert)
 
-        self.logger.info(
-            f"Generated grade degradation alert for {candidate.symbol}: {previous_grade.value} -> {candidate.current_grade.value}"
-        )
+        self.logger.info(f"Generated grade degradation alert for {candidate.symbol}: {previous_grade.value} -> {candidate.current_grade.value}")
 
         return alert
 
@@ -341,9 +339,7 @@ class AlertManager:
         else:
             return AlertSeverity.LOW
 
-    def _assess_regime_change_severity(
-        self, previous_regime: MarketRegime, current_regime: MarketRegime, impact_assessment: dict[str, Any]
-    ) -> AlertSeverity:
+    def _assess_regime_change_severity(self, previous_regime: MarketRegime, current_regime: MarketRegime, impact_assessment: dict[str, Any]) -> AlertSeverity:
         """Assess severity of market regime change."""
         # Simplified assessment based on regime transition
         high_impact_transitions = [
@@ -389,6 +385,4 @@ class AlertManager:
             title = f"A+ Monitoring Alert: {event_type.value}"
             message = f"Alert generated for {event_type.value}"
 
-            await self.notification_service.send_alert(
-                title=title, message=message, severity="medium", metadata={"event_type": event_type.value}
-            )
+            await self.notification_service.send_alert(title=title, message=message, severity="medium", metadata={"event_type": event_type.value})

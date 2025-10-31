@@ -267,9 +267,7 @@ class TestRebalancingReportGenerator:
         deviations = {"AAPL": 0.05, "GOOGL": -0.02, "MSFT": -0.03}
 
         # Act
-        table_html = generator._create_portfolio_table(
-            weightings, deviations, sample_rebalancing_result.trade_recommendations, False
-        )
+        table_html = generator._create_portfolio_table(weightings, deviations, sample_rebalancing_result.trade_recommendations, False)
 
         # Assert
         assert "portfolio-table" in table_html
@@ -315,9 +313,7 @@ class TestRebalancingReportGenerator:
         projected_weights = {"AAPL": 0.35, "GOOGL": 0.33, "MSFT": 0.32}
 
         # Act
-        table_html = generator._create_before_after_table(
-            current_weights, projected_weights, sample_rebalancing_result.trade_recommendations, False
-        )
+        table_html = generator._create_before_after_table(current_weights, projected_weights, sample_rebalancing_result.trade_recommendations, False)
 
         # Assert
         assert "comparison-table" in table_html

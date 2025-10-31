@@ -62,9 +62,7 @@ class PortfolioRebalancingOrchestrator:
 
         logger.info("Portfolio rebalancing orchestrator initialized with specialized components")
 
-    async def rebalance_portfolio(
-        self, portfolio_config: PortfolioConfiguration, portfolio_id: str | None = None
-    ) -> RebalancingResult:
+    async def rebalance_portfolio(self, portfolio_config: PortfolioConfiguration, portfolio_id: str | None = None) -> RebalancingResult:
         """
         Execute complete portfolio rebalancing workflow.
 
@@ -99,9 +97,7 @@ class PortfolioRebalancingOrchestrator:
 
             # Step 4: Generate enhanced trade recommendations
             logger.info("Step 4: Generating enhanced trade recommendations")
-            enhanced_recommendations, validation_errors = await self.optimizer.generate_enhanced_recommendations(
-                portfolio_config, current_analysis, rebalancing_needs, price_data
-            )
+            enhanced_recommendations, validation_errors = await self.optimizer.generate_enhanced_recommendations(portfolio_config, current_analysis, rebalancing_needs, price_data)
 
             if validation_errors:
                 logger.warning(f"Trade validation errors: {validation_errors}")
@@ -111,9 +107,7 @@ class PortfolioRebalancingOrchestrator:
 
             # Step 5: Calculate projected portfolio state
             logger.info("Step 5: Calculating projected portfolio state")
-            projected_analysis = await self.calculator.calculate_projected_portfolio(
-                portfolio_config, current_analysis, optimized_trades.trades, price_data
-            )
+            projected_analysis = await self.calculator.calculate_projected_portfolio(portfolio_config, current_analysis, optimized_trades.trades, price_data)
 
             # Step 6: Perform cost analysis
             logger.info("Step 6: Performing cost analysis")
@@ -146,9 +140,7 @@ class PortfolioRebalancingOrchestrator:
             # Step 10: Perform risk assessment and determine final recommendation
             logger.info("Step 9: Performing risk assessment and determining recommendation")
             risk_assessment = await self.constraint_manager.assess_rebalancing_risks(portfolio_config, preliminary_result)
-            is_safe, blocking_issues = await self.constraint_manager.validate_rebalancing_safety(
-                portfolio_config, preliminary_result
-            )
+            is_safe, blocking_issues = await self.constraint_manager.validate_rebalancing_safety(portfolio_config, preliminary_result)
 
             if not is_safe:
                 logger.warning(f"Rebalancing blocked due to safety concerns: {blocking_issues}")
@@ -176,9 +168,7 @@ class PortfolioRebalancingOrchestrator:
             )
 
             logger.info(
-                f"Portfolio rebalancing complete: {len(optimized_trades.trades)} trades, "
-                f"${cost_analysis.total_transaction_costs:.2f} cost, "
-                f"{overall_recommendation} recommendation"
+                f"Portfolio rebalancing complete: {len(optimized_trades.trades)} trades, ${cost_analysis.total_transaction_costs:.2f} cost, {overall_recommendation} recommendation"
             )
 
             return result

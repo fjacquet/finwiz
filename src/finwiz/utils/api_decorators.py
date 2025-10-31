@@ -143,9 +143,7 @@ def timeout_handler(timeout_seconds: float = 30.0) -> Callable[[F], F]:
     return decorator
 
 
-def api_tool(
-    provider: APIProvider, endpoint: str = "", timeout: float = 30.0, default_return: Any = None, log_errors: bool = True
-) -> Callable[[F], F]:
+def api_tool(provider: APIProvider, endpoint: str = "", timeout: float = 30.0, default_return: Any = None, log_errors: bool = True) -> Callable[[F], F]:
     """
     Comprehensive decorator combining rate limiting, error handling, and timeout.
 
@@ -216,9 +214,7 @@ class APICallContext:
 # Utility functions for common API patterns
 
 
-async def safe_api_call(
-    provider: APIProvider, func: Callable, *args: Any, endpoint: str = "", default_return: Any = None, **kwargs: Any
-) -> Any:
+async def safe_api_call(provider: APIProvider, func: Callable, *args: Any, endpoint: str = "", default_return: Any = None, **kwargs: Any) -> Any:
     """
     Make a safe API call with rate limiting and error handling.
 

@@ -110,9 +110,7 @@ class RebalancingConstraintManager:
             if risk_assessment:
                 from finwiz.quantitative.risk_manager import RiskLevel
 
-                high_risk_warnings = len(
-                    [w for w in risk_assessment.warnings if w.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]]
-                )
+                high_risk_warnings = len([w for w in risk_assessment.warnings if w.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]])
 
             # Determine recommendation based on multiple factors including risk
             if positions_needing_action == 0:
@@ -146,9 +144,7 @@ class RebalancingConstraintManager:
             self.logger.warning(f"Error determining recommendation, using default: {e}")
             return RebalancingRecommendation.MONITOR, datetime.now() + timedelta(days=14)
 
-    def validate_portfolio_constraints(
-        self, portfolio_config: PortfolioConfiguration, current_analysis: Any
-    ) -> tuple[bool, list[str]]:
+    def validate_portfolio_constraints(self, portfolio_config: PortfolioConfiguration, current_analysis: Any) -> tuple[bool, list[str]]:
         """
         Validate portfolio configuration constraints.
 
@@ -202,9 +198,7 @@ class RebalancingConstraintManager:
             self.logger.error(f"Error validating portfolio constraints: {e}")
             return False, [f"Constraint validation error: {str(e)}"]
 
-    def validate_trade_constraints(
-        self, trades: list[Any], portfolio_config: PortfolioConfiguration, current_analysis: Any
-    ) -> tuple[bool, list[str]]:
+    def validate_trade_constraints(self, trades: list[Any], portfolio_config: PortfolioConfiguration, current_analysis: Any) -> tuple[bool, list[str]]:
         """
         Validate trade-specific constraints.
 
@@ -230,9 +224,7 @@ class RebalancingConstraintManager:
                 # Validate position limits
                 if hasattr(trade, "projected_weight_after_trade"):
                     if trade.projected_weight_after_trade > 0.3:  # 30% maximum position
-                        violations.append(
-                            f"Trade would create oversized position in {trade.symbol}: {trade.projected_weight_after_trade:.1%}"
-                        )
+                        violations.append(f"Trade would create oversized position in {trade.symbol}: {trade.projected_weight_after_trade:.1%}")
 
             # Check portfolio-level constraints
             total_trade_value = sum(abs(trade.trade_value) for trade in trades if hasattr(trade, "trade_value"))
@@ -245,9 +237,7 @@ class RebalancingConstraintManager:
             if portfolio_config.available_capital != 0:
                 required_capital = sum(max(0, trade.trade_value) for trade in trades if hasattr(trade, "trade_value"))
                 if required_capital > abs(portfolio_config.available_capital):
-                    violations.append(
-                        f"Insufficient capital: need ${required_capital:,.2f}, have ${abs(portfolio_config.available_capital):,.2f}"
-                    )
+                    violations.append(f"Insufficient capital: need ${required_capital:,.2f}, have ${abs(portfolio_config.available_capital):,.2f}")
 
             is_valid = len(violations) == 0
             return is_valid, violations
@@ -256,9 +246,7 @@ class RebalancingConstraintManager:
             self.logger.error(f"Error validating trade constraints: {e}")
             return False, [f"Trade constraint validation error: {str(e)}"]
 
-    def assess_market_timing_constraints(
-        self, portfolio_config: PortfolioConfiguration, market_volatility: float | None = None
-    ) -> tuple[bool, list[str]]:
+    def assess_market_timing_constraints(self, portfolio_config: PortfolioConfiguration, market_volatility: float | None = None) -> tuple[bool, list[str]]:
         """
         Assess market timing and volatility constraints.
 
@@ -302,9 +290,7 @@ class RebalancingConstraintManager:
             self.logger.error(f"Error assessing market timing constraints: {e}")
             return False, [f"Market timing assessment error: {str(e)}"]
 
-    def calculate_constraint_compliance_score(
-        self, portfolio_config: PortfolioConfiguration, trades: list[Any], current_analysis: Any
-    ) -> dict[str, Any]:
+    def calculate_constraint_compliance_score(self, portfolio_config: PortfolioConfiguration, trades: list[Any], current_analysis: Any) -> dict[str, Any]:
         """
         Calculate overall constraint compliance score.
 

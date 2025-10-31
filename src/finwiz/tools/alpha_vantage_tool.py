@@ -166,9 +166,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             # Determine asset type (simplified logic for stocks)
             asset_type = "stock"
 
-            sonar_result = await perplexity_integration.search_fundamental_analysis(
-                ticker=ticker, asset_type=asset_type, max_results=5
-            )
+            sonar_result = await perplexity_integration.search_fundamental_analysis(ticker=ticker, asset_type=asset_type, max_results=5)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity fundamental insights for {ticker}")
@@ -188,9 +186,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             PerplexityFeatureFlagTracker.record_operation_failure(ticker, "fundamental", "integration_error")
             return []
 
-    def _format_enhanced_overview_response(
-        self, ticker: str, alpha_vantage_data: str, perplexity_insights: list[SonarArticle]
-    ) -> str:
+    def _format_enhanced_overview_response(self, ticker: str, alpha_vantage_data: str, perplexity_insights: list[SonarArticle]) -> str:
         """Format enhanced company overview response combining Alpha Vantage and Perplexity data."""
         response = f"# Enhanced Company Overview for {ticker}\n\n"
 
@@ -213,9 +209,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
                 response += f"**Dividend Yield**: {av_data.get('DividendYield', 'N/A')}\n\n"
 
                 if av_data.get("Description"):
-                    response += (
-                        f"**Description**: {av_data['Description'][:300]}{'...' if len(av_data['Description']) > 300 else ''}\n\n"
-                    )
+                    response += f"**Description**: {av_data['Description'][:300]}{'...' if len(av_data['Description']) > 300 else ''}\n\n"
             else:
                 response += f"{alpha_vantage_data}\n\n"
         except (json.JSONDecodeError, KeyError):
@@ -227,9 +221,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             response += f"Recent earnings reports and fundamental analysis ({len(perplexity_insights)} articles):\n\n"
 
             for i, article in enumerate(perplexity_insights, 1):
-                content_emoji = {"news": "📰", "filing": "📋", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(
-                    article.content_type, "📊"
-                )
+                content_emoji = {"news": "📰", "filing": "📋", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(article.content_type, "📊")
 
                 response += f"{i}. {content_emoji} **{article.title}**\n"
                 response += f"   - Publisher: {article.publisher}\n"

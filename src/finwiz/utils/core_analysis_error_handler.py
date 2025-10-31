@@ -110,9 +110,7 @@ class CoreAnalysisErrorHandler:
             },
         }
 
-    def handle_crew_failure(
-        self, crew_name: str, error: Exception, inputs: dict[str, Any], execution_time: float = 0.0
-    ) -> FallbackResponse:
+    def handle_crew_failure(self, crew_name: str, error: Exception, inputs: dict[str, Any], execution_time: float = 0.0) -> FallbackResponse:
         """
         Handle crew failure with appropriate fallback strategy.
 

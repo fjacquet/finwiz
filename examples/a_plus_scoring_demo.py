@@ -36,9 +36,7 @@ def demo_etf_scoring() -> None:
         "transparency_score": 0.90,
     }
 
-    result = tool._run(
-        symbol="VTI", asset_type="etf", fundamental_data=excellent_etf_data, market_context={"vix": 18, "inflation": 2.8}
-    )
+    result = tool._run(symbol="VTI", asset_type="etf", fundamental_data=excellent_etf_data, market_context={"vix": 18, "inflation": 2.8})
 
     print(f"Symbol: {result['symbol']}")
     print(f"Grade: {result['grade']} ({result['percentage']:.1f}%)")
@@ -80,9 +78,7 @@ def demo_stock_scoring() -> None:
         "competitive_moat": 0.92,
     }
 
-    result = tool._run(
-        symbol="AAPL", asset_type="stock", fundamental_data=excellent_stock_data, market_context={"vix": 20, "inflation": 3.2}
-    )
+    result = tool._run(symbol="AAPL", asset_type="stock", fundamental_data=excellent_stock_data, market_context={"vix": 20, "inflation": 3.2})
 
     print(f"Symbol: {result['symbol']}")
     print(f"Grade: {result['grade']} ({result['percentage']:.1f}%)")
@@ -123,9 +119,7 @@ def demo_crypto_scoring() -> None:
         "community_strength": 0.95,
     }
 
-    result = tool._run(
-        symbol="BTC", asset_type="crypto", fundamental_data=quality_crypto_data, market_context={"vix": 25, "inflation": 3.8}
-    )
+    result = tool._run(symbol="BTC", asset_type="crypto", fundamental_data=quality_crypto_data, market_context={"vix": 25, "inflation": 3.8})
 
     print(f"Symbol: {result['symbol']}")
     print(f"Grade: {result['grade']} ({result['percentage']:.1f}%)")

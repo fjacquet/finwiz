@@ -31,9 +31,7 @@ class TestPortfolioMonitor:
     def mock_price_service(self, mocker):
         """Mock price service."""
         mock_service = mocker.patch("finwiz.quantitative.portfolio_monitor.PortfolioPriceService")
-        mock_service.return_value.get_current_prices = mocker.AsyncMock(
-            return_value={"AAPL": 150.0, "GOOGL": 2500.0, "MSFT": 300.0}
-        )
+        mock_service.return_value.get_current_prices = mocker.AsyncMock(return_value={"AAPL": 150.0, "GOOGL": 2500.0, "MSFT": 300.0})
         return mock_service.return_value
 
     @pytest.fixture
@@ -93,9 +91,7 @@ class TestPortfolioMonitor:
     @pytest.fixture
     def portfolio_monitor(self, mock_price_service, mock_portfolio_analyzer, mock_rebalancing_engine):
         """Portfolio monitor instance."""
-        return PortfolioMonitor(
-            price_service=mock_price_service, portfolio_analyzer=mock_portfolio_analyzer, rebalancing_engine=mock_rebalancing_engine
-        )
+        return PortfolioMonitor(price_service=mock_price_service, portfolio_analyzer=mock_portfolio_analyzer, rebalancing_engine=mock_rebalancing_engine)
 
     def test_should_initialize_portfolio_monitor_when_created(self, portfolio_monitor):
         """Test portfolio monitor initialization."""
@@ -136,9 +132,7 @@ class TestPortfolioMonitor:
         assert portfolio_id not in portfolio_monitor._monitoring_rules
 
     @pytest.mark.asyncio
-    async def test_should_check_portfolio_drift_when_requested(
-        self, mocker, portfolio_monitor, mock_portfolio_analyzer, sample_portfolio_config, sample_rebalancing_needs
-    ):
+    async def test_should_check_portfolio_drift_when_requested(self, mocker, portfolio_monitor, mock_portfolio_analyzer, sample_portfolio_config, sample_rebalancing_needs):
         """Test portfolio drift checking."""
         # Arrange
         portfolio_id = "test_portfolio"
@@ -158,9 +152,7 @@ class TestPortfolioMonitor:
         assert portfolio_id in portfolio_monitor._last_check_times
 
     @pytest.mark.asyncio
-    async def test_should_generate_health_dashboard_when_requested(
-        self, mocker, portfolio_monitor, sample_portfolio_config, sample_rebalancing_needs
-    ):
+    async def test_should_generate_health_dashboard_when_requested(self, mocker, portfolio_monitor, sample_portfolio_config, sample_rebalancing_needs):
         """Test health dashboard generation."""
         # Arrange
         portfolio_id = "test_portfolio"
@@ -188,9 +180,7 @@ class TestPortfolioMonitor:
         # Assert
         assert health_score == 10.0
 
-    def test_should_calculate_correct_health_score_when_minor_deviations(
-        self, portfolio_monitor, sample_rebalancing_needs, sample_portfolio_config
-    ):
+    def test_should_calculate_correct_health_score_when_minor_deviations(self, portfolio_monitor, sample_rebalancing_needs, sample_portfolio_config):
         """Test health score calculation with minor deviations."""
         # Act
         health_score = portfolio_monitor._calculate_health_score(sample_rebalancing_needs, sample_portfolio_config)

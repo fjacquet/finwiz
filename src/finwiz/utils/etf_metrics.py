@@ -413,10 +413,7 @@ def calculate_concentration_risk(holdings: list[dict[str, float]], top_n: int = 
             "total_holdings": len(weights),
         }
 
-        logger.debug(
-            f"Concentration risk calculated: Top {top_n} = {top_n_concentration * 100:.1f}%, "
-            f"Effective N = {effective_n_holdings:.1f}, Rating = {concentration_rating}"
-        )
+        logger.debug(f"Concentration risk calculated: Top {top_n} = {top_n_concentration * 100:.1f}%, Effective N = {effective_n_holdings:.1f}, Rating = {concentration_rating}")
 
         return result
 

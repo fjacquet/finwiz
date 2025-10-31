@@ -91,9 +91,7 @@ def test_full_strategy():
                 "https://cardano.org/",
             ],
         ),
-        risk_assessment=RiskAssessmentStandardized(
-            scale="0_5", score=2.8, level="High", risk_factors=["Market volatility", "Regulatory risk"]
-        ),
+        risk_assessment=RiskAssessmentStandardized(scale="0_5", score=2.8, level="High", risk_factors=["Market volatility", "Regulatory risk"]),
         quantitative_metrics=CryptoQuantitativeMetrics(
             symbol="TOP10PORT",
             sharpe_ratio=1.05,

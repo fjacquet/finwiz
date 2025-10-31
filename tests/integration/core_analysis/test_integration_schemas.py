@@ -702,9 +702,7 @@ class TestEnhancedCrewOutputs:
         metadata = self.create_valid_metadata()
         metadata.crew_name = "stock_crew"
 
-        validated_ticker = ValidatedTicker(
-            symbol="AAPL", is_valid=True, validation_source="Yahoo Finance", validation_timestamp=datetime.now(UTC)
-        )
+        validated_ticker = ValidatedTicker(symbol="AAPL", is_valid=True, validation_source="Yahoo Finance", validation_timestamp=datetime.now(UTC))
 
         sec_citation = SECCitation(
             ticker="AAPL",
@@ -738,9 +736,7 @@ class TestEnhancedCrewOutputs:
         metadata = self.create_valid_metadata()
         metadata.crew_name = "etf_crew"
 
-        validated_etf = ValidatedETF(
-            symbol="SPY", is_valid=True, validation_source="Yahoo Finance", validation_timestamp=datetime.now(UTC)
-        )
+        validated_etf = ValidatedETF(symbol="SPY", is_valid=True, validation_source="Yahoo Finance", validation_timestamp=datetime.now(UTC))
 
         data = {"metadata": metadata, "validated_etfs": [validated_etf]}
 
@@ -761,9 +757,7 @@ class TestEnhancedCrewOutputs:
         metadata = self.create_valid_metadata()
         metadata.crew_name = "crypto_crew"
 
-        validated_crypto = ValidatedCrypto(
-            symbol="BTC", is_valid=True, validation_source="CoinMarketCap", validation_timestamp=datetime.now(UTC)
-        )
+        validated_crypto = ValidatedCrypto(symbol="BTC", is_valid=True, validation_source="CoinMarketCap", validation_timestamp=datetime.now(UTC))
 
         data = {"metadata": metadata, "validated_symbols": [validated_crypto]}
 

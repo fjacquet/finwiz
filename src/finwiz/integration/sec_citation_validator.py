@@ -41,12 +41,8 @@ class SECCitationValidationResult(BaseModel):
 class ConsolidatedSECCitations(BaseModel):
     """Consolidated SEC citations for report integration."""
 
-    citations_by_ticker: dict[str, list[SECCitation]] = Field(
-        default_factory=dict, description="Citations organized by ticker symbol"
-    )
-    citations_by_filing_type: dict[str, list[SECCitation]] = Field(
-        default_factory=dict, description="Citations organized by filing type"
-    )
+    citations_by_ticker: dict[str, list[SECCitation]] = Field(default_factory=dict, description="Citations organized by ticker symbol")
+    citations_by_filing_type: dict[str, list[SECCitation]] = Field(default_factory=dict, description="Citations organized by filing type")
     unique_citations: list[SECCitation] = Field(default_factory=list, description="Deduplicated list of unique citations")
     validation_summary: dict[str, Any] = Field(default_factory=dict, description="Summary of validation results")
     consolidation_timestamp: datetime = Field(description="When consolidation was performed")
@@ -188,9 +184,7 @@ class SECCitationValidator:
 
         return result
 
-    def validate_multiple_citations(
-        self, citations: list[SECCitation], check_url_accessibility: bool = False
-    ) -> dict[str, SECCitationValidationResult]:
+    def validate_multiple_citations(self, citations: list[SECCitation], check_url_accessibility: bool = False) -> dict[str, SECCitationValidationResult]:
         """
         Validate multiple SEC citations.
 
@@ -216,9 +210,7 @@ class SECCitationValidator:
                 error_msg = f"Failed to validate citation {i}: {str(e)}"
                 self.logger.error(error_msg, exc_info=True)
 
-                results[f"citation_{i}"] = SECCitationValidationResult(
-                    is_valid=False, validation_timestamp=datetime.now(), validation_errors=[error_msg]
-                )
+                results[f"citation_{i}"] = SECCitationValidationResult(is_valid=False, validation_timestamp=datetime.now(), validation_errors=[error_msg])
 
         valid_count = sum(1 for r in results.values() if r.is_valid)
         self.logger.info(
@@ -232,9 +224,7 @@ class SECCitationValidator:
 
         return results
 
-    def consolidate_citations_for_report(
-        self, crew_citations: dict[str, list[SECCitation]], deduplicate: bool = True
-    ) -> ConsolidatedSECCitations:
+    def consolidate_citations_for_report(self, crew_citations: dict[str, list[SECCitation]], deduplicate: bool = True) -> ConsolidatedSECCitations:
         """
         Consolidate SEC citations from multiple crews for report integration.
 

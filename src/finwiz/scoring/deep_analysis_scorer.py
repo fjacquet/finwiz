@@ -115,9 +115,7 @@ class DeepAnalysisScorer:
             )
             recommendation = self.generate_recommendation(composite_score, grade)
             confidence = self._calculate_confidence(fundamental_score, technical_score, risk_score, data)
-            rationale = self.generate_rationale(
-                ticker, asset_class, composite_score, grade, fundamental_details, technical_details, risk_details
-            )
+            rationale = self.generate_rationale(ticker, asset_class, composite_score, grade, fundamental_details, technical_details, risk_details)
 
             # Get data quality summary
             data_quality_summary = self._data_quality_metrics.get_summary()
@@ -126,9 +124,7 @@ class DeepAnalysisScorer:
             quality_level = data_quality_summary["quality_level"]
             if quality_level == "low":
                 self.logger.warning(
-                    f"⚠️ Low data quality for {ticker}: "
-                    f"completeness={data_quality_summary['completeness_score']:.1%}, "
-                    f"quality={data_quality_summary['quality_score']:.1%}"
+                    f"⚠️ Low data quality for {ticker}: completeness={data_quality_summary['completeness_score']:.1%}, quality={data_quality_summary['quality_score']:.1%}"
                 )
 
             # Finalize lineage with final values (Task 9.2)
@@ -176,9 +172,7 @@ class DeepAnalysisScorer:
             # Return default low score on error
             return self._create_error_result(ticker, asset_class, str(e))
 
-    def analyze_and_export(
-        self, ticker: str, asset_class: str, collected_data: dict[str, Any], session_id: str = "default"
-    ) -> tuple[DeepAnalysisResult, dict[str, Any]]:
+    def analyze_and_export(self, ticker: str, asset_class: str, collected_data: dict[str, Any], session_id: str = "default") -> tuple[DeepAnalysisResult, dict[str, Any]]:
         """
         Complete analysis pipeline: scoring + detailed analysis + crew export.
 
@@ -675,24 +669,16 @@ class DeepAnalysisScorer:
             debt_equity = fundamental_details.get("debt_to_equity", 1.0)
             growth = fundamental_details.get("revenue_growth", 0.0)
             rationale_parts.append(
-                f"Fundamental analysis (score: {fund_score:.2f}) shows "
-                f"ROE of {roe:.1%}, debt-to-equity of {debt_equity:.2f}, "
-                f"and revenue growth of {growth:.1%}."
+                f"Fundamental analysis (score: {fund_score:.2f}) shows ROE of {roe:.1%}, debt-to-equity of {debt_equity:.2f}, and revenue growth of {growth:.1%}."
             )
         elif asset_class == "etf":
             expense = fundamental_details.get("expense_ratio", 1.0)
             tracking = fundamental_details.get("tracking_error", 1.0)
-            rationale_parts.append(
-                f"Fundamental analysis (score: {fund_score:.2f}) shows "
-                f"expense ratio of {expense:.2%} and tracking error of {tracking:.2%}."
-            )
+            rationale_parts.append(f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%} and tracking error of {tracking:.2%}.")
         elif asset_class == "crypto":
             market_cap = fundamental_details.get("market_cap", 0.0)
             volume = fundamental_details.get("volume_24h", 0.0)
-            rationale_parts.append(
-                f"Fundamental analysis (score: {fund_score:.2f}) shows "
-                f"market cap of ${market_cap / 1e9:.1f}B and 24h volume of ${volume / 1e6:.0f}M."
-            )
+            rationale_parts.append(f"Fundamental analysis (score: {fund_score:.2f}) shows market cap of ${market_cap / 1e9:.1f}B and 24h volume of ${volume / 1e6:.0f}M.")
 
         # Technical analysis summary
         tech_score = technical_details.get("technical_score", 0.5)
@@ -704,30 +690,19 @@ class DeepAnalysisScorer:
         risk_score = risk_details.get("risk_score", 0.5)
         volatility = risk_details.get("volatility", 0.20)
         max_dd = risk_details.get("max_drawdown", -0.20)
-        rationale_parts.append(
-            f"Risk assessment (score: {risk_score:.2f}) shows {volatility:.1%} volatility and maximum drawdown of {max_dd:.1%}."
-        )
+        rationale_parts.append(f"Risk assessment (score: {risk_score:.2f}) shows {volatility:.1%} volatility and maximum drawdown of {max_dd:.1%}.")
 
         # Recommendation rationale
         if composite_score >= self.BUY_THRESHOLD:
-            rationale_parts.append(
-                "Strong fundamentals, favorable technical indicators, and manageable risk profile support a BUY recommendation."
-            )
+            rationale_parts.append("Strong fundamentals, favorable technical indicators, and manageable risk profile support a BUY recommendation.")
         elif composite_score <= self.SELL_THRESHOLD:
-            rationale_parts.append(
-                "Weak fundamentals, unfavorable technical setup, or elevated risk profile warrant a SELL recommendation."
-            )
+            rationale_parts.append("Weak fundamentals, unfavorable technical setup, or elevated risk profile warrant a SELL recommendation.")
         else:
-            rationale_parts.append(
-                "Mixed signals across fundamental, technical, and risk factors "
-                "suggest a HOLD recommendation pending further developments."
-            )
+            rationale_parts.append("Mixed signals across fundamental, technical, and risk factors suggest a HOLD recommendation pending further developments.")
 
         return " ".join(rationale_parts)
 
-    def create_detailed_analysis(
-        self, ticker: str, asset_class: str, data: dict[str, Any], result: DeepAnalysisResult
-    ) -> dict[str, Any]:
+    def create_detailed_analysis(self, ticker: str, asset_class: str, data: dict[str, Any], result: DeepAnalysisResult) -> dict[str, Any]:
         """
         Create comprehensive detailed_analysis dict preserving ALL raw data.
 
@@ -928,9 +903,7 @@ class DeepAnalysisScorer:
 
         return missing_fields
 
-    def create_crew_export(
-        self, result: DeepAnalysisResult, detailed_analysis: dict[str, Any], session_id: str = "default"
-    ) -> dict[str, Any]:
+    def create_crew_export(self, result: DeepAnalysisResult, detailed_analysis: dict[str, Any], session_id: str = "default") -> dict[str, Any]:
         """
         Create DeepAnalysisCrewExport dict from DeepAnalysisResult.
 
@@ -1052,9 +1025,7 @@ class DeepAnalysisScorer:
 
         return list(set(sources))  # Remove duplicates
 
-    def _calculate_confidence(
-        self, fundamental_score: float, technical_score: float, risk_score: float, data: dict[str, Any]
-    ) -> float:
+    def _calculate_confidence(self, fundamental_score: float, technical_score: float, risk_score: float, data: dict[str, Any]) -> float:
         """Calculate confidence level based on data quality and score consistency."""
         # Base confidence from score consistency
         scores = [fundamental_score, technical_score, risk_score]
@@ -1175,7 +1146,5 @@ class DeepAnalysisScorer:
             # Field exists but invalid - track as defaulted
             if self._data_quality_metrics:
                 self._data_quality_metrics.record_defaulted_field(key, default)
-            self.logger.warning(
-                f"⚠️ Invalid value for '{key}' for {self._current_ticker}: {data.get(key)} ({e}), using default {default}"
-            )
+            self.logger.warning(f"⚠️ Invalid value for '{key}' for {self._current_ticker}: {data.get(key)} ({e}), using default {default}")
             return default

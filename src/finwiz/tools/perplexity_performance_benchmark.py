@@ -154,10 +154,7 @@ class PerplexityPerformanceBenchmark:
         """
         result = PerplexityBenchmarkResult("response_time_benchmark")
 
-        logger.info(
-            f"Starting Perplexity response time benchmark: {len(test_cases)} test cases, "
-            f"{iterations} iterations, {concurrent_requests} concurrent requests"
-        )
+        logger.info(f"Starting Perplexity response time benchmark: {len(test_cases)} test cases, {iterations} iterations, {concurrent_requests} concurrent requests")
 
         for test_case in test_cases:
             ticker = test_case.get("ticker", "AAPL")
@@ -173,10 +170,7 @@ class PerplexityPerformanceBenchmark:
                     await self._execute_single_benchmark(result, query, ticker, asset_type, analysis_type)
                 else:
                     # Concurrent requests
-                    tasks = [
-                        self._execute_single_benchmark(result, query, ticker, asset_type, analysis_type)
-                        for _ in range(concurrent_requests)
-                    ]
+                    tasks = [self._execute_single_benchmark(result, query, ticker, asset_type, analysis_type) for _ in range(concurrent_requests)]
                     await asyncio.gather(*tasks, return_exceptions=True)
 
         result.finalize()
@@ -187,16 +181,12 @@ class PerplexityPerformanceBenchmark:
 
         return result
 
-    async def _execute_single_benchmark(
-        self, result: PerplexityBenchmarkResult, query: str, ticker: str, asset_type: str, analysis_type: str
-    ) -> None:
+    async def _execute_single_benchmark(self, result: PerplexityBenchmarkResult, query: str, ticker: str, asset_type: str, analysis_type: str) -> None:
         """Execute a single benchmark request."""
         start_time = PerplexityPerformanceMonitor.start_operation_timer()
 
         try:
-            search_result = await self.integration.search_financial_news(
-                query=query, ticker=ticker, asset_type=asset_type, analysis_type=analysis_type, max_results=5
-            )
+            search_result = await self.integration.search_financial_news(query=query, ticker=ticker, asset_type=asset_type, analysis_type=analysis_type, max_results=5)
 
             response_time_ms = PerplexityPerformanceMonitor.calculate_operation_time(start_time)
             success = search_result.success
@@ -229,9 +219,7 @@ class PerplexityPerformanceBenchmark:
         ]
 
         # Run benchmark
-        benchmark_result = await self.benchmark_response_times(
-            test_cases=test_cases, iterations=sample_size // len(test_cases), concurrent_requests=1
-        )
+        benchmark_result = await self.benchmark_response_times(test_cases=test_cases, iterations=sample_size // len(test_cases), concurrent_requests=1)
 
         summary = benchmark_result.get_performance_summary()
 
@@ -324,32 +312,23 @@ class PerplexityPerformanceBenchmark:
 
         # Response time recommendations
         if summary.get("compliance_rate", 0) < 0.95:
-            recommendations.append(
-                f"Response time compliance is {summary.get('compliance_rate', 0):.1%}. "
-                "Consider optimizing query complexity or implementing request caching."
-            )
+            recommendations.append(f"Response time compliance is {summary.get('compliance_rate', 0):.1%}. Consider optimizing query complexity or implementing request caching.")
 
         if summary.get("avg_performance_ratio", 0) > 1.5:
             recommendations.append(
-                f"Average response time is {summary.get('avg_performance_ratio', 0):.1f}x baseline. "
-                "Consider reducing query complexity or implementing parallel processing."
+                f"Average response time is {summary.get('avg_performance_ratio', 0):.1f}x baseline. Consider reducing query complexity or implementing parallel processing."
             )
 
         # Failure rate recommendations
         failure_rate = summary.get("aggregate_failure_rate", 0)
         if failure_rate > 5:
-            recommendations.append(
-                f"Failure rate is {failure_rate:.1f}%, exceeding 5% threshold. "
-                "Review error handling and implement more robust retry mechanisms."
-            )
+            recommendations.append(f"Failure rate is {failure_rate:.1f}%, exceeding 5% threshold. Review error handling and implement more robust retry mechanisms.")
 
         # Performance variability recommendations
         p99_time = summary.get("p99_response_time_ms", 0)
         avg_time = summary.get("avg_response_time_ms", 0)
         if p99_time > avg_time * 3:
-            recommendations.append(
-                "High response time variability detected. Consider implementing request timeout optimization and load balancing."
-            )
+            recommendations.append("High response time variability detected. Consider implementing request timeout optimization and load balancing.")
 
         if not recommendations:
             recommendations.append("Performance meets all requirements. Continue monitoring for consistency.")

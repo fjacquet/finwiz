@@ -90,9 +90,7 @@ class DataFreshnessValidator:
             is_fresh = effective_age <= self.max_age_hours
 
             if not is_fresh:
-                logger.warning(
-                    f"Stale data detected from {data_source}: {age_hours:.1f} hours old (effective: {effective_age:.1f}h)"
-                )
+                logger.warning(f"Stale data detected from {data_source}: {age_hours:.1f} hours old (effective: {effective_age:.1f}h)")
 
             return FreshnessResult(
                 is_fresh=is_fresh,
@@ -105,9 +103,7 @@ class DataFreshnessValidator:
 
         except Exception as e:
             logger.error(f"Freshness validation failed for {data_source}: {e}")
-            return FreshnessResult(
-                is_fresh=False, age_hours=None, warning=f"Validation error: {str(e)}", should_refresh=True, data_source=data_source
-            )
+            return FreshnessResult(is_fresh=False, age_hours=None, warning=f"Validation error: {str(e)}", should_refresh=True, data_source=data_source)
 
     def _extract_timestamp(self, data: dict[str, Any] | list[dict[str, Any]]) -> datetime | None:
         """

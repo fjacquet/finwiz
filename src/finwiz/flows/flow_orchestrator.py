@@ -9,7 +9,7 @@ financial analysis workflow using CrewAI flows.
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -97,6 +97,32 @@ class FinwizFlow(Flow[FinwizState]):
         self.batch_prefetch_config = get_batch_prefetch_config(log_config=True)
         logger.info("Batch prefetch configuration loaded and validated")
 
+        # Initialize Supabase cache service (Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 8.1.3, 8.1.4)
+        self.cache_service = None
+        try:
+            from finwiz.supabase.client import SupabaseClient
+            from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
+            from finwiz.supabase.services.cache_service import CacheService
+
+            # Initialize Supabase client with circuit breaker
+            supabase_client = SupabaseClient(
+                failure_threshold=3,
+                recovery_timeout=300,  # 5 minutes
+            )
+
+            # Initialize analysis repository
+            analysis_repository = AnalysisRepository(supabase_client)
+
+            # Initialize cache service
+            self.cache_service = CacheService(analysis_repository)
+            logger.info("Supabase cache service initialized successfully")
+
+        except Exception as e:
+            # Graceful fallback when Supabase is unavailable (Requirement 8.1.4)
+            logger.warning(f"Supabase cache service initialization failed: {e}")
+            logger.info("Continuing without Supabase caching (graceful degradation)")
+            self.cache_service = None
+
         # Initialize structured state (replaces self.inputs)
         # Note: self.state is automatically managed by Flow[FinwizState]
         # We just need to ensure it's initialized with session data
@@ -106,9 +132,7 @@ class FinwizFlow(Flow[FinwizState]):
         else:
             logger.info("Flow state already initialized by Flow framework")
 
-    def _execute_crew_with_error_handling(
-        self, crew_name: str, crew_instance: Any, crew_inputs: dict[str, Any], ticker: str = ""
-    ) -> tuple[Any | None, str | None]:
+    def _execute_crew_with_error_handling(self, crew_name: str, crew_instance: Any, crew_inputs: dict[str, Any], ticker: str = "") -> tuple[Any | None, str | None]:
         """
         Execute crew with error handling and state tracking.
 
@@ -261,9 +285,7 @@ class FinwizFlow(Flow[FinwizState]):
         if not hasattr(self.state, "fallback_events"):
             self.state.fallback_events = []
 
-        self.state.fallback_events.append(
-            {"timestamp": datetime.now().isoformat(), "reason": reason, "ticker_count": len(tickers), "mode": "sequential"}
-        )
+        self.state.fallback_events.append({"timestamp": datetime.now().isoformat(), "reason": reason, "ticker_count": len(tickers), "mode": "sequential"})
 
         # Execute sequential analysis (existing logic without batch pre-fetch)
         logger.info("Starting sequential deep analysis (batch mode disabled)")
@@ -887,147 +909,155 @@ class FinwizFlow(Flow[FinwizState]):
             ticker_start_time = time.time()
 
             try:
-                # Check cache first
-                cached_result = cache_manager.get_cached_analysis(ticker, asset_class)
-                if cached_result and cached_result.is_fresh(cache_ttl_hours):
-                    # DATA LINEAGE: Cache retrieval
-                    logger.info(f"DATA LINEAGE [{ticker}]: Retrieved from cache (age: {cached_result.age_hours:.1f}h)")
-                    analysis_result = cached_result.analysis
-                    logger.info(
-                        f"DATA LINEAGE [{ticker}]: Cached data: Grade={analysis_result.grade}, "
-                        f"Score={analysis_result.composite_score:.2f}"
-                    )
-
-                    # DATA LINEAGE: Create Flow state result from cache
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 4 - Creating DeepAnalysisResult from cached data")
-                    deep_result = self._create_deep_analysis_result_from_crew_output(
-                        crew_result=analysis_result,
-                        ticker=ticker,
-                        asset_class=asset_class,
-                        crew_name=analysis_result.crew_name,
-                        cached=True,
-                    )
-                    deep_analysis_results[ticker] = deep_result
-                    logger.info(
-                        f"DATA LINEAGE [{ticker}]: Step 4 - Added cached result to results dict "
-                        f"(Grade={deep_result.grade}, Score={deep_result.composite_score:.2f})"
-                    )
-
-                    # DATA LINEAGE: Generate JSON export and HTML report from cached data
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generating JSON export and HTML report from cached data")
+                # Try Supabase cache service first if available (Requirements: 6.1, 6.2, 6.3, 6.4, 6.5)
+                if self.cache_service:
                     try:
-                        # Create export data from cached analysis_result
-                        export_data = {
-                            "ticker": ticker,
-                            "asset_class": asset_class,
-                            "composite_score": deep_result.composite_score,
-                            "grade": deep_result.grade,
-                            "recommendation": "HOLD",  # Default
-                            "confidence": deep_result.confidence_level,
-                            "rationale": f"Cached analysis for {ticker} with grade {deep_result.grade}",
-                            "fundamental_score": deep_result.fundamental_score or 0.5,
-                            "technical_score": deep_result.technical_score or 0.5,
-                            "risk_score": deep_result.risk_score or 2.5,
-                            "fundamental_details": {},
-                            "technical_details": {},
-                            "risk_details": {},
-                            "analysis_date": deep_result.analysis_timestamp,
-                            "session_id": self.state.session_id or "default",
-                            "data_sources": ["Cached Analysis", "Python Scoring Engine"],
-                        }
+                        # Define crew execution function for cache service
+                        async def execute_crew_analysis() -> dict[str, Any]:
+                            """Execute crew analysis and return export data."""
+                            # Direct crew instantiation and execution (CrewAI Flow pattern)
+                            crew_inputs = {
+                                "ticker": ticker,
+                                "asset_class": asset_class,
+                                "current_day": self.state.current_day,
+                                "current_month": self.state.current_month,
+                                "current_year": self.state.current_year,
+                                "current_date": self.state.current_date,
+                                "full_date": self.state.full_date,
+                                "timestamp": self.state.timestamp,
+                                "report_language": self.state.report_language,
+                            }
 
-                        # Generate JSON export path
+                            crew = DeepAnalysisCrew()
+                            crew_name = "DeepAnalysisCrew"
+
+                            # Inject pre-fetched data if batch mode is enabled
+                            if batch_prefetch_enabled and self.state.prefetched_data:
+                                logger.info(f"DATA LINEAGE [{ticker}]: Injecting pre-fetched data into crew (BATCH MODE)")
+                                crew.set_prefetched_data(self.state.prefetched_data)
+
+                            # Execute crew with error handling
+                            logger.info(f"DATA LINEAGE [{ticker}]: Step 1 - Running {crew_name} analysis for {asset_class}")
+                            result, error = self._execute_crew_with_error_handling(crew_name, crew, crew_inputs, ticker)
+
+                            if error:
+                                raise Exception(f"Crew execution failed: {error}")
+
+                            logger.info(f"DATA LINEAGE [{ticker}]: Step 1 - Crew execution completed")
+
+                            # Create export data from result
+                            if hasattr(result, "pydantic") and result.pydantic:
+                                export_data = result.pydantic.model_dump() if hasattr(result.pydantic, "model_dump") else result.pydantic
+                            else:
+                                # Create minimal export data
+                                deep_result = self._create_deep_analysis_result_from_crew_output(
+                                    crew_result=result,
+                                    ticker=ticker,
+                                    asset_class=asset_class,
+                                    crew_name=crew_name,
+                                    cached=False,
+                                )
+                                export_data = {
+                                    "ticker": ticker,
+                                    "asset_class": asset_class,
+                                    "composite_score": deep_result.composite_score,
+                                    "grade": deep_result.grade,
+                                    "recommendation": "HOLD",
+                                    "confidence": deep_result.confidence_level,
+                                    "rationale": f"Analysis completed for {ticker} with grade {deep_result.grade}",
+                                    "fundamental_score": deep_result.fundamental_score or 0.5,
+                                    "technical_score": deep_result.technical_score or 0.5,
+                                    "risk_score": deep_result.risk_score or 2.5,
+                                    "analysis_date": deep_result.analysis_timestamp,
+                                    "session_id": self.state.session_id or "default",
+                                    "data_sources": ["Yahoo Finance API", "Python Scoring Engine"],
+                                }
+
+                            return export_data
+
+                        # Use cache service with get_or_execute (Requirement 6.1, 6.2, 6.3)
+                        logger.info(f"Checking Supabase cache for {ticker} ({asset_class})")
+
+                        # Run async cache operation in sync context
+                        import asyncio
+
+                        try:
+                            loop = asyncio.get_event_loop()
+                        except RuntimeError:
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+
+                        export_data, is_cached = loop.run_until_complete(
+                            self.cache_service.get_or_execute(
+                                ticker=ticker,
+                                asset_class=asset_class,
+                                execute_fn=execute_crew_analysis,
+                            )
+                        )
+
+                        # Log cache hit/miss (Requirement 6.4, 6.5)
+                        if is_cached:
+                            logger.info(f"✅ Supabase cache HIT for {ticker} ({asset_class}) - using cached analysis")
+                        else:
+                            logger.info(f"❌ Supabase cache MISS for {ticker} ({asset_class}) - executed fresh analysis")
+
+                        # Create DeepAnalysisResult from export data
+                        deep_result = self._create_deep_analysis_result_from_crew_output(
+                            crew_result=type("obj", (object,), {"pydantic": type("obj", (object,), export_data)})(),
+                            ticker=ticker,
+                            asset_class=asset_class,
+                            crew_name="DeepAnalysisCrew",
+                            cached=is_cached,
+                        )
+                        deep_analysis_results[ticker] = deep_result
+
+                        # Generate JSON export and HTML report
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generating JSON export and HTML report")
                         session_id = self.state.session_id or "default"
                         export_path = self._get_crew_export_path("deep_analysis_crew", ticker, session_id)
 
-                        # Save JSON export
                         export_path.parent.mkdir(parents=True, exist_ok=True)
                         with open(export_path, "w", encoding="utf-8") as f:
                             json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
 
-                        # Generate HTML report using DeepAnalysisReportGenerator
                         html_path = self._generate_html_from_export("deep_analysis_crew", export_path)
-
-                        # Store export and HTML paths in Flow state
                         if html_path:
                             self._store_crew_export_paths("deep_analysis_crew", [str(export_path)], [html_path])
-                            logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated JSON export from cache: {export_path}")
-                            logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated HTML report from cache: {html_path}")
-                        else:
-                            logger.warning(f"DATA LINEAGE [{ticker}]: Step 5 - HTML generation from cache failed")
+                            logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated JSON export: {export_path}")
+                            logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated HTML report: {html_path}")
 
-                    except Exception as export_error:
-                        logger.error(f"DATA LINEAGE [{ticker}]: Step 5 - Export/HTML generation from cache failed: {export_error}")
-                        # Continue execution even if export fails
+                    except Exception as cache_error:
+                        # Graceful fallback when Supabase cache fails (Requirement 8.1.3, 8.1.4)
+                        logger.warning(f"Supabase cache service failed for {ticker}: {cache_error}")
+                        logger.info(f"Falling back to file-based cache for {ticker}")
+                        # Fall through to file-based cache below
 
-                else:
-                    # Direct crew instantiation and execution (CrewAI Flow pattern)
-                    # Use unified DeepAnalysisCrew for all asset classes
-                    crew_inputs = {
-                        "ticker": ticker,
-                        "asset_class": asset_class,  # Required for dynamic tool routing
-                        "current_day": self.state.current_day,
-                        "current_month": self.state.current_month,
-                        "current_year": self.state.current_year,
-                        "current_date": self.state.current_date,
-                        "full_date": self.state.full_date,
-                        "timestamp": self.state.timestamp,
-                        "report_language": self.state.report_language,
-                    }
+                # Fallback to file-based cache if Supabase unavailable or failed
+                if ticker not in deep_analysis_results:
+                    # Check file-based cache first
+                    cached_result = cache_manager.get_cached_analysis(ticker, asset_class)
+                    if cached_result and cached_result.is_fresh(cache_ttl_hours):
+                        # DATA LINEAGE: Cache retrieval
+                        logger.info(f"DATA LINEAGE [{ticker}]: Retrieved from file cache (age: {cached_result.age_hours:.1f}h)")
+                        analysis_result = cached_result.analysis
+                        logger.info(f"DATA LINEAGE [{ticker}]: Cached data: Grade={analysis_result.grade}, Score={analysis_result.composite_score:.2f}")
 
-                    # Unified crew for all asset classes (simplified routing)
-                    crew = DeepAnalysisCrew()
-                    crew_name = "DeepAnalysisCrew"
+                        # DATA LINEAGE: Create Flow state result from cache
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 4 - Creating DeepAnalysisResult from cached data")
+                        deep_result = self._create_deep_analysis_result_from_crew_output(
+                            crew_result=analysis_result,
+                            ticker=ticker,
+                            asset_class=asset_class,
+                            crew_name=analysis_result.crew_name,
+                            cached=True,
+                        )
+                        deep_analysis_results[ticker] = deep_result
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 4 - Added cached result to results dict (Grade={deep_result.grade}, Score={deep_result.composite_score:.2f})")
 
-                    # Inject pre-fetched data if batch mode is enabled (Requirement 17.41, 17.42)
-                    if batch_prefetch_enabled and self.state.prefetched_data:
-                        logger.info(f"DATA LINEAGE [{ticker}]: Injecting pre-fetched data into crew (BATCH MODE)")
-                        crew.set_prefetched_data(self.state.prefetched_data)
-                        logger.info(f"DATA LINEAGE [{ticker}]: Pre-fetched data injected - crew will use zero-latency data access")
-
-                    # DATA LINEAGE: Crew execution with error handling
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 1 - Running {crew_name} analysis for {asset_class}")
-                    result, error = self._execute_crew_with_error_handling(crew_name, crew, crew_inputs, ticker)
-
-                    if error:
-                        # Crew execution failed - skip this holding
-                        logger.warning(f"DATA LINEAGE [{ticker}]: Step 1 - Crew execution failed: {error}")
-                        continue
-
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 1 - Crew execution completed")
-
-                    # DATA LINEAGE: Create Flow state result
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 2 - Creating DeepAnalysisResult from crew output")
-                    deep_result = self._create_deep_analysis_result_from_crew_output(
-                        crew_result=result, ticker=ticker, asset_class=asset_class, crew_name=crew_name, cached=False
-                    )
-                    logger.info(
-                        f"DATA LINEAGE [{ticker}]: Step 2 - Created: Grade={deep_result.grade}, "
-                        f"Score={deep_result.composite_score:.2f}"
-                    )
-
-                    # DATA LINEAGE: Cache storage
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 3 - Storing in cache")
-                    cache_manager.cache_analysis(ticker, asset_class, deep_result)
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 3 - Cached successfully")
-
-                    # DATA LINEAGE: Add to results dict
-                    deep_analysis_results[ticker] = deep_result
-                    logger.info(
-                        f"DATA LINEAGE [{ticker}]: Step 4 - Added to results dict "
-                        f"(Grade={deep_result.grade}, Score={deep_result.composite_score:.2f})"
-                    )
-
-                    # DATA LINEAGE: Generate JSON export and HTML report
-                    logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generating JSON export and HTML report")
-                    try:
-                        # Extract crew export data from result if available
-                        if hasattr(result, "pydantic") and result.pydantic:
-                            export_data = (
-                                result.pydantic.model_dump() if hasattr(result.pydantic, "model_dump") else result.pydantic
-                            )
-                        else:
-                            # Create export data from deep_result
+                        # DATA LINEAGE: Generate JSON export and HTML report from cached data
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generating JSON export and HTML report from cached data")
+                        try:
+                            # Create export data from cached analysis_result
                             export_data = {
                                 "ticker": ticker,
                                 "asset_class": asset_class,
@@ -1035,7 +1065,7 @@ class FinwizFlow(Flow[FinwizState]):
                                 "grade": deep_result.grade,
                                 "recommendation": "HOLD",  # Default
                                 "confidence": deep_result.confidence_level,
-                                "rationale": f"Analysis completed for {ticker} with grade {deep_result.grade}",
+                                "rationale": f"Cached analysis for {ticker} with grade {deep_result.grade}",
                                 "fundamental_score": deep_result.fundamental_score or 0.5,
                                 "technical_score": deep_result.technical_score or 0.5,
                                 "risk_score": deep_result.risk_score or 2.5,
@@ -1044,42 +1074,142 @@ class FinwizFlow(Flow[FinwizState]):
                                 "risk_details": {},
                                 "analysis_date": deep_result.analysis_timestamp,
                                 "session_id": self.state.session_id or "default",
-                                "data_sources": ["Yahoo Finance API", "Python Scoring Engine"],
+                                "data_sources": ["Cached Analysis", "Python Scoring Engine"],
                             }
 
-                        # Generate JSON export path
-                        session_id = self.state.session_id or "default"
-                        export_path = self._get_crew_export_path("deep_analysis_crew", ticker, session_id)
+                            # Generate JSON export path
+                            session_id = self.state.session_id or "default"
+                            export_path = self._get_crew_export_path("deep_analysis_crew", ticker, session_id)
 
-                        # Save JSON export
-                        export_path.parent.mkdir(parents=True, exist_ok=True)
-                        with open(export_path, "w", encoding="utf-8") as f:
-                            json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
+                            # Save JSON export
+                            export_path.parent.mkdir(parents=True, exist_ok=True)
+                            with open(export_path, "w", encoding="utf-8") as f:
+                                json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
 
-                        # Generate HTML report using DeepAnalysisReportGenerator
-                        html_path = self._generate_html_from_export("deep_analysis_crew", export_path)
+                            # Generate HTML report using DeepAnalysisReportGenerator
+                            html_path = self._generate_html_from_export("deep_analysis_crew", export_path)
 
-                        # Store export and HTML paths in Flow state
-                        if html_path:
-                            self._store_crew_export_paths("deep_analysis_crew", [str(export_path)], [html_path])
-                            logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated JSON export: {export_path}")
-                            logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated HTML report: {html_path}")
-                        else:
-                            logger.warning(f"DATA LINEAGE [{ticker}]: Step 5 - HTML generation failed")
+                            # Store export and HTML paths in Flow state
+                            if html_path:
+                                self._store_crew_export_paths("deep_analysis_crew", [str(export_path)], [html_path])
+                                logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated JSON export from cache: {export_path}")
+                                logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated HTML report from cache: {html_path}")
+                            else:
+                                logger.warning(f"DATA LINEAGE [{ticker}]: Step 5 - HTML generation from cache failed")
 
-                    except Exception as export_error:
-                        logger.error(f"DATA LINEAGE [{ticker}]: Step 5 - Export/HTML generation failed: {export_error}")
-                        # Continue execution even if export fails
+                        except Exception as export_error:
+                            logger.error(f"DATA LINEAGE [{ticker}]: Step 5 - Export/HTML generation from cache failed: {export_error}")
+                            # Continue execution even if export fails
+
+                    else:
+                        # Direct crew instantiation and execution (CrewAI Flow pattern)
+                        # Use unified DeepAnalysisCrew for all asset classes
+                        crew_inputs = {
+                            "ticker": ticker,
+                            "asset_class": asset_class,  # Required for dynamic tool routing
+                            "current_day": self.state.current_day,
+                            "current_month": self.state.current_month,
+                            "current_year": self.state.current_year,
+                            "current_date": self.state.current_date,
+                            "full_date": self.state.full_date,
+                            "timestamp": self.state.timestamp,
+                            "report_language": self.state.report_language,
+                        }
+
+                        # Unified crew for all asset classes (simplified routing)
+                        crew = DeepAnalysisCrew()
+                        crew_name = "DeepAnalysisCrew"
+
+                        # Inject pre-fetched data if batch mode is enabled (Requirement 17.41, 17.42)
+                        if batch_prefetch_enabled and self.state.prefetched_data:
+                            logger.info(f"DATA LINEAGE [{ticker}]: Injecting pre-fetched data into crew (BATCH MODE)")
+                            crew.set_prefetched_data(self.state.prefetched_data)
+                            logger.info(f"DATA LINEAGE [{ticker}]: Pre-fetched data injected - crew will use zero-latency data access")
+
+                        # DATA LINEAGE: Crew execution with error handling
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 1 - Running {crew_name} analysis for {asset_class}")
+                        result, error = self._execute_crew_with_error_handling(crew_name, crew, crew_inputs, ticker)
+
+                        if error:
+                            # Crew execution failed - skip this holding
+                            logger.warning(f"DATA LINEAGE [{ticker}]: Step 1 - Crew execution failed: {error}")
+                            continue
+
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 1 - Crew execution completed")
+
+                        # DATA LINEAGE: Create Flow state result
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 2 - Creating DeepAnalysisResult from crew output")
+                        deep_result = self._create_deep_analysis_result_from_crew_output(
+                            crew_result=result, ticker=ticker, asset_class=asset_class, crew_name=crew_name, cached=False
+                        )
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 2 - Created: Grade={deep_result.grade}, Score={deep_result.composite_score:.2f}")
+
+                        # DATA LINEAGE: Cache storage
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 3 - Storing in file cache")
+                        cache_manager.cache_analysis(ticker, asset_class, deep_result)
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 3 - Cached successfully")
+
+                        # DATA LINEAGE: Add to results dict
+                        deep_analysis_results[ticker] = deep_result
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 4 - Added to results dict (Grade={deep_result.grade}, Score={deep_result.composite_score:.2f})")
+
+                        # DATA LINEAGE: Generate JSON export and HTML report
+                        logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generating JSON export and HTML report")
+                        try:
+                            # Extract crew export data from result if available
+                            if hasattr(result, "pydantic") and result.pydantic:
+                                export_data = result.pydantic.model_dump() if hasattr(result.pydantic, "model_dump") else result.pydantic
+                            else:
+                                # Create export data from deep_result
+                                export_data = {
+                                    "ticker": ticker,
+                                    "asset_class": asset_class,
+                                    "composite_score": deep_result.composite_score,
+                                    "grade": deep_result.grade,
+                                    "recommendation": "HOLD",  # Default
+                                    "confidence": deep_result.confidence_level,
+                                    "rationale": f"Analysis completed for {ticker} with grade {deep_result.grade}",
+                                    "fundamental_score": deep_result.fundamental_score or 0.5,
+                                    "technical_score": deep_result.technical_score or 0.5,
+                                    "risk_score": deep_result.risk_score or 2.5,
+                                    "fundamental_details": {},
+                                    "technical_details": {},
+                                    "risk_details": {},
+                                    "analysis_date": deep_result.analysis_timestamp,
+                                    "session_id": self.state.session_id or "default",
+                                    "data_sources": ["Yahoo Finance API", "Python Scoring Engine"],
+                                }
+
+                            # Generate JSON export path
+                            session_id = self.state.session_id or "default"
+                            export_path = self._get_crew_export_path("deep_analysis_crew", ticker, session_id)
+
+                            # Save JSON export
+                            export_path.parent.mkdir(parents=True, exist_ok=True)
+                            with open(export_path, "w", encoding="utf-8") as f:
+                                json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
+
+                            # Generate HTML report using DeepAnalysisReportGenerator
+                            html_path = self._generate_html_from_export("deep_analysis_crew", export_path)
+
+                            # Store export and HTML paths in Flow state
+                            if html_path:
+                                self._store_crew_export_paths("deep_analysis_crew", [str(export_path)], [html_path])
+                                logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated JSON export: {export_path}")
+                                logger.info(f"DATA LINEAGE [{ticker}]: Step 5 - Generated HTML report: {html_path}")
+                            else:
+                                logger.warning(f"DATA LINEAGE [{ticker}]: Step 5 - HTML generation failed")
+
+                        except Exception as export_error:
+                            logger.error(f"DATA LINEAGE [{ticker}]: Step 5 - Export/HTML generation failed: {export_error}")
+                            # Continue execution even if export fails
 
                 processed_count += 1
 
                 # Record execution time for this ticker (Requirement 17.44)
                 ticker_duration = time.time() - ticker_start_time
                 ticker_execution_times[ticker] = ticker_duration
-                logger.info(
-                    f"Deep analysis progress: {processed_count}/{len(holdings)} holdings "
-                    f"(ticker {ticker} completed in {ticker_duration:.1f}s)"
-                )
+                logger.info(f"Deep analysis progress: {processed_count}/{len(holdings)} holdings (ticker {ticker} completed in {ticker_duration:.1f}s)")
 
             except Exception as e:
                 # Catch any unexpected errors not handled by _execute_crew_with_error_handling
@@ -1102,6 +1232,13 @@ class FinwizFlow(Flow[FinwizState]):
 
         # Log cache statistics
         cache_manager.log_cache_stats()
+
+        # Log Supabase cache metrics if available (Requirement 6.5)
+        if self.cache_service:
+            try:
+                self.cache_service.log_metrics()
+            except Exception as e:
+                logger.warning(f"Failed to log Supabase cache metrics: {e}")
 
         # Calculate total execution time (Requirement 17.45)
         crew_execution_duration = time.time() - crew_execution_start
@@ -1276,9 +1413,7 @@ class FinwizFlow(Flow[FinwizState]):
                 # Update progress tracking
                 self.state.holdings_processed += 1
                 self.state.holdings_remaining -= 1
-                self.state.progress_percentage = (
-                    self.state.holdings_processed / self.state.total_holdings * 100 if self.state.total_holdings > 0 else 0.0
-                )
+                self.state.progress_percentage = self.state.holdings_processed / self.state.total_holdings * 100 if self.state.total_holdings > 0 else 0.0
 
                 # Log progress
                 success_count = len(results)
@@ -1290,11 +1425,7 @@ class FinwizFlow(Flow[FinwizState]):
                 )
 
             # Log batch completion
-            logger.info(
-                f"Batch {batch_num}/{total_batches} completed: "
-                f"{len([r for r in batch_results if not isinstance(r, Exception) and r is not None])}/"
-                f"{len(batch)} successful"
-            )
+            logger.info(f"Batch {batch_num}/{total_batches} completed: {len([r for r in batch_results if not isinstance(r, Exception) and r is not None])}/{len(batch)} successful")
 
         # Log final statistics
         logger.info(
@@ -1392,29 +1523,20 @@ class FinwizFlow(Flow[FinwizState]):
             logger.error(f"All retries exhausted for {ticker} after {self.state.retry_counts.get(ticker, 0)} attempts: {e}")
 
             # Create ValidationError using create_validation_error_from_exception
-            validation_error = create_validation_error_from_exception(
-                error=e, ticker=ticker, attempt=self.state.retry_counts.get(ticker, 0)
-            )
+            validation_error = create_validation_error_from_exception(error=e, ticker=ticker, attempt=self.state.retry_counts.get(ticker, 0))
 
             # Classify and store error in retryable_errors or non_retryable_errors
             if validation_error.context.get("is_retryable"):
                 self.state.retryable_errors.append(validation_error)
-                logger.info(
-                    f"Retryable error for {ticker}: {validation_error.error_type} - {validation_error.context.get('remediation')}"
-                )
+                logger.info(f"Retryable error for {ticker}: {validation_error.error_type} - {validation_error.context.get('remediation')}")
             else:
                 self.state.non_retryable_errors.append(validation_error)
-                logger.warning(
-                    f"Non-retryable error for {ticker}: {validation_error.error_type} - "
-                    f"{validation_error.context.get('remediation')}"
-                )
+                logger.warning(f"Non-retryable error for {ticker}: {validation_error.error_type} - {validation_error.context.get('remediation')}")
 
             # Return None to indicate failure
             return None
 
-    def _create_deep_analysis_result_from_crew_output(
-        self, crew_result: Any, ticker: str, asset_class: str, crew_name: str, cached: bool = False
-    ) -> "DeepAnalysisResult":
+    def _create_deep_analysis_result_from_crew_output(self, crew_result: Any, ticker: str, asset_class: str, crew_name: str, cached: bool = False) -> "DeepAnalysisResult":
         """
         Create DeepAnalysisResult from crew output with proper field population.
 
@@ -1504,13 +1626,9 @@ class FinwizFlow(Flow[FinwizState]):
 
                 # Validate that we got both grade and score
                 if grade is None:
-                    raise MissingRequiredFieldError(
-                        ticker=ticker, field="grade", context={"source": "crew_raw_output", "parsing": "regex"}
-                    )
+                    raise MissingRequiredFieldError(ticker=ticker, field="grade", context={"source": "crew_raw_output", "parsing": "regex"})
                 if composite_score is None:
-                    raise MissingRequiredFieldError(
-                        ticker=ticker, field="composite_score", context={"source": "crew_raw_output", "parsing": "regex"}
-                    )
+                    raise MissingRequiredFieldError(ticker=ticker, field="composite_score", context={"source": "crew_raw_output", "parsing": "regex"})
 
             else:
                 # No recognizable output format
@@ -1646,16 +1764,12 @@ class FinwizFlow(Flow[FinwizState]):
             logger.info(f"DeepAnalysisCrew execution completed for {ticker}")
 
             # Use helper method to create DeepAnalysisResult with proper field population
-            deep_result = self._create_deep_analysis_result_from_crew_output(
-                crew_result=result, ticker=ticker, asset_class=asset_class, crew_name="DeepAnalysisCrew", cached=False
-            )
+            deep_result = self._create_deep_analysis_result_from_crew_output(crew_result=result, ticker=ticker, asset_class=asset_class, crew_name="DeepAnalysisCrew", cached=False)
 
             # Cache the result
             cache_manager.cache_analysis(ticker, asset_class, deep_result)
 
-            logger.info(
-                f"Deep analysis result for {ticker}: grade={deep_result.grade}, composite_score={deep_result.composite_score:.3f}"
-            )
+            logger.info(f"Deep analysis result for {ticker}: grade={deep_result.grade}, composite_score={deep_result.composite_score:.3f}")
 
             return deep_result
 
@@ -1780,22 +1894,12 @@ class FinwizFlow(Flow[FinwizState]):
 
                     # FAIL LOUDLY - NO DEFAULTS FOR FINANCIAL DATA
                     if risk_score is None:
-                        logger.error(
-                            f"❌ CRITICAL: Missing risk_score for {ticker} - cannot make investment decisions without risk data"
-                        )
-                        raise ValueError(
-                            f"Missing required field 'risk_score' for {ticker}. "
-                            f"Cannot proceed with financial analysis without risk assessment."
-                        )
+                        logger.error(f"❌ CRITICAL: Missing risk_score for {ticker} - cannot make investment decisions without risk data")
+                        raise ValueError(f"Missing required field 'risk_score' for {ticker}. Cannot proceed with financial analysis without risk assessment.")
 
                     if composite_score is None:
-                        logger.error(
-                            f"❌ CRITICAL: Missing composite_score for {ticker} - cannot make investment decisions without score"
-                        )
-                        raise ValueError(
-                            f"Missing required field 'composite_score' for {ticker}. "
-                            f"Cannot proceed with financial analysis without composite score."
-                        )
+                        logger.error(f"❌ CRITICAL: Missing composite_score for {ticker} - cannot make investment decisions without score")
+                        raise ValueError(f"Missing required field 'composite_score' for {ticker}. Cannot proceed with financial analysis without composite score.")
 
                     holding_profile = HoldingProfile(
                         ticker=ticker,
@@ -2030,6 +2134,91 @@ class FinwizFlow(Flow[FinwizState]):
             logger.error("REFUSING to continue with potentially corrupted data - failing fast")
             raise DataMergeError(f"Portfolio update failed: {e}") from e
 
+    async def _create_portfolio_snapshot(self) -> None:
+        """
+        Create portfolio snapshot asynchronously (background task).
+
+        Creates a point-in-time snapshot of the portfolio state after analysis
+        completes. Runs as a background task to avoid blocking the flow.
+
+        Requirements: 4.1, 4.2
+
+        """
+        try:
+            # Initialize Supabase portfolio repository
+            from finwiz.supabase.client import SupabaseClient
+            from finwiz.supabase.repositories.portfolio_repository import PortfolioRepository
+
+            # Initialize Supabase client with circuit breaker
+            supabase_client = SupabaseClient(
+                failure_threshold=3,
+                recovery_timeout=300,  # 5 minutes
+            )
+
+            # Initialize portfolio repository
+            portfolio_repository = PortfolioRepository(supabase_client)
+
+            # Extract portfolio data from state
+            if not self.state.portfolio_review:
+                logger.warning("No portfolio review data available for snapshot")
+                return
+
+            portfolio_data = self.state.portfolio_review
+
+            # Extract holdings
+            if "portfolio_review" in portfolio_data:
+                holdings_data = portfolio_data["portfolio_review"].get("holdings", [])
+            else:
+                holdings_data = portfolio_data.get("holdings", [])
+
+            if not holdings_data:
+                logger.warning("No holdings found in portfolio review for snapshot")
+                return
+
+            # Calculate total portfolio value
+            total_value = 0.0
+            holdings_dict = {}
+
+            for holding in holdings_data:
+                ticker = holding.get("ticker", "")
+                if not ticker:
+                    continue
+
+                # Extract holding data for snapshot
+                holdings_dict[ticker] = {
+                    "ticker": ticker,
+                    "name": holding.get("name", ""),
+                    "asset_class": holding.get("asset_class", "stock"),
+                    "quantity": holding.get("quantity", 0),
+                    "value": holding.get("value", 0.0),
+                    "grade": holding.get("grade", "N/A"),
+                    "composite_score": holding.get("composite_score", 0.0),
+                    "recommendation": holding.get("recommended_action", "KEEP"),
+                    "has_deep_analysis": holding.get("has_deep_analysis", False),
+                }
+
+                # Add to total value
+                total_value += holding.get("value", 0.0)
+
+            logger.info(
+                f"Creating portfolio snapshot: {len(holdings_dict)} holdings, "
+                f"total value: ${total_value:,.2f}"
+            )
+
+            # Create snapshot (async background task)
+            await portfolio_repository.create_snapshot(
+                total_value=total_value,
+                holdings=holdings_dict,
+                snapshot_date=datetime.now(timezone.utc),
+            )
+
+            logger.info("Portfolio snapshot creation scheduled (background task)")
+
+        except Exception as e:
+            # Log error but don't fail the flow (Requirement 4.2)
+            logger.error(f"Portfolio snapshot creation failed: {e}")
+            logger.info("Continuing flow execution (snapshot failure is non-blocking)")
+
     @listen("check_portfolio")
     async def analyze_and_update_portfolio(self) -> dict[str, Any]:
         """
@@ -2085,11 +2274,7 @@ class FinwizFlow(Flow[FinwizState]):
 
         # Check if resuming from checkpoint and deep analysis already completed
         if self.state.resume_from_checkpoint and self.state.deep_analysis_success:
-            logger.info(
-                f"Resume: Deep analysis already completed "
-                f"({self.state.deep_analysis_count}/{self.state.total_holdings} holdings analyzed), "
-                f"skipping deep analysis"
-            )
+            logger.info(f"Resume: Deep analysis already completed ({self.state.deep_analysis_count}/{self.state.total_holdings} holdings analyzed), skipping deep analysis")
 
             # Log which holdings were already analyzed
             if self.state.deep_analysis_results:
@@ -2099,9 +2284,7 @@ class FinwizFlow(Flow[FinwizState]):
             # Return existing results for downstream listeners
             return {
                 "deep_analysis_complete": True,
-                "analysis_results": {
-                    ticker: result.model_dump(mode="json") for ticker, result in self.state.deep_analysis_results.items()
-                },
+                "analysis_results": {ticker: result.model_dump(mode="json") for ticker, result in self.state.deep_analysis_results.items()},
                 "alternatives_data": self.state.portfolio_alternatives or {},
                 "portfolio_updated": True,  # Already updated in previous run
                 "holdings_analyzed": self.state.deep_analysis_count,
@@ -2193,9 +2376,7 @@ class FinwizFlow(Flow[FinwizState]):
                         # Validate required fields - NO SILENT DEFAULTS (Task 5.1)
                         if "grade" not in holding or holding["grade"] is None:
                             logger.error(
-                                f"❌ Missing grade for {ticker} in portfolio review. "
-                                f"This indicates deep analysis failed or was not run. "
-                                f"Available keys: {list(holding.keys())}"
+                                f"❌ Missing grade for {ticker} in portfolio review. This indicates deep analysis failed or was not run. Available keys: {list(holding.keys())}"
                             )
                             # Use conservative fallback with clear warning
                             grade = "C"
@@ -2205,10 +2386,7 @@ class FinwizFlow(Flow[FinwizState]):
 
                         # Validate composite_score (Task 5.1)
                         if "composite_score" not in holding or holding["composite_score"] is None:
-                            logger.error(
-                                f"❌ Missing composite_score for {ticker} in portfolio review. "
-                                f"This indicates deep analysis failed or was not run."
-                            )
+                            logger.error(f"❌ Missing composite_score for {ticker} in portfolio review. This indicates deep analysis failed or was not run.")
                             composite_score = 0.5  # Conservative fallback
                             logger.warning(f"⚠️ Using conservative fallback composite_score 0.5 for {ticker}")
                         else:
@@ -2238,9 +2416,7 @@ class FinwizFlow(Flow[FinwizState]):
                         continue
 
                 # DEBUG: Log final conversion results
-                logger.info(
-                    f"DEBUG: Holdings conversion completed: {len(holding_decisions)} successful out of {len(holdings)} total"
-                )
+                logger.info(f"DEBUG: Holdings conversion completed: {len(holding_decisions)} successful out of {len(holdings)} total")
 
                 # Use Pure Python Portfolio Deep Analyzer (Requirements 0.1, 0.2, 0.3)
                 from finwiz.scoring.portfolio_deep_analyzer import analyze_portfolio_with_python
@@ -2303,9 +2479,7 @@ class FinwizFlow(Flow[FinwizState]):
                     self.state.aplus_discovery_results = discovery_results
 
                     if discovery_results.get("has_a_plus_analysis", False):
-                        logger.info(
-                            f"✅ A+ Discovery Integration: Found {discovery_results['total_opportunities_found']} A+ opportunities"
-                        )
+                        logger.info(f"✅ A+ Discovery Integration: Found {discovery_results['total_opportunities_found']} A+ opportunities")
                     else:
                         logger.info("ℹ️ A+ Discovery Integration: No A+ opportunities found")
 
@@ -2323,9 +2497,7 @@ class FinwizFlow(Flow[FinwizState]):
                     self.state.backtesting_results = backtesting_results
 
                     if backtesting_results.get("backtesting_executed", False):
-                        logger.info(
-                            f"✅ Backtesting Pipeline: Executed for {backtesting_results['candidates_count']} A+ candidates"
-                        )
+                        logger.info(f"✅ Backtesting Pipeline: Executed for {backtesting_results['candidates_count']} A+ candidates")
                     else:
                         logger.info(f"ℹ️ Backtesting Pipeline: {backtesting_results.get('reason', 'Not executed')}")
 
@@ -2359,15 +2531,10 @@ class FinwizFlow(Flow[FinwizState]):
                     cache_indicator = " [CACHED]" if cached else " [FRESH]"
                     fallback_indicator = " [FALLBACK DATA - SHOULD NOT HAPPEN]" if is_fallback else ""
 
-                    logger.info(
-                        f"  {ticker}: Grade={grade}, Score={score:.2f}, Crew={crew_name}{cache_indicator}{fallback_indicator}"
-                    )
+                    logger.info(f"  {ticker}: Grade={grade}, Score={score:.2f}, Crew={crew_name}{cache_indicator}{fallback_indicator}")
 
                     if is_fallback:
-                        logger.error(
-                            f"  ❌ {ticker} deep analysis contains FALLBACK DATA! "
-                            f"This indicates crew did not generate proper analysis."
-                        )
+                        logger.error(f"  ❌ {ticker} deep analysis contains FALLBACK DATA! This indicates crew did not generate proper analysis.")
 
                 # Check for missing analysis
                 holding_tickers = {h.get("ticker") for h in holdings if h.get("ticker")}
@@ -2375,9 +2542,7 @@ class FinwizFlow(Flow[FinwizState]):
                 missing_tickers = holding_tickers - analyzed_tickers
 
                 if missing_tickers:
-                    logger.warning(
-                        f"  ⚠️  Missing deep analysis for {len(missing_tickers)} holdings: {', '.join(sorted(missing_tickers))}"
-                    )
+                    logger.warning(f"  ⚠️  Missing deep analysis for {len(missing_tickers)} holdings: {', '.join(sorted(missing_tickers))}")
 
                 logger.info("=" * 80)
 
@@ -2445,11 +2610,7 @@ class FinwizFlow(Flow[FinwizState]):
                     )
                     logger.info(f"Tracked deep analysis data availability: {len(deep_analysis_results)} holdings analyzed")
                 else:
-                    error_msg = (
-                        f"No deep analysis results generated "
-                        f"(failed: {len(self.state.failed_holdings)}, "
-                        f"timeouts: {len(self.state.timeout_holdings)})"
-                    )
+                    error_msg = f"No deep analysis results generated (failed: {len(self.state.failed_holdings)}, timeouts: {len(self.state.timeout_holdings)})"
                     self.availability_tracker.track_data_source(
                         source="deep_analysis",
                         status="unavailable",
@@ -2462,10 +2623,7 @@ class FinwizFlow(Flow[FinwizState]):
                     failure_rate = len(self.state.failed_holdings) / self.state.total_holdings
 
                     if failure_rate > 0.5:
-                        logger.critical(
-                            f"High failure rate detected: {failure_rate:.1%} "
-                            f"({len(self.state.failed_holdings)}/{self.state.total_holdings} holdings failed)"
-                        )
+                        logger.critical(f"High failure rate detected: {failure_rate:.1%} ({len(self.state.failed_holdings)}/{self.state.total_holdings} holdings failed)")
 
                         # Import AlertManager and create critical alert
                         from finwiz.monitoring.alerting import AlertManager, AlertSeverity, AlertType
@@ -2523,6 +2681,9 @@ class FinwizFlow(Flow[FinwizState]):
                 if not portfolio_updated:
                     logger.warning("Portfolio review update failed - retaining original portfolio")
                 else:
+                    # Step 3.5: Create portfolio snapshot (Requirements 4.1, 4.2)
+                    logger.info("Step 3.5/3: Creating portfolio snapshot")
+                    await self._create_portfolio_snapshot()
                     # DIAGNOSTIC LOGGING: Log portfolio holdings AFTER merge
                     logger.info("=" * 80)
                     logger.info("DIAGNOSTIC: Portfolio Holdings AFTER Deep Analysis Merge")
@@ -2549,23 +2710,15 @@ class FinwizFlow(Flow[FinwizState]):
                         crew_used = holding.get("crew_analysis_used", "None")
 
                         # Check for fallback data pattern
-                        is_fallback = (
-                            grade == "D" and score == 0.6 and any("Validation rapide" in str(bullet) for bullet in rationale)
-                        )
+                        is_fallback = grade == "D" and score == 0.6 and any("Validation rapide" in str(bullet) for bullet in rationale)
 
                         if is_fallback:
                             still_fallback += 1
                             fallback_indicator = " [STILL FALLBACK - MERGE FAILED!]"
-                            logger.error(
-                                f"  ❌ {idx}. {ticker}: Grade={grade}, Score={score:.2f}, "
-                                f"HasDeepAnalysis={has_deep}, Crew={crew_used}{fallback_indicator}"
-                            )
+                            logger.error(f"  ❌ {idx}. {ticker}: Grade={grade}, Score={score:.2f}, HasDeepAnalysis={has_deep}, Crew={crew_used}{fallback_indicator}")
                         else:
                             grades_changed += 1
-                            logger.info(
-                                f"  ✅ {idx}. {ticker}: Grade={grade}, Score={score:.2f}, "
-                                f"HasDeepAnalysis={has_deep}, Crew={crew_used}"
-                            )
+                            logger.info(f"  ✅ {idx}. {ticker}: Grade={grade}, Score={score:.2f}, HasDeepAnalysis={has_deep}, Crew={crew_used}")
 
                     # Summary of merge results
                     logger.info("-" * 80)
@@ -2700,9 +2853,7 @@ class FinwizFlow(Flow[FinwizState]):
             core_analysis_available = self._check_core_analysis_availability()
 
             if core_analysis_available["any_available"]:
-                logger.info(
-                    f"Starting portfolio review with core analysis results available: {core_analysis_available['available_crews']}"
-                )
+                logger.info(f"Starting portfolio review with core analysis results available: {core_analysis_available['available_crews']}")
             else:
                 logger.warning("Starting portfolio review without core analysis results - all crews failed or disabled")
 
@@ -2863,9 +3014,7 @@ class FinwizFlow(Flow[FinwizState]):
             core_analysis_status = self._check_core_analysis_availability()
 
             # Create crew inputs via factory (convert state to dict for compatibility)
-            crew_inputs = self.crew_factory.create_crew_inputs_for_portfolio_rebalancing(
-                self._state_to_dict(), core_analysis_status
-            )
+            crew_inputs = self.crew_factory.create_crew_inputs_for_portfolio_rebalancing(self._state_to_dict(), core_analysis_status)
 
             # Execute portfolio rebalancing crew via factory
             result_data = self.crew_factory.execute_portfolio_rebalancing_crew(crew_inputs)
@@ -2938,9 +3087,7 @@ class FinwizFlow(Flow[FinwizState]):
                 self.state.investment_discovery_error = f"Data validation failed: {str(e)}"
 
                 # Track validation failure
-                self.availability_tracker.track_data_source(
-                    source="discovery_crew", status="unavailable", error_message=f"Data validation failed: {str(e)}"
-                )
+                self.availability_tracker.track_data_source(source="discovery_crew", status="unavailable", error_message=f"Data validation failed: {str(e)}")
 
                 logger.info("=" * 80)
 
@@ -2955,9 +3102,7 @@ class FinwizFlow(Flow[FinwizState]):
                 core_analysis_status = self._check_core_analysis_availability()
 
                 if core_analysis_status["any_available"]:
-                    logger.info(
-                        f"Running investment discovery with core analysis integration: {core_analysis_status['available_crews']}"
-                    )
+                    logger.info(f"Running investment discovery with core analysis integration: {core_analysis_status['available_crews']}")
                 else:
                     logger.warning("Running investment discovery without core analysis - all crews failed or disabled")
 
@@ -2975,9 +3120,7 @@ class FinwizFlow(Flow[FinwizState]):
                 for crew_type in ["stock", "etf", "crypto"]:
                     if core_analysis_status[f"{crew_type}_available"]:
                         try:
-                            crew_data = self.integration_manager.get_crew_data_with_freshness_check(
-                                crew_type, max_age_hours=24, warn_on_stale=True
-                            )
+                            crew_data = self.integration_manager.get_crew_data_with_freshness_check(crew_type, max_age_hours=24, warn_on_stale=True)
                             if crew_data:
                                 core_analysis_data[f"{crew_type}_analysis"] = crew_data
                                 logger.info(f"Core analysis data available for {crew_type}")
@@ -2989,9 +3132,7 @@ class FinwizFlow(Flow[FinwizState]):
                         logger.debug(f"Core analysis not available for {crew_type}")
 
                 # Create crew inputs via factory (convert state to dict for compatibility)
-                crew_inputs = self.crew_factory.create_crew_inputs_for_investment_discovery(
-                    self._state_to_dict(), core_analysis_status, upstream_data, core_analysis_data
-                )
+                crew_inputs = self.crew_factory.create_crew_inputs_for_investment_discovery(self._state_to_dict(), core_analysis_status, upstream_data, core_analysis_data)
 
                 # Log enhanced inputs
                 logger.info(f"Investment discovery enhanced with {len(core_analysis_data)} core analysis results")
@@ -3078,9 +3219,7 @@ class FinwizFlow(Flow[FinwizState]):
                         + len(self.state.investment_discovery_structured.get("crypto_opportunities", []))
                     )
 
-                self.availability_tracker.track_data_source(
-                    source="discovery_crew", status="available", last_updated=datetime.now(), record_count=aplus_count
-                )
+                self.availability_tracker.track_data_source(source="discovery_crew", status="available", last_updated=datetime.now(), record_count=aplus_count)
 
                 logger.info("Investment discovery analysis completed successfully with enhanced error handling")
 
@@ -3098,9 +3237,7 @@ class FinwizFlow(Flow[FinwizState]):
                 self.state.investment_discovery_available = False
 
                 # Track discovery as unavailable
-                self.availability_tracker.track_data_source(
-                    source="discovery_crew", status="unavailable", error_message="No portfolio data available"
-                )
+                self.availability_tracker.track_data_source(source="discovery_crew", status="unavailable", error_message="No portfolio data available")
 
                 return {"investment_discovery_complete": False, "discovery_available": False}
 
@@ -3281,9 +3418,7 @@ class FinwizFlow(Flow[FinwizState]):
             availability_summary = self.availability_tracker.get_availability_summary()
             # Use mode='json' to serialize datetime objects to ISO strings for CrewAI compatibility
             self.state.data_availability_summary = availability_summary.model_dump(mode="json")
-            self.state.data_availability_summary_formatted = self.availability_tracker.format_summary_for_report(
-                availability_summary
-            )
+            self.state.data_availability_summary_formatted = self.availability_tracker.format_summary_for_report(availability_summary)
 
             logger.info(
                 "Data availability summary generated for reporter",
@@ -3649,27 +3784,19 @@ class FinwizFlow(Flow[FinwizState]):
                             ticker: {
                                 "ticker": result.get("ticker") if isinstance(result, dict) else result.ticker,
                                 "grade": result.get("grade") if isinstance(result, dict) else result.grade,
-                                "composite_score": (
-                                    result.get("composite_score", 0.0) if isinstance(result, dict) else result.composite_score
-                                ),
-                                "recommendation": (
-                                    result.get("recommendation", "HOLD") if isinstance(result, dict) else result.recommendation
-                                ),
+                                "composite_score": (result.get("composite_score", 0.0) if isinstance(result, dict) else result.composite_score),
+                                "recommendation": (result.get("recommendation", "HOLD") if isinstance(result, dict) else result.recommendation),
                                 "asset_class": (result.get("asset_class") if isinstance(result, dict) else result.asset_class),
                             }
                             for ticker, result in raw_deep_analysis.items()
                         },
                     }
 
-                    logger.info(
-                        f"Transformed deep analysis: {successful_count} successful, {failed_count} failed, {total_holdings} total"
-                    )
+                    logger.info(f"Transformed deep analysis: {successful_count} successful, {failed_count} failed, {total_holdings} total")
 
                 # Generate Python-based report (Requirements 0.22, 0.23, 0.24, 0.25, 0.26)
                 session_id = self.state.session_id or "default"
-                report_path = generate_python_report(
-                    portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id
-                )
+                report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id)
 
                 # Update state with Python report results
                 result_data = {

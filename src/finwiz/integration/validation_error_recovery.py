@@ -74,9 +74,7 @@ class ValidationErrorRecovery:
         """
         return self.error_handlers.analyze_validation_error(error, data_context)
 
-    def suggest_data_repairs(
-        self, error_analyses: list[ValidationErrorAnalysis], original_data: dict
-    ) -> list[DataRepairSuggestion]:
+    def suggest_data_repairs(self, error_analyses: list[ValidationErrorAnalysis], original_data: dict) -> list[DataRepairSuggestion]:
         """
         Generate data repair suggestions based on error analyses.
 
@@ -168,9 +166,7 @@ class ValidationErrorRecovery:
         """Backward compatibility method."""
         return self.recovery_strategies.create_repair_suggestion(analysis, original_data)
 
-    def _generate_recovery_recommendations(
-        self, error_analyses: list[ValidationErrorAnalysis], repair_suggestions: list[DataRepairSuggestion]
-    ) -> list[str]:
+    def _generate_recovery_recommendations(self, error_analyses: list[ValidationErrorAnalysis], repair_suggestions: list[DataRepairSuggestion]) -> list[str]:
         """Backward compatibility method."""
         return self.error_handlers._generate_recovery_recommendations(error_analyses, repair_suggestions)
 

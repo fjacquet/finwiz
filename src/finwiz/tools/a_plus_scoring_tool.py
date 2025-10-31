@@ -82,10 +82,7 @@ class APlusScoringTool(BaseTool):
             # Calculate composite score with weights
             weights = self._get_scoring_weights(asset_type, market_regime)
             composite_score = (
-                fundamental_score * weights["fundamental"]
-                + technical_score * weights["technical"]
-                + quality_score * weights["quality"]
-                + risk_score * weights["risk"]
+                fundamental_score * weights["fundamental"] + technical_score * weights["technical"] + quality_score * weights["quality"] + risk_score * weights["risk"]
             )
 
             # Generate grade info
@@ -100,9 +97,7 @@ class APlusScoringTool(BaseTool):
             )
 
             # Generate A+ rationale
-            a_plus_rationale = self._generate_a_plus_rationale(
-                symbol, asset_type, composite_score, strengths, weaknesses, market_regime
-            )
+            a_plus_rationale = self._generate_a_plus_rationale(symbol, asset_type, composite_score, strengths, weaknesses, market_regime)
 
             # Calculate confidence level
             confidence_level = self._calculate_confidence_level(fundamental_data, market_regime, composite_score)
@@ -489,9 +484,7 @@ class APlusScoringTool(BaseTool):
         total = sum(weights.values())
         return {k: v / total for k, v in weights.items()}
 
-    def _analyze_strengths_weaknesses(
-        self, symbol: str, asset_type: str, data: dict[str, Any], scores: dict[str, float]
-    ) -> tuple[list[str], list[str]]:
+    def _analyze_strengths_weaknesses(self, symbol: str, asset_type: str, data: dict[str, Any], scores: dict[str, float]) -> tuple[list[str], list[str]]:
         """Analyze investment strengths and weaknesses."""
         strengths = []
         weaknesses = []
@@ -541,9 +534,7 @@ class APlusScoringTool(BaseTool):
 
         return strengths[:10], weaknesses[:10]
 
-    def _generate_a_plus_rationale(
-        self, symbol: str, asset_type: str, score: float, strengths: list[str], weaknesses: list[str], regime: MarketRegime
-    ) -> str:
+    def _generate_a_plus_rationale(self, symbol: str, asset_type: str, score: float, strengths: list[str], weaknesses: list[str], regime: MarketRegime) -> str:
         """Generate detailed A+ rationale."""
         if score >= 0.95:
             rationale = f"{symbol} achieves A+ status with a composite score of {score:.2f}. "

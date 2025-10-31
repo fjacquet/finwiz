@@ -135,10 +135,7 @@ async def main() -> None:
         if dashboard.positions_needing_attention:
             print("\n⚠️  Positions requiring attention:")
             for position in dashboard.positions_needing_attention:
-                print(
-                    f"    {position.symbol}: {position.deviation:+.1%} deviation "
-                    f"(target: {position.target_weight:.1%}, current: {position.current_weight:.1%})"
-                )
+                print(f"    {position.symbol}: {position.deviation:+.1%} deviation (target: {position.target_weight:.1%}, current: {position.current_weight:.1%})")
 
     except Exception as e:
         print(f"⚠️  Note: Portfolio drift check requires real price data. Error: {e}")

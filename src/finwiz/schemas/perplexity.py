@@ -46,9 +46,7 @@ class SonarArticle(BaseModel):
     published_date: Optional[str] = Field(None, description="Publication date (ISO format)")
     relevance_score: float = Field(0.0, ge=0.0, le=1.0, description="Relevance to query (0.0-1.0)")
     content_type: Literal["news", "filing", "analysis", "earnings", "regulatory"] = Field("news", description="Type of content")
-    analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field(
-        "general", description="Analysis context for this article"
-    )
+    analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field("general", description="Analysis context for this article")
 
     @validator("published_date")
     def validate_published_date(cls, v: Optional[str]) -> Optional[str]:
@@ -72,9 +70,7 @@ class SonarSearchResult(BaseModel):
     query: str = Field(..., min_length=1, max_length=500, description="Original search query")
     ticker: str = Field(..., pattern=r"^[A-Z0-9.-]{1,10}$", description="Asset ticker symbol")
     asset_type: Literal["stock", "etf", "crypto"] = Field(..., description="Asset type")
-    analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field(
-        "general", description="Type of analysis performed"
-    )
+    analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field("general", description="Type of analysis performed")
     results: list[SonarArticle] = Field(default_factory=list, description="Search results")
     total_results: int = Field(0, ge=0, description="Total number of results found")
     search_time_ms: int = Field(0, ge=0, description="Search execution time in milliseconds")
@@ -98,9 +94,7 @@ class PerplexitySearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=500, description="Search query")
     ticker: str = Field(..., pattern=r"^[A-Z0-9.-]{1,10}$", description="Asset ticker symbol")
     asset_type: Literal["stock", "etf", "crypto"] = Field(..., description="Asset type")
-    analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field(
-        "general", description="Type of analysis to perform"
-    )
+    analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field("general", description="Type of analysis to perform")
     max_results: int = Field(10, ge=1, le=50, description="Maximum results to return")
     search_filters: Optional[dict[str, str]] = Field(None, description="Additional search filters")
 
@@ -140,6 +134,4 @@ class PerplexityConfig(BaseModel):
         default_factory=lambda: {"site": "bloomberg.com,reuters.com,wsj.com,ft.com,cnbc.com", "date": "past_week"},
         description="Filters for financial news searches",
     )
-    sec_filing_filters: dict[str, str] = Field(
-        default_factory=lambda: {"site": "sec.gov", "filetype": "pdf,html"}, description="Filters for SEC filing searches"
-    )
+    sec_filing_filters: dict[str, str] = Field(default_factory=lambda: {"site": "sec.gov", "filetype": "pdf,html"}, description="Filters for SEC filing searches")

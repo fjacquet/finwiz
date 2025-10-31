@@ -206,9 +206,7 @@ class TwelveDataTool:
 
         try:
             response = await self.client.make_api_call("stoch", params)
-            return self.transformers.transform_stochastic_response(
-                response, symbol, interval, fastkperiod, slowkperiod, slowdperiod
-            )
+            return self.transformers.transform_stochastic_response(response, symbol, interval, fastkperiod, slowkperiod, slowdperiod)
 
         except Exception as e:
             logger.error(f"Error fetching Stochastic data for {symbol}: {e}")
@@ -271,14 +269,9 @@ class TwelveDataTool:
             rsi_data = macd_data = bollinger_data = stochastic_data = None
 
         # Determine overall signal
-        overall_signal, confidence, consensus = self.transformers.determine_overall_signal(
-            rsi_data, macd_data, bollinger_data, stochastic_data
-        )
+        overall_signal, confidence, consensus = self.transformers.determine_overall_signal(rsi_data, macd_data, bollinger_data, stochastic_data)
 
-        logger.info(
-            f"Comprehensive analysis completed for {symbol}: "
-            f"Signal={overall_signal}, Confidence={confidence:.2f}, Consensus={consensus}"
-        )
+        logger.info(f"Comprehensive analysis completed for {symbol}: Signal={overall_signal}, Confidence={confidence:.2f}, Consensus={consensus}")
 
         return TechnicalIndicatorSummary(
             symbol=symbol,

@@ -90,9 +90,7 @@ class TestMarketContextExtractor:
             screening_efficiency=6.0,
         )
 
-    def test_should_extract_market_regime_when_bull_market(
-        self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_extract_market_regime_when_bull_market(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult) -> None:
         """Test extraction of market regime from bull market discovery."""
         # Act
         regime = extractor.extract_market_regime(bull_market_discovery)
@@ -105,9 +103,7 @@ class TestMarketContextExtractor:
         assert regime.interest_rate_trend == "stable"
         assert regime.market_stress_level == "low"
 
-    def test_should_extract_market_regime_when_bear_market(
-        self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_extract_market_regime_when_bear_market(self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult) -> None:
         """Test extraction of market regime from bear market discovery."""
         # Act
         regime = extractor.extract_market_regime(bear_market_discovery)
@@ -120,9 +116,7 @@ class TestMarketContextExtractor:
         assert regime.interest_rate_trend == "rising"
         assert regime.market_stress_level == "high"
 
-    def test_should_extract_vix_indicators_when_low_volatility(
-        self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_extract_vix_indicators_when_low_volatility(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult) -> None:
         """Test VIX indicators extraction with low volatility."""
         # Act
         vix_indicators = extractor.extract_vix_indicators(bull_market_discovery)
@@ -134,9 +128,7 @@ class TestMarketContextExtractor:
         assert vix_indicators.vix_trend == "falling"  # Low stress + bull market
         assert 0 <= vix_indicators.vix_percentile <= 100
 
-    def test_should_extract_vix_indicators_when_high_volatility(
-        self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_extract_vix_indicators_when_high_volatility(self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult) -> None:
         """Test VIX indicators extraction with high volatility."""
         # Act
         vix_indicators = extractor.extract_vix_indicators(bear_market_discovery)
@@ -187,9 +179,7 @@ class TestMarketContextExtractor:
         percentile_50 = extractor._calculate_vix_percentile(50.0)
         assert percentile_50 >= 95.0
 
-    def test_should_extract_macro_indicators_when_stable_environment(
-        self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_extract_macro_indicators_when_stable_environment(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult) -> None:
         """Test macro indicators extraction in stable environment."""
         # Act
         macro = extractor.extract_macro_indicators(bull_market_discovery)
@@ -202,9 +192,7 @@ class TestMarketContextExtractor:
         assert macro.gdp_growth is None  # Not in schema yet
         assert macro.unemployment_rate is None  # Not in schema yet
 
-    def test_should_extract_macro_indicators_when_rising_rates(
-        self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_extract_macro_indicators_when_rising_rates(self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult) -> None:
         """Test macro indicators extraction with rising interest rates."""
         # Act
         macro = extractor.extract_macro_indicators(bear_market_discovery)
@@ -245,9 +233,7 @@ class TestMarketContextExtractor:
         assert extractor._estimate_interest_rate(falling_regime) == 4.5
         assert extractor._estimate_interest_rate(stable_regime) == 5.0
 
-    def test_should_assess_favorable_risk_environment(
-        self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_assess_favorable_risk_environment(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult) -> None:
         """Test risk environment assessment for favorable conditions."""
         # Arrange
         regime = extractor.extract_market_regime(bull_market_discovery)
@@ -260,9 +246,7 @@ class TestMarketContextExtractor:
         # Assert
         assert risk_env == "favorable"
 
-    def test_should_assess_challenging_risk_environment(
-        self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_assess_challenging_risk_environment(self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult) -> None:
         """Test risk environment assessment for challenging conditions."""
         # Arrange
         regime = extractor.extract_market_regime(bear_market_discovery)
@@ -275,9 +259,7 @@ class TestMarketContextExtractor:
         # Assert
         assert risk_env == "challenging"
 
-    def test_should_assess_neutral_risk_environment(
-        self, extractor: MarketContextExtractor, volatile_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_assess_neutral_risk_environment(self, extractor: MarketContextExtractor, volatile_market_discovery: APlusDiscoveryResult) -> None:
         """Test risk environment assessment for neutral conditions."""
         # Arrange
         regime = extractor.extract_market_regime(volatile_market_discovery)
@@ -290,9 +272,7 @@ class TestMarketContextExtractor:
         # Assert
         assert risk_env in ["neutral", "challenging"]  # Could be either based on factors
 
-    def test_should_generate_allocation_implications_for_bull_market(
-        self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_generate_allocation_implications_for_bull_market(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult) -> None:
         """Test allocation implications generation for bull market."""
         # Arrange
         regime = extractor.extract_market_regime(bull_market_discovery)
@@ -307,9 +287,7 @@ class TestMarketContextExtractor:
         assert any("bull" in imp.lower() or "growth" in imp.lower() for imp in implications)
         assert any("low volatility" in imp.lower() or "quality" in imp.lower() for imp in implications)
 
-    def test_should_generate_allocation_implications_for_bear_market(
-        self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_generate_allocation_implications_for_bear_market(self, extractor: MarketContextExtractor, bear_market_discovery: APlusDiscoveryResult) -> None:
         """Test allocation implications generation for bear market."""
         # Arrange
         regime = extractor.extract_market_regime(bear_market_discovery)
@@ -325,9 +303,7 @@ class TestMarketContextExtractor:
         assert any("extreme" in imp.lower() or "risk reduction" in imp.lower() for imp in implications)
         assert any("challenging" in imp.lower() or "conservative" in imp.lower() for imp in implications)
 
-    def test_should_generate_market_context_summary_when_complete_data(
-        self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult
-    ) -> None:
+    def test_should_generate_market_context_summary_when_complete_data(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult) -> None:
         """Test market context summary generation with complete data."""
         # Act
         summary = extractor.get_market_context_summary(bull_market_discovery)
@@ -392,9 +368,7 @@ class TestMarketContextExtractor:
         assert vix is None
         assert macro is None
 
-    def test_should_log_extraction_operations(
-        self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult, mocker
-    ) -> None:
+    def test_should_log_extraction_operations(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult, mocker) -> None:
         """Test that extraction operations are properly logged."""
         # Arrange
         mock_logger = mocker.Mock()

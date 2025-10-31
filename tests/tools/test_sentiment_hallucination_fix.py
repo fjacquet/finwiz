@@ -93,8 +93,4 @@ class TestSentimentHallucinationFix:
                     url = article["url"]
                     # Should not contain obvious fake patterns
                     assert "xyz12345" not in url
-                    assert not any(
-                        fake_pattern in url
-                        for fake_pattern in ["-challenges", "-upgrade", "-analysis", "-institutional-adoption"]
-                        if url.endswith(fake_pattern)
-                    )
+                    assert not any(fake_pattern in url for fake_pattern in ["-challenges", "-upgrade", "-analysis", "-institutional-adoption"] if url.endswith(fake_pattern))

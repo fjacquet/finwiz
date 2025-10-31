@@ -259,15 +259,11 @@ class FeedbackLearningService:
             logger.error(f"Failed to rollback criteria adjustment: {str(e)}")
             return False
 
-    def _identify_success_patterns(
-        self, user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]
-    ) -> list[str]:
+    def _identify_success_patterns(self, user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]) -> list[str]:
         """Identify patterns in successful recommendations."""
         return self.insights.identify_success_patterns(user_feedback, performance_feedback)
 
-    def _identify_failure_patterns(
-        self, user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]
-    ) -> list[str]:
+    def _identify_failure_patterns(self, user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]) -> list[str]:
         """Identify patterns in failed recommendations."""
         # This would be implemented in the insights module
         patterns = []

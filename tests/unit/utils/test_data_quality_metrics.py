@@ -4,7 +4,6 @@ Unit tests for DataQualityMetrics enhancements.
 Tests the field-level tracking functionality added in Task 1.2.
 """
 
-
 from finwiz.utils.data_quality_metrics import DataQualityMetrics
 
 

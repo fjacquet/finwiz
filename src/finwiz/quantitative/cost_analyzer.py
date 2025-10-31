@@ -351,10 +351,7 @@ class CostAnalyzer:
         impact_percentage = impact_bps / 10000
         impact_cost = trade_value * impact_percentage
 
-        self.logger.debug(
-            f"Market impact for {symbol}: {impact_bps:.1f} bps "
-            f"({trade_size_percentage:.2f}% of daily volume), cost: ${impact_cost:.2f}"
-        )
+        self.logger.debug(f"Market impact for {symbol}: {impact_bps:.1f} bps ({trade_size_percentage:.2f}% of daily volume), cost: ${impact_cost:.2f}")
 
         return MarketImpactEstimate(
             symbol=symbol,
@@ -397,18 +394,12 @@ class CostAnalyzer:
         cost_percentage = (total_costs / portfolio.total_value * 100) if portfolio.total_value > 0 else 0.0
 
         # Generate recommendation
-        recommendation, rationale = self._generate_cost_benefit_recommendation(
-            total_costs, expected_benefit, cost_percentage, break_even_days
-        )
+        recommendation, rationale = self._generate_cost_benefit_recommendation(total_costs, expected_benefit, cost_percentage, break_even_days)
 
         # Generate alternative approaches
         alternatives = self._generate_alternative_approaches(total_costs, cost_percentage, trade_recommendations)
 
-        self.logger.info(
-            f"Cost-benefit analysis: ${total_costs:.2f} cost, "
-            f"${expected_benefit:.2f} annual benefit, "
-            f"{break_even_days} days break-even"
-        )
+        self.logger.info(f"Cost-benefit analysis: ${total_costs:.2f} cost, ${expected_benefit:.2f} annual benefit, {break_even_days} days break-even")
 
         return CostBenefitAnalysis(
             total_rebalancing_cost=total_costs,
@@ -479,9 +470,7 @@ class CostAnalyzer:
                 total_commission += commission
         return total_commission
 
-    def _calculate_total_spread_costs(
-        self, trade_recommendations: list[TradeRecommendation], market_data: dict[str, Any] | None
-    ) -> float:
+    def _calculate_total_spread_costs(self, trade_recommendations: list[TradeRecommendation], market_data: dict[str, Any] | None) -> float:
         """Calculate total spread costs for all trades."""
         total_spread = 0.0
         for trade in trade_recommendations:
@@ -555,28 +544,16 @@ class CostAnalyzer:
         """Generate cost-benefit recommendation and rationale."""
         if cost_percentage > 2.0:
             recommendation = "REJECT"
-            rationale = (
-                f"Transaction costs of {cost_percentage:.1f}% are excessive. "
-                "Consider alternative rebalancing approaches or delay until larger deviations occur."
-            )
+            rationale = f"Transaction costs of {cost_percentage:.1f}% are excessive. Consider alternative rebalancing approaches or delay until larger deviations occur."
         elif break_even_days and break_even_days > 365:
             recommendation = "DELAY"
-            rationale = (
-                f"Break-even period of {break_even_days} days is too long. "
-                "Consider waiting for larger deviations or using new contributions to rebalance."
-            )
+            rationale = f"Break-even period of {break_even_days} days is too long. Consider waiting for larger deviations or using new contributions to rebalance."
         elif cost_percentage > 1.0:
             recommendation = "MODIFY"
-            rationale = (
-                f"Transaction costs of {cost_percentage:.1f}% are moderate. "
-                "Consider rebalancing only the most deviated positions or using gradual rebalancing."
-            )
+            rationale = f"Transaction costs of {cost_percentage:.1f}% are moderate. Consider rebalancing only the most deviated positions or using gradual rebalancing."
         else:
             recommendation = "PROCEED"
-            rationale = (
-                f"Transaction costs of {cost_percentage:.1f}% are reasonable. "
-                f"Expected to break even in {break_even_days or 'N/A'} days."
-            )
+            rationale = f"Transaction costs of {cost_percentage:.1f}% are reasonable. Expected to break even in {break_even_days or 'N/A'} days."
 
         return recommendation, rationale
 

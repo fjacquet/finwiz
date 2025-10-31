@@ -49,9 +49,7 @@ class StockCrewExport(CrewExportBase):
     # Analysis Results
     fundamental_analysis: TenKInsight = Field(..., description="10-K fundamental analysis insights")
     risk_assessment: RiskAssessmentStandardized = Field(..., description="Standardized risk assessment")
-    technical_indicators: dict[str, Any] = Field(
-        default_factory=dict, description="Technical analysis indicators (RSI, MACD, etc.)"
-    )
+    technical_indicators: dict[str, Any] = Field(default_factory=dict, description="Technical analysis indicators (RSI, MACD, etc.)")
 
     # Scores and Grades
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Overall composite score")
@@ -149,9 +147,7 @@ class DeepAnalysisCrewExport(CrewExportBase):
     crew_name: str = Field(default="deep_analysis_crew")
 
     # Comprehensive Analysis
-    detailed_analysis: dict[str, Any] = Field(
-        default_factory=dict, description="Detailed analysis findings across multiple dimensions"
-    )
+    detailed_analysis: dict[str, Any] = Field(default_factory=dict, description="Detailed analysis findings across multiple dimensions")
     risk_assessment: RiskAssessmentStandardized = Field(..., description="Standardized risk assessment")
 
     # Scores and Grades
@@ -195,9 +191,7 @@ class DiscoveryCrewExport(CrewExportBase):
     asset_class: str = Field(default="N/A", description="Multiple asset classes analyzed")
 
     # Discovery Results
-    opportunities: list[DiscoveryOpportunity] = Field(
-        default_factory=list, max_length=10, description="Top A+ opportunities discovered"
-    )
+    opportunities: list[DiscoveryOpportunity] = Field(default_factory=list, max_length=10, description="Top A+ opportunities discovered")
     screening_criteria: dict[str, Any] = Field(default_factory=dict, description="Criteria used for A+ screening")
     market_context: str = Field(..., min_length=50, description="Market conditions during discovery")
 
@@ -229,9 +223,7 @@ class RebalancingCrewExport(CrewExportBase):
     opportunities_discovered: int = Field(..., ge=0, description="Number of A+ opportunities found")
 
     # Current State
-    current_allocation: dict[str, float] = Field(
-        default_factory=dict, description="Current portfolio allocation by ticker (percentages)"
-    )
+    current_allocation: dict[str, float] = Field(default_factory=dict, description="Current portfolio allocation by ticker (percentages)")
     current_total_value: float = Field(..., gt=0, description="Current total portfolio value")
 
     # Optimization Results
@@ -271,9 +263,7 @@ class ConsolidatedReportExport(BaseModel):
     stock_analyses: list[StockCrewExport] = Field(default_factory=list, description="All stock analysis results")
     etf_analyses: list[ETFCrewExport] = Field(default_factory=list, description="All ETF analysis results")
     crypto_analyses: list[CryptoCrewExport] = Field(default_factory=list, description="All crypto analysis results")
-    deep_analyses: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult] = Field(
-        default_factory=list, description="All deep analysis results (CrewAI or Python)"
-    )
+    deep_analyses: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult] = Field(default_factory=list, description="All deep analysis results (CrewAI or Python)")
     discovery_results: Optional[DiscoveryCrewExport] = Field(None, description="Investment discovery results (single)")
     rebalancing_results: Optional[RebalancingCrewExport] = Field(None, description="Portfolio rebalancing results (single)")
 
@@ -283,9 +273,7 @@ class ConsolidatedReportExport(BaseModel):
     backtesting_data: Optional[dict[str, Any]] = Field(None, description="Backtesting results")
 
     # Execution Metadata
-    crew_execution_status: dict[str, str] = Field(
-        default_factory=dict, description="Execution status for each crew (completed/failed)"
-    )
+    crew_execution_status: dict[str, str] = Field(default_factory=dict, description="Execution status for each crew (completed/failed)")
     total_execution_time: float = Field(..., ge=0.0, description="Total execution time in seconds")
 
     # Error Tracking

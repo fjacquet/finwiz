@@ -42,9 +42,7 @@ class TestReportDataQuality:
 
         filing_url = generator.get_filing_url("INVALID", "10-K")
 
-        tracker.track_data_source(
-            source="sec_filings", status="unavailable", age_hours=0, error_message="No filings found for INVALID"
-        )
+        tracker.track_data_source(source="sec_filings", status="unavailable", age_hours=0, error_message="No filings found for INVALID")
 
         summary = tracker.get_availability_summary()
 

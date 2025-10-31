@@ -242,9 +242,7 @@ class TestStockScreener:
         """Test screening with custom symbol list."""
         custom_symbols = ["AAPL", "GOOGL", "MSFT"]
 
-        results, summary = screener.screen_stocks(
-            filters=sample_filters, universe=ScreeningUniverse.CUSTOM, custom_symbols=custom_symbols, max_results=10
-        )
+        results, summary = screener.screen_stocks(filters=sample_filters, universe=ScreeningUniverse.CUSTOM, custom_symbols=custom_symbols, max_results=10)
 
         assert len(results) <= len(custom_symbols)
         assert summary.total_stocks_screened == len(custom_symbols)
@@ -309,9 +307,7 @@ class TestStockScreener:
 
     def test_create_custom_screen(self, screener, sample_filters):
         """Test creating custom screening configuration."""
-        custom_screen = screener.create_custom_screen(
-            name="Value Screen", filters=sample_filters, description="Screen for value stocks"
-        )
+        custom_screen = screener.create_custom_screen(name="Value Screen", filters=sample_filters, description="Screen for value stocks")
 
         assert isinstance(custom_screen, dict)
         assert custom_screen["name"] == "Value Screen"

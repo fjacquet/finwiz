@@ -335,9 +335,7 @@ class TestFlowSequence:
         mock_crew_instance = mocker.Mock()
         mock_crew_result = mocker.Mock()
         mock_pydantic = mocker.Mock()
-        mock_pydantic.configure_mock(
-            **{"fundamental_score": 0.85, "technical_score": 0.90, "risk_score": 2.0, "composite_score": 0.87}
-        )
+        mock_pydantic.configure_mock(**{"fundamental_score": 0.85, "technical_score": 0.90, "risk_score": 2.0, "composite_score": 0.87})
         mock_crew_result.pydantic = mock_pydantic
         mock_crew_result.raw = None
         mock_crew_instance.crew().kickoff.return_value = mock_crew_result

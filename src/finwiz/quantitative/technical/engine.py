@@ -139,10 +139,7 @@ class TechnicalAnalysisEngine:
             analysis_duration_ms=duration_ms,
         )
 
-        self.logger.info(
-            f"Technical analysis complete for {symbol}: {overall_signal.value} "
-            f"(confidence: {overall_confidence:.2f}, {len(confluence_zones)} confluence zones)"
-        )
+        self.logger.info(f"Technical analysis complete for {symbol}: {overall_signal.value} (confidence: {overall_confidence:.2f}, {len(confluence_zones)} confluence zones)")
 
         return result
 
@@ -209,13 +206,7 @@ class TechnicalAnalysisEngine:
             avg_strength_score = np.mean(strengths)
 
             if avg_strength_score >= 3:  # At least moderate strength
-                overall_strength = (
-                    SignalStrength.VERY_STRONG
-                    if avg_strength_score >= 4.5
-                    else SignalStrength.STRONG
-                    if avg_strength_score >= 3.5
-                    else SignalStrength.MODERATE
-                )
+                overall_strength = SignalStrength.VERY_STRONG if avg_strength_score >= 4.5 else SignalStrength.STRONG if avg_strength_score >= 3.5 else SignalStrength.MODERATE
 
                 confluence_zones.append(
                     ConfluenceZone(
@@ -239,13 +230,7 @@ class TechnicalAnalysisEngine:
             avg_strength_score = np.mean(strengths)
 
             if avg_strength_score >= 3:  # At least moderate strength
-                overall_strength = (
-                    SignalStrength.VERY_STRONG
-                    if avg_strength_score >= 4.5
-                    else SignalStrength.STRONG
-                    if avg_strength_score >= 3.5
-                    else SignalStrength.MODERATE
-                )
+                overall_strength = SignalStrength.VERY_STRONG if avg_strength_score >= 4.5 else SignalStrength.STRONG if avg_strength_score >= 3.5 else SignalStrength.MODERATE
 
                 confluence_zones.append(
                     ConfluenceZone(

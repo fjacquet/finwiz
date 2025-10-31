@@ -141,21 +141,9 @@ class FinWizArchitectureValidator:
         has_method = "get_tools_for_asset_class" in content
 
         # Check for asset class routing (multiple patterns)
-        has_stock_routing = (
-            'asset_class.lower() == "stock"' in content
-            or 'asset_class == "stock"' in content
-            or 'asset_class_lower == "stock"' in content
-        )
-        has_etf_routing = (
-            'asset_class.lower() == "etf"' in content
-            or 'asset_class == "etf"' in content
-            or 'asset_class_lower == "etf"' in content
-        )
-        has_crypto_routing = (
-            'asset_class.lower() == "crypto"' in content
-            or 'asset_class == "crypto"' in content
-            or 'asset_class_lower == "crypto"' in content
-        )
+        has_stock_routing = 'asset_class.lower() == "stock"' in content or 'asset_class == "stock"' in content or 'asset_class_lower == "stock"' in content
+        has_etf_routing = 'asset_class.lower() == "etf"' in content or 'asset_class == "etf"' in content or 'asset_class_lower == "etf"' in content
+        has_crypto_routing = 'asset_class.lower() == "crypto"' in content or 'asset_class == "crypto"' in content or 'asset_class_lower == "crypto"' in content
 
         passed = has_method and has_stock_routing and has_etf_routing and has_crypto_routing
 
@@ -173,9 +161,7 @@ class FinWizArchitectureValidator:
             ValidationResult(
                 check_name="Dynamic tool routing",
                 passed=passed,
-                message="DeepAnalysisCrew implements dynamic tool routing"
-                if passed
-                else "DeepAnalysisCrew missing dynamic tool routing",
+                message="DeepAnalysisCrew implements dynamic tool routing" if passed else "DeepAnalysisCrew missing dynamic tool routing",
                 requirement_refs=["1.2", "1.3", "1.4"],
                 remediation="Implement get_tools_for_asset_class() with stock/etf/crypto routing" if not passed else None,
                 details=details,
@@ -330,10 +316,7 @@ class FinWizArchitectureValidator:
                 passed=passed,
                 message="Flow sequence matches business logic" if passed else "Flow sequence does not match expected order",
                 requirement_refs=["2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"],
-                remediation="Update flow listeners to match: validate → portfolio → deep analysis → "
-                "discovery → rebalancing → report"
-                if not passed
-                else None,
+                remediation="Update flow listeners to match: validate → portfolio → deep analysis → discovery → rebalancing → report" if not passed else None,
                 details=details,
             )
         )
@@ -423,12 +406,7 @@ class FinWizArchitectureValidator:
         content = flow_file.read_text()
 
         # Check that discovery crews listen to analyze_and_update_portfolio
-        discovery_correct = (
-            '@listen("analyze_and_update_portfolio")' in content
-            and "def check_stock" in content
-            and "def check_etf" in content
-            and "def check_crypto" in content
-        )
+        discovery_correct = '@listen("analyze_and_update_portfolio")' in content and "def check_stock" in content and "def check_etf" in content and "def check_crypto" in content
 
         # Check that rebalancing listens to check_investment_discovery
         rebalancing_correct = "check_investment_discovery" in content and "check_portfolio_rebalancing" in content
@@ -447,10 +425,7 @@ class FinWizArchitectureValidator:
                 passed=passed,
                 message="Listener dependencies are correct" if passed else "Listener dependencies are incorrect",
                 requirement_refs=["2.9", "2.10"],
-                remediation="Update listeners: discovery after analyze_and_update_portfolio, "
-                "rebalancing after check_investment_discovery"
-                if not passed
-                else None,
+                remediation="Update listeners: discovery after analyze_and_update_portfolio, rebalancing after check_investment_discovery" if not passed else None,
                 details=details,
             )
         )
@@ -543,9 +518,7 @@ class FinWizArchitectureValidator:
             content = tasks_file.read_text()
 
             # Check for REQUIRED ENUM VALUES section
-            has_enum_section = (
-                "REQUIRED ENUM VALUES" in content or "Required Enum Values" in content or "required enum values" in content
-            )
+            has_enum_section = "REQUIRED ENUM VALUES" in content or "Required Enum Values" in content or "required enum values" in content
 
             if not has_enum_section:
                 crew_name = tasks_file.parent.parent.name
@@ -557,9 +530,7 @@ class FinWizArchitectureValidator:
             ValidationResult(
                 check_name="Enum documentation",
                 passed=passed,
-                message=f"All {len(tasks_files)} tasks.yaml files have enum documentation"
-                if passed
-                else f"{len(missing_enum_docs)} tasks.yaml files missing enum documentation",
+                message=f"All {len(tasks_files)} tasks.yaml files have enum documentation" if passed else f"{len(missing_enum_docs)} tasks.yaml files missing enum documentation",
                 requirement_refs=["4.18"],
                 remediation="Add 'REQUIRED ENUM VALUES' section to all tasks.yaml files" if not passed else None,
                 details=[f"Missing in: {crew}" for crew in missing_enum_docs],
@@ -625,9 +596,7 @@ class FinWizArchitectureValidator:
             ValidationResult(
                 check_name="Test framework",
                 passed=passed,
-                message=f"All {len(test_files)} test files use pytest-mock"
-                if passed
-                else f"Found {len(violations)} banned mock library violations",
+                message=f"All {len(test_files)} test files use pytest-mock" if passed else f"Found {len(violations)} banned mock library violations",
                 requirement_refs=["6.7", "6.8", "6.9"],
                 remediation="Replace banned mock library with pytest-mock (mocker fixture)" if not passed else None,
                 details=violations[:10],  # Show first 10 violations
@@ -689,9 +658,7 @@ class FinWizArchitectureValidator:
             ValidationResult(
                 check_name="File sizes",
                 passed=passed,
-                message=f"All {len(py_files)} Python files under 400 lines"
-                if passed
-                else f"Found {len(oversized_files)} files exceeding 400 lines",
+                message=f"All {len(py_files)} Python files under 400 lines" if passed else f"Found {len(oversized_files)} files exceeding 400 lines",
                 requirement_refs=["6.10", "6.11"],
                 remediation="Refactor oversized files into smaller modules" if not passed else None,
                 details=oversized_files[:10],  # Show first 10 oversized files
@@ -752,11 +719,7 @@ class FinWizArchitectureValidator:
                 lines = content.split("\n")
                 for i, line in enumerate(lines, 1):
                     # Look for HTML string concatenation
-                    if (
-                        ("<" in line and ">" in line and "+" in line)
-                        or ('f"<' in line or "f'<" in line)
-                        or ('f"""<' in line or "f'''<" in line)
-                    ):
+                    if ("<" in line and ">" in line and "+" in line) or ('f"<' in line or "f'<" in line) or ('f"""<' in line or "f'''<" in line):
                         # Exclude comments and docstrings
                         stripped = line.strip()
                         if not stripped.startswith("#") and not stripped.startswith('"""'):
@@ -790,9 +753,7 @@ class FinWizArchitectureValidator:
             ValidationResult(
                 check_name="HTML generation",
                 passed=passed,
-                message=f"All {len(html_generators)} HTML generators use BeautifulSoup"
-                if passed
-                else "Some HTML generators use string concatenation",
+                message=f"All {len(html_generators)} HTML generators use BeautifulSoup" if passed else "Some HTML generators use string concatenation",
                 requirement_refs=["6.12", "6.13"],
                 remediation="Replace HTML string concatenation with BeautifulSoup" if not passed else None,
                 details=details[:10],
@@ -960,9 +921,7 @@ class FinWizArchitectureValidator:
             ValidationResult(
                 check_name="Feature flags documentation",
                 passed=passed,
-                message=f"All {len(likely_feature_flags)} feature flags documented"
-                if passed
-                else f"{len(undocumented_flags)} feature flags not documented",
+                message=f"All {len(likely_feature_flags)} feature flags documented" if passed else f"{len(undocumented_flags)} feature flags not documented",
                 requirement_refs=["7.4", "7.5"],
                 remediation="Add missing feature flags to .env.example with descriptions" if not passed else None,
                 details=[f"Undocumented: {flag}" for flag in sorted(undocumented_flags)],

@@ -29,6 +29,7 @@ from finwiz.utils.feature_flags import is_feature_enabled
 __all__ = [
     "kickoff",
     "plot",
+    "migrate",
     "FinwizFlow",
     "FinwizState",
     "is_feature_enabled",
@@ -45,6 +46,29 @@ __all__ = [
 logger = get_logger(__name__)
 
 
+def migrate() -> int:
+    """
+    Run Supabase migration CLI.
+
+    Migrates file-based exports to Supabase database.
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+
+    """
+    from finwiz.supabase.cli.migrate import main as migrate_main
+
+    return migrate_main()
+
+
 if __name__ == "__main__":
+    import sys
+
+    # Check if migration command is requested
+    if len(sys.argv) > 1 and sys.argv[1] == "migrate":
+        # Remove 'migrate' from args and run migration CLI
+        sys.argv.pop(1)
+        sys.exit(migrate())
+
     logger.info("main.py executed as script")
     kickoff()

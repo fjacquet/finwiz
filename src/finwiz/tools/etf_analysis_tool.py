@@ -158,17 +158,10 @@ class ETFAnalysisTool(BaseTool):
                 results["metrics"]["expense_impact"] = expense_impact
                 results["metrics"]["expense_ratio_pct"] = input_data.expense_ratio * 100
 
-                logger.debug(
-                    f"Expense impact: {expense_impact['annual_drag'] * 100:.2f}% annual, "
-                    f"{expense_impact['cumulative_cost'] * 100:.1f}% over 10 years"
-                )
+                logger.debug(f"Expense impact: {expense_impact['annual_drag'] * 100:.2f}% annual, {expense_impact['cumulative_cost'] * 100:.1f}% over 10 years")
 
             # Liquidity score
-            if (
-                input_data.avg_daily_volume is not None
-                and input_data.bid_ask_spread_pct is not None
-                and input_data.market_cap is not None
-            ):
+            if input_data.avg_daily_volume is not None and input_data.bid_ask_spread_pct is not None and input_data.market_cap is not None:
                 liquidity = calculate_liquidity_score(
                     avg_daily_volume=input_data.avg_daily_volume,
                     bid_ask_spread_pct=input_data.bid_ask_spread_pct,
@@ -187,17 +180,10 @@ class ETFAnalysisTool(BaseTool):
                 results["metrics"]["concentration"] = concentration
                 results["ratings"]["concentration"] = concentration["concentration_rating"]
 
-                logger.debug(
-                    f"Concentration: Top 10 = {concentration['top_n_concentration'] * 100:.1f}%, "
-                    f"Rating = {concentration['concentration_rating']}"
-                )
+                logger.debug(f"Concentration: Top 10 = {concentration['top_n_concentration'] * 100:.1f}%, Rating = {concentration['concentration_rating']}")
 
             # Overall efficiency score
-            if (
-                "tracking_error" in results["metrics"]
-                and "expense_ratio_pct" in results["metrics"]
-                and "liquidity" in results["metrics"]
-            ):
+            if "tracking_error" in results["metrics"] and "expense_ratio_pct" in results["metrics"] and "liquidity" in results["metrics"]:
                 efficiency = calculate_etf_efficiency_score(
                     tracking_error=results["metrics"]["tracking_error"],
                     expense_ratio=input_data.expense_ratio,

@@ -80,9 +80,7 @@ class TestAPlusScoringTool:
 
     def test_should_score_excellent_etf_as_a_plus_when_all_criteria_met(self):
         """Test A+ scoring for excellent ETF."""
-        result = self.tool._run(
-            symbol="VTI", asset_type="etf", fundamental_data=self.sample_etf_data, market_context={"vix": 15, "inflation": 2.5}
-        )
+        result = self.tool._run(symbol="VTI", asset_type="etf", fundamental_data=self.sample_etf_data, market_context={"vix": 15, "inflation": 2.5})
 
         assert result["symbol"] == "VTI"
         assert result["asset_type"] == "etf"
@@ -93,9 +91,7 @@ class TestAPlusScoringTool:
 
     def test_should_score_excellent_stock_as_a_plus_when_fundamentals_strong(self):
         """Test A+ scoring for excellent stock."""
-        result = self.tool._run(
-            symbol="AAPL", asset_type="stock", fundamental_data=self.sample_stock_data, market_context={"vix": 18, "inflation": 3.0}
-        )
+        result = self.tool._run(symbol="AAPL", asset_type="stock", fundamental_data=self.sample_stock_data, market_context={"vix": 18, "inflation": 3.0})
 
         assert result["symbol"] == "AAPL"
         assert result["asset_type"] == "stock"
@@ -126,9 +122,7 @@ class TestAPlusScoringTool:
         bear_market_context = {"vix": 35, "inflation": 6.0, "rate_change_6m": 2.0}
 
         # Test with bear market context
-        result = self.tool._run(
-            symbol="SPY", asset_type="etf", fundamental_data=self.sample_etf_data, market_context=bear_market_context
-        )
+        result = self.tool._run(symbol="SPY", asset_type="etf", fundamental_data=self.sample_etf_data, market_context=bear_market_context)
 
         # Should still process but with tighter criteria
         assert result["symbol"] == "SPY"
@@ -299,9 +293,7 @@ class TestAPlusScoringTool:
     def test_should_validate_input_schema_when_creating_input_object(self):
         """Test input schema validation."""
         # Valid input
-        valid_input = APlusScoringInput(
-            symbol="AAPL", asset_type="stock", fundamental_data={"roe": 0.25}, market_context={"vix": 20}
-        )
+        valid_input = APlusScoringInput(symbol="AAPL", asset_type="stock", fundamental_data={"roe": 0.25}, market_context={"vix": 20})
 
         assert valid_input.symbol == "AAPL"
         assert valid_input.asset_type == "stock"

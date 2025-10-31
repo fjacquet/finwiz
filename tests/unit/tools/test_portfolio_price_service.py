@@ -53,9 +53,7 @@ class TestPortfolioPriceService:
         mocker.patch("finwiz.tools.portfolio_price_service.YahooFinanceTickerInfoTool")
         mocker.patch("finwiz.tools.portfolio_price_service.EnhancedCryptoAnalysisTool")
 
-        config = PriceServiceConfig(
-            default_cache_ttl=300, max_concurrent_requests=5, request_timeout=10.0, retry_attempts=2, retry_delay=0.1
-        )
+        config = PriceServiceConfig(default_cache_ttl=300, max_concurrent_requests=5, request_timeout=10.0, retry_attempts=2, retry_delay=0.1)
 
         service = PortfolioPriceService(config=config, cache_manager=mock_cache_manager)
         return service

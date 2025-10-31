@@ -1107,7 +1107,7 @@ export CACHE_BACKEND=file
 
 ### Getting Help
 
-- **Documentation**: [docs/README.md](README.md)
+- **Documentation**: [docs/README.md](index.md)
 - **Developer Guide**: [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
 - **API Reference**: [API_REFERENCE.md](API_REFERENCE.md)
 - **GitHub Issues**: Report bugs or request features

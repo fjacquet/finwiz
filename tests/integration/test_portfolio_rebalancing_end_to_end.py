@@ -79,9 +79,7 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_complete_full_rebalancing_workflow_with_real_components(
-        self, mocker, realistic_portfolio_config, realistic_price_data
-    ):
+    async def test_should_complete_full_rebalancing_workflow_with_real_components(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test complete workflow using real component instances."""
         # Arrange - Use real components with mocked external dependencies
         with mocker.patch("finwiz.tools.portfolio_price_service.PortfolioPriceService") as mock_price_service_class:
@@ -120,9 +118,7 @@ class TestPortfolioRebalancingEndToEnd:
                 assert len(result.current_portfolio.weightings) == 5
 
                 # Verify realistic calculations
-                expected_total_value = (
-                    150.0 * 175.0 + 25.0 * 2800.0 + 100.0 * 320.0 + 50.0 * 220.0 + 75.0 * 450.0
-                )  # Should be 162,500
+                expected_total_value = 150.0 * 175.0 + 25.0 * 2800.0 + 100.0 * 320.0 + 50.0 * 220.0 + 75.0 * 450.0  # Should be 162,500
                 assert abs(result.current_portfolio.total_value - expected_total_value) < 1.0
 
                 # Verify rebalancing recommendations are reasonable
@@ -178,9 +174,7 @@ class TestPortfolioRebalancingEndToEnd:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_should_handle_different_rebalancing_methods_consistently(
-        self, mocker, realistic_portfolio_config, realistic_price_data
-    ):
+    async def test_should_handle_different_rebalancing_methods_consistently(self, mocker, realistic_portfolio_config, realistic_price_data):
         """Test that different rebalancing methods produce consistent results."""
         # Arrange
         methods_to_test = [RebalancingMethod.MINIMIZE_TRADES, RebalancingMethod.MINIMIZE_COSTS, RebalancingMethod.RISK_AWARE]
@@ -268,9 +262,7 @@ class TestPortfolioRebalancingEndToEnd:
 
                 # Assert
                 assert result is not None
-                assert len(result.trade_recommendations) == 0 or all(
-                    trade.action == TradeAction.HOLD for trade in result.trade_recommendations
-                )
+                assert len(result.trade_recommendations) == 0 or all(trade.action == TradeAction.HOLD for trade in result.trade_recommendations)
                 assert result.overall_recommendation in [RebalancingRecommendation.NO_ACTION, RebalancingRecommendation.MONITOR]
                 assert result.execution_summary.total_trades_required == 0
 
@@ -478,9 +470,7 @@ class TestPortfolioRebalancingEndToEnd:
                 )
 
                 # Act - Run concurrent analyses
-                tasks = [
-                    orchestrator.rebalance_portfolio(config, portfolio_id=f"concurrent-{i}") for i, config in enumerate(configs)
-                ]
+                tasks = [orchestrator.rebalance_portfolio(config, portfolio_id=f"concurrent-{i}") for i, config in enumerate(configs)]
                 results = await asyncio.gather(*tasks)
 
                 # Assert
@@ -571,9 +561,7 @@ class TestPortfolioRebalancingEndToEnd:
                 assert result is not None
 
                 # Portfolio value should match manual calculation
-                expected_total = sum(
-                    holding.shares * realistic_price_data[holding.symbol].price for holding in realistic_portfolio_config.holdings
-                )
+                expected_total = sum(holding.shares * realistic_price_data[holding.symbol].price for holding in realistic_portfolio_config.holdings)
                 assert abs(result.current_portfolio.total_value - expected_total) < 1.0
 
                 # Weightings should sum to 1.0

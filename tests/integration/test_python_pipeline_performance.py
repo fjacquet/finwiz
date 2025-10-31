@@ -267,10 +267,7 @@ class TestPythonPipelinePerformance:
 
         # Process batches concurrently
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            future_to_batch = {
-                executor.submit(analyze_portfolio_with_python, batch, f"concurrent_test_{i}_{int(time.time())}"): i
-                for i, batch in enumerate(batches)
-            }
+            future_to_batch = {executor.submit(analyze_portfolio_with_python, batch, f"concurrent_test_{i}_{int(time.time())}"): i for i, batch in enumerate(batches)}
 
             batch_results = []
             for future in concurrent.futures.as_completed(future_to_batch):

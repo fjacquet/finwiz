@@ -195,9 +195,7 @@ class TestPythonPipelineEndToEnd:
 
         portfolio_review = PortfolioReview(as_of=datetime.now(), base_currency="USD", holdings=sample_portfolio_holdings)
 
-        report_path = generate_python_report(
-            portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id
-        )
+        report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 
         # Verify report was generated
         assert report_path is not None
@@ -392,9 +390,7 @@ class TestPythonPipelineEndToEnd:
 
         portfolio_review = PortfolioReview(as_of=datetime.now(), base_currency="USD", holdings=sample_portfolio_holdings)
 
-        report_path = generate_python_report(
-            portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id
-        )
+        report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 
         # Verify final report contains actual data, not placeholders (Requirements 0.25, 0.26)
         assert report_path is not None

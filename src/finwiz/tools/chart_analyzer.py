@@ -392,9 +392,7 @@ class ChartAnalyzer:
             volume_trend = "stable"
 
         # Check volume confirmation
-        volume_confirmation = (
-            "volume confirmation" in analysis_lower or "confirmed by volume" in analysis_lower or "strong volume" in analysis_lower
-        )
+        volume_confirmation = "volume confirmation" in analysis_lower or "confirmed by volume" in analysis_lower or "strong volume" in analysis_lower
 
         # Extract unusual volume periods
         unusual_periods = []

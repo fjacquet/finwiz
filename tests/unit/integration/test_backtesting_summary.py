@@ -98,9 +98,7 @@ class TestBacktestingSummaryGeneration:
 
         return [result1, result2]
 
-    def test_should_generate_summary_with_all_required_fields(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_generate_summary_with_all_required_fields(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test that summary contains all required fields."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -114,9 +112,7 @@ class TestBacktestingSummaryGeneration:
         assert hasattr(summary, "best_performer")
         assert hasattr(summary, "worst_performer")
 
-    def test_should_calculate_total_candidates_correctly(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_calculate_total_candidates_correctly(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test total candidates calculation across multiple results."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -126,9 +122,7 @@ class TestBacktestingSummaryGeneration:
         # 3 candidates from result1 + 2 from result2 = 5 total
         assert summary.total_candidates_tested == 5
 
-    def test_should_calculate_weighted_average_metrics(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_calculate_weighted_average_metrics(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test weighted average calculation based on number of candidates."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -145,9 +139,7 @@ class TestBacktestingSummaryGeneration:
         expected_drawdown = (-12.0 * 3 + -13.0 * 2) / 5
         assert abs(summary.average_metrics.max_drawdown - expected_drawdown) < 0.01
 
-    def test_should_identify_best_performer_by_sharpe_ratio(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_identify_best_performer_by_sharpe_ratio(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test identification of best performer by Sharpe ratio."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -157,9 +149,7 @@ class TestBacktestingSummaryGeneration:
         # QQQ has highest Sharpe ratio (2.2)
         assert summary.best_performer == "QQQ"
 
-    def test_should_identify_worst_performer_by_sharpe_ratio(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_identify_worst_performer_by_sharpe_ratio(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test identification of worst performer by Sharpe ratio."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -169,9 +159,7 @@ class TestBacktestingSummaryGeneration:
         # SPY has lowest Sharpe ratio (1.5)
         assert summary.worst_performer == "SPY"
 
-    def test_should_aggregate_regime_performance_across_results(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_aggregate_regime_performance_across_results(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test aggregation of regime performance across multiple results."""
         # Arrange - Add regime performance to validation details
         for result in multiple_validation_results:
@@ -200,9 +188,7 @@ class TestBacktestingSummaryGeneration:
         assert "bull" in summary.regime_performance
         assert "bear" in summary.regime_performance
 
-    def test_should_use_maximum_backtest_period(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_use_maximum_backtest_period(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test that summary uses the maximum backtest period from all results."""
         # Arrange - Set different backtest periods
         multiple_validation_results[0].backtest_period_years = 5
@@ -262,9 +248,7 @@ class TestBacktestingSummaryGeneration:
         assert summary.best_performer == "MSFT"
         assert summary.worst_performer == "AAPL"
 
-    def test_should_calculate_average_return_from_validation_details(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_calculate_average_return_from_validation_details(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test average return calculation from validation details."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -276,9 +260,7 @@ class TestBacktestingSummaryGeneration:
         # Average should be between min and max returns
         assert 12.0 <= summary.average_metrics.annualized_return <= 22.0
 
-    def test_should_calculate_average_win_rate_from_validation_details(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_calculate_average_win_rate_from_validation_details(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test average win rate calculation from validation details."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -289,9 +271,7 @@ class TestBacktestingSummaryGeneration:
         # Average should be between min and max win rates
         assert 0.58 <= summary.average_metrics.win_rate <= 0.72
 
-    def test_should_calculate_calmar_ratio_in_average_metrics(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_calculate_calmar_ratio_in_average_metrics(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test Calmar ratio calculation in average metrics."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -304,9 +284,7 @@ class TestBacktestingSummaryGeneration:
 
         assert abs(summary.average_metrics.calmar_ratio - expected_calmar) < 0.01
 
-    def test_should_create_structured_output_for_report_integration(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_create_structured_output_for_report_integration(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test that summary creates structured output suitable for report integration."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -390,9 +368,7 @@ class TestBacktestingSummaryGeneration:
         assert summary.total_candidates_tested == 2
         # Should handle missing optional metrics gracefully
 
-    def test_should_aggregate_sortino_ratio_correctly(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_aggregate_sortino_ratio_correctly(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test Sortino ratio aggregation across results."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)
@@ -427,9 +403,7 @@ class TestBacktestingSummaryGeneration:
         assert summary.total_candidates_tested == 0
         # Should handle empty details without crashing
 
-    def test_should_provide_summary_suitable_for_comparison_tables(
-        self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]
-    ) -> None:
+    def test_should_provide_summary_suitable_for_comparison_tables(self, extractor: BacktestingDataExtractor, multiple_validation_results: list[ValidationResult]) -> None:
         """Test that summary provides data suitable for comparison tables."""
         # Act
         summary = extractor.get_performance_summary(multiple_validation_results)

@@ -83,9 +83,7 @@ class TwelveDataIndicatorTool(BaseTool):
             logger.info(f"Fetching {indicator} data for {symbol} with optional Perplexity enhancement")
 
             # Get technical indicator data from Twelve Data
-            twelve_data_result = self._get_twelve_data_indicator(
-                symbol, interval, indicator, length, fast_period, slow_period, signal_period, outputsize
-            )
+            twelve_data_result = self._get_twelve_data_indicator(symbol, interval, indicator, length, fast_period, slow_period, signal_period, outputsize)
 
             # Optionally enhance with Perplexity technical analysis insights
             perplexity_insights = asyncio.run(self._get_perplexity_technical_insights(symbol, indicator))
@@ -153,9 +151,7 @@ class TwelveDataIndicatorTool(BaseTool):
             asset_type = self._determine_asset_type(symbol)
 
             # Search for technical analysis insights
-            sonar_result = await perplexity_integration.search_technical_analysis(
-                ticker=symbol, asset_type=asset_type, max_results=5
-            )
+            sonar_result = await perplexity_integration.search_technical_analysis(ticker=symbol, asset_type=asset_type, max_results=5)
 
             if sonar_result.success:
                 feature_flags = get_feature_flags()
@@ -189,9 +185,7 @@ class TwelveDataIndicatorTool(BaseTool):
         # Default to stock
         return "stock"
 
-    def _format_enhanced_technical_response(
-        self, symbol: str, indicator: str, twelve_data_result: str, perplexity_insights: list
-    ) -> str:
+    def _format_enhanced_technical_response(self, symbol: str, indicator: str, twelve_data_result: str, perplexity_insights: list) -> str:
         """Format enhanced technical analysis response combining Twelve Data and Perplexity insights."""
         response = f"# Enhanced Technical Analysis: {indicator.upper()} for {symbol}\n\n"
 
@@ -205,9 +199,7 @@ class TwelveDataIndicatorTool(BaseTool):
             response += f"Found {len(perplexity_insights)} recent technical analysis articles:\n\n"
 
             for i, article in enumerate(perplexity_insights, 1):
-                content_emoji = {"news": "📰", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(
-                    article.content_type, "📰"
-                )
+                content_emoji = {"news": "📰", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(article.content_type, "📰")
 
                 response += f"{i}. {content_emoji} **{article.title}**\n"
                 response += f"   - Publisher: {article.publisher}\n"

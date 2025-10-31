@@ -173,9 +173,7 @@ class TestAPlusMonitoringIntegration:
         await monitoring_service.stop_service()
 
     @pytest.mark.asyncio
-    async def test_should_integrate_with_portfolio_review_successfully(
-        self, monitoring_service, sample_portfolio_review, sample_discovery_result
-    ):
+    async def test_should_integrate_with_portfolio_review_successfully(self, monitoring_service, sample_portfolio_review, sample_discovery_result):
         """Test integration with portfolio review system."""
         # Arrange
         await monitoring_service.start_service()

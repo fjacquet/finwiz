@@ -113,9 +113,7 @@ class TestDeepAnalysisReportGenerator:
         is_valid = generator.validate_template()
         assert is_valid is True
 
-    def test_should_generate_stock_report_successfully(
-        self, generator: DeepAnalysisReportGenerator, sample_stock_data: dict[str, Any]
-    ):
+    def test_should_generate_stock_report_successfully(self, generator: DeepAnalysisReportGenerator, sample_stock_data: dict[str, Any]):
         """Test HTML report generation for stock data."""
         html_content = generator.generate_report(sample_stock_data)
 
@@ -148,9 +146,7 @@ class TestDeepAnalysisReportGenerator:
         assert "Actifs Sous Gestion" in html_content
         assert "400.0B" in html_content  # AUM value
 
-    def test_should_generate_crypto_report_successfully(
-        self, generator: DeepAnalysisReportGenerator, sample_crypto_data: dict[str, Any]
-    ):
+    def test_should_generate_crypto_report_successfully(self, generator: DeepAnalysisReportGenerator, sample_crypto_data: dict[str, Any]):
         """Test HTML report generation for crypto data."""
         html_content = generator.generate_report(sample_crypto_data)
 
@@ -208,9 +204,7 @@ class TestDeepAnalysisReportGenerator:
             html_content = generator.generate_report(data)
             assert recommendation in html_content
 
-    def test_should_complete_generation_under_100ms(
-        self, generator: DeepAnalysisReportGenerator, sample_stock_data: dict[str, Any]
-    ):
+    def test_should_complete_generation_under_100ms(self, generator: DeepAnalysisReportGenerator, sample_stock_data: dict[str, Any]):
         """Test that report generation completes in <100ms."""
         start_time = time.time()
         html_content = generator.generate_report(sample_stock_data)

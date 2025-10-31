@@ -50,10 +50,7 @@ class ToolRestrictionValidator:
         agent_role = getattr(agent, "role", "unknown")
 
         # Check if this agent has tool restrictions
-        is_restricted = (
-            any(restricted_role in agent_role.lower() for restricted_role in self.RESTRICTED_AGENTS.keys())
-            or "financial plan specialist" in agent_role.lower()
-        )
+        is_restricted = any(restricted_role in agent_role.lower() for restricted_role in self.RESTRICTED_AGENTS.keys()) or "financial plan specialist" in agent_role.lower()
 
         if is_restricted:
             if hasattr(agent, "tools") and agent.tools:
@@ -67,10 +64,7 @@ class ToolRestrictionValidator:
                     logger.error(f"Tool restriction violation: {agent_role} - {violation}")
                     raise ToolRestrictionError(agent_role, violation)
                 else:
-                    logger.warning(
-                        f"⚠️  {agent_role} has {len(agent.tools)} read-only tools "
-                        f"(temporary workaround for deep analysis HTML access)"
-                    )
+                    logger.warning(f"⚠️  {agent_role} has {len(agent.tools)} read-only tools (temporary workaround for deep analysis HTML access)")
 
             logger.info(f"Tool restriction validation passed for {agent_role}")
 
@@ -99,10 +93,7 @@ class ToolRestrictionValidator:
         """
         agent_role = getattr(agent, "role", "unknown")
 
-        is_restricted = (
-            any(restricted_role in agent_role.lower() for restricted_role in self.RESTRICTED_AGENTS.keys())
-            or "financial plan specialist" in agent_role.lower()
-        )
+        is_restricted = any(restricted_role in agent_role.lower() for restricted_role in self.RESTRICTED_AGENTS.keys()) or "financial plan specialist" in agent_role.lower()
 
         if is_restricted:
             self.logger.info(f"Monitoring restricted agent execution: {agent_role}")

@@ -124,9 +124,7 @@ class TestConsolidatedReporterInputEnhanced:
             "discovery_result": discovery_result,
         }
 
-    def test_should_include_backtesting_summary_when_available(
-        self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker
-    ) -> None:
+    def test_should_include_backtesting_summary_when_available(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker) -> None:
         """Test that backtesting summary is included in consolidated reporter input."""
         # Arrange
         base_reporter_input = {
@@ -152,9 +150,7 @@ class TestConsolidatedReporterInputEnhanced:
         assert "total_candidates_tested" in result["backtesting_summary"]
         assert result["backtesting_summary"]["total_candidates_tested"] == 1
 
-    def test_should_include_market_context_summary_when_available(
-        self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker
-    ) -> None:
+    def test_should_include_market_context_summary_when_available(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker) -> None:
         """Test that market context summary is included in consolidated reporter input."""
         # Arrange
         base_reporter_input = {
@@ -173,9 +169,7 @@ class TestConsolidatedReporterInputEnhanced:
         assert "market_regime" in result["market_context_summary"]
         assert result["market_context_summary"]["market_regime"]["regime_type"] == "bull"
 
-    def test_should_include_methodology_summary_when_available(
-        self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker
-    ) -> None:
+    def test_should_include_methodology_summary_when_available(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker) -> None:
         """Test that methodology summary is included in consolidated reporter input."""
         # Arrange
         base_reporter_input = {
@@ -194,9 +188,7 @@ class TestConsolidatedReporterInputEnhanced:
         assert "screening_criteria" in result["methodology_summary"]
         assert "validation_statistics" in result["methodology_summary"]
 
-    def test_should_include_performance_report_when_available(
-        self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker
-    ) -> None:
+    def test_should_include_performance_report_when_available(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker) -> None:
         """Test that performance report is included in consolidated reporter input."""
         # Arrange
         base_reporter_input = {
@@ -238,9 +230,7 @@ class TestConsolidatedReporterInputEnhanced:
         assert "performance_report" in result
         assert result["performance_report"] is None
 
-    def test_should_pass_current_portfolio_grade_to_performance_report(
-        self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker
-    ) -> None:
+    def test_should_pass_current_portfolio_grade_to_performance_report(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker) -> None:
         """Test that current_portfolio_grade is passed to performance report generation."""
         # Arrange
         base_reporter_input = {
@@ -274,9 +264,7 @@ class TestConsolidatedReporterInputEnhanced:
         # Enhanced data should be None due to exception
         assert result.get("backtesting_summary") is None
 
-    def test_should_log_enhanced_data_status(
-        self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker, caplog
-    ) -> None:
+    def test_should_log_enhanced_data_status(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker, caplog) -> None:
         """Test that enhanced data inclusion status is logged."""
         # Arrange
         import logging
@@ -295,9 +283,7 @@ class TestConsolidatedReporterInputEnhanced:
         # Assert
         assert any("Enhanced reporter input generated with additional data" in record.message for record in caplog.records)
 
-    def test_should_include_all_enhanced_data_fields_in_result(
-        self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker
-    ) -> None:
+    def test_should_include_all_enhanced_data_fields_in_result(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker) -> None:
         """Test that all enhanced data fields are present in the result."""
         # Arrange
         base_reporter_input = {

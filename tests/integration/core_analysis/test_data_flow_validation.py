@@ -154,9 +154,7 @@ class TestDataFlowValidator:
         # Arrange - Simulate complete flow
         # Stock crew execution
         self.validator.validate_crew_input("stock_crew", {"ticker": "AAPL", "analysis_type": "comprehensive"})
-        self.validator.validate_crew_output(
-            "stock_crew", {"ten_k_insights": [], "risk_score_standardized": {}, "stock_analysis": {}}
-        )
+        self.validator.validate_crew_output("stock_crew", {"ten_k_insights": [], "risk_score_standardized": {}, "stock_analysis": {}})
         self.validator.validate_reporter_isolation("stock_crew", ["yahoo_finance"])
 
         # ETF crew execution

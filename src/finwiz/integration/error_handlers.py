@@ -37,9 +37,7 @@ class ValidationErrorReport(BaseModel):
     repairable_errors_count: int = Field(description="Number of errors that can be automatically repaired")
     critical_errors_count: int = Field(description="Number of critical errors")
     report_timestamp: datetime = Field(description="When this report was generated")
-    overall_repairability: str = Field(
-        description="Overall assessment: 'fully_repairable', 'partially_repairable', 'not_repairable'"
-    )
+    overall_repairability: str = Field(description="Overall assessment: 'fully_repairable', 'partially_repairable', 'not_repairable'")
 
 
 class ErrorHandlers:
@@ -177,9 +175,7 @@ class ErrorHandlers:
                 return "high"
             return "medium"
 
-        if error_type in ["constraint_error"] and any(
-            high_priority in field_path.lower() for high_priority in high_priority_fields
-        ):
+        if error_type in ["constraint_error"] and any(high_priority in field_path.lower() for high_priority in high_priority_fields):
             return "high"
 
         if error_type in ["type_mismatch", "constraint_error"]:
@@ -251,9 +247,7 @@ class ErrorHandlers:
             overall_repairability=overall_repairability,
         )
 
-    def _generate_recovery_recommendations(
-        self, error_analyses: list[ValidationErrorAnalysis], repair_suggestions: list
-    ) -> list[str]:
+    def _generate_recovery_recommendations(self, error_analyses: list[ValidationErrorAnalysis], repair_suggestions: list) -> list[str]:
         """Generate high-level recovery recommendations."""
         recommendations = []
 

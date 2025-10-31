@@ -525,9 +525,7 @@ class TestQuantitativeConfigManager:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(
-            os.environ, {"BACKTEST_INITIAL_CAPITAL": "250000", "BACKTEST_COMMISSION_PCT": "0.002", "BACKTEST_FRAMEWORK": "zipline"}
-        )
+        mocker.patch.dict(os.environ, {"BACKTEST_INITIAL_CAPITAL": "250000", "BACKTEST_COMMISSION_PCT": "0.002", "BACKTEST_FRAMEWORK": "zipline"})
 
         # Act
         manager = QuantitativeConfigManager()

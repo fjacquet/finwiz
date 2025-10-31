@@ -175,9 +175,7 @@ class TestBackwardCompatibility:
             # Clean up temporary file
             os.unlink(temp_file_path)
 
-    def test_investment_discovery_enhanced_with_core_analysis(
-        self, mock_env_vars, sample_portfolio_data, sample_core_analysis_results, mocker
-    ):
+    def test_investment_discovery_enhanced_with_core_analysis(self, mock_env_vars, sample_portfolio_data, sample_core_analysis_results, mocker):
         """Test that investment discovery works with enhanced core analysis data."""
         # Mock the investment discovery crew
         mock_discovery_result = mocker.MagicMock()
@@ -252,9 +250,7 @@ class TestBackwardCompatibility:
         assert "etf_analysis" in crew_call_args
         assert "crypto_analysis" in crew_call_args
 
-    def test_portfolio_rebalancing_with_core_analysis_integration(
-        self, mock_env_vars, sample_portfolio_data, sample_core_analysis_results, mocker
-    ):
+    def test_portfolio_rebalancing_with_core_analysis_integration(self, mock_env_vars, sample_portfolio_data, sample_core_analysis_results, mocker):
         """Test that portfolio rebalancing integrates with core analysis data."""
         # Mock the portfolio rebalancing crew
         mock_rebalancing_result = mocker.MagicMock()

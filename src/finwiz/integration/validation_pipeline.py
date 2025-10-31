@@ -58,9 +58,7 @@ class ValidationPipeline:
         }
 
         # Initialize pipeline stages and validation rules
-        self.pipeline_stages = PipelineStages(
-            output_dir=self.output_dir, crew_schema_mapping=self.crew_schema_mapping, logger=self.logger
-        )
+        self.pipeline_stages = PipelineStages(output_dir=self.output_dir, crew_schema_mapping=self.crew_schema_mapping, logger=self.logger)
         self.validation_rules = ValidationRules(logger=self.logger)
 
         self.logger.info(
@@ -94,9 +92,7 @@ class ValidationPipeline:
 
         """
         start_time = datetime.now()
-        self.logger.info(
-            "Starting comprehensive crew output validation", extra={"max_age_hours": max_age_hours, "strict_mode": strict_mode}
-        )
+        self.logger.info("Starting comprehensive crew output validation", extra={"max_age_hours": max_age_hours, "strict_mode": strict_mode})
 
         # Set validation mode
         original_mode = self.validation_manager.get_strictness_mode()
@@ -133,9 +129,7 @@ class ValidationPipeline:
             # Restore original validation mode
             self.validation_manager.set_strictness_mode(original_mode)
 
-    def validate_crew_output(
-        self, crew_name: str, output_data: dict[str, Any], validate_metadata: bool = True
-    ) -> BaseValidationResult:
+    def validate_crew_output(self, crew_name: str, output_data: dict[str, Any], validate_metadata: bool = True) -> BaseValidationResult:
         """
         Validate a single crew's output against its schema.
 
@@ -205,15 +199,11 @@ class ValidationPipeline:
             CrossCrewValidationResult with consistency validation results
 
         """
-        self.logger.info(
-            "Validating cross-crew data consistency", extra={"crew_count": len(crew_outputs), "crews": list(crew_outputs.keys())}
-        )
+        self.logger.info("Validating cross-crew data consistency", extra={"crew_count": len(crew_outputs), "crews": list(crew_outputs.keys())})
 
         return self.pipeline_stages._validate_cross_crew_consistency(crew_outputs)
 
-    def validate_sec_citations(
-        self, crew_outputs: dict[str, dict[str, Any]], consolidate_for_report: bool = True
-    ) -> dict[str, Any]:
+    def validate_sec_citations(self, crew_outputs: dict[str, dict[str, Any]], consolidate_for_report: bool = True) -> dict[str, Any]:
         """
         Validate SEC citations across all crew outputs.
 
@@ -227,9 +217,7 @@ class ValidationPipeline:
         """
         return self.pipeline_stages.validate_sec_citations(crew_outputs, consolidate_for_report)
 
-    def generate_validation_report(
-        self, validation_result: ValidationPipelineResult, output_path: Path | None = None
-    ) -> dict[str, Any]:
+    def generate_validation_report(self, validation_result: ValidationPipelineResult, output_path: Path | None = None) -> dict[str, Any]:
         """
         Generate a comprehensive validation report.
 

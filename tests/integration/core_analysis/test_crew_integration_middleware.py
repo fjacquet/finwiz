@@ -32,9 +32,7 @@ class TestCrewIntegrationMiddleware:
         """Create mock integration manager."""
         manager = mocker.MagicMock()
         manager.get_crew_data_with_freshness_check.return_value = {"test": "data"}
-        manager.freshness_checker.check_data_freshness_for_crew.return_value = mocker.MagicMock(
-            freshness_status=mocker.MagicMock(is_fresh=True)
-        )
+        manager.freshness_checker.check_data_freshness_for_crew.return_value = mocker.MagicMock(freshness_status=mocker.MagicMock(is_fresh=True))
         manager.coordinate_crew_execution = mocker.AsyncMock(
             return_value=ExecutionResult(success=True, executed_crews=["test_crew"], failed_crews=[], execution_time=1.0, errors=[])
         )
@@ -264,9 +262,7 @@ class TestCrewIntegrationMiddleware:
         crew_output = {"invalid": "data"}
 
         # Configure validation to fail
-        mock_validation_pipeline.validate_crew_output = mocker.AsyncMock(
-            return_value=mocker.MagicMock(is_valid=False, errors=["Invalid schema"], warnings=["Missing field"])
-        )
+        mock_validation_pipeline.validate_crew_output = mocker.AsyncMock(return_value=mocker.MagicMock(is_valid=False, errors=["Invalid schema"], warnings=["Missing field"]))
 
         # First run pre-execution to create context
         await middleware.pre_execution_hook(crew_name, dependencies)

@@ -237,11 +237,7 @@ class PriceTargetCalculator:
             # Simplified DCF: FCF * (1 + growth) / (discount_rate - growth)
             discount_rate = 0.10  # 10% discount rate
             if discount_rate > fundamental_data.growth_rate:
-                dcf_value = (
-                    fundamental_data.free_cash_flow
-                    * (1 + fundamental_data.growth_rate)
-                    / (discount_rate - fundamental_data.growth_rate)
-                )
+                dcf_value = fundamental_data.free_cash_flow * (1 + fundamental_data.growth_rate) / (discount_rate - fundamental_data.growth_rate)
                 fair_values.append(dcf_value)
 
         # Return average of available methods
@@ -357,10 +353,7 @@ class PriceTargetCalculator:
             # For new positions, buy at current price or better
             primary = current_price
             secondary = support_levels[0] if support_levels else round(current_price * 0.95, 2)
-            rationale = (
-                f"Initier position au prix actuel de {current_price:.2f} ou mieux. "
-                f"Niveau d'accumulation secondaire à {secondary:.2f} si le prix baisse."
-            )
+            rationale = f"Initier position au prix actuel de {current_price:.2f} ou mieux. Niveau d'accumulation secondaire à {secondary:.2f} si le prix baisse."
         else:
             # For existing positions (KEEP), buy on dips
             if fair_value and fair_value > current_price:
@@ -368,20 +361,12 @@ class PriceTargetCalculator:
                 primary = support_levels[0] if support_levels else round(current_price * 0.95, 2)
                 secondary = support_levels[1] if len(support_levels) > 1 else round(current_price * 0.90, 2)
                 discount_pct = ((fair_value - current_price) / fair_value) * 100
-                rationale = (
-                    f"Position sous-évaluée de {discount_pct:.1f}%. "
-                    f"Renforcer à {primary:.2f} (support principal) "
-                    f"ou {secondary:.2f} (support secondaire)."
-                )
+                rationale = f"Position sous-évaluée de {discount_pct:.1f}%. Renforcer à {primary:.2f} (support principal) ou {secondary:.2f} (support secondaire)."
             else:
                 # Fairly valued or overvalued - wait for significant dip
                 primary = support_levels[0] if support_levels else round(current_price * 0.90, 2)
                 secondary = support_levels[1] if len(support_levels) > 1 else round(current_price * 0.85, 2)
-                rationale = (
-                    f"Position correctement valorisée. "
-                    f"Renforcer uniquement sur correction significative à {primary:.2f} "
-                    f"ou {secondary:.2f}."
-                )
+                rationale = f"Position correctement valorisée. Renforcer uniquement sur correction significative à {primary:.2f} ou {secondary:.2f}."
 
         return primary, secondary, rationale
 
@@ -437,10 +422,7 @@ class PriceTargetCalculator:
                 primary = resistance_levels[0] if resistance_levels else round(current_price * 1.15, 2)
                 secondary = resistance_levels[1] if len(resistance_levels) > 1 else round(current_price * 1.30, 2)
                 rationale = (
-                    f"Conserver la position. "
-                    f"Objectif de prise de bénéfices à {primary:.2f} "
-                    f"et {secondary:.2f} en cas de forte hausse. "
-                    f"Stop-loss de protection à {stop_loss:.2f}."
+                    f"Conserver la position. Objectif de prise de bénéfices à {primary:.2f} et {secondary:.2f} en cas de forte hausse. Stop-loss de protection à {stop_loss:.2f}."
                 )
 
         return primary, secondary, stop_loss, rationale

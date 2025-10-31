@@ -37,9 +37,7 @@ class RebalancingOptimizer:
         self.rebalancing_engine = rebalancing_engine or RebalancingEngine()
         self.logger = logger
 
-    async def optimize_trades(
-        self, config: PortfolioConfiguration, current_analysis: Any, rebalancing_needs: list[Any], price_data: dict[str, Any]
-    ) -> Any:
+    async def optimize_trades(self, config: PortfolioConfiguration, current_analysis: Any, rebalancing_needs: list[Any], price_data: dict[str, Any]) -> Any:
         """
         Optimize trade recommendations.
 
@@ -200,9 +198,7 @@ class RebalancingOptimizer:
             },
         )
 
-    def validate_optimization_constraints(
-        self, config: PortfolioConfiguration, trades: list[Any], current_analysis: Any
-    ) -> tuple[bool, list[str]]:
+    def validate_optimization_constraints(self, config: PortfolioConfiguration, trades: list[Any], current_analysis: Any) -> tuple[bool, list[str]]:
         """
         Validate that proposed trades meet optimization constraints.
 
@@ -219,9 +215,7 @@ class RebalancingOptimizer:
 
         try:
             # Check minimum trade size constraint
-            small_trades = [
-                trade for trade in trades if hasattr(trade, "trade_value") and abs(trade.trade_value) < config.min_trade_size
-            ]
+            small_trades = [trade for trade in trades if hasattr(trade, "trade_value") and abs(trade.trade_value) < config.min_trade_size]
             if small_trades:
                 violations.append(f"Found {len(small_trades)} trades below minimum size of ${config.min_trade_size}")
 
@@ -238,9 +232,7 @@ class RebalancingOptimizer:
 
             # Check turnover constraint
             total_turnover = (
-                sum(abs(trade.trade_value) for trade in trades if hasattr(trade, "trade_value")) / current_analysis.total_value
-                if current_analysis.total_value > 0
-                else 0
+                sum(abs(trade.trade_value) for trade in trades if hasattr(trade, "trade_value")) / current_analysis.total_value if current_analysis.total_value > 0 else 0
             )
 
             if total_turnover > 0.5:  # 50% maximum turnover
@@ -250,9 +242,7 @@ class RebalancingOptimizer:
             if config.available_capital != 0:
                 required_capital = sum(max(0, trade.trade_value) for trade in trades if hasattr(trade, "trade_value"))
                 if required_capital > abs(config.available_capital):
-                    violations.append(
-                        f"Required capital ${required_capital:,.2f} exceeds available ${abs(config.available_capital):,.2f}"
-                    )
+                    violations.append(f"Required capital ${required_capital:,.2f} exceeds available ${abs(config.available_capital):,.2f}")
 
             is_valid = len(violations) == 0
             return is_valid, violations
@@ -307,9 +297,7 @@ class RebalancingOptimizer:
                 "error": str(e),
             }
 
-    def suggest_optimization_improvements(
-        self, trades: list[Any], constraints: list[OptimizationConstraint], current_analysis: Any
-    ) -> list[str]:
+    def suggest_optimization_improvements(self, trades: list[Any], constraints: list[OptimizationConstraint], current_analysis: Any) -> list[str]:
         """
         Suggest improvements to optimization results.
 
@@ -332,19 +320,13 @@ class RebalancingOptimizer:
 
             # Check for high turnover
             if current_analysis.total_value > 0:
-                turnover = (
-                    sum(abs(trade.trade_value) for trade in trades if hasattr(trade, "trade_value")) / current_analysis.total_value
-                )
+                turnover = sum(abs(trade.trade_value) for trade in trades if hasattr(trade, "trade_value")) / current_analysis.total_value
 
                 if turnover > 0.3:
                     suggestions.append("High portfolio turnover detected - consider phased rebalancing")
 
             # Check for concentration risk
-            large_trades = [
-                trade
-                for trade in trades
-                if hasattr(trade, "projected_weight_after_trade") and trade.projected_weight_after_trade > 0.2
-            ]
+            large_trades = [trade for trade in trades if hasattr(trade, "projected_weight_after_trade") and trade.projected_weight_after_trade > 0.2]
             if large_trades:
                 suggestions.append("Large position sizes detected - monitor concentration risk")
 

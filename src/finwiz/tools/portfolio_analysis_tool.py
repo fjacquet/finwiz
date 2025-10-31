@@ -76,9 +76,7 @@ class PortfolioAnalysisTool(BaseTool):
             composition_analysis = self._analyze_composition(input_data.holdings)
 
             # Calculate performance metrics
-            performance_analysis = self._analyze_performance(
-                input_data.holdings, input_data.benchmark, input_data.analysis_period, performance_analyzer
-            )
+            performance_analysis = self._analyze_performance(input_data.holdings, input_data.benchmark, input_data.analysis_period, performance_analyzer)
 
             # Risk analysis (if requested)
             risk_analysis = None
@@ -143,9 +141,7 @@ class PortfolioAnalysisTool(BaseTool):
             logger.error(f"Error in composition analysis: {e}")
             return {"error": str(e)}
 
-    def _analyze_performance(
-        self, holdings: list[dict[str, Any]], benchmark: str, period: str, performance_analyzer: Any
-    ) -> dict[str, Any]:
+    def _analyze_performance(self, holdings: list[dict[str, Any]], benchmark: str, period: str, performance_analyzer: Any) -> dict[str, Any]:
         """Analyze portfolio performance."""
         try:
             # This is a simplified implementation
@@ -195,9 +191,7 @@ class PortfolioAnalysisTool(BaseTool):
                     "Sector concentration risk" if num_positions < 20 else "Good sector diversification",
                 ],
                 "recommendations": [
-                    "Consider adding more positions for better diversification"
-                    if num_positions < 10
-                    else "Good diversification level",
+                    "Consider adding more positions for better diversification" if num_positions < 10 else "Good diversification level",
                     "Monitor correlation between holdings",
                     "Consider adding defensive positions",
                 ],
@@ -221,9 +215,7 @@ class PortfolioAnalysisTool(BaseTool):
             return {
                 "number_of_positions": num_positions,
                 "diversification_score": diversification_score,
-                "diversification_level": (
-                    "Poor" if num_positions < 5 else "Fair" if num_positions < 10 else "Good" if num_positions < 20 else "Excellent"
-                ),
+                "diversification_level": ("Poor" if num_positions < 5 else "Fair" if num_positions < 10 else "Good" if num_positions < 20 else "Excellent"),
                 "recommendations": [
                     "Add more positions" if num_positions < 10 else "Good position count",
                     "Consider sector diversification",

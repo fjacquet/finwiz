@@ -87,9 +87,9 @@ The integration followed these principles:
 
 ### Development Standards
 
-- [Development Standards](development_standards.md)
-- [Testing Standards](testing_standards.md)
-- [CrewAI Standards](crewai_standards.md)
+- Development Standards
+- Testing Standards
+- CrewAI Standards
 
 ## Future Considerations
 

@@ -360,9 +360,7 @@ class APlusMonitoringService:
             logger.error(f"Failed to cleanup inactive investments: {str(e)}")
             raise
 
-    def _generate_dashboard_recommendations(
-        self, investment_details: list[dict[str, Any]], critical_alerts: list[Any]
-    ) -> list[str]:
+    def _generate_dashboard_recommendations(self, investment_details: list[dict[str, Any]], critical_alerts: list[Any]) -> list[str]:
         """Generate recommendations for the monitoring dashboard."""
         recommendations = []
 

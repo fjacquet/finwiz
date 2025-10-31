@@ -51,9 +51,7 @@ async def demo_portfolio_integration() -> None:
         print("-" * 30)
 
         # Run comprehensive analysis with caching
-        result = await orchestrator.run_comprehensive_analysis(
-            target_weights=target_weights, available_capital=10000.0, enable_caching=True
-        )
+        result = await orchestrator.run_comprehensive_analysis(target_weights=target_weights, available_capital=10000.0, enable_caching=True)
 
         print("✅ Analysis completed successfully!")
 

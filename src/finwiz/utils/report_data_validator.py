@@ -118,11 +118,7 @@ class ReportDataValidator:
             if invalid_fields:
                 error_parts.append(f"Invalid fields: {invalid_fields}")
 
-            error_message = (
-                "Cannot generate report with incomplete data. "
-                + " ".join(error_parts)
-                + "\n\nREFUSING to generate report with hallucinated data."
-            )
+            error_message = "Cannot generate report with incomplete data. " + " ".join(error_parts) + "\n\nREFUSING to generate report with hallucinated data."
 
             logger.error("=" * 80)
             logger.error("REPORT INPUT VALIDATION FAILED")
@@ -218,9 +214,7 @@ class ReportDataValidator:
             rationale_bullets = holding.get("rationale_bullets", [])
 
             # Check for fallback pattern
-            is_fallback = (
-                grade == "D" and composite_score == 0.6 and any("Validation rapide" in str(bullet) for bullet in rationale_bullets)
-            )
+            is_fallback = grade == "D" and composite_score == 0.6 and any("Validation rapide" in str(bullet) for bullet in rationale_bullets)
 
             if is_fallback:
                 fallback_count += 1
@@ -230,11 +224,7 @@ class ReportDataValidator:
                 logger.info(f"✅ Holding {ticker}: Grade {grade}, Score {composite_score:.2f}")
 
         if fallback_count > 0:
-            error_message = (
-                f"Portfolio review contains {fallback_count} holdings with "
-                f"fallback data: {fallback_tickers}. "
-                f"REFUSING to generate report with fake grades."
-            )
+            error_message = f"Portfolio review contains {fallback_count} holdings with fallback data: {fallback_tickers}. REFUSING to generate report with fake grades."
 
             logger.error("=" * 80)
             logger.error("PORTFOLIO REVIEW VALIDATION FAILED")

@@ -50,9 +50,7 @@ class PerplexityFallbackManager:
     """Manages fallback strategies for Perplexity integration failures."""
 
     @staticmethod
-    def create_fallback_result(
-        query: str, ticker: str, asset_type: str, analysis_type: str, error_message: str
-    ) -> SonarSearchResult:
+    def create_fallback_result(query: str, ticker: str, asset_type: str, analysis_type: str, error_message: str) -> SonarSearchResult:
         """Create a fallback result when Perplexity fails."""
         return SonarSearchResult(
             query=query,

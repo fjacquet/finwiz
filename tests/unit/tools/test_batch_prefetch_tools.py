@@ -154,9 +154,7 @@ class TestYahooFinanceHistoryToolWithPrefetch:
     def test_should_fallback_to_live_api_for_history(self, tool, mocker):
         """Test fallback to live API for historical data."""
         # Arrange
-        mock_hist_data = pd.DataFrame(
-            {"Close": [300.0, 302.0, 301.0], "Volume": [2000000, 2100000, 2050000]}, index=pd.date_range("2024-01-01", periods=3)
-        )
+        mock_hist_data = pd.DataFrame({"Close": [300.0, 302.0, 301.0], "Volume": [2000000, 2100000, 2050000]}, index=pd.date_range("2024-01-01", periods=3))
         mock_ticker = mocker.Mock()
         mock_ticker.history.return_value = mock_hist_data
         mocker.patch("yfinance.Ticker", return_value=mock_ticker)

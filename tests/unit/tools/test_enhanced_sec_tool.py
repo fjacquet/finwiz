@@ -32,9 +32,7 @@ class TestEnhancedSECAnalysisInput:
     def test_should_create_valid_input_with_custom_values(self):
         """Test creating input with custom values."""
         # Arrange & Act
-        input_data = EnhancedSECAnalysisInput(
-            ticker="MSFT", form_type="10-Q", sections=["Item 1A", "Item 7A"], risk_assessment=False
-        )
+        input_data = EnhancedSECAnalysisInput(ticker="MSFT", form_type="10-Q", sections=["Item 1A", "Item 7A"], risk_assessment=False)
 
         # Assert
         assert input_data.ticker == "MSFT"
@@ -154,9 +152,7 @@ class TestEnhancedSECAnalysisTool:
         assert result is not None
         # Verify logging calls
         mock_logger.info.assert_any_call("Fetching SEC filing URL for AAPL (10-K)")
-        mock_logger.info.assert_any_call(
-            "Generated SEC filing URL for AAPL: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K"
-        )
+        mock_logger.info.assert_any_call("Generated SEC filing URL for AAPL: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K")
 
     def test_should_identify_risk_factors_correctly(self, tool):
         """Test risk factor identification from content."""
@@ -334,6 +330,4 @@ class TestIntegrationScenarios:
         assert "Error" not in result
         assert "AAPL" in result
         # When risk_assessment=False, the Risk Assessment section should not be present
-        assert (
-            "Risk Assessment" not in result or "Risk Assessment" in result
-        )  # May or may not be present depending on implementation
+        assert "Risk Assessment" not in result or "Risk Assessment" in result  # May or may not be present depending on implementation

@@ -439,9 +439,7 @@ class TestToolsIntegration:
                 "analysis_summary": {"confidence": 0.85},
             }
 
-            result = self.screening_tool._run(
-                asset_type="etf", max_candidates=5, include_detailed_analysis=True, min_a_plus_score=0.90
-            )
+            result = self.screening_tool._run(asset_type="etf", max_candidates=5, include_detailed_analysis=True, min_a_plus_score=0.90)
 
             # Should have integrated with A+ scorer
             assert "screening_result" in result

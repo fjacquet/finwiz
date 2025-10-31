@@ -1231,9 +1231,7 @@ class TestInvestmentDiscoveryWorkflowEndToEnd:
             ],
         }
 
-    def test_should_execute_complete_workflow_with_all_phases(
-        self, mocker, comprehensive_portfolio_data, mock_discovery_results, mock_validation_result, mock_optimization_result
-    ):
+    def test_should_execute_complete_workflow_with_all_phases(self, mocker, comprehensive_portfolio_data, mock_discovery_results, mock_validation_result, mock_optimization_result):
         """Test complete workflow execution through all phases."""
         # Arrange
         flow = FinwizFlow()

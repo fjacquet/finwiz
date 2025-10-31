@@ -215,9 +215,7 @@ class RateLimiter:
 
             if time_since_last < config.cooldown_seconds:
                 sleep_time = config.cooldown_seconds - time_since_last
-                logger.info(
-                    f"Rate limit throttling for {provider}: sleeping {sleep_time:.2f}s (cooldown: {config.cooldown_seconds}s)"
-                )
+                logger.info(f"Rate limit throttling for {provider}: sleeping {sleep_time:.2f}s (cooldown: {config.cooldown_seconds}s)")
                 await asyncio.sleep(sleep_time)
 
             # Record the request
@@ -427,10 +425,7 @@ async def with_rate_limit(provider: APIProvider, func: Callable, *args: Any, end
 
             if attempt < max_retries:
                 delay = limiter.get_retry_delay(provider, attempt)
-                logger.info(
-                    f"Rate limit retry for {provider} {endpoint} - "
-                    f"Attempt {attempt + 1}/{max_retries}, waiting {delay:.2f}s before retry"
-                )
+                logger.info(f"Rate limit retry for {provider} {endpoint} - Attempt {attempt + 1}/{max_retries}, waiting {delay:.2f}s before retry")
                 await asyncio.sleep(delay)
 
     raise RuntimeError(f"All retry attempts failed for {provider} {endpoint}")

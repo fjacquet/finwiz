@@ -152,9 +152,7 @@ class TestBatchDataPreFetcher:
         mock_tickers = mocker.patch("yfinance.Tickers")
 
         # Mock historical data
-        mock_hist_data = pd.DataFrame(
-            {"High": [180.0, 175.0, 170.0], "Low": [120.0, 125.0, 130.0], "Volume": [1000000, 1100000, 1200000]}
-        )
+        mock_hist_data = pd.DataFrame({"High": [180.0, 175.0, 170.0], "Low": [120.0, 125.0, 130.0], "Volume": [1000000, 1100000, 1200000]})
         mock_download.return_value = {"AAPL": mock_hist_data, "MSFT": mock_hist_data, "GOOGL": mock_hist_data}
 
         # Mock ticker info
@@ -395,15 +393,11 @@ class TestBatchDataPreFetcher:
         assert result["AAPL"]["yahoo_finance"]["symbol"] == "AAPL"
         assert "fetch_timestamp" in result["AAPL"]
 
-    def test_should_prefetch_all_data_with_alpha_vantage(
-        self, prefetcher_with_av, sample_tickers, mock_yf_data, mock_av_data, mocker
-    ):
+    def test_should_prefetch_all_data_with_alpha_vantage(self, prefetcher_with_av, sample_tickers, mock_yf_data, mock_av_data, mocker):
         """Test complete prefetch_all_data flow with Alpha Vantage enabled."""
         # Arrange
         mocker.patch.object(prefetcher_with_av, "_fetch_yahoo_finance_batch", return_value=mock_yf_data)
-        mocker.patch.object(
-            prefetcher_with_av, "_fetch_alpha_vantage_batch", return_value=mocker.AsyncMock(return_value=mock_av_data)
-        )
+        mocker.patch.object(prefetcher_with_av, "_fetch_alpha_vantage_batch", return_value=mocker.AsyncMock(return_value=mock_av_data))
         mocker.patch.object(prefetcher_with_av, "_save_to_cache")
 
         # Mock asyncio.run

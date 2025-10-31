@@ -28,19 +28,13 @@ class ScenarioParameters(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     # Capital scenarios
-    capital_amounts: list[float] = Field(
-        default_factory=lambda: [-10000, -5000, 0, 5000, 10000, 25000], description="Different capital amounts to test"
-    )
+    capital_amounts: list[float] = Field(default_factory=lambda: [-10000, -5000, 0, 5000, 10000, 25000], description="Different capital amounts to test")
 
     # Tolerance scenarios
-    tolerance_levels: list[float] = Field(
-        default_factory=lambda: [0.01, 0.025, 0.05, 0.075, 0.10], description="Different tolerance band levels to test"
-    )
+    tolerance_levels: list[float] = Field(default_factory=lambda: [0.01, 0.025, 0.05, 0.075, 0.10], description="Different tolerance band levels to test")
 
     # Transaction cost scenarios
-    transaction_cost_rates: list[float] = Field(
-        default_factory=lambda: [0.0005, 0.001, 0.002, 0.005], description="Different transaction cost rates to test"
-    )
+    transaction_cost_rates: list[float] = Field(default_factory=lambda: [0.0005, 0.001, 0.002, 0.005], description="Different transaction cost rates to test")
 
     # Rebalancing method scenarios
     rebalancing_methods: list[RebalancingMethod] = Field(
@@ -79,9 +73,7 @@ class MonteCarloResult(BaseModel):
     std_final_value: float = Field(..., description="Standard deviation of final portfolio value")
 
     # Percentiles
-    rebalancing_frequency_percentiles: dict[str, float] = Field(
-        default_factory=dict, description="Percentiles of rebalancing frequency"
-    )
+    rebalancing_frequency_percentiles: dict[str, float] = Field(default_factory=dict, description="Percentiles of rebalancing frequency")
     transaction_cost_percentiles: dict[str, float] = Field(default_factory=dict, description="Percentiles of transaction costs")
     final_value_percentiles: dict[str, float] = Field(default_factory=dict, description="Percentiles of final portfolio value")
 

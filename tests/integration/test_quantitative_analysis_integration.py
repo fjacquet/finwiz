@@ -133,9 +133,7 @@ class TestQuantitativeAnalysisIntegration:
     def test_crypto_quantitative_analysis_comprehensive(self, quantitative_tool, mock_historical_data, mocker):
         """Test comprehensive quantitative analysis for cryptocurrencies."""
         with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
-            result_json = quantitative_tool._run(
-                symbol="BTC-USD", asset_class="crypto", analysis_type="comprehensive", timeframe="1y"
-            )
+            result_json = quantitative_tool._run(symbol="BTC-USD", asset_class="crypto", analysis_type="comprehensive", timeframe="1y")
 
             # Parse result
             result_dict = json.loads(result_json)
@@ -223,9 +221,7 @@ class TestQuantitativeAnalysisIntegration:
 
     def test_error_handling_invalid_symbol(self, quantitative_tool, mocker):
         """Test error handling for invalid symbols."""
-        with mocker.patch.object(
-            quantitative_tool.data_manager, "fetch_historical_data", side_effect=Exception("Symbol not found")
-        ):
+        with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", side_effect=Exception("Symbol not found")):
             result = quantitative_tool._run(symbol="INVALID123", asset_class="stock", analysis_type="comprehensive", timeframe="1y")
 
             assert "Error fetching data" in result
@@ -236,9 +232,7 @@ class TestQuantitativeAnalysisIntegration:
 
         for timeframe in timeframes:
             with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
-                result_json = quantitative_tool._run(
-                    symbol="AAPL", asset_class="stock", analysis_type="technical", timeframe=timeframe
-                )
+                result_json = quantitative_tool._run(symbol="AAPL", asset_class="stock", analysis_type="technical", timeframe=timeframe)
 
                 # Should not raise an exception
                 result_dict = json.loads(result_json)
@@ -266,9 +260,7 @@ class TestQuantitativeAnalysisIntegration:
         mock_perf_metrics = mocker.Mock()
 
         # Test recommendation generation
-        recommendation = quantitative_tool._generate_recommendation(
-            "AAPL", mock_tech_result, mock_backtest_result, mock_perf_metrics
-        )
+        recommendation = quantitative_tool._generate_recommendation("AAPL", mock_tech_result, mock_backtest_result, mock_perf_metrics)
 
         assert recommendation.symbol == "AAPL"
         assert recommendation.recommendation == "BUY"
@@ -287,9 +279,7 @@ class TestQuantitativeAnalysisIntegration:
             ]
 
             for symbol, asset_class, expected_schema in asset_classes:
-                result_json = quantitative_tool._run(
-                    symbol=symbol, asset_class=asset_class, analysis_type="comprehensive", timeframe="1y"
-                )
+                result_json = quantitative_tool._run(symbol=symbol, asset_class=asset_class, analysis_type="comprehensive", timeframe="1y")
 
                 # Parse and validate schema
                 result_dict = json.loads(result_json)
@@ -317,14 +307,10 @@ class TestQuantitativeAnalysisIntegration:
                 tech_result = quantitative_tool._run(symbol=symbol, asset_class="stock", analysis_type="technical", timeframe="1y")
 
                 # Step 2: Comprehensive analysis (as used in detailed analysis)
-                comp_result = quantitative_tool._run(
-                    symbol=symbol, asset_class="stock", analysis_type="comprehensive", timeframe="1y"
-                )
+                comp_result = quantitative_tool._run(symbol=symbol, asset_class="stock", analysis_type="comprehensive", timeframe="1y")
 
                 # Step 3: Performance analysis (as used in risk assessment)
-                perf_result = quantitative_tool._run(
-                    symbol=symbol, asset_class="stock", analysis_type="performance", timeframe="1y"
-                )
+                perf_result = quantitative_tool._run(symbol=symbol, asset_class="stock", analysis_type="performance", timeframe="1y")
 
                 results.append(
                     {
@@ -355,16 +341,12 @@ class TestQuantitativeAnalysisIntegration:
         """Test consistency of quantitative metrics across different analysis types."""
         with mocker.patch.object(quantitative_tool.data_manager, "fetch_historical_data", return_value=mock_historical_data):
             # Get comprehensive analysis
-            comp_result_json = quantitative_tool._run(
-                symbol="AAPL", asset_class="stock", analysis_type="comprehensive", timeframe="1y"
-            )
+            comp_result_json = quantitative_tool._run(symbol="AAPL", asset_class="stock", analysis_type="comprehensive", timeframe="1y")
 
             # Get individual analyses
             tech_result_json = quantitative_tool._run(symbol="AAPL", asset_class="stock", analysis_type="technical", timeframe="1y")
 
-            perf_result_json = quantitative_tool._run(
-                symbol="AAPL", asset_class="stock", analysis_type="performance", timeframe="1y"
-            )
+            perf_result_json = quantitative_tool._run(symbol="AAPL", asset_class="stock", analysis_type="performance", timeframe="1y")
 
             # Parse results
             comp_result = json.loads(comp_result_json)

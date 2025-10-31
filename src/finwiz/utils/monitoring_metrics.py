@@ -166,9 +166,7 @@ class MetricsCalculator:
         cutoff_date = datetime.now() - timedelta(days=days)
 
         # Filter events for this symbol
-        symbol_events = [
-            event for event in self._performance_history if event["candidate_id"] == symbol and event["timestamp"] >= cutoff_date
-        ]
+        symbol_events = [event for event in self._performance_history if event["candidate_id"] == symbol and event["timestamp"] >= cutoff_date]
 
         if not symbol_events:
             return {"trend": "no_data", "events": 0}

@@ -37,9 +37,7 @@ class TestValidationPipeline:
     def validation_pipeline(self, mock_validation_manager, mock_logger, mocker):
         """Create ValidationPipeline instance for testing."""
         with mocker.patch("finwiz.integration.validation_pipeline.get_validation_manager", return_value=mock_validation_manager):
-            pipeline = ValidationPipeline(
-                output_dir=Path("/mock/output"), validation_manager=mock_validation_manager, logger=mock_logger
-            )
+            pipeline = ValidationPipeline(output_dir=Path("/mock/output"), validation_manager=mock_validation_manager, logger=mock_logger)
             return pipeline
 
     @pytest.fixture
@@ -82,9 +80,7 @@ class TestValidationPipeline:
         """Sample stock crew output for testing."""
         return {
             "metadata": sample_crew_metadata,
-            "ten_k_insights": [
-                {"ticker": "AAPL", "section": "Business Overview", "insight": "Apple designs and manufactures consumer electronics"}
-            ],
+            "ten_k_insights": [{"ticker": "AAPL", "section": "Business Overview", "insight": "Apple designs and manufactures consumer electronics"}],
             "validated_tickers": [
                 {
                     "symbol": "AAPL",
@@ -148,9 +144,7 @@ class TestValidationPipeline:
     def test_should_initialize_validation_pipeline_successfully(self, mock_validation_manager, mock_logger, mocker):
         """Test ValidationPipeline initialization."""
         with mocker.patch("finwiz.integration.validation_pipeline.get_validation_manager", return_value=mock_validation_manager):
-            pipeline = ValidationPipeline(
-                output_dir=Path("/test/output"), validation_manager=mock_validation_manager, logger=mock_logger
-            )
+            pipeline = ValidationPipeline(output_dir=Path("/test/output"), validation_manager=mock_validation_manager, logger=mock_logger)
 
             assert pipeline.output_dir == Path("/test/output")
             assert pipeline.validation_manager == mock_validation_manager
@@ -163,9 +157,7 @@ class TestValidationPipeline:
             # Should have been called twice: once for SECCitationValidator, once for ValidationPipeline
         assert mock_logger.info.call_count == 2
 
-    def test_should_validate_single_crew_output_successfully_when_valid_data_provided(
-        self, validation_pipeline, sample_stock_output
-    ):
+    def test_should_validate_single_crew_output_successfully_when_valid_data_provided(self, validation_pipeline, sample_stock_output):
         """Test successful validation of single crew output."""
         result = validation_pipeline.validate_crew_output("stock", sample_stock_output)
 
@@ -201,9 +193,7 @@ class TestValidationPipeline:
         error_types = [error.error_type for error in result.errors]
         assert "missing" in str(error_types).lower()
 
-    def test_should_validate_crew_metadata_successfully_when_valid_metadata_provided(
-        self, validation_pipeline, sample_crew_metadata
-    ):
+    def test_should_validate_crew_metadata_successfully_when_valid_metadata_provided(self, validation_pipeline, sample_crew_metadata):
         """Test successful metadata validation."""
         result = validation_pipeline._validate_crew_metadata(sample_crew_metadata)
 
@@ -263,9 +253,7 @@ class TestValidationPipeline:
         assert conflicts[0]["conflict_type"] == "validation_disagreement"
         assert len(conflicts[0]["validations"]) == 2
 
-    def test_should_validate_cross_crew_consistency_successfully_when_no_conflicts(
-        self, validation_pipeline, sample_stock_output, sample_etf_output
-    ):
+    def test_should_validate_cross_crew_consistency_successfully_when_no_conflicts(self, validation_pipeline, sample_stock_output, sample_etf_output):
         """Test successful cross-crew consistency validation."""
         crew_outputs = {"stock": sample_stock_output, "etf": sample_etf_output}
 
@@ -276,9 +264,7 @@ class TestValidationPipeline:
         assert len(result.ticker_conflicts) == 0
         assert len(result.data_conflicts) == 0
 
-    def test_should_detect_cross_crew_inconsistency_when_ticker_conflicts_exist(
-        self, validation_pipeline, sample_stock_output, sample_etf_output
-    ):
+    def test_should_detect_cross_crew_inconsistency_when_ticker_conflicts_exist(self, validation_pipeline, sample_stock_output, sample_etf_output):
         """Test detection of cross-crew inconsistency with ticker conflicts."""
         # Modify ETF output to have conflicting ticker validation
         sample_etf_output["validated_etfs"][0]["symbol"] = "AAPL"  # Same as stock
@@ -355,9 +341,7 @@ class TestValidationPipeline:
         mock_exists.assert_called_once()
         mock_glob.assert_called_once()
 
-    def test_should_validate_all_crew_outputs_successfully_when_valid_data_available(
-        self, mocker, validation_pipeline, sample_stock_output, sample_etf_output
-    ):
+    def test_should_validate_all_crew_outputs_successfully_when_valid_data_available(self, mocker, validation_pipeline, sample_stock_output, sample_etf_output):
         """Test comprehensive validation of all crew outputs."""
         # Mock data loading
         mock_load_data = mocker.patch("finwiz.integration.validation_pipeline.ValidationPipeline._load_crew_data")
@@ -506,9 +490,7 @@ class TestValidationPipelineIntegration:
 
             yield {"exists": mock_exists, "glob": mock_glob, "open": mock_file}
 
-    def test_should_perform_end_to_end_validation_with_mocked_file_system(
-        self, mock_file_system, sample_stock_output, sample_etf_output, mocker
-    ):
+    def test_should_perform_end_to_end_validation_with_mocked_file_system(self, mock_file_system, sample_stock_output, sample_etf_output, mocker):
         """Test end-to-end validation pipeline with mocked file system."""
 
         # Configure mock file system to return sample data

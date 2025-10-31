@@ -159,9 +159,7 @@ class TestReportCrewDiscoveryIntegration:
         assert context["aplus_discovery_results"] is None
         assert "--discovery flag" in context["aplus_opportunities_summary"]
 
-    def test_should_handle_discovery_accessor_errors_gracefully(
-        self, report_crew_instance, mock_discovery_accessor, mock_data_accessor
-    ):
+    def test_should_handle_discovery_accessor_errors_gracefully(self, report_crew_instance, mock_discovery_accessor, mock_data_accessor):
         """Test graceful error handling when discovery accessor fails."""
         # Arrange
         mock_discovery_accessor.has_discovery_results.side_effect = Exception("Discovery error")

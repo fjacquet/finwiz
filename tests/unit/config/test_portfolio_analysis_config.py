@@ -274,9 +274,7 @@ class TestPortfolioAnalysisConfig:
         """Test config validation with valid settings."""
         # Arrange
         mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
-        config = PortfolioAnalysisConfig(
-            deep_analysis_enabled=True, cache_enabled=True, cache_ttl_hours=24, deep_analysis_batch_size=10, max_alternatives=5
-        )
+        config = PortfolioAnalysisConfig(deep_analysis_enabled=True, cache_enabled=True, cache_ttl_hours=24, deep_analysis_batch_size=10, max_alternatives=5)
 
         # Act
         config.validate_config()
@@ -348,9 +346,7 @@ class TestPortfolioAnalysisConfig:
         """Test that multiple warnings are logged when multiple issues exist."""
         # Arrange
         mock_logger = mocker.patch("finwiz.config.portfolio_analysis_config.logger")
-        config = PortfolioAnalysisConfig(
-            deep_analysis_enabled=True, cache_enabled=False, cache_ttl_hours=2, deep_analysis_batch_size=30, max_alternatives=9
-        )
+        config = PortfolioAnalysisConfig(deep_analysis_enabled=True, cache_enabled=False, cache_ttl_hours=2, deep_analysis_batch_size=30, max_alternatives=9)
 
         # Act
         config.validate_config()

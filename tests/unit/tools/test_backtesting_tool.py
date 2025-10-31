@@ -257,9 +257,7 @@ class TestBacktestingTool:
         mock_perf_analyzer.return_value = mock_pa
 
         # Act
-        result_json = backtesting_tool._run(
-            symbol="AAPL", strategy="sma_crossover", backtest_period_years=5, include_regime_analysis=False
-        )
+        result_json = backtesting_tool._run(symbol="AAPL", strategy="sma_crossover", backtest_period_years=5, include_regime_analysis=False)
 
         # Assert
         result = json.loads(result_json)
@@ -384,9 +382,7 @@ class TestBacktestingTool:
         ]
 
         # Act
-        validation_score, validation_passed, validation_notes = backtesting_tool._validate_strategy(
-            mock_backtest_result, additional_metrics, regime_analysis
-        )
+        validation_score, validation_passed, validation_notes = backtesting_tool._validate_strategy(mock_backtest_result, additional_metrics, regime_analysis)
 
         # Assert
         assert isinstance(validation_score, float)
@@ -457,9 +453,7 @@ class TestBacktestingTool:
         ]
 
         # Act
-        validation_score, validation_passed, validation_notes = backtesting_tool._validate_strategy(
-            high_perf_result, additional_metrics, regime_analysis
-        )
+        validation_score, validation_passed, validation_notes = backtesting_tool._validate_strategy(high_perf_result, additional_metrics, regime_analysis)
 
         # Assert
         assert validation_score > 0.7  # Should pass validation threshold
@@ -479,9 +473,7 @@ class TestBacktestingTool:
         regime_analysis = []
 
         # Act
-        validation_score, validation_passed, validation_notes = backtesting_tool._validate_strategy(
-            poor_perf_result, additional_metrics, regime_analysis
-        )
+        validation_score, validation_passed, validation_notes = backtesting_tool._validate_strategy(poor_perf_result, additional_metrics, regime_analysis)
 
         # Assert
         assert validation_score < 0.7  # Should fail validation threshold

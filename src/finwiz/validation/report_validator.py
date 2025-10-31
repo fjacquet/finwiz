@@ -61,9 +61,7 @@ class ReportValidator:
         """Initialize validator."""
         self.current_date = datetime.now()
 
-    def validate_html_report(
-        self, html_content: str, validated_tickers: list[str], report_path: str | None = None
-    ) -> ReportValidationResult:
+    def validate_html_report(self, html_content: str, validated_tickers: list[str], report_path: str | None = None) -> ReportValidationResult:
         """
         Validate HTML report for hallucinations and data quality.
 
@@ -162,11 +160,7 @@ class ReportValidator:
         for text in self.FORBIDDEN_TEXT:
             if text in html:
                 context = self._extract_context(html, text)
-                issues.append(
-                    ValidationIssue(
-                        severity="ERROR", category="PLACEHOLDER_TEXT", message=f"Found placeholder text: {text}", location=context
-                    )
-                )
+                issues.append(ValidationIssue(severity="ERROR", category="PLACEHOLDER_TEXT", message=f"Found placeholder text: {text}", location=context))
 
         return issues
 
@@ -318,11 +312,7 @@ class ReportValidator:
 
             # Check for malformed URLs
             if not url.startswith(("http://", "https://", "mailto:")):
-                issues.append(
-                    ValidationIssue(
-                        severity="WARNING", category="MALFORMED_URL", message=f"Potentially malformed URL: {url}", location=None
-                    )
-                )
+                issues.append(ValidationIssue(severity="WARNING", category="MALFORMED_URL", message=f"Potentially malformed URL: {url}", location=None))
 
         return issues, len(urls)
 
@@ -363,11 +353,7 @@ def validate_report_file(report_path: str | Path, validated_tickers: list[str]) 
     if not report_path.exists():
         return ReportValidationResult(
             is_valid=False,
-            issues=[
-                ValidationIssue(
-                    severity="ERROR", category="FILE_NOT_FOUND", message=f"Report file not found: {report_path}", location=None
-                )
-            ],
+            issues=[ValidationIssue(severity="ERROR", category="FILE_NOT_FOUND", message=f"Report file not found: {report_path}", location=None)],
             warnings=[],
             stats={"total_checks": 0, "errors": 1, "warnings": 0},
         )

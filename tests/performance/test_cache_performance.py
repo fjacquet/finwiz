@@ -194,9 +194,7 @@ class TestCachePerformance:
     async def test_should_handle_cache_eviction_under_memory_pressure(self, cache_manager):
         """Test cache eviction behavior when memory limits are reached."""
         # Arrange - Use small cache for testing eviction
-        small_cache_config = CacheConfig(
-            backend=CacheBackend.MEMORY, max_memory_items=5, strategy=CacheStrategy.LRU, auto_cleanup=False
-        )
+        small_cache_config = CacheConfig(backend=CacheBackend.MEMORY, max_memory_items=5, strategy=CacheStrategy.LRU, auto_cleanup=False)
         small_cache = CacheManager(small_cache_config)
 
         async def eviction_test_function(value: int) -> str:

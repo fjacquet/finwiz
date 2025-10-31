@@ -94,9 +94,7 @@ class MetricsCollector:
 
         return end_timer
 
-    def record_operation_metrics(
-        self, operation_name: str, duration: float, success: bool = True, error: str | None = None
-    ) -> None:
+    def record_operation_metrics(self, operation_name: str, duration: float, success: bool = True, error: str | None = None) -> None:
         """Record metrics for an operation."""
         if operation_name not in self.performance_metrics:
             self.performance_metrics[operation_name] = PerformanceMetrics(operation_name)

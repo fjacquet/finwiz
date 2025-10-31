@@ -281,9 +281,7 @@ class TechnicalAlgorithms:
         rsi = 100 - (100 / (1 + rs))
         return rsi
 
-    def calculate_macd(
-        self, prices: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9
-    ) -> tuple[pd.Series, pd.Series, pd.Series]:
+    def calculate_macd(self, prices: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> tuple[pd.Series, pd.Series, pd.Series]:
         """Calculate MACD indicator."""
         ema_fast = prices.ewm(span=fast).mean()
         ema_slow = prices.ewm(span=slow).mean()
@@ -292,9 +290,7 @@ class TechnicalAlgorithms:
         histogram = macd_line - signal_line
         return macd_line, signal_line, histogram
 
-    def calculate_bollinger_bands(
-        self, prices: pd.Series, period: int = 20, std_dev: int = 2
-    ) -> tuple[pd.Series, pd.Series, pd.Series]:
+    def calculate_bollinger_bands(self, prices: pd.Series, period: int = 20, std_dev: int = 2) -> tuple[pd.Series, pd.Series, pd.Series]:
         """Calculate Bollinger Bands."""
         middle = prices.rolling(window=period).mean()
         std = prices.rolling(window=period).std()

@@ -170,9 +170,7 @@ class PortfolioHoldingsProcessor:
                     currency = (row.get("Currency") or "").strip()
 
                     # Log every row we encounter
-                    logger.debug(
-                        f"CSV line {line_num}: name='{name}', ticker='{ticker}', currency='{currency}', asset_class='{asset_class}'"
-                    )
+                    logger.debug(f"CSV line {line_num}: name='{name}', ticker='{ticker}', currency='{currency}', asset_class='{asset_class}'")
 
                     # Skip completely empty rows
                     if not name and not ticker:
@@ -249,11 +247,7 @@ class PortfolioHoldingsProcessor:
                         validation_status=decision.data_freshness,
                     )
 
-                    logger.debug(
-                        f"Successfully processed {holding.ticker}: "
-                        f"decision={decision.decision}, grade={decision.grade}, "
-                        f"score={decision.composite_score:.2f}"
-                    )
+                    logger.debug(f"Successfully processed {holding.ticker}: decision={decision.decision}, grade={decision.grade}, score={decision.composite_score:.2f}")
 
                     return (idx, decision, result)
 

@@ -111,9 +111,7 @@ class RebalancingUtils:
 
         """
         try:
-            analysis = self.portfolio_analyzer.analyze_current_portfolio(
-                holdings=config.holdings, prices=price_data, target_weights=config.target_weights
-            )
+            analysis = self.portfolio_analyzer.analyze_current_portfolio(holdings=config.holdings, prices=price_data, target_weights=config.target_weights)
             return analysis
 
         except PortfolioAnalysisError as e:
@@ -224,9 +222,7 @@ class RebalancingUtils:
                 "largest_position": max(analysis.weightings.values()) if analysis.weightings else 0.0,
                 "smallest_position": min(analysis.weightings.values()) if analysis.weightings else 0.0,
                 "total_deviation": sum(abs(dev) for dev in analysis.deviations_from_target.values()),
-                "max_deviation": (
-                    max(abs(dev) for dev in analysis.deviations_from_target.values()) if analysis.deviations_from_target else 0.0
-                ),
+                "max_deviation": (max(abs(dev) for dev in analysis.deviations_from_target.values()) if analysis.deviations_from_target else 0.0),
             }
 
             # Calculate concentration metrics

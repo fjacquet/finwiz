@@ -39,9 +39,7 @@ class TestInvestmentCandidate:
             grade_description="Excellent - Champion du portefeuille",
             recommended_action="Augmentez l'allocation si possible",
             data_source="Yahoo Finance",
-            risk_assessment=RiskAssessmentStandardized(
-                score=2.5, level="Medium", risk_factors=["Market volatility", "Tech sector concentration"]
-            ),
+            risk_assessment=RiskAssessmentStandardized(score=2.5, level="Medium", risk_factors=["Market volatility", "Tech sector concentration"]),
         )
 
         # Assert
@@ -97,9 +95,7 @@ class TestMarketRegime:
     def test_should_create_valid_market_regime(self):
         """Test creating valid market regime assessment."""
         # Arrange & Act
-        regime = MarketRegime(
-            regime_type="bull", vix_level=15.5, inflation_rate=3.2, interest_rate_trend="rising", market_stress_level="low"
-        )
+        regime = MarketRegime(regime_type="bull", vix_level=15.5, inflation_rate=3.2, interest_rate_trend="rising", market_stress_level="low")
 
         # Assert
         assert regime.regime_type == "bull"
@@ -158,9 +154,7 @@ class TestAPlusAnalysis:
             data_source="Yahoo Finance",
         )
 
-        market_regime = MarketRegime(
-            regime_type="bull", vix_level=18.0, inflation_rate=2.8, interest_rate_trend="stable", market_stress_level="low"
-        )
+        market_regime = MarketRegime(regime_type="bull", vix_level=18.0, inflation_rate=2.8, interest_rate_trend="stable", market_stress_level="low")
 
         criteria = APlusCriteria()
 
@@ -228,9 +222,7 @@ class TestAPlusDiscoveryResult:
         """Test creating complete discovery result."""
         # Arrange
         criteria = APlusCriteria()
-        market_regime = MarketRegime(
-            regime_type="bull", vix_level=16.0, inflation_rate=3.0, interest_rate_trend="stable", market_stress_level="low"
-        )
+        market_regime = MarketRegime(regime_type="bull", vix_level=16.0, inflation_rate=3.0, interest_rate_trend="stable", market_stress_level="low")
 
         candidate = InvestmentCandidate(
             symbol="VTI",

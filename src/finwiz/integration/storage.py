@@ -80,9 +80,7 @@ class CrewOutputStorage:
         self.max_storage_size_mb = 1000  # Maximum storage size per crew in MB
         self.retention_days = 30  # Default retention period
 
-        self.logger.info(
-            "CrewOutputStorage initialized", extra={"output_dir": str(self.output_dir), "storage_dir": str(self.storage_dir)}
-        )
+        self.logger.info("CrewOutputStorage initialized", extra={"output_dir": str(self.output_dir), "storage_dir": str(self.storage_dir)})
 
     def _setup_logging(self) -> logging.Logger:
         """Set up structured logging for storage operations."""
@@ -105,9 +103,7 @@ class CrewOutputStorage:
             directory.mkdir(parents=True, exist_ok=True)
             self.logger.debug(f"Ensured directory exists: {directory}")
 
-    def store_crew_output(
-        self, crew_name: str, output_data: dict[str, Any], metadata: CrewOutputMetadata, execution_id: str | None = None
-    ) -> StorageResult:
+    def store_crew_output(self, crew_name: str, output_data: dict[str, Any], metadata: CrewOutputMetadata, execution_id: str | None = None) -> StorageResult:
         """
         Store crew output with comprehensive metadata.
 
@@ -176,9 +172,7 @@ class CrewOutputStorage:
             # Check storage limits
             warnings = self._check_storage_limits(crew_name)
 
-            result = StorageResult(
-                success=True, storage_path=str(storage_path), metadata_path=str(metadata_path), warnings=warnings
-            )
+            result = StorageResult(success=True, storage_path=str(storage_path), metadata_path=str(metadata_path), warnings=warnings)
 
             self.logger.info(
                 f"Successfully stored output for crew: {crew_name}",
@@ -331,9 +325,7 @@ class CrewOutputStorage:
                     try:
                         # Check file age if specified
                         if query.max_age_hours:
-                            file_age_hours = (
-                                datetime.now() - datetime.fromtimestamp(storage_file.stat().st_mtime)
-                            ).total_seconds() / 3600
+                            file_age_hours = (datetime.now() - datetime.fromtimestamp(storage_file.stat().st_mtime)).total_seconds() / 3600
 
                             if file_age_hours > query.max_age_hours:
                                 continue
@@ -366,9 +358,7 @@ class CrewOutputStorage:
                                         if key in metadata_dict and isinstance(metadata_dict[key], str):
                                             metadata_dict[key] = datetime.fromisoformat(metadata_dict[key])
                                     # Handle nested validation_status datetime
-                                    if "validation_status" in metadata_dict and isinstance(
-                                        metadata_dict["validation_status"], dict
-                                    ):
+                                    if "validation_status" in metadata_dict and isinstance(metadata_dict["validation_status"], dict):
                                         vs = metadata_dict["validation_status"]
                                         if "validation_timestamp" in vs and isinstance(vs["validation_timestamp"], str):
                                             vs["validation_timestamp"] = datetime.fromisoformat(vs["validation_timestamp"])
@@ -434,9 +424,7 @@ class CrewOutputStorage:
 
             if crew_name:
                 # Filter by crew name
-                filtered_executions = [
-                    exec_data for exec_data in lineage_data.get("executions", []) if exec_data.get("crew_name") == crew_name
-                ]
+                filtered_executions = [exec_data for exec_data in lineage_data.get("executions", []) if exec_data.get("crew_name") == crew_name]
                 lineage_data["executions"] = filtered_executions
 
             # Add summary information
@@ -571,9 +559,7 @@ class CrewOutputStorage:
             total_size_mb = total_size / (1024 * 1024)
 
             if total_size_mb > self.max_storage_size_mb:
-                warnings.append(
-                    f"Storage size for {crew_name} ({total_size_mb:.1f}MB) exceeds limit ({self.max_storage_size_mb}MB)"
-                )
+                warnings.append(f"Storage size for {crew_name} ({total_size_mb:.1f}MB) exceeds limit ({self.max_storage_size_mb}MB)")
 
         except Exception as e:
             self.logger.warning(f"Failed to check storage limits: {str(e)}")

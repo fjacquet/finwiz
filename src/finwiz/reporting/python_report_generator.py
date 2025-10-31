@@ -29,9 +29,7 @@ class PythonReportGenerator:
         self.output_dir = Path(output_dir)
         self.logger = logger
 
-    def generate_family_financial_plan(
-        self, portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default"
-    ) -> str:
+    def generate_family_financial_plan(self, portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default") -> str:
         """
         Generate comprehensive family financial plan HTML report.
 
@@ -582,15 +580,11 @@ class PythonReportGenerator:
         """
 
 
-def generate_python_report(
-    portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default"
-) -> str:
+def generate_python_report(portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default") -> str:
     """
     Convenience function to generate Python-based report.
 
     This replaces AI-based report generation with fast template-based HTML.
     """
     generator = PythonReportGenerator()
-    return generator.generate_family_financial_plan(
-        portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id
-    )
+    return generator.generate_family_financial_plan(portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id)

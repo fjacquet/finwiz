@@ -232,9 +232,7 @@ class DerivativesPricer:
             ql.Settings.instance().evaluationDate = ql.Date.todaysDate()
 
             # Create option
-            payoff = ql.PlainVanillaPayoff(
-                ql.Option.Call if params.option_type == OptionType.CALL else ql.Option.Put, params.strike_price
-            )
+            payoff = ql.PlainVanillaPayoff(ql.Option.Call if params.option_type == OptionType.CALL else ql.Option.Put, params.strike_price)
 
             # Create exercise
             if params.exercise_style == ExerciseStyle.EUROPEAN:
@@ -299,9 +297,7 @@ class DerivativesPricer:
             # Fallback to Black-Scholes
             return self._price_option_black_scholes(params)
 
-    def _calculate_delta(
-        self, S: float, K: float, T: float, r: float, sigma: float, q: float, option_type: OptionType, d1: float
-    ) -> float:
+    def _calculate_delta(self, S: float, K: float, T: float, r: float, sigma: float, q: float, option_type: OptionType, d1: float) -> float:
         """Calculate option delta."""
 
         def norm_cdf(x: float) -> float:
@@ -320,9 +316,7 @@ class DerivativesPricer:
 
         return (math.exp(-q * T) * norm_pdf(d1)) / (S * sigma * math.sqrt(T))
 
-    def _calculate_theta(
-        self, S: float, K: float, T: float, r: float, sigma: float, q: float, option_type: OptionType, d1: float, d2: float
-    ) -> float:
+    def _calculate_theta(self, S: float, K: float, T: float, r: float, sigma: float, q: float, option_type: OptionType, d1: float, d2: float) -> float:
         """Calculate option theta (time decay)."""
 
         def norm_cdf(x: float) -> float:
@@ -489,9 +483,9 @@ class DerivativesPricer:
         years = params.years_to_maturity
 
         # Macaulay duration approximation
-        macaulay_duration = (1 + ytm / frequency) / (ytm / frequency) - (
-            1 + ytm / frequency + frequency * years * (params.coupon_rate / frequency - ytm / frequency)
-        ) / (frequency * ((1 + ytm / frequency) ** (frequency * years) - 1) + ytm / frequency)
+        macaulay_duration = (1 + ytm / frequency) / (ytm / frequency) - (1 + ytm / frequency + frequency * years * (params.coupon_rate / frequency - ytm / frequency)) / (
+            frequency * ((1 + ytm / frequency) ** (frequency * years) - 1) + ytm / frequency
+        )
 
         # Modified duration
         modified_duration = macaulay_duration / (1 + ytm / frequency)
@@ -509,9 +503,7 @@ class DerivativesPricer:
 
         return convexity
 
-    def calculate_implied_volatility(
-        self, market_price: float, parameters: OptionParameters, tolerance: float = 1e-6, max_iterations: int = 100
-    ) -> float:
+    def calculate_implied_volatility(self, market_price: float, parameters: OptionParameters, tolerance: float = 1e-6, max_iterations: int = 100) -> float:
         """
         Calculate implied volatility using Newton-Raphson method.
 

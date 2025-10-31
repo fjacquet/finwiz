@@ -131,10 +131,7 @@ class CoinMarketCapListTool(BaseTool):
     """
 
     name: str = "CoinMarketCap Cryptocurrency List"
-    description: str = (
-        "Get a list of top cryptocurrencies sorted by market cap, volume, price, "
-        "or recent performance. Returns key metrics for each cryptocurrency."
-    )
+    description: str = "Get a list of top cryptocurrencies sorted by market cap, volume, price, or recent performance. Returns key metrics for each cryptocurrency."
     args_schema: type[BaseModel] = CryptocurrencyListInput
 
     def _run(self, limit: int = 25, sort: str = "market_cap") -> str:
@@ -227,10 +224,7 @@ class CoinMarketCapHistoricalTool(BaseTool):
     """
 
     name: str = "CoinMarketCap Historical Data"
-    description: str = (
-        "Get historical price, volume, and market cap data for a specific cryptocurrency "
-        "over various time periods (24h, 7d, 30d, 3m, 1y, or ytd)."
-    )
+    description: str = "Get historical price, volume, and market cap data for a specific cryptocurrency over various time periods (24h, 7d, 30d, 3m, 1y, or ytd)."
     args_schema: type[BaseModel] = CryptocurrencyHistoricalInput
 
     def _run(self, symbol: str, time_period: str = "30d") -> str:
@@ -366,10 +360,7 @@ class CoinMarketCapNewsTool(BaseTool):
     """
 
     name: str = "CoinMarketCap News"
-    description: str = (
-        "Get the latest news about cryptocurrencies from CoinMarketCap. "
-        "Can be filtered for a specific cryptocurrency or show general crypto news."
-    )
+    description: str = "Get the latest news about cryptocurrencies from CoinMarketCap. Can be filtered for a specific cryptocurrency or show general crypto news."
     args_schema: type[BaseModel] = CryptocurrencyNewsInput
 
     def _run(self, symbol: str | None = None, limit: int = 10) -> str:

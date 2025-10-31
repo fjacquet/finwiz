@@ -202,9 +202,7 @@ class TestDataFreshnessValidator:
         validator = DataFreshnessValidator()
 
         data = {"symbol": "AAPL", "price": 150.0}
-        freshness_result = FreshnessResult(
-            is_fresh=True, age_hours=1.0, effective_age_hours=1.0, data_source="test", should_refresh=False
-        )
+        freshness_result = FreshnessResult(is_fresh=True, age_hours=1.0, effective_age_hours=1.0, data_source="test", should_refresh=False)
 
         enhanced_data = validator.add_freshness_metadata(data, freshness_result)
 

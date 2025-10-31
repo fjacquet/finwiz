@@ -142,9 +142,7 @@ class SentimentAnalyzer:
             "crypto_specific": ["blockchain", "defi", "nft", "mining", "staking", "protocol"],
         }
 
-    async def analyze_sentiment(
-        self, ticker: str, days_back: int = 7, max_articles_per_source: int = 20
-    ) -> SentimentAnalysisResult:
+    async def analyze_sentiment(self, ticker: str, days_back: int = 7, max_articles_per_source: int = 20) -> SentimentAnalysisResult:
         """
         Perform comprehensive multi-source sentiment analysis.
 
@@ -253,9 +251,7 @@ class SentimentAnalyzer:
                         if "ticker_sentiment" in item:
                             for ts in item["ticker_sentiment"]:
                                 if ts.get("ticker") == ticker:
-                                    ticker_sentiment = float(ts.get("relevance_score", 0)) * float(
-                                        ts.get("ticker_sentiment_score", 0)
-                                    )
+                                    ticker_sentiment = float(ts.get("relevance_score", 0)) * float(ts.get("ticker_sentiment_score", 0))
                                     break
 
                         if ticker_sentiment is None:

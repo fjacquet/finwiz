@@ -60,18 +60,14 @@ class PerplexityAnalysisIntegration:
     def _create_default_config(self) -> PerplexityConfig:
         """Create default configuration."""
         api_key = os.getenv("PPLX_API_KEY", "")
-        return PerplexityConfig(
-            api_key=api_key, timeout_seconds=30.0, max_retries=3, backoff_factor=2.0, rate_limit_buffer=5, default_max_results=10
-        )
+        return PerplexityConfig(api_key=api_key, timeout_seconds=30.0, max_retries=3, backoff_factor=2.0, rate_limit_buffer=5, default_max_results=10)
 
     @property
     def is_available(self) -> bool:
         """Check if Perplexity integration is available."""
         return self._api_available
 
-    async def search_financial_news(
-        self, query: str, ticker: str, asset_type: str, analysis_type: str = "general", max_results: int = 10
-    ) -> SonarSearchResult:
+    async def search_financial_news(self, query: str, ticker: str, asset_type: str, analysis_type: str = "general", max_results: int = 10) -> SonarSearchResult:
         """
         Search for financial news using Perplexity Sonar.
 
@@ -227,9 +223,7 @@ class PerplexityAnalysisIntegration:
                 if "country" in search_filters:
                     payload["country"] = search_filters["country"]
 
-                http_response = requests.post(
-                    "https://api.perplexity.ai/search", headers=headers, data=json.dumps(payload), timeout=30
-                )
+                http_response = requests.post("https://api.perplexity.ai/search", headers=headers, data=json.dumps(payload), timeout=30)
                 http_response.raise_for_status()
 
                 # Convert search results to the format expected by the parser

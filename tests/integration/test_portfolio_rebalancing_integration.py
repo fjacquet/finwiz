@@ -197,14 +197,10 @@ class TestPortfolioRebalancingIntegration:
         mock_rebalancing_engine.generate_enhanced_trade_recommendations.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_handle_missing_price_data_gracefully(
-        self, orchestrator, sample_portfolio_config, mock_price_service, mocker
-    ):
+    async def test_should_handle_missing_price_data_gracefully(self, orchestrator, sample_portfolio_config, mock_price_service, mocker):
         """Test handling of missing price data with fallback."""
         # Arrange
-        mock_price_service.get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())
-        }
+        mock_price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
         mock_price_service.get_price_with_fallback.side_effect = [
             PriceData(symbol="GOOGL", price=2500.0, timestamp=datetime.now()),
             PriceData(symbol="MSFT", price=300.0, timestamp=datetime.now()),
@@ -218,9 +214,7 @@ class TestPortfolioRebalancingIntegration:
         assert mock_price_service.get_price_with_fallback.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_should_raise_error_when_price_data_unavailable(
-        self, orchestrator, sample_portfolio_config, mock_price_service, mocker
-    ):
+    async def test_should_raise_error_when_price_data_unavailable(self, orchestrator, sample_portfolio_config, mock_price_service, mocker):
         """Test error handling when price data is completely unavailable."""
         # Arrange
         mock_price_service.get_current_prices.return_value = {}
@@ -235,9 +229,7 @@ class TestPortfolioRebalancingIntegration:
         assert "MSFT" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_should_handle_optimization_failure_gracefully(
-        self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker
-    ):
+    async def test_should_handle_optimization_failure_gracefully(self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker):
         """Test handling of optimization failures."""
         # Arrange
         mock_rebalancing_engine.optimize_rebalancing_trades.side_effect = Exception("Optimization failed")
@@ -249,9 +241,7 @@ class TestPortfolioRebalancingIntegration:
         assert "Optimization failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_should_generate_html_report_successfully(
-        self, orchestrator, sample_portfolio_config, mock_report_generator, mocker
-    ):
+    async def test_should_generate_html_report_successfully(self, orchestrator, sample_portfolio_config, mock_report_generator, mocker):
         """Test HTML report generation."""
         # Arrange
         result = await orchestrator.rebalance_portfolio(sample_portfolio_config)
@@ -266,9 +256,7 @@ class TestPortfolioRebalancingIntegration:
         mock_report_generator.generate_html.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_generate_french_report_when_requested(
-        self, orchestrator, sample_portfolio_config, mock_report_generator, mocker
-    ):
+    async def test_should_generate_french_report_when_requested(self, orchestrator, sample_portfolio_config, mock_report_generator, mocker):
         """Test French report generation."""
         # Arrange
         result = await orchestrator.rebalance_portfolio(sample_portfolio_config)
@@ -295,9 +283,7 @@ class TestPortfolioRebalancingIntegration:
         assert len(analysis.weightings) == 3
 
     @pytest.mark.asyncio
-    async def test_should_handle_empty_trade_recommendations(
-        self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker
-    ):
+    async def test_should_handle_empty_trade_recommendations(self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker):
         """Test handling when no trades are recommended."""
         # Arrange
         mock_rebalancing_engine.optimize_rebalancing_trades.return_value = OptimizedTrades(
@@ -320,9 +306,7 @@ class TestPortfolioRebalancingIntegration:
         assert result.overall_recommendation == RebalancingRecommendation.NO_ACTION
 
     @pytest.mark.asyncio
-    async def test_should_handle_high_urgency_positions(
-        self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer, mocker
-    ):
+    async def test_should_handle_high_urgency_positions(self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer, mocker):
         """Test handling of high urgency rebalancing needs."""
         # Arrange
         from finwiz.schemas.portfolio_rebalancing import RebalancingNeed
@@ -348,9 +332,7 @@ class TestPortfolioRebalancingIntegration:
         assert result.overall_recommendation == RebalancingRecommendation.REBALANCE_NOW
 
     @pytest.mark.asyncio
-    async def test_should_handle_high_transaction_costs(
-        self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker
-    ):
+    async def test_should_handle_high_transaction_costs(self, orchestrator, sample_portfolio_config, mock_rebalancing_engine, mocker):
         """Test handling when transaction costs are high relative to portfolio."""
         # Arrange
         mock_rebalancing_engine.optimize_rebalancing_trades.return_value = OptimizedTrades(
@@ -410,9 +392,7 @@ class TestPortfolioRebalancingIntegration:
         mock_price_service.close.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_handle_portfolio_analysis_error(
-        self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer, mocker
-    ):
+    async def test_should_handle_portfolio_analysis_error(self, orchestrator, sample_portfolio_config, mock_portfolio_analyzer, mocker):
         """Test handling of portfolio analysis errors."""
         # Arrange
         from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError
@@ -467,9 +447,7 @@ class TestPortfolioRebalancingIntegration:
 
         # Mock price service to return prices for all symbols
         orchestrator.price_service.get_current_prices = mocker.AsyncMock(
-            return_value={
-                f"STOCK{i:03d}": PriceData(symbol=f"STOCK{i:03d}", price=100.0, timestamp=datetime.now()) for i in range(50)
-            }
+            return_value={f"STOCK{i:03d}": PriceData(symbol=f"STOCK{i:03d}", price=100.0, timestamp=datetime.now()) for i in range(50)}
         )
 
         # Act

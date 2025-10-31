@@ -43,6 +43,7 @@ dependencies = [
     "mkdocs-material>=9.6.22",
     "mkdocs>=1.6.1",
     "sec-api>=1.0.32",
+    "supabase>=2.22.4",
 ]
 
 [project.scripts]

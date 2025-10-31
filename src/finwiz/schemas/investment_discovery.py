@@ -33,22 +33,14 @@ class APlusCriteria(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     # ETF Criteria
-    etf_max_expense_ratio: float = Field(
-        default=0.15, ge=0.0, le=2.0, description="Maximum expense ratio (decimal, e.g., 0.15 = 15%)"
-    )
+    etf_max_expense_ratio: float = Field(default=0.15, ge=0.0, le=2.0, description="Maximum expense ratio (decimal, e.g., 0.15 = 15%)")
     etf_min_aum: float = Field(default=1e9, ge=1e6, le=1e12, description="Minimum AUM for ETF liquidity in USD")
-    etf_max_tracking_error: float = Field(
-        default=0.002, ge=0.0, le=0.1, description="Maximum tracking error (decimal, e.g., 0.002 = 0.2%)"
-    )
+    etf_max_tracking_error: float = Field(default=0.002, ge=0.0, le=0.1, description="Maximum tracking error (decimal, e.g., 0.002 = 0.2%)")
     etf_min_history_years: int = Field(default=3, ge=1, le=20, description="Minimum operating history in years")
 
     # Stock Criteria - Accept percentage format (0-100)
-    stock_min_roe: float = Field(
-        default=20.0, ge=0.0, le=100.0, description="Minimum return on equity (percentage, e.g., 20 = 20%)"
-    )
-    stock_min_revenue_growth: float = Field(
-        default=15.0, ge=-50.0, le=200.0, description="Minimum revenue growth rate (percentage, e.g., 15 = 15%)"
-    )
+    stock_min_roe: float = Field(default=20.0, ge=0.0, le=100.0, description="Minimum return on equity (percentage, e.g., 20 = 20%)")
+    stock_min_revenue_growth: float = Field(default=15.0, ge=-50.0, le=200.0, description="Minimum revenue growth rate (percentage, e.g., 15 = 15%)")
     stock_max_debt_to_equity: float = Field(default=0.3, ge=0.0, le=5.0, description="Maximum debt-to-equity ratio")
     stock_min_market_cap: float = Field(default=1e9, ge=1e6, le=1e13, description="Minimum market capitalization in USD")
 

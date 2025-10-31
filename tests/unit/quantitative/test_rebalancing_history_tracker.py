@@ -155,9 +155,7 @@ class TestRebalancingHistoryTracker:
             # Assert
             assert tracker.storage_path.exists()
 
-    def test_should_record_rebalancing_action_when_valid_data_provided(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_record_rebalancing_action_when_valid_data_provided(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test recording a rebalancing action with valid data."""
         # Arrange
         portfolio_id = "test_portfolio_123"
@@ -188,9 +186,7 @@ class TestRebalancingHistoryTracker:
         assert history_data[0]["portfolio_id"] == portfolio_id
         assert history_data[0]["execution_status"] == "COMPLETED"
 
-    def test_should_calculate_correct_metrics_when_recording_action(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_calculate_correct_metrics_when_recording_action(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test that correct metrics are calculated when recording action."""
         # Arrange
         portfolio_id = "test_portfolio_metrics"
@@ -224,9 +220,7 @@ class TestRebalancingHistoryTracker:
                 executed_trades=[],
             )
 
-    def test_should_retrieve_portfolio_history_when_history_exists(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_retrieve_portfolio_history_when_history_exists(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test retrieving portfolio history when history exists."""
         # Arrange
         portfolio_id = "test_portfolio_history"
@@ -262,9 +256,7 @@ class TestRebalancingHistoryTracker:
         # Assert
         assert history == []
 
-    def test_should_filter_history_by_date_range_when_dates_provided(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_filter_history_by_date_range_when_dates_provided(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test filtering history by date range."""
         # Arrange
         portfolio_id = "test_portfolio_filter"
@@ -299,9 +291,7 @@ class TestRebalancingHistoryTracker:
             # Fallback assertion if something went wrong
             assert len(all_history) == 5
 
-    def test_should_analyze_performance_attribution_when_sufficient_data_exists(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_analyze_performance_attribution_when_sufficient_data_exists(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test performance attribution analysis with sufficient data."""
         # Arrange
         portfolio_id = "test_portfolio_attribution"
@@ -341,9 +331,7 @@ class TestRebalancingHistoryTracker:
         with pytest.raises(ValueError, match="Insufficient history"):
             tracker.analyze_performance_attribution(portfolio_id, start_date, end_date)
 
-    def test_should_analyze_rebalancing_trends_when_data_available(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_analyze_rebalancing_trends_when_data_available(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test trend analysis with available data."""
         # Arrange
         portfolio_id = "test_portfolio_trends"
@@ -388,9 +376,7 @@ class TestRebalancingHistoryTracker:
         assert trend_analysis.optimal_frequency_days == 60  # Default
         assert trend_analysis.confidence_in_optimal < 0.5  # Low confidence
 
-    def test_should_generate_analytics_dashboard_when_history_exists(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_generate_analytics_dashboard_when_history_exists(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test analytics dashboard generation with existing history."""
         # Arrange
         portfolio_id = "test_portfolio_dashboard"
@@ -466,9 +452,7 @@ class TestRebalancingHistoryTracker:
             assert pos_history.total_trades == 4
             assert pos_history.total_transaction_costs > 0
 
-    def test_should_generate_appropriate_strategy_recommendations(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_generate_appropriate_strategy_recommendations(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test that appropriate strategy recommendations are generated."""
         # Arrange
         portfolio_id = "test_portfolio_recommendations"
@@ -516,9 +500,7 @@ class TestRebalancingHistoryTracker:
         with pytest.raises(ValueError):  # Expected due to no history
             tracker.generate_analytics_dashboard(portfolio_id)
 
-    def test_should_validate_frequency_scenarios_in_trend_analysis(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_validate_frequency_scenarios_in_trend_analysis(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test that frequency scenarios are properly validated in trend analysis."""
         # Arrange
         portfolio_id = "test_portfolio_frequency_validation"
@@ -561,9 +543,7 @@ class TestRebalancingHistoryTracker:
         # Restore permissions for cleanup
         tracker.storage_path.chmod(0o755)
 
-    def test_should_maintain_data_consistency_across_operations(
-        self, tracker, sample_rebalancing_result, sample_trade_recommendations
-    ):
+    def test_should_maintain_data_consistency_across_operations(self, tracker, sample_rebalancing_result, sample_trade_recommendations):
         """Test that data consistency is maintained across multiple operations."""
         # Arrange
         portfolio_id = "test_portfolio_consistency"

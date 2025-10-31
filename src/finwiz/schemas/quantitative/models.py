@@ -476,9 +476,7 @@ class ScreeningSummary(BaseModel):
 class RiskWarning(BaseModel):
     """Individual risk warning."""
 
-    warning_type: Literal["concentration", "volatility", "drawdown", "correlation", "liquidity"] = Field(
-        ..., description="Type of risk warning"
-    )
+    warning_type: Literal["concentration", "volatility", "drawdown", "correlation", "liquidity"] = Field(..., description="Type of risk warning")
     severity: Literal["low", "medium", "high", "critical"] = Field(..., description="Severity level")
     message: str = Field(..., description="Warning message")
     affected_assets: list[str] = Field(..., description="Assets affected by this warning")

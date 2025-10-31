@@ -176,9 +176,7 @@ class TestBatchPerformance:
         memory_metrics = batch_prefetcher.get_memory_metrics()
 
         # Assert performance targets
-        assert batch_duration < estimated_sequential_time, (
-            f"Batch ({batch_duration:.1f}s) should be faster than sequential (~{estimated_sequential_time:.1f}s)"
-        )
+        assert batch_duration < estimated_sequential_time, f"Batch ({batch_duration:.1f}s) should be faster than sequential (~{estimated_sequential_time:.1f}s)"
         assert time_savings_percent >= 55, f"Time savings ({time_savings_percent:.1f}%) should be at least 55%"
         assert batch_time_per_ticker < 0.5, f"Time per ticker ({batch_time_per_ticker:.2f}s) should be under 0.5s"
 
@@ -233,9 +231,7 @@ class TestBatchPerformance:
         memory_metrics = batch_prefetcher.get_memory_metrics()
 
         # Assert performance targets
-        assert batch_duration < estimated_sequential_time, (
-            f"Batch ({batch_duration:.1f}s) should be faster than sequential (~{estimated_sequential_time:.1f}s)"
-        )
+        assert batch_duration < estimated_sequential_time, f"Batch ({batch_duration:.1f}s) should be faster than sequential (~{estimated_sequential_time:.1f}s)"
         assert time_savings_percent >= 50, f"Time savings ({time_savings_percent:.1f}%) should be at least 50%"
         assert batch_time_per_ticker < 0.5, f"Time per ticker ({batch_time_per_ticker:.2f}s) should be under 0.5s for 30 tickers"
 
@@ -295,9 +291,7 @@ class TestBatchPerformance:
         memory_metrics = batch_prefetcher.get_memory_metrics()
 
         # Assert performance targets (stricter for full portfolio)
-        assert batch_duration < estimated_sequential_time, (
-            f"Batch ({batch_duration:.1f}s) should be faster than sequential (~{estimated_sequential_time:.1f}s)"
-        )
+        assert batch_duration < estimated_sequential_time, f"Batch ({batch_duration:.1f}s) should be faster than sequential (~{estimated_sequential_time:.1f}s)"
         assert time_savings_percent >= 55, f"Time savings ({time_savings_percent:.1f}%) should be at least 55%"
         assert batch_time_per_ticker < 0.2, f"Time per ticker ({batch_time_per_ticker:.2f}s) should be under 0.2s for 66 tickers"
         assert speedup_factor >= 2.0, f"Speedup factor ({speedup_factor:.1f}x) should be at least 2x"
@@ -355,9 +349,7 @@ class TestBatchPerformance:
         api_call_reduction = ((sequential_api_calls - batch_api_calls) / sequential_api_calls) * 100
 
         # Assert API call reduction
-        assert batch_api_calls < sequential_api_calls, (
-            f"Batch calls ({batch_api_calls}) should be less than sequential ({sequential_api_calls})"
-        )
+        assert batch_api_calls < sequential_api_calls, f"Batch calls ({batch_api_calls}) should be less than sequential ({sequential_api_calls})"
         assert api_call_reduction >= 80, f"API call reduction ({api_call_reduction:.1f}%) should be at least 80%"
 
         # Verify data completeness despite fewer API calls
@@ -412,14 +404,10 @@ class TestBatchPerformance:
         # Analyze memory scaling
         for result in memory_results:
             # Memory per ticker should be reasonable
-            assert result["memory_per_ticker"] < 5.0, (
-                f"Memory per ticker ({result['memory_per_ticker']:.2f} MB) too high for {result['label']}"
-            )
+            assert result["memory_per_ticker"] < 5.0, f"Memory per ticker ({result['memory_per_ticker']:.2f} MB) too high for {result['label']}"
 
             # Total memory should stay under limit
-            assert result["peak_memory_mb"] < 500, (
-                f"Peak memory ({result['peak_memory_mb']:.1f} MB) exceeds 500 MB limit for {result['label']}"
-            )
+            assert result["peak_memory_mb"] < 500, f"Peak memory ({result['peak_memory_mb']:.1f} MB) exceeds 500 MB limit for {result['label']}"
 
         print("\nMemory Usage Scaling:")
         for result in memory_results:

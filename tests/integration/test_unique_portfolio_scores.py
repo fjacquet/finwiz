@@ -146,7 +146,7 @@ class TestUniquePortfolioScores:
             results = analyzer.analyze_portfolio_holdings(holdings, session_id)
 
             # Assert - Verify successful analysis
-            assert results["successful_analyses"] >= 3, f"Expected at least 3 successful analyses"
+            assert results["successful_analyses"] >= 3, "Expected at least 3 successful analyses"
             assert len(results["deep_analysis_results"]) >= 3, "Expected at least 3 analysis results"
 
         except ValueError as e:

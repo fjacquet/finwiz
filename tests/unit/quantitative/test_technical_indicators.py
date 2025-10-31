@@ -460,9 +460,7 @@ class TestTALibWrappers:
 
     def test_mixed_nan_values(self):
         """Test handling of mixed valid and NaN values."""
-        prices = np.array(
-            [100, 101, np.nan, 103, 104, np.nan, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119]
-        )
+        prices = np.array([100, 101, np.nan, 103, 104, np.nan, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119])
 
         # Should handle without crashing
         result = TALibWrappers.rsi(prices, period=14)

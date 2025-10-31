@@ -57,12 +57,8 @@ class ConfigurationManager:
             description="OpenAI API key for LLM operations",
             test_endpoint="https://api.openai.com/v1/models",
         ),
-        APIKeyConfig(
-            name="Serper", env_var="SERPER_API_KEY", required=True, description="Serper API key for web search functionality"
-        ),
-        APIKeyConfig(
-            name="Firecrawl", env_var="FIRECRAWL_API_KEY", required=True, description="Firecrawl API key for web scraping"
-        ),
+        APIKeyConfig(name="Serper", env_var="SERPER_API_KEY", required=True, description="Serper API key for web search functionality"),
+        APIKeyConfig(name="Firecrawl", env_var="FIRECRAWL_API_KEY", required=True, description="Firecrawl API key for web scraping"),
         APIKeyConfig(
             name="Alpha Vantage",
             env_var="ALPHA_VANTAGE_API_KEY",
@@ -172,9 +168,7 @@ class ConfigurationManager:
         # Check if we have critical failures
         if self.missing_keys:
             remediation = self._generate_remediation_guidance()
-            raise ConfigurationError(
-                missing_keys=self.missing_keys, invalid_keys=self.invalid_keys, remediation_guidance=remediation
-            )
+            raise ConfigurationError(missing_keys=self.missing_keys, invalid_keys=self.invalid_keys, remediation_guidance=remediation)
 
         if self.invalid_keys:
             logger.warning(f"Some API keys have invalid formats: {self.invalid_keys}")
@@ -352,10 +346,7 @@ class ConfigurationManager:
                 missing_apis = [api for api in required_apis if not self.is_service_available(api)]
 
                 if missing_apis:
-                    logger.warning(
-                        f"Feature '{feature}' is enabled but missing API keys for: {missing_apis}. "
-                        f"Consider disabling the feature or configuring the required API keys."
-                    )
+                    logger.warning(f"Feature '{feature}' is enabled but missing API keys for: {missing_apis}. Consider disabling the feature or configuring the required API keys.")
 
     def _validate_required_directories(self) -> None:
         """Validate that required directories exist."""

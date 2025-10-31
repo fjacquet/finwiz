@@ -11,7 +11,7 @@ Problem-solving guides for specific tasks.
 ## Performance and Optimization
 
 - **[Performance Optimization](performance_optimization.md)** - Optimize analysis speed
-- **[Performance Monitoring](performance_monitoring.md)** - Monitor system performance
+- **Performance Monitoring** - Monitor system performance
 - **[Memory Management](MEMORY_MANAGEMENT.md)** - Manage memory usage
 
 ## Development

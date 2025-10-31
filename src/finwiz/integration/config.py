@@ -85,9 +85,7 @@ class DataQualityConfig(BaseModel):
     """Configuration for data quality checks and validation."""
 
     # Required metadata fields for all crew outputs
-    required_metadata_fields: list[str] = Field(
-        default_factory=lambda: ["crew_name", "execution_timestamp", "schema_version", "validation_status"]
-    )
+    required_metadata_fields: list[str] = Field(default_factory=lambda: ["crew_name", "execution_timestamp", "schema_version", "validation_status"])
 
     # Data quality thresholds
     min_confidence_score: float = Field(default=0.7, ge=0.0, le=1.0)

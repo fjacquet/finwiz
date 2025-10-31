@@ -120,17 +120,13 @@ class PortfolioAnalysisConfig(BaseModel):
         warnings = []
 
         if self.deep_analysis_enabled and not self.cache_enabled:
-            warnings.append(
-                "Deep analysis is enabled but caching is disabled. This may result in high API costs and slow performance."
-            )
+            warnings.append("Deep analysis is enabled but caching is disabled. This may result in high API costs and slow performance.")
 
         if self.cache_ttl_hours < 6:
             warnings.append(f"Cache TTL is very short ({self.cache_ttl_hours}h). Consider increasing for better performance.")
 
         if self.deep_analysis_batch_size > 20:
-            warnings.append(
-                f"Large batch size ({self.deep_analysis_batch_size}) may cause rate limiting issues with external APIs."
-            )
+            warnings.append(f"Large batch size ({self.deep_analysis_batch_size}) may cause rate limiting issues with external APIs.")
 
         if self.max_alternatives > 7:
             warnings.append(f"High number of alternatives ({self.max_alternatives}) may overwhelm users with too many choices.")

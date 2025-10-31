@@ -131,9 +131,7 @@ class RebalancingSections:
         main_div.append(h4)
 
         # Use formatters to create holdings table and parse it
-        holdings_table_html = self.formatters.create_portfolio_table(
-            current.weightings, is_french=is_french, table_class="portfolio-table"
-        )
+        holdings_table_html = self.formatters.create_portfolio_table(current.weightings, is_french=is_french, table_class="portfolio-table")
 
         # Parse the table HTML and append to main div
         table_soup = BeautifulSoup(holdings_table_html, "html.parser")
@@ -153,11 +151,7 @@ class RebalancingSections:
         if not result.trade_recommendations:
             no_trades_div = soup.new_tag("div", **{"class": "no-trades"})
             p = soup.new_tag("p")
-            message = (
-                "Aucune transaction requise. Votre portefeuille est bien équilibré."
-                if is_french
-                else "No trades required. Your portfolio is well balanced."
-            )
+            message = "Aucune transaction requise. Votre portefeuille est bien équilibré." if is_french else "No trades required. Your portfolio is well balanced."
             p.string = f"✅ {message}"
             no_trades_div.append(p)
             soup.append(no_trades_div)
@@ -173,9 +167,7 @@ class RebalancingSections:
             trades_div.append(p)
 
             # Use formatters to create trades table and parse it
-            trades_table_html = self.formatters.create_trades_table(
-                result.trade_recommendations, is_french=is_french, include_interactive=include_interactive
-            )
+            trades_table_html = self.formatters.create_trades_table(result.trade_recommendations, is_french=is_french, include_interactive=include_interactive)
 
             # Parse the table HTML and append to trades div
             table_soup = BeautifulSoup(trades_table_html, "html.parser")
@@ -192,9 +184,7 @@ class RebalancingSections:
         projected = result.projected_portfolio
 
         # Use formatters to create comparison table
-        comparison_table = self.formatters.create_before_after_table(
-            result.current_portfolio.weightings, projected.weightings, is_french=is_french
-        )
+        comparison_table = self.formatters.create_before_after_table(result.current_portfolio.weightings, projected.weightings, is_french=is_french)
 
         return f"""
         <div class="projected-portfolio">

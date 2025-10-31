@@ -51,11 +51,7 @@ async def demo_basic_backtesting() -> None:
         if result["regime_analysis"]:
             print(f"\nRegime Analysis ({len(result['regime_analysis'])} regimes):")
             for i, regime in enumerate(result["regime_analysis"]):
-                print(
-                    f"  {i + 1}. {regime['regime_type'].upper()} market: "
-                    f"{regime['strategy_return']:.1f}% return, "
-                    f"Sharpe: {regime['sharpe_ratio']:.2f}"
-                )
+                print(f"  {i + 1}. {regime['regime_type'].upper()} market: {regime['strategy_return']:.1f}% return, Sharpe: {regime['sharpe_ratio']:.2f}")
 
         print("\nValidation Notes:")
         for note in result["validation_notes"]:
@@ -97,11 +93,7 @@ async def demo_multi_asset_comparison() -> None:
             result = json.loads(result_json)
             results[symbol] = result
 
-            print(
-                f"  Return: {result['total_return']:.1f}%, "
-                f"Sharpe: {result['sharpe_ratio']:.2f}, "
-                f"Validation: {'✓' if result['validation_passed'] else '✗'}"
-            )
+            print(f"  Return: {result['total_return']:.1f}%, Sharpe: {result['sharpe_ratio']:.2f}, Validation: {'✓' if result['validation_passed'] else '✗'}")
 
         except Exception as e:
             print(f"  Error testing {symbol}: {e}")
@@ -116,12 +108,7 @@ async def demo_multi_asset_comparison() -> None:
 
         for symbol, result in results.items():
             validation_mark = "✓" if result["validation_passed"] else "✗"
-            print(
-                f"{symbol:<8} {result['total_return']:>6.1f}% "
-                f"{result['sharpe_ratio']:>6.2f}  "
-                f"{result['max_drawdown']:>8.1f}%  "
-                f"{validation_mark:>4}"
-            )
+            print(f"{symbol:<8} {result['total_return']:>6.1f}% {result['sharpe_ratio']:>6.2f}  {result['max_drawdown']:>8.1f}%  {validation_mark:>4}")
 
 
 async def demo_regime_analysis() -> None:
@@ -207,9 +194,7 @@ async def demo_validation_criteria() -> None:
             print(f"\n6. Validation Test: {symbol}")
             print("-" * 30)
 
-            result_json = backtesting_tool._run(
-                symbol=symbol, strategy="sma_crossover", backtest_period_years=3, include_regime_analysis=True
-            )
+            result_json = backtesting_tool._run(symbol=symbol, strategy="sma_crossover", backtest_period_years=3, include_regime_analysis=True)
 
             result = json.loads(result_json)
 
@@ -219,10 +204,7 @@ async def demo_validation_criteria() -> None:
             print(f"  Sharpe Ratio: {result['sharpe_ratio']:.2f} ({'✓' if result['sharpe_ratio'] >= 1.0 else '✗ <1.0'})")
             print(f"  Max Drawdown: {result['max_drawdown']:.1f}% ({'✓' if result['max_drawdown'] >= -25 else '✗ <-25%'})")
             print(f"  Win Rate: {result['win_rate']:.1%} ({'✓' if result['win_rate'] >= 0.45 else '✗ <45%'})")
-            print(
-                f"  Regime Consistency: {result['regime_consistency']:.1%} "
-                f"({'✓' if result['regime_consistency'] >= 0.6 else '✗ <60%'})"
-            )
+            print(f"  Regime Consistency: {result['regime_consistency']:.1%} ({'✓' if result['regime_consistency'] >= 0.6 else '✗ <60%'})")
 
             print("\nValidation Result:")
             print(f"  Score: {result['validation_score']:.1%}")

@@ -202,9 +202,7 @@ class TechnicalAnalysisResult(BaseModel):
     analysis_timestamp: datetime = Field(default_factory=datetime.now, description="When analysis was performed")
 
     # Individual indicator results
-    indicator_results: dict[str, TechnicalIndicatorResult] = Field(
-        default_factory=dict, description="Results from individual indicators"
-    )
+    indicator_results: dict[str, TechnicalIndicatorResult] = Field(default_factory=dict, description="Results from individual indicators")
 
     # Overall analysis
     overall_signal: SignalType = Field(..., description="Overall signal recommendation")

@@ -209,9 +209,7 @@ class PortfolioPriceService:
         for attempt in range(self.config.retry_attempts):
             try:
                 # Primary: Use Yahoo Finance ticker info tool
-                result = await asyncio.wait_for(
-                    asyncio.to_thread(self.yahoo_tool._run, symbol), timeout=self.config.request_timeout
-                )
+                result = await asyncio.wait_for(asyncio.to_thread(self.yahoo_tool._run, symbol), timeout=self.config.request_timeout)
 
                 if isinstance(result, dict) and "error" not in result:
                     current_price = result.get("current_price")
@@ -230,9 +228,7 @@ class PortfolioPriceService:
                 info = await asyncio.to_thread(ticker.info.get, "regularMarketPrice")
 
                 if info and info > 0:
-                    return PriceData(
-                        symbol=symbol, price=float(info), timestamp=datetime.now(), source="yfinance_direct", currency="USD"
-                    )
+                    return PriceData(symbol=symbol, price=float(info), timestamp=datetime.now(), source="yfinance_direct", currency="USD")
 
                 # Second fallback: Try history data
                 logger.debug(f"Direct yfinance failed for {symbol}, trying history data")
@@ -277,9 +273,7 @@ class PortfolioPriceService:
                 logger.debug(f"Trying crypto tool for {symbol}")
                 crypto_symbol = symbol.replace("-USD", "").replace("-USDT", "")
 
-                result = await asyncio.wait_for(
-                    asyncio.to_thread(self.crypto_tool._run, crypto_symbol, False, False), timeout=self.config.request_timeout
-                )
+                result = await asyncio.wait_for(asyncio.to_thread(self.crypto_tool._run, crypto_symbol, False, False), timeout=self.config.request_timeout)
 
                 if isinstance(result, dict) and "error" not in result:
                     crypto_data = result.get("crypto_data", {})
@@ -302,9 +296,7 @@ class PortfolioPriceService:
                         info = await asyncio.to_thread(ticker.info.get, "regularMarketPrice")
 
                         if info and info > 0:
-                            return PriceData(
-                                symbol=symbol, price=float(info), timestamp=datetime.now(), source="yfinance_crypto", currency="USD"
-                            )
+                            return PriceData(symbol=symbol, price=float(info), timestamp=datetime.now(), source="yfinance_crypto", currency="USD")
                     except Exception:
                         continue
 

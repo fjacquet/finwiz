@@ -28,10 +28,7 @@ class ChartImgTool(BaseTool):
     """Tool for generating chart images via Chart-img API."""
 
     name: str = "Chart-img Generator"
-    description: str = (
-        "Generates a PNG chart image via Chart-img for a given symbol and timeframe, "
-        "returning a data URL string. Requires CHART_IMG_API_KEY."
-    )
+    description: str = "Generates a PNG chart image via Chart-img for a given symbol and timeframe, returning a data URL string. Requires CHART_IMG_API_KEY."
     args_schema: type[BaseModel] = ChartImgInput
 
     @api_tool(

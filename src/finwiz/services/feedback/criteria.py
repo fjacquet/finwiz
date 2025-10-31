@@ -30,9 +30,7 @@ class CriteriaAdjustment:
 
         # Check performance using pandas Series
         if feedback_summary.performance_by_asset_type:
-            outperformance_series = pd.Series(
-                [metrics.get("outperformance_rate", 0.0) for metrics in feedback_summary.performance_by_asset_type.values()]
-            )
+            outperformance_series = pd.Series([metrics.get("outperformance_rate", 0.0) for metrics in feedback_summary.performance_by_asset_type.values()])
             avg_outperformance = outperformance_series.mean()
 
             if avg_outperformance < 0.5:  # Less than 50% outperformance
@@ -57,9 +55,7 @@ class CriteriaAdjustment:
 
         # Check performance using pandas Series
         if feedback_summary.performance_by_asset_type:
-            outperformance_series = pd.Series(
-                [metrics.get("outperformance_rate", 0.0) for metrics in feedback_summary.performance_by_asset_type.values()]
-            )
+            outperformance_series = pd.Series([metrics.get("outperformance_rate", 0.0) for metrics in feedback_summary.performance_by_asset_type.values()])
             avg_outperformance = outperformance_series.mean()
             if avg_outperformance < 0.5:
                 reasons.append("poor performance outcomes")
@@ -103,9 +99,7 @@ class CriteriaAdjustment:
 
         # Adjust based on performance outcomes using pandas Series
         if feedback_summary.performance_by_asset_type:
-            performance_series = pd.Series(
-                [metrics.get("outperformance_rate", 0.0) for metrics in feedback_summary.performance_by_asset_type.values()]
-            )
+            performance_series = pd.Series([metrics.get("outperformance_rate", 0.0) for metrics in feedback_summary.performance_by_asset_type.values()])
             avg_performance = performance_series.mean()
 
             if avg_performance < 0.4:  # Poor performance

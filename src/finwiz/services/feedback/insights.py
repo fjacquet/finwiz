@@ -33,9 +33,7 @@ class FeedbackInsights:
 
         if performance_feedback:
             # Use pandas Series for vectorized calculations
-            outperformance_series = pd.Series(
-                [p.performance_outcome == PerformanceOutcome.OUTPERFORMED for p in performance_feedback]
-            )
+            outperformance_series = pd.Series([p.performance_outcome == PerformanceOutcome.OUTPERFORMED for p in performance_feedback])
             outperformance_rate = outperformance_series.mean()
             insights.append(f"Outperformance rate: {outperformance_rate:.1%}")
 
@@ -56,9 +54,7 @@ class FeedbackInsights:
             if p.performance_outcome == PerformanceOutcome.OUTPERFORMED:
                 successful_symbols.add(p.symbol)
 
-        successful_feedback = [
-            f for f in user_feedback if f.symbol in successful_symbols and f.outcome == RecommendationOutcome.ACCEPTED
-        ]
+        successful_feedback = [f for f in user_feedback if f.symbol in successful_symbols and f.outcome == RecommendationOutcome.ACCEPTED]
 
         if successful_feedback:
             # Analyze score patterns using pandas Series
@@ -102,9 +98,7 @@ class FeedbackInsights:
         quality_score += completeness_score * 0.4
 
         # Check performance data availability
-        feedback_with_performance = sum(
-            1 for f in user_feedback if any(p.original_recommendation_id == f.recommendation_id for p in performance_feedback)
-        )
+        feedback_with_performance = sum(1 for f in user_feedback if any(p.original_recommendation_id == f.recommendation_id for p in performance_feedback))
         performance_coverage = feedback_with_performance / len(user_feedback)
         quality_score += performance_coverage * 0.3
 
@@ -118,9 +112,7 @@ class FeedbackInsights:
         return min(quality_score, 1.0)
 
     @staticmethod
-    def calculate_confidence_in_insights(
-        user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]
-    ) -> float:
+    def calculate_confidence_in_insights(user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback]) -> float:
         """Calculate confidence level in generated insights."""
         if not user_feedback and not performance_feedback:
             return 0.0
@@ -149,9 +141,7 @@ class FeedbackInsights:
         return sum(confidence_factors)
 
     @staticmethod
-    def calculate_asset_metrics(
-        user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback], asset_type: str
-    ) -> dict[str, float]:
+    def calculate_asset_metrics(user_feedback: list[UserFeedback], performance_feedback: list[PerformanceFeedback], asset_type: str) -> dict[str, float]:
         """Calculate metrics for a specific asset type."""
         asset_user_feedback = [f for f in user_feedback if f.asset_type == asset_type]
 

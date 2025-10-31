@@ -175,15 +175,11 @@ class DataValidator:
 
             for crew_name in freshness_report.stale_data:
                 # Get specific freshness info for this crew
-                freshness_result = self.integration_manager.freshness_checker.check_data_freshness_for_crew(
-                    crew_name, max_age_hours
-                )
+                freshness_result = self.integration_manager.freshness_checker.check_data_freshness_for_crew(crew_name, max_age_hours)
 
                 if freshness_result:
                     age_hours = freshness_result.freshness_status.age_hours
-                    warnings.append(
-                        f"Stale data warning: {crew_name} crew data is {age_hours:.1f} hours old (threshold: {max_age_hours} hours)"
-                    )
+                    warnings.append(f"Stale data warning: {crew_name} crew data is {age_hours:.1f} hours old (threshold: {max_age_hours} hours)")
                 else:
                     warnings.append(f"Stale data warning: {crew_name} crew data age unknown")
 

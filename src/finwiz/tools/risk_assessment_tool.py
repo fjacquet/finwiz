@@ -166,9 +166,7 @@ class RiskAssessmentTool(BaseTool):
                 "concentration_risk": portfolio_result.get("concentration_risk", {}),
                 "stress_test_results": portfolio_result.get("stress_test_results", {}),
                 "market_regime_analysis": regime_analysis,
-                "overall_risk_assessment": self._generate_overall_risk_assessment(
-                    individual_result, portfolio_result, regime_analysis
-                ),
+                "overall_risk_assessment": self._generate_overall_risk_assessment(individual_result, portfolio_result, regime_analysis),
             }
 
         except Exception as e:
@@ -257,10 +255,7 @@ class RiskAssessmentTool(BaseTool):
                 "portfolio_expected_shortfall_95": float(portfolio_es_95),
                 "diversification_ratio": float(diversification_ratio),
                 "diversification_benefit": float(1 - diversification_ratio),
-                "risk_contribution": {
-                    asset: float(weight * volatilities[i] * np.sqrt(weights[i]))
-                    for i, (asset, weight) in enumerate(zip(input_data.assets, weights))
-                },
+                "risk_contribution": {asset: float(weight * volatilities[i] * np.sqrt(weights[i])) for i, (asset, weight) in enumerate(zip(input_data.assets, weights))},
             }
 
         except Exception as e:
@@ -467,9 +462,7 @@ class RiskAssessmentTool(BaseTool):
             logger.error(f"Error generating individual risk summary: {e}")
             return {"error": str(e)}
 
-    def _generate_overall_risk_assessment(
-        self, individual_result: dict[str, Any], portfolio_result: dict[str, Any], regime_analysis: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _generate_overall_risk_assessment(self, individual_result: dict[str, Any], portfolio_result: dict[str, Any], regime_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate overall risk assessment summary."""
         try:
             # Extract key metrics
@@ -481,9 +474,7 @@ class RiskAssessmentTool(BaseTool):
             diversification_benefit = portfolio_metrics.get("diversification_benefit", 0)
 
             # Overall risk score (1-10 scale)
-            overall_risk_score = min(
-                10, max(1, (avg_individual_risk * 0.4) + (portfolio_vol * 20 * 0.4) + ((1 - diversification_benefit) * 5 * 0.2))
-            )
+            overall_risk_score = min(10, max(1, (avg_individual_risk * 0.4) + (portfolio_vol * 20 * 0.4) + ((1 - diversification_benefit) * 5 * 0.2)))
 
             # Risk level
             if overall_risk_score <= 3:

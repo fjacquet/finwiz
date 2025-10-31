@@ -418,9 +418,7 @@ class TestConfigurationError:
     def test_should_create_configuration_error_with_details(self):
         """Test creating ConfigurationError with detailed information."""
         # Arrange & Act
-        error = ConfigurationError(
-            missing_keys=["KEY1", "KEY2"], invalid_keys=["KEY3"], remediation_guidance="Please configure the missing keys"
-        )
+        error = ConfigurationError(missing_keys=["KEY1", "KEY2"], invalid_keys=["KEY3"], remediation_guidance="Please configure the missing keys")
 
         # Assert
         assert error.missing_keys == ["KEY1", "KEY2"]

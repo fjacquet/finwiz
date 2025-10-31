@@ -381,11 +381,7 @@ class SessionPersistence:
             allocation_table = allocation_section.find("table")
             if allocation_table:
                 allocations = []
-                rows = (
-                    allocation_table.find("tbody").find_all("tr")
-                    if allocation_table.find("tbody")
-                    else allocation_table.find_all("tr")[1:]
-                )
+                rows = allocation_table.find("tbody").find_all("tr") if allocation_table.find("tbody") else allocation_table.find_all("tr")[1:]
 
                 for row in rows:
                     cells = row.find_all(["td", "th"])

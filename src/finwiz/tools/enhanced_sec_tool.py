@@ -120,10 +120,7 @@ class EnhancedSECAnalysisTool(BaseTool):
             filing = self._fetch_latest_filing(ticker=ticker, form_type=form_type)
             if filing is None:
                 logger.warning(f"No SEC filings available for {ticker}")
-                return (
-                    f"No SEC filings available for ticker {ticker}. "
-                    f"The company may not be publicly traded or may not have filed {form_type} reports."
-                )
+                return f"No SEC filings available for ticker {ticker}. The company may not be publicly traded or may not have filed {form_type} reports."
 
             # Download and process filing content
             html = self._download_html(filing["filing_url"])
@@ -251,11 +248,7 @@ class EnhancedSECAnalysisTool(BaseTool):
         See: https://www.sec.gov/os/accessing-edgar-data
         """
         headers = {
-            "Accept": (
-                "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                "image/avif,image/webp,image/apng,*/*;q=0.8,"
-                "application/signed-exchange;v=b3;q=0.7"
-            ),
+            "Accept": ("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"),
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
             "User-Agent": "FinWiz/1.0 (contact@finwiz.com)",
@@ -409,9 +402,7 @@ class EnhancedSECAnalysisTool(BaseTool):
             # Determine asset type (simplified logic for stocks)
             asset_type = "stock"
 
-            sonar_result = await perplexity_integration.search_fundamental_analysis(
-                ticker=ticker, asset_type=asset_type, max_results=6
-            )
+            sonar_result = await perplexity_integration.search_fundamental_analysis(ticker=ticker, asset_type=asset_type, max_results=6)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity fundamental insights for {ticker}")
@@ -509,9 +500,7 @@ class EnhancedSECAnalysisTool(BaseTool):
             response += f"Recent earnings reports, SEC filings, and fundamental analysis ({len(perplexity_insights)} articles):\n\n"
 
             for i, article in enumerate(perplexity_insights, 1):
-                content_emoji = {"news": "📰", "filing": "📋", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(
-                    article.content_type, "📊"
-                )
+                content_emoji = {"news": "📰", "filing": "📋", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(article.content_type, "📊")
 
                 response += f"{i}. {content_emoji} **{article.title}**\n"
                 response += f"   - Publisher: {article.publisher}\n"
@@ -550,10 +539,7 @@ class StandardizedRiskScoringTool(BaseTool):
     """
 
     name: str = "Standardized Risk Scoring Tool"
-    description: str = (
-        "Calculate standardized risk scores (0-5 scale) with consistent methodology "
-        "across different asset classes and analysis contexts."
-    )
+    description: str = "Calculate standardized risk scores (0-5 scale) with consistent methodology across different asset classes and analysis contexts."
     args_schema: type[BaseModel] = StandardizedRiskScoringInput
 
     def _run(self, symbol: str, asset_class: str, risk_factors: list[str] = None, **kwargs: Any) -> dict[str, Any]:

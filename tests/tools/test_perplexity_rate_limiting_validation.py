@@ -44,9 +44,7 @@ class TestPerplexityRateLimitingAndFailures:
         mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
-        result = await mock_integration.search_financial_news(
-            query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-        )
+        result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
         # Assert
         assert result.success is True
@@ -67,9 +65,7 @@ class TestPerplexityRateLimitingAndFailures:
         mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
-        result = await mock_integration.search_financial_news(
-            query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-        )
+        result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
         # Assert
         assert result.success is False
@@ -89,9 +85,7 @@ class TestPerplexityRateLimitingAndFailures:
         mock_sleep = mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
-        result = await mock_integration.search_financial_news(
-            query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment"
-        )
+        result = await mock_integration.search_financial_news(query="AAPL news", ticker="AAPL", asset_type="stock", analysis_type="sentiment")
 
         # Assert
         assert result.success is True
@@ -314,9 +308,7 @@ class TestPerplexityCircuitBreakerBehavior:
     def test_should_provide_graceful_degradation(self):
         """Test graceful degradation when circuit breaker is open."""
         # Test that fallback results are provided
-        fallback = PerplexityFallbackManager.create_fallback_result(
-            "test query", "AAPL", "stock", "sentiment", "Circuit breaker open"
-        )
+        fallback = PerplexityFallbackManager.create_fallback_result("test query", "AAPL", "stock", "sentiment", "Circuit breaker open")
 
         # Should provide empty but valid result
         assert fallback.success is False

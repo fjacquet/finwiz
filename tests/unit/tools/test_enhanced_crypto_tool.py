@@ -32,9 +32,7 @@ class TestEnhancedCryptoAnalysisInput:
     def test_should_create_valid_input_with_custom_values(self):
         """Test creating input with custom values."""
         # Arrange & Act
-        input_data = EnhancedCryptoAnalysisInput(
-            symbol="ETH", include_thesis=False, include_risk_assessment=False, max_thesis_bullets=5
-        )
+        input_data = EnhancedCryptoAnalysisInput(symbol="ETH", include_thesis=False, include_risk_assessment=False, max_thesis_bullets=5)
 
         # Assert
         assert input_data.symbol == "ETH"

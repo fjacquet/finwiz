@@ -220,9 +220,6 @@ class PortfolioConfigurationValidator:
             tolerance_value = tolerance * target_value
 
             if tolerance_value < config.min_trade_size:
-                errors.append(
-                    f"Tolerance band for {symbol} ({tolerance:.1%}) results in trades smaller than minimum "
-                    f"({tolerance_value:.2f} < {config.min_trade_size})"
-                )
+                errors.append(f"Tolerance band for {symbol} ({tolerance:.1%}) results in trades smaller than minimum ({tolerance_value:.2f} < {config.min_trade_size})")
 
         return errors

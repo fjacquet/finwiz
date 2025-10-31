@@ -259,9 +259,7 @@ class TestPortfolioMonitoringIntegration:
         mock_sms_provider.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_respect_quiet_hours_when_sending_notifications(
-        self, mocker, mock_price_service, sample_portfolio_config, notification_preferences
-    ):
+    async def test_should_respect_quiet_hours_when_sending_notifications(self, mocker, mock_price_service, sample_portfolio_config, notification_preferences):
         """Test that notifications respect quiet hours settings."""
         # Arrange
         portfolio_id = "quiet_hours_test_portfolio"
@@ -311,9 +309,7 @@ class TestPortfolioMonitoringIntegration:
             mock_email_provider.send_notification.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_should_respect_rate_limiting_when_sending_notifications(
-        self, mocker, mock_price_service, sample_portfolio_config, notification_preferences
-    ):
+    async def test_should_respect_rate_limiting_when_sending_notifications(self, mocker, mock_price_service, sample_portfolio_config, notification_preferences):
         """Test that notifications respect rate limiting settings."""
         # Arrange
         portfolio_id = "rate_limit_test_portfolio"
@@ -357,9 +353,7 @@ class TestPortfolioMonitoringIntegration:
         assert mock_email_provider.send_notification.call_count <= 2
 
     @pytest.mark.asyncio
-    async def test_should_handle_monitoring_errors_gracefully(
-        self, mocker, mock_price_service, sample_portfolio_config, monitoring_rule
-    ):
+    async def test_should_handle_monitoring_errors_gracefully(self, mocker, mock_price_service, sample_portfolio_config, monitoring_rule):
         """Test that monitoring system handles errors gracefully."""
         # Arrange
         portfolio_id = "error_test_portfolio"

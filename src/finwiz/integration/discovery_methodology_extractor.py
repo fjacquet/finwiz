@@ -126,10 +126,7 @@ class DiscoveryMethodologyExtractor:
                 screening_efficiency=screening_efficiency,
             )
 
-            self.logger.info(
-                f"Extracted validation statistics: {candidates_found}/{total_screened} candidates found "
-                f"({screening_efficiency:.1f}% efficiency)"
-            )
+            self.logger.info(f"Extracted validation statistics: {candidates_found}/{total_screened} candidates found ({screening_efficiency:.1f}% efficiency)")
             return statistics
 
         except Exception as e:
@@ -209,10 +206,7 @@ class DiscoveryMethodologyExtractor:
                 data_sources=data_sources,
             )
 
-            self.logger.info(
-                f"Generated methodology summary: {len(score_breakdowns)} candidates, "
-                f"{len(methodology_notes)} notes, {len(data_sources)} data sources"
-            )
+            self.logger.info(f"Generated methodology summary: {len(score_breakdowns)} candidates, {len(methodology_notes)} notes, {len(data_sources)} data sources")
             return summary
 
         except Exception as e:
@@ -237,9 +231,7 @@ class DiscoveryMethodologyExtractor:
         # Criteria notes based on asset type
         if asset_type == "etf":
             notes.append(
-                f"ETF criteria: expense ratio ≤{criteria.etf_max_expense_ratio:.2%}, "
-                f"AUM ≥${criteria.etf_min_aum / 1e9:.1f}B, "
-                f"tracking error ≤{criteria.etf_max_tracking_error:.2%}"
+                f"ETF criteria: expense ratio ≤{criteria.etf_max_expense_ratio:.2%}, AUM ≥${criteria.etf_min_aum / 1e9:.1f}B, tracking error ≤{criteria.etf_max_tracking_error:.2%}"
             )
         elif asset_type == "stock":
             notes.append(
@@ -260,15 +252,10 @@ class DiscoveryMethodologyExtractor:
 
         # Market context note
         market_regime = discovery_result.market_context
-        notes.append(
-            f"Analysis performed in {market_regime.regime_type} market with {market_regime.market_stress_level} stress level"
-        )
+        notes.append(f"Analysis performed in {market_regime.regime_type} market with {market_regime.market_stress_level} stress level")
 
         # Efficiency note
-        notes.append(
-            f"Screening efficiency: {statistics.screening_efficiency:.1f}% "
-            f"({statistics.candidates_found} quality candidates identified)"
-        )
+        notes.append(f"Screening efficiency: {statistics.screening_efficiency:.1f}% ({statistics.candidates_found} quality candidates identified)")
 
         # Confidence note
         high_confidence = discovery_result.high_confidence_count

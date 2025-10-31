@@ -188,9 +188,7 @@ class DataAvailabilityTracker:
                 # Stale data warning
                 if source_status.status == "stale" and source_status.age_hours is not None:
                     age_days = source_status.age_hours / 24
-                    warnings.append(
-                        f"{source_name}: Data is {age_days:.1f} days old (threshold: {self.stale_threshold_hours / 24:.1f} days)"
-                    )
+                    warnings.append(f"{source_name}: Data is {age_days:.1f} days old (threshold: {self.stale_threshold_hours / 24:.1f} days)")
 
                 # Unavailable data warning
                 elif source_status.status == "unavailable":

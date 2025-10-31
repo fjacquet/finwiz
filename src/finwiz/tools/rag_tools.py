@@ -29,9 +29,7 @@ class KnowledgeBaseTool(Tool):
 
     name: str = "Knowledge base"
     description: str = (
-        "Use this tool to retrieve information from the FinWiz knowledge base. "
-        "Ask questions about financial data, market trends, or previously "
-        "researched information."
+        "Use this tool to retrieve information from the FinWiz knowledge base. Ask questions about financial data, market trends, or previously researched information."
     )
     args_schema: type[BaseModel] = KnowledgeBaseInput
     _rag_tool: Any = None

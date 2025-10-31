@@ -265,9 +265,7 @@ class DependencyValidator(ValidationScript):
                 results["dependency_status"][crew_name] = dep_status
 
                 if dep_status["missing_dependencies"]:
-                    results["missing_dependencies"].extend(
-                        [f"{crew_name} missing: {', '.join(dep_status['missing_dependencies'])}"]
-                    )
+                    results["missing_dependencies"].extend([f"{crew_name} missing: {', '.join(dep_status['missing_dependencies'])}"])
 
             # Calculate execution order
             results["execution_order"] = self._calculate_execution_order()

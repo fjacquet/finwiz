@@ -208,9 +208,7 @@ def get_schema_version(data: dict[str, Any]) -> str:
     return data.get("schema_version", "1.0")
 
 
-def add_a_plus_opportunities_to_existing_review(
-    portfolio_review: PortfolioReview, opportunities_data: dict[str, Any]
-) -> PortfolioReview:
+def add_a_plus_opportunities_to_existing_review(portfolio_review: PortfolioReview, opportunities_data: dict[str, Any]) -> PortfolioReview:
     """
     Add A+ opportunities to an existing portfolio review.
 

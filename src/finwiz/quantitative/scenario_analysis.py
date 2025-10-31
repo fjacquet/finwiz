@@ -273,9 +273,7 @@ class ScenarioAnalysisEngine:
 
         return comparisons
 
-    def determine_optimal_parameters(
-        self, sensitivity_results: list[SensitivityResult], monte_carlo_result: MonteCarloResult
-    ) -> dict[str, Any]:
+    def determine_optimal_parameters(self, sensitivity_results: list[SensitivityResult], monte_carlo_result: MonteCarloResult) -> dict[str, Any]:
         """
         Determine optimal parameters based on analysis results.
 
@@ -303,15 +301,11 @@ class ScenarioAnalysisEngine:
         # Use Monte Carlo results to inform recommendations
         if monte_carlo_result:
             optimal_params["expected_rebalancing_frequency"] = monte_carlo_result.mean_rebalancing_frequency
-            optimal_params["risk_tolerance_recommendation"] = (
-                "Conservative" if monte_carlo_result.probability_of_loss > 0.3 else "Moderate"
-            )
+            optimal_params["risk_tolerance_recommendation"] = "Conservative" if monte_carlo_result.probability_of_loss > 0.3 else "Moderate"
 
         return optimal_params
 
-    def generate_risk_warnings(
-        self, monte_carlo_result: MonteCarloResult, sensitivity_results: list[SensitivityResult]
-    ) -> list[str]:
+    def generate_risk_warnings(self, monte_carlo_result: MonteCarloResult, sensitivity_results: list[SensitivityResult]) -> list[str]:
         """
         Generate risk warnings based on analysis results.
 
@@ -343,9 +337,7 @@ class ScenarioAnalysisEngine:
 
         return warnings
 
-    def generate_implementation_notes(
-        self, optimal_parameters: dict[str, Any], scenario_comparisons: list[ScenarioComparison]
-    ) -> list[str]:
+    def generate_implementation_notes(self, optimal_parameters: dict[str, Any], scenario_comparisons: list[ScenarioComparison]) -> list[str]:
         """
         Generate implementation notes and recommendations.
 
@@ -410,9 +402,7 @@ class ScenarioAnalysisEngine:
 
         # Key findings
         if monte_carlo_result:
-            summary_parts.append(
-                f"Expected rebalancing frequency: {monte_carlo_result.mean_rebalancing_frequency:.1f} times per year"
-            )
+            summary_parts.append(f"Expected rebalancing frequency: {monte_carlo_result.mean_rebalancing_frequency:.1f} times per year")
             summary_parts.append(f"Expected transaction costs: ${monte_carlo_result.mean_transaction_costs:.0f}")
             summary_parts.append(f"Probability of loss: {monte_carlo_result.probability_of_loss:.1%}")
 

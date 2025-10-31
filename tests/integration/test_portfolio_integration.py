@@ -100,9 +100,7 @@ class TestPortfolioIntegration:
         assert orchestrator.cache_manager is not None
 
     @pytest.mark.asyncio
-    async def test_should_run_comprehensive_analysis_when_valid_inputs_provided(
-        self, mocker, target_weights, mock_portfolio_data, mock_rebalancing_result
-    ):
+    async def test_should_run_comprehensive_analysis_when_valid_inputs_provided(self, mocker, target_weights, mock_portfolio_data, mock_rebalancing_result):
         """Test comprehensive analysis with valid inputs."""
         # Arrange
         orchestrator = EnhancedPortfolioReviewOrchestrator()
@@ -147,9 +145,7 @@ class TestPortfolioIntegration:
         mock_cache_get.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_generate_unified_report_when_valid_data_provided(
-        self, mocker, mock_portfolio_data, mock_rebalancing_result
-    ):
+    async def test_should_generate_unified_report_when_valid_data_provided(self, mocker, mock_portfolio_data, mock_rebalancing_result):
         """Test unified report generation."""
         # Arrange
         orchestrator = EnhancedPortfolioReviewOrchestrator()

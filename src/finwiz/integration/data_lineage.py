@@ -35,9 +35,7 @@ class DataLineageTracker:
         # Track active operations
         self.active_operations = {}
 
-    def track_crew_execution(
-        self, crew_name: str, input_data: dict[str, Any], output_files: list, metadata: dict[str, Any] = None
-    ) -> None:
+    def track_crew_execution(self, crew_name: str, input_data: dict[str, Any], output_files: list, metadata: dict[str, Any] = None) -> None:
         """
         Track a crew execution in the lineage.
 
@@ -120,13 +118,9 @@ class DataLineageTracker:
             )
 
         except Exception as e:
-            self.logger.log_integration_error(
-                error_type="DEPENDENCY_TRACKING_ERROR", crew_name=dependent_crew, error_message=str(e)
-            )
+            self.logger.log_integration_error(error_type="DEPENDENCY_TRACKING_ERROR", crew_name=dependent_crew, error_message=str(e))
 
-    def track_data_flow(
-        self, from_crew: str, to_crew: str, data_type: str, transformation: str = None, validation_status: str = None
-    ) -> None:
+    def track_data_flow(self, from_crew: str, to_crew: str, data_type: str, transformation: str = None, validation_status: str = None) -> None:
         """Track data flow between crews."""
         try:
             flow_entry = {
@@ -206,11 +200,7 @@ class DataLineageTracker:
                 crew_name = execution["crew_name"]
                 crew_execution_counts[crew_name] = crew_execution_counts.get(crew_name, 0) + 1
 
-            recent_executions = [
-                exec
-                for exec in executions
-                if datetime.fromisoformat(exec["execution_timestamp"]) > datetime.now() - timedelta(hours=24)
-            ]
+            recent_executions = [exec for exec in executions if datetime.fromisoformat(exec["execution_timestamp"]) > datetime.now() - timedelta(hours=24)]
 
             return {
                 "total_executions": len(executions),

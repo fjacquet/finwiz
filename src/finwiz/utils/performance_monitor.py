@@ -166,16 +166,8 @@ class PortfolioMetrics:
         avg_baseline_cost = self.total_baseline_cost / self.total_tickers
 
         # Performance improvements
-        time_savings_pct = (
-            ((self.total_baseline_time - self.total_execution_time) / self.total_baseline_time * 100)
-            if self.total_baseline_time > 0
-            else 0
-        )
-        cost_savings_pct = (
-            ((self.total_baseline_cost - self.total_cost_estimate) / self.total_baseline_cost * 100)
-            if self.total_baseline_cost > 0
-            else 0
-        )
+        time_savings_pct = ((self.total_baseline_time - self.total_execution_time) / self.total_baseline_time * 100) if self.total_baseline_time > 0 else 0
+        cost_savings_pct = ((self.total_baseline_cost - self.total_cost_estimate) / self.total_baseline_cost * 100) if self.total_baseline_cost > 0 else 0
         speedup_factor = self.total_baseline_time / self.total_execution_time if self.total_execution_time > 0 else 0
 
         # Success rate

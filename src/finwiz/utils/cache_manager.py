@@ -508,9 +508,7 @@ def get_cache_manager() -> CacheManager:
     return _cache_manager
 
 
-async def cached(
-    key: str | list[Any], func: Callable, *args: Any, ttl: int | None = None, tags: set[str] | None = None, **kwargs: Any
-) -> Any:
+async def cached(key: str | list[Any], func: Callable, *args: Any, ttl: int | None = None, tags: set[str] | None = None, **kwargs: Any) -> Any:
     """
     Execute function with caching.
 

@@ -395,7 +395,9 @@ comprehensive_investment_report_task:
     1. Look up ticker in inputs.deep_analysis_html_content[ticker]
     2. Use deep_analysis_html_content[ticker]['grade'] (e.g., "A-", "A", "B+")
     3. Use deep_analysis_html_content[ticker]['composite_score'] (e.g., 0.82, 0.86)
-    4. NEVER use portfolio_review.holdings[].grade or .composite_score (they are fake 0.7/C)
+    4. **EXTRACT CURRENT PRICE**: Use deep_analysis_html_content[ticker]['current_price'] for the "Prix Actuel" column
+    5. If current_price is not available: Display "N/A" or "Prix non disponible"
+    6. NEVER use portfolio_review.holdings[].grade or .composite_score (they are fake 0.7/C)
     
     Example:
     - AAPL: Use deep_analysis_html_content["AAPL"] = {grade: "A-", composite_score: 0.82} ✅
@@ -540,7 +542,165 @@ comprehensive_investment_report_task:
       - Si validation échouée: Afficher la raison et les alternatives suggérées
       - Si la décision est SELL, proposez jusqu'à 3 alternatives issues du JSON avec score et risque, avec puces synthétiques.
       - **RÉSUMÉ DE TRAITEMENT**: Afficher le nombre de positions traitées vs positions dans les CSV
-      - Affichez un tableau récapitulatif (Nom | Ticker | Décision | Score | Risque | Statut Validation) et une courte analyse globale.
+      - **TABLEAU RÉCAPITULATIF AVEC TRI DYNAMIQUE**:
+        * Colonnes: Ticker / Nom | Classe | Note | Score | Prix Actuel | Recommandation | Rationale | Statut Validation
+        * **AJOUTER LA COLONNE "Prix Actuel"**: Extraire le prix actuel de inputs.deep_analysis_html_content[ticker]['current_price'] si disponible
+        * Si prix non disponible: Afficher "N/A" ou "Prix non disponible"
+        * **RENDRE LE TABLEAU TRIABLE**: Implémenter un tri JavaScript interactif
+          - Chaque en-tête de colonne doit être cliquable
+          - Premier clic: tri croissant (↑)
+          - Deuxième clic: tri décroissant (↓)
+          - Troisième clic: retour à l'ordre original
+          - Afficher des flèches (↑↓) dans les en-têtes pour indiquer la possibilité de tri
+          - Mettre en évidence la colonne actuellement triée
+        * **JAVASCRIPT POUR LE TRI**:
+          - Ajouter un script JavaScript dans le HTML pour gérer le tri
+          - Utiliser data-sort-value pour les valeurs numériques (score, prix)
+          - Gérer correctement le tri des notes (A+ > A > A- > B+ > B > B- > C+ > C > C- > D > F)
+          - Préserver le formatage et les classes CSS lors du tri
+        * Exemple de structure HTML:
+          ```html
+          <table id="portfolio-table" class="sortable-table">
+            <thead>
+              <tr>
+                <th class="sortable" onclick="sortTable(0)">Ticker / Nom ↑↓</th>
+                <th class="sortable" onclick="sortTable(1)">Classe ↑↓</th>
+                <th class="sortable" onclick="sortTable(2)">Note ↑↓</th>
+                <th class="sortable" onclick="sortTable(3)">Score ↑↓</th>
+                <th class="sortable" onclick="sortTable(4)">Prix Actuel ↑↓</th>
+                <th class="sortable" onclick="sortTable(5)">Recommandation ↑↓</th>
+                <th>Rationale</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>AAPL</strong><br><small>Apple Inc.</small></td>
+                <td>STOCK</td>
+                <td class="grade-a-minus" data-sort-value="8.5"><strong>A-</strong></td>
+                <!-- Valeurs de tri pour les notes:
+                     A+ = 10.0, A = 9.0, A- = 8.5,
+                     B+ = 8.0, B = 7.0, B- = 6.5,
+                     C+ = 6.0, C = 5.0, C- = 4.5,
+                     D = 3.0, F = 0.0 -->
+                <td data-sort-value="0.82">0.820</td>
+                <td data-sort-value="150.25">$150.25</td>
+                <td><span class="badge badge-hold">CONSERVER</span></td>
+                <td><small>Strong fundamentals...</small></td>
+                <td>✅ Validé</td>
+              </tr>
+            </tbody>
+          </table>
+          <script>
+          // Tri de tableau interactif avec support des notes, nombres et texte
+          let sortState = {}; // Stocke l'état de tri pour chaque colonne
+          let originalOrder = []; // Stocke l'ordre original des lignes
+          
+          // Initialiser l'ordre original au chargement
+          document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('portfolio-table');
+            const tbody = table.querySelector('tbody');
+            originalOrder = Array.from(tbody.querySelectorAll('tr'));
+          });
+          
+          function sortTable(columnIndex) {
+            const table = document.getElementById('portfolio-table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const headers = table.querySelectorAll('th');
+            
+            // Initialiser l'état de tri pour cette colonne si nécessaire
+            if (!sortState[columnIndex]) {
+              sortState[columnIndex] = 'none';
+            }
+            
+            // Déterminer le prochain état de tri
+            let nextState;
+            if (sortState[columnIndex] === 'none') {
+              nextState = 'asc';
+            } else if (sortState[columnIndex] === 'asc') {
+              nextState = 'desc';
+            } else {
+              nextState = 'none';
+            }
+            
+            // Réinitialiser tous les états sauf celui-ci
+            Object.keys(sortState).forEach(key => {
+              if (key != columnIndex) sortState[key] = 'none';
+            });
+            sortState[columnIndex] = nextState;
+            
+            // Mettre à jour les indicateurs visuels
+            headers.forEach((header, idx) => {
+              header.classList.remove('sort-asc', 'sort-desc');
+              if (idx === columnIndex) {
+                if (nextState === 'asc') header.classList.add('sort-asc');
+                if (nextState === 'desc') header.classList.add('sort-desc');
+              }
+            });
+            
+            // Si retour à l'ordre original
+            if (nextState === 'none') {
+              originalOrder.forEach(row => tbody.appendChild(row));
+              return;
+            }
+            
+            // Trier les lignes
+            rows.sort((a, b) => {
+              const cellA = a.cells[columnIndex];
+              const cellB = b.cells[columnIndex];
+              
+              // Utiliser data-sort-value si disponible
+              let valueA = cellA.getAttribute('data-sort-value');
+              let valueB = cellB.getAttribute('data-sort-value');
+              
+              // Sinon utiliser le contenu texte
+              if (!valueA) valueA = cellA.textContent.trim();
+              if (!valueB) valueB = cellB.textContent.trim();
+              
+              // Conversion en nombre si possible
+              const numA = parseFloat(valueA);
+              const numB = parseFloat(valueB);
+              
+              let comparison = 0;
+              if (!isNaN(numA) && !isNaN(numB)) {
+                // Comparaison numérique
+                comparison = numA - numB;
+              } else {
+                // Comparaison alphabétique
+                comparison = valueA.localeCompare(valueB, 'fr');
+              }
+              
+              return nextState === 'asc' ? comparison : -comparison;
+            });
+            
+            // Réorganiser le DOM
+            rows.forEach(row => tbody.appendChild(row));
+          }
+          </script>
+          
+          <style>
+          .sortable-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 20px;
+          }
+          .sortable-table th.sortable:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+          }
+          .sortable-table th.sort-asc::after {
+            content: ' ↑';
+            color: #3498db;
+            font-weight: bold;
+          }
+          .sortable-table th.sort-desc::after {
+            content: ' ↓';
+            color: #3498db;
+            font-weight: bold;
+          }
+          </style>
+          ```
       - **SI DES POSITIONS SONT MANQUANTES**: Expliquer pourquoi et afficher les positions exclues avec raisons
       - Contexte JSON injecté (ne pas appeler d'outils; utilisez le contenu ci‑dessous tel quel) :
         ```json

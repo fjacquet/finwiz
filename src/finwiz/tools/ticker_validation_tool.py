@@ -29,10 +29,7 @@ class TickerExistenceValidationTool(BaseTool):
     """
 
     name: str = "Ticker Existence Validation Tool"
-    description: str = (
-        "Validate that a ticker exists on Yahoo Finance (equities/ETFs) or Coinbase (crypto),"
-        " returning a compact dict: {symbol, asset_class, valid, reason, meta}."
-    )
+    description: str = "Validate that a ticker exists on Yahoo Finance (equities/ETFs) or Coinbase (crypto), returning a compact dict: {symbol, asset_class, valid, reason, meta}."
     args_schema: type[BaseModel] = TickerValidationInput
 
     def _run(self, symbol: str, asset_class: AssetClass = "auto") -> dict:

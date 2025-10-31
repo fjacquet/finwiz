@@ -74,9 +74,7 @@ def demo_etf_screening() -> None:
         "min_aum": 5e9,  # Large ETFs only
     }
 
-    result = tool._run(
-        asset_type="etf", screening_criteria=custom_criteria, market_region="us", max_candidates=5, min_a_plus_score=0.85
-    )
+    result = tool._run(asset_type="etf", screening_criteria=custom_criteria, market_region="us", max_candidates=5, min_a_plus_score=0.85)
 
     print_screening_summary(result)
     print_top_candidates(result)
@@ -105,9 +103,7 @@ def demo_stock_screening() -> None:
         "max_debt_to_equity": 0.20,  # Low debt
     }
 
-    result = tool._run(
-        asset_type="stock", screening_criteria=custom_criteria, market_region="us", max_candidates=5, min_a_plus_score=0.85
-    )
+    result = tool._run(asset_type="stock", screening_criteria=custom_criteria, market_region="us", max_candidates=5, min_a_plus_score=0.85)
 
     print_screening_summary(result)
     print_top_candidates(result)
@@ -141,9 +137,7 @@ def demo_crypto_screening() -> None:
         "require_institutional_adoption": True,
     }
 
-    result = tool._run(
-        asset_type="crypto", screening_criteria=custom_criteria, market_region="global", max_candidates=5, min_a_plus_score=0.80
-    )
+    result = tool._run(asset_type="crypto", screening_criteria=custom_criteria, market_region="global", max_candidates=5, min_a_plus_score=0.80)
 
     print_screening_summary(result)
     print_top_candidates(result)

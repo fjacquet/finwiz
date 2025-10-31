@@ -39,9 +39,7 @@ class ValidationPipelineResult(BaseModel):
     validation_timestamp: datetime = Field(description="When pipeline validation was performed")
 
     # Schema validation results per crew
-    schema_validation_results: dict[str, BaseValidationResult] = Field(
-        default_factory=dict, description="Schema validation results for each crew"
-    )
+    schema_validation_results: dict[str, BaseValidationResult] = Field(default_factory=dict, description="Schema validation results for each crew")
 
     # Cross-crew consistency validation
     cross_crew_validation: CrossCrewValidationResult = Field(description="Cross-crew data consistency validation results")
@@ -217,9 +215,7 @@ class PipelineStages:
             },
         )
 
-    def validate_sec_citations(
-        self, crew_outputs: dict[str, dict[str, Any]], consolidate_for_report: bool = True
-    ) -> dict[str, Any]:
+    def validate_sec_citations(self, crew_outputs: dict[str, dict[str, Any]], consolidate_for_report: bool = True) -> dict[str, Any]:
         """
         Validate SEC citations across all crew outputs.
 
@@ -250,9 +246,7 @@ class PipelineStages:
             # Consolidate citations if requested
             consolidated_citations = None
             if consolidate_for_report and crew_citations:
-                consolidated_citations = self.sec_citation_validator.consolidate_citations_for_report(
-                    crew_citations, deduplicate=True
-                )
+                consolidated_citations = self.sec_citation_validator.consolidate_citations_for_report(crew_citations, deduplicate=True)
 
             # Create summary
             total_citations = sum(len(citations) for citations in crew_citations.values())
@@ -300,9 +294,7 @@ class PipelineStages:
                 "consolidated_citations": None,
             }
 
-    def generate_validation_report(
-        self, validation_result: ValidationPipelineResult, output_path: Path | None = None
-    ) -> dict[str, Any]:
+    def generate_validation_report(self, validation_result: ValidationPipelineResult, output_path: Path | None = None) -> dict[str, Any]:
         """
         Generate a comprehensive validation report.
 
@@ -395,9 +387,7 @@ class PipelineStages:
                 result.ticker_conflicts = ticker_conflicts
                 result.is_consistent = False
                 for conflict in ticker_conflicts:
-                    result.consistency_errors.append(
-                        f"Ticker validation conflict for {conflict['ticker']}: {conflict['conflict_description']}"
-                    )
+                    result.consistency_errors.append(f"Ticker validation conflict for {conflict['ticker']}: {conflict['conflict_description']}")
 
             # Check for data value conflicts (e.g., different risk scores for same ticker)
             data_conflicts = self.validation_rules.find_data_value_conflicts(crew_outputs)

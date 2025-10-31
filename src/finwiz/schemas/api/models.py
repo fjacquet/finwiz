@@ -61,9 +61,7 @@ class DiscoveryRequest(BaseModel):
     """Request model for investment discovery analysis."""
 
     asset_class: Literal["stock", "etf", "crypto"] = Field(..., description="Asset class to discover")
-    risk_tolerance: Literal["conservative", "moderate", "aggressive"] = Field(
-        default="moderate", description="Risk tolerance level"
-    )
+    risk_tolerance: Literal["conservative", "moderate", "aggressive"] = Field(default="moderate", description="Risk tolerance level")
     investment_amount: float = Field(..., gt=0, description="Investment amount")
     time_horizon: Literal["short", "medium", "long"] = Field(default="medium", description="Investment time horizon")
     exclude_sectors: list[str] = Field(default_factory=list, description="Sectors to exclude")
@@ -107,9 +105,7 @@ class StockAnalysisRequest(BaseModel):
     """Request model for stock analysis."""
 
     ticker: str = Field(..., description="Stock ticker symbol")
-    analysis_type: Literal["fundamental", "technical", "comprehensive"] = Field(
-        default="comprehensive", description="Type of analysis to perform"
-    )
+    analysis_type: Literal["fundamental", "technical", "comprehensive"] = Field(default="comprehensive", description="Type of analysis to perform")
     include_peer_comparison: bool = Field(default=True, description="Include peer comparison")
     include_sector_analysis: bool = Field(default=True, description="Include sector analysis")
 

@@ -114,9 +114,7 @@ class TestTwelveDataMultiIndicatorTool:
             "macd": '{"values": [{"datetime": "2025-01-01", "macd": 1.2}]}',
         }
 
-        response = tool._format_multi_indicator_response(
-            symbol="AAPL", interval="1day", indicator_results=indicator_results, perplexity_insights=[]
-        )
+        response = tool._format_multi_indicator_response(symbol="AAPL", interval="1day", indicator_results=indicator_results, perplexity_insights=[])
 
         # Verify response structure
         assert "AAPL" in response

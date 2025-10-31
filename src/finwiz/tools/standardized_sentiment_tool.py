@@ -36,10 +36,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
     """
 
     name: str = "Standardized Sentiment Analysis Tool"
-    description: str = (
-        "Comprehensive sentiment analysis tool with consistent methodology "
-        "across all asset classes including weighted scoring and trending topics."
-    )
+    description: str = "Comprehensive sentiment analysis tool with consistent methodology across all asset classes including weighted scoring and trending topics."
     args_schema: type[BaseModel] = StandardizedSentimentInput
     url_validator: Any = None  # URL validator instance
 
@@ -49,9 +46,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
         if self.url_validator is None:
             self.url_validator = get_url_validator()
 
-    def _run(
-        self, symbol: str, asset_class: str, max_articles: int = 50, days_back: int = 30, include_trending: bool = True
-    ) -> dict[str, Any]:
+    def _run(self, symbol: str, asset_class: str, max_articles: int = 50, days_back: int = 30, include_trending: bool = True) -> dict[str, Any]:
         """Execute standardized sentiment analysis."""
         try:
             # Normalize inputs
@@ -154,9 +149,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                         query = f"{symbol} financial news earnings stock analysis"
 
                         # Use asyncio.run() to call async method from sync context
-                        sonar_result = asyncio.run(
-                            perplexity.search_sentiment_news(ticker=symbol, asset_type="stock", max_results=max_count)
-                        )
+                        sonar_result = asyncio.run(perplexity.search_sentiment_news(ticker=symbol, asset_type="stock", max_results=max_count))
 
                         if sonar_result.success and sonar_result.results:
                             logger.info(f"Retrieved {len(sonar_result.results)} articles from Perplexity for {symbol}")
@@ -239,9 +232,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                         query = f"{symbol} cryptocurrency news market analysis adoption"
 
                         # Use asyncio.run() to call async method from sync context
-                        sonar_result = asyncio.run(
-                            perplexity.search_sentiment_news(ticker=symbol, asset_type="crypto", max_results=max_count)
-                        )
+                        sonar_result = asyncio.run(perplexity.search_sentiment_news(ticker=symbol, asset_type="crypto", max_results=max_count))
 
                         if sonar_result.success and sonar_result.results:
                             logger.info(f"Retrieved {len(sonar_result.results)} crypto articles from Perplexity for {symbol}")
@@ -296,11 +287,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                         query = f"{symbol} news market updates business"
 
                         # Use asyncio.run() to call async method from sync context
-                        sonar_result = asyncio.run(
-                            perplexity.search_financial_news(
-                                query=query, ticker=symbol, asset_type="stock", analysis_type="general", max_results=max_count
-                            )
-                        )
+                        sonar_result = asyncio.run(perplexity.search_financial_news(query=query, ticker=symbol, asset_type="stock", analysis_type="general", max_results=max_count))
 
                         if sonar_result.success and sonar_result.results:
                             logger.info(f"Retrieved {len(sonar_result.results)} general articles from Perplexity for {symbol}")
@@ -568,9 +555,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
 
         return trending_topics[:10]  # Top 10 trending topics
 
-    def _get_top_sentiment_articles(
-        self, analyzed_articles: list[dict[str, Any]]
-    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    def _get_top_sentiment_articles(self, analyzed_articles: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         """Get top positive and negative sentiment articles."""
         # Sort by sentiment score
         sorted_articles = sorted(analyzed_articles, key=lambda x: x["sentiment_score"], reverse=True)
@@ -613,10 +598,7 @@ class CrossAssetSentimentComparatorTool(BaseTool):
     """
 
     name: str = "Cross-Asset Sentiment Comparator Tool"
-    description: str = (
-        "Compare sentiment analysis results across different asset classes "
-        "to identify relative sentiment trends and market dynamics."
-    )
+    description: str = "Compare sentiment analysis results across different asset classes to identify relative sentiment trends and market dynamics."
     args_schema: type[BaseModel] = CrossAssetSentimentComparatorInput
 
     def _run(self, symbols: list[str], asset_classes: list[str], **kwargs: Any) -> dict[str, Any]:

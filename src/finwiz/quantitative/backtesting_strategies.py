@@ -65,13 +65,9 @@ class StrategyFramework(bt.Strategy):
 
         if order.status in [order.Completed]:
             if order.isbuy():
-                self.log(
-                    f"BUY EXECUTED: Price={order.executed.price:.2f}, Size={order.executed.size}, Cost={order.executed.value:.2f}"
-                )
+                self.log(f"BUY EXECUTED: Price={order.executed.price:.2f}, Size={order.executed.size}, Cost={order.executed.value:.2f}")
             else:
-                self.log(
-                    f"SELL EXECUTED: Price={order.executed.price:.2f}, Size={order.executed.size}, Cost={order.executed.value:.2f}"
-                )
+                self.log(f"SELL EXECUTED: Price={order.executed.price:.2f}, Size={order.executed.size}, Cost={order.executed.value:.2f}")
 
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log(f"Order {order.status}")

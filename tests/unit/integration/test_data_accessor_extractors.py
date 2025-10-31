@@ -73,9 +73,7 @@ class TestCrewDataAccessorExtractorInitialization:
         # Assert
         assert data_accessor.performance_aggregator.backtesting_extractor == data_accessor.backtesting_extractor
 
-    def test_should_initialize_all_extractors_with_integration_manager(
-        self, integration_manager: CrewDataIntegrationManager
-    ) -> None:
+    def test_should_initialize_all_extractors_with_integration_manager(self, integration_manager: CrewDataIntegrationManager) -> None:
         """Test that all extractors are initialized when CrewDataAccessor is created."""
         # Act
         accessor = CrewDataAccessor(integration_manager)
@@ -86,9 +84,7 @@ class TestCrewDataAccessorExtractorInitialization:
         assert accessor.methodology_extractor is not None
         assert accessor.performance_aggregator is not None
 
-    def test_should_log_initialization_with_extractors(
-        self, integration_manager: CrewDataIntegrationManager, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_should_log_initialization_with_extractors(self, integration_manager: CrewDataIntegrationManager, caplog: pytest.LogCaptureFixture) -> None:
         """Test that initialization logs mention enhanced extractors."""
         # Arrange
         caplog.set_level(logging.INFO)

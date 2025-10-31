@@ -134,17 +134,13 @@ class LogAnalyzer:
 
                     for crew, duration_data in durations.items():
                         if duration_data["average"] > avg_duration * 1.5:  # 50% above average
-                            bottlenecks["slow_crews"].append(
-                                {"crew": crew, "average_duration": duration_data["average"], "max_duration": duration_data["max"]}
-                            )
+                            bottlenecks["slow_crews"].append({"crew": crew, "average_duration": duration_data["average"], "max_duration": duration_data["max"]})
 
             # Find crews with low success rates
             success_rates = execution_analysis.get("success_rates", {})
             for crew, rate_data in success_rates.items():
                 if rate_data["percentage"] < 80:  # Less than 80% success rate
-                    bottlenecks["frequent_failure_crews"].append(
-                        {"crew": crew, "success_rate": rate_data["percentage"], "total_attempts": rate_data["total"]}
-                    )
+                    bottlenecks["frequent_failure_crews"].append({"crew": crew, "success_rate": rate_data["percentage"], "total_attempts": rate_data["total"]})
 
             return bottlenecks
 
@@ -168,19 +164,15 @@ class LogAnalyzer:
             if crew_name:
                 report["crew_specific"] = {
                     "lineage_history": self.lineage_tracker.get_crew_lineage(crew_name),
-                    "recent_executions": [
-                        exec
-                        for exec in self.lineage_tracker._load_lineage().get("executions", [])
-                        if exec["crew_name"] == crew_name
-                    ][-10:],  # Last 10 executions
+                    "recent_executions": [exec for exec in self.lineage_tracker._load_lineage().get("executions", []) if exec["crew_name"] == crew_name][
+                        -10:
+                    ],  # Last 10 executions
                 }
 
             return report
 
         except Exception as e:
-            self.logger.log_integration_error(
-                error_type="DEBUG_REPORT_ERROR", crew_name=crew_name or "system", error_message=str(e)
-            )
+            self.logger.log_integration_error(error_type="DEBUG_REPORT_ERROR", crew_name=crew_name or "system", error_message=str(e))
             return {"error": str(e)}
 
     def export_debug_report(self, output_file: Path = None, crew_name: str = None) -> Path:
@@ -206,7 +198,5 @@ class LogAnalyzer:
             return output_file
 
         except Exception as e:
-            self.logger.log_integration_error(
-                error_type="DEBUG_EXPORT_ERROR", crew_name=crew_name or "system", error_message=str(e)
-            )
+            self.logger.log_integration_error(error_type="DEBUG_EXPORT_ERROR", crew_name=crew_name or "system", error_message=str(e))
             raise

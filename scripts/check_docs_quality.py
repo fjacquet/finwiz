@@ -127,9 +127,7 @@ class DocumentationQualityChecker:
                     incorrect_matches = [m for m in matches if m != correct_term]
 
                     if incorrect_matches:
-                        self.warnings.append(
-                            f"Inconsistent terminology in {md_file}: found '{incorrect_matches[0]}', should be '{correct_term}'"
-                        )
+                        self.warnings.append(f"Inconsistent terminology in {md_file}: found '{incorrect_matches[0]}', should be '{correct_term}'")
 
             except Exception:
                 continue  # Skip files that can't be read

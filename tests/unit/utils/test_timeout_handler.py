@@ -53,9 +53,7 @@ class TestWithTimeout:
             return {"ticker": ticker, "price": price}
 
         # Act
-        result = await with_timeout(
-            operation_with_args, timeout_seconds=1, operation_name="Operation with args", ticker="AAPL", price=150.0
-        )
+        result = await with_timeout(operation_with_args, timeout_seconds=1, operation_name="Operation with args", ticker="AAPL", price=150.0)
 
         # Assert
         assert result["ticker"] == "AAPL"
@@ -165,9 +163,7 @@ class TestWithTimeoutGraceful:
             return f"Result: {value}"
 
         # Act
-        result = await with_timeout_graceful(
-            fast_operation, timeout_seconds=1, operation_name="Fast operation", fallback_value="fallback", value="test"
-        )
+        result = await with_timeout_graceful(fast_operation, timeout_seconds=1, operation_name="Fast operation", fallback_value="fallback", value="test")
 
         # Assert
         assert result == "Result: test"
@@ -184,9 +180,7 @@ class TestWithTimeoutGraceful:
         fallback = {"status": "timeout"}
 
         # Act
-        result = await with_timeout_graceful(
-            slow_operation, timeout_seconds=0.1, operation_name="Slow operation", fallback_value=fallback
-        )
+        result = await with_timeout_graceful(slow_operation, timeout_seconds=0.1, operation_name="Slow operation", fallback_value=fallback)
 
         # Assert
         assert result == fallback
@@ -265,9 +259,7 @@ class TestWithTimeoutGraceful:
 
         # Act
         # Should not raise TimeoutError
-        result = await with_timeout_graceful(
-            slow_operation, timeout_seconds=0.1, operation_name="Slow operation", fallback_value="safe_fallback"
-        )
+        result = await with_timeout_graceful(slow_operation, timeout_seconds=0.1, operation_name="Slow operation", fallback_value="safe_fallback")
 
         # Assert
         assert result == "safe_fallback"
@@ -309,9 +301,7 @@ class TestWithTimeoutGraceful:
 
         # Act & Assert
         for fallback in test_cases:
-            result = await with_timeout_graceful(
-                slow_operation, timeout_seconds=0.1, operation_name="Test", fallback_value=fallback
-            )
+            result = await with_timeout_graceful(slow_operation, timeout_seconds=0.1, operation_name="Test", fallback_value=fallback)
             assert result == fallback
 
     @pytest.mark.asyncio
@@ -325,9 +315,7 @@ class TestWithTimeoutGraceful:
 
         # Act & Assert
         with pytest.raises(ValueError, match="Operation failed"):
-            await with_timeout_graceful(
-                failing_operation, timeout_seconds=1, operation_name="Failing operation", fallback_value="fallback"
-            )
+            await with_timeout_graceful(failing_operation, timeout_seconds=1, operation_name="Failing operation", fallback_value="fallback")
 
 
 class TestTimeoutHandlerIntegration:
@@ -363,9 +351,7 @@ class TestTimeoutHandlerIntegration:
 
         # Act
         results = await asyncio.gather(
-            with_timeout_graceful(
-                operation, timeout_seconds=0.5, operation_name="Op1", fallback_value="timeout1", delay=0.01, value="result1"
-            ),
+            with_timeout_graceful(operation, timeout_seconds=0.5, operation_name="Op1", fallback_value="timeout1", delay=0.01, value="result1"),
             with_timeout_graceful(
                 operation,
                 timeout_seconds=0.5,
@@ -374,9 +360,7 @@ class TestTimeoutHandlerIntegration:
                 delay=1.0,  # Will timeout
                 value="result2",
             ),
-            with_timeout_graceful(
-                operation, timeout_seconds=0.5, operation_name="Op3", fallback_value="timeout3", delay=0.02, value="result3"
-            ),
+            with_timeout_graceful(operation, timeout_seconds=0.5, operation_name="Op3", fallback_value="timeout3", delay=0.02, value="result3"),
         )
 
         # Assert
@@ -398,9 +382,7 @@ class TestTimeoutHandlerIntegration:
         start_time = time.time()
 
         # Act
-        result = await with_timeout_graceful(
-            slow_operation, timeout_seconds=timeout_seconds, operation_name="Timed operation", fallback_value="timeout"
-        )
+        result = await with_timeout_graceful(slow_operation, timeout_seconds=timeout_seconds, operation_name="Timed operation", fallback_value="timeout")
 
         elapsed = time.time() - start_time
 
@@ -459,9 +441,7 @@ class TestTimeoutHandlerIntegration:
             await with_timeout(slow_operation, timeout_seconds=0.1, operation_name="Strict timeout")
 
         # Act & Assert - Graceful version returns fallback
-        result = await with_timeout_graceful(
-            slow_operation, timeout_seconds=0.1, operation_name="Graceful timeout", fallback_value="fallback"
-        )
+        result = await with_timeout_graceful(slow_operation, timeout_seconds=0.1, operation_name="Graceful timeout", fallback_value="fallback")
         assert result == "fallback"
 
 

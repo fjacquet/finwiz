@@ -156,9 +156,7 @@ class PerformanceAnalyzer:
         """
         return self.benchmark_analyzer.generate_performance_visualization(performance_report, save_path)
 
-    def generate_optimization_visualization(
-        self, optimization_result: PortfolioOptimizationResult, save_path: str | None = None
-    ) -> Any | None:
+    def generate_optimization_visualization(self, optimization_result: PortfolioOptimizationResult, save_path: str | None = None) -> Any | None:
         """
         Generate portfolio optimization visualization.
 

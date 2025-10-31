@@ -102,9 +102,7 @@ class PortfolioConfigurationManager:
             )
 
             # Create versioned configuration
-            versioned_config = PortfolioConfigurationVersion(
-                metadata=metadata, configuration=portfolio_config, change_summary="Initial configuration creation"
-            )
+            versioned_config = PortfolioConfigurationVersion(metadata=metadata, configuration=portfolio_config, change_summary="Initial configuration creation")
 
             # Validate and save
             validation_errors = self.validator.validate_configuration(portfolio_config)

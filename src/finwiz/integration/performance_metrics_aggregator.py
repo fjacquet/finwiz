@@ -76,9 +76,7 @@ class PerformanceMetricsAggregator:
         self.logger = logger or logging.getLogger(__name__)
         self.logger.info("PerformanceMetricsAggregator initialized")
 
-    def aggregate_by_asset_type(
-        self, validation_results: list[ValidationResult], asset_type_map: dict[str, str]
-    ) -> dict[str, PerformanceMetrics]:
+    def aggregate_by_asset_type(self, validation_results: list[ValidationResult], asset_type_map: dict[str, str]) -> dict[str, PerformanceMetrics]:
         """
         Aggregate performance metrics by asset type (ETF, stock, crypto).
 
@@ -112,10 +110,7 @@ class PerformanceMetricsAggregator:
             if results:
                 metrics = self._aggregate_validation_results(results, asset_type)
                 aggregated[asset_type] = metrics
-                self.logger.info(
-                    f"Aggregated {len(results)} candidates for {asset_type}: "
-                    f"avg return {metrics.average_return:.2f}%, Sharpe {metrics.average_sharpe:.2f}"
-                )
+                self.logger.info(f"Aggregated {len(results)} candidates for {asset_type}: avg return {metrics.average_return:.2f}%, Sharpe {metrics.average_sharpe:.2f}")
 
         # Add "all" category with overall metrics
         if validation_results:
@@ -155,16 +150,11 @@ class PerformanceMetricsAggregator:
             if perfs:
                 metrics = self._aggregate_regime_performances(perfs, regime)
                 aggregated[regime] = metrics
-                self.logger.info(
-                    f"Aggregated {len(perfs)} candidates for {regime} regime: "
-                    f"avg return {metrics.average_return:.2f}%, Sharpe {metrics.average_sharpe:.2f}"
-                )
+                self.logger.info(f"Aggregated {len(perfs)} candidates for {regime} regime: avg return {metrics.average_return:.2f}%, Sharpe {metrics.average_sharpe:.2f}")
 
         return aggregated
 
-    def calculate_portfolio_impact(
-        self, validation_results: list[ValidationResult], current_portfolio_grade: float = 0.70
-    ) -> PortfolioImpactMetrics:
+    def calculate_portfolio_impact(self, validation_results: list[ValidationResult], current_portfolio_grade: float = 0.70) -> PortfolioImpactMetrics:
         """
         Calculate portfolio-level impact metrics from A+ opportunities.
 
@@ -242,10 +232,7 @@ class PerformanceMetricsAggregator:
             high_confidence_count=high_confidence_count,
         )
 
-        self.logger.info(
-            f"Portfolio impact: {grade_improvement:.1f}% grade improvement, "
-            f"{return_improvement:.1f}% return improvement, {total_opportunities} opportunities"
-        )
+        self.logger.info(f"Portfolio impact: {grade_improvement:.1f}% grade improvement, {return_improvement:.1f}% return improvement, {total_opportunities} opportunities")
 
         return impact
 
@@ -295,10 +282,7 @@ class PerformanceMetricsAggregator:
             data_quality_score=data_quality,
         )
 
-        self.logger.info(
-            f"Performance report generated: {total_candidates} candidates, "
-            f"{len(top_opportunities)} top opportunities, quality score {data_quality:.2f}"
-        )
+        self.logger.info(f"Performance report generated: {total_candidates} candidates, {len(top_opportunities)} top opportunities, quality score {data_quality:.2f}")
 
         return report
 

@@ -584,9 +584,7 @@ class TestSessionPersistenceAndRecovery:
         plan.client_profile.investment_horizon = "10-15 years"
         plan.client_profile.monthly_budget = "2000 CHF"
 
-        plan.current_portfolio_data = {
-            "holdings": [{"name": "Apple Inc.", "ticker": "AAPL", "decision": "KEEP", "composite_score": "0.75"}]
-        }
+        plan.current_portfolio_data = {"holdings": [{"name": "Apple Inc.", "ticker": "AAPL", "decision": "KEEP", "composite_score": "0.75"}]}
 
         plan.current_recommendations = {
             "stocks": ["AAPL - Apple Inc.", "MSFT - Microsoft"],

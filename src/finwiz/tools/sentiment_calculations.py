@@ -434,11 +434,7 @@ class SentimentCalculator:
                     "published_date": self.format_article_date(article.get("providerPublishTime")),
                     "impact_score": round(impact_score, 3),
                     "url": article.get("link", ""),
-                    "summary": (
-                        article.get("summary", "")[:200] + "..."
-                        if len(article.get("summary", "")) > 200
-                        else article.get("summary", "")
-                    ),
+                    "summary": (article.get("summary", "")[:200] + "..." if len(article.get("summary", "")) > 200 else article.get("summary", "")),
                 }
             )
 
@@ -468,20 +464,13 @@ class SentimentCalculator:
 
         # Base outlook based on sentiment
         if sentiment == "positive" and confidence > 0.7:
-            outlook = (
-                f"Strong positive sentiment detected with high confidence. "
-                f"Market conditions appear favorable for {asset_type} investments."
-            )
+            outlook = f"Strong positive sentiment detected with high confidence. Market conditions appear favorable for {asset_type} investments."
         elif sentiment == "positive":
-            outlook = (
-                f"Moderate positive sentiment observed. {asset_type.title()} shows promising signals but with some uncertainty."
-            )
+            outlook = f"Moderate positive sentiment observed. {asset_type.title()} shows promising signals but with some uncertainty."
         elif sentiment == "negative" and confidence > 0.7:
             outlook = f"Strong negative sentiment with high confidence. Caution advised for {asset_type} positions."
         elif sentiment == "negative":
-            outlook = (
-                f"Moderate negative sentiment detected. {asset_type.title()} faces some headwinds but situation remains fluid."
-            )
+            outlook = f"Moderate negative sentiment detected. {asset_type.title()} faces some headwinds but situation remains fluid."
         else:
             outlook = f"Neutral sentiment prevails. {asset_type.title()} market appears to be in a wait-and-see mode."
 

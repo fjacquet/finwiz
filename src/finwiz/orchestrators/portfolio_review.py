@@ -243,11 +243,7 @@ async def build_portfolio_review(
     summary = processor.get_processing_summary()
 
     # Log summary statistics
-    logger.info(
-        f"Processing complete: {summary.processed_successfully} successful, "
-        f"{summary.processed_with_warnings} with warnings, "
-        f"{summary.failed_to_process} failed"
-    )
+    logger.info(f"Processing complete: {summary.processed_successfully} successful, {summary.processed_with_warnings} with warnings, {summary.failed_to_process} failed")
 
     if summary.validation_failures:
         logger.warning(f"Validation failures: {len(summary.validation_failures)}")
@@ -322,10 +318,7 @@ def _merge_deep_analysis_from_flow_state(decisions: list[HoldingDecision], flow_
                 decision.data_freshness = "fresh" if not deep_result.cached else "recent"
 
                 holdings_with_deep_analysis += 1
-                logger.debug(
-                    f"Merged deep analysis for {ticker}: grade={deep_result.grade}, "
-                    f"score={deep_result.composite_score:.3f}, crew={deep_result.crew_name}"
-                )
+                logger.debug(f"Merged deep analysis for {ticker}: grade={deep_result.grade}, score={deep_result.composite_score:.3f}, crew={deep_result.crew_name}")
 
             # Check if we have alternatives for this ticker
             if ticker in portfolio_alternatives:
@@ -351,10 +344,7 @@ def _merge_deep_analysis_from_flow_state(decisions: list[HoldingDecision], flow_
                     logger.debug(f"Added {len(alternatives)} alternatives for {ticker}")
 
         # Log merge statistics
-        logger.info(
-            f"Deep analysis merge complete: {holdings_with_deep_analysis} holdings with deep analysis, "
-            f"{holdings_with_alternatives} holdings with alternatives"
-        )
+        logger.info(f"Deep analysis merge complete: {holdings_with_deep_analysis} holdings with deep analysis, {holdings_with_alternatives} holdings with alternatives")
 
         return decisions
 

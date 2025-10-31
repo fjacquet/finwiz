@@ -82,9 +82,7 @@ class TestFeatureFlags:
     def test_should_handle_invalid_environment_values_gracefully(self, mocker):
         """Test graceful handling of invalid environment variable values."""
         # Arrange
-        mocker.patch.dict(
-            os.environ, {"FF_ENHANCED_SENTIMENT_ROLLOUT": "invalid_number", "FF_CHART_BREAKER_THRESHOLD": "not_an_int"}
-        )
+        mocker.patch.dict(os.environ, {"FF_ENHANCED_SENTIMENT_ROLLOUT": "invalid_number", "FF_CHART_BREAKER_THRESHOLD": "not_an_int"})
 
         # Act & Assert - Should not raise exception
         flags = FeatureFlags()
@@ -110,9 +108,7 @@ class TestFeatureFlags:
         """Test percentage strategy with deterministic user ID."""
         # Arrange
         flags = FeatureFlags()
-        flags.flags["test_flag"] = FeatureFlagConfig(
-            name="test_flag", enabled=True, strategy=FeatureFlagStrategy.PERCENTAGE, rollout_percentage=50.0
-        )
+        flags.flags["test_flag"] = FeatureFlagConfig(name="test_flag", enabled=True, strategy=FeatureFlagStrategy.PERCENTAGE, rollout_percentage=50.0)
 
         # Act - Test with specific user IDs that should have consistent results
         user_enabled = flags.is_enabled("test_flag", user_id="user123")
@@ -143,9 +139,7 @@ class TestFeatureFlags:
         """Test user list strategy evaluation."""
         # Arrange
         flags = FeatureFlags()
-        flags.flags["test_flag"] = FeatureFlagConfig(
-            name="test_flag", enabled=True, strategy=FeatureFlagStrategy.USER_LIST, allowed_users={"user1", "user2", "admin"}
-        )
+        flags.flags["test_flag"] = FeatureFlagConfig(name="test_flag", enabled=True, strategy=FeatureFlagStrategy.USER_LIST, allowed_users={"user1", "user2", "admin"})
 
         # Act & Assert
         assert flags.is_enabled("test_flag", user_id="user1") is True
@@ -302,9 +296,7 @@ class TestFeatureFlags:
         """Test disable fallback strategy returns None."""
         # Arrange
         flags = FeatureFlags()
-        flags.flags["test_flag"] = FeatureFlagConfig(
-            name="test_flag", enabled=False, strategy=FeatureFlagStrategy.BOOLEAN, fallback_strategy=FallbackStrategy.DISABLE
-        )
+        flags.flags["test_flag"] = FeatureFlagConfig(name="test_flag", enabled=False, strategy=FeatureFlagStrategy.BOOLEAN, fallback_strategy=FallbackStrategy.DISABLE)
 
         def primary_func():
             return "primary_result"
@@ -463,9 +455,7 @@ class TestFeatureFlagIntegration:
     def test_should_integrate_with_environment_variables(self, mocker):
         """Test integration with environment variable configuration."""
         # Arrange & Act
-        mocker.patch.dict(
-            os.environ, {"FF_ENHANCED_SENTIMENT": "false", "FF_ADVANCED_TECHNICAL": "true", "FF_CHART_ANALYSIS": "false"}
-        )
+        mocker.patch.dict(os.environ, {"FF_ENHANCED_SENTIMENT": "false", "FF_ADVANCED_TECHNICAL": "true", "FF_CHART_ANALYSIS": "false"})
 
         flags = FeatureFlags()
 

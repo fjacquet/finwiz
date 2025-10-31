@@ -408,9 +408,7 @@ class TestRebalancingReportIntegration:
             risk_metrics={"volatility": 0.12, "sharpe_ratio": 1.4},
         )
 
-        cost_analysis = CostAnalysis(
-            total_transaction_costs=37.5, commission_costs=25.0, spread_costs=12.5, cost_as_percentage=0.004
-        )
+        cost_analysis = CostAnalysis(total_transaction_costs=37.5, commission_costs=25.0, spread_costs=12.5, cost_as_percentage=0.004)
 
         execution_summary = ExecutionSummary(
             total_trades_required=5,

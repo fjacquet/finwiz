@@ -73,9 +73,7 @@ class MarketScreeningTool(BaseTool):
             filtered_candidates = self._apply_screening_filters(universe["symbols"], asset_type, screening_criteria, market_region)
 
             # Score candidates using A+ criteria
-            scored_candidates = self._ranking.score_candidates(
-                filtered_candidates, asset_type, min_a_plus_score, include_detailed_analysis
-            )
+            scored_candidates = self._ranking.score_candidates(filtered_candidates, asset_type, min_a_plus_score, include_detailed_analysis)
 
             # Sort by score and limit results
             scored_candidates.sort(key=lambda x: x.preliminary_score, reverse=True)
@@ -126,9 +124,7 @@ class MarketScreeningTool(BaseTool):
                 "a_plus_candidates": 0,
             }
 
-    def _apply_screening_filters(
-        self, symbols: list[str], asset_type: str, criteria: dict[str, Any], market_region: str
-    ) -> list[dict[str, Any]]:
+    def _apply_screening_filters(self, symbols: list[str], asset_type: str, criteria: dict[str, Any], market_region: str) -> list[dict[str, Any]]:
         """Apply screening filters to the symbol universe."""
         try:
             filtered_candidates = []

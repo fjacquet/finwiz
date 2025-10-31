@@ -161,9 +161,7 @@ class ValidatedTicker(BaseModel):
     sector: Optional[str] = Field(default=None, description="Sector classification")
     company_name: Optional[str] = Field(default=None, description="Full company name")
     validation_errors: list[str] = Field(default_factory=list, description="List of validation errors")
-    alternative_suggestions: list[str] = Field(
-        default_factory=list, description="Alternative ticker suggestions if validation failed"
-    )
+    alternative_suggestions: list[str] = Field(default_factory=list, description="Alternative ticker suggestions if validation failed")
 
 
 class ValidatedETF(BaseModel):
@@ -203,16 +201,10 @@ class StockCrewOutput(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     metadata: CrewOutputMetadata = Field(description="Integration metadata")
-    ten_k_insights: list[dict] = Field(
-        default_factory=list, description="10-K filing insights (using existing TenKInsight structure)"
-    )
+    ten_k_insights: list[dict] = Field(default_factory=list, description="10-K filing insights (using existing TenKInsight structure)")
     validated_tickers: list[ValidatedTicker] = Field(default_factory=list, description="Validated ticker symbols with metadata")
-    market_sentiments: list[dict] = Field(
-        default_factory=list, description="Market sentiment data (using existing MarketSentiment structure)"
-    )
-    risk_assessments: list[dict] = Field(
-        default_factory=list, description="Risk assessments (using existing RiskAssessmentStandardized structure)"
-    )
+    market_sentiments: list[dict] = Field(default_factory=list, description="Market sentiment data (using existing MarketSentiment structure)")
+    risk_assessments: list[dict] = Field(default_factory=list, description="Risk assessments (using existing RiskAssessmentStandardized structure)")
     sec_citations: list[SECCitation] = Field(default_factory=list, description="SEC/EDGAR citations with full provenance")
 
 
@@ -224,12 +216,8 @@ class ETFCrewOutput(BaseModel):
     metadata: CrewOutputMetadata = Field(description="Integration metadata")
     validated_etfs: list[ValidatedETF] = Field(default_factory=list, description="Validated ETF symbols with metadata")
     factsheets: list[dict] = Field(default_factory=list, description="ETF factsheets (using existing ETFFactsheet structure)")
-    holdings_analysis: list[dict] = Field(
-        default_factory=list, description="ETF holdings analysis (using existing ETFTopHolding structure)"
-    )
-    risk_assessments: list[dict] = Field(
-        default_factory=list, description="Risk assessments (using existing RiskAssessmentStandardized structure)"
-    )
+    holdings_analysis: list[dict] = Field(default_factory=list, description="ETF holdings analysis (using existing ETFTopHolding structure)")
+    risk_assessments: list[dict] = Field(default_factory=list, description="Risk assessments (using existing RiskAssessmentStandardized structure)")
 
 
 class CryptoCrewOutput(BaseModel):
@@ -239,12 +227,8 @@ class CryptoCrewOutput(BaseModel):
 
     metadata: CrewOutputMetadata = Field(description="Integration metadata")
     validated_symbols: list[ValidatedCrypto] = Field(default_factory=list, description="Validated crypto symbols with metadata")
-    crypto_theses: list[dict] = Field(
-        default_factory=list, description="Crypto investment theses (using existing CryptoThesis structure)"
-    )
-    risk_assessments: list[dict] = Field(
-        default_factory=list, description="Risk assessments (using existing RiskAssessmentStandardized structure)"
-    )
+    crypto_theses: list[dict] = Field(default_factory=list, description="Crypto investment theses (using existing CryptoThesis structure)")
+    risk_assessments: list[dict] = Field(default_factory=list, description="Risk assessments (using existing RiskAssessmentStandardized structure)")
     market_analysis: list[dict] = Field(default_factory=list, description="Crypto market analysis data")
 
 
@@ -277,9 +261,7 @@ class APlusOpportunityCollection(BaseModel):
     discovery_summary: str = Field(min_length=10, description="Summary of the discovery analysis")
     confidence_score: float = Field(ge=0.0, le=1.0, description="Confidence score for the opportunities (0.0 to 1.0)")
     validation_timestamp: datetime = Field(description="When the opportunities were validated")
-    allocation_recommendations: list[dict] = Field(
-        default_factory=list, description="Allocation recommendations for each opportunity"
-    )
+    allocation_recommendations: list[dict] = Field(default_factory=list, description="Allocation recommendations for each opportunity")
     replacement_notes: list[str] = Field(default_factory=list, description="Notes about what each opportunity might replace")
     market_context: dict[str, Any] | None = Field(None, description="Market context data (VIX, regime, etc.)")
     backtesting_metrics: dict[str, Any] | None = Field(None, description="Backtesting performance metrics")

@@ -59,9 +59,7 @@ class TestSessionManagerWithFaker:
         assert 25 <= session.client_profile.age <= 75
         assert session.created_at <= session.last_updated
 
-    def test_should_parse_html_with_dynamic_client_profiles(
-        self, fake_client_profile, fake_portfolio_holdings, fake_investment_recommendations, fake_data_generator
-    ):
+    def test_should_parse_html_with_dynamic_client_profiles(self, fake_client_profile, fake_portfolio_holdings, fake_investment_recommendations, fake_data_generator):
         """
         Test de parsing HTML avec des profils clients dynamiques.
 
@@ -69,9 +67,7 @@ class TestSessionManagerWithFaker:
         la robustesse du parsing avec différents formats de données.
         """
         # Arrange - Génération d'HTML réaliste
-        html_content = fake_data_generator.generate_session_html(
-            fake_client_profile, fake_portfolio_holdings, fake_investment_recommendations
-        )
+        html_content = fake_data_generator.generate_session_html(fake_client_profile, fake_portfolio_holdings, fake_investment_recommendations)
 
         # Act
         result = self.session_manager.parse_html_report(html_content)
@@ -193,9 +189,7 @@ class TestSessionManagerWithFaker:
             assert len(plan_id) > 0
             assert "-" in plan_id  # Format UUID contient des tirets
 
-    def test_should_save_and_load_realistic_sessions(
-        self, fake_client_profile, fake_portfolio_holdings, fake_investment_recommendations
-    ):
+    def test_should_save_and_load_realistic_sessions(self, fake_client_profile, fake_portfolio_holdings, fake_investment_recommendations):
         """
         Test de sauvegarde et chargement avec des données réalistes.
 

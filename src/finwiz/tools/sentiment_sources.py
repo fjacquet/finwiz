@@ -214,10 +214,7 @@ class SentimentDataSources:
                 self.logger.warning(f"Error converting Sonar article: {e}")
                 continue
 
-        self.logger.info(
-            f"Combined {len(yahoo_articles)} Yahoo articles with {len(sonar_articles)} "
-            f"Sonar articles, total: {len(combined_articles)}"
-        )
+        self.logger.info(f"Combined {len(yahoo_articles)} Yahoo articles with {len(sonar_articles)} Sonar articles, total: {len(combined_articles)}")
         return combined_articles
 
     def _convert_sonar_timestamp(self, sonar_article: SonarArticle) -> float | None:
@@ -412,9 +409,7 @@ class SentimentDataSources:
 
         if perplexity_integration:
             try:
-                sonar_result = await perplexity_integration.search_sentiment_news(
-                    ticker=ticker, asset_type=asset_type, max_results=max_articles // 2
-                )
+                sonar_result = await perplexity_integration.search_sentiment_news(ticker=ticker, asset_type=asset_type, max_results=max_articles // 2)
 
                 if sonar_result.success:
                     sonar_data = sonar_result.results
@@ -423,9 +418,7 @@ class SentimentDataSources:
                 else:
                     # Sonar failed but we continue with existing data
                     sonar_fallback_used = True
-                    self.logger.warning(
-                        f"Sonar search failed for {ticker}, continuing with Yahoo Finance only: {sonar_result.error_message}"
-                    )
+                    self.logger.warning(f"Sonar search failed for {ticker}, continuing with Yahoo Finance only: {sonar_result.error_message}")
                     # Failure tracking is handled automatically in PerplexityOperationLogger.log_search_failure
 
             except Exception as e:

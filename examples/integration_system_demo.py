@@ -53,9 +53,7 @@ async def demo_integration_system() -> None:
             {"ticker": "AAPL", "recommendation": "BUY", "confidence": 0.85},
             {"ticker": "GOOGL", "recommendation": "HOLD", "confidence": 0.72},
         ],
-        "sec_citations": [
-            {"ticker": "AAPL", "filing_url": "https://sec.gov/example", "filed_at": "2024-01-15", "section": "Business Overview"}
-        ],
+        "sec_citations": [{"ticker": "AAPL", "filing_url": "https://sec.gov/example", "filed_at": "2024-01-15", "section": "Business Overview"}],
     }
 
     validation_result = manager.validate_crew_output("stock", sample_output)

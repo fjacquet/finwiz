@@ -231,9 +231,7 @@ class FakeDataGenerator:
         """Initialize session HTML generator."""
         self.fake = faker_instance
 
-    def generate_session_html(
-        self, client_profile: dict[str, Any], portfolio_holdings: list, recommendations: dict[str, list]
-    ) -> str:
+    def generate_session_html(self, client_profile: dict[str, Any], portfolio_holdings: list, recommendations: dict[str, list]) -> str:
         """
         Génère un HTML de session complet avec des données réalistes.
 

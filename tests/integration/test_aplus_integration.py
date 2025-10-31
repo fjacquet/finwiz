@@ -40,9 +40,7 @@ class TestAPlusIntegration:
             etf_opportunities=["VWCE", "IWDA"],
             stock_opportunities=["NVDA", "AVGO", "ADBE"],
             crypto_opportunities=["BTC", "ETH"],
-            discovery_summary=(
-                "Analysis identified 7 high-quality investment opportunities with strong fundamentals and growth potential."
-            ),
+            discovery_summary=("Analysis identified 7 high-quality investment opportunities with strong fundamentals and growth potential."),
             confidence_score=0.85,
             validation_timestamp=datetime.now(),
             allocation_recommendations=[
@@ -75,9 +73,7 @@ class TestAPlusIntegration:
         assert result.confidence_score == 0.85
 
         # Verify integration manager was called correctly
-        data_accessor.integration_manager.get_crew_data_with_freshness_check.assert_called_once_with(
-            "discovery", 24, warn_on_stale=True
-        )
+        data_accessor.integration_manager.get_crew_data_with_freshness_check.assert_called_once_with("discovery", 24, warn_on_stale=True)
 
     def test_should_return_none_when_discovery_data_unavailable(self, data_accessor):
         """Test A+ opportunities extraction when discovery data is unavailable."""
@@ -114,9 +110,7 @@ class TestAPlusIntegration:
         # Assert
         assert result is None
 
-    def test_should_generate_consolidated_reporter_input_with_aplus_opportunities(
-        self, data_accessor, sample_aplus_opportunities, mocker
-    ):
+    def test_should_generate_consolidated_reporter_input_with_aplus_opportunities(self, data_accessor, sample_aplus_opportunities, mocker):
         """Test consolidated reporter input generation with A+ opportunities."""
         # Arrange
         base_consolidated_data = {"stock": {"mock": "stock_data"}, "etf": {"mock": "etf_data"}, "crypto": {"mock": "crypto_data"}}

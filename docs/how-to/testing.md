@@ -388,6 +388,6 @@ uv run pytest --pdb
 
 ## Related Documentation
 
-- [Development Standards](../explanations/development_standards.md)
-- [Code Quality](../how-to/code_quality.md)
-- [CrewAI Testing](../explanations/crewai_testing.md)
+- Development Standards
+- Code Quality
+- CrewAI Testing

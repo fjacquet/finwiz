@@ -192,9 +192,7 @@ class CrewDataIntegrationManager:
         """
         return self.registry_manager.get_upstream_data(requesting_crew, max_age_hours)
 
-    def get_crew_data_with_freshness_check(
-        self, crew_name: str, max_age_hours: int = 24, warn_on_stale: bool = True
-    ) -> dict | None:
+    def get_crew_data_with_freshness_check(self, crew_name: str, max_age_hours: int = 24, warn_on_stale: bool = True) -> dict | None:
         """
         Get crew data with automatic freshness validation and warnings.
 

@@ -417,6 +417,4 @@ output/
 ## Related Documentation
 
 - [Python Pipeline Architecture](../../explanations/python_pipeline_architecture.md)
-- [Portfolio Deep Analyzer](../scoring/portfolio_deep_analyzer.md)
-- [Python Report Generator](../reporting/python_report_generator.md)
-- [Integration Testing](../../how-to/integration_testing.md)
+- [How-to Guide](../../how-to/use_python_pipeline.md)

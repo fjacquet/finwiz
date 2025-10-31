@@ -112,12 +112,8 @@ class TrendAnalysis(BaseModel):
     confidence_in_optimal: float = Field(..., ge=0, le=1, description="Confidence in optimal frequency identification")
 
     # Market condition sensitivity
-    performance_in_bull_markets: dict[str, float] = Field(
-        default_factory=dict, description="Performance by frequency in bull markets"
-    )
-    performance_in_bear_markets: dict[str, float] = Field(
-        default_factory=dict, description="Performance by frequency in bear markets"
-    )
+    performance_in_bull_markets: dict[str, float] = Field(default_factory=dict, description="Performance by frequency in bull markets")
+    performance_in_bear_markets: dict[str, float] = Field(default_factory=dict, description="Performance by frequency in bear markets")
 
 
 class RebalancingAnalytics(BaseModel):

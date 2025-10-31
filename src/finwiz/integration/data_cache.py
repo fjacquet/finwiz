@@ -98,9 +98,7 @@ class DataCache:
             crews = ["stock", "etf", "crypto", "discovery", "portfolio"]
 
             for crew_name in crews:
-                crew_data = self.integration_manager.get_crew_data_with_freshness_check(
-                    crew_name, max_age_hours, warn_on_stale=True
-                )
+                crew_data = self.integration_manager.get_crew_data_with_freshness_check(crew_name, max_age_hours, warn_on_stale=True)
 
                 if crew_data:
                     # Validate that the data is not empty
@@ -145,9 +143,7 @@ class DataCache:
         """
         try:
             # Check if discovery data is available and fresh
-            discovery_data = self.integration_manager.get_crew_data_with_freshness_check(
-                "discovery", max_age_hours, warn_on_stale=True
-            )
+            discovery_data = self.integration_manager.get_crew_data_with_freshness_check("discovery", max_age_hours, warn_on_stale=True)
 
             if not discovery_data:
                 self.logger.warning("No discovery data available for A+ opportunity extraction")
@@ -227,9 +223,7 @@ class DataCache:
                 "data_freshness_hours": max_age_hours,
                 "report_generation_timestamp": datetime.now(),
                 "data_sources": list(consolidated_data.keys()),
-                "total_data_points": sum(
-                    len(crew_data) if isinstance(crew_data, dict) else 0 for crew_data in consolidated_data.values()
-                ),
+                "total_data_points": sum(len(crew_data) if isinstance(crew_data, dict) else 0 for crew_data in consolidated_data.values()),
             }
 
             # Serialize for CrewAI compatibility
@@ -382,9 +376,7 @@ class DataCache:
                 "by_asset_type": {"stocks": 0, "etfs": 0, "cryptos": 0},
             }
 
-        total_opportunities = (
-            len(opportunities.stock_opportunities) + len(opportunities.etf_opportunities) + len(opportunities.crypto_opportunities)
-        )
+        total_opportunities = len(opportunities.stock_opportunities) + len(opportunities.etf_opportunities) + len(opportunities.crypto_opportunities)
 
         if total_opportunities == 0:
             status = "EMPTY"
@@ -433,10 +425,7 @@ class DataCache:
             # Use transformation module to consolidate sentiment
             result = consolidate_market_sentiment_data(consolidated_data)
 
-            self.logger.info(
-                f"Consolidated sentiment data from {len(result['crew_sentiments'])} crews, "
-                f"{result['aggregated_scores']['total_sources']} total sources"
-            )
+            self.logger.info(f"Consolidated sentiment data from {len(result['crew_sentiments'])} crews, {result['aggregated_scores']['total_sources']} total sources")
 
             return result
 

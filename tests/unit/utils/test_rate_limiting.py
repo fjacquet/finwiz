@@ -115,9 +115,7 @@ class TestRateLimiter:
     def test_should_calculate_exponential_backoff_delay(self):
         """Test exponential backoff delay calculation."""
         # Arrange
-        config = {
-            APIProvider.ALPHA_VANTAGE: RateLimitConfig(requests_per_minute=5, base_backoff=2.0, max_backoff=60.0, jitter=False)
-        }
+        config = {APIProvider.ALPHA_VANTAGE: RateLimitConfig(requests_per_minute=5, base_backoff=2.0, max_backoff=60.0, jitter=False)}
         limiter = RateLimiter(config)
 
         # Act & Assert
@@ -276,9 +274,7 @@ class TestAPIDecorators:
         # Act
         success_result = await safe_api_call(APIProvider.YAHOO_FINANCE, mock_successful_call, "test_data", endpoint="test")
 
-        failure_result = await safe_api_call(
-            APIProvider.YAHOO_FINANCE, mock_failing_call, endpoint="test", default_return="fallback_value"
-        )
+        failure_result = await safe_api_call(APIProvider.YAHOO_FINANCE, mock_failing_call, endpoint="test", default_return="fallback_value")
 
         # Assert
         assert success_result == "processed_test_data"

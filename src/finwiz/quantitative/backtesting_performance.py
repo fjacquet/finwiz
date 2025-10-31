@@ -131,9 +131,7 @@ class BacktestingPerformanceAnalyzer:
 
         if benchmark_symbol:
             try:
-                benchmark_return, alpha, beta = self.calculate_benchmark_metrics(
-                    portfolio_values, benchmark_symbol, start_date, end_date
-                )
+                benchmark_return, alpha, beta = self.calculate_benchmark_metrics(portfolio_values, benchmark_symbol, start_date, end_date)
             except Exception as e:
                 self.logger.warning(f"Could not calculate benchmark metrics: {e}")
 
@@ -215,9 +213,7 @@ class BacktestingPerformanceAnalyzer:
 
         return np.mean(tail_returns) * 100
 
-    def calculate_benchmark_metrics(
-        self, portfolio_values: dict[str, float], benchmark_symbol: str, start_date: datetime, end_date: datetime
-    ) -> tuple[float, float, float]:
+    def calculate_benchmark_metrics(self, portfolio_values: dict[str, float], benchmark_symbol: str, start_date: datetime, end_date: datetime) -> tuple[float, float, float]:
         """Calculate benchmark comparison metrics."""
         # Fetch benchmark data
         benchmark_data = self.data_manager.fetch_historical_data(benchmark_symbol, start_date, end_date)

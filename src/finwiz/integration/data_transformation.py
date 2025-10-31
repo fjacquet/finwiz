@@ -290,9 +290,7 @@ def consolidate_ticker_validation_data(crew_data_map: dict[str, dict[str, Any]])
                 }
 
                 if standardized_validation["alternative_suggestions"]:
-                    failed_validation["recovery_suggestions"].append(
-                        f"Try alternatives: {', '.join(standardized_validation['alternative_suggestions'][:3])}"
-                    )
+                    failed_validation["recovery_suggestions"].append(f"Try alternatives: {', '.join(standardized_validation['alternative_suggestions'][:3])}")
 
                 consolidated_validation["failed_validations"].append(failed_validation)
 
@@ -352,8 +350,7 @@ def generate_core_analysis_summary(consolidated_data: dict[str, Any], max_age_ho
 
     # Calculate overall data quality indicators
     summary["data_quality_indicators"] = {
-        "overall_completeness": sum(c["data_completeness"] for c in summary["analysis_coverage"].values())
-        / max(len(summary["analysis_coverage"]), 1),
+        "overall_completeness": sum(c["data_completeness"] for c in summary["analysis_coverage"].values()) / max(len(summary["analysis_coverage"]), 1),
         "crews_with_analysis": sum(1 for c in summary["analysis_coverage"].values() if c["has_analysis"]),
         "crews_with_recommendations": sum(1 for c in summary["analysis_coverage"].values() if c["has_recommendations"]),
         "crews_with_risk_assessment": sum(1 for c in summary["analysis_coverage"].values() if c["has_risk_assessment"]),
@@ -421,9 +418,7 @@ def _identify_cross_crew_correlations(consolidated_data: dict[str, Any]) -> dict
     for symbol in all_symbols:
         crews_with_symbol = [crew for crew, symbols in crew_symbols.items() if symbol in symbols]
         if len(crews_with_symbol) > 1:
-            correlations["common_symbols"].append(
-                {"symbol": symbol, "crews": crews_with_symbol, "coverage": len(crews_with_symbol)}
-            )
+            correlations["common_symbols"].append({"symbol": symbol, "crews": crews_with_symbol, "coverage": len(crews_with_symbol)})
 
     return correlations
 

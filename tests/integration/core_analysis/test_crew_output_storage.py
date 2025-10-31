@@ -45,9 +45,7 @@ class TestCrewOutputStorage:
             crew_name="test_crew",
             execution_timestamp=datetime.now(),
             schema_version=1,
-            validation_status=ValidationStatus(
-                is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1
-            ),
+            validation_status=ValidationStatus(is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1),
             data_sources=[
                 DataSource(
                     source_type=DataSourceType.YAHOO_FINANCE,
@@ -57,9 +55,7 @@ class TestCrewOutputStorage:
                 )
             ],
             dependencies_met=True,
-            freshness_status=FreshnessStatus(
-                is_fresh=True, age_hours=0.5, max_age_hours=24, refresh_recommended=False, last_updated=datetime.now()
-            ),
+            freshness_status=FreshnessStatus(is_fresh=True, age_hours=0.5, max_age_hours=24, refresh_recommended=False, last_updated=datetime.now()),
             execution_duration_seconds=5.2,
         )
 
@@ -91,9 +87,7 @@ class TestCrewOutputStorage:
         execution_id = "test_exec_123"
 
         # Act
-        result = storage.store_crew_output(
-            crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id
-        )
+        result = storage.store_crew_output(crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id)
 
         # Assert
         assert result.success is True
@@ -147,9 +141,7 @@ class TestCrewOutputStorage:
         execution_id = "test_exec_123"
 
         # Act
-        result = storage.store_crew_output(
-            crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id
-        )
+        result = storage.store_crew_output(crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id)
 
         # Assert
         assert result.success is True
@@ -172,9 +164,7 @@ class TestCrewOutputStorage:
         execution_id = "test_exec_123"
 
         # Store output first
-        storage.store_crew_output(
-            crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id
-        )
+        storage.store_crew_output(crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id)
 
         # Act
         result = storage.retrieve_crew_output(crew_name=crew_name)
@@ -193,9 +183,7 @@ class TestCrewOutputStorage:
         execution_id = "test_exec_123"
 
         # Store output first
-        storage.store_crew_output(
-            crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id
-        )
+        storage.store_crew_output(crew_name=crew_name, output_data=sample_output_data, metadata=sample_metadata, execution_id=execution_id)
 
         # Act
         result = storage.retrieve_crew_output(crew_name=crew_name, execution_id=execution_id)
@@ -297,13 +285,9 @@ class TestCrewOutputStorage:
             crew_name="valid_crew",
             execution_timestamp=datetime.now(),
             schema_version=1,
-            validation_status=ValidationStatus(
-                is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1
-            ),
+            validation_status=ValidationStatus(is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1),
             dependencies_met=True,
-            freshness_status=FreshnessStatus(
-                is_fresh=True, age_hours=0.5, max_age_hours=24, refresh_recommended=False, last_updated=datetime.now()
-            ),
+            freshness_status=FreshnessStatus(is_fresh=True, age_hours=0.5, max_age_hours=24, refresh_recommended=False, last_updated=datetime.now()),
         )
 
         invalid_metadata = valid_metadata.model_copy()
@@ -488,9 +472,7 @@ class TestStorageQuery:
         end_date = datetime.now()
 
         # Act
-        query = StorageQuery(
-            crew_name="test_crew", start_date=start_date, end_date=end_date, max_age_hours=24, include_invalid=True, limit=10
-        )
+        query = StorageQuery(crew_name="test_crew", start_date=start_date, end_date=end_date, max_age_hours=24, include_invalid=True, limit=10)
 
         # Assert
         assert query.crew_name == "test_crew"
@@ -558,13 +540,9 @@ class TestRetrievalResult:
             crew_name="test_crew",
             execution_timestamp=datetime.now(),
             schema_version=1,
-            validation_status=ValidationStatus(
-                is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1
-            ),
+            validation_status=ValidationStatus(is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1),
             dependencies_met=True,
-            freshness_status=FreshnessStatus(
-                is_fresh=True, age_hours=0.5, max_age_hours=24, refresh_recommended=False, last_updated=datetime.now()
-            ),
+            freshness_status=FreshnessStatus(is_fresh=True, age_hours=0.5, max_age_hours=24, refresh_recommended=False, last_updated=datetime.now()),
         )
 
         # Act

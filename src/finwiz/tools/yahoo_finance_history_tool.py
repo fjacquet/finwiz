@@ -21,10 +21,7 @@ class YahooFinanceHistoryTool(BaseTool):
     """
 
     name: str = "Yahoo Finance History Tool"
-    description: str = (
-        "Get historical price data (open, high, low, close, volume) for stocks, ETFs,"
-        " or cryptocurrencies over various time periods and intervals."
-    )
+    description: str = "Get historical price data (open, high, low, close, volume) for stocks, ETFs, or cryptocurrencies over various time periods and intervals."
     args_schema: type[BaseModel] = GetTickerHistoryInput
 
     def _run(self, ticker: str, period: str = "1y", interval: str = "1d", prefetched_data: dict | None = None) -> dict:

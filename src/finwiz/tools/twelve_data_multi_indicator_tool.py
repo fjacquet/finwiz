@@ -234,9 +234,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
             asset_type = self._determine_asset_type(symbol)
 
             # Search for technical analysis insights
-            sonar_result = await perplexity_integration.search_technical_analysis(
-                ticker=symbol, asset_type=asset_type, max_results=5
-            )
+            sonar_result = await perplexity_integration.search_technical_analysis(ticker=symbol, asset_type=asset_type, max_results=5)
 
             if sonar_result.success:
                 feature_flags = get_feature_flags()
@@ -270,9 +268,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
         # Default to stock
         return "stock"
 
-    def _format_multi_indicator_response(
-        self, symbol: str, interval: str, indicator_results: dict[str, Any], perplexity_insights: list
-    ) -> str:
+    def _format_multi_indicator_response(self, symbol: str, interval: str, indicator_results: dict[str, Any], perplexity_insights: list) -> str:
         """Format multi-indicator response combining all data sources."""
         response = f"# 📊 Multi-Indicator Technical Analysis: {symbol}\n\n"
         response += f"**Interval**: {interval}\n"
@@ -292,9 +288,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
             response += f"Found {len(perplexity_insights)} recent technical analysis articles:\n\n"
 
             for i, article in enumerate(perplexity_insights, 1):
-                content_emoji = {"news": "📰", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(
-                    article.content_type, "📰"
-                )
+                content_emoji = {"news": "📰", "analysis": "📊", "earnings": "💰", "regulatory": "⚖️"}.get(article.content_type, "📰")
 
                 response += f"{i}. {content_emoji} **{article.title}**\n"
                 response += f"   - Publisher: {article.publisher}\n"

@@ -94,9 +94,7 @@ class InvestmentDiscoveryMonitor:
 
         logger.info(f"Discovery started: {discovery_id} ({asset_type})")
 
-    def record_discovery_completion(
-        self, discovery_id: str, result: APlusDiscoveryResult, duration: float, success: bool = True
-    ) -> None:
+    def record_discovery_completion(self, discovery_id: str, result: APlusDiscoveryResult, duration: float, success: bool = True) -> None:
         """Record the completion of a discovery operation."""
         # Update basic metrics
         self.discovery_metrics.total_discoveries += 1
@@ -115,9 +113,7 @@ class InvestmentDiscoveryMonitor:
 
             # Update asset type distribution
             asset_type = result.asset_type
-            self.discovery_metrics.asset_type_distribution[asset_type] = (
-                self.discovery_metrics.asset_type_distribution.get(asset_type, 0) + 1
-            )
+            self.discovery_metrics.asset_type_distribution[asset_type] = self.discovery_metrics.asset_type_distribution.get(asset_type, 0) + 1
 
             # Record metrics
             self.metrics_collector.record_counter("discovery.completed", tags={"asset_type": asset_type, "success": "true"})
@@ -126,9 +122,7 @@ class InvestmentDiscoveryMonitor:
 
         else:
             self.discovery_metrics.discovery_errors += 1
-            self.metrics_collector.record_counter(
-                "discovery.failed", tags={"asset_type": result.asset_type if result else "unknown"}
-            )
+            self.metrics_collector.record_counter("discovery.failed", tags={"asset_type": result.asset_type if result else "unknown"})
 
         # Update calculated metrics
         self._update_calculated_metrics()
@@ -156,9 +150,7 @@ class InvestmentDiscoveryMonitor:
             }
         )
 
-        self.metrics_collector.record_counter(
-            "grade.changed", tags={"from_grade": old_grade, "to_grade": new_grade, "symbol": symbol}
-        )
+        self.metrics_collector.record_counter("grade.changed", tags={"from_grade": old_grade, "to_grade": new_grade, "symbol": symbol})
 
         # Update quality metrics
         self._update_quality_metrics()
@@ -195,8 +187,7 @@ class InvestmentDiscoveryMonitor:
         # Check error rate
         if (
             self.discovery_metrics.total_discoveries > 0
-            and self.discovery_metrics.discovery_errors / self.discovery_metrics.total_discoveries
-            > self.alert_thresholds.max_error_rate
+            and self.discovery_metrics.discovery_errors / self.discovery_metrics.total_discoveries > self.alert_thresholds.max_error_rate
         ):
             error_rate = self.discovery_metrics.discovery_errors / self.discovery_metrics.total_discoveries
             alerts.append(

@@ -96,9 +96,7 @@ class APlusMonitoringOrchestrator:
                 "timestamp": datetime.now().isoformat(),
             }
 
-            logger.info(
-                f"Discovery processing complete: {processing_result['added_to_monitoring']} investments added to monitoring"
-            )
+            logger.info(f"Discovery processing complete: {processing_result['added_to_monitoring']} investments added to monitoring")
             return result
 
         except Exception as e:

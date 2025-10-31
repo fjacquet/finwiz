@@ -127,9 +127,7 @@ def status(format: str) -> None:
                 click.echo("\nRecent Alerts:")
                 for alert in alerts["recent_alerts"][:5]:
                     severity_icon = "🚨" if alert["severity"] in ["high", "critical"] else "⚠️"
-                    click.echo(
-                        f"  {severity_icon} {alert['symbol']}: {alert['grade_change']} (score: {alert['score_change']:+.3f})"
-                    )
+                    click.echo(f"  {severity_icon} {alert['symbol']}: {alert['grade_change']} (score: {alert['score_change']:+.3f})")
             click.echo()
 
             # Recommendations
@@ -262,9 +260,7 @@ def investments(format: str) -> None:
                 days_monitored = (datetime.now() - metrics.recommendation_date).days
 
                 # Color coding for grade
-                grade_icon = {"A+": "🏆", "A": "⭐", "B+": "📈", "B": "✅", "C+": "⚠️", "C": "🔍", "D": "⚡", "F": "❌"}.get(
-                    metrics.current_grade, ""
-                )
+                grade_icon = {"A+": "🏆", "A": "⭐", "B+": "📈", "B": "✅", "C+": "⚠️", "C": "🔍", "D": "⚡", "F": "❌"}.get(metrics.current_grade, "")
 
                 click.echo(
                     f"{symbol:<10} {metrics.asset_type:<6} "

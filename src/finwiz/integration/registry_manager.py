@@ -49,9 +49,7 @@ class RegistryManager:
     Handles crew execution coordination, data storage/retrieval, and dependency management.
     """
 
-    def __init__(
-        self, output_dir: Path, metadata_dir: Path, freshness_checker: DataFreshnessChecker, logger: logging.Logger
-    ) -> None:
+    def __init__(self, output_dir: Path, metadata_dir: Path, freshness_checker: DataFreshnessChecker, logger: logging.Logger) -> None:
         """
         Initialize the registry manager.
 
@@ -87,9 +85,7 @@ class RegistryManager:
         failed_crews = []
         errors = []
 
-        self.logger.info(
-            "Starting crew execution coordination", extra={"crew_count": len(crews), "crews": [crew.name for crew in crews]}
-        )
+        self.logger.info("Starting crew execution coordination", extra={"crew_count": len(crews), "crews": [crew.name for crew in crews]})
 
         try:
             # Sort crews by dependencies (simplified - would need topological sort for complex deps)
@@ -185,9 +181,7 @@ class RegistryManager:
                 output_data = {
                     "raw_output": str(crew_output.raw),
                     "json_dict": crew_output.json_dict if hasattr(crew_output, "json_dict") else {},
-                    "pydantic": crew_output.pydantic.model_dump()
-                    if hasattr(crew_output, "pydantic") and crew_output.pydantic
-                    else {},
+                    "pydantic": crew_output.pydantic.model_dump() if hasattr(crew_output, "pydantic") and crew_output.pydantic else {},
                     "tasks_output": [
                         {
                             "description": task.description if hasattr(task, "description") else str(task),
@@ -199,9 +193,7 @@ class RegistryManager:
                         for task in (crew_output.tasks_output if hasattr(crew_output, "tasks_output") else [])
                     ],
                     "token_usage": crew_output.token_usage if hasattr(crew_output, "token_usage") else {},
-                    "usage_metrics": schema_manager.serialize_usage_metrics(crew_output.usage_metrics)
-                    if hasattr(crew_output, "usage_metrics")
-                    else {},
+                    "usage_metrics": schema_manager.serialize_usage_metrics(crew_output.usage_metrics) if hasattr(crew_output, "usage_metrics") else {},
                 }
             elif isinstance(crew_output, dict):
                 output_data = crew_output
@@ -347,9 +339,7 @@ class RegistryManager:
 
                             # Log stale data warning
                             age_hours = freshness_result.freshness_status.age_hours if freshness_result else float("inf")
-                            self.logger.warning(
-                                f"Stale data detected for {crew_dir} crew (age: {age_hours:.1f}h > {max_age_hours}h)"
-                            )
+                            self.logger.warning(f"Stale data detected for {crew_dir} crew (age: {age_hours:.1f}h > {max_age_hours}h)")
                     else:
                         missing_data.append(crew_dir)
                 else:
@@ -370,9 +360,7 @@ class RegistryManager:
 
             return UpstreamDataCollection(available_data={}, missing_data=crew_dirs, stale_data=[])
 
-    def get_crew_data_with_freshness_check(
-        self, crew_name: str, max_age_hours: int = 24, warn_on_stale: bool = True
-    ) -> dict | None:
+    def get_crew_data_with_freshness_check(self, crew_name: str, max_age_hours: int = 24, warn_on_stale: bool = True) -> dict | None:
         """
         Get crew data with automatic freshness validation and warnings.
 
@@ -492,9 +480,7 @@ class RegistryManager:
 
                     if "grade" in ticker_data:
                         grade = ticker_data["grade"]
-                        consolidated_data["summary_statistics"]["grade_distribution"][grade] = (
-                            consolidated_data["summary_statistics"]["grade_distribution"].get(grade, 0) + 1
-                        )
+                        consolidated_data["summary_statistics"]["grade_distribution"][grade] = consolidated_data["summary_statistics"]["grade_distribution"].get(grade, 0) + 1
 
                     if "recommendation" in ticker_data:
                         rec = ticker_data["recommendation"]
@@ -511,8 +497,7 @@ class RegistryManager:
                 consolidated_data["summary_statistics"]["average_composite_score"] = total_score / valid_analyses
 
             self.logger.info(
-                f"Consolidated {crew_name} crew data: {valid_analyses} ticker analyses, "
-                f"avg score: {consolidated_data['summary_statistics']['average_composite_score']:.3f}"
+                f"Consolidated {crew_name} crew data: {valid_analyses} ticker analyses, avg score: {consolidated_data['summary_statistics']['average_composite_score']:.3f}"
             )
 
             return consolidated_data
@@ -610,9 +595,7 @@ class RegistryManager:
             if "executions" not in execution_log:
                 execution_log["executions"] = []
 
-            execution_log["executions"].append(
-                {"crew_name": crew_name, "start_time": datetime.now().isoformat(), "status": "STARTED"}
-            )
+            execution_log["executions"].append({"crew_name": crew_name, "start_time": datetime.now().isoformat(), "status": "STARTED"})
 
             schema_manager.save_json_file(self.execution_log_path, execution_log)
 

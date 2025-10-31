@@ -71,9 +71,7 @@ class PortfolioDeepAnalyzer:
                     continue
 
                 # Run pure Python scoring (no AI calls)
-                analysis_result = self.scorer.calculate_composite_score(
-                    ticker=holding.ticker, asset_class=holding.asset_class, data=data
-                )
+                analysis_result = self.scorer.calculate_composite_score(ticker=holding.ticker, asset_class=holding.asset_class, data=data)
 
                 # Create crew export format
                 crew_export = self._create_crew_export(analysis_result, holding)
@@ -87,9 +85,7 @@ class PortfolioDeepAnalyzer:
 
                 results["successful_analyses"] += 1
 
-                self.logger.info(
-                    f"✅ Analyzed {holding.ticker}: Grade {analysis_result.grade}, Score {analysis_result.composite_score:.3f}"
-                )
+                self.logger.info(f"✅ Analyzed {holding.ticker}: Grade {analysis_result.grade}, Score {analysis_result.composite_score:.3f}")
 
             except Exception as e:
                 self.logger.error(f"❌ Failed to analyze {holding.ticker}: {e}")
@@ -116,9 +112,7 @@ class PortfolioDeepAnalyzer:
         export_info = self._export_json_files(results["json_exports"], session_id)
         results["export_info"] = export_info
 
-        self.logger.info(
-            f"🚀 Deep analysis completed in {total_time:.2f}s ({results['successful_analyses']}/{len(holdings)} successful)"
-        )
+        self.logger.info(f"🚀 Deep analysis completed in {total_time:.2f}s ({results['successful_analyses']}/{len(holdings)} successful)")
 
         return results
 
@@ -139,33 +133,44 @@ class PortfolioDeepAnalyzer:
         try:
             # Fetch real quantitative data for this ticker
             quant_tool = QuantitativeAnalysisTool()
-            # Use performance analysis only - it's simpler and more reliable
-            quant_data = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="performance")
+            
+            # Fetch both performance and technical data
+            perf_data = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="performance")
+            tech_data = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="technical")
 
             # Parse the quantitative data
-            if isinstance(quant_data, str):
-                import json
-
+            import json
+            
+            if isinstance(perf_data, str):
                 try:
-                    quant_data = json.loads(quant_data)
+                    perf_data = json.loads(perf_data)
                 except json.JSONDecodeError:
-                    self.logger.warning(f"Failed to parse quantitative data for {ticker}, using defaults")
-                    quant_data = {}
+                    self.logger.warning(f"Failed to parse performance data for {ticker}, using defaults")
+                    perf_data = {}
+            
+            if isinstance(tech_data, str):
+                try:
+                    tech_data = json.loads(tech_data)
+                except json.JSONDecodeError:
+                    self.logger.warning(f"Failed to parse technical data for {ticker}, using defaults")
+                    tech_data = {}
 
             # Extract real values from quantitative analysis
-            # The performance analysis returns these fields directly
+            # Combine performance and technical data
             data = {
                 "ticker": ticker,
                 "asset_class": asset_class,
-                "current_price": 100.0,  # Not provided by performance analysis
-                "volatility": quant_data.get("volatility", 0.20),
-                "max_drawdown": quant_data.get("max_drawdown", -0.15),
-                "beta": quant_data.get("beta", 1.0),
-                "rsi": 50.0,  # Not provided by performance analysis
-                "moving_avg_50": 95.0,  # Not provided by performance analysis
-                "moving_avg_200": 90.0,  # Not provided by performance analysis
-                "macd": 0.1,  # Not provided by performance analysis
-                "macd_signal": 0.05,  # Not provided by performance analysis
+                # From performance analysis
+                "current_price": perf_data.get("current_price", 100.0),
+                "volatility": perf_data.get("volatility", 0.20),
+                "max_drawdown": perf_data.get("max_drawdown", -0.15),
+                "beta": perf_data.get("beta", 1.0),
+                # From technical analysis
+                "rsi": tech_data.get("rsi", 50.0),
+                "moving_avg_50": tech_data.get("sma_50", tech_data.get("current_price", 100.0) * 0.95),
+                "moving_avg_200": tech_data.get("sma_200", tech_data.get("current_price", 100.0) * 0.90),
+                "macd": tech_data.get("macd", 0.0),
+                "macd_signal": tech_data.get("macd_signal", 0.0),
             }
 
             # Add asset-specific data
@@ -197,9 +202,8 @@ class PortfolioDeepAnalyzer:
 
             self.logger.info(
                 f"✅ Fetched real data for {ticker}: "
-                f"volatility={data['volatility']:.3f}, "
-                f"max_drawdown={data['max_drawdown']:.3f}, "
-                f"beta={data['beta']:.2f}"
+                f"volatility={data['volatility']:.3f}, max_drawdown={data['max_drawdown']:.3f}, beta={data['beta']:.2f}, "
+                f"rsi={data['rsi']:.1f}, macd={data['macd']:.3f}"
             )
 
             return data
@@ -397,8 +401,7 @@ class PortfolioDeepAnalyzer:
         # Note: 0.03 threshold allows for similar but not identical scores
         if composite_std < 0.03:
             self.logger.error(
-                f"❌ CRITICAL: All holdings have identical composite scores (std={composite_std:.4f}). "
-                "This indicates hardcoded defaults are being used instead of real data."
+                f"❌ CRITICAL: All holdings have identical composite scores (std={composite_std:.4f}). This indicates hardcoded defaults are being used instead of real data."
             )
             raise ValueError(
                 f"Score validation failed: All holdings have identical composite scores (std={composite_std:.4f}). "
@@ -406,10 +409,7 @@ class PortfolioDeepAnalyzer:
             )
 
         if risk_std < 0.03:
-            self.logger.error(
-                f"❌ CRITICAL: All holdings have identical risk scores (std={risk_std:.4f}). "
-                "This indicates hardcoded defaults are being used instead of real data."
-            )
+            self.logger.error(f"❌ CRITICAL: All holdings have identical risk scores (std={risk_std:.4f}). This indicates hardcoded defaults are being used instead of real data.")
             raise ValueError(
                 f"Score validation failed: All holdings have identical risk scores (std={risk_std:.4f}). "
                 "Expected unique scores per ticker. Check QuantitativeAnalysisTool data fetching."

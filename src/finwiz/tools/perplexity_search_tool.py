@@ -26,9 +26,7 @@ class PerplexitySearchTool(BaseTool):
     """Tool that performs a grounded web search using Perplexity Sonar."""
 
     name: str = "Perplexity Sonar Search"
-    description: str = (
-        "Queries Perplexity Sonar to obtain grounded answers with citations. Requires the PPLX_API_KEY environment variable."
-    )
+    description: str = "Queries Perplexity Sonar to obtain grounded answers with citations. Requires the PPLX_API_KEY environment variable."
     args_schema: type[BaseModel] = PerplexitySearchInput
 
     base_url: str = "https://api.perplexity.ai/chat/completions"
@@ -61,10 +59,7 @@ class PerplexitySearchTool(BaseTool):
             "messages": [
                 {
                     "role": "system",
-                    "content": (
-                        "You are a financial research assistant. Provide concise, cited answers that include the key facts, "
-                        "figures, and trends relevant to the query."
-                    ),
+                    "content": ("You are a financial research assistant. Provide concise, cited answers that include the key facts, figures, and trends relevant to the query."),
                 },
                 {"role": "user", "content": query},
             ],

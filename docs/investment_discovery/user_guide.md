@@ -370,7 +370,7 @@ R : Le système génère automatiquement des rapports de comparaison avec métri
 
 - [Guide développeur](investment_discovery_developer_guide.md)
 - [Référence API](investment_discovery_api_reference.md)
-- [Schémas de données](../docs/schemas/README.md)
+- [Schémas de données](../reference/schemas/index.md)
 
 ### Contact support
 
@@ -607,8 +607,8 @@ monitoring:
 
 - [Investment Discovery Documentation](investment_discovery/) - Complete discovery guide
 - [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - Portfolio analysis
-- [Alternative Finder](API_REFERENCE.md#alternativefinder) - Alternative finding tool
-- [API Reference](API_REFERENCE.md) - Complete API documentation
+- [Alternative Finder](api_reference.md) - Alternative finding tool
+- [API Reference](api_reference.md) - Complete API documentation
 
 ---
 
@@ -687,6 +687,6 @@ monitoring:
 
 - [Investment Discovery Documentation](investment_discovery/) - Complete discovery guide
 - [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - Portfolio analysis
-- [Alternative Finder](API_REFERENCE.md#alternativefinder) - Alternative finding tool
-- [API Reference](API_REFERENCE.md) - Complete API documentation
+- [Alternative Finder](api_reference.md) - Alternative finding tool
+- [API Reference](api_reference.md) - Complete API documentation
 

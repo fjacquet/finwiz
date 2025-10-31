@@ -47,10 +47,7 @@ class BatchPrefetchConfig:
             raise ValueError(f"alpha_vantage_rate_limit must be >= 1, got {self.alpha_vantage_rate_limit}")
 
         if self.alpha_vantage_rate_limit > 100:
-            logger.warning(
-                f"alpha_vantage_rate_limit is very high ({self.alpha_vantage_rate_limit}). "
-                "Ensure you have a premium API key to avoid rate limit errors."
-            )
+            logger.warning(f"alpha_vantage_rate_limit is very high ({self.alpha_vantage_rate_limit}). Ensure you have a premium API key to avoid rate limit errors.")
 
         if self.min_holdings_for_batch < 1:
             raise ValueError(f"min_holdings_for_batch must be >= 1, got {self.min_holdings_for_batch}")

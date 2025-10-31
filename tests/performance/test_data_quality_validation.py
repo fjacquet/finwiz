@@ -97,11 +97,9 @@ class TestDataQualityValidation:
         batch_name = batch_data.get("name", "").upper()
         if live_name != "N/A" and batch_name != "N/A":
             # Allow for minor name variations (e.g., "Inc." vs "Inc")
-            assert live_name.replace(".", "").replace(",", "") in batch_name.replace(".", "").replace(
-                ",", ""
-            ) or batch_name.replace(".", "").replace(",", "") in live_name.replace(".", "").replace(",", ""), (
-                f"Name mismatch for {ticker}: live='{live_name}' vs batch='{batch_name}'"
-            )
+            assert live_name.replace(".", "").replace(",", "") in batch_name.replace(".", "").replace(",", "") or batch_name.replace(".", "").replace(",", "") in live_name.replace(
+                ".", ""
+            ).replace(",", ""), f"Name mismatch for {ticker}: live='{live_name}' vs batch='{batch_name}'"
 
         # Sector should match
         if live_data.get("sector") != "N/A" and batch_data.get("sector") != "N/A":
@@ -236,10 +234,7 @@ class TestDataQualityValidation:
 
         # Average completeness should be high
         avg_completeness = (
-            sum(r.get("completeness_percent", 0) for r in completeness_results.values() if not r.get("failed"))
-            / len(successful_tickers)
-            if successful_tickers
-            else 0
+            sum(r.get("completeness_percent", 0) for r in completeness_results.values() if not r.get("failed")) / len(successful_tickers) if successful_tickers else 0
         )
         assert avg_completeness >= 85, f"Average completeness ({avg_completeness:.1f}%) should be at least 85%"
 
@@ -384,9 +379,7 @@ class TestDataQualityValidation:
         successful_av = [t for t, r in av_quality_results.items() if not r.get("failed", False)]
 
         if successful_av:
-            avg_av_completeness = sum(
-                r.get("completeness_percent", 0) for r in av_quality_results.values() if not r.get("failed")
-            ) / len(successful_av)
+            avg_av_completeness = sum(r.get("completeness_percent", 0) for r in av_quality_results.values() if not r.get("failed")) / len(successful_av)
             assert avg_av_completeness >= 70, f"Alpha Vantage completeness ({avg_av_completeness:.1f}%) should be at least 70%"
 
         # Cleanup

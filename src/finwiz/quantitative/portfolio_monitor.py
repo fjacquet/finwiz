@@ -170,16 +170,12 @@ class PortfolioMonitor:
 
         logger.info("Portfolio monitor initialized")
 
-    async def start_monitoring(
-        self, portfolio_id: str, portfolio_config: PortfolioConfiguration, monitoring_rule: MonitoringRule | None = None
-    ) -> None:
+    async def start_monitoring(self, portfolio_id: str, portfolio_config: PortfolioConfiguration, monitoring_rule: MonitoringRule | None = None) -> None:
         """Start monitoring a portfolio for drift and rebalancing needs."""
         try:
             # Use default rule if none provided
             if monitoring_rule is None:
-                monitoring_rule = MonitoringRule(
-                    rule_id=f"default_{portfolio_id}", rule_name=f"Default monitoring for {portfolio_id}"
-                )
+                monitoring_rule = MonitoringRule(rule_id=f"default_{portfolio_id}", rule_name=f"Default monitoring for {portfolio_id}")
 
             # Store monitoring configuration
             self._monitoring_rules[portfolio_id] = monitoring_rule
@@ -242,9 +238,7 @@ class PortfolioMonitor:
             logger.error(f"Failed to check portfolio drift for {portfolio_id}: {e}")
             raise
 
-    async def generate_health_dashboard(
-        self, portfolio_id: str, portfolio_config: PortfolioConfiguration
-    ) -> PortfolioHealthDashboard:
+    async def generate_health_dashboard(self, portfolio_id: str, portfolio_config: PortfolioConfiguration) -> PortfolioHealthDashboard:
         """Generate comprehensive portfolio health dashboard."""
         try:
             # Check current drift
@@ -253,9 +247,7 @@ class PortfolioMonitor:
             # Calculate health metrics
             positions_needing_attention = [need for need in rebalancing_needs if need.needs_rebalancing]
             max_deviation = max([abs(need.deviation) for need in rebalancing_needs], default=0.0)
-            avg_deviation = (
-                sum([abs(need.deviation) for need in rebalancing_needs]) / len(rebalancing_needs) if rebalancing_needs else 0.0
-            )
+            avg_deviation = sum([abs(need.deviation) for need in rebalancing_needs]) / len(rebalancing_needs) if rebalancing_needs else 0.0
 
             # Determine overall health score (1-10 scale)
             health_score = self._calculate_health_score(rebalancing_needs, portfolio_config)
@@ -293,9 +285,7 @@ class PortfolioMonitor:
             logger.error(f"Failed to generate health dashboard for {portfolio_id}: {e}")
             raise
 
-    async def _monitor_portfolio_loop(
-        self, portfolio_id: str, portfolio_config: PortfolioConfiguration, monitoring_rule: MonitoringRule
-    ) -> None:
+    async def _monitor_portfolio_loop(self, portfolio_id: str, portfolio_config: PortfolioConfiguration, monitoring_rule: MonitoringRule) -> None:
         """Run main monitoring loop for a portfolio."""
         logger.info(f"Starting monitoring loop for portfolio {portfolio_id}")
 
@@ -362,10 +352,7 @@ class PortfolioMonitor:
                 await self._generate_deviation_alert(portfolio_id, positions_out_of_tolerance, max_deviation, monitoring_rule)
 
             # Check multiple positions rule
-            if (
-                monitoring_rule.alert_on_multiple_positions
-                and len(positions_out_of_tolerance) >= monitoring_rule.min_positions_for_alert
-            ):
+            if monitoring_rule.alert_on_multiple_positions and len(positions_out_of_tolerance) >= monitoring_rule.min_positions_for_alert:
                 await self._generate_multiple_positions_alert(portfolio_id, positions_out_of_tolerance, monitoring_rule)
 
             # Check auto-rebalancing rule
@@ -409,9 +396,7 @@ class PortfolioMonitor:
             ],
         )
 
-    async def _generate_multiple_positions_alert(
-        self, portfolio_id: str, positions_out_of_tolerance: list[RebalancingNeed], monitoring_rule: MonitoringRule
-    ) -> None:
+    async def _generate_multiple_positions_alert(self, portfolio_id: str, positions_out_of_tolerance: list[RebalancingNeed], monitoring_rule: MonitoringRule) -> None:
         """Generate alert for multiple positions needing rebalancing."""
         affected_positions = [need.symbol for need in positions_out_of_tolerance]
         current_deviations = {need.symbol: need.deviation for need in positions_out_of_tolerance}
@@ -421,8 +406,7 @@ class PortfolioMonitor:
             alert_type=AlertType.MULTIPLE_POSITIONS_ALERT,
             severity=AlertSeverity.WARNING,
             title=f"Multiple Positions Need Rebalancing - {len(positions_out_of_tolerance)} positions",
-            message=f"{len(positions_out_of_tolerance)} positions are outside tolerance bands and may need rebalancing. "
-            f"Consider comprehensive portfolio rebalancing.",
+            message=f"{len(positions_out_of_tolerance)} positions are outside tolerance bands and may need rebalancing. Consider comprehensive portfolio rebalancing.",
             affected_positions=affected_positions,
             current_deviations=current_deviations,
             recommended_actions=[
@@ -452,8 +436,7 @@ class PortfolioMonitor:
             alert_type=AlertType.AUTO_REBALANCE_TRIGGERED,
             severity=AlertSeverity.INFO,
             title="Auto-Rebalancing Recommended",
-            message=f"Portfolio deviations exceed auto-rebalancing threshold. "
-            f"Automated rebalancing is recommended for {len(positions_out_of_tolerance)} positions.",
+            message=f"Portfolio deviations exceed auto-rebalancing threshold. Automated rebalancing is recommended for {len(positions_out_of_tolerance)} positions.",
             affected_positions=affected_positions,
             current_deviations=current_deviations,
             recommended_actions=[
@@ -521,9 +504,7 @@ class PortfolioMonitor:
 
         return round(health_score, 1)
 
-    def _determine_rebalancing_urgency(
-        self, positions_needing_attention: list[RebalancingNeed], max_deviation: float
-    ) -> UrgencyLevel:
+    def _determine_rebalancing_urgency(self, positions_needing_attention: list[RebalancingNeed], max_deviation: float) -> UrgencyLevel:
         """Determine overall rebalancing urgency level."""
         if not positions_needing_attention:
             return UrgencyLevel.LOW

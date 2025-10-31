@@ -105,9 +105,7 @@ def run_python_deep_analysis(holdings: list[dict[str, Any]], session_id: str) ->
         for holding in holdings:
             # Convert risk dict to RiskAssessmentStandardized
             risk_data = holding["risk"]
-            risk_assessment = RiskAssessmentStandardized(
-                score=risk_data["score"], level=risk_data["level"], risk_factors=risk_data.get("risk_factors", [])
-            )
+            risk_assessment = RiskAssessmentStandardized(score=risk_data["score"], level=risk_data["level"], risk_factors=risk_data.get("risk_factors", []))
 
             holding_decision = HoldingDecision(
                 ticker=holding["ticker"],
@@ -215,9 +213,7 @@ def generate_python_report(holdings: list[dict[str, Any]], deep_analysis_results
         for holding in holdings:
             # Convert risk dict to RiskAssessmentStandardized
             risk_data = holding["risk"]
-            risk_assessment = RiskAssessmentStandardized(
-                score=risk_data["score"], level=risk_data["level"], risk_factors=risk_data.get("risk_factors", [])
-            )
+            risk_assessment = RiskAssessmentStandardized(score=risk_data["score"], level=risk_data["level"], risk_factors=risk_data.get("risk_factors", []))
 
             holding_decision = HoldingDecision(
                 ticker=holding["ticker"],
@@ -240,9 +236,7 @@ def generate_python_report(holdings: list[dict[str, Any]], deep_analysis_results
         # Generate report
         from finwiz.reporting.python_report_generator import generate_python_report
 
-        report_path = generate_python_report(
-            portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id
-        )
+        report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id)
 
         logger.info(f"✅ Report generated: {report_path}")
         return report_path

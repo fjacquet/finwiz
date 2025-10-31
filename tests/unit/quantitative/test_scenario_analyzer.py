@@ -192,9 +192,7 @@ class TestScenarioAnalyzer:
         assert hasattr(scenario_analyzer, "logger")
 
     @pytest.mark.asyncio
-    async def test_should_generate_what_if_scenarios_when_analyze_scenarios_called(
-        self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine
-    ):
+    async def test_should_generate_what_if_scenarios_when_analyze_scenarios_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
         # Arrange
         scenario_params = ScenarioParameters(
             capital_amounts=[0, 5000, 15000],
@@ -213,9 +211,7 @@ class TestScenarioAnalyzer:
         assert result.monte_carlo_result is not None
 
     @pytest.mark.asyncio
-    async def test_should_run_what_if_analysis_when_called_directly(
-        self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine
-    ):
+    async def test_should_run_what_if_analysis_when_called_directly(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
         # Arrange
         scenario_params = ScenarioParameters(
             capital_amounts=[0, 20000],  # 20000 is different from base 10000
@@ -235,9 +231,7 @@ class TestScenarioAnalyzer:
         assert all("available_capital" in s.modified_parameters for s in scenarios)
 
     @pytest.mark.asyncio
-    async def test_should_analyze_single_scenario_when_called(
-        self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine
-    ):
+    async def test_should_analyze_single_scenario_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
         # Arrange
         modified_config = sample_portfolio_config.model_copy()
         modified_config.available_capital = 20000.0
@@ -255,18 +249,12 @@ class TestScenarioAnalyzer:
         assert isinstance(scenario.risk_difference, float)
 
     @pytest.mark.asyncio
-    async def test_should_run_sensitivity_analysis_when_called(
-        self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine
-    ):
+    async def test_should_run_sensitivity_analysis_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
         # Arrange
-        scenario_params = ScenarioParameters(
-            tolerance_levels=[0.01, 0.05, 0.10], transaction_cost_rates=[0.0005, 0.001, 0.002], capital_amounts=[0, 5000, 10000]
-        )
+        scenario_params = ScenarioParameters(tolerance_levels=[0.01, 0.05, 0.10], transaction_cost_rates=[0.0005, 0.001, 0.002], capital_amounts=[0, 5000, 10000])
 
         # Act
-        results = await scenario_analyzer._run_sensitivity_analysis(
-            sample_portfolio_config, scenario_params, mock_rebalancing_engine
-        )
+        results = await scenario_analyzer._run_sensitivity_analysis(sample_portfolio_config, scenario_params, mock_rebalancing_engine)
 
         # Assert
         assert len(results) == 3  # tolerance, transaction_cost, capital
@@ -278,9 +266,7 @@ class TestScenarioAnalyzer:
         assert "available_capital" in parameter_names
 
     @pytest.mark.asyncio
-    async def test_should_analyze_parameter_sensitivity_when_called(
-        self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine
-    ):
+    async def test_should_analyze_parameter_sensitivity_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
         # Arrange
         parameter_values = [0.01, 0.05, 0.10]
 
@@ -288,9 +274,7 @@ class TestScenarioAnalyzer:
             config.global_tolerance = value
 
         # Act
-        result = await scenario_analyzer._analyze_parameter_sensitivity(
-            "tolerance_band", parameter_values, sample_portfolio_config, config_modifier, mock_rebalancing_engine
-        )
+        result = await scenario_analyzer._analyze_parameter_sensitivity("tolerance_band", parameter_values, sample_portfolio_config, config_modifier, mock_rebalancing_engine)
 
         # Assert
         assert isinstance(result, SensitivityResult)
@@ -301,13 +285,9 @@ class TestScenarioAnalyzer:
         assert result.optimal_value in parameter_values
 
     @pytest.mark.asyncio
-    async def test_should_run_monte_carlo_simulation_when_called(
-        self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine
-    ):
+    async def test_should_run_monte_carlo_simulation_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
         # Act
-        result = await scenario_analyzer._run_monte_carlo_simulation(
-            sample_portfolio_config, mock_rebalancing_engine, num_simulations=100, time_horizon_days=50
-        )
+        result = await scenario_analyzer._run_monte_carlo_simulation(sample_portfolio_config, mock_rebalancing_engine, num_simulations=100, time_horizon_days=50)
 
         # Assert
         assert isinstance(result, MonteCarloResult)
@@ -495,9 +475,7 @@ class TestScenarioAnalyzer:
         assert "transaction costs" in summary
 
     @pytest.mark.asyncio
-    async def test_should_handle_analysis_failure_gracefully_when_error_occurs(
-        self, scenario_analyzer, sample_portfolio_config, mocker
-    ):
+    async def test_should_handle_analysis_failure_gracefully_when_error_occurs(self, scenario_analyzer, sample_portfolio_config, mocker):
         # Arrange
         failing_engine = mocker.AsyncMock()
         failing_engine.optimize_rebalancing_trades.side_effect = Exception("API Error")
@@ -518,9 +496,7 @@ class TestScenarioAnalyzer:
         assert scenario.risk_difference == 0.0
 
     @pytest.mark.asyncio
-    async def test_should_use_default_parameters_when_none_provided(
-        self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine
-    ):
+    async def test_should_use_default_parameters_when_none_provided(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
         # Act
         result = await scenario_analyzer.analyze_scenarios(sample_portfolio_config, None, mock_rebalancing_engine)
 

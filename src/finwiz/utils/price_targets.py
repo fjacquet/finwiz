@@ -104,12 +104,7 @@ class PriceTarget:
 
     def __repr__(self) -> str:
         """String representation."""
-        return (
-            f"PriceTarget(target=${self.target_price:.2f}, "
-            f"upside={self.upside_pct:.1f}%, "
-            f"confidence={self.confidence:.2f}, "
-            f"method={self.method})"
-        )
+        return f"PriceTarget(target=${self.target_price:.2f}, upside={self.upside_pct:.1f}%, confidence={self.confidence:.2f}, method={self.method})"
 
 
 def calculate_dcf_target(
@@ -321,9 +316,7 @@ def calculate_technical_target(prices: pd.Series, method: str = "fibonacci", cur
     try:
         if len(prices) < 10:
             logger.warning(f"Insufficient price data: {len(prices)} points")
-            return PriceTarget(
-                target_price=0.0, current_price=current_price, confidence=0.0, method=f"technical_{method}", assumptions={}
-            )
+            return PriceTarget(target_price=0.0, current_price=current_price, confidence=0.0, method=f"technical_{method}", assumptions={})
 
         if current_price is None:
             current_price = float(prices.iloc[-1])

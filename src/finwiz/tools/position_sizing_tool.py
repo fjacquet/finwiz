@@ -329,11 +329,7 @@ class PositionSizingTool:
         risk_level = self._get_risk_level_french(holding.risk_score)
 
         if sizing_action == "hold":
-            return (
-                f"Position actuelle de {holding.current_allocation_pct:.1f}% appropriée. "
-                f"Risque {risk_level} (score {holding.risk_score:.1f}). "
-                f"Maintenir l'allocation actuelle."
-            )
+            return f"Position actuelle de {holding.current_allocation_pct:.1f}% appropriée. Risque {risk_level} (score {holding.risk_score:.1f}). Maintenir l'allocation actuelle."
         elif sizing_action == "add":
             diff = recommended_size - holding.current_allocation_pct
             return (

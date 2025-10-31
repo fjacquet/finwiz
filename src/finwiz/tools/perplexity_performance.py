@@ -31,9 +31,7 @@ class PerplexityPerformanceMonitor:
         return int((time.time() - start_time) * 1000)
 
     @staticmethod
-    def log_performance_metrics(
-        ticker: str, analysis_type: str, latency_ms: int, result_count: int, baseline_comparison: dict[str, Any] | None = None
-    ) -> None:
+    def log_performance_metrics(ticker: str, analysis_type: str, latency_ms: int, result_count: int, baseline_comparison: dict[str, Any] | None = None) -> None:
         """Log performance metrics with baseline comparison."""
         performance_ratio = latency_ms / PerplexityPerformanceMonitor.BASELINE_RESPONSE_TIME_MS
         meets_requirement = latency_ms <= PerplexityPerformanceMonitor.MAX_ACCEPTABLE_RESPONSE_TIME_MS

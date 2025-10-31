@@ -321,9 +321,7 @@ class ZeroDowntimeDeployer:
                 return False
 
             # Force push backup to restore previous state
-            result = subprocess.run(
-                ["git", "-C", str(backup_dir), "push", "--force", "origin", branch], capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(["git", "-C", str(backup_dir), "push", "--force", "origin", branch], capture_output=True, text=True, check=True)
 
             print("✅ Rollback completed successfully")
             return True

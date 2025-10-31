@@ -192,9 +192,7 @@ class TestDataConsolidationFlow:
             assert "json_dict" in crew_data, f"json_dict should be in {crew_name} data"
             assert "pydantic" in crew_data, f"pydantic should be in {crew_name} data"
 
-    def test_should_not_show_core_analysis_missing_warnings_when_data_exists(
-        self, integration_manager, sample_crew_outputs, caplog
-    ):
+    def test_should_not_show_core_analysis_missing_warnings_when_data_exists(self, integration_manager, sample_crew_outputs, caplog):
         """Test that no 'Core analysis data missing' warnings appear when crews execute successfully."""
         # Arrange - Store all crew outputs
         for crew_name, output in sample_crew_outputs.items():

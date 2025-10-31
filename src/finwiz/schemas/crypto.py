@@ -15,9 +15,7 @@ class CryptoThesis(BaseModel):
 
     schema_version: int = 1
 
-    symbol: str = Field(
-        min_length=2, max_length=30, description="Crypto symbol or portfolio identifier, e.g., BTC or CRYPTO_PORTFOLIO"
-    )
+    symbol: str = Field(min_length=2, max_length=30, description="Crypto symbol or portfolio identifier, e.g., BTC or CRYPTO_PORTFOLIO")
     thesis_bullets: list[str] = Field(default_factory=list, max_length=20)
     references: list[str] = Field(default_factory=list, description="List of reference URLs")
 
@@ -118,9 +116,7 @@ class CryptoTechnicalAnalysis(BaseModel):
     chart_patterns: list[str] = Field(default_factory=list, description="Identified chart patterns", max_length=10)
 
     # Trend analysis
-    trend_direction: Optional[Literal["bullish", "bearish", "neutral", "mixed"]] = Field(
-        None, description="Overall trend direction"
-    )
+    trend_direction: Optional[Literal["bullish", "bearish", "neutral", "mixed"]] = Field(None, description="Overall trend direction")
     trend_strength: Optional[Literal["strong", "moderate", "weak"]] = Field(None, description="Trend strength")
 
     # Overall assessment
@@ -135,9 +131,7 @@ class CryptoQuantitativeMetrics(BaseModel):
     symbol: str = Field(min_length=2, max_length=30, description="Crypto symbol or portfolio identifier")
     sharpe_ratio: Optional[float] = Field(None, description="Sharpe ratio")
     sortino_ratio: Optional[float] = Field(None, description="Sortino ratio")
-    max_drawdown: Optional[float] = Field(
-        None, le=0.0, description="Maximum drawdown as negative percentage (e.g., -0.62 for 62% drawdown)"
-    )
+    max_drawdown: Optional[float] = Field(None, le=0.0, description="Maximum drawdown as negative percentage (e.g., -0.62 for 62% drawdown)")
     volatility: Optional[float] = Field(None, ge=0.0, description="Annualized volatility")
     var_95: Optional[float] = Field(None, description="Value at Risk (95% confidence)")
     cvar_95: Optional[float] = Field(None, description="Conditional Value at Risk (95% confidence)")
@@ -168,9 +162,7 @@ class CryptoRiskProfile(BaseModel):
     adoption_risk: str = Field(description="Adoption and utility risk assessment", min_length=20)
 
     # Quantitative risk metrics
-    quantitative_risk_metrics: dict[str, Any] = Field(
-        default_factory=dict, description="Quantitative risk metrics (VaR, CVaR, drawdown, etc.)"
-    )
+    quantitative_risk_metrics: dict[str, Any] = Field(default_factory=dict, description="Quantitative risk metrics (VaR, CVaR, drawdown, etc.)")
 
     # Tokenomics
     tokenomics_assessment: Optional[str] = Field(None, description="Tokenomics and supply dynamics assessment")
@@ -202,9 +194,7 @@ class CryptoInvestmentStrategy(BaseModel):
     quantitative_metrics: Optional[CryptoQuantitativeMetrics] = Field(None, description="Quantitative analysis metrics")
 
     # Strategy details
-    recommended_allocation: Optional[float] = Field(
-        None, ge=0.0, le=100.0, description="Recommended portfolio allocation percentage"
-    )
+    recommended_allocation: Optional[float] = Field(None, ge=0.0, le=100.0, description="Recommended portfolio allocation percentage")
     position_sizing: Optional[str] = Field(None, description="Position sizing recommendations")
     entry_strategy: str = Field(description="Entry strategy details", min_length=20)
     exit_strategy: str = Field(description="Exit strategy details", min_length=20)

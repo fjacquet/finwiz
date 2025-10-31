@@ -67,9 +67,7 @@ def initialize_session(report_path: str = "report/finwiz_family_financial_plan.h
             return session_manager.create_new_session()
 
 
-def save_session_with_analysis_results(
-    plan: FinancialPlan, analysis_results: dict, report_path: str = "report/finwiz_family_financial_plan.html"
-) -> None:
+def save_session_with_analysis_results(plan: FinancialPlan, analysis_results: dict, report_path: str = "report/finwiz_family_financial_plan.html") -> None:
     """
     Save session with new analysis results.
 

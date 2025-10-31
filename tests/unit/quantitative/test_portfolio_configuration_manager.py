@@ -114,9 +114,7 @@ class TestPortfolioConfigurationManager:
     def test_should_load_configuration_when_valid_id_provided(self, config_manager, sample_holdings, sample_target_weights):
         """Test loading an existing configuration."""
         # Arrange
-        config_id = config_manager.create_configuration(
-            name="Load Test", holdings=sample_holdings, target_weights=sample_target_weights
-        )
+        config_id = config_manager.create_configuration(name="Load Test", holdings=sample_holdings, target_weights=sample_target_weights)
 
         # Act
         loaded_config = config_manager.load_configuration(config_id)
@@ -136,9 +134,7 @@ class TestPortfolioConfigurationManager:
     def test_should_update_configuration_when_valid_updates_provided(self, config_manager, sample_holdings, sample_target_weights):
         """Test updating an existing configuration."""
         # Arrange
-        config_id = config_manager.create_configuration(
-            name="Update Test", holdings=sample_holdings, target_weights=sample_target_weights
-        )
+        config_id = config_manager.create_configuration(name="Update Test", holdings=sample_holdings, target_weights=sample_target_weights)
 
         updates = {
             "target_weights": {
@@ -150,9 +146,7 @@ class TestPortfolioConfigurationManager:
         }
 
         # Act
-        updated_id = config_manager.update_configuration(
-            config_id=config_id, updates=updates, change_summary="Updated target weights and tolerance"
-        )
+        updated_id = config_manager.update_configuration(config_id=config_id, updates=updates, change_summary="Updated target weights and tolerance")
 
         # Assert
         assert updated_id == config_id
@@ -199,9 +193,7 @@ class TestPortfolioConfigurationManager:
     def test_should_delete_configuration_when_valid_id_provided(self, config_manager, sample_holdings, sample_target_weights):
         """Test deleting a configuration."""
         # Arrange
-        config_id = config_manager.create_configuration(
-            name="Delete Test", holdings=sample_holdings, target_weights=sample_target_weights
-        )
+        config_id = config_manager.create_configuration(name="Delete Test", holdings=sample_holdings, target_weights=sample_target_weights)
 
         # Verify configuration exists
         loaded_config = config_manager.load_configuration(config_id)
@@ -248,9 +240,7 @@ class TestPortfolioConfigurationManager:
     def test_should_export_configuration_when_valid_format_provided(self, config_manager, sample_holdings, sample_target_weights):
         """Test exporting configuration to file."""
         # Arrange
-        config_id = config_manager.create_configuration(
-            name="Export Test", holdings=sample_holdings, target_weights=sample_target_weights
-        )
+        config_id = config_manager.create_configuration(name="Export Test", holdings=sample_holdings, target_weights=sample_target_weights)
 
         # Act
         export_path = config_manager.export_configuration(config_id, format_type="json")
@@ -267,14 +257,10 @@ class TestPortfolioConfigurationManager:
         assert "configuration" in exported_data
         assert exported_data["metadata"]["name"] == "Export Test"
 
-    def test_should_import_configuration_when_valid_file_provided(
-        self, config_manager, sample_holdings, sample_target_weights, temp_storage_path
-    ):
+    def test_should_import_configuration_when_valid_file_provided(self, config_manager, sample_holdings, sample_target_weights, temp_storage_path):
         """Test importing configuration from file."""
         # Arrange - Create and export a configuration
-        original_config_id = config_manager.create_configuration(
-            name="Import Test Original", holdings=sample_holdings, target_weights=sample_target_weights
-        )
+        original_config_id = config_manager.create_configuration(name="Import Test Original", holdings=sample_holdings, target_weights=sample_target_weights)
 
         export_path = config_manager.export_configuration(original_config_id)
 
@@ -343,9 +329,7 @@ class TestPortfolioConfigurationManager:
     def test_should_handle_version_management_correctly(self, config_manager, sample_holdings, sample_target_weights):
         """Test configuration version management."""
         # Arrange
-        config_id = config_manager.create_configuration(
-            name="Version Test", holdings=sample_holdings, target_weights=sample_target_weights
-        )
+        config_id = config_manager.create_configuration(name="Version Test", holdings=sample_holdings, target_weights=sample_target_weights)
 
         # Act - Create multiple versions
         config_manager.update_configuration(config_id, {"global_tolerance": 0.06}, "Update 1")
@@ -372,9 +356,7 @@ class TestPortfolioConfigurationManager:
     def test_should_handle_configuration_status_changes(self, config_manager, sample_holdings, sample_target_weights):
         """Test configuration status management."""
         # Arrange
-        config_id = config_manager.create_configuration(
-            name="Status Test", holdings=sample_holdings, target_weights=sample_target_weights
-        )
+        config_id = config_manager.create_configuration(name="Status Test", holdings=sample_holdings, target_weights=sample_target_weights)
 
         # Act - Update configuration (status is in metadata, so update tolerance instead)
         config_manager.update_configuration(config_id, {"global_tolerance": 0.08}, "Updated tolerance")

@@ -330,20 +330,13 @@ class DataQualityMetrics(BaseModel):
             logger.warning(f"⚠️ LOW DATA COMPLETENESS: {completeness_score:.2f} ({completeness_score * 100:.0f}%) < 80%")
 
         if self.fallback_grades_count > 0:
-            logger.warning(
-                f"⚠️ FALLBACK GRADES DETECTED: {self.fallback_grades_count} holdings "
-                f"using Grade D fallback instead of actual analysis"
-            )
+            logger.warning(f"⚠️ FALLBACK GRADES DETECTED: {self.fallback_grades_count} holdings using Grade D fallback instead of actual analysis")
 
         if self.placeholder_urls_count > 0:
-            logger.warning(
-                f"⚠️ PLACEHOLDER URLS DETECTED: {self.placeholder_urls_count} locations using example.com instead of real URLs"
-            )
+            logger.warning(f"⚠️ PLACEHOLDER URLS DETECTED: {self.placeholder_urls_count} locations using example.com instead of real URLs")
 
         if len(self.fields_defaulted) > 0:
-            logger.warning(
-                f"⚠️ DEFAULTED FIELDS DETECTED: {len(self.fields_defaulted)} fields using default values instead of real data"
-            )
+            logger.warning(f"⚠️ DEFAULTED FIELDS DETECTED: {len(self.fields_defaulted)} fields using default values instead of real data")
 
     def export_to_file(self, output_dir: Path) -> Path:
         """

@@ -34,9 +34,7 @@ class TestSECCitationValidator:
     @pytest.fixture
     def sample_validation_status(self):
         """Sample validation status for testing."""
-        return ValidationStatus(
-            is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1
-        )
+        return ValidationStatus(is_valid=True, validation_timestamp=datetime.now(), validation_errors=[], validation_warnings=[], schema_version=1)
 
     @pytest.fixture
     def sample_sec_citation(self, sample_validation_status):

@@ -34,9 +34,7 @@ class ScreeningRanking:
         """Initialize screening ranking."""
         self._a_plus_scorer = APlusScoringTool()
 
-    def score_candidates(
-        self, candidates: list[dict[str, Any]], asset_type: str, min_score: float, detailed_analysis: bool
-    ) -> list[ScreeningCandidate]:
+    def score_candidates(self, candidates: list[dict[str, Any]], asset_type: str, min_score: float, detailed_analysis: bool) -> list[ScreeningCandidate]:
         """Score filtered candidates using A+ scoring."""
         scored_candidates = []
 

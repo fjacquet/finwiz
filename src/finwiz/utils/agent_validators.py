@@ -78,9 +78,7 @@ def final_reporter(func: Callable) -> Callable:
             tool_count = len(agent.tools)
             agent_role = getattr(agent, "role", "Unknown")
             error_msg = (
-                f"Final reporter '{agent_role}' must have NO tools. "
-                f"Found {tool_count} tool{'s' if tool_count > 1 else ''}. "
-                f"Final reporters should only consume upstream context."
+                f"Final reporter '{agent_role}' must have NO tools. Found {tool_count} tool{'s' if tool_count > 1 else ''}. Final reporters should only consume upstream context."
             )
             logger.error(
                 f"Final reporter validation failed for '{agent_role}'",

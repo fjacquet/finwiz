@@ -36,9 +36,7 @@ class TestPortfolioOptimizer:
         expected_returns = [0.12, 0.15, 0.10, 0.14]
 
         # Create a realistic covariance matrix
-        correlation_matrix = np.array(
-            [[1.00, 0.60, 0.70, 0.50], [0.60, 1.00, 0.65, 0.55], [0.70, 0.65, 1.00, 0.60], [0.50, 0.55, 0.60, 1.00]]
-        )
+        correlation_matrix = np.array([[1.00, 0.60, 0.70, 0.50], [0.60, 1.00, 0.65, 0.55], [0.70, 0.65, 1.00, 0.60], [0.50, 0.55, 0.60, 1.00]])
 
         volatilities = [0.20, 0.25, 0.18, 0.22]
         covariance_matrix = np.outer(volatilities, volatilities) * correlation_matrix
@@ -74,9 +72,7 @@ class TestPortfolioOptimizer:
 
     def test_optimize_portfolio_max_sharpe(self, optimizer, sample_inputs):
         """Test portfolio optimization for maximum Sharpe ratio."""
-        result = optimizer.optimize_portfolio(
-            sample_inputs, objective=ObjectiveFunction.MAX_SHARPE, method=OptimizationMethod.MEAN_VARIANCE
-        )
+        result = optimizer.optimize_portfolio(sample_inputs, objective=ObjectiveFunction.MAX_SHARPE, method=OptimizationMethod.MEAN_VARIANCE)
 
         assert isinstance(result, OptimizationResult)
         assert result.success is True
@@ -88,9 +84,7 @@ class TestPortfolioOptimizer:
 
     def test_optimize_portfolio_min_volatility(self, optimizer, sample_inputs):
         """Test portfolio optimization for minimum volatility."""
-        result = optimizer.optimize_portfolio(
-            sample_inputs, objective=ObjectiveFunction.MIN_VOLATILITY, method=OptimizationMethod.MEAN_VARIANCE
-        )
+        result = optimizer.optimize_portfolio(sample_inputs, objective=ObjectiveFunction.MIN_VOLATILITY, method=OptimizationMethod.MEAN_VARIANCE)
 
         assert isinstance(result, OptimizationResult)
         assert result.success is True
@@ -99,9 +93,7 @@ class TestPortfolioOptimizer:
 
     def test_optimize_portfolio_max_return(self, optimizer, sample_inputs):
         """Test portfolio optimization for maximum return."""
-        result = optimizer.optimize_portfolio(
-            sample_inputs, objective=ObjectiveFunction.MAX_RETURN, method=OptimizationMethod.MEAN_VARIANCE
-        )
+        result = optimizer.optimize_portfolio(sample_inputs, objective=ObjectiveFunction.MAX_RETURN, method=OptimizationMethod.MEAN_VARIANCE)
 
         assert isinstance(result, OptimizationResult)
         assert result.success is True
@@ -113,9 +105,7 @@ class TestPortfolioOptimizer:
 
     def test_optimize_portfolio_risk_parity(self, optimizer, sample_inputs):
         """Test risk parity optimization."""
-        result = optimizer.optimize_portfolio(
-            sample_inputs, objective=ObjectiveFunction.RISK_PARITY, method=OptimizationMethod.RISK_PARITY
-        )
+        result = optimizer.optimize_portfolio(sample_inputs, objective=ObjectiveFunction.RISK_PARITY, method=OptimizationMethod.RISK_PARITY)
 
         assert isinstance(result, OptimizationResult)
         assert result.success is True
@@ -256,9 +246,7 @@ class TestPortfolioOptimizer:
         current_weights = np.array([0.3, 0.3, 0.2, 0.2])
         target_weights = np.array([0.25, 0.25, 0.25, 0.25])
 
-        trades, total_cost = optimizer.rebalance_portfolio(
-            current_weights, target_weights, transaction_cost=0.001, min_trade_size=0.01
-        )
+        trades, total_cost = optimizer.rebalance_portfolio(current_weights, target_weights, transaction_cost=0.001, min_trade_size=0.01)
 
         assert len(trades) == len(current_weights)
         assert total_cost >= 0
@@ -279,9 +267,7 @@ class TestPortfolioOptimizer:
 
     def test_optimization_with_constraints(self, optimizer, sample_inputs):
         """Test optimization with additional constraints."""
-        constraints = [
-            OptimizationConstraint(constraint_type=ConstraintType.WEIGHT_BOUNDS, parameters={"min_weight": 0.1, "max_weight": 0.4})
-        ]
+        constraints = [OptimizationConstraint(constraint_type=ConstraintType.WEIGHT_BOUNDS, parameters={"min_weight": 0.1, "max_weight": 0.4})]
 
         result = optimizer.optimize_portfolio(sample_inputs, objective=ObjectiveFunction.MAX_SHARPE, constraints=constraints)
 
@@ -311,19 +297,13 @@ class TestPortfolioOptimizer:
         cov_matrix = np.array(sample_inputs.covariance_matrix)
 
         # Test different objectives
-        sharpe_value = optimizer._calculate_objective_value(
-            weights, returns, cov_matrix, sample_inputs.risk_free_rate, ObjectiveFunction.MAX_SHARPE
-        )
+        sharpe_value = optimizer._calculate_objective_value(weights, returns, cov_matrix, sample_inputs.risk_free_rate, ObjectiveFunction.MAX_SHARPE)
         assert sharpe_value > 0
 
-        vol_value = optimizer._calculate_objective_value(
-            weights, returns, cov_matrix, sample_inputs.risk_free_rate, ObjectiveFunction.MIN_VOLATILITY
-        )
+        vol_value = optimizer._calculate_objective_value(weights, returns, cov_matrix, sample_inputs.risk_free_rate, ObjectiveFunction.MIN_VOLATILITY)
         assert vol_value > 0
 
-        return_value = optimizer._calculate_objective_value(
-            weights, returns, cov_matrix, sample_inputs.risk_free_rate, ObjectiveFunction.MAX_RETURN
-        )
+        return_value = optimizer._calculate_objective_value(weights, returns, cov_matrix, sample_inputs.risk_free_rate, ObjectiveFunction.MAX_RETURN)
         assert return_value > 0
 
     def test_risk_parity_objective(self, optimizer, sample_inputs):
@@ -345,9 +325,7 @@ class TestPortfolioOptimizer:
         # Risk contributions should be more equal
         risk_contrib_std = np.std(risk_contrib)
         equal_weight_risk_contrib = (
-            np.array([0.25] * 4)
-            * np.dot(cov_matrix, np.array([0.25] * 4))
-            / np.sqrt(np.dot(np.array([0.25] * 4).T, np.dot(cov_matrix, np.array([0.25] * 4))))
+            np.array([0.25] * 4) * np.dot(cov_matrix, np.array([0.25] * 4)) / np.sqrt(np.dot(np.array([0.25] * 4).T, np.dot(cov_matrix, np.array([0.25] * 4))))
         )
         equal_weight_std = np.std(equal_weight_risk_contrib)
 

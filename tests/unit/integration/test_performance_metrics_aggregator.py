@@ -149,9 +149,7 @@ class TestPerformanceMetricsAggregator:
         # Assert
         assert result == {}
 
-    def test_should_aggregate_by_regime_when_multiple_regimes(
-        self, aggregator, mock_backtesting_extractor, sample_validation_result
-    ):
+    def test_should_aggregate_by_regime_when_multiple_regimes(self, aggregator, mock_backtesting_extractor, sample_validation_result):
         """Test aggregation by market regime."""
         # Arrange
         mock_regime_perf = {
@@ -261,9 +259,7 @@ class TestPerformanceMetricsAggregator:
         assert result.diversification_impact == "neutral"
         assert result.implementation_complexity == "low"
 
-    def test_should_generate_comprehensive_performance_report(
-        self, aggregator, mock_backtesting_extractor, sample_validation_result, asset_type_map
-    ):
+    def test_should_generate_comprehensive_performance_report(self, aggregator, mock_backtesting_extractor, sample_validation_result, asset_type_map):
         """Test comprehensive performance report generation."""
         # Arrange
         mock_regime_perf = {
@@ -296,9 +292,7 @@ class TestPerformanceMetricsAggregator:
         mock_backtesting_extractor.extract_regime_performance.return_value = {}
 
         # Act
-        result = aggregator.generate_performance_report(
-            [sample_validation_result], {"AAPL": "stock", "MSFT": "stock", "GOOGL": "stock"}
-        )
+        result = aggregator.generate_performance_report([sample_validation_result], {"AAPL": "stock", "MSFT": "stock", "GOOGL": "stock"})
 
         # Assert
         assert len(result.top_opportunities) == 3  # Only 3 candidates
@@ -311,9 +305,7 @@ class TestPerformanceMetricsAggregator:
         mock_backtesting_extractor.extract_regime_performance.return_value = {}
 
         # Act
-        result = aggregator.generate_performance_report(
-            [sample_validation_result], {"AAPL": "stock", "MSFT": "stock", "GOOGL": "stock"}
-        )
+        result = aggregator.generate_performance_report([sample_validation_result], {"AAPL": "stock", "MSFT": "stock", "GOOGL": "stock"})
 
         # Assert
         # High quality: all passed validation, complete data, multiple regimes
@@ -412,10 +404,7 @@ class TestPerformanceMetricsAggregator:
             average_max_drawdown=-0.15,
             backtest_period_years=5,
             market_regimes_tested=["bull"],
-            validation_details=[
-                {"symbol": f"SYM{i}", "annualized_return": 15.0, "sharpe_ratio": 1.6, "max_drawdown": -0.12, "win_rate": 0.65}
-                for i in range(5)
-            ],
+            validation_details=[{"symbol": f"SYM{i}", "annualized_return": 15.0, "sharpe_ratio": 1.6, "max_drawdown": -0.12, "win_rate": 0.65} for i in range(5)],
         )
 
         impact = aggregator.calculate_portfolio_impact([medium_result])
@@ -431,10 +420,7 @@ class TestPerformanceMetricsAggregator:
             average_max_drawdown=-0.15,
             backtest_period_years=5,
             market_regimes_tested=["bull"],
-            validation_details=[
-                {"symbol": f"SYM{i}", "annualized_return": 15.0, "sharpe_ratio": 1.6, "max_drawdown": -0.12, "win_rate": 0.65}
-                for i in range(10)
-            ],
+            validation_details=[{"symbol": f"SYM{i}", "annualized_return": 15.0, "sharpe_ratio": 1.6, "max_drawdown": -0.12, "win_rate": 0.65} for i in range(10)],
         )
 
         impact = aggregator.calculate_portfolio_impact([high_result])

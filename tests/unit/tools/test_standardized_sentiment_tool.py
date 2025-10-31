@@ -34,9 +34,7 @@ class TestStandardizedSentimentInput:
     def test_should_create_valid_input_with_custom_values(self):
         """Test creating input with custom values."""
         # Arrange & Act
-        input_data = StandardizedSentimentInput(
-            symbol="BTC", asset_class="crypto", max_articles=25, days_back=14, include_trending=False
-        )
+        input_data = StandardizedSentimentInput(symbol="BTC", asset_class="crypto", max_articles=25, days_back=14, include_trending=False)
 
         # Assert
         assert input_data.symbol == "BTC"
@@ -163,8 +161,7 @@ class TestStandardizedSentimentAnalysisTool:
         # Arrange
         positive_article = {
             "headline": "AAPL Surges on Strong Earnings Beat",
-            "content": "Apple stock rallied significantly after reporting excellent quarterly results "
-            "with strong revenue growth and bullish outlook.",
+            "content": "Apple stock rallied significantly after reporting excellent quarterly results with strong revenue growth and bullish outlook.",
         }
 
         # Act
@@ -179,8 +176,7 @@ class TestStandardizedSentimentAnalysisTool:
         # Arrange
         negative_article = {
             "headline": "AAPL Falls on Regulatory Concerns",
-            "content": "Apple stock declined sharply amid regulatory threats and market uncertainty "
-            "with bearish analyst downgrades.",
+            "content": "Apple stock declined sharply amid regulatory threats and market uncertainty with bearish analyst downgrades.",
         }
 
         # Act

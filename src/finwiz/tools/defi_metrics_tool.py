@@ -30,10 +30,7 @@ class DeFiMetricsTool(BaseTool):
     """
 
     name: str = "DeFi Metrics Tool"
-    description: str = (
-        "Analyze DeFi protocols with specialized metrics including TVL, yield farming, "
-        "governance analysis, and protocol-specific risk assessment."
-    )
+    description: str = "Analyze DeFi protocols with specialized metrics including TVL, yield farming, governance analysis, and protocol-specific risk assessment."
     args_schema: type[BaseModel] = DeFiMetricsInput
 
     def _run(

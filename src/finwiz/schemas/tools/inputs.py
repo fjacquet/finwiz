@@ -103,9 +103,7 @@ class TwelveDataMultiIndicatorInput(BaseModel):
 
     symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, BTC/USD, SPY")
     interval: str = Field("1day", description="Interval, e.g., 1min, 5min, 1h, 1day")
-    indicators: list[Literal["rsi", "macd", "bbands"]] = Field(
-        ..., description="List of indicators to fetch (e.g., ['rsi', 'macd', 'bbands'])"
-    )
+    indicators: list[Literal["rsi", "macd", "bbands"]] = Field(..., description="List of indicators to fetch (e.g., ['rsi', 'macd', 'bbands'])")
     rsi_period: int = Field(14, description="Period for RSI calculation")
     macd_fast: int = Field(12, description="Fast period for MACD")
     macd_slow: int = Field(26, description="Slow period for MACD")
@@ -243,9 +241,7 @@ class GetTickerNewsInput(BaseModel):
 class PortfolioAnalysisInput(BaseModel):
     """Input model for portfolio analysis tool."""
 
-    holdings: list[dict[str, Any]] = Field(
-        ..., description="List of portfolio holdings with symbol, shares, and optional cost_basis"
-    )
+    holdings: list[dict[str, Any]] = Field(..., description="List of portfolio holdings with symbol, shares, and optional cost_basis")
     benchmark: str = Field(default="SPY", description="Benchmark symbol for comparison")
     analysis_period: str = Field(default="1y", description="Analysis period (1y, 2y, 5y)")
     include_risk_metrics: bool = Field(default=True, description="Include risk analysis")
@@ -278,12 +274,8 @@ class RiskAssessmentInput(BaseModel):
     """Input model for risk assessment tool."""
 
     assets: list[str] = Field(..., description="List of asset symbols to assess")
-    portfolio_weights: dict[str, float] | None = Field(
-        None, description="Portfolio weights for each asset (if assessing portfolio risk)"
-    )
-    assessment_type: str = Field(
-        default="comprehensive", description="Type of assessment: 'individual', 'portfolio', or 'comprehensive'"
-    )
+    portfolio_weights: dict[str, float] | None = Field(None, description="Portfolio weights for each asset (if assessing portfolio risk)")
+    assessment_type: str = Field(default="comprehensive", description="Type of assessment: 'individual', 'portfolio', or 'comprehensive'")
     risk_horizon: str = Field(default="1y", description="Risk assessment horizon (1m, 3m, 6m, 1y, 2y)")
     confidence_level: float = Field(default=0.95, description="Confidence level for VaR calculations")
     include_stress_testing: bool = Field(default=True, description="Include stress testing scenarios")
@@ -296,9 +288,7 @@ class QuantitativeAnalysisInput(BaseModel):
 
     symbol: str = Field(..., description="Symbol to analyze (e.g., AAPL, SPY, BTC-USD)")
     asset_class: str = Field(..., description="Asset class: 'stock', 'etf', or 'crypto'")
-    analysis_type: str = Field(
-        default="comprehensive", description="Type of analysis: 'technical', 'backtest', 'performance', or 'comprehensive'"
-    )
+    analysis_type: str = Field(default="comprehensive", description="Type of analysis: 'technical', 'backtest', 'performance', or 'comprehensive'")
     timeframe: str = Field(default="1y", description="Analysis timeframe (e.g., '1y', '2y', '5y')")
     strategy: str = Field(default="sma_crossover", description="Strategy for backtesting")
 
@@ -417,9 +407,7 @@ class OptimizationInput(BaseModel):
     assets: list[str] = Field(..., description="List of asset symbols to optimize")
     expected_returns: dict[str, float] | None = Field(None, description="Expected returns for each asset (optional)")
     risk_tolerance: float = Field(default=0.5, description="Risk tolerance (0.0 = risk averse, 1.0 = risk seeking)")
-    optimization_method: str = Field(
-        default="mean_variance", description="Optimization method: 'mean_variance', 'risk_parity', 'equal_weight'"
-    )
+    optimization_method: str = Field(default="mean_variance", description="Optimization method: 'mean_variance', 'risk_parity', 'equal_weight'")
     constraints: dict[str, Any] | None = Field(None, description="Additional constraints")
     target_return: float | None = Field(None, description="Target return for optimization")
 

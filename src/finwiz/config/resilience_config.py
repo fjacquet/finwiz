@@ -54,9 +54,7 @@ class ResilienceConfig:
             raise ValueError(f"retry_base_delay must be positive, got {self.retry_base_delay}")
 
         if self.retry_max_delay <= self.retry_base_delay:
-            raise ValueError(
-                f"retry_max_delay ({self.retry_max_delay}) must be greater than retry_base_delay ({self.retry_base_delay})"
-            )
+            raise ValueError(f"retry_max_delay ({self.retry_max_delay}) must be greater than retry_base_delay ({self.retry_base_delay})")
 
         # Validate state age
         if self.state_max_age_hours < 1:

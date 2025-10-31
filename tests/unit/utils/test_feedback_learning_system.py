@@ -118,9 +118,7 @@ class TestFeedbackLearningService:
         assert stored_data["outcome"] == "accepted"
 
     @pytest.mark.asyncio
-    async def test_should_record_performance_outcome_when_valid_data_provided(
-        self, feedback_service, sample_performance_feedback, mocker
-    ):
+    async def test_should_record_performance_outcome_when_valid_data_provided(self, feedback_service, sample_performance_feedback, mocker):
         """Test recording performance outcomes with valid data."""
         # Act
         performance_id = await feedback_service.record_performance_outcome(sample_performance_feedback)
@@ -139,9 +137,7 @@ class TestFeedbackLearningService:
         assert stored_data["performance_outcome"] == "outperformed"
 
     @pytest.mark.asyncio
-    async def test_should_analyze_feedback_patterns_when_sufficient_data_available(
-        self, feedback_service, sample_user_feedback, sample_performance_feedback, mocker
-    ):
+    async def test_should_analyze_feedback_patterns_when_sufficient_data_available(self, feedback_service, sample_user_feedback, sample_performance_feedback, mocker):
         """Test feedback pattern analysis with sufficient data."""
         # Arrange - Create multiple feedback samples
         feedback_samples = []
@@ -171,9 +167,7 @@ class TestFeedbackLearningService:
         assert len(analysis.key_insights) > 0
 
     @pytest.mark.asyncio
-    async def test_should_adjust_criteria_when_sufficient_feedback_and_due_timing(
-        self, feedback_service, sample_criteria, sample_user_feedback, mocker
-    ):
+    async def test_should_adjust_criteria_when_sufficient_feedback_and_due_timing(self, feedback_service, sample_criteria, sample_user_feedback, mocker):
         """Test criteria adjustment based on feedback learning."""
         # Arrange - Create feedback indicating low acceptance for stocks
         feedback_samples = []
@@ -195,9 +189,7 @@ class TestFeedbackLearningService:
             mock_backtest.return_value = {"passed": True, "sharpe_ratio": 1.2}
 
             # Act
-            adjustment = await feedback_service.adjust_criteria_based_on_learning(
-                current_criteria=sample_criteria, force_adjustment=True
-            )
+            adjustment = await feedback_service.adjust_criteria_based_on_learning(current_criteria=sample_criteria, force_adjustment=True)
 
         # Assert
         assert adjustment is not None
@@ -230,17 +222,13 @@ class TestFeedbackLearningService:
             await feedback_service.collect_user_feedback(feedback)
 
         # Act
-        adjustment = await feedback_service.adjust_criteria_based_on_learning(
-            current_criteria=sample_criteria, force_adjustment=True
-        )
+        adjustment = await feedback_service.adjust_criteria_based_on_learning(current_criteria=sample_criteria, force_adjustment=True)
 
         # Assert
         assert adjustment is None  # Should not adjust with insufficient data
 
     @pytest.mark.asyncio
-    async def test_should_get_learning_metrics_when_data_available(
-        self, feedback_service, sample_user_feedback, sample_performance_feedback, mocker
-    ):
+    async def test_should_get_learning_metrics_when_data_available(self, feedback_service, sample_user_feedback, sample_performance_feedback, mocker):
         """Test learning metrics calculation with available data."""
         # Arrange - Create feedback and performance data
         await feedback_service.collect_user_feedback(sample_user_feedback)
@@ -281,17 +269,13 @@ class TestFeedbackLearningService:
                 )
                 await feedback_service.collect_user_feedback(feedback)
 
-            adjustment = await feedback_service.adjust_criteria_based_on_learning(
-                current_criteria=sample_criteria, force_adjustment=True
-            )
+            adjustment = await feedback_service.adjust_criteria_based_on_learning(current_criteria=sample_criteria, force_adjustment=True)
 
         assert adjustment is not None
         adjustment_id = adjustment.adjustment_id
 
         # Act - Rollback the adjustment
-        success = await feedback_service.rollback_criteria_adjustment(
-            adjustment_id=adjustment_id, reason="Performance degradation detected"
-        )
+        success = await feedback_service.rollback_criteria_adjustment(adjustment_id=adjustment_id, reason="Performance degradation detected")
 
         # Assert
         assert success

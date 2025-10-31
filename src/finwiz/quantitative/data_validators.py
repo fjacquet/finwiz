@@ -183,9 +183,7 @@ class DataQualityValidator:
 
         return issues
 
-    def _validate_completeness(
-        self, data: pd.DataFrame, symbol: str, start_date: datetime, end_date: datetime
-    ) -> tuple[list[DataQualityIssue], float, float]:
+    def _validate_completeness(self, data: pd.DataFrame, symbol: str, start_date: datetime, end_date: datetime) -> tuple[list[DataQualityIssue], float, float]:
         """Validate data completeness and missing values."""
         issues = []
 

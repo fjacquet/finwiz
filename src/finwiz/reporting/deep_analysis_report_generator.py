@@ -95,23 +95,15 @@ class DeepAnalysisReportGenerator:
 
             # Log performance (target: <100ms)
             if execution_time < 0.1:  # 100ms
-                self.logger.info(
-                    f"✅ Report generated in {execution_time * 1000:.1f}ms "
-                    f"for {result_data.get('ticker', 'unknown')} (target: <100ms)"
-                )
+                self.logger.info(f"✅ Report generated in {execution_time * 1000:.1f}ms for {result_data.get('ticker', 'unknown')} (target: <100ms)")
             else:
-                self.logger.warning(
-                    f"⚠️ Report generation took {execution_time * 1000:.1f}ms "
-                    f"for {result_data.get('ticker', 'unknown')} (target: <100ms)"
-                )
+                self.logger.warning(f"⚠️ Report generation took {execution_time * 1000:.1f}ms for {result_data.get('ticker', 'unknown')} (target: <100ms)")
 
             return html_content
 
         except Exception as e:
             execution_time = time.time() - start_time
-            self.logger.error(
-                f"❌ Report generation failed after {execution_time * 1000:.1f}ms for {result_data.get('ticker', 'unknown')}: {e}"
-            )
+            self.logger.error(f"❌ Report generation failed after {execution_time * 1000:.1f}ms for {result_data.get('ticker', 'unknown')}: {e}")
             raise RuntimeError(f"Failed to generate report: {e}") from e
 
     def _validate_input_data(self, data: dict[str, Any]) -> None:

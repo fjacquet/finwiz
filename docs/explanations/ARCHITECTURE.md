@@ -145,4 +145,4 @@ graph TB
 - [Report Aggregation](REPORT_AGGREGATION_DEVELOPER_GUIDE.md) - Integration patterns
 - [Data Flow](data_flow.md) - Understand how data moves through the system
 - [Performance Configuration](PERFORMANCE_CONFIGURATION.md) - Optimization settings
-- [AI Minimalism](../ai-minimalism.md) - Decision framework for AI vs Python
+- AI Minimalism - Decision framework for AI vs Python

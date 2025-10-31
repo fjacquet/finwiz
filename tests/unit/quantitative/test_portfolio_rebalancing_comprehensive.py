@@ -93,9 +93,7 @@ class TestPortfolioRebalancingEdgeCases:
 
         # Mock stale price data (older than 1 hour)
         stale_timestamp = datetime.now() - timedelta(hours=2)
-        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=stale_timestamp)
-        }
+        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=stale_timestamp)}
 
         # Mock analyzer to return valid analysis
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
@@ -188,9 +186,7 @@ class TestPortfolioRebalancingEdgeCases:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=0.001)], target_weights={"AAPL": 1.0})
 
         # Mock very small price
-        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=0.01, timestamp=datetime.now())
-        }
+        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=0.01, timestamp=datetime.now())}
 
         # Mock analyzer
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
@@ -227,9 +223,7 @@ class TestPortfolioRebalancingEdgeCases:
         )
 
         # Mock price data
-        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())
-        }
+        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
         # Mock analyzer
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
@@ -263,9 +257,7 @@ class TestPortfolioRebalancingEdgeCases:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock dependencies
-        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())
-        }
+        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
@@ -386,9 +378,7 @@ class TestPortfolioRebalancingEdgeCases:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock price data
-        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())
-        }
+        mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
         # Mock analyzer
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
@@ -402,9 +392,7 @@ class TestPortfolioRebalancingEdgeCases:
         )
 
         # Mock optimization timeout
-        mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.side_effect = TimeoutError(
-            "Optimization timeout"
-        )
+        mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.side_effect = TimeoutError("Optimization timeout")
 
         # Act & Assert
         with pytest.raises(PortfolioRebalancingError):
@@ -448,16 +436,12 @@ class TestPortfolioRebalancingErrorScenarios:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock successful price retrieval
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())
-        }
+        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
         # Mock analyzer failure
         from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError
 
-        orchestrator_with_failing_dependencies.portfolio_analyzer.analyze_current_portfolio.side_effect = PortfolioAnalysisError(
-            "Calculation failed"
-        )
+        orchestrator_with_failing_dependencies.portfolio_analyzer.analyze_current_portfolio.side_effect = PortfolioAnalysisError("Calculation failed")
 
         # Act & Assert
         with pytest.raises(PortfolioRebalancingError):
@@ -470,9 +454,7 @@ class TestPortfolioRebalancingErrorScenarios:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock successful price retrieval
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())
-        }
+        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
         # Mock successful analysis
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
@@ -486,9 +468,7 @@ class TestPortfolioRebalancingErrorScenarios:
         )
 
         # Mock optimization failure
-        orchestrator_with_failing_dependencies.rebalancing_engine.generate_enhanced_trade_recommendations.side_effect = Exception(
-            "Optimization failed"
-        )
+        orchestrator_with_failing_dependencies.rebalancing_engine.generate_enhanced_trade_recommendations.side_effect = Exception("Optimization failed")
 
         # Act & Assert
         with pytest.raises(OptimizationFailedError):
@@ -501,9 +481,7 @@ class TestPortfolioRebalancingErrorScenarios:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock successful dependencies
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())
-        }
+        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
@@ -580,9 +558,7 @@ class TestPortfolioRebalancingErrorScenarios:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock corrupted price data (invalid timestamp)
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {
-            "AAPL": PriceData(symbol="AAPL", price=150.0, timestamp="invalid_timestamp")
-        }
+        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp="invalid_timestamp")}
 
         # Act & Assert
         with pytest.raises((PortfolioRebalancingError, ValueError, TypeError)):

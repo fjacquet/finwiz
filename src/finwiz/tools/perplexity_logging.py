@@ -124,9 +124,7 @@ class PerplexityOperationLogger:
         PerplexityFeatureFlagTracker.record_operation_success(ticker, analysis_type, result_count)
 
     @staticmethod
-    def log_search_failure(
-        ticker: str, analysis_type: str, latency_ms: int, error_type: str, http_status: int | None = None
-    ) -> None:
+    def log_search_failure(ticker: str, analysis_type: str, latency_ms: int, error_type: str, http_status: int | None = None) -> None:
         """Log failed Perplexity search with error details."""
         extra_data = {
             "operation": "perplexity_search_failure",

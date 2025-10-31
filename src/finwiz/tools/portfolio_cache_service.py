@@ -84,9 +84,7 @@ class PortfolioCacheService:
 
         """
         cache_key = ["portfolio_analysis", portfolio_hash]
-        await self.cache_manager.set(
-            cache_key, analysis_result, ttl=self.portfolio_analysis_ttl, tags={"portfolio_analysis", "analysis"}
-        )
+        await self.cache_manager.set(cache_key, analysis_result, ttl=self.portfolio_analysis_ttl, tags={"portfolio_analysis", "analysis"})
         logger.debug(f"Cached portfolio analysis for hash {portfolio_hash[:8]}...")
 
     async def get_rebalancing_analysis(self, portfolio_hash: str, target_weights_hash: str) -> dict[str, Any] | None:
@@ -104,9 +102,7 @@ class PortfolioCacheService:
         cache_key = ["rebalancing_analysis", portfolio_hash, target_weights_hash]
         return await self.cache_manager.get(cache_key)
 
-    async def set_rebalancing_analysis(
-        self, portfolio_hash: str, target_weights_hash: str, rebalancing_result: dict[str, Any]
-    ) -> None:
+    async def set_rebalancing_analysis(self, portfolio_hash: str, target_weights_hash: str, rebalancing_result: dict[str, Any]) -> None:
         """
         Cache rebalancing analysis result.
 
@@ -117,9 +113,7 @@ class PortfolioCacheService:
 
         """
         cache_key = ["rebalancing_analysis", portfolio_hash, target_weights_hash]
-        await self.cache_manager.set(
-            cache_key, rebalancing_result, ttl=self.rebalancing_analysis_ttl, tags={"rebalancing_analysis", "analysis"}
-        )
+        await self.cache_manager.set(cache_key, rebalancing_result, ttl=self.rebalancing_analysis_ttl, tags={"rebalancing_analysis", "analysis"})
         logger.debug(f"Cached rebalancing analysis for portfolio {portfolio_hash[:8]}...")
 
     async def get_ticker_validation(self, symbol: str, asset_class: str) -> dict[str, Any] | None:
@@ -148,9 +142,7 @@ class PortfolioCacheService:
 
         """
         cache_key = ["ticker_validation", symbol, asset_class]
-        await self.cache_manager.set(
-            cache_key, validation_result, ttl=self.validation_ttl, tags={"ticker_validation", "validation"}
-        )
+        await self.cache_manager.set(cache_key, validation_result, ttl=self.validation_ttl, tags={"ticker_validation", "validation"})
         logger.debug(f"Cached ticker validation for {symbol}")
 
     async def warm_portfolio_cache(self, symbols: list[str]) -> None:
@@ -284,9 +276,7 @@ def get_portfolio_cache_service() -> PortfolioCacheService:
     return _portfolio_cache_service
 
 
-async def with_portfolio_cache(
-    cache_key: str | list[Any], compute_func: callable, ttl: int | None = None, *args: Any, **kwargs: Any
-) -> Any:
+async def with_portfolio_cache(cache_key: str | list[Any], compute_func: callable, ttl: int | None = None, *args: Any, **kwargs: Any) -> Any:
     """
     Execute function with portfolio-specific caching.
 

@@ -201,9 +201,7 @@ class MetricsCalculator:
             return 0.0
         return np.sqrt(((downside_returns - target_return) ** 2).mean()) * np.sqrt(252)
 
-    def calculate_relative_performance(
-        self, strategy_metrics: PerformanceMetrics, benchmark_metrics: PerformanceMetrics
-    ) -> dict[str, float]:
+    def calculate_relative_performance(self, strategy_metrics: PerformanceMetrics, benchmark_metrics: PerformanceMetrics) -> dict[str, float]:
         """
         Calculate relative performance metrics vs benchmark.
 

@@ -273,9 +273,7 @@ class DeepAnalysisCrew:
         logger.info(f"⚡ PHASE 2: Loaded {len(tools)} minimal tools for risk assessment ({asset_class})")
         return tools
 
-    def _validate_performance_targets(
-        self, ticker: str, execution_time: float, api_metrics: dict[str, Any], ai_summary_enabled: bool = False
-    ) -> dict[str, Any]:
+    def _validate_performance_targets(self, ticker: str, execution_time: float, api_metrics: dict[str, Any], ai_summary_enabled: bool = False) -> dict[str, Any]:
         """
         Validate performance improvements against targets.
 
@@ -358,9 +356,7 @@ class DeepAnalysisCrew:
             "speedup_target_met": speedup_target_met,
             "cost_reduction_target_met": cost_reduction_target_met,
             # Overall validation
-            "all_targets_met": all(
-                [time_target_met, llm_target_met, cost_target_met, speedup_target_met, cost_reduction_target_met]
-            ),
+            "all_targets_met": all([time_target_met, llm_target_met, cost_target_met, speedup_target_met, cost_reduction_target_met]),
             # Baseline comparison
             "baseline_ai_time_avg": baseline_avg_time,
             "baseline_ai_cost_avg": baseline_avg_cost,
@@ -557,8 +553,7 @@ class DeepAnalysisCrew:
             asset_analyst_agent.tools = analyst_tools
             # risk_assessor and investment_reporter have no tools (Python scoring approach)
             logger.info(
-                f"⚡ PYTHON SCORING: Assigned {len(analyst_tools)} tools to asset_analyst for data collection. "
-                f"Risk assessment and scoring handled by Python DeepAnalysisScorer."
+                f"⚡ PYTHON SCORING: Assigned {len(analyst_tools)} tools to asset_analyst for data collection. Risk assessment and scoring handled by Python DeepAnalysisScorer."
             )
 
             # Verify investment_reporter has no tools (enforced by @final_reporter)

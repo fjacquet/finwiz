@@ -112,9 +112,7 @@ class OptimizationValidator:
             OptimizationMode.BASELINE: {"time_min": 300, "time_max": 600, "speedup_min": 1, "speedup_max": 1, "cost_savings": 0},
         }
 
-    def validate_accuracy_against_baseline(
-        self, ticker: str, baseline_result: dict[str, Any], optimized_result: dict[str, Any]
-    ) -> AccuracyValidationResult:
+    def validate_accuracy_against_baseline(self, ticker: str, baseline_result: dict[str, Any], optimized_result: dict[str, Any]) -> AccuracyValidationResult:
         """
         Validate that optimized results match baseline within thresholds.
 
@@ -139,9 +137,7 @@ class OptimizationValidator:
             result.score_within_threshold = result.score_difference <= self.SCORE_THRESHOLD
 
             if not result.score_within_threshold:
-                result.validation_notes.append(
-                    f"Score difference {result.score_difference:.3f} exceeds threshold {self.SCORE_THRESHOLD}"
-                )
+                result.validation_notes.append(f"Score difference {result.score_difference:.3f} exceeds threshold {self.SCORE_THRESHOLD}")
         else:
             result.validation_notes.append("Missing score data for comparison")
 
@@ -153,9 +149,7 @@ class OptimizationValidator:
             result.grade_matches = result.baseline_grade == result.optimized_grade
 
             if not result.grade_matches and self.GRADE_MATCH_REQUIRED:
-                result.validation_notes.append(
-                    f"Grade mismatch: baseline {result.baseline_grade} vs optimized {result.optimized_grade}"
-                )
+                result.validation_notes.append(f"Grade mismatch: baseline {result.baseline_grade} vs optimized {result.optimized_grade}")
         else:
             result.validation_notes.append("Missing grade data for comparison")
 
@@ -167,9 +161,7 @@ class OptimizationValidator:
             result.recommendation_matches = result.baseline_recommendation == result.optimized_recommendation
 
             if not result.recommendation_matches and self.RECOMMENDATION_MATCH_REQUIRED:
-                result.validation_notes.append(
-                    f"Recommendation mismatch: baseline {result.baseline_recommendation} vs optimized {result.optimized_recommendation}"
-                )
+                result.validation_notes.append(f"Recommendation mismatch: baseline {result.baseline_recommendation} vs optimized {result.optimized_recommendation}")
         else:
             result.validation_notes.append("Missing recommendation data for comparison")
 
@@ -219,9 +211,7 @@ class OptimizationValidator:
         result.time_target_met = result.target_time_min <= result.avg_execution_time <= result.target_time_max
 
         if not result.time_target_met:
-            result.validation_notes.append(
-                f"Execution time {result.avg_execution_time:.1f}s outside target range {result.target_time_min}-{result.target_time_max}s"
-            )
+            result.validation_notes.append(f"Execution time {result.avg_execution_time:.1f}s outside target range {result.target_time_min}-{result.target_time_max}s")
 
         # Validate speedup factor
         result.speedup_factor = perf_data.get("performance_improvements", {}).get("speedup_factor", 0)
@@ -229,9 +219,7 @@ class OptimizationValidator:
         result.speedup_target_met = result.speedup_factor >= result.target_speedup_min
 
         if not result.speedup_target_met:
-            result.validation_notes.append(
-                f"Speedup factor {result.speedup_factor:.1f}x below target minimum {result.target_speedup_min}x"
-            )
+            result.validation_notes.append(f"Speedup factor {result.speedup_factor:.1f}x below target minimum {result.target_speedup_min}x")
 
         # Validate cost savings
         result.cost_savings_pct = perf_data.get("performance_improvements", {}).get("cost_savings_pct", 0)
@@ -239,17 +227,13 @@ class OptimizationValidator:
         result.cost_target_met = result.cost_savings_pct >= result.target_cost_savings
 
         if not result.cost_target_met:
-            result.validation_notes.append(
-                f"Cost savings {result.cost_savings_pct:.1f}% below target {result.target_cost_savings}%"
-            )
+            result.validation_notes.append(f"Cost savings {result.cost_savings_pct:.1f}% below target {result.target_cost_savings}%")
 
         # Check for performance degradation (compared to previous runs)
         result.performance_degraded = False  # Would need historical data to implement
 
         # Overall performance validation
-        result.performance_validated = all(
-            [result.time_target_met, result.speedup_target_met, result.cost_target_met, not result.performance_degraded]
-        )
+        result.performance_validated = all([result.time_target_met, result.speedup_target_met, result.cost_target_met, not result.performance_degraded])
 
         # Log validation result
         if result.performance_validated:
@@ -259,9 +243,7 @@ class OptimizationValidator:
 
         return result
 
-    def run_regression_tests(
-        self, test_tickers: list[str], baseline_results: dict[str, dict[str, Any]], optimized_results: dict[str, dict[str, Any]]
-    ) -> dict[str, Any]:
+    def run_regression_tests(self, test_tickers: list[str], baseline_results: dict[str, dict[str, Any]], optimized_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """
         Run regression tests comparing baseline vs optimized results.
 
@@ -307,11 +289,7 @@ class OptimizationValidator:
                 regression_results["failed_tickers"] += 1
 
         # Calculate pass rate
-        pass_rate = (
-            regression_results["passed_tickers"] / regression_results["total_tickers"] * 100
-            if regression_results["total_tickers"] > 0
-            else 0
-        )
+        pass_rate = regression_results["passed_tickers"] / regression_results["total_tickers"] * 100 if regression_results["total_tickers"] > 0 else 0
 
         regression_results["pass_rate_pct"] = pass_rate
         regression_results["overall_passed"] = pass_rate >= 90.0  # 90% pass rate required
@@ -404,9 +382,7 @@ class OptimizationValidator:
 
         return validation_report
 
-    def _generate_recommendations(
-        self, performance_validation: PerformanceValidationResult, accuracy_validations: list[AccuracyValidationResult] = None
-    ) -> list[str]:
+    def _generate_recommendations(self, performance_validation: PerformanceValidationResult, accuracy_validations: list[AccuracyValidationResult] = None) -> list[str]:
         """Generate recommendations based on validation results."""
         recommendations = []
 
@@ -427,9 +403,7 @@ class OptimizationValidator:
         if accuracy_validations:
             failed_validations = [v for v in accuracy_validations if not v.accuracy_validated]
             if failed_validations:
-                recommendations.append(
-                    f"Accuracy validation failed for {len(failed_validations)} tickers - review scoring algorithms"
-                )
+                recommendations.append(f"Accuracy validation failed for {len(failed_validations)} tickers - review scoring algorithms")
 
         # General recommendations
         if not recommendations:
@@ -467,9 +441,7 @@ def get_optimization_validator() -> OptimizationValidator:
     return _optimization_validator
 
 
-def validate_accuracy_against_baseline(
-    ticker: str, baseline_result: dict[str, Any], optimized_result: dict[str, Any]
-) -> AccuracyValidationResult:
+def validate_accuracy_against_baseline(ticker: str, baseline_result: dict[str, Any], optimized_result: dict[str, Any]) -> AccuracyValidationResult:
     """Validate accuracy against baseline."""
     validator = get_optimization_validator()
     return validator.validate_accuracy_against_baseline(ticker, baseline_result, optimized_result)
@@ -481,9 +453,7 @@ def validate_performance_targets(portfolio_metrics: PortfolioMetrics) -> Perform
     return validator.validate_performance_targets(portfolio_metrics)
 
 
-def run_regression_tests(
-    test_tickers: list[str], baseline_results: dict[str, dict[str, Any]], optimized_results: dict[str, dict[str, Any]]
-) -> dict[str, Any]:
+def run_regression_tests(test_tickers: list[str], baseline_results: dict[str, dict[str, Any]], optimized_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """Run regression tests."""
     validator = get_optimization_validator()
     return validator.run_regression_tests(test_tickers, baseline_results, optimized_results)

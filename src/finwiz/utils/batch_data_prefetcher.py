@@ -177,10 +177,7 @@ class BatchDataPreFetcher:
         av_duration = 0.0
         if self.enable_alpha_vantage:
             logger.info("Step 2: Fetching Alpha Vantage data (OPTIONAL SOURCE)...")
-            logger.warning(
-                f"⚠️  Alpha Vantage enabled: This will add ~{len(tickers) * 12 / 60:.1f} minutes "
-                f"for {len(tickers)} tickers (5 calls/minute limit)"
-            )
+            logger.warning(f"⚠️  Alpha Vantage enabled: This will add ~{len(tickers) * 12 / 60:.1f} minutes for {len(tickers)} tickers (5 calls/minute limit)")
             logger.warning("⚠️  Consider disabling Alpha Vantage for optimal performance")
             logger.warning("⚠️  Yahoo Finance already provides all essential data")
             av_start = time.time()
@@ -198,9 +195,7 @@ class BatchDataPreFetcher:
             logger.info("  ✓ Yahoo Finance provides all essential data")
 
         # Step 3: Combine all data and track failures (Requirement 17.52, 17.53, 17.54)
-        logger.info(
-            "Step 3/3: Combining data and saving to cache..." if self.enable_alpha_vantage else "Step 2/2: Saving data to cache..."
-        )
+        logger.info("Step 3/3: Combining data and saving to cache..." if self.enable_alpha_vantage else "Step 2/2: Saving data to cache...")
         combined_data = {}
         failed_tickers = []
         partial_failures = []
@@ -250,13 +245,9 @@ class BatchDataPreFetcher:
         logger.info("Time per ticker: %.1fs", time_per_ticker)
         logger.info("")
         logger.info("Data Sources:")
-        logger.info(
-            "  PRIMARY - Yahoo Finance: %.1fs (%.2fs per ticker)", yf_duration, yf_duration / len(tickers) if tickers else 0
-        )
+        logger.info("  PRIMARY - Yahoo Finance: %.1fs (%.2fs per ticker)", yf_duration, yf_duration / len(tickers) if tickers else 0)
         if self.enable_alpha_vantage:
-            logger.info(
-                "  OPTIONAL - Alpha Vantage: %.1fs (%.2fs per ticker)", av_duration, av_duration / len(tickers) if tickers else 0
-            )
+            logger.info("  OPTIONAL - Alpha Vantage: %.1fs (%.2fs per ticker)", av_duration, av_duration / len(tickers) if tickers else 0)
             logger.info("  ⚠️  Alpha Vantage added %.1fs overhead", av_duration)
         else:
             logger.info("  OPTIONAL - Alpha Vantage: DISABLED (Optimal)")

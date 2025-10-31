@@ -102,9 +102,7 @@ class PerplexitySearchWrapper(BaseTool):
                                 domain = domain[4:]
                             source = domain.replace(".com", "").title()
 
-                        formatted_results.append(
-                            {"title": title, "link": url, "snippet": snippet, "source": source or "Unknown", "date": date}
-                        )
+                        formatted_results.append({"title": title, "link": url, "snippet": snippet, "source": source or "Unknown", "date": date})
                     except Exception as e:
                         logger.warning(f"Failed to parse search result {i}: {e}")
                         continue

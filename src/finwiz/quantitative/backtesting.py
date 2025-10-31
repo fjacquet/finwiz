@@ -136,9 +136,7 @@ class BacktestingEngine:
             strategy_instance = results[0]
 
             # Calculate performance metrics
-            backtest_result = self.performance_analyzer.calculate_performance_metrics(
-                strategy_instance, symbol, start_date, end_date, initial_value, final_value, benchmark_symbol
-            )
+            backtest_result = self.performance_analyzer.calculate_performance_metrics(strategy_instance, symbol, start_date, end_date, initial_value, final_value, benchmark_symbol)
 
             self.logger.info(
                 f"Backtest completed: Total Return={backtest_result.total_return:.2f}%, "
@@ -152,9 +150,7 @@ class BacktestingEngine:
             self.logger.error(f"Error during backtest execution: {e}")
             raise
 
-    def run_multi_strategy_backtest(
-        self, strategies: list[tuple[type, dict[str, Any]]], symbol: str, start_date: datetime, end_date: datetime
-    ) -> list[BacktestResult]:
+    def run_multi_strategy_backtest(self, strategies: list[tuple[type, dict[str, Any]]], symbol: str, start_date: datetime, end_date: datetime) -> list[BacktestResult]:
         """
         Run multiple strategies and compare results.
 

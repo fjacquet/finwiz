@@ -441,9 +441,7 @@ class TestAPlusDataExtractor:
         # Assert
         assert opportunities == []
 
-    def test_should_extract_complete_aplus_collection_when_all_files_exist(
-        self, mocker, extractor, sample_stock_content, sample_etf_content, sample_crypto_content
-    ):
+    def test_should_extract_complete_aplus_collection_when_all_files_exist(self, mocker, extractor, sample_stock_content, sample_etf_content, sample_crypto_content):
         mock_exists = mocker.patch("pathlib.Path.exists")
         mock_read_text = mocker.patch("pathlib.Path.read_text")
         """Test complete A+ opportunities extraction from all files."""
@@ -675,9 +673,7 @@ class TestAPlusDataExtractor:
             etf_opportunities=etf_opps,
             stock_opportunities=stock_opps,
             crypto_opportunities=crypto_opps,
-            discovery_summary=(
-                "Comprehensive analysis identified 6 high-quality opportunities with strong fundamentals and growth potential."
-            ),
+            discovery_summary=("Comprehensive analysis identified 6 high-quality opportunities with strong fundamentals and growth potential."),
             confidence_score=0.85,
             validation_timestamp=datetime.now(),
             allocation_recommendations=[{"asset_type": "stock", "symbol": "NVDA", "allocation": "5-8%", "grade": "A+", "rank": 1}],

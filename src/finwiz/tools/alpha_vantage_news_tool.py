@@ -22,9 +22,7 @@ class AlphaVantageNewsSentimentTool(BaseTool):
     """Fetch news and sentiment from Alpha Vantage for specified tickers."""
 
     name: str = "Alpha Vantage News Sentiment"
-    description: str = (
-        "Fetches news and sentiment using Alpha Vantage NEWS_SENTIMENT endpoint. Requires ALPHA_VANTAGE_API_KEY in environment."
-    )
+    description: str = "Fetches news and sentiment using Alpha Vantage NEWS_SENTIMENT endpoint. Requires ALPHA_VANTAGE_API_KEY in environment."
     args_schema: type[BaseModel] = AlphaVantageNewsInput
 
     base_url: str = "https://www.alphavantage.co/query"

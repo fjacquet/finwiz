@@ -153,15 +153,11 @@ class OptimizationTool(BaseTool):
                     "weights_sum": float(np.sum(adjusted_weights)),
                 },
                 "recommendations": [
-                    f"Largest allocation: {max(optimal_weights.items(), key=lambda x: x[1])[0]} "
-                    f"({max(optimal_weights.values()):.1%})",
+                    f"Largest allocation: {max(optimal_weights.items(), key=lambda x: x[1])[0]} ({max(optimal_weights.values()):.1%})",
                     ("Most diversified allocation" if max(optimal_weights.values()) < 0.3 else "Consider further diversification"),
                     f"Expected Sharpe ratio: {sharpe_ratio:.2f}",
                 ],
-                "note": (
-                    "This is a simplified optimization. Production implementation should use "
-                    "historical data and advanced optimization libraries."
-                ),
+                "note": ("This is a simplified optimization. Production implementation should use historical data and advanced optimization libraries."),
             }
 
         except Exception as e:

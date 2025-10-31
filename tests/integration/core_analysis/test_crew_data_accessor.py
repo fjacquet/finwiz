@@ -160,9 +160,7 @@ class TestCrewDataAccessor:
         assert result == {}
         mock_integration_manager.logger.error.assert_called()
 
-    def test_should_consolidate_market_sentiment_from_multiple_crews(
-        self, data_accessor, mock_integration_manager, current_time, mocker
-    ):
+    def test_should_consolidate_market_sentiment_from_multiple_crews(self, data_accessor, mock_integration_manager, current_time, mocker):
         """Test market sentiment consolidation across crews."""
         # Arrange
         stock_data = {
@@ -261,9 +259,7 @@ class TestCrewDataAccessor:
             assert len(result["crew_sentiments"]) == 0
             assert result["data_quality"] == "INSUFFICIENT"
 
-    def test_should_consolidate_ticker_validation_from_all_crews(
-        self, data_accessor, mock_integration_manager, current_time, mocker
-    ):
+    def test_should_consolidate_ticker_validation_from_all_crews(self, data_accessor, mock_integration_manager, current_time, mocker):
         """Test ticker validation consolidation across all crews."""
         # Arrange
         stock_data = {

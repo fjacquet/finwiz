@@ -30,9 +30,7 @@ class TestMissingRequiredFieldError:
     def test_should_include_context_in_error_message(self):
         """Test that context is included in error message."""
         # Arrange & Act
-        error = MissingRequiredFieldError(
-            ticker="AAPL", field="volatility", context={"source": "quantitative_analysis", "attempt": 1}
-        )
+        error = MissingRequiredFieldError(ticker="AAPL", field="volatility", context={"source": "quantitative_analysis", "attempt": 1})
 
         # Assert
         assert error.context == {"source": "quantitative_analysis", "attempt": 1}

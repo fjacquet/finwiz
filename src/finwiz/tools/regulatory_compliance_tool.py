@@ -30,10 +30,7 @@ class RegulatoryComplianceTool(BaseTool):
     """
 
     name: str = "Regulatory Compliance Tool"
-    description: str = (
-        "Analyze cryptocurrency regulatory compliance across multiple jurisdictions "
-        "including risk assessment, compliance status, and regulatory clarity indicators."
-    )
+    description: str = "Analyze cryptocurrency regulatory compliance across multiple jurisdictions including risk assessment, compliance status, and regulatory clarity indicators."
     args_schema: type[BaseModel] = RegulatoryComplianceInput
 
     def _run(

@@ -522,10 +522,10 @@ Templates are cached automatically by Jinja2 for performance.
 
 ## See Also
 
-- [Template Renderer Source](../../src/finwiz/utils/template_renderer.py)
-- [HTML Generator Source](../../src/finwiz/utils/html_generator.py)
+- Template Renderer Source
+- HTML Generator Source
 - [Template Directory](../../src/finwiz/templates/)
-- [Generation Script](../../scripts/generate_html_reports.py)
+- Generation Script
 
 ---
 

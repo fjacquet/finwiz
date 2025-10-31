@@ -462,5 +462,3 @@ for file_path in output_dir.rglob("*.json"):
 
 - [Python Pipeline Architecture](../explanations/python_pipeline_architecture.md)
 - [Integration Reference](../reference/integration/python_pipeline_integration.md)
-- [Portfolio Deep Analyzer](../reference/scoring/portfolio_deep_analyzer.md)
-- [Integration Testing](integration_testing.md)

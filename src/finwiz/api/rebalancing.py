@@ -38,9 +38,7 @@ async def analyze_portfolio_rebalancing(request: RebalancingRequest) -> Rebalanc
     including current position analysis, optimization, and trade recommendations.
     """
     if not is_feature_enabled("portfolio_rebalancing"):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Portfolio rebalancing feature is currently disabled"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Portfolio rebalancing feature is currently disabled")
 
     try:
         logger.info("Starting portfolio rebalancing analysis via API")
@@ -49,9 +47,7 @@ async def analyze_portfolio_rebalancing(request: RebalancingRequest) -> Rebalanc
         orchestrator = PortfolioRebalancingOrchestrator()
 
         # Perform rebalancing analysis
-        result = await orchestrator.rebalance_portfolio(
-            portfolio_config=request.portfolio_config, available_capital=request.available_capital
-        )
+        result = await orchestrator.rebalance_portfolio(portfolio_config=request.portfolio_config, available_capital=request.available_capital)
 
         logger.info("Portfolio rebalancing analysis completed successfully")
 
@@ -63,9 +59,7 @@ async def analyze_portfolio_rebalancing(request: RebalancingRequest) -> Rebalanc
 
 
 @router.get("/portfolio/{portfolio_id}/analysis", response_model=PortfolioAnalysisResponse)
-async def get_portfolio_analysis(
-    portfolio_id: str, include_recommendations: bool = Query(False, description="Include rebalancing recommendations")
-) -> PortfolioAnalysisResponse:
+async def get_portfolio_analysis(portfolio_id: str, include_recommendations: bool = Query(False, description="Include rebalancing recommendations")) -> PortfolioAnalysisResponse:
     """
     Get current portfolio analysis for a specific portfolio.
 
@@ -73,9 +67,7 @@ async def get_portfolio_analysis(
     including weightings and deviations from targets.
     """
     if not is_feature_enabled("portfolio_rebalancing"):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Portfolio rebalancing feature is currently disabled"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Portfolio rebalancing feature is currently disabled")
 
     try:
         logger.info(f"Getting portfolio analysis for portfolio {portfolio_id}")
@@ -88,9 +80,7 @@ async def get_portfolio_analysis(
         raise
     except Exception as e:
         logger.error(f"Portfolio analysis failed for {portfolio_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error during portfolio analysis"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error during portfolio analysis")
 
 
 @router.post("/portfolio/{portfolio_id}/simulate")
@@ -102,26 +92,20 @@ async def simulate_rebalancing_scenario(portfolio_id: str, scenario_config: Reba
     without affecting the actual portfolio configuration.
     """
     if not is_feature_enabled("portfolio_rebalancing"):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Portfolio rebalancing feature is currently disabled"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Portfolio rebalancing feature is currently disabled")
 
     try:
         logger.info(f"Simulating rebalancing scenario for portfolio {portfolio_id}")
 
         # This would be implemented to simulate rebalancing scenarios
         # For now, return a placeholder response
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Rebalancing simulation endpoint not yet implemented"
-        )
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Rebalancing simulation endpoint not yet implemented")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Rebalancing simulation failed for {portfolio_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error during rebalancing simulation"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error during rebalancing simulation")
 
 
 @router.get("/status")

@@ -161,14 +161,9 @@ class RebalancingEngine:
             )
 
             # Validate recommendations
-            valid_recommendations, validation_errors = self.trade_recommendation_system.validate_trade_recommendations(
-                recommendations, config
-            )
+            valid_recommendations, validation_errors = self.trade_recommendation_system.validate_trade_recommendations(recommendations, config)
 
-            logger.info(
-                f"Enhanced recommendations generated: {len(valid_recommendations)} valid, "
-                f"{len(validation_errors)} validation errors"
-            )
+            logger.info(f"Enhanced recommendations generated: {len(valid_recommendations)} valid, {len(validation_errors)} validation errors")
 
             return valid_recommendations, validation_errors
 

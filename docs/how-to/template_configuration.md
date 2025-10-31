@@ -742,5 +742,5 @@ This template system enables FinWiz to generate high-quality reports at scale wh
 **Last Updated**: 2025-01-25  
 **Related Documentation**:
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
-- [Deep Analysis Report Generator API](../src/finwiz/reporting/README.md)
+- Deep Analysis Report Generator API
 - [Template Testing Guide](TEMPLATE_TESTING.md)

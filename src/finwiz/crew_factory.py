@@ -103,9 +103,7 @@ class CrewFactory:
             self.logger.error(f"Cryptocurrency analysis crew failed: {e}", exc_info=True)
 
             # Handle error with graceful degradation
-            fallback_response = self.error_handler.handle_crew_failure(
-                crew_name="crypto", error=e, inputs=inputs, execution_time=execution_time
-            )
+            fallback_response = self.error_handler.handle_crew_failure(crew_name="crypto", error=e, inputs=inputs, execution_time=execution_time)
 
             # Prepare error response
             result_data = {
@@ -179,9 +177,7 @@ class CrewFactory:
             self.logger.error(f"Stock analysis crew failed: {e}", exc_info=True)
 
             # Handle error with graceful degradation
-            fallback_response = self.error_handler.handle_crew_failure(
-                crew_name="stock", error=e, inputs=inputs, execution_time=execution_time
-            )
+            fallback_response = self.error_handler.handle_crew_failure(crew_name="stock", error=e, inputs=inputs, execution_time=execution_time)
 
             # Prepare error response
             result_data = {
@@ -254,9 +250,7 @@ class CrewFactory:
             self.logger.error(f"ETF analysis crew failed: {e}", exc_info=True)
 
             # Handle error with graceful degradation
-            fallback_response = self.error_handler.handle_crew_failure(
-                crew_name="etf", error=e, inputs=inputs, execution_time=execution_time
-            )
+            fallback_response = self.error_handler.handle_crew_failure(crew_name="etf", error=e, inputs=inputs, execution_time=execution_time)
 
             # Prepare error response
             result_data = {
@@ -374,9 +368,7 @@ class CrewFactory:
 
                 # Check for insufficient tickers warning
                 if prepared_context.get("insufficient_tickers", False):
-                    self.logger.warning(
-                        f"Proceeding with limited report generation: {ticker_count} validated tickers (recommended: 3+)"
-                    )
+                    self.logger.warning(f"Proceeding with limited report generation: {ticker_count} validated tickers (recommended: 3+)")
                 else:
                     self.logger.info(f"Crew context prepared with {ticker_count} validated tickers")
 
@@ -409,14 +401,10 @@ class CrewFactory:
                 "report_generation_success": False,
             }
 
-    def create_crew_inputs_for_portfolio_rebalancing(
-        self, base_inputs: dict[str, Any], core_analysis_status: dict[str, Any]
-    ) -> dict[str, Any]:
+    def create_crew_inputs_for_portfolio_rebalancing(self, base_inputs: dict[str, Any], core_analysis_status: dict[str, Any]) -> dict[str, Any]:
         """Create specialized inputs for portfolio rebalancing crew."""
         if core_analysis_status["any_available"]:
-            self.logger.info(
-                f"Creating portfolio rebalancing inputs with core analysis integration: {core_analysis_status['available_crews']}"
-            )
+            self.logger.info(f"Creating portfolio rebalancing inputs with core analysis integration: {core_analysis_status['available_crews']}")
 
             # Prepare enhanced inputs with available core analysis
             crew_inputs = {

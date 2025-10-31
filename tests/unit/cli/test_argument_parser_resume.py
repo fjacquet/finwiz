@@ -274,9 +274,7 @@ class TestInitializeFlowWithResume:
 
         assert exc_info.value.code == 1
 
-    def test_should_fallback_when_state_creation_fails_interactive(
-        self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state
-    ):
+    def test_should_fallback_when_state_creation_fails_interactive(self, mocker, mock_flow_state_manager, mock_finwiz_flow, mock_finwiz_state):
         """Test fallback to fresh when FinwizState creation fails in interactive mode."""
         # Arrange
         args = argparse.Namespace(resume_uuid=None, no_resume=False)

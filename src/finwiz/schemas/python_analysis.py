@@ -53,12 +53,8 @@ class PythonDeepAnalysisResult(BaseModel):
     rationale: str = Field(..., min_length=10, description="Rationale for recommendation")
 
     # Detailed Analysis Components
-    fundamental_details: dict[str, Any] = Field(
-        default_factory=dict, description="Detailed fundamental analysis metrics and findings"
-    )
-    technical_details: dict[str, Any] = Field(
-        default_factory=dict, description="Detailed technical analysis indicators and patterns"
-    )
+    fundamental_details: dict[str, Any] = Field(default_factory=dict, description="Detailed fundamental analysis metrics and findings")
+    technical_details: dict[str, Any] = Field(default_factory=dict, description="Detailed technical analysis indicators and patterns")
     risk_details: dict[str, Any] = Field(default_factory=dict, description="Detailed risk assessment metrics")
 
     # Performance Metrics
@@ -90,9 +86,7 @@ class PythonPortfolioAnalysisResult(BaseModel):
 
     # Holdings Analysis
     holdings_by_grade: dict[str, int] = Field(default_factory=dict, description="Count of holdings by grade (A+, A, B+, etc.)")
-    holdings_by_recommendation: dict[str, int] = Field(
-        default_factory=dict, description="Count of holdings by recommendation (BUY, HOLD, SELL)"
-    )
+    holdings_by_recommendation: dict[str, int] = Field(default_factory=dict, description="Count of holdings by recommendation (BUY, HOLD, SELL)")
 
     # Risk Metrics
     portfolio_risk_score: float = Field(..., ge=0.0, le=1.0, description="Aggregate portfolio risk score")

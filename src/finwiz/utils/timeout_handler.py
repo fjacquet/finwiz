@@ -15,9 +15,7 @@ logger = get_logger(__name__)
 T = TypeVar("T")
 
 
-async def with_timeout[T](
-    coro: Callable[..., Coroutine[Any, Any, T]], timeout_seconds: int, operation_name: str, **kwargs: Any
-) -> T:
+async def with_timeout[T](coro: Callable[..., Coroutine[Any, Any, T]], timeout_seconds: int, operation_name: str, **kwargs: Any) -> T:
     """
     Execute coroutine with timeout enforcement.
 
