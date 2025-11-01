@@ -131,6 +131,7 @@ class PortfolioRebalancingCrew:
             config=self.agents_config["holding_analyzer"],
             verbose=True,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
         )
 
@@ -141,6 +142,7 @@ class PortfolioRebalancingCrew:
             config=self.agents_config["price_target_specialist"],
             verbose=True,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
         )
 
@@ -151,6 +153,7 @@ class PortfolioRebalancingCrew:
             config=self.agents_config["alternative_researcher"],
             verbose=True,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
         )
 
@@ -161,6 +164,7 @@ class PortfolioRebalancingCrew:
             config=self.agents_config["portfolio_analyst"],
             verbose=True,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
         )
 
@@ -172,6 +176,7 @@ class PortfolioRebalancingCrew:
             verbose=True,
             tools=holding_analysis_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite reasoning loops
         )
 
     @agent
@@ -182,6 +187,7 @@ class PortfolioRebalancingCrew:
             verbose=True,
             tools=holding_analysis_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite reasoning loops
         )
 
     @final_reporter
@@ -287,6 +293,8 @@ class PortfolioRebalancingCrew:
         find_alternatives_task) can be executed in parallel using asyncio for improved performance.
         The portfolio_analysis_task depends on these and will wait for all to complete.
         """
+        from finwiz.utils.llm_config import get_manager_llm
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
@@ -296,6 +304,7 @@ class PortfolioRebalancingCrew:
             allow_delegation=False,
             max_rpm=20,
             max_retries=10,
+            manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
         )
 
     async def analyze_holdings_parallel(

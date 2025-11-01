@@ -484,6 +484,8 @@ class DeepAnalysisCrew:
             ]
             logger.info("🔍 BASELINE MODE: AI scoring for comparison/debugging")
 
+        from finwiz.utils.llm_config import get_manager_llm
+
         return Crew(
             agents=self.agents,
             tasks=crew_tasks,  # Dynamic task list based on configuration
@@ -494,6 +496,7 @@ class DeepAnalysisCrew:
             allow_delegation=False,
             max_rpm=20,
             max_retries=3,  # ⚡ OPTIMIZED: Reduced from 10 to 3 (reduce retry overhead)
+            manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
         )
 
     def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:

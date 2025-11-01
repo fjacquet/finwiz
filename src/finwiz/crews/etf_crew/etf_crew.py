@@ -207,6 +207,8 @@ class EtfCrew:
     @crew
     def crew(self) -> Crew:
         """Create a specialized ETF trading research crew with a sequential workflow."""
+        from finwiz.utils.llm_config import get_manager_llm
+
         return Crew(
             agents=self.agents,  # Automatically created by the @agent decorator
             tasks=self.tasks,
@@ -217,6 +219,7 @@ class EtfCrew:
             respect_context_window=True,
             allow_delegation=False,
             max_rpm=20,
+            manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
         )
 
     def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:

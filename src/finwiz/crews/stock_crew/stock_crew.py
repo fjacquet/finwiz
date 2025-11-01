@@ -214,6 +214,8 @@ class StockCrew:
         Uses a sequential workflow for analysis with validation steps to ensure
         high-quality, consistent output formats for both HTML and JSON data.
         """
+        from finwiz.utils.llm_config import get_manager_llm
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
@@ -224,6 +226,7 @@ class StockCrew:
             allow_delegation=False,
             max_rpm=20,
             max_retries=10,
+            manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
         )
 
     def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:

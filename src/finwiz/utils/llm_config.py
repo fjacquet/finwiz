@@ -18,13 +18,16 @@ load_dotenv()
 logger = get_logger(__name__)
 
 
-def get_configured_llm() -> LLM:
+def get_configured_llm(model_override: str | None = None) -> LLM:
     """
     Get a properly configured LLM instance for CrewAI.
 
     This function creates an LLM instance with proper parameter handling,
     including dropping unsupported parameters like 'stop' that cause
     400 Bad Request errors with certain models.
+
+    Args:
+        model_override: Optional model name to override the default from environment
 
     Returns:
         LLM: Configured LLM instance ready for CrewAI use
@@ -33,8 +36,8 @@ def get_configured_llm() -> LLM:
         EnvironmentError: If required API keys are missing
 
     """
-    # Get model configuration from environment
-    model = os.getenv("MODEL", "openai/gpt-5-mini")
+    # Get model configuration from environment or use override
+    model = model_override or os.getenv("MODEL", "openai/gpt-5-mini")
     openai_api_key = os.getenv("OPENAI_API_KEY")
 
     if not openai_api_key:
@@ -73,6 +76,36 @@ def get_llm_for_crew(crew_name: str) -> LLM:
 
     """
     logger.debug(f"Getting LLM configuration for crew: {crew_name}")
+    return get_configured_llm()
+
+
+def get_manager_llm() -> LLM:
+    """
+    Get LLM configuration for crew manager.
+
+    This ensures the manager LLM also has proper parameter handling
+    to avoid 'stop' parameter errors.
+
+    Returns:
+        LLM: Configured LLM instance for crew manager
+
+    """
+    logger.debug("Getting manager LLM configuration")
+    return get_configured_llm()
+
+
+def get_planning_llm() -> LLM:
+    """
+    Get LLM configuration for crew planning.
+
+    This ensures the planning LLM also has proper parameter handling
+    to avoid 'stop' parameter errors.
+
+    Returns:
+        LLM: Configured LLM instance for crew planning
+
+    """
+    logger.debug("Getting planning LLM configuration")
     return get_configured_llm()
 
 

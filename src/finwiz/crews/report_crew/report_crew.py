@@ -801,6 +801,8 @@ class ReportCrew:
             raise
 
         # Create crew with integrated data context
+        from finwiz.utils.llm_config import get_manager_llm
+
         crew = Crew(
             agents=agents,
             tasks=tasks,
@@ -812,6 +814,7 @@ class ReportCrew:
             max_retries=10,
             max_rpm=20,
             llm="gpt-5",
+            manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
         )
 
         return crew

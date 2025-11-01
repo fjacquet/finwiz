@@ -278,6 +278,8 @@ class InvestmentDiscoveryCrew:
     @crew
     def crew(self) -> Crew:
         """Create the Investment Discovery Crew with sequential workflow."""
+        from finwiz.utils.llm_config import get_manager_llm
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
@@ -287,4 +289,5 @@ class InvestmentDiscoveryCrew:
             respect_context_window=True,
             allow_delegation=False,
             max_rpm=20,
+            manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
         )
