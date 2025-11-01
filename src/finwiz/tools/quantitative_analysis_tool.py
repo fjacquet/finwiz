@@ -332,7 +332,105 @@ class QuantitativeAnalysisTool(BaseTool):
                 total_days=len(returns),
             )
 
-            return quant_perf.model_dump_json(indent=2)
+            # Convert to dict for adding ETF-specific fields
+            perf_dict = json.loads(quant_perf.model_dump_json())
+
+            # Add ETF-specific metrics from Yahoo Finance
+            if input_data.asset_class == "etf":
+                logger = get_logger(f"{__name__}.{self.__class__.__name__}")
+                try:
+                    import yfinance as yf
+                    
+                    ticker = yf.Ticker(input_data.symbol)
+                    info = ticker.info
+                    
+                    # Fetch expense ratio (try multiple fields)
+                    expense_ratio = info.get("netExpenseRatio") or info.get("annualReportExpenseRatio")
+                    if expense_ratio is not None:
+                        # Yahoo Finance returns as percentage (0.0945 = 0.0945%)
+                        # Scorer expects percentage as decimal (0.0945% → 0.000945 decimal)
+                        # So we divide by 100: 0.0945 / 100 = 0.000945
+                        expense_ratio_decimal = float(expense_ratio) / 100.0
+                        perf_dict["expense_ratio"] = expense_ratio_decimal
+                        logger.info(f"✅ Fetched expense_ratio for {input_data.symbol}: {expense_ratio}% → {expense_ratio_decimal:.6f} (as decimal)")
+                    else:
+                        # Try fallback configuration file
+                        from finwiz.utils.etf_expense_fallback import get_fallback_expense_ratio
+                        
+                        fallback_ratio = get_fallback_expense_ratio(input_data.symbol)
+                        if fallback_ratio is not None:
+                            perf_dict["expense_ratio"] = fallback_ratio
+                            logger.info(f"✅ Using fallback expense_ratio for {input_data.symbol}: {fallback_ratio:.6f} (as decimal)")
+                        else:
+                            logger.warning(f"⚠️ No expense_ratio available for {input_data.symbol} (Yahoo Finance or fallback)")
+                    
+                    # Fetch AUM (totalAssets)
+                    total_assets = info.get("totalAssets")
+                    if total_assets is not None:
+                        perf_dict["aum"] = float(total_assets)
+                        logger.info(f"✅ Fetched AUM for {input_data.symbol}: ${total_assets:,.0f}")
+                    else:
+                        logger.warning(f"⚠️ No AUM available for {input_data.symbol}")
+                    
+                    # Calculate tracking error using historical data
+                    try:
+                        # Determine appropriate benchmark based on ETF category
+                        category = info.get("category", "").lower()
+                        
+                        # Map ETF category to benchmark
+                        benchmark_map = {
+                            "large blend": "SPY",  # S&P 500
+                            "large growth": "QQQ",  # Nasdaq-100
+                            "large value": "IVE",  # S&P 500 Value
+                            "mid-cap blend": "MDY",  # S&P MidCap 400
+                            "small blend": "IJR",  # S&P SmallCap 600
+                            "foreign large blend": "VEA",  # Developed Markets
+                            "diversified emerging mkts": "VWO",  # Emerging Markets
+                            "intermediate core bond": "AGG",  # US Aggregate Bond
+                        }
+                        
+                        # Default to SPY if category not found
+                        benchmark_symbol = benchmark_map.get(category, "SPY")
+                        
+                        logger.info(f"Calculating tracking error for {input_data.symbol} vs {benchmark_symbol} (category: {category or 'unknown'})")
+                        
+                        # Fetch benchmark data
+                        import yfinance as yf
+                        benchmark = yf.Ticker(benchmark_symbol)
+                        
+                        # Get 1 year of historical data for both
+                        etf_hist = ticker.history(period="1y")
+                        benchmark_hist = benchmark.history(period="1y")
+                        
+                        if not etf_hist.empty and not benchmark_hist.empty:
+                            # Calculate daily returns
+                            etf_returns = etf_hist["Close"].pct_change().dropna()
+                            benchmark_returns = benchmark_hist["Close"].pct_change().dropna()
+                            
+                            # Align dates (in case of different trading days)
+                            aligned_etf, aligned_benchmark = etf_returns.align(benchmark_returns, join="inner")
+                            
+                            if len(aligned_etf) > 20:  # Need at least 20 days of data
+                                # Calculate tracking difference
+                                tracking_diff = aligned_etf - aligned_benchmark
+                                
+                                # Annualized tracking error (standard deviation of tracking difference)
+                                tracking_error = tracking_diff.std() * (252 ** 0.5)
+                                
+                                perf_dict["tracking_error"] = float(tracking_error)
+                                logger.info(f"✅ Calculated tracking_error for {input_data.symbol}: {tracking_error:.4f} ({tracking_error*100:.2f}%)")
+                            else:
+                                logger.warning(f"⚠️ Insufficient aligned data for tracking error calculation: {len(aligned_etf)} days")
+                        else:
+                            logger.warning(f"⚠️ No historical data available for tracking error calculation")
+                            
+                    except Exception as e:
+                        logger.error(f"Error calculating tracking error for {input_data.symbol}: {e}")
+                    
+                except Exception as e:
+                    logger.error(f"Error fetching ETF-specific data for {input_data.symbol}: {e}")
+
+            return json.dumps(perf_dict, indent=2, default=str)
 
         except Exception as e:
             logger = get_logger(f"{__name__}.{self.__class__.__name__}")
@@ -416,6 +514,44 @@ class QuantitativeAnalysisTool(BaseTool):
             # Generate recommendation
             recommendation = self._generate_recommendation(input_data.symbol, tech_result, backtest_result, metrics)
 
+            # Add ETF-specific metrics if applicable
+            etf_specific_data = {}
+            if input_data.asset_class.lower() == "etf":
+                logger = get_logger(f"{__name__}.{self.__class__.__name__}")
+                try:
+                    import yfinance as yf
+                    
+                    ticker = yf.Ticker(input_data.symbol)
+                    info = ticker.info
+                    
+                    # Fetch expense ratio (try multiple fields)
+                    expense_ratio = info.get("netExpenseRatio") or info.get("annualReportExpenseRatio")
+                    if expense_ratio is not None:
+                        expense_ratio_decimal = float(expense_ratio) / 100.0
+                        etf_specific_data["expense_ratio"] = expense_ratio_decimal
+                        logger.info(f"✅ Fetched expense_ratio for {input_data.symbol}: {expense_ratio}% → {expense_ratio_decimal:.6f}")
+                    else:
+                        # Try fallback configuration file
+                        from finwiz.utils.etf_expense_fallback import get_fallback_expense_ratio
+                        
+                        fallback_ratio = get_fallback_expense_ratio(input_data.symbol)
+                        if fallback_ratio is not None:
+                            etf_specific_data["expense_ratio"] = fallback_ratio
+                            logger.info(f"✅ Using fallback expense_ratio for {input_data.symbol}: {fallback_ratio:.6f}")
+                        else:
+                            logger.warning(f"⚠️ No expense_ratio available for {input_data.symbol}")
+                    
+                    # Fetch AUM
+                    total_assets = info.get("totalAssets")
+                    if total_assets is not None:
+                        etf_specific_data["aum"] = float(total_assets)
+                        logger.info(f"✅ Fetched AUM for {input_data.symbol}: ${total_assets:,.0f}")
+                    else:
+                        logger.warning(f"⚠️ No AUM available for {input_data.symbol}")
+                        
+                except Exception as e:
+                    logger.error(f"Error fetching ETF-specific data for {input_data.symbol}: {e}")
+
             # Create comprehensive result based on asset class
             if input_data.asset_class.lower() == "stock":
                 result = EnhancedStockAnalysis(
@@ -442,7 +578,12 @@ class QuantitativeAnalysisTool(BaseTool):
                     quantitative_recommendation=recommendation,
                 )
 
-            return result.model_dump_json(indent=2)
+            # Merge ETF-specific data into result dict
+            result_dict = json.loads(result.model_dump_json())
+            if etf_specific_data:
+                result_dict.update(etf_specific_data)
+            
+            return json.dumps(result_dict, indent=2, default=str)
 
         except Exception as e:
             logger = get_logger(f"{__name__}.{self.__class__.__name__}")

@@ -226,11 +226,13 @@ class PortfolioDeepAnalyzer:
                     }
                 )
             elif asset_class == "etf":
+                # CRITICAL: Do NOT use defaults for expense_ratio and tracking_error
+                # These are critical fields that must come from real data
                 data.update(
                     {
-                        "expense_ratio": perf_data.get("expense_ratio", 0.20),
-                        "tracking_error": perf_data.get("tracking_error", 0.30),
-                        "aum": perf_data.get("aum", 5e9),
+                        "expense_ratio": perf_data.get("expense_ratio"),  # No default - will trigger CriticalFieldError if missing
+                        "tracking_error": perf_data.get("tracking_error"),  # No default - will trigger CriticalFieldError if missing
+                        "aum": perf_data.get("aum", 5e9),  # AUM can have default (not critical for scoring)
                     }
                 )
             elif asset_class == "crypto":
@@ -242,11 +244,19 @@ class PortfolioDeepAnalyzer:
                     }
                 )
 
-            self.logger.info(
-                f"✅ Fetched real data for {ticker}: "
-                f"volatility={data['volatility']:.3f}, max_drawdown={data['max_drawdown']:.3f}, beta={data['beta']:.2f}, "
-                f"rsi={data['rsi']:.1f}, macd={data['macd']:.3f}"
-            )
+            # Log asset-specific data for debugging
+            if asset_class == "etf":
+                self.logger.info(
+                    f"✅ Fetched ETF data for {ticker}: "
+                    f"expense_ratio={data.get('expense_ratio')}, tracking_error={data.get('tracking_error')}, "
+                    f"aum={data.get('aum')}, volatility={data['volatility']:.3f}"
+                )
+            else:
+                self.logger.info(
+                    f"✅ Fetched real data for {ticker}: "
+                    f"volatility={data['volatility']:.3f}, max_drawdown={data['max_drawdown']:.3f}, beta={data['beta']:.2f}, "
+                    f"rsi={data['rsi']:.1f}, macd={data['macd']:.3f}"
+                )
 
             return data
 

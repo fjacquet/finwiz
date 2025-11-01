@@ -42,6 +42,10 @@ class DeepAnalysisResult(BaseModel):
     fundamental_score: float | None = Field(None, ge=0.0, le=1.0, description="Fundamental analysis score")
     technical_score: float | None = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
     risk_score: float | None = Field(None, ge=0.0, le=5.0, description="Risk score (0-5 scale)")
+    
+    # Score details for debugging and transparency
+    fundamental_details: dict[str, Any] = Field(default_factory=dict, description="Fundamental analysis breakdown")
+    technical_details: dict[str, Any] = Field(default_factory=dict, description="Technical analysis breakdown")
 
     # Data quality and freshness (NEW - Task 2.1)
     data_freshness_hours: float = Field(..., ge=0.0, description="Age of market data in hours")

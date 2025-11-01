@@ -169,6 +169,8 @@ class DeepAnalysisScorer:
                 fundamental_score=fundamental_score,
                 technical_score=technical_score,
                 risk_score=risk_score,
+                fundamental_details=fundamental_details,  # Include breakdown for debugging
+                technical_details=technical_details,  # Include breakdown for debugging
                 data_freshness_hours=0.0,  # Fresh data from Python calculation
                 confidence_level=confidence,
                 warnings=[],
@@ -363,54 +365,97 @@ class DeepAnalysisScorer:
         """Calculate fundamental score for ETFs."""
         # Expense ratio - lower is better
         expense_ratio = self._safe_get_float(data, "expense_ratio", 1.0)
-        if expense_ratio <= 0.10:  # 0.10% or less
+        
+        # Log the actual value for debugging
+        self.logger.info(f"ETF {self._current_ticker}: expense_ratio = {expense_ratio} (raw value)")
+        
+        # Thresholds for expense ratio (as decimal: 0.001 = 0.10%)
+        if expense_ratio <= 0.001:  # 0.10% or less (excellent)
             expense_score = 1.0
-        elif expense_ratio <= 0.25:  # 0.10-0.25%
+        elif expense_ratio <= 0.0025:  # 0.10-0.25% (very good)
             expense_score = 0.8
-        elif expense_ratio <= 0.50:  # 0.25-0.50%
+        elif expense_ratio <= 0.005:  # 0.25-0.50% (good)
             expense_score = 0.6
-        elif expense_ratio <= 1.00:  # 0.50-1.00%
+        elif expense_ratio <= 0.01:  # 0.50-1.00% (acceptable)
             expense_score = 0.4
-        else:  # >1.00%
+        else:  # >1.00% (high/poor)
             expense_score = 0.2
 
         details["expense_ratio"] = expense_ratio
         details["expense_score"] = expense_score
+        
+        self.logger.info(f"ETF {self._current_ticker}: expense_score = {expense_score}")
 
-        # Tracking error - lower is better
-        tracking_error = self._safe_get_float(data, "tracking_error", 1.0)
-        if tracking_error <= 0.20:  # 0.20% or less
-            tracking_score = 1.0
-        elif tracking_error <= 0.50:  # 0.20-0.50%
-            tracking_score = 0.8
-        elif tracking_error <= 1.00:  # 0.50-1.00%
-            tracking_score = 0.6
-        elif tracking_error <= 2.00:  # 1.00-2.00%
-            tracking_score = 0.4
-        else:  # >2.00%
-            tracking_score = 0.2
+        # Tracking error - lower is better (optional field)
+        tracking_error = self._safe_get_float(data, "tracking_error", None)
+        tracking_available = tracking_error is not None
+        
+        if tracking_available:
+            # Log the actual value for debugging
+            self.logger.info(f"ETF {self._current_ticker}: tracking_error = {tracking_error} (raw value)")
+            
+            # Thresholds for tracking error (as decimal: 0.002 = 0.20%)
+            if tracking_error <= 0.002:  # 0.20% or less (excellent)
+                tracking_score = 1.0
+            elif tracking_error <= 0.005:  # 0.20-0.50% (very good)
+                tracking_score = 0.8
+            elif tracking_error <= 0.01:  # 0.50-1.00% (good)
+                tracking_score = 0.6
+            elif tracking_error <= 0.02:  # 1.00-2.00% (acceptable)
+                tracking_score = 0.4
+            else:  # >2.00% (high/poor)
+                tracking_score = 0.2
+            
+            self.logger.info(f"ETF {self._current_ticker}: tracking_score = {tracking_score}")
+        else:
+            # Tracking error not available - use neutral score
+            tracking_score = 0.5  # Neutral score when data unavailable
+            self.logger.warning(f"⚠️ ETF {self._current_ticker}: tracking_error not available, using neutral score")
 
         details["tracking_error"] = tracking_error
+        details["tracking_error_available"] = tracking_available
         details["tracking_score"] = tracking_score
 
-        # AUM (Assets Under Management) - higher is better for liquidity
-        aum = self._safe_get_float(data, "aum", 0.0)
-        if aum >= 5e9:  # $5B+
-            aum_score = 1.0
-        elif aum >= 1e9:  # $1-5B
-            aum_score = 0.8
-        elif aum >= 500e6:  # $500M-1B
-            aum_score = 0.6
-        elif aum >= 100e6:  # $100-500M
-            aum_score = 0.4
-        else:  # <$100M
-            aum_score = 0.2
+        # AUM (Assets Under Management) - higher is better for liquidity (optional field)
+        aum = self._safe_get_float(data, "aum", None)
+        aum_available = aum is not None and aum > 0
+        
+        if aum_available:
+            if aum >= 5e9:  # $5B+
+                aum_score = 1.0
+            elif aum >= 1e9:  # $1-5B
+                aum_score = 0.8
+            elif aum >= 500e6:  # $500M-1B
+                aum_score = 0.6
+            elif aum >= 100e6:  # $100-500M
+                aum_score = 0.4
+            else:  # <$100M
+                aum_score = 0.2
+        else:
+            # AUM not available - use neutral score
+            aum_score = 0.5  # Neutral score when data unavailable
+            self.logger.warning(f"⚠️ ETF {self._current_ticker}: AUM not available, using neutral score")
 
         details["aum"] = aum
+        details["aum_available"] = aum_available
         details["aum_score"] = aum_score
 
-        # Weighted average (Expense 40%, Tracking 40%, AUM 20%)
-        fundamental_score = 0.40 * expense_score + 0.40 * tracking_score + 0.20 * aum_score
+        # Weighted average - adjust weights based on data availability
+        # Base: Expense 60%, Tracking 30%, AUM 10%
+        # If tracking unavailable: Expense 70%, AUM 30%
+        # If AUM unavailable: Expense 60%, Tracking 40%
+        # If both unavailable: Expense 100%
+        if tracking_available and aum_available:
+            fundamental_score = 0.60 * expense_score + 0.30 * tracking_score + 0.10 * aum_score
+        elif tracking_available:
+            fundamental_score = 0.60 * expense_score + 0.40 * tracking_score
+            self.logger.info(f"ETF {self._current_ticker}: AUM unavailable, adjusted weights (Expense 60%, Tracking 40%)")
+        elif aum_available:
+            fundamental_score = 0.70 * expense_score + 0.30 * aum_score
+            self.logger.info(f"ETF {self._current_ticker}: Tracking error unavailable, adjusted weights (Expense 70%, AUM 30%)")
+        else:
+            fundamental_score = expense_score
+            self.logger.warning(f"⚠️ ETF {self._current_ticker}: Only expense_ratio available, using 100% weight")
 
         details["fundamental_score"] = fundamental_score
         return fundamental_score, details
@@ -701,8 +746,18 @@ class DeepAnalysisScorer:
             )
         elif asset_class == "etf":
             expense = fundamental_details.get("expense_ratio", 1.0)
-            tracking = fundamental_details.get("tracking_error", 1.0)
-            rationale_parts.append(f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%} and tracking error of {tracking:.2%}.")
+            tracking = fundamental_details.get("tracking_error", None)
+            tracking_available = fundamental_details.get("tracking_error_available", False)
+            
+            if tracking_available and tracking is not None:
+                rationale_parts.append(
+                    f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%} and tracking error of {tracking:.2%}."
+                )
+            else:
+                rationale_parts.append(
+                    f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%}. "
+                    f"Note: Tracking error data not available for this ETF."
+                )
         elif asset_class == "crypto":
             market_cap = fundamental_details.get("market_cap", 0.0)
             volume = fundamental_details.get("volume_24h", 0.0)

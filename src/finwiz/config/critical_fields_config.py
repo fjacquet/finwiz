@@ -20,9 +20,9 @@ CRITICAL_FIELDS = {
     "etf": [
         "current_price",  # Cannot analyze without price
         "expense_ratio",  # Core cost metric
-        "tracking_error",  # Core performance metric
-        "aum",  # Core liquidity metric
         "volatility",  # Core risk metric
+        # Note: tracking_error moved to optional - many international ETFs lack benchmark data
+        # Note: aum moved to optional - not available for all exchanges
     ],
     "crypto": [
         "current_price",  # Cannot analyze without price
@@ -43,6 +43,8 @@ OPTIONAL_FIELDS = {
         "moving_avg_200",  # Technical indicator
     ],
     "etf": [
+        "tracking_error",  # Important but not always available (international ETFs)
+        "aum",  # Important but not always available (all exchanges)
         "dividend_yield",  # Nice to have
         "rsi",  # Technical indicator
         "macd",  # Technical indicator
@@ -64,6 +66,9 @@ SAFE_DEFAULTS = {
     # Optional fundamentals
     "profit_margin": 0.10,  # Conservative 10% margin
     "dividend_yield": 0.0,  # No dividend assumption
+    # Optional ETF metrics
+    "tracking_error": None,  # No default - will be flagged in reports
+    "aum": None,  # No default - will be flagged in reports
     # Optional crypto metrics
     "circulating_supply": 0.0,  # Unknown supply
     "max_supply": 0.0,  # Unknown max
