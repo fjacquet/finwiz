@@ -3,11 +3,16 @@ Circuit breaker implementation for database operations.
 
 Prevents cascading failures by automatically disabling database operations
 after repeated failures and attempting recovery after a timeout period.
+Includes state change monitoring and logging.
 """
 
 import logging
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from finwiz.supabase.utils.monitoring import CircuitBreakerMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +45,7 @@ class CircuitBreaker:
         self,
         failure_threshold: int = 3,
         recovery_timeout: int = 300,
+        monitor: "CircuitBreakerMonitor | None" = None,
     ) -> None:
         """
         Initialize circuit breaker.
@@ -47,6 +53,7 @@ class CircuitBreaker:
         Args:
             failure_threshold: Number of failures before opening circuit (default: 3)
             recovery_timeout: Seconds before recovery attempt (default: 300)
+            monitor: Optional CircuitBreakerMonitor for state change tracking
 
         """
         self.failure_threshold = failure_threshold
@@ -54,6 +61,7 @@ class CircuitBreaker:
         self.failure_count = 0
         self.last_failure_time: datetime | None = None
         self.state = CircuitState.CLOSED
+        self.monitor = monitor
 
     def is_open(self) -> bool:
         """
@@ -70,11 +78,85 @@ class CircuitBreaker:
             if self.last_failure_time:
                 elapsed = (datetime.now() - self.last_failure_time).total_seconds()
                 if elapsed >= self.recovery_timeout:
-                    self.state = CircuitState.HALF_OPEN
-                    logger.info("Circuit breaker entering half-open state for recovery test")
+                    self._transition_to_half_open()
                     return False
             return True
         return False
+
+    def should_allow_request(self) -> bool:
+        """
+        Check if circuit breaker should allow a request.
+
+        This is the main method to check before attempting an operation.
+        Handles state transitions automatically.
+
+        Returns:
+            True if request should be allowed, False otherwise
+
+        """
+        if self.state == CircuitState.CLOSED:
+            return True
+
+        if self.state == CircuitState.HALF_OPEN:
+            # Allow one request to test recovery
+            return True
+
+        if self.state == CircuitState.OPEN:
+            # Check if we should transition to half-open
+            if self.last_failure_time:
+                elapsed = (datetime.now() - self.last_failure_time).total_seconds()
+                if elapsed >= self.recovery_timeout:
+                    self._transition_to_half_open()
+                    return True
+            return False
+
+        return False
+
+    def _transition_to_half_open(self) -> None:
+        """
+        Transition circuit breaker to half-open state.
+
+        Called when recovery timeout has elapsed and we want to test
+        if the service has recovered.
+        """
+        old_state = self.state
+        self.state = CircuitState.HALF_OPEN
+        logger.info("🔄 Circuit breaker half-open - testing Supabase")
+
+        # Record state change in monitor
+        if self.monitor:
+            self.monitor.record_state_change(old_state, self.state)
+
+    def _transition_to_open(self) -> None:
+        """
+        Transition circuit breaker to open state.
+
+        Called when failure threshold is reached.
+        """
+        old_state = self.state
+        self.state = CircuitState.OPEN
+        logger.warning(
+            f"⚠️ Circuit breaker opened after {self.failure_count} failures"
+        )
+        logger.warning("⚠️ Supabase operations suspended - caching disabled")
+
+        # Record state change in monitor
+        if self.monitor:
+            self.monitor.record_state_change(old_state, self.state)
+
+    def _transition_to_closed(self) -> None:
+        """
+        Transition circuit breaker to closed state.
+
+        Called when a successful operation occurs in half-open state.
+        """
+        old_state = self.state
+        self.state = CircuitState.CLOSED
+        logger.info("✅ Circuit breaker closed - Supabase recovered")
+
+        # Record state change in monitor
+        if self.monitor:
+            self.monitor.record_state_change(old_state, self.state)
 
     def record_success(self) -> None:
         """
@@ -83,8 +165,7 @@ class CircuitBreaker:
         Resets failure count and closes circuit if in half-open state.
         """
         if self.state == CircuitState.HALF_OPEN:
-            logger.info("Circuit breaker closing after successful recovery test")
-            self.state = CircuitState.CLOSED
+            self._transition_to_closed()
         self.failure_count = 0
 
     def record_failure(self) -> None:
@@ -98,5 +179,4 @@ class CircuitBreaker:
 
         if self.failure_count >= self.failure_threshold:
             if self.state != CircuitState.OPEN:
-                logger.warning(f"Circuit breaker opening after {self.failure_count} consecutive failures")
-                self.state = CircuitState.OPEN
+                self._transition_to_open()

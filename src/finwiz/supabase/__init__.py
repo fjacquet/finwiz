@@ -12,7 +12,12 @@ Provides centralized data persistence and vector storage with:
 
 from finwiz.supabase.circuit_breaker import CircuitBreaker, CircuitState
 from finwiz.supabase.client import SupabaseClient
-from finwiz.supabase.models import AnalysisRecord, EmbeddingRecord, PortfolioSnapshot
+from finwiz.supabase.models import (
+    AnalysisRecord,
+    EmbeddingRecord,
+    PortfolioSnapshot,
+    SupabaseHealthStatus,
+)
 from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
 from finwiz.supabase.repositories.vector_repository import VectorRepository
 from finwiz.supabase.services.embedding_service import EmbeddingService
@@ -39,6 +44,7 @@ __all__ = [
     "AnalysisRecord",
     "PortfolioSnapshot",
     "EmbeddingRecord",
+    "SupabaseHealthStatus",
     # Repositories
     "AnalysisRepository",
     "VectorRepository",

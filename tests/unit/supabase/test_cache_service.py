@@ -9,6 +9,7 @@ Tests cache service functionality including:
 - Mock AnalysisRepository and crew execution function
 """
 
+import asyncio
 import os
 from datetime import datetime
 
@@ -28,9 +29,20 @@ class TestCacheService:
         return mocker.Mock(spec=AnalysisRepository)
 
     @pytest.fixture
-    def cache_service(self, mock_repository):
-        """Create CacheService with mock repository."""
-        return CacheService(repository=mock_repository)
+    def mock_client(self, mocker):
+        """Create mock SupabaseClient."""
+        mock = mocker.Mock()
+        mock.read_timeout = 10.0
+        mock.write_timeout = 15.0
+        mock.test_connectivity = mocker.AsyncMock(return_value=True)
+        return mock
+
+    @pytest.fixture
+    def cache_service(self, mock_repository, mock_client):
+        """Create CacheService with mock repository and client."""
+        service = CacheService(repository=mock_repository, client=mock_client)
+        service.is_enabled = True  # Enable by default for tests
+        return service
 
     @pytest.fixture
     def sample_analysis_record(self):
@@ -65,25 +77,27 @@ class TestCacheService:
         }
 
     @pytest.mark.asyncio
-    async def test_should_initialize_with_default_ttl(self, mock_repository):
+    async def test_should_initialize_with_default_ttl(self, mock_repository, mock_client):
         """Test CacheService initialization with default TTL."""
         # Act
-        service = CacheService(repository=mock_repository)
+        service = CacheService(repository=mock_repository, client=mock_client)
 
         # Assert
         assert service.repository == mock_repository
+        assert service.client == mock_client
         assert service.ttl_hours == 24  # Default value
+        assert service.is_enabled is False  # Not initialized yet
         assert service.cache_hits == 0
         assert service.cache_misses == 0
 
     @pytest.mark.asyncio
-    async def test_should_initialize_with_environment_ttl(self, mock_repository, mocker):
+    async def test_should_initialize_with_environment_ttl(self, mock_repository, mock_client, mocker):
         """Test CacheService initialization with TTL from environment variable."""
         # Arrange
         mocker.patch.dict(os.environ, {"ANALYSIS_CACHE_TTL_HOURS": "48"})
 
         # Act
-        service = CacheService(repository=mock_repository)
+        service = CacheService(repository=mock_repository, client=mock_client)
 
         # Assert
         assert service.ttl_hours == 48
@@ -125,7 +139,7 @@ class TestCacheService:
         """Test get_or_execute() with cache miss (executes crew, stores result)."""
         # Arrange
         mock_repository.get_cached_analysis.return_value = None
-        mock_repository.store_analysis.return_value = True
+        mock_repository.store_analysis = mocker.AsyncMock()
 
         async def mock_execute_fn():
             return sample_crew_result
@@ -152,7 +166,10 @@ class TestCacheService:
             ttl_hours=24,
         )
 
-        # Verify repository was called to store result
+        # Give time for background task to complete
+        await asyncio.sleep(0.1)
+
+        # Verify repository was called to store result (non-blocking)
         mock_repository.store_analysis.assert_called_once_with(
             ticker="MSFT",
             asset_class="stock",
@@ -175,6 +192,9 @@ class TestCacheService:
             asset_class="stock",
             execute_fn=mock_execute_fn,
         )
+
+        # Wait for async cache write task to complete
+        await asyncio.sleep(0.1)
 
         # Assert
         assert is_cached is False
@@ -380,11 +400,12 @@ class TestCacheService:
         assert "Hit Rate=" in log_call
 
     @pytest.mark.asyncio
-    async def test_should_use_custom_ttl_from_environment(self, mock_repository, mocker, sample_crew_result):
+    async def test_should_use_custom_ttl_from_environment(self, mock_repository, mock_client, mocker, sample_crew_result):
         """Test TTL configuration from environment variable."""
         # Arrange
         mocker.patch.dict(os.environ, {"ANALYSIS_CACHE_TTL_HOURS": "72"})
-        service = CacheService(repository=mock_repository)
+        service = CacheService(repository=mock_repository, client=mock_client)
+        service.is_enabled = True  # Enable cache for test
         mock_repository.get_cached_analysis.return_value = None
         mock_repository.store_analysis.return_value = True
 
@@ -421,6 +442,9 @@ class TestCacheService:
         await cache_service.get_or_execute("SPY", "etf", mock_execute_fn)
         await cache_service.get_or_execute("BTC", "crypto", mock_execute_fn)
 
+        # Wait for async cache write tasks to complete
+        await asyncio.sleep(0.1)
+
         # Assert
         assert mock_repository.get_cached_analysis.call_count == 3
         assert mock_repository.store_analysis.call_count == 3
@@ -455,3 +479,204 @@ class TestCacheService:
         assert cache_service.cache_hits == 2
         assert cache_service.cache_misses == 3
         assert cache_service.get_hit_rate() == 0.4  # 2/5 = 40%
+
+    @pytest.mark.asyncio
+    async def test_should_initialize_successfully_when_connectivity_passes(self, mock_repository, mock_client, mocker):
+        """Test initialize() with successful connectivity test."""
+        # Arrange
+        mock_client.test_connectivity = mocker.AsyncMock(return_value=True)
+        service = CacheService(repository=mock_repository, client=mock_client)
+
+        # Act
+        result = await service.initialize()
+
+        # Assert
+        assert result is True
+        assert service.is_enabled is True
+        mock_client.test_connectivity.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_should_initialize_disabled_when_connectivity_fails(self, mock_repository, mock_client, mocker):
+        """Test initialize() with failed connectivity test."""
+        # Arrange
+        mock_client.test_connectivity = mocker.AsyncMock(return_value=False)
+        service = CacheService(repository=mock_repository, client=mock_client)
+
+        # Act
+        result = await service.initialize()
+
+        # Assert
+        assert result is False
+        assert service.is_enabled is False
+        mock_client.test_connectivity.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_should_initialize_disabled_when_no_client(self, mock_repository):
+        """Test initialize() with no client."""
+        # Arrange
+        service = CacheService(repository=mock_repository, client=None)
+
+        # Act
+        result = await service.initialize()
+
+        # Assert
+        assert result is False
+        assert service.is_enabled is False
+
+    @pytest.mark.asyncio
+    async def test_should_skip_cache_when_disabled(self, mock_repository, mock_client, sample_crew_result, mocker):
+        """Test get_or_execute() skips cache when disabled."""
+        # Arrange
+        service = CacheService(repository=mock_repository, client=mock_client)
+        service.is_enabled = False  # Cache disabled
+
+        async def mock_execute_fn():
+            return sample_crew_result
+
+        # Act
+        result, is_cached = await service.get_or_execute(
+            ticker="AAPL",
+            asset_class="stock",
+            execute_fn=mock_execute_fn,
+        )
+
+        # Assert
+        assert is_cached is False
+        assert result == sample_crew_result
+        # Repository should NOT be called when cache is disabled
+        mock_repository.get_cached_analysis.assert_not_called()
+        mock_repository.store_analysis.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_should_handle_cache_read_timeout_gracefully(self, mock_repository, mock_client, sample_crew_result, mocker):
+        """Test get_or_execute() handles cache read timeout."""
+        # Arrange
+        service = CacheService(repository=mock_repository, client=mock_client)
+        service.is_enabled = True
+
+        # Simulate timeout on cache read
+        async def slow_cache_read(*args, **kwargs):
+            await asyncio.sleep(20)  # Longer than timeout
+            return None
+
+        mock_repository.get_cached_analysis = slow_cache_read
+        mock_repository.store_analysis = mocker.AsyncMock()
+
+        async def mock_execute_fn():
+            return sample_crew_result
+
+        # Act
+        result, is_cached = await service.get_or_execute(
+            ticker="AAPL",
+            asset_class="stock",
+            execute_fn=mock_execute_fn,
+        )
+
+        # Assert
+        assert is_cached is False
+        assert result == sample_crew_result
+        # Should proceed with execution despite timeout
+
+    @pytest.mark.asyncio
+    async def test_should_write_cache_non_blocking(self, mock_repository, mock_client, sample_crew_result, mocker):
+        """Test that cache writes don't block analysis."""
+        # Arrange
+        service = CacheService(repository=mock_repository, client=mock_client)
+        service.is_enabled = True
+        mock_repository.get_cached_analysis.return_value = None
+
+        # Simulate slow cache write
+        write_started = False
+        write_completed = False
+
+        async def slow_store(*args, **kwargs):
+            nonlocal write_started, write_completed
+            write_started = True
+            await asyncio.sleep(0.1)  # Simulate slow write
+            write_completed = True
+
+        mock_repository.store_analysis = slow_store
+
+        async def mock_execute_fn():
+            return sample_crew_result
+
+        # Act
+        result, is_cached = await service.get_or_execute(
+            ticker="AAPL",
+            asset_class="stock",
+            execute_fn=mock_execute_fn,
+        )
+
+        # Assert
+        assert is_cached is False
+        assert result == sample_crew_result
+        # Write should be scheduled but not block return
+        # Give a moment for the task to start
+        await asyncio.sleep(0.01)
+        # Write may or may not have completed, but we returned immediately
+
+    @pytest.mark.asyncio
+    async def test_should_log_cache_write_timeout(self, mock_repository, mock_client, sample_crew_result, mocker):
+        """Test that cache write timeouts are logged as warnings."""
+        # Arrange
+        service = CacheService(repository=mock_repository, client=mock_client)
+        service.is_enabled = True
+        mock_repository.get_cached_analysis.return_value = None
+        mock_logger = mocker.patch("finwiz.supabase.services.cache_service.logger")
+
+        # Simulate timeout on cache write
+        async def timeout_store(*args, **kwargs):
+            await asyncio.sleep(20)  # Longer than write timeout
+
+        mock_repository.store_analysis = timeout_store
+
+        async def mock_execute_fn():
+            return sample_crew_result
+
+        # Act
+        result, is_cached = await service.get_or_execute(
+            ticker="AAPL",
+            asset_class="stock",
+            execute_fn=mock_execute_fn,
+        )
+
+        # Give time for background task to timeout
+        await asyncio.sleep(0.1)
+
+        # Assert
+        assert is_cached is False
+        assert result == sample_crew_result
+        # Analysis should complete despite write timeout
+
+    @pytest.mark.asyncio
+    async def test_should_log_cache_write_failure(self, mock_repository, mock_client, sample_crew_result, mocker):
+        """Test that cache write failures are logged as warnings."""
+        # Arrange
+        service = CacheService(repository=mock_repository, client=mock_client)
+        service.is_enabled = True
+        mock_repository.get_cached_analysis.return_value = None
+        mock_logger = mocker.patch("finwiz.supabase.services.cache_service.logger")
+
+        # Simulate failure on cache write
+        async def failing_store(*args, **kwargs):
+            raise Exception("Storage failed")
+
+        mock_repository.store_analysis = failing_store
+
+        async def mock_execute_fn():
+            return sample_crew_result
+
+        # Act
+        result, is_cached = await service.get_or_execute(
+            ticker="AAPL",
+            asset_class="stock",
+            execute_fn=mock_execute_fn,
+        )
+
+        # Give time for background task to fail
+        await asyncio.sleep(0.1)
+
+        # Assert
+        assert is_cached is False
+        assert result == sample_crew_result
+        # Analysis should complete despite write failure

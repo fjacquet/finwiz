@@ -6,6 +6,7 @@ technical analysis, and performance metrics calculation for integration
 into Stock, ETF, and Crypto crews.
 """
 
+import json
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -181,7 +182,75 @@ class QuantitativeAnalysisTool(BaseTool):
                 if bb_result.signals:
                     quant_tech.bollinger_position = bb_result.signals[0].description
 
-            return quant_tech.model_dump_json(indent=2)
+            # Build complete technical data dict with numeric indicator values
+            tech_data = quant_tech.model_dump()
+
+            # Add numeric MACD values from raw_values
+            # Note: This overwrites macd_signal string description with numeric value
+            # The numeric value is needed by the scorer for calculations
+            logger = get_logger(f"{__name__}.{self.__class__.__name__}")
+            if "MACD" in tech_result.indicator_results:
+                macd_result = tech_result.indicator_results["MACD"]
+                if "MACD_line" in macd_result.raw_values and "MACD_signal" in macd_result.raw_values:
+                    macd_line_values = macd_result.raw_values["MACD_line"]
+                    macd_signal_values = macd_result.raw_values["MACD_signal"]
+
+                    if isinstance(macd_line_values, list) and macd_line_values:
+                        try:
+                            macd_value = float(macd_line_values[-1])
+                            # Check for NaN
+                            if not (macd_value != macd_value):  # NaN check
+                                tech_data["macd"] = macd_value
+                                logger.debug(f"✅ Extracted MACD line: {macd_value}")
+                            else:
+                                logger.warning(f"⚠️ MACD line is NaN for {input_data.symbol}")
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"⚠️ Failed to convert MACD line for {input_data.symbol}: {e}")
+
+                    if isinstance(macd_signal_values, list) and macd_signal_values:
+                        try:
+                            macd_signal_value = float(macd_signal_values[-1])
+                            # Check for NaN
+                            if not (macd_signal_value != macd_signal_value):  # NaN check
+                                # Overwrite string description with numeric value (needed by scorer)
+                                tech_data["macd_signal"] = macd_signal_value
+                                logger.debug(f"✅ Extracted MACD signal: {macd_signal_value}")
+                            else:
+                                logger.warning(f"⚠️ MACD signal is NaN for {input_data.symbol}")
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"⚠️ Failed to convert MACD signal for {input_data.symbol}: {e}")
+
+                    # Store description separately if needed
+                    if macd_result.signals:
+                        tech_data["macd_description"] = macd_result.signals[0].description
+                else:
+                    logger.warning(f"⚠️ MACD raw_values missing for {input_data.symbol}")
+
+            # Add RSI numeric value
+            if "RSI" in tech_result.indicator_results:
+                rsi_result = tech_result.indicator_results["RSI"]
+                if "RSI" in rsi_result.values:
+                    rsi_values = rsi_result.values["RSI"]
+                    if isinstance(rsi_values, list) and rsi_values:
+                        tech_data["rsi"] = float(rsi_values[-1])
+
+            # Add moving averages if available
+            if "SMA_50" in tech_result.indicator_results:
+                sma_50_result = tech_result.indicator_results["SMA_50"]
+                if "SMA" in sma_50_result.values:
+                    sma_50_values = sma_50_result.values["SMA"]
+                    if isinstance(sma_50_values, list) and sma_50_values:
+                        tech_data["sma_50"] = float(sma_50_values[-1])
+
+            if "SMA_200" in tech_result.indicator_results:
+                sma_200_result = tech_result.indicator_results["SMA_200"]
+                if "SMA" in sma_200_result.values:
+                    sma_200_values = sma_200_result.values["SMA"]
+                    if isinstance(sma_200_values, list) and sma_200_values:
+                        tech_data["sma_200"] = float(sma_200_values[-1])
+
+            # Serialize with proper datetime handling
+            return json.dumps(tech_data, indent=2, default=str)
 
         except Exception as e:
             logger = get_logger(f"{__name__}.{self.__class__.__name__}")

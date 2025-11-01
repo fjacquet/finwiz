@@ -8,8 +8,8 @@ optimization, risk parity, efficient frontier generation, and portfolio analytic
 import numpy as np
 import pytest
 
+from finwiz.quantitative.constraint_handlers import ConstraintType
 from finwiz.quantitative.optimization import (
-    ConstraintType,
     EfficientFrontier,
     ObjectiveFunction,
     OptimizationConstraint,

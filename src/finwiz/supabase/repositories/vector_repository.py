@@ -2,16 +2,19 @@
 Vector repository for similarity search operations.
 
 Provides vector embedding storage and semantic similarity search using
-pgvector with async operations, timeout enforcement, and error handling.
+pgvector with async operations, timeout enforcement, error handling,
+and performance monitoring.
 """
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+import time
+from datetime import UTC, datetime
 from typing import Any
 
 from finwiz.supabase.client import SupabaseClient
 from finwiz.supabase.services.embedding_service import EmbeddingService
+from finwiz.supabase.utils.monitoring import OperationType, PerformanceMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +40,7 @@ class VectorRepository:
         self,
         client: SupabaseClient,
         embedding_service: EmbeddingService | None = None,
+        performance_monitor: PerformanceMonitor | None = None,
     ) -> None:
         """
         Initialize vector repository.
@@ -44,11 +48,13 @@ class VectorRepository:
         Args:
             client: SupabaseClient instance
             embedding_service: Optional EmbeddingService instance (creates new if None)
+            performance_monitor: Optional performance monitor for metrics tracking
 
         """
         self.client = client
         self.embedding_service = embedding_service or EmbeddingService()
         self.table = "analysis_embeddings"
+        self.performance_monitor = performance_monitor or PerformanceMonitor()
 
         logger.info("VectorRepository initialized")
 
@@ -87,7 +93,7 @@ class VectorRepository:
         self,
         analysis_id: str,
         text: str,
-        max_retries: int = 3,
+        max_retries: int | None = None,
     ) -> None:
         """
         Store embedding with retry logic.
@@ -98,9 +104,12 @@ class VectorRepository:
         Args:
             analysis_id: Associated analysis ID (UUID)
             text: Source text to embed
-            max_retries: Maximum number of retry attempts (default: 3)
+            max_retries: Maximum number of retry attempts (default: from client config)
 
         """
+        # Use configured max_retries if not specified
+        if max_retries is None:
+            max_retries = self.client.max_retries
         try:
             # Generate embedding first (with its own retry logic)
             embedding = await self.embedding_service.generate_embedding(text)
@@ -120,13 +129,14 @@ class VectorRepository:
                                     "analysis_id": analysis_id,
                                     "embedding": embedding,
                                     "text": text.strip(),
-                                    "created_at": datetime.now(timezone.utc).isoformat(),
+                                    "created_at": datetime.now(UTC).isoformat(),
                                 }
                             )
                             .execute()
                         )
 
-                    result = await self.client.execute_with_timeout(insert, timeout=5.0)
+                    logger.debug(f"Store attempt {attempt + 1}/{max_retries} for analysis {analysis_id} (timeout: {self.client.write_timeout}s)")
+                    result = await self.client.execute_with_timeout(insert, timeout=self.client.write_timeout)
 
                     if result:
                         logger.info(f"Embedding stored successfully for analysis: {analysis_id}")
@@ -187,6 +197,11 @@ class VectorRepository:
 
         logger.debug(f"Searching for similar analyses (query length: {len(query)}, limit: {limit}, threshold: {similarity_threshold})")
 
+        # Track operation duration
+        start_time = time.time()
+        success = False
+        timeout = False
+
         try:
             # Generate query embedding
             query_embedding = await self.embedding_service.generate_embedding(query)
@@ -205,23 +220,40 @@ class VectorRepository:
                     },
                 ).execute()
 
-            # Execute with 2-second timeout
-            result = await self.client.execute_with_timeout(search, timeout=2.0)
+            # Execute with configured read timeout
+            result = await self.client.execute_with_timeout(search)
 
             if result and result.data:
                 # Extract analysis_id and similarity from results
                 matches = [(record["analysis_id"], record["similarity"]) for record in result.data]
 
                 logger.info(f"Found {len(matches)} similar analyses (threshold: {similarity_threshold})")
+                success = True
 
                 return matches
 
             logger.info(f"No similar analyses found above threshold {similarity_threshold}")
+            success = True  # Empty result is still a successful operation
+            return []
+
+        except TimeoutError:
+            logger.error("Similarity search timed out")
+            timeout = True
             return []
 
         except Exception as e:
             logger.error(f"Similarity search failed: {e}")
             return []
+
+        finally:
+            # Record operation metrics
+            duration_ms = (time.time() - start_time) * 1000
+            self.performance_monitor.record_operation(
+                OperationType.VECTOR_SEARCH,
+                duration_ms,
+                success=success,
+                timeout=timeout,
+            )
 
     async def get_embedding_by_analysis_id(
         self,
@@ -231,7 +263,7 @@ class VectorRepository:
         Get embedding and text for an analysis.
 
         Retrieves the stored embedding and source text for a specific analysis.
-        Uses strict 2-second timeout.
+        Uses configured read timeout.
 
         Args:
             analysis_id: Analysis ID (UUID)
@@ -247,7 +279,7 @@ class VectorRepository:
             return client.table(self.table).select("embedding, text").eq("analysis_id", analysis_id).limit(1).execute()
 
         try:
-            result = await self.client.execute_with_timeout(query, timeout=2.0)
+            result = await self.client.execute_with_timeout(query)
 
             if result and result.data:
                 record = result.data[0]
@@ -272,7 +304,7 @@ class VectorRepository:
         Delete embedding for an analysis.
 
         Removes the stored embedding for a specific analysis.
-        Uses strict 2-second timeout.
+        Uses configured read timeout.
 
         Args:
             analysis_id: Analysis ID (UUID)
@@ -288,7 +320,7 @@ class VectorRepository:
             return client.table(self.table).delete().eq("analysis_id", analysis_id).execute()
 
         try:
-            result = await self.client.execute_with_timeout(delete, timeout=2.0)
+            result = await self.client.execute_with_timeout(delete)
 
             if result:
                 logger.info(f"Embedding deleted successfully for analysis: {analysis_id}")
@@ -316,7 +348,7 @@ class VectorRepository:
             return client.table(self.table).select("id", count="exact").execute()
 
         try:
-            result = await self.client.execute_with_timeout(query, timeout=2.0)
+            result = await self.client.execute_with_timeout(query)
 
             if result:
                 count = result.count or 0

@@ -99,6 +99,7 @@ class FinwizFlow(Flow[FinwizState]):
 
         # Initialize Supabase cache service (Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 8.1.3, 8.1.4)
         self.cache_service = None
+        self.cache_enabled = False  # Will be set by _initialize_cache()
         try:
             from finwiz.supabase.client import SupabaseClient
             from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
@@ -113,15 +114,16 @@ class FinwizFlow(Flow[FinwizState]):
             # Initialize analysis repository
             analysis_repository = AnalysisRepository(supabase_client)
 
-            # Initialize cache service
-            self.cache_service = CacheService(analysis_repository)
-            logger.info("Supabase cache service initialized successfully")
+            # Initialize cache service with client for connectivity testing
+            self.cache_service = CacheService(analysis_repository, supabase_client)
+            logger.info("Supabase cache service created (connectivity test pending)")
 
         except Exception as e:
             # Graceful fallback when Supabase is unavailable (Requirement 8.1.4)
             logger.warning(f"Supabase cache service initialization failed: {e}")
             logger.info("Continuing without Supabase caching (graceful degradation)")
             self.cache_service = None
+            self.cache_enabled = False
 
         # Initialize structured state (replaces self.inputs)
         # Note: self.state is automatically managed by Flow[FinwizState]
@@ -298,6 +300,45 @@ class FinwizFlow(Flow[FinwizState]):
         logger.info("=" * 80)
 
         return results
+
+    async def _initialize_cache(self) -> None:
+        """
+        Initialize cache service with connectivity test.
+
+        Tests Supabase connectivity and sets cache_enabled flag based on result.
+        Should be called from validate_data_integration() at Flow startup.
+
+        Logs cache status with detailed information:
+        - "✅ Supabase caching enabled" if successful
+        - "ℹ️ Supabase caching disabled" if failed
+        - Includes reason for disabled status
+
+        Requirements: 3.4, 3.5, 4.1, 4.2, 4.3
+        """
+        try:
+            if not self.cache_service:
+                logger.info("ℹ️ Supabase caching disabled - no cache service configured")
+                self.cache_enabled = False
+                return
+
+            # Test connectivity and initialize cache service
+            self.cache_enabled = await self.cache_service.initialize()
+
+            if self.cache_enabled:
+                logger.info("✅ Supabase caching enabled")
+                logger.info("Cache will be used for analysis results with TTL validation")
+            else:
+                logger.info("ℹ️ Supabase caching disabled - connectivity test failed")
+                logger.info("⚠️ Caching disabled - analysis will proceed without cache")
+
+        except ConnectionError:
+            # Fail fast on Supabase misconfiguration
+            logger.error("❌ Supabase is enabled but misconfigured - stopping execution")
+            raise
+        except Exception as e:
+            logger.warning(f"⚠️ Cache initialization failed: {e}")
+            logger.info("ℹ️ Supabase caching disabled - initialization error")
+            self.cache_enabled = False
 
     def _update_state_from_dict(self, data: dict[str, Any]) -> None:
         """
@@ -633,7 +674,7 @@ class FinwizFlow(Flow[FinwizState]):
         return {"etf_analysis_complete": True, "etf_result": result_data.get("etf_result", "")}
 
     @start()
-    def validate_data_integration(self) -> dict[str, Any]:
+    async def validate_data_integration(self) -> dict[str, Any]:
         """
         Validate data integration system before crew execution.
 
@@ -694,7 +735,16 @@ class FinwizFlow(Flow[FinwizState]):
 
             logger.info("Data integration validation completed")
 
-            return {"validation_complete": True, "overall_status": availability_report.overall_status.value}
+            # Initialize cache service with connectivity test (Requirements: 3.4, 3.5)
+            await self._initialize_cache()
+
+            # Log cache status
+            if self.cache_enabled:
+                logger.info("📊 Cache Status: ENABLED")
+            else:
+                logger.info("📊 Cache Status: DISABLED (analysis will proceed normally)")
+
+            return {"validation_complete": True, "overall_status": availability_report.overall_status.value, "cache_enabled": self.cache_enabled}
 
         except Exception as e:
             logger.error(f"Data integration validation failed: {str(e)}", exc_info=True)
@@ -909,8 +959,8 @@ class FinwizFlow(Flow[FinwizState]):
             ticker_start_time = time.time()
 
             try:
-                # Try Supabase cache service first if available (Requirements: 6.1, 6.2, 6.3, 6.4, 6.5)
-                if self.cache_service:
+                # Try Supabase cache service first if available and enabled (Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 1.5, 5.1)
+                if self.cache_service and self.cache_enabled:
                     try:
                         # Define crew execution function for cache service
                         async def execute_crew_analysis() -> dict[str, Any]:
@@ -1233,8 +1283,8 @@ class FinwizFlow(Flow[FinwizState]):
         # Log cache statistics
         cache_manager.log_cache_stats()
 
-        # Log Supabase cache metrics if available (Requirement 6.5)
-        if self.cache_service:
+        # Log Supabase cache metrics if available and enabled (Requirement 6.5)
+        if self.cache_service and self.cache_enabled:
             try:
                 self.cache_service.log_metrics()
             except Exception as e:

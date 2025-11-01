@@ -106,7 +106,7 @@ class PortfolioRepository:
         operation: Any,
         snapshot_date: datetime,
         total_value: float,
-        max_retries: int = 3,
+        max_retries: int | None = None,
     ) -> None:
         """
         Store snapshot with exponential backoff retry.
@@ -118,12 +118,20 @@ class PortfolioRepository:
             operation: Database operation to execute
             snapshot_date: Snapshot timestamp (for logging)
             total_value: Total portfolio value (for logging)
-            max_retries: Maximum number of retry attempts (default: 3)
+            max_retries: Maximum number of retry attempts (default: from client config)
 
         """
+        # Use configured max_retries if not specified
+        if max_retries is None:
+            max_retries = self.client.max_retries
+            
         for attempt in range(max_retries):
             try:
-                result = await self.client.execute_with_timeout(operation, timeout=5.0)
+                logger.debug(
+                    f"Snapshot store attempt {attempt + 1}/{max_retries} for "
+                    f"{snapshot_date.isoformat()} (timeout: {self.client.write_timeout}s)"
+                )
+                result = await self.client.execute_with_timeout(operation, timeout=self.client.write_timeout)
 
                 if result:
                     logger.info(
@@ -164,7 +172,7 @@ class PortfolioRepository:
         Retrieve portfolio history ordered by date descending.
 
         Gets the most recent portfolio snapshots, ordered from newest to oldest.
-        Uses strict 2-second timeout.
+        Uses configured read timeout.
 
         Args:
             limit: Maximum number of snapshots to return (default: 10)
@@ -186,7 +194,7 @@ class PortfolioRepository:
             )
 
         try:
-            result = await self.client.execute_with_timeout(query, timeout=2.0)
+            result = await self.client.execute_with_timeout(query)
 
             if result and result.data:
                 snapshots = [PortfolioSnapshot(**record) for record in result.data]
@@ -319,7 +327,7 @@ class PortfolioRepository:
         Get portfolio snapshot by ID.
 
         Retrieves a specific snapshot by its unique identifier.
-        Uses strict 2-second timeout.
+        Uses configured read timeout.
 
         Args:
             snapshot_id: Unique snapshot identifier (UUID)
@@ -337,7 +345,7 @@ class PortfolioRepository:
             )
 
         try:
-            result = await self.client.execute_with_timeout(query, timeout=2.0)
+            result = await self.client.execute_with_timeout(query)
 
             if result and result.data:
                 logger.debug(f"Found snapshot: {snapshot_id}")

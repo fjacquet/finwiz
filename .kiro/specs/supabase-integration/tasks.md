@@ -5,12 +5,30 @@ Convert the Supabase integration design into a series of implementation tasks. E
 ## Task List
 
 - [x] 1. Set up Supabase infrastructure and database schema
-  - Create Supabase project and enable pgvector extension
-  - Write and execute database migration SQL for analyses, analysis_embeddings, and portfolio_snapshots tables
-  - Create vector similarity search function (match_analyses)
-  - Configure row-level security policies for future multi-user support
-  - Add environment variables to .env.example: SUPABASE_URL, SUPABASE_KEY, SUPABASE_ENABLED, ANALYSIS_CACHE_TTL_HOURS
-  - _Requirements: 1.1, 1.2, 1.3_
+  - [x] 1.1 Create Supabase project and obtain connection strings
+    - Create new Supabase project in desired region
+    - Navigate to project settings and click "Connect" button
+    - Copy Supavisor Session Mode connection string (port 5432) for SUPABASE_DB_URL
+    - Copy API URL for SUPABASE_URL
+    - Copy anon key for SUPABASE_KEY
+    - Verify SSL is enabled on all connection strings
+    - _Requirements: 1.1, 1.2.1, 1.2.2, 1.2.5_
+  
+  - [x] 1.2 Set up database schema and extensions
+    - Enable pgvector extension in Supabase SQL editor
+    - Write and execute database migration SQL for analyses, analysis_embeddings, and portfolio_snapshots tables
+    - Create indexes for performance (ticker_asset, created_at, grade, embedding vector)
+    - Create vector similarity search function (match_analyses) using pgvector
+    - Configure row-level security policies for future multi-user support
+    - _Requirements: 1.2, 1.3_
+  
+  - [x] 1.3 Configure environment variables
+    - Add to .env.example: SUPABASE_URL, SUPABASE_KEY, SUPABASE_DB_URL, SUPABASE_ENABLED
+    - Add connection pool configuration: SUPABASE_POOL_MIN_SIZE, SUPABASE_POOL_MAX_SIZE, SUPABASE_POOL_IDLE_TIMEOUT
+    - Add cache configuration: ANALYSIS_CACHE_TTL_HOURS
+    - Add timeout configuration: DATABASE_READ_TIMEOUT, DATABASE_WRITE_TIMEOUT
+    - Document connection string format in comments (Supavisor Session Mode)
+    - _Requirements: 1.1, 1.2.1, 1.2.2, 1.2.3, 1.2.4, 1.2.5_
 
 - [x] 2. Implement core Supabase client and circuit breaker
   - [x] 2.1 Create circuit breaker implementation
@@ -21,14 +39,22 @@ Convert the Supabase integration design into a series of implementation tasks. E
     - Add automatic recovery attempt after timeout in is_open() method
     - _Requirements: 8.2.1, 8.2.2, 8.2.3, 8.2.4, 8.2.5_
   
-  - [x] 2.2 Create Supabase client with connection management
-    - Write `src/finwiz/supabase/client.py` with SupabaseClient class
-    - Implement lazy connection initialization with environment variable configuration
+  - [x] 2.2 Create Supabase singleton client with connection pooling
+    - Write `src/finwiz/supabase/client.py` with SupabaseClient singleton class
+    - Implement singleton pattern using `__new__` method to ensure single instance
+    - Add asyncpg connection pool initialization with configurable min/max connections (default 2-10)
+    - Implement lazy pool initialization (create on first use, not during app startup)
+    - Add support for both API client (REST/GraphQL) and database pool (direct SQL)
     - Integrate CircuitBreaker for failure protection
-    - Add get_client() method with circuit breaker check
-    - Implement execute_with_timeout() method with configurable timeout (default 2s)
-    - Add error handling with circuit breaker integration
-    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 8.1.5_
+    - Implement get_api_client() method for REST/GraphQL operations
+    - Implement get_connection() method for direct database operations with pool
+    - Implement release_connection() method to return connections to pool
+    - Add execute_with_timeout() method with configurable timeout and pool/API selection
+    - Configure pool with idle timeout (default 300s) and SSL enforcement
+    - Add get_pool_stats() method for monitoring pool health
+    - Add close() method for graceful pool shutdown
+    - Support environment variables: SUPABASE_URL, SUPABASE_KEY, SUPABASE_DB_URL, SUPABASE_POOL_MIN_SIZE, SUPABASE_POOL_MAX_SIZE, SUPABASE_POOL_IDLE_TIMEOUT
+    - _Requirements: 1.1, 1.1.1, 1.1.2, 1.1.3, 1.1.4, 1.1.5, 1.2.1, 1.2.2, 1.2.3, 1.2.4, 1.2.5, 1.3.1, 1.3.2, 1.3.3, 1.3.4, 1.3.5_
   
   - [x] 2.3 Create Pydantic models for database schemas
     - Write `src/finwiz/supabase/models.py` with AnalysisRecord, PortfolioSnapshot, and EmbeddingRecord models
@@ -41,10 +67,16 @@ Convert the Supabase integration design into a series of implementation tasks. E
     - Test circuit breaker state transitions (CLOSED → OPEN → HALF_OPEN → CLOSED)
     - Test failure threshold triggering (3 consecutive failures)
     - Test automatic recovery after timeout (5 minutes)
-    - Test client connection with circuit breaker protection
-    - Test execute_with_timeout() with various timeout scenarios
-    - Mock Supabase client for deterministic testing
-    - _Requirements: 8.2.1, 8.2.2, 8.2.3, 8.2.4, 8.2.5_
+    - Test singleton pattern (multiple instantiations return same instance)
+    - Test lazy pool initialization (pool created on first use)
+    - Test connection acquisition from pool
+    - Test connection release back to pool
+    - Test pool exhaustion handling (5-second wait timeout)
+    - Test execute_with_timeout() with pool and API client modes
+    - Test get_pool_stats() returns correct metrics
+    - Test graceful pool shutdown with close()
+    - Mock asyncpg pool and Supabase API client for deterministic testing
+    - _Requirements: 1.1.1, 1.1.2, 1.1.3, 1.1.4, 1.1.5, 8.2.1, 8.2.2, 8.2.3, 8.2.4, 8.2.5_
 
 - [x] 3. Implement analysis repository with async storage
   - [x] 3.1 Create analysis repository for CRUD operations
@@ -200,21 +232,26 @@ Convert the Supabase integration design into a series of implementation tasks. E
     - Mock file system and Supabase client
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 10. Implement monitoring and observability
-  - [ ] 10.1 Create monitoring utilities for database operations
+- [x] 10. Implement monitoring and observability
+  - [x] 10.1 Create monitoring utilities for database operations
     - Write `src/finwiz/supabase/utils/monitoring.py` with performance tracking
-    - Implement operation duration logging with thresholds
-    - Add cache hit/miss rate tracking
-    - Include circuit breaker state monitoring
-    - Add metrics export for external monitoring systems
-    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+    - Implement PoolMonitor class for connection pool health monitoring
+    - Add operation duration logging with configurable thresholds
+    - Implement cache hit/miss rate tracking
+    - Add circuit breaker state monitoring
+    - Implement connection pool metrics tracking (size, utilization, wait times)
+    - Add pool utilization alerts (warn when >80%)
+    - Include metrics export for external monitoring systems
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 1.3.5_
   
-  - [ ] 10.2 Add monitoring integration to all repositories and services
+  - [x] 10.2 Add monitoring integration to all repositories and services
     - Update AnalysisRepository to log operation metrics
     - Update VectorRepository to log search performance
     - Update CacheService to track hit/miss rates
     - Update CircuitBreaker to log state changes
-    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+    - Add pool statistics logging to SupabaseClient
+    - Implement periodic pool health checks
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 1.3.5_
   
   - [ ]* 10.3 Write unit tests for monitoring utilities
     - Test operation duration tracking
@@ -263,20 +300,26 @@ Convert the Supabase integration design into a series of implementation tasks. E
     - Measure total overhead (target < 500ms)
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [x] 13. Documentation and deployment
-  - [x] 13.1 Update documentation with Supabase integration
-    - Add Supabase setup guide to README.md
-    - Document environment variables and configuration
-    - Add troubleshooting section for common issues
-    - Include migration guide for existing users
+- [ ] 13. Documentation and deployment
+  - [ ] 13.1 Update documentation with Supabase integration
+    - Add Supabase setup guide to README.md with connection string instructions
+    - Document all environment variables and configuration options
+    - Add connection pooling configuration guide
+    - Document Supavisor Session Mode setup and benefits
+    - Add troubleshooting section for common issues (pool exhaustion, timeouts, circuit breaker)
+    - Include connection string format examples
+    - Document migration guide for existing users
     - Document performance benefits and cost savings
+    - Add monitoring and observability guide
     - _Requirements: All_
   
-  - [x] 13.2 Create deployment checklist and rollout plan
-    - Document 6-phase rollout strategy
-    - Create monitoring dashboard for key metrics
-    - Add alerting for circuit breaker state changes
+  - [ ] 13.2 Create deployment checklist and rollout plan
+    - Document 6-phase rollout strategy with connection pooling setup
+    - Create monitoring dashboard for key metrics (pool utilization, cache hit rate, circuit breaker state)
+    - Add alerting for circuit breaker state changes and pool exhaustion
     - Document rollback procedure if issues arise
+    - Include connection pool sizing recommendations based on workload
+    - Add performance benchmarking guide
     - _Requirements: All_
 
 ---

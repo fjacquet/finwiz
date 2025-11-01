@@ -245,6 +245,53 @@ def investment_reporter(self) -> Agent:
 ### Implementation Rule
 **Final reporters in crews must have empty tools lists. Use @final_reporter decorator to enforce this at framework level.**
 
+## Lesson 9: JSON Serialization of Datetime Objects
+
+### Problem Discovered
+Tools returning JSON strings with `json.dumps()` failed when data contained datetime objects:
+```
+ERROR - Error in technical analysis: Object of type datetime is not JSON serializable
+```
+
+This occurred in `QuantitativeAnalysisTool._perform_technical_analysis()` when building technical analysis results that included datetime fields from Pydantic models.
+
+### Root Cause
+Using `json.dumps()` without a `default` parameter to handle non-JSON-serializable types like datetime, numpy types, or custom objects.
+
+### Solution
+Always use `default=str` parameter with `json.dumps()`:
+
+```python
+# ❌ WRONG - Will fail with datetime objects
+tech_data = {"timestamp": datetime.now(), "value": 123.45}
+return json.dumps(tech_data, indent=2)
+
+# ✅ CORRECT - Handles datetime and other non-serializable types
+tech_data = {"timestamp": datetime.now(), "value": 123.45}
+return json.dumps(tech_data, indent=2, default=str)
+```
+
+### Alternative: Use Pydantic Serialization
+When working with Pydantic models, prefer `model_dump_json()`:
+
+```python
+# ✅ BEST - Pydantic handles datetime serialization automatically
+result = QuantitativeBacktestResult(
+    backtest_start_date=datetime.now(),
+    backtest_end_date=datetime.now(),
+    # ... other fields
+)
+return result.model_dump_json(indent=2)
+```
+
+### Implementation Rule
+**When manually serializing data with `json.dumps()`, always include `default=str` to handle datetime, numpy types, and other non-JSON-serializable objects. Prefer Pydantic's `model_dump_json()` when working with models.**
+
+### Additional Considerations
+- Cast numpy types to Python types explicitly: `float(numpy_value)`
+- Be aware that `default=str` converts objects to their string representation
+- For custom serialization logic, provide a custom serializer function instead of `str`
+
 ## Summary Checklist
 
 When designing CrewAI Flows:
@@ -259,9 +306,11 @@ When designing CrewAI Flows:
 - [ ] Final reporters have empty tools (enforced by decorator)
 - [ ] Portfolio/data generated once, not multiple times
 - [ ] No race conditions in parallel listeners
+- [ ] JSON serialization uses `default=str` or Pydantic's `model_dump_json()`
 
 ---
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Created**: 2025-01-11  
-**Purpose**: Capture critical lessons from deep portfolio analysis implementation
+**Updated**: 2025-11-01  
+**Purpose**: Capture critical lessons from deep portfolio analysis implementation and tool development

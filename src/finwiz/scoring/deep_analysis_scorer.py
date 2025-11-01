@@ -56,7 +56,14 @@ class DeepAnalysisScorer:
         Returns:
             DeepAnalysisResult with scores, grade, and recommendation
 
+        Raises:
+            CriticalFieldError: If critical fields are missing (fail fast)
+
         """
+        from finwiz.config.critical_fields_config import (
+            CriticalFieldError,
+            validate_critical_fields,
+        )
         from finwiz.schemas.data_lineage import DataLineage
         from finwiz.utils.data_quality_metrics import DataQualityMetrics
 
@@ -72,6 +79,19 @@ class DeepAnalysisScorer:
                 scorer_version="1.0.0",  # TODO: Get from package version
                 formula_version="1.0.0",
             )
+
+            # CRITICAL: Validate all critical fields are present BEFORE scoring
+            # This will raise CriticalFieldError if any critical field is missing
+            try:
+                validate_critical_fields(ticker, asset_class, data)
+                self.logger.info(f"✅ All critical fields present for {ticker}")
+            except CriticalFieldError as e:
+                self.logger.error(
+                    f"❌ CRITICAL FIELDS MISSING for {ticker}: {e.missing_fields}\n"
+                    f"   Cannot proceed with analysis - would be based on assumptions.\n"
+                    f"   Recommendation: Check API connectivity and data sources."
+                )
+                raise
 
             # Define expected fields based on asset class
             expected_fields = self._get_expected_fields(asset_class)
@@ -167,9 +187,17 @@ class DeepAnalysisScorer:
 
             return result
 
+        except CriticalFieldError as e:
+            # Critical field missing - DO NOT return fallback result
+            # Re-raise to let caller handle (should skip this holding)
+            self.logger.error(
+                f"❌ ANALYSIS FAILED for {ticker}: Missing critical fields {e.missing_fields}\n"
+                f"   This holding will be SKIPPED to avoid decisions based on assumptions."
+            )
+            raise
         except Exception as e:
             self.logger.error(f"Error calculating composite score for {ticker}: {e}")
-            # Return default low score on error
+            # Return default low score on error (non-critical errors only)
             return self._create_error_result(ticker, asset_class, str(e))
 
     def analyze_and_export(self, ticker: str, asset_class: str, collected_data: dict[str, Any], session_id: str = "default") -> tuple[DeepAnalysisResult, dict[str, Any]]:
@@ -1089,40 +1117,75 @@ class DeepAnalysisScorer:
         else:
             return common_fields
 
-    def _safe_get_float(self, data: dict[str, Any], key: str, default: float) -> float:
+    def _safe_get_float(self, data: dict[str, Any], key: str, default: float | None = None) -> float:
         """
-        Safely extract float value from data dictionary with data quality tracking.
+        Safely extract float value from data dictionary with critical field validation.
+
+        CRITICAL CHANGE: If field is critical and missing, raises CriticalFieldError
+        instead of silently using a default value.
 
         Args:
             data: Data dictionary
             key: Key to extract
-            default: Default value if key is missing or invalid
+            default: Default value if key is missing (only for OPTIONAL fields)
 
         Returns:
-            Float value (either from data or default)
+            Float value from data
+
+        Raises:
+            CriticalFieldError: If critical field is missing (no default allowed)
 
         """
+        from finwiz.config.critical_fields_config import (
+            CriticalFieldError,
+            get_safe_default,
+            is_critical_field,
+        )
+
         try:
             value = data.get(key)
 
             if value is None:
-                # Field is missing - track it
+                # Check if this is a critical field
+                asset_class = data.get("asset_class", self._current_ticker)
+                if is_critical_field(key, asset_class):
+                    # CRITICAL FIELD MISSING - FAIL FAST
+                    if self._data_quality_metrics:
+                        self._data_quality_metrics.record_missing_field(key)
+
+                    raise CriticalFieldError(
+                        ticker=self._current_ticker,
+                        asset_class=asset_class,
+                        missing_fields=[key],
+                    )
+
+                # Optional field - use safe default
+                safe_default = default if default is not None else get_safe_default(key)
+                if safe_default is None:
+                    # No safe default available
+                    self.logger.error(f"❌ No safe default for optional field '{key}'")
+                    safe_default = 0.0
+
+                # Track defaulted field
                 if self._data_quality_metrics:
-                    self._data_quality_metrics.record_defaulted_field(key, default)
+                    self._data_quality_metrics.record_defaulted_field(key, safe_default)
 
                 # Track default value in lineage (Task 9.2)
                 if self._lineage_tracker:
                     self._lineage_tracker.add_source(
                         source_id=f"default_{key}",
                         source_type="default",
-                        source_name="Default Value",
+                        source_name="Safe Default (Optional Field)",
                         field_name=key,
-                        raw_value=default,
-                        metadata={"reason": "field_missing"},
+                        raw_value=safe_default,
+                        metadata={"reason": "optional_field_missing", "is_critical": False},
                     )
 
-                self.logger.warning(f"⚠️ Missing field '{key}' for {self._current_ticker}, using default {default}")
-                return default
+                self.logger.warning(
+                    f"⚠️ Optional field '{key}' missing for {self._current_ticker}, "
+                    f"using safe default {safe_default}"
+                )
+                return safe_default
 
             # Field exists - track as calculated
             float_value = float(value)
@@ -1134,17 +1197,38 @@ class DeepAnalysisScorer:
                 self._lineage_tracker.add_source(
                     source_id=f"data_{key}",
                     source_type="calculation",  # From crew output/calculation
-                    source_name="Crew Output",
+                    source_name="Real Data",
                     field_name=key,
                     raw_value=value,
-                    metadata={"data_type": type(value).__name__},
+                    metadata={"data_type": type(value).__name__, "is_critical": is_critical_field(key, data.get("asset_class", "stock"))},
                 )
 
             return float_value
 
         except (ValueError, TypeError) as e:
-            # Field exists but invalid - track as defaulted
+            # Field exists but invalid value
+            asset_class = data.get("asset_class", "stock")
+            if is_critical_field(key, asset_class):
+                # CRITICAL FIELD INVALID - FAIL FAST
+                if self._data_quality_metrics:
+                    self._data_quality_metrics.record_missing_field(key)
+
+                raise CriticalFieldError(
+                    ticker=self._current_ticker,
+                    asset_class=asset_class,
+                    missing_fields=[key],
+                )
+
+            # Optional field with invalid value - use safe default
+            safe_default = default if default is not None else get_safe_default(key)
+            if safe_default is None:
+                safe_default = 0.0
+
             if self._data_quality_metrics:
-                self._data_quality_metrics.record_defaulted_field(key, default)
-            self.logger.warning(f"⚠️ Invalid value for '{key}' for {self._current_ticker}: {data.get(key)} ({e}), using default {default}")
-            return default
+                self._data_quality_metrics.record_defaulted_field(key, safe_default)
+
+            self.logger.warning(
+                f"⚠️ Invalid value for optional field '{key}' for {self._current_ticker}: "
+                f"{data.get(key)} ({e}), using safe default {safe_default}"
+            )
+            return safe_default

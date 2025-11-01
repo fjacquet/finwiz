@@ -29,27 +29,15 @@ class PortfolioDeepAnalyzer:
     """
 
     def __init__(self, output_dir: str = "output") -> None:
-        """Initialize the analyzer with optional Supabase integration."""
+        """Initialize the analyzer."""
         self.scorer = DeepAnalysisScorer()
         self.output_dir = Path(output_dir)
         self.logger = logger
         
-        # Initialize Supabase cache service if enabled
+        # Note: Supabase integration for Python analyzer is disabled due to event loop conflicts
+        # The Python analyzer runs in synchronous context while Supabase requires async
+        # Supabase caching is available for AI-based DeepAnalysisCrew
         self.cache_service = None
-        if os.getenv("SUPABASE_ENABLED", "false").lower() == "true":
-            try:
-                from finwiz.supabase.client import SupabaseClient
-                from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
-                from finwiz.supabase.services.cache_service import CacheService
-                
-                client = SupabaseClient()
-                repository = AnalysisRepository(client)
-                self.cache_service = CacheService(repository)
-                self.logger.info("✅ Supabase cache service initialized for Python analyzer")
-            except Exception as e:
-                self.logger.warning(f"⚠️ Supabase cache service initialization failed: {e}")
-                self.logger.info("Continuing without Supabase caching (graceful degradation)")
-                self.cache_service = None
 
     def analyze_portfolio_holdings(self, holdings: list[HoldingDecision], session_id: str) -> dict[str, Any]:
         """
@@ -81,103 +69,17 @@ class PortfolioDeepAnalyzer:
         # Process each holding
         for holding in holdings:
             try:
-                # Check Supabase cache first if available
-                cached_result = None
-                if self.cache_service:
-                    try:
-                        import asyncio
-                        # Check if we're already in an event loop
-                        try:
-                            loop = asyncio.get_running_loop()
-                            # We're in an async context, use create_task
-                            cached_analysis = asyncio.create_task(
-                                self.cache_service.repository.get_cached_analysis(
-                                    ticker=holding.ticker,
-                                    asset_class=holding.asset_class,
-                                    ttl_hours=int(os.getenv("ANALYSIS_CACHE_TTL_HOURS", "24"))
-                                )
-                            )
-                            cached_export = asyncio.run(asyncio.wait_for(cached_analysis, timeout=2.0))
-                        except RuntimeError:
-                            # No event loop running, create one
-                            cached_export = asyncio.run(
-                                self.cache_service.repository.get_cached_analysis(
-                                    ticker=holding.ticker,
-                                    asset_class=holding.asset_class,
-                                    ttl_hours=int(os.getenv("ANALYSIS_CACHE_TTL_HOURS", "24"))
-                                )
-                            )
-                        
-                        if cached_export:
-                            # Use cached result
-                            self.logger.info(f"✅ Cache HIT for {holding.ticker} - using cached analysis")
-                            # Convert cached export to DeepAnalysisResult
-                            cached_result = DeepAnalysisResult(
-                                ticker=cached_export.get("ticker", holding.ticker),
-                                asset_class=cached_export.get("asset_class", holding.asset_class),
-                                composite_score=cached_export.get("composite_score", 0.5),
-                                grade=cached_export.get("grade", "C"),
-                                recommendation=cached_export.get("recommendation", "HOLD"),
-                                confidence_level=cached_export.get("confidence", 0.5),
-                                rationale=cached_export.get("rationale", "Cached analysis"),
-                                fundamental_score=cached_export.get("fundamental_score", 0.5),
-                                technical_score=cached_export.get("technical_score", 0.5),
-                                risk_score=cached_export.get("risk_score", 0.5),
-                                risk_details=cached_export.get("risk_details", {}),
-                                fundamental_details=cached_export.get("fundamental_details", {}),
-                                technical_details=cached_export.get("technical_details", {}),
-                                data_freshness_hours=0.0,
-                            )
-                    except Exception as e:
-                        self.logger.warning(f"⚠️ Cache check failed for {holding.ticker}: {e}")
-                        cached_result = None
-                
-                # If not cached, perform fresh analysis
-                if cached_result is None:
-                    self.logger.info(f"🔄 Cache MISS for {holding.ticker} - performing fresh analysis")
-                    
-                    # Extract data for scoring
-                    data = self._extract_holding_data(holding)
+                # Extract data for scoring
+                data = self._extract_holding_data(holding)
 
-                    # Skip if data extraction returned None (ticker unavailable)
-                    if data is None:
-                        self.logger.warning(f"⏭️ Skipping {holding.ticker} - data unavailable")
-                        results["failed_analyses"] += 1
-                        continue
+                # Skip if data extraction returned None (ticker unavailable)
+                if data is None:
+                    self.logger.warning(f"⏭️ Skipping {holding.ticker} - data unavailable")
+                    results["failed_analyses"] += 1
+                    continue
 
-                    # Run pure Python scoring (no AI calls)
-                    analysis_result = self.scorer.calculate_composite_score(ticker=holding.ticker, asset_class=holding.asset_class, data=data)
-                    
-                    # Store in Supabase if available
-                    if self.cache_service:
-                        try:
-                            crew_export = self._create_crew_export(analysis_result, holding)
-                            # Handle event loop properly
-                            try:
-                                loop = asyncio.get_running_loop()
-                                # We're in an async context, schedule as background task
-                                asyncio.create_task(
-                                    self.cache_service.repository.store_analysis(
-                                        ticker=holding.ticker,
-                                        asset_class=holding.asset_class,
-                                        export_data=crew_export
-                                    )
-                                )
-                            except RuntimeError:
-                                # No event loop running, create one
-                                asyncio.run(
-                                    self.cache_service.repository.store_analysis(
-                                        ticker=holding.ticker,
-                                        asset_class=holding.asset_class,
-                                        export_data=crew_export
-                                    )
-                                )
-                            self.logger.info(f"💾 Stored analysis for {holding.ticker} in Supabase")
-                        except Exception as e:
-                            self.logger.warning(f"⚠️ Failed to store analysis in Supabase for {holding.ticker}: {e}")
-                else:
-                    # Use cached result
-                    analysis_result = cached_result
+                # Run pure Python scoring (no AI calls)
+                analysis_result = self.scorer.calculate_composite_score(ticker=holding.ticker, asset_class=holding.asset_class, data=data)
 
                 # Create crew export format
                 crew_export = self._create_crew_export(analysis_result, holding)
@@ -194,8 +96,30 @@ class PortfolioDeepAnalyzer:
                 self.logger.info(f"✅ Analyzed {holding.ticker}: Grade {analysis_result.grade}, Score {analysis_result.composite_score:.3f}")
 
             except Exception as e:
-                self.logger.error(f"❌ Failed to analyze {holding.ticker}: {e}")
-                results["failed_analyses"] += 1
+                # Import CriticalFieldError for specific handling
+                from finwiz.config.critical_fields_config import CriticalFieldError
+
+                # Handle critical field errors specifically
+                if isinstance(e, CriticalFieldError):
+                    self.logger.error(
+                        f"❌ SKIPPING {holding.ticker}: Missing critical fields {e.missing_fields}\n"
+                        f"   Cannot make investment decision without real data.\n"
+                        f"   Recommendation: Check API connectivity and data sources."
+                    )
+                    # Track as skipped, not failed
+                    results["failed_analyses"] += 1
+                    results.setdefault("skipped_holdings", []).append(
+                        {
+                            "ticker": holding.ticker,
+                            "asset_class": holding.asset_class,
+                            "reason": f"Missing critical fields: {', '.join(e.missing_fields)}",
+                            "recommendation": "Verify data sources and retry analysis",
+                        }
+                    )
+                else:
+                    # Other errors
+                    self.logger.error(f"❌ Failed to analyze {holding.ticker}: {e}")
+                    results["failed_analyses"] += 1
 
         # Task 0.20.3: Validate score uniqueness
         self._validate_score_uniqueness(results["deep_analysis_results"])
@@ -213,6 +137,18 @@ class PortfolioDeepAnalyzer:
             "speedup_vs_ai": "10-20x faster",
             "cost_reduction": "100%",
         }
+
+        # Log summary of skipped holdings
+        skipped_holdings = results.get("skipped_holdings", [])
+        if skipped_holdings:
+            self.logger.warning(
+                f"\n⚠️  SKIPPED HOLDINGS SUMMARY:\n"
+                f"   {len(skipped_holdings)} holdings skipped due to missing critical data:\n"
+                + "\n".join(
+                    f"   - {h['ticker']} ({h['asset_class']}): {h['reason']}"
+                    for h in skipped_holdings
+                )
+            )
 
         # Export JSON files (Requirements 0.8-0.12)
         export_info = self._export_json_files(results["json_exports"], session_id)

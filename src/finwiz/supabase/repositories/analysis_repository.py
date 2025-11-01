@@ -6,16 +6,19 @@ Provides async storage and retrieval of analysis results with:
 - Non-blocking background storage
 - Exponential backoff retry logic
 - Strict timeout enforcement (2s reads, 5s writes)
+- Performance monitoring and metrics tracking
 """
 
 import asyncio
 import logging
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from finwiz.supabase.client import SupabaseClient
 from finwiz.supabase.models import AnalysisRecord
+from finwiz.supabase.utils.monitoring import OperationType, PerformanceMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -33,16 +36,22 @@ class AnalysisRepository:
 
     """
 
-    def __init__(self, client: SupabaseClient) -> None:
+    def __init__(
+        self,
+        client: SupabaseClient,
+        performance_monitor: PerformanceMonitor | None = None,
+    ) -> None:
         """
         Initialize analysis repository.
 
         Args:
             client: SupabaseClient instance
+            performance_monitor: Optional performance monitor for metrics tracking
 
         """
         self.client = client
         self.table = "analyses"
+        self.performance_monitor = performance_monitor or PerformanceMonitor()
 
     async def get_cached_analysis(
         self,
@@ -91,20 +100,42 @@ class AnalysisRepository:
                 .execute()
             )
 
+        # Track operation duration
+        start_time = time.time()
+        success = False
+        timeout = False
+
         try:
-            # Execute with 2-second timeout
-            result = await self.client.execute_with_timeout(query, timeout=2.0)
+            # Execute with configured read timeout
+            result = await self.client.execute_with_timeout(query)
 
             if result and result.data:
                 logger.info(f"Cache HIT for {ticker_upper} ({asset_class_lower})")
+                success = True
                 return AnalysisRecord(**result.data[0])
 
             logger.info(f"Cache MISS for {ticker_upper} ({asset_class_lower})")
+            success = True  # Cache miss is still a successful operation
+            return None
+
+        except TimeoutError:
+            logger.error(f"Cache check timed out for {ticker_upper}")
+            timeout = True
             return None
 
         except Exception as e:
             logger.error(f"Cache check failed for {ticker_upper}: {e}")
             return None
+
+        finally:
+            # Record operation metrics
+            duration_ms = (time.time() - start_time) * 1000
+            self.performance_monitor.record_operation(
+                OperationType.CACHE_CHECK,
+                duration_ms,
+                success=success,
+                timeout=timeout,
+            )
 
     async def store_analysis(
         self,
@@ -172,7 +203,7 @@ class AnalysisRepository:
         operation: Any,
         ticker: str,
         asset_class: str,
-        max_retries: int = 3,
+        max_retries: int | None = None,
     ) -> None:
         """
         Store with exponential backoff retry.
@@ -184,19 +215,34 @@ class AnalysisRepository:
             operation: Database operation to execute
             ticker: Ticker symbol (for logging)
             asset_class: Asset class (for logging)
-            max_retries: Maximum number of retry attempts (default: 3)
+            max_retries: Maximum number of retry attempts (default: from client config)
 
         """
+        # Use configured max_retries if not specified
+        if max_retries is None:
+            max_retries = self.client.max_retries
+
+        # Track operation duration
+        start_time = time.time()
+        success = False
+        timeout = False
+            
         for attempt in range(max_retries):
             try:
-                result = await self.client.execute_with_timeout(operation, timeout=5.0)
+                logger.debug(f"Store attempt {attempt + 1}/{max_retries} for {ticker} (timeout: {self.client.write_timeout}s)")
+                result = await self.client.execute_with_timeout(operation, timeout=self.client.write_timeout)
 
                 if result:
                     logger.info(f"Analysis stored successfully for {ticker} ({asset_class})")
-                    return
+                    success = True
+                    break
 
                 # If result is None, operation failed or timed out
                 logger.warning(f"Store attempt {attempt + 1}/{max_retries} returned None for {ticker}")
+
+            except TimeoutError:
+                logger.error(f"Store attempt {attempt + 1}/{max_retries} timed out for {ticker}")
+                timeout = True
 
             except Exception as e:
                 logger.error(f"Store attempt {attempt + 1}/{max_retries} failed for {ticker}: {e}")
@@ -207,15 +253,25 @@ class AnalysisRepository:
                 logger.debug(f"Retrying in {backoff_seconds}s...")
                 await asyncio.sleep(backoff_seconds)
 
+        # Record operation metrics
+        duration_ms = (time.time() - start_time) * 1000
+        self.performance_monitor.record_operation(
+            OperationType.WRITE,
+            duration_ms,
+            success=success,
+            timeout=timeout,
+        )
+
         # All retries exhausted
-        logger.error(f"Failed to store analysis for {ticker} ({asset_class}) after {max_retries} attempts")
+        if not success:
+            logger.error(f"Failed to store analysis for {ticker} ({asset_class}) after {max_retries} attempts")
 
     async def get_by_id(self, analysis_id: str) -> AnalysisRecord | None:
         """
         Get analysis by ID.
 
         Retrieves a specific analysis by its unique identifier.
-        Uses strict 2-second timeout.
+        Uses configured read timeout.
 
         Args:
             analysis_id: Unique analysis identifier (UUID)
@@ -230,19 +286,41 @@ class AnalysisRepository:
             """Query function for execute_with_timeout."""
             return client.table(self.table).select("*").eq("id", analysis_id).limit(1).execute()
 
+        # Track operation duration
+        start_time = time.time()
+        success = False
+        timeout = False
+
         try:
-            result = await self.client.execute_with_timeout(query, timeout=2.0)
+            result = await self.client.execute_with_timeout(query)
 
             if result and result.data:
                 logger.debug(f"Found analysis: {analysis_id}")
+                success = True
                 return AnalysisRecord(**result.data[0])
 
             logger.debug(f"Analysis not found: {analysis_id}")
+            success = True  # Not found is still a successful operation
+            return None
+
+        except TimeoutError:
+            logger.error(f"Fetch timed out for analysis {analysis_id}")
+            timeout = True
             return None
 
         except Exception as e:
             logger.error(f"Failed to fetch analysis {analysis_id}: {e}")
             return None
+
+        finally:
+            # Record operation metrics
+            duration_ms = (time.time() - start_time) * 1000
+            self.performance_monitor.record_operation(
+                OperationType.READ,
+                duration_ms,
+                success=success,
+                timeout=timeout,
+            )
 
     async def get_recent_analyses(
         self,
@@ -253,7 +331,7 @@ class AnalysisRepository:
         Get recent analyses.
 
         Retrieves the most recent analyses, optionally filtered by asset class.
-        Uses strict 2-second timeout.
+        Uses configured read timeout.
 
         Args:
             limit: Maximum number of analyses to return (default: 10)
@@ -274,17 +352,39 @@ class AnalysisRepository:
 
             return q.order("created_at", desc=True).limit(limit).execute()
 
+        # Track operation duration
+        start_time = time.time()
+        success = False
+        timeout = False
+
         try:
-            result = await self.client.execute_with_timeout(query, timeout=2.0)
+            result = await self.client.execute_with_timeout(query)
 
             if result and result.data:
                 analyses = [AnalysisRecord(**record) for record in result.data]
                 logger.info(f"Retrieved {len(analyses)} recent analyses")
+                success = True
                 return analyses
 
             logger.info("No recent analyses found")
+            success = True  # Empty result is still a successful operation
+            return []
+
+        except TimeoutError:
+            logger.error("Fetch recent analyses timed out")
+            timeout = True
             return []
 
         except Exception as e:
             logger.error(f"Failed to fetch recent analyses: {e}")
             return []
+
+        finally:
+            # Record operation metrics
+            duration_ms = (time.time() - start_time) * 1000
+            self.performance_monitor.record_operation(
+                OperationType.READ,
+                duration_ms,
+                success=success,
+                timeout=timeout,
+            )

@@ -43,7 +43,7 @@ graph TB
 src/finwiz/
 ├── supabase/
 │   ├── __init__.py
-│   ├── client.py                    # Supabase client with connection pooling
+│   ├── client.py                    # Singleton client with connection pooling
 │   ├── circuit_breaker.py           # Circuit breaker implementation
 │   ├── models.py                    # Pydantic models for database schemas
 │   ├── repositories/
@@ -60,36 +60,156 @@ src/finwiz/
 │   └── utils/
 │       ├── __init__.py
 │       ├── async_tasks.py           # Background task management
-│       └── monitoring.py            # Performance monitoring
+│       └── monitoring.py            # Performance and pool monitoring
 ```
+
+### Connection Pooling Architecture
+
+```mermaid
+graph TB
+    subgraph "Application Layer"
+        A[FinWiz Flow] --> B[Repository Layer]
+        B --> C[SupabaseClient Singleton]
+    end
+    
+    subgraph "Connection Management"
+        C --> D{Pool Initialized?}
+        D -->|No| E[Lazy Initialize Pool]
+        D -->|Yes| F[asyncpg Connection Pool]
+        E --> F
+        F --> G{Connection Available?}
+        G -->|Yes| H[Acquire Connection]
+        G -->|No| I[Wait up to 5s]
+        I -->|Timeout| J[Circuit Breaker]
+        I -->|Available| H
+    end
+    
+    subgraph "Supabase Infrastructure"
+        H --> K[Supavisor Session Mode]
+        K --> L[PostgreSQL + pgvector]
+    end
+    
+    H --> M[Execute Query]
+    M --> N[Release Connection]
+    N --> F
+    
+    style C fill:#FFD700
+    style F fill:#90EE90
+    style K fill:#87CEEB
+    style J fill:#FFB6C1
+```
+
+**Connection Flow**:
+
+1. **Application requests database operation** → Repository layer
+2. **Repository calls SupabaseClient** → Singleton instance (only one per app)
+3. **Client checks pool initialization** → Lazy init on first use
+4. **Pool acquisition** → asyncpg pool with 2-10 connections
+5. **Connection wait** → Up to 5 seconds if pool exhausted
+6. **Supavisor routing** → Session Mode for persistent connections
+7. **Query execution** → With timeout enforcement
+8. **Connection release** → Back to pool for reuse
+
+**Key Benefits**:
+
+- **Singleton pattern** prevents multiple client instances
+- **Lazy initialization** avoids blocking during app startup
+- **Connection reuse** reduces overhead of creating new connections
+- **Supavisor Session Mode** provides server-side pooling for IPv4/IPv6 support
+- **Application-side pooling** provides additional connection management
+- **Circuit breaker** prevents cascading failures
 
 ## Components and Interfaces
 
 ### 1. Supabase Client (`client.py`)
 
-**Purpose**: Manage Supabase connection with circuit breaker protection
+**Purpose**: Manage Supabase connection with singleton pattern, connection pooling, and circuit breaker protection
 
 **Interface**:
+
 ```python
 from typing import Optional
+import asyncpg
 from supabase import Client, create_client
 from finwiz.supabase.circuit_breaker import CircuitBreaker
 
 class SupabaseClient:
-    """Supabase client with circuit breaker protection."""
+    """Singleton Supabase client with connection pooling and circuit breaker protection."""
+    
+    _instance: Optional['SupabaseClient'] = None
+    _lock = asyncio.Lock()
+    
+    def __new__(cls):
+        """Ensure only one instance exists (singleton pattern)."""
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
     
     def __init__(self):
+        """Initialize client with connection pooling."""
+        if hasattr(self, '_initialized'):
+            return
+        
         self.url: str = os.getenv("SUPABASE_URL")
         self.key: str = os.getenv("SUPABASE_KEY")
+        self.db_url: Optional[str] = os.getenv("SUPABASE_DB_URL")  # Session Mode connection string
         self.enabled: bool = os.getenv("SUPABASE_ENABLED", "true").lower() == "true"
-        self.client: Optional[Client] = None
+        
+        # API client (for REST/GraphQL operations)
+        self.api_client: Optional[Client] = None
+        
+        # Database connection pool (for direct SQL operations)
+        self.db_pool: Optional[asyncpg.Pool] = None
+        
+        # Circuit breaker
         self.circuit_breaker: CircuitBreaker = CircuitBreaker(
             failure_threshold=3,
             recovery_timeout=300  # 5 minutes
         )
+        
+        # Pool configuration
+        self.pool_min_size = int(os.getenv("SUPABASE_POOL_MIN_SIZE", "2"))
+        self.pool_max_size = int(os.getenv("SUPABASE_POOL_MAX_SIZE", "10"))
+        self.pool_idle_timeout = int(os.getenv("SUPABASE_POOL_IDLE_TIMEOUT", "300"))
+        
+        self._initialized = True
     
-    def get_client(self) -> Optional[Client]:
-        """Get Supabase client if available and circuit is closed."""
+    async def initialize_pool(self):
+        """Initialize connection pool lazily on first use."""
+        if self.db_pool is not None:
+            return
+        
+        if not self.enabled or not self.db_url:
+            logger.info("Database connection pool disabled (using API client only)")
+            return
+        
+        async with self._lock:
+            if self.db_pool is not None:
+                return
+            
+            try:
+                # Create asyncpg connection pool with Supavisor Session Mode
+                self.db_pool = await asyncpg.create_pool(
+                    dsn=self.db_url,
+                    min_size=self.pool_min_size,
+                    max_size=self.pool_max_size,
+                    max_inactive_connection_lifetime=self.pool_idle_timeout,
+                    command_timeout=5.0,  # 5 second timeout for commands
+                    ssl='require'  # Enforce SSL
+                )
+                logger.info(
+                    f"Connection pool initialized: "
+                    f"min={self.pool_min_size}, max={self.pool_max_size}, "
+                    f"idle_timeout={self.pool_idle_timeout}s"
+                )
+                self.circuit_breaker.record_success()
+            except Exception as e:
+                self.circuit_breaker.record_failure()
+                logger.error(f"Failed to initialize connection pool: {e}")
+                self.db_pool = None
+    
+    def get_api_client(self) -> Optional[Client]:
+        """Get Supabase API client if available and circuit is closed."""
         if not self.enabled:
             return None
         
@@ -97,52 +217,134 @@ class SupabaseClient:
             logger.warning("Circuit breaker is open, skipping database operation")
             return None
         
-        if not self.client:
+        if not self.api_client:
             try:
-                self.client = create_client(self.url, self.key)
+                self.api_client = create_client(self.url, self.key)
                 self.circuit_breaker.record_success()
             except Exception as e:
                 self.circuit_breaker.record_failure()
-                logger.error(f"Failed to connect to Supabase: {e}")
+                logger.error(f"Failed to connect to Supabase API: {e}")
                 return None
         
-        return self.client
+        return self.api_client
     
-    def execute_with_timeout(
-        self, 
-        operation: callable, 
-        timeout: float = 2.0
-    ) -> Optional[Any]:
-        """Execute operation with timeout and circuit breaker protection."""
-        client = self.get_client()
-        if not client:
+    async def get_connection(self) -> Optional[asyncpg.Connection]:
+        """Get database connection from pool."""
+        if not self.enabled or self.circuit_breaker.is_open():
+            return None
+        
+        # Initialize pool on first use (lazy initialization)
+        await self.initialize_pool()
+        
+        if not self.db_pool:
             return None
         
         try:
-            result = asyncio.wait_for(operation(client), timeout=timeout)
-            self.circuit_breaker.record_success()
-            return result
+            # Acquire connection with timeout
+            conn = await asyncio.wait_for(
+                self.db_pool.acquire(),
+                timeout=5.0  # Wait up to 5 seconds for available connection
+            )
+            return conn
         except asyncio.TimeoutError:
-            logger.warning(f"Database operation timed out after {timeout}s")
+            logger.warning("Connection pool exhausted, timeout waiting for connection")
             self.circuit_breaker.record_failure()
             return None
         except Exception as e:
-            logger.error(f"Database operation failed: {e}")
+            logger.error(f"Failed to acquire connection: {e}")
             self.circuit_breaker.record_failure()
             return None
+    
+    async def release_connection(self, conn: asyncpg.Connection):
+        """Release connection back to pool."""
+        if self.db_pool and conn:
+            await self.db_pool.release(conn)
+    
+    async def execute_with_timeout(
+        self, 
+        operation: callable, 
+        timeout: float = 2.0,
+        use_pool: bool = False
+    ) -> Optional[Any]:
+        """Execute operation with timeout and circuit breaker protection."""
+        if use_pool:
+            # Use connection pool for direct SQL operations
+            conn = await self.get_connection()
+            if not conn:
+                return None
+            
+            try:
+                result = await asyncio.wait_for(operation(conn), timeout=timeout)
+                self.circuit_breaker.record_success()
+                return result
+            except asyncio.TimeoutError:
+                logger.warning(f"Database operation timed out after {timeout}s")
+                self.circuit_breaker.record_failure()
+                return None
+            except Exception as e:
+                logger.error(f"Database operation failed: {e}")
+                self.circuit_breaker.record_failure()
+                return None
+            finally:
+                await self.release_connection(conn)
+        else:
+            # Use API client for REST/GraphQL operations
+            client = self.get_api_client()
+            if not client:
+                return None
+            
+            try:
+                result = await asyncio.wait_for(operation(client), timeout=timeout)
+                self.circuit_breaker.record_success()
+                return result
+            except asyncio.TimeoutError:
+                logger.warning(f"Database operation timed out after {timeout}s")
+                self.circuit_breaker.record_failure()
+                return None
+            except Exception as e:
+                logger.error(f"Database operation failed: {e}")
+                self.circuit_breaker.record_failure()
+                return None
+    
+    async def close(self):
+        """Close connection pool gracefully."""
+        if self.db_pool:
+            await self.db_pool.close()
+            logger.info("Connection pool closed")
+    
+    async def get_pool_stats(self) -> dict:
+        """Get connection pool statistics for monitoring."""
+        if not self.db_pool:
+            return {"status": "disabled"}
+        
+        return {
+            "status": "active",
+            "size": self.db_pool.get_size(),
+            "free_size": self.db_pool.get_idle_size(),
+            "min_size": self.pool_min_size,
+            "max_size": self.pool_max_size,
+            "idle_timeout": self.pool_idle_timeout
+        }
 ```
 
 **Key Features**:
-- Connection pooling with lazy initialization
-- Circuit breaker integration
-- Timeout enforcement (default 2s for reads)
-- Graceful failure handling
+
+- **Singleton pattern**: Only one client instance per application lifecycle
+- **Connection pooling**: asyncpg pool with configurable min/max connections
+- **Lazy initialization**: Pool created on first use, not during app startup
+- **Supavisor Session Mode**: Uses Session Mode connection string for persistent deployment
+- **Circuit breaker integration**: Automatic failure detection and recovery
+- **Timeout enforcement**: Configurable timeouts for reads (2s) and writes (5s)
+- **Graceful failure handling**: Falls back to API client if pool unavailable
+- **SSL enforcement**: All connections use SSL encryption
+- **Pool monitoring**: Statistics for observability
 
 ### 2. Circuit Breaker (`circuit_breaker.py`)
 
 **Purpose**: Prevent cascading failures from database issues
 
 **Interface**:
+
 ```python
 from enum import Enum
 from datetime import datetime, timedelta
@@ -196,6 +398,7 @@ class CircuitBreaker:
 ```
 
 **Key Features**:
+
 - Three states: CLOSED, OPEN, HALF_OPEN
 - Automatic recovery attempt after timeout
 - Configurable failure threshold
@@ -206,6 +409,7 @@ class CircuitBreaker:
 **Purpose**: CRUD operations for analysis storage and retrieval
 
 **Interface**:
+
 ```python
 from typing import Optional, List
 from datetime import datetime, timedelta
@@ -290,6 +494,7 @@ class AnalysisRepository:
 ```
 
 **Key Features**:
+
 - Async storage with background tasks
 - Cache retrieval with strict timeout
 - Exponential backoff retry for writes
@@ -300,6 +505,7 @@ class AnalysisRepository:
 **Purpose**: Vector embedding storage and semantic search
 
 **Interface**:
+
 ```python
 from typing import List, Tuple
 from finwiz.supabase.services.embedding_service import EmbeddingService
@@ -370,6 +576,7 @@ class VectorRepository:
 ```
 
 **Key Features**:
+
 - OpenAI text-embedding-3-small integration
 - pgvector similarity search
 - Configurable similarity threshold
@@ -380,6 +587,7 @@ class VectorRepository:
 **Purpose**: High-level caching logic with fallback
 
 **Interface**:
+
 ```python
 from typing import Optional
 from finwiz.schemas.crew_exports import CrewExport
@@ -419,6 +627,7 @@ class CacheService:
 ```
 
 **Key Features**:
+
 - Transparent caching layer
 - Non-blocking storage
 - Configurable TTL
@@ -429,6 +638,7 @@ class CacheService:
 **Purpose**: Retrieve historical context for AI agents
 
 **Interface**:
+
 ```python
 from typing import List, Optional
 from finwiz.supabase.repositories.vector_repository import VectorRepository
@@ -477,6 +687,7 @@ class RAGService:
 ```
 
 **Key Features**:
+
 - Vector similarity search
 - Top-k retrieval (default 3)
 - Graceful failure handling
@@ -778,6 +989,15 @@ SUPABASE_ENABLED=true
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your-anon-key
 
+# Database Connection (Supavisor Session Mode)
+# Format: postgres://postgres.PROJECT:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+SUPABASE_DB_URL=postgres://postgres.your-project:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres
+
+# Connection Pool Configuration
+SUPABASE_POOL_MIN_SIZE=2
+SUPABASE_POOL_MAX_SIZE=10
+SUPABASE_POOL_IDLE_TIMEOUT=300
+
 # Cache Configuration
 ANALYSIS_CACHE_TTL_HOURS=24
 
@@ -792,11 +1012,21 @@ DATABASE_WRITE_TIMEOUT=5.0
 
 ### Database Setup
 
-1. Create Supabase project
-2. Enable pgvector extension
-3. Run schema migration SQL
-4. Configure row-level security policies
-5. Set up connection pooling
+1. **Create Supabase project** in desired region
+2. **Get connection strings** from Supabase dashboard:
+   - Click "Connect" button
+   - Select "Session Mode" for SUPABASE_DB_URL
+   - Copy API URL and anon key for SUPABASE_URL and SUPABASE_KEY
+3. **Enable pgvector extension**:
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS vector;
+   ```
+4. **Run schema migration SQL** (see Data Models section)
+5. **Configure row-level security policies** for future multi-user support
+6. **Verify connection pooling**:
+   - Supavisor Session Mode provides server-side pooling
+   - Application-side pooling (asyncpg) provides additional connection management
+   - Combined approach optimizes for persistent deployment architecture
 
 ### Monitoring
 
@@ -808,48 +1038,191 @@ DATABASE_WRITE_TIMEOUT=5.0
 - database_operation_duration: Time for database operations
 - background_task_success_rate: Success rate of async writes
 - embedding_generation_duration: Time to generate embeddings
+
+# Connection pool metrics
+- pool_size: Current number of connections in pool
+- pool_free_size: Number of idle connections available
+- pool_utilization: Percentage of pool in use
+- connection_wait_time: Time waiting for available connection
+- connection_acquisition_failures: Failed attempts to acquire connection
+- connection_lifetime: Average connection duration
+```
+
+**Monitoring Implementation**:
+
+```python
+# In finwiz/supabase/utils/monitoring.py
+
+class PoolMonitor:
+    """Monitor connection pool health and performance."""
+    
+    def __init__(self, client: SupabaseClient):
+        self.client = client
+        self.metrics = {
+            "acquisitions": 0,
+            "releases": 0,
+            "timeouts": 0,
+            "failures": 0
+        }
+    
+    async def log_pool_stats(self):
+        """Log current pool statistics."""
+        stats = await self.client.get_pool_stats()
+        
+        if stats["status"] == "active":
+            utilization = (
+                (stats["size"] - stats["free_size"]) / stats["max_size"] * 100
+            )
+            
+            logger.info(
+                f"Connection Pool Stats: "
+                f"size={stats['size']}/{stats['max_size']}, "
+                f"free={stats['free_size']}, "
+                f"utilization={utilization:.1f}%"
+            )
+            
+            # Alert if utilization is high
+            if utilization > 80:
+                logger.warning(
+                    f"Connection pool utilization high: {utilization:.1f}%"
+                )
 ```
 
 ## Migration Strategy
 
 ### Phase 1: Infrastructure Setup
-1. Create Supabase project and database schema
-2. Implement core client and circuit breaker
-3. Add environment variable configuration
-4. Deploy with SUPABASE_ENABLED=false
+
+1. **Create Supabase project** and obtain connection strings
+   - Get Supavisor Session Mode connection string (port 5432)
+   - Get API URL and anon key
+   - Verify SSL is enabled
+2. **Implement singleton client** with connection pooling
+   - asyncpg pool with min=2, max=10 connections
+   - Lazy initialization pattern
+   - Circuit breaker integration
+3. **Add environment variable configuration**
+   - SUPABASE_DB_URL (Session Mode connection string)
+   - Pool configuration variables
+   - Timeout settings
+4. **Deploy with SUPABASE_ENABLED=false** for initial testing
+5. **Run database schema migration** to create tables and indexes
 
 ### Phase 2: Storage Implementation
+
 1. Implement analysis repository
 2. Add background storage tasks
 3. Test with small portfolio (< 10 holdings)
 4. Monitor performance impact
 
 ### Phase 3: Caching Implementation
+
 1. Implement cache service
 2. Integrate with flow orchestrator
 3. Test cache hit/miss scenarios
 4. Measure cost savings
 
 ### Phase 4: Vector Search
+
 1. Implement embedding service
 2. Add vector repository
 3. Migrate existing analyses
 4. Test semantic search
 
 ### Phase 5: RAG Integration
+
 1. Implement RAG service
 2. Integrate with crew task descriptions
 3. Test with historical context
 4. Measure recommendation quality
 
 ### Phase 6: Full Rollout
+
 1. Enable for all users (SUPABASE_ENABLED=true)
 2. Monitor performance and reliability
 3. Optimize based on metrics
 4. Document best practices
 
+## Troubleshooting
+
+### Connection Pool Issues
+
+**Problem**: Connection pool exhausted (timeout waiting for connection)
+
+**Symptoms**:
+- Logs show "Connection pool exhausted, timeout waiting for connection"
+- High pool utilization (>80%)
+- Slow database operations
+
+**Solutions**:
+1. **Increase pool size**: Adjust SUPABASE_POOL_MAX_SIZE (default 10)
+2. **Check for connection leaks**: Ensure all connections are released
+3. **Reduce connection lifetime**: Lower SUPABASE_POOL_IDLE_TIMEOUT
+4. **Monitor pool metrics**: Use `get_pool_stats()` to track utilization
+
+**Problem**: Timeout during initialization
+
+**Symptoms**:
+- Application hangs during startup
+- "test_connectivity() timed out" errors
+- Blocking event loop
+
+**Solutions**:
+1. **Use lazy initialization**: Pool created on first use, not during startup
+2. **Remove blocking connectivity tests**: Test on first actual operation
+3. **Use async/await patterns**: Ensure all database calls are async
+4. **Check network connectivity**: Verify Supabase URL is accessible
+
+**Problem**: Circuit breaker opens frequently
+
+**Symptoms**:
+- "Circuit breaker is open" warnings
+- Database operations skipped
+- Falling back to file-based storage
+
+**Solutions**:
+1. **Check Supabase status**: Verify service is operational
+2. **Verify connection string**: Ensure Session Mode format is correct
+3. **Check SSL configuration**: Verify SSL is enabled and working
+4. **Review timeout settings**: May need to increase for slow networks
+5. **Monitor pool health**: Check for connection acquisition failures
+
+### Performance Issues
+
+**Problem**: Slow database operations
+
+**Symptoms**:
+- Operations exceed timeout thresholds
+- High latency in logs
+- Poor cache hit rates
+
+**Solutions**:
+1. **Use connection pooling**: Ensure pool is properly configured
+2. **Optimize queries**: Add indexes for frequently queried fields
+3. **Reduce payload size**: Limit JSON export size
+4. **Use async operations**: Ensure all I/O is non-blocking
+5. **Monitor pool utilization**: Check if pool is undersized
+
+### Connection String Issues
+
+**Problem**: Invalid connection string format
+
+**Symptoms**:
+- "Failed to initialize connection pool" errors
+- SSL connection failures
+- Authentication errors
+
+**Solutions**:
+1. **Verify Session Mode format**: Should use port 5432
+   ```
+   postgres://postgres.PROJECT:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+   ```
+2. **Check SSL requirement**: Ensure `ssl='require'` in connection
+3. **Verify credentials**: Check password is correct and not URL-encoded
+4. **Test connection manually**: Use psql to verify connection string works
+
 ---
 
-**Version**: 1.0  
+**Version**: 2.0  
 **Created**: 2025-10-30  
-**Status**: Design Complete
+**Last Updated**: 2025-11-01  
+**Status**: Design Complete - Connection Pooling Enhanced

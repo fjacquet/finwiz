@@ -225,7 +225,7 @@ class PortfolioHoldingsProcessor:
         self.processing_results = []
 
         # Get concurrency limit from environment
-        parallel_limit = int(os.getenv("PORTFOLIO_PARALLEL_LIMIT", "10"))
+        parallel_limit = int(os.getenv("FINWIZ_PARALLEL_LIMIT", "10"))
         logger.info(f"Using parallel processing with limit of {parallel_limit} concurrent holdings")
 
         # Create semaphore to limit concurrency

@@ -78,7 +78,12 @@ plugins:
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
       lang: en
-  - mermaid2:
+  - awesome-pages  # Automatic navigation from .pages files
+  - git-revision-date-localized:  # Show last update dates from git
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
+  - mermaid2:  # Mermaid diagram support
       arguments:
         theme: |
           ^(JSON.parse(__md_get("__palette").index == 1)) ?
@@ -153,31 +158,7 @@ extra:
   version:
     provider: mike
 
-# Page tree
-nav:
-  - Home: index.md
-  - Getting Started: 
-    - Overview: tutorials/getting_started.md
-    - First Analysis: tutorials/first_analysis.md
-    - Portfolio Analysis: tutorials/portfolio_analysis.md
-  - Developer Guide:
-    - Overview: DEVELOPER_GUIDE.md
-    - Architecture: ARCHITECTURE.md
-    - API Reference: API_REFERENCE.md
-    - Testing: how-to/testing.md
-  - HTML Integration:
-    - Overview: HTML_INTEGRATION_GUIDE.md
-    - Templates: how-to/template_configuration.md
-  - How-to Guides:
-    - Setup Environment: how-to/setup_environment.md
-    - Configure API Keys: how-to/configure_api_keys.md
-    - Deploy to GitHub Pages: how-to/github-pages-mkdocs.md
-    - Performance Optimization: how-to/performance_optimization.md
-    - Troubleshooting: how-to/troubleshooting.md
-  - Reference:
-    - CLI Commands: reference/cli_commands.md
-    - Configuration: reference/configuration.md
-    - Environment Variables: reference/environment_variables.md
+
 
 # Extra CSS and JavaScript
 extra_css:
