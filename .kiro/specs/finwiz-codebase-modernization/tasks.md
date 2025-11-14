@@ -39,7 +39,7 @@
 
 ## Phase 1: Complete Testing Modernization (Foundation for Safe Refactoring)
 
-- [-] 1. Convert all remaining unittest.mock to pytest-mock (61 test files)
+- [ ] 1. Convert all remaining unittest.mock to pytest-mock (61 test files)
   - [x] 1.1 Convert integration test files (21 files)
     - Convert test_portfolio_monitoring_integration.py, test_portfolio_rebalancing_integration.py
     - Convert test_portfolio_rebalancing_end_to_end.py, test_a_plus_monitoring_integration.py
@@ -140,6 +140,285 @@
     - Update coding standards documentation
     - **Phase 2 Complete: All HTML generation uses bs4 ✓**
     - _Requirements: 4_
+
+## Phase 2A: Detailed Code Refactoring (High Priority - From Roadmap)
+
+This phase addresses specific architectural improvements identified in the refactoring roadmap, focusing on the most critical files with design pattern issues.
+
+- [ ] 2A. High-priority refactoring tasks (DeepAnalysisScorer and APlusExtractor)
+  - [ ] 2A.1 Split DeepAnalysisScorer God Class (1,301 lines → 4 focused classes)
+    - Create `src/finwiz/scoring/fundamental_scorer.py` (~300 lines)
+      - Extract stock/ETF/crypto fundamental scoring logic
+      - Move ROE, debt, growth, expense ratio calculations
+      - Create unit tests for FundamentalScorer
+    - Create `src/finwiz/scoring/technical_scorer.py` (~200 lines)
+      - Extract technical analysis scoring logic
+      - Move RSI, MACD, trend analysis calculations
+      - Create unit tests for TechnicalScorer
+    - Create `src/finwiz/scoring/risk_scorer.py` (~200 lines)
+      - Extract risk assessment scoring logic
+      - Move volatility, drawdown, beta calculations
+      - Create unit tests for RiskScorer
+    - Refactor `src/finwiz/scoring/deep_analysis_scorer.py` as orchestrator (~400 lines)
+      - Coordinate between component scorers
+      - Handle result aggregation
+      - Maintain integration tests for orchestrator
+    - Verify identical outputs before/after refactoring
+    - Run: `uv run pytest tests/unit/scoring/ tests/integration/scoring/`
+    - _Requirements: 1_
+
+  - [ ] 2A.2 Implement Strategy Pattern for Asset-Specific Logic
+    - Create `src/finwiz/scoring/asset_analyzers/` directory
+    - Create `src/finwiz/scoring/asset_analyzers/base.py` (~50 lines)
+      - Define `AssetAnalyzer` abstract base class
+      - Define interface for fundamental scoring
+      - Define interface for metric extraction
+      - Define interface for data validation
+    - Create `src/finwiz/scoring/asset_analyzers/stock_analyzer.py` (~150 lines)
+      - Implement StockAnalyzer strategy
+      - ROE, debt-to-equity, revenue growth logic
+      - Stock-specific metric extraction
+    - Create `src/finwiz/scoring/asset_analyzers/etf_analyzer.py` (~150 lines)
+      - Implement ETFAnalyzer strategy
+      - Expense ratio, tracking error logic
+      - ETF-specific metric extraction
+    - Create `src/finwiz/scoring/asset_analyzers/crypto_analyzer.py` (~150 lines)
+      - Implement CryptoAnalyzer strategy
+      - Market cap, volume, age logic
+      - Crypto-specific metric extraction
+    - Create `src/finwiz/scoring/asset_analyzers/factory.py` (~50 lines)
+      - Create AnalyzerFactory class
+      - Map asset_class to analyzer implementation
+      - Handle unknown asset classes gracefully
+    - Update DeepAnalysisScorer to use strategy pattern
+    - Unit test each analyzer independently
+    - Test factory with valid/invalid asset classes
+    - Integration tests for end-to-end flow
+    - Run: `uv run pytest tests/unit/scoring/asset_analyzers/`
+    - _Requirements: 1_
+
+  - [ ] 2A.3 Extract Scoring Thresholds to Configuration
+    - Create `src/finwiz/scoring/scoring_thresholds.py` (~100 lines)
+      - Create ScoringThresholds dataclass
+      - ROE thresholds (excellent, very good, good, acceptable)
+      - Debt thresholds (very low, low, moderate, high)
+      - Growth thresholds
+      - Expense ratio thresholds
+      - Volatility thresholds
+      - All other scoring thresholds
+    - Update all scoring methods to use thresholds
+      - Replace hardcoded values with threshold references
+      - Ensure backward compatibility
+    - Create unit tests for threshold configuration
+    - Test with default thresholds
+    - Test with custom thresholds
+    - Verify score consistency
+    - Run: `uv run pytest tests/unit/scoring/`
+    - _Requirements: 1_
+
+  - [ ] 2A.4 Eliminate Duplicate JSON Parsing in APlusExtractor
+    - Create `_load_and_parse_json()` helper method in APlusExtractor (~50 lines)
+      - Handle file existence checks
+      - Handle empty file cases
+      - Clean JSON content
+      - Parse and validate structure
+    - Refactor `_extract_stock_opportunities()` to use helper
+      - Reduce from ~100 lines to ~30 lines
+    - Refactor `_extract_etf_opportunities()` to use helper
+      - Reduce from ~100 lines to ~30 lines
+    - Refactor `_extract_crypto_opportunities()` to use helper
+      - Reduce from ~100 lines to ~30 lines
+    - Test with valid JSON files
+    - Test with missing files
+    - Test with empty files
+    - Test with malformed JSON
+    - Verify identical output before/after
+    - Run: `uv run pytest tests/unit/integration/test_aplus_extractor.py`
+    - _Requirements: 1_
+
+  - [ ] 2A.5 Apply Template Method Pattern to Opportunity Extraction
+    - Create `src/finwiz/integration/opportunity_extractors/` directory
+    - Create `src/finwiz/integration/opportunity_extractors/base.py` (~80 lines)
+      - Create OpportunityExtractor abstract base class
+      - Define template method `extract()`
+      - Define abstract methods: `_should_include()`, `_build_opportunity()`
+    - Create `src/finwiz/integration/opportunity_extractors/stock_extractor.py` (~60 lines)
+      - Implement StockOpportunityExtractor
+      - Stock-specific inclusion logic
+      - Stock-specific opportunity building
+    - Create `src/finwiz/integration/opportunity_extractors/etf_extractor.py` (~60 lines)
+      - Implement ETFOpportunityExtractor
+      - ETF-specific inclusion logic
+      - ETF-specific opportunity building
+    - Create `src/finwiz/integration/opportunity_extractors/crypto_extractor.py` (~60 lines)
+      - Implement CryptoOpportunityExtractor
+      - Crypto-specific inclusion logic
+      - Crypto-specific opportunity building
+    - Update `APlusDataExtractor` to use extractors (~30 lines)
+      - Instantiate appropriate extractor
+      - Call extract method
+    - Test each extractor independently
+    - Verify identical output for each asset type
+    - Test with edge cases (missing fields, invalid data)
+    - Run: `uv run pytest tests/unit/integration/opportunity_extractors/`
+    - _Requirements: 1_
+
+  - [ ] 2A.6 Verify Phase 2A completion
+    - Run full test suite: `uv run pytest`
+    - Run linting: `ruff check . && ruff format .`
+    - Verify DeepAnalysisScorer reduced from 1,301 to ~400 lines
+    - Verify APlusExtractor reduced by ~200 lines
+    - Verify all tests pass
+    - Verify no performance regression
+    - **Phase 2A Complete: Critical refactoring tasks completed ✓**
+    - _Requirements: 1_
+
+## Phase 2B: Medium Priority Refactoring (From Roadmap)
+
+- [ ] 2B. Medium-priority refactoring tasks
+  - [ ] 2B.1 Break Down Long Methods
+    - Refactor `calculate_composite_score()` in DeepAnalysisScorer (100+ lines)
+      - Extract `_initialize_tracking()` method
+      - Extract `_validate_critical_fields()` method
+      - Extract `_calculate_component_scores()` method
+      - Extract `_compute_weighted_score()` method
+      - Extract `_build_result()` method
+      - Unit test each extracted method
+      - Integration test for full flow
+      - Verify identical behavior
+    - Refactor `create_detailed_analysis()` in DeepAnalysisScorer (150+ lines)
+      - Consider extracting data quality checks
+      - Maintain existing helper methods
+    - Refactor `_build_rationale()` in DeepAnalysisScorer (80+ lines)
+      - Extract asset-specific rationale builders
+      - Use strategy pattern from Phase 2A
+    - Run: `uv run pytest tests/unit/scoring/`
+    - _Requirements: 1_
+
+  - [ ] 2B.2 Extract Repeated Scoring Pattern
+    - Create `src/finwiz/scoring/scoring_utils.py` (~100 lines)
+      - Create `calculate_threshold_score()` utility function
+      - Accept value, thresholds list, reverse flag
+      - Return score between 0.0 and 1.0
+    - Update ROE scoring to use utility
+    - Update debt scoring to use utility
+    - Update growth scoring to use utility
+    - Update expense ratio scoring to use utility
+    - Update all other threshold-based scoring
+    - Unit test utility function with various inputs
+    - Test reverse scoring (lower is better)
+    - Verify identical scores before/after
+    - Run: `uv run pytest tests/unit/scoring/`
+    - _Requirements: 1_
+
+  - [ ] 2B.3 Create Base Class for Async Feedback Tools
+    - Create `src/finwiz/tools/base_tools.py` (~100 lines)
+      - Create AsyncFeedbackTool base class
+      - Implement `_run()` with event loop handling
+      - Define abstract `_arun()` method
+    - Refactor FeedbackCollectionTool to inherit base
+    - Refactor FeedbackRetrievalTool to inherit base
+    - Refactor FeedbackAnalysisTool to inherit base
+    - Refactor FeedbackReportTool to inherit base
+    - Refactor FeedbackExportTool to inherit base
+    - Test base class with mock implementations
+    - Test each tool independently
+    - Verify async behavior in different contexts
+    - Run: `uv run pytest tests/unit/tools/`
+    - _Requirements: 1_
+
+  - [ ] 2B.4 Standardize Error Handling Across Tools
+    - Create `src/finwiz/tools/tool_result.py` (~50 lines)
+      - Create ToolResult dataclass
+      - Fields: success (bool), data (dict), error (str | None)
+      - Implement to_dict() method
+    - Update all tools to use ToolResult
+      - FeedbackCollectionTool
+      - FeedbackRetrievalTool
+      - FeedbackAnalysisTool
+      - FeedbackReportTool
+      - FeedbackExportTool
+      - All other tools
+    - Test success cases
+    - Test error cases
+    - Verify consistent response format
+    - Run: `uv run pytest tests/unit/tools/`
+    - _Requirements: 1_
+
+  - [ ] 2B.5 Extract Nested Conditionals to Guard Clauses
+    - Create `_extract_moat_info()` helper in APlusExtractor (~30 lines)
+      - Handle string type
+      - Handle dict type
+      - Handle other types
+    - Create `_extract_diversification_info()` helper (~30 lines)
+      - Handle various data structures
+      - Use guard clauses
+    - Refactor opportunity building methods
+      - Use extracted helpers
+      - Reduce nesting depth
+    - Test with various data structures
+    - Test with missing fields
+    - Test with invalid types
+    - Run: `uv run pytest tests/unit/integration/test_aplus_extractor.py`
+    - _Requirements: 1_
+
+  - [ ] 2B.6 Verify Phase 2B completion
+    - Run full test suite: `uv run pytest`
+    - Run linting: `ruff check . && ruff format .`
+    - Verify all methods under 50 lines
+    - Verify consistent error handling
+    - Verify all tests pass
+    - **Phase 2B Complete: Medium-priority refactoring completed ✓**
+    - _Requirements: 1_
+
+## Phase 2C: Low Priority Improvements (From Roadmap)
+
+- [ ] 2C. Low-priority improvements
+  - [ ] 2C.1 Improve Timezone Handling
+    - Create `src/finwiz/utils/datetime_utils.py` (~50 lines)
+      - Create `normalize_to_naive()` utility function
+      - Handle aware datetimes
+      - Handle naive datetimes
+      - Convert to UTC
+    - Update `validate_inputs()` in data_processors.py to use utility
+    - Update other datetime handling code
+    - Test with aware datetimes
+    - Test with naive datetimes
+    - Test with various timezones
+    - Run: `uv run pytest tests/unit/utils/`
+    - _Requirements: 1_
+
+  - [ ] 2C.2 Extract Regex Patterns to Constants
+    - Extract patterns to module constants in verify_html_reports.py
+      - TICKER_PATTERN
+      - TICKER_TITLE_PATTERN
+      - NUMERIC_PATTERN
+      - GRADE_PATTERN
+    - Extract patterns to module constants in generate_html_reports.py
+    - Update code to use constants
+    - Add documentation for patterns
+    - Verify identical matching behavior
+    - Test with various HTML structures
+    - Run: `uv run pytest tests/unit/scripts/`
+    - _Requirements: 1_
+
+  - [ ] 2C.3 Add Missing Type Hints
+    - Audit all functions for missing type hints
+    - Add return type annotations
+    - Add parameter type annotations
+    - Run mypy in strict mode
+    - Verify no type errors
+    - Test with various inputs
+    - Run: `mypy src/finwiz --strict`
+    - _Requirements: 1_
+
+  - [ ] 2C.4 Verify Phase 2C completion
+    - Run full test suite: `uv run pytest`
+    - Run linting: `ruff check . && ruff format .`
+    - Run type checking: `mypy src/finwiz --strict`
+    - Verify all improvements complete
+    - **Phase 2C Complete: Low-priority improvements completed ✓**
+    - _Requirements: 1_
 
 ## Phase 3: Split Large Files (>600 lines - 27 files)
 
@@ -486,7 +765,7 @@
     - **Phase 7 Complete: Full modernization achieved ✓**
     - _Requirements: 1, 2, 3, 4_
 
-## Group 8: Remaining Test Conversions (Based on Audit)
+## Phase 8: Remaining Test Conversions (Based on Audit)
 
 - [ ] 8. Convert all remaining unittest.mock tests to pytest-mock
   - [ ] 8.1 Process remaining unit tests
@@ -509,7 +788,7 @@
     - Update tracking document with completion status
     - _Requirements: 3_
 
-## Group 9: CrewAI Pattern Compliance (Based on Audit)
+## Phase 9: CrewAI Pattern Compliance (Based on Audit)
 
 - [ ] 9. Migrate all non-compliant crews to standard patterns
   - [ ] 9.1 Convert crews missing decorator patterns
@@ -526,7 +805,7 @@
     - Update tracking document with completion status
     - _Requirements: 2_
 
-## Group 10: Final Validation & Quality Assurance
+## Phase 10: Final Validation & Quality Assurance
 
 - [ ] 10. Comprehensive validation and quality assurance
   - [ ] 10.1 Complete test suite validation

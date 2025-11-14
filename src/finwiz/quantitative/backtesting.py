@@ -113,6 +113,14 @@ class BacktestingEngine:
             if data.empty:
                 raise ValueError(f"No data available for {symbol}")
 
+            # Check if we have enough data for the strategy
+            min_data_points = strategy_params.get('long_period', strategy_params.get('period', 50)) + 10
+            if len(data) < min_data_points:
+                raise ValueError(
+                    f"Insufficient data for {symbol}: got {len(data)} rows, "
+                    f"need at least {min_data_points} for strategy parameters"
+                )
+
             # Convert to Backtrader data feed
             bt_data = create_backtrader_datafeed(data, symbol)
             self.cerebro.adddata(bt_data)

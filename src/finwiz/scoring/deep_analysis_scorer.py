@@ -28,12 +28,14 @@ class DeepAnalysisScorer:
     - 30% risk assessment (volatility, drawdown, beta)
     """
 
-    # Grade thresholds based on composite score
-    GRADE_THRESHOLDS = {0.85: "A+", 0.75: "A", 0.65: "B", 0.55: "C", 0.45: "D", 0.0: "F"}
+    # Grade thresholds based on composite score (MORE DISCRIMINATING)
+    # Changed from lenient scale (B at 65%) to stricter scale (B at 70%)
+    # This ensures only truly exceptional investments get A+ grades
+    GRADE_THRESHOLDS = {0.90: "A+", 0.80: "A", 0.70: "B", 0.60: "C", 0.50: "D", 0.0: "F"}
 
-    # Recommendation thresholds
-    BUY_THRESHOLD = 0.70  # A- or better
-    SELL_THRESHOLD = 0.50  # Below C
+    # Recommendation thresholds (adjusted for new scale)
+    BUY_THRESHOLD = 0.80  # A or better (raised from 0.70)
+    SELL_THRESHOLD = 0.60  # Below C (raised from 0.50)
 
     def __init__(self) -> None:
         """Initialize the scoring engine."""

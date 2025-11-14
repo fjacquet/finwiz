@@ -11,7 +11,7 @@ Provides async storage and retrieval of portfolio snapshots with:
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from finwiz.supabase.client import SupabaseClient
@@ -67,7 +67,6 @@ class PortfolioRepository:
         """
         # Use provided snapshot_date or current time
         if snapshot_date is None:
-            from datetime import timezone
             snapshot_date = datetime.now(timezone.utc)
 
         logger.debug(

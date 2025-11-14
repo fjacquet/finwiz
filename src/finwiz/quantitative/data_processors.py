@@ -61,7 +61,14 @@ class DataProcessor:
         now_naive = datetime.now()
 
         if start_naive >= end_naive:
-            raise ValueError("Start date must be before end date")
+            # Add debugging info to help diagnose the issue
+            self.logger.error(
+                f"Date validation failed for {symbol}: "
+                f"start_date={start_date} (naive: {start_naive}), "
+                f"end_date={end_date} (naive: {end_naive}), "
+                f"start >= end: {start_naive >= end_naive}"
+            )
+            raise ValueError(f"Start date must be before end date (start: {start_naive}, end: {end_naive})")
 
         if end_naive > now_naive:
             raise ValueError("End date cannot be in the future")

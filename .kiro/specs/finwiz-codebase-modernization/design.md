@@ -73,6 +73,209 @@ class PerplexityLogger:           # Logging utilities (50-100 lines)
 - **Composition over Inheritance**: Use dependency injection for shared functionality
 - **Utility Extraction**: Move helper functions to separate modules
 
+#### Priority Refactoring: DeepAnalysisScorer (1,301 lines)
+
+**Current State**: God class with 30+ methods handling all scoring logic
+
+**Target State**: 4 focused classes with clear responsibilities
+
+```python
+# NEW: FundamentalScorer (~300 lines)
+class FundamentalScorer:
+    """Handles fundamental analysis scoring for all asset classes."""
+    
+    def calculate_stock_score(self, data: dict) -> tuple[float, dict]:
+        """Calculate fundamental score for stocks (ROE, debt, growth)."""
+        
+    def calculate_etf_score(self, data: dict) -> tuple[float, dict]:
+        """Calculate fundamental score for ETFs (expense ratio, tracking error)."""
+        
+    def calculate_crypto_score(self, data: dict) -> tuple[float, dict]:
+        """Calculate fundamental score for crypto (market cap, volume, age)."""
+
+# NEW: TechnicalScorer (~200 lines)
+class TechnicalScorer:
+    """Handles technical analysis scoring."""
+    
+    def calculate_technical_score(self, data: dict) -> tuple[float, dict]:
+        """Calculate technical score (RSI, MACD, trends)."""
+
+# NEW: RiskScorer (~200 lines)
+class RiskScorer:
+    """Handles risk assessment scoring."""
+    
+    def calculate_risk_score(self, data: dict) -> tuple[float, dict]:
+        """Calculate risk score (volatility, drawdown, beta)."""
+
+# REFACTORED: DeepAnalysisScorer (~400 lines)
+class DeepAnalysisScorer:
+    """Orchestrates scoring components and aggregates results."""
+    
+    def __init__(self):
+        self.fundamental_scorer = FundamentalScorer()
+        self.technical_scorer = TechnicalScorer()
+        self.risk_scorer = RiskScorer()
+    
+    def calculate_composite_score(self, ticker: str, asset_class: str, data: dict):
+        """Coordinate scoring and aggregate results."""
+        fundamental = self.fundamental_scorer.calculate_score(asset_class, data)
+        technical = self.technical_scorer.calculate_technical_score(data)
+        risk = self.risk_scorer.calculate_risk_score(data)
+        return self._aggregate_scores(fundamental, technical, risk)
+```
+
+**Benefits**:
+
+- Single Responsibility Principle compliance
+- Easier to test individual components
+- Clearer code organization
+- Reduced cognitive load
+- Each class under 400 lines
+
+#### Strategy Pattern for Asset-Specific Logic
+
+**Problem**: Repeated `if asset_class == "stock"` conditionals in 8+ methods
+
+**Solution**: Strategy pattern with factory
+
+```python
+# NEW: Asset Analyzer Strategy Pattern
+from abc import ABC, abstractmethod
+
+class AssetAnalyzer(ABC):
+    """Abstract base class for asset-specific analysis."""
+    
+    @abstractmethod
+    def calculate_fundamental_score(self, data: dict) -> tuple[float, dict]:
+        """Calculate fundamental score for this asset type."""
+        
+    @abstractmethod
+    def extract_metrics(self, data: dict) -> dict:
+        """Extract asset-specific metrics."""
+        
+    @abstractmethod
+    def validate_data(self, data: dict) -> bool:
+        """Validate asset-specific data requirements."""
+
+class StockAnalyzer(AssetAnalyzer):
+    """Stock-specific analysis logic."""
+    
+    def calculate_fundamental_score(self, data: dict) -> tuple[float, dict]:
+        roe = self._safe_get_float(data, "roe", 0.0)
+        debt = self._safe_get_float(data, "debt_to_equity", 0.0)
+        growth = self._safe_get_float(data, "revenue_growth", 0.0)
+        # Stock-specific scoring logic
+        return score, details
+
+class ETFAnalyzer(AssetAnalyzer):
+    """ETF-specific analysis logic."""
+    
+    def calculate_fundamental_score(self, data: dict) -> tuple[float, dict]:
+        expense = self._safe_get_float(data, "expense_ratio", 1.0)
+        tracking = self._safe_get_float(data, "tracking_error", 0.0)
+        # ETF-specific scoring logic
+        return score, details
+
+class CryptoAnalyzer(AssetAnalyzer):
+    """Crypto-specific analysis logic."""
+    
+    def calculate_fundamental_score(self, data: dict) -> tuple[float, dict]:
+        market_cap = self._safe_get_float(data, "market_cap", 0.0)
+        volume = self._safe_get_float(data, "volume_24h", 0.0)
+        # Crypto-specific scoring logic
+        return score, details
+
+class AnalyzerFactory:
+    """Factory for creating asset-specific analyzers."""
+    
+    @staticmethod
+    def get_analyzer(asset_class: str) -> AssetAnalyzer:
+        analyzers = {
+            "stock": StockAnalyzer,
+            "etf": ETFAnalyzer,
+            "crypto": CryptoAnalyzer
+        }
+        analyzer_class = analyzers.get(asset_class.lower())
+        if not analyzer_class:
+            raise ValueError(f"Unknown asset class: {asset_class}")
+        return analyzer_class()
+
+# USAGE in DeepAnalysisScorer
+def calculate_fundamental_score(self, asset_class: str, data: dict):
+    analyzer = AnalyzerFactory.get_analyzer(asset_class)
+    return analyzer.calculate_fundamental_score(data)
+```
+
+**Benefits**:
+
+- Eliminates 200+ lines of duplicate conditional logic
+- Easy to add new asset classes
+- Clearer separation of concerns
+- Improved testability
+
+#### Configuration Extraction Pattern
+
+**Problem**: Magic numbers scattered across 15+ methods
+
+**Solution**: Centralized configuration dataclass
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class ScoringThresholds:
+    """Centralized scoring thresholds configuration."""
+    
+    # ROE thresholds
+    roe_excellent: float = 0.20
+    roe_very_good: float = 0.15
+    roe_good: float = 0.10
+    roe_acceptable: float = 0.05
+    
+    # Debt thresholds
+    debt_very_low: float = 0.2
+    debt_low: float = 0.5
+    debt_moderate: float = 1.0
+    debt_high: float = 2.0
+    
+    # Growth thresholds
+    growth_excellent: float = 0.20
+    growth_good: float = 0.10
+    growth_acceptable: float = 0.05
+    
+    # Expense ratio thresholds (ETF)
+    expense_excellent: float = 0.001
+    expense_good: float = 0.0025
+    expense_acceptable: float = 0.005
+    
+    # Volatility thresholds
+    volatility_low: float = 0.15
+    volatility_moderate: float = 0.25
+    volatility_high: float = 0.40
+
+# USAGE
+thresholds = ScoringThresholds()
+
+def score_roe(self, roe: float) -> float:
+    """Score ROE using configured thresholds."""
+    if roe >= thresholds.roe_excellent:
+        return 1.0
+    elif roe >= thresholds.roe_very_good:
+        return 0.8
+    elif roe >= thresholds.roe_good:
+        return 0.6
+    elif roe >= thresholds.roe_acceptable:
+        return 0.4
+    return 0.2
+```
+
+**Benefits**:
+
+- Single source of truth for thresholds
+- Easy to tune scoring parameters
+- Better documentation of scoring logic
+- Supports experimentation and A/B testing
+
 ### 2. CrewAI Pattern Standardization
 
 #### Standard Crew Structure
@@ -175,6 +378,187 @@ def generate_report(title: str, data: dict) -> str:
 - Proper UTF-8 encoding handling
 - Well-formed HTML structure guaranteed
 - Better code readability and maintainability
+
+#### Template Method Pattern for Opportunity Extraction
+
+**Problem**: 90% identical logic across 3 extraction methods in APlusExtractor
+
+**Solution**: Template Method pattern with base class
+
+```python
+from abc import ABC, abstractmethod
+
+class OpportunityExtractor(ABC):
+    """Base class for extracting opportunities using Template Method pattern."""
+    
+    def extract(self, json_data: dict) -> list[dict]:
+        """Template method defining the extraction algorithm."""
+        opportunities = []
+        
+        # Load and parse JSON (common logic)
+        data = self._load_and_parse_json(json_data)
+        
+        # Extract opportunities (asset-specific)
+        for item in data:
+            if self._should_include(item):
+                opportunity = self._build_opportunity(item)
+                opportunities.append(opportunity)
+        
+        return opportunities
+    
+    def _load_and_parse_json(self, json_data: dict) -> list[dict]:
+        """Common JSON loading and parsing logic."""
+        # Shared implementation
+        pass
+    
+    @abstractmethod
+    def _should_include(self, item: dict) -> bool:
+        """Determine if item should be included (asset-specific)."""
+        pass
+    
+    @abstractmethod
+    def _build_opportunity(self, item: dict) -> dict:
+        """Build opportunity object (asset-specific)."""
+        pass
+
+class StockOpportunityExtractor(OpportunityExtractor):
+    """Extract stock opportunities."""
+    
+    def _should_include(self, item: dict) -> bool:
+        """Stock-specific inclusion logic."""
+        return (
+            item.get("grade") == "A+" and
+            item.get("asset_class") == "stock" and
+            item.get("composite_score", 0) >= 0.85
+        )
+    
+    def _build_opportunity(self, item: dict) -> dict:
+        """Build stock opportunity."""
+        return {
+            "ticker": item["ticker"],
+            "name": item["name"],
+            "grade": item["grade"],
+            "score": item["composite_score"],
+            "sector": item.get("sector", "Unknown")
+        }
+
+class ETFOpportunityExtractor(OpportunityExtractor):
+    """Extract ETF opportunities."""
+    
+    def _should_include(self, item: dict) -> bool:
+        """ETF-specific inclusion logic."""
+        return (
+            item.get("grade") == "A+" and
+            item.get("asset_class") == "etf" and
+            item.get("expense_ratio", 1.0) <= 0.15
+        )
+    
+    def _build_opportunity(self, item: dict) -> dict:
+        """Build ETF opportunity."""
+        return {
+            "ticker": item["ticker"],
+            "name": item["name"],
+            "grade": item["grade"],
+            "expense_ratio": item.get("expense_ratio"),
+            "tracking_error": item.get("tracking_error")
+        }
+
+class CryptoOpportunityExtractor(OpportunityExtractor):
+    """Extract crypto opportunities."""
+    
+    def _should_include(self, item: dict) -> bool:
+        """Crypto-specific inclusion logic."""
+        return (
+            item.get("grade") == "A+" and
+            item.get("asset_class") == "crypto" and
+            item.get("market_cap", 0) >= 10_000_000_000
+        )
+    
+    def _build_opportunity(self, item: dict) -> dict:
+        """Build crypto opportunity."""
+        return {
+            "ticker": item["ticker"],
+            "name": item["name"],
+            "grade": item["grade"],
+            "market_cap": item.get("market_cap"),
+            "volume_24h": item.get("volume_24h")
+        }
+
+# USAGE in APlusDataExtractor
+def extract_opportunities(self, asset_class: str, json_data: dict) -> list[dict]:
+    """Extract opportunities using appropriate extractor."""
+    extractors = {
+        "stock": StockOpportunityExtractor,
+        "etf": ETFOpportunityExtractor,
+        "crypto": CryptoOpportunityExtractor
+    }
+    extractor_class = extractors.get(asset_class.lower())
+    if not extractor_class:
+        raise ValueError(f"Unknown asset class: {asset_class}")
+    
+    extractor = extractor_class()
+    return extractor.extract(json_data)
+```
+
+**Benefits**:
+
+- Eliminates ~200 lines of duplicate extraction logic
+- Easy to add new asset types
+- Follows Open/Closed Principle
+- Clear separation of common vs specific logic
+
+#### Utility Function Extraction Pattern
+
+**Problem**: Same threshold-based scoring logic repeated in 10+ places
+
+**Solution**: Reusable utility function
+
+```python
+def calculate_threshold_score(
+    value: float,
+    thresholds: list[tuple[float, float]],
+    reverse: bool = False
+) -> float:
+    """
+    Calculate score based on threshold ranges.
+    
+    Args:
+        value: The value to score
+        thresholds: List of (threshold, score) tuples, sorted ascending
+        reverse: If True, lower values get higher scores
+    
+    Returns:
+        Score between 0.0 and 1.0
+    
+    Example:
+        thresholds = [(0.05, 0.4), (0.10, 0.6), (0.15, 0.8), (0.20, 1.0)]
+        score = calculate_threshold_score(0.18, thresholds)  # Returns 0.8
+    """
+    if reverse:
+        thresholds = [(t, s) for t, s in reversed(thresholds)]
+        value = -value
+    
+    for threshold, score in thresholds:
+        if value >= threshold:
+            continue
+        return score
+    
+    return thresholds[-1][1]  # Return highest score if above all thresholds
+
+# USAGE
+roe_thresholds = [(0.05, 0.4), (0.10, 0.6), (0.15, 0.8), (0.20, 1.0)]
+roe_score = calculate_threshold_score(roe_value, roe_thresholds)
+
+debt_thresholds = [(0.2, 1.0), (0.5, 0.8), (1.0, 0.6), (2.0, 0.4)]
+debt_score = calculate_threshold_score(debt_value, debt_thresholds, reverse=True)
+```
+
+**Benefits**:
+
+- Eliminates 100+ lines of duplicate logic
+- Consistent scoring behavior
+- Easier to modify scoring algorithm
+- Better testability
 
 ## Data Models
 
