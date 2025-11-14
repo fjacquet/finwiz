@@ -1,3 +1,7 @@
 {
-    "kiroAgent.configureMCP": "Enabled"
+    "kiroAgent.configureMCP": "Enabled",
+    "sonarlint.connectedMode.project": {
+        "connectionId": "fjacquet",
+        "projectKey": "fjacquet_finwiz"
+    }
 }

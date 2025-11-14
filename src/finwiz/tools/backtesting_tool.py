@@ -156,9 +156,21 @@ class BacktestingTool(BaseTool):
             strategy_class = self._get_strategy_class(input_data.strategy)
             strategy_params = {**input_data.strategy_params}
 
-            # Set initial capital in strategy params if not provided
-            if "initial_capital" not in strategy_params:
-                strategy_params["initial_capital"] = input_data.initial_capital
+            # Map common parameter name variations to standard names
+            # This handles cases where external code uses different naming conventions
+            param_mappings = {
+                "short_window": "short_period",
+                "long_window": "long_period",
+                "window": "period",
+            }
+            
+            for old_name, new_name in param_mappings.items():
+                if old_name in strategy_params and new_name not in strategy_params:
+                    strategy_params[new_name] = strategy_params.pop(old_name)
+                    logger.info(f"Mapped strategy parameter '{old_name}' to '{new_name}'")
+
+            # Note: initial_capital is set on the Cerebro broker, not passed to strategy
+            # The backtesting engine handles this via the config
 
             backtest_result = backtesting_engine.run_strategy_backtest(
                 strategy_class=strategy_class,

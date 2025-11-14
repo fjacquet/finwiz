@@ -41,7 +41,16 @@ class FeedbackCollectionTool(BaseTool):
 
     def _run(self, **kwargs: Any) -> dict[str, Any]:
         """Collect user feedback synchronously."""
-        return asyncio.run(self._arun(**kwargs))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No event loop running, safe to use asyncio.run()
+            return asyncio.run(self._arun(**kwargs))
+        else:
+            # Event loop already running, use run_coroutine_threadsafe or nest_asyncio
+            import nest_asyncio
+            nest_asyncio.apply()
+            return asyncio.run(self._arun(**kwargs))
 
     async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Collect user feedback on A+ recommendations."""
@@ -101,7 +110,14 @@ class PerformanceTrackingTool(BaseTool):
 
     def _run(self, **kwargs: Any) -> dict[str, Any]:
         """Track performance synchronously."""
-        return asyncio.run(self._arun(**kwargs))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self._arun(**kwargs))
+        else:
+            import nest_asyncio
+            nest_asyncio.apply()
+            return asyncio.run(self._arun(**kwargs))
 
     async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Track performance outcomes of A+ recommendations."""
@@ -177,7 +193,14 @@ class CriteriaOptimizationTool(BaseTool):
 
     def _run(self, **kwargs: Any) -> dict[str, Any]:
         """Optimize criteria synchronously."""
-        return asyncio.run(self._arun(**kwargs))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self._arun(**kwargs))
+        else:
+            import nest_asyncio
+            nest_asyncio.apply()
+            return asyncio.run(self._arun(**kwargs))
 
     async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Optimize A+ criteria based on feedback learning."""
@@ -234,7 +257,14 @@ class FeedbackAnalysisTool(BaseTool):
 
     def _run(self, days_back: int = 90) -> dict[str, Any]:
         """Analyze feedback synchronously."""
-        return asyncio.run(self._arun(days_back=days_back))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self._arun(days_back=days_back))
+        else:
+            import nest_asyncio
+            nest_asyncio.apply()
+            return asyncio.run(self._arun(days_back=days_back))
 
     async def _arun(self, days_back: int = 90) -> dict[str, Any]:
         """Analyze feedback patterns and generate insights."""
@@ -303,7 +333,14 @@ class LearningMetricsTool(BaseTool):
 
     def _run(self, days_back: int = 30) -> dict[str, Any]:
         """Get learning metrics synchronously."""
-        return asyncio.run(self._arun(days_back=days_back))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self._arun(days_back=days_back))
+        else:
+            import nest_asyncio
+            nest_asyncio.apply()
+            return asyncio.run(self._arun(days_back=days_back))
 
     async def _arun(self, days_back: int = 30) -> dict[str, Any]:
         """Get comprehensive learning system metrics."""

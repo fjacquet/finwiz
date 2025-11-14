@@ -387,30 +387,39 @@ class DeepAnalysisScorer:
         self.logger.info(f"ETF {self._current_ticker}: expense_score = {expense_score}")
 
         # Tracking error - lower is better (optional field)
-        tracking_error = self._safe_get_float(data, "tracking_error", None)
-        tracking_available = tracking_error is not None
+        # Use None as default to properly detect missing data
+        tracking_error_raw = data.get("tracking_error")
+        tracking_available = tracking_error_raw is not None
         
         if tracking_available:
-            # Log the actual value for debugging
-            self.logger.info(f"ETF {self._current_ticker}: tracking_error = {tracking_error} (raw value)")
-            
-            # Thresholds for tracking error (as decimal: 0.002 = 0.20%)
-            if tracking_error <= 0.002:  # 0.20% or less (excellent)
-                tracking_score = 1.0
-            elif tracking_error <= 0.005:  # 0.20-0.50% (very good)
-                tracking_score = 0.8
-            elif tracking_error <= 0.01:  # 0.50-1.00% (good)
-                tracking_score = 0.6
-            elif tracking_error <= 0.02:  # 1.00-2.00% (acceptable)
-                tracking_score = 0.4
-            else:  # >2.00% (high/poor)
-                tracking_score = 0.2
-            
-            self.logger.info(f"ETF {self._current_ticker}: tracking_score = {tracking_score}")
+            try:
+                tracking_error = float(tracking_error_raw)
+                # Log the actual value for debugging
+                self.logger.info(f"ETF {self._current_ticker}: tracking_error = {tracking_error} (raw value)")
+                
+                # Thresholds for tracking error (as decimal: 0.002 = 0.20%)
+                if tracking_error <= 0.002:  # 0.20% or less (excellent)
+                    tracking_score = 1.0
+                elif tracking_error <= 0.005:  # 0.20-0.50% (very good)
+                    tracking_score = 0.8
+                elif tracking_error <= 0.01:  # 0.50-1.00% (good)
+                    tracking_score = 0.6
+                elif tracking_error <= 0.02:  # 1.00-2.00% (acceptable)
+                    tracking_score = 0.4
+                else:  # >2.00% (high/poor)
+                    tracking_score = 0.2
+                
+                self.logger.info(f"ETF {self._current_ticker}: tracking_score = {tracking_score}")
+            except (ValueError, TypeError) as e:
+                # Invalid tracking error value - use neutral score
+                tracking_score = 0.5
+                tracking_available = False
+                self.logger.warning(f"⚠️ ETF {self._current_ticker}: Invalid tracking_error value '{tracking_error_raw}': {e}, using neutral score")
         else:
             # Tracking error not available - use neutral score
+            tracking_error = None
             tracking_score = 0.5  # Neutral score when data unavailable
-            self.logger.warning(f"⚠️ ETF {self._current_ticker}: tracking_error not available, using neutral score")
+            self.logger.info(f"ETF {self._current_ticker}: tracking_error not available, using neutral score")
 
         details["tracking_error"] = tracking_error
         details["tracking_error_available"] = tracking_available

@@ -410,6 +410,8 @@ class OptimizationInput(BaseModel):
     optimization_method: str = Field(default="mean_variance", description="Optimization method: 'mean_variance', 'risk_parity', 'equal_weight'")
     constraints: dict[str, Any] | None = Field(None, description="Additional constraints")
     target_return: float | None = Field(None, description="Target return for optimization")
+    max_weight: float = Field(default=0.4, ge=0.0, le=1.0, description="Maximum weight per asset (0.0-1.0)")
+    min_weight: float = Field(default=0.0, ge=0.0, le=1.0, description="Minimum weight per asset (0.0-1.0)")
 
 
 # Portfolio Rebalancing Tool Inputs

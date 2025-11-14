@@ -3798,11 +3798,30 @@ class FinwizFlow(Flow[FinwizState]):
                 else:
                     portfolio_review = portfolio_review_data
 
-                # Extract and transform deep analysis results
-                # The state contains dict[str, DeepAnalysisResult] but report generator expects
-                # a summary dict with successful_analyses, failed_analyses, total_holdings
-                raw_deep_analysis = state_dict.get("deep_analysis_results", {})
-
+                # 🔧 CRITICAL FIX: Read deep analysis results from JSON files on disk (NOT memory)
+                # This ensures report matches the persisted data and provides single source of truth
+                logger.info("🔧 Reading deep analysis results from JSON files on disk...")
+                
+                raw_deep_analysis = {}
+                session_id = self.state.session_id or "default"
+                
+                # Read JSON files from disk for each asset class
+                for asset_class in ["stock", "etf", "crypto"]:
+                    asset_dir = Path(f"output/{asset_class}")
+                    if asset_dir.exists():
+                        for json_file in asset_dir.glob("*_default.json"):
+                            try:
+                                with open(json_file, "r", encoding="utf-8") as f:
+                                    data = json.load(f)
+                                    ticker = data.get("ticker")
+                                    if ticker:
+                                        raw_deep_analysis[ticker] = data
+                                        logger.debug(f"✅ Loaded {ticker} from {json_file}: Score={data.get('composite_score'):.3f}, Grade={data.get('grade')}")
+                            except Exception as e:
+                                logger.warning(f"⚠️ Failed to load {json_file}: {e}")
+                
+                logger.info(f"✅ Loaded {len(raw_deep_analysis)} deep analysis results from JSON files")
+                
                 # Transform to expected format
                 deep_analysis_results = None
                 if raw_deep_analysis:
@@ -3843,6 +3862,37 @@ class FinwizFlow(Flow[FinwizState]):
                     }
 
                     logger.info(f"Transformed deep analysis: {successful_count} successful, {failed_count} failed, {total_holdings} total")
+
+                # 🔧 CRITICAL FIX: Merge deep analysis results into portfolio review BEFORE generating report
+                # This fixes the bug where all holdings show 0.750/Grade B instead of real scores
+                if deep_analysis_results and "results_by_ticker" in deep_analysis_results:
+                    logger.info("🔧 Merging deep analysis results into portfolio review...")
+                    merged_count = 0
+                    for holding in portfolio_review.holdings:
+                        ticker = holding.ticker
+                        if ticker in deep_analysis_results["results_by_ticker"]:
+                            deep_result = deep_analysis_results["results_by_ticker"][ticker]
+                            
+                            # Update holding with deep analysis results
+                            holding.composite_score = deep_result["composite_score"]
+                            holding.grade = deep_result["grade"]
+                            holding.decision = deep_result["recommendation"]
+                            holding.recommended_action = f"{deep_result['recommendation']} - Analyse approfondie Python"
+                            
+                            # Update rationale with real analysis
+                            holding.rationale_bullets = [
+                                f"📊 Score composite: {deep_result['composite_score']:.3f}",
+                                f"🎯 Note: {deep_result['grade']}",
+                                f"💡 Recommandation: {deep_result['recommendation']}",
+                                "✅ Analyse approfondie Python (déterministe)",
+                                f"📈 Classe d'actif: {deep_result['asset_class']}"
+                            ]
+                            
+                            merged_count += 1
+                    
+                    logger.info(f"✅ Merged {merged_count} deep analysis results into portfolio review")
+                else:
+                    logger.warning("⚠️ No deep analysis results to merge - report will show quick validation scores")
 
                 # Generate Python-based report (Requirements 0.22, 0.23, 0.24, 0.25, 0.26)
                 session_id = self.state.session_id or "default"

@@ -168,6 +168,12 @@ class APlusDataExtractor:
 
         try:
             content = stock_file.read_text(encoding="utf-8")
+            
+            # Check if file is empty
+            if not content or content.strip() == "":
+                self.logger.warning(f"Stock A+ file is empty: {stock_file}")
+                return []
+            
             # Fix Python-style numeric literals (underscores) which are invalid in JSON
             content = self._clean_json_content(content)
             try:
@@ -183,8 +189,16 @@ class APlusDataExtractor:
                 raise
             opportunities = []
 
-            # Extract from candidates array (actual structure)
-            candidates = data.get("candidates", [])
+            # Handle different data structures
+            # Case 1: data is already a list of candidates
+            if isinstance(data, list):
+                candidates = data
+            # Case 2: data is a dict with "candidates" key
+            elif isinstance(data, dict):
+                candidates = data.get("candidates", [])
+            else:
+                self.logger.error(f"Unexpected data type in {stock_file.name}: {type(data)}")
+                return []
 
             for idx, candidate in enumerate(candidates):
                 # Only include A+ and A grades
@@ -211,9 +225,15 @@ class APlusDataExtractor:
 
                 # Extract moat analysis as rationale
                 moat_analysis = candidate.get("moat_analysis", {})
-                moat_type = moat_analysis.get("moat_type", "")
-                moat_strength = moat_analysis.get("moat_strength", "")
-                rationale = [f"Moat: {moat_type}", f"Strength: {moat_strength}"] if moat_type else []
+                # Handle case where moat_analysis might be a string instead of dict
+                if isinstance(moat_analysis, str):
+                    moat_type = ""
+                    moat_strength = ""
+                    rationale = [moat_analysis] if moat_analysis else []
+                else:
+                    moat_type = moat_analysis.get("moat_type", "")
+                    moat_strength = moat_analysis.get("moat_strength", "")
+                    rationale = [f"Moat: {moat_type}", f"Strength: {moat_strength}"] if moat_type else []
 
                 # Extract key metrics from fundamentals
                 key_metrics = {
@@ -231,7 +251,7 @@ class APlusDataExtractor:
                     "composite_score": composite_score,
                     "confidence": confidence,
                     "risk_score": risk_score,
-                    "allocation_recommendation": moat_analysis.get("competitive_advantage", ""),
+                    "allocation_recommendation": moat_analysis.get("competitive_advantage", "") if isinstance(moat_analysis, dict) else "",
                     "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
                     "rationale": rationale,
                     "key_metrics": key_metrics,
@@ -256,13 +276,27 @@ class APlusDataExtractor:
 
         try:
             content = etf_file.read_text(encoding="utf-8")
+            
+            # Check if file is empty
+            if not content or content.strip() == "":
+                self.logger.warning(f"ETF A+ file is empty: {etf_file}")
+                return []
+            
             # Fix Python-style numeric literals (underscores) which are invalid in JSON
             content = self._clean_json_content(content)
             data = json.loads(content)
             opportunities = []
 
-            # Extract from candidates array (actual structure)
-            candidates = data.get("candidates", [])
+            # Handle different data structures
+            # Case 1: data is already a list of candidates
+            if isinstance(data, list):
+                candidates = data
+            # Case 2: data is a dict with "candidates" key
+            elif isinstance(data, dict):
+                candidates = data.get("candidates", [])
+            else:
+                self.logger.error(f"Unexpected data type in {etf_file.name}: {type(data)}")
+                return []
 
             for idx, candidate in enumerate(candidates):
                 # Only include A+ and A grades
@@ -297,9 +331,15 @@ class APlusDataExtractor:
 
                 # Extract diversification as rationale
                 diversification = candidate.get("diversification", {})
-                holdings_count = diversification.get("holdings_count", 0)
-                top_10_concentration = diversification.get("top_10_concentration_pct", 0)
-                rationale = [f"Holdings: {holdings_count}", f"Top 10 concentration: {top_10_concentration}%"]
+                # Handle case where diversification might be a string instead of dict
+                if isinstance(diversification, str):
+                    holdings_count = 0
+                    top_10_concentration = 0
+                    rationale = [diversification] if diversification else []
+                else:
+                    holdings_count = diversification.get("holdings_count", 0)
+                    top_10_concentration = diversification.get("top_10_concentration_pct", 0)
+                    rationale = [f"Holdings: {holdings_count}", f"Top 10 concentration: {top_10_concentration}%"]
 
                 # Build key metrics
                 key_metrics = {
@@ -318,7 +358,7 @@ class APlusDataExtractor:
                     "composite_score": composite_score,
                     "confidence": confidence,
                     "risk_score": risk_score,
-                    "allocation_recommendation": diversification.get("sector_breakdown", ""),
+                    "allocation_recommendation": diversification.get("sector_breakdown", "") if isinstance(diversification, dict) else "",
                     "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
                     "rationale": rationale,
                     "key_metrics": key_metrics,
@@ -343,13 +383,27 @@ class APlusDataExtractor:
 
         try:
             content = crypto_file.read_text(encoding="utf-8")
+            
+            # Check if file is empty
+            if not content or content.strip() == "":
+                self.logger.warning(f"Crypto A+ file is empty: {crypto_file}")
+                return []
+            
             # Fix Python-style numeric literals (underscores) which are invalid in JSON
             content = self._clean_json_content(content)
             data = json.loads(content)
             opportunities = []
 
-            # Extract from candidates array (actual structure)
-            candidates = data.get("candidates", [])
+            # Handle different data structures
+            # Case 1: data is already a list of candidates
+            if isinstance(data, list):
+                candidates = data
+            # Case 2: data is a dict with "candidates" key
+            elif isinstance(data, dict):
+                candidates = data.get("candidates", [])
+            else:
+                self.logger.error(f"Unexpected data type in {crypto_file.name}: {type(data)}")
+                return []
 
             for idx, candidate in enumerate(candidates):
                 # Only include A+ and A grades
@@ -377,9 +431,15 @@ class APlusDataExtractor:
 
                 # Extract technology as rationale
                 technology = candidate.get("technology", {})
-                consensus = technology.get("consensus_mechanism", "")
-                use_case = technology.get("primary_use_case", "")
-                rationale = [f"Consensus: {consensus}", f"Use case: {use_case}"] if consensus else []
+                # Handle case where technology might be a string instead of dict
+                if isinstance(technology, str):
+                    consensus = ""
+                    use_case = ""
+                    rationale = [technology] if technology else []
+                else:
+                    consensus = technology.get("consensus_mechanism", "")
+                    use_case = technology.get("primary_use_case", "")
+                    rationale = [f"Consensus: {consensus}", f"Use case: {use_case}"] if consensus else []
 
                 # Build key metrics
                 key_metrics = {
@@ -396,7 +456,7 @@ class APlusDataExtractor:
                     "composite_score": composite_score,
                     "confidence": confidence,
                     "risk_score": risk_score,
-                    "allocation_recommendation": technology.get("competitive_advantage", ""),
+                    "allocation_recommendation": technology.get("competitive_advantage", "") if isinstance(technology, dict) else "",
                     "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
                     "rationale": rationale,
                     "key_metrics": key_metrics,

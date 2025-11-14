@@ -54,10 +54,16 @@ class DataProcessor:
         if not symbol or not symbol.strip():
             raise ValueError("Symbol cannot be empty")
 
-        if start_date >= end_date:
+        # Normalize datetimes to timezone-naive for comparison
+        # This handles cases where input dates might be timezone-aware
+        start_naive = start_date.replace(tzinfo=None) if start_date.tzinfo else start_date
+        end_naive = end_date.replace(tzinfo=None) if end_date.tzinfo else end_date
+        now_naive = datetime.now()
+
+        if start_naive >= end_naive:
             raise ValueError("Start date must be before end date")
 
-        if end_date > datetime.now():
+        if end_naive > now_naive:
             raise ValueError("End date cannot be in the future")
 
         valid_intervals = ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
