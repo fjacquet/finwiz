@@ -89,6 +89,85 @@ class APlusDataExtractor:
 
         return content
 
+    def _load_and_parse_json(self, file_path: Path, asset_type: str) -> list[dict[str, Any]]:
+        """
+        Load and parse JSON file with comprehensive error handling.
+
+        This helper method consolidates duplicate JSON parsing logic across
+        stock, ETF, and crypto extraction methods.
+
+        Args:
+            file_path: Path to the JSON file to load
+            asset_type: Type of asset for logging (stock, etf, crypto)
+
+        Returns:
+            List of candidate dictionaries, or empty list if file missing/invalid
+
+        """
+        # Check if file exists
+        if not file_path.exists():
+            self.logger.warning(f"{asset_type.capitalize()} A+ file not found: {file_path}")
+            return []
+
+        try:
+            # Read file content
+            content = file_path.read_text(encoding="utf-8")
+
+            # Check if file is empty
+            if not content or content.strip() == "":
+                self.logger.warning(f"{asset_type.capitalize()} A+ file is empty: {file_path}")
+                return []
+
+            # Clean JSON content (fix Python-style numeric literals, trailing commas, etc.)
+            content = self._clean_json_content(content)
+
+            # Parse JSON
+            try:
+                data = json.loads(content)
+            except json.JSONDecodeError as e:
+                # Log the problematic area for debugging
+                lines = content.split("\n")
+                error_line = e.lineno - 1 if e.lineno <= len(lines) else len(lines) - 1
+                context_start = max(0, error_line - 2)
+                context_end = min(len(lines), error_line + 3)
+                context = "\n".join(f"{i + 1}: {lines[i]}" for i in range(context_start, context_end))
+                self.logger.error(f"JSON parsing error in {file_path.name} at line {e.lineno}, column {e.colno}:\n{context}")
+                raise
+
+            # Handle different data structures
+            # Case 1: data is already a list of candidates
+            if isinstance(data, list):
+                candidates = data
+            # Case 2: data is a dict with "candidates" or "a_plus_candidates" key
+            elif isinstance(data, dict):
+                candidates = data.get("candidates", data.get("a_plus_candidates", []))
+            else:
+                self.logger.error(f"Unexpected data type in {file_path.name}: {type(data)}")
+                return []
+
+            # Unwrap nested "candidate" objects if present
+            # Some data formats have: [{"candidate": {...}, "composite_score": ...}, ...]
+            # We need to merge the wrapper fields with the inner candidate object
+            unwrapped_candidates = []
+            for item in candidates:
+                if isinstance(item, dict) and "candidate" in item:
+                    # Nested structure - merge wrapper fields with inner candidate
+                    inner_candidate = item["candidate"].copy()
+                    # Add wrapper-level fields to the candidate (if not already present)
+                    for key, value in item.items():
+                        if key != "candidate" and key not in inner_candidate:
+                            inner_candidate[key] = value
+                    unwrapped_candidates.append(inner_candidate)
+                else:
+                    # Flat structure - use as is
+                    unwrapped_candidates.append(item)
+
+            return unwrapped_candidates
+
+        except Exception as e:
+            self.logger.error(f"Failed to load {asset_type} opportunities from {file_path}: {str(e)}", exc_info=True)
+            return []
+
     def extract_aplus_opportunities(self) -> APlusOpportunityCollection | None:
         """
         Extract A+ opportunities from all discovery crew files.
@@ -160,316 +239,57 @@ class APlusDataExtractor:
 
     def _extract_stock_opportunities(self) -> list[dict[str, any]]:
         """Extract A+ stock opportunities from a_plus_stocks.json file."""
+        from finwiz.integration.opportunity_extractors import StockOpportunityExtractor
+
         stock_file = self.discovery_dir / "a_plus_stocks.json"
 
-        if not stock_file.exists():
-            self.logger.warning(f"Stock A+ file not found: {stock_file}")
+        # Load and parse JSON using helper method
+        candidates = self._load_and_parse_json(stock_file, "stock")
+        if not candidates:
             return []
 
-        try:
-            content = stock_file.read_text(encoding="utf-8")
-            
-            # Check if file is empty
-            if not content or content.strip() == "":
-                self.logger.warning(f"Stock A+ file is empty: {stock_file}")
-                return []
-            
-            # Fix Python-style numeric literals (underscores) which are invalid in JSON
-            content = self._clean_json_content(content)
-            try:
-                data = json.loads(content)
-            except json.JSONDecodeError as e:
-                # Log the problematic area for debugging
-                lines = content.split("\n")
-                error_line = e.lineno - 1 if e.lineno <= len(lines) else len(lines) - 1
-                context_start = max(0, error_line - 2)
-                context_end = min(len(lines), error_line + 3)
-                context = "\n".join(f"{i + 1}: {lines[i]}" for i in range(context_start, context_end))
-                self.logger.error(f"JSON parsing error in {stock_file.name} at line {e.lineno}, column {e.colno}:\n{context}")
-                raise
-            opportunities = []
+        # Use stock extractor with Template Method pattern
+        extractor = StockOpportunityExtractor()
+        opportunities = extractor.extract(candidates)
 
-            # Handle different data structures
-            # Case 1: data is already a list of candidates
-            if isinstance(data, list):
-                candidates = data
-            # Case 2: data is a dict with "candidates" key
-            elif isinstance(data, dict):
-                candidates = data.get("candidates", [])
-            else:
-                self.logger.error(f"Unexpected data type in {stock_file.name}: {type(data)}")
-                return []
-
-            for idx, candidate in enumerate(candidates):
-                # Only include A+ and A grades
-                grade = candidate.get("grade", "")
-                if grade not in ["A+", "A"]:
-                    continue
-
-                symbol = candidate.get("symbol", "")
-                company_name = candidate.get("name", "")
-
-                # Extract fundamentals for composite score calculation
-                fundamentals = candidate.get("fundamentals", {})
-                roe = fundamentals.get("roe_3y_avg", 0)
-                revenue_growth = fundamentals.get("revenue_cagr_5y", 0)
-                debt_ratio = fundamentals.get("debt_to_equity", 0)
-
-                # Calculate composite score from fundamentals
-                composite_score = min((roe / 20 * 0.4) + (revenue_growth / 15 * 0.4) + ((1 - min(debt_ratio, 1)) * 0.2), 1.0)
-                confidence = 0.85 if grade == "A+" else 0.75
-
-                # Extract risk assessment
-                risk_assessment = candidate.get("risk_assessment") or {}
-                risk_score = risk_assessment.get("score", 5.0)
-
-                # Extract moat analysis as rationale
-                moat_analysis = candidate.get("moat_analysis", {})
-                # Handle case where moat_analysis might be a string instead of dict
-                if isinstance(moat_analysis, str):
-                    moat_type = ""
-                    moat_strength = ""
-                    rationale = [moat_analysis] if moat_analysis else []
-                else:
-                    moat_type = moat_analysis.get("moat_type", "")
-                    moat_strength = moat_analysis.get("moat_strength", "")
-                    rationale = [f"Moat: {moat_type}", f"Strength: {moat_strength}"] if moat_type else []
-
-                # Extract key metrics from fundamentals
-                key_metrics = {
-                    "roe_3y_avg": roe,
-                    "revenue_cagr_5y": revenue_growth,
-                    "debt_to_equity": debt_ratio,
-                    "market_cap_usd": candidate.get("market_cap_usd", 0),
-                }
-
-                # Return dict matching APlusOpportunity schema
-                opportunity = {
-                    "symbol": symbol,
-                    "name": company_name,
-                    "grade": grade,
-                    "composite_score": composite_score,
-                    "confidence": confidence,
-                    "risk_score": risk_score,
-                    "allocation_recommendation": moat_analysis.get("competitive_advantage", "") if isinstance(moat_analysis, dict) else "",
-                    "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
-                    "rationale": rationale,
-                    "key_metrics": key_metrics,
-                }
-
-                opportunities.append(opportunity)
-
-            self.logger.info(f"Extracted {len(opportunities)} stock A+ opportunities")
-            return opportunities
-
-        except Exception as e:
-            self.logger.error(f"Failed to extract stock opportunities: {str(e)}", exc_info=True)
-            return []
+        self.logger.info(f"Extracted {len(opportunities)} stock A+ opportunities")
+        return opportunities
 
     def _extract_etf_opportunities(self) -> list[dict[str, any]]:
         """Extract A+ ETF opportunities from a_plus_etfs.json file."""
+        from finwiz.integration.opportunity_extractors import ETFOpportunityExtractor
+
         etf_file = self.discovery_dir / "a_plus_etfs.json"
 
-        if not etf_file.exists():
-            self.logger.warning(f"ETF A+ file not found: {etf_file}")
+        # Load and parse JSON using helper method
+        candidates = self._load_and_parse_json(etf_file, "etf")
+        if not candidates:
             return []
 
-        try:
-            content = etf_file.read_text(encoding="utf-8")
-            
-            # Check if file is empty
-            if not content or content.strip() == "":
-                self.logger.warning(f"ETF A+ file is empty: {etf_file}")
-                return []
-            
-            # Fix Python-style numeric literals (underscores) which are invalid in JSON
-            content = self._clean_json_content(content)
-            data = json.loads(content)
-            opportunities = []
+        # Use ETF extractor with Template Method pattern
+        extractor = ETFOpportunityExtractor()
+        opportunities = extractor.extract(candidates)
 
-            # Handle different data structures
-            # Case 1: data is already a list of candidates
-            if isinstance(data, list):
-                candidates = data
-            # Case 2: data is a dict with "candidates" key
-            elif isinstance(data, dict):
-                candidates = data.get("candidates", [])
-            else:
-                self.logger.error(f"Unexpected data type in {etf_file.name}: {type(data)}")
-                return []
-
-            for idx, candidate in enumerate(candidates):
-                # Only include A+ and A grades
-                grade = candidate.get("grade", "")
-                if grade not in ["A+", "A"]:
-                    continue
-
-                symbol = candidate.get("symbol", "")
-                fund_name = candidate.get("name", "")
-
-                # Extract cost metrics for composite score
-                cost_metrics = candidate.get("cost_metrics", {})
-                ter = cost_metrics.get("ter", 0.0)
-                aum = cost_metrics.get("aum_usd", 0)
-                tracking_error = cost_metrics.get("tracking_error_3y", 0.0)
-
-                # Calculate composite score from cost efficiency
-                composite_score = min((1 - ter) * 0.4 + (1 - tracking_error) * 0.4 + 0.2, 1.0)
-                confidence = 0.90 if grade == "A+" else 0.80
-
-                # Format AUM for display
-                if aum >= 1e9:
-                    aum_str = f"${aum / 1e9:.1f}B"
-                elif aum >= 1e6:
-                    aum_str = f"${aum / 1e6:.1f}M"
-                else:
-                    aum_str = f"${aum:,.0f}"
-
-                # Extract risk assessment
-                risk_assessment = candidate.get("risk_assessment") or {}
-                risk_score = risk_assessment.get("score", 3.0)
-
-                # Extract diversification as rationale
-                diversification = candidate.get("diversification", {})
-                # Handle case where diversification might be a string instead of dict
-                if isinstance(diversification, str):
-                    holdings_count = 0
-                    top_10_concentration = 0
-                    rationale = [diversification] if diversification else []
-                else:
-                    holdings_count = diversification.get("holdings_count", 0)
-                    top_10_concentration = diversification.get("top_10_concentration_pct", 0)
-                    rationale = [f"Holdings: {holdings_count}", f"Top 10 concentration: {top_10_concentration}%"]
-
-                # Build key metrics
-                key_metrics = {
-                    "ter": ter,
-                    "aum_usd": aum,
-                    "aum_formatted": aum_str,
-                    "tracking_error_3y": tracking_error,
-                    "holdings_count": holdings_count,
-                }
-
-                # Return dict matching APlusOpportunity schema
-                opportunity = {
-                    "symbol": symbol,
-                    "name": fund_name,
-                    "grade": grade,
-                    "composite_score": composite_score,
-                    "confidence": confidence,
-                    "risk_score": risk_score,
-                    "allocation_recommendation": diversification.get("sector_breakdown", "") if isinstance(diversification, dict) else "",
-                    "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
-                    "rationale": rationale,
-                    "key_metrics": key_metrics,
-                }
-
-                opportunities.append(opportunity)
-
-            self.logger.info(f"Extracted {len(opportunities)} ETF A+ opportunities")
-            return opportunities
-
-        except Exception as e:
-            self.logger.error(f"Failed to extract ETF opportunities: {str(e)}", exc_info=True)
-            return []
+        self.logger.info(f"Extracted {len(opportunities)} ETF A+ opportunities")
+        return opportunities
 
     def _extract_crypto_opportunities(self) -> list[dict[str, any]]:
         """Extract A+ crypto opportunities from a_plus_crypto.json file."""
+        from finwiz.integration.opportunity_extractors import CryptoOpportunityExtractor
+
         crypto_file = self.discovery_dir / "a_plus_crypto.json"
 
-        if not crypto_file.exists():
-            self.logger.warning(f"Crypto A+ file not found: {crypto_file}")
+        # Load and parse JSON using helper method
+        candidates = self._load_and_parse_json(crypto_file, "crypto")
+        if not candidates:
             return []
 
-        try:
-            content = crypto_file.read_text(encoding="utf-8")
-            
-            # Check if file is empty
-            if not content or content.strip() == "":
-                self.logger.warning(f"Crypto A+ file is empty: {crypto_file}")
-                return []
-            
-            # Fix Python-style numeric literals (underscores) which are invalid in JSON
-            content = self._clean_json_content(content)
-            data = json.loads(content)
-            opportunities = []
+        # Use crypto extractor with Template Method pattern
+        extractor = CryptoOpportunityExtractor()
+        opportunities = extractor.extract(candidates)
 
-            # Handle different data structures
-            # Case 1: data is already a list of candidates
-            if isinstance(data, list):
-                candidates = data
-            # Case 2: data is a dict with "candidates" key
-            elif isinstance(data, dict):
-                candidates = data.get("candidates", [])
-            else:
-                self.logger.error(f"Unexpected data type in {crypto_file.name}: {type(data)}")
-                return []
-
-            for idx, candidate in enumerate(candidates):
-                # Only include A+ and A grades
-                grade = candidate.get("grade", "")
-                if grade not in ["A+", "A"]:
-                    continue
-
-                symbol = candidate.get("symbol", "")
-                crypto_name = candidate.get("name", "")
-
-                # Extract market metrics for composite score
-                market_cap = candidate.get("market_cap_usd", 0)
-                volume_24h = candidate.get("volume_24h_usd", 0)
-
-                # Calculate composite score from market metrics
-                # Higher market cap and volume = higher score
-                market_cap_score = min(market_cap / 100e9, 1.0)  # Normalize to $100B
-                volume_score = min(volume_24h / 10e9, 1.0)  # Normalize to $10B daily volume
-                composite_score = (market_cap_score * 0.6 + volume_score * 0.4) * 0.9  # Max 0.9 for crypto
-                confidence = 0.85 if grade == "A+" else 0.75
-
-                # Extract risk assessment
-                risk_assessment = candidate.get("risk_assessment") or {}
-                risk_score = risk_assessment.get("score", 6.0)  # Crypto typically higher risk
-
-                # Extract technology as rationale
-                technology = candidate.get("technology", {})
-                # Handle case where technology might be a string instead of dict
-                if isinstance(technology, str):
-                    consensus = ""
-                    use_case = ""
-                    rationale = [technology] if technology else []
-                else:
-                    consensus = technology.get("consensus_mechanism", "")
-                    use_case = technology.get("primary_use_case", "")
-                    rationale = [f"Consensus: {consensus}", f"Use case: {use_case}"] if consensus else []
-
-                # Build key metrics
-                key_metrics = {
-                    "market_cap_usd": market_cap,
-                    "volume_24h_usd": volume_24h,
-                    "consensus_mechanism": consensus,
-                }
-
-                # Return dict matching APlusOpportunity schema
-                opportunity = {
-                    "symbol": symbol.replace("-USD", ""),  # Clean symbol
-                    "name": crypto_name,
-                    "grade": grade,
-                    "composite_score": composite_score,
-                    "confidence": confidence,
-                    "risk_score": risk_score,
-                    "allocation_recommendation": technology.get("competitive_advantage", "") if isinstance(technology, dict) else "",
-                    "replacement_note": candidate.get("implementation", {}).get("entry_strategy", ""),
-                    "rationale": rationale,
-                    "key_metrics": key_metrics,
-                }
-
-                opportunities.append(opportunity)
-
-            self.logger.info(f"Extracted {len(opportunities)} crypto A+ opportunities")
-            return opportunities
-
-        except Exception as e:
-            self.logger.error(f"Failed to extract crypto opportunities: {str(e)}", exc_info=True)
-            return []
+        self.logger.info(f"Extracted {len(opportunities)} crypto A+ opportunities")
+        return opportunities
 
     def _generate_discovery_summary(self, stocks: list[dict], etfs: list[dict], cryptos: list[dict]) -> str:
         """Generate a summary of the discovery analysis."""
@@ -587,6 +407,114 @@ class APlusDataExtractor:
                 notes.append(f"{crypto['symbol']}: {crypto['replacement_note']}")
 
         return notes
+
+    def _extract_moat_info(self, moat_analysis: Any) -> tuple[str, str, list[str]]:
+        """
+        Extract moat information with guard clauses for different data types.
+
+        Handles:
+        - String type: Returns empty moat type/strength, uses string as rationale
+        - Dict type: Extracts moat_type, moat_strength, builds rationale
+        - Other types: Returns empty values
+
+        Args:
+            moat_analysis: Moat analysis data (string, dict, or other)
+
+        Returns:
+            Tuple of (moat_type, moat_strength, rationale_list)
+
+        """
+        # Guard: Handle None or empty
+        if not moat_analysis:
+            return "", "", []
+
+        # Guard: Handle string type
+        if isinstance(moat_analysis, str):
+            return "", "", [moat_analysis]
+
+        # Guard: Handle non-dict types
+        if not isinstance(moat_analysis, dict):
+            return "", "", []
+
+        # Extract from dict
+        moat_type = moat_analysis.get("moat_type", "")
+        moat_strength = moat_analysis.get("moat_strength", "")
+        rationale = [f"Moat: {moat_type}", f"Strength: {moat_strength}"] if moat_type else []
+
+        return moat_type, moat_strength, rationale
+
+    def _extract_diversification_info(self, diversification: Any) -> tuple[int, float, list[str]]:
+        """
+        Extract diversification information with guard clauses for different data types.
+
+        Handles:
+        - String type: Returns zero values, uses string as rationale
+        - Dict type: Extracts holdings_count, top_10_concentration, builds rationale
+        - Other types: Returns zero values
+
+        Args:
+            diversification: Diversification data (string, dict, or other)
+
+        Returns:
+            Tuple of (holdings_count, top_10_concentration, rationale_list)
+
+        """
+        # Guard: Handle None
+        if diversification is None:
+            return 0, 0.0, []
+
+        # Guard: Handle string type
+        if isinstance(diversification, str):
+            # Empty string should return empty rationale
+            if not diversification:
+                return 0, 0.0, []
+            return 0, 0.0, [diversification]
+
+        # Guard: Handle non-dict types
+        if not isinstance(diversification, dict):
+            return 0, 0.0, []
+
+        # Extract from dict (even if empty, return rationale with zero values)
+        holdings_count = diversification.get("holdings_count", 0)
+        top_10_concentration = diversification.get("top_10_concentration_pct", 0.0)
+        rationale = [f"Holdings: {holdings_count}", f"Top 10 concentration: {top_10_concentration}%"]
+
+        return holdings_count, top_10_concentration, rationale
+
+    def _extract_technology_info(self, technology: Any) -> tuple[str, str, list[str]]:
+        """
+        Extract technology information with guard clauses for different data types.
+
+        Handles:
+        - String type: Returns empty values, uses string as rationale
+        - Dict type: Extracts consensus_mechanism, use_case, builds rationale
+        - Other types: Returns empty values
+
+        Args:
+            technology: Technology data (string, dict, or other)
+
+        Returns:
+            Tuple of (consensus_mechanism, use_case, rationale_list)
+
+        """
+        # Guard: Handle None or empty
+        if not technology:
+            return "", "", []
+
+        # Guard: Handle string type
+        if isinstance(technology, str):
+            return "", "", [technology]
+
+        # Guard: Handle non-dict types
+        if not isinstance(technology, dict):
+            return "", "", []
+
+        # Extract from dict
+        consensus = technology.get("consensus_mechanism", "")
+        use_case = technology.get("primary_use_case", "")
+        rationale = [f"Consensus: {consensus}", f"Use case: {use_case}"] if consensus else []
+
+        return consensus, use_case, rationale
 
     def validate_aplus_opportunities(self, collection: APlusOpportunityCollection) -> tuple[bool, list[str]]:
         """

@@ -9,7 +9,7 @@ financial analysis workflow using CrewAI flows.
 import json
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -2250,16 +2250,13 @@ class FinwizFlow(Flow[FinwizState]):
                 # Add to total value
                 total_value += holding.get("value", 0.0)
 
-            logger.info(
-                f"Creating portfolio snapshot: {len(holdings_dict)} holdings, "
-                f"total value: ${total_value:,.2f}"
-            )
+            logger.info(f"Creating portfolio snapshot: {len(holdings_dict)} holdings, total value: ${total_value:,.2f}")
 
             # Create snapshot (async background task)
             await portfolio_repository.create_snapshot(
                 total_value=total_value,
                 holdings=holdings_dict,
-                snapshot_date=datetime.now(timezone.utc),
+                snapshot_date=datetime.now(UTC),
             )
 
             logger.info("Portfolio snapshot creation scheduled (background task)")
@@ -3801,17 +3798,17 @@ class FinwizFlow(Flow[FinwizState]):
                 # 🔧 CRITICAL FIX: Read deep analysis results from JSON files on disk (NOT memory)
                 # This ensures report matches the persisted data and provides single source of truth
                 logger.info("🔧 Reading deep analysis results from JSON files on disk...")
-                
+
                 raw_deep_analysis = {}
                 session_id = self.state.session_id or "default"
-                
+
                 # Read JSON files from disk for each asset class
                 for asset_class in ["stock", "etf", "crypto"]:
                     asset_dir = Path(f"output/{asset_class}")
                     if asset_dir.exists():
                         for json_file in asset_dir.glob("*_default.json"):
                             try:
-                                with open(json_file, "r", encoding="utf-8") as f:
+                                with open(json_file, encoding="utf-8") as f:
                                     data = json.load(f)
                                     ticker = data.get("ticker")
                                     if ticker:
@@ -3819,9 +3816,9 @@ class FinwizFlow(Flow[FinwizState]):
                                         logger.debug(f"✅ Loaded {ticker} from {json_file}: Score={data.get('composite_score'):.3f}, Grade={data.get('grade')}")
                             except Exception as e:
                                 logger.warning(f"⚠️ Failed to load {json_file}: {e}")
-                
+
                 logger.info(f"✅ Loaded {len(raw_deep_analysis)} deep analysis results from JSON files")
-                
+
                 # Transform to expected format
                 deep_analysis_results = None
                 if raw_deep_analysis:
@@ -3872,24 +3869,24 @@ class FinwizFlow(Flow[FinwizState]):
                         ticker = holding.ticker
                         if ticker in deep_analysis_results["results_by_ticker"]:
                             deep_result = deep_analysis_results["results_by_ticker"][ticker]
-                            
+
                             # Update holding with deep analysis results
                             holding.composite_score = deep_result["composite_score"]
                             holding.grade = deep_result["grade"]
                             holding.decision = deep_result["recommendation"]
                             holding.recommended_action = f"{deep_result['recommendation']} - Analyse approfondie Python"
-                            
+
                             # Update rationale with real analysis
                             holding.rationale_bullets = [
                                 f"📊 Score composite: {deep_result['composite_score']:.3f}",
                                 f"🎯 Note: {deep_result['grade']}",
                                 f"💡 Recommandation: {deep_result['recommendation']}",
                                 "✅ Analyse approfondie Python (déterministe)",
-                                f"📈 Classe d'actif: {deep_result['asset_class']}"
+                                f"📈 Classe d'actif: {deep_result['asset_class']}",
                             ]
-                            
+
                             merged_count += 1
-                    
+
                     logger.info(f"✅ Merged {merged_count} deep analysis results into portfolio review")
                 else:
                     logger.warning("⚠️ No deep analysis results to merge - report will show quick validation scores")

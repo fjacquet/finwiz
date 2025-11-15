@@ -39,7 +39,7 @@
 
 ## Phase 1: Complete Testing Modernization (Foundation for Safe Refactoring)
 
-- [ ] 1. Convert all remaining unittest.mock to pytest-mock (61 test files)
+- [x] 1. Convert all remaining unittest.mock to pytest-mock (61 test files)
   - [x] 1.1 Convert integration test files (21 files)
     - Convert test_portfolio_monitoring_integration.py, test_portfolio_rebalancing_integration.py
     - Convert test_portfolio_rebalancing_end_to_end.py, test_a_plus_monitoring_integration.py
@@ -145,8 +145,8 @@
 
 This phase addresses specific architectural improvements identified in the refactoring roadmap, focusing on the most critical files with design pattern issues.
 
-- [ ] 2A. High-priority refactoring tasks (DeepAnalysisScorer and APlusExtractor)
-  - [ ] 2A.1 Split DeepAnalysisScorer God Class (1,301 lines → 4 focused classes)
+- [x] 2A. High-priority refactoring tasks (DeepAnalysisScorer and APlusExtractor)
+  - [x] 2A.1 Split DeepAnalysisScorer God Class (1,301 lines → 4 focused classes)
     - Create `src/finwiz/scoring/fundamental_scorer.py` (~300 lines)
       - Extract stock/ETF/crypto fundamental scoring logic
       - Move ROE, debt, growth, expense ratio calculations
@@ -167,7 +167,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/scoring/ tests/integration/scoring/`
     - _Requirements: 1_
 
-  - [ ] 2A.2 Implement Strategy Pattern for Asset-Specific Logic
+  - [x] 2A.2 Implement Strategy Pattern for Asset-Specific Logic
     - Create `src/finwiz/scoring/asset_analyzers/` directory
     - Create `src/finwiz/scoring/asset_analyzers/base.py` (~50 lines)
       - Define `AssetAnalyzer` abstract base class
@@ -197,7 +197,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/scoring/asset_analyzers/`
     - _Requirements: 1_
 
-  - [ ] 2A.3 Extract Scoring Thresholds to Configuration
+  - [x] 2A.3 Extract Scoring Thresholds to Configuration
     - Create `src/finwiz/scoring/scoring_thresholds.py` (~100 lines)
       - Create ScoringThresholds dataclass
       - ROE thresholds (excellent, very good, good, acceptable)
@@ -216,7 +216,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/scoring/`
     - _Requirements: 1_
 
-  - [ ] 2A.4 Eliminate Duplicate JSON Parsing in APlusExtractor
+  - [x] 2A.4 Eliminate Duplicate JSON Parsing in APlusExtractor
     - Create `_load_and_parse_json()` helper method in APlusExtractor (~50 lines)
       - Handle file existence checks
       - Handle empty file cases
@@ -236,7 +236,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/integration/test_aplus_extractor.py`
     - _Requirements: 1_
 
-  - [ ] 2A.5 Apply Template Method Pattern to Opportunity Extraction
+  - [x] 2A.5 Apply Template Method Pattern to Opportunity Extraction
     - Create `src/finwiz/integration/opportunity_extractors/` directory
     - Create `src/finwiz/integration/opportunity_extractors/base.py` (~80 lines)
       - Create OpportunityExtractor abstract base class
@@ -263,7 +263,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/integration/opportunity_extractors/`
     - _Requirements: 1_
 
-  - [ ] 2A.6 Verify Phase 2A completion
+  - [x] 2A.6 Verify Phase 2A completion
     - Run full test suite: `uv run pytest`
     - Run linting: `ruff check . && ruff format .`
     - Verify DeepAnalysisScorer reduced from 1,301 to ~400 lines
@@ -275,8 +275,8 @@ This phase addresses specific architectural improvements identified in the refac
 
 ## Phase 2B: Medium Priority Refactoring (From Roadmap)
 
-- [ ] 2B. Medium-priority refactoring tasks
-  - [ ] 2B.1 Break Down Long Methods
+- [x] 2B. Medium-priority refactoring tasks
+  - [x] 2B.1 Break Down Long Methods
     - Refactor `calculate_composite_score()` in DeepAnalysisScorer (100+ lines)
       - Extract `_initialize_tracking()` method
       - Extract `_validate_critical_fields()` method
@@ -295,7 +295,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/scoring/`
     - _Requirements: 1_
 
-  - [ ] 2B.2 Extract Repeated Scoring Pattern
+  - [x] 2B.2 Extract Repeated Scoring Pattern
     - Create `src/finwiz/scoring/scoring_utils.py` (~100 lines)
       - Create `calculate_threshold_score()` utility function
       - Accept value, thresholds list, reverse flag
@@ -311,7 +311,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/scoring/`
     - _Requirements: 1_
 
-  - [ ] 2B.3 Create Base Class for Async Feedback Tools
+  - [x] 2B.3 Create Base Class for Async Feedback Tools
     - Create `src/finwiz/tools/base_tools.py` (~100 lines)
       - Create AsyncFeedbackTool base class
       - Implement `_run()` with event loop handling
@@ -327,7 +327,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/tools/`
     - _Requirements: 1_
 
-  - [ ] 2B.4 Standardize Error Handling Across Tools
+  - [x] 2B.4 Standardize Error Handling Across Tools
     - Create `src/finwiz/tools/tool_result.py` (~50 lines)
       - Create ToolResult dataclass
       - Fields: success (bool), data (dict), error (str | None)
@@ -345,7 +345,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/tools/`
     - _Requirements: 1_
 
-  - [ ] 2B.5 Extract Nested Conditionals to Guard Clauses
+  - [x] 2B.5 Extract Nested Conditionals to Guard Clauses
     - Create `_extract_moat_info()` helper in APlusExtractor (~30 lines)
       - Handle string type
       - Handle dict type
@@ -362,7 +362,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/integration/test_aplus_extractor.py`
     - _Requirements: 1_
 
-  - [ ] 2B.6 Verify Phase 2B completion
+  - [x] 2B.6 Verify Phase 2B completion
     - Run full test suite: `uv run pytest`
     - Run linting: `ruff check . && ruff format .`
     - Verify all methods under 50 lines
@@ -373,8 +373,8 @@ This phase addresses specific architectural improvements identified in the refac
 
 ## Phase 2C: Low Priority Improvements (From Roadmap)
 
-- [ ] 2C. Low-priority improvements
-  - [ ] 2C.1 Improve Timezone Handling
+- [-] 2C. Low-priority improvements
+  - [x] 2C.1 Improve Timezone Handling
     - Create `src/finwiz/utils/datetime_utils.py` (~50 lines)
       - Create `normalize_to_naive()` utility function
       - Handle aware datetimes
@@ -388,7 +388,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/utils/`
     - _Requirements: 1_
 
-  - [ ] 2C.2 Extract Regex Patterns to Constants
+  - [x] 2C.2 Extract Regex Patterns to Constants
     - Extract patterns to module constants in verify_html_reports.py
       - TICKER_PATTERN
       - TICKER_TITLE_PATTERN
@@ -402,7 +402,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `uv run pytest tests/unit/scripts/`
     - _Requirements: 1_
 
-  - [ ] 2C.3 Add Missing Type Hints
+  - [-] 2C.3 Add Missing Type Hints
     - Audit all functions for missing type hints
     - Add return type annotations
     - Add parameter type annotations
@@ -412,7 +412,7 @@ This phase addresses specific architectural improvements identified in the refac
     - Run: `mypy src/finwiz --strict`
     - _Requirements: 1_
 
-  - [ ] 2C.4 Verify Phase 2C completion
+  - [x] 2C.4 Verify Phase 2C completion
     - Run full test suite: `uv run pytest`
     - Run linting: `ruff check . && ruff format .`
     - Run type checking: `mypy src/finwiz --strict`

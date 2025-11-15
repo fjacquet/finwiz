@@ -36,7 +36,7 @@ class IntegrationLogFormatter:
     """Handles log message formatting for integration operations."""
 
     @staticmethod
-    def format_crew_execution_start(crew_name: str, dependencies: list = None) -> dict[str, Any]:
+    def format_crew_execution_start(crew_name: str, dependencies: list[str] | None = None) -> dict[str, Any]:
         """Format crew execution start log data."""
         return {
             "event_type": "crew_execution_start",
@@ -46,7 +46,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_crew_execution_complete(crew_name: str, success: bool, execution_time: float, output_files: list = None) -> dict[str, Any]:
+    def format_crew_execution_complete(crew_name: str, success: bool, execution_time: float, output_files: list[str] | None = None) -> dict[str, Any]:
         """Format crew execution completion log data."""
         return {
             "event_type": "crew_execution_complete",
@@ -58,7 +58,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_data_validation(crew_name: str, is_valid: bool, errors: list = None, warnings: list = None) -> dict[str, Any]:
+    def format_data_validation(crew_name: str, is_valid: bool, errors: list[str] | None = None, warnings: list[str] | None = None) -> dict[str, Any]:
         """Format data validation log data."""
         return {
             "event_type": "data_validation",
@@ -72,7 +72,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_data_freshness_check(fresh_crews: list, stale_crews: list, missing_crews: list, overall_status: str) -> dict[str, Any]:
+    def format_data_freshness_check(fresh_crews: list[str], stale_crews: list[str], missing_crews: list[str], overall_status: str) -> dict[str, Any]:
         """Format data freshness check log data."""
         return {
             "event_type": "data_freshness_check",
@@ -84,7 +84,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_integration_error(error_type: str, crew_name: str, error_message: str, recovery_suggestions: list = None) -> dict[str, Any]:
+    def format_integration_error(error_type: str, crew_name: str, error_message: str, recovery_suggestions: list[str] | None = None) -> dict[str, Any]:
         """Format integration error log data."""
         return {
             "event_type": "integration_error",
@@ -96,7 +96,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_data_lineage(crew_name: str, input_sources: list, output_files: list, transformations: list = None) -> dict[str, Any]:
+    def format_data_lineage(crew_name: str, input_sources: list[str], output_files: list[str], transformations: list[str] | None = None) -> dict[str, Any]:
         """Format data lineage log data."""
         return {
             "event_type": "data_lineage",
@@ -108,7 +108,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_performance_metrics(operation: str, duration: float, data_size: int = None, memory_usage: float = None) -> dict[str, Any]:
+    def format_performance_metrics(operation: str, duration: float, data_size: int | None = None, memory_usage: float | None = None) -> dict[str, Any]:
         """Format performance metrics log data."""
         return {
             "event_type": "performance_metrics",
@@ -120,7 +120,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_data_access_operation(operation: str, crew_name: str, success: bool, file_paths: list = None, error_message: str = None) -> dict[str, Any]:
+    def format_data_access_operation(operation: str, crew_name: str, success: bool, file_paths: list[str] | None = None, error_message: str | None = None) -> dict[str, Any]:
         """Format data access operation log data."""
         return {
             "event_type": "data_access_operation",
@@ -133,7 +133,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_data_transformation(crew_name: str, transformation_type: str, input_schema: str, output_schema: str, record_count: int = None) -> dict[str, Any]:
+    def format_data_transformation(crew_name: str, transformation_type: str, input_schema: str, output_schema: str, record_count: int | None = None) -> dict[str, Any]:
         """Format data transformation log data."""
         return {
             "event_type": "data_transformation",
@@ -146,7 +146,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_dependency_check(crew_name: str, dependencies: list, satisfied: list, missing: list, stale: list) -> dict[str, Any]:
+    def format_dependency_check(crew_name: str, dependencies: list[str], satisfied: list[str], missing: list[str], stale: list[str]) -> dict[str, Any]:
         """Format dependency check log data."""
         return {
             "event_type": "dependency_check",
@@ -160,7 +160,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_schema_validation_detail(crew_name: str, schema_name: str, validation_errors: list, validation_warnings: list, field_validations: dict = None) -> dict[str, Any]:
+    def format_schema_validation_detail(crew_name: str, schema_name: str, validation_errors: list[str], validation_warnings: list[str], field_validations: dict[str, Any] | None = None) -> dict[str, Any]:
         """Format detailed schema validation log data."""
         return {
             "event_type": "schema_validation_detail",
@@ -175,7 +175,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_data_consolidation(source_crews: list, target_file: str, success: bool, record_counts: dict = None, error_message: str = None) -> dict[str, Any]:
+    def format_data_consolidation(source_crews: list[str], target_file: str, success: bool, record_counts: dict[str, int] | None = None, error_message: str | None = None) -> dict[str, Any]:
         """Format data consolidation log data."""
         return {
             "event_type": "data_consolidation",
@@ -189,7 +189,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_system_health_check(component: str, status: str, details: dict = None) -> dict[str, Any]:
+    def format_system_health_check(component: str, status: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
         """Format system health check log data."""
         return {
             "event_type": "system_health_check",
@@ -200,7 +200,7 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_error_recovery_attempt(error_type: str, crew_name: str, recovery_action: str, success: bool, details: dict = None) -> dict[str, Any]:
+    def format_error_recovery_attempt(error_type: str, crew_name: str, recovery_action: str, success: bool, details: dict[str, Any] | None = None) -> dict[str, Any]:
         """Format error recovery attempt log data."""
         return {
             "event_type": "error_recovery_attempt",

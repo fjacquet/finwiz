@@ -131,23 +131,17 @@ class CacheService:
 
         # Skip cache if not enabled
         if not self.is_enabled:
-            logger.debug(
-                f"Cache DISABLED for {ticker_upper} ({asset_class_lower}) - executing fresh analysis"
-            )
+            logger.debug(f"Cache DISABLED for {ticker_upper} ({asset_class_lower}) - executing fresh analysis")
             result = await execute_fn()
 
             # Ensure result is a dict
             if not isinstance(result, dict):
-                logger.error(
-                    f"execute_fn returned {type(result)}, expected dict. Converting to dict."
-                )
+                logger.error(f"execute_fn returned {type(result)}, expected dict. Converting to dict.")
                 result = {"raw_result": str(result)}
 
             return result, False
 
-        logger.debug(
-            f"Cache check for {ticker_upper} ({asset_class_lower}), TTL: {self.ttl_hours}h"
-        )
+        logger.debug(f"Cache check for {ticker_upper} ({asset_class_lower}), TTL: {self.ttl_hours}h")
 
         # Try cache read with timeout
         try:
@@ -164,18 +158,12 @@ class CacheService:
                 # Cache hit - return cached data
                 self.cache_hits += 1
                 self.cache_metrics.record_hit()
-                logger.info(
-                    f"✅ Cache HIT for {ticker_upper} ({asset_class_lower}) "
-                    f"[Hit rate: {self.get_hit_rate():.1%}]"
-                )
+                logger.info(f"✅ Cache HIT for {ticker_upper} ({asset_class_lower}) [Hit rate: {self.get_hit_rate():.1%}]")
                 return cached.export_json, True
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self.cache_metrics.record_timeout()
-            logger.warning(
-                f"⚠️ Cache read timeout for {ticker_upper} "
-                f"(>{self.client.read_timeout}s) - proceeding with fresh analysis"
-            )
+            logger.warning(f"⚠️ Cache read timeout for {ticker_upper} (>{self.client.read_timeout}s) - proceeding with fresh analysis")
         except Exception as e:
             # Cache check failed - log and proceed with execution
             self.cache_metrics.record_error()
@@ -184,32 +172,23 @@ class CacheService:
         # Cache miss or timeout - execute crew
         self.cache_misses += 1
         self.cache_metrics.record_miss()
-        logger.info(
-            f"❌ Cache MISS for {ticker_upper} ({asset_class_lower}), executing crew "
-            f"[Hit rate: {self.get_hit_rate():.1%}]"
-        )
+        logger.info(f"❌ Cache MISS for {ticker_upper} ({asset_class_lower}), executing crew [Hit rate: {self.get_hit_rate():.1%}]")
 
         # Execute crew (this may take time)
         result = await execute_fn()
 
         # Ensure result is a dict
         if not isinstance(result, dict):
-            logger.error(
-                f"execute_fn returned {type(result)}, expected dict. Converting to dict for storage."
-            )
+            logger.error(f"execute_fn returned {type(result)}, expected dict. Converting to dict for storage.")
             result = {"raw_result": str(result)}
 
         # Store result asynchronously (non-blocking) if cache is enabled
         if self.is_enabled:
-            asyncio.create_task(
-                self._store_async(ticker_upper, asset_class_lower, result)
-            )
+            asyncio.create_task(self._store_async(ticker_upper, asset_class_lower, result))
 
         return result, False
 
-    async def _store_async(
-        self, ticker: str, asset_class: str, export_data: dict[str, Any]
-    ) -> None:
+    async def _store_async(self, ticker: str, asset_class: str, export_data: dict[str, Any]) -> None:
         """
         Store analysis result asynchronously without blocking.
 
@@ -232,10 +211,8 @@ class CacheService:
                 timeout=self.client.write_timeout,
             )
             logger.debug(f"✅ Cached {ticker} ({asset_class})")
-        except asyncio.TimeoutError:
-            logger.warning(
-                f"⚠️ Cache write timeout for {ticker} (>{self.client.write_timeout}s)"
-            )
+        except TimeoutError:
+            logger.warning(f"⚠️ Cache write timeout for {ticker} (>{self.client.write_timeout}s)")
         except Exception as e:
             logger.warning(f"⚠️ Cache write failed for {ticker}: {e}")
 

@@ -10,7 +10,7 @@ Tests portfolio repository functionality including:
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -61,7 +61,7 @@ class TestPortfolioRepository:
         """Create sample PortfolioSnapshot."""
         return PortfolioSnapshot(
             id="550e8400-e29b-41d4-a716-446655440000",
-            snapshot_date=datetime.now(timezone.utc),
+            snapshot_date=datetime.now(UTC),
             total_value=45000.0,
             holdings={
                 "AAPL": {
@@ -83,7 +83,7 @@ class TestPortfolioRepository:
                     "recommendation": "BUY",
                 },
             },
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
     @pytest.mark.asyncio
@@ -97,13 +97,11 @@ class TestPortfolioRepository:
         assert repository.table == "portfolio_snapshots"
 
     @pytest.mark.asyncio
-    async def test_should_create_snapshot_with_valid_data(
-        self, portfolio_repository, mock_client, sample_holdings, mocker
-    ):
+    async def test_should_create_snapshot_with_valid_data(self, portfolio_repository, mock_client, sample_holdings, mocker):
         """Test create_snapshot() with valid portfolio data."""
         # Arrange
         total_value = 45000.0
-        snapshot_date = datetime.now(timezone.utc)
+        snapshot_date = datetime.now(UTC)
 
         # Mock execute_with_timeout to return success
         mock_result = mocker.Mock()
@@ -121,9 +119,7 @@ class TestPortfolioRepository:
         assert result is True  # Returns immediately
 
     @pytest.mark.asyncio
-    async def test_should_create_snapshot_with_default_date(
-        self, portfolio_repository, mock_client, sample_holdings, mocker
-    ):
+    async def test_should_create_snapshot_with_default_date(self, portfolio_repository, mock_client, sample_holdings, mocker):
         """Test create_snapshot() uses current time when date not provided."""
         # Arrange
         total_value = 45000.0
@@ -144,13 +140,11 @@ class TestPortfolioRepository:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_should_execute_snapshot_creation_asynchronously(
-        self, portfolio_repository, mock_client, sample_holdings, mocker
-    ):
+    async def test_should_execute_snapshot_creation_asynchronously(self, portfolio_repository, mock_client, sample_holdings, mocker):
         """Test async execution (non-blocking) of create_snapshot()."""
         # Arrange
         total_value = 45000.0
-        snapshot_date = datetime.now(timezone.utc)
+        snapshot_date = datetime.now(UTC)
 
         # Track if background task was created
         original_create_task = asyncio.create_task
@@ -181,12 +175,10 @@ class TestPortfolioRepository:
         assert task_created is True  # Background task was created
 
     @pytest.mark.asyncio
-    async def test_should_get_snapshots_ordered_by_date(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_get_snapshots_ordered_by_date(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshots() retrieval ordered by date descending."""
         # Arrange
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         mock_data = [
             {
                 "id": "id-3",
@@ -231,9 +223,7 @@ class TestPortfolioRepository:
         assert call_args[1]["timeout"] == 2.0
 
     @pytest.mark.asyncio
-    async def test_should_return_empty_list_when_no_snapshots(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_return_empty_list_when_no_snapshots(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshots() returns empty list when no snapshots exist."""
         # Arrange
         mock_result = mocker.Mock()
@@ -247,9 +237,7 @@ class TestPortfolioRepository:
         assert snapshots == []
 
     @pytest.mark.asyncio
-    async def test_should_handle_get_snapshots_timeout(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_handle_get_snapshots_timeout(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshots() handles timeout gracefully."""
         # Arrange
         mock_client.execute_with_timeout = mocker.AsyncMock(return_value=None)
@@ -261,14 +249,10 @@ class TestPortfolioRepository:
         assert snapshots == []
 
     @pytest.mark.asyncio
-    async def test_should_handle_get_snapshots_error(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_handle_get_snapshots_error(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshots() handles errors gracefully."""
         # Arrange
-        mock_client.execute_with_timeout = mocker.AsyncMock(
-            side_effect=Exception("Database error")
-        )
+        mock_client.execute_with_timeout = mocker.AsyncMock(side_effect=Exception("Database error"))
 
         # Act
         snapshots = await portfolio_repository.get_snapshots()
@@ -277,14 +261,12 @@ class TestPortfolioRepository:
         assert snapshots == []
 
     @pytest.mark.asyncio
-    async def test_should_compare_snapshots_and_calculate_changes(
-        self, portfolio_repository
-    ):
+    async def test_should_compare_snapshots_and_calculate_changes(self, portfolio_repository):
         """Test compare_snapshots() change calculation."""
         # Arrange
         snapshot1 = PortfolioSnapshot(
             id="id-1",
-            snapshot_date=datetime.now(timezone.utc) - timedelta(days=7),
+            snapshot_date=datetime.now(UTC) - timedelta(days=7),
             total_value=45000.0,
             holdings={
                 "AAPL": {
@@ -306,12 +288,12 @@ class TestPortfolioRepository:
                     "recommendation": "BUY",
                 },
             },
-            created_at=datetime.now(timezone.utc) - timedelta(days=7),
+            created_at=datetime.now(UTC) - timedelta(days=7),
         )
 
         snapshot2 = PortfolioSnapshot(
             id="id-2",
-            snapshot_date=datetime.now(timezone.utc),
+            snapshot_date=datetime.now(UTC),
             total_value=50000.0,
             holdings={
                 "AAPL": {
@@ -333,7 +315,7 @@ class TestPortfolioRepository:
                     "recommendation": "HOLD",
                 },
             },
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -382,18 +364,18 @@ class TestPortfolioRepository:
 
         snapshot1 = PortfolioSnapshot(
             id="id-1",
-            snapshot_date=datetime.now(timezone.utc) - timedelta(days=1),
+            snapshot_date=datetime.now(UTC) - timedelta(days=1),
             total_value=15000.0,
             holdings=holdings,
-            created_at=datetime.now(timezone.utc) - timedelta(days=1),
+            created_at=datetime.now(UTC) - timedelta(days=1),
         )
 
         snapshot2 = PortfolioSnapshot(
             id="id-2",
-            snapshot_date=datetime.now(timezone.utc),
+            snapshot_date=datetime.now(UTC),
             total_value=15000.0,
             holdings=holdings,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -408,25 +390,23 @@ class TestPortfolioRepository:
         assert comparison["grade_changes"] == {}
 
     @pytest.mark.asyncio
-    async def test_should_handle_zero_initial_value_in_comparison(
-        self, portfolio_repository
-    ):
+    async def test_should_handle_zero_initial_value_in_comparison(self, portfolio_repository):
         """Test compare_snapshots() handles zero initial value correctly."""
         # Arrange
         snapshot1 = PortfolioSnapshot(
             id="id-1",
-            snapshot_date=datetime.now(timezone.utc) - timedelta(days=1),
+            snapshot_date=datetime.now(UTC) - timedelta(days=1),
             total_value=0.0,  # Zero initial value
             holdings={},
-            created_at=datetime.now(timezone.utc) - timedelta(days=1),
+            created_at=datetime.now(UTC) - timedelta(days=1),
         )
 
         snapshot2 = PortfolioSnapshot(
             id="id-2",
-            snapshot_date=datetime.now(timezone.utc),
+            snapshot_date=datetime.now(UTC),
             total_value=10000.0,
             holdings={"AAPL": {"quantity": 100, "value": 10000.0}},
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -437,13 +417,11 @@ class TestPortfolioRepository:
         assert comparison["value_change_pct"] == 0.0  # Avoid division by zero
 
     @pytest.mark.asyncio
-    async def test_should_get_snapshot_by_id(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_get_snapshot_by_id(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshot_by_id() retrieves specific snapshot."""
         # Arrange
         snapshot_id = "550e8400-e29b-41d4-a716-446655440000"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_data = {
             "id": snapshot_id,
@@ -467,9 +445,7 @@ class TestPortfolioRepository:
         assert snapshot.total_value == 45000.0
 
     @pytest.mark.asyncio
-    async def test_should_return_none_when_snapshot_not_found(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_return_none_when_snapshot_not_found(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshot_by_id() returns None when snapshot not found."""
         # Arrange
         snapshot_id = "nonexistent-id"
@@ -485,15 +461,11 @@ class TestPortfolioRepository:
         assert snapshot is None
 
     @pytest.mark.asyncio
-    async def test_should_handle_get_snapshot_by_id_error(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_handle_get_snapshot_by_id_error(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshot_by_id() handles errors gracefully."""
         # Arrange
         snapshot_id = "test-id"
-        mock_client.execute_with_timeout = mocker.AsyncMock(
-            side_effect=Exception("Database error")
-        )
+        mock_client.execute_with_timeout = mocker.AsyncMock(side_effect=Exception("Database error"))
 
         # Act
         snapshot = await portfolio_repository.get_snapshot_by_id(snapshot_id)
@@ -502,12 +474,10 @@ class TestPortfolioRepository:
         assert snapshot is None
 
     @pytest.mark.asyncio
-    async def test_should_respect_limit_parameter(
-        self, portfolio_repository, mock_client, mocker
-    ):
+    async def test_should_respect_limit_parameter(self, portfolio_repository, mock_client, mocker):
         """Test get_snapshots() respects limit parameter."""
         # Arrange
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         mock_data = [
             {
                 "id": f"id-{i}",
@@ -530,33 +500,31 @@ class TestPortfolioRepository:
         assert len(snapshots) == 5
 
     @pytest.mark.asyncio
-    async def test_should_track_grade_evolution_across_snapshots(
-        self, portfolio_repository
-    ):
+    async def test_should_track_grade_evolution_across_snapshots(self, portfolio_repository):
         """Test compare_snapshots() tracks grade evolution correctly."""
         # Arrange
         snapshot1 = PortfolioSnapshot(
             id="id-1",
-            snapshot_date=datetime.now(timezone.utc) - timedelta(days=1),
+            snapshot_date=datetime.now(UTC) - timedelta(days=1),
             total_value=30000.0,
             holdings={
                 "AAPL": {"grade": "B+"},
                 "GOOGL": {"grade": "A"},
                 "MSFT": {"grade": "C"},
             },
-            created_at=datetime.now(timezone.utc) - timedelta(days=1),
+            created_at=datetime.now(UTC) - timedelta(days=1),
         )
 
         snapshot2 = PortfolioSnapshot(
             id="id-2",
-            snapshot_date=datetime.now(timezone.utc),
+            snapshot_date=datetime.now(UTC),
             total_value=35000.0,
             holdings={
                 "AAPL": {"grade": "A+"},  # Upgraded
                 "GOOGL": {"grade": "A"},  # No change
                 "MSFT": {"grade": "B"},  # Upgraded
             },
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -582,18 +550,18 @@ class TestPortfolioRepository:
         # Arrange
         snapshot1 = PortfolioSnapshot(
             id="id-1",
-            snapshot_date=datetime.now(timezone.utc) - timedelta(days=1),
+            snapshot_date=datetime.now(UTC) - timedelta(days=1),
             total_value=15000.0,
             holdings={"AAPL": {"value": 15000.0}},  # No grade field
-            created_at=datetime.now(timezone.utc) - timedelta(days=1),
+            created_at=datetime.now(UTC) - timedelta(days=1),
         )
 
         snapshot2 = PortfolioSnapshot(
             id="id-2",
-            snapshot_date=datetime.now(timezone.utc),
+            snapshot_date=datetime.now(UTC),
             total_value=18000.0,
             holdings={"AAPL": {"value": 18000.0, "grade": "A+"}},  # Grade added
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         # Act

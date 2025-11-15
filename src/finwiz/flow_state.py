@@ -42,7 +42,7 @@ class DeepAnalysisResult(BaseModel):
     fundamental_score: float | None = Field(None, ge=0.0, le=1.0, description="Fundamental analysis score")
     technical_score: float | None = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
     risk_score: float | None = Field(None, ge=0.0, le=5.0, description="Risk score (0-5 scale)")
-    
+
     # Score details for debugging and transparency
     fundamental_details: dict[str, Any] = Field(default_factory=dict, description="Fundamental analysis breakdown")
     technical_details: dict[str, Any] = Field(default_factory=dict, description="Technical analysis breakdown")

@@ -13,7 +13,7 @@ import asyncio
 import logging
 import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from finwiz.supabase.client import SupabaseClient
@@ -79,7 +79,7 @@ class AnalysisRepository:
             ttl_hours = int(os.getenv("ANALYSIS_CACHE_TTL_HOURS", "24"))
 
         # Calculate cutoff time
-        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=ttl_hours)
+        cutoff_time = datetime.now(UTC) - timedelta(hours=ttl_hours)
 
         # Normalize inputs
         ticker_upper = ticker.upper()
@@ -181,7 +181,7 @@ class AnalysisRepository:
                         "grade": grade,
                         "recommendation": recommendation,
                         "export_json": export_data,
-                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "created_at": datetime.now(UTC).isoformat(),
                     }
                 )
                 .execute()
@@ -226,7 +226,7 @@ class AnalysisRepository:
         start_time = time.time()
         success = False
         timeout = False
-            
+
         for attempt in range(max_retries):
             try:
                 logger.debug(f"Store attempt {attempt + 1}/{max_retries} for {ticker} (timeout: {self.client.write_timeout}s)")

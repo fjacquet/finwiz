@@ -6,14 +6,13 @@ Provides fallback expense ratio data when Yahoo Finance doesn't have it.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
 # Cache for loaded expense ratios
-_EXPENSE_RATIOS_CACHE: Optional[dict] = None
+_EXPENSE_RATIOS_CACHE: dict | None = None
 
 
 def load_expense_ratios() -> dict:
@@ -50,7 +49,7 @@ def load_expense_ratios() -> dict:
         return {}
 
 
-def get_fallback_expense_ratio(ticker: str) -> Optional[float]:
+def get_fallback_expense_ratio(ticker: str) -> float | None:
     """
     Get fallback expense ratio for a ticker.
 
@@ -69,10 +68,7 @@ def get_fallback_expense_ratio(ticker: str) -> Optional[float]:
 
         if expense_ratio is not None:
             source = data.get("source", "manual config")
-            logger.info(
-                f"📋 Using fallback expense ratio for {ticker}: {expense_ratio:.4f} "
-                f"({expense_ratio * 100:.2f}%) from {source}"
-            )
+            logger.info(f"📋 Using fallback expense ratio for {ticker}: {expense_ratio:.4f} ({expense_ratio * 100:.2f}%) from {source}")
             return expense_ratio
 
     return None

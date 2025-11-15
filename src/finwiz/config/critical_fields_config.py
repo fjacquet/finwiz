@@ -5,7 +5,7 @@ Defines which fields are CRITICAL (must have real data) vs OPTIONAL (can use def
 Missing critical fields should cause analysis to FAIL rather than use fallback values.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 # Critical fields by asset class - MUST have real data or analysis fails
 CRITICAL_FIELDS = {
@@ -88,9 +88,7 @@ class CriticalFieldError(Exception):
         self.asset_class = asset_class
         self.missing_fields = missing_fields
         super().__init__(
-            f"Cannot analyze {ticker} ({asset_class}): "
-            f"Missing critical fields: {', '.join(missing_fields)}. "
-            f"Analysis would be based on assumptions rather than real data."
+            f"Cannot analyze {ticker} ({asset_class}): Missing critical fields: {', '.join(missing_fields)}. Analysis would be based on assumptions rather than real data."
         )
 
 
@@ -152,9 +150,7 @@ def get_safe_default(field_name: str) -> float | None:
     return SAFE_DEFAULTS.get(field_name)
 
 
-def validate_critical_fields(
-    ticker: str, asset_class: Literal["stock", "etf", "crypto"], data: dict
-) -> None:
+def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "crypto"], data: dict[str, Any]) -> None:
     """
     Validate that all critical fields are present with real data.
 

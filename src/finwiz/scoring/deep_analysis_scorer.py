@@ -15,36 +15,50 @@ from typing import Any, Literal
 # Import the correct DeepAnalysisResult from flow_state
 from finwiz.flow_state import DeepAnalysisResult
 
+# Import component scorers (Phase 2A refactoring)
+from finwiz.scoring.fundamental_scorer import FundamentalScorer
+from finwiz.scoring.risk_scorer import RiskScorer
+from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
+from finwiz.scoring.technical_scorer import TechnicalScorer
+
 logger = logging.getLogger(__name__)
 
 
 class DeepAnalysisScorer:
     """
-    Python-based scoring engine for deep analysis.
+    Python-based scoring engine orchestrator for deep analysis.
 
-    Replaces AI-based scoring with deterministic calculations:
-    - 40% fundamental analysis (ROE, debt, growth)
-    - 30% technical analysis (RSI, trend, momentum)
-    - 30% risk assessment (volatility, drawdown, beta)
+    Coordinates component scorers to produce composite scores:
+    - 40% fundamental analysis (via FundamentalScorer)
+    - 30% technical analysis (via TechnicalScorer)
+    - 30% risk assessment (via RiskScorer)
+
+    Refactored in Phase 2A to use composition pattern with focused scorers.
+    Phase 2A.3: Uses centralized ScoringThresholds for all thresholds.
     """
 
-    # Grade thresholds based on composite score (MORE DISCRIMINATING)
-    # Changed from lenient scale (B at 65%) to stricter scale (B at 70%)
-    # This ensures only truly exceptional investments get A+ grades
-    GRADE_THRESHOLDS = {0.90: "A+", 0.80: "A", 0.70: "B", 0.60: "C", 0.50: "D", 0.0: "F"}
+    def __init__(self, thresholds: ScoringThresholds | None = None) -> None:
+        """
+        Initialize the scoring engine with component scorers.
 
-    # Recommendation thresholds (adjusted for new scale)
-    BUY_THRESHOLD = 0.80  # A or better (raised from 0.70)
-    SELL_THRESHOLD = 0.60  # Below C (raised from 0.50)
+        Args:
+            thresholds: Optional custom thresholds (defaults to DEFAULT_THRESHOLDS)
 
-    def __init__(self) -> None:
-        """Initialize the scoring engine."""
+        """
         self.logger = logger
         # Data quality tracking (Task 3.2)
         self._data_quality_metrics = None
         self._current_ticker = None
         # Data lineage tracking (Task 9.2)
         self._lineage_tracker = None
+
+        # Scoring thresholds (Phase 2A.3)
+        self.thresholds = thresholds or get_thresholds()
+
+        # Initialize component scorers (Phase 2A)
+        self.fundamental_scorer = FundamentalScorer(thresholds=self.thresholds)
+        self.technical_scorer = TechnicalScorer(thresholds=self.thresholds)
+        self.risk_scorer = RiskScorer(thresholds=self.thresholds)
 
     def calculate_composite_score(self, ticker: str, asset_class: str, data: dict[str, Any]) -> DeepAnalysisResult:
         """
@@ -62,131 +76,28 @@ class DeepAnalysisScorer:
             CriticalFieldError: If critical fields are missing (fail fast)
 
         """
-        from finwiz.config.critical_fields_config import (
-            CriticalFieldError,
-            validate_critical_fields,
-        )
-        from finwiz.schemas.data_lineage import DataLineage
-        from finwiz.utils.data_quality_metrics import DataQualityMetrics
+        from finwiz.config.critical_fields_config import CriticalFieldError
 
         try:
-            # Initialize data quality tracking (Task 3.2)
-            self._data_quality_metrics = DataQualityMetrics()
-            self._current_ticker = ticker
+            # Step 1: Initialize tracking systems
+            self._initialize_tracking(ticker, asset_class, data)
 
-            # Initialize data lineage tracking (Task 9.2)
-            self._lineage_tracker = DataLineage(
+            # Step 2: Validate critical fields
+            self._validate_critical_fields(ticker, asset_class, data)
+
+            # Step 3: Calculate component scores
+            scores = self._calculate_component_scores(asset_class, data)
+
+            # Step 4: Compute weighted composite score
+            composite_score = self._compute_weighted_score(scores)
+
+            # Step 5: Build final result
+            result = self._build_result(
                 ticker=ticker,
                 asset_class=asset_class,
-                scorer_version="1.0.0",  # TODO: Get from package version
-                formula_version="1.0.0",
-            )
-
-            # CRITICAL: Validate all critical fields are present BEFORE scoring
-            # This will raise CriticalFieldError if any critical field is missing
-            try:
-                validate_critical_fields(ticker, asset_class, data)
-                self.logger.info(f"✅ All critical fields present for {ticker}")
-            except CriticalFieldError as e:
-                self.logger.error(
-                    f"❌ CRITICAL FIELDS MISSING for {ticker}: {e.missing_fields}\n"
-                    f"   Cannot proceed with analysis - would be based on assumptions.\n"
-                    f"   Recommendation: Check API connectivity and data sources."
-                )
-                raise
-
-            # Define expected fields based on asset class
-            expected_fields = self._get_expected_fields(asset_class)
-            self._data_quality_metrics.set_expected_fields(expected_fields)
-
-            # Calculate component scores (with data quality tracking)
-            fundamental_score, fundamental_details = self.calculate_fundamental_score(asset_class, data)
-            technical_score, technical_details = self.calculate_technical_score(data)
-            risk_score, risk_details = self.calculate_risk_score(data)
-
-            # Calculate weighted composite score (40% + 30% + 30%)
-            composite_score = 0.40 * fundamental_score + 0.30 * technical_score + 0.30 * risk_score
-
-            # Track composite score calculation in lineage (Task 9.2)
-            self._lineage_tracker.add_calculation(
-                step_id="composite_score",
-                step_name="composite_score",
-                inputs={
-                    "fundamental_score": fundamental_score,
-                    "technical_score": technical_score,
-                    "risk_score": risk_score,
-                },
-                calculation="Weighted average of component scores",
-                formula="0.40 * fundamental + 0.30 * technical + 0.30 * risk",
-                output=composite_score,
-                metadata={"weights": {"fundamental": 0.40, "technical": 0.30, "risk": 0.30}},
-            )
-
-            # Assign grade and recommendation
-            grade = self.assign_grade(composite_score)
-
-            # Track grade assignment in lineage (Task 9.2)
-            self._lineage_tracker.add_calculation(
-                step_id="grade_assignment",
-                step_name="grade",
-                inputs={"composite_score": composite_score},
-                calculation="Grade assignment based on composite score",
-                formula=f"grading_scale[{composite_score:.3f}]",
-                output=grade,
-                metadata={"grading_scale": self.GRADE_THRESHOLDS},
-            )
-            recommendation = self.generate_recommendation(composite_score, grade)
-            confidence = self._calculate_confidence(fundamental_score, technical_score, risk_score, data)
-            rationale = self.generate_rationale(ticker, asset_class, composite_score, grade, fundamental_details, technical_details, risk_details)
-
-            # Get data quality summary
-            data_quality_summary = self._data_quality_metrics.get_summary()
-
-            # Log data quality warnings if needed
-            quality_level = data_quality_summary["quality_level"]
-            if quality_level == "low":
-                self.logger.warning(
-                    f"⚠️ Low data quality for {ticker}: completeness={data_quality_summary['completeness_score']:.1%}, quality={data_quality_summary['quality_score']:.1%}"
-                )
-
-            # Finalize lineage with final values (Task 9.2)
-            self._lineage_tracker.final_values = {
-                "composite_score": composite_score,
-                "grade": grade,
-                "recommendation": recommendation,
-                "fundamental_score": fundamental_score,
-                "technical_score": technical_score,
-                "risk_score": risk_score,
-            }
-
-            result = DeepAnalysisResult(
-                ticker=ticker,
-                asset_class=asset_class,
-                crew_name="python_scorer",
                 composite_score=composite_score,
-                grade=grade,
-                recommendation=recommendation,
-                rationale=rationale,
-                risk_details=risk_details,
-                fundamental_score=fundamental_score,
-                technical_score=technical_score,
-                risk_score=risk_score,
-                fundamental_details=fundamental_details,  # Include breakdown for debugging
-                technical_details=technical_details,  # Include breakdown for debugging
-                data_freshness_hours=0.0,  # Fresh data from Python calculation
-                confidence_level=confidence,
-                warnings=[],
-                cached=False,
-                data_quality=data_quality_summary,  # Task 2.1: Include data quality metrics
-                lineage=self._lineage_tracker.model_dump(),  # Task 9.2: Include complete data lineage
-            )
-
-            # Log successful scoring with data quality info
-            self.logger.info(
-                f"✅ Python scoring completed for {ticker}: "
-                f"Grade {grade} ({composite_score:.3f}), "
-                f"Recommendation {recommendation} ({confidence:.1%} confidence), "
-                f"Quality: {quality_level} ({data_quality_summary['completeness_score']:.1%} complete)"
+                scores=scores,
+                data=data,
             )
 
             return result
@@ -195,14 +106,252 @@ class DeepAnalysisScorer:
             # Critical field missing - DO NOT return fallback result
             # Re-raise to let caller handle (should skip this holding)
             self.logger.error(
-                f"❌ ANALYSIS FAILED for {ticker}: Missing critical fields {e.missing_fields}\n"
-                f"   This holding will be SKIPPED to avoid decisions based on assumptions."
+                f"❌ ANALYSIS FAILED for {ticker}: Missing critical fields {e.missing_fields}\n   This holding will be SKIPPED to avoid decisions based on assumptions."
             )
             raise
         except Exception as e:
             self.logger.error(f"Error calculating composite score for {ticker}: {e}")
             # Return default low score on error (non-critical errors only)
             return self._create_error_result(ticker, asset_class, str(e))
+
+    def _initialize_tracking(self, ticker: str, asset_class: str, data: dict[str, Any]) -> None:
+        """
+        Initialize data quality and lineage tracking systems.
+
+        Args:
+            ticker: Asset ticker symbol
+            asset_class: Asset class (stock, etf, crypto)
+            data: Dictionary containing all analysis data
+
+        """
+        from finwiz.schemas.data_lineage import DataLineage
+        from finwiz.utils.data_quality_metrics import DataQualityMetrics
+
+        # Initialize data quality tracking
+        self._data_quality_metrics = DataQualityMetrics()
+        self._current_ticker = ticker
+
+        # Initialize data lineage tracking
+        self._lineage_tracker = DataLineage(
+            ticker=ticker,
+            asset_class=asset_class,
+            scorer_version="1.0.0",  # TODO: Get from package version
+            formula_version="1.0.0",
+        )
+
+        # Define expected fields based on asset class
+        expected_fields = self._get_expected_fields(asset_class)
+        self._data_quality_metrics.set_expected_fields(expected_fields)
+
+    def _validate_critical_fields(self, ticker: str, asset_class: str, data: dict[str, Any]) -> None:
+        """
+        Validate that all critical fields are present before scoring.
+
+        Args:
+            ticker: Asset ticker symbol
+            asset_class: Asset class (stock, etf, crypto)
+            data: Dictionary containing all analysis data
+
+        Raises:
+            CriticalFieldError: If any critical field is missing
+
+        """
+        from finwiz.config.critical_fields_config import (
+            CriticalFieldError,
+            validate_critical_fields,
+        )
+
+        try:
+            validate_critical_fields(ticker, asset_class, data)
+            self.logger.info(f"✅ All critical fields present for {ticker}")
+        except CriticalFieldError as e:
+            self.logger.error(
+                f"❌ CRITICAL FIELDS MISSING for {ticker}: {e.missing_fields}\n"
+                f"   Cannot proceed with analysis - would be based on assumptions.\n"
+                f"   Recommendation: Check API connectivity and data sources."
+            )
+            raise
+
+    def _calculate_component_scores(self, asset_class: str, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Calculate fundamental, technical, and risk component scores.
+
+        Args:
+            asset_class: Asset class (stock, etf, crypto)
+            data: Dictionary containing all analysis data
+
+        Returns:
+            Dictionary with component scores and details
+
+        """
+        # Calculate component scores (with data quality tracking)
+        fundamental_score, fundamental_details = self.calculate_fundamental_score(asset_class, data)
+        technical_score, technical_details = self.calculate_technical_score(data)
+        risk_score, risk_details = self.calculate_risk_score(data)
+
+        return {
+            "fundamental_score": fundamental_score,
+            "fundamental_details": fundamental_details,
+            "technical_score": technical_score,
+            "technical_details": technical_details,
+            "risk_score": risk_score,
+            "risk_details": risk_details,
+        }
+
+    def _compute_weighted_score(self, scores: dict[str, Any]) -> float:
+        """
+        Compute weighted composite score from component scores.
+
+        Args:
+            scores: Dictionary with component scores
+
+        Returns:
+            Weighted composite score (0.0 to 1.0)
+
+        """
+        # Calculate weighted composite score using configured weights
+        composite_score = (
+            self.thresholds.weight_fundamental * scores["fundamental_score"]
+            + self.thresholds.weight_technical * scores["technical_score"]
+            + self.thresholds.weight_risk * scores["risk_score"]
+        )
+
+        # Track composite score calculation in lineage
+        self._lineage_tracker.add_calculation(
+            step_id="composite_score",
+            step_name="composite_score",
+            inputs={
+                "fundamental_score": scores["fundamental_score"],
+                "technical_score": scores["technical_score"],
+                "risk_score": scores["risk_score"],
+            },
+            calculation="Weighted average of component scores",
+            formula=f"{self.thresholds.weight_fundamental} * fundamental + {self.thresholds.weight_technical} * technical + {self.thresholds.weight_risk} * risk",
+            output=composite_score,
+            metadata={
+                "weights": {
+                    "fundamental": self.thresholds.weight_fundamental,
+                    "technical": self.thresholds.weight_technical,
+                    "risk": self.thresholds.weight_risk,
+                }
+            },
+        )
+
+        return composite_score
+
+    def _build_result(
+        self,
+        ticker: str,
+        asset_class: str,
+        composite_score: float,
+        scores: dict[str, Any],
+        data: dict[str, Any],
+    ) -> DeepAnalysisResult:
+        """
+        Build final DeepAnalysisResult from calculated scores.
+
+        Args:
+            ticker: Asset ticker symbol
+            asset_class: Asset class (stock, etf, crypto)
+            composite_score: Weighted composite score
+            scores: Dictionary with component scores and details
+            data: Dictionary containing all analysis data
+
+        Returns:
+            Complete DeepAnalysisResult
+
+        """
+        # Assign grade and recommendation
+        grade = self.assign_grade(composite_score)
+
+        # Track grade assignment in lineage
+        self._lineage_tracker.add_calculation(
+            step_id="grade_assignment",
+            step_name="grade",
+            inputs={"composite_score": composite_score},
+            calculation="Grade assignment based on composite score",
+            formula=f"grading_scale[{composite_score:.3f}]",
+            output=grade,
+            metadata={
+                "grading_scale": {
+                    self.thresholds.grade_a_plus: "A+",
+                    self.thresholds.grade_a: "A",
+                    self.thresholds.grade_b: "B",
+                    self.thresholds.grade_c: "C",
+                    self.thresholds.grade_d: "D",
+                    0.0: "F",
+                }
+            },
+        )
+
+        recommendation = self.generate_recommendation(composite_score, grade)
+        confidence = self._calculate_confidence(
+            scores["fundamental_score"],
+            scores["technical_score"],
+            scores["risk_score"],
+            data,
+        )
+        rationale = self.generate_rationale(
+            ticker,
+            asset_class,
+            composite_score,
+            grade,
+            scores["fundamental_details"],
+            scores["technical_details"],
+            scores["risk_details"],
+        )
+
+        # Get data quality summary
+        data_quality_summary = self._data_quality_metrics.get_summary()
+
+        # Log data quality warnings if needed
+        quality_level = data_quality_summary["quality_level"]
+        if quality_level == "low":
+            self.logger.warning(
+                f"⚠️ Low data quality for {ticker}: completeness={data_quality_summary['completeness_score']:.1%}, quality={data_quality_summary['quality_score']:.1%}"
+            )
+
+        # Finalize lineage with final values
+        self._lineage_tracker.final_values = {
+            "composite_score": composite_score,
+            "grade": grade,
+            "recommendation": recommendation,
+            "fundamental_score": scores["fundamental_score"],
+            "technical_score": scores["technical_score"],
+            "risk_score": scores["risk_score"],
+        }
+
+        result = DeepAnalysisResult(
+            ticker=ticker,
+            asset_class=asset_class,
+            crew_name="python_scorer",
+            composite_score=composite_score,
+            grade=grade,
+            recommendation=recommendation,
+            rationale=rationale,
+            risk_details=scores["risk_details"],
+            fundamental_score=scores["fundamental_score"],
+            technical_score=scores["technical_score"],
+            risk_score=scores["risk_score"],
+            fundamental_details=scores["fundamental_details"],
+            technical_details=scores["technical_details"],
+            data_freshness_hours=0.0,
+            confidence_level=confidence,
+            warnings=[],
+            cached=False,
+            data_quality=data_quality_summary,
+            lineage=self._lineage_tracker.model_dump(),
+        )
+
+        # Log successful scoring with data quality info
+        self.logger.info(
+            f"✅ Python scoring completed for {ticker}: "
+            f"Grade {grade} ({composite_score:.3f}), "
+            f"Recommendation {recommendation} ({confidence:.1%} confidence), "
+            f"Quality: {quality_level} ({data_quality_summary['completeness_score']:.1%} complete)"
+        )
+
+        return result
 
     def analyze_and_export(self, ticker: str, asset_class: str, collected_data: dict[str, Any], session_id: str = "default") -> tuple[DeepAnalysisResult, dict[str, Any]]:
         """
@@ -269,6 +418,8 @@ class DeepAnalysisScorer:
         """
         Calculate fundamental score based on asset class.
 
+        Delegates to FundamentalScorer component (Phase 2A refactoring).
+
         For stocks: ROE, debt/equity, revenue growth, profit margins
         For ETFs: expense ratio, tracking error, AUM, diversification
         For crypto: market cap, volume, adoption metrics, tokenomics
@@ -277,343 +428,30 @@ class DeepAnalysisScorer:
             Tuple of (score, details_dict)
 
         """
-        details = {}
+        # Set context for fundamental scorer
+        self.fundamental_scorer.set_context(self._current_ticker, self._data_quality_metrics)
 
-        if asset_class == "stock":
-            return self._calculate_stock_fundamental_score(data, details)
-        elif asset_class == "etf":
-            return self._calculate_etf_fundamental_score(data, details)
-        elif asset_class == "crypto":
-            return self._calculate_crypto_fundamental_score(data, details)
-        else:
-            self.logger.warning(f"Unknown asset class: {asset_class}")
-            return 0.5, {"error": f"Unknown asset class: {asset_class}"}
-
-    def _calculate_stock_fundamental_score(self, data: dict[str, Any], details: dict[str, Any]) -> tuple[float, dict[str, Any]]:
-        """Calculate fundamental score for stocks."""
-        score = 0.5  # Base score
-
-        # ROE (Return on Equity) - target 15%+
-        roe = self._safe_get_float(data, "roe", 0.0)
-        if roe >= 0.20:  # 20%+
-            roe_score = 1.0
-        elif roe >= 0.15:  # 15-20%
-            roe_score = 0.8
-        elif roe >= 0.10:  # 10-15%
-            roe_score = 0.6
-        elif roe >= 0.05:  # 5-10%
-            roe_score = 0.4
-        else:  # <5%
-            roe_score = 0.2
-
-        details["roe"] = roe
-        details["roe_score"] = roe_score
-
-        # Debt-to-Equity ratio - lower is better
-        debt_equity = self._safe_get_float(data, "debt_to_equity", 1.0)
-        if debt_equity <= 0.3:  # Very low debt
-            debt_score = 1.0
-        elif debt_equity <= 0.5:  # Low debt
-            debt_score = 0.8
-        elif debt_equity <= 1.0:  # Moderate debt
-            debt_score = 0.6
-        elif debt_equity <= 2.0:  # High debt
-            debt_score = 0.4
-        else:  # Very high debt
-            debt_score = 0.2
-
-        details["debt_to_equity"] = debt_equity
-        details["debt_score"] = debt_score
-
-        # Revenue growth - target 10%+
-        revenue_growth = self._safe_get_float(data, "revenue_growth", 0.0)
-        if revenue_growth >= 0.25:  # 25%+
-            growth_score = 1.0
-        elif revenue_growth >= 0.15:  # 15-25%
-            growth_score = 0.8
-        elif revenue_growth >= 0.10:  # 10-15%
-            growth_score = 0.6
-        elif revenue_growth >= 0.05:  # 5-10%
-            growth_score = 0.4
-        else:  # <5%
-            growth_score = 0.2
-
-        details["revenue_growth"] = revenue_growth
-        details["growth_score"] = growth_score
-
-        # Profit margin
-        profit_margin = self._safe_get_float(data, "profit_margin", 0.0)
-        if profit_margin >= 0.20:  # 20%+
-            margin_score = 1.0
-        elif profit_margin >= 0.15:  # 15-20%
-            margin_score = 0.8
-        elif profit_margin >= 0.10:  # 10-15%
-            margin_score = 0.6
-        elif profit_margin >= 0.05:  # 5-10%
-            margin_score = 0.4
-        else:  # <5%
-            margin_score = 0.2
-
-        details["profit_margin"] = profit_margin
-        details["margin_score"] = margin_score
-
-        # Weighted average (ROE 40%, Debt 30%, Growth 20%, Margin 10%)
-        fundamental_score = 0.40 * roe_score + 0.30 * debt_score + 0.20 * growth_score + 0.10 * margin_score
-
-        details["fundamental_score"] = fundamental_score
-        return fundamental_score, details
-
-    def _calculate_etf_fundamental_score(self, data: dict[str, Any], details: dict[str, Any]) -> tuple[float, dict[str, Any]]:
-        """Calculate fundamental score for ETFs."""
-        # Expense ratio - lower is better
-        expense_ratio = self._safe_get_float(data, "expense_ratio", 1.0)
-        
-        # Log the actual value for debugging
-        self.logger.info(f"ETF {self._current_ticker}: expense_ratio = {expense_ratio} (raw value)")
-        
-        # Thresholds for expense ratio (as decimal: 0.001 = 0.10%)
-        if expense_ratio <= 0.001:  # 0.10% or less (excellent)
-            expense_score = 1.0
-        elif expense_ratio <= 0.0025:  # 0.10-0.25% (very good)
-            expense_score = 0.8
-        elif expense_ratio <= 0.005:  # 0.25-0.50% (good)
-            expense_score = 0.6
-        elif expense_ratio <= 0.01:  # 0.50-1.00% (acceptable)
-            expense_score = 0.4
-        else:  # >1.00% (high/poor)
-            expense_score = 0.2
-
-        details["expense_ratio"] = expense_ratio
-        details["expense_score"] = expense_score
-        
-        self.logger.info(f"ETF {self._current_ticker}: expense_score = {expense_score}")
-
-        # Tracking error - lower is better (optional field)
-        # Use None as default to properly detect missing data
-        tracking_error_raw = data.get("tracking_error")
-        tracking_available = tracking_error_raw is not None
-        
-        if tracking_available:
-            try:
-                tracking_error = float(tracking_error_raw)
-                # Log the actual value for debugging
-                self.logger.info(f"ETF {self._current_ticker}: tracking_error = {tracking_error} (raw value)")
-                
-                # Thresholds for tracking error (as decimal: 0.002 = 0.20%)
-                if tracking_error <= 0.002:  # 0.20% or less (excellent)
-                    tracking_score = 1.0
-                elif tracking_error <= 0.005:  # 0.20-0.50% (very good)
-                    tracking_score = 0.8
-                elif tracking_error <= 0.01:  # 0.50-1.00% (good)
-                    tracking_score = 0.6
-                elif tracking_error <= 0.02:  # 1.00-2.00% (acceptable)
-                    tracking_score = 0.4
-                else:  # >2.00% (high/poor)
-                    tracking_score = 0.2
-                
-                self.logger.info(f"ETF {self._current_ticker}: tracking_score = {tracking_score}")
-            except (ValueError, TypeError) as e:
-                # Invalid tracking error value - use neutral score
-                tracking_score = 0.5
-                tracking_available = False
-                self.logger.warning(f"⚠️ ETF {self._current_ticker}: Invalid tracking_error value '{tracking_error_raw}': {e}, using neutral score")
-        else:
-            # Tracking error not available - use neutral score
-            tracking_error = None
-            tracking_score = 0.5  # Neutral score when data unavailable
-            self.logger.info(f"ETF {self._current_ticker}: tracking_error not available, using neutral score")
-
-        details["tracking_error"] = tracking_error
-        details["tracking_error_available"] = tracking_available
-        details["tracking_score"] = tracking_score
-
-        # AUM (Assets Under Management) - higher is better for liquidity (optional field)
-        aum = self._safe_get_float(data, "aum", None)
-        aum_available = aum is not None and aum > 0
-        
-        if aum_available:
-            if aum >= 5e9:  # $5B+
-                aum_score = 1.0
-            elif aum >= 1e9:  # $1-5B
-                aum_score = 0.8
-            elif aum >= 500e6:  # $500M-1B
-                aum_score = 0.6
-            elif aum >= 100e6:  # $100-500M
-                aum_score = 0.4
-            else:  # <$100M
-                aum_score = 0.2
-        else:
-            # AUM not available - use neutral score
-            aum_score = 0.5  # Neutral score when data unavailable
-            self.logger.warning(f"⚠️ ETF {self._current_ticker}: AUM not available, using neutral score")
-
-        details["aum"] = aum
-        details["aum_available"] = aum_available
-        details["aum_score"] = aum_score
-
-        # Weighted average - adjust weights based on data availability
-        # Base: Expense 60%, Tracking 30%, AUM 10%
-        # If tracking unavailable: Expense 70%, AUM 30%
-        # If AUM unavailable: Expense 60%, Tracking 40%
-        # If both unavailable: Expense 100%
-        if tracking_available and aum_available:
-            fundamental_score = 0.60 * expense_score + 0.30 * tracking_score + 0.10 * aum_score
-        elif tracking_available:
-            fundamental_score = 0.60 * expense_score + 0.40 * tracking_score
-            self.logger.info(f"ETF {self._current_ticker}: AUM unavailable, adjusted weights (Expense 60%, Tracking 40%)")
-        elif aum_available:
-            fundamental_score = 0.70 * expense_score + 0.30 * aum_score
-            self.logger.info(f"ETF {self._current_ticker}: Tracking error unavailable, adjusted weights (Expense 70%, AUM 30%)")
-        else:
-            fundamental_score = expense_score
-            self.logger.warning(f"⚠️ ETF {self._current_ticker}: Only expense_ratio available, using 100% weight")
-
-        details["fundamental_score"] = fundamental_score
-        return fundamental_score, details
-
-    def _calculate_crypto_fundamental_score(self, data: dict[str, Any], details: dict[str, Any]) -> tuple[float, dict[str, Any]]:
-        """Calculate fundamental score for crypto."""
-        # Market cap - higher is better for stability
-        market_cap = self._safe_get_float(data, "market_cap", 0.0)
-        if market_cap >= 100e9:  # $100B+
-            cap_score = 1.0
-        elif market_cap >= 10e9:  # $10-100B
-            cap_score = 0.8
-        elif market_cap >= 1e9:  # $1-10B
-            cap_score = 0.6
-        elif market_cap >= 100e6:  # $100M-1B
-            cap_score = 0.4
-        else:  # <$100M
-            cap_score = 0.2
-
-        details["market_cap"] = market_cap
-        details["cap_score"] = cap_score
-
-        # Daily volume - higher is better for liquidity
-        volume_24h = self._safe_get_float(data, "volume_24h", 0.0)
-        if volume_24h >= 1e9:  # $1B+
-            volume_score = 1.0
-        elif volume_24h >= 500e6:  # $500M-1B
-            volume_score = 0.8
-        elif volume_24h >= 100e6:  # $100-500M
-            volume_score = 0.6
-        elif volume_24h >= 10e6:  # $10-100M
-            volume_score = 0.4
-        else:  # <$10M
-            volume_score = 0.2
-
-        details["volume_24h"] = volume_24h
-        details["volume_score"] = volume_score
-
-        # Age/maturity - older is more stable
-        age_years = self._safe_get_float(data, "age_years", 0.0)
-        if age_years >= 5:  # 5+ years
-            age_score = 1.0
-        elif age_years >= 3:  # 3-5 years
-            age_score = 0.8
-        elif age_years >= 2:  # 2-3 years
-            age_score = 0.6
-        elif age_years >= 1:  # 1-2 years
-            age_score = 0.4
-        else:  # <1 year
-            age_score = 0.2
-
-        details["age_years"] = age_years
-        details["age_score"] = age_score
-
-        # Weighted average (Market Cap 50%, Volume 30%, Age 20%)
-        fundamental_score = 0.50 * cap_score + 0.30 * volume_score + 0.20 * age_score
-
-        details["fundamental_score"] = fundamental_score
-        return fundamental_score, details
+        # Delegate to component scorer
+        return self.fundamental_scorer.calculate_fundamental_score(asset_class, data)
 
     def calculate_technical_score(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         """
         Calculate technical score based on RSI, trend analysis, and momentum.
 
+        Delegates to TechnicalScorer component (Phase 2A refactoring).
+
         Returns:
             Tuple of (score, details_dict)
 
         """
-        details = {}
-
-        # RSI (Relative Strength Index) - target 30-70 range
-        rsi = self._safe_get_float(data, "rsi", 50.0)
-        if 40 <= rsi <= 60:  # Neutral zone
-            rsi_score = 1.0
-        elif 30 <= rsi <= 70:  # Good range
-            rsi_score = 0.8
-        elif 20 <= rsi <= 80:  # Acceptable range
-            rsi_score = 0.6
-        elif 10 <= rsi <= 90:  # Warning range
-            rsi_score = 0.4
-        else:  # Extreme overbought/oversold
-            rsi_score = 0.2
-
-        details["rsi"] = rsi
-        details["rsi_score"] = rsi_score
-
-        # Trend analysis (moving averages)
-        price = self._safe_get_float(data, "current_price", 100.0)
-        ma_50 = self._safe_get_float(data, "moving_avg_50", price)
-        ma_200 = self._safe_get_float(data, "moving_avg_200", price)
-
-        # Price vs moving averages
-        if price > ma_50 > ma_200:  # Strong uptrend
-            trend_score = 1.0
-            trend_direction = "strong_uptrend"
-        elif price > ma_50 and price > ma_200:  # Uptrend
-            trend_score = 0.8
-            trend_direction = "uptrend"
-        elif price > ma_200:  # Weak uptrend
-            trend_score = 0.6
-            trend_direction = "weak_uptrend"
-        elif price < ma_50 and price < ma_200 and ma_50 < ma_200:  # Strong downtrend
-            trend_score = 0.2
-            trend_direction = "strong_downtrend"
-        elif price < ma_50 or price < ma_200:  # Downtrend
-            trend_score = 0.4
-            trend_direction = "downtrend"
-        else:  # Sideways
-            trend_score = 0.5
-            trend_direction = "sideways"
-
-        details["current_price"] = price
-        details["moving_avg_50"] = ma_50
-        details["moving_avg_200"] = ma_200
-        details["trend_score"] = trend_score
-        details["trend_direction"] = trend_direction
-
-        # MACD momentum
-        macd = self._safe_get_float(data, "macd", 0.0)
-        macd_signal = self._safe_get_float(data, "macd_signal", 0.0)
-        macd_diff = macd - macd_signal
-
-        if macd_diff > 0 and macd > 0:  # Strong bullish momentum
-            momentum_score = 1.0
-        elif macd_diff > 0:  # Bullish momentum
-            momentum_score = 0.8
-        elif abs(macd_diff) < 0.1:  # Neutral momentum
-            momentum_score = 0.6
-        elif macd_diff < 0:  # Bearish momentum
-            momentum_score = 0.4
-        else:  # Strong bearish momentum
-            momentum_score = 0.2
-
-        details["macd"] = macd
-        details["macd_signal"] = macd_signal
-        details["macd_diff"] = macd_diff
-        details["momentum_score"] = momentum_score
-
-        # Weighted average (RSI 40%, Trend 40%, Momentum 20%)
-        technical_score = 0.40 * rsi_score + 0.40 * trend_score + 0.20 * momentum_score
-
-        details["technical_score"] = technical_score
-        return technical_score, details
+        # Delegate to component scorer
+        return self.technical_scorer.calculate_technical_score(data)
 
     def calculate_risk_score(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         """
         Calculate risk score (0-5 scale converted to 0-1, where 1 = low risk).
+
+        Delegates to RiskScorer component (Phase 2A refactoring).
 
         Based on volatility, maximum drawdown, and beta.
 
@@ -621,70 +459,12 @@ class DeepAnalysisScorer:
             Tuple of (score, details_dict)
 
         """
-        details = {}
-
-        # Volatility - lower is better (annual volatility)
-        volatility = self._safe_get_float(data, "volatility", 0.20)
-        if volatility <= 0.10:  # 10% or less
-            vol_score = 1.0
-        elif volatility <= 0.15:  # 10-15%
-            vol_score = 0.8
-        elif volatility <= 0.25:  # 15-25%
-            vol_score = 0.6
-        elif volatility <= 0.40:  # 25-40%
-            vol_score = 0.4
-        else:  # >40%
-            vol_score = 0.2
-
-        details["volatility"] = volatility
-        details["volatility_score"] = vol_score
-
-        # Maximum drawdown - lower is better (negative values)
-        max_drawdown = self._safe_get_float(data, "max_drawdown", -0.20)
-        max_drawdown = abs(max_drawdown)  # Convert to positive for comparison
-
-        if max_drawdown <= 0.10:  # 10% or less
-            drawdown_score = 1.0
-        elif max_drawdown <= 0.20:  # 10-20%
-            drawdown_score = 0.8
-        elif max_drawdown <= 0.35:  # 20-35%
-            drawdown_score = 0.6
-        elif max_drawdown <= 0.50:  # 35-50%
-            drawdown_score = 0.4
-        else:  # >50%
-            drawdown_score = 0.2
-
-        details["max_drawdown"] = -max_drawdown  # Store as negative
-        details["drawdown_score"] = drawdown_score
-
-        # Beta - closer to 1.0 is better for most assets
-        beta = self._safe_get_float(data, "beta", 1.0)
-        beta_deviation = abs(beta - 1.0)
-
-        if beta_deviation <= 0.20:  # 0.8-1.2 range
-            beta_score = 1.0
-        elif beta_deviation <= 0.40:  # 0.6-1.4 range
-            beta_score = 0.8
-        elif beta_deviation <= 0.60:  # 0.4-1.6 range
-            beta_score = 0.6
-        elif beta_deviation <= 1.00:  # 0.0-2.0 range
-            beta_score = 0.4
-        else:  # >2.0 or negative
-            beta_score = 0.2
-
-        details["beta"] = beta
-        details["beta_deviation"] = beta_deviation
-        details["beta_score"] = beta_score
-
-        # Weighted average (Volatility 50%, Drawdown 30%, Beta 20%)
-        risk_score = 0.50 * vol_score + 0.30 * drawdown_score + 0.20 * beta_score
-
-        details["risk_score"] = risk_score
-        return risk_score, details
+        # Delegate to component scorer
+        return self.risk_scorer.calculate_risk_score(data)
 
     def assign_grade(self, composite_score: float) -> str:
         """
-        Assign letter grade based on composite score.
+        Assign letter grade based on composite score using configured thresholds.
 
         Args:
             composite_score: Composite score (0.0 to 1.0)
@@ -693,14 +473,22 @@ class DeepAnalysisScorer:
             Letter grade (A+, A, B, C, D, F)
 
         """
-        for threshold, grade in self.GRADE_THRESHOLDS.items():
-            if composite_score >= threshold:
-                return grade
-        return "F"
+        if composite_score >= self.thresholds.grade_a_plus:
+            return "A+"
+        elif composite_score >= self.thresholds.grade_a:
+            return "A"
+        elif composite_score >= self.thresholds.grade_b:
+            return "B"
+        elif composite_score >= self.thresholds.grade_c:
+            return "C"
+        elif composite_score >= self.thresholds.grade_d:
+            return "D"
+        else:
+            return "F"
 
     def generate_recommendation(self, composite_score: float, grade: str) -> Literal["BUY", "HOLD", "SELL"]:
         """
-        Generate investment recommendation based on composite score and grade.
+        Generate investment recommendation based on composite score using configured thresholds.
 
         Args:
             composite_score: Composite score (0.0 to 1.0)
@@ -710,9 +498,9 @@ class DeepAnalysisScorer:
             Investment recommendation
 
         """
-        if composite_score >= self.BUY_THRESHOLD:  # A- or better
+        if composite_score >= self.thresholds.buy_threshold:  # A or better
             return "BUY"
-        elif composite_score <= self.SELL_THRESHOLD:  # Below C
+        elif composite_score <= self.thresholds.sell_threshold:  # Below C
             return "SELL"
         else:  # B to C range
             return "HOLD"
@@ -759,15 +547,12 @@ class DeepAnalysisScorer:
             expense = fundamental_details.get("expense_ratio", 1.0)
             tracking = fundamental_details.get("tracking_error", None)
             tracking_available = fundamental_details.get("tracking_error_available", False)
-            
+
             if tracking_available and tracking is not None:
-                rationale_parts.append(
-                    f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%} and tracking error of {tracking:.2%}."
-                )
+                rationale_parts.append(f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%} and tracking error of {tracking:.2%}.")
             else:
                 rationale_parts.append(
-                    f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%}. "
-                    f"Note: Tracking error data not available for this ETF."
+                    f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%}. Note: Tracking error data not available for this ETF."
                 )
         elif asset_class == "crypto":
             market_cap = fundamental_details.get("market_cap", 0.0)
@@ -787,9 +572,9 @@ class DeepAnalysisScorer:
         rationale_parts.append(f"Risk assessment (score: {risk_score:.2f}) shows {volatility:.1%} volatility and maximum drawdown of {max_dd:.1%}.")
 
         # Recommendation rationale
-        if composite_score >= self.BUY_THRESHOLD:
+        if composite_score >= self.thresholds.buy_threshold:
             rationale_parts.append("Strong fundamentals, favorable technical indicators, and manageable risk profile support a BUY recommendation.")
-        elif composite_score <= self.SELL_THRESHOLD:
+        elif composite_score <= self.thresholds.sell_threshold:
             rationale_parts.append("Weak fundamentals, unfavorable technical setup, or elevated risk profile warrant a SELL recommendation.")
         else:
             rationale_parts.append("Mixed signals across fundamental, technical, and risk factors suggest a HOLD recommendation pending further developments.")
@@ -1045,45 +830,45 @@ class DeepAnalysisScorer:
         }
 
     def _map_risk_level(self, risk_score: float) -> str:
-        """Map risk score (0-1, where 1=low risk) to risk level."""
+        """Map risk score (0-1, where 1=low risk) to risk level using configured thresholds."""
         # Convert to 0-5 scale where 5=high risk
         risk_5_scale = (1.0 - risk_score) * 5
 
-        if risk_5_scale <= 1.5:
+        if risk_5_scale <= self.thresholds.risk_low_threshold:
             return "Low"
-        elif risk_5_scale <= 2.5:
+        elif risk_5_scale <= self.thresholds.risk_medium_threshold:
             return "Medium"
-        elif risk_5_scale <= 4.0:
+        elif risk_5_scale <= self.thresholds.risk_high_threshold:
             return "High"
         else:
             return "Very High"
 
     def _extract_risk_factors(self, risk_details: dict[str, Any]) -> list[str]:
-        """Extract risk factors from risk analysis details."""
+        """Extract risk factors from risk analysis details using configured thresholds."""
         risk_factors = []
 
         volatility = risk_details.get("volatility", 0.20)
-        if volatility > 0.30:
+        if volatility > self.thresholds.risk_volatility_high:
             risk_factors.append(f"High volatility ({volatility:.1%})")
 
         max_drawdown = risk_details.get("max_drawdown", -0.20)
-        if max_drawdown < -0.25:
+        if max_drawdown < -self.thresholds.risk_drawdown_significant:
             risk_factors.append(f"Significant drawdown risk ({max_drawdown:.1%})")
 
         beta = risk_details.get("beta", 1.0)
-        if beta > 1.5:
+        if beta > self.thresholds.risk_beta_high:
             risk_factors.append(f"High market sensitivity (beta: {beta:.2f})")
-        elif beta < 0.5:
+        elif beta < self.thresholds.risk_beta_low:
             risk_factors.append(f"Low market correlation (beta: {beta:.2f})")
 
         return risk_factors[:10]  # Limit to 10 factors
 
     def _generate_mitigation_strategies(self, asset_class: str, risk_details: dict[str, Any]) -> list[str]:
-        """Generate risk mitigation strategies based on asset class and risk profile."""
+        """Generate risk mitigation strategies based on asset class and risk profile using configured thresholds."""
         strategies = []
 
         volatility = risk_details.get("volatility", 0.20)
-        if volatility > 0.25:
+        if volatility > self.thresholds.volatility_moderate:
             strategies.append("Consider position sizing to limit exposure")
             strategies.append("Use stop-loss orders to limit downside risk")
 
@@ -1247,10 +1032,7 @@ class DeepAnalysisScorer:
                         metadata={"reason": "optional_field_missing", "is_critical": False},
                     )
 
-                self.logger.warning(
-                    f"⚠️ Optional field '{key}' missing for {self._current_ticker}, "
-                    f"using safe default {safe_default}"
-                )
+                self.logger.warning(f"⚠️ Optional field '{key}' missing for {self._current_ticker}, using safe default {safe_default}")
                 return safe_default
 
             # Field exists - track as calculated
@@ -1293,8 +1075,5 @@ class DeepAnalysisScorer:
             if self._data_quality_metrics:
                 self._data_quality_metrics.record_defaulted_field(key, safe_default)
 
-            self.logger.warning(
-                f"⚠️ Invalid value for optional field '{key}' for {self._current_ticker}: "
-                f"{data.get(key)} ({e}), using safe default {safe_default}"
-            )
+            self.logger.warning(f"⚠️ Invalid value for optional field '{key}' for {self._current_ticker}: {data.get(key)} ({e}), using safe default {safe_default}")
             return safe_default

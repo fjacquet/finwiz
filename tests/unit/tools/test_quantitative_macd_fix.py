@@ -1,9 +1,7 @@
 """
 Unit tests for MACD signal extraction fix in quantitative analysis tool.
 """
-import json
 
-import pandas as pd
 import pytest
 
 
@@ -14,9 +12,7 @@ class TestMACDExtractionFix:
     def mock_tech_result_with_macd(self, mocker):
         """Create mock technical analysis result with MACD data."""
         mock_macd_result = mocker.Mock()
-        mock_macd_result.signals = [
-            mocker.Mock(description="MACD bullish crossover - strong buy signal")
-        ]
+        mock_macd_result.signals = [mocker.Mock(description="MACD bullish crossover - strong buy signal")]
         mock_macd_result.raw_values = {
             "MACD_line": [0.5, 0.6, 0.7, 0.8, 0.9],
             "MACD_signal": [0.4, 0.5, 0.6, 0.7, 0.8],
@@ -78,10 +74,7 @@ class TestMACDExtractionFix:
         # Add numeric MACD values (THE FIX)
         if "MACD" in mock_tech_result_with_macd.indicator_results:
             macd_result = mock_tech_result_with_macd.indicator_results["MACD"]
-            if (
-                "MACD_line" in macd_result.raw_values
-                and "MACD_signal" in macd_result.raw_values
-            ):
+            if "MACD_line" in macd_result.raw_values and "MACD_signal" in macd_result.raw_values:
                 macd_line_values = macd_result.raw_values["MACD_line"]
                 macd_signal_values = macd_result.raw_values["MACD_signal"]
                 if isinstance(macd_line_values, list) and macd_line_values:
@@ -104,20 +97,11 @@ class TestMACDExtractionFix:
         assert tech_data["macd"] == 0.9, f"Expected MACD=0.9, got {tech_data['macd']}"
 
         assert "macd_signal" in tech_data, "MACD signal should be extracted"
-        assert isinstance(
-            tech_data["macd_signal"], float
-        ), f"MACD signal should be float, got {type(tech_data['macd_signal'])}"
-        assert (
-            tech_data["macd_signal"] == 0.8
-        ), f"Expected MACD signal=0.8, got {tech_data['macd_signal']}"
+        assert isinstance(tech_data["macd_signal"], float), f"MACD signal should be float, got {type(tech_data['macd_signal'])}"
+        assert tech_data["macd_signal"] == 0.8, f"Expected MACD signal=0.8, got {tech_data['macd_signal']}"
 
-        assert (
-            "macd_description" in tech_data
-        ), "MACD description should be preserved"
-        assert (
-            tech_data["macd_description"]
-            == "MACD bullish crossover - strong buy signal"
-        )
+        assert "macd_description" in tech_data, "MACD description should be preserved"
+        assert tech_data["macd_description"] == "MACD bullish crossover - strong buy signal"
 
         assert "rsi" in tech_data, "RSI should be extracted"
         assert tech_data["rsi"] == 65.0, f"Expected RSI=65.0, got {tech_data['rsi']}"
@@ -170,10 +154,7 @@ class TestMACDExtractionFix:
         # Extract numeric MACD values
         if "MACD" in mock_tech_result_with_macd.indicator_results:
             macd_result = mock_tech_result_with_macd.indicator_results["MACD"]
-            if (
-                "MACD_line" in macd_result.raw_values
-                and "MACD_signal" in macd_result.raw_values
-            ):
+            if "MACD_line" in macd_result.raw_values and "MACD_signal" in macd_result.raw_values:
                 macd_line_values = macd_result.raw_values["MACD_line"]
                 macd_signal_values = macd_result.raw_values["MACD_signal"]
                 if isinstance(macd_line_values, list) and macd_line_values:
@@ -196,6 +177,4 @@ class TestMACDExtractionFix:
         else:
             momentum_score = 0.4
 
-        assert (
-            momentum_score == 1.0
-        ), f"Expected momentum_score=1.0, got {momentum_score}"
+        assert momentum_score == 1.0, f"Expected momentum_score=1.0, got {momentum_score}"

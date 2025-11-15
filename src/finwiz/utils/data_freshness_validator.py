@@ -148,11 +148,11 @@ class DataFreshnessValidator:
 
     def _parse_timestamp(self, timestamp_value: Any) -> datetime | None:
         """Parse various timestamp formats into datetime object."""
+        from finwiz.utils.datetime_utils import ensure_utc_aware
+
         if isinstance(timestamp_value, datetime):
             # Ensure timezone awareness
-            if timestamp_value.tzinfo is None:
-                return timestamp_value.replace(tzinfo=UTC)
-            return timestamp_value
+            return ensure_utc_aware(timestamp_value)
 
         if isinstance(timestamp_value, str):
             # Try ISO format first (most common)
@@ -179,9 +179,7 @@ class DataFreshnessValidator:
             for fmt in formats:
                 try:
                     dt = datetime.strptime(timestamp_value, fmt)
-                    if dt.tzinfo is None:
-                        dt = dt.replace(tzinfo=UTC)
-                    return dt
+                    return ensure_utc_aware(dt)
                 except ValueError:
                     continue
 
@@ -196,9 +194,10 @@ class DataFreshnessValidator:
 
     def _calculate_age_hours(self, timestamp: datetime) -> float:
         """Calculate age of data in hours."""
+        from finwiz.utils.datetime_utils import ensure_utc_aware
+
         now = datetime.now(UTC)
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=UTC)
+        timestamp = ensure_utc_aware(timestamp)
 
         age_delta = now - timestamp
         return age_delta.total_seconds() / 3600

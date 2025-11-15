@@ -251,6 +251,24 @@ wheels = [
 ]
 
 [[package]]
+name = "bottleneck"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/14/d8/6d641573e210768816023a64966d66463f2ce9fc9945fa03290c8a18f87c/bottleneck-1.6.0.tar.gz", hash = "sha256:028d46ee4b025ad9ab4d79924113816f825f62b17b87c9e1d0d8ce144a4a0e31", size = 104311, upload-time = "2025-09-08T16:30:38.617Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/72/7e3593a2a3dd69ec831a9981a7b1443647acb66a5aec34c1620a5f7f8498/bottleneck-1.6.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:3bb16a16a86a655fdbb34df672109a8a227bb5f9c9cf5bb8ae400a639bc52fa3", size = 100515, upload-time = "2025-09-08T16:29:55.141Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/d4/e7bbea08f4c0f0bab819d38c1a613da5f194fba7b19aae3e2b3a27e78886/bottleneck-1.6.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:0fbf5d0787af9aee6cef4db9cdd14975ce24bd02e0cc30155a51411ebe2ff35f", size = 377451, upload-time = "2025-09-08T16:29:56.718Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/80/a6da430e3b1a12fd85f9fe90d3ad8fe9a527ecb046644c37b4b3f4baacfc/bottleneck-1.6.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d08966f4a22384862258940346a72087a6f7cebb19038fbf3a3f6690ee7fd39f", size = 368303, upload-time = "2025-09-08T16:29:57.834Z" },
+    { url = "https://files.pythonhosted.org/packages/30/11/abd30a49f3251f4538430e5f876df96f2b39dabf49e05c5836820d2c31fe/bottleneck-1.6.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:604f0b898b43b7bc631c564630e936a8759d2d952641c8b02f71e31dbcd9deaa", size = 361232, upload-time = "2025-09-08T16:29:59.104Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/ac/1c0e09d8d92b9951f675bd42463ce76c3c3657b31c5bf53ca1f6dd9eccff/bottleneck-1.6.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:d33720bad761e642abc18eda5f188ff2841191c9f63f9d0c052245decc0faeb9", size = 373234, upload-time = "2025-09-08T16:30:00.488Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/ea/382c572ae3057ba885d484726bb63629d1f63abedf91c6cd23974eb35a9b/bottleneck-1.6.0-cp312-cp312-win32.whl", hash = "sha256:a1e5907ec2714efbe7075d9207b58c22ab6984a59102e4ecd78dced80dab8374", size = 108020, upload-time = "2025-09-08T16:30:01.773Z" },
+    { url = "https://files.pythonhosted.org/packages/48/ad/d71da675eef85ac153eef5111ca0caa924548c9591da00939bcabba8de8e/bottleneck-1.6.0-cp312-cp312-win_amd64.whl", hash = "sha256:81e3822499f057a917b7d3972ebc631ac63c6bbcc79ad3542a66c4c40634e3a6", size = 113493, upload-time = "2025-09-08T16:30:02.872Z" },
+]
+
+[[package]]
 name = "bracex"
 version = "2.6"
 source = { registry = "https://pypi.org/simple" }
@@ -818,6 +836,22 @@ wheels = [
 ]
 
 [[package]]
+name = "empyrical-reloaded"
+version = "0.5.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "bottleneck" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "peewee" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/97/43/2dd510760e12fb9a07d2ab4dcf67f263e6eb103c73285d040005fe3d5da9/empyrical_reloaded-0.5.12.tar.gz", hash = "sha256:e01f0bbf24f0aaab2767c85a7dee8f05a59d25355cf50c3371efda056613e323", size = 84272, upload-time = "2025-06-01T23:17:11.118Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/54/23d8f6d36c66575b8d31e354c8bba2c857f9ca41e4b76388c6ca53938fd8/empyrical_reloaded-0.5.12-py3-none-any.whl", hash = "sha256:1bd8b53810c760ae5a12a03f2cefc6af0e905f854b71e7d99074b673abdd4fd6", size = 33048, upload-time = "2025-06-01T23:17:09.958Z" },
+]
+
+[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -897,6 +931,7 @@ dependencies = [
     { name = "crewai", extra = ["tools"] },
     { name = "crewai-tools" },
     { name = "dotenv" },
+    { name = "empyrical-reloaded" },
     { name = "faiss-cpu" },
     { name = "firecrawl-py" },
     { name = "langchain" },
@@ -974,6 +1009,7 @@ requires-dist = [
     { name = "crewai", extras = ["tools"], specifier = ">=0.120.1,<1.0.0" },
     { name = "crewai-tools", specifier = ">=0.46.0" },
     { name = "dotenv", specifier = ">=0.9.9" },
+    { name = "empyrical-reloaded", specifier = ">=0.5.12" },
     { name = "faiss-cpu", specifier = ">=1.9.0" },
     { name = "firecrawl-py", specifier = ">=2.7.1" },
     { name = "langchain", specifier = ">=0.3.27" },
@@ -2742,9 +2778,9 @@ wheels = [
 
 [[package]]
 name = "peewee"
-version = "3.18.3"
+version = "3.17.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6f/60/58e7a307a24044e0e982b99042fcd5a58d0cd928d9c01829574d7553ee8d/peewee-3.18.3.tar.gz", hash = "sha256:62c3d93315b1a909360c4b43c3a573b47557a1ec7a4583a71286df2a28d4b72e", size = 3026296, upload-time = "2025-11-03T16:43:46.678Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/b1/2331e6b1fc8c61686dd9276f34142265462640eb0dd431246e30c4461065/peewee-3.17.3.tar.gz", hash = "sha256:ef15f90b628e41a584be8306cdc3243c51f73ce88b06154d9572f6d0284a0169", size = 2953258, upload-time = "2024-04-17T15:29:44.345Z" }
 
 [[package]]
 name = "perplexityai"

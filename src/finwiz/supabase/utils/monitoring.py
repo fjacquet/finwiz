@@ -14,8 +14,6 @@ Provides comprehensive monitoring and observability for:
 from __future__ import annotations
 
 import logging
-import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -46,7 +44,7 @@ class OperationMetrics:
     failure_count: int = 0
     timeout_count: int = 0
     total_duration_ms: float = 0.0
-    min_duration_ms: float = float('inf')
+    min_duration_ms: float = float("inf")
     max_duration_ms: float = 0.0
     durations: list[float] = field(default_factory=list)
     max_durations: int = 100  # Keep last 100 durations
@@ -275,10 +273,7 @@ class PerformanceMonitor:
             OperationType.CACHE_CHECK: cache_threshold_ms,
             OperationType.VECTOR_SEARCH: vector_search_threshold_ms,
         }
-        self.metrics: dict[OperationType, OperationMetrics] = {
-            op_type: OperationMetrics(operation_type=op_type)
-            for op_type in OperationType
-        }
+        self.metrics: dict[OperationType, OperationMetrics] = {op_type: OperationMetrics(operation_type=op_type) for op_type in OperationType}
 
     def record_operation(
         self,
@@ -341,10 +336,7 @@ class PerformanceMonitor:
 
     def reset_metrics(self) -> None:
         """Reset all metrics."""
-        self.metrics = {
-            op_type: OperationMetrics(operation_type=op_type)
-            for op_type in OperationType
-        }
+        self.metrics = {op_type: OperationMetrics(operation_type=op_type) for op_type in OperationType}
         logger.debug("Performance metrics reset")
 
 
@@ -402,25 +394,13 @@ class PoolMonitor:
         }
 
         # Log stats
-        logger.info(
-            f"📊 Connection Pool Stats: "
-            f"size={size}/{max_size}, "
-            f"free={free_size}, "
-            f"utilization={utilization:.1%}, "
-            f"idle_timeout={stats['idle_timeout']}s"
-        )
+        logger.info(f"📊 Connection Pool Stats: size={size}/{max_size}, free={free_size}, utilization={utilization:.1%}, idle_timeout={stats['idle_timeout']}s")
 
         # Alert if utilization is high
         if utilization >= self.utilization_critical_threshold:
-            logger.error(
-                f"🚨 CRITICAL: Connection pool utilization very high: {utilization:.1%} "
-                f"(threshold: {self.utilization_critical_threshold:.1%})"
-            )
+            logger.error(f"🚨 CRITICAL: Connection pool utilization very high: {utilization:.1%} (threshold: {self.utilization_critical_threshold:.1%})")
         elif utilization >= self.utilization_warning_threshold:
-            logger.warning(
-                f"⚠️ WARNING: Connection pool utilization high: {utilization:.1%} "
-                f"(threshold: {self.utilization_warning_threshold:.1%})"
-            )
+            logger.warning(f"⚠️ WARNING: Connection pool utilization high: {utilization:.1%} (threshold: {self.utilization_warning_threshold:.1%})")
 
     def record_acquisition(self, duration_ms: float) -> None:
         """
@@ -505,23 +485,14 @@ class CircuitBreakerMonitor:
         # Update counters
         if new_state == CircuitState.OPEN:
             self.open_count += 1
-            logger.error(
-                f"🚨 Circuit breaker OPENED: {old_state.value} → {new_state.value} "
-                f"(total opens: {self.open_count})"
-            )
+            logger.error(f"🚨 Circuit breaker OPENED: {old_state.value} → {new_state.value} (total opens: {self.open_count})")
         elif new_state == CircuitState.HALF_OPEN:
             self.half_open_count += 1
-            logger.warning(
-                f"⚠️ Circuit breaker HALF-OPEN: {old_state.value} → {new_state.value} "
-                f"(attempting recovery)"
-            )
+            logger.warning(f"⚠️ Circuit breaker HALF-OPEN: {old_state.value} → {new_state.value} (attempting recovery)")
         elif new_state == CircuitState.CLOSED:
             self.closed_count += 1
             if old_state != CircuitState.CLOSED:
-                logger.info(
-                    f"✅ Circuit breaker CLOSED: {old_state.value} → {new_state.value} "
-                    f"(recovery successful)"
-                )
+                logger.info(f"✅ Circuit breaker CLOSED: {old_state.value} → {new_state.value} (recovery successful)")
 
     def get_current_state(self) -> CircuitState:
         """
@@ -627,7 +598,7 @@ class MetricsExporter:
                 "failure_rate": op_metrics.failure_rate,
                 "timeout_rate": op_metrics.timeout_rate,
                 "avg_duration_ms": op_metrics.avg_duration_ms,
-                "min_duration_ms": op_metrics.min_duration_ms if op_metrics.min_duration_ms != float('inf') else 0.0,
+                "min_duration_ms": op_metrics.min_duration_ms if op_metrics.min_duration_ms != float("inf") else 0.0,
                 "max_duration_ms": op_metrics.max_duration_ms,
             }
         return metrics
@@ -698,7 +669,7 @@ class MetricsExporter:
         # Circuit breaker metrics
         cb = metrics["circuit_breaker"]
         lines.append(f"supabase_circuit_breaker_open_count {cb['open_count']}")
-        lines.append(f"supabase_circuit_breaker_state {{state=\"{cb['current_state']}\"}} 1")
+        lines.append(f'supabase_circuit_breaker_state {{state="{cb["current_state"]}"}} 1')
 
         # Cache metrics
         cache = metrics["cache"]

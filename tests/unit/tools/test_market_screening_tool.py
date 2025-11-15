@@ -9,12 +9,8 @@ from datetime import datetime
 
 import pytest
 
-from finwiz.tools.market_screening_tool import (
-    MarketScreeningInput,
-    MarketScreeningResult,
-    MarketScreeningTool,
-    ScreeningCandidate,
-)
+from finwiz.schemas.tools import MarketScreeningInput, MarketScreeningResult
+from finwiz.tools.market_screening_tool import MarketScreeningTool
 
 
 class TestMarketScreeningTool:

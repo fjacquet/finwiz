@@ -21,7 +21,7 @@ print("\nTesting fallback for problematic ETFs:")
 for ticker in test_tickers:
     has_data = has_fallback_data(ticker)
     ratio = get_fallback_expense_ratio(ticker)
-    
+
     if ratio is not None:
         print(f"  ✅ {ticker}: {ratio:.6f} ({ratio * 100:.2f}%)")
     else:
@@ -32,25 +32,26 @@ print("\n" + "=" * 60)
 print("Testing integration with QuantitativeAnalysisTool:")
 print("=" * 60)
 
-from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 import json
 
-tool = QuantitativeAnalysisTool(asset_class='etf')
+from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
+
+tool = QuantitativeAnalysisTool(asset_class="etf")
 
 # Test with a ticker that should use fallback
 ticker = "VUSA.L"
 print(f"\nTesting {ticker}...")
 
 try:
-    result = tool._run(symbol=ticker, asset_class='etf')
+    result = tool._run(symbol=ticker, asset_class="etf")
     data = json.loads(result)
-    
+
     expense_ratio = data.get("expense_ratio")
     if expense_ratio is not None:
         print(f"  ✅ Got expense_ratio: {expense_ratio:.6f} ({expense_ratio * 100:.2f}%)")
     else:
-        print(f"  ❌ No expense_ratio in result")
-        
+        print("  ❌ No expense_ratio in result")
+
 except Exception as e:
     print(f"  ⚠️ Tool execution error: {e}")
 

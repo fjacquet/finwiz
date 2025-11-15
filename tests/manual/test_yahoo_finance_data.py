@@ -14,9 +14,9 @@ import yfinance as yf
 
 def test_yahoo_finance_data(ticker: str = "AAPL"):
     """Test what data Yahoo Finance provides for a given ticker."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Testing Yahoo Finance data for {ticker}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     try:
         # Fetch ticker data
@@ -35,10 +35,10 @@ def test_yahoo_finance_data(ticker: str = "AAPL"):
 
         print("CRITICAL FIELDS CHECK:")
         print("-" * 80)
-        
+
         available_fields = []
         missing_fields = []
-        
+
         for field_key, field_name in critical_fields.items():
             value = info.get(field_key)
             if value is not None:
@@ -49,10 +49,10 @@ def test_yahoo_finance_data(ticker: str = "AAPL"):
                 print(f"❌ {field_name:30} ({field_key:20}): NOT AVAILABLE")
 
         # Additional useful fields
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("ADDITIONAL FINANCIAL METRICS:")
         print("-" * 80)
-        
+
         additional_fields = {
             "totalRevenue": "Total Revenue",
             "ebitda": "EBITDA",
@@ -67,7 +67,7 @@ def test_yahoo_finance_data(ticker: str = "AAPL"):
             "averageVolume": "Average Volume",
             "dividendYield": "Dividend Yield",
         }
-        
+
         for field_key, field_name in additional_fields.items():
             value = info.get(field_key)
             if value is not None:
@@ -76,12 +76,12 @@ def test_yahoo_finance_data(ticker: str = "AAPL"):
                 print(f"  {field_name:30} ({field_key:20}): N/A")
 
         # Summary
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("SUMMARY:")
         print("-" * 80)
         print(f"✅ Available critical fields: {len(available_fields)}/{len(critical_fields)}")
         print(f"❌ Missing critical fields: {len(missing_fields)}/{len(critical_fields)}")
-        
+
         if missing_fields:
             print(f"\nMissing fields: {', '.join(missing_fields)}")
             print("\n⚠️  WARNING: Some critical fields are not available from Yahoo Finance!")
@@ -90,7 +90,7 @@ def test_yahoo_finance_data(ticker: str = "AAPL"):
             print("\n✅ All critical fields are available from Yahoo Finance!")
 
         # Show all available keys for reference
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"ALL AVAILABLE KEYS ({len(info)} total):")
         print("-" * 80)
         for i, key in enumerate(sorted(info.keys()), 1):
@@ -102,15 +102,15 @@ def test_yahoo_finance_data(ticker: str = "AAPL"):
 
 if __name__ == "__main__":
     import sys
-    
+
     # Test with AAPL by default, or use command line argument
     ticker = sys.argv[1] if len(sys.argv) > 1 else "AAPL"
     test_yahoo_finance_data(ticker)
-    
+
     # Test with a few more tickers
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("Testing additional tickers...")
-    print("="*80)
-    
+    print("=" * 80)
+
     for test_ticker in ["MSFT", "GOOGL", "SPY"]:
         test_yahoo_finance_data(test_ticker)

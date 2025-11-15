@@ -96,9 +96,11 @@ class YahooFinanceHistoryTool(BaseTool):
             if history_list:
                 latest_date = history_list[-1]["date"]
                 try:
+                    from finwiz.utils.datetime_utils import ensure_utc_aware
+
                     # Convert date string back to datetime for better timestamp
                     data_date = datetime.strptime(latest_date, "%Y-%m-%d")
-                    result["data_time"] = data_date.replace(tzinfo=UTC).isoformat()
+                    result["data_time"] = ensure_utc_aware(data_date).isoformat()
                     logger.debug(f"Latest data point for {ticker}: {latest_date}")
                 except ValueError as e:
                     logger.warning(f"Could not parse latest date for {ticker}: {e}")

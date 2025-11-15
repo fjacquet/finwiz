@@ -32,16 +32,12 @@ class TestSupabaseClientConnectivity:
         return SupabaseClient()
 
     @pytest.mark.asyncio
-    async def test_should_pass_connectivity_test_when_supabase_available(
-        self, client, mocker
-    ):
+    async def test_should_pass_connectivity_test_when_supabase_available(self, client, mocker):
         """Test successful connectivity test."""
         # Arrange
         mock_result = mocker.Mock()
         mock_result.data = [{"id": "test-id"}]
-        mocker.patch.object(
-            client, "execute_with_timeout", return_value=mock_result
-        )
+        mocker.patch.object(client, "execute_with_timeout", return_value=mock_result)
 
         # Act
         result = await client.test_connectivity()
@@ -102,9 +98,7 @@ class TestSupabaseClientConnectivity:
         assert client.is_available is False
 
     @pytest.mark.asyncio
-    async def test_should_fail_connectivity_test_when_missing_credentials(
-        self, mocker
-    ):
+    async def test_should_fail_connectivity_test_when_missing_credentials(self, mocker):
         """Test connectivity test when credentials are missing."""
         # Arrange
         mocker.patch.dict(
@@ -138,9 +132,7 @@ class TestSupabaseClientConnectivity:
             },
         )
         client = SupabaseClient()
-        mock_execute = mocker.patch.object(
-            client, "execute_with_timeout", return_value=mocker.Mock()
-        )
+        mock_execute = mocker.patch.object(client, "execute_with_timeout", return_value=mocker.Mock())
 
         # Act
         await client.test_connectivity()

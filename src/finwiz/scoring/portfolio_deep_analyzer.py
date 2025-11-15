@@ -6,7 +6,6 @@ Implements the spec requirements for 10-20x speed improvement and 100% cost redu
 """
 
 import json
-import os
 import time
 from pathlib import Path
 from typing import Any
@@ -24,7 +23,7 @@ class PortfolioDeepAnalyzer:
 
     Replaces AI-based deep analysis with deterministic Python calculations
     using the DeepAnalysisScorer for 10-20x speed improvement.
-    
+
     Now includes Supabase integration for caching and storage.
     """
 
@@ -33,7 +32,7 @@ class PortfolioDeepAnalyzer:
         self.scorer = DeepAnalysisScorer()
         self.output_dir = Path(output_dir)
         self.logger = logger
-        
+
         # Note: Supabase integration for Python analyzer is disabled due to event loop conflicts
         # The Python analyzer runs in synchronous context while Supabase requires async
         # Supabase caching is available for AI-based DeepAnalysisCrew
@@ -144,10 +143,7 @@ class PortfolioDeepAnalyzer:
             self.logger.warning(
                 f"\n⚠️  SKIPPED HOLDINGS SUMMARY:\n"
                 f"   {len(skipped_holdings)} holdings skipped due to missing critical data:\n"
-                + "\n".join(
-                    f"   - {h['ticker']} ({h['asset_class']}): {h['reason']}"
-                    for h in skipped_holdings
-                )
+                + "\n".join(f"   - {h['ticker']} ({h['asset_class']}): {h['reason']}" for h in skipped_holdings)
             )
 
         # Export JSON files (Requirements 0.8-0.12)
@@ -175,21 +171,21 @@ class PortfolioDeepAnalyzer:
         try:
             # Fetch real quantitative data for this ticker
             quant_tool = QuantitativeAnalysisTool()
-            
+
             # Fetch both performance and technical data
             perf_data = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="performance")
             tech_data = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="technical")
 
             # Parse the quantitative data
             import json
-            
+
             if isinstance(perf_data, str):
                 try:
                     perf_data = json.loads(perf_data)
                 except json.JSONDecodeError:
                     self.logger.warning(f"Failed to parse performance data for {ticker}, using defaults")
                     perf_data = {}
-            
+
             if isinstance(tech_data, str):
                 try:
                     tech_data = json.loads(tech_data)
