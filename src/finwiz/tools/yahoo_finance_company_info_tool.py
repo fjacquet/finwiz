@@ -1,5 +1,7 @@
 """Tool for fetching Yahoo Finance Company Information."""
 
+from typing import Any
+
 import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from crewai.tools import BaseTool
 from pydantic import BaseModel
@@ -9,8 +11,7 @@ from finwiz.schemas.tools import GetCompanyInfoInput
 
 
 class YahooFinanceCompanyInfoTool(BaseTool):
-    """
-    Get detailed company information from Yahoo Finance.
+    """Get detailed company information from Yahoo Finance.
 
     This tool retrieves comprehensive company data including business description,
     financial metrics, and key performance indicators.
@@ -20,7 +21,7 @@ class YahooFinanceCompanyInfoTool(BaseTool):
     description: str = "Get detailed company information including business description, key financial metrics, and company profile."
     args_schema: type[BaseModel] = GetCompanyInfoInput
 
-    def _run(self, ticker: str) -> dict:
+    def _run(self, ticker: str) -> dict[str, Any]:
         """Execute the Yahoo Finance company info lookup."""
         try:
             ticker_data = yf.Ticker(ticker)

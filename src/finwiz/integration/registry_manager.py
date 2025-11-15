@@ -427,7 +427,7 @@ class RegistryManager:
             self.logger.error(error_msg, exc_info=True)
             return None
 
-    def _consolidate_crew_ticker_files(self, crew_name: str, output_files: list) -> dict:
+    def _consolidate_crew_ticker_files(self, crew_name: str, output_files: list[Any]) -> dict[str, Any]:
         """
         Consolidate individual ticker analysis files into crew-level summary.
 

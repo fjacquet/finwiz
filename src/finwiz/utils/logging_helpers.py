@@ -11,7 +11,7 @@ Usage:
         def __init__(self) -> None:
             self.logger = CrewLogger("MyCrew")
 
-        def kickoff(self, inputs: dict) -> Any:
+        def kickoff(self, inputs: dict[str, Any]) -> Any:
             self.logger.log_start(inputs)
             start_time = time.time()
 

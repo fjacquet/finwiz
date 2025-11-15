@@ -49,9 +49,9 @@ class TestIntegrationHealthChecker:
     def test_should_check_system_resources_when_healthy(self, mocker):
         """Test system resource checking when resources are healthy."""
         # Arrange
-        mock_cpu = mocker.patch("finwiz.integration.health_checker.psutil.cpu_percent")
-        mock_memory = mocker.patch("finwiz.integration.health_checker.psutil.virtual_memory")
-        mock_disk = mocker.patch("finwiz.integration.health_checker.psutil.disk_usage")
+        mock_cpu = mocker.patch("finwiz.integration.health_checks.psutil.cpu_percent")
+        mock_memory = mocker.patch("finwiz.integration.health_checks.psutil.virtual_memory")
+        mock_disk = mocker.patch("finwiz.integration.health_checks.psutil.disk_usage")
 
         mock_cpu.return_value = 25.0
         mock_memory.return_value = mocker.Mock(percent=30.0, available=8 * 1024**3)
@@ -74,9 +74,9 @@ class TestIntegrationHealthChecker:
     def test_should_detect_critical_resource_usage(self, mocker):
         """Test system resource checking when resources are critical."""
         # Arrange
-        mock_cpu = mocker.patch("finwiz.integration.health_checker.psutil.cpu_percent")
-        mock_memory = mocker.patch("finwiz.integration.health_checker.psutil.virtual_memory")
-        mock_disk = mocker.patch("finwiz.integration.health_checker.psutil.disk_usage")
+        mock_cpu = mocker.patch("finwiz.integration.health_checks.psutil.cpu_percent")
+        mock_memory = mocker.patch("finwiz.integration.health_checks.psutil.virtual_memory")
+        mock_disk = mocker.patch("finwiz.integration.health_checks.psutil.disk_usage")
 
         mock_cpu.return_value = 95.0
         mock_memory.return_value = mocker.Mock(percent=95.0, available=1 * 1024**3)
@@ -314,7 +314,7 @@ class TestIntegrationHealthChecker:
     def test_should_perform_comprehensive_health_check(self, mocker):
         """Test comprehensive health check functionality."""
         # Arrange
-        mock_freshness_checker = mocker.patch("finwiz.integration.health_checker.FreshnessChecker")
+        mock_freshness_checker = mocker.patch("finwiz.integration.health_checks.DataFreshnessChecker")
 
         mock_freshness_report = mocker.Mock()
         mock_freshness_report.fresh_data = ["stock"]

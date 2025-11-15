@@ -12,7 +12,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 
-from finwiz.tools.a_plus_scoring_tool import APlusScoringTool, MarketRegime
+from finwiz.schemas.tools import MarketRegime
+from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.backtesting_tool import BacktestingTool
 from finwiz.tools.market_screening_tool import MarketScreeningTool
 

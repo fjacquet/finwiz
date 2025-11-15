@@ -5,6 +5,9 @@ This module provides comprehensive URL validation to ensure that only real,
 valid URLs are included in reports and analysis outputs.
 """
 
+from typing import Any
+
+
 import re
 from urllib.parse import urlparse
 
@@ -186,7 +189,7 @@ class URLValidator:
 
         return valid_urls
 
-    def validate_url_dict(self, data: dict, url_fields: list[str], context: str = "") -> dict:
+    def validate_url_dict(self, data: dict, url_fields: list[str], context: str = "") -> dict[str, Any]:
         """
         Validate URL fields in a dictionary and replace invalid ones with None.
 

@@ -1488,7 +1488,7 @@ class FinwizFlow(Flow[FinwizState]):
 
         return results
 
-    async def _analyze_single_holding_with_resilience(self, holding: dict) -> Any | None:
+    async def _analyze_single_holding_with_resilience(self, holding: dict[str, Any]) -> Any | None:
         """
         Analyze single holding with retry and timeout management.
 

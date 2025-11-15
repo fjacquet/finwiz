@@ -1,6 +1,7 @@
 """Tool for fetching Yahoo Finance Ticker History."""
 
 from datetime import UTC, datetime
+from typing import Any
 
 import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from crewai.tools import BaseTool
@@ -13,18 +14,17 @@ logger = get_logger(__name__)
 
 
 class YahooFinanceHistoryTool(BaseTool):
-    """
-    Get historical price data for a financial instrument from Yahoo Finance.
+    """Get historical price data for a financial instrument from Yahoo Finance.
 
-    This tool retrieves historical price data for stocks, ETFs, or cryptocurrencies
-    over a specified time period and interval.
+        This tool retrieves historical price data for stocks, ETFs, or cryptocurrencies
+        over a specified time period and interval.
     """
 
     name: str = "Yahoo Finance History Tool"
     description: str = "Get historical price data (open, high, low, close, volume) for stocks, ETFs, or cryptocurrencies over various time periods and intervals."
     args_schema: type[BaseModel] = GetTickerHistoryInput
 
-    def _run(self, ticker: str, period: str = "1y", interval: str = "1d", prefetched_data: dict | None = None) -> dict:
+    def _run(self, ticker: str, period: str = "1y", interval: str = "1d", prefetched_data: dict | None = None) -> dict[str, Any]:
         """
         Execute the Yahoo Finance historical data lookup.
 

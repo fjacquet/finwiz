@@ -29,7 +29,7 @@ class FallbackHandlers:
         """Initialize fallback handlers."""
         pass
 
-    def attempt_data_repair(self, corrupted_data: dict, repair_suggestions: list) -> dict | None:
+    def attempt_data_repair(self, corrupted_data: dict, repair_suggestions: list[Any]) -> dict | None:
         """
         Attempt to repair corrupted data using repair suggestions.
 
@@ -61,7 +61,7 @@ class FallbackHandlers:
             logger.error(f"Failed to repair data: {e}")
             return None
 
-    def _apply_repair_suggestion(self, data: dict, suggestion: DataRepairSuggestion) -> dict:
+    def _apply_repair_suggestion(self, data: dict, suggestion: DataRepairSuggestion) -> dict[str, Any]:
         """Apply a single repair suggestion to the data."""
         field_path = suggestion.field_path
         keys = field_path.split(".")
@@ -105,7 +105,7 @@ class FallbackHandlers:
             # Field doesn't exist, nothing to remove
             pass
 
-    def create_fallback_data(self, original_data: dict, error_report: ValidationResult) -> dict:
+    def create_fallback_data(self, original_data: dict, error_report: ValidationResult) -> dict[str, Any]:
         """
         Create fallback data when repair attempts fail.
 
@@ -155,7 +155,7 @@ class FallbackHandlers:
 
         return fallback_data
 
-    def _sanitize_data_section(self, data_section: dict) -> dict:
+    def _sanitize_data_section(self, data_section: dict[str, Any]) -> dict[str, Any]:
         """
         Sanitize a data section to remove problematic fields.
 
@@ -186,7 +186,7 @@ class FallbackHandlers:
 
         return sanitized
 
-    def apply_emergency_fallback(self, crew_name: str) -> dict:
+    def apply_emergency_fallback(self, crew_name: str) -> dict[str, Any]:
         """
         Apply emergency fallback when all other recovery attempts fail.
 

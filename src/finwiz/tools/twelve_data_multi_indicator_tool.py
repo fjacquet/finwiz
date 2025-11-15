@@ -223,7 +223,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
         resp.raise_for_status()
         return resp.text
 
-    async def _get_perplexity_technical_insights(self, symbol: str) -> list:
+    async def _get_perplexity_technical_insights(self, symbol: str) -> list[Any]:
         """Get technical analysis insights from Perplexity Sonar."""
         perplexity_integration = self._get_perplexity_integration()
         if not perplexity_integration:
@@ -268,7 +268,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
         # Default to stock
         return "stock"
 
-    def _format_multi_indicator_response(self, symbol: str, interval: str, indicator_results: dict[str, Any], perplexity_insights: list) -> str:
+    def _format_multi_indicator_response(self, symbol: str, interval: str, indicator_results: dict[str, Any], perplexity_insights: list[Any]) -> str:
         """Format multi-indicator response combining all data sources."""
         response = f"# 📊 Multi-Indicator Technical Analysis: {symbol}\n\n"
         response += f"**Interval**: {interval}\n"

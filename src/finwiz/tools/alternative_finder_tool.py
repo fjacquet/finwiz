@@ -9,6 +9,9 @@ This module finds alternatives by:
 - Calculating expected grade improvements
 """
 
+from typing import Any
+
+
 import json
 from pathlib import Path
 
@@ -420,7 +423,7 @@ class AlternativeFinder:
         self,
         current: HoldingProfile,
         alternative: HoldingProfile,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Compare two holdings and return comparison metrics.
 

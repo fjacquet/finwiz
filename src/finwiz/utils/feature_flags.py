@@ -8,65 +8,23 @@ This module provides a comprehensive feature flag system that allows for:
 - Feature flag evaluation with fallback strategies
 """
 
-import os
-import random
-import time
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
 from finwiz.tools.logger import get_logger
+from finwiz.utils.flags import (
+    CircuitBreakerState,
+    FallbackStrategy,
+    FeatureFlagConfig,
+    FeatureFlagStrategy,
+    create_default_flags,
+    evaluate_flag,
+    get_default_values,
+    record_failure,
+    record_success,
+)
 
 logger = get_logger(__name__)
-
-
-class FeatureFlagStrategy(str, Enum):
-    """Feature flag evaluation strategies."""
-
-    BOOLEAN = "boolean"  # Simple on/off
-    PERCENTAGE = "percentage"  # Percentage-based rollout
-    USER_LIST = "user_list"  # Specific user allowlist
-    TIME_WINDOW = "time_window"  # Time-based activation
-    CIRCUIT_BREAKER = "circuit_breaker"  # Circuit breaker pattern
-
-
-class FallbackStrategy(str, Enum):
-    """Fallback strategies for degraded functionality."""
-
-    DISABLE = "disable"  # Disable feature completely
-    CACHED_ONLY = "cached_only"  # Use cached data only
-    REDUCED_FUNCTIONALITY = "reduced_functionality"  # Limited feature set
-    DEFAULT_VALUES = "default_values"  # Use default/mock values
-    RETRY_WITH_BACKOFF = "retry_with_backoff"  # Retry with exponential backoff
-
-
-@dataclass
-class FeatureFlagConfig:
-    """Configuration for a single feature flag."""
-
-    name: str
-    enabled: bool = False
-    strategy: FeatureFlagStrategy = FeatureFlagStrategy.BOOLEAN
-    rollout_percentage: float = 0.0  # 0-100
-    allowed_users: set[str] = field(default_factory=set)
-    start_time: float | None = None
-    end_time: float | None = None
-    fallback_strategy: FallbackStrategy = FallbackStrategy.DISABLE
-    circuit_breaker_threshold: int = 5  # Failures before circuit opens
-    circuit_breaker_timeout: int = 300  # Seconds before retry
-    description: str = ""
-    tags: set[str] = field(default_factory=set)
-
-
-@dataclass
-class CircuitBreakerState:
-    """State tracking for circuit breaker pattern."""
-
-    failure_count: int = 0
-    last_failure_time: float = 0.0
-    is_open: bool = False
-    last_success_time: float = 0.0
 
 
 class FeatureFlags:
@@ -86,207 +44,14 @@ class FeatureFlags:
 
     def _load_from_environment(self) -> None:
         """Load feature flag configurations from environment variables."""
-        # Define default feature flags for FinWiz
-        default_flags = {
-            "enhanced_sentiment_analysis": FeatureFlagConfig(
-                name="enhanced_sentiment_analysis",
-                enabled=self._get_env_bool("FF_ENHANCED_SENTIMENT", True),
-                strategy=FeatureFlagStrategy.PERCENTAGE,
-                rollout_percentage=self._get_env_float("FF_ENHANCED_SENTIMENT_ROLLOUT", 100.0),
-                fallback_strategy=FallbackStrategy.CACHED_ONLY,
-                description="Multi-source sentiment analysis with trending topics",
-            ),
-            "advanced_technical_analysis": FeatureFlagConfig(
-                name="advanced_technical_analysis",
-                enabled=self._get_env_bool("FF_ADVANCED_TECHNICAL", True),
-                strategy=FeatureFlagStrategy.PERCENTAGE,
-                rollout_percentage=self._get_env_float("FF_ADVANCED_TECHNICAL_ROLLOUT", 100.0),
-                fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
-                description="Advanced technical indicators and confluence detection",
-            ),
-            "chart_analysis": FeatureFlagConfig(
-                name="chart_analysis",
-                enabled=self._get_env_bool("FF_CHART_ANALYSIS", True),
-                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-                circuit_breaker_threshold=self._get_env_int("FF_CHART_BREAKER_THRESHOLD", 3),
-                circuit_breaker_timeout=self._get_env_int("FF_CHART_BREAKER_TIMEOUT", 300),
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Chart-img API integration for visual analysis",
-            ),
-            "twelve_data_integration": FeatureFlagConfig(
-                name="twelve_data_integration",
-                enabled=self._get_env_bool("FF_TWELVE_DATA", True),
-                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-                circuit_breaker_threshold=self._get_env_int("FF_TWELVE_DATA_BREAKER_THRESHOLD", 5),
-                circuit_breaker_timeout=self._get_env_int("FF_TWELVE_DATA_BREAKER_TIMEOUT", 600),
-                fallback_strategy=FallbackStrategy.CACHED_ONLY,
-                description="Twelve Data API for technical indicators",
-            ),
-            "strict_validation": FeatureFlagConfig(
-                name="strict_validation",
-                enabled=self._get_env_bool("FF_STRICT_VALIDATION", True),
-                strategy=FeatureFlagStrategy.PERCENTAGE,
-                rollout_percentage=self._get_env_float("FF_STRICT_VALIDATION_ROLLOUT", 100.0),
-                fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
-                description="Strict Pydantic validation enforcement",
-            ),
-            "async_execution": FeatureFlagConfig(
-                name="async_execution",
-                enabled=self._get_env_bool("FF_ASYNC_EXECUTION", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
-                description="Asynchronous task execution for I/O operations",
-            ),
-            "intelligent_caching": FeatureFlagConfig(
-                name="intelligent_caching",
-                enabled=self._get_env_bool("FF_INTELLIGENT_CACHING", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Advanced caching with TTL and invalidation strategies",
-            ),
-            "portfolio_review": FeatureFlagConfig(
-                name="portfolio_review",
-                enabled=self._get_env_bool("FF_PORTFOLIO_REVIEW", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Portfolio keep-or-sell review functionality",
-            ),
-            "quantitative_analysis": FeatureFlagConfig(
-                name="quantitative_analysis",
-                enabled=self._get_env_bool("FF_QUANTITATIVE_ANALYSIS", True),
-                strategy=FeatureFlagStrategy.PERCENTAGE,
-                rollout_percentage=self._get_env_float("FF_QUANTITATIVE_ANALYSIS_ROLLOUT", 0.0),
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Quantitative analysis and backtesting framework",
-            ),
-            "quantitative_backtesting": FeatureFlagConfig(
-                name="quantitative_backtesting",
-                enabled=self._get_env_bool("FF_QUANTITATIVE_BACKTESTING", True),
-                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-                circuit_breaker_threshold=self._get_env_int("FF_BACKTEST_BREAKER_THRESHOLD", 3),
-                circuit_breaker_timeout=self._get_env_int("FF_BACKTEST_BREAKER_TIMEOUT", 600),
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Strategy backtesting with professional frameworks",
-            ),
-            "stock_screening": FeatureFlagConfig(
-                name="stock_screening",
-                enabled=self._get_env_bool("FF_STOCK_SCREENING", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
-                description="Fundamental analysis stock screening",
-            ),
-            "portfolio_optimization": FeatureFlagConfig(
-                name="portfolio_optimization",
-                enabled=self._get_env_bool("FF_PORTFOLIO_OPTIMIZATION", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Modern portfolio theory optimization",
-            ),
-            "derivatives_pricing": FeatureFlagConfig(
-                name="derivatives_pricing",
-                enabled=self._get_env_bool("FF_DERIVATIVES_PRICING", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="QuantLib derivatives pricing capabilities",
-            ),
-            "portfolio_rebalancing": FeatureFlagConfig(
-                name="portfolio_rebalancing",
-                enabled=self._get_env_bool("FF_PORTFOLIO_REBALANCING", True),
-                strategy=FeatureFlagStrategy.PERCENTAGE,
-                rollout_percentage=self._get_env_float("FF_PORTFOLIO_REBALANCING_ROLLOUT", 0.0),
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Portfolio rebalancing with optimization algorithms",
-            ),
-            "rebalancing_monitoring": FeatureFlagConfig(
-                name="rebalancing_monitoring",
-                enabled=self._get_env_bool("FF_REBALANCING_MONITORING", True),
-                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-                circuit_breaker_threshold=self._get_env_int("FF_REBALANCING_BREAKER_THRESHOLD", 3),
-                circuit_breaker_timeout=self._get_env_int("FF_REBALANCING_BREAKER_TIMEOUT", 300),
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Real-time portfolio monitoring and alerts",
-            ),
-            "rebalancing_api": FeatureFlagConfig(
-                name="rebalancing_api",
-                enabled=self._get_env_bool("FF_REBALANCING_API", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="REST API endpoints for portfolio rebalancing",
-            ),
-            "monitoring": FeatureFlagConfig(
-                name="monitoring",
-                enabled=self._get_env_bool("FF_MONITORING", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Performance monitoring and metrics collection",
-            ),
-            "investment_discovery": FeatureFlagConfig(
-                name="investment_discovery",
-                enabled=self._get_env_bool("FF_INVESTMENT_DISCOVERY", True),
-                strategy=FeatureFlagStrategy.PERCENTAGE,
-                rollout_percentage=self._get_env_float("FF_INVESTMENT_DISCOVERY_ROLLOUT", 100.0),
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="A+ grade investment discovery agents for proactive opportunity identification",
-            ),
-            "stock_analysis": FeatureFlagConfig(
-                name="stock_analysis",
-                enabled=self._get_env_bool("FF_STOCK_ANALYSIS", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Stock market analysis crew for equity research and recommendations",
-            ),
-            "etf_analysis": FeatureFlagConfig(
-                name="etf_analysis",
-                enabled=self._get_env_bool("FF_ETF_ANALYSIS", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="ETF analysis crew for exchange-traded fund research and recommendations",
-            ),
-            "crypto_analysis": FeatureFlagConfig(
-                name="crypto_analysis",
-                enabled=self._get_env_bool("FF_CRYPTO_ANALYSIS", True),
-                strategy=FeatureFlagStrategy.BOOLEAN,
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description="Cryptocurrency analysis crew for digital asset research and recommendations",
-            ),
-            "perplexity_research": FeatureFlagConfig(
-                name="perplexity_research",
-                enabled=self._get_env_bool("FF_PERPLEXITY_RESEARCH", True),
-                strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-                circuit_breaker_threshold=self._get_env_int("FF_PERPLEXITY_BREAKER_THRESHOLD", 5),
-                circuit_breaker_timeout=self._get_env_int("FF_PERPLEXITY_BREAKER_TIMEOUT", 300),
-                fallback_strategy=FallbackStrategy.DISABLE,
-                description=("Perplexity Sonar Search integration for enhanced research capabilities across sentiment, technical, and fundamental analysis"),
-            ),
-        }
-
+        # Load default flags from definitions module
+        default_flags = create_default_flags()
         self.flags.update(default_flags)
 
         # Initialize circuit breaker states
         for flag_name, config in self.flags.items():
             if config.strategy == FeatureFlagStrategy.CIRCUIT_BREAKER:
                 self.circuit_breakers[flag_name] = CircuitBreakerState()
-
-    def _get_env_bool(self, key: str, default: bool = False) -> bool:
-        """Get boolean value from environment variable."""
-        value = os.getenv(key, str(default)).lower()
-        return value in {"true", "1", "yes", "on", "enabled"}
-
-    def _get_env_float(self, key: str, default: float = 0.0) -> float:
-        """Get float value from environment variable."""
-        try:
-            return float(os.getenv(key, str(default)))
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid float value for {key}, using default: {default}")
-            return default
-
-    def _get_env_int(self, key: str, default: int = 0) -> int:
-        """Get integer value from environment variable."""
-        try:
-            return int(os.getenv(key, str(default)))
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid integer value for {key}, using default: {default}")
-            return default
 
     def is_enabled(self, flag_name: str, user_id: str | None = None, context: dict[str, Any] | None = None) -> bool:
         """
@@ -313,87 +78,18 @@ class FeatureFlags:
 
         # Evaluate based on strategy
         try:
-            return self._evaluate_flag(config, user_id, context)
+            return evaluate_flag(config, user_id, context, self.circuit_breakers)
         except Exception as e:
             logger.error(f"Error evaluating feature flag {flag_name}: {e}")
             return False
 
-    def _evaluate_flag(self, config: FeatureFlagConfig, user_id: str | None, context: dict[str, Any] | None) -> bool:
-        """Evaluate feature flag based on its strategy."""
-        if config.strategy == FeatureFlagStrategy.BOOLEAN:
-            return config.enabled
-
-        elif config.strategy == FeatureFlagStrategy.PERCENTAGE:
-            # Use deterministic hash for consistent user experience
-            if user_id:
-                hash_value = hash(f"{config.name}:{user_id}") % 100
-            else:
-                hash_value = random.randint(0, 99)
-            return hash_value < config.rollout_percentage
-
-        elif config.strategy == FeatureFlagStrategy.USER_LIST:
-            return user_id is not None and user_id in config.allowed_users
-
-        elif config.strategy == FeatureFlagStrategy.TIME_WINDOW:
-            current_time = time.time()
-            if config.start_time and current_time < config.start_time:
-                return False
-            if config.end_time and current_time > config.end_time:
-                return False
-            return True
-
-        elif config.strategy == FeatureFlagStrategy.CIRCUIT_BREAKER:
-            return self._evaluate_circuit_breaker(config)
-
-        return False
-
-    def _evaluate_circuit_breaker(self, config: FeatureFlagConfig) -> bool:
-        """Evaluate circuit breaker state for feature flag."""
-        breaker = self.circuit_breakers.get(config.name)
-        if not breaker:
-            return True
-
-        current_time = time.time()
-
-        # If circuit is open, check if timeout has passed
-        if breaker.is_open:
-            if current_time - breaker.last_failure_time > config.circuit_breaker_timeout:
-                # Try to close circuit (half-open state)
-                breaker.is_open = False
-                breaker.failure_count = 0
-                logger.info(f"Circuit breaker for {config.name} moving to half-open state")
-                return True
-            return False
-
-        # Circuit is closed or half-open
-        return True
-
     def record_success(self, flag_name: str) -> None:
         """Record successful operation for circuit breaker."""
-        if flag_name in self.circuit_breakers:
-            breaker = self.circuit_breakers[flag_name]
-            breaker.failure_count = 0
-            breaker.last_success_time = time.time()
-            if breaker.is_open:
-                breaker.is_open = False
-                logger.info(f"Circuit breaker for {flag_name} closed after successful operation")
+        record_success(flag_name, self.circuit_breakers)
 
     def record_failure(self, flag_name: str) -> None:
         """Record failed operation for circuit breaker."""
-        if flag_name not in self.circuit_breakers:
-            return
-
-        config = self.flags.get(flag_name)
-        if not config or config.strategy != FeatureFlagStrategy.CIRCUIT_BREAKER:
-            return
-
-        breaker = self.circuit_breakers[flag_name]
-        breaker.failure_count += 1
-        breaker.last_failure_time = time.time()
-
-        if breaker.failure_count >= config.circuit_breaker_threshold:
-            breaker.is_open = True
-            logger.warning(f"Circuit breaker for {flag_name} opened after {breaker.failure_count} failures")
+        record_failure(flag_name, self.flags, self.circuit_breakers)
 
     def get_fallback_strategy(self, flag_name: str) -> FallbackStrategy:
         """Get fallback strategy for a feature flag."""
@@ -446,12 +142,12 @@ class FeatureFlags:
 
         if strategy == FallbackStrategy.DEFAULT_VALUES:
             logger.info(f"Feature {flag_name} using default values")
-            return self._get_default_values(flag_name)
+            return get_default_values(flag_name)
 
         elif strategy == FallbackStrategy.CACHED_ONLY:
             # For cached_only strategy, return default values if no cache available
             logger.info(f"Feature {flag_name} using cached fallback (default values)")
-            return self._get_default_values(flag_name)
+            return get_default_values(flag_name)
 
         elif fallback_func:
             try:
@@ -459,7 +155,7 @@ class FeatureFlags:
             except Exception as e:
                 logger.error(f"Fallback function failed for {flag_name}: {e}")
                 # Try default values as last resort
-                default_values = self._get_default_values(flag_name)
+                default_values = get_default_values(flag_name)
                 if default_values:
                     return default_values
                 return None
@@ -470,36 +166,13 @@ class FeatureFlags:
 
         else:
             # Try default values as fallback
-            default_values = self._get_default_values(flag_name)
+            default_values = get_default_values(flag_name)
             if default_values:
                 logger.info(f"Using default values as fallback for {flag_name}")
                 return default_values
 
             logger.warning(f"No fallback available for {flag_name}")
             return None
-
-    def _get_default_values(self, flag_name: str) -> Any:
-        """Get default values for specific features."""
-        defaults = {
-            "enhanced_sentiment_analysis": {"sentiment_score": 0.0, "article_count": 0, "trending_topics": [], "source": "default"},
-            "advanced_technical_analysis": {
-                "indicators": {},
-                "confluence_zones": [],
-                "support_resistance": {"support": [], "resistance": []},
-            },
-            "chart_analysis": {"chart_url": None, "pattern_insights": [], "visual_analysis": "Chart analysis unavailable"},
-            "perplexity_research": {
-                "sonar_articles": [],
-                "search_results": [],
-                "total_results": 0,
-                "source": "fallback",
-                "status": "disabled",
-            },
-        }
-        result = defaults.get(flag_name, {})
-        if result:
-            logger.info(f"Using default values for {flag_name}")
-        return result
 
     def get_flag_status(self, flag_name: str) -> dict[str, Any]:
         """Get comprehensive status of a feature flag."""

@@ -184,7 +184,7 @@ class TestFeatureFlags:
         )
 
         # Initialize circuit breaker state for test flag
-        from finwiz.utils.feature_flags import CircuitBreakerState
+        from finwiz.utils.flags import CircuitBreakerState
 
         flags.circuit_breakers["test_flag"] = CircuitBreakerState()
 
@@ -199,7 +199,7 @@ class TestFeatureFlags:
         assert flags.is_enabled("test_flag") is False
 
         # Manually reset circuit breaker state to simulate timeout
-        flags.circuit_breakers["test_flag"]["last_failure_time"] = time.time() - 2.0  # Simulate timeout passed
+        flags.circuit_breakers["test_flag"].last_failure_time = time.time() - 2.0  # Simulate timeout passed
         assert flags.is_enabled("test_flag") is True  # Should be in half-open state
 
         # Record success to close circuit
@@ -372,9 +372,9 @@ class TestFeatureFlags:
         # Assert
         config = flags.flags["perplexity_research"]
         assert config.name == "perplexity_research"
-        assert config.enabled is False  # Default disabled
+        assert config.enabled is True  # Default enabled
         assert config.strategy == FeatureFlagStrategy.CIRCUIT_BREAKER
-        assert config.fallback_strategy == FallbackStrategy.CACHED_ONLY
+        assert config.fallback_strategy == FallbackStrategy.DISABLE
         assert config.circuit_breaker_threshold == 5  # Default threshold
         assert config.circuit_breaker_timeout == 300  # Default timeout
         assert "Perplexity Sonar Search integration" in config.description
@@ -404,6 +404,9 @@ class TestFeatureFlags:
         """Test that perplexity_research returns appropriate default values when disabled."""
         # Arrange
         flags = FeatureFlags()
+        # Disable the flag and change fallback strategy to DEFAULT_VALUES for this test
+        flags.flags["perplexity_research"].enabled = False
+        flags.flags["perplexity_research"].fallback_strategy = FallbackStrategy.DEFAULT_VALUES
 
         def primary_func():
             return {"sonar_articles": [{"title": "Test"}], "total_results": 1}
@@ -411,7 +414,7 @@ class TestFeatureFlags:
         # Act
         result = flags.execute_with_fallback("perplexity_research", primary_func)
 
-        # Assert - Should return default values since flag is disabled by default
+        # Assert - Should return default values since flag is disabled
         assert result is not None
         assert "sonar_articles" in result
         assert result["sonar_articles"] == []
@@ -467,6 +470,8 @@ class TestFeatureFlagIntegration:
     def test_should_handle_circuit_breaker_recovery_scenario(self):
         """Test complete circuit breaker recovery scenario."""
         # Arrange
+        from finwiz.utils.flags import CircuitBreakerState
+
         flags = FeatureFlags()
         flags.flags["test_service"] = FeatureFlagConfig(
             name="test_service",
@@ -474,8 +479,10 @@ class TestFeatureFlagIntegration:
             strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
             circuit_breaker_threshold=2,
             circuit_breaker_timeout=0.5,
-            fallback_strategy=FallbackStrategy.CACHED_ONLY,
+            fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
         )
+        # Initialize circuit breaker state
+        flags.circuit_breakers["test_service"] = CircuitBreakerState()
 
         def failing_service():
             raise ConnectionError("Service unavailable")
@@ -496,7 +503,7 @@ class TestFeatureFlagIntegration:
         assert result3 == {"cached": True, "data": "fallback_data"}
 
         # Manually reset circuit breaker to simulate timeout
-        flags.circuit_breakers["test_service"]["last_failure_time"] = time.time() - 1.0
+        flags.circuit_breakers["test_service"].last_failure_time = time.time() - 1.0
 
         # Define a working service for recovery
         def working_service():

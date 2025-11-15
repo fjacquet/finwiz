@@ -5,6 +5,9 @@ This module generates the final consolidated French report using Jinja2 template
 from consolidated JSON data. This is pure Python code - fast, testable, and free.
 """
 
+from typing import Any
+
+
 from datetime import datetime
 from pathlib import Path
 
@@ -105,7 +108,7 @@ class FinalReportGenerator:
             logger.error(f"Unexpected error generating final report: {e}", exc_info=True)
             raise
 
-    def _prepare_template_data(self, consolidated_data: ConsolidatedReportExport) -> dict:
+    def _prepare_template_data(self, consolidated_data: ConsolidatedReportExport) -> dict[str, Any]:
         """
         Prepare data dictionary for template rendering.
 

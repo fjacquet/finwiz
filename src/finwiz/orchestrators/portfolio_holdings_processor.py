@@ -18,7 +18,7 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.portfolio_review import HoldingDecision
@@ -351,7 +351,7 @@ class PortfolioHoldingsProcessor:
             data_freshness=data_freshness,  # type: ignore[arg-type]
         )
 
-    def _validate_holding(self, holding: RawHolding) -> dict:
+    def _validate_holding(self, holding: RawHolding) -> dict[str, Any]:
         """
         Validate a holding using the ticker validation tool.
 
@@ -416,7 +416,7 @@ class PortfolioHoldingsProcessor:
 
         return min(base, 1.0)
 
-    def _assess_risk(self, is_valid: bool, validation_result: dict) -> RiskAssessmentStandardized:
+    def _assess_risk(self, is_valid: bool, validation_result: dict[str, Any]) -> RiskAssessmentStandardized:
         """
         Assess risk for a holding.
 
@@ -489,7 +489,7 @@ class PortfolioHoldingsProcessor:
 
         return rationale
 
-    def _build_citations(self, validation_result: dict) -> list[str]:
+    def _build_citations(self, validation_result: dict[str, Any]) -> list[str]:
         """
         Build citations list from validation result.
 

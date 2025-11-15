@@ -11,6 +11,8 @@ import pytest
 from bs4 import BeautifulSoup
 
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisInput, EnhancedETFAnalysisTool, ETFTrackingAnalysisTool
+from finwiz.tools.etf.etf_analyzers import ETFAnalyzer
+from finwiz.tools.etf.etf_data_fetchers import ETFDataFetcher
 
 
 class TestEnhancedETFAnalysisInput:
@@ -94,11 +96,11 @@ class TestEnhancedETFAnalysisTool:
         soup = BeautifulSoup("<html><body></body></html>", "html.parser")
 
         # Act & Assert
-        assert tool._extract_issuer(soup, "SPY") == "SPDR"
-        assert tool._extract_issuer(soup, "VTI") == "Vanguard"
-        assert tool._extract_issuer(soup, "QQQ") == "Invesco"
-        assert tool._extract_issuer(soup, "IWM") == "iShares"
-        assert tool._extract_issuer(soup, "UNKNOWN") == "Unknown"
+        assert ETFDataFetcher.extract_issuer(soup, "SPY") == "SPDR"
+        assert ETFDataFetcher.extract_issuer(soup, "VTI") == "Vanguard"
+        assert ETFDataFetcher.extract_issuer(soup, "QQQ") == "Invesco"
+        assert ETFDataFetcher.extract_issuer(soup, "IWM") == "iShares"
+        assert ETFDataFetcher.extract_issuer(soup, "UNKNOWN") == "Unknown"
 
     def test_should_extract_expense_ratio_from_html(self, tool, mock_yahoo_html):
         """Test expense ratio extraction from HTML content."""
@@ -106,7 +108,7 @@ class TestEnhancedETFAnalysisTool:
         soup = BeautifulSoup(mock_yahoo_html, "html.parser")
 
         # Act
-        expense_ratio = tool._extract_expense_ratio(soup)
+        expense_ratio = ETFDataFetcher.extract_expense_ratio(soup)
 
         # Assert
         assert expense_ratio == 0.09
@@ -116,31 +118,31 @@ class TestEnhancedETFAnalysisTool:
         # Test basis points conversion
         html_bp = "<div>Total Expense: 95 basis points</div>"
         soup_bp = BeautifulSoup(html_bp, "html.parser")
-        assert tool._extract_expense_ratio(soup_bp) == 0.95
+        assert ETFDataFetcher.extract_expense_ratio(soup_bp) == 0.95
 
         # Test fallback default
         html_empty = "<div>No expense info</div>"
         soup_empty = BeautifulSoup(html_empty, "html.parser")
-        assert tool._extract_expense_ratio(soup_empty) == 0.20
+        assert ETFDataFetcher.extract_expense_ratio(soup_empty) == 0.20
 
     def test_should_extract_tracking_difference(self, tool):
         """Test tracking difference extraction."""
         # Test positive tracking difference
         html_pos = "<div>Tracking Error: 0.15%</div>"
         soup_pos = BeautifulSoup(html_pos, "html.parser")
-        result_pos = tool._extract_tracking_difference(soup_pos)
+        result_pos = ETFDataFetcher.extract_tracking_difference(soup_pos)
         assert result_pos == 0.15
 
         # Test negative tracking difference
         html_neg = "<div>Tracking Difference: -0.05%</div>"
         soup_neg = BeautifulSoup(html_neg, "html.parser")
-        result_neg = tool._extract_tracking_difference(soup_neg)
+        result_neg = ETFDataFetcher.extract_tracking_difference(soup_neg)
         assert result_neg == -0.05
 
         # Test no tracking info
         html_none = "<div>No tracking info</div>"
         soup_none = BeautifulSoup(html_none, "html.parser")
-        result_none = tool._extract_tracking_difference(soup_none)
+        result_none = ETFDataFetcher.extract_tracking_difference(soup_none)
         assert result_none is None
 
     def test_should_determine_replication_method(self, tool):
@@ -148,22 +150,22 @@ class TestEnhancedETFAnalysisTool:
         # Test physical replication
         html_physical = "<div>Full replication strategy</div>"
         soup_physical = BeautifulSoup(html_physical, "html.parser")
-        assert tool._determine_replication_method(soup_physical) == "physical"
+        assert ETFDataFetcher.determine_replication_method(soup_physical) == "physical"
 
         # Test synthetic replication
         html_synthetic = "<div>Uses swap-based synthetic replication</div>"
         soup_synthetic = BeautifulSoup(html_synthetic, "html.parser")
-        assert tool._determine_replication_method(soup_synthetic) == "synthetic"
+        assert ETFDataFetcher.determine_replication_method(soup_synthetic) == "synthetic"
 
         # Test optimized replication
         html_optimized = "<div>Optimized sampling approach</div>"
         soup_optimized = BeautifulSoup(html_optimized, "html.parser")
-        assert tool._determine_replication_method(soup_optimized) == "optimized"
+        assert ETFDataFetcher.determine_replication_method(soup_optimized) == "optimized"
 
         # Test unknown method
         html_unknown = "<div>No replication info</div>"
         soup_unknown = BeautifulSoup(html_unknown, "html.parser")
-        assert tool._determine_replication_method(soup_unknown) == "other"
+        assert ETFDataFetcher.determine_replication_method(soup_unknown) == "other"
 
     def test_should_extract_highlights_from_html(self, tool, mock_yahoo_html):
         """Test highlights extraction from HTML."""
@@ -171,7 +173,7 @@ class TestEnhancedETFAnalysisTool:
         soup = BeautifulSoup(mock_yahoo_html, "html.parser")
 
         # Act
-        highlights = tool._extract_highlights(soup)
+        highlights = ETFDataFetcher.extract_highlights(soup)
 
         # Assert
         assert isinstance(highlights, list)
@@ -181,7 +183,7 @@ class TestEnhancedETFAnalysisTool:
     def test_should_create_sample_holdings_for_common_etfs(self, tool):
         """Test sample holdings creation for common ETFs."""
         # Test SPY holdings
-        spy_holdings = tool._create_sample_holdings("SPY", "https://test.com")
+        spy_holdings = ETFDataFetcher.create_sample_holdings("SPY", "https://test.com")
         assert len(spy_holdings) > 0
         assert any(h["ticker"] == "AAPL" for h in spy_holdings)
         assert all("weight_pct" in h for h in spy_holdings)
@@ -189,12 +191,12 @@ class TestEnhancedETFAnalysisTool:
         assert all("as_of" in h for h in spy_holdings)
 
         # Test QQQ holdings
-        qqq_holdings = tool._create_sample_holdings("QQQ", "https://test.com")
+        qqq_holdings = ETFDataFetcher.create_sample_holdings("QQQ", "https://test.com")
         assert len(qqq_holdings) > 0
         assert any(h["ticker"] == "AAPL" for h in qqq_holdings)
 
         # Test unknown ETF
-        unknown_holdings = tool._create_sample_holdings("UNKNOWN", "https://test.com")
+        unknown_holdings = ETFDataFetcher.create_sample_holdings("UNKNOWN", "https://test.com")
         assert len(unknown_holdings) > 0
         assert all(h["ticker"].startswith("SAMPLE") for h in unknown_holdings)
 
@@ -248,10 +250,10 @@ class TestEnhancedETFAnalysisTool:
     def test_should_map_risk_score_to_level_correctly(self, tool):
         """Test risk score to level mapping."""
         # Arrange & Act & Assert
-        assert tool._map_score_to_level(1.0) == "Low"
-        assert tool._map_score_to_level(2.0) == "Medium"
-        assert tool._map_score_to_level(3.5) == "High"
-        assert tool._map_score_to_level(4.5) == "Very High"
+        assert ETFAnalyzer.map_score_to_level(1.0) == "Low"
+        assert ETFAnalyzer.map_score_to_level(2.0) == "Medium"
+        assert ETFAnalyzer.map_score_to_level(3.5) == "High"
+        assert ETFAnalyzer.map_score_to_level(4.5) == "Very High"
 
     def test_should_construct_etf_factsheet_successfully(self, tool):
         """Test ETF factsheet construction."""

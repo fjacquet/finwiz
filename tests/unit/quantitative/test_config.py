@@ -482,7 +482,7 @@ class TestQuantitativeConfigManager:
     def test_should_initialize_manager_when_created(self, mocker):
         """Test initialization of QuantitativeConfigManager."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -498,7 +498,7 @@ class TestQuantitativeConfigManager:
     def test_should_load_config_from_environment_when_available(self, mocker):
         """Test loading configuration from environment variables."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
         mocker.patch.dict(
@@ -521,7 +521,7 @@ class TestQuantitativeConfigManager:
     def test_should_load_backtest_config_from_environment_when_available(self, mocker):
         """Test loading backtesting configuration from environment variables."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -538,7 +538,7 @@ class TestQuantitativeConfigManager:
     def test_should_load_screener_config_from_environment_when_available(self, mocker):
         """Test loading screener configuration from environment variables."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -554,7 +554,7 @@ class TestQuantitativeConfigManager:
     def test_should_return_feature_flag_status_when_requested(self, mocker):
         """Test checking feature flag status."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.side_effect = lambda flag: {
             "quantitative_analysis": True,
@@ -572,7 +572,7 @@ class TestQuantitativeConfigManager:
     def test_should_validate_configuration_successfully_when_providers_available(self, mocker):
         """Test successful configuration validation."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -589,7 +589,7 @@ class TestQuantitativeConfigManager:
     def test_should_fail_validation_when_no_providers_available(self, mocker):
         """Test configuration validation failure when no providers are available."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -607,7 +607,7 @@ class TestQuantitativeConfigManager:
     def test_should_return_configuration_summary_when_requested(self, mocker):
         """Test getting configuration summary."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.side_effect = lambda flag: {
             "quantitative_analysis": True,
@@ -640,7 +640,7 @@ class TestGlobalConfigurationFunctions:
     def test_should_return_singleton_manager_when_requested(self, mocker):
         """Test that global configuration manager returns singleton instance."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -654,7 +654,7 @@ class TestGlobalConfigurationFunctions:
     def test_should_return_quant_config_when_requested(self, mocker):
         """Test convenience function for getting quantitative config."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -668,7 +668,7 @@ class TestGlobalConfigurationFunctions:
     def test_should_return_backtest_config_when_requested(self, mocker):
         """Test convenience function for getting backtest config."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -682,7 +682,7 @@ class TestGlobalConfigurationFunctions:
     def test_should_return_screener_config_when_requested(self, mocker):
         """Test convenience function for getting screener config."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -700,7 +700,7 @@ class TestEnvironmentVariableHandling:
     def test_should_use_default_when_invalid_environment_value_provided(self, mocker):
         """Test handling of invalid environment variable values."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -716,7 +716,7 @@ class TestEnvironmentVariableHandling:
     def test_should_use_default_when_invalid_backtest_environment_value_provided(self, mocker):
         """Test handling of invalid backtesting environment variable values."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
@@ -732,7 +732,7 @@ class TestEnvironmentVariableHandling:
     def test_should_use_default_when_invalid_screener_environment_value_provided(self, mocker):
         """Test handling of invalid screener environment variable values."""
         # Arrange
-        mock_get_feature_flags = mocker.patch("finwiz.quantitative.config.get_feature_flags")
+        mock_get_feature_flags = mocker.patch("finwiz.utils.feature_flags.get_feature_flags")
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 

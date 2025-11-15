@@ -30,7 +30,7 @@ class SchemaManager:
         """
         self.logger = logger
 
-    def serialize_usage_metrics(self, usage_metrics: Any) -> dict:
+    def serialize_usage_metrics(self, usage_metrics: Any) -> dict[str, Any]:
         """
         Convert UsageMetrics object to JSON-serializable dictionary.
 
@@ -64,7 +64,7 @@ class SchemaManager:
             self.logger.warning(f"Failed to serialize usage_metrics: {str(e)}")
             return {"serialization_error": str(e), "raw_usage_metrics": str(usage_metrics)}
 
-    def save_json_file(self, file_path: Path, data: dict) -> None:
+    def save_json_file(self, file_path: Path, data: dict[str, Any]) -> None:
         """Save data to JSON file with custom serialization for datetime and Pydantic models."""
 
         def json_serializer(obj: Any) -> str:
@@ -80,7 +80,7 @@ class SchemaManager:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False, default=json_serializer)
 
-    def load_json_file(self, file_path: Path, default: dict) -> dict:
+    def load_json_file(self, file_path: Path, default: dict[str, Any]) -> dict[str, Any]:
         """Load JSON file with default fallback."""
         try:
             if file_path.exists():

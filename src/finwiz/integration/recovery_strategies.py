@@ -82,7 +82,7 @@ class RecoveryStrategies:
             "optional_float": None,
         }
 
-    def assess_repairability(self, error_type: str, error_info: dict) -> tuple[bool, float]:
+    def assess_repairability(self, error_type: str, error_info: dict[str, Any]) -> tuple[bool, float]:
         """Assess whether an error can be automatically repaired."""
         if error_type not in self.repair_strategies:
             return False, 0.0
@@ -160,7 +160,7 @@ class RecoveryStrategies:
 
         return "unknown"
 
-    def create_repair_suggestion(self, error_analysis: ValidationErrorAnalysis, original_data: dict) -> DataRepairSuggestion | None:
+    def create_repair_suggestion(self, error_analysis: ValidationErrorAnalysis, original_data: dict[str, Any]) -> DataRepairSuggestion | None:
         """Create a specific repair suggestion for a validation error."""
         field_path = error_analysis.field_path
         error_type = error_analysis.error_type

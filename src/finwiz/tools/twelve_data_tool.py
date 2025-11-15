@@ -7,6 +7,8 @@ Environment variable required: TWELVE_DATA_API_KEY
 
 from __future__ import annotations
 
+from typing import Any
+
 import asyncio
 import os
 
@@ -140,7 +142,7 @@ class TwelveDataIndicatorTool(BaseTool):
         resp.raise_for_status()
         return resp.text
 
-    async def _get_perplexity_technical_insights(self, symbol: str, indicator: str) -> list:
+    async def _get_perplexity_technical_insights(self, symbol: str, indicator: str) -> list[Any]:
         """Get technical analysis insights from Perplexity Sonar."""
         perplexity_integration = self._get_perplexity_integration()
         if not perplexity_integration:
@@ -185,7 +187,7 @@ class TwelveDataIndicatorTool(BaseTool):
         # Default to stock
         return "stock"
 
-    def _format_enhanced_technical_response(self, symbol: str, indicator: str, twelve_data_result: str, perplexity_insights: list) -> str:
+    def _format_enhanced_technical_response(self, symbol: str, indicator: str, twelve_data_result: str, perplexity_insights: list[Any]) -> str:
         """Format enhanced technical analysis response combining Twelve Data and Perplexity insights."""
         response = f"# Enhanced Technical Analysis: {indicator.upper()} for {symbol}\n\n"
 

@@ -41,7 +41,7 @@ class TwelveDataClient:
         self.cache_ttl = 300  # 5 minutes cache
         self.timeout = 30
 
-    async def make_api_call(self, endpoint: str, params: dict) -> dict:
+    async def make_api_call(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
         """
         Make API call to Twelve Data with rate limiting and error handling.
 

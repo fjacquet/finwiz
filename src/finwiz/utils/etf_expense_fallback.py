@@ -4,6 +4,9 @@ ETF Expense Ratio Fallback Utility.
 Provides fallback expense ratio data when Yahoo Finance doesn't have it.
 """
 
+from typing import Any
+
+
 import logging
 from pathlib import Path
 
@@ -15,7 +18,7 @@ logger = logging.getLogger(__name__)
 _EXPENSE_RATIOS_CACHE: dict | None = None
 
 
-def load_expense_ratios() -> dict:
+def load_expense_ratios() -> dict[str, Any]:
     """
     Load expense ratios from configuration file.
 

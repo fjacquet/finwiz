@@ -186,7 +186,7 @@ class ErrorHandlers:
 
         return "medium"
 
-    def generate_error_report(self, validation_errors: list[ValidationError], original_data: dict) -> ValidationErrorReport:
+    def generate_error_report(self, validation_errors: list[ValidationError], original_data: dict[str, Any]) -> ValidationErrorReport:
         """
         Generate a comprehensive validation error report.
 
@@ -247,7 +247,7 @@ class ErrorHandlers:
             overall_repairability=overall_repairability,
         )
 
-    def _generate_recovery_recommendations(self, error_analyses: list[ValidationErrorAnalysis], repair_suggestions: list) -> list[str]:
+    def _generate_recovery_recommendations(self, error_analyses: list[ValidationErrorAnalysis], repair_suggestions: list[Any]) -> list[str]:
         """Generate high-level recovery recommendations."""
         recommendations = []
 

@@ -5,6 +5,9 @@ This module contains the core sentiment analysis algorithms, impact scoring,
 and trending topic extraction logic.
 """
 
+from typing import Any
+
+
 import datetime
 
 from finwiz.tools.logger import get_logger
@@ -19,7 +22,7 @@ class SentimentCalculator:
         """Initialize sentiment calculator."""
         self.logger = logger
 
-    def analyze_sentiment(self, news_data: list[dict], ticker: str, asset_type: str) -> dict:
+    def analyze_sentiment(self, news_data: list[dict], ticker: str, asset_type: str) -> dict[str, Any]:
         """
         Analyze sentiment using n8n workflow logic.
 
@@ -320,7 +323,7 @@ class SentimentCalculator:
         # Combined confidence
         return (size_confidence + consistency_confidence) / 2
 
-    def _get_empty_sentiment_result(self) -> dict:
+    def _get_empty_sentiment_result(self) -> dict[str, Any]:
         """Get empty sentiment result structure."""
         return {
             "overall_sentiment": "neutral",
@@ -392,7 +395,7 @@ class SentimentCalculator:
 
         return trending_topics[:5]  # Return top 5 topics
 
-    def calculate_impact_scores(self, news_data: list[dict], sentiment_analysis: dict) -> list[dict]:
+    def calculate_impact_scores(self, news_data: list[dict], sentiment_analysis: dict[str, Any]) -> list[dict]:
         """Calculate enhanced impact scores for articles including Sonar data."""
         if not news_data:
             return []

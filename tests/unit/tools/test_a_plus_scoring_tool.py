@@ -7,7 +7,8 @@ with dynamic criteria adjustment based on market conditions.
 
 import pytest
 
-from finwiz.tools.a_plus_scoring_tool import APlusScoringInput, APlusScoringTool, MarketRegime, ScoringCriteria
+from finwiz.schemas.tools import APlusScoringInput, MarketRegime, ScoringCriteria
+from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 
 
 class TestAPlusScoringTool:

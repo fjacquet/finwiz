@@ -160,7 +160,9 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_schema_validation_detail(crew_name: str, schema_name: str, validation_errors: list[str], validation_warnings: list[str], field_validations: dict[str, Any] | None = None) -> dict[str, Any]:
+    def format_schema_validation_detail(
+        crew_name: str, schema_name: str, validation_errors: list[str], validation_warnings: list[str], field_validations: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Format detailed schema validation log data."""
         return {
             "event_type": "schema_validation_detail",
@@ -175,7 +177,9 @@ class IntegrationLogFormatter:
         }
 
     @staticmethod
-    def format_data_consolidation(source_crews: list[str], target_file: str, success: bool, record_counts: dict[str, int] | None = None, error_message: str | None = None) -> dict[str, Any]:
+    def format_data_consolidation(
+        source_crews: list[str], target_file: str, success: bool, record_counts: dict[str, int] | None = None, error_message: str | None = None
+    ) -> dict[str, Any]:
         """Format data consolidation log data."""
         return {
             "event_type": "data_consolidation",

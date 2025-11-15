@@ -4,6 +4,9 @@ Validation management for crew data integration.
 Handles validation of crew outputs against expected schemas and stores validation results.
 """
 
+from typing import Any
+
+
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -40,7 +43,7 @@ class ValidationManager:
         self.logger = logger
         self.validation_status_path = self.metadata_dir / "validation_status.json"
 
-    def validate_crew_output(self, crew_name: str, output_data: dict) -> ValidationResult:
+    def validate_crew_output(self, crew_name: str, output_data: dict[str, Any]) -> ValidationResult:
         """
         Validate crew output against expected schema.
 

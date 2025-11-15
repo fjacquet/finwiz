@@ -20,6 +20,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.schemas.stock import MarketSentiment, SentimentItem
 from finwiz.tools.logger import get_logger
+from finwiz.tools.sentiment.sentiment_aggregators import SentimentAggregators
+from finwiz.tools.sentiment.sentiment_calculators import SentimentCalculators
 
 logger = get_logger(__name__)
 
@@ -141,6 +143,10 @@ class SentimentAnalyzer:
             "partnerships": ["partnership", "collaboration", "alliance", "joint", "agreement"],
             "crypto_specific": ["blockchain", "defi", "nft", "mining", "staking", "protocol"],
         }
+
+        # Initialize helper classes
+        self.calculators = SentimentCalculators(self.bullish_keywords, self.bearish_keywords)
+        self.aggregators = SentimentAggregators(self.topic_keywords)
 
     async def analyze_sentiment(self, ticker: str, days_back: int = 7, max_articles_per_source: int = 20) -> SentimentAnalysisResult:
         """
@@ -433,165 +439,24 @@ class SentimentAnalyzer:
 
     def _calculate_keyword_sentiment(self, text: str) -> float:
         """Calculate sentiment score using keyword analysis."""
-        text_lower = text.lower()
-
-        bullish_count = sum(1 for keyword in self.bullish_keywords if keyword in text_lower)
-        bearish_count = sum(1 for keyword in self.bearish_keywords if keyword in text_lower)
-
-        if bullish_count == 0 and bearish_count == 0:
-            return 0.0
-
-        # Calculate sentiment score
-        total_keywords = bullish_count + bearish_count
-        sentiment_strength = abs(bullish_count - bearish_count) / total_keywords
-
-        if bullish_count > bearish_count:
-            return min(0.8, sentiment_strength)
-        elif bearish_count > bullish_count:
-            return max(-0.8, -sentiment_strength)
-        else:
-            return 0.0
+        return self.calculators.calculate_keyword_sentiment(text)
 
     def _calculate_weighted_sentiment(self, sources: list[dict[str, Any]]) -> float:
         """Calculate weighted average sentiment across sources."""
-        if not sources:
-            return 0.0
-
-        weighted_sum = 0.0
-        total_weight = 0.0
-
-        for source in sources:
-            weight = source["weight"] * source["confidence"]
-            weighted_sum += source["sentiment_score"] * weight
-            total_weight += weight
-
-        return weighted_sum / total_weight if total_weight > 0 else 0.0
+        return self.calculators.calculate_weighted_sentiment(sources)
 
     def _extract_trending_topics(self, articles: list[dict[str, Any]]) -> list[TrendingTopic]:
         """Extract trending topics from articles."""
-        if not articles:
-            return []
-
-        topic_counts = {}
-        topic_relevance = {}
-
-        for article in articles:
-            title = article.get("title", "").lower()
-            summary = article.get("summary", "").lower()
-            text = f"{title} {summary}"
-
-            for topic, keywords in self.topic_keywords.items():
-                matches = sum(1 for keyword in keywords if keyword in text)
-                if matches > 0:
-                    if topic not in topic_counts:
-                        topic_counts[topic] = 0
-                        topic_relevance[topic] = []
-
-                    topic_counts[topic] += 1
-                    topic_relevance[topic].append(matches / len(keywords))
-
-        # Create trending topics
-        trending_topics = []
-        for topic, count in topic_counts.items():
-            if count >= 2:  # Only include topics mentioned in multiple articles
-                avg_relevance = sum(topic_relevance[topic]) / len(topic_relevance[topic])
-                trending_topics.append(
-                    TrendingTopic(
-                        topic=topic.replace("_", " ").title(),
-                        article_count=count,
-                        relevance_score=round(avg_relevance, 3),
-                        keywords=self.topic_keywords[topic][:3],  # Top 3 keywords
-                    )
-                )
-
-        # Sort by relevance and article count
-        trending_topics.sort(key=lambda x: (x.relevance_score, x.article_count), reverse=True)
-        return trending_topics[:5]
+        topics = self.aggregators.extract_trending_topics(articles)
+        return [TrendingTopic(**topic) for topic in topics]
 
     def _get_top_articles(self, articles: list[dict[str, Any]]) -> tuple[list[SentimentItem], list[SentimentItem]]:
         """Get top positive and negative articles."""
-        if not articles:
-            return [], []
-
-        # Sort articles by sentiment score
-        sorted_articles = sorted(articles, key=lambda x: x.get("sentiment_score", 0))
-
-        # Get top negative (most negative scores)
-        top_negative = []
-        for article in sorted_articles[:5]:
-            if article.get("sentiment_score", 0) < -0.1:
-                try:
-                    # Parse datetime
-                    published_time = article.get("published_time", "")
-                    if published_time:
-                        if isinstance(published_time, str):
-                            # Try to parse ISO format or timestamp
-                            try:
-                                dt = datetime.datetime.fromisoformat(published_time.replace("Z", "+00:00"))
-                            except ValueError:
-                                dt = datetime.datetime.now()
-                        else:
-                            dt = datetime.datetime.fromtimestamp(published_time)
-                    else:
-                        dt = datetime.datetime.now()
-
-                    top_negative.append(
-                        SentimentItem(
-                            headline=article.get("title", "")[:200],  # Limit length
-                            url=article.get("url", ""),
-                            date=dt,
-                            score=article.get("sentiment_score", 0),
-                        )
-                    )
-                except Exception as e:
-                    logger.warning(f"Error creating SentimentItem: {e}")
-                    continue
-
-        # Get top positive (most positive scores)
-        top_positive = []
-        for article in reversed(sorted_articles[-5:]):
-            if article.get("sentiment_score", 0) > 0.1:
-                try:
-                    # Parse datetime
-                    published_time = article.get("published_time", "")
-                    if published_time:
-                        if isinstance(published_time, str):
-                            try:
-                                dt = datetime.datetime.fromisoformat(published_time.replace("Z", "+00:00"))
-                            except ValueError:
-                                dt = datetime.datetime.now()
-                        else:
-                            dt = datetime.datetime.fromtimestamp(published_time)
-                    else:
-                        dt = datetime.datetime.now()
-
-                    top_positive.append(
-                        SentimentItem(
-                            headline=article.get("title", "")[:200],  # Limit length
-                            url=article.get("url", ""),
-                            date=dt,
-                            score=article.get("sentiment_score", 0),
-                        )
-                    )
-                except Exception as e:
-                    logger.warning(f"Error creating SentimentItem: {e}")
-                    continue
-
-        return top_positive, top_negative
+        return self.aggregators.get_top_articles(articles)
 
     def _calculate_confidence(self, sources: list[dict[str, Any]], total_articles: int) -> float:
         """Calculate overall confidence in the analysis."""
-        if not sources:
-            return 0.0
-
-        # Base confidence on number of sources and articles
-        source_confidence = len(sources) / 3.0  # Max 3 sources
-        article_confidence = min(1.0, total_articles / 30.0)  # Optimal around 30 articles
-
-        # Weight by individual source confidences
-        avg_source_confidence = sum(s["confidence"] for s in sources) / len(sources)
-
-        return source_confidence * 0.3 + article_confidence * 0.3 + avg_source_confidence * 0.4
+        return self.calculators.calculate_confidence(sources, total_articles)
 
     def _is_crypto_ticker(self, ticker: str) -> bool:
         """Check if ticker appears to be a cryptocurrency."""
