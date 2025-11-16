@@ -275,7 +275,7 @@ class TestIntegrationScenarios:
         mock_doc.page_content = "Test content for section analysis"
 
         mock_retriever = mocker.Mock()
-        mock_retriever.get_relevant_documents.return_value = [mock_doc]
+        mock_retriever.invoke.return_value = [mock_doc]  # Changed from get_relevant_documents to invoke
 
         mock_faiss = mocker.Mock()
         mock_faiss.from_documents.return_value.as_retriever.return_value = mock_retriever
@@ -313,7 +313,7 @@ class TestIntegrationScenarios:
         mock_doc.page_content = "Test content"
 
         mock_retriever = mocker.Mock()
-        mock_retriever.get_relevant_documents.return_value = [mock_doc]
+        mock_retriever.invoke.return_value = [mock_doc]  # Changed from get_relevant_documents to invoke
 
         mock_faiss = mocker.Mock()
         mock_faiss.from_documents.return_value.as_retriever.return_value = mock_retriever

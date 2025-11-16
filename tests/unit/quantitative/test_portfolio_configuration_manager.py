@@ -72,7 +72,7 @@ class TestPortfolioConfigurationManager:
         template_ids = {t.template_id for t in templates}
         assert "balanced_portfolio" in template_ids
         assert "aggressive_growth" in template_ids
-        assert "conservative_income" in template_ids
+        assert "conservative_portfolio" in template_ids
         assert "dividend_focused" in template_ids
 
     def test_should_create_configuration_when_valid_inputs_provided(self, config_manager, sample_holdings, sample_target_weights):

@@ -5,11 +5,9 @@ This module generates the final consolidated French report using Jinja2 template
 from consolidated JSON data. This is pure Python code - fast, testable, and free.
 """
 
-from typing import Any
-
-
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 

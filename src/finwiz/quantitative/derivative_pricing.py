@@ -6,7 +6,6 @@ and QuantLib integration for professional-grade financial instrument valuation.
 """
 
 import math
-from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field

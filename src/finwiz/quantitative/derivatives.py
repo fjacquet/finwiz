@@ -12,9 +12,9 @@ from datetime import datetime
 
 from finwiz.quantitative.config import get_quant_config
 from finwiz.quantitative.derivative_pricing import (
+    BlackScholesCalculator,
     BondParameters,
     BondPricingResult,
-    BlackScholesCalculator,
     ExerciseStyle,
     OptionGreeks,
     OptionParameters,

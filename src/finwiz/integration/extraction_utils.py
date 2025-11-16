@@ -6,7 +6,6 @@ confidence scores, and extracting recommendations from opportunity data.
 """
 
 import logging
-from typing import Any
 
 
 class ExtractionUtils:

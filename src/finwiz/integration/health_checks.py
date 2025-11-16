@@ -13,7 +13,6 @@ from typing import Any
 import psutil
 from pydantic import BaseModel, Field
 
-from .config import get_integration_config
 from .freshness_checker import DataFreshnessChecker
 from .logging_utils import IntegrationLogger
 

@@ -1852,7 +1852,7 @@ class FinwizFlow(Flow[FinwizState]):
         # Calculate estimated time remaining based on average time per holding
         if self.state.holdings_processed > 0 and self.state.holdings_remaining > 0:
             # Calculate elapsed time
-            flow_start = datetime.fromisoformat(self.state.flow_start_time)
+            flow_start = self.state.flow_start_time if isinstance(self.state.flow_start_time, datetime) else datetime.fromisoformat(self.state.flow_start_time)
             elapsed_time = (datetime.now() - flow_start).total_seconds()
 
             # Calculate average time per holding
@@ -1867,7 +1867,7 @@ class FinwizFlow(Flow[FinwizState]):
         self.state.last_checkpoint_time = datetime.now().isoformat()
 
         # Log progress with formatted message
-        flow_start = datetime.fromisoformat(self.state.flow_start_time)
+        flow_start = self.state.flow_start_time if isinstance(self.state.flow_start_time, datetime) else datetime.fromisoformat(self.state.flow_start_time)
         elapsed_time = (datetime.now() - flow_start).total_seconds()
         elapsed_minutes = int(elapsed_time // 60)
         elapsed_seconds = int(elapsed_time % 60)

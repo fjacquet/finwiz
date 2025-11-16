@@ -95,6 +95,8 @@ class PerformanceAnalyzer:
                 equity_curve_data=equity_curve_data,
                 drawdown_data=drawdown_data,
                 returns_distribution_data=returns_distribution_data,
+                strategy_name=strategy_name,
+                benchmark_name=benchmark_name,
                 analysis_period=f"{returns.index[0]} to {returns.index[-1]}",
                 total_observations=len(returns),
             )

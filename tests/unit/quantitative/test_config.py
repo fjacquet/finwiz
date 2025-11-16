@@ -176,7 +176,7 @@ class TestQuantConfig:
     def test_should_load_api_keys_from_environment_when_available(self, mocker):
         """Test loading API keys from environment variables."""
         # Arrange
-        mocker.patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_alpha_key"})
+        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "test_alpha_key"})
 
         # Act
         config = QuantConfig()
@@ -202,7 +202,7 @@ class TestQuantConfig:
     def test_should_identify_available_providers_when_api_keys_present(self, mocker):
         """Test identification of available data providers."""
         # Arrange
-        mocker.patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_key"})
+        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "test_key"})
         config = QuantConfig()
 
         # Act
@@ -215,8 +215,8 @@ class TestQuantConfig:
     def test_should_identify_unavailable_providers_when_api_keys_missing(self, mocker):
         """Test identification of unavailable providers when API keys are missing."""
         # Arrange
-        with mocker.patch.dict(os.environ, {}, clear=True):
-            config = QuantConfig()
+        mocker.patch.dict("os.environ", {}, clear=True)
+        config = QuantConfig()
 
         # Act
         is_alpha_vantage_available = config.is_provider_available(DataProvider.ALPHA_VANTAGE)
@@ -525,7 +525,7 @@ class TestQuantitativeConfigManager:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(os.environ, {"BACKTEST_INITIAL_CAPITAL": "250000", "BACKTEST_COMMISSION_PCT": "0.002", "BACKTEST_FRAMEWORK": "zipline"})
+        mocker.patch.dict("os.environ", {"BACKTEST_INITIAL_CAPITAL": "250000", "BACKTEST_COMMISSION_PCT": "0.002", "BACKTEST_FRAMEWORK": "zipline"})
 
         # Act
         manager = QuantitativeConfigManager()
@@ -542,7 +542,7 @@ class TestQuantitativeConfigManager:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(os.environ, {"SCREENER_MIN_MARKET_CAP": "5000000000", "SCREENER_MAX_RESULTS": "25"})
+        mocker.patch.dict("os.environ", {"SCREENER_MIN_MARKET_CAP": "5000000000", "SCREENER_MAX_RESULTS": "25"})
 
         # Act
         manager = QuantitativeConfigManager()
@@ -576,7 +576,7 @@ class TestQuantitativeConfigManager:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(os.environ, {"ALPHA_VANTAGE_API_KEY": "test_key"})
+        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "test_key"})
 
         manager = QuantitativeConfigManager()
 
@@ -593,7 +593,7 @@ class TestQuantitativeConfigManager:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(os.environ, {}, clear=True)
+        mocker.patch.dict("os.environ", {}, clear=True)
         # Create config with no available providers
         mocker.patch.object(QuantConfig, "get_available_providers", return_value=[])
         manager = QuantitativeConfigManager()
@@ -704,7 +704,7 @@ class TestEnvironmentVariableHandling:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(os.environ, {"QUANT_LOOKBACK_DAYS": "invalid_number"})
+        mocker.patch.dict("os.environ", {"QUANT_LOOKBACK_DAYS": "invalid_number"})
 
         # Act
         manager = QuantitativeConfigManager()
@@ -720,7 +720,7 @@ class TestEnvironmentVariableHandling:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(os.environ, {"BACKTEST_INITIAL_CAPITAL": "not_a_number"})
+        mocker.patch.dict("os.environ", {"BACKTEST_INITIAL_CAPITAL": "not_a_number"})
 
         # Act
         manager = QuantitativeConfigManager()
@@ -736,7 +736,7 @@ class TestEnvironmentVariableHandling:
         mock_feature_flags = mock_get_feature_flags.return_value
         mock_feature_flags.is_enabled.return_value = True
 
-        mocker.patch.dict(os.environ, {"SCREENER_MAX_RESULTS": "not_an_integer"})
+        mocker.patch.dict("os.environ", {"SCREENER_MAX_RESULTS": "not_an_integer"})
 
         # Act
         manager = QuantitativeConfigManager()

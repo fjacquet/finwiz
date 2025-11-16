@@ -15,7 +15,7 @@ copyright: Copyright &copy; 2025 FinWiz Team
 theme:
   name: material
   language: en
-  custom_dir: docs/overrides
+  # custom_dir: docs/overrides  # Commented out until overrides directory is created
   
   # Theme features
   features:
@@ -67,11 +67,11 @@ theme:
     text: Roboto
     code: Roboto Mono
   
-  # Favicon
-  favicon: assets/favicon.png
-  
-  # Logo
-  logo: assets/logo.png
+  # Favicon (commented out until asset files are created)
+  # favicon: assets/favicon.png
+
+  # Logo (commented out until asset files are created)
+  # logo: assets/logo.png
 
 # Plugins
 plugins:
@@ -174,5 +174,5 @@ extra_javascript:
 dev_addr: 127.0.0.1:8000
 
 # Build
-strict: false  # Temporarily disabled to fix broken links
+strict: true  # Enabled after fixing all broken links
 use_directory_urls: true

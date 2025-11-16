@@ -5,10 +5,8 @@ This module provides comprehensive URL validation to ensure that only real,
 valid URLs are included in reports and analysis outputs.
 """
 
-from typing import Any
-
-
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from finwiz.tools.logger import get_logger

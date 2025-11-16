@@ -1,4 +1,5 @@
-"""Template renderers for rebalancing reports.
+"""
+Template renderers for rebalancing reports.
 
 This module handles rendering and exporting of rebalancing report templates.
 """

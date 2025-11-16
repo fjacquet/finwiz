@@ -14,10 +14,11 @@ logger = get_logger(__name__)
 
 
 class YahooFinanceTickerInfoTool(BaseTool):
-    """Get basic information about a financial instrument from Yahoo Finance.
+    """
+    Get basic information about a financial instrument from Yahoo Finance.
 
-        This tool retrieves key data points about a stock, ETF, or cryptocurrency
-        including current price, market cap, 52-week range, and more.
+    This tool retrieves key data points about a stock, ETF, or cryptocurrency
+    including current price, market cap, 52-week range, and more.
     """
 
     name: str = "Yahoo Finance Ticker Info Tool"

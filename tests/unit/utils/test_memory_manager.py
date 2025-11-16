@@ -63,7 +63,7 @@ class TestMemoryManager:
 
         assert result["success"]
         assert result["files_removed"] == 2
-        assert result["disk_freed_mb"] > 0
+        assert result["disk_freed_mb"] >= 0  # May be 0 for very small files
         assert not cache_dir.exists()
 
     def test_should_handle_cleanup_when_cache_not_exists(self):
@@ -99,7 +99,7 @@ class TestMemoryManager:
 
         assert metrics["sample_count"] == 3
         assert len(metrics["samples"]) == 3
-        assert metrics["max_memory_limit_mb"] == 500
+        assert metrics["max_memory_limit_mb"] == 1024
 
     def test_should_validate_memory_constraints_when_within_limit(self):
         """Test memory constraint validation when within limit."""

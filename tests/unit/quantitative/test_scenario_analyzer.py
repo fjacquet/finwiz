@@ -98,6 +98,9 @@ class TestMonteCarloResult:
             std_transaction_costs=200.0,
             mean_final_value=105000.0,
             std_final_value=15000.0,
+            probability_of_loss=0.15,
+            value_at_risk_95=-5000.0,
+            expected_shortfall_95=-7500.0,
         )
 
         # Assert

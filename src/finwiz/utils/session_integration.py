@@ -7,7 +7,6 @@ into the main FinWiz workflow for persistent financial planning.
 
 from typing import Any
 
-
 from finwiz.schemas.session import FinancialPlan
 from finwiz.tools.logger import get_logger
 from finwiz.utils.session_manager import SessionManager, SessionParsingError

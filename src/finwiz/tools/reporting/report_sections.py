@@ -1,4 +1,5 @@
-"""Report section builders for HTML report generation.
+"""
+Report section builders for HTML report generation.
 
 This module provides classes for building and managing report sections
 with support for portfolio overview, rebalancing summaries, and trade recommendations.

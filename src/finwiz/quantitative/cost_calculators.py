@@ -324,10 +324,7 @@ def estimate_market_impact(
     impact_percentage = impact_bps / 10000
     impact_cost = trade_value * impact_percentage
 
-    logger.debug(
-        f"Market impact for {symbol}: {impact_bps:.1f} bps "
-        f"({trade_size_percentage:.2f}% of daily volume), cost: ${impact_cost:.2f}"
-    )
+    logger.debug(f"Market impact for {symbol}: {impact_bps:.1f} bps ({trade_size_percentage:.2f}% of daily volume), cost: ${impact_cost:.2f}")
 
     return MarketImpactEstimate(
         symbol=symbol,

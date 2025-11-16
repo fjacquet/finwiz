@@ -285,9 +285,7 @@ class PortfolioMonitor:
 
             # Check deviation threshold rule
             if monitoring_rule.alert_on_deviation and max_deviation > monitoring_rule.max_deviation_threshold:
-                await self.alert_manager.generate_deviation_alert(
-                    portfolio_id, positions_out_of_tolerance, max_deviation, monitoring_rule.max_deviation_threshold
-                )
+                await self.alert_manager.generate_deviation_alert(portfolio_id, positions_out_of_tolerance, max_deviation, monitoring_rule.max_deviation_threshold)
 
             # Check multiple positions rule
             if monitoring_rule.alert_on_multiple_positions and len(positions_out_of_tolerance) >= monitoring_rule.min_positions_for_alert:

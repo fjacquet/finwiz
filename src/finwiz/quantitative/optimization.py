@@ -288,8 +288,14 @@ class PortfolioOptimizer:
                 computation_time=computation_time,
             )
 
-    def _validate_inputs(self, inputs: PortfolioInputs) -> None:
-        """Validate portfolio optimization inputs."""
+    def _validate_inputs(self, inputs: PortfolioInputs) -> list[str]:
+        """
+        Validate portfolio optimization inputs.
+
+        Returns:
+            List of validation error messages (empty if valid)
+
+        """
         # Check for positive definite covariance matrix
         cov_matrix = np.array(inputs.covariance_matrix)
         returns = np.array(inputs.expected_returns)
@@ -304,6 +310,8 @@ class PortfolioOptimizer:
         regularized_cov = self.algorithms.regularize_covariance_matrix(cov_matrix)
         if not np.array_equal(cov_matrix, regularized_cov):
             inputs.covariance_matrix = regularized_cov.tolist()
+
+        return errors
 
     def _calculate_portfolio_metrics(self, weights: np.ndarray, returns: np.ndarray, cov_matrix: np.ndarray, risk_free_rate: float) -> PortfolioMetrics:
         """Calculate comprehensive portfolio metrics."""

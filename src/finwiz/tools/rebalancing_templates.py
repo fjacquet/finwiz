@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class RebalancingTemplates:
-    """Template and styling management for rebalancing reports.
+    """
+    Template and styling management for rebalancing reports.
 
     This class provides backward compatibility by delegating to the split
     TemplateBuilder and TemplateRenderer classes.

@@ -315,6 +315,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
         )
 
         # Act
@@ -345,6 +347,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
         )
         decorator = create_retry_decorator(config)
 
@@ -379,6 +383,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
         )
         decorator = create_retry_decorator(config)
 
@@ -411,6 +417,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
         )
         decorator = create_retry_decorator(config)
 
@@ -447,6 +455,8 @@ class TestRetryHandlerIntegration:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
         )
         decorator = create_retry_decorator(config)
 

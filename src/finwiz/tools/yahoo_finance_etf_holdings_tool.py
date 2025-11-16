@@ -11,7 +11,8 @@ from finwiz.schemas.tools import GetETFHoldingsInput
 
 
 class YahooFinanceETFHoldingsTool(BaseTool):
-    """Get holdings information for an ETF from Yahoo Finance.
+    """
+    Get holdings information for an ETF from Yahoo Finance.
 
     This tool retrieves detailed holdings data for ETFs including
     top holdings, sector allocations, and geographical exposure.

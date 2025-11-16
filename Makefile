@@ -54,7 +54,9 @@ help:
 	@echo "Quality Assurance:"
 	@echo "  make check       - Run all quality checks"
 	@echo "  make check-unittest-mock - Check for banned unittest.mock"
-	@echo "  make coverage    - Run tests with coverage report"
+	@echo "  make coverage    - Run tests with coverage report (65% minimum)"
+	@echo "  make coverage-report - Open coverage report in browser"
+	@echo "  make coverage-check - Validate coverage meets threshold"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean       - Clean cache directories"
@@ -93,7 +95,24 @@ test-integration:
 	uv run pytest -m integration -v
 
 coverage:
-	uv run pytest --cov=src/finwiz --cov-report=html --cov-report=term
+	@echo "📊 Running tests with coverage..."
+	uv run pytest --cov=src/finwiz --cov-report=html --cov-report=term-missing --cov-fail-under=65
+	@echo "✅ Coverage report generated: htmlcov/index.html"
+
+coverage-report:
+	@echo "📈 Opening coverage report..."
+	@if command -v open >/dev/null 2>&1; then \
+		open htmlcov/index.html; \
+	elif command -v xdg-open >/dev/null 2>&1; then \
+		xdg-open htmlcov/index.html; \
+	else \
+		echo "Please open htmlcov/index.html manually"; \
+	fi
+
+coverage-check:
+	@echo "🔍 Checking test coverage..."
+	uv run pytest --cov=src/finwiz --cov-report=term-missing --cov-fail-under=65 --quiet
+	@echo "✅ Coverage meets minimum threshold (65%)"
 
 # Code Quality
 lint:

@@ -1,4 +1,5 @@
-"""HTML report formatting and generation.
+"""
+HTML report formatting and generation.
 
 This module provides HTML formatting, template rendering, and report generation
 with UTF-8 encoding and emoji support using BeautifulSoup4.

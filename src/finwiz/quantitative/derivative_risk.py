@@ -5,15 +5,11 @@ This module provides risk analytics for derivatives including Greeks calculation
 implied volatility computation, and portfolio risk aggregation.
 """
 
-import math
 
 from finwiz.quantitative.derivative_pricing import (
     BlackScholesCalculator,
     OptionGreeks,
     OptionParameters,
-    OptionPricingResult,
-    OptionType,
-    PricingModel,
 )
 from finwiz.tools.logger import get_logger
 

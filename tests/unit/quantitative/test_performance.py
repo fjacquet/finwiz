@@ -117,7 +117,7 @@ class TestPerformanceAnalyzer:
 
     def test_calculate_performance_metrics_basic(self, performance_analyzer, sample_returns):
         """Test basic performance metrics calculation."""
-        metrics = performance_analyzer._calculate_performance_metrics(sample_returns)
+        metrics = performance_analyzer.metrics_calculator.calculate_performance_metrics(sample_returns)
 
         assert isinstance(metrics, PerformanceMetrics)
         assert metrics.total_return is not None
@@ -125,24 +125,24 @@ class TestPerformanceAnalyzer:
         assert metrics.sharpe_ratio is not None
         assert metrics.max_drawdown is not None
         assert metrics.volatility is not None
-        assert metrics.trading_days == len(sample_returns)
+        assert metrics.max_drawdown_duration >= 0
 
     def test_calculate_performance_metrics_with_trades(self, performance_analyzer, sample_returns, sample_trades):
         """Test performance metrics calculation with trade data."""
-        metrics = performance_analyzer._calculate_performance_metrics(sample_returns, sample_trades)
+        metrics = performance_analyzer.metrics_calculator.calculate_performance_metrics(sample_returns, sample_trades)
 
         assert metrics.win_rate is not None
         assert metrics.profit_factor is not None
         assert metrics.avg_win is not None
         assert metrics.avg_loss is not None
-        assert 0 <= metrics.win_rate <= 1
+        assert 0 <= metrics.win_rate <= 100  # win_rate is a percentage (0-100)
 
     def test_calculate_max_drawdown(self, performance_analyzer):
         """Test maximum drawdown calculation."""
         # Create returns with known drawdown
         returns = pd.Series([0.1, -0.05, -0.1, -0.05, 0.15, 0.05, -0.2, 0.1])
 
-        max_dd, duration = performance_analyzer._calculate_max_drawdown(returns)
+        max_dd, duration = performance_analyzer.metrics_calculator.calculate_max_drawdown(returns)
 
         assert max_dd < 0  # Drawdown should be negative
         assert duration > 0  # Duration should be positive
@@ -153,13 +153,13 @@ class TestPerformanceAnalyzer:
         """Test downside deviation calculation."""
         returns = pd.Series([0.1, -0.05, 0.02, -0.1, 0.08, -0.03, 0.05, -0.08])
 
-        downside_dev = performance_analyzer._calculate_downside_deviation(returns)
+        downside_dev = performance_analyzer.metrics_calculator.calculate_downside_deviation(returns)
 
         assert downside_dev >= 0
         assert isinstance(downside_dev, float)
 
         # Test with target return
-        downside_dev_target = performance_analyzer._calculate_downside_deviation(returns, target_return=0.01)
+        downside_dev_target = performance_analyzer.metrics_calculator.calculate_downside_deviation(returns, target_return=0.01)
         assert downside_dev_target >= 0
 
     def test_analyze_performance_strategy_only(self, performance_analyzer, sample_returns):
@@ -168,7 +168,7 @@ class TestPerformanceAnalyzer:
 
         assert isinstance(report, PerformanceReport)
         assert report.strategy_name == "Test Strategy"
-        assert report.performance_metrics is not None
+        assert report.strategy_metrics is not None
         assert report.benchmark_metrics is None
         assert report.relative_performance is None
         assert "dates" in report.equity_curve_data
@@ -187,7 +187,7 @@ class TestPerformanceAnalyzer:
         assert report.benchmark_metrics is not None
         assert report.relative_performance is not None
         assert "excess_return" in report.relative_performance
-        assert "information_ratio" in report.relative_performance
+        assert "relative_sharpe" in report.relative_performance
         assert "benchmark_equity" in report.equity_curve_data
 
     def test_calculate_relative_performance(self, performance_analyzer):
@@ -236,10 +236,10 @@ class TestPerformanceAnalyzer:
             trading_days=252,
         )
 
-        relative_perf = performance_analyzer._calculate_relative_performance(strategy_metrics, benchmark_metrics)
+        relative_perf = performance_analyzer.metrics_calculator.calculate_relative_performance(strategy_metrics, benchmark_metrics)
 
         assert "excess_return" in relative_perf
-        assert "information_ratio" in relative_perf
+        assert "relative_sharpe" in relative_perf
         assert relative_perf["excess_return"] == pytest.approx(0.04, rel=1e-2)  # 0.12 - 0.08
         assert relative_perf["relative_sharpe"] == pytest.approx(0.3, rel=1e-2)  # 1.5 - 1.2
 
@@ -248,7 +248,7 @@ class TestPerformanceAnalyzer:
         # This test verifies the logic when PyPortfolioOpt would be available
         # We'll test the error case since the actual library isn't installed
         with pytest.raises(RuntimeError, match="PyPortfolioOpt is not available"):
-            performance_analyzer.optimize_portfolio(price_data=sample_price_data, method="max_sharpe")
+            performance_analyzer.optimize_portfolio(price_data=sample_price_data, optimization_method="max_sharpe")
 
     def test_optimize_portfolio_pypfopt_unavailable(self, performance_analyzer, sample_price_data, mocker):
         """Test portfolio optimization when PyPortfolioOpt is not available."""
@@ -260,7 +260,7 @@ class TestPerformanceAnalyzer:
         """Test portfolio optimization with invalid method."""
         mocker.patch("finwiz.quantitative.performance.PYPFOPT_AVAILABLE", True)
         with pytest.raises(ValueError, match="Invalid optimization method"):
-            performance_analyzer.optimize_portfolio(sample_price_data, method="invalid_method")
+            performance_analyzer.optimize_portfolio(sample_price_data, optimization_method="invalid_method")
 
     def test_optimize_portfolio_empty_data(self, performance_analyzer, mocker):
         """Test portfolio optimization with empty price data."""
@@ -272,7 +272,7 @@ class TestPerformanceAnalyzer:
 
     def test_generate_equity_curve_data(self, performance_analyzer, sample_returns, sample_benchmark_returns):
         """Test equity curve data generation."""
-        data = performance_analyzer._generate_equity_curve_data(sample_returns, sample_benchmark_returns)
+        data = performance_analyzer.metrics_calculator.generate_equity_curve_data(sample_returns, sample_benchmark_returns)
 
         assert "dates" in data
         assert "strategy_equity" in data
@@ -283,7 +283,7 @@ class TestPerformanceAnalyzer:
 
     def test_generate_drawdown_data(self, performance_analyzer, sample_returns):
         """Test drawdown data generation."""
-        data = performance_analyzer._generate_drawdown_data(sample_returns)
+        data = performance_analyzer.metrics_calculator.generate_drawdown_data(sample_returns)
 
         assert "dates" in data
         assert "drawdown" in data
@@ -293,7 +293,7 @@ class TestPerformanceAnalyzer:
 
     def test_generate_returns_distribution_data(self, performance_analyzer, sample_returns, sample_benchmark_returns):
         """Test returns distribution data generation."""
-        data = performance_analyzer._generate_returns_distribution_data(sample_returns, sample_benchmark_returns)
+        data = performance_analyzer.metrics_calculator.generate_returns_distribution_data(sample_returns, sample_benchmark_returns)
 
         assert "strategy_returns" in data
         assert "benchmark_returns" in data
@@ -542,7 +542,7 @@ class TestPerformanceAnalysisIntegration:
         mock_ef.portfolio_performance.return_value = (0.095, 0.18, 0.42)
 
         # Perform optimization
-        result = analyzer.optimize_portfolio(price_data=price_data, method="max_sharpe", total_portfolio_value=100000)
+        result = analyzer.optimize_portfolio(price_data=price_data, optimization_method="max_sharpe", total_portfolio_value=100000)
 
         # Verify optimization result
         assert isinstance(result, PortfolioOptimizationResult)

@@ -29,4 +29,3 @@ __all__ = [
     "get_backtest_config",
     "get_screener_config",
 ]
-

@@ -409,10 +409,12 @@ class TestStockScreener:
 
     def test_universe_symbol_methods(self, screener):
         """Test universe symbol retrieval methods."""
-        sp500_symbols = screener._get_sp500_symbols()
-        nasdaq100_symbols = screener._get_nasdaq100_symbols()
-        russell2000_symbols = screener._get_russell2000_symbols()
-        dow30_symbols = screener._get_dow30_symbols()
+        from finwiz.quantitative.screening_universes import UniverseProvider
+
+        sp500_symbols = UniverseProvider.get_sp500_symbols()
+        nasdaq100_symbols = UniverseProvider.get_nasdaq100_symbols()
+        russell2000_symbols = UniverseProvider.get_russell2000_symbols()
+        dow30_symbols = UniverseProvider.get_dow30_symbols()
 
         assert isinstance(sp500_symbols, list)
         assert isinstance(nasdaq100_symbols, list)

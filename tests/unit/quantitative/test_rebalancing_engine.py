@@ -46,9 +46,8 @@ class TestMinimizeTradesStrategy:
                 target_weight=0.3,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.9,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
             RebalancingNeed(
                 symbol="GOOGL",
@@ -56,9 +55,8 @@ class TestMinimizeTradesStrategy:
                 target_weight=0.2,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.3,
-                recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -112,9 +110,8 @@ class TestMinimizeTradesStrategy:
                 target_weight=0.3,
                 deviation=0.001,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.5,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -170,9 +167,8 @@ class TestMinimizeTradesStrategy:
                 target_weight=0.5,
                 deviation=0.4,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.8,
-                recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -224,9 +220,8 @@ class TestMinimizeTradesStrategy:
                 target_weight=0.2,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.8,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -280,9 +275,8 @@ class TestMinimizeCostsStrategy:
                 target_weight=0.35,
                 deviation=0.05,
                 tolerance_band=0.03,
-                exceeds_tolerance=True,
                 urgency_score=0.5,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
             RebalancingNeed(
                 symbol="GOOGL",  # Lower value, high deviation = high efficiency
@@ -290,9 +284,8 @@ class TestMinimizeCostsStrategy:
                 target_weight=0.3,
                 deviation=0.2,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.7,
-                recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -345,9 +338,8 @@ class TestMinimizeCostsStrategy:
                 target_weight=0.5,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.5,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -402,9 +394,8 @@ class TestRiskAwareStrategy:
                 target_weight=0.3,
                 deviation=0.3,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.5,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
             RebalancingNeed(
                 symbol="GOOGL",  # Normal position
@@ -412,9 +403,8 @@ class TestRiskAwareStrategy:
                 target_weight=0.2,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.7,
-                recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -467,9 +457,8 @@ class TestRiskAwareStrategy:
                 target_weight=0.4,  # Would exceed max position size
                 deviation=0.2,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.8,
-                recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -543,9 +532,8 @@ class TestRebalancingEngine:
                 target_weight=0.3,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.8,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -583,26 +571,16 @@ class TestRebalancingEngine:
     def test_should_raise_error_when_unknown_strategy_specified(self):
         """Test that error is raised for unknown optimization strategy."""
         # Arrange
+        from pydantic_core import ValidationError
+
         engine = RebalancingEngine()
 
-        config = PortfolioConfiguration(
-            holdings=[Holding(symbol="AAPL", shares=100.0)],
-            target_weights={"AAPL": 1.0},
-            rebalancing_method="UNKNOWN_METHOD",  # Invalid method
-        )
-
-        # Act & Assert
-        with pytest.raises(ValueError, match="Unknown rebalancing method"):
-            engine.optimize_rebalancing_trades(
-                rebalancing_needs=[],
-                current_portfolio=PortfolioAnalysis(
-                    total_value=15000.0,
-                    weightings={"AAPL": 1.0},
-                    deviations_from_target={"AAPL": 0.0},
-                ),
+        # Act & Assert - Pydantic validates enum during config creation
+        with pytest.raises(ValidationError):
+            config = PortfolioConfiguration(
+                holdings=[Holding(symbol="AAPL", shares=100.0)],
                 target_weights={"AAPL": 1.0},
-                prices={"AAPL": 150.0},
-                config=config,
+                rebalancing_method="UNKNOWN_METHOD",  # Invalid method
             )
 
     def test_should_combine_trades_for_same_symbol_when_minimizing_costs(self):

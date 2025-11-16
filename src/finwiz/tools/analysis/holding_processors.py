@@ -238,7 +238,6 @@ class HoldingProcessor:
         """
         import json
         from datetime import datetime
-        from pathlib import Path
 
         latest_file = output_dir / f"{asset_class}_latest.json"
         if not latest_file.exists():

@@ -94,7 +94,7 @@ class TradeRecommendationSystem:
         self.logger.info(f"Generating trade recommendations for {len(rebalancing_needs)} positions")
 
         # Filter to positions that exceed tolerance
-        actionable_needs = [need for need in rebalancing_needs if need.exceeds_tolerance]
+        actionable_needs = [need for need in rebalancing_needs if need.needs_rebalancing]
 
         if not actionable_needs:
             self.logger.info("No positions require rebalancing")

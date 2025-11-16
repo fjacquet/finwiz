@@ -39,9 +39,9 @@ class ScenarioParameters(BaseModel):
     # Rebalancing method scenarios
     rebalancing_methods: list[RebalancingMethod] = Field(
         default_factory=lambda: [
-            RebalancingMethod.THRESHOLD_BASED,
-            RebalancingMethod.CALENDAR_BASED,
-            RebalancingMethod.VOLATILITY_BASED,
+            RebalancingMethod.MINIMIZE_TRADES,
+            RebalancingMethod.MINIMIZE_COSTS,
+            RebalancingMethod.RISK_AWARE,
         ],
         description="Different rebalancing methods to test",
     )

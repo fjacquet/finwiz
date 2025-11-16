@@ -25,6 +25,7 @@ class SentimentAggregators:
 
         Args:
             topic_keywords: Dictionary mapping topic names to keyword lists
+
         """
         self.topic_keywords = topic_keywords
 
@@ -37,6 +38,7 @@ class SentimentAggregators:
 
         Returns:
             List of trending topic dictionaries sorted by relevance
+
         """
         if not articles:
             return []
@@ -86,6 +88,7 @@ class SentimentAggregators:
 
         Returns:
             Tuple of (top_positive_articles, top_negative_articles)
+
         """
         if not articles:
             return [], []

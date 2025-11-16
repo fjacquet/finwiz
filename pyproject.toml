@@ -248,7 +248,6 @@ allow_untyped_defs = true
 # Third-party libraries without type stubs
 [[tool.mypy.overrides]]
 module = [
-    "pypdf.*",
     "docx.*",
     "litellm.*",
     "pandas.*",

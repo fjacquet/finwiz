@@ -1,11 +1,11 @@
-"""Datetime utility functions for timezone handling.
+"""
+Datetime utility functions for timezone handling.
 
 This module provides utilities for normalizing datetime objects to ensure
 consistent timezone handling across the FinWiz codebase.
 """
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 
 def normalize_to_naive(dt: datetime) -> datetime:
@@ -35,10 +35,11 @@ def normalize_to_naive(dt: datetime) -> datetime:
         >>> result = normalize_to_naive(naive_dt)
         >>> result == naive_dt
         True
+
     """
     if dt.tzinfo is not None:
         # Aware datetime - convert to UTC and remove timezone info
-        utc_dt = dt.astimezone(timezone.utc)
+        utc_dt = dt.astimezone(UTC)
         return utc_dt.replace(tzinfo=None)
     else:
         # Naive datetime - assume it's already UTC
@@ -72,10 +73,11 @@ def ensure_utc_aware(dt: datetime) -> datetime:
         >>> result = ensure_utc_aware(aware_dt)
         >>> result.tzinfo == timezone.utc
         True
+
     """
     if dt.tzinfo is None:
         # Naive datetime - assume it's UTC and make it aware
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=UTC)
     else:
         # Aware datetime - convert to UTC
-        return dt.astimezone(timezone.utc)
+        return dt.astimezone(UTC)

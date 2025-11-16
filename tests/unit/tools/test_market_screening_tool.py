@@ -11,6 +11,7 @@ import pytest
 
 from finwiz.schemas.tools import MarketScreeningInput, MarketScreeningResult
 from finwiz.tools.market_screening_tool import MarketScreeningTool
+from finwiz.tools.screening_ranking import ScreeningCandidate
 
 
 class TestMarketScreeningTool:
@@ -25,8 +26,10 @@ class TestMarketScreeningTool:
         assert self.tool.name == "Market Screening Tool"
         assert "screens large universes" in self.tool.description.lower()
         assert self.tool.args_schema == MarketScreeningInput
-        assert hasattr(self.tool, "_a_plus_scorer")
-        assert hasattr(self.tool, "_screening_cache")
+        # Check for refactored components
+        assert hasattr(self.tool, "_utils")
+        assert hasattr(self.tool, "_criteria")
+        assert hasattr(self.tool, "_ranking")
 
     def test_should_validate_input_schema_correctly(self):
         """Test input schema validation."""
@@ -81,39 +84,40 @@ class TestMarketScreeningTool:
 
     def test_should_get_etf_universe_correctly(self):
         """Test ETF universe retrieval."""
-        # US market
-        us_universe = self.tool._get_etf_universe("us")
+        # US market - now using _utils component
+        us_universe = self.tool._utils._get_etf_universe("us")
         assert "symbols" in us_universe
         assert "SPY" in us_universe["symbols"]
         assert "VOO" in us_universe["symbols"]
         assert us_universe["count"] > 0
 
         # EU market
-        eu_universe = self.tool._get_etf_universe("eu")
+        eu_universe = self.tool._utils._get_etf_universe("eu")
         assert "symbols" in eu_universe
         assert len(eu_universe["symbols"]) > 0
 
         # Global market
-        global_universe = self.tool._get_etf_universe("global")
+        global_universe = self.tool._utils._get_etf_universe("global")
         assert len(global_universe["symbols"]) >= len(us_universe["symbols"])
 
     def test_should_get_stock_universe_correctly(self):
         """Test stock universe retrieval."""
-        # US market
-        us_universe = self.tool._get_stock_universe("us")
+        # US market - now using _utils component
+        us_universe = self.tool._utils._get_stock_universe("us")
         assert "symbols" in us_universe
         assert "AAPL" in us_universe["symbols"]
         assert "MSFT" in us_universe["symbols"]
         assert us_universe["count"] > 0
 
         # EU market
-        eu_universe = self.tool._get_stock_universe("eu")
+        eu_universe = self.tool._utils._get_stock_universe("eu")
         assert "symbols" in eu_universe
         assert len(eu_universe["symbols"]) > 0
 
     def test_should_get_crypto_universe_correctly(self):
         """Test crypto universe retrieval."""
-        crypto_universe = self.tool._get_crypto_universe("global")
+        # Now using _utils component
+        crypto_universe = self.tool._utils._get_crypto_universe("global")
         assert "symbols" in crypto_universe
         assert "BTC" in crypto_universe["symbols"]
         assert "ETH" in crypto_universe["symbols"]
@@ -121,22 +125,22 @@ class TestMarketScreeningTool:
 
     def test_should_get_default_screening_criteria_correctly(self):
         """Test default screening criteria."""
-        # ETF criteria
-        etf_criteria = self.tool._get_default_screening_criteria("etf")
+        # ETF criteria - now using _criteria component
+        etf_criteria = self.tool._criteria.get_default_criteria("etf")
         assert "max_expense_ratio" in etf_criteria
         assert "min_aum" in etf_criteria
         assert etf_criteria["max_expense_ratio"] == 0.25
         assert etf_criteria["min_aum"] == 1e9
 
         # Stock criteria
-        stock_criteria = self.tool._get_default_screening_criteria("stock")
+        stock_criteria = self.tool._criteria.get_default_criteria("stock")
         assert "min_roe" in stock_criteria
         assert "min_revenue_growth" in stock_criteria
         assert stock_criteria["min_roe"] == 0.20
         assert stock_criteria["min_revenue_growth"] == 0.15
 
         # Crypto criteria
-        crypto_criteria = self.tool._get_default_screening_criteria("crypto")
+        crypto_criteria = self.tool._criteria.get_default_criteria("crypto")
         assert "min_market_cap" in crypto_criteria
         assert "min_daily_volume" in crypto_criteria
         assert crypto_criteria["min_market_cap"] == 10e9
@@ -144,8 +148,8 @@ class TestMarketScreeningTool:
 
     def test_should_get_etf_market_data_correctly(self):
         """Test ETF market data retrieval."""
-        # Known ETF
-        spy_data = self.tool._get_etf_market_data("SPY")
+        # Known ETF - now using _utils component
+        spy_data = self.tool._utils._get_etf_market_data("SPY")
         assert spy_data["symbol"] == "SPY"
         assert spy_data["asset_type"] == "etf"
         assert "expense_ratio" in spy_data
@@ -153,14 +157,14 @@ class TestMarketScreeningTool:
         assert spy_data["expense_ratio"] < 0.1  # SPY has low fees
 
         # Unknown ETF (should get defaults)
-        unknown_data = self.tool._get_etf_market_data("UNKNOWN")
+        unknown_data = self.tool._utils._get_etf_market_data("UNKNOWN")
         assert unknown_data["symbol"] == "UNKNOWN"
         assert unknown_data["expense_ratio"] == 0.20  # Default
 
     def test_should_get_stock_market_data_correctly(self):
         """Test stock market data retrieval."""
-        # Known stock
-        aapl_data = self.tool._get_stock_market_data("AAPL")
+        # Known stock - now using _utils component
+        aapl_data = self.tool._utils._get_stock_market_data("AAPL")
         assert aapl_data["symbol"] == "AAPL"
         assert aapl_data["asset_type"] == "stock"
         assert "market_cap" in aapl_data
@@ -168,14 +172,14 @@ class TestMarketScreeningTool:
         assert aapl_data["market_cap"] > 1e12  # Apple is large cap
 
         # Unknown stock (should get defaults)
-        unknown_data = self.tool._get_stock_market_data("UNKNOWN")
+        unknown_data = self.tool._utils._get_stock_market_data("UNKNOWN")
         assert unknown_data["symbol"] == "UNKNOWN"
         assert unknown_data["market_cap"] == 5e8  # Default
 
     def test_should_get_crypto_market_data_correctly(self):
         """Test crypto market data retrieval."""
-        # Known crypto
-        btc_data = self.tool._get_crypto_market_data("BTC")
+        # Known crypto - now using _utils component
+        btc_data = self.tool._utils._get_crypto_market_data("BTC")
         assert btc_data["symbol"] == "BTC"
         assert btc_data["asset_type"] == "crypto"
         assert "market_cap" in btc_data
@@ -183,7 +187,7 @@ class TestMarketScreeningTool:
         assert btc_data["institutional_adoption"] is True  # BTC has institutional adoption
 
         # Unknown crypto (should get defaults)
-        unknown_data = self.tool._get_crypto_market_data("UNKNOWN")
+        unknown_data = self.tool._utils._get_crypto_market_data("UNKNOWN")
         assert unknown_data["symbol"] == "UNKNOWN"
         assert unknown_data["market_cap"] == 1e9  # Default
 
@@ -197,8 +201,8 @@ class TestMarketScreeningTool:
             "tracking_error": 0.0008,
             "history_years": 12,
         }
-        criteria = self.tool._get_default_screening_criteria("etf")
-        assert self.tool._passes_etf_filters(good_etf_data, criteria) is True
+        criteria = self.tool._criteria.get_default_criteria("etf")
+        assert self.tool._criteria._passes_etf_filters(good_etf_data, criteria) is True
 
         # Bad ETF data (should fail)
         bad_etf_data = {
@@ -208,7 +212,7 @@ class TestMarketScreeningTool:
             "tracking_error": 0.01,  # Too high
             "history_years": 1,  # Too short
         }
-        assert self.tool._passes_etf_filters(bad_etf_data, criteria) is False
+        assert self.tool._criteria._passes_etf_filters(bad_etf_data, criteria) is False
 
     def test_should_apply_stock_screening_filters_correctly(self):
         """Test stock screening filters."""
@@ -222,8 +226,8 @@ class TestMarketScreeningTool:
             "fcf_positive": True,
             "fcf_growing": True,
         }
-        criteria = self.tool._get_default_screening_criteria("stock")
-        assert self.tool._passes_stock_filters(good_stock_data, criteria) is True
+        criteria = self.tool._criteria.get_default_criteria("stock")
+        assert self.tool._criteria._passes_stock_filters(good_stock_data, criteria) is True
 
         # Bad stock data (should fail)
         bad_stock_data = {
@@ -235,7 +239,7 @@ class TestMarketScreeningTool:
             "fcf_positive": False,  # No FCF
             "fcf_growing": False,
         }
-        assert self.tool._passes_stock_filters(bad_stock_data, criteria) is False
+        assert self.tool._criteria._passes_stock_filters(bad_stock_data, criteria) is False
 
     def test_should_apply_crypto_screening_filters_correctly(self):
         """Test crypto screening filters."""
@@ -248,8 +252,8 @@ class TestMarketScreeningTool:
             "institutional_adoption": True,
             "real_utility": True,
         }
-        criteria = self.tool._get_default_screening_criteria("crypto")
-        assert self.tool._passes_crypto_filters(good_crypto_data, criteria) is True
+        criteria = self.tool._criteria.get_default_criteria("crypto")
+        assert self.tool._criteria._passes_crypto_filters(good_crypto_data, criteria) is True
 
         # Bad crypto data (should fail)
         bad_crypto_data = {
@@ -260,18 +264,18 @@ class TestMarketScreeningTool:
             "institutional_adoption": False,
             "real_utility": False,
         }
-        assert self.tool._passes_crypto_filters(bad_crypto_data, criteria) is False
+        assert self.tool._criteria._passes_crypto_filters(bad_crypto_data, criteria) is False
 
     def test_should_calculate_preliminary_scores_correctly(self):
         """Test preliminary scoring calculations."""
-        # High-quality ETF
+        # High-quality ETF - now using _ranking component
         good_etf_data = {
             "expense_ratio": 0.03,
             "aum": 300e9,
             "tracking_error": 0.0008,
             "history_years": 15,
         }
-        etf_score = self.tool._score_etf_preliminary(good_etf_data)
+        etf_score = self.tool._ranking._score_etf_preliminary(good_etf_data)
         assert etf_score > 0.8  # Should score highly
 
         # High-quality stock
@@ -283,7 +287,7 @@ class TestMarketScreeningTool:
             "fcf_positive": True,
             "fcf_growing": True,
         }
-        stock_score = self.tool._score_stock_preliminary(good_stock_data)
+        stock_score = self.tool._ranking._score_stock_preliminary(good_stock_data)
         assert stock_score > 0.8  # Should score highly
 
         # High-quality crypto
@@ -294,12 +298,12 @@ class TestMarketScreeningTool:
             "institutional_adoption": True,
             "real_utility": True,
         }
-        crypto_score = self.tool._score_crypto_preliminary(good_crypto_data)
+        crypto_score = self.tool._ranking._score_crypto_preliminary(good_crypto_data)
         assert crypto_score > 0.8  # Should score highly
 
     def test_should_extract_key_metrics_correctly(self):
         """Test key metrics extraction."""
-        # ETF metrics
+        # ETF metrics - now using _utils component
         etf_data = {
             "expense_ratio": 0.05,
             "aum": 100e9,
@@ -307,7 +311,7 @@ class TestMarketScreeningTool:
             "history_years": 10,
             "other_field": "ignored",
         }
-        etf_metrics = self.tool._extract_key_metrics(etf_data, "etf")
+        etf_metrics = self.tool._utils.extract_key_metrics(etf_data, "etf")
         assert "expense_ratio" in etf_metrics
         assert "aum" in etf_metrics
         assert "other_field" not in etf_metrics
@@ -320,7 +324,7 @@ class TestMarketScreeningTool:
             "debt_to_equity": 0.2,
             "other_field": "ignored",
         }
-        stock_metrics = self.tool._extract_key_metrics(stock_data, "stock")
+        stock_metrics = self.tool._utils.extract_key_metrics(stock_data, "stock")
         assert "market_cap" in stock_metrics
         assert "roe" in stock_metrics
         assert "other_field" not in stock_metrics
@@ -333,21 +337,21 @@ class TestMarketScreeningTool:
             "institutional_adoption": True,
             "other_field": "ignored",
         }
-        crypto_metrics = self.tool._extract_key_metrics(crypto_data, "crypto")
+        crypto_metrics = self.tool._utils.extract_key_metrics(crypto_data, "crypto")
         assert "market_cap" in crypto_metrics
         assert "daily_volume" in crypto_metrics
         assert "other_field" not in crypto_metrics
 
     def test_should_generate_screening_rationale_correctly(self):
         """Test screening rationale generation."""
-        # A+ candidate
+        # A+ candidate - now using _utils component
         good_data = {
             "symbol": "TEST",
             "name": "Test Investment",
             "expense_ratio": 0.05,
             "aum": 100e9,
         }
-        a_plus_rationale = self.tool._generate_screening_rationale(good_data, "etf", 0.95, True)
+        a_plus_rationale = self.tool._utils.generate_screening_rationale(good_data, "etf", 0.95, True)
         assert "qualifies as A+ candidate" in a_plus_rationale
         assert "TEST" in a_plus_rationale
         assert "0.95" in a_plus_rationale
@@ -359,7 +363,7 @@ class TestMarketScreeningTool:
             "roe": 0.10,
             "revenue_growth": 0.05,
         }
-        poor_rationale = self.tool._generate_screening_rationale(poor_data, "stock", 0.65, False)
+        poor_rationale = self.tool._utils.generate_screening_rationale(poor_data, "stock", 0.65, False)
         assert "shows potential" in poor_rationale
         assert "needs improvement" in poor_rationale
         assert "POOR" in poor_rationale
@@ -417,30 +421,31 @@ class TestMarketScreeningTool:
 
     def test_should_use_caching_efficiently(self):
         """Test caching functionality."""
-        # First call should populate cache
-        data1 = self.tool._get_basic_market_data("SPY", "etf")
+        # First call should populate cache - now using _utils component
+        data1 = self.tool._utils.get_basic_market_data("SPY", "etf")
 
         # Second call should use cache
-        data2 = self.tool._get_basic_market_data("SPY", "etf")
+        data2 = self.tool._utils.get_basic_market_data("SPY", "etf")
 
         assert data1 == data2
         # Cache should contain some data after the calls
-        assert len(self.tool._screening_cache) >= 0  # Cache may or may not be populated depending on implementation
+        assert len(self.tool._utils._screening_cache) >= 0  # Cache may or may not be populated depending on implementation
 
     def test_should_integrate_with_a_plus_scorer_when_detailed_analysis_enabled(self, mocker):
         """Test integration with A+ scoring tool."""
-        with mocker.patch.object(self.tool._a_plus_scorer, "_run") as mock_scorer:
-            mock_scorer.return_value = {
-                "composite_score": 0.92,
-                "is_a_plus_candidate": True,
-                "grade": "A+",
-            }
+        # Mock the A+ scorer _run method
+        mock_scorer = mocker.patch.object(self.tool._ranking._a_plus_scorer, "_run")
+        mock_scorer.return_value = {
+            "composite_score": 0.92,
+            "is_a_plus_candidate": True,
+            "grade": "A+",
+        }
 
-            result = self.tool._run(asset_type="etf", max_candidates=1, include_detailed_analysis=True)
+        result = self.tool._run(asset_type="etf", max_candidates=1, include_detailed_analysis=True)
 
-            # Should have called the A+ scorer for detailed analysis
-            if result["summary"]["candidates_found"] > 0:
-                mock_scorer.assert_called()
+        # Should have called the A+ scorer for detailed analysis
+        if result["summary"]["candidates_found"] > 0:
+            mock_scorer.assert_called()
 
     def test_should_validate_screening_candidate_model(self):
         """Test ScreeningCandidate model validation."""
@@ -512,12 +517,13 @@ class TestMarketScreeningTool:
     )
     def test_should_return_expected_symbols_for_asset_types(self, asset_type, expected_symbols):
         """Test that each asset type returns expected symbols."""
+        # Now using _utils component
         if asset_type == "etf":
-            universe = self.tool._get_etf_universe("us")
+            universe = self.tool._utils._get_etf_universe("us")
         elif asset_type == "stock":
-            universe = self.tool._get_stock_universe("us")
+            universe = self.tool._utils._get_stock_universe("us")
         elif asset_type == "crypto":
-            universe = self.tool._get_crypto_universe("global")
+            universe = self.tool._utils._get_crypto_universe("global")
 
         symbols = universe["symbols"]
         for expected_symbol in expected_symbols:

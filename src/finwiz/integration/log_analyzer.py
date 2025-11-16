@@ -4,12 +4,10 @@ Log Analysis Utilities for Integration System.
 Utility class for analyzing integration logs and debugging issues.
 """
 
-from typing import Any
-
-
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from .data_lineage import DataLineageTracker
 

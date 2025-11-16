@@ -103,7 +103,7 @@ class TestChartAnalyzer:
         mocker.patch.dict("os.environ", {}, clear=True)
         analyzer_no_key = ChartAnalyzer()
 
-        with pytest.raises(ValueError, match="CHART_IMG_API_KEY environment variable not set"):
+        with pytest.raises(RuntimeError, match="Failed to generate chart"):
             analyzer_no_key.analyze_chart("AAPL")
 
     def test_should_generate_chart_successfully(self, analyzer, mock_chart_response, mocker):

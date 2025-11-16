@@ -7,9 +7,8 @@ for portfolio monitoring systems.
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from finwiz.quantitative.portfolio_analyzer import PortfolioAnalyzer

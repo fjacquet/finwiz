@@ -9,11 +9,9 @@ This module finds alternatives by:
 - Calculating expected grade improvements
 """
 
-from typing import Any
-
-
 import json
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 

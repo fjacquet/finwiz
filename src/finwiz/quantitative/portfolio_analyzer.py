@@ -170,9 +170,8 @@ class PortfolioAnalyzer:
                     target_weight=target_weight,
                     deviation=deviation,
                     tolerance_band=tolerance,
-                    exceeds_tolerance=exceeds_tolerance,
+                    needs_rebalancing=exceeds_tolerance,
                     urgency_score=urgency_score,
-                    recommended_action=recommended_action,
                 )
 
                 rebalancing_needs.append(rebalancing_need)
@@ -180,7 +179,7 @@ class PortfolioAnalyzer:
             # Sort by urgency score (highest first)
             rebalancing_needs.sort(key=lambda x: x.urgency_score, reverse=True)
 
-            positions_needing_action = sum(1 for need in rebalancing_needs if need.exceeds_tolerance)
+            positions_needing_action = sum(1 for need in rebalancing_needs if need.needs_rebalancing)
             logger.debug(f"Identified {positions_needing_action} positions needing rebalancing")
 
             return rebalancing_needs

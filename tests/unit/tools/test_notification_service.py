@@ -457,25 +457,29 @@ class TestNotificationService:
         # Arrange
         preferences = NotificationPreferences(quiet_hours_start=22, quiet_hours_end=7)
 
-        # Mock current time to be in quiet hours
-        with mocker.patch("finwiz.tools.notification_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value.hour = 23  # 11 PM
+        # Mock current time to be in quiet hours (11 PM)
+        mock_now_quiet = mocker.Mock()
+        mock_now_quiet.hour = 23
+        mock_datetime_quiet = mocker.patch("finwiz.tools.notification_service.datetime")
+        mock_datetime_quiet.now.return_value = mock_now_quiet
 
-            # Act
-            is_quiet = notification_service._is_quiet_hours(preferences)
+        # Act
+        is_quiet = notification_service._is_quiet_hours(preferences)
 
-            # Assert
-            assert is_quiet is True
+        # Assert
+        assert is_quiet is True
 
-        # Mock current time to be outside quiet hours
-        with mocker.patch("finwiz.tools.notification_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value.hour = 10  # 10 AM
+        # Mock current time to be outside quiet hours (10 AM)
+        mock_now_active = mocker.Mock()
+        mock_now_active.hour = 10
+        mock_datetime_active = mocker.patch("finwiz.tools.notification_service.datetime")
+        mock_datetime_active.now.return_value = mock_now_active
 
-            # Act
-            is_quiet = notification_service._is_quiet_hours(preferences)
+        # Act
+        is_quiet = notification_service._is_quiet_hours(preferences)
 
-            # Assert
-            assert is_quiet is False
+        # Assert
+        assert is_quiet is False
 
     def test_should_detect_rate_limiting_correctly(self, notification_service, sample_preferences):
         """Test rate limiting detection."""

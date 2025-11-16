@@ -5,10 +5,8 @@ This module contains the core sentiment analysis algorithms, impact scoring,
 and trending topic extraction logic.
 """
 
-from typing import Any
-
-
 import datetime
+from typing import Any
 
 from finwiz.tools.logger import get_logger
 

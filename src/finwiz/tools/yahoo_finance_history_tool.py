@@ -14,10 +14,11 @@ logger = get_logger(__name__)
 
 
 class YahooFinanceHistoryTool(BaseTool):
-    """Get historical price data for a financial instrument from Yahoo Finance.
+    """
+    Get historical price data for a financial instrument from Yahoo Finance.
 
-        This tool retrieves historical price data for stocks, ETFs, or cryptocurrencies
-        over a specified time period and interval.
+    This tool retrieves historical price data for stocks, ETFs, or cryptocurrencies
+    over a specified time period and interval.
     """
 
     name: str = "Yahoo Finance History Tool"

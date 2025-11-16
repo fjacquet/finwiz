@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 
 from finwiz.schemas.session import AnalysisRecord, ClientProfile, FinancialPlan
 from finwiz.tools.logger import get_logger
-from finwiz.utils.persistence_strategies import SessionParsingError, BackupStrategy, RecoveryStrategy
+from finwiz.utils.persistence_strategies import BackupStrategy, RecoveryStrategy, SessionParsingError
 from finwiz.utils.session_storage import SessionStorage
 
 # Re-export for backward compatibility
@@ -91,11 +91,7 @@ class SessionPersistence:
             recommendations = self._extract_recommendations(soup)
 
             # Create analysis record from current content
-            analysis_record = AnalysisRecord(
-                timestamp=last_updated,
-                analysis_type="full_analysis",
-                portfolio_data=portfolio_data
-            )
+            analysis_record = AnalysisRecord(timestamp=last_updated, analysis_type="full_analysis", portfolio_data=portfolio_data)
 
             financial_plan = FinancialPlan(
                 plan_id=plan_id,

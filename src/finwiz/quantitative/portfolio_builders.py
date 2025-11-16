@@ -303,7 +303,7 @@ class SystemTemplateManager:
                 "XLU": 0.08,  # Utilities
             },
             global_tolerance=0.08,
-            rebalancing_method=RebalancingMethod.THRESHOLD_BASED,
+            rebalancing_method=RebalancingMethod.MINIMIZE_TRADES,
             is_system_template=True,
         )
 
@@ -316,7 +316,7 @@ class SystemTemplateManager:
             strategy_type=StrategyTemplate.EQUAL_WEIGHT,
             target_weights={},  # Will be calculated based on holdings
             global_tolerance=0.05,
-            rebalancing_method=RebalancingMethod.THRESHOLD_BASED,
+            rebalancing_method=RebalancingMethod.MINIMIZE_TRADES,
             is_system_template=True,
         )
 

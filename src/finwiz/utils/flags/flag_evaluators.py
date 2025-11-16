@@ -12,7 +12,6 @@ from typing import Any
 from finwiz.tools.logger import get_logger
 from finwiz.utils.flags.flag_definitions import (
     CircuitBreakerState,
-    FallbackStrategy,
     FeatureFlagConfig,
     FeatureFlagStrategy,
 )
@@ -37,6 +36,7 @@ def evaluate_flag(
 
     Returns:
         True if feature is enabled, False otherwise
+
     """
     if config.strategy == FeatureFlagStrategy.BOOLEAN:
         return config.enabled
@@ -76,6 +76,7 @@ def evaluate_circuit_breaker(config: FeatureFlagConfig, circuit_breakers: dict[s
 
     Returns:
         True if circuit is closed or half-open, False if open
+
     """
     breaker = circuit_breakers.get(config.name)
     if not breaker:
@@ -104,6 +105,7 @@ def record_success(flag_name: str, circuit_breakers: dict[str, CircuitBreakerSta
     Args:
         flag_name: Name of the feature flag
         circuit_breakers: Circuit breaker states dictionary
+
     """
     if flag_name in circuit_breakers:
         breaker = circuit_breakers[flag_name]
@@ -122,6 +124,7 @@ def record_failure(flag_name: str, flags: dict[str, FeatureFlagConfig], circuit_
         flag_name: Name of the feature flag
         flags: Feature flags dictionary
         circuit_breakers: Circuit breaker states dictionary
+
     """
     if flag_name not in circuit_breakers:
         return
@@ -148,6 +151,7 @@ def get_default_values(flag_name: str) -> Any:
 
     Returns:
         Default values for the feature or empty dict
+
     """
     defaults = {
         "enhanced_sentiment_analysis": {"sentiment_score": 0.0, "article_count": 0, "trending_topics": [], "source": "default"},

@@ -136,9 +136,7 @@ class EnhancedETFAnalysisTool(BaseTool):
         """Extract top holdings for the ETF."""
         return ETFDataFetcher.extract_top_holdings(ticker, max_holdings)
 
-    def _perform_etf_risk_assessment(
-        self, ticker: str, factsheet_data: dict[str, Any], holdings_data: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _perform_etf_risk_assessment(self, ticker: str, factsheet_data: dict[str, Any], holdings_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Perform standardized risk assessment for ETF."""
         return ETFAnalyzer.perform_etf_risk_assessment(ticker, factsheet_data, holdings_data)
 

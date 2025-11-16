@@ -88,6 +88,8 @@ class PerformanceReport(BaseModel):
     optimization_result: PortfolioOptimizationResult | None = Field(None, description="Portfolio optimization results")
 
     # Analysis metadata
+    strategy_name: str = Field(default="Strategy", description="Name of the strategy")
+    benchmark_name: str | None = Field(None, description="Name of the benchmark")
     analysis_period: str = Field(..., description="Analysis period")
     total_observations: int = Field(..., description="Total number of observations")
 

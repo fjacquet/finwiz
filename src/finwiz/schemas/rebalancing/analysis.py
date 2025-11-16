@@ -53,11 +53,26 @@ class PortfolioMetrics(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    total_return: float = Field(..., description="Total portfolio return")
-    annualized_return: float = Field(..., description="Annualized return")
-    volatility: float = Field(..., ge=0, description="Portfolio volatility")
-    sharpe_ratio: float = Field(..., description="Sharpe ratio")
-    max_drawdown: float = Field(..., le=0, description="Maximum drawdown")
+    # Basic portfolio composition
+    total_value: float = Field(..., gt=0, description="Total portfolio value")
+    number_of_positions: int = Field(..., ge=0, description="Number of positions in portfolio")
+    largest_position_weight: float = Field(..., ge=0, le=1, description="Weight of largest position")
+
+    # Risk metrics
+    concentration_risk_score: float = Field(..., ge=0, le=10, description="Concentration risk score (0-10 scale)")
+    diversification_ratio: float = Field(..., ge=0, description="Diversification ratio")
+    effective_number_of_positions: float = Field(..., ge=0, description="Effective number of positions")
+
+    # Rebalancing metrics
+    turnover_if_rebalanced: float = Field(..., ge=0, le=1, description="Turnover required if rebalanced")
+    cash_weight: float = Field(..., ge=0, le=1, description="Cash as percentage of portfolio")
+
+    # Performance metrics (optional - may not always be available)
+    total_return: float | None = Field(None, description="Total portfolio return")
+    annualized_return: float | None = Field(None, description="Annualized return")
+    volatility: float | None = Field(None, ge=0, description="Portfolio volatility")
+    sharpe_ratio: float | None = Field(None, description="Sharpe ratio")
+    max_drawdown: float | None = Field(None, le=0, description="Maximum drawdown")
     beta: float | None = Field(None, description="Portfolio beta vs benchmark")
     correlation_with_benchmark: float | None = Field(None, ge=-1, le=1, description="Correlation with benchmark")
 
@@ -80,6 +95,7 @@ class PerformanceAttribution(BaseModel):
     total_rebalancing_costs: float = Field(..., ge=0, description="Total costs incurred from rebalancing")
     net_benefit: float = Field(..., description="Net benefit after costs")
     cost_adjusted_alpha: float = Field(..., description="Alpha after adjusting for rebalancing costs")
+    cost_drag: float = Field(..., ge=0, description="Cost drag from rebalancing as percentage of returns")
 
     # Risk metrics
     volatility_reduction: float = Field(..., description="Volatility reduction from rebalancing")

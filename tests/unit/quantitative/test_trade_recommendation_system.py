@@ -72,9 +72,8 @@ class TestTradeRecommendationSystem:
                 target_weight=0.4,
                 deviation=-0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.8,
-                recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
             ),
             RebalancingNeed(
                 symbol="GOOGL",
@@ -82,9 +81,8 @@ class TestTradeRecommendationSystem:
                 target_weight=0.3,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.7,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
             RebalancingNeed(
                 symbol="MSFT",
@@ -92,9 +90,8 @@ class TestTradeRecommendationSystem:
                 target_weight=0.3,
                 deviation=0.0,
                 tolerance_band=0.05,
-                exceeds_tolerance=False,
                 urgency_score=0.1,
-                recommended_action=TradeAction.HOLD,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -148,9 +145,8 @@ class TestTradeRecommendationSystem:
                 target_weight=0.4,
                 deviation=0.0,
                 tolerance_band=0.05,
-                exceeds_tolerance=False,
                 urgency_score=0.1,
-                recommended_action=TradeAction.HOLD,
+                needs_rebalancing=True,
             )
         ]
 
@@ -176,9 +172,8 @@ class TestTradeRecommendationSystem:
             target_weight=0.4,
             deviation=-0.1,
             tolerance_band=0.05,
-            exceeds_tolerance=True,
             urgency_score=0.8,
-            recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
         )
 
         # Use higher capital config to avoid validation errors
@@ -245,9 +240,8 @@ class TestTradeRecommendationSystem:
                 target_weight=0.4,
                 deviation=-0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.8,
-                recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
             ),
             RebalancingNeed(
                 symbol="GOOGL",
@@ -255,9 +249,8 @@ class TestTradeRecommendationSystem:
                 target_weight=0.3,
                 deviation=0.1,
                 tolerance_band=0.05,
-                exceeds_tolerance=True,
                 urgency_score=0.6,
-                recommended_action=TradeAction.SELL,
+                needs_rebalancing=True,
             ),
         ]
 
@@ -546,10 +539,9 @@ class TestTradeRecommendationSystem:
             current_weight=0.399,  # Very close to target
             target_weight=0.4,
             deviation=-0.001,  # Tiny deviation
-            tolerance_band=0.05,
-            exceeds_tolerance=True,  # Force it to be considered
+            tolerance_band=0.05,  # Force it to be considered
             urgency_score=0.5,
-            recommended_action=TradeAction.BUY,
+                needs_rebalancing=True,
         )
 
         prices = {"AAPL": 150.0}

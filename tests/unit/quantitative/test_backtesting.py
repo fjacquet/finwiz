@@ -555,7 +555,8 @@ class TestBacktestingEngine:
         symbol = fake.pystr(min_chars=3, max_chars=5).upper()
 
         # Act
-        data_feed = backtesting_engine._create_backtrader_datafeed(sample_ohlcv_data, symbol)
+        from finwiz.quantitative.backtesting_utils import create_backtrader_datafeed
+        data_feed = create_backtrader_datafeed(sample_ohlcv_data, symbol)
 
         # Assert
         assert isinstance(data_feed, bt.feeds.PandasData)
@@ -573,7 +574,7 @@ class TestBacktestingEngine:
         ]
 
         # Act
-        volatility = backtesting_engine._calculate_volatility(portfolio_values)
+        volatility = backtesting_engine.performance_analyzer.calculate_volatility(portfolio_values)
 
         # Assert
         assert isinstance(volatility, float)
@@ -591,7 +592,7 @@ class TestBacktestingEngine:
         ]
 
         # Act
-        var_95 = backtesting_engine._calculate_var(portfolio_values, 0.95)
+        var_95 = backtesting_engine.performance_analyzer.calculate_var(portfolio_values, 0.95)
 
         # Assert
         assert isinstance(var_95, float)
@@ -609,7 +610,7 @@ class TestBacktestingEngine:
         ]
 
         # Act
-        cvar_95 = backtesting_engine._calculate_cvar(portfolio_values, 0.95)
+        cvar_95 = backtesting_engine.performance_analyzer.calculate_cvar(portfolio_values, 0.95)
 
         # Assert
         assert isinstance(cvar_95, float)
@@ -621,9 +622,9 @@ class TestBacktestingEngine:
         portfolio_values = [("2023-01-01", 100000)]  # Only one data point
 
         # Act
-        volatility = backtesting_engine._calculate_volatility(portfolio_values)
-        var_95 = backtesting_engine._calculate_var(portfolio_values, 0.95)
-        cvar_95 = backtesting_engine._calculate_cvar(portfolio_values, 0.95)
+        volatility = backtesting_engine.performance_analyzer.calculate_volatility(portfolio_values)
+        var_95 = backtesting_engine.performance_analyzer.calculate_var(portfolio_values, 0.95)
+        cvar_95 = backtesting_engine.performance_analyzer.calculate_cvar(portfolio_values, 0.95)
 
         # Assert
         assert volatility == 0.0

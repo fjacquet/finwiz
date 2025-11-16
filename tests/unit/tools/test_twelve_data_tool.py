@@ -43,12 +43,15 @@ class TestTwelveDataIndicatorTool:
         out = tool._run(symbol="AAPL", indicator="rsi", length=14)
         assert out.startswith("Error: TWELVE_DATA_API_KEY")
 
-    def test_rsi_success(self, mock_get, monkeypatch, mocker):
+    def test_rsi_success(self, monkeypatch, mocker):
         # Mock the rate limiting decorator to avoid asyncio issues
         mock_rate_limit_decorator(mocker)
 
         # Create a new instance to avoid decorator caching issues
         tool = TwelveDataIndicatorTool()
+
+        # Mock requests.get
+        mock_get = mocker.patch("requests.get")
 
         # Mock the decorated method directly
         def mock_run_method(symbol, indicator, interval="1day", length=14, outputsize=50, **kwargs):
@@ -93,12 +96,15 @@ class TestTwelveDataIndicatorTool:
         assert called_params["outputsize"] == 50
         assert called_params["apikey"] == "testkey"
 
-    def test_macd_parameters(self, mock_get, monkeypatch, mocker):
+    def test_macd_parameters(self, monkeypatch, mocker):
         # Mock the rate limiting decorator to avoid asyncio issues
         mock_rate_limit_decorator(mocker)
 
         # Create a new instance to avoid decorator caching issues
         tool = TwelveDataIndicatorTool()
+
+        # Mock requests.get
+        mock_get = mocker.patch("requests.get")
 
         # Mock the decorated method directly
         def mock_run_method(symbol, indicator, interval="1day", fast_period=12, slow_period=26, signal_period=9, **kwargs):
@@ -148,12 +154,15 @@ class TestTwelveDataIndicatorTool:
         assert called_params["slow"] == 26
         assert called_params["signal"] == 9
 
-    def test_request_error(self, mock_get, monkeypatch, mocker):
+    def test_request_error(self, monkeypatch, mocker):
         # Mock the rate limiting decorator to avoid asyncio issues
         mock_rate_limit_decorator(mocker)
 
         # Create a new instance to avoid decorator caching issues
         tool = TwelveDataIndicatorTool()
+
+        # Mock requests.get
+        mock_get = mocker.patch("requests.get")
 
         # Mock the decorated method directly
         def mock_run_method(symbol, indicator, **kwargs):

@@ -17,8 +17,8 @@ class TestMainFlowIntegration:
     def test_should_initialize_integration_system_when_flow_created(self, mocker):
         """Test that FinwizFlow initializes the integration system correctly."""
         # Arrange
-        mock_integration_manager = mocker.patch("finwiz.main.CrewDataIntegrationManager")
-        mock_data_accessor = mocker.patch("finwiz.main.CrewDataAccessor")
+        mock_integration_manager = mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager")
+        mock_data_accessor = mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor")
 
         # Act
         flow = FinwizFlow()
@@ -52,8 +52,8 @@ class TestMainFlowIntegration:
         mock_data_accessor.check_data_availability.return_value = mock_availability_report
         mock_data_accessor.get_stale_data_warnings.return_value = []
 
-        mocker.patch("finwiz.main.CrewDataIntegrationManager", return_value=mock_integration_manager)
-        mocker.patch("finwiz.main.CrewDataAccessor", return_value=mock_data_accessor)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager", return_value=mock_integration_manager)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor", return_value=mock_data_accessor)
 
         flow = FinwizFlow()
 
@@ -62,11 +62,11 @@ class TestMainFlowIntegration:
 
         # Assert
         mock_data_accessor.check_data_availability.assert_called_once()
-        assert flow.inputs["data_availability_report"]["overall_status"] == "PARTIAL"
-        assert flow.inputs["data_availability_report"]["stock_available"] is True
-        assert flow.inputs["data_availability_report"]["crypto_available"] is False
+        assert flow.state.data_availability_report.overall_status == DataAvailabilityStatus.PARTIAL
+        assert flow.state.data_availability_report.stock_available is True
+        assert flow.state.data_availability_report.crypto_available is False
 
-    def test_should_handle_stale_data_warnings_in_validation(self, mocker):
+    async def test_should_handle_stale_data_warnings_in_validation(self, mocker):
         """Test that stale data warnings are properly handled."""
         # Arrange
         mock_availability_report = DataAvailabilityReport(
@@ -96,49 +96,44 @@ class TestMainFlowIntegration:
         mock_data_accessor.check_data_availability.return_value = mock_availability_report
         mock_data_accessor.get_stale_data_warnings.return_value = stale_warnings
 
-        mocker.patch("finwiz.main.CrewDataIntegrationManager", return_value=mock_integration_manager)
-        mocker.patch("finwiz.main.CrewDataAccessor", return_value=mock_data_accessor)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager", return_value=mock_integration_manager)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor", return_value=mock_data_accessor)
 
         flow = FinwizFlow()
 
         # Act
-        flow.validate_data_integration()
+        await flow.validate_data_integration()
 
         # Assert
-        assert "stale_data_warnings" in flow.inputs
-        assert len(flow.inputs["stale_data_warnings"]) == 2
-        assert "refresh_recommendations" in flow.inputs
-        assert flow.inputs["refresh_recommendations"] == ["stock", "etf", "crypto"]
+        assert hasattr(flow.state, "stale_data_warnings")
+        assert len(flow.state.stale_data_warnings) == 2
+        assert hasattr(flow.state, "refresh_recommendations")
+        assert flow.state.refresh_recommendations == ["stock", "etf", "crypto"]
 
     def test_should_use_upstream_data_in_investment_discovery(self, mocker):
-        """Test that investment discovery uses upstream data from integration system."""
-        # Arrange
-        from finwiz.integration.manager import UpstreamDataCollection
+        """Test that investment discovery uses Python-based analysis results."""
+        # Arrange - Mock Python analyzers to provide discovery data
+        mock_crypto_results = {
+            "analysis_summary": "Crypto discovery completed",
+            "opportunities": ["BTC", "ETH"],
+            "performance_metrics": {"total_analyzed": 2, "a_plus_count": 2},
+        }
+        mock_stock_results = {
+            "analysis_summary": "Stock discovery completed",
+            "opportunities": ["MSFT", "AAPL"],
+            "performance_metrics": {"total_analyzed": 2, "a_plus_count": 2},
+        }
+        mock_etf_results = {
+            "analysis_summary": "ETF discovery completed",
+            "opportunities": ["VWCE", "CSSPX"],
+            "performance_metrics": {"total_analyzed": 2, "a_plus_count": 2},
+        }
 
-        upstream_data = UpstreamDataCollection(
-            available_data={"stock": ["stock_output.json"], "etf": ["etf_output.json"]},
-            missing_data=["crypto"],
-            stale_data=["portfolio"],
-        )
+        mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities", return_value=mock_crypto_results)
+        mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities", return_value=mock_stock_results)
+        mocker.patch("finwiz.scoring.etf_analyzer.analyze_etf_opportunities", return_value=mock_etf_results)
 
-        mock_integration_manager = mocker.MagicMock()
-        mock_integration_manager.get_upstream_data.return_value = upstream_data
-
-        mock_data_accessor = mocker.MagicMock()
-        mock_aplus_opportunities = mocker.MagicMock()
-        mock_aplus_opportunities.etf_opportunities = ["VWCE", "CSSPX"]
-        mock_aplus_opportunities.stock_opportunities = ["MSFT", "AAPL"]
-        mock_aplus_opportunities.crypto_opportunities = ["BTC", "ETH"]
-        mock_aplus_opportunities.discovery_summary = "Test summary"
-        mock_aplus_opportunities.confidence_score = 0.85
-        mock_aplus_opportunities.allocation_recommendations = []
-        mock_aplus_opportunities.replacement_notes = []
-        mock_data_accessor.get_aplus_opportunities.return_value = mock_aplus_opportunities
-
-        mocker.patch("finwiz.main.CrewDataIntegrationManager", return_value=mock_integration_manager)
-        mocker.patch("finwiz.main.CrewDataAccessor", return_value=mock_data_accessor)
-
-        # Mock feature flag and crew execution
+        # Mock investment discovery crew
         mocker.patch("finwiz.utils.feature_flags.is_feature_enabled", return_value=True)
         mock_crew = mocker.MagicMock()
         mock_crew_result = mocker.MagicMock()
@@ -146,26 +141,27 @@ class TestMainFlowIntegration:
         mock_crew.crew.return_value.kickoff.return_value = mock_crew_result
         mocker.patch("finwiz.main.InvestmentDiscoveryCrew", return_value=mock_crew)
 
-        flow = FinwizFlow()
-        flow.inputs["portfolio_review"] = {"test": "data"}
+        # Mock data consolidation validator
+        mock_validator = mocker.MagicMock()
+        mock_validator.validate_and_report.return_value = None
+        mocker.patch("finwiz.flows.flow_orchestrator.DataConsolidationValidator", return_value=mock_validator)
 
-        # Act
+        flow = FinwizFlow()
+        flow.state.portfolio_review = {"test": "data"}
+
+        # Act - Run discovery flow (crypto, stock, etf first, then consolidation)
+        flow.check_crypto()
+        flow.check_stock()
+        flow.check_etf()
         flow.check_investment_discovery()
 
-        # Assert
-        mock_integration_manager.get_upstream_data.assert_called_once_with("discovery")
-        mock_data_accessor.get_aplus_opportunities.assert_called_once()
-
-        # Check that upstream data info is passed to crew
-        crew_inputs = mock_crew.crew.return_value.kickoff.call_args[1]["inputs"]
-        assert "upstream_data_available" in crew_inputs
-        assert crew_inputs["upstream_data_available"] == ["stock", "etf"]
-        assert crew_inputs["upstream_data_stale"] == ["portfolio"]
-        assert crew_inputs["upstream_data_missing"] == ["crypto"]
-
-        # Check that A+ opportunities are extracted
-        assert flow.inputs["investment_discovery_structured"]["has_a_plus_analysis"] is True
-        assert len(flow.inputs["investment_discovery_structured"]["etf_opportunities"]) == 2
+        # Assert - Verify Python analyzers were used for discovery
+        assert flow.state.crypto_analysis_success is True
+        assert flow.state.stock_analysis_success is True
+        assert flow.state.etf_analysis_success is True
+        assert flow.state.crypto_result == "Crypto discovery completed"
+        assert flow.state.stock_result == "Stock discovery completed"
+        assert flow.state.etf_result == "ETF discovery completed"
 
     def test_should_consolidate_data_for_reporter_input(self, mocker):
         """Test that reporter input uses consolidated data from integration system."""
@@ -193,8 +189,8 @@ class TestMainFlowIntegration:
         mock_data_accessor = mocker.MagicMock()
         mock_data_accessor.get_consolidated_reporter_input.return_value = consolidated_data
 
-        mocker.patch("finwiz.main.CrewDataIntegrationManager", return_value=mock_integration_manager)
-        mocker.patch("finwiz.main.CrewDataAccessor", return_value=mock_data_accessor)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager", return_value=mock_integration_manager)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor", return_value=mock_data_accessor)
 
         flow = FinwizFlow()
 
@@ -203,11 +199,11 @@ class TestMainFlowIntegration:
 
         # Assert
         mock_data_accessor.get_consolidated_reporter_input.assert_called_once()
-        assert flow.inputs["consolidated_data"] == consolidated_data
-        assert flow.inputs["integrated_data_available"] is True
-        assert flow.inputs["market_sentiment"]["data_quality"] == "HIGH"
-        assert flow.inputs["ticker_validation"]["validation_summary"]["validation_rate"] == 95.0
-        assert flow.inputs["aplus_opportunities"]["stock_opportunities"] == ["MSFT", "AAPL"]
+        assert flow.state.consolidated_data == consolidated_data
+        assert flow.state.integrated_data_available is True
+        assert flow.state.market_sentiment["data_quality"] == "HIGH"
+        assert flow.state.ticker_validation["validation_summary"]["validation_rate"] == 95.0
+        assert flow.state.aplus_opportunities["stock_opportunities"] == ["MSFT", "AAPL"]
 
     def test_should_provide_data_accessor_to_report_crew(self, mocker):
         """Test that report crew receives data accessor and integration manager."""
@@ -215,8 +211,8 @@ class TestMainFlowIntegration:
         mock_integration_manager = mocker.MagicMock()
         mock_data_accessor = mocker.MagicMock()
 
-        mocker.patch("finwiz.main.CrewDataIntegrationManager", return_value=mock_integration_manager)
-        mocker.patch("finwiz.main.CrewDataAccessor", return_value=mock_data_accessor)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager", return_value=mock_integration_manager)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor", return_value=mock_data_accessor)
 
         mock_report_crew = mocker.MagicMock()
         mock_report_crew.validate_reporter_input.return_value = None
@@ -224,37 +220,37 @@ class TestMainFlowIntegration:
         mocker.patch("finwiz.main.ReportCrew", return_value=mock_report_crew)
 
         flow = FinwizFlow()
-        flow.inputs["integrated_data_available"] = True
-        flow.inputs["market_sentiment"] = {"data_quality": "HIGH"}
-        flow.inputs["ticker_validation"] = {"validation_summary": {"validation_rate": 95.0}}
-        flow.inputs["aplus_opportunities"] = {"stock_opportunities": ["MSFT"]}
+        flow.state.integrated_data_available = True
+        flow.state.market_sentiment = {"data_quality": "HIGH"}
+        flow.state.ticker_validation = {"validation_summary": {"validation_rate": 95.0}}
+        flow.state.aplus_opportunities = {"stock_opportunities": ["MSFT"]}
 
         # Act
         flow.report()
 
         # Assert
-        assert flow.inputs["data_accessor"] == mock_data_accessor
-        assert flow.inputs["integration_manager"] == mock_integration_manager
+        assert flow.state.data_accessor == mock_data_accessor
+        assert flow.state.integration_manager == mock_integration_manager
         mock_report_crew.crew.return_value.kickoff.assert_called_once()
 
-    def test_should_handle_integration_system_errors_gracefully(self, mocker):
+    async def test_should_handle_integration_system_errors_gracefully(self, mocker):
         """Test that integration system errors are handled gracefully."""
         # Arrange
         mock_integration_manager = mocker.MagicMock()
         mock_data_accessor = mocker.MagicMock()
         mock_data_accessor.check_data_availability.side_effect = Exception("Integration system error")
 
-        mocker.patch("finwiz.main.CrewDataIntegrationManager", return_value=mock_integration_manager)
-        mocker.patch("finwiz.main.CrewDataAccessor", return_value=mock_data_accessor)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager", return_value=mock_integration_manager)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor", return_value=mock_data_accessor)
 
         flow = FinwizFlow()
 
         # Act
-        flow.validate_data_integration()
+        await flow.validate_data_integration()
 
         # Assert
-        assert "data_integration_error" in flow.inputs
-        assert "Integration system error" in flow.inputs["data_integration_error"]
+        assert hasattr(flow.state, "data_integration_error")
+        assert "Integration system error" in flow.state.data_integration_error
 
     def test_should_fallback_to_example_validation_when_no_crew_data(self, mocker):
         """Test fallback to example validation when no crew data is available."""
@@ -265,8 +261,8 @@ class TestMainFlowIntegration:
         mock_data_accessor = mocker.MagicMock()
         mock_data_accessor.get_consolidated_reporter_input.return_value = consolidated_data
 
-        mocker.patch("finwiz.main.CrewDataIntegrationManager", return_value=mock_integration_manager)
-        mocker.patch("finwiz.main.CrewDataAccessor", return_value=mock_data_accessor)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager", return_value=mock_integration_manager)
+        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor", return_value=mock_data_accessor)
 
         # Mock example file existence and validation
         mock_path = mocker.patch("finwiz.main.Path")
@@ -285,4 +281,4 @@ class TestMainFlowIntegration:
 
         # Assert
         mock_validate.assert_called_once()
-        assert flow.inputs["reporter_input"] == {"example": "data"}
+        assert flow.state.reporter_input == {"example": "data"}

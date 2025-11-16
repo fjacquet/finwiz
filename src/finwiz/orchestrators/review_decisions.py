@@ -19,12 +19,13 @@ logger = logging.getLogger(__name__)
 def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
     """
     Generate HTML table for holdings with letter grades.
-    
+
     Args:
         holdings: List of holding dictionaries
-        
+
     Returns:
         HTML string for holdings table
+
     """
     if not holdings:
         # Use bs4 for simple paragraph
@@ -256,12 +257,13 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
 def generate_trades_table(trades: list[dict[str, Any]]) -> str:
     """
     Generate HTML table for trade recommendations.
-    
+
     Args:
         trades: List of trade dictionaries
-        
+
     Returns:
         HTML string for trades table
+
     """
     if not trades:
         # Use bs4 for simple paragraph
@@ -342,10 +344,11 @@ def generate_trades_table(trades: list[dict[str, Any]]) -> str:
 def add_portfolio_review_sections(generator: Any, review_data: dict[str, Any]) -> None:
     """
     Add portfolio review sections to HTML report generator.
-    
+
     Args:
         generator: HTML report generator instance
         review_data: Portfolio review data dictionary
+
     """
     # Extract holdings and processing summary
     if "portfolio_review" in review_data:
@@ -471,10 +474,11 @@ def add_portfolio_review_sections(generator: Any, review_data: dict[str, Any]) -
 def add_rebalancing_sections(generator: Any, rebalancing_data: dict[str, Any]) -> None:
     """
     Add rebalancing sections to HTML report generator.
-    
+
     Args:
         generator: HTML report generator instance
         rebalancing_data: Rebalancing data dictionary
+
     """
     # Rebalancing summary
     execution_summary = rebalancing_data.get("execution_summary", {})

@@ -4,11 +4,9 @@ ETF Expense Ratio Fallback Utility.
 Provides fallback expense ratio data when Yahoo Finance doesn't have it.
 """
 
-from typing import Any
-
-
 import logging
 from pathlib import Path
+from typing import Any
 
 import yaml
 

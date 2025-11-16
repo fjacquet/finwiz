@@ -24,6 +24,7 @@ class SentimentCalculators:
         Args:
             bullish_keywords: List of keywords indicating positive sentiment
             bearish_keywords: List of keywords indicating negative sentiment
+
         """
         self.bullish_keywords = bullish_keywords
         self.bearish_keywords = bearish_keywords
@@ -37,6 +38,7 @@ class SentimentCalculators:
 
         Returns:
             Sentiment score between -1.0 (very negative) and 1.0 (very positive)
+
         """
         text_lower = text.lower()
 
@@ -66,6 +68,7 @@ class SentimentCalculators:
 
         Returns:
             Weighted sentiment score between -1.0 and 1.0
+
         """
         if not sources:
             return 0.0
@@ -90,6 +93,7 @@ class SentimentCalculators:
 
         Returns:
             Confidence score between 0.0 and 1.0
+
         """
         if not sources:
             return 0.0

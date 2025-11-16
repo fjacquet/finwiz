@@ -109,7 +109,7 @@ class APlusMonitoringSystem:
             candidate = InvestmentCandidate(
                 symbol=symbol,
                 asset_type=asset_type,
-                current_grade=score_to_grade(initial_analysis.overall_score),
+                current_grade=score_to_grade(initial_analysis.composite_score),
                 analysis_date=datetime.now(),
                 last_updated=datetime.now(),
             )
@@ -119,7 +119,7 @@ class APlusMonitoringSystem:
             self.investment_analyses[symbol] = initial_analysis
 
             # Track performance event
-            self.metrics_calculator.track_performance_event(candidate, "initial_recommendation", initial_analysis.overall_score)
+            self.metrics_calculator.track_performance_event(candidate, "initial_recommendation", initial_analysis.composite_score)
 
             logger.info(f"Added {symbol} to A+ monitoring system")
 
@@ -138,7 +138,7 @@ class APlusMonitoringSystem:
 
             # Re-evaluate the investment
             new_analysis = await self.scoring_tool.analyze_investment(symbol, candidate.asset_type)
-            new_grade = score_to_grade(new_analysis.overall_score)
+            new_grade = score_to_grade(new_analysis.composite_score)
 
             # Check for grade degradation
             if new_grade != candidate.current_grade:
@@ -237,7 +237,7 @@ class APlusMonitoringSystem:
             await self.alert_manager.generate_grade_degradation_alert(candidate, previous_grade, analysis)
 
         # Track performance event
-        score_change = analysis.overall_score - 0.8  # Simplified previous score estimation
+        score_change = analysis.composite_score - 0.8  # Simplified previous score estimation
         self.metrics_calculator.track_performance_event(candidate, "grade_change", score_change)
 
         logger.info(f"Grade change for {candidate.symbol}: {previous_grade.value} -> {new_grade.value}")

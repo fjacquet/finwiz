@@ -186,7 +186,9 @@ def calculate_sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.02) -> 
     # Use Empyrical for Sharpe ratio calculation
     from empyrical import sharpe_ratio as empyrical_sharpe
 
-    sharpe = empyrical_sharpe(returns, risk_free=risk_free_rate, period="daily")
+    # Convert annual risk-free rate to daily rate for Empyrical
+    daily_risk_free = risk_free_rate / 252
+    sharpe = empyrical_sharpe(returns, risk_free=daily_risk_free, period="daily")
 
     return float(sharpe)
 
@@ -220,7 +222,9 @@ def calculate_sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.02) ->
     # Use Empyrical for Sortino ratio calculation
     from empyrical import sortino_ratio as empyrical_sortino
 
-    sortino = empyrical_sortino(returns, required_return=risk_free_rate, period="daily")
+    # Convert annual risk-free rate to daily rate for Empyrical
+    daily_risk_free = risk_free_rate / 252
+    sortino = empyrical_sortino(returns, required_return=daily_risk_free, period="daily")
 
     return float(sortino)
 
@@ -258,5 +262,9 @@ def calculate_beta(asset_returns: pd.Series, market_returns: pd.Series) -> float
     from empyrical import alpha_beta
 
     _, beta_value = alpha_beta(asset_returns, market_returns, risk_free=0.0)
+
+    # If beta is NaN (zero market variance), return 0.0
+    if np.isnan(beta_value):
+        return 0.0
 
     return float(beta_value)

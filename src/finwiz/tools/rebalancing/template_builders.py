@@ -1,4 +1,5 @@
-"""Template builders for rebalancing reports.
+"""
+Template builders for rebalancing reports.
 
 This module delegates to CSS and JavaScript builders for template generation.
 """

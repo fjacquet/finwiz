@@ -100,7 +100,7 @@ class RebalancingConstraintManager:
         """
         try:
             # Count positions needing action
-            positions_needing_action = sum(1 for need in rebalancing_needs if need.exceeds_tolerance)
+            positions_needing_action = sum(1 for need in rebalancing_needs if need.needs_rebalancing)
 
             # Check for high urgency positions
             high_urgency_positions = sum(1 for need in rebalancing_needs if need.urgency_score >= 0.7)

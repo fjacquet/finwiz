@@ -4,11 +4,9 @@ Integration System Logging Configuration.
 Main logging classes and global instances for the crew data integration system.
 """
 
-from typing import Any
-
-
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from .config import get_integration_config
 from .log_formatters import IntegrationLogFormatter

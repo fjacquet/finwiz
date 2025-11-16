@@ -11,7 +11,8 @@ from finwiz.schemas.tools import GetCompanyInfoInput
 
 
 class YahooFinanceCompanyInfoTool(BaseTool):
-    """Get detailed company information from Yahoo Finance.
+    """
+    Get detailed company information from Yahoo Finance.
 
     This tool retrieves comprehensive company data including business description,
     financial metrics, and key performance indicators.

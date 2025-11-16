@@ -81,18 +81,39 @@ class TestStockCrew:
             "risk_assessment": {"description": "Assess risks"},
         }
 
-        # Mock agent methods
-        mock_crew.market_analyst.return_value = mocker.MagicMock()
-        mock_crew.fundamental_analyst.return_value = mocker.MagicMock()
-        mock_crew.risk_assessor.return_value = mocker.MagicMock()
+        # Mock agent methods with tools attribute
+        mock_market_analyst = mocker.MagicMock()
+        mock_market_analyst.tools = []
+        mock_crew.market_analyst.return_value = mock_market_analyst
 
-        # Mock task methods
-        mock_crew.market_research.return_value = mocker.MagicMock()
-        mock_crew.fundamental_analysis.return_value = mocker.MagicMock()
-        mock_crew.risk_assessment.return_value = mocker.MagicMock()
+        mock_fundamental_analyst = mocker.MagicMock()
+        mock_fundamental_analyst.tools = []
+        mock_crew.fundamental_analyst.return_value = mock_fundamental_analyst
 
-        # Mock crew method
-        mock_crew.crew.return_value = mocker.MagicMock()
+        mock_risk_assessor = mocker.MagicMock()
+        mock_risk_assessor.tools = []
+        mock_crew.risk_assessor.return_value = mock_risk_assessor
+
+        # Mock task methods with description attribute
+        mock_market_task = mocker.MagicMock()
+        mock_market_task.description = "Research markets"
+        mock_crew.market_research.return_value = mock_market_task
+
+        mock_fundamental_task = mocker.MagicMock()
+        mock_fundamental_task.description = "Analyze fundamentals"
+        mock_crew.fundamental_analysis.return_value = mock_fundamental_task
+
+        mock_risk_task = mocker.MagicMock()
+        mock_risk_task.description = "Assess risks"
+        mock_crew.risk_assessment.return_value = mock_risk_task
+
+        # Mock crew method with agents and tasks lists
+        mock_crew_instance = mocker.MagicMock()
+        mock_crew_instance.agents = [mock_market_analyst, mock_fundamental_analyst, mock_risk_assessor]
+        mock_crew_instance.tasks = [mock_market_task, mock_fundamental_task, mock_risk_task]
+        mock_crew_instance.process = "sequential"
+        mock_crew_instance.verbose = True
+        mock_crew.crew.return_value = mock_crew_instance
 
         return mock_crew
 

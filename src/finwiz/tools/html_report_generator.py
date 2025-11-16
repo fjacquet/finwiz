@@ -9,13 +9,11 @@ Re-exports from reporting submodules for backward compatibility.
 """
 
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from finwiz.tools.reporting.report_formatters import HTMLReportFormatter
 from finwiz.tools.reporting.report_sections import (
-    ReportSection,
     ReportSectionBuilder,
 )
 
@@ -28,7 +26,7 @@ class HTMLReportGenerator:
 
     Implements FinWiz HTML-first output standards including French report
     section requirements (Synthèse 10-K, Sentiment du Marché).
-    
+
     This class orchestrates report generation by delegating to specialized
     components: ReportSectionBuilder for building sections and HTMLReportFormatter
     for formatting and rendering HTML.
@@ -254,18 +252,18 @@ class HTMLReportGenerator:
             if crew_name not in template_map:
                 raise ValueError(f"Invalid crew_name: {crew_name}. Must be one of: {', '.join(template_map.keys())}")
 
+            # Validate export_data against crew's Pydantic schema FIRST
+            # Note: Validation should be done by the caller before passing data
+            # This is a safety check to ensure data structure is correct
+            if not isinstance(export_data, dict):
+                raise ValueError(f"export_data must be a dictionary, got {type(export_data)}")
+
             # Load appropriate template
             template_name = template_map[crew_name]
             try:
                 template = env.get_template(template_name)
             except TemplateNotFound:
                 raise ValueError(f"Template not found: {template_name}. Ensure template exists at src/finwiz/templates/{template_name}")
-
-            # Validate export_data against crew's Pydantic schema
-            # Note: Validation should be done by the caller before passing data
-            # This is a safety check to ensure data structure is correct
-            if not isinstance(export_data, dict):
-                raise ValueError(f"export_data must be a dictionary, got {type(export_data)}")
 
             # Required fields check
             required_fields = ["ticker", "asset_class", "analysis_date", "session_id"]

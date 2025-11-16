@@ -90,6 +90,7 @@ class SessionStorage:
             # Create backup if requested and file exists
             if backup and self.report_path.exists():
                 from finwiz.utils.persistence_strategies import BackupStrategy
+
                 backup_strategy = BackupStrategy(self.report_path)
                 backup_strategy.create_backup()
 

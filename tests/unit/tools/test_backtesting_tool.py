@@ -241,8 +241,11 @@ class TestBacktestingTool:
 
     def test_should_run_basic_backtest_successfully(self, mocker, backtesting_tool, mock_backtest_result):
         """Test successful basic backtesting execution."""
-        # Arrange
-        mock_backtesting_engine = mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
+        # Arrange - Mock at the actual import locations in backtesting_tool.py
+        # Line 145: from finwiz.quantitative.backtesting import get_backtesting_engine
+        # Line 148: data_manager = get_historical_data_manager()
+        # Line 149: get_performance_analyzer()
+        mock_backtesting_engine = mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
         mock_data_manager = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
         mock_perf_analyzer = mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
 
@@ -281,18 +284,21 @@ class TestBacktestingTool:
         mock_benchmark_data,
     ):
         """Test regime analysis functionality."""
-        # Arrange
-        mock_backtesting_engine = mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
-        mock_data_manager = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        # Arrange - Mock at the actual import location in backtesting_tool.py
+        # Line 148: data_manager = get_historical_data_manager()
+        mock_data_manager_func = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        mock_backtesting_engine = mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
         mock_perf_analyzer = mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
 
+        # Create mock data manager instance
+        mock_dm = mocker.MagicMock()
+        mock_dm.fetch_historical_data.return_value = mock_benchmark_data
+        mock_data_manager_func.return_value = mock_dm
+
+        # Create mock engine with mock data manager
         mock_engine = mocker.MagicMock()
         mock_engine.run_strategy_backtest.return_value = mock_backtest_result
         mock_backtesting_engine.return_value = mock_engine
-
-        mock_dm = mocker.MagicMock()
-        mock_dm.fetch_historical_data.return_value = mock_benchmark_data
-        mock_data_manager.return_value = mock_dm
 
         mock_pa = mocker.MagicMock()
         mock_perf_analyzer.return_value = mock_pa
@@ -311,7 +317,7 @@ class TestBacktestingTool:
     def test_should_get_correct_strategy_class(self, backtesting_tool):
         """Test strategy class mapping."""
         # Arrange & Act & Assert
-        from finwiz.quantitative.backtesting import SimpleMovingAverageStrategy
+        from finwiz.quantitative.backtesting_strategies import SimpleMovingAverageStrategy
 
         assert backtesting_tool._get_strategy_class("sma_crossover") == SimpleMovingAverageStrategy
         assert backtesting_tool._get_strategy_class("buy_and_hold") == SimpleMovingAverageStrategy
@@ -405,8 +411,8 @@ class TestBacktestingTool:
 
     def test_should_handle_backtesting_errors_gracefully(self, mocker, backtesting_tool):
         """Test error handling in backtesting execution."""
-        # Arrange
-        mock_backtesting_engine = mocker.patch("finwiz.tools.backtesting_tool.get_backtesting_engine")
+        # Arrange - Mock at the import location inside the _run method
+        mock_backtesting_engine = mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
         mock_engine = mocker.MagicMock()
         mock_engine.run_strategy_backtest.side_effect = Exception("Backtesting failed")
         mock_backtesting_engine.return_value = mock_engine

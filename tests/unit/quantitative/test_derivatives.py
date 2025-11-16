@@ -142,12 +142,13 @@ class TestDerivativesPricer:
         mock_ql.VanillaOption.return_value = mock_option
 
         # Mock the QuantLibPricer's price_option method
-        mocker.patch.object(pricer._quantlib_pricer, 'price_option', return_value=OptionPricingResult(
-            option_price=5.0,
-            greeks=OptionGreeks(delta=0.6, gamma=0.02, theta=-10.0, vega=20.0, rho=15.0),
-            pricing_model=PricingModel.BINOMIAL,
-            calculation_time=0.0
-        ))
+        mocker.patch.object(
+            pricer._quantlib_pricer,
+            "price_option",
+            return_value=OptionPricingResult(
+                option_price=5.0, greeks=OptionGreeks(delta=0.6, gamma=0.02, theta=-10.0, vega=20.0, rho=15.0), pricing_model=PricingModel.BINOMIAL, calculation_time=0.0
+            ),
+        )
 
         result = pricer.price_option(call_option_params, PricingModel.BINOMIAL)
 

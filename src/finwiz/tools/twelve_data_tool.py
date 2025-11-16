@@ -7,10 +7,9 @@ Environment variable required: TWELVE_DATA_API_KEY
 
 from __future__ import annotations
 
-from typing import Any
-
 import asyncio
 import os
+from typing import Any
 
 import requests
 from crewai.tools import BaseTool

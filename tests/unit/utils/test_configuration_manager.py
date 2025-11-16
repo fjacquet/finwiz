@@ -79,7 +79,7 @@ class TestConfigurationManager:
     def test_should_validate_required_api_keys_successfully(self, mocker):
         """Test successful validation of all required API keys."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -87,18 +87,18 @@ class TestConfigurationManager:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            config_manager = ConfigurationManager()
+        )
+        config_manager = ConfigurationManager()
 
-            # Act
-            result = config_manager.validate_api_keys()
+        # Act
+        result = config_manager.validate_api_keys()
 
-            # Assert
-            assert result is True
-            assert len(config_manager.missing_keys) == 0
-            assert len(config_manager.api_keys) >= 4
-            assert "OpenAI" in config_manager.api_keys
-            assert "Serper" in config_manager.api_keys
+        # Assert
+        assert result is True
+        assert len(config_manager.missing_keys) == 0
+        assert len(config_manager.api_keys) >= 4
+        assert "OpenAI" in config_manager.api_keys
+        assert "Serper" in config_manager.api_keys
 
     def test_should_raise_configuration_error_for_missing_required_keys(self):
         """Test that missing required API keys raise ConfigurationError."""
@@ -177,7 +177,7 @@ class TestConfigurationManager:
     def test_should_get_api_key_for_configured_service(self, mocker):
         """Test getting API key for a configured service."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -185,15 +185,15 @@ class TestConfigurationManager:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            config_manager = ConfigurationManager()
-            config_manager.validate_api_keys()
+        )
+        config_manager = ConfigurationManager()
+        config_manager.validate_api_keys()
 
-            # Act
-            api_key = config_manager.get_api_key("OpenAI")
+        # Act
+        api_key = config_manager.get_api_key("OpenAI")
 
-            # Assert
-            assert api_key == "sk-test-openai-key-1234567890"
+        # Assert
+        assert api_key == "sk-test-openai-key-1234567890"
 
     def test_should_return_none_for_unconfigured_service(self, mocker):
         """Test that None is returned for unconfigured services."""
@@ -209,7 +209,7 @@ class TestConfigurationManager:
     def test_should_check_service_availability(self, mocker):
         """Test checking if a service is available."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -217,18 +217,18 @@ class TestConfigurationManager:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            config_manager = ConfigurationManager()
-            config_manager.validate_api_keys()
+        )
+        config_manager = ConfigurationManager()
+        config_manager.validate_api_keys()
 
-            # Act & Assert
-            assert config_manager.is_service_available("OpenAI") is True
-            assert config_manager.is_service_available("NonExistentService") is False
+        # Act & Assert
+        assert config_manager.is_service_available("OpenAI") is True
+        assert config_manager.is_service_available("NonExistentService") is False
 
     def test_should_provide_configuration_summary(self, mocker):
         """Test getting comprehensive configuration summary."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -236,19 +236,19 @@ class TestConfigurationManager:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            config_manager = ConfigurationManager()
-            config_manager.validate_api_keys()
+        )
+        config_manager = ConfigurationManager()
+        config_manager.validate_api_keys()
 
-            # Act
-            summary = config_manager.get_configuration_summary()
+        # Act
+        summary = config_manager.get_configuration_summary()
 
-            # Assert
-            assert "api_keys_configured" in summary
-            assert "available_services" in summary
-            assert "missing_keys" in summary
-            assert "feature_flags" in summary
-            assert isinstance(summary["available_services"], list)
+        # Assert
+        assert "api_keys_configured" in summary
+        assert "available_services" in summary
+        assert "missing_keys" in summary
+        assert "feature_flags" in summary
+        assert isinstance(summary["available_services"], list)
 
     def test_should_validate_feature_flag_consistency(self, mocker):
         """Test validation of feature flag consistency with API keys."""
@@ -283,7 +283,7 @@ class TestConfigurationManager:
     def test_should_perform_comprehensive_startup_validation(self, mocker):
         """Test comprehensive startup validation."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -291,14 +291,14 @@ class TestConfigurationManager:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            config_manager = ConfigurationManager()
+        )
+        config_manager = ConfigurationManager()
 
-            # Act
-            result = config_manager.validate_startup_configuration()
+        # Act
+        result = config_manager.validate_startup_configuration()
 
-            # Assert
-            assert result is True
+        # Assert
+        assert result is True
 
     def test_should_handle_startup_validation_failure(self):
         """Test handling of startup validation failure."""
@@ -325,7 +325,7 @@ class TestConfigurationManagerConvenienceFunctions:
     def test_should_validate_startup_configuration_via_convenience_function(self, mocker):
         """Test validate_startup_configuration convenience function."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -333,17 +333,17 @@ class TestConfigurationManagerConvenienceFunctions:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            # Act
-            result = validate_startup_configuration()
+        )
+        # Act
+        result = validate_startup_configuration()
 
-            # Assert
-            assert isinstance(result, bool)
+        # Assert
+        assert isinstance(result, bool)
 
     def test_should_get_api_key_via_convenience_function(self, mocker):
         """Test get_api_key convenience function."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -351,19 +351,19 @@ class TestConfigurationManagerConvenienceFunctions:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            validate_startup_configuration()  # Initialize configuration
+        )
+        validate_startup_configuration()  # Initialize configuration
 
-            # Act
-            api_key = get_api_key("OpenAI")
+        # Act
+        api_key = get_api_key("OpenAI")
 
-            # Assert
-            assert api_key == "sk-test-openai-key-1234567890"
+        # Assert
+        assert api_key == "sk-test-openai-key-1234567890"
 
     def test_should_check_service_availability_via_convenience_function(self, mocker):
         """Test is_service_available convenience function."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -371,12 +371,12 @@ class TestConfigurationManagerConvenienceFunctions:
                 "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
-        ):
-            validate_startup_configuration()  # Initialize configuration
+        )
+        validate_startup_configuration()  # Initialize configuration
 
-            # Act & Assert
-            assert is_service_available("OpenAI") is True
-            assert is_service_available("NonExistentService") is False
+        # Act & Assert
+        assert is_service_available("OpenAI") is True
+        assert is_service_available("NonExistentService") is False
 
 
 class TestAPIKeyConfig:
@@ -470,7 +470,7 @@ class TestConfigurationManagerIntegration:
     def test_should_handle_mixed_required_and_optional_keys(self, mocker):
         """Test handling of mixed required and optional API keys."""
         # Arrange
-        with mocker.patch.dict(
+        mocker.patch.dict(
             os.environ,
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
@@ -479,14 +479,14 @@ class TestConfigurationManagerIntegration:
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
                 # Missing optional keys like CHART_IMG_API_KEY
             },
-        ):
-            config_manager = ConfigurationManager()
+        )
+        config_manager = ConfigurationManager()
 
-            # Act
-            result = config_manager.validate_api_keys()
+        # Act
+        result = config_manager.validate_api_keys()
 
-            # Assert
-            assert result is True  # Should succeed with just required keys
-            assert len(config_manager.missing_keys) == 0
-            assert "OpenAI" in config_manager.api_keys
-            assert "Chart-img" not in config_manager.api_keys  # Optional key not configured
+        # Assert
+        assert result is True  # Should succeed with just required keys
+        assert len(config_manager.missing_keys) == 0
+        assert "OpenAI" in config_manager.api_keys
+        assert "Chart-img" not in config_manager.api_keys  # Optional key not configured

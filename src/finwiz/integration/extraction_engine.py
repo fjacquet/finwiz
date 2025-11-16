@@ -163,8 +163,6 @@ class ExtractionEngine:
         self.logger.info(f"Extracted {len(opportunities)} crypto A+ opportunities")
         return opportunities
 
-
-
     def _extract_market_context(self) -> dict[str, Any] | None:
         """Extract market context from discovery_latest.json."""
         try:

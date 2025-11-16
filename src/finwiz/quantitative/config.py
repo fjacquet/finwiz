@@ -59,4 +59,3 @@ __all__ = [
     "get_default_screening_criteria",
     "get_default_technical_filters",
 ]
-

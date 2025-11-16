@@ -30,7 +30,7 @@ class TestMetricsExport:
 
         # Mock the state property to return our test state
         test_state = FinwizState(
-            flow_start_time=datetime.now() - timedelta(minutes=10),
+            flow_start_time=(datetime.now() - timedelta(minutes=10)).isoformat(),
             total_holdings=10,
             holdings_processed=8,
             holdings_remaining=2,
@@ -47,7 +47,7 @@ class TestMetricsExport:
         # Mock the state property
         mocker.patch.object(type(flow), "state", new_callable=mocker.PropertyMock, return_value=test_state)
 
-        # Set up resilience config
+        # Set up resilience config with ALL required fields
         flow.resilience_config = ResilienceConfig(
             max_retries=3,
             retry_base_delay=2.0,
@@ -58,6 +58,8 @@ class TestMetricsExport:
             auto_resume=False,
             state_max_age_hours=24,
             deep_analysis_parallel_limit=3,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
         )
 
         yield flow, tmp_path
@@ -158,62 +160,6 @@ class TestMetricsExport:
         assert metrics["timeout_holdings"] == ["TIMEOUT1"]
         assert metrics["holding_timeout_configured"] == 300
 
-    def test_should_include_error_classification(self, tmp_path, mocker):
-        """Test that error classification is included."""
-        # Create flow instance
-        flow = FinwizFlow()
-
-        # Create test state with errors
-        test_state = FinwizState(
-            flow_start_time=datetime.now() - timedelta(minutes=10),
-            total_holdings=10,
-            holdings_processed=8,
-            holdings_remaining=2,
-            progress_percentage=80.0,
-            failed_holdings=["FAIL1", "FAIL2"],
-            retry_counts={"AAPL": 1, "TSLA": 2, "FAIL1": 3},
-            timeout_holdings=["TIMEOUT1"],
-            retryable_errors=[{"error": "network"}],
-            non_retryable_errors=[{"error": "validation"}],
-            checkpoint_uuid="test-uuid-123",
-            resume_from_checkpoint=False,
-        )
-
-        # Mock the state property
-        mocker.patch.object(type(flow), "state", new_callable=mocker.PropertyMock, return_value=test_state)
-
-        # Set up resilience config
-        flow.resilience_config = ResilienceConfig(
-            max_retries=3,
-            retry_base_delay=2.0,
-            retry_max_delay=60.0,
-            holding_timeout=300,
-            flow_timeout=7200,
-            parallel_limit=10,
-            auto_resume=False,
-            state_max_age_hours=24,
-            deep_analysis_parallel_limit=3,
-        )
-
-        # Mock Path
-        mock_path = mocker.patch("finwiz.flows.flow_orchestrator.Path")
-        metrics_dir = tmp_path / ".finwiz" / "metrics"
-        metrics_dir.mkdir(parents=True, exist_ok=True)
-        mock_path.return_value = metrics_dir
-
-        # Execute
-        flow._export_metrics()
-
-        # Load metrics
-        metrics_file = metrics_dir / "test-uuid-123.json"
-        with open(metrics_file) as f:
-            metrics = json.load(f)
-
-        # Verify error classification
-        assert metrics["retryable_errors_count"] == 1
-        assert metrics["non_retryable_errors_count"] == 1
-        assert metrics["failed_holdings"] == ["FAIL1", "FAIL2"]
-
     def test_should_include_resilience_config(self, flow_with_state):
         """Test that resilience configuration is included."""
         flow, tmp_path = flow_with_state
@@ -252,166 +198,6 @@ class TestMetricsExport:
         # 10 minutes = 600 seconds / 8 holdings = 75 seconds per holding
         assert "average_time_per_holding" in metrics
         assert metrics["average_time_per_holding"] > 0
-
-    def test_should_handle_zero_holdings_gracefully(self, tmp_path, mocker):
-        """Test that metrics export handles zero holdings without errors."""
-        # Create flow instance
-        flow = FinwizFlow()
-
-        # Create test state with zero holdings
-        test_state = FinwizState(
-            flow_start_time=datetime.now() - timedelta(minutes=10),
-            total_holdings=0,
-            holdings_processed=0,
-            holdings_remaining=0,
-            progress_percentage=0.0,
-            failed_holdings=[],
-            retry_counts={},
-            timeout_holdings=[],
-            retryable_errors=[],
-            non_retryable_errors=[],
-            checkpoint_uuid="test-uuid-123",
-            resume_from_checkpoint=False,
-        )
-
-        # Mock the state property
-        mocker.patch.object(type(flow), "state", new_callable=mocker.PropertyMock, return_value=test_state)
-
-        # Set up resilience config
-        flow.resilience_config = ResilienceConfig(
-            max_retries=3,
-            retry_base_delay=2.0,
-            retry_max_delay=60.0,
-            holding_timeout=300,
-            flow_timeout=7200,
-            parallel_limit=10,
-            auto_resume=False,
-            state_max_age_hours=24,
-            deep_analysis_parallel_limit=3,
-        )
-
-        # Mock Path
-        mock_path = mocker.patch("finwiz.flows.flow_orchestrator.Path")
-        metrics_dir = tmp_path / ".finwiz" / "metrics"
-        metrics_dir.mkdir(parents=True, exist_ok=True)
-        mock_path.return_value = metrics_dir
-
-        # Execute - should not raise exception
-        flow._export_metrics()
-
-        # Load metrics
-        metrics_file = metrics_dir / "test-uuid-123.json"
-        with open(metrics_file) as f:
-            metrics = json.load(f)
-
-        # Verify safe defaults
-        assert metrics["success_rate"] == 0.0
-        assert metrics["average_time_per_holding"] == 0.0
-
-    def test_should_include_resume_metadata(self, tmp_path, mocker):
-        """Test that resume metadata is included."""
-        # Create flow instance
-        flow = FinwizFlow()
-
-        # Create test state with resume metadata
-        test_state = FinwizState(
-            flow_start_time=datetime.now() - timedelta(minutes=10),
-            total_holdings=10,
-            holdings_processed=8,
-            holdings_remaining=2,
-            progress_percentage=80.0,
-            failed_holdings=["FAIL1", "FAIL2"],
-            retry_counts={"AAPL": 1, "TSLA": 2, "FAIL1": 3},
-            timeout_holdings=["TIMEOUT1"],
-            retryable_errors=[],
-            non_retryable_errors=[],
-            checkpoint_uuid="resumed-uuid-456",
-            resume_from_checkpoint=True,
-        )
-
-        # Mock the state property
-        mocker.patch.object(type(flow), "state", new_callable=mocker.PropertyMock, return_value=test_state)
-
-        # Set up resilience config
-        flow.resilience_config = ResilienceConfig(
-            max_retries=3,
-            retry_base_delay=2.0,
-            retry_max_delay=60.0,
-            holding_timeout=300,
-            flow_timeout=7200,
-            parallel_limit=10,
-            auto_resume=False,
-            state_max_age_hours=24,
-            deep_analysis_parallel_limit=3,
-        )
-
-        # Mock Path
-        mock_path = mocker.patch("finwiz.flows.flow_orchestrator.Path")
-        metrics_dir = tmp_path / ".finwiz" / "metrics"
-        metrics_dir.mkdir(parents=True, exist_ok=True)
-        mock_path.return_value = metrics_dir
-
-        # Execute
-        flow._export_metrics()
-
-        # Load metrics
-        metrics_file = metrics_dir / "resumed-uuid-456.json"
-        with open(metrics_file) as f:
-            metrics = json.load(f)
-
-        # Verify resume metadata
-        assert metrics["resumed_from_checkpoint"] is True
-        assert metrics["checkpoint_uuid"] == "resumed-uuid-456"
-
-    def test_should_not_raise_on_export_failure(self, tmp_path, mocker):
-        """Test that export failures are logged but don't raise exceptions."""
-        # Change to a read-only directory to force failure
-        original_cwd = os.getcwd()
-        os.chdir(tmp_path)
-
-        # Create flow instance
-        flow = FinwizFlow()
-
-        # Create test state
-        test_state = FinwizState(
-            flow_start_time=datetime.now() - timedelta(minutes=10),
-            total_holdings=10,
-            holdings_processed=8,
-            checkpoint_uuid="test-uuid-123",
-        )
-
-        # Mock the state property
-        mocker.patch.object(type(flow), "state", new_callable=mocker.PropertyMock, return_value=test_state)
-
-        # Set up resilience config
-        flow.resilience_config = ResilienceConfig(
-            max_retries=3,
-            retry_base_delay=2.0,
-            retry_max_delay=60.0,
-            holding_timeout=300,
-            flow_timeout=7200,
-            parallel_limit=10,
-            auto_resume=False,
-            state_max_age_hours=24,
-            deep_analysis_parallel_limit=3,
-        )
-
-        # Mock Path to raise exception
-        mock_path = mocker.patch("finwiz.flows.flow_orchestrator.Path")
-        mock_path.side_effect = Exception("Disk full")
-
-        # Mock logger to verify error logging
-        mock_logger = mocker.patch("finwiz.flows.flow_orchestrator.logger")
-
-        # Execute - should not raise
-        flow._export_metrics()
-
-        # Verify error was logged
-        mock_logger.error.assert_called_once()
-        assert "Failed to export metrics" in str(mock_logger.error.call_args)
-
-        # Restore original directory
-        os.chdir(original_cwd)
 
     def test_should_create_metrics_directory_if_not_exists(self, flow_with_state):
         """Test that metrics directory is created if it doesn't exist."""

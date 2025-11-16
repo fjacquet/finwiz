@@ -121,18 +121,39 @@ class TestCryptoCrew:
             "risk_assessment": {"description": "Assess risks"},
         }
 
-        # Mock agent methods
-        mock_crew.market_analyst.return_value = mocker.MagicMock()
-        mock_crew.crypto_researcher.return_value = mocker.MagicMock()
-        mock_crew.risk_assessor.return_value = mocker.MagicMock()
+        # Mock agent methods with tools attribute
+        mock_market_analyst = mocker.MagicMock()
+        mock_market_analyst.tools = []
+        mock_crew.market_analyst.return_value = mock_market_analyst
 
-        # Mock task methods
-        mock_crew.market_research.return_value = mocker.MagicMock()
-        mock_crew.crypto_analysis.return_value = mocker.MagicMock()
-        mock_crew.risk_assessment.return_value = mocker.MagicMock()
+        mock_crypto_researcher = mocker.MagicMock()
+        mock_crypto_researcher.tools = []
+        mock_crew.crypto_researcher.return_value = mock_crypto_researcher
 
-        # Mock crew method
-        mock_crew.crew.return_value = mocker.MagicMock()
+        mock_risk_assessor = mocker.MagicMock()
+        mock_risk_assessor.tools = []
+        mock_crew.risk_assessor.return_value = mock_risk_assessor
+
+        # Mock task methods with description attribute
+        mock_market_task = mocker.MagicMock()
+        mock_market_task.description = "Research markets"
+        mock_crew.market_research.return_value = mock_market_task
+
+        mock_crypto_task = mocker.MagicMock()
+        mock_crypto_task.description = "Analyze crypto"
+        mock_crew.crypto_analysis.return_value = mock_crypto_task
+
+        mock_risk_task = mocker.MagicMock()
+        mock_risk_task.description = "Assess risks"
+        mock_crew.risk_assessment.return_value = mock_risk_task
+
+        # Mock crew method with agents and tasks lists
+        mock_crew_instance = mocker.MagicMock()
+        mock_crew_instance.agents = [mock_market_analyst, mock_crypto_researcher, mock_risk_assessor]
+        mock_crew_instance.tasks = [mock_market_task, mock_crypto_task, mock_risk_task]
+        mock_crew_instance.process = "sequential"
+        mock_crew_instance.verbose = True
+        mock_crew.crew.return_value = mock_crew_instance
 
         return mock_crew
 

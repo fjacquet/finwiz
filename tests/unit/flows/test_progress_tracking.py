@@ -37,7 +37,7 @@ class TestProgressTracking:
         flow.state.holdings_remaining = 10
         flow.state.failed_holdings = []
         flow.state.timeout_holdings = []
-        flow.state.flow_start_time = datetime.now() - timedelta(seconds=100)
+        flow.state.flow_start_time = (datetime.now() - timedelta(seconds=100)).isoformat()
 
         return flow
 

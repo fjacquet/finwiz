@@ -20,7 +20,6 @@ from finwiz.orchestrators.portfolio_rebalancing import (
     PortfolioRebalancingError,
     PortfolioRebalancingOrchestrator,
 )
-from finwiz.quantitative.portfolio_analyzer import PortfolioAnalyzer
 from finwiz.quantitative.rebalancing_engine import RebalancingEngine
 from finwiz.schemas.portfolio_rebalancing import (
     Holding,
@@ -52,15 +51,19 @@ class TestPortfolioRebalancingEdgeCases:
     def mock_orchestrator_dependencies(self, mocker):
         """Create mocked dependencies for orchestrator testing."""
         price_service = mocker.AsyncMock(spec=PortfolioPriceService)
-        portfolio_analyzer = mocker.MagicMock(spec=PortfolioAnalyzer)
         rebalancing_engine = mocker.MagicMock(spec=RebalancingEngine)
         report_generator = mocker.MagicMock()
+        risk_manager = mocker.MagicMock()
+
+        # Set up default return values for risk manager methods (NOT async)
+        risk_manager.assess_rebalancing_risks.return_value = {}
+        risk_manager.validate_rebalancing_safety.return_value = (True, [])
 
         return {
             "price_service": price_service,
-            "portfolio_analyzer": portfolio_analyzer,
             "rebalancing_engine": rebalancing_engine,
             "report_generator": report_generator,
+            "risk_manager": risk_manager,
         }
 
     def test_should_handle_empty_holdings_gracefully(self, mock_orchestrator_dependencies):
@@ -85,7 +88,7 @@ class TestPortfolioRebalancingEdgeCases:
             )
 
     @pytest.mark.asyncio
-    async def test_should_handle_stale_price_data(self, mock_orchestrator_dependencies):
+    async def test_should_handle_stale_price_data(self, mock_orchestrator_dependencies, mocker):
         """Test handling of stale price data."""
         # Arrange
         orchestrator = PortfolioRebalancingOrchestrator(**mock_orchestrator_dependencies)
@@ -98,16 +101,20 @@ class TestPortfolioRebalancingEdgeCases:
         # Mock analyzer to return valid analysis
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
-        mock_orchestrator_dependencies["portfolio_analyzer"].analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=15000.0,
-            weightings={"AAPL": 1.0},
-            deviations_from_target={"AAPL": 0.0},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 10.0},
+        # Mock the portfolio analyzer on the utils object
+        mocker.patch.object(
+            orchestrator.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=15000.0,
+                weightings={"AAPL": 1.0},
+                deviations_from_target={"AAPL": 0.0},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 10.0},
+            )
         )
 
         # Mock engine to return no trades needed
-
         mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.return_value = (
             [],
             [],
@@ -130,8 +137,8 @@ class TestPortfolioRebalancingEdgeCases:
         # Mock network timeout
         mock_orchestrator_dependencies["price_service"].get_current_prices.side_effect = TimeoutError("Network timeout")
 
-        # Act & Assert
-        with pytest.raises(InsufficientPriceDataError):
+        # Act & Assert - TimeoutError is wrapped in PortfolioRebalancingError
+        with pytest.raises(PortfolioRebalancingError):
             await orchestrator.rebalance_portfolio(config)
 
     @pytest.mark.asyncio
@@ -179,7 +186,7 @@ class TestPortfolioRebalancingEdgeCases:
             PriceData(symbol="AAPL", price=-10.0, timestamp=datetime.now())
 
     @pytest.mark.asyncio
-    async def test_should_handle_very_small_portfolio_values(self, mock_orchestrator_dependencies):
+    async def test_should_handle_very_small_portfolio_values(self, mock_orchestrator_dependencies, mocker):
         """Test handling of very small portfolio values."""
         # Arrange
         orchestrator = PortfolioRebalancingOrchestrator(**mock_orchestrator_dependencies)
@@ -188,15 +195,19 @@ class TestPortfolioRebalancingEdgeCases:
         # Mock very small price
         mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=0.01, timestamp=datetime.now())}
 
-        # Mock analyzer
+        # Mock analyzer on the utils object
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
-        mock_orchestrator_dependencies["portfolio_analyzer"].analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=0.00001,  # Very small value
-            weightings={"AAPL": 1.0},
-            deviations_from_target={"AAPL": 0.0},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 10.0},
+        mocker.patch.object(
+            orchestrator.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=0.00001,  # Very small value
+                weightings={"AAPL": 1.0},
+                deviations_from_target={"AAPL": 0.0},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 10.0},
+            )
         )
 
         # Mock engine
@@ -213,7 +224,7 @@ class TestPortfolioRebalancingEdgeCases:
         assert result.current_portfolio.total_value == 0.00001
 
     @pytest.mark.asyncio
-    async def test_should_handle_fractional_shares_correctly(self, mock_orchestrator_dependencies):
+    async def test_should_handle_fractional_shares_correctly(self, mock_orchestrator_dependencies, mocker):
         """Test handling of fractional share calculations."""
         # Arrange
         orchestrator = PortfolioRebalancingOrchestrator(**mock_orchestrator_dependencies)
@@ -225,15 +236,19 @@ class TestPortfolioRebalancingEdgeCases:
         # Mock price data
         mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
-        # Mock analyzer
+        # Mock analyzer on the utils object
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
-        mock_orchestrator_dependencies["portfolio_analyzer"].analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=15075.0,  # 100.5 * 150
-            weightings={"AAPL": 1.0},
-            deviations_from_target={"AAPL": 0.0},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 10.0},
+        mocker.patch.object(
+            orchestrator.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=15075.0,  # 100.5 * 150
+                weightings={"AAPL": 1.0},
+                deviations_from_target={"AAPL": 0.0},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 10.0},
+            )
         )
 
         # Mock engine
@@ -250,7 +265,7 @@ class TestPortfolioRebalancingEdgeCases:
         assert result.current_portfolio.total_value == 15075.0
 
     @pytest.mark.asyncio
-    async def test_should_handle_concurrent_rebalancing_requests(self, mock_orchestrator_dependencies):
+    async def test_should_handle_concurrent_rebalancing_requests(self, mock_orchestrator_dependencies, mocker):
         """Test handling of concurrent rebalancing requests."""
         # Arrange
         orchestrator = PortfolioRebalancingOrchestrator(**mock_orchestrator_dependencies)
@@ -261,12 +276,16 @@ class TestPortfolioRebalancingEdgeCases:
 
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
-        mock_orchestrator_dependencies["portfolio_analyzer"].analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=15000.0,
-            weightings={"AAPL": 1.0},
-            deviations_from_target={"AAPL": 0.0},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 10.0},
+        mocker.patch.object(
+            orchestrator.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=15000.0,
+                weightings={"AAPL": 1.0},
+                deviations_from_target={"AAPL": 0.0},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 10.0},
+            )
         )
 
         mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.return_value = (
@@ -284,7 +303,7 @@ class TestPortfolioRebalancingEdgeCases:
             assert result is not None
 
     @pytest.mark.asyncio
-    async def test_should_handle_memory_pressure_with_large_portfolio(self, mock_orchestrator_dependencies, large_portfolio_config):
+    async def test_should_handle_memory_pressure_with_large_portfolio(self, mock_orchestrator_dependencies, large_portfolio_config, mocker):
         """Test handling of large portfolios that might cause memory pressure."""
         # Arrange
         orchestrator = PortfolioRebalancingOrchestrator(**mock_orchestrator_dependencies)
@@ -293,16 +312,20 @@ class TestPortfolioRebalancingEdgeCases:
         price_data = {f"STOCK{i:03d}": PriceData(symbol=f"STOCK{i:03d}", price=100.0, timestamp=datetime.now()) for i in range(100)}
         mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = price_data
 
-        # Mock analyzer
+        # Mock analyzer on the utils object
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
         weightings = {f"STOCK{i:03d}": 0.01 for i in range(100)}
-        mock_orchestrator_dependencies["portfolio_analyzer"].analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=1000000.0,  # 100 stocks * 100 shares * $100
-            weightings=weightings,
-            deviations_from_target={symbol: 0.0 for symbol in weightings},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 1.0},  # Well diversified
+        mocker.patch.object(
+            orchestrator.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=1000000.0,  # 100 stocks * 100 shares * $100
+                weightings=weightings,
+                deviations_from_target={symbol: 0.0 for symbol in weightings},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 1.0},  # Well diversified
+            )
         )
 
         mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.return_value = (
@@ -371,7 +394,7 @@ class TestPortfolioRebalancingEdgeCases:
         assert "INVALID" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_should_handle_optimization_timeout(self, mock_orchestrator_dependencies):
+    async def test_should_handle_optimization_timeout(self, mock_orchestrator_dependencies, mocker):
         """Test handling of optimization timeout scenarios."""
         # Arrange
         orchestrator = PortfolioRebalancingOrchestrator(**mock_orchestrator_dependencies)
@@ -380,22 +403,26 @@ class TestPortfolioRebalancingEdgeCases:
         # Mock price data
         mock_orchestrator_dependencies["price_service"].get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
-        # Mock analyzer
+        # Mock analyzer on the utils object
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
-        mock_orchestrator_dependencies["portfolio_analyzer"].analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=15000.0,
-            weightings={"AAPL": 1.0},
-            deviations_from_target={"AAPL": 0.0},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 10.0},
+        mocker.patch.object(
+            orchestrator.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=15000.0,
+                weightings={"AAPL": 1.0},
+                deviations_from_target={"AAPL": 0.0},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 10.0},
+            )
         )
 
         # Mock optimization timeout
         mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.side_effect = TimeoutError("Optimization timeout")
 
-        # Act & Assert
-        with pytest.raises(PortfolioRebalancingError):
+        # Act & Assert - TimeoutError is wrapped in OptimizationFailedError
+        with pytest.raises(OptimizationFailedError):
             await orchestrator.rebalance_portfolio(config)
 
 
@@ -406,15 +433,19 @@ class TestPortfolioRebalancingErrorScenarios:
     def orchestrator_with_failing_dependencies(self, mocker):
         """Create orchestrator with dependencies that fail in various ways."""
         price_service = mocker.AsyncMock(spec=PortfolioPriceService)
-        portfolio_analyzer = mocker.MagicMock(spec=PortfolioAnalyzer)
         rebalancing_engine = mocker.MagicMock(spec=RebalancingEngine)
         report_generator = mocker.MagicMock()
+        risk_manager = mocker.MagicMock()
+
+        # Set up default return values for risk manager methods (NOT async)
+        risk_manager.assess_rebalancing_risks.return_value = {}
+        risk_manager.validate_rebalancing_safety.return_value = (True, [])
 
         return PortfolioRebalancingOrchestrator(
             price_service=price_service,
-            portfolio_analyzer=portfolio_analyzer,
             rebalancing_engine=rebalancing_engine,
             report_generator=report_generator,
+            risk_manager=risk_manager,
         )
 
     @pytest.mark.asyncio
@@ -423,83 +454,103 @@ class TestPortfolioRebalancingErrorScenarios:
         # Arrange
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.side_effect = ConnectionError("Connection failed")
+        orchestrator_with_failing_dependencies.utils.price_service.get_current_prices.side_effect = ConnectionError("Connection failed")
 
-        # Act & Assert
-        with pytest.raises(InsufficientPriceDataError):
+        # Act & Assert - ConnectionError is wrapped in PortfolioRebalancingError
+        with pytest.raises(PortfolioRebalancingError):
             await orchestrator_with_failing_dependencies.rebalance_portfolio(config)
 
     @pytest.mark.asyncio
-    async def test_should_handle_analyzer_calculation_error(self, orchestrator_with_failing_dependencies):
+    async def test_should_handle_analyzer_calculation_error(self, orchestrator_with_failing_dependencies, mocker):
         """Test handling of portfolio analyzer calculation errors."""
         # Arrange
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock successful price retrieval
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
+        orchestrator_with_failing_dependencies.utils.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
-        # Mock analyzer failure
+        # Mock analyzer failure on the utils object using mocker.patch.object
         from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError
 
-        orchestrator_with_failing_dependencies.portfolio_analyzer.analyze_current_portfolio.side_effect = PortfolioAnalysisError("Calculation failed")
+        mocker.patch.object(
+            orchestrator_with_failing_dependencies.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            side_effect=PortfolioAnalysisError("Calculation failed")
+        )
 
         # Act & Assert
         with pytest.raises(PortfolioRebalancingError):
             await orchestrator_with_failing_dependencies.rebalance_portfolio(config)
 
     @pytest.mark.asyncio
-    async def test_should_handle_optimization_engine_failure(self, orchestrator_with_failing_dependencies):
+    async def test_should_handle_optimization_engine_failure(self, orchestrator_with_failing_dependencies, mocker):
         """Test handling of optimization engine failures."""
         # Arrange
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock successful price retrieval
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
+        orchestrator_with_failing_dependencies.utils.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
-        # Mock successful analysis
+        # Mock successful analysis on the utils object
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
-        orchestrator_with_failing_dependencies.portfolio_analyzer.analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=15000.0,
-            weightings={"AAPL": 1.0},
-            deviations_from_target={"AAPL": 0.0},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 10.0},
+        mocker.patch.object(
+            orchestrator_with_failing_dependencies.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=15000.0,
+                weightings={"AAPL": 1.0},
+                deviations_from_target={"AAPL": 0.0},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 10.0},
+            )
         )
 
-        # Mock optimization failure
-        orchestrator_with_failing_dependencies.rebalancing_engine.generate_enhanced_trade_recommendations.side_effect = Exception("Optimization failed")
+        # Mock optimization failure using mocker.patch.object
+        mocker.patch.object(
+            orchestrator_with_failing_dependencies.optimizer.rebalancing_engine,
+            'generate_enhanced_trade_recommendations',
+            side_effect=Exception("Optimization failed")
+        )
 
-        # Act & Assert
+        # Act & Assert - Exception is wrapped in OptimizationFailedError
         with pytest.raises(OptimizationFailedError):
             await orchestrator_with_failing_dependencies.rebalance_portfolio(config)
 
     @pytest.mark.asyncio
-    async def test_should_handle_report_generation_failure(self, orchestrator_with_failing_dependencies):
+    async def test_should_handle_report_generation_failure(self, orchestrator_with_failing_dependencies, mocker):
         """Test handling of report generation failures."""
         # Arrange
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
-        # Mock successful dependencies
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
+        # Mock successful dependencies using mocker.patch.object
+        orchestrator_with_failing_dependencies.utils.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now())}
 
         from finwiz.schemas.portfolio_rebalancing import PortfolioAnalysis
 
-        orchestrator_with_failing_dependencies.portfolio_analyzer.analyze_current_portfolio.return_value = PortfolioAnalysis(
-            total_value=15000.0,
-            weightings={"AAPL": 1.0},
-            deviations_from_target={"AAPL": 0.0},
-            positions_needing_rebalancing=[],
-            risk_metrics={"concentration_risk": 10.0},
+        mocker.patch.object(
+            orchestrator_with_failing_dependencies.utils.portfolio_analyzer,
+            'analyze_current_portfolio',
+            return_value=PortfolioAnalysis(
+                total_value=15000.0,
+                weightings={"AAPL": 1.0},
+                deviations_from_target={"AAPL": 0.0},
+                positions_needing_rebalancing=[],
+                risk_metrics={"concentration_risk": 10.0},
+            )
         )
 
-        orchestrator_with_failing_dependencies.rebalancing_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
+        orchestrator_with_failing_dependencies.optimizer.rebalancing_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
 
         # Get successful rebalancing result first
         result = await orchestrator_with_failing_dependencies.rebalance_portfolio(config)
 
-        # Mock report generation failure
-        orchestrator_with_failing_dependencies.report_generator.generate_html.side_effect = Exception("Report generation failed")
+        # Mock report generation failure using mocker.patch.object
+        mocker.patch.object(
+            orchestrator_with_failing_dependencies.report_generator_service,
+            'generate_rebalancing_report',
+            side_effect=Exception("Report generation failed")
+        )
 
         # Act & Assert
         with pytest.raises(Exception, match="Report generation failed"):
@@ -517,15 +568,15 @@ class TestPortfolioRebalancingErrorScenarios:
 
     def test_should_handle_extreme_tolerance_values(self):
         """Test handling of extreme tolerance values."""
-        # Test very high tolerance (should be capped)
-        config = PortfolioConfiguration(
-            holdings=[Holding(symbol="AAPL", shares=100.0)],
-            target_weights={"AAPL": 1.0},
-            global_tolerance=0.9,  # 90% tolerance
-        )
-        assert config.global_tolerance == 0.9
+        # Test very high tolerance (should be rejected by validation)
+        with pytest.raises(ValueError):
+            PortfolioConfiguration(
+                holdings=[Holding(symbol="AAPL", shares=100.0)],
+                target_weights={"AAPL": 1.0},
+                global_tolerance=0.9,  # 90% tolerance - exceeds max of 0.5
+            )
 
-        # Test very low tolerance
+        # Test very low tolerance (should be accepted)
         config = PortfolioConfiguration(
             holdings=[Holding(symbol="AAPL", shares=100.0)],
             target_weights={"AAPL": 1.0},
@@ -552,16 +603,22 @@ class TestPortfolioRebalancingErrorScenarios:
         assert config.transaction_cost_rate == 0.0
 
     @pytest.mark.asyncio
-    async def test_should_handle_corrupted_price_data(self, orchestrator_with_failing_dependencies):
+    async def test_should_handle_corrupted_price_data(self, orchestrator_with_failing_dependencies, mocker):
         """Test handling of corrupted or malformed price data."""
         # Arrange
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
-        # Mock corrupted price data (invalid timestamp)
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.return_value = {"AAPL": PriceData(symbol="AAPL", price=150.0, timestamp="invalid_timestamp")}
+        # Mock corrupted price data - return empty dict (missing required data)
+        orchestrator_with_failing_dependencies.utils.price_service.get_current_prices.return_value = {}
 
-        # Act & Assert
-        with pytest.raises((PortfolioRebalancingError, ValueError, TypeError)):
+        # Mock fallback to also fail
+        from finwiz.tools.portfolio_price_service import PriceDataUnavailableError
+        orchestrator_with_failing_dependencies.utils.price_service.get_price_with_fallback = mocker.AsyncMock(
+            side_effect=PriceDataUnavailableError(symbol="AAPL", reason="Price unavailable")
+        )
+
+        # Act & Assert - Missing price data should raise InsufficientPriceDataError
+        with pytest.raises(InsufficientPriceDataError):
             await orchestrator_with_failing_dependencies.rebalance_portfolio(config)
 
     @pytest.mark.asyncio
@@ -571,8 +628,8 @@ class TestPortfolioRebalancingErrorScenarios:
         config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100.0)], target_weights={"AAPL": 1.0})
 
         # Mock memory error
-        orchestrator_with_failing_dependencies.price_service.get_current_prices.side_effect = MemoryError("Out of memory")
+        orchestrator_with_failing_dependencies.utils.price_service.get_current_prices.side_effect = MemoryError("Out of memory")
 
-        # Act & Assert
-        with pytest.raises((MemoryError, InsufficientPriceDataError)):
+        # Act & Assert - MemoryError is wrapped in PortfolioRebalancingError
+        with pytest.raises(PortfolioRebalancingError):
             await orchestrator_with_failing_dependencies.rebalance_portfolio(config)

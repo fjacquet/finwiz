@@ -6,13 +6,11 @@ financial reports. It handles checking for discovery results, loading them,
 and providing human-readable summaries.
 """
 
-from typing import Any
-
-
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 class APlusDiscoveryAccessor:

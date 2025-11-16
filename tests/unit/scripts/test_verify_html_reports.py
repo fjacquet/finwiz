@@ -1,21 +1,20 @@
 """Tests for verify_html_reports script."""
 
 import re
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
 
 from verify_html_reports import (
+    GRADE_PATTERN,
+    NUMERIC_PATTERN,
+    RECOMMENDATION_PATTERN,
+    SCORE_PATTERN,
+    TABLE_ROW_PATTERN,
     TICKER_PATTERN,
     TICKER_TITLE_PATTERN,
-    NUMERIC_PATTERN,
-    GRADE_PATTERN,
-    SCORE_PATTERN,
-    RECOMMENDATION_PATTERN,
-    TABLE_ROW_PATTERN,
     verify_html_file,
 )
 

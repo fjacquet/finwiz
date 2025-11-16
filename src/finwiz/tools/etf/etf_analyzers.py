@@ -19,9 +19,7 @@ class ETFAnalyzer:
     """Utility class for analyzing ETF data and constructing factsheets."""
 
     @staticmethod
-    def perform_etf_risk_assessment(
-        ticker: str, factsheet_data: dict[str, Any], holdings_data: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def perform_etf_risk_assessment(ticker: str, factsheet_data: dict[str, Any], holdings_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Perform standardized risk assessment for ETF."""
         try:
             risk_factors = []

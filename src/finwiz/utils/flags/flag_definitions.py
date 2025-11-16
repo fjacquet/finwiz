@@ -8,7 +8,6 @@ used throughout the FinWiz system.
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 from finwiz.tools.logger import get_logger
 

@@ -249,6 +249,7 @@ class RebalancingHistoryTracker:
                 total_rebalancing_costs=total_costs,
                 net_benefit=net_benefit,
                 cost_adjusted_alpha=net_benefit,  # Same as net_benefit after costs
+                cost_drag=cost_drag,  # Cost drag as percentage of portfolio value
                 volatility_reduction=risk_reduction,
                 tracking_error_vs_target=0.0,  # Default value, would need calculation
                 rebalancing_frequency_days=avg_days_between,

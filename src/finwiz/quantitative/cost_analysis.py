@@ -217,10 +217,7 @@ def perform_cost_benefit_analysis(
     # Generate alternative approaches
     alternatives = generate_alternative_approaches(total_costs, cost_percentage, trade_recommendations)
 
-    logger.info(
-        f"Cost-benefit analysis: ${total_costs:.2f} cost, "
-        f"${expected_benefit:.2f} annual benefit, {break_even_days} days break-even"
-    )
+    logger.info(f"Cost-benefit analysis: ${total_costs:.2f} cost, ${expected_benefit:.2f} annual benefit, {break_even_days} days break-even")
 
     return CostBenefitAnalysis(
         total_rebalancing_cost=total_costs,
@@ -254,28 +251,16 @@ def generate_cost_benefit_recommendation(
     """
     if cost_percentage > 2.0:
         recommendation = "REJECT"
-        rationale = (
-            f"Transaction costs of {cost_percentage:.1f}% are excessive. "
-            "Consider alternative rebalancing approaches or delay until larger deviations occur."
-        )
+        rationale = f"Transaction costs of {cost_percentage:.1f}% are excessive. Consider alternative rebalancing approaches or delay until larger deviations occur."
     elif break_even_days and break_even_days > 365:
         recommendation = "DELAY"
-        rationale = (
-            f"Break-even period of {break_even_days} days is too long. "
-            "Consider waiting for larger deviations or using new contributions to rebalance."
-        )
+        rationale = f"Break-even period of {break_even_days} days is too long. Consider waiting for larger deviations or using new contributions to rebalance."
     elif cost_percentage > 1.0:
         recommendation = "MODIFY"
-        rationale = (
-            f"Transaction costs of {cost_percentage:.1f}% are moderate. "
-            "Consider rebalancing only the most deviated positions or using gradual rebalancing."
-        )
+        rationale = f"Transaction costs of {cost_percentage:.1f}% are moderate. Consider rebalancing only the most deviated positions or using gradual rebalancing."
     else:
         recommendation = "PROCEED"
-        rationale = (
-            f"Transaction costs of {cost_percentage:.1f}% are reasonable. "
-            f"Expected to break even in {break_even_days or 'N/A'} days."
-        )
+        rationale = f"Transaction costs of {cost_percentage:.1f}% are reasonable. Expected to break even in {break_even_days or 'N/A'} days."
 
     return recommendation, rationale
 

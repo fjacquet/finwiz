@@ -1,8 +1,8 @@
 """Tests for datetime utility functions."""
 
-from datetime import datetime, timezone, timedelta
-import pytest
-from finwiz.utils.datetime_utils import normalize_to_naive, ensure_utc_aware
+from datetime import UTC, datetime, timedelta, timezone
+
+from finwiz.utils.datetime_utils import ensure_utc_aware, normalize_to_naive
 
 
 class TestNormalizeToNaive:
@@ -11,7 +11,7 @@ class TestNormalizeToNaive:
     def test_should_convert_aware_utc_datetime_to_naive(self):
         """Test converting UTC-aware datetime to naive."""
         # Arrange
-        aware_dt = datetime(2025, 1, 15, 12, 30, 45, tzinfo=timezone.utc)
+        aware_dt = datetime(2025, 1, 15, 12, 30, 45, tzinfo=UTC)
 
         # Act
         result = normalize_to_naive(aware_dt)
@@ -80,7 +80,7 @@ class TestEnsureUtcAware:
         result = ensure_utc_aware(naive_dt)
 
         # Assert
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         assert result.year == 2025
         assert result.month == 1
         assert result.day == 15
@@ -98,7 +98,7 @@ class TestEnsureUtcAware:
         result = ensure_utc_aware(aware_dt)
 
         # Assert
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         # 12:00 PST = 20:00 UTC
         assert result.hour == 20
         assert result.day == 15
@@ -106,13 +106,13 @@ class TestEnsureUtcAware:
     def test_should_keep_utc_aware_datetime_unchanged(self):
         """Test that UTC-aware datetime remains UTC."""
         # Arrange
-        utc_dt = datetime(2025, 1, 15, 12, 30, 45, tzinfo=timezone.utc)
+        utc_dt = datetime(2025, 1, 15, 12, 30, 45, tzinfo=UTC)
 
         # Act
         result = ensure_utc_aware(utc_dt)
 
         # Assert
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         assert result == utc_dt
 
     def test_should_handle_various_timezones(self):
@@ -125,7 +125,7 @@ class TestEnsureUtcAware:
         result = ensure_utc_aware(aware_dt)
 
         # Assert
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         # 13:00 CET = 12:00 UTC
         assert result.hour == 12
         assert result.day == 15

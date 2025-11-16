@@ -8,9 +8,8 @@ scenario comparison reports for portfolio rebalancing decisions.
 
 from __future__ import annotations
 
-from typing import Any
-
 import logging
+from typing import Any
 
 from finwiz.schemas.portfolio_rebalancing import (
     PortfolioConfiguration,

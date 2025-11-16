@@ -269,6 +269,7 @@ class RiskManager:
 
         return is_safe, blocking_issues
 
+
 # Re-export classes for backward compatibility
 from finwiz.quantitative.risk_metrics import (  # noqa: E402, F401
     ConcentrationLimits,
