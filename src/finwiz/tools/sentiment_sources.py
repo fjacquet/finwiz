@@ -5,10 +5,8 @@ This module handles integration with various data sources including
 Yahoo Finance, Perplexity Sonar, and other news providers.
 """
 
-from typing import Any
-
-
 import datetime
+from typing import Any
 
 import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 
@@ -430,7 +428,7 @@ class SentimentDataSources:
                 self.logger.warning(f"Sonar integration error for {ticker}, continuing with Yahoo Finance only: {str(e)}")
 
                 # Record failure for feature flag tracking
-                from finwiz.tools.perplexity_analysis_integration import PerplexityFeatureFlagTracker
+                from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker
 
                 PerplexityFeatureFlagTracker.record_operation_failure(ticker, "sentiment", "integration_error")
         else:

@@ -136,23 +136,27 @@ class TestEmailNotificationProvider:
         subject = "Test Alert"
         message = "Test message"
 
-        with mocker.patch("smtplib.SMTP") as mock_smtp:
-            mock_server = mocker.MagicMock()
-            mock_smtp.return_value.__enter__.return_value = mock_server
+        mock_server = mocker.MagicMock()
+        mock_smtp_context = mocker.MagicMock()
+        mock_smtp_context.__enter__ = mocker.MagicMock(return_value=mock_server)
+        mock_smtp_context.__exit__ = mocker.MagicMock(return_value=None)
 
-            # Act
-            record = await email_provider.send_notification(recipient, subject, message, sample_alert)
+        mock_smtp = mocker.patch("smtplib.SMTP")
+        mock_smtp.return_value = mock_smtp_context
 
-            # Assert
-            assert isinstance(record, NotificationRecord)
-            assert record.notification_type == NotificationType.EMAIL
-            assert record.recipient == recipient
-            assert record.subject == subject
-            assert record.status == NotificationStatus.SENT
-            assert record.error_message is None
+        # Act
+        record = await email_provider.send_notification(recipient, subject, message, sample_alert)
 
-            # Verify SMTP calls
-            mock_server.send_message.assert_called_once()
+        # Assert
+        assert isinstance(record, NotificationRecord)
+        assert record.notification_type == NotificationType.EMAIL
+        assert record.recipient == recipient
+        assert record.subject == subject
+        assert record.status == NotificationStatus.SENT
+        assert record.error_message is None
+
+        # Verify SMTP calls
+        mock_server.send_message.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_should_handle_email_sending_failure(self, mocker, email_provider, sample_alert):
@@ -162,15 +166,15 @@ class TestEmailNotificationProvider:
         subject = "Test Alert"
         message = "Test message"
 
-        with mocker.patch("smtplib.SMTP") as mock_smtp:
-            mock_smtp.side_effect = Exception("SMTP connection failed")
+        mock_smtp = mocker.patch("smtplib.SMTP")
+        mock_smtp.side_effect = Exception("SMTP connection failed")
 
-            # Act
-            record = await email_provider.send_notification(recipient, subject, message, sample_alert)
+        # Act
+        record = await email_provider.send_notification(recipient, subject, message, sample_alert)
 
-            # Assert
-            assert record.status == NotificationStatus.FAILED
-            assert record.error_message == "SMTP connection failed"
+        # Assert
+        assert record.status == NotificationStatus.FAILED
+        assert record.error_message == "SMTP connection failed"
 
     def test_should_create_html_email_content(self, email_provider, sample_alert):
         """Test HTML email content creation."""

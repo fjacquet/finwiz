@@ -494,7 +494,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             logger.warning(f"Perplexity crypto search failed for {symbol}: {str(e)}")
 
             # Record failure for feature flag tracking
-            from finwiz.tools.perplexity_analysis_integration import PerplexityFeatureFlagTracker
+            from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker
 
             PerplexityFeatureFlagTracker.record_operation_failure(symbol, "crypto", "integration_error")
             return []
