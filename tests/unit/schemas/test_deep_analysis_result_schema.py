@@ -23,7 +23,7 @@ class TestDeepAnalysisResultSchemaValidation:
             "ticker": "AAPL",
             "asset_class": "stock",
             "crew_name": "DeepAnalysisCrew",
-            "analysis_timestamp": datetime.now().isoformat().isoformat(),
+            "analysis_timestamp": datetime.now().isoformat(),
             "composite_score": 0.85,
             "grade": "A",
             "recommendation": "BUY",
@@ -374,6 +374,8 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "  A  ",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
+            "recommendation": "  BUY  ",
+            "rationale": "  Strong fundamentals and technical indicators  ",
         }
 
         # Act
@@ -384,6 +386,8 @@ class TestDeepAnalysisResultSchemaValidation:
         assert result.asset_class == "stock"
         assert result.crew_name == "DeepAnalysisCrew"
         assert result.grade == "A"
+        assert result.recommendation == "BUY"
+        assert result.rationale == "Strong fundamentals and technical indicators"
 
     def test_should_validate_optional_scores(self):
         """Test that optional score fields (fundamental, technical) validate correctly."""
@@ -459,7 +463,7 @@ class TestDeepAnalysisResultSchemaValidation:
     def test_should_default_analysis_timestamp_to_now(self):
         """Test that analysis_timestamp defaults to current time."""
         # Arrange
-        before_creation = datetime.now().isoformat()
+        before_creation = datetime.now()
         data_without_timestamp = {
             "ticker": "AAPL",
             "asset_class": "stock",
@@ -474,7 +478,7 @@ class TestDeepAnalysisResultSchemaValidation:
 
         # Act
         result = DeepAnalysisResult(**data_without_timestamp)
-        after_creation = datetime.now().isoformat()
+        after_creation = datetime.now()
 
         # Assert
         assert isinstance(result.analysis_timestamp, datetime)

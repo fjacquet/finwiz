@@ -41,8 +41,8 @@ class TestCoreAnalysisFeatureFlags:
         mock_stock_crew.crew().kickoff.assert_called_once()
 
         # Verify results were stored
-        assert "stock_analysis_result" in finwiz_flow.inputs
-        assert finwiz_flow.inputs["stock_analysis_success"] is True
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        assert finwiz_flow.state.stock_analysis_success is True
 
     def test_should_skip_stock_crew_when_flag_disabled(self, finwiz_flow, mocker):
         """Test that stock crew is skipped when feature flag is disabled."""
@@ -61,7 +61,7 @@ class TestCoreAnalysisFeatureFlags:
         mock_stock_crew_class.assert_not_called()
 
         # Verify disabled flag was set
-        assert finwiz_flow.inputs.get("stock_analysis_disabled") is True
+        assert finwiz_flow.state.stock_analysis_disabled is True
         assert "stock_analysis_result" not in finwiz_flow.inputs
 
     def test_should_execute_etf_crew_when_flag_enabled(self, finwiz_flow, mocker):
@@ -87,8 +87,8 @@ class TestCoreAnalysisFeatureFlags:
         mock_etf_crew.crew().kickoff.assert_called_once()
 
         # Verify results were stored
-        assert "etf_analysis_result" in finwiz_flow.inputs
-        assert finwiz_flow.inputs["etf_analysis_success"] is True
+        assert hasattr(finwiz_flow.state, "etf_analysis_result")
+        assert finwiz_flow.state.etf_analysis_success is True
 
     def test_should_skip_etf_crew_when_flag_disabled(self, finwiz_flow, mocker):
         """Test that ETF crew is skipped when feature flag is disabled."""
@@ -107,7 +107,7 @@ class TestCoreAnalysisFeatureFlags:
         mock_etf_crew_class.assert_not_called()
 
         # Verify disabled flag was set
-        assert finwiz_flow.inputs.get("etf_analysis_disabled") is True
+        assert finwiz_flow.state.etf_analysis_disabled is True
         assert "etf_analysis_result" not in finwiz_flow.inputs
 
     def test_should_execute_crypto_crew_when_flag_enabled(self, finwiz_flow, mocker):
@@ -133,8 +133,8 @@ class TestCoreAnalysisFeatureFlags:
         mock_crypto_crew.crew().kickoff.assert_called_once()
 
         # Verify results were stored
-        assert "crypto_analysis_result" in finwiz_flow.inputs
-        assert finwiz_flow.inputs["crypto_analysis_success"] is True
+        assert hasattr(finwiz_flow.state, "crypto_analysis_result")
+        assert finwiz_flow.state.crypto_analysis_success is True
 
     def test_should_skip_crypto_crew_when_flag_disabled(self, finwiz_flow, mocker):
         """Test that crypto crew is skipped when feature flag is disabled."""
@@ -153,7 +153,7 @@ class TestCoreAnalysisFeatureFlags:
         mock_crypto_crew_class.assert_not_called()
 
         # Verify disabled flag was set
-        assert finwiz_flow.inputs.get("crypto_analysis_disabled") is True
+        assert finwiz_flow.state.crypto_analysis_disabled is True
         assert "crypto_analysis_result" not in finwiz_flow.inputs
 
     def test_should_handle_mixed_feature_flag_states(self, finwiz_flow, mocker):
@@ -194,12 +194,12 @@ class TestCoreAnalysisFeatureFlags:
         # Verify enabled crews were executed
         mock_stock_crew_class.assert_called_once()
         mock_crypto_crew_class.assert_called_once()
-        assert "stock_analysis_result" in finwiz_flow.inputs
-        assert "crypto_analysis_result" in finwiz_flow.inputs
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        assert hasattr(finwiz_flow.state, "crypto_analysis_result")
 
         # Verify disabled crew was skipped
         mock_etf_crew_class.assert_not_called()
-        assert finwiz_flow.inputs.get("etf_analysis_disabled") is True
+        assert finwiz_flow.state.etf_analysis_disabled is True
         assert "etf_analysis_result" not in finwiz_flow.inputs
 
     def test_should_handle_all_crews_disabled(self, finwiz_flow, mocker):
@@ -222,9 +222,9 @@ class TestCoreAnalysisFeatureFlags:
         mock_crypto_crew_class.assert_not_called()
 
         # Verify all disabled flags were set
-        assert finwiz_flow.inputs.get("stock_analysis_disabled") is True
-        assert finwiz_flow.inputs.get("etf_analysis_disabled") is True
-        assert finwiz_flow.inputs.get("crypto_analysis_disabled") is True
+        assert finwiz_flow.state.stock_analysis_disabled is True
+        assert finwiz_flow.state.etf_analysis_disabled is True
+        assert finwiz_flow.state.crypto_analysis_disabled is True
 
         # Verify no analysis results were created
         assert "stock_analysis_result" not in finwiz_flow.inputs
@@ -265,14 +265,14 @@ class TestCoreAnalysisFeatureFlags:
         mock_crypto_crew_class.assert_called_once()
 
         # Verify all analysis results were created
-        assert "stock_analysis_result" in finwiz_flow.inputs
-        assert "etf_analysis_result" in finwiz_flow.inputs
-        assert "crypto_analysis_result" in finwiz_flow.inputs
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        assert hasattr(finwiz_flow.state, "etf_analysis_result")
+        assert hasattr(finwiz_flow.state, "crypto_analysis_result")
 
         # Verify success flags
-        assert finwiz_flow.inputs["stock_analysis_success"] is True
-        assert finwiz_flow.inputs["etf_analysis_success"] is True
-        assert finwiz_flow.inputs["crypto_analysis_success"] is True
+        assert finwiz_flow.state.stock_analysis_success is True
+        assert finwiz_flow.state.etf_analysis_success is True
+        assert finwiz_flow.state.crypto_analysis_success is True
 
     def test_should_handle_feature_flag_check_failures(self, finwiz_flow, mocker):
         """Test handling when feature flag checks themselves fail."""
@@ -308,7 +308,7 @@ class TestCoreAnalysisFeatureFlags:
 
         # Verify crew was attempted (and failed)
         mock_stock_crew_class.assert_called_once()
-        assert finwiz_flow.inputs["stock_analysis_success"] is False
+        assert finwiz_flow.state.stock_analysis_success is False
 
         # Reset mocks for second test
         mock_feature_enabled.reset_mock()
@@ -325,7 +325,7 @@ class TestCoreAnalysisFeatureFlags:
 
         # Verify crew was not attempted
         mock_stock_crew_class.assert_not_called()
-        assert finwiz_flow.inputs.get("stock_analysis_disabled") is True
+        assert finwiz_flow.state.stock_analysis_disabled is True
 
     def test_should_handle_dynamic_feature_flag_changes(self, finwiz_flow, mocker):
         """Test handling of dynamic feature flag changes during execution."""
@@ -348,17 +348,17 @@ class TestCoreAnalysisFeatureFlags:
 
         # First execution should succeed
         finwiz_flow.check_stock()
-        assert "stock_analysis_result" in finwiz_flow.inputs
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
 
         # Reset for second execution
-        if "stock_analysis_result" in finwiz_flow.inputs:
-            del finwiz_flow.inputs["stock_analysis_result"]
-        if "stock_analysis_disabled" in finwiz_flow.inputs:
-            del finwiz_flow.inputs["stock_analysis_disabled"]
+        if hasattr(finwiz_flow.state, "stock_analysis_result"):
+            del finwiz_flow.state.stock_analysis_result
+        if hasattr(finwiz_flow.state, "stock_analysis_disabled"):
+            del finwiz_flow.state.stock_analysis_disabled
 
         # Second execution should be skipped
         finwiz_flow.check_stock()
-        assert finwiz_flow.inputs.get("stock_analysis_disabled") is True
+        assert finwiz_flow.state.stock_analysis_disabled is True
 
     def test_should_provide_feature_flag_status_information(self, finwiz_flow, mocker):
         """Test that feature flag status information is available."""
@@ -390,11 +390,11 @@ class TestCoreAnalysisFeatureFlags:
 
         # Verify feature flag status is reflected in inputs
         # Enabled crews should have results
-        assert "stock_analysis_result" in finwiz_flow.inputs
-        assert "crypto_analysis_result" in finwiz_flow.inputs
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        assert hasattr(finwiz_flow.state, "crypto_analysis_result")
 
         # Disabled crew should have disabled flag
-        assert finwiz_flow.inputs.get("etf_analysis_disabled") is True
+        assert finwiz_flow.state.etf_analysis_disabled is True
 
     def test_should_handle_feature_flag_environment_variables(self, finwiz_flow, mocker):
         """Test that feature flags work with environment variables."""
@@ -440,6 +440,6 @@ class TestCoreAnalysisFeatureFlags:
         finwiz_flow.check_crypto()
 
         # Verify environment-based feature flags work
-        assert "stock_analysis_result" in finwiz_flow.inputs
-        assert finwiz_flow.inputs.get("etf_analysis_disabled") is True
-        assert "crypto_analysis_result" in finwiz_flow.inputs
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        assert finwiz_flow.state.etf_analysis_disabled is True
+        assert hasattr(finwiz_flow.state, "crypto_analysis_result")

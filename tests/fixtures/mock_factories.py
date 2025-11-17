@@ -2,7 +2,7 @@
 Mock factories for testing.
 
 Provides pytest fixtures to create mock objects for common test scenarios.
-Uses pytest-mock exclusively (NO unittest.mock allowed per FinWiz standards).
+Uses pytest-mock exclusively (NO unit test mock allowed per FinWiz standards).
 """
 
 from typing import Any
@@ -23,6 +23,7 @@ def mock_api_response(mocker):
             response = mock_api_response(data={"result": "success"})
             assert response.status_code == 200
     """
+
     def _factory(
         data: dict[str, Any] | None = None,
         status_code: int = 200,
@@ -61,12 +62,12 @@ def create_mock_tool_result(
 ) -> dict[str, Any]:
     """
     Create a mock tool execution result.
-    
+
     Args:
         success: Whether tool execution succeeded (default: True)
         data: Tool output data (default: empty dict)
         error: Error message if any (default: None)
-        
+
     Returns:
         Dictionary with tool result
 
@@ -95,6 +96,7 @@ def mock_crew_result(mocker):
             result = mock_crew_result(raw="Analysis complete")
             assert result.raw == "Analysis complete"
     """
+
     def _factory(
         raw: str = "Analysis complete",
         pydantic: Any | None = None,
@@ -134,6 +136,7 @@ def mock_yfinance_ticker(mocker):
             ticker = mock_yfinance_ticker(ticker="AAPL")
             assert ticker.info["symbol"] == "AAPL"
     """
+
     def _factory(
         ticker: str = "AAPL",
         info: dict[str, Any] | None = None,

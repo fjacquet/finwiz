@@ -53,8 +53,8 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_stock()
 
         # Verify error was handled
-        assert finwiz_flow.inputs.get("stock_analysis_success") is False
-        assert "stock_analysis_error" in finwiz_flow.inputs
+        assert finwiz_flow.state.stock_analysis_success is False
+        assert hasattr(finwiz_flow.state, "stock_analysis_error")
 
     def test_should_handle_crew_kickoff_failure(self, finwiz_flow, mocker):
         """Test handling of crew kickoff failures."""
@@ -69,9 +69,9 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_stock()
 
         # Verify error was handled
-        assert finwiz_flow.inputs["stock_analysis_success"] is False
-        assert finwiz_flow.inputs["stock_analysis_fallback"] is True
-        assert "stock_analysis_error" in finwiz_flow.inputs
+        assert finwiz_flow.state.stock_analysis_success is False
+        assert finwiz_flow.state.stock_analysis_fallback is True
+        assert hasattr(finwiz_flow.state, "stock_analysis_error")
 
     def test_should_handle_api_connection_failures(self, finwiz_flow, mocker):
         """Test handling of API connection failures."""
@@ -94,9 +94,9 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_crypto()
 
         # Verify error was handled
-        assert finwiz_flow.inputs["crypto_analysis_success"] is False
-        assert finwiz_flow.inputs["crypto_fallback_strategy"] == "skip"
-        assert finwiz_flow.inputs["crypto_degraded_functionality"] == ["no_crypto_data"]
+        assert finwiz_flow.state.crypto_analysis_success is False
+        assert finwiz_flow.state.crypto_fallback_strategy == "skip"
+        assert finwiz_flow.state.crypto_degraded_functionality == ["no_crypto_data"]
 
     def test_should_handle_timeout_errors(self, finwiz_flow, mocker):
         """Test handling of timeout errors."""
@@ -111,9 +111,9 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_etf()
 
         # Verify error was handled
-        assert finwiz_flow.inputs["etf_analysis_success"] is False
-        assert "etf_analysis_error" in finwiz_flow.inputs
-        assert "timed out" in str(finwiz_flow.inputs["etf_analysis_error"])
+        assert finwiz_flow.state.etf_analysis_success is False
+        assert hasattr(finwiz_flow.state, "etf_analysis_error")
+        assert "timed out" in str(finwiz_flow.state.etf_analysis_error)
 
     def test_should_handle_memory_errors(self, finwiz_flow, mocker):
         """Test handling of memory errors."""
@@ -128,8 +128,8 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_stock()
 
         # Verify error was handled
-        assert finwiz_flow.inputs["stock_analysis_success"] is False
-        assert "stock_analysis_error" in finwiz_flow.inputs
+        assert finwiz_flow.state.stock_analysis_success is False
+        assert hasattr(finwiz_flow.state, "stock_analysis_error")
 
     def test_should_handle_data_validation_errors(self, finwiz_flow, mocker):
         """Test handling of data validation errors."""
@@ -144,8 +144,8 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_crypto()
 
         # Verify error was handled
-        assert finwiz_flow.inputs["crypto_analysis_success"] is False
-        assert "crypto_analysis_error" in finwiz_flow.inputs
+        assert finwiz_flow.state.crypto_analysis_success is False
+        assert hasattr(finwiz_flow.state, "crypto_analysis_error")
 
     def test_should_use_cached_data_as_fallback(self, finwiz_flow, mocker):
         """Test that cached data is used as fallback when available."""
@@ -177,10 +177,10 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_stock()
 
         # Verify fallback data was used
-        assert finwiz_flow.inputs["stock_analysis_success"] is False
-        assert finwiz_flow.inputs["stock_analysis_fallback"] is True
-        assert finwiz_flow.inputs["stock_fallback_strategy"] == "cached_data"
-        assert "stock_analysis_result" in finwiz_flow.inputs
+        assert finwiz_flow.state.stock_analysis_success is False
+        assert finwiz_flow.state.stock_analysis_fallback is True
+        assert finwiz_flow.state.stock_fallback_strategy == "cached_data"
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
 
     def test_should_handle_partial_crew_failures(self, finwiz_flow, mocker):
         """Test handling when some crews succeed and others fail."""
@@ -220,13 +220,13 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_crypto()
 
         # Verify partial success
-        assert finwiz_flow.inputs["stock_analysis_success"] is True
-        assert finwiz_flow.inputs["etf_analysis_success"] is True
-        assert finwiz_flow.inputs["crypto_analysis_success"] is False
+        assert finwiz_flow.state.stock_analysis_success is True
+        assert finwiz_flow.state.etf_analysis_success is True
+        assert finwiz_flow.state.crypto_analysis_success is False
 
         # Verify successful results are available
-        assert "stock_analysis_result" in finwiz_flow.inputs
-        assert "etf_analysis_result" in finwiz_flow.inputs
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        assert hasattr(finwiz_flow.state, "etf_analysis_result")
 
     def test_should_handle_integration_system_failures(self, finwiz_flow, mocker):
         """Test handling of data integration system failures."""
@@ -246,8 +246,8 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_stock()
 
         # Verify crew executed successfully despite integration failure
-        assert finwiz_flow.inputs["stock_analysis_success"] is True
-        assert "stock_analysis_result" in finwiz_flow.inputs
+        assert finwiz_flow.state.stock_analysis_success is True
+        assert hasattr(finwiz_flow.state, "stock_analysis_result")
 
     def test_should_handle_error_handler_failures(self, finwiz_flow, mocker):
         """Test handling when error handler itself fails."""
@@ -265,8 +265,8 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_crypto()
 
         # Verify basic error handling still works
-        assert finwiz_flow.inputs["crypto_analysis_success"] is False
-        assert "crypto_analysis_error" in finwiz_flow.inputs
+        assert finwiz_flow.state.crypto_analysis_success is False
+        assert hasattr(finwiz_flow.state, "crypto_analysis_error")
 
     def test_should_handle_invalid_crew_results(self, finwiz_flow, mocker):
         """Test handling of invalid crew results."""
@@ -282,8 +282,8 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_etf()
 
         # Verify handling of invalid result
-        assert finwiz_flow.inputs["etf_analysis_success"] is True  # Crew executed
-        assert "etf_analysis_result" in finwiz_flow.inputs
+        assert finwiz_flow.state.etf_analysis_success is True  # Crew executed
+        assert hasattr(finwiz_flow.state, "etf_analysis_result")
 
     def test_should_provide_detailed_error_information(self, finwiz_flow, mocker):
         """Test that detailed error information is provided for debugging."""
@@ -299,9 +299,9 @@ class TestCoreAnalysisErrorScenarios:
         finwiz_flow.check_stock()
 
         # Verify detailed error information is available
-        assert finwiz_flow.inputs["stock_analysis_success"] is False
-        assert "stock_analysis_error" in finwiz_flow.inputs
-        assert error_message in str(finwiz_flow.inputs["stock_analysis_error"])
+        assert finwiz_flow.state.stock_analysis_success is False
+        assert hasattr(finwiz_flow.state, "stock_analysis_error")
+        assert error_message in str(finwiz_flow.state.stock_analysis_error)
 
     def test_should_handle_multiple_consecutive_failures(self, finwiz_flow, mocker):
         """Test handling of multiple consecutive failures."""
@@ -323,8 +323,8 @@ class TestCoreAnalysisErrorScenarios:
             finwiz_flow.check_crypto()
 
             # Verify each failure is handled
-            assert finwiz_flow.inputs["crypto_analysis_success"] is False
-            assert "crypto_analysis_error" in finwiz_flow.inputs
+            assert finwiz_flow.state.crypto_analysis_success is False
+            assert hasattr(finwiz_flow.state, "crypto_analysis_error")
 
     def test_should_maintain_system_stability_during_errors(self, finwiz_flow, mocker):
         """Test that system maintains stability during various error conditions."""
@@ -349,8 +349,8 @@ class TestCoreAnalysisErrorScenarios:
             finwiz_flow.check_stock()
 
             # Verify system remains stable
-            assert finwiz_flow.inputs["stock_analysis_success"] is False
-            assert "stock_analysis_error" in finwiz_flow.inputs
+            assert finwiz_flow.state.stock_analysis_success is False
+            assert hasattr(finwiz_flow.state, "stock_analysis_error")
 
             # System should still be functional for next iteration
             assert finwiz_flow.integration_manager is not None

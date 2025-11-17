@@ -28,7 +28,7 @@ class TestPortfolioHoldingsGrading:
         mock = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         return mock
 
-    def test_should_assign_b_grade_to_valid_stock_with_shallow_validation(self, processor, mocker):
+    async def test_should_assign_b_grade_to_valid_stock_with_shallow_validation(self, processor, mocker):
         """Test that valid stocks receive B grade (75%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -48,14 +48,14 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         assert decision.composite_score == 0.75, "Valid stock should get 0.75 score"
         assert decision.grade == "B", f"Expected B grade, got {decision.grade}"
         assert decision.decision == "KEEP", "Valid stock with B grade should be KEEP"
 
-    def test_should_assign_b_grade_to_msft_with_shallow_validation(self, processor, mocker):
+    async def test_should_assign_b_grade_to_msft_with_shallow_validation(self, processor, mocker):
         """Test that MSFT receives B grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -75,14 +75,14 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         assert decision.composite_score == 0.75
         assert decision.grade == "B"
         assert decision.decision == "KEEP"
 
-    def test_should_assign_b_grade_to_asml_with_shallow_validation(self, processor, mocker):
+    async def test_should_assign_b_grade_to_asml_with_shallow_validation(self, processor, mocker):
         """Test that ASML receives B grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -102,14 +102,14 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         assert decision.composite_score == 0.75
         assert decision.grade == "B"
         assert decision.decision == "KEEP"
 
-    def test_should_assign_b_plus_grade_to_valid_etf_with_shallow_validation(self, processor, mocker):
+    async def test_should_assign_b_plus_grade_to_valid_etf_with_shallow_validation(self, processor, mocker):
         """Test that valid ETFs receive B+ grade (80%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -129,14 +129,14 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         assert decision.composite_score == 0.80, "Valid ETF should get 0.80 score"
         assert decision.grade == "B+", f"Expected B+ grade, got {decision.grade}"
         assert decision.decision == "KEEP"
 
-    def test_should_assign_f_grade_to_invalid_ticker(self, processor, mocker):
+    async def test_should_assign_f_grade_to_invalid_ticker(self, processor, mocker):
         """Test that invalid tickers receive F grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -156,14 +156,14 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         assert decision.composite_score == 0.3, "Invalid ticker should get 0.3 score"
         assert decision.grade == "F", f"Expected F grade, got {decision.grade}"
         assert decision.decision == "SELL"
 
-    def test_should_include_shallow_validation_warning_in_rationale(self, processor, mocker):
+    async def test_should_include_shallow_validation_warning_in_rationale(self, processor, mocker):
         """Test that rationale includes shallow validation warning."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -183,7 +183,7 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         rationale_text = " ".join(decision.rationale_bullets)
@@ -231,7 +231,7 @@ class TestPortfolioHoldingsGrading:
         grade_info = score_to_grade(score)
         assert grade_info.grade == "F"
 
-    def test_should_process_multiple_quality_stocks_with_b_grades(self, processor, mocker):
+    async def test_should_process_multiple_quality_stocks_with_b_grades(self, processor, mocker):
         """Test processing multiple high-quality stocks."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -269,7 +269,7 @@ class TestPortfolioHoldingsGrading:
         ]
 
         # Act
-        decisions = processor.process_holdings(holdings, "CHF", 0.55)
+        decisions = await processor.process_holdings(holdings, "CHF", 0.55)
 
         # Assert
         assert len(decisions) == 3
@@ -278,7 +278,7 @@ class TestPortfolioHoldingsGrading:
             assert decision.composite_score == 0.75
             assert decision.decision == "KEEP"
 
-    def test_should_indicate_data_freshness_as_fresh_for_valid_holdings(self, processor, mocker):
+    async def test_should_indicate_data_freshness_as_fresh_for_valid_holdings(self, processor, mocker):
         """Test that valid holdings have 'fresh' data freshness."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -298,12 +298,12 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         assert decision.data_freshness == "fresh"
 
-    def test_should_indicate_data_freshness_as_stale_for_invalid_holdings(self, processor, mocker):
+    async def test_should_indicate_data_freshness_as_stale_for_invalid_holdings(self, processor, mocker):
         """Test that invalid holdings have 'stale' data freshness."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -323,7 +323,7 @@ class TestPortfolioHoldingsGrading:
         )
 
         # Act
-        decision = processor._process_single_holding(holding, "CHF", 0.55)
+        decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
         assert decision.data_freshness == "stale"
