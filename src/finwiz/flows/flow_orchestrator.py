@@ -480,7 +480,7 @@ class FinwizFlow(Flow[FinwizState]):
                 ticker=ticker,
                 asset_class=asset_class,
                 crew_name=crew_name,
-                analyzed_at=datetime.now(),
+                analysis_timestamp=datetime.now().isoformat(),
                 fundamental_score=fundamental_score,
                 technical_score=technical_score,
                 risk_score=risk_score,
@@ -538,7 +538,7 @@ class FinwizFlow(Flow[FinwizState]):
             self.availability_tracker.track_data_source(
                 source="crypto_crew",
                 status="available",
-                last_updated=datetime.now(),
+                last_updated=datetime.now().isoformat(),
                 record_count=len(crypto_results.get("opportunities", [])),
             )
 
@@ -597,7 +597,7 @@ class FinwizFlow(Flow[FinwizState]):
             self.availability_tracker.track_data_source(
                 source="stock_crew",
                 status="available",
-                last_updated=datetime.now(),
+                last_updated=datetime.now().isoformat(),
                 record_count=len(stock_results.get("opportunities", [])),
             )
 
@@ -656,7 +656,7 @@ class FinwizFlow(Flow[FinwizState]):
             self.availability_tracker.track_data_source(
                 source="etf_crew",
                 status="available",
-                last_updated=datetime.now(),
+                last_updated=datetime.now().isoformat(),
                 record_count=len(etf_results.get("opportunities", [])),
             )
 
