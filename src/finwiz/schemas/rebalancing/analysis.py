@@ -149,7 +149,7 @@ class RebalancingAnalytics(BaseModel):
     trend_analysis: TrendAnalysis | None = Field(None, description="Trend analysis results")
 
     # Position histories
-    position_histories: list[PositionHistory] = Field(default_factory=list, description="Historical tracking of individual positions")
+    position_histories: list = Field(default_factory=list, description="Historical tracking of individual positions")
 
     # Recommendations
     recommended_action: RebalancingRecommendation = Field(..., description="Overall recommended action")

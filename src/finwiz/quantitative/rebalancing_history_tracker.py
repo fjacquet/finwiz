@@ -448,10 +448,12 @@ class RebalancingHistoryTracker:
             strategy_recommendations = self._generate_strategy_recommendations(history, performance_attribution, trend_analysis)
 
             analytics = RebalancingAnalytics(
+                portfolio_id=portfolio_id,
                 current_portfolio_metrics=current_metrics,
                 current_rebalancing_needs=current_needs,
                 performance_attribution=performance_attribution,
                 trend_analysis=trend_analysis,
+                position_histories=position_histories,
                 recommended_action=RebalancingRecommendation.REBALANCE_NOW if any(n.needs_rebalancing for n in current_needs) else RebalancingRecommendation.NO_ACTION,
                 next_review_date=datetime.now() + timedelta(days=30),
                 strategy_recommendations=strategy_recommendations,
