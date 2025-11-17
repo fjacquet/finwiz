@@ -29,7 +29,7 @@ class DeepAnalysisResult(BaseModel):
     ticker: str = Field(..., description="Stock/ETF/crypto ticker symbol")
     asset_class: str = Field(..., description="Asset class (stock, etf, crypto)")
     crew_name: str = Field(..., description="Name of crew that performed analysis")
-    analysis_timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(), description="When analysis was performed (ISO format)")
+    analysis_timestamp: datetime = Field(default_factory=datetime.now, description="When analysis was performed")
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Composite score (0.0-1.0)")
     grade: str = Field(..., description="Letter grade (A+ to F)")
 
