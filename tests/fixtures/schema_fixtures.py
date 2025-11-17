@@ -18,12 +18,12 @@ def create_risk_assessment(
 ) -> RiskAssessmentStandardized:
     """
     Create a valid RiskAssessmentStandardized instance.
-    
+
     Args:
         overall_risk_score: Risk score 0-5 (default: 3)
         risk_level: Risk level string (default: "MEDIUM")
         **overrides: Additional field overrides
-        
+
     Returns:
         RiskAssessmentStandardized instance
 
@@ -59,14 +59,14 @@ def create_deep_analysis_result(
 ) -> dict[str, Any]:
     """
     Create a valid deep analysis result dictionary.
-    
+
     Args:
         ticker: Ticker symbol (default: "AAPL")
         asset_class: Asset class (default: "stock")
         composite_score: Overall score 0-1 (default: 0.85)
         grade: Letter grade (default: "A")
         **overrides: Additional field overrides
-        
+
     Returns:
         Dictionary with deep analysis result
 
@@ -98,12 +98,12 @@ def create_holding_decision(
 ) -> HoldingDecision:
     """
     Create a valid HoldingDecision instance.
-    
+
     Args:
         ticker: Ticker symbol (default: "AAPL")
         decision: Decision (KEEP/SELL) (default: "KEEP")
         **overrides: Additional field overrides
-        
+
     Returns:
         HoldingDecision instance
 
@@ -130,13 +130,13 @@ def create_portfolio_review(
 ) -> PortfolioReview:
     """
     Create a valid PortfolioReview instance.
-    
+
     Args:
         total_holdings: Total number of holdings (default: 10)
         keep_count: Number to keep (default: 7)
         sell_count: Number to sell (default: 3)
         **overrides: Additional field overrides
-        
+
     Returns:
         PortfolioReview instance
 
@@ -145,19 +145,23 @@ def create_portfolio_review(
 
     # Create KEEP decisions
     for i in range(keep_count):
-        decisions.append(create_holding_decision(
-            ticker=f"KEEP{i}",
-            decision="KEEP",
-        ))
+        decisions.append(
+            create_holding_decision(
+                ticker=f"KEEP{i}",
+                decision="KEEP",
+            )
+        )
 
     # Create SELL decisions
     for i in range(sell_count):
-        decisions.append(create_holding_decision(
-            ticker=f"SELL{i}",
-            decision="SELL",
-            grade="D",
-            composite_score=0.45,
-        ))
+        decisions.append(
+            create_holding_decision(
+                ticker=f"SELL{i}",
+                decision="SELL",
+                grade="D",
+                composite_score=0.45,
+            )
+        )
 
     data = {
         "decisions": decisions,

@@ -78,7 +78,7 @@ class MonteCarloResult(BaseModel):
     final_value_percentiles: dict[str, float] = Field(default_factory=dict, description="Percentiles of final portfolio value")
 
     # Risk metrics
-    probability_of_loss: float = Field(..., description="Probability of portfolio loss")
+    probability_of_loss: float = Field(..., ge=0.0, le=1.0, description="Probability of portfolio loss (0-1)")
     value_at_risk_95: float = Field(..., description="95% Value at Risk")
     expected_shortfall_95: float = Field(..., description="95% Expected Shortfall")
 

@@ -4,7 +4,6 @@ Unit tests for ToolResult standardization.
 Tests the ToolResult dataclass for consistent error handling across tools.
 """
 
-
 from finwiz.tools.tool_result import ToolResult
 
 

@@ -104,14 +104,14 @@ class TestPortfolioRebalancingEdgeCases:
         # Mock the portfolio analyzer on the utils object
         mocker.patch.object(
             orchestrator.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=15000.0,
                 weightings={"AAPL": 1.0},
                 deviations_from_target={"AAPL": 0.0},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 10.0},
-            )
+            ),
         )
 
         # Mock engine to return no trades needed
@@ -200,14 +200,14 @@ class TestPortfolioRebalancingEdgeCases:
 
         mocker.patch.object(
             orchestrator.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=0.00001,  # Very small value
                 weightings={"AAPL": 1.0},
                 deviations_from_target={"AAPL": 0.0},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 10.0},
-            )
+            ),
         )
 
         # Mock engine
@@ -241,14 +241,14 @@ class TestPortfolioRebalancingEdgeCases:
 
         mocker.patch.object(
             orchestrator.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=15075.0,  # 100.5 * 150
                 weightings={"AAPL": 1.0},
                 deviations_from_target={"AAPL": 0.0},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 10.0},
-            )
+            ),
         )
 
         # Mock engine
@@ -278,14 +278,14 @@ class TestPortfolioRebalancingEdgeCases:
 
         mocker.patch.object(
             orchestrator.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=15000.0,
                 weightings={"AAPL": 1.0},
                 deviations_from_target={"AAPL": 0.0},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 10.0},
-            )
+            ),
         )
 
         mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.return_value = (
@@ -318,14 +318,14 @@ class TestPortfolioRebalancingEdgeCases:
         weightings = {f"STOCK{i:03d}": 0.01 for i in range(100)}
         mocker.patch.object(
             orchestrator.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=1000000.0,  # 100 stocks * 100 shares * $100
                 weightings=weightings,
                 deviations_from_target={symbol: 0.0 for symbol in weightings},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 1.0},  # Well diversified
-            )
+            ),
         )
 
         mock_orchestrator_dependencies["rebalancing_engine"].generate_enhanced_trade_recommendations.return_value = (
@@ -408,14 +408,14 @@ class TestPortfolioRebalancingEdgeCases:
 
         mocker.patch.object(
             orchestrator.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=15000.0,
                 weightings={"AAPL": 1.0},
                 deviations_from_target={"AAPL": 0.0},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 10.0},
-            )
+            ),
         )
 
         # Mock optimization timeout
@@ -472,11 +472,7 @@ class TestPortfolioRebalancingErrorScenarios:
         # Mock analyzer failure on the utils object using mocker.patch.object
         from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError
 
-        mocker.patch.object(
-            orchestrator_with_failing_dependencies.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
-            side_effect=PortfolioAnalysisError("Calculation failed")
-        )
+        mocker.patch.object(orchestrator_with_failing_dependencies.utils.portfolio_analyzer, "analyze_current_portfolio", side_effect=PortfolioAnalysisError("Calculation failed"))
 
         # Act & Assert
         with pytest.raises(PortfolioRebalancingError):
@@ -496,21 +492,19 @@ class TestPortfolioRebalancingErrorScenarios:
 
         mocker.patch.object(
             orchestrator_with_failing_dependencies.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=15000.0,
                 weightings={"AAPL": 1.0},
                 deviations_from_target={"AAPL": 0.0},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 10.0},
-            )
+            ),
         )
 
         # Mock optimization failure using mocker.patch.object
         mocker.patch.object(
-            orchestrator_with_failing_dependencies.optimizer.rebalancing_engine,
-            'generate_enhanced_trade_recommendations',
-            side_effect=Exception("Optimization failed")
+            orchestrator_with_failing_dependencies.optimizer.rebalancing_engine, "generate_enhanced_trade_recommendations", side_effect=Exception("Optimization failed")
         )
 
         # Act & Assert - Exception is wrapped in OptimizationFailedError
@@ -530,14 +524,14 @@ class TestPortfolioRebalancingErrorScenarios:
 
         mocker.patch.object(
             orchestrator_with_failing_dependencies.utils.portfolio_analyzer,
-            'analyze_current_portfolio',
+            "analyze_current_portfolio",
             return_value=PortfolioAnalysis(
                 total_value=15000.0,
                 weightings={"AAPL": 1.0},
                 deviations_from_target={"AAPL": 0.0},
                 positions_needing_rebalancing=[],
                 risk_metrics={"concentration_risk": 10.0},
-            )
+            ),
         )
 
         orchestrator_with_failing_dependencies.optimizer.rebalancing_engine.generate_enhanced_trade_recommendations.return_value = ([], [])
@@ -546,11 +540,7 @@ class TestPortfolioRebalancingErrorScenarios:
         result = await orchestrator_with_failing_dependencies.rebalance_portfolio(config)
 
         # Mock report generation failure using mocker.patch.object
-        mocker.patch.object(
-            orchestrator_with_failing_dependencies.report_generator_service,
-            'generate_rebalancing_report',
-            side_effect=Exception("Report generation failed")
-        )
+        mocker.patch.object(orchestrator_with_failing_dependencies.report_generator_service, "generate_rebalancing_report", side_effect=Exception("Report generation failed"))
 
         # Act & Assert
         with pytest.raises(Exception, match="Report generation failed"):
@@ -613,6 +603,7 @@ class TestPortfolioRebalancingErrorScenarios:
 
         # Mock fallback to also fail
         from finwiz.tools.portfolio_price_service import PriceDataUnavailableError
+
         orchestrator_with_failing_dependencies.utils.price_service.get_price_with_fallback = mocker.AsyncMock(
             side_effect=PriceDataUnavailableError(symbol="AAPL", reason="Price unavailable")
         )

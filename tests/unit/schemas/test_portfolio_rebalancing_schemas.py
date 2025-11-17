@@ -783,9 +783,8 @@ class TestRebalancingNeed:
             target_weight=0.30,
             deviation=0.05,
             tolerance_band=0.03,
-            exceeds_tolerance=True,
+            needs_rebalancing=True,
             urgency_score=0.7,
-            recommended_action=TradeAction.SELL,
         )
 
         # Assert
@@ -793,9 +792,8 @@ class TestRebalancingNeed:
         assert need.current_weight == 0.35
         assert need.target_weight == 0.30
         assert need.deviation == 0.05
-        assert need.exceeds_tolerance is True
+        assert need.needs_rebalancing is True
         assert need.urgency_score == 0.7
-        assert need.recommended_action == TradeAction.SELL
 
 
 class TestPortfolioMetrics:

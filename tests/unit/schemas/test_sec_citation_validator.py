@@ -50,8 +50,6 @@ class TestSECCitationValidator:
             validation_status=sample_validation_status,
         )
 
-
-
     def test_should_initialize_sec_citation_validator_successfully(self, mock_logger):
         """Test SECCitationValidator initialization."""
         validator = SECCitationValidator(logger=mock_logger)
@@ -86,7 +84,7 @@ class TestSECCitationValidator:
             extraction_timestamp=datetime.now(),
             validation_status=sample_validation_status,
         )
-        
+
         result = sec_validator.validate_sec_citation(invalid_citation)
 
         assert isinstance(result, SECCitationValidationResult)
@@ -289,7 +287,7 @@ class TestSECCitationValidator:
             extraction_timestamp=datetime.now(),
             validation_status=sample_validation_status,
         )
-        
+
         # Create an invalid citation (old date)
         invalid_citation = SECCitation(
             ticker="GOOGL",
@@ -301,7 +299,7 @@ class TestSECCitationValidator:
             extraction_timestamp=datetime.now(),
             validation_status=sample_validation_status,
         )
-        
+
         citations = [sample_sec_citation, citation2, invalid_citation]
 
         results = sec_validator.validate_multiple_citations(citations)

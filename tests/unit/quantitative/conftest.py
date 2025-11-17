@@ -14,9 +14,7 @@ def sample_returns():
 def sample_prices(fake):
     """Generate realistic price data using Faker."""
     dates = pd.date_range(start="2023-01-01", periods=100, freq="D")
-    returns = [
-        fake.random_element([0.01, -0.01, 0.02, -0.02, 0.00]) for _ in range(100)
-    ]
+    returns = [fake.random_element([0.01, -0.01, 0.02, -0.02, 0.00]) for _ in range(100)]
     prices = 100 * (1 + pd.Series(returns)).cumprod()
     return pd.Series(prices.values, index=dates)
 

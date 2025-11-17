@@ -1,213 +1,65 @@
 # API Reference
 
-Complete technical reference for FinWiz's APIs, interfaces, and programmatic access points.
+Complete API documentation for FinWiz crews, tools, and schemas.
 
-## Core APIs
+## Crew APIs
 
-### CrewAI Integration
-
-- **[Crews](crews.md)** - AI agent crews for financial analysis
-  - StockCrew - Comprehensive stock analysis
-  - EtfCrew - ETF analysis and evaluation
-  - CryptoCrew - Cryptocurrency analysis
-  - ReportCrew - Report generation and synthesis
-
-- **[Flows](flows.md)** - Orchestration and workflow management
-  - FinwizFlow - Main analysis orchestration
-  - Portfolio analysis workflows
-  - Batch processing flows
-
-### Data and Analysis
-
-- **[Tools](tools.md)** - Analysis tools and data sources
-  - Financial data tools (Yahoo Finance, Alpha Vantage)
-  - Technical analysis tools
-  - Sentiment analysis tools
-  - Validation tools
-
+- **[Crews](crews.md)** - Crew configuration and usage
+- **[Tools](tools.md)** - Tool reference and parameters
 - **[Schemas](schemas.md)** - Data models and validation
-  - Input validation schemas
-  - Analysis result schemas
-  - Portfolio management schemas
-  - Error handling schemas
 
-### Configuration
+## Quick Links
 
-- **[Configuration](configuration.md)** - System configuration and settings
-  - Environment variables
-  - Agent configurations
-  - Task definitions
-  - Tool configurations
+- [Main API Reference](../API_REFERENCE.md)
+- [CLI Commands](../cli_commands.md)
+- [Configuration Reference](../configuration.md)
 
 ## API Categories
 
-### Analysis APIs
+### Analysis Crews
 
-| API | Purpose | Input | Output |
-|-----|---------|-------|--------|
-| Stock Analysis | Analyze individual stocks | Ticker symbol | TenKInsight |
-| ETF Analysis | Analyze ETFs | ETF ticker | ETFFactsheet |
-| Crypto Analysis | Analyze cryptocurrencies | Crypto symbol | CryptoThesis |
-| Portfolio Analysis | Analyze portfolios | Holdings list | PortfolioReview |
+Specialized crews for different asset types:
 
-### Data APIs
+- **Stock Crew API** - Stock analysis and fundamental research
+- **ETF Crew API** - Exchange-traded fund analysis
+- **Crypto Crew API** - Cryptocurrency analysis
+- **Portfolio Rebalancing API** - Portfolio optimization and rebalancing
 
-| API | Purpose | Data Source | Rate Limits |
-|-----|---------|-------------|-------------|
-| Market Data | Real-time prices | Yahoo Finance | 2000/hour |
-| Financial Data | Company fundamentals | Alpha Vantage | 500/day |
-| News & Sentiment | Market sentiment | Serper API | 2500/month |
-| SEC Filings | Regulatory data | SEC EDGAR | No limit |
+### Tool APIs
 
-### Utility APIs
+Essential tools for financial analysis:
 
-| API | Purpose | Use Case |
-|-----|---------|----------|
-| Ticker Validation | Validate symbols | Input sanitization |
-| Risk Assessment | Standardized scoring | Risk evaluation |
-| Report Generation | HTML/PDF reports | Output formatting |
-| Data Export | Multiple formats | Data portability |
+- **Market Screening Tool** - Filter and screen investment opportunities
+- **Sentiment Analysis Tool** - News and social sentiment analysis
+- **Quantitative Analysis Tool** - Technical and quantitative metrics
+- **Backtesting Tool** - Strategy backtesting and validation
 
-## Authentication and Access
+### Schema APIs
 
-### API Keys Required
+Data models and validation schemas:
 
-```python
-# Required environment variables
-OPENAI_API_KEY = "sk-proj-..."      # OpenAI for AI agents
-SERPER_API_KEY = "..."              # Serper for web search
-FIRECRAWL_API_KEY = "..."           # Firecrawl for web scraping
-ALPHA_VANTAGE_API_KEY = "..."       # Alpha Vantage for financial data
-```
+- **Portfolio Schemas** - Portfolio structure and holdings
+- **Analysis Result Schemas** - Analysis output formats
+- **Rebalancing Schemas** - Rebalancing recommendations
+- **Discovery Schemas** - A+ investment discovery results
 
-### Optional API Keys
+## Getting Started
 
-```python
-# Enhanced features (optional)
-TWELVE_DATA_API_KEY = "..."         # Technical analysis
-PPLX_API_KEY = "..."                # Perplexity search
-SEC_API_API_KEY = "..."             # SEC filings (premium)
-CHART_IMG_API_KEY = "..."           # Chart generation
-COINMARKETCAP_API_KEY = "..."       # Crypto data
-```
+New to the FinWiz API? Check out these resources:
 
-## Usage Patterns
+- [Getting Started Tutorial](../../tutorials/getting_started.md)
+- [First Analysis](../../tutorials/first_analysis.md)
+- [API Examples](../API_REFERENCE.md#examples)
 
-### Basic Analysis
+## API Design Principles
 
-```python
-from finwiz.crews.stock_crew import StockCrew
+FinWiz APIs follow these principles:
 
-# Analyze a single stock
-crew = StockCrew()
-result = crew.kickoff(inputs={"ticker": "AAPL"})
-print(result.recommendation)  # BUY, HOLD, or SELL
-```
+- **Pydantic-First**: All data validated with strict schemas
+- **Type-Safe**: Full type hints for IDE autocomplete
+- **Consistent**: Uniform interfaces across all crews
+- **Documented**: Comprehensive docstrings and examples
 
-### Portfolio Analysis
+---
 
-```python
-from finwiz.orchestrators.finwiz_flow import FinwizFlow
-
-# Analyze complete portfolio
-flow = FinwizFlow()
-result = flow.kickoff()
-portfolio_review = flow.state.portfolio_review
-```
-
-### Batch Processing
-
-```python
-from finwiz.tools.batch_processor import BatchProcessor
-
-# Process multiple tickers
-processor = BatchProcessor()
-results = processor.analyze_batch(["AAPL", "GOOGL", "MSFT"])
-```
-
-## Error Handling
-
-### Common Error Types
-
-```python
-from finwiz.exceptions import (
-    InvalidTickerError,
-    APIError,
-    ValidationError,
-    RateLimitError
-)
-
-try:
-    result = analyze_stock("INVALID")
-except InvalidTickerError as e:
-    print(f"Invalid ticker: {e.ticker}")
-except APIError as e:
-    print(f"API error: {e.message}")
-```
-
-### Error Response Format
-
-```json
-{
-  "error": {
-    "type": "ValidationError",
-    "message": "Invalid ticker symbol format",
-    "field": "ticker",
-    "code": "INVALID_FORMAT"
-  }
-}
-```
-
-## Rate Limits and Performance
-
-### API Rate Limits
-
-| Service | Limit | Reset Period |
-|---------|-------|--------------|
-| OpenAI | 20 RPM | 1 minute |
-| Serper | 100/hour | 1 hour |
-| Alpha Vantage | 500/day | 24 hours |
-| Yahoo Finance | 2000/hour | 1 hour |
-
-### Performance Guidelines
-
-- **Batch Processing**: Use for multiple assets
-- **Caching**: Results cached for 1 hour by default
-- **Async Operations**: All I/O operations are asynchronous
-- **Memory Management**: Automatic cleanup for large datasets
-
-## Versioning and Compatibility
-
-### API Versioning
-
-- **Current Version**: v1.0
-- **Backward Compatibility**: Maintained for major versions
-- **Deprecation Policy**: 6-month notice for breaking changes
-
-### Schema Evolution
-
-- **Additive Changes**: New fields added without breaking existing code
-- **Breaking Changes**: Require version bump
-- **Migration Support**: Automatic schema migration tools provided
-
-## Getting Help
-
-### Documentation
-
-- **[Schemas Reference](../schemas/index.md)** - Detailed schema documentation
-- **[Error Codes](../errors.md)** - Complete error reference
-- **[Examples](../../tutorials/index.md)** - Working code examples
-
-### Support
-
-- **GitHub Issues**: Bug reports and feature requests
-- **Discussions**: Community support and questions
-- **Documentation**: Comprehensive guides and references
-
-## Contributing
-
-Interested in contributing to FinWiz APIs? See our:
-
-- **[Developer Guide](../../explanations/DEVELOPER_GUIDE.md)** - Development setup and guidelines
-- **[API Design Principles](../../explanations/design_principles.md)** - Our API design philosophy
-- **[Testing Standards](../../how-to/testing.md)** - How we test our APIs
+*For detailed API documentation, see the sections above or the [complete API reference](../API_REFERENCE.md).*

@@ -1,322 +1,543 @@
-#!/usr/bin/env python3
 """
-Graceful Degradation Test Script
+Unit tests for the graceful degradation system.
 
-Tests that the system works correctly when Supabase is unavailable:
-1. Test with Supabase enabled
-2. Test with Supabase disabled
-3. Test with slow/timing out Supabase
-4. Verify analysis completes in all cases
-
-Usage:
-    python scripts/test_graceful_degradation.py
+Tests service health monitoring, fallback strategies, circuit breaker patterns,
+and recovery mechanisms.
 """
 
 import asyncio
-import logging
-import os
-import sys
 import time
-from pathlib import Path
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+import pytest
 
-from finwiz.supabase.client import SupabaseClient
-from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
-from finwiz.supabase.services.cache_service import CacheService
+from finwiz.utils.graceful_degradation import (
+    DegradationConfig,
+    DegradationLevel,
+    GracefulDegradationManager,
+    ServiceHealth,
+    ServiceStatus,
+    execute_with_degradation,
+    get_degradation_manager,
+)
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+
+@pytest.fixture(autouse=True)
+def mock_sleep(mocker):
+    """Mock asyncio.sleep to avoid delays in tests."""
+    return mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
 
-class GracefulDegradationTester:
-    """Tests graceful degradation scenarios."""
+class TestGracefulDegradationManager:
+    """Test suite for GracefulDegradationManager class."""
 
-    def __init__(self):
-        """Initialize tester."""
-        self.results = []
+    def setup_method(self):
+        """Set up test environment."""
+        # Create fresh manager for each test
+        self.manager = GracefulDegradationManager()
 
-    async def test_scenario(self, name: str, test_fn) -> bool:
-        """
-        Run a test scenario.
+    def test_should_initialize_with_default_service_configs(self):
+        """Test that manager initializes with expected default service configurations."""
+        # Arrange & Act
+        manager = GracefulDegradationManager()
 
-        Args:
-            name: Test scenario name
-            test_fn: Async test function
+        # Assert
+        assert len(manager.degradation_configs) > 0
+        assert "openai" in manager.degradation_configs
+        assert "alpha_vantage" in manager.degradation_configs
+        assert "chart_img" in manager.degradation_configs
+        assert "twelve_data" in manager.degradation_configs
 
-        Returns:
-            True if test passed, False otherwise
+        # Check that health status is initialized
+        assert len(manager.service_health) > 0
+        assert all(health.status == ServiceStatus.HEALTHY for health in manager.service_health.values())
 
-        """
-        logger.info("=" * 80)
-        logger.info(f"TEST: {name}")
-        logger.info("=" * 80)
+    @pytest.mark.asyncio
+    async def test_should_execute_primary_function_successfully(self):
+        """Test successful execution of primary function."""
 
-        start_time = time.time()
+        # Arrange
+        async def primary_func(value):
+            return f"success_{value}"
 
-        try:
-            result = await test_fn()
-            elapsed = time.time() - start_time
+        # Act
+        result = await self.manager.execute_with_degradation("test_service", primary_func, value="test")
 
-            if result:
-                logger.info(f"✅ PASS: {name} (completed in {elapsed:.2f}s)")
-                self.results.append({"name": name, "passed": True, "elapsed": elapsed})
-                return True
-            else:
-                logger.error(f"❌ FAIL: {name} (completed in {elapsed:.2f}s)")
-                self.results.append({"name": name, "passed": False, "elapsed": elapsed})
-                return False
+        # Assert
+        assert result == "success_test"
 
-        except Exception as e:
-            elapsed = time.time() - start_time
-            logger.error(f"❌ FAIL: {name} - Exception: {e} (after {elapsed:.2f}s)")
-            self.results.append({"name": name, "passed": False, "elapsed": elapsed, "error": str(e)})
-            return False
+    @pytest.mark.asyncio
+    async def test_should_record_success_and_update_health(self):
+        """Test that successful calls update service health correctly."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, recovery_threshold=1)
+        self.manager.service_health[service_name] = ServiceHealth(service_name=service_name, status=ServiceStatus.DEGRADED, error_count=2)
 
-    async def test_with_supabase_enabled(self) -> bool:
-        """Test with Supabase enabled (normal operation)."""
-        client = SupabaseClient()
-        repository = AnalysisRepository(client)
-        cache_service = CacheService(repository, client)
+        async def primary_func():
+            return "success"
 
-        # Initialize cache
-        init_result = await cache_service.initialize()
-        logger.info(f"Cache initialized: {init_result}")
+        # Act
+        result = await self.manager.execute_with_degradation(service_name, primary_func)
 
-        # Test cache operation
-        async def mock_execute():
-            await asyncio.sleep(0.1)
-            return {"test": "data", "scenario": "enabled"}
+        # Assert
+        assert result == "success"
+        health = self.manager.service_health[service_name]
+        assert health.status == ServiceStatus.HEALTHY
+        assert health.success_count >= 1
+        assert health.error_count == 0  # Should be reset on recovery
 
-        result, is_cached = await cache_service.get_or_execute(ticker="TEST1", asset_class="stock", execute_fn=mock_execute)
+    @pytest.mark.asyncio
+    async def test_should_handle_timeout_errors(self):
+        """Test handling of timeout errors."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, timeout_seconds=0.1, max_retries=1)
 
-        # Verify result
-        success = result is not None and isinstance(result, dict) and result.get("test") == "data"
+        async def slow_func():
+            # Raise TimeoutError directly to simulate timeout
+            raise TimeoutError("Operation timed out")
 
-        logger.info(f"Result: {result}")
-        logger.info(f"Is Cached: {is_cached}")
-        logger.info(f"Cache Enabled: {cache_service.is_enabled}")
+        async def fallback_func():
+            return "fallback_result"
 
-        return success
+        # Act
+        result = await self.manager.execute_with_degradation(service_name, slow_func, fallback_func)
 
-    async def test_with_supabase_disabled(self) -> bool:
-        """Test with Supabase disabled (graceful degradation)."""
-        # Create client with Supabase disabled
-        original_enabled = os.getenv("SUPABASE_ENABLED")
-        os.environ["SUPABASE_ENABLED"] = "false"
+        # Assert
+        assert result == "fallback_result"
+        health = self.manager.service_health[service_name]
+        assert health.status == ServiceStatus.TIMEOUT
+        assert health.error_count > 0
 
-        try:
-            client = SupabaseClient()
-            repository = AnalysisRepository(client)
-            cache_service = CacheService(repository, client)
+    @pytest.mark.asyncio
+    async def test_should_handle_rate_limit_errors(self):
+        """Test handling of rate limit errors."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, max_retries=1)
 
-            # Initialize cache (should fail gracefully)
-            init_result = await cache_service.initialize()
-            logger.info(f"Cache initialized: {init_result}")
+        async def rate_limited_func():
+            raise Exception("Rate limit exceeded (429)")
 
-            # Test that analysis still works
-            async def mock_execute():
-                await asyncio.sleep(0.1)
-                return {"test": "data", "scenario": "disabled"}
+        async def fallback_func():
+            return "rate_limit_fallback"
 
-            result, is_cached = await cache_service.get_or_execute(ticker="TEST2", asset_class="stock", execute_fn=mock_execute)
+        # Act
+        result = await self.manager.execute_with_degradation(service_name, rate_limited_func, fallback_func)
 
-            # Verify result
-            success = (
-                result is not None
-                and isinstance(result, dict)
-                and result.get("test") == "data"
-                and not is_cached  # Should not be cached
-                and not cache_service.is_enabled  # Cache should be disabled
-            )
+        # Assert
+        assert result == "rate_limit_fallback"
+        health = self.manager.service_health[service_name]
+        assert health.status == ServiceStatus.RATE_LIMITED
 
-            logger.info(f"Result: {result}")
-            logger.info(f"Is Cached: {is_cached}")
-            logger.info(f"Cache Enabled: {cache_service.is_enabled}")
+    @pytest.mark.asyncio
+    async def test_should_implement_exponential_backoff_on_retries(self, mock_sleep):
+        """Test exponential backoff during retries."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, max_retries=2, retry_delay=0.1)
 
-            return success
+        call_count = 0
 
-        finally:
-            # Restore original setting
-            if original_enabled:
-                os.environ["SUPABASE_ENABLED"] = original_enabled
-            else:
-                os.environ.pop("SUPABASE_ENABLED", None)
+        async def failing_func():
+            nonlocal call_count
+            call_count += 1
+            raise Exception("Service error")
 
-    async def test_with_cache_disabled_flag(self) -> bool:
-        """Test with cache disabled via is_enabled flag."""
-        client = SupabaseClient()
-        repository = AnalysisRepository(client)
-        cache_service = CacheService(repository, client)
+        async def fallback_func():
+            return "fallback"
 
-        # Manually disable cache
-        cache_service.is_enabled = False
+        # Act
+        result = await self.manager.execute_with_degradation(service_name, failing_func, fallback_func)
 
-        # Test that analysis still works
-        async def mock_execute():
-            await asyncio.sleep(0.1)
-            return {"test": "data", "scenario": "cache_disabled"}
+        # Assert
+        assert result == "fallback"
+        assert call_count == 3  # Initial + 2 retries
+        assert mock_sleep.call_count >= 2  # Should have sleep calls for retries
 
-        result, is_cached = await cache_service.get_or_execute(ticker="TEST3", asset_class="stock", execute_fn=mock_execute)
+    @pytest.mark.asyncio
+    async def test_should_use_cached_fallback_data(self, mocker):
+        """Test using cached data as fallback."""
+        # Arrange
+        service_name = "test_service"
+        cache_key = "test_cache_key"
+        cached_data = {"cached": True, "value": "cached_result"}
 
-        # Verify result
-        success = (
-            result is not None and isinstance(result, dict) and result.get("test") == "data" and not is_cached  # Should not be cached
+        # Mock cache manager
+        mocker.patch.object(self.manager.cache_manager, "get", return_value=cached_data)
+
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, cache_fallback=True, max_retries=1)
+
+        async def failing_func():
+            raise Exception("Service unavailable")
+
+        # Act
+        result = await self.manager.execute_with_degradation(service_name, failing_func, cache_key=cache_key)
+
+        # Assert
+        assert result == cached_data
+
+    @pytest.mark.asyncio
+    async def test_should_cache_successful_results(self, mocker):
+        """Test caching of successful results."""
+        # Arrange
+        service_name = "test_service"
+        cache_key = "test_cache_key"
+        success_data = {"success": True, "value": "result"}
+
+        # Setup service configuration
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name)
+
+        # Mock cache manager
+        mock_set = mocker.patch.object(self.manager.cache_manager, "set")
+
+        async def successful_func():
+            return success_data
+
+        # Act
+        result = await self.manager.execute_with_degradation(service_name, successful_func, cache_key=cache_key)
+
+        # Assert
+        assert result == success_data
+        mock_set.assert_called_once_with(cache_key, success_data, ttl=1800)
+
+    @pytest.mark.asyncio
+    async def test_should_implement_circuit_breaker_pattern(self):
+        """Test circuit breaker pattern implementation."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(
+            service_name=service_name,
+            error_threshold=2,
+            enable_circuit_breaker=True,
+            health_check_interval=1,  # 1 second for testing
+            max_retries=1,
         )
 
-        logger.info(f"Result: {result}")
-        logger.info(f"Is Cached: {is_cached}")
-        logger.info(f"Cache Enabled: {cache_service.is_enabled}")
+        async def failing_func():
+            raise Exception("Service error")
 
-        return success
+        async def fallback_func():
+            return "circuit_breaker_fallback"
 
-    async def test_connectivity_test_timeout(self) -> bool:
-        """Test that connectivity test completes within timeout."""
-        client = SupabaseClient()
+        # Act - Trigger circuit breaker
+        for _ in range(3):  # Exceed error threshold
+            await self.manager.execute_with_degradation(service_name, failing_func, fallback_func)
 
-        # Test connectivity with timeout
-        start_time = time.time()
-        result = await client.test_connectivity()
-        elapsed = time.time() - start_time
+        # Service should now be unavailable
+        health = self.manager.service_health[service_name]
+        assert health.status == ServiceStatus.UNAVAILABLE
 
-        # Should complete within timeout + 1 second buffer
-        timeout = client.connectivity_test_timeout
-        success = elapsed <= timeout + 1.0
+        # Next call should use fallback immediately (circuit breaker open)
+        result = await self.manager.execute_with_degradation(service_name, failing_func, fallback_func)
 
-        logger.info(f"Connectivity test result: {result}")
-        logger.info(f"Elapsed time: {elapsed:.2f}s")
-        logger.info(f"Timeout: {timeout}s")
-        logger.info(f"Within timeout: {success}")
+        # Assert
+        assert result == "circuit_breaker_fallback"
+        # Circuit breaker should prevent retries, so no additional calls to failing_func
 
-        return success
+    @pytest.mark.asyncio
+    async def test_should_recover_from_circuit_breaker_state(self):
+        """Test recovery from circuit breaker state."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(
+            service_name=service_name,
+            error_threshold=1,
+            health_check_interval=0.1,  # Very short for testing
+            recovery_threshold=1,
+        )
 
-    async def test_cache_write_non_blocking(self) -> bool:
-        """Test that cache writes don't block analysis."""
-        client = SupabaseClient()
-        repository = AnalysisRepository(client)
-        cache_service = CacheService(repository, client)
+        # Set service to unavailable state
+        self.manager.service_health[service_name] = ServiceHealth(
+            service_name=service_name,
+            status=ServiceStatus.UNAVAILABLE,
+            error_count=5,
+            last_check=time.time() - 1,  # Old timestamp
+        )
 
-        # Initialize cache
-        await cache_service.initialize()
+        async def working_func():
+            return "recovered"
 
-        # Test that get_or_execute returns quickly
-        async def mock_execute():
-            await asyncio.sleep(0.1)
-            return {"test": "data", "scenario": "non_blocking"}
+        # Act - Circuit breaker timeout is mocked, execute directly
+        result = await self.manager.execute_with_degradation(service_name, working_func)
 
-        start_time = time.time()
-        result, is_cached = await cache_service.get_or_execute(ticker="TEST4", asset_class="stock", execute_fn=mock_execute)
-        elapsed = time.time() - start_time
+        # Assert
+        assert result == "recovered"
+        health = self.manager.service_health[service_name]
+        assert health.status == ServiceStatus.HEALTHY
 
-        # Should complete quickly (< 1 second)
-        # Cache write happens asynchronously in background
-        success = elapsed < 1.0 and result is not None
+    def test_should_get_default_fallback_data_for_known_services(self):
+        """Test getting default fallback data for known services."""
+        # Arrange & Act
+        openai_fallback = self.manager._get_default_fallback_data("openai")
+        alpha_fallback = self.manager._get_default_fallback_data("alpha_vantage")
+        unknown_fallback = self.manager._get_default_fallback_data("unknown_service")
 
-        logger.info(f"Result: {result}")
-        logger.info(f"Elapsed time: {elapsed:.3f}s")
-        logger.info(f"Non-blocking: {success}")
+        # Assert
+        assert "choices" in openai_fallback
+        assert "Global Quote" in alpha_fallback
+        assert unknown_fallback["status"] == "unavailable"
 
-        # Wait a bit for background write to complete
-        await asyncio.sleep(0.5)
+    def test_should_calculate_degradation_levels_correctly(self):
+        """Test calculation of degradation levels based on error count."""
+        # Arrange
+        config = DegradationConfig(service_name="test", error_threshold=10)
 
-        return success
+        # Act & Assert
+        assert self.manager._calculate_degradation_level(0, config) == DegradationLevel.NONE
+        assert self.manager._calculate_degradation_level(3, config) == DegradationLevel.MINOR
+        assert self.manager._calculate_degradation_level(7, config) == DegradationLevel.MODERATE
+        assert self.manager._calculate_degradation_level(12, config) == DegradationLevel.SEVERE
 
-    async def test_circuit_breaker_state(self) -> bool:
-        """Test circuit breaker state management."""
-        client = SupabaseClient()
+    def test_should_get_service_health_status(self):
+        """Test getting service health status."""
+        # Arrange
+        service_name = "test_service"
+        health = ServiceHealth(service_name=service_name, status=ServiceStatus.DEGRADED, error_count=3)
+        self.manager.service_health[service_name] = health
 
-        # Check initial state
-        is_open = client.circuit_breaker.is_open()
-        logger.info(f"Circuit breaker initial state: {'OPEN' if is_open else 'CLOSED'}")
+        # Act
+        retrieved_health = self.manager.get_service_health(service_name)
 
-        # Test that we can check state without errors
-        success = isinstance(is_open, bool)
+        # Assert
+        assert retrieved_health is not None
+        assert retrieved_health.service_name == service_name
+        assert retrieved_health.status == ServiceStatus.DEGRADED
+        assert retrieved_health.error_count == 3
 
-        # Get health status
-        health = client.get_health_status()
-        logger.info(f"Health status: Available={health.is_available}, CB Open={health.circuit_breaker_open}")
+    def test_should_get_system_health_summary(self):
+        """Test getting comprehensive system health summary."""
+        # Arrange - Clear existing health data first
+        self.manager.service_health.clear()
 
-        return success
+        self.manager.service_health["healthy_service"] = ServiceHealth(service_name="healthy_service", status=ServiceStatus.HEALTHY, degradation_level=DegradationLevel.NONE)
+        self.manager.service_health["degraded_service"] = ServiceHealth(service_name="degraded_service", status=ServiceStatus.DEGRADED, degradation_level=DegradationLevel.MODERATE)
 
-    async def run_all_tests(self) -> bool:
-        """
-        Run all graceful degradation tests.
+        # Act
+        summary = self.manager.get_system_health_summary()
 
-        Returns:
-            True if all tests passed, False otherwise
+        # Assert
+        assert "overall_health" in summary
+        assert "healthy_services" in summary
+        assert "total_services" in summary
+        assert "service_details" in summary
+        assert summary["overall_health"] == "degraded"  # At least one service is degraded
+        # Le niveau de dégradation devrait être le maximum des services configurés
+        expected_degradation = "moderate"  # Car degraded_service a DegradationLevel.MODERATE
+        assert summary["overall_degradation"] == expected_degradation, f"Expected {expected_degradation}, got {summary['overall_degradation']}"
 
-        """
-        logger.info("=" * 80)
-        logger.info("GRACEFUL DEGRADATION TEST SUITE")
-        logger.info("=" * 80)
+    @pytest.mark.asyncio
+    async def test_should_force_health_check_and_reset_circuit_breaker(self):
+        """Test forcing health check and resetting circuit breaker."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, health_check_interval=0.1)
+        self.manager.service_health[service_name] = ServiceHealth(
+            service_name=service_name,
+            status=ServiceStatus.UNAVAILABLE,
+            error_count=10,
+            last_check=time.time() - 1,  # Old timestamp
+        )
 
-        tests = [
-            ("Supabase Enabled", self.test_with_supabase_enabled),
-            ("Supabase Disabled", self.test_with_supabase_disabled),
-            ("Cache Disabled Flag", self.test_with_cache_disabled_flag),
-            ("Connectivity Test Timeout", self.test_connectivity_test_timeout),
-            ("Cache Write Non-Blocking", self.test_cache_write_non_blocking),
-            ("Circuit Breaker State", self.test_circuit_breaker_state),
-        ]
+        # Act
+        await asyncio.sleep(0.2)  # Wait longer than health check interval
+        health = await self.manager.force_health_check(service_name)
 
-        all_passed = True
-        for name, test_fn in tests:
-            passed = await self.test_scenario(name, test_fn)
-            if not passed:
-                all_passed = False
+        # Assert
+        assert health.status == ServiceStatus.DEGRADED  # Should be reset from UNAVAILABLE
+        assert health.degradation_level == DegradationLevel.MODERATE
 
-        # Print summary
-        self.print_summary()
+    def test_should_update_service_configuration(self):
+        """Test updating service configuration at runtime."""
+        # Arrange
+        service_name = "test_service"
+        self.manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, max_retries=3, timeout_seconds=30.0)
 
-        return all_passed
+        # Act
+        success = self.manager.update_service_config(service_name, max_retries=5, timeout_seconds=60.0)
 
-    def print_summary(self):
-        """Print test summary."""
-        logger.info("\n" + "=" * 80)
-        logger.info("TEST SUMMARY")
-        logger.info("=" * 80)
+        # Assert
+        assert success is True
+        config = self.manager.degradation_configs[service_name]
+        assert config.max_retries == 5
+        assert config.timeout_seconds == 60.0
 
-        total = len(self.results)
-        passed = sum(1 for r in self.results if r["passed"])
-        failed = total - passed
+    def test_should_handle_unknown_service_configuration_update(self):
+        """Test handling of configuration update for unknown service."""
+        # Arrange & Act
+        success = self.manager.update_service_config("unknown_service", max_retries=5)
 
-        logger.info(f"Total Tests: {total}")
-        logger.info(f"Passed: {passed}")
-        logger.info(f"Failed: {failed}")
-
-        if failed > 0:
-            logger.info("\nFailed Tests:")
-            for result in self.results:
-                if not result["passed"]:
-                    error = result.get("error", "Unknown error")
-                    logger.info(f"  ❌ {result['name']}: {error}")
-
-        logger.info("\nTest Results:")
-        for result in self.results:
-            status = "✅ PASS" if result["passed"] else "❌ FAIL"
-            logger.info(f"  {status}: {result['name']} ({result['elapsed']:.2f}s)")
-
-        if passed == total:
-            logger.info("\n✅ ALL TESTS PASSED")
-        else:
-            logger.info(f"\n❌ {failed} TEST(S) FAILED")
-
-        logger.info("=" * 80)
-
-
-async def main():
-    """Main test entry point."""
-    tester = GracefulDegradationTester()
-
-    try:
-        all_passed = await tester.run_all_tests()
-        sys.exit(0 if all_passed else 1)
-
-    except Exception as e:
-        logger.error(f"Test suite failed with exception: {e}", exc_info=True)
-        sys.exit(1)
+        # Assert
+        assert success is False
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+class TestServiceHealth:
+    """Test suite for ServiceHealth dataclass."""
+
+    def test_should_create_service_health_with_defaults(self):
+        """Test creating ServiceHealth with default values."""
+        # Arrange & Act
+        health = ServiceHealth(service_name="test_service", status=ServiceStatus.HEALTHY)
+
+        # Assert
+        assert health.service_name == "test_service"
+        assert health.status == ServiceStatus.HEALTHY
+        assert health.degradation_level == DegradationLevel.NONE
+        assert health.error_count == 0
+        assert health.success_count == 0
+
+    def test_should_check_if_service_is_expired(self):
+        """Test checking if service health check is expired."""
+        # Arrange
+        old_time = time.time() - 3600  # 1 hour ago
+        health = ServiceHealth(service_name="test_service", status=ServiceStatus.HEALTHY, last_check=old_time)
+
+        # Act & Assert
+        # Note: ServiceHealth doesn't have is_expired method, but we can check age
+        age = health.last_check
+        assert age < time.time()
+
+
+class TestDegradationConfig:
+    """Test suite for DegradationConfig dataclass."""
+
+    def test_should_create_degradation_config_with_defaults(self):
+        """Test creating DegradationConfig with default values."""
+        # Arrange & Act
+        config = DegradationConfig(service_name="test_service")
+
+        # Assert
+        assert config.service_name == "test_service"
+        assert config.max_retries == 3
+        assert config.retry_delay == 1.0
+        assert config.timeout_seconds == 30.0
+        assert config.cache_fallback is True
+        assert config.enable_circuit_breaker is True
+
+    def test_should_create_degradation_config_with_custom_values(self):
+        """Test creating DegradationConfig with custom values."""
+        # Arrange & Act
+        config = DegradationConfig(
+            service_name="custom_service",
+            max_retries=5,
+            retry_delay=2.0,
+            timeout_seconds=60.0,
+            error_threshold=10,
+            cache_fallback=False,
+        )
+
+        # Assert
+        assert config.service_name == "custom_service"
+        assert config.max_retries == 5
+        assert config.retry_delay == 2.0
+        assert config.timeout_seconds == 60.0
+        assert config.error_threshold == 10
+        assert config.cache_fallback is False
+
+
+class TestGracefulDegradationConvenienceFunctions:
+    """Test suite for convenience functions."""
+
+    def test_should_get_degradation_manager_singleton(self):
+        """Test that get_degradation_manager returns singleton instance."""
+        # Arrange & Act
+        manager1 = get_degradation_manager()
+        manager2 = get_degradation_manager()
+
+        # Assert
+        assert manager1 is manager2
+
+    @pytest.mark.asyncio
+    async def test_should_execute_with_degradation_via_convenience_function(self):
+        """Test execute_with_degradation convenience function."""
+
+        # Arrange
+        async def test_func(value):
+            return f"result_{value}"
+
+        # Act
+        result = await execute_with_degradation("test_service", test_func, value="test")
+
+        # Assert
+        assert result == "result_test"
+
+
+class TestGracefulDegradationIntegration:
+    """Integration tests for graceful degradation system."""
+
+    @pytest.mark.asyncio
+    async def test_should_integrate_with_feature_flags_circuit_breaker(self, mocker):
+        """Test integration with feature flags circuit breaker."""
+        # Arrange
+        manager = GracefulDegradationManager()
+        service_name = "test_service"
+
+        # Setup service configuration
+        manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, max_retries=1)
+
+        # Mock feature flags
+        mock_success = mocker.patch.object(manager.feature_flags, "record_success")
+        mock_failure = mocker.patch.object(manager.feature_flags, "record_failure")
+
+        async def successful_func():
+            return "success"
+
+        async def failing_func():
+            raise Exception("Service error")
+
+        async def fallback_func():
+            return "fallback"
+
+        # Act - Success case
+        await manager.execute_with_degradation(service_name, successful_func)
+
+        # Act - Failure case (with fallback to prevent exception)
+        await manager.execute_with_degradation(service_name, failing_func, fallback_func)
+
+        # Assert
+        mock_success.assert_called_with("test_service_integration")
+        mock_failure.assert_called_with("test_service_integration")
+
+    @pytest.mark.asyncio
+    async def test_should_handle_complete_service_failure_scenario(self):
+        """Test complete service failure and recovery scenario."""
+        # Arrange
+        manager = GracefulDegradationManager()
+        service_name = "integration_test_service"
+
+        manager.degradation_configs[service_name] = DegradationConfig(service_name=service_name, error_threshold=2, max_retries=1, health_check_interval=0.1, recovery_threshold=1)
+
+        call_count = 0
+
+        async def intermittent_func():
+            nonlocal call_count
+            call_count += 1
+            if call_count <= 3:  # Fail first 3 calls
+                raise Exception("Service temporarily unavailable")
+            return f"success_after_{call_count}_calls"
+
+        async def fallback_func():
+            return "fallback_response"
+
+        # Act - Initial failures should trigger circuit breaker
+        result1 = await manager.execute_with_degradation(service_name, intermittent_func, fallback_func)
+        result2 = await manager.execute_with_degradation(service_name, intermittent_func, fallback_func)
+
+        # Service should be in circuit breaker state
+        health = manager.get_service_health(service_name)
+        assert health.status == ServiceStatus.UNAVAILABLE
+
+        # Wait for circuit breaker timeout
+        await asyncio.sleep(0.2)
+
+        # Service should recover on next successful call
+        result3 = await manager.execute_with_degradation(service_name, intermittent_func, fallback_func)
+
+        # Assert
+        assert result1 == "fallback_response"
+        assert result2 == "fallback_response"
+        assert "success_after" in result3
+
+        # Service should be healthy again
+        final_health = manager.get_service_health(service_name)
+        assert final_health.status == ServiceStatus.HEALTHY

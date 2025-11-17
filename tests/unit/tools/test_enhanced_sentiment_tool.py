@@ -58,7 +58,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sonar_articles": [],
                 "combined_count": 1,
                 "sonar_fallback_used": False,
-            }
+            },
         )
 
         # Mock filter methods to return the articles
@@ -73,7 +73,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "providerPublishTime": datetime.datetime.now().timestamp(),
                     "summary": "Company reports strong growth and positive outlook",
                 }
-            ]
+            ],
         )
         mocker.patch.object(self.tool.data_sources, "filter_sonar_articles_by_date", return_value=[])
         mocker.patch.object(
@@ -87,7 +87,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "providerPublishTime": datetime.datetime.now().timestamp(),
                     "summary": "Company reports strong growth and positive outlook",
                 }
-            ]
+            ],
         )
 
         # Mock sentiment analysis
@@ -99,7 +99,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sentiment_score": 0.5,
                 "confidence": 0.8,
                 "sentiment_distribution": {"bullish": 1, "neutral": 0, "bearish": 0},
-            }
+            },
         )
 
         # Mock trending topics
@@ -118,7 +118,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "sentiment": "bullish",
                     "impact_score": 0.8,
                 }
-            ]
+            ],
         )
 
         # Mock market outlook
@@ -157,7 +157,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sonar_articles": [],
                 "combined_count": 1,
                 "sonar_fallback_used": False,
-            }
+            },
         )
 
         # Mock filter methods
@@ -173,7 +173,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "summary": "Technology ETF attracts investor interest with sector rotation",
                     "sentiment": "bullish",
                 }
-            ]
+            ],
         )
         mocker.patch.object(self.tool.data_sources, "filter_sonar_articles_by_date", return_value=[])
         mocker.patch.object(
@@ -188,7 +188,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "summary": "Technology ETF attracts investor interest with sector rotation",
                     "sentiment": "bullish",
                 }
-            ]
+            ],
         )
 
         # Mock sentiment analysis
@@ -200,7 +200,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sentiment_score": 0.5,
                 "confidence": 0.8,
                 "sentiment_distribution": {"bullish": 1, "neutral": 0, "bearish": 0},
-            }
+            },
         )
 
         # Mock trending topics
@@ -219,7 +219,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "sentiment": "bullish",
                     "impact_score": 0.8,
                 }
-            ]
+            ],
         )
 
         # Mock market outlook
@@ -256,7 +256,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sonar_articles": [],
                 "combined_count": 1,
                 "sonar_fallback_used": False,
-            }
+            },
         )
 
         # Mock filter methods
@@ -272,7 +272,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "summary": "Cryptocurrency gains momentum with growing institutional interest",
                     "sentiment": "bullish",
                 }
-            ]
+            ],
         )
         mocker.patch.object(self.tool.data_sources, "filter_sonar_articles_by_date", return_value=[])
         mocker.patch.object(
@@ -287,7 +287,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "summary": "Cryptocurrency gains momentum with growing institutional interest",
                     "sentiment": "bullish",
                 }
-            ]
+            ],
         )
 
         # Mock sentiment analysis
@@ -299,7 +299,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sentiment_score": 0.5,
                 "confidence": 0.8,
                 "sentiment_distribution": {"bullish": 1, "neutral": 0, "bearish": 0},
-            }
+            },
         )
 
         # Mock trending topics
@@ -318,7 +318,7 @@ class TestEnhancedSentimentAnalysisTool:
                     "sentiment": "bullish",
                     "impact_score": 0.8,
                 }
-            ]
+            ],
         )
 
         # Mock market outlook
@@ -347,7 +347,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sonar_articles": [],
                 "combined_count": 0,
                 "sonar_fallback_used": False,
-            }
+            },
         )
 
         result = self.tool._run("UNKNOWN", "stock", 7, 10)
@@ -377,7 +377,7 @@ class TestEnhancedSentimentAnalysisTool:
                 "sonar_articles": [],
                 "combined_count": 1,
                 "sonar_fallback_used": False,
-            }
+            },
         )
 
         # Mock filter methods to return empty (articles are too old)

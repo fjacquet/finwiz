@@ -173,7 +173,7 @@ class TestTradeRecommendationSystem:
             deviation=-0.1,
             tolerance_band=0.05,
             urgency_score=0.8,
-                needs_rebalancing=True,
+            needs_rebalancing=True,
         )
 
         # Use higher capital config to avoid validation errors
@@ -541,7 +541,7 @@ class TestTradeRecommendationSystem:
             deviation=-0.001,  # Tiny deviation
             tolerance_band=0.05,  # Force it to be considered
             urgency_score=0.5,
-                needs_rebalancing=True,
+            needs_rebalancing=True,
         )
 
         prices = {"AAPL": 150.0}

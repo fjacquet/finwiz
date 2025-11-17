@@ -172,10 +172,10 @@ class TestStockCrew:
         # Mock the Crew.kickoff method to avoid actual LLM calls
         mock_result = mocker.MagicMock()
         mock_result.raw = "Mock stock analysis result with BUY recommendation"
-        
+
         # Configure the existing mock crew instance from fixture
         stock_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on stock_crew to use the crew
         stock_crew.kickoff = lambda inputs: stock_crew.crew().kickoff(inputs=inputs)
 
@@ -190,7 +190,7 @@ class TestStockCrew:
 
         # Configure the existing mock crew instance to raise an error
         stock_crew.crew.return_value.kickoff.side_effect = ValueError("Missing required inputs")
-        
+
         # Mock the kickoff method on stock_crew to use the crew
         stock_crew.kickoff = lambda inputs: stock_crew.crew().kickoff(inputs=inputs)
 
@@ -237,10 +237,10 @@ class TestStockCrew:
         # Create a mock result
         mock_result = mocker.MagicMock()
         mock_result.raw = "Analysis completed with limited data due to tool failures"
-        
+
         # Configure the existing mock crew instance from fixture
         stock_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on stock_crew to use the crew
         stock_crew.kickoff = lambda inputs: stock_crew.crew().kickoff(inputs=inputs)
 
@@ -280,10 +280,10 @@ class TestStockCrew:
         # Create a mock result
         mock_result = mocker.MagicMock()
         mock_result.raw = "Analyse des actions en français"
-        
+
         # Configure the existing mock crew instance from fixture
         stock_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on stock_crew to use the crew
         stock_crew.kickoff = lambda inputs: stock_crew.crew().kickoff(inputs=inputs)
 
@@ -296,7 +296,7 @@ class TestStockCrew:
         # Create a new mock result for English
         mock_result_en = mocker.MagicMock()
         mock_result_en.raw = "Stock analysis in English"
-        
+
         # Update the mock crew instance return value
         stock_crew.crew.return_value.kickoff.return_value = mock_result_en
 

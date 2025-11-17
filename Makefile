@@ -14,6 +14,7 @@ help:
 	@echo "  make dev         - Run FinWiz application"
 	@echo "  make test        - Run unit tests only"
 	@echo "  make test-all    - Run all tests including integration"
+	@echo "  make test-failures - Analyze and report all test failures"
 	@echo "  make lint        - Run linting checks"
 	@echo "  make format      - Format code with ruff"
 	@echo ""
@@ -108,6 +109,14 @@ coverage-report:
 	else \
 		echo "Please open htmlcov/index.html manually"; \
 	fi
+
+test-failures:
+	@echo "🔍 Analyzing test failures..."
+	@python scripts/analyze_test_failures.py
+	@echo ""
+	@echo "📄 Reports generated:"
+	@echo "  - TEST_FAILURES.txt (human-readable)"
+	@echo "  - test_failures.json (machine-readable)"
 
 coverage-check:
 	@echo "🔍 Checking test coverage..."

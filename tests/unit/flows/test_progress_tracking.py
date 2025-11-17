@@ -119,7 +119,7 @@ class TestProgressTracking:
     def test_should_update_last_checkpoint_time_when_called(self, flow_instance):
         """Test that last checkpoint time is updated to current time."""
         # Arrange
-        old_checkpoint = datetime.now() - timedelta(minutes=5)
+        old_checkpoint = (datetime.now() - timedelta(minutes=5)).isoformat()
         flow_instance.state.last_checkpoint_time = old_checkpoint
         flow_instance.state.holdings_processed = 5
         flow_instance.state.holdings_remaining = 5
@@ -131,8 +131,10 @@ class TestProgressTracking:
 
         # Assert
         assert flow_instance.state.last_checkpoint_time is not None
-        assert before_call <= flow_instance.state.last_checkpoint_time <= after_call
-        assert flow_instance.state.last_checkpoint_time > old_checkpoint
+        # Parse ISO format string back to datetime for comparison
+        checkpoint_dt = datetime.fromisoformat(flow_instance.state.last_checkpoint_time)
+        assert before_call <= checkpoint_dt <= after_call
+        assert checkpoint_dt > datetime.fromisoformat(old_checkpoint)
 
     def test_should_handle_zero_total_holdings_gracefully(self, flow_instance):
         """Test that method handles edge case of zero total holdings."""

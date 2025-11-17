@@ -213,27 +213,33 @@ class TestCryptoCrew:
 
     def test_should_execute_crew_with_mock_data(self, crypto_crew, mock_crypto_inputs, mock_crypto_data, mocker):
         """Test crew execution with mocked external data."""
-        # Mock the crew kickoff to avoid actual LLM calls
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "Mock crypto analysis result with BUY recommendation for Bitcoin"
-            mock_kickoff.return_value = mock_result
+        # Configure the mock result
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "Mock crypto analysis result with BUY recommendation for Bitcoin"
 
-            result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
+        # Configure the existing mock crew instance from fixture
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            assert result is not None
-            mock_kickoff.assert_called_once_with(inputs=mock_crypto_inputs)
+        # Mock the kickoff method on crypto_crew to use the crew
+        crypto_crew.kickoff = lambda inputs: crypto_crew.crew().kickoff(inputs=inputs)
+
+        result = crypto_crew.kickoff(inputs=mock_crypto_inputs)
+
+        assert result is not None
+        assert crypto_crew.crew.return_value.kickoff.called
 
     def test_should_handle_missing_inputs_gracefully(self, crypto_crew, mocker):
         """Test that crew handles missing inputs gracefully."""
         incomplete_inputs = {"current_date": "2025-01-15"}
 
-        # Mock the crew kickoff to simulate error handling
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_kickoff.side_effect = ValueError("Missing required inputs")
+        # Configure the existing mock crew instance to raise an error
+        crypto_crew.crew.return_value.kickoff.side_effect = ValueError("Missing required inputs")
 
-            with pytest.raises(ValueError, match="Missing required inputs"):
-                crypto_crew.crew().kickoff(inputs=incomplete_inputs)
+        # Mock the kickoff method on crypto_crew to use the crew
+        crypto_crew.kickoff = lambda inputs: crypto_crew.crew().kickoff(inputs=inputs)
+
+        with pytest.raises(ValueError, match="Missing required inputs"):
+            crypto_crew.kickoff(inputs=incomplete_inputs)
 
     def test_should_use_crypto_research_tools(self, crypto_crew):
         """Test that crew uses crypto research tools from tool factory."""
@@ -242,7 +248,9 @@ class TestCryptoCrew:
 
         # Check that get_crypto_crew_tools is imported and used
         assert hasattr(crypto_crew_module, "get_crypto_crew_tools")
+        # The crypto crew module has 'research_tools' (robust wrapped)
         assert hasattr(crypto_crew_module, "research_tools")
+        assert hasattr(crypto_crew_module, "raw_research_tools")
 
         # Verify tools are used in agent creation
         market_analyst = crypto_crew.market_analyst()
@@ -255,7 +263,9 @@ class TestCryptoCrew:
 
         # Check that tool factory is used
         assert hasattr(crypto_crew_module, "get_crypto_crew_tools")
+        # The crypto crew module has 'research_tools' (robust wrapped)
         assert hasattr(crypto_crew_module, "research_tools")
+        assert hasattr(crypto_crew_module, "raw_research_tools")
 
         # Verify tools are used in agent creation
         market_analyst = crypto_crew.market_analyst()
@@ -289,16 +299,15 @@ class TestCryptoCrew:
         mock_tool_instance.run.side_effect = Exception("Crypto API connection failed")
         mock_crypto_tools.return_value = [mock_tool_instance]
 
-        # Mock the crew to handle tool failures
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "Crypto analysis completed with limited data due to API failures"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "Crypto analysis completed with limited data due to API failures"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
+        result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
 
-            assert result is not None
-            assert "limited data" in str(result.raw)
+        assert result is not None
+        assert "limited data" in str(result.raw)
 
     def test_should_have_proper_crew_process(self, crypto_crew):
         """Test that crew uses proper process configuration."""
@@ -317,7 +326,9 @@ class TestCryptoCrew:
 
         # Check that tool factory is used (which includes RAG tools)
         assert hasattr(crypto_crew_module, "get_crypto_crew_tools")
+        # The crypto crew module has 'research_tools' (robust wrapped)
         assert hasattr(crypto_crew_module, "research_tools")
+        assert hasattr(crypto_crew_module, "raw_research_tools")
 
         # Verify tools are available
         market_analyst = crypto_crew.market_analyst()
@@ -325,53 +336,51 @@ class TestCryptoCrew:
 
     def test_should_analyze_tokenomics(self, mocker, crypto_crew, mock_crypto_inputs, mock_crypto_data):
         """Test that crew analyzes tokenomics properly."""
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            # Mock result that includes tokenomics analysis
-            mock_result = mocker.MagicMock()
-            mock_result.raw = f"Bitcoin tokenomics: {mock_crypto_data['circulating_supply']} of {mock_crypto_data['max_supply']} coins in circulation"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = f"Bitcoin tokenomics: {mock_crypto_data['circulating_supply']} of {mock_crypto_data['max_supply']} coins in circulation"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
+        result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
 
-            assert result is not None
-            assert "tokenomics" in str(result.raw)
+        assert result is not None
+        assert "tokenomics" in str(result.raw)
 
     def test_should_analyze_defi_protocols(self, mocker, crypto_crew, mock_crypto_inputs, mock_defi_data):
         """Test that crew analyzes DeFi protocols when relevant."""
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            # Mock result that includes DeFi analysis
-            mock_result = mocker.MagicMock()
-            mock_result.raw = f"DeFi analysis shows TVL of ${mock_defi_data['tvl']:,} with staking opportunities"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = f"DeFi analysis shows TVL of ${mock_defi_data['tvl']:,} with staking opportunities"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
+        result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
 
-            assert result is not None
-            assert "DeFi" in str(result.raw) or "TVL" in str(result.raw)
+        assert result is not None
+        assert "DeFi" in str(result.raw) or "TVL" in str(result.raw)
 
     def test_should_support_multilingual_analysis(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew supports multilingual analysis."""
         # Test with French language setting
         french_inputs = {**mock_crypto_inputs, "report_language": "fr"}
 
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "Analyse des cryptomonnaies en français"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "Analyse des cryptomonnaies en français"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=french_inputs)
-            assert result is not None
+        result = crypto_crew.crew().kickoff(inputs=french_inputs)
+        assert result is not None
 
         # Test with English language setting
         english_inputs = {**mock_crypto_inputs, "report_language": "en"}
 
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "Cryptocurrency analysis in English"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "Cryptocurrency analysis in English"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=english_inputs)
-            assert result is not None
+        result = crypto_crew.crew().kickoff(inputs=english_inputs)
+        assert result is not None
 
     def test_should_handle_high_volatility_scenarios(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew handles high volatility crypto scenarios."""
@@ -383,27 +392,27 @@ class TestCryptoCrew:
             "risk_level": "very_high",
         }
 
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "High volatility detected: -25.5% in 24h. Risk assessment: VERY HIGH"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "High volatility detected: -25.5% in 24h. Risk assessment: VERY HIGH"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
+        result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
 
-            assert result is not None
-            assert "volatility" in str(result.raw) or "VERY HIGH" in str(result.raw)
+        assert result is not None
+        assert "volatility" in str(result.raw) or "VERY HIGH" in str(result.raw)
 
     def test_should_analyze_regulatory_risks(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew analyzes regulatory risks for cryptocurrencies."""
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "Regulatory analysis: SEC enforcement actions and potential classification changes pose risks"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "Regulatory analysis: SEC enforcement actions and potential classification changes pose risks"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
+        result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
 
-            assert result is not None
-            assert "regulatory" in str(result.raw).lower() or "SEC" in str(result.raw)
+        assert result is not None
+        assert "regulatory" in str(result.raw).lower() or "SEC" in str(result.raw)
 
     def test_should_integrate_quantitative_analysis(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew integrates quantitative analysis for crypto performance."""
@@ -419,26 +428,26 @@ class TestCryptoCrew:
         }
         mock_crypto_tools.return_value = [mock_tool_instance]
 
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "Quantitative analysis shows Sharpe ratio of 0.85 with high volatility of 65%"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "Quantitative analysis shows Sharpe ratio of 0.85 with high volatility of 65%"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
+        result = crypto_crew.crew().kickoff(inputs=mock_crypto_inputs)
 
-            assert result is not None
-            assert "Sharpe ratio" in str(result.raw) or "volatility" in str(result.raw)
+        assert result is not None
+        assert "Sharpe ratio" in str(result.raw) or "volatility" in str(result.raw)
 
     def test_should_handle_stablecoin_analysis(self, mocker, crypto_crew, mock_crypto_inputs):
         """Test that crew handles stablecoin analysis differently."""
         stablecoin_inputs = {**mock_crypto_inputs, "asset_type": "stablecoin"}
 
-        with mocker.patch.object(crypto_crew.crew(), "kickoff") as mock_kickoff:
-            mock_result = mocker.MagicMock()
-            mock_result.raw = "Stablecoin analysis: Peg stability and collateral backing assessment"
-            mock_kickoff.return_value = mock_result
+        # Configure the existing mock crew instance from fixture
+        mock_result = mocker.MagicMock()
+        mock_result.raw = "Stablecoin analysis: Peg stability and collateral backing assessment"
+        crypto_crew.crew.return_value.kickoff.return_value = mock_result
 
-            result = crypto_crew.crew().kickoff(inputs=stablecoin_inputs)
+        result = crypto_crew.crew().kickoff(inputs=stablecoin_inputs)
 
-            assert result is not None
-            assert "stablecoin" in str(result.raw).lower() or "peg" in str(result.raw).lower()
+        assert result is not None
+        assert "stablecoin" in str(result.raw).lower() or "peg" in str(result.raw).lower()

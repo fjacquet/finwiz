@@ -229,10 +229,10 @@ class TestRebalancingReportGenerator:
         # Assert
         assert 'lang="fr"' in html_report
         # BeautifulSoup encodes accented characters as HTML entities
-        assert ("Résumé Exécutif" in html_report or "R&eacute;sum&eacute; Ex&eacute;cutif" in html_report)
-        assert ("Analyse du Portefeuille Actuel" in html_report or "Portefeuille Actuel" in html_report)
-        assert ("Recommandations de Trading" in html_report or "Recommandations" in html_report)
-        assert ("Analyse des Coûts" in html_report or "Analyse des Co&ucirc;ts" in html_report)
+        assert "Résumé Exécutif" in html_report or "R&eacute;sum&eacute; Ex&eacute;cutif" in html_report
+        assert "Analyse du Portefeuille Actuel" in html_report or "Portefeuille Actuel" in html_report
+        assert "Recommandations de Trading" in html_report or "Recommandations" in html_report
+        assert "Analyse des Coûts" in html_report or "Analyse des Co&ucirc;ts" in html_report
 
     def test_should_include_interactive_elements_when_enabled(self, sample_rebalancing_result):
         """Test inclusion of interactive elements in report."""
@@ -268,11 +268,7 @@ class TestRebalancingReportGenerator:
         target_weights = {"AAPL": 35.0, "GOOGL": 37.0, "MSFT": 28.0}
 
         # Act
-        table_html = generator.section_generator.formatters.create_portfolio_table(
-            weightings=weightings,
-            target_weights=target_weights,
-            is_french=False
-        )
+        table_html = generator.section_generator.formatters.create_portfolio_table(weightings=weightings, target_weights=target_weights, is_french=False)
 
         # Assert
         assert "portfolio-table" in table_html
@@ -286,11 +282,7 @@ class TestRebalancingReportGenerator:
         generator = RebalancingReportGenerator()
 
         # Act
-        table_html = generator.section_generator.formatters.create_trades_table(
-            sample_rebalancing_result.trade_recommendations,
-            is_french=False,
-            include_interactive=True
-        )
+        table_html = generator.section_generator.formatters.create_trades_table(sample_rebalancing_result.trade_recommendations, is_french=False, include_interactive=True)
 
         # Assert
         assert "trades-table" in table_html
@@ -304,11 +296,7 @@ class TestRebalancingReportGenerator:
         generator = RebalancingReportGenerator()
 
         # Act
-        table_html = generator.section_generator.formatters.create_trades_table(
-            sample_rebalancing_result.trade_recommendations,
-            is_french=False,
-            include_interactive=False
-        )
+        table_html = generator.section_generator.formatters.create_trades_table(sample_rebalancing_result.trade_recommendations, is_french=False, include_interactive=False)
 
         # Assert
         assert "trades-table" in table_html
@@ -323,11 +311,7 @@ class TestRebalancingReportGenerator:
         projected_weights = {"AAPL": 35.0, "GOOGL": 33.0, "MSFT": 32.0}
 
         # Act
-        table_html = generator.section_generator.formatters.create_before_after_table(
-            current_weights,
-            projected_weights,
-            is_french=False
-        )
+        table_html = generator.section_generator.formatters.create_before_after_table(current_weights, projected_weights, is_french=False)
 
         # Assert
         assert "before-after-table" in table_html
@@ -344,10 +328,7 @@ class TestRebalancingReportGenerator:
         parameters = {"global_tolerance": 0.10, "capital": 5000.0, "cost_rate": 0.002}
 
         # Act
-        formatted_html = generator.section_generator.formatters.format_scenario_parameters(
-            parameters,
-            is_french=False
-        )
+        formatted_html = generator.section_generator.formatters.format_scenario_parameters(parameters, is_french=False)
 
         # Assert
         assert "<li>" in formatted_html
@@ -410,11 +391,7 @@ class TestRebalancingReportGenerator:
         generator = RebalancingReportGenerator()
 
         # Act
-        table_html = generator.section_generator.formatters.create_trades_table(
-            [],
-            is_french=False,
-            include_interactive=True
-        )
+        table_html = generator.section_generator.formatters.create_trades_table([], is_french=False, include_interactive=True)
 
         # Assert
         assert "No trade recommendations" in table_html
@@ -447,10 +424,7 @@ class TestRebalancingReportGenerator:
         weightings = {f"STOCK{i:03d}": 1.0 for i in range(100)}
 
         # Act
-        table_html = generator.section_generator.formatters.create_portfolio_table(
-            weightings=weightings,
-            is_french=False
-        )
+        table_html = generator.section_generator.formatters.create_portfolio_table(weightings=weightings, is_french=False)
 
         # Assert
         assert "portfolio-table" in table_html
@@ -481,11 +455,7 @@ class TestRebalancingReportGenerator:
         )
 
         # Act
-        table_html = generator.section_generator.formatters.create_trades_table(
-            [urgent_trade],
-            is_french=False,
-            include_interactive=True
-        )
+        table_html = generator.section_generator.formatters.create_trades_table([urgent_trade], is_french=False, include_interactive=True)
 
         # Assert
         # Check that trade is rendered (exact class/text may vary)
@@ -517,7 +487,7 @@ class TestRebalancingReportGenerator:
 
         # Assert
         # BeautifulSoup encodes accented characters as HTML entities
-        assert (custom_title in html_report or "Mon Rapport de R&eacute;&eacute;quilibrage" in html_report)
+        assert custom_title in html_report or "Mon Rapport de R&eacute;&eacute;quilibrage" in html_report
         assert 'lang="fr"' in html_report
 
     def test_should_clear_sections_before_generating_new_report(self, sample_rebalancing_result):

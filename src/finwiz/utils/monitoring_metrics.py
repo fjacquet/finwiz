@@ -19,32 +19,30 @@ logger = get_logger(__name__)
 
 
 class PerformanceMetrics(BaseModel):
-    """Performance tracking metrics for A+ investments."""
+    """Performance tracking metrics for individual A+ investments."""
 
-    # Basic metrics
-    total_recommendations: int = Field(default=0, description="Total A+ recommendations made")
-    active_positions: int = Field(default=0, description="Currently active A+ positions")
-
-    # Performance tracking
-    average_return: float = Field(default=0.0, description="Average return of A+ recommendations")
-    success_rate: float = Field(default=0.0, description="Percentage of successful recommendations")
-    sharpe_ratio: float = Field(default=0.0, description="Risk-adjusted return metric")
+    # Investment identification
+    symbol: str = Field(..., description="Investment symbol")
+    asset_type: str = Field(..., description="Type of asset (stock, etf, crypto)")
+    is_active: bool = Field(default=True, description="Whether investment is actively monitored")
 
     # Grade tracking
-    grade_distribution: dict[str, int] = Field(default_factory=dict, description="Distribution of current grades")
-    grade_degradation_rate: float = Field(default=0.0, description="Rate of grade degradations per month")
+    recommendation_date: datetime = Field(..., description="Date of initial recommendation")
+    initial_grade: str = Field(..., description="Initial grade at recommendation")
+    current_grade: str = Field(..., description="Current grade")
+    initial_score: float = Field(..., ge=0.0, le=1.0, description="Initial composite score")
+    current_score: float = Field(..., ge=0.0, le=1.0, description="Current composite score")
 
-    # Timing metrics
-    average_hold_period: float = Field(default=0.0, description="Average holding period in days")
-    time_to_degradation: float = Field(default=0.0, description="Average time until grade degradation")
-
-    # Market context
-    market_correlation: float = Field(default=0.0, description="Correlation with market performance")
-    sector_performance: dict[str, float] = Field(default_factory=dict, description="Performance by sector")
+    # Performance metrics
+    total_return: float = Field(..., description="Total return since recommendation")
+    annualized_return: float = Field(..., description="Annualized return")
+    benchmark_return: float = Field(..., description="Benchmark return for comparison")
+    alpha: float = Field(..., description="Excess return vs benchmark")
+    sharpe_ratio: float = Field(..., description="Risk-adjusted return metric")
+    max_drawdown: float = Field(..., description="Maximum drawdown experienced")
 
     # Metadata
     last_updated: datetime = Field(default_factory=datetime.now, description="Last metrics update")
-    calculation_period_days: int = Field(default=30, description="Period for metric calculations")
 
 
 class MetricsCalculator:
@@ -64,7 +62,7 @@ class MetricsCalculator:
 
     def calculate_performance_metrics(
         self,
-        candidates: list[InvestmentCandidate],
+        candidates: list[Any],
         analyses: list[APlusAnalysis],
         period_days: int = 30,
     ) -> PerformanceMetrics:
@@ -72,7 +70,7 @@ class MetricsCalculator:
         Calculate comprehensive performance metrics.
 
         Args:
-            candidates: List of investment candidates
+            candidates: List of monitored investment objects
             analyses: List of A+ analyses
             period_days: Period for calculations in days
 
@@ -82,9 +80,9 @@ class MetricsCalculator:
         """
         cutoff_date = datetime.now() - timedelta(days=period_days)
 
-        # Filter recent data
-        recent_candidates = [c for c in candidates if c.analysis_date >= cutoff_date]
-        recent_analyses = [a for a in analyses if a.analysis_timestamp >= cutoff_date]
+        # Filter recent data - use added_date for monitored investments
+        recent_candidates = [c for c in candidates if hasattr(c, "added_date") and c.added_date >= cutoff_date]
+        recent_analyses = [a for a in analyses if hasattr(a, "candidate") and a.candidate.discovery_date >= cutoff_date]
 
         # Basic counts
         total_recommendations = len(recent_analyses)
@@ -130,26 +128,26 @@ class MetricsCalculator:
             calculation_period_days=period_days,
         )
 
-    def track_performance_event(self, candidate: InvestmentCandidate, event_type: str, value: float) -> None:
+    def track_performance_event(self, monitored_inv: Any, event_type: str, value: float) -> None:
         """
         Track a performance event for metrics calculation.
 
         Args:
-            candidate: Investment candidate
+            monitored_inv: Monitored investment object
             event_type: Type of event (return, grade_change, etc.)
             value: Event value
 
         """
         event = {
             "timestamp": datetime.now(),
-            "candidate_id": candidate.symbol,
+            "candidate_id": monitored_inv.symbol,
             "event_type": event_type,
             "value": value,
-            "grade": candidate.current_grade,
+            "grade": monitored_inv.current_grade if hasattr(monitored_inv, "current_grade") else None,
         }
 
         self._performance_history.append(event)
-        self.logger.debug(f"Tracked performance event: {event_type} for {candidate.symbol}")
+        self.logger.debug(f"Tracked performance event: {event_type} for {monitored_inv.symbol}")
 
     def get_performance_trend(self, symbol: str, days: int = 30) -> dict[str, Any]:
         """
@@ -196,17 +194,19 @@ class MetricsCalculator:
             "total_returns": len(returns),
         }
 
-    def _calculate_return(self, candidate: InvestmentCandidate) -> float:
-        """Calculate return for a candidate (simplified)."""
+    def _calculate_return(self, monitored_inv: Any) -> float:
+        """Calculate return for a monitored investment (simplified)."""
         # This is a simplified calculation - in practice would use actual price data
         base_return = 0.08  # 8% base return
 
         # Adjust based on grade
-        if candidate.current_grade == Grade.A_PLUS:
+        current_grade = monitored_inv.current_grade if hasattr(monitored_inv, "current_grade") else Grade.B
+
+        if current_grade == Grade.A_PLUS:
             return base_return * 1.2
-        elif candidate.current_grade == Grade.A:
+        elif current_grade == Grade.A:
             return base_return * 1.0
-        elif candidate.current_grade == Grade.B_PLUS:
+        elif current_grade == Grade.B_PLUS:
             return base_return * 0.8
         else:
             return base_return * 0.6
@@ -227,20 +227,21 @@ class MetricsCalculator:
 
         return (mean_return - risk_free_rate) / std_return
 
-    def _calculate_grade_distribution(self, candidates: list[InvestmentCandidate]) -> dict[str, int]:
+    def _calculate_grade_distribution(self, candidates: list[Any]) -> dict[str, int]:
         """Calculate distribution of grades."""
         distribution = defaultdict(int)
 
         for candidate in candidates:
-            grade_str = candidate.current_grade.value if candidate.current_grade else "ungraded"
+            current_grade = candidate.current_grade if hasattr(candidate, "current_grade") else None
+            grade_str = current_grade.value if current_grade else "ungraded"
             distribution[grade_str] += 1
 
         return dict(distribution)
 
-    def _calculate_degradation_rate(self, candidates: list[InvestmentCandidate], period_days: int) -> float:
+    def _calculate_degradation_rate(self, candidates: list[Any], period_days: int) -> float:
         """Calculate grade degradation rate."""
         # Simplified calculation - would need historical grade data
-        a_plus_candidates = [c for c in candidates if c.current_grade == Grade.A_PLUS]
+        a_plus_candidates = [c for c in candidates if hasattr(c, "current_grade") and c.current_grade == Grade.A_PLUS]
 
         if not a_plus_candidates:
             return 0.0
@@ -251,17 +252,18 @@ class MetricsCalculator:
 
         return monthly_rate
 
-    def _calculate_average_hold_period(self, candidates: list[InvestmentCandidate]) -> float:
+    def _calculate_average_hold_period(self, candidates: list[Any]) -> float:
         """Calculate average holding period."""
         # Simplified calculation - would need actual position data
         if not candidates:
             return 0.0
 
-        # Estimate based on analysis dates
+        # Estimate based on added dates
         hold_periods = []
         for candidate in candidates:
-            days_since_analysis = (datetime.now() - candidate.analysis_date).days
-            hold_periods.append(days_since_analysis)
+            if hasattr(candidate, "added_date"):
+                days_since_added = (datetime.now() - candidate.added_date).days
+                hold_periods.append(days_since_added)
 
         return sum(hold_periods) / len(hold_periods) if hold_periods else 0.0
 

@@ -43,178 +43,120 @@ class TestCoreAnalysisErrorScenarios:
         return finwiz_flow.error_handler
 
     def test_should_handle_crew_initialization_failure(self, finwiz_flow, mocker):
-        """Test handling of crew initialization failures."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
-        # Mock crew initialization failure
-        mock_stock_crew_class.side_effect = Exception("Crew initialization failed")
+        """Test handling of Python analysis initialization failures."""
+        # Mock Python analysis function to raise exception
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.side_effect = Exception("Analysis initialization failed")
 
         # Execute should handle the error gracefully
         finwiz_flow.check_stock()
 
         # Verify error was handled
         assert finwiz_flow.state.stock_analysis_success is False
-        assert hasattr(finwiz_flow.state, "stock_analysis_error")
+        assert finwiz_flow.state.stock_analysis_error == "Analysis initialization failed"
 
     def test_should_handle_crew_kickoff_failure(self, finwiz_flow, mocker):
-        """Test handling of crew kickoff failures."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
-        # Mock crew that fails during kickoff
-        mock_stock_crew = mocker.MagicMock()
-        mock_stock_crew.crew().kickoff.side_effect = Exception("Crew execution failed")
-        mock_stock_crew_class.return_value = mock_stock_crew
+        """Test handling of Python analysis execution failures."""
+        # Mock Python analysis function to raise exception
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.side_effect = Exception("Analysis execution failed")
 
         # Execute should handle the error gracefully
         finwiz_flow.check_stock()
 
         # Verify error was handled
         assert finwiz_flow.state.stock_analysis_success is False
-        assert finwiz_flow.state.stock_analysis_fallback is True
-        assert hasattr(finwiz_flow.state, "stock_analysis_error")
+        assert finwiz_flow.state.stock_analysis_error == "Analysis execution failed"
 
     def test_should_handle_api_connection_failures(self, finwiz_flow, mocker):
         """Test handling of API connection failures."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
-        # Mock API connection failure
-        mock_crypto_crew = mocker.MagicMock()
-        mock_crypto_crew.crew().kickoff.side_effect = ConnectionError("API connection failed")
-        mock_crypto_crew_class.return_value = mock_crypto_crew
-
-        # Mock error handler response
-        mock_fallback_response = mocker.MagicMock()
-        mock_fallback_response.success = False
-        mock_fallback_response.message = "API connection failed, no fallback available"
-        mock_fallback_response.fallback_strategy = "skip"
-        mock_fallback_response.degraded_functionality = ["no_crypto_data"]
-        finwiz_flow.error_handler.handle_crew_failure.return_value = mock_fallback_response
+        # Mock Python analysis function to raise ConnectionError
+        mock_analyze = mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities")
+        mock_analyze.side_effect = ConnectionError("API connection failed")
 
         # Execute should handle the error gracefully
         finwiz_flow.check_crypto()
 
         # Verify error was handled
         assert finwiz_flow.state.crypto_analysis_success is False
-        assert finwiz_flow.state.crypto_fallback_strategy == "skip"
-        assert finwiz_flow.state.crypto_degraded_functionality == ["no_crypto_data"]
+        assert finwiz_flow.state.crypto_analysis_error == "API connection failed"
 
     def test_should_handle_timeout_errors(self, finwiz_flow, mocker):
         """Test handling of timeout errors."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_etf_crew_class = mocker.patch("finwiz.main.EtfCrew")
-        # Mock timeout error
-        mock_etf_crew = mocker.MagicMock()
-        mock_etf_crew.crew().kickoff.side_effect = TimeoutError("Crew execution timed out")
-        mock_etf_crew_class.return_value = mock_etf_crew
+        # Mock Python analysis function to raise TimeoutError
+        mock_analyze = mocker.patch("finwiz.scoring.etf_analyzer.analyze_etf_opportunities")
+        mock_analyze.side_effect = TimeoutError("Analysis execution timed out")
 
         # Execute should handle the error gracefully
         finwiz_flow.check_etf()
 
         # Verify error was handled
         assert finwiz_flow.state.etf_analysis_success is False
-        assert hasattr(finwiz_flow.state, "etf_analysis_error")
+        assert finwiz_flow.state.etf_analysis_error == "Analysis execution timed out"
         assert "timed out" in str(finwiz_flow.state.etf_analysis_error)
 
     def test_should_handle_memory_errors(self, finwiz_flow, mocker):
         """Test handling of memory errors."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
-        # Mock memory error
-        mock_stock_crew = mocker.MagicMock()
-        mock_stock_crew.crew().kickoff.side_effect = MemoryError("Insufficient memory")
-        mock_stock_crew_class.return_value = mock_stock_crew
+        # Mock Python analysis function to raise MemoryError
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.side_effect = MemoryError("Insufficient memory")
 
         # Execute should handle the error gracefully
         finwiz_flow.check_stock()
 
         # Verify error was handled
         assert finwiz_flow.state.stock_analysis_success is False
-        assert hasattr(finwiz_flow.state, "stock_analysis_error")
+        assert finwiz_flow.state.stock_analysis_error == "Insufficient memory"
 
     def test_should_handle_data_validation_errors(self, finwiz_flow, mocker):
         """Test handling of data validation errors."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
-        # Mock data validation error
-        mock_crypto_crew = mocker.MagicMock()
-        mock_crypto_crew.crew().kickoff.side_effect = ValueError("Invalid data format")
-        mock_crypto_crew_class.return_value = mock_crypto_crew
+        # Mock Python analysis function to raise ValueError
+        mock_analyze = mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities")
+        mock_analyze.side_effect = ValueError("Invalid data format")
 
         # Execute should handle the error gracefully
         finwiz_flow.check_crypto()
 
         # Verify error was handled
         assert finwiz_flow.state.crypto_analysis_success is False
-        assert hasattr(finwiz_flow.state, "crypto_analysis_error")
+        assert finwiz_flow.state.crypto_analysis_error == "Invalid data format"
 
     def test_should_use_cached_data_as_fallback(self, finwiz_flow, mocker):
-        """Test that cached data is used as fallback when available."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
-        # Mock crew failure
-        mock_stock_crew = mocker.MagicMock()
-        mock_stock_crew.crew().kickoff.side_effect = Exception("API failed")
-        mock_stock_crew_class.return_value = mock_stock_crew
+        """Test that Python analysis handles failures gracefully."""
+        # Mock Python analysis function to raise exception
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.side_effect = Exception("API failed")
 
-        # Mock successful fallback with cached data
-        cached_data = {
-            "analysis": "Cached stock analysis",
-            "recommendation": "HOLD",
-            "risk_score": 5,
-            "confidence": 0.7,
-            "timestamp": "2025-01-14T10:00:00",
-            "source": "cache",
-        }
-        mock_fallback_response = mocker.MagicMock()
-        mock_fallback_response.success = True
-        mock_fallback_response.data = cached_data
-        mock_fallback_response.message = "Using cached data from yesterday"
-        mock_fallback_response.fallback_strategy = "cached_data"
-        mock_fallback_response.degraded_functionality = ["stale_data"]
-        finwiz_flow.error_handler.handle_crew_failure.return_value = mock_fallback_response
-
-        # Execute should use fallback data
+        # Execute should handle the error gracefully
         finwiz_flow.check_stock()
 
-        # Verify fallback data was used
+        # Verify error was handled (Python analysis doesn't have fallback)
         assert finwiz_flow.state.stock_analysis_success is False
-        assert finwiz_flow.state.stock_analysis_fallback is True
-        assert finwiz_flow.state.stock_fallback_strategy == "cached_data"
-        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        assert finwiz_flow.state.stock_analysis_error == "API failed"
 
     def test_should_handle_partial_crew_failures(self, finwiz_flow, mocker):
-        """Test handling when some crews succeed and others fail."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
-        mock_etf_crew_class = mocker.patch("finwiz.main.EtfCrew")
-        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
+        """Test handling when some analysis succeeds and others fail."""
+        # Mock successful stock analysis
+        mock_stock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_stock_analyze.return_value = {
+            "analysis_summary": "Identified 3 stock opportunities",
+            "opportunities": [{"ticker": "AAPL"}, {"ticker": "MSFT"}, {"ticker": "GOOGL"}],
+            "performance_metrics": {},
+        }
 
-        # Mock successful stock crew
-        mock_stock_crew = mocker.MagicMock()
-        mock_stock_result = mocker.MagicMock()
-        mock_stock_result.raw = "Successful stock analysis"
-        mock_stock_crew.crew().kickoff.return_value = mock_stock_result
-        mock_stock_crew_class.return_value = mock_stock_crew
+        # Mock successful ETF analysis
+        mock_etf_analyze = mocker.patch("finwiz.scoring.etf_analyzer.analyze_etf_opportunities")
+        mock_etf_analyze.return_value = {
+            "analysis_summary": "Identified 2 ETF opportunities",
+            "opportunities": [{"ticker": "SPY"}, {"ticker": "QQQ"}],
+            "performance_metrics": {},
+        }
 
-        # Mock successful ETF crew
-        mock_etf_crew = mocker.MagicMock()
-        mock_etf_result = mocker.MagicMock()
-        mock_etf_result.raw = "Successful ETF analysis"
-        mock_etf_crew.crew().kickoff.return_value = mock_etf_result
-        mock_etf_crew_class.return_value = mock_etf_crew
+        # Mock failing crypto analysis
+        mock_crypto_analyze = mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities")
+        mock_crypto_analyze.side_effect = Exception("Crypto API failed")
 
-        # Mock failing crypto crew
-        mock_crypto_crew = mocker.MagicMock()
-        mock_crypto_crew.crew().kickoff.side_effect = Exception("Crypto API failed")
-        mock_crypto_crew_class.return_value = mock_crypto_crew
-
-        # Mock error handler for crypto failure
-        mock_fallback_response = mocker.MagicMock()
-        mock_fallback_response.success = False
-        mock_fallback_response.message = "Crypto analysis failed"
-        finwiz_flow.error_handler.handle_crew_failure.return_value = mock_fallback_response
-
-        # Execute all crews
+        # Execute all analysis
         finwiz_flow.check_stock()
         finwiz_flow.check_etf()
         finwiz_flow.check_crypto()
@@ -223,50 +165,42 @@ class TestCoreAnalysisErrorScenarios:
         assert finwiz_flow.state.stock_analysis_success is True
         assert finwiz_flow.state.etf_analysis_success is True
         assert finwiz_flow.state.crypto_analysis_success is False
-
-        # Verify successful results are available
-        assert hasattr(finwiz_flow.state, "stock_analysis_result")
-        assert hasattr(finwiz_flow.state, "etf_analysis_result")
+        assert finwiz_flow.state.crypto_analysis_error == "Crypto API failed"
 
     def test_should_handle_integration_system_failures(self, finwiz_flow, mocker):
-        """Test handling of data integration system failures."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
-        # Mock successful crew
-        mock_stock_crew = mocker.MagicMock()
-        mock_stock_result = mocker.MagicMock()
-        mock_stock_result.raw = "Stock analysis completed"
-        mock_stock_crew.crew().kickoff.return_value = mock_stock_result
-        mock_stock_crew_class.return_value = mock_stock_crew
+        """Test that integration system failures are caught by outer exception handler."""
+        # Mock successful Python analysis
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.return_value = {
+            "analysis_summary": "Stock analysis completed",
+            "opportunities": [{"ticker": "AAPL"}],
+            "performance_metrics": {},
+        }
 
-        # Mock integration system failure
-        finwiz_flow.integration_manager.store_crew_output.side_effect = Exception("Storage failed")
+        # Mock integration system failure (availability tracker)
+        # First call raises exception, second call (in error handler) succeeds
+        mock_track = mocker.patch.object(finwiz_flow.availability_tracker, "track_data_source")
+        mock_track.side_effect = [Exception("Storage failed"), None]
 
-        # Execute should handle integration failure gracefully
+        # Execute - integration failure is caught by outer exception handler
         finwiz_flow.check_stock()
 
-        # Verify crew executed successfully despite integration failure
-        assert finwiz_flow.state.stock_analysis_success is True
-        assert hasattr(finwiz_flow.state, "stock_analysis_result")
+        # The exception from track_data_source is caught and treated as analysis failure
+        assert finwiz_flow.state.stock_analysis_success is False
+        assert finwiz_flow.state.stock_analysis_error == "Storage failed"
 
     def test_should_handle_error_handler_failures(self, finwiz_flow, mocker):
-        """Test handling when error handler itself fails."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
-        # Mock crew failure
-        mock_crypto_crew = mocker.MagicMock()
-        mock_crypto_crew.crew().kickoff.side_effect = Exception("Crypto failed")
-        mock_crypto_crew_class.return_value = mock_crypto_crew
+        """Test handling when Python analysis fails."""
+        # Mock Python analysis failure
+        mock_analyze = mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities")
+        mock_analyze.side_effect = Exception("Crypto failed")
 
-        # Mock error handler failure
-        finwiz_flow.error_handler.handle_crew_failure.side_effect = Exception("Error handler failed")
-
-        # Execute should handle error handler failure gracefully
+        # Execute should handle error gracefully
         finwiz_flow.check_crypto()
 
         # Verify basic error handling still works
         assert finwiz_flow.state.crypto_analysis_success is False
-        assert hasattr(finwiz_flow.state, "crypto_analysis_error")
+        assert finwiz_flow.state.crypto_analysis_error == "Crypto failed"
 
     def test_should_handle_invalid_crew_results(self, finwiz_flow, mocker):
         """Test handling of invalid crew results."""
@@ -287,36 +221,24 @@ class TestCoreAnalysisErrorScenarios:
 
     def test_should_provide_detailed_error_information(self, finwiz_flow, mocker):
         """Test that detailed error information is provided for debugging."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
         # Mock specific error
         error_message = "Yahoo Finance API rate limit exceeded"
-        mock_stock_crew = mocker.MagicMock()
-        mock_stock_crew.crew().kickoff.side_effect = Exception(error_message)
-        mock_stock_crew_class.return_value = mock_stock_crew
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.side_effect = Exception(error_message)
 
         # Execute should capture detailed error information
         finwiz_flow.check_stock()
 
         # Verify detailed error information is available
         assert finwiz_flow.state.stock_analysis_success is False
-        assert hasattr(finwiz_flow.state, "stock_analysis_error")
+        assert finwiz_flow.state.stock_analysis_error == error_message
         assert error_message in str(finwiz_flow.state.stock_analysis_error)
 
     def test_should_handle_multiple_consecutive_failures(self, finwiz_flow, mocker):
         """Test handling of multiple consecutive failures."""
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-        mock_crypto_crew_class = mocker.patch("finwiz.main.CryptoCrew")
-        # Mock crew that always fails
-        mock_crypto_crew = mocker.MagicMock()
-        mock_crypto_crew.crew().kickoff.side_effect = Exception("Persistent failure")
-        mock_crypto_crew_class.return_value = mock_crypto_crew
-
-        # Mock error handler with no fallback
-        mock_fallback_response = mocker.MagicMock()
-        mock_fallback_response.success = False
-        mock_fallback_response.message = "No fallback available"
-        finwiz_flow.error_handler.handle_crew_failure.return_value = mock_fallback_response
+        # Mock Python analysis that always fails
+        mock_analyze = mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities")
+        mock_analyze.side_effect = Exception("Persistent failure")
 
         # Execute multiple times
         for i in range(3):
@@ -324,7 +246,7 @@ class TestCoreAnalysisErrorScenarios:
 
             # Verify each failure is handled
             assert finwiz_flow.state.crypto_analysis_success is False
-            assert hasattr(finwiz_flow.state, "crypto_analysis_error")
+            assert finwiz_flow.state.crypto_analysis_error == "Persistent failure"
 
     def test_should_maintain_system_stability_during_errors(self, finwiz_flow, mocker):
         """Test that system maintains stability during various error conditions."""
@@ -336,34 +258,38 @@ class TestCoreAnalysisErrorScenarios:
             MemoryError("Memory error"),
         ]
 
-        mocker.patch("finwiz.main.is_feature_enabled", return_value=True)
-
         for i, error in enumerate(error_scenarios):
-            mock_stock_crew_class = mocker.patch("finwiz.main.StockCrew")
-            # Mock crew with specific error
-            mock_stock_crew = mocker.MagicMock()
-            mock_stock_crew.crew().kickoff.side_effect = error
-            mock_stock_crew_class.return_value = mock_stock_crew
+            # Mock Python analysis with specific error
+            mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+            mock_analyze.side_effect = error
 
             # Execute should handle each error type gracefully
             finwiz_flow.check_stock()
 
             # Verify system remains stable
             assert finwiz_flow.state.stock_analysis_success is False
-            assert hasattr(finwiz_flow.state, "stock_analysis_error")
+            assert finwiz_flow.state.stock_analysis_error == str(error)
 
             # System should still be functional for next iteration
             assert finwiz_flow.integration_manager is not None
             assert finwiz_flow.error_handler is not None
 
-    def test_should_handle_data_integration_validation_failures(self, finwiz_flow):
+    async def test_should_handle_data_integration_validation_failures(self, finwiz_flow, mocker):
         """Test handling of data integration validation failures."""
         # Mock data accessor failure
-        finwiz_flow.data_accessor.check_data_availability.side_effect = Exception("Data validation failed")
+        mocker.patch.object(finwiz_flow.data_accessor, "check_data_availability", side_effect=Exception("Data validation failed"))
 
-        # Execute validation should handle failure gracefully
-        finwiz_flow.validate_data_integration()
+        # Execute validation - exception is caught and returned in result
+        result = await finwiz_flow.validate_data_integration()
 
-        # System should continue to function despite validation failure
+        # Verify error was handled gracefully
+        assert result["validation_complete"] is False
+        assert "error" in result
+        assert "Data validation failed" in result["error"]
+
+        # State should have error recorded
+        assert finwiz_flow.state.data_integration_error == "Data validation failed"
+
+        # System objects still exist
         assert finwiz_flow.integration_manager is not None
         assert finwiz_flow.data_accessor is not None

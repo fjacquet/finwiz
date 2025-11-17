@@ -16,14 +16,14 @@ def create_stock_data(
 ) -> dict[str, Any]:
     """
     Create sample stock fundamental data.
-    
+
     Args:
         roe: Return on equity (default: 0.25 = 25%)
         revenue_growth: Revenue growth rate (default: 0.20 = 20%)
         debt_to_equity: Debt to equity ratio (default: 0.2)
         market_cap: Market capitalization (default: $10B)
         **overrides: Additional fields or overrides
-        
+
     Returns:
         Dictionary with stock fundamental data
 
@@ -57,13 +57,13 @@ def create_etf_data(
 ) -> dict[str, Any]:
     """
     Create sample ETF data.
-    
+
     Args:
         expense_ratio: Annual expense ratio (default: 0.03 = 0.03%)
         aum: Assets under management (default: $5B)
         tracking_error: Tracking error vs benchmark (default: 0.001 = 0.1%)
         **overrides: Additional fields or overrides
-        
+
     Returns:
         Dictionary with ETF data
 
@@ -93,13 +93,13 @@ def create_crypto_data(
 ) -> dict[str, Any]:
     """
     Create sample cryptocurrency data.
-    
+
     Args:
         market_cap: Market capitalization (default: $50B)
         daily_volume: 24h trading volume (default: $2B)
         age_months: Age in months (default: 60 = 5 years)
         **overrides: Additional fields or overrides
-        
+
     Returns:
         Dictionary with crypto data
 
@@ -130,13 +130,13 @@ def create_technical_data(
 ) -> dict[str, Any]:
     """
     Create sample technical analysis data.
-    
+
     Args:
         momentum_score: Momentum indicator score (default: 0.7)
         trend_strength: Trend strength score (default: 0.8)
         volatility_score: Volatility score (default: 0.6)
         **overrides: Additional fields or overrides
-        
+
     Returns:
         Dictionary with technical data
 
@@ -166,13 +166,13 @@ def create_risk_data(
 ) -> dict[str, Any]:
     """
     Create sample risk metrics data.
-    
+
     Args:
         volatility: Annualized volatility (default: 0.20 = 20%)
         beta: Beta vs market (default: 1.0)
         max_drawdown: Maximum drawdown (default: 0.15 = 15%)
         **overrides: Additional fields or overrides
-        
+
     Returns:
         Dictionary with risk metrics
 

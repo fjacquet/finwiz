@@ -12,6 +12,6 @@ Learn FinWiz step-by-step with hands-on tutorials.
 
 Once you've completed the tutorials, check out:
 
-- **[Developer Guide](../DEVELOPER_GUIDE.md)** - Development workflow and standards
-- **[HTML Integration](../HTML_INTEGRATION_GUIDE.md)** - Generate professional reports
-- **[How-to Guides](../how-to/index.md)** - Solve specific problems
+- **[How-to Guides](../how-to/index.md)** - Solve specific problems and configurations
+- **[API Reference](../reference/API_REFERENCE.md)** - Complete API documentation
+- **[Explanations](../explanations/index.md)** - Understand the architecture and design principles

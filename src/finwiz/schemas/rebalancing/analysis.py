@@ -137,6 +137,9 @@ class RebalancingAnalytics(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
+    # Portfolio identification
+    portfolio_id: str = Field(..., description="Portfolio identifier")
+
     # Current state
     current_portfolio_metrics: PortfolioMetrics = Field(..., description="Current portfolio metrics")
     current_rebalancing_needs: list[RebalancingNeed] = Field(..., description="Current rebalancing needs")
@@ -145,11 +148,18 @@ class RebalancingAnalytics(BaseModel):
     performance_attribution: PerformanceAttribution | None = Field(None, description="Performance attribution analysis")
     trend_analysis: TrendAnalysis | None = Field(None, description="Trend analysis results")
 
+    # Position histories
+    position_histories: list[PositionHistory] = Field(default_factory=list, description="Historical tracking of individual positions")
+
     # Recommendations
     recommended_action: RebalancingRecommendation = Field(..., description="Overall recommended action")
     next_review_date: datetime = Field(..., description="Recommended next review date")
+    strategy_recommendations: list[str] = Field(default_factory=list, description="Strategic recommendations for portfolio optimization")
 
     # Risk assessment
     portfolio_risk_score: float = Field(..., ge=0, le=10, description="Overall portfolio risk score (0=low, 10=high)")
     concentration_risk: float = Field(..., ge=0, le=1, description="Concentration risk measure")
     rebalancing_urgency: float = Field(..., ge=0, le=1, description="Urgency of rebalancing need")
+
+    # Event tracking
+    total_rebalancing_events: int = Field(default=0, ge=0, description="Total number of rebalancing events tracked")

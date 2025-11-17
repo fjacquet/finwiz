@@ -82,16 +82,15 @@ class TestCoreAnalysisErrorHandler:
         mock_integration_manager.get_cached_crew_output.return_value = cached_data
 
         # Mock feature flags to return cached_only strategy
-        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
-            mock_strategy.return_value = "cached_only"
+        mock_strategy = mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy", return_value="cached_only")
 
-            test_error = Exception("Test error")
-            response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
+        test_error = Exception("Test error")
+        response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
 
-            assert response.success is True
-            assert response.cache_used is True
-            assert response.fallback_strategy == "cached_data"
-            assert response.data is not None
+        assert response.success is True
+        assert response.cache_used is True
+        assert response.fallback_strategy == "cached_data"
+        assert response.data is not None
 
     def test_should_return_reduced_functionality_when_no_cache_available(self, mocker, error_handler, mock_integration_manager):
         """Test reduced functionality fallback strategy."""
@@ -99,16 +98,15 @@ class TestCoreAnalysisErrorHandler:
         mock_integration_manager.get_cached_crew_output.return_value = None
 
         # Mock feature flags to return cached_only strategy (will fallback to reduced)
-        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
-            mock_strategy.return_value = "cached_only"
+        mock_strategy = mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy", return_value="cached_only")
 
-            test_error = Exception("Test error")
-            response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
+        test_error = Exception("Test error")
+        response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
 
-            assert response.success is True
-            assert response.cache_used is False
-            assert response.fallback_strategy == "reduced_functionality"
-            assert "limited_analysis" in response.degraded_functionality
+        assert response.success is True
+        assert response.cache_used is False
+        assert response.fallback_strategy == "reduced_functionality"
+        assert "limited_analysis" in response.degraded_functionality
 
     def test_should_return_default_values_when_reduced_functionality_fails(self, mocker, error_handler, mock_integration_manager):
         """Test default values fallback strategy."""
@@ -116,16 +114,15 @@ class TestCoreAnalysisErrorHandler:
         mock_integration_manager.get_cached_crew_output.return_value = None
 
         # Mock feature flags to return default_values strategy
-        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
-            mock_strategy.return_value = "default_values"
+        mock_strategy = mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy", return_value="default_values")
 
-            test_error = Exception("Test error")
-            response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
+        test_error = Exception("Test error")
+        response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
 
-            assert response.success is True
-            assert response.fallback_strategy == "default_values"
-            assert response.data["ai_recommendation"] == "HOLD"
-            assert response.data["confidence_score"] == 0.1
+        assert response.success is True
+        assert response.fallback_strategy == "default_values"
+        assert response.data["ai_recommendation"] == "HOLD"
+        assert response.data["confidence_score"] == 0.1
 
     def test_should_reject_stale_cache_when_too_old(self, mocker, error_handler, mock_integration_manager):
         """Test cache rejection when data is too old."""
@@ -138,14 +135,13 @@ class TestCoreAnalysisErrorHandler:
         mock_integration_manager.get_cached_crew_output.return_value = cached_data
 
         # Mock feature flags to return cached_only strategy
-        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
-            mock_strategy.return_value = "cached_only"
+        mock_strategy = mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy", return_value="cached_only")
 
-            test_error = Exception("Test error")
-            response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
+        test_error = Exception("Test error")
+        response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
 
-            # Should fallback to reduced functionality since cache is too old
-            assert response.fallback_strategy == "reduced_functionality"
+        # Should fallback to reduced functionality since cache is too old
+        assert response.fallback_strategy == "reduced_functionality"
 
     def test_should_get_error_summary_when_errors_recorded(self, error_handler):
         """Test error summary generation."""
@@ -199,15 +195,14 @@ class TestCoreAnalysisErrorHandler:
         mock_integration_manager.get_cached_crew_output.return_value = None
 
         # Mock feature flags to return disable strategy
-        with mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy") as mock_strategy:
-            mock_strategy.return_value = "disable"
+        mock_strategy = mocker.patch.object(error_handler.feature_flags, "get_fallback_strategy", return_value="disable")
 
-            test_error = Exception("Test error")
-            response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
+        test_error = Exception("Test error")
+        response = error_handler.handle_crew_failure("stock", test_error, {}, 1.0)
 
-            assert response.success is False
-            assert response.fallback_strategy == "disable"
-            assert "crew_disabled" in response.degraded_functionality
+        assert response.success is False
+        assert response.fallback_strategy == "disable"
+        assert "crew_disabled" in response.degraded_functionality
 
     def test_should_clean_old_errors_from_history(self, error_handler):
         """Test that old errors are cleaned from history."""

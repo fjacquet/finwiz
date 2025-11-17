@@ -67,15 +67,18 @@ class TradeGenerator:
                 # Use the first trade as template
                 template = symbol_trade_list[0]
 
+                # Calculate reduced costs (20% savings from combining)
+                reduced_total_cost = total_cost * 0.8
+
                 combined_trade = TradeRecommendation(
                     symbol=symbol,
                     action=TradeAction.BUY if net_quantity > 0 else TradeAction.SELL,
                     quantity=abs(net_quantity),
                     current_price=template.current_price,
                     trade_value=abs(net_quantity) * template.current_price,
-                    estimated_commission=total_cost * 0.7,  # Reduced due to combining
-                    estimated_spread_cost=total_cost * 0.3,
-                    total_estimated_cost=total_cost * 0.8,  # 20% savings from combining
+                    estimated_commission=reduced_total_cost * 0.7,  # 70% of reduced cost
+                    estimated_spread_cost=reduced_total_cost * 0.3,  # 30% of reduced cost
+                    total_estimated_cost=reduced_total_cost,  # Must equal commission + spread
                     current_weight=template.current_weight,
                     target_weight=template.target_weight,
                     weight_deviation=template.weight_deviation,

@@ -1,75 +1,29 @@
 # Agent Configuration Reference
 
-Complete reference documentation for agent configuration.
+!!! warning "Documentation In Progress"
+    This page is currently being written. Check back soon!
 
 ## Overview
 
-This reference provides detailed technical information about agent configuration.
+This section will cover CrewAI agent configuration, agent roles, and agent customization in FinWiz.
 
-## API Reference
+## Related Documentation
 
-### Classes and Functions
+While this page is being completed, you may find these resources helpful:
 
-#### Main Classes
+- [API Reference](API_REFERENCE.md)
+- [API Crews](api/crews.md)
+- [Configuration](configuration.md)
+- [Explanations: AI Architecture](../explanations/ai_architecture.md)
 
-```python
-class ExampleClass:
-    """Example class documentation."""
-    pass
-```
+## Coming Soon
 
-#### Key Functions
+- Agent configuration parameters
+- Agent roles and responsibilities
+- Custom agent creation
+- Agent tools configuration
+- Performance tuning
 
-```python
-def example_function(param1: str, param2: int) -> str:
-    """Example function documentation."""
-    pass
-```
+---
 
-## Configuration Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| option1 | str | "default" | Description of option1 |
-| option2 | int | 100 | Description of option2 |
-
-## Parameters and Return Values
-
-### Input Parameters
-
-Detailed description of input parameters.
-
-### Return Values
-
-Detailed description of return values and their structure.
-
-## Error Handling
-
-Common errors and how to handle them.
-
-### Error Codes
-
-| Code | Description | Resolution |
-|------|-------------|------------|
-| E001 | Error description | How to fix |
-| E002 | Error description | How to fix |
-
-## Examples
-
-### Basic Usage
-
-```python
-# Basic usage example
-```
-
-### Advanced Usage
-
-```python
-# Advanced usage example
-```
-
-## See Also
-
-- [API Index](index.md)
-- [How-to Guides](../how-to/index.md)
-- [Tutorials](../tutorials/index.md)
+*Need this documentation urgently? [Open an issue](https://github.com/finwiz/finwiz/issues)*

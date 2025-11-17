@@ -117,6 +117,7 @@ class SECFilingSearchTool(BaseTool):
     def _retrieve_excerpts(self, docs: list[Any], question: str, top_k: int) -> list[str]:
         retriever = FAISS.from_documents(docs, OpenAIEmbeddings()).as_retriever(search_kwargs={"k": top_k})
         results = retriever.invoke(question)
+        return [doc.page_content for doc in results]
 
 
 try:  # defer optional dependency

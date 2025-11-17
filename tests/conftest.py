@@ -115,13 +115,15 @@ def fake_portfolio_holdings(fake: Faker) -> list[dict[str, Any]]:
     holdings = []
     tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "JNJ"]
     for ticker in fake.random_elements(elements=tickers, length=5, unique=True):
-        holdings.append({
-            "ticker": ticker,
-            "shares": fake.random_int(min=1, max=1000),
-            "purchase_price": round(fake.random.uniform(10.0, 500.0), 2),
-            "current_price": round(fake.random.uniform(10.0, 500.0), 2),
-            "purchase_date": fake.past_date(start_date="-2y").isoformat(),
-        })
+        holdings.append(
+            {
+                "ticker": ticker,
+                "shares": fake.random_int(min=1, max=1000),
+                "purchase_price": round(fake.random.uniform(10.0, 500.0), 2),
+                "current_price": round(fake.random.uniform(10.0, 500.0), 2),
+                "purchase_date": fake.past_date(start_date="-2y").isoformat(),
+            }
+        )
     return holdings
 
 
@@ -130,13 +132,15 @@ def fake_investment_recommendations(fake: Faker) -> list[dict[str, Any]]:
     """Fixture providing realistic investment recommendations."""
     recommendations = []
     for _ in range(3):
-        recommendations.append({
-            "ticker": fake.random_element(elements=("AAPL", "MSFT", "GOOGL", "AMZN", "TSLA")),
-            "action": fake.random_element(elements=("BUY", "HOLD", "SELL")),
-            "target_price": round(fake.random.uniform(100.0, 500.0), 2),
-            "confidence": fake.random.uniform(0.6, 0.95),
-            "rationale": fake.sentence(nb_words=15),
-        })
+        recommendations.append(
+            {
+                "ticker": fake.random_element(elements=("AAPL", "MSFT", "GOOGL", "AMZN", "TSLA")),
+                "action": fake.random_element(elements=("BUY", "HOLD", "SELL")),
+                "target_price": round(fake.random.uniform(100.0, 500.0), 2),
+                "confidence": fake.random.uniform(0.6, 0.95),
+                "rationale": fake.sentence(nb_words=15),
+            }
+        )
     return recommendations
 
 
@@ -171,6 +175,7 @@ def fake_stock_data(fake: Faker) -> dict[str, Any]:
 @pytest.fixture
 def fake_data_generator(fake: Faker):
     """Fixture providing a data generator function."""
+
     def generate(data_type: str, count: int = 1):
         if data_type == "stock":
             return [fake_stock_data.__wrapped__(fake) for _ in range(count)]
@@ -178,6 +183,7 @@ def fake_data_generator(fake: Faker):
             return [fake_client_profile.__wrapped__(fake) for _ in range(count)]
         else:
             return []
+
     return generate
 
 

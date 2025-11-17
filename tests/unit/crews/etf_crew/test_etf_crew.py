@@ -193,10 +193,10 @@ class TestEtfCrew:
         # Configure the mock result
         mock_result = mocker.MagicMock()
         mock_result.raw = "Mock ETF analysis result with BUY recommendation"
-        
+
         # Configure the existing mock crew instance from fixture
         etf_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 
@@ -211,7 +211,7 @@ class TestEtfCrew:
 
         # Configure the existing mock crew instance to raise an error
         etf_crew.crew.return_value.kickoff.side_effect = ValueError("Missing required inputs")
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 
@@ -264,10 +264,10 @@ class TestEtfCrew:
         # Configure the mock result
         mock_result = mocker.MagicMock()
         mock_result.raw = "ETF analysis completed with limited holdings data"
-        
+
         # Configure the existing mock crew instance from fixture
         etf_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 
@@ -305,10 +305,10 @@ class TestEtfCrew:
         # Mock result that includes expense ratio analysis
         mock_result = mocker.MagicMock()
         mock_result.raw = f"ETF analysis shows expense ratio of {mock_etf_data['expenseRatio']:.4f} which is competitive"
-        
+
         # Configure the existing mock crew instance from fixture
         etf_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 
@@ -322,10 +322,10 @@ class TestEtfCrew:
         # Mock result that includes tracking error analysis
         mock_result = mocker.MagicMock()
         mock_result.raw = f"Tracking error of {mock_etf_data['trackingError']:.2f} indicates good benchmark tracking"
-        
+
         # Configure the existing mock crew instance from fixture
         etf_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 
@@ -343,10 +343,10 @@ class TestEtfCrew:
         # Configure the mock result for French
         mock_result = mocker.MagicMock()
         mock_result.raw = "Analyse des ETF en français"
-        
+
         # Configure the existing mock crew instance from fixture
         etf_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 
@@ -381,10 +381,10 @@ class TestEtfCrew:
         # Configure the mock result
         mock_result = mocker.MagicMock()
         mock_result.raw = "ETF analysis completed for diversified fund with 500 holdings"
-        
+
         # Configure the existing mock crew instance from fixture
         etf_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 
@@ -410,10 +410,10 @@ class TestEtfCrew:
         # Configure the mock result
         mock_result = mocker.MagicMock()
         mock_result.raw = "ETF shows strong risk-adjusted returns with Sharpe ratio of 1.25"
-        
+
         # Configure the existing mock crew instance from fixture
         etf_crew.crew.return_value.kickoff.return_value = mock_result
-        
+
         # Mock the kickoff method on etf_crew to use the crew
         etf_crew.kickoff = lambda inputs: etf_crew.crew().kickoff(inputs=inputs)
 

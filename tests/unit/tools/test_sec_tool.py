@@ -53,18 +53,18 @@ def test_successful_search_with_mocks(monkeypatch):
 
     # Mock FAISS and OpenAIEmbeddings retrieval pipeline
     class DummyRetriever:
-        def get_relevant_documents(self, question, top_k=2):
+        def invoke(self, question):  # Fixed: use invoke instead of get_relevant_documents
             class Obj:
                 def __init__(self, pc):
                     self.page_content = pc
 
-            return [Obj("Excerpt 1"), Obj("Excerpt 2")][:top_k]
+            return [Obj("Excerpt 1"), Obj("Excerpt 2")]
 
     class DummyFAISS:
         @staticmethod
         def from_documents(docs, embeddings):
             class Container:
-                def as_retriever(self_inner):
+                def as_retriever(self_inner, search_kwargs=None):  # Fixed: accept search_kwargs
                     return DummyRetriever()
 
             return Container()

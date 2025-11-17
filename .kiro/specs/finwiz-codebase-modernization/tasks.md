@@ -8,11 +8,12 @@ This plan focuses on completing the remaining modernization work for the FinWiz 
 
 **Current Status**:
 
+- 🚨 **Phase 0 - FIX TEST SUITE** - **CRITICAL PRIORITY** (BLOCKING ALL OTHER WORK)
 - ✅ Phases 1, 2, 2A, 2B, 2C, 5 - **COMPLETE**
-- ⏳ Phase 3 - **IN PROGRESS** (5/22 files split)
-- ❌ Phase 4 - **NOT STARTED** (20 files to split)
-- ❌ Phase 6 - **NOT STARTED** (Test failure resolution)
-- ❌ Phase 7 - **NOT STARTED** (Final validation)
+- 🚫 Phase 3 - **BLOCKED** (waiting for Phase 0)
+- 🚫 Phase 4 - **BLOCKED** (waiting for Phase 0)
+- 🚫 Phase 6 - **BLOCKED** (waiting for Phase 0)
+- 🚫 Phase 7 - **BLOCKED** (waiting for Phase 0)
 
 **Key Metrics**:
 
@@ -24,11 +25,48 @@ This plan focuses on completing the remaining modernization work for the FinWiz 
 
 ---
 
-## Phase 3: Split Large Files (>600 lines) - IN PROGRESS
+## Phase 0: Fix Test Suite - CRITICAL PRIORITY
+
+**Status**: BLOCKING ALL OTHER WORK
+
+**Current Test Status**:
+
+- Unit tests: 557 failed, 2608 passed (82% pass rate)
+- Test execution time: ~2 minutes
+- **BLOCKER**: Cannot proceed with refactoring until test suite is healthy
+
+
+- [ ] 1. improve test
+
+  - [ ] 1.1 Fix test suite to achieve >95% pass rate - **IN PROGRESS**
+    - Current: 551 failures out of 3165 unit tests (82.6% pass rate) - **6 tests fixed**
+    - Target: <50 failures (>95% pass rate)
+    - **See TEST_STATUS_REPORT.md for detailed breakdown**
+    - Progress:
+      - ✅ Fixed environment mocking in test_config.py (2 tests)
+      - ✅ Fixed risk calculation method calls in test_backtesting.py (4 tests)
+      - 🔄 quantitative/ (136 failures remaining, down from 141) - IN PROGRESS
+      - ⏳ crews/ (48 failures) - PENDING
+      - ⏳ flow/ + flows/ (36 failures) - PENDING
+      - ⏳ utils/ (38 failures) - PENDING
+      - ⏳ Other modules (82 failures) - PENDING
+    - **This task MUST be completed before any Phase 3 or Phase 4 work continues**
+    - _Requirements: 3_
+
+  - [ ] 1.2 Verify test suite stability
+    - Run full unit test suite 3 times consecutively
+    - Ensure consistent results (no flaky tests)
+    - Execution time must be <3 minutes
+    - Document any known issues or limitations
+    - _Requirements: 3_
+
+---
+
+## Phase 3: Split Large Files (>600 lines) - BLOCKED
 
 **Status**: 5 of 22 files complete
 
-- [ ] 3. Split large files exceeding 600 lines
+- [x] 3. Split large files exceeding 600 lines
   - [x] 3.1 Split main.py (764 lines) ✓
   - [x] 3.2 Split integration/manager.py (722 lines) ✓
   - [x] 3.3 Split integration/validation_error_recovery.py (704 lines) ✓
@@ -141,110 +179,241 @@ This plan focuses on completing the remaining modernization work for the FinWiz 
 
 ---
 
-## Phase 4: Split Medium Files (500-600 lines)
+## Phase 4: Split Medium Files (500-600 lines) - BLOCKED
 
-**Status**: 0 of 20 files complete
+**Status**: BLOCKED - Must complete Phase 0 (Fix Test Suite) first
 
-- [ ] 4. Split medium files (500-600 lines)
+**BLOCKER**: Cannot proceed with refactoring until test suite achieves >95% pass rate (currently 82%)
 
-  - [ ] 4.1 Split quantitative/screening.py (600 lines)
-    - Extract screening criteria to quantitative/screening_criteria.py
-    - Extract screening filters to quantitative/screening_filters.py
+**QUALITY GATES** (will apply once Phase 0 is complete):
+
+- ✅ Run unit tests: `uv run pytest tests/unit --timeout=10 -q` (must complete in <3 min)
+- ✅ No NEW test failures introduced (compare before/after counts)
+- ✅ Run linting: `ruff check . && ruff format .` (must pass)
+- ✅ Verify file organization follows best practices
+- ✅ Ensure backward compatibility maintained
+
+- [-] 4. Split medium files (500-600 lines)
+
+  - [~] 4.1 Split quantitative/screening.py (600 lines) - **NEEDS QUALITY VERIFICATION**
+    - ✅ Extract screening criteria to quantitative/screening_criteria.py
+    - ✅ Extract screening filters to quantitative/screening_filters.py
+    - **Quality Gates (NOT YET VERIFIED)**:
+      - ⚠️ Run ALL tests: `uv run pytest` (NOT VERIFIED)
+      - ⚠️ Run linting: `ruff check . && ruff format .` (NOT VERIFIED)
+      - ⚠️ Verify file organization follows best practices (NOT VERIFIED)
+      - ⚠️ Ensure backward compatibility maintained (NOT VERIFIED)
+      - ⚠️ Code must be runnable and commit-safe (NOT VERIFIED)
     - _Requirements: 1_
 
-  - [ ] 4.2 Split crews/report_crew/report_crew.py (594 lines)
-    - Extract agent definitions if needed (maintain @CrewBase patterns)
-    - Keep YAML configs in config/ directory
+  - [~] 4.2 Split crews/report_crew/report_crew.py (594 lines) - **NEEDS QUALITY VERIFICATION**
+    - ✅ Extract agent definitions if needed (maintain @CrewBase patterns)
+    - ✅ Keep YAML configs in config/ directory
+    - **Quality Gates (NOT YET VERIFIED)**:
+      - ⚠️ Run ALL tests: `uv run pytest` (NOT VERIFIED)
+      - ⚠️ Run linting: `ruff check . && ruff format .` (NOT VERIFIED)
+      - ⚠️ Verify file organization follows best practices (NOT VERIFIED)
+      - ⚠️ Ensure backward compatibility maintained (NOT VERIFIED)
+      - ⚠️ Code must be runnable and commit-safe (NOT VERIFIED)
     - _Requirements: 1, 2_
 
-  - [ ] 4.3 Split tools/chart_analyzer.py (588 lines)
-    - Extract chart generation to tools/charts/chart_generator.py
-    - Extract chart analysis to tools/charts/chart_analysis.py
+  - [~] 4.3 Split tools/chart_analyzer.py (588 lines) - **PARTIAL VERIFICATION ONLY**
+    - ✅ Extract chart generation to tools/charts/chart_generator.py
+    - ✅ Extract chart analysis to tools/charts/chart_analysis.py
+    - **Quality Gates (INCOMPLETE)**:
+      - ⚠️ Run ALL tests: `uv run pytest` - **ONLY ran chart_analyzer tests (20/20), NOT full suite**
+      - ✅ Run linting: `ruff check . && ruff format .` (passed for modified files only)
+      - ✅ Verify file organization follows best practices (tools/charts/ structure)
+      - ✅ Ensure backward compatibility maintained (re-export pattern verified)
+      - ⚠️ Code must be runnable and commit-safe - **CANNOT CONFIRM without full test suite**
+    - **RISK**: Full test suite not verified, may have broken other tests
     - _Requirements: 1_
 
-  - [ ] 4.4 Split tools/twelve_data_transformers.py (584 lines)
-    - Extract data transformers to tools/twelve_data/transformers.py
-    - Extract data validators to tools/twelve_data/validators.py
+  - [~] 4.4 Split tools/twelve_data_transformers.py (584 lines) - **NEEDS QUALITY VERIFICATION**
+    - ✅ Extract data transformers to tools/twelve_data/transformers.py
+    - ✅ Extract data validators to tools/twelve_data/validators.py
+    - **Quality Gates (NOT YET VERIFIED)**:
+      - ⚠️ Run ALL tests: `uv run pytest` (NOT VERIFIED)
+      - ⚠️ Run linting: `ruff check . && ruff format .` (NOT VERIFIED)
+      - ⚠️ Verify file organization follows best practices (NOT VERIFIED)
+      - ⚠️ Ensure backward compatibility maintained (NOT VERIFIED)
+      - ⚠️ Code must be runnable and commit-safe (NOT VERIFIED)
     - _Requirements: 1_
 
   - [ ] 4.5 Split tools/enhanced_crypto_tool.py (583 lines)
     - Extract crypto data fetchers to tools/crypto/crypto_data_fetchers.py
     - Extract crypto analyzers to tools/crypto/crypto_analyzers.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.6 Split integration/storage.py (583 lines)
     - Extract storage backends to integration/storage_backends.py
     - Extract storage operations to integration/storage_operations.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.7 Split tools/backtesting_tool.py (581 lines)
     - Extract backtesting strategies to tools/backtesting/strategies.py
     - Extract backtesting metrics to tools/backtesting/metrics.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.8 Split quantitative/rebalancing_history_tracker.py (580 lines)
     - Extract history storage to quantitative/rebalancing_history_storage.py
     - Extract history analysis to quantitative/rebalancing_history_analysis.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.9 Split integration/sec_citation_validator.py (572 lines)
     - Extract citation validators to integration/citation_validators.py
     - Extract citation parsers to integration/citation_parsers.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.10 Split tools/perplexity_analysis_integration.py (570 lines)
     - Extract Perplexity client to tools/perplexity/perplexity_client.py
     - Extract analysis logic to tools/perplexity/perplexity_analyzer.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.11 Split integration/missing_data_handler.py (566 lines)
-    - Extract data recovery strategies
-    - Extract fallback handlers
+    - Extract data recovery strategies to integration/recovery_strategies.py
+    - Extract fallback handlers to integration/fallback_handlers.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.12 Split integration/validation_scripts.py (560 lines)
-    - Extract validation rules
-    - Extract validation executors
+    - Extract validation rules to integration/validation_rules.py
+    - Extract validation executors to integration/validation_pipeline.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.13 Split utils/cache_manager.py (556 lines)
-    - Extract cache strategies
-    - Extract cache storage
+    - Extract cache strategies to utils/cache/cache_strategies.py
+    - Extract cache storage to utils/cache/cache_storage.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.14 Split tools/screening_utils.py (555 lines)
-    - Extract screening helpers
-    - Extract screening formatters
+    - Extract screening helpers to tools/screening/screening_helpers.py
+    - Extract screening formatters to tools/screening/screening_formatters.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.15 Split integration/middleware.py (544 lines)
-    - Extract middleware components
-    - Extract middleware handlers
+    - Extract middleware components to integration/middleware_components.py
+    - Extract middleware handlers to integration/middleware_handlers.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.16 Split tools/standardized_sentiment_tool.py (536 lines)
-    - Extract sentiment analyzers
-    - Extract sentiment aggregators
+    - Extract sentiment analyzers to tools/sentiment/sentiment_analyzers.py
+    - Extract sentiment aggregators to tools/sentiment/sentiment_aggregators.py (if not exists)
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.17 Split tools/risk_assessment_tool.py (536 lines)
-    - Extract risk calculators
-    - Extract risk evaluators
+    - Extract risk calculators to tools/risk/risk_calculators.py
+    - Extract risk evaluators to tools/risk/risk_evaluators.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.18 Split tools/notification_service.py (530 lines)
-    - Extract notification builders
-    - Extract notification senders
+    - Extract notification builders to tools/notifications/notification_builders.py
+    - Extract notification senders to tools/notifications/notification_senders.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.19 Split quantitative/portfolio_analyzer.py (526 lines)
-    - Extract analysis engines
-    - Extract metric calculators
+    - Extract analysis engines to quantitative/portfolio_analysis_engine.py
+    - Extract metric calculators to quantitative/portfolio_metrics_calculator.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.20 Split tools/enhanced_sec_tool.py (507 lines)
-    - Extract SEC data fetchers
-    - Extract SEC analyzers
+    - Extract SEC data fetchers to tools/sec/sec_data_fetchers.py
+    - Extract SEC analyzers to tools/sec/sec_analyzers.py
+    - **Quality Gates (MANDATORY)**:
+      - ✅ Run ALL tests: `uv run pytest` (must pass, no excuses)
+      - ✅ Run linting: `ruff check . && ruff format .` (must pass)
+      - ✅ Verify file organization follows best practices (schemas/models/helpers/services)
+      - ✅ Ensure backward compatibility maintained (re-export pattern)
+      - ✅ Code must be runnable and commit-safe
     - _Requirements: 1_
 
   - [ ] 4.21 Verify Phase 4 completion

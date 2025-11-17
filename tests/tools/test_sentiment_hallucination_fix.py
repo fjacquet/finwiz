@@ -39,10 +39,13 @@ class TestSentimentHallucinationFix:
                 assert "xyz12345" not in url, f"Found fake URL pattern in: {url}"
                 assert not url.endswith(f"/{article.get('symbol', '').lower()}-challenges"), f"Found templated fake URL: {url}"
 
-    def test_should_return_empty_lists_when_no_real_data(self):
+    def test_should_return_empty_lists_when_no_real_data(self, mocker):
         """Test that tool returns empty lists instead of fake data when no real sources available."""
         # Arrange
         tool = StandardizedSentimentAnalysisTool()
+
+        # Mock the news collection to return no articles
+        mocker.patch.object(tool, "_collect_news_articles", return_value=[])
 
         # Act
         result = tool._run(symbol="TESTFAKE", asset_class="stock")
@@ -73,10 +76,13 @@ class TestSentimentHallucinationFix:
         assert general_articles == []
         assert sample_articles == []
 
-    def test_should_handle_different_asset_classes_without_fake_data(self):
+    def test_should_handle_different_asset_classes_without_fake_data(self, mocker):
         """Test that all asset classes return empty data instead of fake articles."""
         # Arrange
         tool = StandardizedSentimentAnalysisTool()
+
+        # Mock the news collection to return no articles for all asset classes
+        mocker.patch.object(tool, "_collect_news_articles", return_value=[])
 
         # Act & Assert for different asset classes
         for asset_class in ["stock", "etf", "crypto"]:

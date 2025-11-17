@@ -22,6 +22,7 @@ def mock_api_response(mocker):
         def test_api_call(mock_api_response):
             response = mock_api_response(data={"result": "success"})
             assert response.status_code == 200
+
     """
 
     def _factory(
@@ -39,6 +40,7 @@ def mock_api_response(mocker):
 
         Returns:
             Mock API response object
+
         """
         mock_response = mocker.Mock()
         mock_response.status_code = status_code
@@ -95,6 +97,7 @@ def mock_crew_result(mocker):
         def test_crew(mock_crew_result):
             result = mock_crew_result(raw="Analysis complete")
             assert result.raw == "Analysis complete"
+
     """
 
     def _factory(
@@ -112,6 +115,7 @@ def mock_crew_result(mocker):
 
         Returns:
             Mock crew result object
+
         """
         mock_result = mocker.Mock()
         mock_result.raw = raw
@@ -135,6 +139,7 @@ def mock_yfinance_ticker(mocker):
         def test_ticker(mock_yfinance_ticker):
             ticker = mock_yfinance_ticker(ticker="AAPL")
             assert ticker.info["symbol"] == "AAPL"
+
     """
 
     def _factory(
@@ -152,6 +157,7 @@ def mock_yfinance_ticker(mocker):
 
         Returns:
             Mock yfinance Ticker object
+
         """
         mock_ticker = mocker.Mock()
         mock_ticker.ticker = ticker
@@ -192,6 +198,7 @@ def mock_supabase_client(mocker):
             client = mock_supabase_client
             result = client.table("test").select("*").execute()
             assert result.data == []
+
     """
     mock_client = mocker.Mock()
 

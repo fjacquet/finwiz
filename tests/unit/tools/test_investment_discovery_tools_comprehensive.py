@@ -160,6 +160,7 @@ class TestMarketScreeningToolComprehensive:
 
     def test_should_handle_api_failures_gracefully(self, mocker):
         """Test handling of API failures during screening."""
+
         # Simulate API failures for some symbols
         def side_effect(symbol, asset_type):
             if symbol in ["FAIL1", "FAIL2"]:

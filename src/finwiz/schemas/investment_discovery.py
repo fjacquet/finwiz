@@ -104,13 +104,10 @@ class APlusDiscoveryResult(BaseModel):
     total_screened: int = Field(default=0, ge=0, description="Total number of investments screened")
     candidates_found: int = Field(default=0, ge=0, description="Number of A+ candidates found")
     discovery_criteria: APlusCriteria = Field(default_factory=APlusCriteria, description="Criteria used for discovery")
-    market_context: MarketRegime = Field(default_factory=lambda: MarketRegime(
-        regime_type="sideways",
-        vix_level=20.0,
-        inflation_rate=3.0,
-        interest_rate_trend="stable",
-        market_stress_level="medium"
-    ), description="Market conditions during discovery")
+    market_context: MarketRegime = Field(
+        default_factory=lambda: MarketRegime(regime_type="sideways", vix_level=20.0, inflation_rate=3.0, interest_rate_trend="stable", market_stress_level="medium"),
+        description="Market conditions during discovery",
+    )
     discovery_timestamp: datetime = Field(default_factory=datetime.now, description="When discovery was performed")
 
     # A+ candidates with detailed analysis

@@ -556,6 +556,7 @@ class TestBacktestingEngine:
 
         # Act
         from finwiz.quantitative.backtesting_utils import create_backtrader_datafeed
+
         data_feed = create_backtrader_datafeed(sample_ohlcv_data, symbol)
 
         # Assert

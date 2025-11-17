@@ -187,7 +187,7 @@ class TestAPlusMonitoringSystem:
         # Arrange
         monitoring_system.add_investment_to_monitor("AAPL", "stock", sample_analysis)
         # Set last evaluation to recent time
-        monitoring_system.monitored_investments["AAPL"].last_evaluation = datetime.now()
+        monitoring_system.monitored_investments["AAPL"].last_evaluated = datetime.now()
 
         # Act
         result = await monitoring_system.evaluate_investment("AAPL", force_evaluation=False)

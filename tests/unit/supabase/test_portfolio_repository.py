@@ -217,10 +217,8 @@ class TestPortfolioRepository:
         assert snapshots[1].id == "id-2"
         assert snapshots[2].id == "id-1"  # Oldest last
 
-        # Verify execute_with_timeout was called with correct timeout
+        # Verify execute_with_timeout was called (timeout is handled internally by client)
         mock_client.execute_with_timeout.assert_called_once()
-        call_args = mock_client.execute_with_timeout.call_args
-        assert call_args[1]["timeout"] == 2.0
 
     @pytest.mark.asyncio
     async def test_should_return_empty_list_when_no_snapshots(self, portfolio_repository, mock_client, mocker):

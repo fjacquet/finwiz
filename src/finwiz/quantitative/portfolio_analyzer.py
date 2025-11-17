@@ -370,11 +370,13 @@ class PortfolioAnalyzer:
         # Convert to 0-10 scale (1.0 = maximum concentration, 0.0 = perfect diversification)
         # For a portfolio, HHI ranges from 1/n (equal weights) to 1.0 (single asset)
         n_positions = len(weightings)
-        min_hhi = 1.0 / n_positions if n_positions > 0 else 1.0
-        max_hhi = 1.0
 
-        if max_hhi <= min_hhi:
-            return 0.0
+        # Special case: single position = maximum concentration
+        if n_positions == 1:
+            return 10.0
+
+        min_hhi = 1.0 / n_positions
+        max_hhi = 1.0
 
         # Normalize to 0-1 range, then scale to 0-10
         normalized_risk = (hhi - min_hhi) / (max_hhi - min_hhi)
