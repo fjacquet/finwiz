@@ -9,6 +9,8 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.progress_tracking_orchestrator import ProgressTrackingOrchestrator
@@ -129,7 +131,7 @@ class TestProgressTrackingOrchestrator:
         assert saved_metrics["holdings_processed"] == 10
         assert saved_metrics["success_count"] == 8
         assert saved_metrics["failed_count"] == 2
-        assert "timestamp" in saved_metrics
+        assert saved_metrics["execution_time_seconds"] == 120.5
 
     def test_save_batch_metrics_creates_directory(self, orchestrator, tmp_path):
         """Test that save_batch_metrics creates output directory if it doesn't exist."""
@@ -268,3 +270,41 @@ class TestProgressTrackingOrchestrator:
         assert saved_metrics["ticker_execution_times"]["AAPL"] == 12.5
         assert saved_metrics["failed_holdings"] == ["INVALID1", "INVALID2"]
         assert saved_metrics["nested"]["level1"]["level2"]["value"] == 42
+
+
+class TestProgressTrackingOrchestratorProperties:
+    """Property-based tests for ProgressTrackingOrchestrator."""
+
+    @given(
+        processed=st.integers(min_value=0, max_value=100),
+        total=st.integers(min_value=1, max_value=100),
+    )
+    @settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_property_progress_calculation_accuracy(self, mocker, processed, total):
+        """
+        **Feature: flow-orchestrator-refactoring, Property 21: Progress Calculation Accuracy**
+
+        For any progress update with N processed out of M total holdings,
+        the percentage should equal (N/M) * 100.
+
+        **Validates: Requirements 8.3**
+        """
+        # Arrange
+        state = FinwizState()
+        state.flow_start_time = datetime.now().isoformat()
+        orchestrator = ProgressTrackingOrchestrator(state)
+
+        # Ensure processed <= total
+        processed = min(processed, total)
+
+        # Act
+        orchestrator.update_progress(holdings_processed=processed, total_holdings=total)
+
+        # Assert
+        expected_percentage = (processed / total) * 100
+        assert abs(state.progress_percentage - expected_percentage) < 0.01
+
+        # Additional assertions
+        assert state.holdings_processed == processed
+        assert state.total_holdings == total
+        assert state.holdings_remaining == total - processed

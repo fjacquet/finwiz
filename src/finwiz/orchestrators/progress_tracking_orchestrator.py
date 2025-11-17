@@ -146,14 +146,18 @@ class ProgressTrackingOrchestrator:
 
         """
         # Calculate elapsed time
-        flow_start = (
-            self.state.flow_start_time
-            if isinstance(self.state.flow_start_time, datetime)
-            else datetime.fromisoformat(self.state.flow_start_time)
-        )
-        elapsed_time = (datetime.now() - flow_start).total_seconds()
-        elapsed_minutes = int(elapsed_time // 60)
-        elapsed_seconds = int(elapsed_time % 60)
+        if self.state.flow_start_time:
+            flow_start = (
+                self.state.flow_start_time
+                if isinstance(self.state.flow_start_time, datetime)
+                else datetime.fromisoformat(self.state.flow_start_time)
+            )
+            elapsed_time = (datetime.now() - flow_start).total_seconds()
+            elapsed_minutes = int(elapsed_time // 60)
+            elapsed_seconds = int(elapsed_time % 60)
+        else:
+            elapsed_minutes = 0
+            elapsed_seconds = 0
 
         # Calculate remaining time
         remaining_minutes = int(self.state.estimated_time_remaining // 60)
