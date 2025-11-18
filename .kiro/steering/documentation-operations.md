@@ -71,11 +71,13 @@ graph TD
 #### Standard Review
 
 **Triggers**:
+
 - New content creation
 - Minor content updates
 - Regular maintenance updates
 
 **Process**:
+
 1. Author completes self-review checklist
 2. Single reviewer assigned based on content type
 3. Review completed within 3 business days
@@ -86,12 +88,14 @@ graph TD
 #### Comprehensive Review
 
 **Triggers**:
+
 - Major content restructuring
 - New content categories or templates
 - Significant technical changes
 - User feedback indicating problems
 
 **Process**:
+
 1. Multiple reviewers assigned (technical + editorial)
 2. Extended review period (5-7 business days)
 3. Review board discussion if needed
@@ -102,11 +106,13 @@ graph TD
 #### Emergency Review
 
 **Triggers**:
+
 - Critical errors in published content
 - Security-related documentation updates
 - Time-sensitive information updates
 
 **Process**:
+
 1. Immediate reviewer assignment
 2. 24-hour review turnaround
 3. Expedited approval process
@@ -132,6 +138,7 @@ graph TD
 #### Automatic Approval
 
 Content that can be approved without maintainer review:
+
 - Minor text corrections (typos, grammar)
 - Code example updates (same functionality)
 - Link updates (same destination, new URL)
@@ -140,6 +147,7 @@ Content that can be approved without maintainer review:
 #### Maintainer Approval Required
 
 Content requiring maintainer review:
+
 - New content categories or sections
 - Changes to site structure or navigation
 - Updates to style guide or templates
@@ -151,6 +159,7 @@ Content requiring maintainer review:
 #### Reviewer Disagreement
 
 When reviewers disagree:
+
 1. **Discussion phase**: Reviewers discuss concerns directly
 2. **Compromise attempt**: Seek middle-ground solution
 3. **Maintainer decision**: Escalate to maintainer for final decision
@@ -159,6 +168,7 @@ When reviewers disagree:
 #### Author-Reviewer Conflict
 
 When author disagrees with reviewer feedback:
+
 1. **Clarification request**: Author requests specific clarification
 2. **Discussion**: Direct discussion between author and reviewer
 3. **Second opinion**: Request additional reviewer if needed
@@ -421,11 +431,13 @@ uv run mkdocs build --verbose
 #### Build Fails with Syntax Errors
 
 **Symptom**:
+
 ```
 Error: Invalid YAML syntax in mkdocs.yml
 ```
 
 **Diagnosis**:
+
 ```bash
 # Check YAML syntax
 python -c "import yaml; yaml.safe_load(open('mkdocs.yml'))"
@@ -437,6 +449,7 @@ make docs-lint
 **Solutions**:
 
 1. **YAML syntax errors**:
+
    ```bash
    # Common issues:
    # - Missing quotes around special characters
@@ -452,6 +465,7 @@ make docs-lint
    ```
 
 2. **Markdown syntax errors**:
+
    ```bash
    # Check specific file
    markdownlint docs/path/to/file.md
@@ -465,6 +479,7 @@ make docs-lint
 #### Build Fails with Missing Files
 
 **Symptom**:
+
 ```
 Error: Documentation file 'path/to/file.md' does not exist
 ```
@@ -472,18 +487,21 @@ Error: Documentation file 'path/to/file.md' does not exist
 **Solutions**:
 
 1. **Create missing file**:
+
    ```bash
    touch docs/path/to/file.md
    echo "# Placeholder" > docs/path/to/file.md
    ```
 
 2. **Remove from navigation**:
+
    ```yaml
    # In .pages or mkdocs.yml, remove or comment out:
    # - missing-file.md
    ```
 
 3. **Fix file path**:
+
    ```yaml
    # Check for typos in navigation
    nav:
@@ -495,12 +513,14 @@ Error: Documentation file 'path/to/file.md' does not exist
 #### Pages Not Appearing in Navigation
 
 **Symptom**:
+
 - Files exist but don't show in site navigation
 - Navigation structure doesn't match expected layout
 
 **Solutions**:
 
 1. **Add to .pages file**:
+
    ```yaml
    # docs/tutorials/.pages
    nav:
@@ -509,6 +529,7 @@ Error: Documentation file 'path/to/file.md' does not exist
    ```
 
 2. **Add to mkdocs.yml**:
+
    ```yaml
    nav:
      - Home: index.md
@@ -518,6 +539,7 @@ Error: Documentation file 'path/to/file.md' does not exist
    ```
 
 3. **Check file naming**:
+
    ```bash
    # Ensure files use correct naming convention
    # Use hyphens, not underscores or spaces
@@ -531,6 +553,7 @@ Error: Documentation file 'path/to/file.md' does not exist
 **Solutions**:
 
 1. **Rebuild search index**:
+
    ```bash
    # Clean and rebuild
    make docs-clean
@@ -538,6 +561,7 @@ Error: Documentation file 'path/to/file.md' does not exist
    ```
 
 2. **Check search plugin configuration**:
+
    ```yaml
    plugins:
      - search:
@@ -546,6 +570,7 @@ Error: Documentation file 'path/to/file.md' does not exist
    ```
 
 3. **Clear browser cache**:
+
    ```bash
    # Hard refresh in browser
    # Ctrl+Shift+R (Windows/Linux)
@@ -559,12 +584,14 @@ Error: Documentation file 'path/to/file.md' does not exist
 **Solutions**:
 
 1. **Fix repository permissions**:
+
    ```bash
    # Ensure you have write access to repository
    # Check GitHub Pages source branch setting
    ```
 
 2. **Configure deployment key**:
+
    ```bash
    # Generate SSH key if needed
    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
@@ -573,6 +600,7 @@ Error: Documentation file 'path/to/file.md' does not exist
    ```
 
 3. **Use HTTPS instead of SSH**:
+
    ```bash
    git remote set-url origin https://github.com/username/repo.git
    ```
@@ -584,6 +612,7 @@ Error: Documentation file 'path/to/file.md' does not exist
 **Solutions**:
 
 1. **Optimize images**:
+
    ```bash
    # Compress PNG images
    find docs -name "*.png" -exec optipng -o2 {} \;
@@ -593,6 +622,7 @@ Error: Documentation file 'path/to/file.md' does not exist
    ```
 
 2. **Enable compression**:
+
    ```yaml
    # In mkdocs.yml
    plugins:
@@ -603,6 +633,7 @@ Error: Documentation file 'path/to/file.md' does not exist
    ```
 
 3. **Optimize theme configuration**:
+
    ```yaml
    theme:
      features:
@@ -618,12 +649,14 @@ Error: Documentation file 'path/to/file.md' does not exist
 
 **Scope**: High-traffic and critical content
 **Focus Areas**:
+
 - Accuracy of code examples
 - Currency of external links
 - User feedback and reported issues
 - Analytics data review
 
 **Process**:
+
 1. Review analytics for top 20 pages
 2. Check for reported issues or user feedback
 3. Validate external links and references
@@ -634,12 +667,14 @@ Error: Documentation file 'path/to/file.md' does not exist
 
 **Scope**: Complete content inventory
 **Focus Areas**:
+
 - Content relevance and usefulness
 - Structural organization and navigation
 - Compliance with current standards
 - Gap analysis for missing content
 
 **Process**:
+
 1. Complete content inventory and categorization
 2. User journey analysis and pain point identification
 3. Content performance analysis (engagement, bounce rate)
@@ -650,12 +685,14 @@ Error: Documentation file 'path/to/file.md' does not exist
 
 **Scope**: Comprehensive governance assessment
 **Focus Areas**:
+
 - Overall content strategy effectiveness
 - Governance process improvements
 - Technology and tooling updates
 - Team structure and role definitions
 
 **Process**:
+
 1. Stakeholder feedback collection
 2. Process efficiency analysis
 3. Technology stack review and updates
@@ -667,6 +704,7 @@ Error: Documentation file 'path/to/file.md' does not exist
 #### Automatic Updates
 
 Content that should be updated automatically:
+
 - **Code changes**: When APIs or functionality changes
 - **Version updates**: When software versions change
 - **Link rot**: When external links become invalid
@@ -675,6 +713,7 @@ Content that should be updated automatically:
 #### Reactive Updates
 
 Content updated in response to:
+
 - **User feedback**: Reports of confusion or errors
 - **Support tickets**: Common questions or issues
 - **Analytics data**: High bounce rates or low engagement
@@ -683,6 +722,7 @@ Content updated in response to:
 #### Proactive Updates
 
 Content updated proactively:
+
 - **Industry changes**: New best practices or standards
 - **Technology evolution**: New tools or methodologies
 - **User needs evolution**: Changing user expectations
@@ -693,16 +733,19 @@ Content updated proactively:
 #### Regular Maintenance
 
 **Weekly**:
+
 - [ ] Check for broken links: `make docs-validate`
 - [ ] Review and update outdated content
 - [ ] Monitor site performance
 
 **Monthly**:
+
 - [ ] Update dependencies: `uv sync --group docs`
 - [ ] Review analytics and user feedback
 - [ ] Audit content for accuracy
 
 **Quarterly**:
+
 - [ ] Full content audit and reorganization
 - [ ] Performance optimization review
 - [ ] Security updates and dependency upgrades
@@ -720,10 +763,12 @@ uv add mkdocs-material@latest --group docs
 #### Backup Procedures
 
 **Content backup**:
+
 - Documentation is version-controlled in Git
 - Regular repository backups via GitHub
 
 **Site backup**:
+
 - Built site is stored in `gh-pages` branch
 - Can be restored from any commit
 

@@ -93,6 +93,7 @@ async def fetch_with_error_handling(url: str) -> dict:
 ### Best Practices
 
 ✅ **DO**:
+
 - Use `ClientSession` as async context manager
 - Reuse sessions across multiple requests
 - Set appropriate timeouts
@@ -100,6 +101,7 @@ async def fetch_with_error_handling(url: str) -> dict:
 - Use `response.raise_for_status()` to check status codes
 
 ❌ **DON'T**:
+
 - Create new session for each request (overhead)
 - Forget to await response methods (`.text()`, `.json()`)
 - Leave sessions open (use context managers)
@@ -219,6 +221,7 @@ def get_ticker_data(symbol: str) -> dict:
 ### Best Practices
 
 ✅ **DO**:
+
 - Use `fast_info` when you only need basic data
 - Cache historical data to avoid repeated API calls
 - Check for missing data before accessing
@@ -226,6 +229,7 @@ def get_ticker_data(symbol: str) -> dict:
 - Handle rate limiting gracefully
 
 ❌ **DON'T**:
+
 - Make excessive API calls (respect rate limits)
 - Assume all data fields are present
 - Use for real-time trading (data may be delayed)
@@ -418,6 +422,7 @@ print(f"Funds remaining: ${leftover:.2f}")
 ### Best Practices
 
 ✅ **DO**:
+
 - Use appropriate risk model for your use case
 - Apply realistic constraints (weight bounds, sector limits)
 - Clean weights before implementation
@@ -426,6 +431,7 @@ print(f"Funds remaining: ${leftover:.2f}")
 - Validate inputs (no NaN, sufficient history)
 
 ❌ **DON'T**:
+
 - Use too short price history (min 1 year recommended)
 - Ignore constraints (unconstrained can be extreme)
 - Forget to clean weights (tiny allocations are impractical)
