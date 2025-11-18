@@ -1,0 +1,180 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+/* Automatic Dark Mode based on System Preferences */
+
+/* Light mode (default) - already handled by Minima theme */
+
+/* Dark mode - triggered by system preference */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+  }
+
+  /* Links */
+  a {
+    color: #58a6ff;
+  }
+
+  a:visited {
+    color: #8e96f0;
+  }
+
+  a:hover {
+    color: #79c0ff;
+  }
+
+  /* Headers */
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f0f0;
+  }
+
+  /* Code blocks */
+  pre, code {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  /* Inline code */
+  code.highlighter-rouge {
+    background-color: #2d2d2d;
+    color: #f0f0f0;
+  }
+
+  /* Blockquotes */
+  blockquote {
+    color: #b0b0b0;
+    border-left-color: #58a6ff;
+  }
+
+  /* Tables */
+  table {
+    border-color: #444;
+  }
+
+  th {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #f0f0f0;
+  }
+
+  td {
+    border-color: #444;
+  }
+
+  tr:nth-child(even) {
+    background-color: #252525;
+  }
+
+  /* Navigation */
+  .site-header {
+    background-color: #2d2d2d;
+    border-bottom-color: #444;
+  }
+
+  .site-title,
+  .site-title:visited {
+    color: #f0f0f0;
+  }
+
+  .site-nav .page-link {
+    color: #e0e0e0;
+  }
+
+  .site-nav .page-link:hover {
+    color: #58a6ff;
+  }
+
+  /* Footer */
+  .site-footer {
+    background-color: #2d2d2d;
+    border-top-color: #444;
+    color: #b0b0b0;
+  }
+
+  .footer-heading {
+    color: #f0f0f0;
+  }
+
+  /* Syntax highlighting adjustments for dark mode */
+  .highlight {
+    background-color: #2d2d2d;
+  }
+
+  .highlight .c { color: #6a9955; } /* Comment */
+  .highlight .k { color: #569cd6; } /* Keyword */
+  .highlight .s { color: #ce9178; } /* String */
+  .highlight .n { color: #9cdcfe; } /* Name */
+  .highlight .o { color: #d4d4d4; } /* Operator */
+  .highlight .p { color: #d4d4d4; } /* Punctuation */
+
+  /* Search box (if present) */
+  input[type="text"],
+  input[type="search"] {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  input[type="text"]:focus,
+  input[type="search"]:focus {
+    border-color: #58a6ff;
+  }
+
+  /* Buttons */
+  button,
+  .button {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  button:hover,
+  .button:hover {
+    background-color: #3d3d3d;
+    border-color: #58a6ff;
+  }
+
+  /* Horizontal rules */
+  hr {
+    border-color: #444;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: #264f78;
+    color: #ffffff;
+  }
+
+  /* Scrollbar (for webkit browsers) */
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+/* Smooth transition between modes */
+body,
+a,
+pre,
+code,
+.site-header,
+.site-footer {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
