@@ -43,7 +43,7 @@ class TestDeepAnalysisResultSchemaValidation:
         assert result.grade == "A"
         assert result.data_freshness_hours == 2.5
         assert result.confidence_level == 0.9
-        assert isinstance(result.analysis_timestamp, datetime)
+        assert isinstance(result.analysis_timestamp, str)  # ISO format string
         assert result.warnings == []  # Default empty list
         assert result.cached is False  # Default value
 
@@ -439,7 +439,7 @@ class TestDeepAnalysisResultSchemaValidation:
     def test_should_handle_analysis_timestamp_correctly(self):
         """Test that analysis_timestamp is handled correctly."""
         # Arrange
-        specific_time = datetime(2025, 1, 15, 10, 30, 0)
+        specific_time = "2025-01-15T10:30:00"
         data_with_timestamp = {
             "ticker": "AAPL",
             "asset_class": "stock",
@@ -458,12 +458,12 @@ class TestDeepAnalysisResultSchemaValidation:
 
         # Assert
         assert result.analysis_timestamp == specific_time
-        assert isinstance(result.analysis_timestamp, datetime)
+        assert isinstance(result.analysis_timestamp, str)
 
     def test_should_default_analysis_timestamp_to_now(self):
         """Test that analysis_timestamp defaults to current time."""
         # Arrange
-        before_creation = datetime.now()
+        before_creation = datetime.now().isoformat()
         data_without_timestamp = {
             "ticker": "AAPL",
             "asset_class": "stock",
@@ -478,10 +478,10 @@ class TestDeepAnalysisResultSchemaValidation:
 
         # Act
         result = DeepAnalysisResult(**data_without_timestamp)
-        after_creation = datetime.now()
+        after_creation = datetime.now().isoformat()
 
         # Assert
-        assert isinstance(result.analysis_timestamp, datetime)
+        assert isinstance(result.analysis_timestamp, str)
         assert before_creation <= result.analysis_timestamp <= after_creation
 
     def test_should_validate_cached_flag(self):
@@ -567,7 +567,7 @@ class TestDeepAnalysisResultSchemaValidation:
         assert result.confidence_level == 0.92
         assert len(result.warnings) == 2
         assert result.cached is False
-        assert isinstance(result.analysis_timestamp, datetime)
+        assert isinstance(result.analysis_timestamp, str)
 
     def test_should_serialize_to_dict_correctly(self):
         """Test that schema can be serialized to dict."""

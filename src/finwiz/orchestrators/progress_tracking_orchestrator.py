@@ -64,11 +64,7 @@ class ProgressTrackingOrchestrator:
         # Calculate estimated time remaining based on average time per holding
         if holdings_processed > 0 and self.state.holdings_remaining > 0 and self.state.flow_start_time:
             # Calculate elapsed time
-            flow_start = (
-                self.state.flow_start_time
-                if isinstance(self.state.flow_start_time, datetime)
-                else datetime.fromisoformat(self.state.flow_start_time)
-            )
+            flow_start = self.state.flow_start_time if isinstance(self.state.flow_start_time, datetime) else datetime.fromisoformat(self.state.flow_start_time)
             elapsed_time = (datetime.now() - flow_start).total_seconds()
 
             # Calculate average time per holding
@@ -147,11 +143,7 @@ class ProgressTrackingOrchestrator:
         """
         # Calculate elapsed time
         if self.state.flow_start_time:
-            flow_start = (
-                self.state.flow_start_time
-                if isinstance(self.state.flow_start_time, datetime)
-                else datetime.fromisoformat(self.state.flow_start_time)
-            )
+            flow_start = self.state.flow_start_time if isinstance(self.state.flow_start_time, datetime) else datetime.fromisoformat(self.state.flow_start_time)
             elapsed_time = (datetime.now() - flow_start).total_seconds()
             elapsed_minutes = int(elapsed_time // 60)
             elapsed_seconds = int(elapsed_time % 60)

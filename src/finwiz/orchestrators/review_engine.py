@@ -377,7 +377,7 @@ async def run_with_rebalancing(
                 rebalancing_out.write_text(rebalancing_result.model_dump_json(indent=2), encoding="utf-8")
 
         except Exception as e:
-            print(f"Warning: Rebalancing analysis failed: {e}")
+            logger.warning(f"Rebalancing analysis failed: {e}")
             rebalancing_result = None
 
     return out, rebalancing_result

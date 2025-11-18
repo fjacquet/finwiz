@@ -185,32 +185,19 @@ class TestCoreAnalysisFlow:
 
     async def test_should_validate_data_integration_system(self, mocker, finwiz_flow):
         """Test that data integration system is validated before crew execution."""
-        from datetime import datetime
-
-        from finwiz.schemas.integration import DataAvailabilityReport, DataAvailabilityStatus
-
         # Mock data accessor method with proper Pydantic model
-        mock_availability_report = DataAvailabilityReport(
-            stock_available=True,
-            etf_available=True,
-            crypto_available=False,
-            discovery_available=False,
-            portfolio_available=True,
-            missing_data=["crypto"],
-            stale_data=[],
-            integration_errors=[],
-            overall_status=DataAvailabilityStatus.PARTIAL,
-            report_timestamp=datetime.now(),
-            data_freshness_summary={},
-            recommendations=[],
-        )
-        mock_check = mocker.patch.object(finwiz_flow.data_accessor, "check_data_availability", return_value=mock_availability_report)
-
         # Execute validation (async)
-        await finwiz_flow.validate_data_integration()
+        result = await finwiz_flow.validate_data_integration()
 
-        # Verify validation was performed
-        mock_check.assert_called_once()
+        # Verify validation results structure (refactored flow returns different keys)
+        assert "integration_manager_available" in result
+        assert "data_accessor_available" in result
+        assert "cache_service_available" in result
+        assert "cache_enabled" in result
+
+        # Verify system components are available
+        assert result["integration_manager_available"] is True
+        assert result["data_accessor_available"] is True
 
     def test_should_store_all_crew_results_in_integration_system(
         self,

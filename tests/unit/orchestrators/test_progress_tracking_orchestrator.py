@@ -6,7 +6,6 @@ Tests progress calculation, metrics file saving, and progress logging.
 
 import json
 from datetime import datetime
-from pathlib import Path
 
 import pytest
 from hypothesis import HealthCheck, given, settings

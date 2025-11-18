@@ -5,8 +5,9 @@ This module provides centralized error handling utilities for crew execution,
 including error aggregation, summary generation, and error reporting.
 """
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 from finwiz.flow_state import FinwizState
 from finwiz.tools.logger import get_logger
