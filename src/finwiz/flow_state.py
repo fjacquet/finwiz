@@ -131,13 +131,17 @@ class FinwizState(BaseModel):
     # Portfolio review data (from check_portfolio)
     portfolio_review: dict[str, Any] | None = Field(None, description="Portfolio review data")
     portfolio_review_json: str | None = Field(None, description="Path to portfolio review JSON file")
+    portfolio_review_success: bool = Field(default=False, description="Whether portfolio review completed successfully")
     portfolio_review_error: str | None = Field(None, description="Portfolio review error if any")
     core_analysis_status: dict[str, Any] | None = Field(None, description="Core analysis availability status")
 
     # Portfolio rebalancing data (from check_portfolio_rebalancing)
     portfolio_rebalancing_available: bool = Field(default=False, description="Whether rebalancing analysis is available")
     portfolio_rebalancing_result: dict[str, Any] | None = Field(None, description="Portfolio rebalancing result")
-    portfolio_rebalancing_error: str | None = Field(None, description="Portfolio rebalancing error if any")
+    rebalancing_success: bool = Field(default=False, description="Whether rebalancing completed successfully")
+    rebalancing_results: dict[str, Any] | None = Field(None, description="Rebalancing results data")
+    rebalancing_error: str | None = Field(None, description="Rebalancing error if any")
+    portfolio_rebalancing_error: str | None = Field(None, description="Portfolio rebalancing error if any (legacy)")
     portfolio_allocation_updates: dict[str, Any] | None = Field(None, description="Portfolio allocation updates")
 
     # Investment discovery data (from check_investment_discovery)

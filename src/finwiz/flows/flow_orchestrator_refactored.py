@@ -553,7 +553,7 @@ class FinwizFlow(Flow[FinwizState]):
         return self.discovery_orch.check_investment_discovery()
 
     @listen("check_investment_discovery")
-    def match_alternatives_after_discovery(self) -> dict[str, Any]:
+    def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
         """
         Match alternatives from discovery results.
 
@@ -567,6 +567,9 @@ class FinwizFlow(Flow[FinwizState]):
             - Find A+ alternatives from discovery data
             - Update portfolio with additional alternatives
 
+        Args:
+            discovery_data: Discovery results from upstream check_investment_discovery method
+
         Returns:
             dict: Alternative matching results
 
@@ -574,7 +577,7 @@ class FinwizFlow(Flow[FinwizState]):
             check_portfolio_rebalancing (Phase 6)
 
         """
-        return self.alternatives_orch.match_alternatives_after_discovery()
+        return self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
 
     @listen("match_alternatives_after_discovery")
     def check_portfolio_rebalancing(self) -> dict[str, Any]:

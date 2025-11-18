@@ -106,7 +106,8 @@ class ValidationOrchestrator:
         Run portfolio keep-or-sell review orchestrator.
 
         Phase 2: Portfolio Analysis
-        - Execute portfolio review crew
+        - Load portfolio data from CSV files
+        - Build portfolio review with decisions
         - Store results in state
 
         Requirements: 7.1, 7.2
@@ -120,41 +121,33 @@ class ValidationOrchestrator:
         self.logger.info("=" * 80)
 
         # Import here to avoid circular dependencies
-        from finwiz.crews.portfolio_review.portfolio_review import PortfolioReviewCrew
+        from finwiz.orchestrators.review_engine import run
 
         try:
-            # Execute portfolio review crew
-            crew = PortfolioReviewCrew()
-            result = crew.crew().kickoff(
-                inputs={
-                    "current_day": self.state.current_day,
-                    "current_month": self.state.current_month,
-                    "current_year": self.state.current_year,
-                    "current_date": self.state.current_date,
-                    "full_date": self.state.full_date,
-                    "timestamp": self.state.timestamp,
-                    "report_language": self.state.report_language,
-                }
-            )
-
-            # Extract portfolio review from crew output
-            if hasattr(result, "pydantic") and result.pydantic:
-                portfolio_review = result.pydantic.model_dump() if hasattr(result.pydantic, "model_dump") else result.pydantic.dict()
-            else:
-                portfolio_review = {"holdings": [], "error": "Failed to extract portfolio review"}
+            # Run portfolio review (loads CSV, builds decisions) - MUST await async function
+            review_path = await run(flow_state=self.state)
+            
+            # Load the generated review JSON
+            import json
+            from pathlib import Path
+            
+            review_data = json.loads(Path(review_path).read_text(encoding="utf-8"))
 
             # Update state
-            self.state.portfolio_review = portfolio_review
+            self.state.portfolio_review = review_data
             self.state.portfolio_review_success = True
+            self.state.portfolio_review_json = str(review_path)
 
-            holdings_count = len(portfolio_review.get("holdings", []))
+            holdings_count = len(review_data.get("holdings", []))
             self.logger.info(f"Portfolio review completed: {holdings_count} holdings")
+            self.logger.info(f"Review saved to: {review_path}")
             self.logger.info("=" * 80)
 
             return {
                 "success": True,
-                "portfolio_review": portfolio_review,
+                "portfolio_review": review_data,
                 "holdings_count": holdings_count,
+                "review_path": str(review_path),
             }
 
         except Exception as e:
