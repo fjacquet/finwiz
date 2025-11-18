@@ -151,7 +151,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             logger.warning(f"Perplexity technical search failed for {ticker}: {str(e)}")
 
             # Record failure for feature flag tracking
-            from finwiz.tools.perplexity_analysis_integration import PerplexityFeatureFlagTracker
+            from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker
 
             PerplexityFeatureFlagTracker.record_operation_failure(ticker, "technical", "integration_error")
             return []

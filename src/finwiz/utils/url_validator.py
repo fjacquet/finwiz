@@ -6,6 +6,7 @@ valid URLs are included in reports and analysis outputs.
 """
 
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from finwiz.tools.logger import get_logger
@@ -186,7 +187,7 @@ class URLValidator:
 
         return valid_urls
 
-    def validate_url_dict(self, data: dict, url_fields: list[str], context: str = "") -> dict:
+    def validate_url_dict(self, data: dict, url_fields: list[str], context: str = "") -> dict[str, Any]:
         """
         Validate URL fields in a dictionary and replace invalid ones with None.
 

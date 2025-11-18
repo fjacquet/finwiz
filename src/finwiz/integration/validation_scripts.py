@@ -208,7 +208,7 @@ class DataIntegrityValidator(ValidationScript):
 
         return [t for t in tickers if t]  # Remove empty strings
 
-    def _extract_timestamp_from_data(self, data: dict) -> str | None:
+    def _extract_timestamp_from_data(self, data: dict[str, Any]) -> str | None:
         """Extract timestamp from crew data."""
         try:
             if "metadata" in data and "execution_timestamp" in data["metadata"]:

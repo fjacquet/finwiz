@@ -42,12 +42,15 @@ class TestChartImgTool:
         out = tool._run(symbol="AAPL")
         assert out.startswith("Error: CHART_IMG_API_KEY")
 
-    def test_success_returns_data_url(self, mock_get, monkeypatch, mocker):
+    def test_success_returns_data_url(self, monkeypatch, mocker):
         # Mock the rate limiting decorator to avoid asyncio issues
         mock_rate_limit_decorator(mocker)
 
         # Create a new instance to avoid decorator caching issues
         tool = ChartImgTool()
+
+        # Mock requests.get directly
+        mock_get = mocker.patch("requests.get")
 
         # Mock the decorated method directly
         def mock_run_method(symbol, interval="1day", range="6mo", width=900, height=500, theme="light"):
@@ -109,12 +112,15 @@ class TestChartImgTool:
         assert called_params["height"] == 400
         assert called_params["theme"] == "light"
 
-    def test_request_error(self, mock_get, monkeypatch, mocker):
+    def test_request_error(self, monkeypatch, mocker):
         # Mock the rate limiting decorator to avoid asyncio issues
         mock_rate_limit_decorator(mocker)
 
         # Create a new instance to avoid decorator caching issues
         tool = ChartImgTool()
+
+        # Mock requests.get directly
+        mock_get = mocker.patch("requests.get")
 
         # Mock the decorated method directly
         def mock_run_method(symbol, interval="1day", range="6mo", width=900, height=500, theme="light"):

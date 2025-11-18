@@ -1,6 +1,7 @@
 """Tool for fetching Yahoo Finance Ticker Information."""
 
 from datetime import UTC, datetime
+from typing import Any
 
 import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from crewai.tools import BaseTool
@@ -24,7 +25,7 @@ class YahooFinanceTickerInfoTool(BaseTool):
     description: str = "Get current information about stocks, ETFs, or cryptocurrencies including price, market cap, P/E ratio, volume, and other key stats."
     args_schema: type[BaseModel] = GetTickerInfoInput
 
-    def _run(self, ticker: str, prefetched_data: dict | None = None) -> dict:
+    def _run(self, ticker: str, prefetched_data: dict | None = None) -> dict[str, Any]:
         """
         Execute the Yahoo Finance ticker info lookup.
 

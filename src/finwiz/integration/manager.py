@@ -164,7 +164,7 @@ class CrewDataIntegrationManager:
         """
         return self.registry_manager.get_cached_crew_output(crew_name)
 
-    def validate_crew_output(self, crew_name: str, output_data: dict) -> ValidationResult:
+    def validate_crew_output(self, crew_name: str, output_data: dict[str, Any]) -> ValidationResult:
         """
         Validate crew output against expected schema.
 
@@ -234,11 +234,11 @@ class CrewDataIntegrationManager:
         return self.registry_manager.check_data_freshness(max_age_hours)
 
     # Backward compatibility methods for tests
-    def _load_json_file(self, file_path: Path, default: dict) -> dict:
+    def _load_json_file(self, file_path: Path, default: dict[str, Any]) -> dict[str, Any]:
         """Load JSON file with default fallback (backward compatibility)."""
         return self.schema_manager.load_json_file(file_path, default)
 
-    def _save_json_file(self, file_path: Path, data: dict) -> None:
+    def _save_json_file(self, file_path: Path, data: dict[str, Any]) -> None:
         """Save data to JSON file (backward compatibility)."""
         return self.schema_manager.save_json_file(file_path, data)
 

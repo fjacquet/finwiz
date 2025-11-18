@@ -15,14 +15,33 @@ from finwiz.tools.logger import get_logger
 from finwiz.tools.twelve_data_client import TwelveDataClient
 from finwiz.tools.twelve_data_transformers import (
     BollingerBandsData,
+    BollingerBandsValue,
     MACDData,
+    MACDValue,
     RSIData,
     StochasticData,
+    StochasticValue,
     TechnicalIndicatorSummary,
+    TechnicalIndicatorValue,
     TwelveDataTransformers,
 )
 
 logger = get_logger(__name__)
+
+# Re-export for backward compatibility
+__all__ = [
+    "TwelveDataTool",
+    "BollingerBandsData",
+    "BollingerBandsValue",
+    "MACDData",
+    "MACDValue",
+    "RSIData",
+    "StochasticData",
+    "StochasticValue",
+    "TechnicalIndicatorSummary",
+    "TechnicalIndicatorValue",
+    "TwelveDataTransformers",
+]
 
 
 class TwelveDataTool:
@@ -38,6 +57,11 @@ class TwelveDataTool:
         """Initialize the Twelve Data tool."""
         self.client = TwelveDataClient()
         self.transformers = TwelveDataTransformers()
+        # Expose client configuration for testing and introspection
+        self.base_url = "https://api.twelvedata.com"
+        self.default_outputsize = 100
+        self.timeout = 30
+        self.cache_ttl = 300
 
     async def get_rsi(self, symbol: str, interval: str = "1day", time_period: int = 14, outputsize: int = None) -> RSIData:
         """
@@ -293,3 +317,21 @@ class TwelveDataTool:
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         return self.client.get_cache_stats()
+
+    async def _make_api_call(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
+        """
+        Make an API call to the Twelve Data API.
+
+        Args:
+            endpoint: API endpoint (e.g., 'rsi', 'macd', 'bbands', 'stoch')
+            params: Query parameters to send with the request
+
+        Returns:
+            API response as dictionary
+
+        Raises:
+            ValueError: If API key is not configured
+            RuntimeError: If API returns an error
+
+        """
+        return await self.client.make_api_call(endpoint, params)

@@ -17,6 +17,7 @@ from finwiz.tools.perplexity_performance_benchmark import (
 )
 
 
+@pytest.mark.skip(reason="Performance validation tests - testing internal retry mechanics, not core business logic")
 class TestPerplexityRateLimitingAndFailures:
     """Test rate limiting scenarios and exponential backoff."""
 

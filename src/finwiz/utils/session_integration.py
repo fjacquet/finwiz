@@ -5,6 +5,8 @@ This module demonstrates how to integrate the session management system
 into the main FinWiz workflow for persistent financial planning.
 """
 
+from typing import Any
+
 from finwiz.schemas.session import FinancialPlan
 from finwiz.tools.logger import get_logger
 from finwiz.utils.session_manager import SessionManager, SessionParsingError
@@ -99,7 +101,7 @@ def save_session_with_analysis_results(plan: FinancialPlan, analysis_results: di
         raise
 
 
-def get_session_summary(plan: FinancialPlan) -> dict:
+def get_session_summary(plan: FinancialPlan) -> dict[str, Any]:
     """
     Get a summary of the current session for logging/debugging.
 

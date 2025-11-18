@@ -135,9 +135,7 @@ class CircuitBreaker:
         """
         old_state = self.state
         self.state = CircuitState.OPEN
-        logger.warning(
-            f"⚠️ Circuit breaker opened after {self.failure_count} failures"
-        )
+        logger.warning(f"⚠️ Circuit breaker opened after {self.failure_count} failures")
         logger.warning("⚠️ Supabase operations suspended - caching disabled")
 
         # Record state change in monitor

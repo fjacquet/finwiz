@@ -17,6 +17,13 @@ from finwiz.supabase.client import SupabaseClient
 class TestSupabaseClientConnectivity:
     """Test suite for SupabaseClient connectivity test."""
 
+    @pytest.fixture(autouse=True)
+    def reset_singleton(self):
+        """Reset SupabaseClient singleton before each test."""
+        SupabaseClient._instance = None
+        yield
+        SupabaseClient._instance = None
+
     @pytest.fixture
     def client(self, mocker):
         """Create SupabaseClient with mocked environment."""
@@ -32,16 +39,12 @@ class TestSupabaseClientConnectivity:
         return SupabaseClient()
 
     @pytest.mark.asyncio
-    async def test_should_pass_connectivity_test_when_supabase_available(
-        self, client, mocker
-    ):
+    async def test_should_pass_connectivity_test_when_supabase_available(self, client, mocker):
         """Test successful connectivity test."""
         # Arrange
         mock_result = mocker.Mock()
         mock_result.data = [{"id": "test-id"}]
-        mocker.patch.object(
-            client, "execute_with_timeout", return_value=mock_result
-        )
+        mocker.patch.object(client, "execute_with_timeout", return_value=mock_result)
 
         # Act
         result = await client.test_connectivity()
@@ -54,13 +57,12 @@ class TestSupabaseClientConnectivity:
     async def test_should_fail_connectivity_test_when_timeout(self, client, mocker):
         """Test connectivity test failure due to timeout."""
         # Arrange
-        mocker.patch.object(client, "execute_with_timeout", return_value=None)
+        mocker.patch.object(client, "get_api_client", return_value=None)
 
-        # Act
-        result = await client.test_connectivity()
+        # Act & Assert
+        with pytest.raises(ConnectionError, match="Could not create API client"):
+            await client.test_connectivity()
 
-        # Assert
-        assert result is False
         assert client.is_available is False
 
     @pytest.mark.asyncio
@@ -69,15 +71,14 @@ class TestSupabaseClientConnectivity:
         # Arrange
         mocker.patch.object(
             client,
-            "execute_with_timeout",
+            "get_api_client",
             side_effect=Exception("Connection error"),
         )
 
-        # Act
-        result = await client.test_connectivity()
+        # Act & Assert
+        with pytest.raises(ConnectionError, match="Connection error"):
+            await client.test_connectivity()
 
-        # Assert
-        assert result is False
         assert client.is_available is False
 
     @pytest.mark.asyncio
@@ -102,9 +103,7 @@ class TestSupabaseClientConnectivity:
         assert client.is_available is False
 
     @pytest.mark.asyncio
-    async def test_should_fail_connectivity_test_when_missing_credentials(
-        self, mocker
-    ):
+    async def test_should_fail_connectivity_test_when_missing_credentials(self, mocker):
         """Test connectivity test when credentials are missing."""
         # Arrange
         mocker.patch.dict(
@@ -138,23 +137,25 @@ class TestSupabaseClientConnectivity:
             },
         )
         client = SupabaseClient()
-        mock_execute = mocker.patch.object(
-            client, "execute_with_timeout", return_value=mocker.Mock()
-        )
+        mock_get_api_client = mocker.patch.object(client, "get_api_client", return_value=mocker.Mock())
 
         # Act
         await client.test_connectivity()
 
         # Assert
         assert client.connectivity_test_timeout == 3.0
-        mock_execute.assert_called_once()
-        # Verify timeout parameter was passed
-        call_args = mock_execute.call_args
-        assert call_args.kwargs["timeout"] == 3.0
+        mock_get_api_client.assert_called_once()
 
 
 class TestSupabaseClientMetrics:
     """Test suite for SupabaseClient metrics tracking."""
+
+    @pytest.fixture(autouse=True)
+    def reset_singleton(self):
+        """Reset SupabaseClient singleton before each test."""
+        SupabaseClient._instance = None
+        yield
+        SupabaseClient._instance = None
 
     @pytest.fixture
     def client(self, mocker):

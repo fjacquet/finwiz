@@ -46,17 +46,17 @@ class ValidationErrorRecovery:
 
     # Backward compatibility properties
     @property
-    def error_patterns(self) -> dict:
+    def error_patterns(self) -> dict[str, Any]:
         """Backward compatibility property for error patterns."""
         return self.error_handlers.error_patterns
 
     @property
-    def repair_strategies(self) -> dict:
+    def repair_strategies(self) -> dict[str, Any]:
         """Backward compatibility property for repair strategies."""
         return self.recovery_strategies.repair_strategies
 
     @property
-    def default_values(self) -> dict:
+    def default_values(self) -> dict[str, Any]:
         """Backward compatibility property for default values."""
         return self.recovery_strategies.default_values
 
@@ -74,7 +74,7 @@ class ValidationErrorRecovery:
         """
         return self.error_handlers.analyze_validation_error(error, data_context)
 
-    def suggest_data_repairs(self, error_analyses: list[ValidationErrorAnalysis], original_data: dict) -> list[DataRepairSuggestion]:
+    def suggest_data_repairs(self, error_analyses: list[ValidationErrorAnalysis], original_data: dict[str, Any]) -> list[DataRepairSuggestion]:
         """
         Generate data repair suggestions based on error analyses.
 
@@ -101,7 +101,7 @@ class ValidationErrorRecovery:
 
         return repair_suggestions
 
-    def generate_error_report(self, validation_errors: list[ValidationError], original_data: dict) -> ValidationErrorReport:
+    def generate_error_report(self, validation_errors: list[ValidationError], original_data: dict[str, Any]) -> ValidationErrorReport:
         """
         Generate a comprehensive validation error report.
 
@@ -138,7 +138,7 @@ class ValidationErrorRecovery:
         """Backward compatibility method."""
         return self.error_handlers._determine_error_severity(error_type, field_path, error_message)
 
-    def _assess_repairability(self, error_type: str, error_info: dict) -> tuple[bool, float]:
+    def _assess_repairability(self, error_type: str, error_info: dict[str, Any]) -> tuple[bool, float]:
         """Backward compatibility method."""
         return self.recovery_strategies.assess_repairability(error_type, error_info)
 
@@ -162,7 +162,7 @@ class ValidationErrorRecovery:
         """Backward compatibility method."""
         return self.recovery_strategies._adjust_value_for_constraints(current_value, error_message)
 
-    def _create_repair_suggestion(self, analysis: ValidationErrorAnalysis, original_data: dict) -> DataRepairSuggestion | None:
+    def _create_repair_suggestion(self, analysis: ValidationErrorAnalysis, original_data: dict[str, Any]) -> DataRepairSuggestion | None:
         """Backward compatibility method."""
         return self.recovery_strategies.create_repair_suggestion(analysis, original_data)
 
@@ -178,6 +178,6 @@ class ValidationErrorRecovery:
         """Backward compatibility method."""
         return self.fallback_handlers._remove_nested_field(data, keys)
 
-    def _apply_repair_suggestion(self, data: dict, suggestion: DataRepairSuggestion) -> dict:
+    def _apply_repair_suggestion(self, data: dict, suggestion: DataRepairSuggestion) -> dict[str, Any]:
         """Backward compatibility method."""
         return self.fallback_handlers._apply_repair_suggestion(data, suggestion)

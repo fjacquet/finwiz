@@ -32,7 +32,7 @@ class TickerExistenceValidationTool(BaseTool):
     description: str = "Validate that a ticker exists on Yahoo Finance (equities/ETFs) or Coinbase (crypto), returning a compact dict: {symbol, asset_class, valid, reason, meta}."
     args_schema: type[BaseModel] = TickerValidationInput
 
-    def _run(self, symbol: str, asset_class: AssetClass = "auto") -> dict:
+    def _run(self, symbol: str, asset_class: AssetClass = "auto") -> dict[str, Any]:
         try:
             if asset_class == "crypto":
                 return self._validate_crypto(symbol)
@@ -51,7 +51,7 @@ class TickerExistenceValidationTool(BaseTool):
             }
 
     # --- Helpers ---
-    def _validate_yahoo(self, symbol: str, asset_class: AssetClass) -> dict:
+    def _validate_yahoo(self, symbol: str, asset_class: AssetClass) -> dict[str, Any]:
         t = yf.Ticker(symbol)
         info: dict[str, Any] = t.info or {}
         if not info:
@@ -101,7 +101,7 @@ class TickerExistenceValidationTool(BaseTool):
             },
         }
 
-    def _validate_crypto(self, symbol: str) -> dict:
+    def _validate_crypto(self, symbol: str) -> dict[str, Any]:
         sym = symbol.upper()
         try:
             r = requests.get("https://api.exchange.coinbase.com/products", timeout=10)

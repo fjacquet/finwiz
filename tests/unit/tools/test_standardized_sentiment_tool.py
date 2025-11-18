@@ -110,34 +110,22 @@ class TestStandardizedSentimentAnalysisTool:
         assert result["symbol"] == "AAPL"
 
     def test_should_create_sample_financial_articles(self, tool):
-        """Test creation of sample financial articles."""
+        """Test that sample financial articles are disabled (returns empty list)."""
         # Act
         articles = tool._create_sample_financial_articles("AAPL", "earnings")
 
-        # Assert
-        assert len(articles) > 0
-        for article in articles:
-            assert "headline" in article
-            assert "url" in article
-            assert "date" in article
-            assert "source" in article
-            assert "content" in article
-            assert "AAPL" in article["headline"]
+        # Assert - method is disabled and returns empty list to prevent fake data
+        assert len(articles) == 0
+        assert isinstance(articles, list)
 
     def test_should_create_sample_crypto_articles(self, tool):
-        """Test creation of sample crypto articles."""
+        """Test that sample crypto articles are disabled (returns empty list)."""
         # Act
         articles = tool._create_sample_crypto_articles("BTC", "price")
 
-        # Assert
-        assert len(articles) > 0
-        for article in articles:
-            assert "headline" in article
-            assert "url" in article
-            assert "date" in article
-            assert "source" in article
-            assert "content" in article
-            assert "BTC" in article["headline"]
+        # Assert - method is disabled and returns empty list to prevent fake data
+        assert len(articles) == 0
+        assert isinstance(articles, list)
 
     def test_should_deduplicate_articles(self, tool):
         """Test article deduplication functionality."""
@@ -368,11 +356,17 @@ class TestCrossAssetSentimentComparatorTool:
 
     def test_should_return_methodology_information(self, tool):
         """Test that the tool returns methodology information."""
+        # Arrange
+        symbols = ["AAPL", "BTC-USD"]
+        asset_classes = ["stock", "crypto"]
+
         # Act
-        result = tool._run()
+        result = tool._run(symbols=symbols, asset_classes=asset_classes)
 
         # Assert
         assert result["tool"] == "CrossAssetSentimentComparatorTool"
+        assert result["symbols"] == symbols
+        assert result["asset_classes"] == asset_classes
         assert "methodology" in result
         assert "cross-asset" in result["methodology"].lower()
 

@@ -6,10 +6,7 @@ process, enabling continuous improvement of A+ criteria based on user feedback
 and performance outcomes.
 """
 
-import asyncio
 from typing import Any
-
-from crewai.tools import BaseTool
 
 from finwiz.schemas.feedback import (
     PerformanceFeedback,
@@ -24,12 +21,14 @@ from finwiz.schemas.tools import (
     PerformanceTrackingInput,
 )
 from finwiz.services.feedback_service import get_feedback_service
+from finwiz.tools.base_tools import AsyncFeedbackTool
 from finwiz.tools.logger import get_logger
+from finwiz.tools.tool_result import ToolResult
 
 logger = get_logger(__name__)
 
 
-class FeedbackCollectionTool(BaseTool):
+class FeedbackCollectionTool(AsyncFeedbackTool):
     """Tool for collecting user feedback on A+ recommendations."""
 
     name: str = "feedback_collection_tool"
@@ -38,19 +37,6 @@ class FeedbackCollectionTool(BaseTool):
     Use this tool when users provide feedback on whether they accepted or rejected
     A+ recommendations and their reasons for the decision.
     """
-
-    def _run(self, **kwargs: Any) -> dict[str, Any]:
-        """Collect user feedback synchronously."""
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            # No event loop running, safe to use asyncio.run()
-            return asyncio.run(self._arun(**kwargs))
-        else:
-            # Event loop already running, use run_coroutine_threadsafe or nest_asyncio
-            import nest_asyncio
-            nest_asyncio.apply()
-            return asyncio.run(self._arun(**kwargs))
 
     async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Collect user feedback on A+ recommendations."""
@@ -78,27 +64,25 @@ class FeedbackCollectionTool(BaseTool):
             # Collect feedback
             feedback_id = await feedback_service.collect_user_feedback(feedback)
 
-            result = {
-                "success": True,
-                "feedback_id": feedback_id,
-                "message": f"Collected feedback for {input_data.symbol}",
-                "outcome": input_data.outcome,
-                "will_improve_future_recommendations": True,
-            }
+            result = ToolResult.success_result(
+                {
+                    "feedback_id": feedback_id,
+                    "message": f"Collected feedback for {input_data.symbol}",
+                    "outcome": input_data.outcome,
+                    "will_improve_future_recommendations": True,
+                }
+            )
 
             logger.info(f"Collected user feedback: {input_data.symbol} - {input_data.outcome}")
-            return result
+            return result.to_dict()
 
         except Exception as e:
             logger.error(f"Failed to collect user feedback: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to collect feedback",
-            }
+            result = ToolResult.error_result(error=str(e), data={"message": "Failed to collect feedback"})
+            return result.to_dict()
 
 
-class PerformanceTrackingTool(BaseTool):
+class PerformanceTrackingTool(AsyncFeedbackTool):
     """Tool for tracking performance outcomes of A+ recommendations."""
 
     name: str = "performance_tracking_tool"
@@ -107,17 +91,6 @@ class PerformanceTrackingTool(BaseTool):
     the effectiveness of the discovery system and improve future recommendations.
     Use this tool to record how A+ investments have performed over time.
     """
-
-    def _run(self, **kwargs: Any) -> dict[str, Any]:
-        """Track performance synchronously."""
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return asyncio.run(self._arun(**kwargs))
-        else:
-            import nest_asyncio
-            nest_asyncio.apply()
-            return asyncio.run(self._arun(**kwargs))
 
     async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Track performance outcomes of A+ recommendations."""
@@ -159,29 +132,27 @@ class PerformanceTrackingTool(BaseTool):
             # Record performance
             performance_id = await feedback_service.record_performance_outcome(performance)
 
-            result = {
-                "success": True,
-                "performance_id": performance_id,
-                "symbol": input_data.symbol,
-                "alpha": alpha,
-                "performance_outcome": performance_outcome.value,
-                "grade_maintained": input_data.grade_maintained,
-                "message": f"Recorded performance for {input_data.symbol}: {performance_outcome.value}",
-            }
+            result = ToolResult.success_result(
+                {
+                    "performance_id": performance_id,
+                    "symbol": input_data.symbol,
+                    "alpha": alpha,
+                    "performance_outcome": performance_outcome.value,
+                    "grade_maintained": input_data.grade_maintained,
+                    "message": f"Recorded performance for {input_data.symbol}: {performance_outcome.value}",
+                }
+            )
 
             logger.info(f"Recorded performance outcome: {input_data.symbol} - {performance_outcome.value}")
-            return result
+            return result.to_dict()
 
         except Exception as e:
             logger.error(f"Failed to record performance outcome: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to record performance outcome",
-            }
+            result = ToolResult.error_result(error=str(e), data={"message": "Failed to record performance outcome"})
+            return result.to_dict()
 
 
-class CriteriaOptimizationTool(BaseTool):
+class CriteriaOptimizationTool(AsyncFeedbackTool):
     """Tool for optimizing A+ criteria based on feedback learning."""
 
     name: str = "criteria_optimization_tool"
@@ -190,17 +161,6 @@ class CriteriaOptimizationTool(BaseTool):
     outcomes. This tool implements machine learning to continuously improve the
     quality of A+ recommendations by adjusting screening criteria.
     """
-
-    def _run(self, **kwargs: Any) -> dict[str, Any]:
-        """Optimize criteria synchronously."""
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return asyncio.run(self._arun(**kwargs))
-        else:
-            import nest_asyncio
-            nest_asyncio.apply()
-            return asyncio.run(self._arun(**kwargs))
 
     async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Optimize A+ criteria based on feedback learning."""
@@ -215,8 +175,7 @@ class CriteriaOptimizationTool(BaseTool):
             adjustment = await feedback_service.adjust_criteria_based_on_learning(current_criteria=current_criteria, force_adjustment=input_data.force_adjustment)
 
             if adjustment:
-                result = {
-                    "success": True,
+                data = {
                     "adjustment_made": True,
                     "adjustment_id": adjustment.adjustment_id,
                     "adjustment_reason": adjustment.adjustment_reason,
@@ -226,26 +185,23 @@ class CriteriaOptimizationTool(BaseTool):
                     "message": f"Criteria adjusted: {adjustment.adjustment_reason}",
                 }
             else:
-                result = {
-                    "success": True,
+                data = {
                     "adjustment_made": False,
                     "message": "No criteria adjustment needed at this time",
                     "reason": "Insufficient feedback data or adjustment not due",
                 }
 
-            logger.info(f"Criteria optimization result: adjustment_made={result['adjustment_made']}")
-            return result
+            result = ToolResult.success_result(data)
+            logger.info(f"Criteria optimization result: adjustment_made={data['adjustment_made']}")
+            return result.to_dict()
 
         except Exception as e:
             logger.error(f"Failed to optimize criteria: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to optimize criteria",
-            }
+            result = ToolResult.error_result(error=str(e), data={"message": "Failed to optimize criteria"})
+            return result.to_dict()
 
 
-class FeedbackAnalysisTool(BaseTool):
+class FeedbackAnalysisTool(AsyncFeedbackTool):
     """Tool for analyzing feedback patterns and generating insights."""
 
     name: str = "feedback_analysis_tool"
@@ -254,17 +210,6 @@ class FeedbackAnalysisTool(BaseTool):
     for improving A+ investment discovery. Use this tool to understand how well
     the system is performing and what adjustments might be needed.
     """
-
-    def _run(self, days_back: int = 90) -> dict[str, Any]:
-        """Analyze feedback synchronously."""
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return asyncio.run(self._arun(days_back=days_back))
-        else:
-            import nest_asyncio
-            nest_asyncio.apply()
-            return asyncio.run(self._arun(days_back=days_back))
 
     async def _arun(self, days_back: int = 90) -> dict[str, Any]:
         """Analyze feedback patterns and generate insights."""
@@ -277,8 +222,7 @@ class FeedbackAnalysisTool(BaseTool):
             # Get learning metrics
             learning_metrics = await feedback_service.get_learning_metrics(days_back=min(days_back, 30))
 
-            result = {
-                "success": True,
+            data = {
                 "analysis_period_days": days_back,
                 "total_feedback_items": feedback_summary.total_feedback_items,
                 "unique_users": feedback_summary.unique_users,
@@ -309,19 +253,17 @@ class FeedbackAnalysisTool(BaseTool):
                 "message": f"Analyzed {feedback_summary.total_feedback_items} feedback items over {days_back} days",
             }
 
+            result = ToolResult.success_result(data)
             logger.info(f"Generated feedback analysis: {feedback_summary.total_feedback_items} items analyzed")
-            return result
+            return result.to_dict()
 
         except Exception as e:
             logger.error(f"Failed to analyze feedback: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to analyze feedback patterns",
-            }
+            result = ToolResult.error_result(error=str(e), data={"message": "Failed to analyze feedback patterns"})
+            return result.to_dict()
 
 
-class LearningMetricsTool(BaseTool):
+class LearningMetricsTool(AsyncFeedbackTool):
     """Tool for getting comprehensive learning system metrics."""
 
     name: str = "learning_metrics_tool"
@@ -331,17 +273,6 @@ class LearningMetricsTool(BaseTool):
     over time. Use this tool to monitor the effectiveness of the feedback loop.
     """
 
-    def _run(self, days_back: int = 30) -> dict[str, Any]:
-        """Get learning metrics synchronously."""
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return asyncio.run(self._arun(days_back=days_back))
-        else:
-            import nest_asyncio
-            nest_asyncio.apply()
-            return asyncio.run(self._arun(days_back=days_back))
-
     async def _arun(self, days_back: int = 30) -> dict[str, Any]:
         """Get comprehensive learning system metrics."""
         try:
@@ -350,8 +281,7 @@ class LearningMetricsTool(BaseTool):
             # Get learning metrics
             metrics = await feedback_service.get_learning_metrics(days_back=days_back)
 
-            result = {
-                "success": True,
+            data = {
                 "evaluation_period": {
                     "start_date": metrics.evaluation_period_start.isoformat(),
                     "end_date": metrics.evaluation_period_end.isoformat(),
@@ -389,19 +319,17 @@ class LearningMetricsTool(BaseTool):
                 "message": f"Learning metrics for {days_back} days: {metrics.acceptance_rate:.1%} acceptance rate",
             }
 
+            result = ToolResult.success_result(data)
             logger.info(f"Generated learning metrics for {days_back} days")
-            return result
+            return result.to_dict()
 
         except Exception as e:
             logger.error(f"Failed to get learning metrics: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to get learning metrics",
-            }
+            result = ToolResult.error_result(error=str(e), data={"message": "Failed to get learning metrics"})
+            return result.to_dict()
 
 
-def get_feedback_tools() -> list[BaseTool]:
+def get_feedback_tools() -> list[AsyncFeedbackTool]:
     """Get all feedback integration tools."""
     return [
         FeedbackCollectionTool(),

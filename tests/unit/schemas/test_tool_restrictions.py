@@ -43,7 +43,7 @@ class TestToolRestrictionValidator:
         with pytest.raises(ToolRestrictionError) as exc_info:
             self.validator.validate_agent_tools(mock_agent)
 
-        assert "Agent has 2 tools but should have none" in str(exc_info.value)
+        assert "Agent has 2 non-read-only tools but should have none" in str(exc_info.value)
         assert exc_info.value.agent_role == "Family Financial Plan Specialist"
 
     def test_should_allow_tools_for_non_restricted_agents(self, mocker):

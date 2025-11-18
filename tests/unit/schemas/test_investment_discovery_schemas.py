@@ -114,7 +114,7 @@ class TestAPlusCriteria:
 
         # Assert
         assert criteria.etf_max_expense_ratio == 0.15
-        assert criteria.stock_min_roe == 0.20
+        assert criteria.stock_min_roe == 20.0  # Percentage format: 20 = 20%
         assert criteria.crypto_min_market_cap == 10e9
         assert not criteria.regime_adjusted
 

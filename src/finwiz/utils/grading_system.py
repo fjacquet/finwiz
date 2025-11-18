@@ -6,7 +6,7 @@ letter grades (A+ to F) and generate actionable recommendations.
 """
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 # Type definitions for grades
 Grade = Literal["A+", "A", "B+", "B", "C+", "C", "D", "F"]
@@ -131,7 +131,7 @@ def format_grade_display(composite_score: float, include_percentage: bool = True
         return f"{grade_info.emoji} {grade_info.grade}"
 
 
-def get_portfolio_grade_summary(scores: list[float]) -> dict:
+def get_portfolio_grade_summary(scores: list[float]) -> dict[str, Any]:
     """
     Calculate portfolio-wide grade statistics.
 
@@ -145,15 +145,15 @@ def get_portfolio_grade_summary(scores: list[float]) -> dict:
     if not scores:
         return {"average_grade": "N/A", "distribution": {}, "total_positions": 0}
 
-    grade_counts = {}
-    total_score = 0
+    grade_counts: dict[str, int] = {}
+    total_score: float = 0.0
 
     for score in scores:
         grade_info = score_to_grade(score)
         grade_counts[grade_info.grade] = grade_counts.get(grade_info.grade, 0) + 1
         total_score += score
 
-    average_score = total_score / len(scores)
+    average_score: float = total_score / len(scores)
     average_grade_info = score_to_grade(average_score)
 
     # Calculate percentages

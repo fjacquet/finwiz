@@ -44,14 +44,17 @@ class GradeDegradationAlert(BaseModel):
     """Alert for A+ grade degradation."""
 
     symbol: str = Field(..., description="Investment symbol")
-    previous_grade: Grade = Field(..., description="Previous grade")
-    current_grade: Grade = Field(..., description="Current grade")
-    degradation_reason: str = Field(..., description="Reason for degradation")
+    asset_type: str = Field(..., description="Type of asset (stock, etf, crypto)")
+    previous_grade: str = Field(..., description="Previous grade")
+    current_grade: str = Field(..., description="Current grade")
+    previous_score: float = Field(..., ge=0.0, le=1.0, description="Previous composite score")
+    current_score: float = Field(..., ge=0.0, le=1.0, description="Current composite score")
+    score_change: float = Field(..., description="Change in composite score")
     severity: AlertSeverity = Field(..., description="Alert severity")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Alert timestamp")
+    alert_timestamp: datetime = Field(default_factory=datetime.now, description="Alert timestamp")
 
-    # Additional context
-    score_change: float = Field(default=0.0, description="Change in A+ score")
+    # Optional context
+    degradation_reason: str = Field(default="", description="Reason for degradation")
     recommendation: str = Field(default="", description="Recommended action")
     market_context: str = Field(default="", description="Market context information")
 
@@ -94,7 +97,7 @@ class AlertManager:
 
     async def generate_grade_degradation_alert(
         self,
-        candidate: InvestmentCandidate,
+        monitored_inv: Any,  # MonitoredInvestment or InvestmentCandidate
         previous_grade: Grade,
         analysis: APlusAnalysis,
     ) -> GradeDegradationAlert:
@@ -102,7 +105,7 @@ class AlertManager:
         Generate an alert for grade degradation.
 
         Args:
-            candidate: Investment candidate with degraded grade
+            monitored_inv: Monitored investment with degraded grade
             previous_grade: Previous grade before degradation
             analysis: Current A+ analysis
 
@@ -110,28 +113,42 @@ class AlertManager:
             GradeDegradationAlert with alert details
 
         """
+        # Extract current grade (handle both MonitoredInvestment and InvestmentCandidate)
+        current_grade = getattr(monitored_inv, "current_grade", None)
+        if current_grade is None:
+            current_grade = analysis.grade
+
         # Determine severity based on grade change
-        severity = self._assess_degradation_severity(previous_grade, candidate.current_grade)
+        severity = self._assess_degradation_severity(previous_grade, current_grade)
 
         # Generate degradation reason
         degradation_reason = self._analyze_degradation_reason(analysis)
 
         # Calculate score change
-        score_change = self._calculate_score_change(previous_grade, candidate.current_grade)
+        previous_score = getattr(monitored_inv, "current_score", 0.0)
+        current_score = analysis.composite_score
+        score_change = current_score - previous_score
 
         # Generate recommendation
-        recommendation = self._generate_recommendation(candidate, analysis, severity)
+        recommendation = self._generate_recommendation(monitored_inv, analysis, severity)
 
         # Get market context
         market_context = self._get_market_context(analysis)
 
+        # Get asset type
+        asset_type = getattr(monitored_inv, "asset_type", "unknown")
+
         alert = GradeDegradationAlert(
-            symbol=candidate.symbol,
-            previous_grade=previous_grade,
-            current_grade=candidate.current_grade,
-            degradation_reason=degradation_reason,
-            severity=severity,
+            symbol=monitored_inv.symbol,
+            asset_type=asset_type,
+            previous_grade=str(previous_grade),
+            current_grade=str(current_grade),
+            previous_score=previous_score,
+            current_score=current_score,
             score_change=score_change,
+            severity=severity,
+            alert_timestamp=datetime.now(),
+            degradation_reason=degradation_reason,
             recommendation=recommendation,
             market_context=market_context,
         )
@@ -142,7 +159,7 @@ class AlertManager:
         # Dispatch alert
         await self._dispatch_alert(MonitoringEvent.GRADE_DEGRADATION, alert)
 
-        self.logger.info(f"Generated grade degradation alert for {candidate.symbol}: {previous_grade.value} -> {candidate.current_grade.value}")
+        self.logger.info(f"Generated grade degradation alert for {monitored_inv.symbol}: {previous_grade} -> {current_grade}")
 
         return alert
 
@@ -202,7 +219,7 @@ class AlertManager:
 
         await self._dispatch_alert(MonitoringEvent.MARKET_REGIME_SHIFT, alert_data)
 
-        self.logger.info(f"Generated market regime alert: {previous_regime.value} -> {current_regime.value}")
+        self.logger.info(f"Generated market regime alert: {previous_regime.regime_type} -> {current_regime.regime_type}")
 
     def get_alert_history(self, days: int = 30) -> list[GradeDegradationAlert]:
         """
@@ -242,11 +259,14 @@ class AlertManager:
     def _assess_degradation_severity(self, previous_grade: Grade, current_grade: Grade) -> AlertSeverity:
         """Assess severity of grade degradation."""
         grade_values = {
-            Grade.A_PLUS: 4,
-            Grade.A: 3,
-            Grade.B_PLUS: 2,
-            Grade.B: 1,
-            Grade.C: 0,
+            "A+": 4,
+            "A": 3,
+            "B+": 2,
+            "B": 1,
+            "C+": 0.5,
+            "C": 0,
+            "D": -1,
+            "F": -2,
         }
 
         previous_value = grade_values.get(previous_grade, 0)
@@ -287,11 +307,14 @@ class AlertManager:
     def _calculate_score_change(self, previous_grade: Grade, current_grade: Grade) -> float:
         """Calculate approximate score change based on grade change."""
         grade_scores = {
-            Grade.A_PLUS: 0.9,
-            Grade.A: 0.8,
-            Grade.B_PLUS: 0.7,
-            Grade.B: 0.6,
-            Grade.C: 0.5,
+            "A+": 0.9,
+            "A": 0.8,
+            "B+": 0.7,
+            "B": 0.6,
+            "C+": 0.55,
+            "C": 0.5,
+            "D": 0.4,
+            "F": 0.3,
         }
 
         previous_score = grade_scores.get(previous_grade, 0.5)
@@ -342,12 +365,10 @@ class AlertManager:
     def _assess_regime_change_severity(self, previous_regime: MarketRegime, current_regime: MarketRegime, impact_assessment: dict[str, Any]) -> AlertSeverity:
         """Assess severity of market regime change."""
         # Simplified assessment based on regime transition
-        high_impact_transitions = [
-            (MarketRegime.BULL_MARKET, MarketRegime.BEAR_MARKET),
-            (MarketRegime.LOW_VOLATILITY, MarketRegime.HIGH_VOLATILITY),
-        ]
-
-        if (previous_regime, current_regime) in high_impact_transitions:
+        # Check for high-impact transitions using regime_type strings
+        if previous_regime.regime_type == "bull" and current_regime.regime_type == "bear":
+            return AlertSeverity.HIGH
+        elif previous_regime.market_stress_level == "low" and current_regime.market_stress_level == "high":
             return AlertSeverity.HIGH
         else:
             return AlertSeverity.MEDIUM

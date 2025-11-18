@@ -9,7 +9,7 @@ import asyncio
 import logging
 from collections.abc import Awaitable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -47,8 +47,9 @@ class BackgroundTask:
 
     def __post_init__(self) -> None:
         """Ensure created_at uses UTC timezone."""
-        if self.created_at.tzinfo is None:
-            object.__setattr__(self, "created_at", self.created_at.replace(tzinfo=timezone.utc))
+        from finwiz.utils.datetime_utils import ensure_utc_aware
+
+        object.__setattr__(self, "created_at", ensure_utc_aware(self.created_at))
 
     @property
     def duration(self) -> float | None:
@@ -120,7 +121,7 @@ class BackgroundTaskManager:
         bg_task = BackgroundTask(
             task_id=task_id,
             name=name,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         # Wrap coroutine with monitoring
@@ -160,7 +161,7 @@ class BackgroundTaskManager:
 
             # Update status to running
             bg_task.status = TaskStatus.RUNNING
-            bg_task.started_at = datetime.now(timezone.utc)
+            bg_task.started_at = datetime.now(UTC)
 
             logger.debug(f"Starting task: {bg_task.task_id} ({bg_task.name})")
 
@@ -170,7 +171,7 @@ class BackgroundTaskManager:
 
                 # Update status to completed
                 bg_task.status = TaskStatus.COMPLETED
-                bg_task.completed_at = datetime.now(timezone.utc)
+                bg_task.completed_at = datetime.now(UTC)
                 bg_task.result = result
 
                 logger.debug(f"Task completed: {bg_task.task_id} ({bg_task.name}) in {bg_task.duration:.2f}s")
@@ -178,7 +179,7 @@ class BackgroundTaskManager:
             except asyncio.CancelledError:
                 # Task was cancelled
                 bg_task.status = TaskStatus.CANCELLED
-                bg_task.completed_at = datetime.now(timezone.utc)
+                bg_task.completed_at = datetime.now(UTC)
 
                 logger.warning(f"Task cancelled: {bg_task.task_id} ({bg_task.name})")
                 raise
@@ -186,7 +187,7 @@ class BackgroundTaskManager:
             except Exception as e:
                 # Task failed with error
                 bg_task.status = TaskStatus.FAILED
-                bg_task.completed_at = datetime.now(timezone.utc)
+                bg_task.completed_at = datetime.now(UTC)
                 bg_task.error = str(e)
 
                 logger.error(

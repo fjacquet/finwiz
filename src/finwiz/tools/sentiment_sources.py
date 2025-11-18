@@ -6,6 +6,7 @@ Yahoo Finance, Perplexity Sonar, and other news providers.
 """
 
 import datetime
+from typing import Any
 
 import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 
@@ -382,7 +383,7 @@ class SentimentDataSources:
         # Default for unknown sources
         return 0.4
 
-    def estimate_article_reach(self, article: dict) -> str:
+    def estimate_article_reach(self, article: dict[str, Any]) -> str:
         """Estimate the potential reach/impact of an article based on source."""
         publisher = article.get("publisher", "").lower()
 
@@ -397,7 +398,7 @@ class SentimentDataSources:
         else:
             return "Low"
 
-    async def get_enhanced_news_data(self, ticker: str, asset_type: str, max_articles: int) -> dict:
+    async def get_enhanced_news_data(self, ticker: str, asset_type: str, max_articles: int) -> dict[str, Any]:
         """Get enhanced news data from multiple sources including Sonar."""
         # Get existing Yahoo Finance data
         yahoo_data = self.get_news_data(ticker, max_articles)
@@ -427,7 +428,7 @@ class SentimentDataSources:
                 self.logger.warning(f"Sonar integration error for {ticker}, continuing with Yahoo Finance only: {str(e)}")
 
                 # Record failure for feature flag tracking
-                from finwiz.tools.perplexity_analysis_integration import PerplexityFeatureFlagTracker
+                from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker
 
                 PerplexityFeatureFlagTracker.record_operation_failure(ticker, "sentiment", "integration_error")
         else:
@@ -441,7 +442,7 @@ class SentimentDataSources:
             "sonar_fallback_used": sonar_fallback_used,
         }
 
-    def format_news_article(self, raw_article: dict) -> dict:
+    def format_news_article(self, raw_article: dict[str, Any]) -> dict[str, Any]:
         """Format raw news article into standardized format."""
         return {
             "title": raw_article.get("title", "No title"),

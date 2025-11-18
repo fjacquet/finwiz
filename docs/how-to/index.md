@@ -11,12 +11,13 @@ Problem-solving guides for specific tasks.
 ## Performance and Optimization
 
 - **[Performance Optimization](performance_optimization.md)** - Optimize analysis speed
-- **Performance Monitoring** - Monitor system performance
+- **[Batch Processing](BATCH_PROCESSING.md)** - High-performance portfolio analysis
+- **Performance Monitoring** _(coming soon)_ - Monitor system performance
 - **[Memory Management](MEMORY_MANAGEMENT.md)** - Manage memory usage
 
 ## Development
 
-- **[Testing](testing.md)** - Testing framework and best practices
+- **Testing** _(coming soon)_ - Testing framework and best practices
 - **[Custom Workflows](custom_workflows.md)** - Create custom analysis workflows
 - **[Plugin Development](plugin_development.md)** - Develop custom plugins
 

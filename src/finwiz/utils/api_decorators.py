@@ -237,7 +237,7 @@ async def safe_api_call(provider: APIProvider, func: Callable, *args: Any, endpo
         return default_return
 
 
-def get_api_stats() -> dict:
+def get_api_stats() -> dict[str, Any]:
     """Get statistics for all API providers."""
     from finwiz.utils.rate_limiter import get_rate_limiter
 

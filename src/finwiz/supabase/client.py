@@ -127,9 +127,7 @@ class SupabaseClient:
         self.read_timeout: float = float(os.getenv("DATABASE_READ_TIMEOUT", "2.0"))
         self.write_timeout: float = float(os.getenv("DATABASE_WRITE_TIMEOUT", "5.0"))
         self.max_retries: int = int(os.getenv("SUPABASE_MAX_RETRIES", "1"))
-        self.connectivity_test_timeout: float = float(
-            os.getenv("SUPABASE_CONNECTIVITY_TEST_TIMEOUT", "5.0")
-        )
+        self.connectivity_test_timeout: float = float(os.getenv("SUPABASE_CONNECTIVITY_TEST_TIMEOUT", "5.0"))
 
         # Connection pool limit to prevent exhaustion
         max_concurrent = int(os.getenv("SUPABASE_MAX_CONCURRENT_OPERATIONS", "10"))
@@ -174,13 +172,9 @@ class SupabaseClient:
                     max_size=self.pool_max_size,
                     max_inactive_connection_lifetime=self.pool_idle_timeout,
                     command_timeout=5.0,  # 5 second timeout for commands
-                    ssl='require'  # Enforce SSL
+                    ssl="require",  # Enforce SSL
                 )
-                logger.info(
-                    f"✅ Connection pool initialized: "
-                    f"min={self.pool_min_size}, max={self.pool_max_size}, "
-                    f"idle_timeout={self.pool_idle_timeout}s"
-                )
+                logger.info(f"✅ Connection pool initialized: min={self.pool_min_size}, max={self.pool_max_size}, idle_timeout={self.pool_idle_timeout}s")
                 self.circuit_breaker.record_success()
             except Exception as e:
                 self.circuit_breaker.record_failure()
@@ -243,7 +237,7 @@ class SupabaseClient:
             # Acquire connection with timeout
             conn = await asyncio.wait_for(
                 self.db_pool.acquire(),
-                timeout=5.0  # Wait up to 5 seconds for available connection
+                timeout=5.0,  # Wait up to 5 seconds for available connection
             )
             return conn
         except TimeoutError:
@@ -294,7 +288,7 @@ class SupabaseClient:
             "free_size": self.db_pool.get_idle_size(),
             "min_size": self.pool_min_size,
             "max_size": self.pool_max_size,
-            "idle_timeout": self.pool_idle_timeout
+            "idle_timeout": self.pool_idle_timeout,
         }
 
     async def execute_with_timeout(
@@ -353,22 +347,14 @@ class SupabaseClient:
                     return result
 
                 except TimeoutError:
-                    logger.warning(
-                        f"⚠️ Database operation timed out after {timeout}s "
-                        f"[Total timeouts: {self.timeout_count + 1}, "
-                        f"Success rate: {self.get_success_rate():.1%}]"
-                    )
+                    logger.warning(f"⚠️ Database operation timed out after {timeout}s [Total timeouts: {self.timeout_count + 1}, Success rate: {self.get_success_rate():.1%}]")
                     self.timeout_count += 1
                     self.failed_operations += 1
                     self.circuit_breaker.record_failure()
                     return None
 
                 except Exception as e:
-                    logger.error(
-                        f"❌ Database operation failed: {e} "
-                        f"[Total failures: {self.failed_operations + 1}, "
-                        f"Success rate: {self.get_success_rate():.1%}]"
-                    )
+                    logger.error(f"❌ Database operation failed: {e} [Total failures: {self.failed_operations + 1}, Success rate: {self.get_success_rate():.1%}]")
                     self.failed_operations += 1
                     self.circuit_breaker.record_failure()
                     return None
@@ -403,22 +389,14 @@ class SupabaseClient:
                     return result
 
                 except TimeoutError:
-                    logger.warning(
-                        f"⚠️ Database operation timed out after {timeout}s "
-                        f"[Total timeouts: {self.timeout_count + 1}, "
-                        f"Success rate: {self.get_success_rate():.1%}]"
-                    )
+                    logger.warning(f"⚠️ Database operation timed out after {timeout}s [Total timeouts: {self.timeout_count + 1}, Success rate: {self.get_success_rate():.1%}]")
                     self.timeout_count += 1
                     self.failed_operations += 1
                     self.circuit_breaker.record_failure()
                     return None
 
                 except Exception as e:
-                    logger.error(
-                        f"❌ Database operation failed: {e} "
-                        f"[Total failures: {self.failed_operations + 1}, "
-                        f"Success rate: {self.get_success_rate():.1%}]"
-                    )
+                    logger.error(f"❌ Database operation failed: {e} [Total failures: {self.failed_operations + 1}, Success rate: {self.get_success_rate():.1%}]")
                     self.failed_operations += 1
                     self.circuit_breaker.record_failure()
                     return None
@@ -443,9 +421,7 @@ class SupabaseClient:
             return False
 
         if not self.url or not self.key:
-            logger.warning(
-                "⚠️ Supabase connectivity test failed: Missing SUPABASE_URL or SUPABASE_KEY"
-            )
+            logger.warning("⚠️ Supabase connectivity test failed: Missing SUPABASE_URL or SUPABASE_KEY")
             logger.warning("⚠️ Caching disabled - analysis will proceed without cache")
             self.is_available = False
             return False
@@ -469,16 +445,10 @@ class SupabaseClient:
 
             if result is not None:
                 self.is_available = True
-                logger.info(
-                    f"✅ Supabase connectivity test passed (timeout: {self.connectivity_test_timeout}s)"
-                )
+                logger.info(f"✅ Supabase connectivity test passed (timeout: {self.connectivity_test_timeout}s)")
                 # Log initial health status
                 health = self.get_health_status()
-                logger.info(
-                    f"📊 Supabase Health Status: "
-                    f"Available={health.is_available}, "
-                    f"Circuit Breaker={'OPEN' if health.circuit_breaker_open else 'CLOSED'}"
-                )
+                logger.info(f"📊 Supabase Health Status: Available={health.is_available}, Circuit Breaker={'OPEN' if health.circuit_breaker_open else 'CLOSED'}")
                 return True
             else:
                 self.is_available = False
@@ -662,19 +632,10 @@ class SupabaseClient:
         utilization = (size - free_size) / max_size if max_size > 0 else 0.0
 
         # Log health check
-        logger.info(
-            f"🏥 Pool Health Check: "
-            f"size={size}/{max_size}, "
-            f"free={free_size}, "
-            f"utilization={utilization:.1%}"
-        )
+        logger.info(f"🏥 Pool Health Check: size={size}/{max_size}, free={free_size}, utilization={utilization:.1%}")
 
         # Alert if utilization is high
         if utilization >= 0.95:
-            logger.error(
-                f"🚨 CRITICAL: Pool utilization very high: {utilization:.1%}"
-            )
+            logger.error(f"🚨 CRITICAL: Pool utilization very high: {utilization:.1%}")
         elif utilization >= 0.80:
-            logger.warning(
-                f"⚠️ WARNING: Pool utilization high: {utilization:.1%}"
-            )
+            logger.warning(f"⚠️ WARNING: Pool utilization high: {utilization:.1%}")

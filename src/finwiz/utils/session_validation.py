@@ -197,7 +197,7 @@ class SessionValidator:
 
         return issues
 
-    def _validate_portfolio_data(self, portfolio_data: dict) -> list[str]:
+    def _validate_portfolio_data(self, portfolio_data: dict[str, Any]) -> list[str]:
         """Validate portfolio data structure."""
         issues = []
 
@@ -251,7 +251,7 @@ class SessionValidator:
 
         return issues
 
-    def _validate_recommendations(self, recommendations: dict) -> list[str]:
+    def _validate_recommendations(self, recommendations: dict[str, Any]) -> list[str]:
         """Validate recommendations structure."""
         issues = []
 

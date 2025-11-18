@@ -6,6 +6,7 @@ Main logging classes and global instances for the crew data integration system.
 
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from .config import get_integration_config
 from .log_formatters import IntegrationLogFormatter
@@ -36,12 +37,12 @@ class IntegrationLogger:
         # Initialize operation tracking
         self.operation_start_times = {}
 
-    def log_crew_execution_start(self, crew_name: str, dependencies: list = None) -> None:
+    def log_crew_execution_start(self, crew_name: str, dependencies: list[Any] | None = None) -> None:
         """Log the start of crew execution."""
         extra_data = self.formatter.format_crew_execution_start(crew_name, dependencies)
         self.logger.info(f"Starting execution for crew: {crew_name}", extra=extra_data if self.config.enable_structured_logging else {})
 
-    def log_crew_execution_complete(self, crew_name: str, success: bool, execution_time: float, output_files: list = None) -> None:
+    def log_crew_execution_complete(self, crew_name: str, success: bool, execution_time: float, output_files: list[Any] | None = None) -> None:
         """Log the completion of crew execution."""
         extra_data = self.formatter.format_crew_execution_complete(crew_name, success, execution_time, output_files)
         status = "completed successfully" if success else "failed"
@@ -50,7 +51,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_data_validation(self, crew_name: str, is_valid: bool, errors: list = None, warnings: list = None) -> None:
+    def log_data_validation(self, crew_name: str, is_valid: bool, errors: list[Any] | None = None, warnings: list[Any] | None = None) -> None:
         """Log data validation results."""
         extra_data = self.formatter.format_data_validation(crew_name, is_valid, errors, warnings)
 
@@ -70,7 +71,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_integration_error(self, error_type: str, crew_name: str, error_message: str, recovery_suggestions: list = None) -> None:
+    def log_integration_error(self, error_type: str, crew_name: str, error_message: str, recovery_suggestions: list[Any] | None = None) -> None:
         """Log integration errors with recovery suggestions."""
         extra_data = self.formatter.format_integration_error(error_type, crew_name, error_message, recovery_suggestions)
         self.logger.error(
@@ -78,7 +79,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_data_lineage(self, crew_name: str, input_sources: list, output_files: list, transformations: list = None) -> None:
+    def log_data_lineage(self, crew_name: str, input_sources: list, output_files: list, transformations: list[Any] | None = None) -> None:
         """Log data lineage information."""
         extra_data = self.formatter.format_data_lineage(crew_name, input_sources, output_files, transformations)
         self.logger.info(
@@ -94,7 +95,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_data_access_operation(self, operation: str, crew_name: str, success: bool, file_paths: list = None, error_message: str = None) -> None:
+    def log_data_access_operation(self, operation: str, crew_name: str, success: bool, file_paths: list[Any] | None = None, error_message: str = None) -> None:
         """Log data access operations for debugging integration issues."""
         extra_data = self.formatter.format_data_access_operation(operation, crew_name, success, file_paths, error_message)
 
@@ -117,7 +118,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_dependency_check(self, crew_name: str, dependencies: list, satisfied: list, missing: list, stale: list) -> None:
+    def log_dependency_check(self, crew_name: str, dependencies: list, satisfied: list, missing: list, stale: list[Any]) -> None:
         """Log dependency checking results."""
         extra_data = self.formatter.format_dependency_check(crew_name, dependencies, satisfied, missing, stale)
         status = "satisfied" if len(missing) == 0 else f"missing {len(missing)} dependencies"
@@ -126,7 +127,9 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_schema_validation_detail(self, crew_name: str, schema_name: str, validation_errors: list, validation_warnings: list, field_validations: dict = None) -> None:
+    def log_schema_validation_detail(
+        self, crew_name: str, schema_name: str, validation_errors: list, validation_warnings: list, field_validations: dict[str, Any] | None = None
+    ) -> None:
         """Log detailed schema validation results."""
         extra_data = self.formatter.format_schema_validation_detail(crew_name, schema_name, validation_errors, validation_warnings, field_validations)
 
@@ -146,7 +149,7 @@ class IntegrationLogger:
                 extra=extra_data if self.config.enable_structured_logging else {},
             )
 
-    def log_data_consolidation(self, source_crews: list, target_file: str, success: bool, record_counts: dict = None, error_message: str = None) -> None:
+    def log_data_consolidation(self, source_crews: list, target_file: str, success: bool, record_counts: dict[str, Any] | None = None, error_message: str = None) -> None:
         """Log data consolidation operations."""
         extra_data = self.formatter.format_data_consolidation(source_crews, target_file, success, record_counts, error_message)
 
@@ -166,7 +169,7 @@ class IntegrationLogger:
         """Start timing an operation for performance logging."""
         self.operation_start_times[operation_id] = datetime.now()
 
-    def end_operation_timing(self, operation_id: str, operation_name: str, additional_metrics: dict = None) -> float:
+    def end_operation_timing(self, operation_id: str, operation_name: str, additional_metrics: dict[str, Any] | None = None) -> float:
         """End timing an operation and log performance metrics."""
         if operation_id not in self.operation_start_times:
             self.logger.warning(f"No start time found for operation: {operation_id}")
@@ -186,7 +189,7 @@ class IntegrationLogger:
 
         return duration
 
-    def log_system_health_check(self, component: str, status: str, details: dict = None) -> None:
+    def log_system_health_check(self, component: str, status: str, details: dict[str, Any] | None = None) -> None:
         """Log system health check results."""
         extra_data = self.formatter.format_system_health_check(component, status, details)
 
@@ -201,7 +204,7 @@ class IntegrationLogger:
                 extra=extra_data if self.config.enable_structured_logging else {},
             )
 
-    def log_error_recovery_attempt(self, error_type: str, crew_name: str, recovery_action: str, success: bool, details: dict = None) -> None:
+    def log_error_recovery_attempt(self, error_type: str, crew_name: str, recovery_action: str, success: bool, details: dict[str, Any] | None = None) -> None:
         """Log error recovery attempts."""
         extra_data = self.formatter.format_error_recovery_attempt(error_type, crew_name, recovery_action, success, details)
 

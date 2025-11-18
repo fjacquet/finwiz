@@ -7,7 +7,7 @@ regime-specific analysis, and portfolio-level impact calculations.
 
 import logging
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -288,7 +288,7 @@ class PerformanceMetricsAggregator:
 
     # Private helper methods
 
-    def _create_single_validation_result(self, vr: ValidationResult, detail: dict) -> ValidationResult:
+    def _create_single_validation_result(self, vr: ValidationResult, detail: dict[str, Any]) -> ValidationResult:
         """Create a single-candidate validation result from a detail entry."""
         return ValidationResult(
             total_candidates=1,

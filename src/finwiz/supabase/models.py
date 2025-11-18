@@ -178,33 +178,15 @@ class SupabaseHealthStatus(BaseModel):
 
     """
 
-    is_available: bool = Field(
-        ..., description="Whether Supabase connectivity test passed"
-    )
-    success_rate: float = Field(
-        ..., ge=0.0, le=1.0, description="Operation success rate (0.0 to 1.0)"
-    )
-    avg_response_time: float = Field(
-        ..., ge=0.0, description="Average response time in milliseconds"
-    )
-    circuit_breaker_open: bool = Field(
-        ..., description="Whether circuit breaker is currently open"
-    )
+    is_available: bool = Field(..., description="Whether Supabase connectivity test passed")
+    success_rate: float = Field(..., ge=0.0, le=1.0, description="Operation success rate (0.0 to 1.0)")
+    avg_response_time: float = Field(..., ge=0.0, description="Average response time in milliseconds")
+    circuit_breaker_open: bool = Field(..., description="Whether circuit breaker is currently open")
     timeout_count: int = Field(..., ge=0, description="Number of timeout failures")
-    total_operations: int = Field(
-        ..., ge=0, description="Total number of operations attempted"
-    )
-    successful_operations: int = Field(
-        ..., ge=0, description="Number of successful operations"
-    )
-    failed_operations: int = Field(
-        ..., ge=0, description="Number of failed operations"
-    )
-    last_check_timestamp: datetime = Field(
-        ..., description="Timestamp of last health check"
-    )
-    configuration: dict[str, str | float | int] = Field(
-        default_factory=dict, description="Current configuration settings"
-    )
+    total_operations: int = Field(..., ge=0, description="Total number of operations attempted")
+    successful_operations: int = Field(..., ge=0, description="Number of successful operations")
+    failed_operations: int = Field(..., ge=0, description="Number of failed operations")
+    last_check_timestamp: datetime = Field(..., description="Timestamp of last health check")
+    configuration: dict[str, str | float | int] = Field(default_factory=dict, description="Current configuration settings")
 
     model_config = {"frozen": False}

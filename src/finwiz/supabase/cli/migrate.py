@@ -53,7 +53,7 @@ def print_progress_bar(
 
     # Print progress bar (overwrite previous line)
     print(
-        f"\r[{bar}] {current}/{total} ({percent*100:.1f}%) - {file_str}",
+        f"\r[{bar}] {current}/{total} ({percent * 100:.1f}%) - {file_str}",
         end="",
         flush=True,
     )

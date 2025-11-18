@@ -280,7 +280,7 @@ def score_roe(self, roe: float) -> float:
 
 #### Standard Crew Structure
 
-```
+```shell
 src/finwiz/crews/{crew_name}/
 ├── {crew_name}.py          # @agent, @task, @crew decorators only
 └── config/

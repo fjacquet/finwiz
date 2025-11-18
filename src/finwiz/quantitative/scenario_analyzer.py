@@ -9,6 +9,7 @@ scenario comparison reports for portfolio rebalancing decisions.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from finwiz.schemas.portfolio_rebalancing import (
     PortfolioConfiguration,
@@ -42,7 +43,7 @@ class ScenarioAnalyzer:
         parameters: dict | None = None,
         include_monte_carlo: bool = True,
         include_sensitivity: bool = True,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Perform comprehensive scenario analysis.
 

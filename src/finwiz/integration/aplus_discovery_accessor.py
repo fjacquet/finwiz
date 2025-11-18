@@ -10,6 +10,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 class APlusDiscoveryAccessor:
@@ -168,7 +169,7 @@ class APlusDiscoveryAccessor:
             self.logger.error(f"Failed to generate opportunities summary: {str(e)}", exc_info=True)
             return "Error generating opportunities summary"
 
-    def _load_stock_results(self) -> dict:
+    def _load_stock_results(self) -> dict[str, Any]:
         """Load stock discovery results."""
         stock_file = self.discovery_dir / "a_plus_stocks.json"
 
@@ -185,7 +186,7 @@ class APlusDiscoveryAccessor:
             self.logger.error(f"Failed to load stock results: {str(e)}", exc_info=True)
             return {}
 
-    def _load_etf_results(self) -> dict:
+    def _load_etf_results(self) -> dict[str, Any]:
         """Load ETF discovery results."""
         etf_file = self.discovery_dir / "a_plus_etfs.json"
 
@@ -202,7 +203,7 @@ class APlusDiscoveryAccessor:
             self.logger.error(f"Failed to load ETF results: {str(e)}", exc_info=True)
             return {}
 
-    def _load_crypto_results(self) -> dict:
+    def _load_crypto_results(self) -> dict[str, Any]:
         """Load crypto discovery results."""
         crypto_file = self.discovery_dir / "a_plus_crypto.json"
 

@@ -80,20 +80,27 @@ class TestPerplexityIntegrationWrapper:
         # Arrange
         mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
 
-        mock_response = {
-            "choices": [{"message": {"content": "Apple Inc. analysis shows strong performance"}}],
-            "citations": [
+        # Mock the search API response directly
+        mock_search_response = {
+            "results": [
                 {
                     "title": "Apple Reports Strong Q4 Earnings",
                     "url": "https://example.com/apple-earnings",
                     "snippet": "Apple exceeded expectations with record revenue",
-                    "publisher": "Reuters",
+                    "date": "2024-01-01",
+                    "last_updated": "2024-01-01T12:00:00Z",
                 }
-            ],
+            ]
         }
 
+        mock_http_response = mocker.Mock()
+        mock_http_response.json.return_value = mock_search_response
+        mock_http_response.raise_for_status = mocker.Mock()
+
+        # Patch requests.post to avoid actual HTTP calls
+        mocker.patch("requests.post", return_value=mock_http_response)
+
         integration = PerplexityAnalysisIntegration(self.config)
-        mocker.patch.object(integration.perplexity_tool, "_run", return_value=json.dumps(mock_response))
 
         # Act
         result = asyncio.run(integration.search_financial_news(query="AAPL earnings analysis", ticker="AAPL", asset_type="stock", analysis_type="sentiment", max_results=10))
@@ -106,7 +113,7 @@ class TestPerplexityIntegrationWrapper:
         assert result.analysis_type == "sentiment"
         assert len(result.results) == 1
         assert result.results[0].title == "Apple Reports Strong Q4 Earnings"
-        assert result.results[0].publisher == "Reuters"
+        assert result.results[0].publisher == "Example"  # Extracted from example.com domain
 
     def test_should_handle_api_key_missing_gracefully(self, mocker):
         """Test graceful handling when API key is missing."""
@@ -348,9 +355,15 @@ class TestPerplexityIntegrationWrapper:
 
         integration = PerplexityAnalysisIntegration(self.config)
 
-        # Mock tool to fail first, then succeed
-        mock_responses = ["Error: Rate limit exceeded, retry after 5 seconds", json.dumps({"citations": []})]
-        mocker.patch.object(integration.perplexity_tool, "_run", side_effect=mock_responses)
+        # Mock HTTP responses: first fails with 429, then succeeds
+        mock_error_response = mocker.Mock()
+        mock_error_response.raise_for_status.side_effect = Exception("429 Rate limit exceeded")
+
+        mock_success_response = mocker.Mock()
+        mock_success_response.json.return_value = {"results": []}
+        mock_success_response.raise_for_status = mocker.Mock()
+
+        mocker.patch("requests.post", side_effect=[mock_error_response, mock_success_response])
 
         # Mock sleep to avoid actual delays
         mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
@@ -368,7 +381,9 @@ class TestPerplexityIntegrationWrapper:
         mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
 
         integration = PerplexityAnalysisIntegration(self.config)
-        mocker.patch.object(integration.perplexity_tool, "_run", return_value="Error: Request timeout")
+
+        # Mock HTTP request timeout
+        mocker.patch("requests.post", side_effect=Exception("Request timeout"))
 
         # Act
         result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))
@@ -383,7 +398,9 @@ class TestPerplexityIntegrationWrapper:
         mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
 
         integration = PerplexityAnalysisIntegration(self.config)
-        mocker.patch.object(integration.perplexity_tool, "_run", return_value="Error: Connection failed")
+
+        # Mock HTTP connection error
+        mocker.patch("requests.post", side_effect=Exception("Connection failed"))
 
         # Act
         result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))

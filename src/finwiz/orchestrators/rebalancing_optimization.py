@@ -183,19 +183,18 @@ class RebalancingOptimizer:
             OptimizedTrades structure
 
         """
-        from finwiz.quantitative.rebalancing_engine import OptimizedTrades
+        from finwiz.quantitative.optimization_algorithms import OptimizedTrades
 
         # Calculate total capital used
         capital_used = sum(abs(rec.trade_value) for rec in recommendations if hasattr(rec, "trade_value"))
 
         return OptimizedTrades(
             trades=recommendations,
+            total_cost=0.0,  # Will be calculated later in cost analysis
             capital_used=capital_used,
-            optimization_metadata={
-                "algorithm": "enhanced_trade_recommendation_system",
-                "total_recommendations": len(recommendations),
-                "capital_efficiency": capital_used / max(1, len(recommendations)),
-            },
+            constraints_violated=[],
+            optimization_score=1.0,  # Default score for enhanced recommendations
+            method_used="enhanced_trade_recommendation_system",
         )
 
     def validate_optimization_constraints(self, config: PortfolioConfiguration, trades: list[Any], current_analysis: Any) -> tuple[bool, list[str]]:

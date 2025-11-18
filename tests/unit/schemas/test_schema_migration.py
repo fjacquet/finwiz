@@ -261,7 +261,7 @@ class TestAutomaticMigration:
         portfolio = migrate_portfolio_review_if_needed(v1_data)
 
         assert isinstance(portfolio, PortfolioReview)
-        assert portfolio.schema_version == "2.0"
+        assert portfolio.schema_version == "2.1"
         assert portfolio.has_a_plus_analysis is False
         assert len(portfolio.holdings) == 1
         assert portfolio.holdings[0].has_a_plus_opportunities is False

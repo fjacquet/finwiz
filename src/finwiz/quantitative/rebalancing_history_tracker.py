@@ -19,9 +19,12 @@ from pydantic import ValidationError
 
 from finwiz.schemas.portfolio_rebalancing import (
     PerformanceAttribution,
+    PortfolioMetrics,
     PositionHistory,
     RebalancingAnalytics,
     RebalancingHistoryEntry,
+    RebalancingNeed,
+    RebalancingRecommendation,
     RebalancingResult,
     TradeRecommendation,
     TrendAnalysis,
@@ -249,6 +252,7 @@ class RebalancingHistoryTracker:
                 total_rebalancing_costs=total_costs,
                 net_benefit=net_benefit,
                 cost_adjusted_alpha=net_benefit,  # Same as net_benefit after costs
+                cost_drag=cost_drag,  # Cost drag as percentage of portfolio value
                 volatility_reduction=risk_reduction,
                 tracking_error_vs_target=0.0,  # Default value, would need calculation
                 rebalancing_frequency_days=avg_days_between,
@@ -405,22 +409,58 @@ class RebalancingHistoryTracker:
                 if pos_history.average_deviation > 0.08:  # 8% average deviation
                     tolerance_suggestions[pos_history.symbol] = min(0.15, pos_history.average_deviation * 1.2)
 
+            # Create current portfolio metrics from latest entry
+            latest_entry = history[-1]
+            current_metrics = PortfolioMetrics(
+                total_value=latest_entry.rebalancing_result.current_portfolio.total_value,
+                number_of_positions=len(latest_entry.rebalancing_result.current_portfolio.weightings),
+                largest_position_weight=max(latest_entry.rebalancing_result.current_portfolio.weightings.values())
+                if latest_entry.rebalancing_result.current_portfolio.weightings
+                else 0.0,
+                concentration_risk_score=5.0,  # Placeholder
+                diversification_ratio=1.0,  # Placeholder
+                effective_number_of_positions=float(len(latest_entry.rebalancing_result.current_portfolio.weightings)),
+                turnover_if_rebalanced=0.1,  # Placeholder
+                cash_weight=0.0,  # Placeholder
+            )
+
+            # Create rebalancing needs from latest entry
+            current_needs = []
+            for symbol, deviation in latest_entry.rebalancing_result.current_portfolio.deviations_from_target.items():
+                current_needs.append(
+                    RebalancingNeed(
+                        symbol=symbol,
+                        current_weight=latest_entry.rebalancing_result.current_portfolio.weightings.get(symbol, 0.0),
+                        target_weight=latest_entry.rebalancing_result.current_portfolio.weightings.get(symbol, 0.0) - deviation,
+                        deviation=deviation,
+                        tolerance_band=0.05,
+                        needs_rebalancing=abs(deviation) > 0.05,
+                        urgency_score=min(1.0, abs(deviation) / 0.1),
+                    )
+                )
+
+            # Calculate risk scores
+            portfolio_risk = min(10.0, max(0.0, current_metrics.concentration_risk_score))
+            concentration = min(1.0, max(0.0, current_metrics.concentration_risk_score / 10.0))
+            urgency = min(1.0, max(0.0, sum(n.urgency_score for n in current_needs) / len(current_needs) if current_needs else 0.0))
+
+            # Generate strategy recommendations based on analysis
+            strategy_recommendations = self._generate_strategy_recommendations(history, performance_attribution, trend_analysis)
+
             analytics = RebalancingAnalytics(
                 portfolio_id=portfolio_id,
-                analysis_date=datetime.now(),
-                total_rebalancing_events=total_events,
-                first_rebalancing_date=first_date,
-                last_rebalancing_date=last_date,
+                current_portfolio_metrics=current_metrics,
+                current_rebalancing_needs=current_needs,
                 performance_attribution=performance_attribution,
                 trend_analysis=trend_analysis,
                 position_histories=position_histories,
-                most_rebalanced_positions=most_rebalanced_symbols,
-                average_deviation_improvement=float(avg_deviation_improvement),
-                rebalancing_success_rate=success_rate,
-                cost_efficiency_score=cost_efficiency,
+                recommended_action=RebalancingRecommendation.REBALANCE_NOW if any(n.needs_rebalancing for n in current_needs) else RebalancingRecommendation.NO_ACTION,
+                next_review_date=datetime.now() + timedelta(days=30),
                 strategy_recommendations=strategy_recommendations,
-                tolerance_adjustment_suggestions=tolerance_suggestions,
-                target_weight_suggestions=target_suggestions,
+                portfolio_risk_score=portfolio_risk,
+                concentration_risk=concentration,
+                rebalancing_urgency=urgency,
+                total_rebalancing_events=len(history),
             )
 
             logger.info(f"Generated analytics dashboard for portfolio {portfolio_id}")
@@ -544,12 +584,12 @@ class RebalancingHistoryTracker:
             recommendations.append("High transaction costs detected - consider using new contributions for rebalancing")
 
         # Frequency-based recommendations
-        if trend_analysis.confidence_score > 0.7:
-            if trend_analysis.recommended_frequency != 60:  # Default 60 days
-                recommendations.append(f"Optimize rebalancing frequency to {trend_analysis.recommended_frequency} days based on historical analysis")
+        if trend_analysis.confidence_in_optimal > 0.7:
+            if trend_analysis.optimal_frequency_days != 60:  # Default 60 days
+                recommendations.append(f"Optimize rebalancing frequency to {trend_analysis.optimal_frequency_days} days based on historical analysis")
 
         # Risk-based recommendations
-        if performance_attribution.risk_reduction < 0:
+        if performance_attribution.volatility_reduction < 0:
             recommendations.append("Rebalancing is increasing portfolio risk - review target allocations and tolerance bands")
 
         # Default recommendation if no issues found

@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class JsonToHtmlConverter:
     """
     Convert JSON output files to HTML using Jinja2 templates.
-    
+
     Maps JSON files to their corresponding templates and generates
     professional HTML reports for human consumption.
     """
@@ -46,9 +46,10 @@ class JsonToHtmlConverter:
     def __init__(self, template_dir: str = "src/finwiz/templates"):
         """
         Initialize the converter with template directory.
-        
+
         Args:
             template_dir: Path to Jinja2 templates directory
+
         """
         self.template_dir = Path(template_dir)
         self.env = Environment(
@@ -62,12 +63,13 @@ class JsonToHtmlConverter:
     def convert_file(self, json_path: Path) -> str | None:
         """
         Convert a single JSON file to HTML.
-        
+
         Args:
             json_path: Path to JSON file
-            
+
         Returns:
             Path to generated HTML file, or None if conversion failed
+
         """
         try:
             # Find matching template
@@ -78,7 +80,7 @@ class JsonToHtmlConverter:
 
             # Load JSON data
             try:
-                with open(json_path, "r", encoding="utf-8") as f:
+                with open(json_path, encoding="utf-8") as f:
                     data = json.load(f)
             except json.JSONDecodeError as e:
                 logger.warning(f"Skipping malformed JSON file {json_path.name}: {e}")
@@ -119,12 +121,13 @@ class JsonToHtmlConverter:
     def convert_directory(self, output_dir: Path = Path("output")) -> dict[str, list[str]]:
         """
         Convert all JSON files in output directory to HTML.
-        
+
         Args:
             output_dir: Root output directory to scan
-            
+
         Returns:
             Dict with 'success' and 'failed' lists of file paths
+
         """
         results = {"success": [], "failed": []}
 
@@ -143,21 +146,19 @@ class JsonToHtmlConverter:
             else:
                 results["failed"].append(str(json_path))
 
-        logger.info(
-            f"Conversion complete: {len(results['success'])} succeeded, "
-            f"{len(results['failed'])} failed"
-        )
+        logger.info(f"Conversion complete: {len(results['success'])} succeeded, {len(results['failed'])} failed")
         return results
 
     def _find_template_for_file(self, json_path: Path) -> str | None:
         """
         Find the appropriate template for a JSON file.
-        
+
         Args:
             json_path: Path to JSON file
-            
+
         Returns:
             Template name, or None if no match found
+
         """
         filename = json_path.name
 
@@ -184,13 +185,14 @@ class JsonToHtmlConverter:
     def _prepare_context(self, data: dict[str, Any], json_path: Path) -> dict[str, Any]:
         """
         Prepare template context from JSON data.
-        
+
         Args:
             data: JSON data dictionary
             json_path: Path to source JSON file
-            
+
         Returns:
             Context dictionary for template rendering
+
         """
         # Start with all JSON data
         context = data.copy()
@@ -235,12 +237,13 @@ class JsonToHtmlConverter:
 def convert_all_json_to_html(output_dir: str = "output") -> dict[str, list[str]]:
     """
     Convenience function to convert all JSON files to HTML.
-    
+
     Args:
         output_dir: Root output directory
-        
+
     Returns:
         Dict with conversion results
+
     """
     converter = JsonToHtmlConverter()
     return converter.convert_directory(Path(output_dir))
@@ -249,10 +252,10 @@ def convert_all_json_to_html(output_dir: str = "output") -> dict[str, list[str]]
 if __name__ == "__main__":
     # Run conversion when executed directly
     results = convert_all_json_to_html()
-    print(f"\n✅ Conversion complete!")
+    print("\n✅ Conversion complete!")
     print(f"   Success: {len(results['success'])} files")
     print(f"   Failed: {len(results['failed'])} files")
-    
+
     if results["failed"]:
         print("\n❌ Failed files:")
         for failed in results["failed"]:

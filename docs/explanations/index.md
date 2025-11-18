@@ -4,16 +4,16 @@ Deep-dive explanations of FinWiz concepts and design decisions.
 
 ## Core Concepts
 
-- **[Architecture](../ARCHITECTURE.md)** - System architecture and design
+- **[Architecture](ARCHITECTURE.md)** - System architecture and design
+- **[Design Principles](design_principles.md)** - Core design philosophy
 - **[AI Architecture](ai_architecture.md)** - AI and CrewAI integration
 - **[Data Flow](data_flow.md)** - How data flows through the system
 - **[Investment Methodology](investment_methodology.md)** - Investment analysis approach
 
 ## Design Principles
 
-- **[Design Principles](design_principles.md)** - Core design philosophy
 - **[AI vs Rules](ai_vs_rules.md)** - When to use AI vs rule-based logic
-- **[Performance Attribution](performance_attribution.md)** - Performance analysis methodology
+- **Performance Attribution** _(coming soon)_ - Performance analysis methodology
 
 ## Technical Deep Dives
 

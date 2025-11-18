@@ -1,20 +1,26 @@
 """
 Risk Metrics Calculation Module.
 
-This module provides risk calculation functions for financial analysis including
-volatility, Value at Risk (VaR), Conditional VaR (CVaR), Sharpe ratio, Sortino ratio,
-maximum drawdown, and beta coefficient.
+This module provides risk calculation functions for financial analysis using
+Empyrical-Reloaded for standard metrics (volatility, Sharpe, drawdown, beta)
+and custom implementations for specialized metrics (VaR, CVaR).
+
+Migrated to Empyrical-Reloaded as part of Phase 2A.3 refactoring.
+See: empyrical-standards.md and financial-libraries-strategy.md
 
 All functions accept pandas Series and return calculated metrics.
 """
 
 import numpy as np
 import pandas as pd
+from empyrical import annual_volatility
 
 
 def calculate_volatility(returns: pd.Series, annualize: bool = True) -> float:
     """
     Calculate historical volatility (standard deviation of returns).
+
+    Uses Empyrical-Reloaded for calculation.
 
     Args:
         returns: Series of returns (daily, weekly, etc.)
@@ -33,11 +39,12 @@ def calculate_volatility(returns: pd.Series, annualize: bool = True) -> float:
     if returns.empty:
         return 0.0
 
-    volatility = returns.std()
-
     if annualize:
-        # Assume 252 trading days per year
-        volatility = volatility * np.sqrt(252)
+        # Use Empyrical for annualized volatility
+        volatility = annual_volatility(returns, period="daily")
+    else:
+        # Simple standard deviation for non-annualized
+        volatility = returns.std()
 
     return float(volatility)
 
@@ -116,6 +123,8 @@ def calculate_max_drawdown(prices: pd.Series) -> float:
     """
     Calculate maximum drawdown from a price series.
 
+    Uses Empyrical-Reloaded for calculation.
+
     Maximum drawdown is the largest peak-to-trough decline in the price series.
 
     Args:
@@ -134,21 +143,25 @@ def calculate_max_drawdown(prices: pd.Series) -> float:
     if prices.empty or len(prices) < 2:
         return 0.0
 
-    # Calculate cumulative maximum (running peak)
-    cumulative_max = prices.expanding().max()
+    # Convert prices to returns for Empyrical
+    returns = prices.pct_change().dropna()
 
-    # Calculate drawdown at each point
-    drawdown = (prices - cumulative_max) / cumulative_max
+    if returns.empty:
+        return 0.0
 
-    # Maximum drawdown is the minimum value (most negative)
-    max_drawdown = drawdown.min()
+    # Use Empyrical for max drawdown calculation
+    from empyrical import max_drawdown as empyrical_max_drawdown
 
-    return float(max_drawdown)
+    max_dd = empyrical_max_drawdown(returns)
+
+    return float(max_dd)
 
 
 def calculate_sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.02) -> float:
     """
     Calculate Sharpe ratio (risk-adjusted return).
+
+    Uses Empyrical-Reloaded for calculation.
 
     Sharpe ratio measures excess return per unit of risk (volatility).
     Higher values indicate better risk-adjusted performance.
@@ -170,24 +183,21 @@ def calculate_sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.02) -> 
     if returns.empty:
         return 0.0
 
-    # Calculate annualized return
-    mean_return = returns.mean() * 252  # Annualize daily returns
+    # Use Empyrical for Sharpe ratio calculation
+    from empyrical import sharpe_ratio as empyrical_sharpe
 
-    # Calculate annualized volatility
-    volatility = calculate_volatility(returns, annualize=True)
+    # Convert annual risk-free rate to daily rate for Empyrical
+    daily_risk_free = risk_free_rate / 252
+    sharpe = empyrical_sharpe(returns, risk_free=daily_risk_free, period="daily")
 
-    if volatility == 0:
-        return 0.0
-
-    # Sharpe ratio = (return - risk_free_rate) / volatility
-    sharpe_ratio = (mean_return - risk_free_rate) / volatility
-
-    return float(sharpe_ratio)
+    return float(sharpe)
 
 
 def calculate_sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.02) -> float:
     """
     Calculate Sortino ratio (downside risk-adjusted return).
+
+    Uses Empyrical-Reloaded for calculation.
 
     Similar to Sharpe ratio but only considers downside volatility,
     penalizing only negative returns rather than all volatility.
@@ -209,30 +219,21 @@ def calculate_sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.02) ->
     if returns.empty:
         return 0.0
 
-    # Calculate annualized return
-    mean_return = returns.mean() * 252
+    # Use Empyrical for Sortino ratio calculation
+    from empyrical import sortino_ratio as empyrical_sortino
 
-    # Calculate downside deviation (only negative returns)
-    downside_returns = returns[returns < 0]
+    # Convert annual risk-free rate to daily rate for Empyrical
+    daily_risk_free = risk_free_rate / 252
+    sortino = empyrical_sortino(returns, required_return=daily_risk_free, period="daily")
 
-    if downside_returns.empty:
-        # No downside risk - return a high value
-        return float("inf") if mean_return > risk_free_rate else 0.0
-
-    downside_deviation = downside_returns.std() * np.sqrt(252)
-
-    if downside_deviation == 0:
-        return 0.0
-
-    # Sortino ratio = (return - risk_free_rate) / downside_deviation
-    sortino_ratio = (mean_return - risk_free_rate) / downside_deviation
-
-    return float(sortino_ratio)
+    return float(sortino)
 
 
 def calculate_beta(asset_returns: pd.Series, market_returns: pd.Series) -> float:
     """
     Calculate beta coefficient (systematic risk relative to market).
+
+    Uses Empyrical-Reloaded for calculation.
 
     Beta measures how much an asset moves relative to the market.
     Beta = 1: moves with market, Beta > 1: more volatile, Beta < 1: less volatile
@@ -255,20 +256,15 @@ def calculate_beta(asset_returns: pd.Series, market_returns: pd.Series) -> float
     if asset_returns.empty or market_returns.empty:
         return 0.0
 
-    # Align the series (in case they have different indices)
-    aligned_data = pd.DataFrame({"asset": asset_returns, "market": market_returns}).dropna()
+    # Use Empyrical for beta calculation
 
-    if len(aligned_data) < 2:
+    # Empyrical's alpha_beta returns both, we just need beta
+    from empyrical import alpha_beta
+
+    _, beta_value = alpha_beta(asset_returns, market_returns, risk_free=0.0)
+
+    # If beta is NaN (zero market variance), return 0.0
+    if np.isnan(beta_value):
         return 0.0
 
-    # Calculate covariance and variance
-    covariance = aligned_data["asset"].cov(aligned_data["market"])
-    market_variance = aligned_data["market"].var()
-
-    if market_variance == 0:
-        return 0.0
-
-    # Beta = Cov(asset, market) / Var(market)
-    beta = covariance / market_variance
-
-    return float(beta)
+    return float(beta_value)

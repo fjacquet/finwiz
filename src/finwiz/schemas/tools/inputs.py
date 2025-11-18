@@ -479,6 +479,18 @@ class APlusScore(BaseModel):
     fundamental_score: float = Field(ge=0.0, le=1.0)
     technical_score: float = Field(ge=0.0, le=1.0)
     quality_score: float = Field(ge=0.0, le=1.0)
+    risk_score: float = Field(ge=0.0, le=1.0)
+
+    # Analysis details
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    a_plus_rationale: str = ""
+    confidence_level: float = Field(default=0.5, ge=0.0, le=1.0)
+
+    # Context
+    market_regime: MarketRegime
+    scoring_criteria: ScoringCriteria
+    analysis_timestamp: Any  # datetime
 
 
 # Regulatory Compliance Tool Inputs

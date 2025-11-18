@@ -242,9 +242,12 @@ class TestSentimentAnalyzer:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_should_handle_coinmarketcap_success_for_crypto(self, analyzer, mock_coinmarketcap_response, mocker):
+    async def test_should_handle_coinmarketcap_success_for_crypto(self, mock_coinmarketcap_response, mocker):
         """Test successful CoinMarketCap integration for crypto tickers."""
         mocker.patch.dict("os.environ", {"X-CMC_PRO_API_KEY": "test_key"})
+
+        # Create analyzer after patching environment variable
+        analyzer = SentimentAnalyzer()
 
         # Use APITestMocks for standardized mock setup
         APITestMocks.setup_coinmarketcap_mock(

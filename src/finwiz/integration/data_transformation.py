@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any
 
 
-def serialize_datetime_objects(obj: Any, _seen: set | None = None) -> Any:
+def serialize_datetime_objects(obj: Any, _seen: set[int] | None = None) -> Any:
     """
     Recursively serialize datetime objects and other non-serializable types to CrewAI-compatible formats.
 

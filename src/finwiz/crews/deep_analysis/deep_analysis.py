@@ -169,7 +169,7 @@ class DeepAnalysisCrew:
         self.prefetched_data = prefetched_data
         logger.info(f"Pre-fetched data set for {len(prefetched_data)} tickers")
 
-    def get_tools_for_asset_class(self, asset_class: str, minimal: bool = False) -> list:
+    def get_tools_for_asset_class(self, asset_class: str, minimal: bool = False) -> list[Any]:
         """
         Route to appropriate tool set based on asset class and optimization mode.
 
@@ -231,7 +231,7 @@ class DeepAnalysisCrew:
 
         return tools
 
-    def _get_minimal_risk_tools(self, asset_class: str) -> list:
+    def _get_minimal_risk_tools(self, asset_class: str) -> list[Any]:
         """
         Get minimal tool set for risk assessment only (Phase 2 optimization).
 

@@ -163,7 +163,7 @@ class BacktestingTool(BaseTool):
                 "long_window": "long_period",
                 "window": "period",
             }
-            
+
             for old_name, new_name in param_mappings.items():
                 if old_name in strategy_params and new_name not in strategy_params:
                     strategy_params[new_name] = strategy_params.pop(old_name)

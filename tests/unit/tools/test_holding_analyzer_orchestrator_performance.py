@@ -8,10 +8,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from finwiz.tools.holding_analyzer_orchestrator import (
-    HoldingAnalysis,
-    HoldingAnalyzerOrchestrator,
-)
+from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
+from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
 
 
 class TestHoldingAnalyzerOrchestratorPerformance:
@@ -218,7 +216,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
     def test_should_create_baseline_analysis_when_no_cache(self, orchestrator):
         """Test that baseline analysis is created when no cache available."""
         # Act
-        result = orchestrator._create_baseline_analysis(
+        result = HoldingProcessor.create_baseline_analysis(
             ticker="AAPL",
             asset_class="stock",
             currency="USD",
@@ -235,9 +233,9 @@ class TestHoldingAnalyzerOrchestratorPerformance:
     def test_should_use_different_baseline_scores_by_asset_class(self, orchestrator):
         """Test that different asset classes have different baseline scores."""
         # Act
-        stock_result = orchestrator._create_baseline_analysis("AAPL", "stock", "USD", "Apple")
-        etf_result = orchestrator._create_baseline_analysis("SPY", "etf", "USD", "S&P 500 ETF")
-        crypto_result = orchestrator._create_baseline_analysis("BTC", "crypto", "USD", "Bitcoin")
+        stock_result = HoldingProcessor.create_baseline_analysis("AAPL", "stock", "USD", "Apple")
+        etf_result = HoldingProcessor.create_baseline_analysis("SPY", "etf", "USD", "S&P 500 ETF")
+        crypto_result = HoldingProcessor.create_baseline_analysis("BTC", "crypto", "USD", "Bitcoin")
 
         # Assert
         assert stock_result.composite_score == 0.60
@@ -255,7 +253,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         }
 
         # Act
-        result = orchestrator._extract_fundamental_analysis(crew_output, "stock")
+        result = HoldingProcessor.extract_fundamental_analysis(crew_output, "stock")
 
         # Assert
         assert result is not None
@@ -274,7 +272,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         }
 
         # Act
-        result = orchestrator._extract_fundamental_analysis(crew_output, "etf")
+        result = HoldingProcessor.extract_fundamental_analysis(crew_output, "etf")
 
         # Assert
         assert result is not None
@@ -293,7 +291,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         }
 
         # Act
-        result = orchestrator._extract_technical_analysis(crew_output)
+        result = HoldingProcessor.extract_technical_analysis(crew_output)
 
         # Assert
         assert result is not None
@@ -313,7 +311,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         }
 
         # Act
-        result = orchestrator._extract_sec_citations(crew_output)
+        result = HoldingProcessor.extract_sec_citations(crew_output)
 
         # Assert
         assert len(result) == 2
@@ -325,7 +323,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         crew_output = {"pydantic": {"composite_score": 0.85}}
 
         # Act
-        result = orchestrator._extract_composite_score(crew_output)
+        result = HoldingProcessor.extract_composite_score(crew_output)
 
         # Assert
         assert result == 0.85
@@ -336,7 +334,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         crew_output = {"pydantic": {}}
 
         # Act
-        result = orchestrator._extract_composite_score(crew_output)
+        result = HoldingProcessor.extract_composite_score(crew_output)
 
         # Assert
         assert result == 0.65  # Default baseline
@@ -350,7 +348,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         }
 
         # Act
-        result = orchestrator._contains_ticker_analysis(crew_output, "AAPL")
+        result = HoldingProcessor.contains_ticker_analysis(crew_output, "AAPL")
 
         # Assert
         assert result is True
@@ -364,7 +362,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         }
 
         # Act
-        result = orchestrator._contains_ticker_analysis(crew_output, "AAPL")
+        result = HoldingProcessor.contains_ticker_analysis(crew_output, "AAPL")
 
         # Assert
         assert result is False

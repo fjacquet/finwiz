@@ -1,36 +1,29 @@
 # Performance Attribution
 
-This explanation provides conceptual understanding of performance attribution in the FinWiz system.
+!!! warning "Documentation In Progress"
+    This page is currently being written. Check back soon!
 
 ## Overview
 
-Performance Attribution is a key concept in FinWiz's architecture and operation.
+This section will cover performance attribution methodology, analysis techniques, and interpretation.
 
-## Key Concepts
+## Related Documentation
 
-- Core principles and ideas
-- How it fits into the overall system
-- Why it's designed this way
+While this page is being completed, you may find these resources helpful:
 
-## How It Works
+- [Architecture](ARCHITECTURE.md)
+- [Investment Methodology](investment_methodology.md)
+- [Reference: Quantitative Analysis](../reference/quantitative_analysis.md)
+- [Risk Framework](risk_framework.md)
 
-Detailed explanation of the mechanisms and processes involved.
+## Coming Soon
 
-## Benefits and Trade-offs
+- Performance attribution methodology
+- Factor analysis
+- Portfolio contribution analysis
+- Benchmark comparison
+- Attribution reports
 
-- Advantages of this approach
-- Considerations and limitations
-- When to use different strategies
+---
 
-## Examples
-
-Practical examples demonstrating the concepts.
-
-## Related Topics
-
-- [Architecture Overview](ARCHITECTURE.md)
-- [Design Principles](design_principles.md)
-
-## Further Reading
-
-Additional resources and documentation for deeper understanding.
+*Need this documentation urgently? [Open an issue](https://github.com/finwiz/finwiz/issues)*

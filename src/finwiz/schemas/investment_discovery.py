@@ -101,19 +101,22 @@ class APlusDiscoveryResult(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of assets analyzed")
-    total_screened: int = Field(..., ge=0, description="Total number of investments screened")
-    candidates_found: int = Field(..., ge=0, description="Number of A+ candidates found")
-    discovery_criteria: APlusCriteria = Field(..., description="Criteria used for discovery")
-    market_context: MarketRegime = Field(..., description="Market conditions during discovery")
+    total_screened: int = Field(default=0, ge=0, description="Total number of investments screened")
+    candidates_found: int = Field(default=0, ge=0, description="Number of A+ candidates found")
+    discovery_criteria: APlusCriteria = Field(default_factory=APlusCriteria, description="Criteria used for discovery")
+    market_context: MarketRegime = Field(
+        default_factory=lambda: MarketRegime(regime_type="sideways", vix_level=20.0, inflation_rate=3.0, interest_rate_trend="stable", market_stress_level="medium"),
+        description="Market conditions during discovery",
+    )
     discovery_timestamp: datetime = Field(default_factory=datetime.now, description="When discovery was performed")
 
     # A+ candidates with detailed analysis
     a_plus_candidates: list[APlusAnalysis] = Field(default_factory=list, description="Detailed A+ candidate analysis")
 
     # Summary statistics
-    average_score: float = Field(..., ge=0.0, le=1.0, description="Average score of A+ candidates")
+    average_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average score of A+ candidates")
     grade_distribution: dict[Grade, int] = Field(default_factory=dict, description="Distribution of grades found")
-    a_plus_percentage: float = Field(..., ge=0.0, le=100.0, description="Percentage of screened investments achieving A+")
+    a_plus_percentage: float = Field(default=0.0, ge=0.0, le=100.0, description="Percentage of screened investments achieving A+")
 
     # UCITS compliance for ETFs (European investors)
     ucits_compliant_count: Optional[int] = Field(None, description="Number of UCITS-compliant ETFs found")
@@ -125,7 +128,7 @@ class APlusDiscoveryResult(BaseModel):
 
     # Quality metrics
     high_confidence_count: int = Field(default=0, description="Number of candidates with >80% confidence")
-    screening_efficiency: float = Field(..., ge=0.0, le=100.0, description="Percentage of quality candidates found")
+    screening_efficiency: float = Field(default=0.0, ge=0.0, le=100.0, description="Percentage of quality candidates found")
 
 
 class ValidationResult(BaseModel):
@@ -133,21 +136,21 @@ class ValidationResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    total_candidates: int = Field(..., ge=0, description="Total candidates validated")
-    passed_validation: int = Field(..., ge=0, description="Candidates that passed validation")
-    failed_validation: int = Field(..., ge=0, description="Candidates that failed validation")
+    total_candidates: int = Field(default=0, ge=0, description="Total candidates validated")
+    passed_validation: int = Field(default=0, ge=0, description="Candidates that passed validation")
+    failed_validation: int = Field(default=0, ge=0, description="Candidates that failed validation")
 
     # Validation details for each candidate
     validation_details: list[dict[str, Any]] = Field(default_factory=list, description="Detailed validation results")
 
     # Backtesting results
-    backtest_period_years: int = Field(..., ge=1, description="Years of backtesting data used")
+    backtest_period_years: int = Field(default=1, ge=1, description="Years of backtesting data used")
     market_regimes_tested: list[str] = Field(default_factory=list, description="Market regimes included in testing")
 
-    # Performance metrics
-    average_sharpe_ratio: float = Field(..., description="Average Sharpe ratio of validated candidates")
-    average_max_drawdown: float = Field(..., le=0.0, description="Average maximum drawdown")
-    average_sortino_ratio: float = Field(..., description="Average Sortino ratio")
+    # Performance metrics (optional - may not always be available)
+    average_sharpe_ratio: float | None = Field(None, description="Average Sharpe ratio of validated candidates")
+    average_max_drawdown: float | None = Field(None, le=0.0, description="Average maximum drawdown")
+    average_sortino_ratio: float | None = Field(None, description="Average Sortino ratio")
 
     # Risk metrics
     correlation_analysis: dict[str, Any] = Field(default_factory=dict, description="Correlation with existing holdings")

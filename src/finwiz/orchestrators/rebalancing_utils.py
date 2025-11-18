@@ -141,7 +141,7 @@ class RebalancingUtils:
                 global_tolerance=config.global_tolerance,
             )
 
-            positions_needing_action = sum(1 for need in rebalancing_needs if need.exceeds_tolerance)
+            positions_needing_action = sum(1 for need in rebalancing_needs if need.needs_rebalancing)
             self.logger.info(f"Identified {positions_needing_action} positions needing rebalancing")
 
             return rebalancing_needs
@@ -262,8 +262,8 @@ class RebalancingUtils:
         try:
             summary = {
                 "total_positions": len(needs),
-                "positions_needing_action": sum(1 for need in needs if need.exceeds_tolerance),
-                "positions_within_tolerance": sum(1 for need in needs if not need.exceeds_tolerance),
+                "positions_needing_action": sum(1 for need in needs if need.needs_rebalancing),
+                "positions_within_tolerance": sum(1 for need in needs if not need.needs_rebalancing),
                 "high_urgency_positions": sum(1 for need in needs if getattr(need, "urgency_score", 0) >= 0.7),
                 "medium_urgency_positions": sum(1 for need in needs if 0.3 <= getattr(need, "urgency_score", 0) < 0.7),
                 "low_urgency_positions": sum(1 for need in needs if getattr(need, "urgency_score", 0) < 0.3),

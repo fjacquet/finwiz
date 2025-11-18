@@ -76,7 +76,7 @@ class DataLineageTracker:
         except Exception as e:
             self.logger.log_integration_error(error_type="LINEAGE_TRACKING_ERROR", crew_name=crew_name, error_message=str(e))
 
-    def get_crew_lineage(self, crew_name: str) -> list:
+    def get_crew_lineage(self, crew_name: str) -> list[Any]:
         """Get lineage history for a specific crew."""
         try:
             lineage_data = self._load_lineage()
@@ -155,7 +155,7 @@ class DataLineageTracker:
         except Exception as e:
             self.logger.log_integration_error(error_type="DATA_FLOW_TRACKING_ERROR", crew_name=to_crew, error_message=str(e))
 
-    def get_data_flow_graph(self) -> dict:
+    def get_data_flow_graph(self) -> dict[str, Any]:
         """Get a graph representation of data flows between crews."""
         try:
             lineage_data = self._load_lineage()
@@ -185,7 +185,7 @@ class DataLineageTracker:
             self.logger.log_integration_error(error_type="GRAPH_GENERATION_ERROR", crew_name="system", error_message=str(e))
             return {}
 
-    def get_lineage_summary(self) -> dict:
+    def get_lineage_summary(self) -> dict[str, Any]:
         """Get a summary of data lineage for monitoring."""
         try:
             lineage_data = self._load_lineage()

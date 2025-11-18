@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from finwiz.tools.holding_analyzer_orchestrator import HoldingAnalysis, HoldingAnalyzerOrchestrator
+from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
+from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
 
 
 class TestHoldingAnalyzerOrchestrator:
@@ -215,7 +216,7 @@ class TestHoldingAnalyzerOrchestrator:
         """Test freshness determination based on age."""
         # Test fresh (0-2 days)
         cached_data = {"age_days": 1, "pydantic": {}}
-        result = orchestrator._map_cached_to_holding_analysis(
+        result = HoldingProcessor.map_cached_to_holding_analysis(
             ticker="TEST",
             asset_class="stock",
             currency="USD",
@@ -226,7 +227,7 @@ class TestHoldingAnalyzerOrchestrator:
 
         # Test recent (3-7 days)
         cached_data = {"age_days": 5, "pydantic": {}}
-        result = orchestrator._map_cached_to_holding_analysis(
+        result = HoldingProcessor.map_cached_to_holding_analysis(
             ticker="TEST",
             asset_class="stock",
             currency="USD",
@@ -237,7 +238,7 @@ class TestHoldingAnalyzerOrchestrator:
 
         # Test stale (>7 days)
         cached_data = {"age_days": 10, "pydantic": {}}
-        result = orchestrator._map_cached_to_holding_analysis(
+        result = HoldingProcessor.map_cached_to_holding_analysis(
             ticker="TEST",
             asset_class="stock",
             currency="USD",

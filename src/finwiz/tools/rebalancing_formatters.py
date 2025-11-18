@@ -171,16 +171,16 @@ class RebalancingFormatters:
         # Create tbody
         tbody = soup.new_tag("tbody")
 
-        # Sort trades by priority (urgent first)
-        sorted_trades = sorted(trades, key=lambda t: (t.priority != "urgent", t.estimated_cost), reverse=True)
+        # Sort trades by priority (lower number = higher priority)
+        sorted_trades = sorted(trades, key=lambda t: (t.priority, -t.total_estimated_cost))
 
         for trade in sorted_trades:
             tr = soup.new_tag("tr")
 
-            # Add row class based on priority
-            if trade.priority == "urgent":
+            # Add row class based on urgency level
+            if trade.urgency.value.lower() == "critical":
                 tr["class"] = "urgent-trade"
-            elif trade.priority == "high":
+            elif trade.urgency.value.lower() == "high":
                 tr["class"] = "high-priority-trade"
 
             # Asset
@@ -192,42 +192,41 @@ class RebalancingFormatters:
 
             # Action with emoji
             td_action = soup.new_tag("td")
-            action_emoji = "📈" if trade.action.lower() == "buy" else "📉"
-            action_text = trade.action.upper()
+            action_value = trade.action.value.lower()
+            action_emoji = "📈" if action_value == "buy" else "📉"
+            action_text = trade.action.value.upper()
             if is_french:
-                action_text = "ACHETER" if trade.action.lower() == "buy" else "VENDRE"
+                action_text = "ACHETER" if action_value == "buy" else "VENDRE"
             td_action.string = f"{action_emoji} {action_text}"
             tr.append(td_action)
 
             # Quantity
             td_quantity = soup.new_tag("td")
-            if trade.quantity_type == "shares":
-                quantity_text = f"{trade.quantity:.0f} {'actions' if is_french else 'shares'}"
-            else:
-                quantity_text = f"${trade.quantity:,.0f}"
+            quantity_text = f"{trade.quantity:.0f} {'actions' if is_french else 'shares'}"
             td_quantity.string = quantity_text
             tr.append(td_quantity)
 
             # Estimated Price
             td_price = soup.new_tag("td")
-            td_price.string = f"${trade.estimated_price:.2f}"
+            td_price.string = f"${trade.current_price:.2f}"
             tr.append(td_price)
 
             # Total Cost
             td_cost = soup.new_tag("td")
-            cost_class = "cost-positive" if trade.action.lower() == "sell" else "cost-negative"
-            cost_sign = "+" if trade.action.lower() == "sell" else "-"
+            cost_class = "cost-positive" if trade.action.value.lower() == "sell" else "cost-negative"
+            cost_sign = "+" if trade.action.value.lower() == "sell" else "-"
             td_cost["class"] = cost_class
-            td_cost.string = f"{cost_sign}${abs(trade.estimated_cost):,.0f}"
+            td_cost.string = f"{cost_sign}${abs(trade.total_estimated_cost):,.0f}"
             tr.append(td_cost)
 
-            # Priority
+            # Priority (using urgency enum)
             td_priority = soup.new_tag("td")
-            priority_emoji = {"urgent": "🚨", "high": "⚠️", "medium": "📊", "low": "⏳"}.get(trade.priority, "📊")
-            priority_text = trade.priority.upper()
+            urgency_value = trade.urgency.value.lower()
+            priority_emoji = {"critical": "🚨", "high": "⚠️", "medium": "📊", "low": "⏳"}.get(urgency_value, "📊")
+            priority_text = trade.urgency.value.upper()
             if is_french:
-                priority_map = {"urgent": "URGENT", "high": "ÉLEVÉE", "medium": "MOYENNE", "low": "FAIBLE"}
-                priority_text = priority_map.get(trade.priority, trade.priority.upper())
+                priority_map = {"critical": "CRITIQUE", "high": "ÉLEVÉE", "medium": "MOYENNE", "low": "FAIBLE"}
+                priority_text = priority_map.get(urgency_value, trade.urgency.value.upper())
             td_priority.string = f"{priority_emoji} {priority_text}"
             tr.append(td_priority)
 

@@ -57,11 +57,11 @@ from .performance_metrics import (
     PerformanceMetrics,
 )
 from .rebalancing_history_tracker import RebalancingHistoryTracker
-from .risk_manager import (
+from .risk_manager import RiskManager
+from .risk_metrics import (
     ConcentrationLimits,
     RiskAssessment,
     RiskLevel,
-    RiskManager,
     RiskManagerConfig,
     RiskWarning,
     RiskWarningType,

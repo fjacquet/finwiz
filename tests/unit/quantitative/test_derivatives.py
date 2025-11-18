@@ -141,14 +141,20 @@ class TestDerivativesPricer:
 
         mock_ql.VanillaOption.return_value = mock_option
 
-        import sys
+        # Mock the QuantLibPricer's price_option method
+        mocker.patch.object(
+            pricer._quantlib_pricer,
+            "price_option",
+            return_value=OptionPricingResult(
+                option_price=5.0, greeks=OptionGreeks(delta=0.6, gamma=0.02, theta=-10.0, vega=20.0, rho=15.0), pricing_model=PricingModel.BINOMIAL, calculation_time=0.0
+            ),
+        )
 
-        with mocker.patch.dict(sys.modules, {"QuantLib": mock_ql}):
-            result = pricer._price_option_quantlib(call_option_params, PricingModel.BINOMIAL)
+        result = pricer.price_option(call_option_params, PricingModel.BINOMIAL)
 
-            assert isinstance(result, OptionPricingResult)
-            assert result.option_price == 5.0
-            assert result.greeks.delta == 0.6
+        assert isinstance(result, OptionPricingResult)
+        assert result.option_price == 5.0
+        assert result.greeks.delta == 0.6
 
     def test_bond_pricing_simple(self, pricer, bond_params):
         """Test bond pricing using simple present value calculation."""
@@ -165,7 +171,7 @@ class TestDerivativesPricer:
         """Test bond pricing when QuantLib is not available."""
         pricer._quantlib_available = False
 
-        result = pricer._price_bond_simple(bond_params)
+        result = pricer.price_bond(bond_params)
 
         assert isinstance(result, BondPricingResult)
         assert result.bond_price > 0
@@ -236,18 +242,16 @@ class TestDerivativesPricer:
 
     def test_validate_option_parameters_invalid(self, pricer):
         """Test option parameter validation with invalid parameters."""
-        # Test negative underlying price
-        invalid_params = OptionParameters(
-            underlying_price=-100.0,
-            strike_price=105.0,
-            time_to_expiry=0.25,
-            risk_free_rate=0.05,
-            volatility=0.20,
-            option_type=OptionType.CALL,
-        )
-
-        is_valid = pricer.validate_option_parameters(invalid_params)
-        assert is_valid is False
+        # Test negative underlying price - Pydantic will catch this at model creation
+        with pytest.raises(Exception):  # ValidationError from Pydantic
+            OptionParameters(
+                underlying_price=-100.0,
+                strike_price=105.0,
+                time_to_expiry=0.25,
+                risk_free_rate=0.05,
+                volatility=0.20,
+                option_type=OptionType.CALL,
+            )
 
     def test_validate_option_parameters_extreme_values(self, pricer):
         """Test option parameter validation with extreme values."""
@@ -266,32 +270,28 @@ class TestDerivativesPricer:
 
     def test_option_pricing_error_handling(self, pricer):
         """Test error handling in option pricing."""
-        # Test with invalid parameters
-        invalid_params = OptionParameters(
-            underlying_price=0.0,  # Invalid
-            strike_price=105.0,
-            time_to_expiry=0.25,
-            risk_free_rate=0.05,
-            volatility=0.20,
-            option_type=OptionType.CALL,
-        )
-
-        with pytest.raises(Exception):
-            pricer.price_option(invalid_params)
+        # Test with invalid parameters - Pydantic will catch this at model creation
+        with pytest.raises(Exception):  # ValidationError from Pydantic
+            OptionParameters(
+                underlying_price=0.0,  # Invalid
+                strike_price=105.0,
+                time_to_expiry=0.25,
+                risk_free_rate=0.05,
+                volatility=0.20,
+                option_type=OptionType.CALL,
+            )
 
     def test_bond_pricing_error_handling(self, pricer):
         """Test error handling in bond pricing."""
-        # Test with invalid parameters
-        invalid_params = BondParameters(
-            face_value=-1000.0,  # Invalid
-            coupon_rate=0.05,
-            years_to_maturity=5.0,
-            yield_to_maturity=0.04,
-            coupon_frequency=2,
-        )
-
-        with pytest.raises(Exception):
-            pricer.price_bond(invalid_params)
+        # Test with invalid parameters - Pydantic will catch this at model creation
+        with pytest.raises(Exception):  # ValidationError from Pydantic
+            BondParameters(
+                face_value=-1000.0,  # Invalid
+                coupon_rate=0.05,
+                years_to_maturity=5.0,
+                yield_to_maturity=0.04,
+                coupon_frequency=2,
+            )
 
     def test_greeks_calculation_accuracy(self, pricer, call_option_params):
         """Test accuracy of Greeks calculations."""
@@ -362,7 +362,7 @@ class TestDerivativesPricer:
 
     def test_bond_duration_calculation(self, pricer, bond_params):
         """Test bond duration calculation."""
-        result = pricer._price_bond_simple(bond_params)
+        result = pricer.price_bond(bond_params)
 
         # Duration should be positive and less than time to maturity
         assert result.duration > 0
@@ -374,7 +374,7 @@ class TestDerivativesPricer:
 
     def test_bond_convexity_calculation(self, pricer, bond_params):
         """Test bond convexity calculation."""
-        result = pricer._price_bond_simple(bond_params)
+        result = pricer.price_bond(bond_params)
 
         # Convexity should be positive
         assert result.convexity > 0

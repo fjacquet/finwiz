@@ -18,8 +18,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from finwiz.utils.json_to_html_converter import JsonToHtmlConverter
 from finwiz.tools.logger import get_logger
+from finwiz.utils.json_to_html_converter import JsonToHtmlConverter
 
 logger = get_logger(__name__)
 
@@ -47,6 +47,7 @@ def main():
     # Configure logging
     if args.verbose:
         import logging
+
         logging.basicConfig(level=logging.DEBUG)
 
     # Initialize converter

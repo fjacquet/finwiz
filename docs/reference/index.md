@@ -10,25 +10,26 @@ Complete reference documentation for FinWiz.
 
 ## API Documentation
 
-- **[API Reference](../API_REFERENCE.md)** - Complete API documentation
-- **[Schemas](schemas/index.md)** - Data schemas and validation
-- **[Error Codes](errors.md)** - Error codes and messages
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation
+- **[API Crews](api/crews.md)** - Crew configuration and usage
+- **[API Tools](api/tools.md)** - Tool reference and configuration
+- **[API Schemas](api/schemas.md)** - Data schemas and validation
+- **[Schemas](schemas/index.md)** - Interactive schema documentation
+- **Error Codes** _(coming soon)_ - Error codes and messages
 
 ## System Reference
 
-- **[Architecture](../ARCHITECTURE.md)** - System architecture overview
-- **[Performance](performance.md)** - Performance characteristics
-- **[Rate Limits](rate_limits.md)** - API rate limiting
-- **[Resource Usage](resource_usage.md)** - System resource requirements
+- **[Architecture](../explanations/ARCHITECTURE.md)** - System architecture overview
+- **[Quantitative Analysis](quantitative_analysis.md)** - Quantitative framework reference
+- **Performance** _(coming soon)_ - Performance characteristics
 
 ## Data Sources
 
-- **[Data Sources](data_sources.md)** - External data providers
-- **[Data Quality](data_quality.md)** - Data quality standards
-- **[Validation Errors](validation_errors.md)** - Data validation reference
+- **[SEC API Reference](sec_api_reference.md)** - SEC filing integration
+- **Data Sources** _(coming soon)_ - External data providers
 
-## Migration and Compatibility
+## Configuration Reference
 
-- **[Migration](migration.md)** - Version migration guides
-- **[Compatibility](compatibility.md)** - Version compatibility matrix
-- **[Changelog](changelog.md)** - Version history and changes
+- **Agent Configuration** _(coming soon)_ - Agent settings
+- **Task Configuration** _(coming soon)_ - Task definitions
+- **Tool Configuration** _(coming soon)_ - Tool parameters

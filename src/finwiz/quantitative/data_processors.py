@@ -51,13 +51,15 @@ class DataProcessor:
 
     def validate_inputs(self, symbol: str, start_date: datetime, end_date: datetime, interval: str) -> None:
         """Validate input parameters."""
+        from finwiz.utils.datetime_utils import normalize_to_naive
+
         if not symbol or not symbol.strip():
             raise ValueError("Symbol cannot be empty")
 
         # Normalize datetimes to timezone-naive for comparison
         # This handles cases where input dates might be timezone-aware
-        start_naive = start_date.replace(tzinfo=None) if start_date.tzinfo else start_date
-        end_naive = end_date.replace(tzinfo=None) if end_date.tzinfo else end_date
+        start_naive = normalize_to_naive(start_date)
+        end_naive = normalize_to_naive(end_date)
         now_naive = datetime.now()
 
         if start_naive >= end_naive:

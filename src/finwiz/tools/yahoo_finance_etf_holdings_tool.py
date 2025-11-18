@@ -1,5 +1,7 @@
 """Tool for fetching Yahoo Finance ETF Holdings."""
 
+from typing import Any
+
 import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
 from crewai.tools import BaseTool
 from pydantic import BaseModel
@@ -20,7 +22,7 @@ class YahooFinanceETFHoldingsTool(BaseTool):
     description: str = "Get detailed holdings information for ETFs, including top holdings, sector allocations, and asset breakdown."
     args_schema: type[BaseModel] = GetETFHoldingsInput
 
-    def _run(self, ticker: str) -> dict:
+    def _run(self, ticker: str) -> dict[str, Any]:
         """Execute the Yahoo Finance ETF holdings lookup."""
         try:
             etf_data = yf.Ticker(ticker)

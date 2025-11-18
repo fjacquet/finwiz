@@ -7,6 +7,7 @@ from consolidated JSON data. This is pure Python code - fast, testable, and free
 
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
@@ -105,7 +106,7 @@ class FinalReportGenerator:
             logger.error(f"Unexpected error generating final report: {e}", exc_info=True)
             raise
 
-    def _prepare_template_data(self, consolidated_data: ConsolidatedReportExport) -> dict:
+    def _prepare_template_data(self, consolidated_data: ConsolidatedReportExport) -> dict[str, Any]:
         """
         Prepare data dictionary for template rendering.
 

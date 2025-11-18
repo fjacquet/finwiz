@@ -6,6 +6,8 @@ and their tasks to analyze current portfolio composition, generate optimal rebal
 recommendations, and validate risk constraints.
 """
 
+from typing import Any
+
 from crewai import Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
@@ -375,7 +377,7 @@ class PortfolioRebalancingCrew:
 
         return results
 
-    async def _analyze_single_holding_async(self, holding: dict) -> dict:
+    async def _analyze_single_holding_async(self, holding: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze a single holding asynchronously.
 

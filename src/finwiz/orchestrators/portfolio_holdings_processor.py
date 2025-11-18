@@ -16,54 +16,27 @@ import csv
 import logging
 import os
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any
 
-from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.orchestrators.portfolio_decision_builders import (
+    assess_risk,
+    build_citations,
+    build_rationale,
+    calculate_score,
+    create_error_decision,
+)
+from finwiz.schemas.portfolio_processing import (
+    AssetClass,
+    ProcessingResult,
+    ProcessingSummary,
+    RawHolding,
+)
 from finwiz.schemas.portfolio_review import HoldingDecision
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.utils.grading_system import score_to_grade
 
 logger = logging.getLogger(__name__)
-
-AssetClass = Literal["stock", "etf", "crypto"]
-
-
-@dataclass
-class RawHolding:
-    """Raw holding data from CSV."""
-
-    asset_class: AssetClass
-    name: str
-    ticker: str
-    currency: str
-    source_file: str
-    line_number: int
-
-
-@dataclass
-class ProcessingResult:
-    """Result of processing a single holding."""
-
-    holding: RawHolding
-    decision: HoldingDecision | None
-    success: bool
-    validation_status: str
-    error_message: str | None = None
-
-
-@dataclass
-class ProcessingSummary:
-    """Summary of holdings processing."""
-
-    total_holdings: int
-    processed_successfully: int
-    processed_with_warnings: int
-    failed_to_process: int
-    excluded_holdings: list[tuple[str, str]]  # (ticker, reason)
-    by_asset_class: dict[str, int]
-    validation_failures: list[tuple[str, str]]  # (ticker, reason)
 
 
 class PortfolioHoldingsProcessor:
@@ -258,7 +231,7 @@ class PortfolioHoldingsProcessor:
                     )
 
                     # Create a minimal decision for failed processing
-                    decision = self._create_error_decision(holding, base_currency, str(e))
+                    decision = create_error_decision(holding, base_currency, str(e))
 
                     # Record failed processing
                     result = ProcessingResult(
@@ -314,19 +287,19 @@ class PortfolioHoldingsProcessor:
         is_valid = validation_result.get("valid", False)
 
         # Calculate composite score
-        score = self._calculate_score(is_valid, holding.asset_class)
+        score = calculate_score(is_valid, holding.asset_class)
 
         # Determine decision
         decision = "KEEP" if score >= keep_threshold else "SELL"
 
         # Generate risk assessment
-        risk = self._assess_risk(is_valid, validation_result)
+        risk = assess_risk(is_valid, validation_result)
 
         # Build rationale
-        rationale = self._build_rationale(is_valid, validation_result, holding)
+        rationale = build_rationale(is_valid, validation_result, holding)
 
         # Build citations
-        citations = self._build_citations(validation_result)
+        citations = build_citations(validation_result)
 
         # Get grade information
         grade_info = score_to_grade(score)
@@ -351,7 +324,23 @@ class PortfolioHoldingsProcessor:
             data_freshness=data_freshness,  # type: ignore[arg-type]
         )
 
-    def _validate_holding(self, holding: RawHolding) -> dict:
+    def _calculate_score(self, is_valid: bool, asset_class: AssetClass) -> float:
+        """
+        Calculate composite score for a holding.
+
+        This is a wrapper around the calculate_score function for testing purposes.
+
+        Args:
+            is_valid: Whether the holding passed validation
+            asset_class: Type of asset (stock, etf, crypto)
+
+        Returns:
+            Composite score between 0.0 and 1.0
+
+        """
+        return calculate_score(is_valid, asset_class)
+
+    def _validate_holding(self, holding: RawHolding) -> dict[str, Any]:
         """
         Validate a holding using the ticker validation tool.
 
@@ -374,186 +363,6 @@ class PortfolioHoldingsProcessor:
                 "reason": f"Validation error: {str(e)}",
                 "meta": {},
             }
-
-    def _calculate_score(self, is_valid: bool, asset_class: AssetClass) -> float:
-        """
-        Calculate composite score for a holding using improved shallow validation.
-
-        This method provides more realistic scores for validated holdings when deep
-        analysis is not enabled. The scoring assumes that holdings in a portfolio
-        are generally reasonable investments that passed initial screening.
-
-        Args:
-            is_valid: Whether the holding passed validation
-            asset_class: Type of asset
-
-        Returns:
-            Composite score between 0.0 and 1.0
-
-        Scoring Logic:
-            - Valid holdings: 0.75 base (B grade) - assumes reasonable quality
-            - ETFs: +0.05 for diversification benefit
-            - Invalid holdings: 0.3 (F grade) - requires manual review
-
-        """
-        if not is_valid:
-            # Invalid holdings get low score - requires manual review
-            return 0.3
-
-        # Base score for validated holdings - assumes reasonable quality
-        # This gives a B grade (75%) which is appropriate for holdings that:
-        # - Passed ticker validation
-        # - Are in an active portfolio
-        # - Haven't been analyzed in depth yet
-        base = 0.75
-
-        # ETFs get a slight boost for diversification benefit
-        if asset_class == "etf":
-            base += 0.05
-
-        # Stocks and crypto maintain base score
-        # Deep analysis will provide more accurate scoring when enabled
-
-        return min(base, 1.0)
-
-    def _assess_risk(self, is_valid: bool, validation_result: dict) -> RiskAssessmentStandardized:
-        """
-        Assess risk for a holding.
-
-        Args:
-            is_valid: Whether validation passed
-            validation_result: Validation result dictionary
-
-        Returns:
-            Standardized risk assessment
-
-        """
-        if is_valid:
-            return RiskAssessmentStandardized(
-                score=2.0,
-                level="Medium",
-                risk_factors=["Baseline risk - ticker validated"],
-            )
-
-        # Higher risk for invalid holdings
-        reason = validation_result.get("reason", "Unknown validation failure")
-        return RiskAssessmentStandardized(
-            score=4.5,
-            level="Very High",
-            risk_factors=[
-                "Validation failed",
-                f"Reason: {reason}",
-                "Unable to verify ticker existence",
-            ],
-        )
-
-    def _build_rationale(
-        self,
-        is_valid: bool,
-        validation_result: dict,
-        holding: RawHolding,
-    ) -> list[str]:
-        """
-        Build rationale bullets for a holding decision.
-
-        Args:
-            is_valid: Whether validation passed
-            validation_result: Validation result
-            holding: Raw holding data
-
-        Returns:
-            List of rationale bullet points
-
-        """
-        rationale: list[str] = []
-
-        # Add analysis depth indicator
-        rationale.append("⚡ Validation rapide (analyse superficielle)")
-        rationale.append("💡 Activez DEEP_PORTFOLIO_ANALYSIS=true pour une analyse complète")
-
-        if is_valid:
-            rationale.append("✅ Ticker validé avec succès")
-            source = validation_result.get("meta", {}).get("source", "unknown")
-            rationale.append(f"Source de données: {source}")
-            rationale.append("📊 Note basée sur la validation du ticker uniquement")
-            rationale.append("🔍 L'analyse approfondie fournira des métriques détaillées")
-        else:
-            rationale.append("⚠️ Échec de la validation du ticker")
-            reason = validation_result.get("reason", "Unknown reason")
-            rationale.append(f"Problème de validation: {reason}")
-            rationale.append("📋 Inclus dans le rapport pour transparence")
-            rationale.append("🔧 Révision manuelle requise")
-
-        # Add source information
-        rationale.append(f"📁 Source: {Path(holding.source_file).name}, ligne {holding.line_number}")
-
-        return rationale
-
-    def _build_citations(self, validation_result: dict) -> list[str]:
-        """
-        Build citations list from validation result.
-
-        Args:
-            validation_result: Validation result dictionary
-
-        Returns:
-            List of citation strings
-
-        """
-        citations: list[str] = []
-
-        source = validation_result.get("meta", {}).get("source")
-        if source == "yahoo":
-            citations.append("Yahoo Finance")
-        elif source == "coinbase":
-            citations.append("Coinbase Products API")
-
-        return citations
-
-    def _create_error_decision(
-        self,
-        holding: RawHolding,
-        base_currency: str,
-        error_message: str,
-    ) -> HoldingDecision:
-        """
-        Create a minimal decision for a holding that failed to process.
-
-        Args:
-            holding: Raw holding that failed
-            base_currency: Base currency
-            error_message: Error message
-
-        Returns:
-            HoldingDecision with error information
-
-        """
-        grade_info = score_to_grade(0.0)
-
-        return HoldingDecision(
-            asset_class=holding.asset_class,
-            name=holding.name,
-            ticker=holding.ticker,
-            currency=holding.currency or base_currency,
-            decision="SELL",  # type: ignore[arg-type]
-            composite_score=0.0,
-            grade=grade_info.grade,  # type: ignore[arg-type]
-            grade_description="Processing Error",
-            recommended_action="Review manually",
-            risk=RiskAssessmentStandardized(
-                score=5.0,
-                level="Very High",
-                risk_factors=["Processing error", error_message],
-            ),
-            rationale_bullets=[
-                "❌ Failed to process holding",
-                f"Error: {error_message}",
-                "Manual review required",
-            ],
-            citations=[],
-            alternatives=[],
-            data_freshness="stale",  # type: ignore[arg-type]
-        )
 
     def get_processing_summary(self) -> ProcessingSummary:
         """

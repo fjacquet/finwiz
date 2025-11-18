@@ -103,12 +103,12 @@ class InvestmentDiscoveryMonitor:
 
         if success:
             # Count A+ discoveries
-            a_plus_count = sum(1 for candidate in result.candidates if candidate.final_grade == "A+")
+            a_plus_count = sum(1 for analysis in result.a_plus_candidates if analysis.candidate.grade == "A+")
             self.discovery_metrics.a_plus_discoveries += a_plus_count
 
             # Update grade distribution
-            for candidate in result.candidates:
-                grade = candidate.final_grade
+            for analysis in result.a_plus_candidates:
+                grade = analysis.candidate.grade
                 self.discovery_metrics.grade_distribution[grade] = self.discovery_metrics.grade_distribution.get(grade, 0) + 1
 
             # Update asset type distribution
@@ -304,8 +304,8 @@ class InvestmentDiscoveryMonitor:
             "duration": duration,
             "success": success,
             "asset_type": result.asset_type if result else None,
-            "candidates_count": len(result.candidates) if result and result.candidates else 0,
-            "a_plus_count": sum(1 for c in result.candidates if c.final_grade == "A+") if result and result.candidates else 0,
+            "candidates_count": len(result.a_plus_candidates) if result and result.a_plus_candidates else 0,
+            "a_plus_count": sum(1 for a in result.a_plus_candidates if a.candidate.grade == "A+") if result and result.a_plus_candidates else 0,
         }
 
         self.discovery_history.append(record)

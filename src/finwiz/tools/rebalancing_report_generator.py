@@ -46,7 +46,7 @@ class RebalancingReportGenerator(HTMLReportGenerator):
         """Initialize the rebalancing report generator."""
         super().__init__(template_path)
         # Add rebalancing-specific emojis to the base emoji map
-        self.EMOJI_MAP.update(self.REBALANCING_EMOJI_MAP)
+        self.section_builder.EMOJI_MAP.update(self.REBALANCING_EMOJI_MAP)
 
         # Initialize helper classes
         self.section_generator = RebalancingSections()
@@ -95,7 +95,7 @@ class RebalancingReportGenerator(HTMLReportGenerator):
         if include_interactive:
             html_content = self.templates.add_interactive_elements(html_content)
 
-        logger.info(f"Generated rebalancing report with {len(self.sections)} sections")
+        logger.info(f"Generated rebalancing report with {len(self.section_builder.sections)} sections")
         return html_content
 
     def _add_executive_summary(self, result: RebalancingResult, language: str) -> None:

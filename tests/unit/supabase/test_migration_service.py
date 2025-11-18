@@ -65,9 +65,7 @@ class TestMigrationService:
         assert metadata["ticker"] == "NESN.SW"
         assert metadata["asset_class"] == "stock"
 
-    def test_should_validate_export_data_with_required_fields(
-        self, migration_service, sample_export_data
-    ):
+    def test_should_validate_export_data_with_required_fields(self, migration_service, sample_export_data):
         """Test validation passes with all required fields."""
         # Act
         is_valid = migration_service._validate_export_data(sample_export_data)
@@ -75,9 +73,7 @@ class TestMigrationService:
         # Assert
         assert is_valid is True
 
-    def test_should_fail_validation_with_missing_ticker(
-        self, migration_service, sample_export_data
-    ):
+    def test_should_fail_validation_with_missing_ticker(self, migration_service, sample_export_data):
         """Test validation fails when ticker is missing."""
         # Arrange
         del sample_export_data["ticker"]
@@ -88,9 +84,7 @@ class TestMigrationService:
         # Assert
         assert is_valid is False
 
-    def test_should_fail_validation_with_missing_composite_score(
-        self, migration_service, sample_export_data
-    ):
+    def test_should_fail_validation_with_missing_composite_score(self, migration_service, sample_export_data):
         """Test validation fails when composite_score is missing."""
         # Arrange
         del sample_export_data["composite_score"]
@@ -116,9 +110,7 @@ class TestMigrationService:
         assert hash1 == hash2  # Same file should produce same hash
         assert len(hash1) == 64  # SHA256 produces 64-character hex string
 
-    def test_should_produce_different_hashes_for_different_files(
-        self, migration_service, tmp_path
-    ):
+    def test_should_produce_different_hashes_for_different_files(self, migration_service, tmp_path):
         """Test that different files produce different hashes."""
         # Arrange
         file1 = tmp_path / "file1.json"
@@ -236,18 +228,14 @@ class TestMigrationService:
         assert is_migrated is False
 
     @pytest.mark.asyncio
-    async def test_should_handle_migration_check_failure_gracefully(
-        self, migration_service, tmp_path, mocker
-    ):
+    async def test_should_handle_migration_check_failure_gracefully(self, migration_service, tmp_path, mocker):
         """Test that migration check failures don't block migration."""
         # Arrange
         test_file = tmp_path / "AAPL_default.json"
         test_file.write_text(json.dumps({"ticker": "AAPL"}))
 
         # Mock Supabase client to raise exception
-        migration_service.client.execute_with_timeout = mocker.AsyncMock(
-            side_effect=Exception("Database connection failed")
-        )
+        migration_service.client.execute_with_timeout = mocker.AsyncMock(side_effect=Exception("Database connection failed"))
 
         # Act
         is_migrated = await migration_service._is_already_migrated(test_file)
@@ -256,9 +244,7 @@ class TestMigrationService:
         assert is_migrated is False
 
     @pytest.mark.asyncio
-    async def test_should_migrate_valid_export(
-        self, migration_service, tmp_path, sample_export_data, mocker
-    ):
+    async def test_should_migrate_valid_export(self, migration_service, tmp_path, sample_export_data, mocker):
         """Test successful migration of valid export file."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -279,9 +265,7 @@ class TestMigrationService:
         migration_service._record_migration.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_skip_already_migrated_export(
-        self, migration_service, tmp_path, sample_export_data, mocker
-    ):
+    async def test_should_skip_already_migrated_export(self, migration_service, tmp_path, sample_export_data, mocker):
         """Test that already migrated files are skipped."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -300,9 +284,7 @@ class TestMigrationService:
         migration_service.repository.store_analysis.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_should_force_migrate_already_migrated_export(
-        self, migration_service, tmp_path, sample_export_data, mocker
-    ):
+    async def test_should_force_migrate_already_migrated_export(self, migration_service, tmp_path, sample_export_data, mocker):
         """Test that force flag bypasses idempotency check."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -323,9 +305,7 @@ class TestMigrationService:
         migration_service.repository.store_analysis.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_skip_invalid_json_file(
-        self, migration_service, tmp_path, mocker
-    ):
+    async def test_should_skip_invalid_json_file(self, migration_service, tmp_path, mocker):
         """Test that files with invalid JSON are skipped."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -344,9 +324,7 @@ class TestMigrationService:
         migration_service.repository.store_analysis.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_should_skip_export_with_missing_required_fields(
-        self, migration_service, tmp_path, mocker
-    ):
+    async def test_should_skip_export_with_missing_required_fields(self, migration_service, tmp_path, mocker):
         """Test that exports missing required fields are skipped."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -369,9 +347,7 @@ class TestMigrationService:
         migration_service.repository.store_analysis.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_should_add_metadata_from_path_when_missing(
-        self, migration_service, tmp_path, mocker
-    ):
+    async def test_should_add_metadata_from_path_when_missing(self, migration_service, tmp_path, mocker):
         """Test that ticker and asset_class are extracted from path if missing."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -400,9 +376,7 @@ class TestMigrationService:
         assert call_args[1]["asset_class"] == "stock"
 
     @pytest.mark.asyncio
-    async def test_should_preserve_file_timestamp(
-        self, migration_service, tmp_path, sample_export_data, mocker
-    ):
+    async def test_should_preserve_file_timestamp(self, migration_service, tmp_path, sample_export_data, mocker):
         """Test that file modification time is preserved as analysis timestamp."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -428,9 +402,7 @@ class TestMigrationService:
         assert "analysis_timestamp" in export_data
 
     @pytest.mark.asyncio
-    async def test_should_handle_storage_failure(
-        self, migration_service, tmp_path, sample_export_data, mocker
-    ):
+    async def test_should_handle_storage_failure(self, migration_service, tmp_path, sample_export_data, mocker):
         """Test handling of storage failures."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"
@@ -450,9 +422,7 @@ class TestMigrationService:
         migration_service._record_migration.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_should_run_migration_twice_without_duplicates(
-        self, migration_service, tmp_path, sample_export_data, mocker
-    ):
+    async def test_should_run_migration_twice_without_duplicates(self, migration_service, tmp_path, sample_export_data, mocker):
         """Test idempotency: running migration twice doesn't create duplicates."""
         # Arrange
         test_file = tmp_path / "stock" / "AAPL_default.json"

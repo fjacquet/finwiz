@@ -30,43 +30,30 @@ class TestConsolidatedReporterInputEnhanced:
     @pytest.fixture
     def mock_discovery_data_with_validation(self, tmp_path: Path) -> dict:
         """Create mock discovery data with validation results."""
-        # Create mock validation result as plain dict
+        # Create mock validation result matching current ValidationResult schema
         validation_result = {
-            "symbol": "AAPL",
-            "asset_type": "stock",
-            "validation_passed": True,
+            "total_candidates": 10,
+            "passed_validation": 1,
+            "failed_validation": 9,
             "validation_details": [
                 {
-                    "criterion": "backtesting_return",
+                    "symbol": "AAPL",
                     "passed": True,
+                    "criterion": "backtesting_return",
                     "value": 0.12,
                     "threshold": 0.08,
                     "weight": 0.25,
                 }
             ],
-            "overall_score": 0.85,
-            "grade": "A+",
-            "backtesting_metrics": {
-                "annualized_return": 0.12,
-                "sharpe_ratio": 1.5,
-                "max_drawdown": -0.15,
-                "win_rate": 0.55,
-                "backtest_period_years": 5,
-            },
-            "market_regimes_tested": {
-                "bull": {"annualized_return": 0.18, "sharpe_ratio": 1.8, "max_drawdown": -0.10, "win_rate": 0.65},
-                "bear": {"annualized_return": 0.05, "sharpe_ratio": 0.8, "max_drawdown": -0.25, "win_rate": 0.45},
-                "sideways": {
-                    "annualized_return": 0.08,
-                    "sharpe_ratio": 1.2,
-                    "max_drawdown": -0.12,
-                    "win_rate": 0.50,
-                },
-            },
-            "regime_consistency_score": 0.75,
-            "recommendation": "STRONG_BUY",
-            "confidence_level": 0.85,
-            "validation_timestamp": datetime.now().isoformat(),
+            "backtest_period_years": 5,
+            "market_regimes_tested": ["bull", "bear", "sideways"],  # List, not dict
+            "average_sharpe_ratio": 1.5,
+            "average_max_drawdown": -0.15,
+            "average_sortino_ratio": 1.8,
+            "correlation_analysis": {},
+            "stress_test_results": {},
+            "validated_candidates": ["AAPL"],
+            "rejected_candidates": [],
         }
 
         # Create mock discovery result as plain dict
@@ -148,7 +135,7 @@ class TestConsolidatedReporterInputEnhanced:
         assert "backtesting_summary" in result
         assert result["backtesting_summary"] is not None
         assert "total_candidates_tested" in result["backtesting_summary"]
-        assert result["backtesting_summary"]["total_candidates_tested"] == 1
+        assert result["backtesting_summary"]["total_candidates_tested"] == 10  # From validation_result.total_candidates
 
     def test_should_include_market_context_summary_when_available(self, data_accessor: CrewDataAccessor, mock_discovery_data_with_validation: dict, mocker) -> None:
         """Test that market context summary is included in consolidated reporter input."""

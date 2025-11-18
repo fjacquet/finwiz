@@ -7,6 +7,7 @@ Utility class for analyzing integration logs and debugging issues.
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from .data_lineage import DataLineageTracker
 
@@ -31,7 +32,7 @@ class LogAnalyzer:
 
         self.logger = IntegrationLogger("finwiz.integration.analyzer")
 
-    def analyze_crew_execution_patterns(self, hours_back: int = 24) -> dict:
+    def analyze_crew_execution_patterns(self, hours_back: int = 24) -> dict[str, Any]:
         """Analyze crew execution patterns for debugging."""
         try:
             self.lineage_tracker.get_lineage_summary()
@@ -98,7 +99,7 @@ class LogAnalyzer:
             self.logger.log_integration_error(error_type="EXECUTION_ANALYSIS_ERROR", crew_name="system", error_message=str(e))
             return {}
 
-    def identify_integration_bottlenecks(self) -> dict:
+    def identify_integration_bottlenecks(self) -> dict[str, Any]:
         """Identify potential bottlenecks in the integration pipeline."""
         try:
             data_flow_graph = self.lineage_tracker.get_data_flow_graph()
@@ -148,7 +149,7 @@ class LogAnalyzer:
             self.logger.log_integration_error(error_type="BOTTLENECK_ANALYSIS_ERROR", crew_name="system", error_message=str(e))
             return {}
 
-    def generate_debug_report(self, crew_name: str = None) -> dict:
+    def generate_debug_report(self, crew_name: str = None) -> dict[str, Any]:
         """Generate a comprehensive debug report for integration issues."""
         try:
             report = {

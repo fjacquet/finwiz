@@ -1,346 +1,211 @@
 """
-Configuration et fixtures partagées pour les tests FinWiz.
+Pytest configuration and shared fixtures.
 
-Ce module fournit des fixtures Faker configurées pour générer
-des données de test réalistes et cohérentes.
+Makes test fixtures available to all test modules.
 """
 
+from datetime import datetime
 from typing import Any
 
 import pytest
-
-# Import the unittest mock blocker to prevent its usage
-# This will raise an error if any test tries to import unittest mock
-from conftest_unittest_blocker import UnittestMockBlocker  # noqa: F401
 from faker import Faker
 
+# Import all fixtures to make them available
+from tests.fixtures import (
+    create_crypto_data,
+    create_deep_analysis_result,
+    create_etf_data,
+    create_market_context,
+    create_portfolio_review,
+    create_price_history,
+    create_risk_assessment,
+    create_stock_data,
+)
 
-@pytest.fixture(scope="session")
-def faker_instance():
-    """
-    Instance Faker configurée avec les providers nécessaires.
 
-    Utilise une seed fixe pour garantir la reproductibilité des tests.
-    """
-    fake = Faker("fr_FR")  # Utilisation d'une seule locale pour éviter les problèmes de proxy
-    fake.seed_instance(12345)  # Seed fixe pour reproductibilité
-
-    # Les providers sont déjà inclus par défaut dans Faker
-    # Pas besoin de les ajouter explicitement
-
-    return fake
+# Make fixtures available as pytest fixtures
+@pytest.fixture
+def stock_data():
+    """Fixture providing sample stock data."""
+    return create_stock_data()
 
 
 @pytest.fixture
-def fake_client_profile(faker_instance):
-    """
-    Génère un profil client réaliste pour les tests.
+def etf_data():
+    """Fixture providing sample ETF data."""
+    return create_etf_data()
 
-    Returns:
-        Dict contenant les données d'un client fictif
 
-    """
-    fake = faker_instance
+@pytest.fixture
+def crypto_data():
+    """Fixture providing sample crypto data."""
+    return create_crypto_data()
 
+
+@pytest.fixture
+def market_context():
+    """Fixture providing sample market context."""
+    return create_market_context()
+
+
+@pytest.fixture
+def price_history():
+    """Fixture providing sample price history."""
+    return create_price_history()
+
+
+@pytest.fixture
+def risk_assessment():
+    """Fixture providing sample risk assessment."""
+    return create_risk_assessment()
+
+
+@pytest.fixture
+def deep_analysis_result():
+    """Fixture providing sample deep analysis result."""
+    return create_deep_analysis_result()
+
+
+@pytest.fixture
+def portfolio_review():
+    """Fixture providing sample portfolio review."""
+    return create_portfolio_review()
+
+
+# ===== Faker-based fixtures =====
+
+
+@pytest.fixture(scope="session")
+def fake():
+    """Faker instance for generating test data."""
+    return Faker()
+
+
+@pytest.fixture
+def fake_client_profile(fake: Faker) -> dict[str, Any]:
+    """Fixture providing realistic client profile data."""
     return {
         "name": fake.name(),
         "email": fake.email(),
         "phone": fake.phone_number(),
-        "age": fake.random_int(min=25, max=75),
-        "address": fake.address().replace("\n", ", "),
+        "address": fake.address(),
         "city": fake.city(),
         "country": fake.country(),
-        "investment_horizon": fake.random_element(["5-10 ans", "10-15 ans", "15-20 ans", "20+ ans"]),
-        "monthly_budget": f"{fake.random_int(min=500, max=5000)} CHF",
-        "risk_tolerance": fake.random_element(["Conservative", "Moderate", "Aggressive"]),
-        "occupation": fake.job(),
-        "company": fake.company(),
+        "date_of_birth": fake.date_of_birth(minimum_age=25, maximum_age=70).isoformat(),
+        "risk_tolerance": fake.random_element(elements=("conservative", "moderate", "aggressive")),
+        "investment_goals": fake.sentence(nb_words=10),
+        "annual_income": fake.random_int(min=30000, max=500000),
+        "net_worth": fake.random_int(min=50000, max=5000000),
     }
 
 
 @pytest.fixture
-def fake_financial_data(faker_instance):
-    """
-    Génère des données financières réalistes pour les tests.
-
-    Returns:
-        Dict contenant des données financières fictives
-
-    """
-    fake = faker_instance
-
+def fake_timestamps(fake: Faker) -> dict[str, Any]:
+    """Fixture providing realistic timestamp data."""
     return {
-        "plan_id": fake.uuid4(),
-        "account_number": fake.bban(),
-        "portfolio_value": fake.pydecimal(left_digits=6, right_digits=2, positive=True),
-        "annual_income": fake.random_int(min=50000, max=200000),
-        "net_worth": fake.random_int(min=100000, max=1000000),
-        "investment_amount": fake.random_int(min=1000, max=50000),
-        "currency": fake.random_element(["CHF", "EUR", "USD"]),
+        "created_at": fake.past_datetime(start_date="-30d").isoformat(),
+        "updated_at": fake.date_time_between(start_date="-7d", end_date="now").isoformat(),
+        "last_analysis": fake.date_time_between(start_date="-3d", end_date="now").isoformat(),
     }
 
 
 @pytest.fixture
-def fake_stock_data(faker_instance):
-    """
-    Génère des données d'actions réalistes pour les tests.
-
-    Returns:
-        Dict contenant des données d'actions fictives
-
-    """
-    fake = faker_instance
-
-    # Tickers réalistes mais fictifs
-    fake_tickers = ["FAKE", "TEST", "DEMO", "MOCK", "SMPL"]
-
-    return {
-        "ticker": fake.random_element(fake_tickers),
-        "company_name": fake.company(),
-        "price": fake.pydecimal(left_digits=3, right_digits=2, positive=True),
-        "pe_ratio": fake.pydecimal(left_digits=2, right_digits=2, positive=True),
-        "market_cap": fake.random_int(min=1000000, max=1000000000),
-        "sector": fake.random_element(["Technology", "Healthcare", "Finance", "Energy", "Consumer Goods"]),
-        "recommendation": fake.random_element(["BUY", "HOLD", "SELL"]),
-        "confidence_score": fake.pydecimal(left_digits=0, right_digits=2, positive=True, max_value=1),
-    }
-
-
-@pytest.fixture
-def fake_timestamps(faker_instance):
-    """
-    Génère des timestamps cohérents pour les tests.
-
-    Returns:
-        Dict contenant des timestamps fictifs mais logiques
-
-    """
-    fake = faker_instance
-
-    # Génère des dates dans une séquence logique
-    created_at = fake.date_time_between(start_date="-1y", end_date="-1m")
-    last_updated = fake.date_time_between(start_date=created_at, end_date="now")
-
-    return {
-        "created_at": created_at,
-        "last_updated": last_updated,
-        "analysis_date": fake.date_time_between(start_date=created_at, end_date=last_updated),
-        "report_date": last_updated,
-    }
-
-
-@pytest.fixture
-def fake_html_metadata(faker_instance):
-    """
-    Génère des métadonnées HTML réalistes pour les tests.
-
-    Returns:
-        Dict contenant des métadonnées HTML fictives
-
-    """
-    fake = faker_instance
-
-    return {
-        "plan_id": fake.uuid4(),
-        "title": f"Plan Financier - {fake.name()}",
-        "description": fake.text(max_nb_chars=200),
-        "author": fake.name(),
-        "language": fake.random_element(["fr", "en", "de"]),
-        "charset": "utf-8",
-    }
-
-
-@pytest.fixture
-def fake_portfolio_holdings(faker_instance):
-    """
-    Génère une liste de positions de portefeuille réalistes.
-
-    Returns:
-        List de dictionnaires représentant des positions
-
-    """
-    fake = faker_instance
-
+def fake_portfolio_holdings(fake: Faker) -> list[dict[str, Any]]:
+    """Fixture providing realistic portfolio holdings data."""
     holdings = []
-    companies = [
-        ("AAPL", "Apple Inc."),
-        ("MSFT", "Microsoft Corp."),
-        ("GOOGL", "Alphabet Inc."),
-        ("TSLA", "Tesla Inc."),
-        ("AMZN", "Amazon.com Inc."),
-    ]
-
-    for ticker, name in fake.random_elements(companies, length=fake.random_int(min=2, max=4), unique=True):
+    tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "JNJ"]
+    for ticker in fake.random_elements(elements=tickers, length=5, unique=True):
         holdings.append(
             {
                 "ticker": ticker,
-                "name": name,
-                "decision": fake.random_element(["KEEP", "SELL"]),
-                "composite_score": str(fake.pydecimal(left_digits=0, right_digits=2, positive=True, max_value=1)),
-                "risk_level": fake.random_element(["Low", "Medium", "High"]),
-                "quantity": fake.random_int(min=1, max=100),
-                "current_price": fake.pydecimal(left_digits=3, right_digits=2, positive=True),
+                "shares": fake.random_int(min=1, max=1000),
+                "purchase_price": round(fake.random.uniform(10.0, 500.0), 2),
+                "current_price": round(fake.random.uniform(10.0, 500.0), 2),
+                "purchase_date": fake.past_date(start_date="-2y").isoformat(),
             }
         )
-
     return holdings
 
 
 @pytest.fixture
-def fake_investment_recommendations(faker_instance):
-    """
-    Génère des recommandations d'investissement réalistes.
+def fake_investment_recommendations(fake: Faker) -> list[dict[str, Any]]:
+    """Fixture providing realistic investment recommendations."""
+    recommendations = []
+    for _ in range(3):
+        recommendations.append(
+            {
+                "ticker": fake.random_element(elements=("AAPL", "MSFT", "GOOGL", "AMZN", "TSLA")),
+                "action": fake.random_element(elements=("BUY", "HOLD", "SELL")),
+                "target_price": round(fake.random.uniform(100.0, 500.0), 2),
+                "confidence": fake.random.uniform(0.6, 0.95),
+                "rationale": fake.sentence(nb_words=15),
+            }
+        )
+    return recommendations
 
-    Returns:
-        Dict contenant des recommandations par catégorie
 
-    """
-    fake = faker_instance
-
-    stocks = [
-        f"{fake.random_element(['NVDA', 'AMD', 'INTC'])} - {fake.company()}",
-        f"{fake.random_element(['JPM', 'BAC', 'WFC'])} - {fake.company()}",
-    ]
-
-    etfs = [
-        f"{fake.random_element(['VTI', 'SPY', 'QQQ'])} - {fake.company()} ETF",
-        f"{fake.random_element(['AGG', 'BND', 'TLT'])} - {fake.company()} Bond ETF",
-    ]
-
-    crypto = [
-        f"BTC ({fake.random_int(min=10, max=100)} CHF/mois)",
-        f"ETH ({fake.random_int(min=5, max=50)} CHF/mois)",
-    ]
-
+@pytest.fixture
+def fake_financial_data(fake: Faker) -> dict[str, Any]:
+    """Fixture providing realistic financial data."""
     return {
-        "stocks": stocks,
-        "etfs": etfs,
-        "crypto": crypto,
+        "revenue": fake.random_int(min=1000000, max=100000000),
+        "net_income": fake.random_int(min=100000, max=10000000),
+        "total_assets": fake.random_int(min=5000000, max=500000000),
+        "total_liabilities": fake.random_int(min=2000000, max=200000000),
+        "eps": round(fake.random.uniform(1.0, 50.0), 2),
+        "pe_ratio": round(fake.random.uniform(10.0, 40.0), 2),
+        "dividend_yield": round(fake.random.uniform(0.0, 5.0), 2),
     }
 
 
-class FakeDataGenerator:
-    """
-    Générateur de données de test centralisé utilisant Faker.
-
-    Cette classe fournit des méthodes pratiques pour générer
-    des données de test cohérentes et réalistes.
-    """
-
-    def __init__(self, faker_instance: Faker):
-        """Initialize session HTML generator."""
-        self.fake = faker_instance
-
-    def generate_session_html(self, client_profile: dict[str, Any], portfolio_holdings: list, recommendations: dict[str, list]) -> str:
-        """
-        Génère un HTML de session complet avec des données réalistes.
-
-        Args:
-            client_profile: Profil client généré par fake_client_profile
-            portfolio_holdings: Holdings générés par fake_portfolio_holdings
-            recommendations: Recommandations générées par fake_investment_recommendations
-
-        Returns:
-            String HTML complète pour les tests
-
-        """
-        plan_id = self.fake.uuid4()
-        created_at = self.fake.date_time_between(start_date="-1y", end_date="-1m")
-        last_updated = self.fake.date_time_between(start_date=created_at, end_date="now")
-
-        # Génération des lignes de tableau pour le portefeuille
-        portfolio_rows = ""
-        for holding in portfolio_holdings:
-            portfolio_rows += f"""
-                        <tr>
-                            <td>{holding["name"]}</td>
-                            <td>{holding["ticker"]}</td>
-                            <td><span class="badge {"keep" if holding["decision"] == "KEEP" else "sell"}">
-                        {holding["decision"]}</span></td>
-                            <td>{holding["composite_score"]}</td>
-                            <td>{holding["risk_level"]}</td>
-                        </tr>"""
-
-        # Génération des listes de recommandations
-        stock_items = "\n".join([f"<li>{stock}</li>" for stock in recommendations["stocks"]])
-        etf_items = "\n".join([f"<li>{etf}</li>" for etf in recommendations["etfs"]])
-        crypto_items = "\n".join([f"<li>{crypto}</li>" for crypto in recommendations["crypto"]])
-
-        return f"""
-        <!doctype html>
-        <html lang="fr">
-        <head>
-            <meta charset="utf-8" />
-            <meta name="plan-id" content="{plan_id}" />
-            <meta name="created-at" content="{created_at.isoformat()}" />
-            <meta name="last-updated" content="{last_updated.isoformat()}" />
-            <title>Plan Financier Familial — {client_profile["name"]} ({last_updated.strftime("%d %B %Y")})</title>
-        </head>
-        <body>
-            <div class="container">
-                <header>
-                    <div class="meta">Client: {client_profile["name"]}, {client_profile["age"]} ans • 
-                    Horizon: {client_profile["investment_horizon"]} • 
-                    Budget mensuel: {client_profile["monthly_budget"]}</div>
-                </header>
-
-                <section class="card">
-                    <h2>📦 Revue du portefeuille: Conserver ou Vendre</h2>
-                    <table>
-                        <thead>
-                            <tr><th>Nom</th><th>Ticker</th><th>Décision</th><th>Score composite</th><th>Risque</th></tr>
-                        </thead>
-                        <tbody>{portfolio_rows}
-                        </tbody>
-                    </table>
-                </section>
-
-                <section class="card">
-                    <h2>💎 Recommandations d'Investissement</h2>
-                    <h3>Sélection d'actions 📊</h3>
-                    <ul>{stock_items}</ul>
-                    <h3>Sélection d'ETFs 📈</h3>
-                    <ul>{etf_items}</ul>
-                    <h3>Allocation en cryptomonnaies ₿</h3>
-                    <ul>{crypto_items}</ul>
-                </section>
-            </div>
-        </body>
-        </html>
-        """
+@pytest.fixture
+def fake_stock_data(fake: Faker) -> dict[str, Any]:
+    """Fixture providing realistic stock data."""
+    return {
+        "ticker": fake.random_element(elements=("AAPL", "MSFT", "GOOGL", "AMZN", "TSLA")),
+        "company_name": fake.company(),
+        "sector": fake.random_element(elements=("Technology", "Finance", "Healthcare", "Energy")),
+        "market_cap": fake.random_int(min=1000000000, max=3000000000000),
+        "price": round(fake.random.uniform(10.0, 500.0), 2),
+        "volume": fake.random_int(min=1000000, max=100000000),
+        "change_percent": round(fake.random.uniform(-10.0, 10.0), 2),
+    }
 
 
 @pytest.fixture
-def fake_data_generator(faker_instance):
-    """Fixture qui fournit une instance du générateur de données de test."""
-    return FakeDataGenerator(faker_instance)
+def fake_data_generator(fake: Faker):
+    """Fixture providing a data generator function."""
+
+    def generate(data_type: str, count: int = 1):
+        if data_type == "stock":
+            return [fake_stock_data.__wrapped__(fake) for _ in range(count)]
+        elif data_type == "client":
+            return [fake_client_profile.__wrapped__(fake) for _ in range(count)]
+        else:
+            return []
+
+    return generate
 
 
 @pytest.fixture
-def mock_ticker(mocker):
-    """
-    Mock fixture for yfinance.Ticker.
-
-    Returns a mock that can be configured in individual tests.
-    """
-    return mocker.patch("yfinance.Ticker")
-
-
-@pytest.fixture
-def mock_openai(mocker):
-    """
-    Mock fixture for OpenAI client.
-
-    Returns a mock that can be configured in individual tests.
-    """
-    return mocker.patch("openai.OpenAI")
-
-
-@pytest.fixture
-def mock_get(mocker):
-    """
-    Mock fixture for HTTP GET requests.
-
-    Returns a mock that can be configured in individual tests.
-    """
-    return mocker.patch("requests.get")
+def sample_output() -> dict[str, Any]:
+    """Fixture providing sample crew output data."""
+    return {
+        "crew_name": "stock_crew",
+        "timestamp": datetime.now().isoformat(),
+        "status": "success",
+        "raw_output": "Comprehensive stock analysis completed successfully.",
+        "pydantic": {
+            "ticker": "AAPL",
+            "composite_score": 0.85,
+            "grade": "A-",
+            "recommendation": "BUY",
+        },
+        "tasks_output": [
+            {
+                "name": "analysis_task",
+                "description": "Analyze stock fundamentals",
+                "raw": "Apple Inc. shows strong fundamentals with consistent revenue growth.",
+            }
+        ],
+    }

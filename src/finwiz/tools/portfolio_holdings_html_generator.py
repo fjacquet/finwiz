@@ -93,9 +93,9 @@ class PortfolioHoldingsHTMLGenerator:
             risk_reductions = []
             for h in portfolio_review.holdings:
                 if h.alternatives:
-                    current_risk = h.risk.overall_risk_score
+                    current_risk = h.risk.score
                     for alt in h.alternatives:
-                        alt_risk = alt.risk_score if hasattr(alt, "risk_score") else current_risk
+                        alt_risk = alt.risk_score_standardized
                         risk_reductions.append(max(0, current_risk - alt_risk))
             if risk_reductions:
                 avg_risk_reduction = sum(risk_reductions) / len(risk_reductions)
@@ -268,57 +268,57 @@ class PortfolioHoldingsHTMLGenerator:
 
     def _build_html_document(self, title: str, portfolio_review: PortfolioReview) -> str:
         """Build complete HTML document."""
-        css = """
-        body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;padding:20px;margin:0}
-        .container{max-width:1400px;margin:0 auto;background:#fff;padding:30px;border-radius:10px;"""
-        """box-shadow:0 2px 10px rgba(0,0,0,0.1)}
-        h1{color:#2c3e50;text-align:center;font-size:2.5em;margin-bottom:10px}
-        h2{color:#34495e;margin-top:40px;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid #3498db}
-        h3{color:#2c3e50;margin-top:25px;margin-bottom:15px}
-        .header-info{text-align:center;color:#7f8c8d;margin-bottom:30px}
-        .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:40px}
-        .metric-card{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;"""
-        """padding:25px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.1);transition:transform 0.3s}
-        .metric-card:hover{transform:translateY(-5px)}
-        .metric-card h3{color:#fff;margin:0 0 10px 0;font-size:1.1em;opacity:0.9}
-        .metric-value{font-size:2.5em;font-weight:bold;margin:10px 0}
-        .metric-label{font-size:0.9em;opacity:0.8}
-        .holdings-table{width:100%;border-collapse:collapse;margin:20px 0;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.05)}
-        .holdings-table thead{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
-        .holdings-table th{padding:15px;text-align:left;font-weight:600}
-        .holdings-table td{padding:12px 15px;border-bottom:1px solid #ecf0f1}
-        .holdings-table tbody tr:hover{background-color:#f8f9fa}
-        .grade-badge{display:inline-block;padding:5px 12px;border-radius:20px;font-weight:bold;color:#fff}
-        .decision-keep{background-color:#d5f4e6;color:#27ae60;padding:5px 12px;border-radius:5px;font-weight:600}
-        .decision-sell{background-color:#fadbd8;color:#e74c3c;padding:5px 12px;border-radius:5px;font-weight:600}
-        .deep-analysis{background-color:#e8f5e9;color:#2e7d32;padding:5px 10px;border-radius:5px;font-weight:600;font-size:0.9em}
-        .quick-validation{background-color:#fff3e0;color:#ef6c00;padding:5px 10px;border-radius:5px;font-weight:600;font-size:0.9em}
-        .roadmap-section{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);"""
-        """color:#fff;padding:30px;border-radius:10px;margin:30px 0}
-        .roadmap-section h2{color:#fff;border-bottom-color:rgba(255,255,255,0.3)}
-        .roadmap-phase{background:rgba(255,255,255,0.1);padding:20px;border-radius:8px;margin:15px 0;border-left:4px solid #fff}
-        .roadmap-phase h3{color:#fff;margin-top:0}
-        .data-completeness{background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #3498db}
-        .data-completeness h3{margin-top:0;color:#2c3e50}
-        .data-completeness ul{margin:10px 0;padding-left:20px}
-        .data-completeness li{margin:5px 0;color:#34495e}
-        .improvement-summary{background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%);color:#fff;"""
-        """padding:25px;border-radius:10px;margin:30px 0}
-        .improvement-summary h2{color:#fff;border-bottom-color:rgba(255,255,255,0.3)}
-        .improvement-summary .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:20px}
-        .improvement-summary .metric-item{background:rgba(255,255,255,0.15);padding:15px;border-radius:8px}
-        .improvement-summary .metric-item h4{margin:0 0 10px 0;font-size:0.9em;opacity:0.9}
-        .improvement-summary .metric-item .value{font-size:2em;font-weight:bold}
-        .alternatives-expandable{background:#f8f9fa;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #9b59b6}
-        .alternatives-expandable h4{margin:0 0 10px 0;color:#2c3e50;cursor:pointer}
-        .alternatives-expandable h4:hover{color:#9b59b6}
-        .alternatives-content{margin-top:10px}
-        .alternative-item{background:#fff;padding:12px;margin:8px 0;border-radius:5px;border:1px solid #e0e0e0}
-        .alternative-item .improvement{color:#27ae60;font-weight:600;font-size:1.1em}
-        .footer{margin-top:50px;padding-top:20px;border-top:2px solid #ecf0f1;text-align:center;color:#95a5a6;font-size:0.9em}
-        @media print{body{background:#fff;padding:0}.container{box-shadow:none}}
-        @media (max-width: 768px){.dashboard{grid-template-columns:1fr}h1{font-size:1.8em}}
-        """
+        css = (
+            "body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;padding:20px;margin:0}"
+            ".container{max-width:1400px;margin:0 auto;background:#fff;padding:30px;border-radius:10px;"
+            "box-shadow:0 2px 10px rgba(0,0,0,0.1)}"
+            "h1{color:#2c3e50;text-align:center;font-size:2.5em;margin-bottom:10px}"
+            "h2{color:#34495e;margin-top:40px;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid #3498db}"
+            "h3{color:#2c3e50;margin-top:25px;margin-bottom:15px}"
+            ".header-info{text-align:center;color:#7f8c8d;margin-bottom:30px}"
+            ".dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:40px}"
+            ".metric-card{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;"
+            "padding:25px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.1);transition:transform 0.3s}"
+            ".metric-card:hover{transform:translateY(-5px)}"
+            ".metric-card h3{color:#fff;margin:0 0 10px 0;font-size:1.1em;opacity:0.9}"
+            ".metric-value{font-size:2.5em;font-weight:bold;margin:10px 0}"
+            ".metric-label{font-size:0.9em;opacity:0.8}"
+            ".holdings-table{width:100%;border-collapse:collapse;margin:20px 0;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.05)}"
+            ".holdings-table thead{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}"
+            ".holdings-table th{padding:15px;text-align:left;font-weight:600}"
+            ".holdings-table td{padding:12px 15px;border-bottom:1px solid #ecf0f1}"
+            ".holdings-table tbody tr:hover{background-color:#f8f9fa}"
+            ".grade-badge{display:inline-block;padding:5px 12px;border-radius:20px;font-weight:bold;color:#fff}"
+            ".decision-keep{background-color:#d5f4e6;color:#27ae60;padding:5px 12px;border-radius:5px;font-weight:600}"
+            ".decision-sell{background-color:#fadbd8;color:#e74c3c;padding:5px 12px;border-radius:5px;font-weight:600}"
+            ".deep-analysis{background-color:#e8f5e9;color:#2e7d32;padding:5px 10px;border-radius:5px;font-weight:600;font-size:0.9em}"
+            ".quick-validation{background-color:#fff3e0;color:#ef6c00;padding:5px 10px;border-radius:5px;font-weight:600;font-size:0.9em}"
+            ".roadmap-section{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);"
+            "color:#fff;padding:30px;border-radius:10px;margin:30px 0}"
+            ".roadmap-section h2{color:#fff;border-bottom-color:rgba(255,255,255,0.3)}"
+            ".roadmap-phase{background:rgba(255,255,255,0.1);padding:20px;border-radius:8px;margin:15px 0;border-left:4px solid #fff}"
+            ".roadmap-phase h3{color:#fff;margin-top:0}"
+            ".data-completeness{background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #3498db}"
+            ".data-completeness h3{margin-top:0;color:#2c3e50}"
+            ".data-completeness ul{margin:10px 0;padding-left:20px}"
+            ".data-completeness li{margin:5px 0;color:#34495e}"
+            ".improvement-summary{background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%);color:#fff;"
+            "padding:25px;border-radius:10px;margin:30px 0}"
+            ".improvement-summary h2{color:#fff;border-bottom-color:rgba(255,255,255,0.3)}"
+            ".improvement-summary .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:20px}"
+            ".improvement-summary .metric-item{background:rgba(255,255,255,0.15);padding:15px;border-radius:8px}"
+            ".improvement-summary .metric-item h4{margin:0 0 10px 0;font-size:0.9em;opacity:0.9}"
+            ".improvement-summary .metric-item .value{font-size:2em;font-weight:bold}"
+            ".alternatives-expandable{background:#f8f9fa;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #9b59b6}"
+            ".alternatives-expandable h4{margin:0 0 10px 0;color:#2c3e50;cursor:pointer}"
+            ".alternatives-expandable h4:hover{color:#9b59b6}"
+            ".alternatives-content{margin-top:10px}"
+            ".alternative-item{background:#fff;padding:12px;margin:8px 0;border-radius:5px;border:1px solid #e0e0e0}"
+            ".alternative-item .improvement{color:#27ae60;font-weight:600;font-size:1.1em}"
+            ".footer{margin-top:50px;padding-top:20px;border-top:2px solid #ecf0f1;text-align:center;color:#95a5a6;font-size:0.9em}"
+            "@media print{body{background:#fff;padding:0}.container{box-shadow:none}}"
+            "@media (max-width: 768px){.dashboard{grid-template-columns:1fr}h1{font-size:1.8em}}"
+        )
 
         return f"""<!DOCTYPE html>
 <html lang="fr">
@@ -566,8 +566,8 @@ class PortfolioHoldingsHTMLGenerator:
                 score_improvement = alt.composite_score - holding.composite_score
                 improvement_text = f"{holding.grade} → {alt.grade}, +{score_improvement:.2f} amélioration du score"
 
-                # Extract rationale (first 200 chars)
-                rationale_preview = alt.rationale[:200] + "..." if len(alt.rationale) > 200 else alt.rationale
+                # Format thesis bullets (Alternative uses thesis_bullets, not rationale)
+                thesis_text = " | ".join(alt.thesis_bullets[:3]) if alt.thesis_bullets else "Voir analyse détaillée"
 
                 alt_items.append(f"""
                 <div class="alternative-item">
@@ -580,7 +580,7 @@ class PortfolioHoldingsHTMLGenerator:
                     <div class="improvement">{improvement_text}</div>
                     <div style="margin:10px 0"><strong>Score:</strong> {alt.composite_score:.2f}</div>
                     <div style="margin:10px 0"><strong>Stratégie:</strong> {alt.transition_strategy}</div>
-                    <div style="margin:10px 0;color:#555"><strong>Justification:</strong> {rationale_preview}</div>
+                    <div style="margin:10px 0;color:#555"><strong>Points Clés:</strong> {thesis_text}</div>
                 </div>
 """)
 

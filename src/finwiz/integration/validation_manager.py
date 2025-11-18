@@ -7,6 +7,7 @@ Handles validation of crew outputs against expected schemas and stores validatio
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -40,7 +41,7 @@ class ValidationManager:
         self.logger = logger
         self.validation_status_path = self.metadata_dir / "validation_status.json"
 
-    def validate_crew_output(self, crew_name: str, output_data: dict) -> ValidationResult:
+    def validate_crew_output(self, crew_name: str, output_data: dict[str, Any]) -> ValidationResult:
         """
         Validate crew output against expected schema.
 

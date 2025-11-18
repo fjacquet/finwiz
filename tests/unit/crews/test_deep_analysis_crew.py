@@ -41,17 +41,26 @@ class TestDeepAnalysisCrew:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Verify all required tasks are present
+        # Verify all required tasks are present (Python scoring approach)
+        # NOTE: The crew was refactored to use Python scoring instead of AI tasks
         required_tasks = [
-            "deep_analysis_task",
-            "technical_analysis_task",
-            "risk_assessment_task",
-            "final_report_task",
+            "data_collection_task",  # Async data collection
+            "python_scoring_task",  # Sync Python scoring
         ]
+
+        # Optional AI summary task (only when DEEP_ANALYSIS_AI_SUMMARY=true)
+        optional_tasks = ["ai_summary_task"]
+
         for task_name in required_tasks:
             assert task_name in config, f"Missing task configuration: {task_name}"
             assert "description" in config[task_name]
             assert "expected_output" in config[task_name]
+
+        # Verify optional tasks exist in config
+        for task_name in optional_tasks:
+            if task_name in config:
+                assert "description" in config[task_name]
+                assert "expected_output" in config[task_name]
 
     def test_should_have_get_tools_for_asset_class_method(self):
         """Test that DeepAnalysisCrew has the get_tools_for_asset_class method."""
@@ -94,10 +103,12 @@ class TestDeepAnalysisCrew:
         """Test that DeepAnalysisCrew has all required task methods."""
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
-        assert hasattr(DeepAnalysisCrew, "deep_analysis_task")
-        assert hasattr(DeepAnalysisCrew, "technical_analysis_task")
-        assert hasattr(DeepAnalysisCrew, "risk_assessment_task")
-        assert hasattr(DeepAnalysisCrew, "final_report_task")
+        # Python scoring approach tasks
+        assert hasattr(DeepAnalysisCrew, "data_collection_task")
+        assert hasattr(DeepAnalysisCrew, "python_scoring_task")
+
+        # Optional AI summary task
+        # Note: ai_summary_task is optional and only used when DEEP_ANALYSIS_AI_SUMMARY=true
 
     def test_should_have_crew_method(self):
         """Test that DeepAnalysisCrew has the crew method."""

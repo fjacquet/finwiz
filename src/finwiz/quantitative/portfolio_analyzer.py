@@ -170,9 +170,8 @@ class PortfolioAnalyzer:
                     target_weight=target_weight,
                     deviation=deviation,
                     tolerance_band=tolerance,
-                    exceeds_tolerance=exceeds_tolerance,
+                    needs_rebalancing=exceeds_tolerance,
                     urgency_score=urgency_score,
-                    recommended_action=recommended_action,
                 )
 
                 rebalancing_needs.append(rebalancing_need)
@@ -180,7 +179,7 @@ class PortfolioAnalyzer:
             # Sort by urgency score (highest first)
             rebalancing_needs.sort(key=lambda x: x.urgency_score, reverse=True)
 
-            positions_needing_action = sum(1 for need in rebalancing_needs if need.exceeds_tolerance)
+            positions_needing_action = sum(1 for need in rebalancing_needs if need.needs_rebalancing)
             logger.debug(f"Identified {positions_needing_action} positions needing rebalancing")
 
             return rebalancing_needs
@@ -371,11 +370,13 @@ class PortfolioAnalyzer:
         # Convert to 0-10 scale (1.0 = maximum concentration, 0.0 = perfect diversification)
         # For a portfolio, HHI ranges from 1/n (equal weights) to 1.0 (single asset)
         n_positions = len(weightings)
-        min_hhi = 1.0 / n_positions if n_positions > 0 else 1.0
-        max_hhi = 1.0
 
-        if max_hhi <= min_hhi:
-            return 0.0
+        # Special case: single position = maximum concentration
+        if n_positions == 1:
+            return 10.0
+
+        min_hhi = 1.0 / n_positions
+        max_hhi = 1.0
 
         # Normalize to 0-1 range, then scale to 0-10
         normalized_risk = (hhi - min_hhi) / (max_hhi - min_hhi)

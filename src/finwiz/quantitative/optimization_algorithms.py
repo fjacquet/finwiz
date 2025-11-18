@@ -81,7 +81,7 @@ class MinimizeTradesStrategy(OptimizationStrategy):
 
         # Sort by urgency and deviation magnitude
         sorted_needs = sorted(
-            [need for need in rebalancing_needs if need.exceeds_tolerance],
+            [need for need in rebalancing_needs if need.needs_rebalancing],
             key=lambda x: (x.urgency_score, abs(x.deviation)),
             reverse=True,
         )
@@ -228,7 +228,7 @@ class MinimizeCostsStrategy(OptimizationStrategy):
         trade_candidates = []
 
         for need in rebalancing_needs:
-            if not need.exceeds_tolerance:
+            if not need.needs_rebalancing:
                 continue
 
             symbol = need.symbol
@@ -370,7 +370,7 @@ class RiskAwareStrategy(OptimizationStrategy):
         risk_adjusted_needs = []
 
         for need in rebalancing_needs:
-            if not need.exceeds_tolerance:
+            if not need.needs_rebalancing:
                 continue
 
             # Calculate risk contribution (simplified)

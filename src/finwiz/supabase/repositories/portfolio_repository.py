@@ -10,8 +10,7 @@ Provides async storage and retrieval of portfolio snapshots with:
 
 import asyncio
 import logging
-import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from finwiz.supabase.client import SupabaseClient
@@ -67,12 +66,9 @@ class PortfolioRepository:
         """
         # Use provided snapshot_date or current time
         if snapshot_date is None:
-            snapshot_date = datetime.now(timezone.utc)
+            snapshot_date = datetime.now(UTC)
 
-        logger.debug(
-            f"Scheduling async snapshot creation for {snapshot_date.isoformat()}, "
-            f"total_value: ${total_value:,.2f}, holdings: {len(holdings)}"
-        )
+        logger.debug(f"Scheduling async snapshot creation for {snapshot_date.isoformat()}, total_value: ${total_value:,.2f}, holdings: {len(holdings)}")
 
         def insert(client: Any) -> Any:
             """Insert function for execute_with_timeout."""
@@ -83,7 +79,7 @@ class PortfolioRepository:
                         "snapshot_date": snapshot_date.isoformat(),
                         "total_value": total_value,
                         "holdings": holdings,
-                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "created_at": datetime.now(UTC).isoformat(),
                     }
                 )
                 .execute()
@@ -123,33 +119,21 @@ class PortfolioRepository:
         # Use configured max_retries if not specified
         if max_retries is None:
             max_retries = self.client.max_retries
-            
+
         for attempt in range(max_retries):
             try:
-                logger.debug(
-                    f"Snapshot store attempt {attempt + 1}/{max_retries} for "
-                    f"{snapshot_date.isoformat()} (timeout: {self.client.write_timeout}s)"
-                )
+                logger.debug(f"Snapshot store attempt {attempt + 1}/{max_retries} for {snapshot_date.isoformat()} (timeout: {self.client.write_timeout}s)")
                 result = await self.client.execute_with_timeout(operation, timeout=self.client.write_timeout)
 
                 if result:
-                    logger.info(
-                        f"Portfolio snapshot stored successfully for "
-                        f"{snapshot_date.isoformat()}, value: ${total_value:,.2f}"
-                    )
+                    logger.info(f"Portfolio snapshot stored successfully for {snapshot_date.isoformat()}, value: ${total_value:,.2f}")
                     return
 
                 # If result is None, operation failed or timed out
-                logger.warning(
-                    f"Snapshot store attempt {attempt + 1}/{max_retries} returned None "
-                    f"for {snapshot_date.isoformat()}"
-                )
+                logger.warning(f"Snapshot store attempt {attempt + 1}/{max_retries} returned None for {snapshot_date.isoformat()}")
 
             except Exception as e:
-                logger.error(
-                    f"Snapshot store attempt {attempt + 1}/{max_retries} failed "
-                    f"for {snapshot_date.isoformat()}: {e}"
-                )
+                logger.error(f"Snapshot store attempt {attempt + 1}/{max_retries} failed for {snapshot_date.isoformat()}: {e}")
 
             # Exponential backoff before retry (except on last attempt)
             if attempt < max_retries - 1:
@@ -158,10 +142,7 @@ class PortfolioRepository:
                 await asyncio.sleep(backoff_seconds)
 
         # All retries exhausted
-        logger.error(
-            f"Failed to store portfolio snapshot for {snapshot_date.isoformat()} "
-            f"after {max_retries} attempts"
-        )
+        logger.error(f"Failed to store portfolio snapshot for {snapshot_date.isoformat()} after {max_retries} attempts")
 
     async def get_snapshots(
         self,
@@ -184,13 +165,7 @@ class PortfolioRepository:
 
         def query(client: Any) -> Any:
             """Query function for execute_with_timeout."""
-            return (
-                client.table(self.table)
-                .select("*")
-                .order("snapshot_date", desc=True)
-                .limit(limit)
-                .execute()
-            )
+            return client.table(self.table).select("*").order("snapshot_date", desc=True).limit(limit).execute()
 
         try:
             result = await self.client.execute_with_timeout(query)
@@ -232,16 +207,11 @@ class PortfolioRepository:
                 - grade_changes: Dict of tickers with grade evolution
 
         """
-        logger.debug(
-            f"Comparing snapshots: {snapshot1.snapshot_date.isoformat()} vs "
-            f"{snapshot2.snapshot_date.isoformat()}"
-        )
+        logger.debug(f"Comparing snapshots: {snapshot1.snapshot_date.isoformat()} vs {snapshot2.snapshot_date.isoformat()}")
 
         # Calculate value changes
         value_change = snapshot2.total_value - snapshot1.total_value
-        value_change_pct = (
-            (value_change / snapshot1.total_value * 100) if snapshot1.total_value > 0 else 0.0
-        )
+        value_change_pct = (value_change / snapshot1.total_value * 100) if snapshot1.total_value > 0 else 0.0
 
         # Get holdings from both snapshots
         holdings1 = snapshot1.holdings
@@ -339,9 +309,7 @@ class PortfolioRepository:
 
         def query(client: Any) -> Any:
             """Query function for execute_with_timeout."""
-            return (
-                client.table(self.table).select("*").eq("id", snapshot_id).limit(1).execute()
-            )
+            return client.table(self.table).select("*").eq("id", snapshot_id).limit(1).execute()
 
         try:
             result = await self.client.execute_with_timeout(query)

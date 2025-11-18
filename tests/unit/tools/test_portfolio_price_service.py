@@ -33,6 +33,14 @@ class TestPortfolioPriceService:
         return mock_cache
 
     @pytest.fixture
+    def mock_portfolio_cache(self, mocker):
+        """Mock portfolio cache service."""
+        mock_cache = mocker.MagicMock()
+        mock_cache.get_price_data = mocker.AsyncMock(return_value=None)
+        mock_cache.set_price_data = mocker.AsyncMock()
+        return mock_cache
+
+    @pytest.fixture
     def mock_yahoo_tool(self, mocker):
         """Mock Yahoo Finance ticker info tool."""
         mock_tool = mocker.MagicMock()
@@ -47,11 +55,14 @@ class TestPortfolioPriceService:
         return mock_tool
 
     @pytest.fixture
-    def price_service(self, mock_cache_manager, mocker):
+    def price_service(self, mock_cache_manager, mock_portfolio_cache, mocker):
         """Create PortfolioPriceService instance with mocked dependencies."""
         # Mock the tool imports
         mocker.patch("finwiz.tools.portfolio_price_service.YahooFinanceTickerInfoTool")
         mocker.patch("finwiz.tools.portfolio_price_service.EnhancedCryptoAnalysisTool")
+
+        # Mock the portfolio cache service
+        mocker.patch("finwiz.tools.portfolio_price_service.get_portfolio_cache_service", return_value=mock_portfolio_cache)
 
         config = PriceServiceConfig(default_cache_ttl=300, max_concurrent_requests=5, request_timeout=10.0, retry_attempts=2, retry_delay=0.1)
 
@@ -85,7 +96,7 @@ class TestPortfolioPriceService:
         assert price_service._is_crypto_symbol("VTI") is False
 
     @pytest.mark.asyncio
-    async def test_should_return_cached_price_when_cache_hit_and_fresh(self, price_service, mock_cache_manager):
+    async def test_should_return_cached_price_when_cache_hit_and_fresh(self, price_service, mock_portfolio_cache):
         """Test successful cache hit with fresh data."""
         # Arrange
         cached_price_data = {
@@ -95,7 +106,7 @@ class TestPortfolioPriceService:
             "source": "yahoo_finance",
             "currency": "USD",
         }
-        mock_cache_manager.get.return_value = cached_price_data
+        mock_portfolio_cache.get_price_data.return_value = cached_price_data
 
         # Act
         result = await price_service.get_current_price("AAPL")
@@ -105,10 +116,10 @@ class TestPortfolioPriceService:
         assert result.symbol == "AAPL"
         assert result.price == 150.0
         assert result.source == "yahoo_finance"
-        mock_cache_manager.get.assert_called_once_with("price:AAPL")
+        mock_portfolio_cache.get_price_data.assert_called_once_with("AAPL")
 
     @pytest.mark.asyncio
-    async def test_should_fetch_fresh_data_when_cached_data_stale(self, price_service, mock_cache_manager, mocker):
+    async def test_should_fetch_fresh_data_when_cached_data_stale(self, price_service, mock_portfolio_cache, mocker):
         """Test fetching fresh data when cached data is stale."""
         # Arrange
         stale_timestamp = (datetime.now() - timedelta(hours=2)).isoformat()
@@ -119,7 +130,7 @@ class TestPortfolioPriceService:
             "source": "yahoo_finance",
             "currency": "USD",
         }
-        mock_cache_manager.get.return_value = cached_price_data
+        mock_portfolio_cache.get_price_data.return_value = cached_price_data
 
         # Mock Yahoo Finance tool to return fresh data
         price_service.yahoo_tool._run.return_value = {"current_price": 155.0, "currency": "USD"}
@@ -130,13 +141,13 @@ class TestPortfolioPriceService:
         # Assert
         assert result is not None
         assert result.price == 155.0  # Fresh price, not cached
-        mock_cache_manager.set.assert_called_once()
+        mock_portfolio_cache.set_price_data.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_get_stock_price_from_yahoo_finance_when_cache_miss(self, price_service, mock_cache_manager):
+    async def test_should_get_stock_price_from_yahoo_finance_when_cache_miss(self, price_service, mock_portfolio_cache):
         """Test getting stock price from Yahoo Finance on cache miss."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
         price_service.yahoo_tool._run.return_value = {"current_price": 150.0, "currency": "USD", "symbol": "AAPL"}
 
         # Act
@@ -150,16 +161,19 @@ class TestPortfolioPriceService:
         assert result.currency == "USD"
 
         # Verify caching
-        mock_cache_manager.set.assert_called_once()
-        cache_call_args = mock_cache_manager.set.call_args
-        assert cache_call_args[0][0] == "price:AAPL"
-        assert cache_call_args[1]["ttl"] == 300
+        mock_portfolio_cache.set_price_data.assert_called_once()
+        cache_call_args = mock_portfolio_cache.set_price_data.call_args
+        assert cache_call_args[0][0] == "AAPL"
+        # Verify that the cached data contains expected fields
+        cached_data = cache_call_args[0][1]
+        assert cached_data["symbol"] == "AAPL"
+        assert cached_data["price"] == 150.0
 
     @pytest.mark.asyncio
-    async def test_should_use_crypto_tool_for_crypto_symbols(self, price_service, mock_cache_manager, mocker):
+    async def test_should_use_crypto_tool_for_crypto_symbols(self, price_service, mock_portfolio_cache, mocker):
         """Test using crypto tool for cryptocurrency symbols."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
 
         # Mock Yahoo Finance to fail for crypto
         price_service.yahoo_tool._run.return_value = {"error": "Not found"}
@@ -184,10 +198,10 @@ class TestPortfolioPriceService:
         price_service.crypto_tool._run.assert_called_once_with("BTC", False, False)
 
     @pytest.mark.asyncio
-    async def test_should_handle_yahoo_finance_tool_error_with_fallback(self, price_service, mock_cache_manager, mocker):
+    async def test_should_handle_yahoo_finance_tool_error_with_fallback(self, price_service, mock_portfolio_cache, mocker):
         """Test fallback mechanism when Yahoo Finance tool fails."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
         price_service.yahoo_tool._run.return_value = {"error": "API error"}
 
         # Mock yfinance direct call
@@ -204,10 +218,10 @@ class TestPortfolioPriceService:
         assert result.source == "yfinance_direct"
 
     @pytest.mark.asyncio
-    async def test_should_use_history_fallback_when_direct_yfinance_fails(self, price_service, mock_cache_manager, mocker):
+    async def test_should_use_history_fallback_when_direct_yfinance_fails(self, price_service, mock_portfolio_cache, mocker):
         """Test using history data as fallback when direct yfinance fails."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
         price_service.yahoo_tool._run.return_value = {"error": "API error"}
 
         # Mock yfinance ticker with failing info but working history
@@ -231,10 +245,10 @@ class TestPortfolioPriceService:
         assert result.source == "yfinance_history"
 
     @pytest.mark.asyncio
-    async def test_should_return_none_when_all_sources_fail(self, price_service, mock_cache_manager, mocker):
+    async def test_should_return_none_when_all_sources_fail(self, price_service, mock_portfolio_cache, mocker):
         """Test returning None when all price sources fail."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
         price_service.yahoo_tool._run.return_value = {"error": "API error"}
 
         # Mock yfinance to fail
@@ -250,10 +264,10 @@ class TestPortfolioPriceService:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_should_get_multiple_prices_concurrently(self, price_service, mock_cache_manager):
+    async def test_should_get_multiple_prices_concurrently(self, price_service, mock_portfolio_cache):
         """Test getting multiple prices concurrently."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
 
         def mock_yahoo_response(symbol):
             prices = {"AAPL": 150.0, "MSFT": 300.0, "GOOGL": 2500.0}
@@ -271,13 +285,13 @@ class TestPortfolioPriceService:
         assert result["GOOGL"].price == 2500.0
 
         # Verify all symbols were cached
-        assert mock_cache_manager.set.call_count == 3
+        assert mock_portfolio_cache.set_price_data.call_count == 3
 
     @pytest.mark.asyncio
-    async def test_should_handle_partial_failures_in_batch_requests(self, price_service, mock_cache_manager):
+    async def test_should_handle_partial_failures_in_batch_requests(self, price_service, mock_portfolio_cache):
         """Test handling partial failures in batch price requests."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
 
         def mock_yahoo_response(symbol):
             if symbol == "INVALID":
@@ -296,10 +310,10 @@ class TestPortfolioPriceService:
         assert "INVALID" not in result
 
     @pytest.mark.asyncio
-    async def test_should_raise_exception_when_get_price_with_fallback_fails(self, price_service, mock_cache_manager, mocker):
+    async def test_should_raise_exception_when_get_price_with_fallback_fails(self, price_service, mock_portfolio_cache, mocker):
         """Test exception raising when get_price_with_fallback fails."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
         price_service.yahoo_tool._run.return_value = {"error": "API error"}
 
         # Mock all fallbacks to fail
@@ -316,10 +330,10 @@ class TestPortfolioPriceService:
         assert "All price sources failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_should_validate_symbols_correctly(self, price_service, mock_cache_manager):
+    async def test_should_validate_symbols_correctly(self, price_service, mock_portfolio_cache):
         """Test symbol validation functionality."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
 
         def mock_yahoo_response(symbol):
             valid_symbols = {"AAPL", "MSFT"}
@@ -366,10 +380,10 @@ class TestPortfolioPriceService:
         mock_cache_manager.clear.assert_called_once_with(tags={"price"})
 
     @pytest.mark.asyncio
-    async def test_should_warm_cache_successfully(self, price_service, mock_cache_manager):
+    async def test_should_warm_cache_successfully(self, price_service, mock_portfolio_cache):
         """Test cache warming functionality."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
         price_service.yahoo_tool._run.return_value = {"current_price": 150.0, "currency": "USD"}
 
         # Act
@@ -378,7 +392,7 @@ class TestPortfolioPriceService:
         # Assert
         assert result["AAPL"] is True
         assert result["MSFT"] is True
-        assert mock_cache_manager.set.call_count == 2
+        assert mock_portfolio_cache.set_price_data.call_count == 2
 
     @pytest.mark.asyncio
     async def test_should_get_cache_stats(self, price_service, mock_cache_manager):
@@ -397,10 +411,10 @@ class TestPortfolioPriceService:
         assert result["misses"] == 20
 
     @pytest.mark.asyncio
-    async def test_should_handle_timeout_errors_with_retry(self, price_service, mock_cache_manager, mocker):
+    async def test_should_handle_timeout_errors_with_retry(self, price_service, mock_portfolio_cache, mocker):
         """Test handling timeout errors with retry logic."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
 
         # Mock asyncio.wait_for to raise TimeoutError on first call, succeed on second
         call_count = 0
@@ -423,10 +437,10 @@ class TestPortfolioPriceService:
         assert call_count == 2  # Verify retry occurred
 
     @pytest.mark.asyncio
-    async def test_should_respect_concurrent_request_limit(self, price_service, mock_cache_manager, mocker):
+    async def test_should_respect_concurrent_request_limit(self, price_service, mock_portfolio_cache, mocker):
         """Test that concurrent request limit is respected."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
 
         # Mock yfinance to avoid real API calls
         mock_ticker = mocker.MagicMock()
@@ -472,10 +486,10 @@ class TestPortfolioPriceService:
             PriceData(symbol="AAPL", price=-150.0, timestamp=datetime.now(), source="yahoo_finance", currency="USD")
 
     @pytest.mark.asyncio
-    async def test_should_handle_crypto_symbol_variations(self, price_service, mock_cache_manager, mocker):
+    async def test_should_handle_crypto_symbol_variations(self, price_service, mock_portfolio_cache, mocker):
         """Test handling various crypto symbol formats."""
         # Arrange
-        mock_cache_manager.get.return_value = None
+        mock_portfolio_cache.get_price_data.return_value = None
 
         # Mock Yahoo Finance to fail for crypto
         price_service.yahoo_tool._run.return_value = {"error": "Not found"}

@@ -99,8 +99,8 @@ class TestPortfolioMonitor:
         assert portfolio_monitor is not None
         assert portfolio_monitor._monitoring_tasks == {}
         assert portfolio_monitor._monitoring_rules == {}
-        assert portfolio_monitor._alert_history == {}
-        assert portfolio_monitor._last_check_times == {}
+        assert portfolio_monitor.monitoring_engine is not None
+        assert portfolio_monitor.alert_manager is not None
 
     @pytest.mark.asyncio
     async def test_should_start_monitoring_when_valid_config_provided(self, portfolio_monitor, sample_portfolio_config):
@@ -149,7 +149,7 @@ class TestPortfolioMonitor:
 
         # Assert
         assert result == sample_rebalancing_needs
-        assert portfolio_id in portfolio_monitor._last_check_times
+        assert portfolio_monitor.monitoring_engine.get_last_check_time(portfolio_id) is not None
 
     @pytest.mark.asyncio
     async def test_should_generate_health_dashboard_when_requested(self, mocker, portfolio_monitor, sample_portfolio_config, sample_rebalancing_needs):
@@ -175,7 +175,7 @@ class TestPortfolioMonitor:
         portfolio_config = PortfolioConfiguration(holdings=[Holding(symbol="AAPL", shares=100)], target_weights={"AAPL": 1.0})
 
         # Act
-        health_score = portfolio_monitor._calculate_health_score(rebalancing_needs, portfolio_config)
+        health_score = portfolio_monitor.monitoring_engine._calculate_health_score(rebalancing_needs, portfolio_config)
 
         # Assert
         assert health_score == 10.0
@@ -183,7 +183,7 @@ class TestPortfolioMonitor:
     def test_should_calculate_correct_health_score_when_minor_deviations(self, portfolio_monitor, sample_rebalancing_needs, sample_portfolio_config):
         """Test health score calculation with minor deviations."""
         # Act
-        health_score = portfolio_monitor._calculate_health_score(sample_rebalancing_needs, sample_portfolio_config)
+        health_score = portfolio_monitor.monitoring_engine._calculate_health_score(sample_rebalancing_needs, sample_portfolio_config)
 
         # Assert
         assert 5.0 <= health_score <= 9.0  # Should be in reasonable range
@@ -195,7 +195,7 @@ class TestPortfolioMonitor:
         max_deviation = 0.02
 
         # Act
-        urgency = portfolio_monitor._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
+        urgency = portfolio_monitor.monitoring_engine._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
 
         # Assert
         assert urgency == UrgencyLevel.LOW
@@ -207,7 +207,7 @@ class TestPortfolioMonitor:
         max_deviation = 0.25
 
         # Act
-        urgency = portfolio_monitor._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
+        urgency = portfolio_monitor.monitoring_engine._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
 
         # Assert
         assert urgency == UrgencyLevel.CRITICAL
@@ -219,7 +219,7 @@ class TestPortfolioMonitor:
         max_deviation = 0.18
 
         # Act
-        urgency = portfolio_monitor._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
+        urgency = portfolio_monitor.monitoring_engine._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
 
         # Assert
         assert urgency == UrgencyLevel.HIGH
@@ -231,7 +231,7 @@ class TestPortfolioMonitor:
         max_deviation = 0.08
 
         # Act
-        urgency = portfolio_monitor._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
+        urgency = portfolio_monitor.monitoring_engine._determine_rebalancing_urgency(positions_needing_attention, max_deviation)
 
         # Assert
         assert urgency == UrgencyLevel.MEDIUM
@@ -239,7 +239,7 @@ class TestPortfolioMonitor:
     def test_should_get_correct_health_status_description_when_excellent_score(self, portfolio_monitor):
         """Test health status description for excellent score."""
         # Act
-        description = portfolio_monitor._get_health_status_description(9.5)
+        description = portfolio_monitor.monitoring_engine._get_health_status_description(9.5)
 
         # Assert
         assert "Excellent" in description
@@ -247,7 +247,7 @@ class TestPortfolioMonitor:
     def test_should_get_correct_health_status_description_when_poor_score(self, portfolio_monitor):
         """Test health status description for poor score."""
         # Act
-        description = portfolio_monitor._get_health_status_description(2.5)
+        description = portfolio_monitor.monitoring_engine._get_health_status_description(2.5)
 
         # Assert
         assert "Critical" in description
@@ -266,7 +266,7 @@ class TestPortfolioMonitor:
         recommended_actions = ["Review portfolio", "Consider rebalancing"]
 
         # Act
-        alert = await portfolio_monitor._generate_alert(
+        alert = await portfolio_monitor.alert_manager.generate_alert(
             portfolio_id=portfolio_id,
             alert_type=alert_type,
             severity=severity,
@@ -295,7 +295,7 @@ class TestPortfolioMonitor:
         """Test alert acknowledgment."""
         # Arrange
         portfolio_id = "test_portfolio"
-        alert = await portfolio_monitor._generate_alert(
+        alert = await portfolio_monitor.alert_manager.generate_alert(
             portfolio_id=portfolio_id,
             alert_type=AlertType.DEVIATION_ALERT,
             severity=AlertSeverity.WARNING,
@@ -331,7 +331,7 @@ class TestPortfolioMonitor:
         # Arrange
         portfolio_id = "test_portfolio"
         resolution_notes = "Issue resolved by rebalancing"
-        alert = await portfolio_monitor._generate_alert(
+        alert = await portfolio_monitor.alert_manager.generate_alert(
             portfolio_id=portfolio_id,
             alert_type=AlertType.DEVIATION_ALERT,
             severity=AlertSeverity.WARNING,
@@ -357,7 +357,7 @@ class TestPortfolioMonitor:
         portfolio_id = "test_portfolio"
 
         # Generate resolved alert
-        resolved_alert = await portfolio_monitor._generate_alert(
+        resolved_alert = await portfolio_monitor.alert_manager.generate_alert(
             portfolio_id=portfolio_id,
             alert_type=AlertType.DEVIATION_ALERT,
             severity=AlertSeverity.WARNING,
@@ -370,7 +370,7 @@ class TestPortfolioMonitor:
         resolved_alert.resolved = True
 
         # Generate active alert
-        active_alert = await portfolio_monitor._generate_alert(
+        active_alert = await portfolio_monitor.alert_manager.generate_alert(
             portfolio_id=portfolio_id,
             alert_type=AlertType.MULTIPLE_POSITIONS_ALERT,
             severity=AlertSeverity.ERROR,

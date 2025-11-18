@@ -9,12 +9,10 @@ Provides functionality to:
 - Prevent duplicate migrations (idempotency)
 """
 
-import asyncio
 import hashlib
 import json
 import logging
-import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -63,11 +61,7 @@ class MigrationResult:
             "successful": self.successful,
             "skipped": self.skipped,
             "failed": self.failed,
-            "success_rate": (
-                f"{(self.successful / self.total_files * 100):.1f}%"
-                if self.total_files > 0
-                else "0%"
-            ),
+            "success_rate": (f"{(self.successful / self.total_files * 100):.1f}%" if self.total_files > 0 else "0%"),
         }
 
 
@@ -170,13 +164,7 @@ class MigrationService:
 
         def query(client: Any) -> Any:
             """Query migration history."""
-            return (
-                client.table(self.migration_table)
-                .select("id")
-                .eq("file_hash", file_hash)
-                .limit(1)
-                .execute()
-            )
+            return client.table(self.migration_table).select("id").eq("file_hash", file_hash).limit(1).execute()
 
         try:
             result = await self.client.execute_with_timeout(query, timeout=2.0)
@@ -210,7 +198,7 @@ class MigrationService:
                         "file_path": str(file_path),
                         "file_hash": file_hash,
                         "analysis_id": analysis_id,
-                        "migrated_at": datetime.now(timezone.utc).isoformat(),
+                        "migrated_at": datetime.now(UTC).isoformat(),
                     }
                 )
                 .execute()
@@ -340,7 +328,7 @@ class MigrationService:
             # Get file modification time as timestamp (preserve original date)
             file_mtime = datetime.fromtimestamp(
                 file_path.stat().st_mtime,
-                tz=timezone.utc,
+                tz=UTC,
             )
 
             # Override created_at with file timestamp if not present
@@ -434,10 +422,6 @@ class MigrationService:
 
         # Log summary
         summary = result.summary()
-        logger.info(
-            f"Migration complete: {summary['successful']} successful, "
-            f"{summary['skipped']} skipped, {summary['failed']} failed "
-            f"({summary['success_rate']} success rate)"
-        )
+        logger.info(f"Migration complete: {summary['successful']} successful, {summary['skipped']} skipped, {summary['failed']} failed ({summary['success_rate']} success rate)")
 
         return result
