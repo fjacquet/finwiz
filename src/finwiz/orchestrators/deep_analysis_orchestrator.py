@@ -46,9 +46,9 @@ class DeepAnalysisOrchestrator:
         self.logger.info("=" * 80)
 
         # Check if deep analysis is enabled
-        enabled = os.getenv("DEEP_ANALYSIS_ENABLED", "false").lower() == "true"
+        enabled = os.getenv("DEEP_PORTFOLIO_ANALYSIS", "false").lower() == "true"
         if not enabled:
-            self.logger.info("Deep analysis disabled via DEEP_ANALYSIS_ENABLED")
+            self.logger.info("Deep analysis disabled via DEEP_PORTFOLIO_ANALYSIS")
             return {}
 
         # Get portfolio review from state
@@ -246,6 +246,15 @@ class DeepAnalysisOrchestrator:
                 "report_language": self.state.report_language,
             }
         )
+
+        # Store crew output to disk for integration system
+        if self.integration_manager:
+            try:
+                crew_name = f"deep_analysis_{asset_class}"
+                self.integration_manager.store_crew_output(crew_name, result)
+                self.logger.debug(f"Stored crew output for {ticker} ({asset_class}) to {crew_name}")
+            except Exception as e:
+                self.logger.warning(f"Failed to store crew output for {ticker}: {e}")
 
         deep_result = self.create_deep_analysis_result_from_crew_output(result, ticker, asset_class, "DeepAnalysisCrew", False)
         cache_mgr.cache_analysis(ticker, asset_class, deep_result)
