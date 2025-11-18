@@ -123,17 +123,72 @@ search/results/
 old/
 
 # =============================================================================
-# MkDocs Documentation
+# Documentation Build Artifacts
 # =============================================================================
+# Jekyll
+docs/_site/
+docs/.jekyll-cache/
+docs/.jekyll-metadata
+
+# Legacy MkDocs
 site/
 .cache/
 docs/.cache/
 
+# Documentation archives and temporary files
+docs/archive/
+docs/change_requests/
+analysis/
+reports/
+
+# Prevent docs/ root clutter - only allow essential files
+docs/*
+!docs/index.md
+!docs/README.md
+!docs/USER_GUIDE.md
+!docs/DEVELOPER_GUIDE.md
+!docs/QUICK_REFERENCE.md
+!docs/GITHUB_PAGES_SETUP.md
+!docs/DOCUMENTATION_ORGANIZATION.md
+!docs/REQUIREMENTS.md
+!docs/DOCUMENTATION_ENHANCEMENT_SUMMARY.md
+!docs/tutorials/
+!docs/how-to/
+!docs/reference/
+!docs/explanations/
+!docs/_config.yml
+
 # =============================================================================
-# Generated Reports
+# Generated Reports & Progress Documents
 # =============================================================================
 *.html
 *.txt
+
+# Progress and status documents (keep only essential docs)
+*STATUS*.md
+*COMPLETE*.md
+*SUMMARY*.md
+*REPORT*.md
+*PLAN*.md
+*IMPLEMENTATION*.md
+*SPEEDUP*.md
+*OPTIMIZATION*.md
+*PHASE*.md
+*FIXES*.md
+*ANALYSIS*.md
+*VALIDATION*.md
+*MIGRATION*.md
+
+# Exception: Keep essential documentation
+!README.md
+!CLAUDE.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+!LICENSE.md
+!DOCUMENTATION_MIGRATION_SUMMARY.md
+!docs/**/*.md
+!.kiro/**/*.md
+!.taskmaster/**/*.md
 
 # =============================================================================
 # Jupyter Notebooks

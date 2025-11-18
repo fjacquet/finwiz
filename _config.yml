@@ -1,0 +1,99 @@
+# FinWiz Documentation - GitHub Pages Configuration
+
+# Site Settings
+title: FinWiz Documentation
+description: AI-powered financial analysis platform with CrewAI
+baseurl: "" # Leave empty for root deployment
+url: "https://fjacquet.github.io/finwiz" # Update with your actual GitHub Pages URL
+
+# Repository
+repository: fjacquet/finwiz
+
+# Theme
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Markdown
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+# Exclude from processing
+exclude:
+  - .venv/
+  - .kiro/
+  - .taskmaster/
+  - node_modules/
+  - vendor/
+  - Gemfile
+  - Gemfile.lock
+  - README_INTERNAL.md
+  - mkdocs.yml
+  - site/
+  - analysis/
+  - output/
+  - input/
+  - logs/
+  - archive/
+
+# Collections
+collections:
+  tutorials:
+    output: true
+    permalink: /tutorials/:name/
+  how-to:
+    output: true
+    permalink: /how-to/:name/
+  reference:
+    output: true
+    permalink: /reference/:name/
+  explanations:
+    output: true
+    permalink: /explanations/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "tutorials"
+    values:
+      layout: "default"
+      category: "tutorial"
+  - scope:
+      path: ""
+      type: "how-to"
+    values:
+      layout: "default"
+      category: "how-to"
+  - scope:
+      path: ""
+      type: "reference"
+    values:
+      layout: "default"
+      category: "reference"
+  - scope:
+      path: ""
+      type: "explanations"
+    values:
+      layout: "default"
+      category: "explanation"
+
+# Navigation
+header_pages:
+  - index.md
+  - tutorials/getting_started.md
+  - how-to/setup_environment.md
+  - reference/API_REFERENCE.md
+  - explanations/ARCHITECTURE.md
