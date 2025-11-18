@@ -123,17 +123,55 @@ search/results/
 old/
 
 # =============================================================================
-# MkDocs Documentation
+# Documentation Build Artifacts
 # =============================================================================
+# Jekyll
+docs/_site/
+docs/.jekyll-cache/
+docs/.jekyll-metadata
+
+# Legacy MkDocs
 site/
 .cache/
 docs/.cache/
 
+# Documentation archives and temporary files
+docs/archive/
+docs/change_requests/
+analysis/
+reports/
+
 # =============================================================================
-# Generated Reports
+# Generated Reports & Progress Documents
 # =============================================================================
 *.html
 *.txt
+
+# Progress and status documents (keep only essential docs)
+*STATUS*.md
+*COMPLETE*.md
+*SUMMARY*.md
+*REPORT*.md
+*PLAN*.md
+*IMPLEMENTATION*.md
+*SPEEDUP*.md
+*OPTIMIZATION*.md
+*PHASE*.md
+*FIXES*.md
+*ANALYSIS*.md
+*VALIDATION*.md
+*MIGRATION*.md
+
+# Exception: Keep essential documentation
+!README.md
+!CLAUDE.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+!LICENSE.md
+!DOCUMENTATION_MIGRATION_SUMMARY.md
+!docs/**/*.md
+!.kiro/**/*.md
+!.taskmaster/**/*.md
 
 # =============================================================================
 # Jupyter Notebooks

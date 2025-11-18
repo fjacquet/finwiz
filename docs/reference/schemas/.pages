@@ -1,7 +1,0 @@
-nav:
-  - index.md
-  - Analysis Schemas: analysis_schemas.md
-  - Portfolio Schemas: portfolio_schemas.md
-  - Discovery Schemas: discovery_schemas.md
-  - Validation Schemas: validation_schemas.md
-  - Schema Relationships: relationships.md
