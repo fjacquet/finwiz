@@ -196,7 +196,40 @@ Before committing code:
 | Timeouts | `httpx.AsyncClient(timeout=30.0)` |
 | Error messages | Generic to users, detailed to logs |
 
+## Dependency Management
+
+- Keep dependencies updated
+- Use dependency scanning tools
+- Review third-party packages before adding
+- Use lock files (uv.lock, poetry.lock)
+- Remove unused dependencies regularly
+
+## Data Protection
+
+- Encrypt sensitive data at rest and in transit
+- Use HTTPS for all web communications
+- Implement proper session management
+- Use secure headers (HSTS, CSP, etc.)
+- Follow OWASP guidelines
+
+## Infrastructure Security
+
+- Use least privilege principle for IAM
+- Enable logging and monitoring
+- Use network segmentation
+- Implement proper backup strategies
+- Regular security audits and penetration testing
+
+## Development Practices
+
+- Use static code analysis tools (ruff, mypy)
+- Implement security testing in CI/CD
+- Code reviews for security issues
+- Security training for developers
+- Incident response procedures
+
 ---
 
-**Version**: 2.1  
-**Last Updated**: 2025-10-18
+**Version**: 2.2  
+**Last Updated**: 2025-11-17  
+**Consolidated from**: security-best-practices.md

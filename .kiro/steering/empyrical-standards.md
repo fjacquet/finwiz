@@ -233,6 +233,7 @@ def analyze_backtest_results(returns: np.ndarray) -> dict:
 **Formula**: `(Return - Risk-Free Rate) / Volatility`
 
 **Interpretation**:
+>
 - > 1.0: Good risk-adjusted returns
 - > 2.0: Very good
 - > 3.0: Excellent
@@ -246,6 +247,7 @@ sharpe = sharpe_ratio(returns, risk_free=0.02, period='daily')
 **Definition**: Largest peak-to-trough decline
 
 **Interpretation**:
+
 - < 10%: Low risk
 - 10-20%: Moderate risk
 - > 20%: High risk
@@ -260,6 +262,7 @@ max_dd = max_drawdown(returns)  # Returns negative value
 **Beta**: Sensitivity to benchmark movements
 
 **Interpretation**:
+
 - Beta = 1.0: Moves with market
 - Beta > 1.0: More volatile than market
 - Beta < 1.0: Less volatile than market

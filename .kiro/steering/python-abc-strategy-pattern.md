@@ -1,6 +1,7 @@
 ---
 title: Python ABC and Strategy Pattern Standards
-inclusion: always
+inclusion: fileMatch
+fileMatchPattern: '*.py*'
 ---
 
 # Python ABC and Strategy Pattern Standards
@@ -12,6 +13,7 @@ This document defines standards for using Python's `abc` module (Abstract Base C
 ## When to Use Strategy Pattern
 
 Use the Strategy Pattern when you have:
+
 - **Multiple implementations** of the same algorithm for different contexts
 - **Conditional logic** that switches between implementations (`if asset_class == "stock"`)
 - **Duplicate code** across similar implementations
@@ -185,6 +187,7 @@ def calculate_score(asset_class: str, data: dict[str, Any]) -> tuple[float, dict
 ```
 
 **Problems:**
+
 - ❌ 300+ lines in one function
 - ❌ High cognitive complexity
 - ❌ Difficult to test individual strategies
@@ -218,6 +221,7 @@ class CryptoAnalyzer(AssetAnalyzer):
 ```
 
 **Benefits:**
+
 - ✅ Each strategy is 50-150 lines (focused)
 - ✅ Low cognitive complexity
 - ✅ Easy to test each strategy independently
@@ -399,6 +403,7 @@ class StockAnalyzer(AssetAnalyzer):
 ## Example: FinWiz Asset Analyzers
 
 See the complete implementation in:
+
 - `src/finwiz/scoring/asset_analyzers/base.py` - Abstract base class
 - `src/finwiz/scoring/asset_analyzers/stock_analyzer.py` - Stock strategy
 - `src/finwiz/scoring/asset_analyzers/etf_analyzer.py` - ETF strategy
