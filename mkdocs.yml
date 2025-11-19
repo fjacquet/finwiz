@@ -1,0 +1,307 @@
+site_name: FinWiz Documentation
+site_description: AI-powered financial analysis platform with CrewAI
+site_author: FinWiz Team
+site_url: https://fjacquet.github.io/finwiz
+
+repo_name: fjacquet/finwiz
+repo_url: https://github.com/fjacquet/finwiz
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2024 FinWiz
+
+# Theme configuration
+theme:
+  name: material
+  language: en
+
+  # Color scheme
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  # Features
+  features:
+    - navigation.instant # Instant loading
+    - navigation.instant.prefetch # Prefetch pages
+    - navigation.instant.progress # Progress indicator
+    - navigation.tracking # Anchor tracking
+    - navigation.tabs # Top-level navigation tabs
+    - navigation.tabs.sticky # Sticky tabs
+    - navigation.sections # Navigation sections
+    - navigation.expand # Expand navigation by default
+    - navigation.path # Show path in navigation
+    - navigation.indexes # Section index pages
+    - navigation.top # Back to top button
+    - navigation.footer # Footer navigation
+    - toc.follow # TOC follows scrolling
+    - toc.integrate # Integrate TOC with navigation
+    - search.suggest # Search suggestions
+    - search.highlight # Highlight search results
+    - search.share # Share search results
+    - header.autohide # Auto-hide header
+    - content.code.copy # Copy code button
+    - content.code.annotate # Code annotations
+    - content.tabs.link # Link content tabs
+    - announce.dismiss # Dismissible announcements
+
+  # Fonts
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  # Icon
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/chart-line
+    annotation: material/arrow-right-circle
+
+  # Favicon
+  favicon: assets/favicon.ico
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+      pipeline:
+        - stemmer
+        - stopWordFilter
+        - trimmer
+
+  - awesome-pages:
+      strict: false
+      collapse_single_pages: false
+
+  - mermaid2:
+      version: 10.6.1
+      arguments:
+        theme: |
+          ^(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
+
+# Markdown extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      permalink_title: Anchor link to this section
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+      use_pygments: true
+      auto_title: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/abbreviations.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
+  - pymdownx.tabbed:
+      alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Navigation
+nav:
+  - Home: index.md
+
+  - Getting Started:
+      - User Guide: USER_GUIDE.md
+      - Developer Guide: DEVELOPER_GUIDE.md
+      - Quick Reference: QUICK_REFERENCE.md
+      - Requirements: REQUIREMENTS.md
+
+  - Tutorials:
+      - tutorials/index.md
+      - Deep Analysis: tutorials/DEEP_ANALYSIS_CREW.md
+      - API Reference: tutorials/API_REFERENCE.md
+      - Developer Guide: tutorials/DEVELOPER_GUIDE.md
+
+  - How-To Guides:
+      - how-to/index.md
+      - Performance Optimization: how-to/PERFORMANCE_OPTIMIZATION_GUIDE.md
+      - Memory Management: how-to/MEMORY_MANAGEMENT.md
+      - Performance Monitoring: how-to/PERFORMANCE_MONITORING.md
+      - Deployment Quick Reference: how-to/DEPLOYMENT_QUICK_REFERENCE.md
+      - Deep Analysis Troubleshooting: how-to/deep_analysis_troubleshooting.md
+
+  - Reference:
+      - reference/index.md
+      - Agent Handbook: reference/agent_handbook.md
+      - API Errors: reference/api_errors.md
+      - API Requirements: reference/api_requirements.md
+      - Changelog: reference/changelog.md
+      - CLI Options: reference/cli_options.md
+      - Compatibility: reference/compatibility.md
+      - Configuration: reference/configuration.md
+      - Data Quality: reference/data_quality.md
+      - Environment Variables: reference/environment_variables.md
+      - Migration Guide: reference/migration.md
+      - Performance: reference/performance.md
+      - Rate Limits: reference/rate_limits.md
+      - Resource Usage: reference/resource_usage.md
+      - SEC API Reference: reference/sec_api_reference.md
+      - Validation Errors: reference/validation_errors.md
+      - Quantitative Analysis: reference/quantitative_analysis.md
+      - Enhanced Data Extraction: reference/ENHANCED_DATA_EXTRACTION.md
+      - Crew Data Integration: reference/CREW_DATA_INTEGRATION_INDEX.md
+      - Report Crew Examples: reference/REPORT_CREW_ENHANCED_EXAMPLES.md
+      - API:
+          - Flows: reference/api/flows.md
+          - Configuration: reference/api/configuration.md
+          - CLI Commands: reference/api/cli_commands.md
+
+  - Explanations:
+      - explanations/index.md
+      - AI Architecture: explanations/ai_architecture.md
+      - AI vs Rules: explanations/ai_vs_rules.md
+      - Caching & Performance: explanations/caching_performance.md
+      - CrewAI Integration: explanations/crewai_integration.md
+      - Data Flow: explanations/data_flow.md
+      - Data Pipeline: explanations/data_pipeline.md
+      - Data Quality Assurance: explanations/data_quality_assurance.md
+      - Deep Analysis: explanations/deep_analysis.md
+      - Deployment Considerations: explanations/deployment_considerations.md
+      - Development History: explanations/development_history.md
+      - Error Handling: explanations/error_handling.md
+      - External API Integration: explanations/external_api_integration.md
+      - Flow Architecture: explanations/flow_architecture.md
+      - Future Roadmap: explanations/future_roadmap.md
+      - Investment Methodology: explanations/investment_methodology.md
+      - Jinja2 Templates: explanations/JINJA2_TEMPLATES.md
+      - Lessons Learned: explanations/lessons_learned.md
+      - Multi-Asset Analysis: explanations/multi_asset_analysis.md
+      - Open Source Landscape: explanations/open_source_landscape.md
+      - Performance Configuration: explanations/PERFORMANCE_CONFIGURATION.md
+      - Plugin Architecture: explanations/plugin_architecture.md
+      - Quantitative Analysis: explanations/quantitative_analysis.md
+      - Recommendation Engine: explanations/recommendation_engine.md
+      - Report Aggregation: explanations/report_aggregation_architecture.md
+      - Report Generation: explanations/report_generation.md
+      - Risk Framework: explanations/risk_framework.md
+      - Risk Management: explanations/risk_management.md
+      - Schema Evolution: explanations/schema_evolution.md
+      - Testing Strategy: explanations/testing_strategy.md
+      - Validation Framework: explanations/validation_framework.md
+      - vs Traditional Analysis: explanations/vs_traditional_analysis.md
+      - A+ Monitoring System: explanations/a_plus_monitoring_system.md
+      - A+ Scoring Tool: explanations/a_plus_scoring_tool.md
+      - Portfolio Monitoring: explanations/portfolio_monitoring_system.md
+      - Performance Attribution: explanations/performance_attribution.md
+      - Python Pipeline:
+          - Overview: explanations/python_pipeline/overview.md
+          - Components: explanations/python_pipeline/components.md
+          - Data Flow: explanations/python_pipeline/data-flow.md
+          - Best Practices: explanations/python_pipeline/best-practices.md
+
+  - Investment Discovery:
+      - investment_discovery/README.md
+      - User Guide: investment_discovery/investment_discovery_user_guide.md
+      - API Reference: investment_discovery/investment_discovery_api_reference.md
+      - Developer Guide: investment_discovery/investment_discovery_developer_guide.md
+      - Portfolio Holdings Analysis: investment_discovery/portfolio_holdings_analysis_user_guide.md
+      - FAQ: investment_discovery/faq.md
+
+  - Portfolio Rebalancing:
+      - portfolio_rebalancing/README.md
+      - User Guide: portfolio_rebalancing/user_guide.md
+      - API Reference: portfolio_rebalancing/api_reference.md
+      - Developer Guide: portfolio_rebalancing/developer_guide.md
+
+# Extra CSS/JS
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Extra
+extra:
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/kiro/finwiz
+      name: FinWiz on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/finwiz/
+      name: FinWiz on PyPI
+
+  version:
+    provider: mike
+    default: latest
+
+  consent:
+    title: Cookie consent
+    description: >-
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+
+# Validation
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    absolute_links: warn
+    unrecognized_links: warn

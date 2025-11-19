@@ -310,3 +310,7 @@ fixup/performance/test_portfolio_rebalancing_performance.py
 fixup/performance/test_rate_limiting_performance.py
 fixup/performance/core_analysis/README.md
 fixup/performance/core_analysis/test_core_analysis_performance.py
+
+# MkDocs
+site/
+.cache/

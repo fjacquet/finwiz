@@ -19,7 +19,9 @@ help:
 	@echo "  make format      - Format code with ruff"
 	@echo ""
 	@echo "Documentation:"
-	@echo "  make docs-serve  - Preview documentation locally"
+	@echo "  make docs-serve  - Preview documentation with MkDocs (recommended)"
+	@echo "  make docs-build  - Build MkDocs documentation"
+	@echo "  make docs-deploy - Deploy documentation to GitHub Pages"
 	@echo "  make docs-lint   - Lint markdown files for style issues"
 	@echo "  make docs-validate - Validate documentation structure"
 	@echo "  make docs-clean  - Clean documentation artifacts"
@@ -149,16 +151,23 @@ cleanup:
 mypy:
 	uv run mypy src/finwiz
 
-# Documentation (GitHub Pages with Jekyll)
+# Documentation (MkDocs with Material theme)
 docs-serve:
-	@echo "🚀 Starting local documentation preview..."
-	@if command -v jekyll >/dev/null 2>&1; then \
-		cd docs && jekyll serve --baseurl '' --livereload; \
-	else \
-		echo "⚠️  Jekyll not installed. Using simple HTTP server..."; \
-		echo "📝 View documentation at: http://localhost:8000"; \
-		cd docs && python3 -m http.server 8000; \
-	fi
+	@echo "🚀 Starting MkDocs local preview..."
+	@echo "📝 View documentation at: http://127.0.0.1:8000"
+	uv run mkdocs serve
+
+docs-build:
+	@echo "🔨 Building MkDocs documentation..."
+	uv run mkdocs build
+	@echo "✅ Documentation built to site/ directory"
+
+docs-deploy:
+	@echo "🚀 Deploying documentation to GitHub Pages..."
+	@echo "⚠️  This will push to gh-pages branch"
+	@read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
+	uv run mkdocs gh-deploy --clean --message "docs: update documentation [skip ci]"
+	@echo "✅ Documentation deployed to GitHub Pages"
 
 docs-lint:
 	@echo "📝 Linting documentation..."
@@ -184,7 +193,7 @@ docs-validate: docs-lint
 
 docs-clean:
 	@echo "🧹 Cleaning documentation artifacts..."
-	@rm -rf docs/_site/ docs/.jekyll-cache/ docs/.jekyll-metadata
+	@rm -rf site/ docs/_site/ docs/.jekyll-cache/ docs/.jekyll-metadata
 	@echo "✅ Documentation artifacts cleaned"
 
 # HTML Report Generation
