@@ -292,6 +292,72 @@ class DeepAnalysisOrchestrator:
         cache_mgr.cache_analysis(ticker, asset_class, deep_result)
         return deep_result
 
+    def _flatten_collected_data(self, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Flatten nested tool output structures for Python scorer.
+
+        The scorer expects flat dict with fields like: current_price, roe, volatility, beta, etc.
+        But agent outputs come nested in structures like:
+        - quantitative_analysis.prices.current_price
+        - quantitative_analysis.risk_metrics.volatility
+        - sec_analysis.fundamentals.roe
+
+        Args:
+            data: Nested dict from agent tool outputs
+
+        Returns:
+            Flattened dict with all metrics at top level
+        """
+        flattened = {}
+
+        # Keep top-level metadata
+        for key in ["ticker", "asset_class", "collection_timestamp"]:
+            if key in data:
+                flattened[key] = data[key]
+
+        # Extract from nested structures
+        nested_sections = ["quantitative_analysis", "sec_analysis", "sentiment_analysis", "ticker_validation"]
+
+        for section in nested_sections:
+            if section in data and isinstance(data[section], dict):
+                self._flatten_recursive(data[section], flattened, prefix="")
+
+        return flattened
+
+    def _flatten_recursive(self, obj: Any, target: dict[str, Any], prefix: str = "") -> None:
+        """
+        Recursively flatten nested dict structures.
+
+        Extracts numeric/string values and brings them to top level.
+        Skips deeply nested metadata structures.
+
+        Args:
+            obj: Object to flatten (dict, list, or primitive)
+            target: Target dict to add flattened fields to
+            prefix: Current key prefix (for nested keys)
+        """
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                # Skip metadata/structural keys
+                if key in ["meta", "metadata", "raw_data", "debug_info"]:
+                    continue
+
+                # For primitives (numbers, strings, bools), add to target
+                if isinstance(value, (int, float, str, bool, type(None))):
+                    # Use simple key name (no prefix) for cleaner top-level access
+                    target[key] = value
+                # For nested dicts, recurse
+                elif isinstance(value, dict):
+                    self._flatten_recursive(value, target, prefix="")
+                # For lists with single dict, extract that dict
+                elif isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict):
+                    self._flatten_recursive(value[0], target, prefix="")
+
+        elif isinstance(obj, list):
+            # For numeric lists, take the first value or average
+            if obj and all(isinstance(x, (int, float)) for x in obj):
+                target[prefix] = obj[0] if len(obj) == 1 else sum(obj) / len(obj)
+
     def _extract_collected_data(self, crew_output: Any) -> dict[str, Any] | None:
         """
         Extract RAW tool outputs from crew for Python scoring.
@@ -382,7 +448,20 @@ class DeepAnalysisOrchestrator:
                         parsed = json.loads(cleaned)
                         if isinstance(parsed, dict):
                             self.logger.info(f"✅ Parsed JSON with keys: {list(parsed.keys())[:10]}")
-                            return parsed
+
+                            # CRITICAL: Unwrap 'collected_data' if present (some agents nest it)
+                            if "collected_data" in parsed and len(parsed) == 1:
+                                self.logger.info("🔍 Unwrapping 'collected_data' wrapper")
+                                parsed = parsed["collected_data"]
+                                self.logger.info(f"🔍 After unwrap, keys: {list(parsed.keys())[:10]}")
+
+                            # CRITICAL: Flatten nested structures for Python scorer
+                            # Scorer expects flat dict with fields like: current_price, roe, volatility, etc.
+                            # But data comes nested in: quantitative_analysis.prices.current_price
+                            flattened = self._flatten_collected_data(parsed)
+                            self.logger.info(f"🔍 Flattened to {len(flattened)} top-level fields")
+
+                            return flattened
                     except json.JSONDecodeError as e:
                         self.logger.warning(f"⚠️ JSON parse failed: {e}")
                         self.logger.info(f"Cleaned text preview: {cleaned[:300]}")
