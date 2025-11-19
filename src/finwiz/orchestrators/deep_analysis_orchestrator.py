@@ -322,6 +322,15 @@ class DeepAnalysisOrchestrator:
             if section in data and isinstance(data[section], dict):
                 self._flatten_recursive(data[section], flattened, prefix="")
 
+        # CRITICAL FIX: Sometimes agent nests sections inside ticker_validation
+        # Check if ticker_validation contains the other sections
+        if "ticker_validation" in data and isinstance(data["ticker_validation"], dict):
+            ticker_val = data["ticker_validation"]
+            for section in ["quantitative_analysis", "sec_analysis", "sentiment_analysis"]:
+                if section in ticker_val and isinstance(ticker_val[section], dict):
+                    self.logger.info(f"🔍 Found {section} nested inside ticker_validation, extracting...")
+                    self._flatten_recursive(ticker_val[section], flattened, prefix="")
+
         return flattened
 
     def _flatten_recursive(self, obj: Any, target: dict[str, Any], prefix: str = "") -> None:
@@ -438,10 +447,20 @@ class DeepAnalysisOrchestrator:
                         self.logger.info("🔍 Stripped markdown code fence")
 
                     # Extract JSON from Python assignment: context["x"] = {...}
-                    match = re.search(r'=\s*(\{.+\})\s*$', cleaned, re.DOTALL)
+                    # Try multiple patterns to handle different agent output formats
+                    match = re.search(r'=\s*(\{.+)', cleaned, re.DOTALL)  # More permissive: don't require closing }
                     if match:
                         cleaned = match.group(1).strip()
                         self.logger.info(f"🔍 Extracted JSON from assignment (length={len(cleaned)})")
+
+                        # CRITICAL: Try to fix malformed JSON by ensuring proper closing
+                        # Count braces and add missing closing braces
+                        open_braces = cleaned.count('{')
+                        close_braces = cleaned.count('}')
+                        if open_braces > close_braces:
+                            missing = open_braces - close_braces
+                            cleaned = cleaned + ('}' * missing)
+                            self.logger.info(f"🔍 Fixed malformed JSON: added {missing} closing braces")
 
                     # Try parsing as JSON
                     try:
