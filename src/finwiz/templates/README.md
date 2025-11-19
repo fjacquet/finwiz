@@ -253,11 +253,13 @@ jinja2.exceptions.TemplateNotFound: my_template.html
 - Check file name spelling and extension
 
 **Missing Data Errors**:
-```
+
+```text
 'dict object' has no attribute 'field_name'
 ```
-- Add null checks: `{{ data.field_name if data.field_name else 'N/A' }}`
-- Use default filter: `{{ data.field_name | default('N/A') }}`
+
+- Add null checks: {% raw %}`{{ data.field_name if data.field_name else 'N/A' }}`{% endraw %}
+- Use default filter: {% raw %}`{{ data.field_name | default('N/A') }}`{% endraw %}
 
 **CSS Not Loading**:
 - Ensure base template is properly extended
