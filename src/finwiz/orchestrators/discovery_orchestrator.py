@@ -323,7 +323,9 @@ class DiscoveryOrchestrator:
                 output_file = discovery_dir / "consolidated_discovery.json"
             else:
                 # Asset-specific A+ results - use standardized naming
-                output_file = discovery_dir / f"a_plus_{asset_class}s.json"
+                # Note: crypto stays singular, stock/etf become plural
+                plural_suffix = "s" if asset_class in ["stock", "etf"] else ""
+                output_file = discovery_dir / f"a_plus_{asset_class}{plural_suffix}.json"
 
             # Also save timestamped backup in asset-specific directory
             asset_dir = Path("output") / asset_class
