@@ -203,6 +203,7 @@ class ReportConsolidator:
 
 If you need custom styling, extend the base template:
 
+
 ```html
 <!-- src/finwiz/templates/crew_reports/base.html -->
 <!DOCTYPE html>
@@ -259,10 +260,12 @@ If you need custom styling, extend the base template:
 </body>
 </html>
 ```
+{% endraw %}
 
 ### Step 2: Create Crew-Specific Template
 
 Create a template for your crew in `src/finwiz/templates/crew_reports/`:
+
 
 ```html
 <!-- src/finwiz/templates/crew_reports/my_new_crew_report.html -->
@@ -326,6 +329,7 @@ Create a template for your crew in `src/finwiz/templates/crew_reports/`:
 </footer>
 {% endblock %}
 ```
+{% endraw %}
 
 **Template Best Practices:**
 - Use French for all user-facing text
@@ -717,6 +721,7 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
 
 ### Pattern 4: Jinja2 Template with French Localization
 
+
 ```html
 {% extends "crew_reports/base.html" %}
 
@@ -743,6 +748,7 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
 </section>
 {% endblock %}
 ```
+{% endraw %}
 
 ## Summary
 
