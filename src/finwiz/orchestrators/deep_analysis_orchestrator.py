@@ -245,7 +245,41 @@ class DeepAnalysisOrchestrator:
             }
         )
 
-        # Store crew output to disk for integration system
+        # PYTHON SCORING: Call DeepAnalysisScorer with collected data
+        # This replaces AI-generated fake scores with real Python calculations
+        try:
+            from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
+
+            # Extract collected data from crew output
+            collected_data = self._extract_collected_data(result)
+
+            if collected_data:
+                # Calculate scores using Python scorer (not AI!)
+                scorer = DeepAnalysisScorer()
+                python_result = scorer.calculate_composite_score(ticker, asset_class, collected_data)
+
+                self.logger.info(f"✅ Python scoring: {ticker} = {python_result.grade} ({python_result.composite_score:.3f})")
+
+                # Cache and return Python-calculated result
+                cache_mgr.cache_analysis(ticker, asset_class, python_result)
+
+                # Store to disk for integration
+                if self.integration_manager:
+                    try:
+                        crew_name = f"deep_analysis_{asset_class}"
+                        # Store Python result instead of AI result
+                        self.integration_manager.store_crew_output(crew_name, python_result)
+                        self.logger.debug(f"Stored Python scoring output for {ticker}")
+                    except Exception as e:
+                        self.logger.warning(f"Failed to store Python scoring output: {e}")
+
+                return python_result
+            else:
+                self.logger.warning(f"No collected data found in crew output for {ticker}, falling back to AI scores")
+        except Exception as e:
+            self.logger.error(f"Python scoring failed for {ticker}: {e}, falling back to AI scores")
+
+        # Fallback: Store crew output to disk for integration system (AI scores)
         if self.integration_manager:
             try:
                 crew_name = f"deep_analysis_{asset_class}"
@@ -257,6 +291,65 @@ class DeepAnalysisOrchestrator:
         deep_result = self.create_deep_analysis_result_from_crew_output(result, ticker, asset_class, "DeepAnalysisCrew", False)
         cache_mgr.cache_analysis(ticker, asset_class, deep_result)
         return deep_result
+
+    def _extract_collected_data(self, crew_output: Any) -> dict[str, Any] | None:
+        """
+        Extract collected data from data_collection_task output.
+
+        The data_collection_task should store data in its output that can be
+        used by the Python scorer. This method extracts that collected data.
+
+        Args:
+            crew_output: CrewAI crew execution result
+
+        Returns:
+            Dictionary of collected data for Python scoring, or None if not found
+
+        """
+        try:
+            # Try to extract from tasks_output (data_collection_task is first task)
+            if hasattr(crew_output, "tasks_output") and crew_output.tasks_output:
+                # Get first task output (data_collection_task)
+                data_task_output = crew_output.tasks_output[0]
+
+                # Try to parse raw output as collected data
+                if hasattr(data_task_output, "raw"):
+                    raw = data_task_output.raw
+                    # Check if raw contains collected data markers
+                    if isinstance(raw, str) and "collected_data" in raw.lower():
+                        # Try to extract dict from Python code in raw output
+                        import re
+                        import ast
+
+                        # Look for dict assignment pattern
+                        match = re.search(r'context\s*=\s*(\{.*?\})', raw, re.DOTALL)
+                        if match:
+                            try:
+                                context = ast.literal_eval(match.group(1))
+                                if "collected_data" in context:
+                                    return context["collected_data"]
+                            except:
+                                pass
+
+                # Try pydantic output
+                if hasattr(data_task_output, "pydantic") and data_task_output.pydantic:
+                    pydantic_data = data_task_output.pydantic
+                    if hasattr(pydantic_data, "collected_data"):
+                        return pydantic_data.collected_data
+
+            # Try to extract from pydantic at top level
+            if hasattr(crew_output, "pydantic") and crew_output.pydantic:
+                pydantic_data = crew_output.pydantic
+                # Check detailed_analysis or raw_metrics
+                if hasattr(pydantic_data, "detailed_analysis"):
+                    detailed = pydantic_data.detailed_analysis
+                    if isinstance(detailed, dict) and "raw_metrics" in detailed:
+                        return detailed["raw_metrics"]
+
+        except Exception as e:
+            self.logger.debug(f"Failed to extract collected data: {e}")
+
+        return None
 
     def create_deep_analysis_result_from_crew_output(
         self, crew_output: Any, ticker: str, asset_class: str, crew_name: str = "DeepAnalysisCrew", cached: bool = False
