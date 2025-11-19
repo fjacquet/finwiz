@@ -82,12 +82,6 @@ class DeepAnalysisScoringTool(BaseTool):
 
     args_schema: type[BaseModel] = DeepAnalysisScoringInput
 
-    def __init__(self):
-        """Initialize the scoring tool with DeepAnalysisScorer instance."""
-        super().__init__()
-        self.scorer = DeepAnalysisScorer()
-        self.logger = logger
-
     def _run(
         self,
         ticker: str,
@@ -116,7 +110,7 @@ class DeepAnalysisScoringTool(BaseTool):
             JSON string with scoring results
 
         """
-        self.logger.info(f"🔢 Executing Python scorer for {ticker} ({asset_class})")
+        logger.info(f"🔢 Executing Python scorer for {ticker} ({asset_class})")
 
         try:
             # Build data dict from parameters
@@ -153,8 +147,9 @@ class DeepAnalysisScoringTool(BaseTool):
             # Remove None values
             data = {k: v for k, v in data.items() if v is not None}
 
-            # Execute Python scorer
-            result = self.scorer.calculate_composite_score(
+            # Instantiate scorer and execute
+            scorer = DeepAnalysisScorer()
+            result = scorer.calculate_composite_score(
                 ticker=ticker,
                 asset_class=asset_class,
                 data=data
@@ -175,12 +170,12 @@ class DeepAnalysisScoringTool(BaseTool):
                 "confidence_level": result.confidence_level,
             }
 
-            self.logger.info(f"✅ Scored {ticker}: {result.grade} ({result.composite_score:.3f}) - {result.recommendation}")
+            logger.info(f"✅ Scored {ticker}: {result.grade} ({result.composite_score:.3f}) - {result.recommendation}")
 
             return json.dumps(result_dict, indent=2)
 
         except Exception as e:
-            self.logger.error(f"❌ Scoring failed for {ticker}: {e}")
+            logger.error(f"❌ Scoring failed for {ticker}: {e}")
             # Return error result
             import json
             return json.dumps({
