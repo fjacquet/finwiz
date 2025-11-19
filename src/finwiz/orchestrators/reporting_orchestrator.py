@@ -303,10 +303,17 @@ class ReportingOrchestrator:
                         for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob(f"*_output_*.json")):
                             try:
                                 data = self._read_json_file(str(json_file))
-                                ticker = data.get("ticker")
+
+                                # Handle nested pydantic structure from CrewAI output
+                                if "pydantic" in data and isinstance(data["pydantic"], dict):
+                                    analysis_data = data["pydantic"]
+                                else:
+                                    analysis_data = data
+
+                                ticker = analysis_data.get("ticker")
                                 if ticker and ticker not in raw_deep_analysis:  # Avoid duplicates
-                                    raw_deep_analysis[ticker] = data
-                                    self.logger.debug(f"Loaded {ticker} from {json_file}: Score={data.get('composite_score', 0):.3f}, Grade={data.get('grade', 'N/A')}")
+                                    raw_deep_analysis[ticker] = analysis_data
+                                    self.logger.debug(f"Loaded {ticker} from {json_file}: Score={analysis_data.get('composite_score', 0):.3f}, Grade={analysis_data.get('grade', 'N/A')}")
                             except Exception as e:
                                 self.logger.warning(f"Failed to load {json_file}: {e}")
 
