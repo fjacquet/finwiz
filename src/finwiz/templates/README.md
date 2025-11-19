@@ -162,12 +162,15 @@ The templates use CSS custom properties (variables) for theming:
 ### Adding New Templates
 
 1. Create new template file extending `base_template.html`:
+
 ```html
+{% raw %}
 {% extends "base_template.html" %}
 
 {% block content %}
 <!-- Your template content -->
 {% endblock %}
+{% endraw %}
 ```
 
 2. Add render method to `TemplateRenderer`:
@@ -270,10 +273,13 @@ renderer.env.globals['debug'] = True
 ```
 
 Add debug output in templates:
+
 ```html
+{% raw %}
 {% if debug %}
 <pre>{{ data | tojson(indent=2) }}</pre>
 {% endif %}
+{% endraw %}
 ```
 
 ## File Structure
