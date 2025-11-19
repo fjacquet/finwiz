@@ -165,93 +165,59 @@ nav:
 
   - Tutorials:
       - tutorials/index.md
+      - Getting Started: tutorials/getting_started.md
+      - First Analysis: tutorials/first_analysis.md
+      - Portfolio Analysis: tutorials/portfolio_analysis.md
       - Deep Analysis: tutorials/DEEP_ANALYSIS_CREW.md
-      - API Reference: tutorials/API_REFERENCE.md
-      - Developer Guide: tutorials/DEVELOPER_GUIDE.md
 
   - How-To Guides:
       - how-to/index.md
+      - Setup Environment: how-to/setup_environment.md
+      - Configure API Keys: how-to/configure_api_keys.md
       - Performance Optimization: how-to/PERFORMANCE_OPTIMIZATION_GUIDE.md
       - Memory Management: how-to/MEMORY_MANAGEMENT.md
       - Performance Monitoring: how-to/PERFORMANCE_MONITORING.md
-      - Deployment Quick Reference: how-to/DEPLOYMENT_QUICK_REFERENCE.md
+      - Deployment Guide: how-to/DEPLOYMENT_QUICK_REFERENCE.md
       - Deep Analysis Troubleshooting: how-to/deep_analysis_troubleshooting.md
+      - Batch Processing: how-to/BATCH_PROCESSING.md
 
   - Reference:
       - reference/index.md
+      - API Reference: reference/API_REFERENCE.md
       - Agent Handbook: reference/agent_handbook.md
-      - API Errors: reference/api_errors.md
-      - API Requirements: reference/api_requirements.md
-      - Changelog: reference/changelog.md
       - CLI Options: reference/cli_options.md
-      - Compatibility: reference/compatibility.md
-      - Configuration: reference/configuration.md
-      - Data Quality: reference/data_quality.md
       - Environment Variables: reference/environment_variables.md
-      - Migration Guide: reference/migration.md
+      - Configuration: reference/configuration.md
+      - Data Sources: reference/data_sources.md
+      - Errors: reference/errors.md
       - Performance: reference/performance.md
       - Rate Limits: reference/rate_limits.md
-      - Resource Usage: reference/resource_usage.md
-      - SEC API Reference: reference/sec_api_reference.md
-      - Validation Errors: reference/validation_errors.md
-      - Quantitative Analysis: reference/quantitative_analysis.md
-      - Enhanced Data Extraction: reference/ENHANCED_DATA_EXTRACTION.md
-      - Crew Data Integration: reference/CREW_DATA_INTEGRATION_INDEX.md
-      - Report Crew Examples: reference/REPORT_CREW_ENHANCED_EXAMPLES.md
       - API:
+          - API Overview: reference/api/index.md
           - Flows: reference/api/flows.md
           - Configuration: reference/api/configuration.md
           - CLI Commands: reference/api/cli_commands.md
+      - Schemas:
+          - Schema Overview: reference/schemas/index.md
 
   - Explanations:
       - explanations/index.md
       - AI Architecture: explanations/ai_architecture.md
+      - Architecture Overview: explanations/ARCHITECTURE.md
       - AI vs Rules: explanations/ai_vs_rules.md
-      - Caching & Performance: explanations/caching_performance.md
       - CrewAI Integration: explanations/crewai_integration.md
       - Data Flow: explanations/data_flow.md
       - Data Pipeline: explanations/data_pipeline.md
-      - Data Quality Assurance: explanations/data_quality_assurance.md
       - Deep Analysis: explanations/deep_analysis.md
-      - Deployment Considerations: explanations/deployment_considerations.md
-      - Development History: explanations/development_history.md
-      - Error Handling: explanations/error_handling.md
-      - External API Integration: explanations/external_api_integration.md
       - Flow Architecture: explanations/flow_architecture.md
-      - Future Roadmap: explanations/future_roadmap.md
-      - Investment Methodology: explanations/investment_methodology.md
-      - Jinja2 Templates: explanations/JINJA2_TEMPLATES.md
-      - Lessons Learned: explanations/lessons_learned.md
-      - Multi-Asset Analysis: explanations/multi_asset_analysis.md
-      - Open Source Landscape: explanations/open_source_landscape.md
-      - Performance Configuration: explanations/PERFORMANCE_CONFIGURATION.md
-      - Plugin Architecture: explanations/plugin_architecture.md
-      - Quantitative Analysis: explanations/quantitative_analysis.md
-      - Recommendation Engine: explanations/recommendation_engine.md
-      - Report Aggregation: explanations/report_aggregation_architecture.md
-      - Report Generation: explanations/report_generation.md
-      - Risk Framework: explanations/risk_framework.md
-      - Risk Management: explanations/risk_management.md
-      - Schema Evolution: explanations/schema_evolution.md
+      - Design Principles: explanations/design_principles.md
       - Testing Strategy: explanations/testing_strategy.md
-      - Validation Framework: explanations/validation_framework.md
-      - vs Traditional Analysis: explanations/vs_traditional_analysis.md
-      - A+ Monitoring System: explanations/a_plus_monitoring_system.md
-      - A+ Scoring Tool: explanations/a_plus_scoring_tool.md
-      - Portfolio Monitoring: explanations/portfolio_monitoring_system.md
-      - Performance Attribution: explanations/performance_attribution.md
-      - Python Pipeline:
-          - Overview: explanations/python_pipeline/overview.md
-          - Components: explanations/python_pipeline/components.md
-          - Data Flow: explanations/python_pipeline/data-flow.md
-          - Best Practices: explanations/python_pipeline/best-practices.md
 
   - Investment Discovery:
       - investment_discovery/index.md
       - User Guide: investment_discovery/investment_discovery_user_guide.md
       - API Reference: investment_discovery/investment_discovery_api_reference.md
       - Developer Guide: investment_discovery/investment_discovery_developer_guide.md
-      - Portfolio Holdings Analysis: investment_discovery/portfolio_holdings_analysis_user_guide.md
       - FAQ: investment_discovery/faq.md
 
   - Portfolio Rebalancing:

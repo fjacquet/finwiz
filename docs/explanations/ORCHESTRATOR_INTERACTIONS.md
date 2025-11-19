@@ -508,7 +508,7 @@ async def run_discovery():
 ## Related Documentation
 
 - [Architecture Documentation](ARCHITECTURE.md)
-- [Developer Guide](DEVELOPER_GUIDE.md)
+- [Developer Guide](../DEVELOPER_GUIDE.md)
 - Migration Guide (internal spec)
 
 ---

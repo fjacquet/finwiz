@@ -967,8 +967,8 @@ def test_data_quality():
 ## Related Documentation
 
 - **[Data Quality and Flow Guide](DATA_QUALITY_AND_FLOW_GUIDE.md)**: Comprehensive data quality standards
-- **[API Reference](API_REFERENCE.md)**: Data quality component API documentation
-- **[Developer Guide](DEVELOPER_GUIDE.md)**: Development standards and patterns
+- **[API Reference](../reference/API_REFERENCE.md)**: Data quality component API documentation
+- **[Developer Guide](../DEVELOPER_GUIDE.md)**: Development standards and patterns
 - **[Architecture Guide](ARCHITECTURE.md)**: System architecture overview
 
 ---
