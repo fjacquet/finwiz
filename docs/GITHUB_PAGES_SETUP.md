@@ -17,11 +17,13 @@ This guide explains how to configure GitHub Pages for the FinWiz documentation.
 ### 2. Verify Deployment
 
 After enabling GitHub Pages, GitHub will automatically:
+
 - Build your site using Jekyll
 - Deploy to `https://[username].github.io/finwiz`
 - Update the deployment status in the repository
 
 You can check deployment status:
+
 - Go to **Actions** tab to see build progress
 - Check the **Environments** section for deployment history
 
@@ -30,6 +32,7 @@ You can check deployment status:
 To use a custom domain:
 
 1. Add a `CNAME` file to the `docs/` directory:
+
    ```bash
    echo "docs.your-domain.com" > docs/CNAME
    ```
@@ -101,6 +104,7 @@ docs/
 ### `_config.yml`
 
 Jekyll configuration at the project root:
+
 - Site metadata (title, description)
 - Theme configuration
 - Build settings
@@ -140,6 +144,7 @@ make docs-validate
 ### CI/CD Validation
 
 GitHub Actions automatically validates documentation on every push:
+
 - Markdown linting
 - Broken link checking
 - Structure validation
@@ -194,18 +199,21 @@ See `.github/workflows/docs-validation.yml`
 FinWiz previously used MkDocs. The migration to GitHub Pages/Jekyll includes:
 
 ### Removed
+
 - `mkdocs.yml` configuration
 - `.pages` navigation files
 - `docs/includes/` directory
 - MkDocs-specific make targets
 
 ### Added
+
 - `_config.yml` Jekyll configuration
 - `.nojekyll` file
 - Simplified make targets
 - GitHub Actions validation
 
 ### Updated
+
 - All documentation references
 - Navigation structure
 - Build and deployment process

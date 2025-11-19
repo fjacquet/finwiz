@@ -15,12 +15,14 @@ FinWiz automatically converts JSON outputs into professional, responsive HTML re
 **Purpose**: Investment candidate performance analysis
 
 **Key Features**:
+
 - Candidate performance metrics
 - Risk-adjusted returns
 - Comparative analysis
 - Grade distribution
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/backtesting_results_default.json --type backtesting_results
 ```
@@ -34,12 +36,14 @@ python scripts/generate_html_reports.py --file output/backtesting_results_defaul
 **Purpose**: Portfolio holdings analysis and recommendations
 
 **Key Features**:
+
 - Holdings overview with grades
 - Keep/sell recommendations
 - Alternative suggestions
 - Portfolio composition
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/portfolio/portfolio_review.json --type portfolio_review
 ```
@@ -53,17 +57,20 @@ python scripts/generate_html_reports.py --file output/portfolio/portfolio_review
 **Purpose**: A+ investment opportunities by asset class
 
 **Variants**:
+
 - `a_plus_stocks.json` - Stock opportunities
 - `a_plus_etfs.json` - ETF opportunities
 - `a_plus_crypto.json` - Cryptocurrency opportunities
 
 **Key Features**:
+
 - Top-rated candidates
 - Detailed rationales
 - Asset-specific metrics
 - Screening criteria
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/discovery/a_plus_stocks.json --type a_plus_discovery
 ```
@@ -77,12 +84,14 @@ python scripts/generate_html_reports.py --file output/discovery/a_plus_stocks.js
 **Purpose**: Consolidated deep analysis results for all holdings
 
 **Key Features**:
+
 - Comprehensive analysis summary
 - Grade distribution
 - Performance metrics
 - Individual holding details
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/deep_analysis_consolidated_default.json --type deep_analysis_consolidated
 ```
@@ -96,12 +105,14 @@ python scripts/generate_html_reports.py --file output/deep_analysis_consolidated
 **Purpose**: Latest investment discovery results
 
 **Key Features**:
+
 - Recent opportunities
 - Market context
 - Screening criteria
 - Data sources
 
 **Data Structure Note**: Handles CrewAI output format with `pydantic` wrapper:
+
 ```json
 {
   "pydantic": {
@@ -113,6 +124,7 @@ python scripts/generate_html_reports.py --file output/deep_analysis_consolidated
 ```
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/discovery/discovery_latest.json --type discovery_latest
 ```
@@ -126,12 +138,14 @@ python scripts/generate_html_reports.py --file output/discovery/discovery_latest
 **Purpose**: Data validation status and quality metrics
 
 **Key Features**:
+
 - Validation results
 - Data quality scores
 - Error summaries
 - Compliance status
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/discovery/validation_report.json --type validation_report
 ```
@@ -145,12 +159,14 @@ python scripts/generate_html_reports.py --file output/discovery/validation_repor
 **Purpose**: Processing performance and statistics
 
 **Key Features**:
+
 - Processing metrics
 - Success/failure rates
 - Performance statistics
 - Error tracking
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/portfolio/portfolio_processing_summary.json --type portfolio_processing_summary
 ```
@@ -164,12 +180,14 @@ python scripts/generate_html_reports.py --file output/portfolio/portfolio_proces
 **Purpose**: Portfolio optimization recommendations
 
 **Key Features**:
+
 - Optimization strategies
 - Rebalancing suggestions
 - Risk-return analysis
 - Implementation plan
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/discovery/optimization_report.json --type optimization_report
 ```
@@ -183,6 +201,7 @@ python scripts/generate_html_reports.py --file output/discovery/optimization_rep
 **Purpose**: Feedback analysis and learning insights
 
 **Key Features**:
+
 - Success metrics dashboard (6 key metrics)
 - Feedback analysis summary
 - Performance outcome tracking
@@ -194,6 +213,7 @@ python scripts/generate_html_reports.py --file output/discovery/optimization_rep
 - Quality assurance metrics
 
 **Expected JSON Structure**:
+
 ```json
 {
   "pydantic": {
@@ -228,6 +248,7 @@ python scripts/generate_html_reports.py --file output/discovery/optimization_rep
 ```
 
 **Generation**:
+
 ```bash
 python scripts/generate_html_reports.py --file output/discovery/feedback_learning_report.json --type feedback_learning_report
 ```
@@ -401,9 +422,11 @@ else:
 **Solution**: Provide default values in template:
 
 {% raw %}
+
 ```html
 {{ data.get('field_name', 'Default Value') }}
 ```
+
 {% endraw %}
 
 #### 4. Date Parsing Errors
@@ -424,6 +447,7 @@ if isinstance(date_str, str):
 Templates must handle both Python objects and dicts:
 
 {% raw %}
+
 ```html
 <!-- For Python objects (attribute access) -->
 {{ candidate.ticker }}
@@ -434,6 +458,7 @@ Templates must handle both Python objects and dicts:
 <!-- Safe approach (works for both) -->
 {{ candidate.get('ticker') if candidate is mapping else candidate.ticker }}
 ```
+
 {% endraw %}
 
 ---
@@ -458,6 +483,7 @@ All templates extend `base_template.html` which provides:
 1. Create new template in `src/finwiz/templates/`
 2. Extend base template:
 {% raw %}
+
    ```html
    {% extends "base_template.html" %}
    
@@ -467,9 +493,11 @@ All templates extend `base_template.html` which provides:
    <!-- Your content here -->
    {% endblock %}
    ```
+
 {% endraw %}
 
 3. Register in `template_renderer.py`:
+
    ```python
    self.render_methods = {
        "custom_report": self.render_custom_report
@@ -477,6 +505,7 @@ All templates extend `base_template.html` which provides:
    ```
 
 4. Add helper function in `html_generator.py`:
+
    ```python
    def save_custom_report(data: dict, output_path: str) -> tuple[Path, Path]:
        return _save_with_html(data, output_path, "custom_report")

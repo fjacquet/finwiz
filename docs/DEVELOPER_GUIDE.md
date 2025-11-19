@@ -89,6 +89,7 @@ score = scorer.calculate_composite_score(ticker, asset_class, data)
 ```
 
 **Benefits**:
+
 - 10-20x speedup
 - 100% cost reduction
 - Deterministic results
@@ -872,6 +873,7 @@ class HTMLReportGenerator:
 **Template**: `src/finwiz/templates/crew_reports/deep_analysis_report.html.j2`
 
 {% raw %}
+
 ```html
 {% extends "base.html" %}
 
@@ -923,6 +925,7 @@ class HTMLReportGenerator:
 </div>
 {% endblock %}
 ```
+
 {% endraw %}
 
 ## Creating Custom Crews
@@ -1414,6 +1417,7 @@ open htmlcov/index.html
 ```
 
 **Coverage Standards**:
+
 - Minimum: 65% (enforced)
 - Target: 80%
 - Critical paths: 90%+
@@ -1425,11 +1429,13 @@ open htmlcov/index.html
 #### Reasoning (`reasoning=True`)
 
 **When to Enable**:
+
 - Complex analysis requiring multi-step thinking
 - Decision-making with multiple factors
 - Creative synthesis of information
 
 **When to Disable**:
+
 - Validators and reporters
 - High-volume executions (66+ runs)
 - Simple data transformation
@@ -1457,16 +1463,19 @@ def validator(self) -> Agent:
 #### Planning (`planning=True`)
 
 **When to Enable**:
+
 - 4+ agents AND 6+ tasks AND ≤3 runs
 - Complex workflows with dependencies
 - Strategic planning required
 
 **When to Disable**:
+
 - High-volume executions
 - Single-agent crews
 - Simple sequential workflows
 
 **Example**:
+
 ```python
 # ✅ GOOD: Complex workflow, single run
 @crew
@@ -1492,10 +1501,12 @@ def crew(self) -> Crew:
 #### Delegation (`allow_delegation=True`)
 
 **When to Enable**:
+
 - Coordinator agents managing workflow
 - Dynamic task distribution needed
 
 **When to Disable**:
+
 - Specialist agents (focused role)
 - Reporter agents
 - High-volume executions
@@ -1525,6 +1536,7 @@ def analyst(self) -> Agent:
 For portfolios with 10+ holdings, use batch processing:
 
 **Configuration**:
+
 ```bash
 BATCH_PREFETCH_ENABLED=true
 DEEP_ANALYSIS_BATCH_SIZE=5  # Adjust based on CPU/memory
@@ -1533,6 +1545,7 @@ ENABLE_ALPHA_VANTAGE=false  # Yahoo Finance faster for batch
 ```
 
 **Performance Gains**:
+
 - 66 holdings: 5.5-11 hours → 20-40 minutes (10-20x speedup)
 - Data pre-fetch: 2-5 seconds (Yahoo Finance)
 - Concurrent execution: 5 crews in parallel
@@ -1639,6 +1652,7 @@ def calculate_composite_score(
 ### Pull Request Process
 
 1. **Create Feature Branch**:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -1649,17 +1663,20 @@ def calculate_composite_score(
    - Update documentation
 
 3. **Run Quality Checks**:
+
    ```bash
    make check  # Runs lint, mypy, tests
    ```
 
 4. **Commit Changes**:
+
    ```bash
    git add .
    git commit -m "feat: add new feature - @documentation-specialist"
    ```
 
 5. **Push and Create PR**:
+
    ```bash
    git push origin feature/your-feature-name
    gh pr create --title "Add new feature" --body "Description"

@@ -49,12 +49,14 @@ src/finwiz/schemas/
 Standardized risk assessment used across all asset classes (stocks, ETFs, crypto).
 
 **Fields:**
+
 - `scale` (str): Risk scale type, default "0_5" (0=lowest, 5=highest)
 - `score` (float): Risk score from 0.0 to 5.0
 - `level` (str): Human-friendly risk level ("Low", "Medium", "High", "Very High")
 - `risk_factors` (list[str]): Up to 10 specific risk factors
 
 **Example:**
+
 ```json
 {
   "scale": "0_5",
@@ -69,6 +71,7 @@ Standardized risk assessment used across all asset classes (stocks, ETFs, crypto
 ```
 
 **Usage:**
+
 ```python
 from finwiz.schemas.common import RiskAssessmentStandardized
 
@@ -86,6 +89,7 @@ risk = RiskAssessmentStandardized(
 Extracted insights from SEC 10-K filings with provenance tracking.
 
 **Fields:**
+
 - `schema_version` (int): Schema version for compatibility
 - `ticker` (str): Stock ticker symbol (1-10 characters)
 - `filing_url` (str): URL to SEC filing (validated)
@@ -95,6 +99,7 @@ Extracted insights from SEC 10-K filings with provenance tracking.
 - `sec_citation` (str): Citation format (e.g., "10-K (2024), Item 1A, p. 17")
 
 **Example:**
+
 ```json
 {
   "schema_version": 1,
@@ -112,6 +117,7 @@ Extracted insights from SEC 10-K filings with provenance tracking.
 Aggregated market sentiment analysis from news sources.
 
 **Fields:**
+
 - `schema_version` (int): Schema version
 - `ticker` (str): Stock ticker symbol
 - `mean_score` (float): Average sentiment score (-1.0 to 1.0)
@@ -120,6 +126,7 @@ Aggregated market sentiment analysis from news sources.
 - `top_neg` (list[SentimentItem]): Top negative sentiment articles
 
 **Example:**
+
 ```json
 {
   "schema_version": 1,
@@ -147,11 +154,13 @@ Aggregated market sentiment analysis from news sources.
 Market trend analysis for stock market overview.
 
 **Fields:**
+
 - `schema_version` (int): Schema version
 - `analysis_date` (date): Date of analysis
 - Additional fields for trend indicators
 
 **Example:**
+
 ```json
 {
   "schema_version": 1,
@@ -166,6 +175,7 @@ Market trend analysis for stock market overview.
 Comprehensive ETF information and metrics.
 
 **Fields:**
+
 - `ticker` (str): ETF ticker symbol
 - `name` (str): Full ETF name
 - `expense_ratio` (float): Annual expense ratio
@@ -174,6 +184,7 @@ Comprehensive ETF information and metrics.
 - Additional fields for holdings, performance, etc.
 
 **Example:**
+
 ```json
 {
   "ticker": "SPY",
@@ -189,6 +200,7 @@ Comprehensive ETF information and metrics.
 Individual ETF holding details.
 
 **Fields:**
+
 - `ticker` (str): Holding ticker symbol
 - `name` (str): Company/asset name
 - `weight` (float): Portfolio weight percentage
@@ -196,6 +208,7 @@ Individual ETF holding details.
 - `market_value` (float): Market value of holding
 
 **Example:**
+
 ```json
 {
   "ticker": "AAPL",
@@ -213,6 +226,7 @@ Individual ETF holding details.
 Investment thesis for cryptocurrency analysis.
 
 **Fields:**
+
 - `ticker` (str): Crypto ticker symbol
 - `name` (str): Cryptocurrency name
 - `thesis` (str): Investment thesis narrative
@@ -222,6 +236,7 @@ Investment thesis for cryptocurrency analysis.
 - `threats` (list[str]): Market threats
 
 **Example:**
+
 ```json
 {
   "ticker": "BTC",
@@ -241,12 +256,14 @@ Investment thesis for cryptocurrency analysis.
 Results from A+ investment discovery process.
 
 **Fields:**
+
 - `candidates` (list[InvestmentCandidate]): Discovered investment candidates
 - `discovery_date` (datetime): When discovery was performed
 - `criteria_used` (dict): Criteria used for discovery
 - `total_screened` (int): Total assets screened
 
 **Example:**
+
 ```json
 {
   "candidates": [
@@ -270,12 +287,14 @@ Results from A+ investment discovery process.
 Comprehensive portfolio analysis results.
 
 **Fields:**
+
 - `holdings` (list[Holding]): Current portfolio holdings
 - `metrics` (PortfolioMetrics): Portfolio-level metrics
 - `recommendations` (list[str]): Rebalancing recommendations
 - `analysis_date` (datetime): Analysis timestamp
 
 **Example:**
+
 ```json
 {
   "holdings": [
@@ -302,6 +321,7 @@ Comprehensive portfolio analysis results.
 Keep/sell decision for individual portfolio holding.
 
 **Fields:**
+
 - `ticker` (str): Holding ticker symbol
 - `decision` (str): "KEEP" or "SELL"
 - `rationale` (str): Detailed reasoning
@@ -309,6 +329,7 @@ Keep/sell decision for individual portfolio holding.
 - `alternative_suggestions` (list[str]): Alternative tickers if selling
 
 **Example:**
+
 ```json
 {
   "ticker": "IBM",
@@ -324,6 +345,7 @@ Keep/sell decision for individual portfolio holding.
 Alternative investment suggestion for portfolio improvement.
 
 **Fields:**
+
 - `ticker` (str): Alternative ticker symbol
 - `name` (str): Asset name
 - `grade` (str): Quality grade
@@ -332,6 +354,7 @@ Alternative investment suggestion for portfolio improvement.
 - `rationale` (str): Why this alternative is better
 
 **Example:**
+
 ```json
 {
   "ticker": "MSFT",

@@ -35,6 +35,7 @@ Retrieves comprehensive ticker information from Yahoo Finance.
 **Output**: Dictionary with company information
 
 **Example**:
+
 ```python
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
@@ -47,6 +48,7 @@ print(f"Market Cap: {info['marketCap']}")
 ```
 
 **Output Fields**:
+
 - `longName`: Company full name
 - `sector`: Business sector
 - `industry`: Industry classification
@@ -66,6 +68,7 @@ Analyzes SEC filings (10-K, 10-Q) for fundamental analysis.
 **Output**: Dictionary with financial analysis
 
 **Example**:
+
 ```python
 from finwiz.tools.enhanced_sec_analysis_tool import EnhancedSECAnalysisTool
 
@@ -77,6 +80,7 @@ print(f"ROE: {analysis['roe']}")
 ```
 
 **Output Fields**:
+
 - `revenue_growth`: Annual revenue growth rate
 - `roe`: Return on equity
 - `debt_to_equity`: Debt-to-equity ratio
@@ -95,6 +99,7 @@ Specialized analysis for Exchange-Traded Funds.
 **Output**: Dictionary with ETF analysis
 
 **Example**:
+
 ```python
 from finwiz.tools.enhanced_etf_analysis_tool import EnhancedETFAnalysisTool
 
@@ -106,6 +111,7 @@ print(f"AUM: {analysis['aum']}")
 ```
 
 **Output Fields**:
+
 - `expense_ratio`: Annual expense ratio
 - `aum`: Assets under management
 - `tracking_error`: Tracking error vs benchmark
@@ -124,6 +130,7 @@ Cryptocurrency analysis including market metrics and blockchain data.
 **Output**: Dictionary with crypto analysis
 
 **Example**:
+
 ```python
 from finwiz.tools.enhanced_crypto_analysis_tool import EnhancedCryptoAnalysisTool
 
@@ -135,6 +142,7 @@ print(f"24h Volume: {analysis['volume_24h']}")
 ```
 
 **Output Fields**:
+
 - `market_cap`: Market capitalization
 - `volume_24h`: 24-hour trading volume
 - `circulating_supply`: Circulating supply
@@ -152,7 +160,8 @@ Comprehensive quantitative analysis including risk metrics and technical indicat
 
 **Purpose**: Calculate quantitative metrics for investment analysis
 
-**Input**: 
+**Input**:
+
 ```python
 {
     "ticker": "AAPL",
@@ -163,6 +172,7 @@ Comprehensive quantitative analysis including risk metrics and technical indicat
 **Output**: Dictionary with quantitative metrics
 
 **Example**:
+
 ```python
 from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 
@@ -174,6 +184,7 @@ print(f"VaR: {analysis['var_95']}")
 ```
 
 **Output Fields**:
+
 - `sharpe_ratio`: Risk-adjusted return measure
 - `sortino_ratio`: Downside risk-adjusted return
 - `var_95`: Value at Risk (95% confidence)
@@ -194,6 +205,7 @@ Calculates technical indicators for price analysis.
 **Output**: Dictionary with technical indicators
 
 **Example**:
+
 ```python
 from finwiz.tools.technical_indicators_tool import TechnicalIndicatorsTool
 
@@ -209,6 +221,7 @@ print(f"MACD: {indicators['macd']}")
 ```
 
 **Output Fields**:
+
 - `rsi`: Relative Strength Index
 - `macd`: MACD indicator
 - `bollinger_bands`: Bollinger Bands (upper, middle, lower)
@@ -231,6 +244,7 @@ Comprehensive risk analysis for investments.
 **Output**: Standardized risk assessment
 
 **Example**:
+
 ```python
 from finwiz.tools.risk_assessment_tool import RiskAssessmentTool
 
@@ -248,6 +262,7 @@ print(f"Risk Factors: {risk['risk_factors']}")
 **Output Schema**: `RiskAssessmentStandardized`
 
 **Output Fields**:
+
 - `risk_score`: Overall risk score (1-10 scale)
 - `systematic_risk`: Market/sector risk component
 - `idiosyncratic_risk`: Asset-specific risk
@@ -266,6 +281,7 @@ Specialized volatility analysis and forecasting.
 **Output**: Volatility analysis results
 
 **Example**:
+
 ```python
 from finwiz.tools.volatility_analysis_tool import VolatilityAnalysisTool
 
@@ -294,6 +310,7 @@ Analyzes market sentiment from news and social media.
 **Output**: Sentiment analysis results
 
 **Example**:
+
 ```python
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentTool
 
@@ -307,6 +324,7 @@ print(f"News Count: {sentiment['news_count']}")
 **Output Schema**: `MarketSentiment`
 
 **Output Fields**:
+
 - `sentiment_score`: Overall sentiment (-1 to 1)
 - `sentiment_category`: Categorical sentiment
 - `news_count`: Number of news articles analyzed
@@ -325,6 +343,7 @@ Comprehensive news analysis and impact assessment.
 **Output**: News analysis summary
 
 **Example**:
+
 ```python
 from finwiz.tools.news_analysis_tool import NewsAnalysisTool
 
@@ -353,6 +372,7 @@ Validates ticker symbols and ensures data availability.
 **Output**: Validation result
 
 **Example**:
+
 ```python
 from finwiz.tools.ticker_validation_tool import TickerValidationTool
 
@@ -366,6 +386,7 @@ print(f"Exchange: {validation['exchange']}")
 **Output Schema**: `ValidatedTicker`
 
 **Output Fields**:
+
 - `ticker`: Validated ticker symbol
 - `is_valid`: Boolean validation result
 - `exchange`: Primary exchange
@@ -384,6 +405,7 @@ Assesses data quality and freshness for analysis.
 **Output**: Data quality assessment
 
 **Example**:
+
 ```python
 from finwiz.tools.data_quality_tool import DataQualityTool
 
@@ -679,12 +701,14 @@ class CustomAnalysisTool(BaseTool):
 ### Common Issues
 
 **Issue**: Tool execution timeout
+
 ```python
 # Solution: Increase timeout or check network connectivity
 tool = YahooFinanceTickerInfoTool(timeout=60)
 ```
 
 **Issue**: Rate limit exceeded
+
 ```python
 # Solution: Add delays or reduce request frequency
 import time
@@ -692,6 +716,7 @@ time.sleep(1)  # Add delay between requests
 ```
 
 **Issue**: Invalid ticker symbol
+
 ```python
 # Solution: Validate ticker before tool execution
 validation_tool = TickerValidationTool()
@@ -700,6 +725,7 @@ if validation_tool.run(ticker)['is_valid']:
 ```
 
 **Issue**: Missing data fields
+
 ```python
 # Solution: Check data quality and use fallbacks
 quality_tool = DataQualityTool()

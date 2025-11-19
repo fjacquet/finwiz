@@ -179,11 +179,13 @@ crewai flow kickoff
 ```
 
 When prompted:
+
 1. Choose "Single Asset Analysis"
 2. Enter ticker: `AAPL`
 3. Select asset class: `stock`
 
 The analysis will:
+
 - Fetch real-time market data
 - Perform fundamental analysis
 - Calculate technical indicators
@@ -240,6 +242,7 @@ crewai flow kickoff
 ```
 
 The system will:
+
 1. Analyze each holding individually
 2. Generate keep/sell recommendations
 3. Suggest alternatives for sell recommendations
@@ -1074,11 +1077,13 @@ analyst:
 #### Issue: "API Key Not Found"
 
 **Symptoms**:
+
 ```
 Error: OPENAI_API_KEY not found in environment
 ```
 
 **Solution**:
+
 1. Verify `.env` file exists in project root
 2. Check API key is set: `cat .env | grep OPENAI_API_KEY`
 3. Reload environment: `source .env` (bash) or restart terminal
@@ -1086,44 +1091,54 @@ Error: OPENAI_API_KEY not found in environment
 #### Issue: "Rate Limit Exceeded"
 
 **Symptoms**:
+
 ```
 Error: Rate limit exceeded for API key
 ```
 
 **Solution**:
+
 1. Reduce `DEEP_ANALYSIS_BATCH_SIZE` (e.g., from 5 to 3)
 2. Add delays between requests:
+
    ```bash
    export API_RATE_LIMIT_DELAY=1.0  # 1 second delay
    ```
+
 3. Use API key with higher limits
 4. Enable `RISK_ASSESSMENT_USE_MINI=true` to reduce API calls
 
 #### Issue: "Out of Memory"
 
 **Symptoms**:
+
 ```
 MemoryError: Unable to allocate array
 ```
 
 **Solution**:
+
 1. Reduce batch size: `DEEP_ANALYSIS_BATCH_SIZE=3`
 2. Use file-based cache: `CACHE_BACKEND=file`
 3. Limit cache size:
+
    ```bash
    CACHE_MAX_MEMORY_ITEMS=500
    CACHE_MAX_FILE_SIZE_MB=50
    ```
+
 4. Process portfolio in smaller batches
 
 #### Issue: "Validation Errors"
 
 **Symptoms**:
+
 ```
 ValidationError: 1 validation error for StockAnalysis
 ```
 
 **Solution**:
+
 1. Check data quality in CSV files
 2. Reduce strictness: `VALIDATION_STRICTNESS=warn`
 3. Review error details in logs
@@ -1132,18 +1147,23 @@ ValidationError: 1 validation error for StockAnalysis
 #### Issue: "Slow Performance"
 
 **Symptoms**:
+
 - Analysis takes longer than expected
 - High CPU usage
 
 **Solution**:
+
 1. Enable batch processing: `BATCH_PREFETCH_ENABLED=true`
 2. Use faster models: `RISK_ASSESSMENT_USE_MINI=true`
 3. Optimize caching:
+
    ```bash
    CACHE_BACKEND=hybrid
    CACHE_STRATEGY=adaptive
    ```
+
 4. Reduce data fetching:
+
    ```bash
    ENABLE_ALPHA_VANTAGE=false
    ```

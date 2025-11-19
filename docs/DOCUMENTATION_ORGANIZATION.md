@@ -58,6 +58,7 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Purpose**: Help users learn by doing
 
 **Characteristics**:
+
 - Step-by-step lessons
 - Assumes no prior knowledge
 - Focus on getting started successfully
@@ -66,11 +67,13 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Location**: `docs/tutorials/`
 
 **Examples**:
+
 - Getting started guide
 - First portfolio analysis
 - Building custom workflows
 
 **When to Add**:
+
 - Onboarding new users
 - Teaching new features
 - Demonstrating workflows
@@ -80,6 +83,7 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Purpose**: Guide users to solve specific problems
 
 **Characteristics**:
+
 - Practical, goal-oriented
 - Assumes some knowledge
 - Focus on accomplishing tasks
@@ -88,12 +92,14 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Location**: `docs/how-to/`
 
 **Examples**:
+
 - Setting up batch processing
 - Configuring Python scoring engine
 - Deploying to production
 - Troubleshooting issues
 
 **When to Add**:
+
 - Solving common problems
 - Configuring specific features
 - Optimizing performance
@@ -104,6 +110,7 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Purpose**: Provide accurate technical information
 
 **Characteristics**:
+
 - Technical descriptions
 - Comprehensive and accurate
 - Organized for lookup
@@ -112,12 +119,14 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Location**: `docs/reference/`
 
 **Examples**:
+
 - API documentation
 - CLI command reference
 - Environment variables
 - Schema definitions
 
 **When to Add**:
+
 - Documenting APIs
 - Listing configuration options
 - Defining data structures
@@ -128,6 +137,7 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Purpose**: Clarify and illuminate topics
 
 **Characteristics**:
+
 - Conceptual discussions
 - Background and context
 - Design decisions and trade-offs
@@ -136,12 +146,14 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 **Location**: `docs/explanations/`
 
 **Examples**:
+
 - System architecture
 - Design principles
 - AI minimalism philosophy
 - Flow architecture patterns
 
 **When to Add**:
+
 - Explaining architecture
 - Discussing design decisions
 - Providing context
@@ -159,23 +171,27 @@ FinWiz documentation follows the [Diátaxis framework](https://diataxis.fr/), wh
 ### Specific Patterns
 
 **Tutorials**:
+
 - `getting-started.md`
 - `first-[feature].md`
 - `[workflow]-tutorial.md`
 
 **How-To Guides**:
+
 - `setup-[feature].md`
 - `configure-[feature].md`
 - `troubleshoot-[feature].md`
 - `deploy-to-[platform].md`
 
 **Reference**:
+
 - `[feature]-api.md`
 - `[component]-schema.md`
 - `cli-commands.md`
 - `environment-variables.md`
 
 **Explanations**:
+
 - `[concept]-architecture.md`
 - `[topic]-principles.md`
 - `[system]-design.md`
@@ -467,11 +483,12 @@ make docs-clean
 
 - **Documentation Specialist**: Tag issues with `documentation`
 - **Style Guide**: See `DEVELOPER_GUIDE.md`
-- **Diátaxis**: https://diataxis.fr/
+- **Diátaxis**: <https://diataxis.fr/>
 
 ## Summary
 
 **Key Points**:
+
 - Follow Diátaxis framework (tutorials, how-to, reference, explanations)
 - Keep `docs/` root clean (only essential files)
 - Use proper front matter on all pages
@@ -480,6 +497,7 @@ make docs-clean
 - Test all code examples
 
 **Before Committing**:
+
 - [ ] Placed in correct directory
 - [ ] Added front matter
 - [ ] Updated navigation

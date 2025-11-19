@@ -6,7 +6,7 @@
 
 ---
 
-## Immediate Usage - No Setup Required!
+## Immediate Usage - No Setup Required
 
 The Claude 007 Agents system with Task Master 0.24.0 is already configured and ready to use. Simply invoke agents using the @ mention pattern in your conversations.
 

@@ -44,30 +44,35 @@ graph TB
 ## Core Components
 
 ### Python Scoring Engine (Primary)
+
 - **DeepAnalysisScorer**: Deterministic financial scoring (10-20x faster than AI)
 - **PortfolioDeepAnalyzer**: Concurrent portfolio analysis with Python calculations
 - **Asset-Specific Analyzers**: Stock, ETF, and Crypto specialized scoring
 - **Performance**: 10-30 seconds per ticker vs 5-10 minutes with AI
 
 ### Report Aggregation System
+
 - **PythonReportGenerator**: Template-based HTML generation (NO AI)
 - **Jinja2 Templates**: Professional French-language reports
 - **JSON Export Pipeline**: Structured data exports for integration
 - **A+ Discovery Integration**: Automatic opportunity identification
 
 ### CrewAI Flow Orchestration
+
 - **Flow Management**: Coordinates Python and AI workflows
 - **State Management**: Structured Pydantic state models
 - **Conditional Routing**: Python-first with optional AI enhancement
 - **Error Handling**: Graceful degradation and recovery
 
 ### Data Integration Layer
+
 - **Batch Pre-fetching**: Concurrent API calls for portfolio analysis
 - **Multi-source Data**: Yahoo Finance, Alpha Vantage, SEC filings
 - **Data Validation**: Pydantic v2 strict validation
 - **Rate Limiting**: Intelligent API throttling and management
 
 ### AI Crews (Selective Use)
+
 - **Data Collection**: Fetch and structure financial data
 - **Deep Analysis**: Optional reasoning for complex scenarios
 - **Quality Assurance**: Validation and enhancement of Python results
@@ -94,12 +99,14 @@ graph TB
 ## Performance Architecture
 
 ### Python-First Performance
+
 - **Execution Speed**: 10-30 seconds per ticker (vs 5-10 minutes with AI)
 - **Portfolio Analysis**: 10-20 minutes for 66 holdings (vs 3-6 hours)
 - **Cost Efficiency**: $0 for calculations (vs $13-36 per portfolio)
 - **Deterministic Results**: Same input always produces same output
 
 ### Scalability Considerations
+
 - **Concurrent Processing**: ThreadPoolExecutor for portfolio analysis
 - **Batch Pre-fetching**: Parallel API calls reduce latency
 - **Memory Management**: Efficient data processing and cleanup
@@ -107,6 +114,7 @@ graph TB
 - **Caching Strategy**: Multi-level caching for performance optimization
 
 ### Hybrid Approach Support
+
 - **Maximum Speed Mode**: Pure Python scoring (10-30 seconds)
 - **Balanced Mode**: Python + optional AI summary (15-40 seconds)
 - **Research Mode**: Full AI analysis for methodology development (5-10 minutes)
@@ -121,6 +129,7 @@ graph TB
 ## Implementation Status
 
 ### ✅ Completed Components
+
 - **Python Scoring Engine**: Complete deterministic scoring system
 - **Portfolio Analyzer**: Concurrent analysis with Python calculations
 - **Report Generator**: Template-based HTML generation
@@ -128,12 +137,14 @@ graph TB
 - **Batch Processing**: Optimized data pre-fetching system
 
 ### 🔄 Integration in Progress
+
 - **Flow Integration**: Connecting Python components to CrewAI Flow
 - **A+ Discovery**: Integrating discovery with analysis results
 - **Backtesting Pipeline**: Connecting backtesting to opportunities
 - **Final Report Assembly**: Template-based consolidation
 
 ### 📊 Performance Achievements
+
 - **Speed Improvement**: 10-20x faster than AI-only approach
 - **Cost Reduction**: 100% savings on calculations
 - **Reliability**: Deterministic, testable results

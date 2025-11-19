@@ -289,6 +289,7 @@ The system generates several report files:
 ### Development Workflow
 
 1. **Local Development**:
+
    ```bash
    make docs-serve  # Start development server
    # Make changes to documentation
@@ -296,12 +297,14 @@ The system generates several report files:
    ```
 
 2. **Testing Changes**:
+
    ```bash
    make docs-build-production  # Test production build
    make docs-validate-build    # Validate build output
    ```
 
 3. **Deployment**:
+
    ```bash
    # For major changes, use staging first
    make docs-deploy-staging

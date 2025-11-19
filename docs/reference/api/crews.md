@@ -29,6 +29,7 @@ Comprehensive analysis of individual stocks using fundamental and technical anal
 **Purpose**: Analyze individual stocks for investment recommendations
 
 **Inputs**:
+
 ```python
 {
     "ticker": "AAPL"  # Required: Stock ticker symbol
@@ -38,6 +39,7 @@ Comprehensive analysis of individual stocks using fundamental and technical anal
 **Output Schema**: `TenKInsight`
 
 **Example Usage**:
+
 ```python
 from finwiz.crews.stock_crew.stock_crew import StockCrew
 
@@ -49,12 +51,14 @@ print(f"Grade: {result.grade}")
 ```
 
 **Agents**:
+
 - **Stock Analyst**: Performs fundamental analysis
 - **Technical Analyst**: Conducts technical analysis
 - **Risk Assessor**: Evaluates investment risks
 - **Investment Reporter**: Consolidates findings
 
 **Tools Used**:
+
 - `YahooFinanceTickerInfoTool`
 - `EnhancedSECAnalysisTool`
 - `QuantitativeAnalysisTool`
@@ -70,6 +74,7 @@ Specialized analysis of Exchange-Traded Funds (ETFs) including expense ratios, h
 **Purpose**: Analyze ETFs for investment suitability
 
 **Inputs**:
+
 ```python
 {
     "ticker": "SPY"  # Required: ETF ticker symbol
@@ -79,6 +84,7 @@ Specialized analysis of Exchange-Traded Funds (ETFs) including expense ratios, h
 **Output Schema**: `ETFFactsheet`
 
 **Example Usage**:
+
 ```python
 from finwiz.crews.etf_crew.etf_crew import EtfCrew
 
@@ -90,12 +96,14 @@ print(f"Tracking Error: {result.tracking_error}")
 ```
 
 **Agents**:
+
 - **ETF Analyst**: Analyzes fund structure and holdings
 - **Cost Analyst**: Evaluates fees and expenses
 - **Performance Analyst**: Assesses tracking and returns
 - **ETF Reporter**: Generates comprehensive report
 
 **Tools Used**:
+
 - `YahooFinanceTickerInfoTool`
 - `EnhancedETFAnalysisTool`
 - `QuantitativeAnalysisTool`
@@ -110,6 +118,7 @@ Analysis of cryptocurrencies including market dynamics, technology assessment, a
 **Purpose**: Analyze cryptocurrencies for investment potential
 
 **Inputs**:
+
 ```python
 {
     "ticker": "BTC"  # Required: Crypto ticker symbol
@@ -119,6 +128,7 @@ Analysis of cryptocurrencies including market dynamics, technology assessment, a
 **Output Schema**: `CryptoThesis`
 
 **Example Usage**:
+
 ```python
 from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
 
@@ -130,12 +140,14 @@ print(f"Technology Score: {result.technology_score}")
 ```
 
 **Agents**:
+
 - **Crypto Analyst**: Analyzes blockchain and tokenomics
 - **Market Analyst**: Evaluates market dynamics
 - **Regulatory Analyst**: Assesses regulatory risks
 - **Crypto Reporter**: Consolidates analysis
 
 **Tools Used**:
+
 - `CoinMarketCapTool`
 - `EnhancedCryptoAnalysisTool`
 - `QuantitativeAnalysisTool`
@@ -150,6 +162,7 @@ Unified crew for comprehensive analysis of any asset class with detailed grading
 **Purpose**: Perform deep, comprehensive analysis for portfolio evaluation
 
 **Inputs**:
+
 ```python
 {
     "ticker": "AAPL",        # Required: Asset ticker
@@ -160,6 +173,7 @@ Unified crew for comprehensive analysis of any asset class with detailed grading
 **Output Schema**: `DeepAnalysisResult`
 
 **Example Usage**:
+
 ```python
 from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
@@ -174,11 +188,13 @@ print(f"Composite Score: {result.composite_score}")
 ```
 
 **Agents**:
+
 - **Deep Analyst**: Performs comprehensive analysis
 - **Risk Assessor**: Detailed risk evaluation
 - **Grading Specialist**: Assigns grades and scores
 
 **Dynamic Tool Routing**:
+
 - **Stock**: SEC analysis, fundamental metrics
 - **ETF**: Fund analysis, expense evaluation
 - **Crypto**: Blockchain analysis, market metrics
@@ -192,6 +208,7 @@ Consolidates analysis results from multiple crews into comprehensive reports.
 **Purpose**: Generate consolidated investment reports
 
 **Inputs**:
+
 ```python
 {
     "analysis_results": [...],  # Results from other crews
@@ -202,6 +219,7 @@ Consolidates analysis results from multiple crews into comprehensive reports.
 **Output Schema**: `ConsolidatedReport`
 
 **Example Usage**:
+
 ```python
 from finwiz.crews.report_crew.report_crew import ReportCrew
 
@@ -213,10 +231,12 @@ result = crew.crew().kickoff(inputs={
 ```
 
 **Agents**:
+
 - **Report Analyst**: Consolidates findings
 - **Investment Reporter**: Generates final report
 
 **Tools Used**:
+
 - No external tools (consolidation only)
 
 ## Crew Configuration
@@ -467,24 +487,28 @@ async def analyze_portfolio(tickers):
 ### Common Issues
 
 **Issue**: Crew execution hangs
+
 ```python
 # Solution: Check task descriptions for reasoning compatibility
 # Ensure single-ticker mode is specified for Deep Analysis Crew
 ```
 
 **Issue**: API rate limits exceeded
+
 ```python
 # Solution: Reduce max_rpm or add delays
 crew = Crew(max_rpm=10)  # Reduce from default 20
 ```
 
 **Issue**: Memory usage too high
+
 ```python
 # Solution: Use minimal tool sets
 tools = get_minimal_tools(asset_class)
 ```
 
 **Issue**: Validation errors
+
 ```python
 # Solution: Check output schema compatibility
 result = OutputSchema.model_validate(crew_output)

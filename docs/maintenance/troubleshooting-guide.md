@@ -37,11 +37,13 @@ uv run mkdocs build --verbose
 ### Build Fails with Syntax Errors
 
 #### Symptom
+
 ```
 Error: Invalid YAML syntax in mkdocs.yml
 ```
 
 #### Diagnosis
+
 ```bash
 # Check YAML syntax
 python -c "import yaml; yaml.safe_load(open('mkdocs.yml'))"
@@ -53,6 +55,7 @@ make docs-lint
 #### Solutions
 
 1. **YAML syntax errors**:
+
    ```bash
    # Common issues:
    # - Missing quotes around special characters
@@ -68,6 +71,7 @@ make docs-lint
    ```
 
 2. **Markdown syntax errors**:
+
    ```bash
    # Check specific file
    markdownlint docs/path/to/file.md
@@ -81,11 +85,13 @@ make docs-lint
 ### Build Fails with Missing Files
 
 #### Symptom
+
 ```
 Error: Documentation file 'path/to/file.md' does not exist
 ```
 
 #### Diagnosis
+
 ```bash
 # Check if file exists
 ls -la docs/path/to/file.md
@@ -97,18 +103,21 @@ grep -r "file.md" docs/.pages mkdocs.yml
 #### Solutions
 
 1. **Create missing file**:
+
    ```bash
    touch docs/path/to/file.md
    echo "# Placeholder" > docs/path/to/file.md
    ```
 
 2. **Remove from navigation**:
+
    ```yaml
    # In .pages or mkdocs.yml, remove or comment out:
    # - missing-file.md
    ```
 
 3. **Fix file path**:
+
    ```yaml
    # Check for typos in navigation
    nav:
@@ -118,11 +127,13 @@ grep -r "file.md" docs/.pages mkdocs.yml
 ### Plugin Errors
 
 #### Symptom
+
 ```
 Error: Plugin 'plugin-name' not found
 ```
 
 #### Diagnosis
+
 ```bash
 # Check installed plugins
 uv run pip list | grep mkdocs
@@ -134,11 +145,13 @@ grep -A 5 "plugins:" mkdocs.yml
 #### Solutions
 
 1. **Install missing plugin**:
+
    ```bash
    uv add mkdocs-plugin-name --group docs
    ```
 
 2. **Remove unused plugin**:
+
    ```yaml
    # In mkdocs.yml, comment out or remove:
    plugins:
@@ -146,6 +159,7 @@ grep -A 5 "plugins:" mkdocs.yml
    ```
 
 3. **Check plugin compatibility**:
+
    ```bash
    # Update to compatible version
    uv add mkdocs-material@latest --group docs
@@ -156,10 +170,12 @@ grep -A 5 "plugins:" mkdocs.yml
 ### Pages Not Appearing in Navigation
 
 #### Symptom
+
 - Files exist but don't show in site navigation
 - Navigation structure doesn't match expected layout
 
 #### Diagnosis
+
 ```bash
 # Check .pages files
 find docs -name ".pages" -exec cat {} \;
@@ -174,6 +190,7 @@ find docs -name "*.md" | head -20
 #### Solutions
 
 1. **Add to .pages file**:
+
    ```yaml
    # docs/tutorials/.pages
    nav:
@@ -182,6 +199,7 @@ find docs -name "*.md" | head -20
    ```
 
 2. **Add to mkdocs.yml**:
+
    ```yaml
    nav:
      - Home: index.md
@@ -191,6 +209,7 @@ find docs -name "*.md" | head -20
    ```
 
 3. **Check file naming**:
+
    ```bash
    # Ensure files use correct naming convention
    # Use hyphens, not underscores or spaces
@@ -200,12 +219,14 @@ find docs -name "*.md" | head -20
 ### Navigation Order Issues
 
 #### Symptom
+
 - Pages appear in wrong order
 - Navigation doesn't follow intended hierarchy
 
 #### Solutions
 
 1. **Use .pages for custom ordering**:
+
    ```yaml
    # docs/.pages
    nav:
@@ -217,6 +238,7 @@ find docs -name "*.md" | head -20
    ```
 
 2. **Use explicit ordering in subdirectories**:
+
    ```yaml
    # docs/tutorials/.pages
    nav:
@@ -230,10 +252,12 @@ find docs -name "*.md" | head -20
 ### Search Returns No Results
 
 #### Symptom
+
 - Search box appears but returns no results
 - Search functionality completely broken
 
 #### Diagnosis
+
 ```bash
 # Check search plugin configuration
 grep -A 5 "search:" mkdocs.yml
@@ -248,6 +272,7 @@ make docs-build
 #### Solutions
 
 1. **Rebuild search index**:
+
    ```bash
    # Clean and rebuild
    make docs-clean
@@ -255,6 +280,7 @@ make docs-build
    ```
 
 2. **Check search plugin configuration**:
+
    ```yaml
    plugins:
      - search:
@@ -263,6 +289,7 @@ make docs-build
    ```
 
 3. **Clear browser cache**:
+
    ```bash
    # Hard refresh in browser
    # Ctrl+Shift+R (Windows/Linux)
@@ -272,18 +299,21 @@ make docs-build
 ### Search Results Incomplete
 
 #### Symptom
+
 - Some pages don't appear in search results
 - Search results seem outdated
 
 #### Solutions
 
 1. **Check content indexing**:
+
    ```bash
    # Ensure all markdown files are valid
    find docs -name "*.md" -exec head -1 {} \;
    ```
 
 2. **Verify search configuration**:
+
    ```yaml
    plugins:
      - search:
@@ -291,6 +321,7 @@ make docs-build
    ```
 
 3. **Check for search exclusions**:
+
    ```yaml
    # Remove search exclusions if present
    plugins:
@@ -304,12 +335,14 @@ make docs-build
 ### GitHub Pages Deployment Fails
 
 #### Symptom
+
 ```
 Error: Permission denied (publickey)
 Error: Failed to deploy to GitHub Pages
 ```
 
 #### Diagnosis
+
 ```bash
 # Check repository permissions
 git remote -v
@@ -324,12 +357,14 @@ git remote -v
 #### Solutions
 
 1. **Fix repository permissions**:
+
    ```bash
    # Ensure you have write access to repository
    # Check GitHub Pages source branch setting
    ```
 
 2. **Configure deployment key**:
+
    ```bash
    # Generate SSH key if needed
    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
@@ -338,6 +373,7 @@ git remote -v
    ```
 
 3. **Use HTTPS instead of SSH**:
+
    ```bash
    git remote set-url origin https://github.com/username/repo.git
    ```
@@ -345,6 +381,7 @@ git remote -v
 ### Custom Domain Issues
 
 #### Symptom
+
 - Custom domain not working
 - SSL certificate errors
 - DNS resolution failures
@@ -352,6 +389,7 @@ git remote -v
 #### Solutions
 
 1. **Configure DNS records**:
+
    ```
    # Add CNAME record pointing to username.github.io
    # Or A records pointing to GitHub Pages IPs:
@@ -362,12 +400,14 @@ git remote -v
    ```
 
 2. **Configure CNAME file**:
+
    ```bash
    # Create docs/CNAME file
    echo "docs.finwiz.com" > docs/CNAME
    ```
 
 3. **Enable HTTPS**:
+
    ```bash
    # In GitHub repository settings:
    # Settings > Pages > Enforce HTTPS
@@ -376,6 +416,7 @@ git remote -v
 ### Deployment Timeout
 
 #### Symptom
+
 ```
 Error: Deployment timed out
 Error: Build process exceeded time limit
@@ -384,6 +425,7 @@ Error: Build process exceeded time limit
 #### Solutions
 
 1. **Optimize build process**:
+
    ```bash
    # Use fast build for testing
    make docs-build-fast
@@ -393,6 +435,7 @@ Error: Build process exceeded time limit
    ```
 
 2. **Reduce site size**:
+
    ```bash
    # Check site size
    du -sh site/
@@ -406,11 +449,13 @@ Error: Build process exceeded time limit
 ### Slow Page Load Times
 
 #### Symptom
+
 - Pages take > 3 seconds to load
 - Poor Lighthouse scores
 - Users report slow experience
 
 #### Diagnosis
+
 ```bash
 # Check site size
 du -sh site/
@@ -425,6 +470,7 @@ time make docs-build
 #### Solutions
 
 1. **Optimize images**:
+
    ```bash
    # Compress PNG images
    find docs -name "*.png" -exec optipng -o2 {} \;
@@ -437,6 +483,7 @@ time make docs-build
    ```
 
 2. **Enable compression**:
+
    ```yaml
    # In mkdocs.yml
    plugins:
@@ -447,6 +494,7 @@ time make docs-build
    ```
 
 3. **Optimize theme configuration**:
+
    ```yaml
    theme:
      features:
@@ -457,6 +505,7 @@ time make docs-build
 ### Slow Build Times
 
 #### Symptom
+
 - `mkdocs build` takes > 30 seconds
 - Development server slow to start
 - CI/CD builds timeout
@@ -464,12 +513,14 @@ time make docs-build
 #### Solutions
 
 1. **Use incremental builds**:
+
    ```bash
    # Development server with auto-reload
    mkdocs serve --dirtyreload
    ```
 
 2. **Optimize plugin configuration**:
+
    ```yaml
    plugins:
      - search:
@@ -477,6 +528,7 @@ time make docs-build
    ```
 
 3. **Exclude unnecessary files**:
+
    ```yaml
    # In mkdocs.yml
    exclude_docs: |
@@ -490,11 +542,13 @@ time make docs-build
 ### Broken Links
 
 #### Symptom
+
 - Links return 404 errors
 - Internal links don't work
 - External links are dead
 
 #### Diagnosis
+
 ```bash
 # Check for broken links
 make docs-validate
@@ -509,6 +563,7 @@ grep -r "](http" docs/
 #### Solutions
 
 1. **Fix internal links**:
+
    ```markdown
    # Use relative paths
    [Link text](../reference/api.md)
@@ -518,6 +573,7 @@ grep -r "](http" docs/
    ```
 
 2. **Update external links**:
+
    ```bash
    # Check if external sites moved
    curl -I https://example.com/old-url
@@ -526,6 +582,7 @@ grep -r "](http" docs/
    ```
 
 3. **Use link checking tools**:
+
    ```bash
    # Install link checker
    npm install -g markdown-link-check
@@ -537,6 +594,7 @@ grep -r "](http" docs/
 ### Images Not Displaying
 
 #### Symptom
+
 - Images show as broken links
 - Alt text displays instead of images
 - Images work locally but not in production
@@ -544,6 +602,7 @@ grep -r "](http" docs/
 #### Solutions
 
 1. **Check image paths**:
+
    ```markdown
    # Use relative paths from current file
    ![Alt text](../assets/image.png)
@@ -553,12 +612,14 @@ grep -r "](http" docs/
    ```
 
 2. **Verify image files exist**:
+
    ```bash
    # Check if image files are committed
    git ls-files | grep -E "\.(png|jpg|jpeg|gif|svg)$"
    ```
 
 3. **Check image formats**:
+
    ```bash
    # Ensure supported formats
    # Supported: PNG, JPG, JPEG, GIF, SVG, WebP
@@ -567,6 +628,7 @@ grep -r "](http" docs/
 ### Code Examples Not Working
 
 #### Symptom
+
 - Code blocks not syntax highlighted
 - Code examples produce errors when run
 - Copy button not working
@@ -574,26 +636,30 @@ grep -r "](http" docs/
 #### Solutions
 
 1. **Add language specification**:
+
    ```markdown
    ```python
    # Python code here
    def example():
        return "Hello"
    ```
-   
+
    ```bash
    # Shell commands here
    make docs-serve
    ```
+
    ```
 
 2. **Test code examples**:
+
    ```bash
    # Extract and test code blocks
    grep -A 10 "```python" docs/file.md
    ```
 
 3. **Enable code copy feature**:
+
    ```yaml
    theme:
      features:
@@ -605,6 +671,7 @@ grep -r "](http" docs/
 ### Dependencies Not Installing
 
 #### Symptom
+
 ```
 Error: Could not find a version that satisfies the requirement
 Error: Package not found
@@ -613,6 +680,7 @@ Error: Package not found
 #### Solutions
 
 1. **Update package manager**:
+
    ```bash
    # Update uv
    curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -622,6 +690,7 @@ Error: Package not found
    ```
 
 2. **Clear cache**:
+
    ```bash
    # Clear uv cache
    uv cache clean
@@ -631,6 +700,7 @@ Error: Package not found
    ```
 
 3. **Check Python version**:
+
    ```bash
    # Ensure compatible Python version
    python --version
@@ -641,6 +711,7 @@ Error: Package not found
 ### Development Server Issues
 
 #### Symptom
+
 - Server won't start
 - Hot reload not working
 - Port conflicts
@@ -648,6 +719,7 @@ Error: Package not found
 #### Solutions
 
 1. **Check port availability**:
+
    ```bash
    # Check if port 8000 is in use
    lsof -i :8000
@@ -657,6 +729,7 @@ Error: Package not found
    ```
 
 2. **Fix file watching**:
+
    ```bash
    # Increase file watch limit (Linux)
    echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
@@ -664,6 +737,7 @@ Error: Package not found
    ```
 
 3. **Clear browser cache**:
+
    ```bash
    # Hard refresh browser
    # Check browser developer tools for errors

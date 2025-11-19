@@ -11,14 +11,17 @@ This reference documents the integration modules that connect the Pure Python Pi
 Integrates A+ discovery with deep analysis results by reading JSON exports.
 
 **Signature:**
+
 ```python
 def integrate_aplus_discovery_with_deep_analysis(session_id: str) -> dict[str, Any]
 ```
 
 **Parameters:**
+
 - `session_id` (str): Session identifier for finding analysis files
 
 **Returns:**
+
 - `dict[str, Any]`: Discovery integration results containing:
   - `has_a_plus_analysis` (bool): Whether A+ analysis exists
   - `total_opportunities_found` (int): Number of A+ opportunities
@@ -28,6 +31,7 @@ def integrate_aplus_discovery_with_deep_analysis(session_id: str) -> dict[str, A
   - `integration_timestamp` (str): ISO timestamp
 
 **Example:**
+
 ```python
 from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
@@ -42,17 +46,20 @@ if discovery_results["has_a_plus_analysis"]:
 ```
 
 **Data Sources:**
+
 - Scans `output/stock/*.json` for stock analysis files
 - Scans `output/etf/*.json` for ETF analysis files
 - Scans `output/crypto/*.json` for crypto analysis files
 - Reads `output/deep_analysis_consolidated_{session_id}.json` if available
 
 **Filtering Logic:**
+
 - Only includes holdings with grade "A+" or "A"
 - Excludes holdings with grades "B", "C", "D", "F"
 - Removes duplicate tickers
 
 **Error Handling:**
+
 - Returns empty results if directories don't exist
 - Logs warnings for unreadable files
 - Continues processing even if individual files fail
@@ -64,14 +71,17 @@ if discovery_results["has_a_plus_analysis"]:
 Connects backtesting pipeline to discovery results and executes backtesting for A+ candidates.
 
 **Signature:**
+
 ```python
 def connect_backtesting_to_discovery_results(session_id: str) -> dict[str, Any]
 ```
 
 **Parameters:**
+
 - `session_id` (str): Session identifier for finding discovery files
 
 **Returns:**
+
 - `dict[str, Any]`: Backtesting execution results containing:
   - `backtesting_executed` (bool): Whether backtesting was executed
   - `candidates_count` (int): Number of candidates tested
@@ -82,6 +92,7 @@ def connect_backtesting_to_discovery_results(session_id: str) -> dict[str, Any]
   - `session_id` (str): Session identifier
 
 **Example:**
+
 ```python
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 
@@ -97,11 +108,13 @@ if backtesting_results["backtesting_executed"]:
 ```
 
 **Data Sources:**
+
 - Calls `integrate_aplus_discovery_with_deep_analysis()` to get candidates
 - Falls back to reading discovery JSON files if integration fails
 - Removes duplicate candidates
 
 **Backtesting Metrics:**
+
 - `annual_return` (float): Annualized return
 - `sharpe_ratio` (float): Risk-adjusted return metric
 - `max_drawdown` (float): Maximum peak-to-trough decline
@@ -110,10 +123,12 @@ if backtesting_results["backtesting_executed"]:
 - `status` (str): Execution status
 
 **Output Files:**
+
 - Saves results to `output/backtesting_results_{session_id}.json`
 - Includes candidates, results, and execution metadata
 
 **Error Handling:**
+
 - Returns `backtesting_executed: false` if no candidates found
 - Logs errors and continues processing
 - Includes error details in return value
@@ -125,11 +140,13 @@ if backtesting_results["backtesting_executed"]:
 Extracts and processes A+ opportunity data from discovery crew outputs.
 
 **Constructor:**
+
 ```python
 def __init__(self, output_dir: Path = Path("output")) -> None
 ```
 
 **Parameters:**
+
 - `output_dir` (Path): Base output directory containing crew outputs
 
 **Methods:**
@@ -139,14 +156,17 @@ def __init__(self, output_dir: Path = Path("output")) -> None
 Extracts A+ opportunities from all discovery crew files.
 
 **Signature:**
+
 ```python
 def extract_aplus_opportunities(self) -> APlusOpportunityCollection | None
 ```
 
 **Returns:**
+
 - `APlusOpportunityCollection`: Collection of A+ opportunities, or None if extraction fails
 
 **Example:**
+
 ```python
 from finwiz.integration.aplus_extractor import APlusDataExtractor
 
@@ -161,12 +181,14 @@ if collection:
 ```
 
 **Data Sources:**
+
 - Reads `output/discovery/a_plus_stocks.json`
 - Reads `output/discovery/a_plus_etfs.json`
 - Reads `output/discovery/a_plus_crypto.json`
 - Reads `output/discovery/discovery_latest.json` for market context
 
 **Extraction Process:**
+
 1. Loads JSON files from discovery directory
 2. Cleans JSON content (fixes Python-style numeric literals)
 3. Extracts opportunities with grades "A+" or "A"
@@ -181,6 +203,7 @@ if collection:
 Validates A+ opportunities collection for completeness and quality.
 
 **Signature:**
+
 ```python
 def validate_aplus_opportunities(
     self,
@@ -189,12 +212,15 @@ def validate_aplus_opportunities(
 ```
 
 **Parameters:**
+
 - `collection` (APlusOpportunityCollection): Collection to validate
 
 **Returns:**
+
 - `tuple[bool, list[str]]`: (is_valid, list_of_validation_errors)
 
 **Validation Checks:**
+
 - At least one opportunity found
 - Confidence score ≥ 0.5
 - Discovery summary ≥ 50 characters
@@ -202,6 +228,7 @@ def validate_aplus_opportunities(
 - No duplicate symbols
 
 **Example:**
+
 ```python
 extractor = APlusDataExtractor()
 collection = extractor.extract_aplus_opportunities()
@@ -383,16 +410,19 @@ output/
 ### Issue: No A+ Opportunities Found
 
 **Symptoms:**
+
 - `has_a_plus_analysis: false`
 - `total_opportunities_found: 0`
 
 **Possible Causes:**
+
 1. Deep analysis not completed
 2. No holdings achieved A+ or A grade
 3. JSON files not in expected directories
 4. Session ID mismatch
 
 **Solutions:**
+
 1. Verify deep analysis completed successfully
 2. Check analysis results for grades
 3. Verify output directory structure
@@ -401,15 +431,18 @@ output/
 ### Issue: Backtesting Not Executing
 
 **Symptoms:**
+
 - `backtesting_executed: false`
 - `reason: "No A+ candidates available"`
 
 **Possible Causes:**
+
 1. A+ discovery found no opportunities
 2. Discovery integration failed
 3. Candidate list empty
 
 **Solutions:**
+
 1. Run A+ discovery integration first
 2. Check discovery results for candidates
 3. Verify discovery JSON files exist

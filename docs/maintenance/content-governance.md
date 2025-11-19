@@ -9,6 +9,7 @@ This document establishes the governance framework for FinWiz documentation, inc
 #### Documentation Maintainer
 
 **Primary Responsibilities**:
+
 - Overall documentation strategy and vision
 - Final approval authority for significant changes
 - Quality standards enforcement
@@ -21,6 +22,7 @@ This document establishes the governance framework for FinWiz documentation, inc
 #### Content Reviewers
 
 **Primary Responsibilities**:
+
 - Technical accuracy review
 - Editorial review for clarity and style
 - Compliance with content standards
@@ -29,6 +31,7 @@ This document establishes the governance framework for FinWiz documentation, inc
 **Authority Level**: Approve/reject content changes, suggest improvements
 
 **Qualification Requirements**:
+
 - Subject matter expertise in relevant domain
 - Strong writing and editing skills
 - Familiarity with Diátaxis framework
@@ -37,6 +40,7 @@ This document establishes the governance framework for FinWiz documentation, inc
 #### Content Creators
 
 **Primary Responsibilities**:
+
 - Create and maintain documentation content
 - Follow established standards and guidelines
 - Respond to review feedback
@@ -45,6 +49,7 @@ This document establishes the governance framework for FinWiz documentation, inc
 **Authority Level**: Create content within guidelines, propose improvements
 
 **Qualification Requirements**:
+
 - Domain expertise in content area
 - Basic writing skills
 - Familiarity with markdown and MkDocs
@@ -130,11 +135,13 @@ graph TD
 #### Standard Review
 
 **Triggers**:
+
 - New content creation
 - Minor content updates
 - Regular maintenance updates
 
 **Process**:
+
 1. Author completes self-review checklist
 2. Single reviewer assigned based on content type
 3. Review completed within 3 business days
@@ -145,12 +152,14 @@ graph TD
 #### Comprehensive Review
 
 **Triggers**:
+
 - Major content restructuring
 - New content categories or templates
 - Significant technical changes
 - User feedback indicating problems
 
 **Process**:
+
 1. Multiple reviewers assigned (technical + editorial)
 2. Extended review period (5-7 business days)
 3. Review board discussion if needed
@@ -161,11 +170,13 @@ graph TD
 #### Emergency Review
 
 **Triggers**:
+
 - Critical errors in published content
 - Security-related documentation updates
 - Time-sensitive information updates
 
 **Process**:
+
 1. Immediate reviewer assignment
 2. 24-hour review turnaround
 3. Expedited approval process
@@ -241,18 +252,21 @@ When author disagrees with reviewer feedback:
 #### Language Guidelines
 
 **Clarity**:
+
 - Use simple, common words when possible
 - Keep sentences under 20 words
 - Be specific and precise
 - Avoid jargon without explanation
 
 **Consistency**:
+
 - Use the same terms throughout documentation
 - Follow established terminology in glossary
 - Maintain consistent formatting patterns
 - Apply style rules uniformly
 
 **Inclusivity**:
+
 - Use gender-neutral language
 - Consider non-native English speakers
 - Avoid cultural references and idioms
@@ -270,16 +284,19 @@ def example_function():
 ```
 
 # Include comments for clarity
+
 ```bash
 # Start the development server
 make docs-serve
 ```
 
 # Show expected output when helpful
+
 ```
 Expected output:
 Server started at http://127.0.0.1:8000
 ```
+
 ```
 
 #### Links and References
@@ -345,12 +362,14 @@ Server started at http://127.0.0.1:8000
 
 **Scope**: High-traffic and critical content
 **Focus Areas**:
+
 - Accuracy of code examples
 - Currency of external links
 - User feedback and reported issues
 - Analytics data review
 
 **Process**:
+
 1. Review analytics for top 20 pages
 2. Check for reported issues or user feedback
 3. Validate external links and references
@@ -361,12 +380,14 @@ Server started at http://127.0.0.1:8000
 
 **Scope**: Complete content inventory
 **Focus Areas**:
+
 - Content relevance and usefulness
 - Structural organization and navigation
 - Compliance with current standards
 - Gap analysis for missing content
 
 **Process**:
+
 1. Complete content inventory and categorization
 2. User journey analysis and pain point identification
 3. Content performance analysis (engagement, bounce rate)
@@ -377,12 +398,14 @@ Server started at http://127.0.0.1:8000
 
 **Scope**: Comprehensive governance assessment
 **Focus Areas**:
+
 - Overall content strategy effectiveness
 - Governance process improvements
 - Technology and tooling updates
 - Team structure and role definitions
 
 **Process**:
+
 1. Stakeholder feedback collection
 2. Process efficiency analysis
 3. Technology stack review and updates
@@ -493,12 +516,14 @@ When content becomes outdated:
 #### Feedback Integration
 
 **User Feedback**:
+
 - Regular surveys and feedback collection
 - Issue tracking and resolution
 - User testing and observation
 - Analytics data analysis
 
 **Team Feedback**:
+
 - Retrospectives and process reviews
 - Reviewer feedback on content quality
 - Author feedback on review process
@@ -515,6 +540,7 @@ When content becomes outdated:
 **Duration**: 2-week review period with 1-week implementation
 
 **Review Areas**:
+
 1. **Role effectiveness**: Are roles clearly defined and effective?
 2. **Process efficiency**: Are review processes working well?
 3. **Quality outcomes**: Are quality standards being met?
@@ -524,6 +550,7 @@ When content becomes outdated:
 #### Framework Updates
 
 **Change Process**:
+
 1. **Proposal**: Anyone can propose governance changes
 2. **Discussion**: Review board discusses proposal
 3. **Trial period**: Test changes on limited scope if appropriate
@@ -536,11 +563,13 @@ When content becomes outdated:
 #### Regular Compliance Checks
 
 **Monthly**:
+
 - Review process adherence
 - Quality standard compliance
 - Approval workflow effectiveness
 
 **Quarterly**:
+
 - Comprehensive process audit
 - Stakeholder satisfaction assessment
 - Framework effectiveness review
@@ -548,11 +577,13 @@ When content becomes outdated:
 #### Non-Compliance Response
 
 **Minor Issues**:
+
 - Direct feedback to individuals
 - Additional training or support
 - Process clarification
 
 **Major Issues**:
+
 - Formal review and discussion
 - Process improvement initiatives
 - Framework adjustments if needed

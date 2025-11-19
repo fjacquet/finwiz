@@ -7,6 +7,7 @@ This document provides solutions to common issues encountered when using the Pur
 ### Issue: All Holdings Have Identical Scores
 
 **Symptom:**
+
 ```
 ValueError: Score validation failed: All holdings have identical scores (std=0.0000)
 ```
@@ -18,12 +19,14 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
 **Diagnosis:**
 
 1. Check if API keys are configured:
+
    ```bash
    echo $ALPHA_VANTAGE_API_KEY
    echo $TWELVE_DATA_API_KEY
    ```
 
 2. Verify ticker symbols are valid:
+
    ```python
    from finwiz.tools.ticker_validation_tool import TickerValidationTool
    
@@ -33,6 +36,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
    ```
 
 3. Check network connectivity:
+
    ```bash
    curl -I https://www.alphavantage.co
    ```
@@ -40,6 +44,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
 **Solutions:**
 
 1. **Configure API keys**:
+
    ```bash
    # Add to .env file
    ALPHA_VANTAGE_API_KEY=your_key_here
@@ -47,12 +52,14 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
    ```
 
 2. **Verify ticker format**:
+
    ```python
    # Correct format
    ticker = "AAPL"  # Not "Apple" or "aapl"
    ```
 
 3. **Check QuantitativeAnalysisTool logs**:
+
    ```python
    import logging
    logging.basicConfig(level=logging.DEBUG)
@@ -62,6 +69,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
    ```
 
 4. **Test data fetching directly**:
+
    ```python
    from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
    
@@ -73,6 +81,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
 ### Issue: No A+ Opportunities Found
 
 **Symptom:**
+
 ```python
 discovery_results["has_a_plus_analysis"] == False
 discovery_results["total_opportunities_found"] == 0
@@ -88,18 +97,21 @@ discovery_results["total_opportunities_found"] == 0
 **Diagnosis:**
 
 1. Check deep analysis results:
+
    ```python
    print(f"Successful: {analysis_results['successful_analyses']}")
    print(f"Failed: {analysis_results['failed_analyses']}")
    ```
 
 2. Check grades in analysis results:
+
    ```python
    for ticker, result in analysis_results["deep_analysis_results"].items():
        print(f"{ticker}: Grade {result.grade}, Score {result.composite_score:.3f}")
    ```
 
 3. Verify output directory structure:
+
    ```bash
    ls -la output/stock/
    ls -la output/etf/
@@ -107,6 +119,7 @@ discovery_results["total_opportunities_found"] == 0
    ```
 
 4. Check session ID consistency:
+
    ```python
    print(f"Analysis session: {session_id}")
    print(f"Discovery session: {session_id}")  # Should match
@@ -115,12 +128,14 @@ discovery_results["total_opportunities_found"] == 0
 **Solutions:**
 
 1. **Verify deep analysis completed**:
+
    ```python
    if analysis_results["successful_analyses"] == 0:
        print("❌ Deep analysis failed - check logs")
    ```
 
 2. **Check analysis grades**:
+
    ```python
    # Look for A+ or A grades
    aplus_count = sum(
@@ -131,6 +146,7 @@ discovery_results["total_opportunities_found"] == 0
    ```
 
 3. **Verify directory structure**:
+
    ```python
    from pathlib import Path
    
@@ -143,6 +159,7 @@ discovery_results["total_opportunities_found"] == 0
    ```
 
 4. **Use consistent session ID**:
+
    ```python
    # Generate once, use everywhere
    session_id = f"analysis_{int(time.time())}"
@@ -154,6 +171,7 @@ discovery_results["total_opportunities_found"] == 0
 ### Issue: Backtesting Not Executing
 
 **Symptom:**
+
 ```python
 backtesting_results["backtesting_executed"] == False
 backtesting_results["reason"] == "No A+ candidates available"
@@ -168,12 +186,14 @@ backtesting_results["reason"] == "No A+ candidates available"
 **Diagnosis:**
 
 1. Check discovery results:
+
    ```python
    print(f"Has A+ analysis: {discovery_results['has_a_plus_analysis']}")
    print(f"Opportunities: {discovery_results['total_opportunities_found']}")
    ```
 
 2. Check candidate list:
+
    ```python
    if discovery_results["has_a_plus_analysis"]:
        for holding in discovery_results["aplus_holdings"]:
@@ -181,6 +201,7 @@ backtesting_results["reason"] == "No A+ candidates available"
    ```
 
 3. Verify discovery JSON exists:
+
    ```bash
    ls -la output/aplus_discovery_*.json
    ```
@@ -188,6 +209,7 @@ backtesting_results["reason"] == "No A+ candidates available"
 **Solutions:**
 
 1. **Run A+ discovery first**:
+
    ```python
    # Ensure discovery runs before backtesting
    discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id)
@@ -199,6 +221,7 @@ backtesting_results["reason"] == "No A+ candidates available"
    ```
 
 2. **Check discovery results**:
+
    ```python
    if not discovery_results["has_a_plus_analysis"]:
        print("No A+ opportunities found")
@@ -206,6 +229,7 @@ backtesting_results["reason"] == "No A+ candidates available"
    ```
 
 3. **Verify discovery JSON**:
+
    ```python
    from pathlib import Path
    import json
@@ -220,6 +244,7 @@ backtesting_results["reason"] == "No A+ candidates available"
 ### Issue: JSON Export Files Not Found
 
 **Symptom:**
+
 ```
 FileNotFoundError: [Errno 2] No such file or directory: 'output/stock/AAPL_session_123.json'
 ```
@@ -234,17 +259,20 @@ FileNotFoundError: [Errno 2] No such file or directory: 'output/stock/AAPL_sessi
 **Diagnosis:**
 
 1. Check if files were created:
+
    ```bash
    find output -name "*.json" -type f
    ```
 
 2. Check file permissions:
+
    ```bash
    ls -la output/
    ls -la output/stock/
    ```
 
 3. Check export logs:
+
    ```python
    # Look for export messages in logs
    # "📄 Exported AAPL analysis to output/stock/AAPL_session_123.json"
@@ -253,12 +281,14 @@ FileNotFoundError: [Errno 2] No such file or directory: 'output/stock/AAPL_sessi
 **Solutions:**
 
 1. **Verify export completed**:
+
    ```python
    if "export_info" in analysis_results:
        print(f"Exported files: {analysis_results['export_info']['exported_files']}")
    ```
 
 2. **Check directory permissions**:
+
    ```bash
    chmod 755 output/
    chmod 755 output/stock/
@@ -267,6 +297,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'output/stock/AAPL_sessi
    ```
 
 3. **Create directories if missing**:
+
    ```python
    from pathlib import Path
    
@@ -278,6 +309,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'output/stock/AAPL_sessi
 ### Issue: Report Generation Fails
 
 **Symptom:**
+
 ```
 Exception: Failed to generate report: ...
 ```
@@ -292,17 +324,20 @@ Exception: Failed to generate report: ...
 **Diagnosis:**
 
 1. Check template exists:
+
    ```bash
    ls -la src/finwiz/templates/
    ```
 
 2. Validate input data:
+
    ```python
    print(f"Portfolio review: {portfolio_review}")
    print(f"Analysis results: {analysis_results}")
    ```
 
 3. Check template rendering:
+
    ```python
    from finwiz.reporting.python_report_generator import PythonReportGenerator
    
@@ -313,6 +348,7 @@ Exception: Failed to generate report: ...
 **Solutions:**
 
 1. **Verify template exists**:
+
    ```python
    from pathlib import Path
    
@@ -322,6 +358,7 @@ Exception: Failed to generate report: ...
    ```
 
 2. **Validate data structure**:
+
    ```python
    from finwiz.schemas.portfolio_review import PortfolioReview
    
@@ -331,6 +368,7 @@ Exception: Failed to generate report: ...
    ```
 
 3. **Check output permissions**:
+
    ```bash
    chmod 755 output/
    touch output/test.html
@@ -355,6 +393,7 @@ Analysis takes longer than expected (> 2 seconds per holding).
 **Solutions:**
 
 1. **Enable caching**:
+
    ```python
    # Cache market data to avoid redundant API calls
    from functools import lru_cache
@@ -365,6 +404,7 @@ Analysis takes longer than expected (> 2 seconds per holding).
    ```
 
 2. **Batch processing**:
+
    ```python
    # Process holdings in batches
    BATCH_SIZE = 10
@@ -374,6 +414,7 @@ Analysis takes longer than expected (> 2 seconds per holding).
    ```
 
 3. **Monitor API calls**:
+
    ```python
    import time
    
@@ -394,6 +435,7 @@ Memory usage increases significantly during analysis.
 **Solutions:**
 
 1. **Process in batches**:
+
    ```python
    # Clear memory after each batch
    for batch in batches:
@@ -403,6 +445,7 @@ Memory usage increases significantly during analysis.
    ```
 
 2. **Use generators**:
+
    ```python
    def analyze_holdings_generator(holdings):
        for holding in holdings:
@@ -414,6 +457,7 @@ Memory usage increases significantly during analysis.
    ```
 
 3. **Monitor memory**:
+
    ```python
    import psutil
    

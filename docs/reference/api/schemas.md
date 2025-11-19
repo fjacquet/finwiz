@@ -90,6 +90,7 @@ Results from A+ investment discovery process.
 **Purpose**: A+ investment opportunities
 
 **Fields**:
+
 ```python
 class APlusDiscoveryResult(BaseModel):
     # Discovery metadata
@@ -127,6 +128,7 @@ Individual investment opportunity from discovery process.
 **Purpose**: Discovered investment opportunity
 
 **Fields**:
+
 ```python
 class InvestmentCandidate(BaseModel):
     # Basic information
@@ -174,6 +176,7 @@ Ticker validation results.
 **Purpose**: Ticker symbol validation
 
 **Fields**:
+
 ```python
 class ValidatedTicker(BaseModel):
     # Input ticker
@@ -216,6 +219,7 @@ Generic validation result for various data types.
 **Purpose**: Generic validation results
 
 **Fields**:
+
 ```python
 class ValidationResult(BaseModel):
     # Validation status

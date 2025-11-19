@@ -341,7 +341,7 @@ def analyze_portfolio_holdings(self, portfolio: Portfolio) -> dict:
 
 ### When to Use Each Approach
 
-#### Use Python Scoring For:
+#### Use Python Scoring For
 
 - High-volume portfolio analysis (66+ holdings)
 - Production environments requiring consistency
@@ -349,7 +349,7 @@ def analyze_portfolio_holdings(self, portfolio: Portfolio) -> dict:
 - Regulatory environments requiring auditability
 - Performance-critical workflows
 
-#### Use AI Scoring For:
+#### Use AI Scoring For
 
 - Single-ticker deep analysis requiring nuanced reasoning
 - Research and development of new scoring methodologies
@@ -374,6 +374,7 @@ if os.getenv('DEEP_ANALYSIS_AI_SUMMARY', 'false').lower() == 'true':
 ```
 
 This provides:
+
 - **80-90% cost savings** ($0.01 vs $0.05-0.10 per ticker)
 - **75-85% time savings** (15-40 seconds vs 5-10 minutes)
 - **Best of both worlds**: Python reliability + AI insights

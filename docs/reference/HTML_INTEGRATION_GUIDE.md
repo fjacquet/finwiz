@@ -19,6 +19,7 @@ from finwiz.utils.html_generator import (
 ### 2. Replace JSON Saves
 
 **Before (JSON only):**
+
 ```python
 import json
 
@@ -29,6 +30,7 @@ def save_portfolio_analysis(data, output_path):
 ```
 
 **After (JSON + HTML):**
+
 ```python
 from finwiz.utils.html_generator import save_portfolio_review
 
@@ -201,6 +203,7 @@ enable_html_generation()
 ### Environment Variable Control
 
 Add to your `.env` file:
+
 ```bash
 # Enable/disable HTML generation
 FINWIZ_HTML_GENERATION=true
@@ -210,6 +213,7 @@ FINWIZ_TEMPLATES_DIR=/path/to/custom/templates
 ```
 
 Use in code:
+
 ```python
 import os
 from finwiz.utils.html_generator import html_generator

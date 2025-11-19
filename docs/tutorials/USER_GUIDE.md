@@ -244,6 +244,7 @@ cp -r backups/20250310/data/ .
 The `DeepAnalysisCrew` is a unified crew for comprehensive single-ticker analysis across all asset classes (stocks, ETFs, cryptocurrencies). It provides detailed grading (A+ to F) and comprehensive analysis for portfolio holdings evaluation.
 
 **Key Features:**
+
 - Single crew for all asset classes (no duplication)
 - Dynamic tool routing based on asset_class parameter
 - Fresh data for real money decisions
@@ -253,12 +254,14 @@ The `DeepAnalysisCrew` is a unified crew for comprehensive single-ticker analysi
 ### When to Use DeepAnalysisCrew
 
 **Use DeepAnalysisCrew for:**
+
 - ✅ Analyzing specific tickers you already own
 - ✅ Evaluating individual portfolio holdings
 - ✅ Making keep/sell decisions
 - ✅ Getting detailed grades (A+ to F)
 
 **Use Discovery Crews for:**
+
 - ✅ Finding NEW investment opportunities
 - ✅ Screening for "top 10" candidates
 - ✅ Discovering assets you don't own
@@ -330,6 +333,7 @@ The crew returns a `DeepAnalysisResult` with:
 - **Metadata**: ticker, asset_class, analyzed_at, data_freshness
 
 **Grade Mapping:**
+
 - A+ ≥ 0.95 (Exceptional)
 - A ≥ 0.85 (Excellent)
 - B ≥ 0.75 (Good)
@@ -354,10 +358,12 @@ The DeepAnalysisCrew integrates into the 6-phase flow:
 ### Performance
 
 **Expected Execution Time:**
+
 - Target: < 5 minutes per ticker
 - Typical: 2-3 minutes for complete analysis
 
 **API Efficiency:**
+
 - Smart batching of indicator requests
 - Context sharing between tasks
 - Parallel execution where possible
@@ -378,11 +384,13 @@ RISK_ASSESSMENT_USE_MINI=false
 ```
 
 **Benefits:**
+
 - Faster execution (GPT-5-mini is optimized for speed)
 - Lower cost per analysis
 - Maintains accuracy for straightforward risk calculations
 
 **When to disable:**
+
 - Complex risk scenarios requiring advanced reasoning
 - Regulatory compliance requiring specific model versions
 - Comparative analysis with baseline results
@@ -398,16 +406,19 @@ USE_MINIMAL_RISK_TOOLS=false
 ```
 
 **Benefits:**
+
 - Reduced tool initialization overhead
 - Faster agent startup time
 - Focused on essential risk calculation tools only
 
 **Minimal Tool Set Includes:**
+
 - `QuantitativeAnalysisTool` (core risk metrics)
 - `TickerValidationTool` (ticker validation)
 - Asset-specific tool (`EnhancedSECAnalysisTool`, `EnhancedETFAnalysisTool`, or `EnhancedCryptoAnalysisTool`)
 
 **When to disable:**
+
 - Need full tool set for comprehensive analysis
 - Debugging tool-related issues
 - Comparative analysis with baseline results
@@ -422,6 +433,7 @@ USE_MINIMAL_RISK_TOOLS=true
 ```
 
 **Performance Impact:**
+
 - Faster execution: 20-30% reduction in analysis time
 - Lower cost: Reduced LLM API costs
 - Maintained accuracy: Risk scores remain consistent
@@ -449,6 +461,7 @@ For detailed documentation, see [docs/DEEP_ANALYSIS_CREW.md](DEEP_ANALYSIS_CREW.
 FinWiz includes comprehensive resilience and recovery capabilities to ensure reliable execution of long-running portfolio analysis workflows. The system automatically handles failures, saves progress, and can resume interrupted analyses without losing work or wasting API quota.
 
 **Key Features:**
+
 - Automatic retry with exponential backoff for transient failures
 - Progress checkpointing using CrewAI native persistence
 - Resume capability for interrupted flows
@@ -460,12 +473,14 @@ FinWiz includes comprehensive resilience and recovery capabilities to ensure rel
 ### When to Use Resilience Features
 
 **Resilience features are automatically enabled for:**
+
 - ✅ Deep portfolio analysis (analyzing 10+ holdings)
 - ✅ Long-running workflows (>30 minutes)
 - ✅ Operations with external API dependencies
 - ✅ Production environments with reliability requirements
 
 **Benefits:**
+
 - **Reliability**: Automatic retry of failed operations (up to 3 attempts)
 - **Progress Preservation**: Never lose work due to interruptions
 - **Cost Efficiency**: Resume from last checkpoint without re-analyzing
@@ -500,18 +515,21 @@ FINWIZ_DEEP_ANALYSIS_PARALLEL_LIMIT=3   # Deep analysis parallel limit (default:
 The system automatically retries failed operations with intelligent exponential backoff:
 
 **Retryable Errors:**
+
 - Network connection failures
 - API timeouts
 - Rate limit errors (429 responses)
 - Temporary server errors (5xx responses)
 
 **Non-Retryable Errors:**
+
 - Invalid ticker symbols
 - Authentication failures
 - Validation errors
 - Malformed requests
 
 **Retry Behavior:**
+
 ```
 Attempt 1: Immediate execution
 Attempt 2: Wait 2 seconds (base delay)
@@ -520,6 +538,7 @@ Final: Mark as failed after 3 attempts
 ```
 
 **Example Log Output:**
+
 ```
 INFO: Analyzing AAPL (attempt 1/3)
 WARNING: Network error for AAPL, retrying in 2 seconds...
@@ -532,6 +551,7 @@ INFO: Successfully analyzed AAPL on attempt 2
 The system uses CrewAI's native `@persist()` decorator to automatically save progress after each flow method:
 
 **What Gets Saved:**
+
 - Portfolio analysis results
 - Deep analysis results for each holding
 - Alternative recommendations
@@ -540,11 +560,13 @@ The system uses CrewAI's native `@persist()` decorator to automatically save pro
 - Timing information (start time, estimated completion)
 
 **Checkpoint Location:**
+
 - Stored in `.finwiz/state/{flow_uuid}/` directory
 - Each flow execution has a unique UUID
 - State files are JSON format for easy inspection
 
 **Automatic Checkpointing:**
+
 ```python
 # Checkpoints are saved automatically after each method
 @persist()  # Class-level persistence
@@ -565,6 +587,7 @@ class FinwizFlow(Flow[FinwizState]):
 If a flow is interrupted (crash, network failure, manual stop), you can resume from the last checkpoint:
 
 **Manual Resume:**
+
 ```python
 from finwiz.flows.flow_orchestrator import FinwizFlow
 
@@ -575,6 +598,7 @@ result = flow.kickoff()
 ```
 
 **Automatic Resume (Optional):**
+
 ```bash
 # Enable automatic resume on restart
 export FINWIZ_AUTO_RESUME=true
@@ -584,6 +608,7 @@ uv run python src/finwiz/main.py
 ```
 
 **Resume Behavior:**
+
 - Checks for persisted state less than 24 hours old (configurable)
 - Skips already-completed holdings
 - Continues from last successful checkpoint
@@ -591,6 +616,7 @@ uv run python src/finwiz/main.py
 - Logs which holdings are being skipped vs analyzed
 
 **Example Log Output:**
+
 ```
 INFO: Found persisted state from 2025-03-10 14:30:00 (2 hours ago)
 INFO: Resume: Portfolio already analyzed, skipping
@@ -604,18 +630,21 @@ INFO: Progress: 46/66 (69.7%) - Success: 44, Failed: 2
 The system enforces timeouts to prevent indefinite hangs:
 
 **Per-Holding Timeout:**
+
 - Default: 5 minutes per holding
 - Configurable via `FINWIZ_HOLDING_TIMEOUT`
 - Applies to each individual holding analysis
 - Graceful cancellation before forced termination
 
 **Global Flow Timeout:**
+
 - Default: 2 hours for entire flow
 - Configurable via `FINWIZ_FLOW_TIMEOUT`
 - Applies to complete portfolio analysis
 - Saves checkpoint before termination
 
 **Timeout Behavior:**
+
 ```
 Holding timeout (5 min):
   - Attempt graceful cancellation
@@ -631,6 +660,7 @@ Global timeout (2 hours):
 ```
 
 **Example Log Output:**
+
 ```
 WARNING: Timeout: Deep analysis for TSLA exceeded 300s timeout
 INFO: Marked TSLA as failed, continuing with remaining holdings
@@ -642,6 +672,7 @@ INFO: Progress: 50/66 (75.8%) - Success: 48, Failed: 2, Timeout: 1
 Real-time progress tracking provides visibility into long-running analyses:
 
 **Tracked Metrics:**
+
 - Total holdings count
 - Holdings processed / remaining
 - Progress percentage
@@ -651,6 +682,7 @@ Real-time progress tracking provides visibility into long-running analyses:
 - Retry counts per holding
 
 **Progress Updates:**
+
 ```
 INFO: Starting deep analysis for 66 holdings
 INFO: Progress: 10/66 (15.2%) - Success: 9, Failed: 1 - ETA: 45 minutes
@@ -663,6 +695,7 @@ INFO: Completed: 66/66 (100.0%) - Success: 63, Failed: 3 - Total time: 52 minute
 ```
 
 **Accessing Progress Programmatically:**
+
 ```python
 # During flow execution
 flow = FinwizFlow()
@@ -680,6 +713,7 @@ print(f"Current: {flow.state.current_ticker}")
 The system classifies errors and provides actionable remediation suggestions:
 
 **Error Types:**
+
 - **Network**: Connection failures, DNS errors
 - **Timeout**: Operation exceeded time limit
 - **Rate Limit**: API quota exceeded
@@ -699,6 +733,7 @@ The system classifies errors and provides actionable remediation suggestions:
 | Unknown | Review error details and logs |
 
 **Error Report Example:**
+
 ```
 ERROR: Failed to analyze 3 holdings after all retries:
 
@@ -723,6 +758,7 @@ ERROR: Failed to analyze 3 holdings after all retries:
 The system exports comprehensive metrics for monitoring:
 
 **Metrics Exported:**
+
 - Flow UUID and execution timestamp
 - Total holdings and processing counts
 - Success rate and failure breakdown
@@ -731,11 +767,13 @@ The system exports comprehensive metrics for monitoring:
 - Error classification and remediation
 
 **Metrics Location:**
+
 - Exported to `.finwiz/metrics/{flow_uuid}.json`
 - JSON format for easy integration with dashboards
 - Includes all resilience-related metrics
 
 **Example Metrics File:**
+
 ```json
 {
   "flow_uuid": "abc123-def456-ghi789",
@@ -762,12 +800,14 @@ The system exports comprehensive metrics for monitoring:
 The system integrates with FinWiz's existing monitoring infrastructure:
 
 **AlertManager Integration:**
+
 - Critical alerts for high failure rates (>50%)
 - Includes failed holdings list in metadata
 - Configurable alert thresholds
 - Multi-channel notifications (email, SMS)
 
 **Example Alert:**
+
 ```
 CRITICAL: High Failure Rate in Deep Analysis
 - Failed: 35/66 holdings (53%)
@@ -782,6 +822,7 @@ CRITICAL: High Failure Rate in Deep Analysis
 **Issue: Flow hangs indefinitely**
 
 Solution: Check timeout configuration and increase if needed:
+
 ```bash
 export FINWIZ_HOLDING_TIMEOUT=600  # 10 minutes
 export FINWIZ_FLOW_TIMEOUT=14400   # 4 hours
@@ -790,6 +831,7 @@ export FINWIZ_FLOW_TIMEOUT=14400   # 4 hours
 **Issue: Too many retries causing delays**
 
 Solution: Reduce retry attempts or increase delays:
+
 ```bash
 export FINWIZ_MAX_RETRIES=2
 export FINWIZ_RETRY_BASE_DELAY=5
@@ -798,6 +840,7 @@ export FINWIZ_RETRY_BASE_DELAY=5
 **Issue: Cannot resume from checkpoint**
 
 Solution: Check state age and validity:
+
 ```bash
 # Check state files
 ls -lh .finwiz/state/
@@ -812,6 +855,7 @@ rm -rf .finwiz/state/
 **Issue: High failure rate**
 
 Solution: Check error classification and remediation:
+
 ```bash
 # Review error logs
 grep "ERROR" logs/finwiz.log | tail -n 50
@@ -829,6 +873,7 @@ cat .finwiz/metrics/latest.json | jq '.error_breakdown'
 **Issue: Progress not updating**
 
 Solution: Check logging configuration:
+
 ```bash
 # Enable verbose logging
 export LOG_LEVEL=INFO
@@ -840,26 +885,31 @@ tail -f logs/finwiz.log | grep "Progress:"
 ### Best Practices
 
 **1. Configure Appropriate Timeouts:**
+
 - Set holding timeout based on typical analysis time
 - Set flow timeout based on portfolio size
 - Allow buffer for retries and delays
 
 **2. Monitor Failure Rates:**
+
 - Review metrics after each run
 - Investigate if failure rate >10%
 - Adjust configuration based on patterns
 
 **3. Use Resume Capability:**
+
 - Enable for large portfolios (>50 holdings)
 - Useful for development and testing
 - Saves time and API quota
 
 **4. Tune Parallelization:**
+
 - Balance speed vs reliability
 - Reduce if hitting rate limits
 - Increase for faster execution
 
 **5. Review Error Reports:**
+
 - Check remediation suggestions
 - Fix systemic issues (API keys, network)
 - Update configuration as needed
@@ -867,18 +917,21 @@ tail -f logs/finwiz.log | grep "Progress:"
 ### Performance Impact
 
 **Overhead for Successful Execution:**
+
 - Checkpointing: ~10-50ms per method
 - Progress tracking: ~1ms per update
 - Error handling: ~1-5ms per operation
 - **Total overhead: <100ms** (negligible)
 
 **Overhead for Failed Execution:**
+
 - Retry with backoff: 2-60s per retry
 - 3 retries: 6-180s total delay
 - Timeout enforcement: 0s (prevents indefinite hangs)
 - **Total overhead: 6-180s per failed holding**
 
 **Benefits:**
+
 - ✅ Prevents complete workflow failures
 - ✅ Saves API quota on interruptions
 - ✅ Provides visibility into long operations
@@ -888,6 +941,7 @@ tail -f logs/finwiz.log | grep "Progress:"
 ### Advanced Configuration
 
 **Custom Retry Strategy:**
+
 ```python
 from finwiz.config.resilience_config import ResilienceConfig
 
@@ -901,6 +955,7 @@ config = ResilienceConfig(
 ```
 
 **Selective Persistence:**
+
 ```python
 # Only persist after important methods
 class CustomFlow(Flow[MyState]):
@@ -917,6 +972,7 @@ class CustomFlow(Flow[MyState]):
 ```
 
 **Custom Error Handling:**
+
 ```python
 from finwiz.utils.retry_handler import classify_error, get_remediation_suggestion
 

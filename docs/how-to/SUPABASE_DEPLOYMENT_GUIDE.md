@@ -5,6 +5,7 @@ This guide provides step-by-step instructions for deploying the Supabase timeout
 ## Overview
 
 The Supabase timeout fix implements:
+
 - Increased timeouts (10s read, 15s write)
 - Connectivity testing at startup
 - Graceful degradation when Supabase is unavailable
@@ -66,6 +67,7 @@ The Supabase timeout fix implements:
    ```
 
    Expected output:
+
    ```
    ✅ PASS: Read Timeout Configuration - Read timeout is 10.0s (expected: >=10.0s)
    ✅ PASS: Write Timeout Configuration - Write timeout is 15.0s (expected: >=15.0s)
@@ -85,6 +87,7 @@ The Supabase timeout fix implements:
    - **Circuit Breaker State**: Should remain CLOSED under normal conditions
 
    Check logs for timeout warnings:
+
    ```bash
    # Look for timeout warnings
    grep "Database operation timed out" logs/finwiz.log
@@ -141,6 +144,7 @@ The Supabase timeout fix implements:
    ```
 
    Expected output:
+
    ```
    ✅ PASS: Connectivity Test Timeout - Connectivity test timeout is 5.0s (expected: 5.0s)
    ✅ PASS: Connectivity Test Execution - Test completed in 0.45s (timeout: 5.0s), result: True
@@ -160,6 +164,7 @@ The Supabase timeout fix implements:
    ```
 
    Expected log messages:
+
    ```
    ✅ Supabase connectivity test passed (timeout: 5.0s)
    ✅ Cache service initialized successfully
@@ -263,17 +268,20 @@ The Supabase timeout fix implements:
 ### Key Metrics to Track
 
 1. **Supabase Metrics** (logged every 100 operations):
+
    ```
    Supabase Metrics: Available=True, Success Rate=95.2%, Avg Response Time=245.3ms, 
    Circuit Breaker=CLOSED, Total Ops=500, Successful=476, Failed=24, Timeouts=12
    ```
 
 2. **Cache Metrics**:
+
    ```
    Cache Metrics: Hits=150, Misses=50, Hit Rate=75.0%, Total=200, TTL=24h
    ```
 
 3. **Health Status** (at startup):
+
    ```
    📊 Supabase Health Status: Available=True, Circuit Breaker=CLOSED
    ```
@@ -281,18 +289,21 @@ The Supabase timeout fix implements:
 ### Log Patterns to Monitor
 
 **Success Patterns**:
+
 - `✅ Supabase connectivity test passed`
 - `✅ Cache service initialized successfully`
 - `✅ Cache HIT for {ticker}`
 - `✅ Cached {ticker}`
 
 **Warning Patterns** (expected, not errors):
+
 - `⚠️ Cache read timeout for {ticker} - proceeding with fresh analysis`
 - `⚠️ Cache write timeout for {ticker}`
 - `⚠️ Supabase connectivity test failed: {error}`
 - `⚠️ Caching disabled - analysis will proceed without cache`
 
 **Error Patterns** (investigate):
+
 - `Circuit breaker opened after N failures`
 - `Supabase operations suspended - caching disabled`
 - Repeated timeout warnings (>10% of operations)
@@ -328,11 +339,13 @@ If issues are detected:
 ### Rollback Phase 1
 
 1. Restore original timeout values:
+
    ```bash
    SUPABASE_READ_TIMEOUT=2.0
    SUPABASE_WRITE_TIMEOUT=5.0
    SUPABASE_MAX_RETRIES=3
    ```
+
 2. Restart application
 3. Monitor for original timeout issues
 
@@ -349,16 +362,20 @@ If issues are detected:
 **Symptoms**: Many timeout warnings in logs
 
 **Diagnosis**:
+
 ```bash
 grep "Database operation timed out" logs/finwiz.log | wc -l
 ```
 
 **Solutions**:
+
 1. Increase timeouts further:
+
    ```bash
    SUPABASE_READ_TIMEOUT=15.0
    SUPABASE_WRITE_TIMEOUT=20.0
    ```
+
 2. Check Supabase service status
 3. Verify network connectivity
 4. Consider disabling cache if persistent
@@ -368,16 +385,20 @@ grep "Database operation timed out" logs/finwiz.log | wc -l
 **Symptoms**: `Circuit breaker is open` messages, no operations succeeding
 
 **Diagnosis**:
+
 ```bash
 grep "Circuit breaker" logs/finwiz.log | tail -20
 ```
 
 **Solutions**:
+
 1. Check Supabase availability
 2. Increase recovery timeout:
+
    ```bash
    SUPABASE_CIRCUIT_BREAKER_TIMEOUT=120
    ```
+
 3. Restart application to reset circuit breaker
 4. Temporarily disable Supabase if service is down
 
@@ -386,21 +407,27 @@ grep "Circuit breaker" logs/finwiz.log | tail -20
 **Symptoms**: `Cache service disabled` at startup
 
 **Diagnosis**:
+
 ```bash
 grep "Cache service" logs/finwiz.log
 grep "connectivity test" logs/finwiz.log
 ```
 
 **Solutions**:
+
 1. Verify Supabase credentials:
+
    ```bash
    echo $SUPABASE_URL
    echo $SUPABASE_KEY | head -c 20
    ```
+
 2. Check connectivity test timeout:
+
    ```bash
    SUPABASE_CONNECTIVITY_TEST_TIMEOUT=10.0
    ```
+
 3. Verify `analysis_cache` table exists in Supabase
 4. Check Supabase service status
 
@@ -409,16 +436,21 @@ grep "connectivity test" logs/finwiz.log
 **Symptoms**: Application takes >5 seconds to start
 
 **Diagnosis**:
+
 ```bash
 grep "connectivity test" logs/finwiz.log
 ```
 
 **Solutions**:
+
 1. Reduce connectivity test timeout:
+
    ```bash
    SUPABASE_CONNECTIVITY_TEST_TIMEOUT=3.0
    ```
+
 2. Consider disabling connectivity test if not needed:
+
    ```bash
    CACHE_ENABLED=false
    ```

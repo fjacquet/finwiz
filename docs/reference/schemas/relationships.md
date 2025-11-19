@@ -59,6 +59,7 @@ class BaseAnalysis:
 ```
 
 **Inheritance Pattern:**
+
 - `TenKInsight` extends BaseAnalysis for stocks
 - `ETFFactsheet` extends BaseAnalysis for ETFs  
 - `CryptoThesis` extends BaseAnalysis for cryptocurrencies

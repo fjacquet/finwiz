@@ -51,21 +51,25 @@ Analyze individual stocks, ETFs, or cryptocurrencies.
 **Command**: `analyze` (default)
 
 **Usage**:
+
 ```bash
 uv run python src/finwiz/main.py --ticker TICKER --asset-class CLASS [OPTIONS]
 ```
 
 **Required Options**:
+
 - `--ticker TICKER`: Asset ticker symbol (e.g., AAPL, SPY, BTC)
 - `--asset-class CLASS`: Asset class (`stock`, `etf`, or `crypto`)
 
 **Optional Options**:
+
 - `--deep-analysis`: Enable comprehensive deep analysis
 - `--output-format FORMAT`: Output format (`html`, `json`, `both`) [default: `both`]
 - `--save-report`: Save HTML report to file
 - `--no-cache`: Disable caching for this analysis
 
 **Examples**:
+
 ```bash
 # Analyze Apple stock
 uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
@@ -87,11 +91,13 @@ Analyze complete investment portfolios.
 **Command**: `portfolio`
 
 **Usage**:
+
 ```bash
 uv run python src/finwiz/main.py --mode portfolio_review [OPTIONS]
 ```
 
 **Options**:
+
 - `--portfolio-file FILE`: Custom portfolio CSV file
 - `--asset-class CLASS`: Analyze specific asset class only
 - `--deep-analysis`: Enable deep analysis for all holdings
@@ -100,6 +106,7 @@ uv run python src/finwiz/main.py --mode portfolio_review [OPTIONS]
 - `--skip-alternatives`: Skip alternative investment suggestions
 
 **Examples**:
+
 ```bash
 # Analyze complete portfolio
 uv run python src/finwiz/main.py --mode portfolio_review
@@ -121,20 +128,24 @@ Analyze multiple assets in batch mode.
 **Command**: `batch`
 
 **Usage**:
+
 ```bash
 uv run python src/finwiz/main.py --mode batch --input-file FILE [OPTIONS]
 ```
 
 **Required Options**:
+
 - `--input-file FILE`: CSV file with tickers and asset classes
 
 **Optional Options**:
+
 - `--batch-size SIZE`: Number of assets to process in parallel [default: `5`]
 - `--output-format FORMAT`: Output format for each analysis
 - `--continue-on-error`: Continue processing if individual analyses fail
 - `--max-retries COUNT`: Maximum retry attempts for failed analyses [default: `3`]
 
 **Input File Format**:
+
 ```csv
 ticker,asset_class,name
 AAPL,stock,Apple Inc
@@ -143,6 +154,7 @@ BTC,crypto,Bitcoin
 ```
 
 **Examples**:
+
 ```bash
 # Batch analyze from CSV file
 uv run python src/finwiz/main.py --mode batch --input-file assets.csv
@@ -163,14 +175,17 @@ Discover new A+ investment opportunities.
 **Command**: `discover`
 
 **Usage**:
+
 ```bash
 uv run python src/finwiz/main.py --mode discovery --asset-class CLASS [OPTIONS]
 ```
 
 **Required Options**:
+
 - `--asset-class CLASS`: Asset class to discover (`stock`, `etf`, or `crypto`)
 
 **Optional Options**:
+
 - `--max-results COUNT`: Maximum opportunities to find [default: `10`]
 - `--min-score SCORE`: Minimum composite score threshold [default: `0.85`]
 - `--sector SECTOR`: Focus on specific sector
@@ -178,6 +193,7 @@ uv run python src/finwiz/main.py --mode discovery --asset-class CLASS [OPTIONS]
 - `--exclude-file FILE`: File with tickers to exclude
 
 **Examples**:
+
 ```bash
 # Discover A+ stocks
 uv run python src/finwiz/main.py --mode discovery --asset-class stock
@@ -201,11 +217,13 @@ Validate tickers, portfolios, or configuration.
 **Command**: `validate`
 
 **Usage**:
+
 ```bash
 uv run python src/finwiz/main.py --mode validate [OPTIONS]
 ```
 
 **Options**:
+
 - `--ticker TICKER`: Validate single ticker
 - `--portfolio-file FILE`: Validate portfolio CSV file
 - `--config-only`: Validate configuration only
@@ -213,6 +231,7 @@ uv run python src/finwiz/main.py --mode validate [OPTIONS]
 - `--fix-issues`: Attempt to fix validation issues
 
 **Examples**:
+
 ```bash
 # Validate single ticker
 uv run python src/finwiz/main.py --mode validate --ticker AAPL
@@ -234,22 +253,26 @@ Manage analysis cache.
 **Command**: `cache`
 
 **Usage**:
+
 ```bash
 uv run python src/finwiz/main.py --mode cache ACTION [OPTIONS]
 ```
 
 **Actions**:
+
 - `clear`: Clear all cache
 - `clean`: Clean expired cache entries
 - `stats`: Show cache statistics
 - `list`: List cached items
 
 **Options**:
+
 - `--cache-type TYPE`: Cache type to manage (`memory`, `file`, `all`) [default: `all`]
 - `--older-than DAYS`: Clear cache older than N days
 - `--ticker TICKER`: Manage cache for specific ticker
 
 **Examples**:
+
 ```bash
 # Clear all cache
 uv run python src/finwiz/main.py --mode cache clear
@@ -274,22 +297,26 @@ Manage FinWiz configuration.
 **Command**: `config`
 
 **Usage**:
+
 ```bash
 uv run python src/finwiz/main.py --mode config ACTION [OPTIONS]
 ```
 
 **Actions**:
+
 - `show`: Display current configuration
 - `test`: Test configuration and API connectivity
 - `init`: Initialize configuration from template
 - `validate`: Validate configuration file
 
 **Options**:
+
 - `--config-file FILE`: Configuration file path [default: `.env`]
 - `--output-format FORMAT`: Output format (`text`, `json`, `yaml`)
 - `--section SECTION`: Show specific configuration section
 
 **Examples**:
+
 ```bash
 # Show current configuration
 uv run python src/finwiz/main.py --mode config show
@@ -440,24 +467,28 @@ uv run python src/finwiz/main.py --mode validate --portfolio-file data/stock.csv
 ### Common Issues
 
 **Issue**: Command not found
+
 ```bash
 # Solution: Use full path to Python script
 uv run python src/finwiz/main.py --help
 ```
 
 **Issue**: API key errors
+
 ```bash
 # Solution: Test configuration
 uv run python src/finwiz/main.py --mode config test
 ```
 
 **Issue**: Slow performance
+
 ```bash
 # Solution: Increase batch size and enable caching
 uv run python src/finwiz/main.py --mode portfolio_review --batch-size 10
 ```
 
 **Issue**: Memory errors
+
 ```bash
 # Solution: Reduce batch size
 uv run python src/finwiz/main.py --mode portfolio_review --batch-size 3

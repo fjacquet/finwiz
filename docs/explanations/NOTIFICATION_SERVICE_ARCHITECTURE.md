@@ -14,7 +14,9 @@ The NotificationService provides email and SMS notification capabilities for por
 ### 1. Core Classes
 
 #### `NotificationService`
+
 Main service orchestrating notifications with the following responsibilities:
+
 - Provider registration and management
 - User preference storage
 - Alert notification dispatching
@@ -24,6 +26,7 @@ Main service orchestrating notifications with the following responsibilities:
 - History tracking and statistics
 
 **Key Methods**:
+
 ```python
 async def send_alert_notification(alert: PortfolioAlert, user_id: str) -> list[NotificationRecord]
 def _is_quiet_hours(preferences: NotificationPreferences) -> bool
@@ -36,25 +39,32 @@ def get_notification_statistics() -> dict[str, Any]
 ### 2. Notification Providers (Strategy Pattern)
 
 #### `NotificationProvider` (ABC)
+
 Abstract base class defining the provider interface:
+
 - `async send_notification()` - Send notification
 - `validate_recipient()` - Validate recipient format
 
 #### `EmailNotificationProvider`
+
 SMTP-based email notification provider:
+
 - HTML and plain text email generation using BeautifulSoup
 - SMTP connection management
 - Email address validation (regex-based)
 - Formatted email content with alert details, affected positions, and recommended actions
 
 **HTML Email Features**:
+
 - Severity-based color coding
 - Responsive design with styled sections
 - Formatted position deviations
 - Recommended action lists
 
 #### `SMSNotificationProvider`
+
 SMS notification provider (mock implementation):
+
 - Phone number validation (international format)
 - SMS message formatting (≤160 characters)
 - Concise alert summaries
@@ -62,7 +72,9 @@ SMS notification provider (mock implementation):
 ### 3. Data Models (Pydantic)
 
 #### `NotificationPreferences`
+
 User notification preferences:
+
 ```python
 class NotificationPreferences(BaseModel):
     # Contact information
@@ -85,7 +97,9 @@ class NotificationPreferences(BaseModel):
 ```
 
 #### `NotificationRecord`
+
 Record of sent notification:
+
 ```python
 class NotificationRecord(BaseModel):
     notification_id: str
@@ -105,12 +119,14 @@ class NotificationRecord(BaseModel):
 ### 4. Enums
 
 #### `NotificationType`
+
 - `EMAIL` - Email notifications
 - `SMS` - SMS notifications
 - `PUSH` - Push notifications (future)
 - `WEBHOOK` - Webhook notifications (future)
 
 #### `NotificationStatus`
+
 - `PENDING` - Notification queued
 - `SENT` - Notification sent
 - `DELIVERED` - Notification delivered
@@ -120,9 +136,11 @@ class NotificationRecord(BaseModel):
 ## Key Features
 
 ### 1. Quiet Hours Detection
+
 **Implementation**: `NotificationService._is_quiet_hours()`
 
 Respects user-defined quiet hours with support for midnight-spanning periods:
+
 ```python
 def _is_quiet_hours(self, preferences: NotificationPreferences) -> bool:
     current_hour = datetime.now().hour
@@ -136,9 +154,11 @@ def _is_quiet_hours(self, preferences: NotificationPreferences) -> bool:
 ```
 
 ### 2. Rate Limiting
+
 **Implementation**: `NotificationService._is_rate_limited()`
 
 Prevents notification spam by enforcing per-hour limits:
+
 ```python
 def _is_rate_limited(self, user_id: str, preferences: NotificationPreferences) -> bool:
     one_hour_ago = datetime.now() - timedelta(hours=1)
@@ -151,14 +171,18 @@ def _is_rate_limited(self, user_id: str, preferences: NotificationPreferences) -
 ```
 
 ### 3. Alert Severity Filtering
+
 Different notification types can have different severity thresholds:
+
 - **Email**: Default to WARNING, ERROR, CRITICAL
 - **SMS**: Default to ERROR, CRITICAL (more urgent only)
 
 ### 4. Message Formatting
+
 **Implementation**: `NotificationService._create_notification_message()`
 
 Customizable message content based on user preferences:
+
 - Base alert message (always included)
 - Affected positions list (if `include_detailed_analysis=True`)
 - Deviation percentages (if available)
@@ -167,13 +191,17 @@ Customizable message content based on user preferences:
 ## Test Fix Applied
 
 ### Problem
+
 The `test_should_detect_quiet_hours_correctly` test was failing with:
+
 ```
 AttributeError: 'NoneType' object has no attribute 'now'
 ```
 
 ### Root Cause
+
 Incorrect mock configuration when patching `datetime` with pytest-mock:
+
 ```python
 # ❌ WRONG - mocker.patch() returns the mock, not None
 with mocker.patch("finwiz.tools.notification_service.datetime") as mock_datetime:
@@ -181,7 +209,9 @@ with mocker.patch("finwiz.tools.notification_service.datetime") as mock_datetime
 ```
 
 ### Solution
+
 Properly configure the mock datetime object with `now()` method returning a mock with `hour` attribute:
+
 ```python
 # ✅ CORRECT - Configure mock return value first
 mock_now_quiet = mocker.Mock()
@@ -191,7 +221,9 @@ mock_datetime_quiet.now.return_value = mock_now_quiet
 ```
 
 ### Changes Made
+
 **File**: `tests/unit/tools/test_notification_service.py`
+
 - Fixed `test_should_detect_quiet_hours_correctly` to properly mock `datetime.now()`
 - Created separate mock objects for quiet hours (23:00) and active hours (10:00)
 - Removed unnecessary `with` context manager (pytest-mock auto-cleans up)
@@ -201,22 +233,26 @@ mock_datetime_quiet.now.return_value = mock_now_quiet
 ### Test Coverage (25 tests)
 
 **NotificationPreferences** (3 tests):
+
 - Valid data creation
 - Default values
 - Validation error handling
 
 **EmailNotificationProvider** (6 tests):
+
 - Email address validation (valid/invalid)
 - Email sending (success/failure)
 - HTML email content generation
 - Plain text email content generation
 
 **SMSNotificationProvider** (4 tests):
+
 - Phone number validation (valid/invalid)
 - SMS sending
 - SMS message formatting (≤160 chars)
 
 **NotificationService** (12 tests):
+
 - Service initialization
 - Provider registration
 - User preferences management
@@ -230,11 +266,13 @@ mock_datetime_quiet.now.return_value = mock_now_quiet
 ### Mock Strategy
 
 **External Dependencies Mocked**:
+
 1. **SMTP** - `smtplib.SMTP` mocked with `mocker.patch()`
 2. **DateTime** - `datetime.now()` mocked for time-based tests
 3. **SMS API** - Mock implementation (no actual API calls)
 
 **Not Mocked**:
+
 - Pydantic models (real validation)
 - Internal logic (quiet hours calculation, rate limiting)
 - Message formatting
@@ -297,21 +335,25 @@ print(f"Success rate: {stats['success_rate']:.1%}")
 ## Best Practices
 
 ### 1. Provider Pattern
+
 - All providers implement `NotificationProvider` ABC
 - Easy to add new notification channels (PUSH, WEBHOOK)
 - Each provider handles its own validation and formatting
 
 ### 2. Pydantic Validation
+
 - All data models use Pydantic for validation
 - Type safety with `str | None` (Python 3.12+)
 - Clear validation errors for invalid data
 
 ### 3. pytest-mock Usage
+
 - Always use `mocker` fixture (NEVER `unittest.mock`)
 - Configure mock return values before use
 - Let pytest-mock handle cleanup (no context managers needed)
 
 ### 4. Async/Await Pattern
+
 - All notification sending is async
 - Supports concurrent notification dispatch
 - Non-blocking for high-volume scenarios
@@ -335,12 +377,14 @@ print(f"Success rate: {stats['success_rate']:.1%}")
 ## Key Lessons Learned
 
 ### pytest-mock Best Practices
+
 1. **Configure before use**: Always set up mock return values before calling mocked methods
 2. **Explicit mocking**: Create mock objects explicitly with `mocker.Mock()`
 3. **Attribute access**: Use attribute assignment for simple values: `mock.hour = 23`
 4. **No context managers**: pytest-mock auto-cleans up; `with` statement not needed
 
 ### Datetime Mocking Pattern
+
 ```python
 # Create mock datetime object with specific hour
 mock_now = mocker.Mock()
@@ -354,6 +398,7 @@ mock_datetime.now.return_value = mock_now
 ```
 
 ### Test Organization
+
 - Group tests by class (`TestNotificationService`, `TestEmailNotificationProvider`)
 - Use descriptive test names: `test_should_<action>_when_<condition>`
 - Arrange-Act-Assert pattern with clear comments
@@ -362,6 +407,6 @@ mock_datetime.now.return_value = mock_now
 ## References
 
 - **CLAUDE.md**: FinWiz testing standards (pytest-mock required)
-- **pytest-mock**: https://pytest-mock.readthedocs.io/
-- **Pydantic**: https://docs.pydantic.dev/latest/
-- **BeautifulSoup**: https://www.crummy.com/software/BeautifulSoup/ (HTML email generation)
+- **pytest-mock**: <https://pytest-mock.readthedocs.io/>
+- **Pydantic**: <https://docs.pydantic.dev/latest/>
+- **BeautifulSoup**: <https://www.crummy.com/software/BeautifulSoup/> (HTML email generation)

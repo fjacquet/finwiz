@@ -119,6 +119,7 @@ def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
 ### Configuration Examples
 
 **Optimal Performance (Recommended)**:
+
 ```bash
 # Maximum speed with Yahoo Finance only
 BATCH_PREFETCH_ENABLED=true
@@ -129,6 +130,7 @@ BATCH_PREFETCH_MIN_HOLDINGS=10
 ```
 
 **Premium Alpha Vantage Setup**:
+
 ```bash
 # For users with premium Alpha Vantage API
 BATCH_PREFETCH_ENABLED=true
@@ -139,6 +141,7 @@ BATCH_PREFETCH_MIN_HOLDINGS=5
 ```
 
 **Memory-Constrained Environment**:
+
 ```bash
 # Smaller batches for limited memory
 BATCH_PREFETCH_ENABLED=true
@@ -148,6 +151,7 @@ BATCH_PREFETCH_MIN_HOLDINGS=15
 ```
 
 **Debugging/Development**:
+
 ```bash
 # Disable batch processing for debugging
 BATCH_PREFETCH_ENABLED=false
@@ -187,6 +191,7 @@ print(f"Minimum holdings for batch: {config.min_holdings_for_batch}")
 - **Technical Data**: Moving averages, volatility, beta
 
 **Performance Characteristics**:
+
 - **Speed**: ~2-5 seconds for 66 tickers
 - **Rate Limit**: 600 requests/minute (very generous)
 - **Coverage**: All essential data for comprehensive analysis
@@ -201,6 +206,7 @@ print(f"Minimum holdings for batch: {config.min_holdings_for_batch}")
 - **Earnings Data**: Quarterly earnings, earnings surprises
 
 **Performance Characteristics**:
+
 - **Speed**: ~13 minutes for 66 tickers (free tier)
 - **Rate Limit**: 5 calls/minute (free), 75 calls/minute (premium)
 - **Coverage**: Supplementary data (Yahoo Finance covers essentials)
@@ -508,6 +514,7 @@ Detailed metrics are saved to JSON for analysis:
 ### Optimization Strategies
 
 1. **Portfolio Size-Based Configuration**:
+
    ```python
    def optimize_for_portfolio_size(portfolio_size: int) -> dict[str, str]:
        """Optimize configuration based on portfolio size."""
@@ -529,6 +536,7 @@ Detailed metrics are saved to JSON for analysis:
    ```
 
 2. **Memory-Based Configuration**:
+
    ```python
    def optimize_for_memory(available_memory_gb: float) -> dict[str, str]:
        """Optimize configuration based on available memory."""
@@ -541,6 +549,7 @@ Detailed metrics are saved to JSON for analysis:
    ```
 
 3. **API Tier-Based Configuration**:
+
    ```python
    def optimize_for_api_tier(has_premium_alpha_vantage: bool) -> dict[str, str]:
        """Optimize configuration based on API tier."""
@@ -562,6 +571,7 @@ Detailed metrics are saved to JSON for analysis:
 ### Common Issues
 
 **Issue**: Batch processing is slower than expected
+
 ```bash
 # Check configuration
 echo "BATCH_PREFETCH_ENABLED: $BATCH_PREFETCH_ENABLED"
@@ -573,6 +583,7 @@ export ENABLE_ALPHA_VANTAGE=false
 ```
 
 **Issue**: High memory usage during batch processing
+
 ```bash
 # Check current memory usage
 free -h
@@ -582,6 +593,7 @@ export DEEP_ANALYSIS_BATCH_SIZE=3
 ```
 
 **Issue**: Frequent fallback to sequential mode
+
 ```bash
 # Check logs for fallback reasons
 grep "Falling back to sequential mode" logs/finwiz.log
@@ -593,6 +605,7 @@ grep "Falling back to sequential mode" logs/finwiz.log
 ```
 
 **Issue**: Individual tickers failing consistently
+
 ```bash
 # Check for specific ticker issues
 grep "Failed to process.*data for" logs/finwiz.log
@@ -606,6 +619,7 @@ grep "Failed to process.*data for" logs/finwiz.log
 ### Performance Debugging
 
 **Monitor Batch Processing Performance**:
+
 ```python
 from finwiz.utils.performance_monitor import PerformanceMonitor
 
@@ -624,6 +638,7 @@ with monitor.track_batch_processing() as tracker:
 ```
 
 **Analyze Performance Metrics**:
+
 ```python
 import json
 from pathlib import Path
@@ -676,6 +691,7 @@ This system enables FinWiz to scale from small portfolios to large institutional
 **Version**: 1.0  
 **Last Updated**: 2025-01-25  
 **Related Documentation**:
+
 - [Performance Configuration Guide](PERFORMANCE_CONFIGURATION.md)
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
 - [Flow Architecture Documentation](FLOW_ARCHITECTURE.md)

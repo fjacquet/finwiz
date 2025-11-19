@@ -196,6 +196,7 @@ Use reference documentation when you:
 - ✅ Need API signatures
 
 **Don't use reference for**:
+
 - ❌ Learning FinWiz (use [Tutorials](../tutorials/index.md))
 - ❌ Solving specific problems (use [How-To Guides](../how-to/index.md))
 - ❌ Understanding concepts (use [Explanations](../explanations/index.md))

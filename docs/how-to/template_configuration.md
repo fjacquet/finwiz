@@ -46,6 +46,7 @@ src/finwiz/templates/
 All report templates extend the base template:
 
 {% raw %}
+
 ```jinja
 {% extends "crew_reports/base.html" %}
 
@@ -55,6 +56,7 @@ All report templates extend the base template:
 <!-- Template-specific content -->
 {% endblock %}
 ```
+
 {% endraw %}
 
 ## Deep Analysis Template Structure
@@ -138,6 +140,7 @@ template_data = {
 All templates use professional French financial terminology:
 
 {% raw %}
+
 ```jinja2
 <!-- Executive Summary -->
 <h2>📋 Résumé Exécutif</h2>
@@ -151,9 +154,11 @@ All templates use professional French financial terminology:
 <h2>💡 Recommandation</h2>
 <p>Notre recommandation est de <strong>{{ recommendation }}</strong> cet actif</p>
 ```
+
 {% endraw %}
 
 **Key French Terms:**
+
 - **Résumé Exécutif**: Executive Summary
 - **Recommandation**: Recommendation
 - **Métriques Clés**: Key Metrics
@@ -216,6 +221,7 @@ body {
 Templates dynamically show relevant metrics based on asset class:
 
 {% raw %}
+
 ```jinja
 
 <!-- Stock-specific metrics -->
@@ -249,6 +255,7 @@ Templates dynamically show relevant metrics based on asset class:
 {% endif %}
 
 ```
+
 {% endraw %}
 
 ### Conditional Formatting
@@ -256,6 +263,7 @@ Templates dynamically show relevant metrics based on asset class:
 Templates include conditional CSS classes based on values:
 
 {% raw %}
+
 ```jinja
 
 <!-- Risk-based color coding -->
@@ -270,9 +278,11 @@ Templates include conditional CSS classes based on values:
 </p>
 
 ```
+
 {% endraw %}
 
 **CSS Classes:**
+
 ```css
 .risk-low { color: #27ae60; }      /* Green for low risk */
 .risk-medium { color: #f39c12; }   /* Orange for medium risk */
@@ -294,6 +304,7 @@ To add a new section to the template:
 
 1. **Define the section structure**:
 {% raw %}
+
 ```jinja
 
 <!-- New Performance Metrics Section -->
@@ -312,9 +323,11 @@ To add a new section to the template:
 </div>
 
 ```
+
 {% endraw %}
 
 2. **Add corresponding CSS**:
+
 ```css
 .performance-metrics {
     margin: 2rem 0;
@@ -329,6 +342,7 @@ To add a new section to the template:
 ```
 
 3. **Update data structure**:
+
 ```python
 template_data["performance_data"] = {
     "sharpe_ratio": 1.25,
@@ -372,11 +386,13 @@ jinja_env.filters['risk_level'] = risk_level_text
 
 **Usage in templates**:
 {% raw %}
+
 ```jinja2
 <p>Prix: {{ current_price|currency("USD") }}</p>
 <p>Croissance: {{ revenue_growth|percentage(1) }}</p>
 <p>Risque: {{ risk_score|risk_level }}</p>
 ```
+
 {% endraw %}
 
 ### Template Inheritance
@@ -384,6 +400,7 @@ jinja_env.filters['risk_level'] = risk_level_text
 Create specialized templates by extending the base:
 
 {% raw %}
+
 ```jinja
 
 <!-- etf_deep_analysis_report.html.j2 -->
@@ -419,6 +436,7 @@ Create specialized templates by extending the base:
 {% endblock %}
 
 ```
+
 {% endraw %}
 
 ## Report Generation
@@ -469,12 +487,14 @@ class DeepAnalysisReportGenerator:
 ### Performance Characteristics
 
 **Template Rendering Performance:**
+
 - **Execution Time**: <100ms per report
 - **Memory Usage**: <10MB per report
 - **CPU Usage**: Minimal (template compilation cached)
 - **Scalability**: 1000+ reports per minute
 
 **Benefits over AI Generation:**
+
 - **Speed**: 100-1000x faster than AI report generation
 - **Cost**: $0 vs $0.01-0.05 per report
 - **Consistency**: 100% consistent formatting
@@ -678,6 +698,7 @@ def monitor_template_performance():
 ### Common Issues
 
 **Issue**: Template not found
+
 ```python
 # Solution: Check template path and loader configuration
 template_dir = Path(__file__).parent.parent / "templates"
@@ -688,6 +709,7 @@ env = Environment(loader=loader)
 ```
 
 **Issue**: Missing template variables
+
 ```python
 # Solution: Provide default values
 template_data = {
@@ -702,6 +724,7 @@ template_data = {
 
 **Issue**: Formatting errors
 {% raw %}
+
 ```jinja
 
 <!-- Solution: Use safe filters and error handling -->
@@ -714,6 +737,7 @@ template_data = {
 {% endif %}
 
 ```
+
 {% endraw %}
 
 ### Debug Mode
@@ -755,6 +779,7 @@ This template system enables FinWiz to generate high-quality reports at scale wh
 **Version**: 1.0  
 **Last Updated**: 2025-01-25  
 **Related Documentation**:
+
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
 - Deep Analysis Report Generator API
 - [Template Testing Guide](TEMPLATE_TESTING.md)

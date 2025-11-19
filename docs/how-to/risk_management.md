@@ -26,12 +26,14 @@ Effective risk management is fundamental to successful investing. FinWiz provide
 ### Risk Components
 
 **Systematic Risk (Market Risk)**
+
 - Market volatility correlation
 - Sector-specific risks
 - Economic cycle sensitivity
 - Interest rate sensitivity
 
 **Idiosyncratic Risk (Asset-Specific)**
+
 - Company fundamentals
 - Management quality
 - Competitive position
@@ -75,6 +77,7 @@ print(f"Concentration Risk: {portfolio_risk.concentration_risk:.2%}")
 ### 1. Diversification
 
 **Asset Class Diversification**
+
 ```python
 # Recommended allocation ranges
 allocation_targets = {
@@ -85,11 +88,13 @@ allocation_targets = {
 ```
 
 **Geographic Diversification**
+
 - Domestic: 60-70%
 - International Developed: 20-30%
 - Emerging Markets: 5-15%
 
 **Sector Diversification**
+
 - No single sector > 25%
 - Technology exposure < 30%
 - Defensive sectors: 20-40%
@@ -97,6 +102,7 @@ allocation_targets = {
 ### 2. Position Sizing
 
 **Risk-Based Position Sizing**
+
 ```python
 def calculate_position_size(risk_score, portfolio_value, max_risk_per_position=0.02):
     """Calculate position size based on risk score."""
@@ -111,6 +117,7 @@ def calculate_position_size(risk_score, portfolio_value, max_risk_per_position=0
 ```
 
 **Position Limits**
+
 - Maximum single position: 10% of portfolio
 - Maximum sector exposure: 25% of portfolio
 - Maximum country exposure: 15% for non-domestic
@@ -118,6 +125,7 @@ def calculate_position_size(risk_score, portfolio_value, max_risk_per_position=0
 ### 3. Risk Monitoring
 
 **Continuous Monitoring**
+
 ```python
 from finwiz.monitoring import RiskMonitor
 
@@ -138,6 +146,7 @@ monitor.add_alert(
 ```
 
 **Risk Reporting**
+
 - Daily risk metrics updates
 - Weekly portfolio risk reports
 - Monthly stress testing
@@ -236,12 +245,14 @@ def allocate_by_risk_contribution(assets, risk_budget):
 ### Risk Limits
 
 **Portfolio-Level Limits**
+
 - Maximum portfolio volatility: 18%
 - Maximum portfolio beta: 1.2
 - Maximum correlation with market: 0.85
 - Maximum drawdown tolerance: 20%
 
 **Position-Level Limits**
+
 - Maximum position volatility: 35%
 - Maximum position beta: 2.0
 - Minimum liquidity: $1M daily volume

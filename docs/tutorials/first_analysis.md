@@ -37,6 +37,7 @@ Before starting, make sure you have:
 For this tutorial, we'll analyze Apple Inc. (AAPL), but you can substitute any stock ticker.
 
 **Good first choices:**
+
 - **Stocks**: AAPL, MSFT, GOOGL, TSLA
 - **ETFs**: SPY, VTI, QQQ, VOO
 - **Crypto**: BTC, ETH (if you have crypto API keys)
@@ -53,6 +54,7 @@ uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
 ```
 
 **What happens next:**
+
 1. FinWiz validates the ticker symbol
 2. Fetches current market data
 3. Analyzes fundamentals and technicals
@@ -103,6 +105,7 @@ Confidence: 87%
 ```
 
 **Key metrics:**
+
 - **Grade**: Letter grade from A+ (best) to F (worst)
 - **Composite Score**: Numerical score combining all factors
 - **Recommendation**: BUY, HOLD, or SELL
@@ -117,6 +120,7 @@ Risk Score: 3/10 🟢 (Lower is better)
 ```
 
 **Score breakdown:**
+
 - **Fundamental**: Financial health, growth, valuation
 - **Technical**: Price trends, momentum, support/resistance
 - **Risk**: Overall risk level (1=very low, 10=very high)
@@ -133,6 +137,7 @@ Stop Loss: $135.00 (-10.0%)
 ```
 
 **How to use:**
+
 - **Buy Target**: Good price to purchase
 - **Sell Target**: Take profit level
 - **Stop Loss**: Exit if price falls here
@@ -148,6 +153,7 @@ Risk Factors:
 ```
 
 **Risk categories:**
+
 - 1-2: Very Low Risk
 - 3-4: Low Risk
 - 5-6: Moderate Risk
@@ -170,12 +176,14 @@ Risk Factors:
 ### What Influences the Grade
 
 **Positive factors:**
+
 - Strong financial metrics (revenue growth, profitability)
 - Positive technical indicators (uptrend, momentum)
 - Low risk profile
 - Reasonable valuation
 
 **Negative factors:**
+
 - Declining fundamentals
 - Negative technical signals
 - High risk factors
@@ -186,6 +194,7 @@ Risk Factors:
 ### If You Get an A+ or A Grade
 
 **Consider buying if:**
+
 - Price is at or below the buy target
 - You have available investment capital
 - The asset fits your portfolio strategy
@@ -194,6 +203,7 @@ Risk Factors:
 ### If You Get a B or C Grade
 
 **Consider holding if:**
+
 - You already own the asset
 - Fundamentals are stable
 - Technical outlook is neutral
@@ -202,6 +212,7 @@ Risk Factors:
 ### If You Get a D or F Grade
 
 **Consider avoiding or selling if:**
+
 - Fundamental problems identified
 - Technical breakdown occurring
 - High risk factors present
@@ -220,6 +231,7 @@ uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
 ```
 
 **Deep analysis includes:**
+
 - SEC filing analysis (10-K, 10-Q)
 - Advanced technical indicators
 - Sentiment analysis from news
@@ -243,6 +255,7 @@ uv run python src/finwiz/main.py --ticker SPY --asset-class etf
 ```
 
 **ETF analysis includes:**
+
 - Expense ratio evaluation
 - Holdings analysis
 - Tracking error assessment
@@ -311,6 +324,7 @@ Reason: Limited data available
 ```
 
 **Possible causes:**
+
 - New IPO with limited history
 - Low trading volume
 - Recent corporate actions
@@ -330,12 +344,14 @@ After your first successful analysis:
 ### Exercise 1: Compare Tech Stocks
 
 Analyze these tech stocks and compare their grades:
+
 - AAPL (Apple)
 - MSFT (Microsoft)
 - GOOGL (Google)
 - AMZN (Amazon)
 
 **Questions to consider:**
+
 - Which has the highest grade?
 - Which has the lowest risk?
 - Which offers the best value?
@@ -343,11 +359,13 @@ Analyze these tech stocks and compare their grades:
 ### Exercise 2: ETF Comparison
 
 Compare these popular ETFs:
+
 - SPY (S&P 500)
 - VTI (Total Stock Market)
 - QQQ (Nasdaq 100)
 
 **Look for:**
+
 - Expense ratio differences
 - Diversification levels
 - Performance metrics
@@ -355,11 +373,13 @@ Compare these popular ETFs:
 ### Exercise 3: Risk Assessment
 
 Find examples of:
+
 - Low risk investment (score 1-3)
 - Moderate risk investment (score 4-6)
 - High risk investment (score 7-10)
 
 **Analyze:**
+
 - What factors contribute to each risk level?
 - How does risk affect the overall grade?
 
@@ -374,6 +394,7 @@ Congratulations! You've completed your first FinWiz analysis. You now know how t
 ✅ Make informed investment decisions  
 
 **Key takeaways:**
+
 - Grades provide quick quality assessment
 - Composite scores offer detailed evaluation
 - Risk scores help manage portfolio risk
@@ -381,6 +402,7 @@ Congratulations! You've completed your first FinWiz analysis. You now know how t
 - Confidence levels indicate reliability
 
 **Remember:**
+
 - FinWiz provides analysis, not financial advice
 - Always do your own research
 - Consider your personal risk tolerance

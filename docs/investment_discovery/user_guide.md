@@ -394,7 +394,6 @@ The A+ Investment System identifies and monitors exceptional investment opportun
 2. **Scoring**: Evaluates investments using comprehensive multi-factor analysis
 3. **Monitoring**: Continuously tracks A+ investments to ensure quality maintenance
 
-
 ## A+ Monitoring
 
 ### Continuous Monitoring
@@ -480,7 +479,6 @@ uv run python -m finwiz.tools.a_plus_monitoring_cli alerts
 uv run python -m finwiz.tools.a_plus_monitoring_cli stop
 ```
 
-
 ## Portfolio Integration
 
 ### Discovery Integration
@@ -558,6 +556,7 @@ dashboard = await orchestrator.get_monitoring_dashboard()
 ```
 
 ## Best Practices
+
 ### Portfolio Integration
 
 1. **Gradual Transition**: Don't rush to 100% A+ allocation
@@ -644,7 +643,6 @@ monitoring:
 3. **Rebalance Regularly**: Quarterly rebalancing recommended
 4. **Maintain Diversification**: Don't sacrifice diversification for A+ grade
 
-
 ## Configuration
 
 ### Environment Variables
@@ -689,4 +687,3 @@ monitoring:
 - [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - Portfolio analysis
 - [Alternative Finder](api_reference.md) - Alternative finding tool
 - [API Reference](api_reference.md) - Complete API documentation
-

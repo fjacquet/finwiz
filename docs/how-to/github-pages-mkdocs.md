@@ -19,6 +19,7 @@ To disable Jekyll processing, we create a `.nojekyll` file in the root of the bu
 The `.nojekyll` file is automatically created during the build process:
 
 **In `scripts/build_docs.py`:**
+
 ```python
 # Create .nojekyll file to disable GitHub Pages Jekyll processing
 nojekyll_file = self.build_dir / ".nojekyll"
@@ -26,10 +27,11 @@ nojekyll_file.touch()
 ```
 
 **In `Makefile`:**
+
 ```makefile
 docs-build:
-	uv run mkdocs build --clean
-	touch site/.nojekyll
+ uv run mkdocs build --clean
+ touch site/.nojekyll
 ```
 
 ### GitHub Actions Workflow
@@ -52,6 +54,7 @@ After deployment, verify that GitHub Pages is serving MkDocs correctly:
 ## Deployment Commands
 
 ### Local Build
+
 ```bash
 # Standard build (includes .nojekyll)
 make docs-build
@@ -61,6 +64,7 @@ make docs-build-production
 ```
 
 ### Manual Deployment
+
 ```bash
 # Deploy to GitHub Pages
 make docs-deploy
@@ -84,6 +88,7 @@ The documentation is automatically deployed when:
 **Symptom**: CSS, JavaScript, or images return 404 errors
 
 **Solution**: Verify `.nojekyll` file exists in deployed site:
+
 ```bash
 # Check locally
 ls -la site/.nojekyll
@@ -96,7 +101,8 @@ curl -I https://your-username.github.io/finwiz/.nojekyll
 
 **Symptom**: Search returns no results or fails to load
 
-**Solution**: 
+**Solution**:
+
 1. Verify `search/search_index.json` exists in build
 2. Check browser console for JavaScript errors
 3. Ensure `.nojekyll` file is present
@@ -106,6 +112,7 @@ curl -I https://your-username.github.io/finwiz/.nojekyll
 **Symptom**: Internal links return 404 errors
 
 **Solution**:
+
 1. Run link validation: `make docs-validate`
 2. Check `use_directory_urls` setting in `mkdocs.yml`
 3. Verify relative paths in markdown files

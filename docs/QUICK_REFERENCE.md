@@ -21,6 +21,7 @@ make docs-clean
 ## Local Preview
 
 ### With Jekyll (recommended)
+
 ```bash
 cd docs
 jekyll serve --baseurl '' --livereload
@@ -28,6 +29,7 @@ jekyll serve --baseurl '' --livereload
 ```
 
 ### With Python
+
 ```bash
 cd docs
 python3 -m http.server 8000
@@ -98,6 +100,7 @@ def hello():
 ```
 
 [Use descriptive link text](path/to/file.md)
+
 ```
 
 ## Links
@@ -110,6 +113,7 @@ def hello():
 ```
 
 ### External Links
+
 ```markdown
 [GitHub](https://github.com/fjacquet/finwiz)
 ```
@@ -117,12 +121,14 @@ def hello():
 ## GitHub Pages
 
 ### Enable Pages
+
 1. Settings → Pages
 2. Source: Deploy from branch
 3. Branch: `main`, Folder: `/docs`
 4. Save
 
 ### Check Deployment
+
 - Actions tab → See build progress
 - Environments → Deployment history
 - Visit: `https://[username].github.io/finwiz`
@@ -130,6 +136,7 @@ def hello():
 ## Validation
 
 ### Before Commit
+
 ```bash
 # Check markdown style
 make docs-lint
@@ -142,6 +149,7 @@ make docs-serve
 ```
 
 ### CI/CD
+
 - Automatic validation on push
 - Check Actions tab for status
 - Fix any errors before merging
@@ -149,16 +157,19 @@ make docs-serve
 ## Common Issues
 
 ### 404 Errors
+
 - Check file paths are correct
 - Ensure case sensitivity matches
 - Use relative links without leading `/`
 
 ### Styling Issues
+
 - Test locally with Jekyll
 - Add custom CSS if needed
 - Keep styling simple
 
 ### Build Failures
+
 - Check Actions tab for errors
 - Validate YAML front matter
 - Ensure all links are valid

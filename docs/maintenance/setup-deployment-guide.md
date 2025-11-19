@@ -429,9 +429,9 @@ For custom domains:
 
 ### Documentation
 
-- **MkDocs**: https://www.mkdocs.org/
-- **Material Theme**: https://squidfunk.github.io/mkdocs-material/
-- **Diátaxis Framework**: https://diataxis.fr/
+- **MkDocs**: <https://www.mkdocs.org/>
+- **Material Theme**: <https://squidfunk.github.io/mkdocs-material/>
+- **Diátaxis Framework**: <https://diataxis.fr/>
 
 ### Getting Help
 
@@ -441,7 +441,6 @@ For custom domains:
 4. **External resources**: MkDocs and Material theme documentation
 
 ### Contributing
-
 
 See the Content Creation Guide and Style Guide for detailed contribution guidelines.
 

@@ -460,12 +460,14 @@ async def run_discovery():
 ### 1. Orchestrator Communication
 
 ✅ **DO**:
+
 - Use state for persistent data
 - Return data for downstream listeners
 - Use error handling orchestrator for crew execution
 - Keep orchestrators focused on single responsibility
 
 ❌ **DON'T**:
+
 - Create circular dependencies
 - Store large data in memory
 - Skip error handling
@@ -474,12 +476,14 @@ async def run_discovery():
 ### 2. State Management
 
 ✅ **DO**:
+
 - Update state through orchestrators
 - Use Pydantic models for type safety
 - Validate state updates
 - Document state fields
 
 ❌ **DON'T**:
+
 - Modify state directly from Flow
 - Use unstructured state
 - Skip validation
@@ -488,12 +492,14 @@ async def run_discovery():
 ### 3. Error Handling
 
 ✅ **DO**:
+
 - Wrap crew executions with error handling
 - Log errors with context
 - Return structured error info
 - Update state with error status
 
 ❌ **DON'T**:
+
 - Ignore errors
 - Raise unhandled exceptions
 - Lose error context

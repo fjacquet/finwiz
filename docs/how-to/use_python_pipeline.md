@@ -355,6 +355,7 @@ print(f"   Cost: $0.00")
 ### Issue: All Holdings Have Identical Scores
 
 **Symptom:**
+
 ```
 ValueError: Score validation failed: All holdings have identical scores
 ```
@@ -362,6 +363,7 @@ ValueError: Score validation failed: All holdings have identical scores
 **Cause:** QuantitativeAnalysisTool is returning default values instead of real data.
 
 **Solution:**
+
 1. Check API keys are configured correctly
 2. Verify ticker symbols are valid
 3. Check network connectivity
@@ -370,17 +372,20 @@ ValueError: Score validation failed: All holdings have identical scores
 ### Issue: No A+ Opportunities Found
 
 **Symptom:**
+
 ```python
 discovery_results["has_a_plus_analysis"] == False
 discovery_results["total_opportunities_found"] == 0
 ```
 
 **Possible Causes:**
+
 1. Deep analysis not completed
 2. No holdings achieved A+ or A grade
 3. JSON files not in expected directories
 
 **Solution:**
+
 1. Verify deep analysis completed successfully
 2. Check analysis results for grades
 3. Verify output directory structure exists
@@ -388,15 +393,18 @@ discovery_results["total_opportunities_found"] == 0
 ### Issue: Backtesting Not Executing
 
 **Symptom:**
+
 ```python
 backtesting_results["backtesting_executed"] == False
 ```
 
 **Possible Causes:**
+
 1. No A+ candidates found
 2. Discovery integration failed
 
 **Solution:**
+
 1. Run A+ discovery integration first
 2. Check discovery results for candidates
 3. Verify discovery JSON files exist

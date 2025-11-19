@@ -50,6 +50,7 @@ Bitcoin,BTC,USD
 ```
 
 **Important Notes**:
+
 - Use official ticker symbols
 - Specify the correct currency
 - Include the company/fund name for clarity
@@ -141,6 +142,7 @@ Rationale: Strong support from 200-day moving average
 ```
 
 **How to Use**:
+
 - Set limit orders at these levels
 - Use dollar-cost averaging between targets
 - Don't chase prices above fair value
@@ -162,6 +164,7 @@ Rationale: Below key support, invalidates thesis
 ```
 
 **How to Use**:
+
 - Set stop-loss orders immediately after buying
 - Take partial profits at primary target
 - Reassess if stop-loss is triggered
@@ -200,16 +203,19 @@ Each alternative lists specific advantages:
 ### Transition Strategies
 
 **Immediate Swap** 🚀
+
 - Best for: Tax-advantaged accounts (IRA, 401k)
 - Action: Sell current, buy alternative same day
 - Tax Impact: None (tax-deferred account)
 
 **Gradual Transition** 📅
+
 - Best for: Taxable accounts with gains
 - Action: Sell 25% per quarter over 1 year
 - Tax Impact: Spread capital gains across tax years
 
 **Tax-Optimized** 💡
+
 - Best for: Large positions with significant gains
 - Action: Harvest losses elsewhere, offset gains
 - Tax Impact: Minimized through strategic timing
@@ -340,6 +346,7 @@ The system enforces prudent concentration limits:
 #### 1. Review the HTML Report
 
 Open `output/portfolio/portfolio_review_fr.html` in your browser:
+
 - Read the portfolio dashboard
 - Review each holding's analysis
 - Note all recommended actions
@@ -365,6 +372,7 @@ Low Priority (Next 6 Months):
 #### 3. Execute Trades
 
 For each action:
+
 1. **Check current prices** against buy/sell targets
 2. **Set limit orders** at recommended price levels
 3. **Set stop-losses** for risk management
@@ -380,11 +388,13 @@ For each action:
 ### Tax Considerations
 
 **Tax-Advantaged Accounts** (IRA, 401k, Roth IRA):
+
 - ✅ No immediate tax impact
 - ✅ Execute swaps immediately
 - ✅ Rebalance freely
 
 **Taxable Accounts**:
+
 - ⚠️ Capital gains tax applies
 - 💡 Harvest losses to offset gains
 - 💡 Hold > 1 year for long-term rates
@@ -397,6 +407,7 @@ For each action:
 Each holding shows data freshness indicators:
 
 **🟢 Fresh** (< 7 days old)
+
 ```
 Data as of: 2025-10-26
 Status: Fresh ✅
@@ -404,6 +415,7 @@ Confidence: 95%
 ```
 
 **🟡 Recent** (7-30 days old)
+
 ```
 Data as of: 2025-10-15
 Status: Recent ⚠️
@@ -411,6 +423,7 @@ Confidence: 85%
 ```
 
 **🔴 Stale** (> 30 days old)
+
 ```
 Data as of: 2025-09-10
 Status: Stale ⚠️⚠️
@@ -423,18 +436,21 @@ Action: Manual review recommended
 All analysis cites specific sources:
 
 **Stock Analysis**:
+
 - SEC Filings: EDGAR (10-K, 10-Q, 8-K)
 - Price Data: Yahoo Finance, Alpha Vantage
 - Fundamentals: Company financial statements
 - Analyst Ratings: Aggregated consensus
 
 **ETF Analysis**:
+
 - Fund Data: Prospectus, fact sheets
 - Holdings: Fund provider websites
 - Performance: Yahoo Finance, Morningstar
 - Expense Ratios: Official fund documents
 
 **Crypto Analysis**:
+
 - Price Data: Coinbase, Kraken APIs
 - Market Data: CoinMarketCap
 - Technical Indicators: TradingView
@@ -449,6 +465,7 @@ All analysis cites specific sources:
 ### Q: Should I follow all recommendations immediately?
 
 **A**: No. Prioritize:
+
 1. Exit D/F grade holdings (high priority)
 2. Trim overweight positions (medium priority)
 3. Add to underweight A+ holdings (medium priority)
@@ -457,6 +474,7 @@ All analysis cites specific sources:
 ### Q: What if I disagree with a recommendation?
 
 **A**: The analysis is a tool, not a mandate. Consider:
+
 - Your personal risk tolerance
 - Tax implications
 - Transaction costs
@@ -468,6 +486,7 @@ Use the analysis to inform your decisions, not dictate them.
 ### Q: How accurate are the price targets?
 
 **A**: Price targets are estimates based on current data and models. They have varying confidence levels (shown in the report). Use them as guidelines, not guarantees. Always:
+
 - Set stop-losses
 - Diversify
 - Don't invest more than you can afford to lose

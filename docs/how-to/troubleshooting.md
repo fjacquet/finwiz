@@ -21,6 +21,7 @@ This guide covers common issues you may encounter when using FinWiz, including C
 **Problem**: Deep analysis results failing validation with schema mismatch errors
 
 **Symptoms**:
+
 ```
 Validation failed for output/stock/AAPL_default.json against DeepAnalysisCrewExport
 ```
@@ -30,12 +31,14 @@ Validation failed for output/stock/AAPL_default.json against DeepAnalysisCrewExp
 **Solution**: Use the correct schema for Python-based analysis
 
 The system now supports both schemas:
+
 - `PythonDeepAnalysisResult` - For Python-based deep analysis
 - `DeepAnalysisCrewExport` - For CrewAI crew analysis
 
 The consolidator automatically detects which schema to use based on the `crew_name` field.
 
 **Verification**:
+
 ```bash
 # Check that all analyses validate
 grep "Validation failed" logs/flow_execution.log
@@ -49,6 +52,7 @@ grep "Validation failed" logs/flow_execution.log
 **Problem**: Discovery crew fails to initialize with `KeyError: True`
 
 **Symptoms**:
+
 ```
 KeyError: True
   in CrewAI task variable mapping
@@ -56,7 +60,8 @@ KeyError: True
 
 **Root Cause**: Invalid `output_json: true` in task configuration
 
-**Explanation**: 
+**Explanation**:
+
 - `output_json` should be a Pydantic model class name (e.g., `output_pydantic: FeedbackLearningResult`)
 - OR omitted entirely for JSON file output
 - Setting it to `true` (boolean) causes CrewAI to look for a model named `True`
@@ -84,6 +89,7 @@ feedback_learning_task:
 **Problem**: Consolidator trying to set fields that don't exist in schema
 
 **Symptoms**:
+
 ```
 "ConsolidatedReportExport" object has no field "backtesting_data"
 "ConsolidatedReportExport" object has no field "portfolio_data"
@@ -102,6 +108,7 @@ class ConsolidatedReportExport(BaseModel):
 ```
 
 **Verification**:
+
 ```bash
 # Check consolidated report generation
 cat output/reports/*/consolidated_report.json | jq '.deep_analyses | length'
@@ -117,6 +124,7 @@ cat output/reports/*/consolidated_report.json | jq '.deep_analyses | length'
 **Problem**: HTML templates render with empty/default values despite having rich data in JSON
 
 **Symptoms**:
+
 - Discovery date shows as "N/A"
 - Total opportunities shows as 0
 - Candidate details are missing
@@ -124,6 +132,7 @@ cat output/reports/*/consolidated_report.json | jq '.deep_analyses | length'
 **Root Cause**: Data structure mismatch between JSON format and template expectations
 
 CrewAI outputs use nested structure:
+
 ```json
 {
   "raw_output": "...",
@@ -153,11 +162,13 @@ def render_discovery_latest(self, json_data: dict[str, Any]) -> str:
 ```
 
 **Field Mapping Fixes**:
+
 - `discovery_date` → `analysis_date` (with fallback)
 - `discovery_criteria` → `screening_criteria` (with fallback)
 - Add `market_context` and `data_sources` fields
 
 **Date Parsing**:
+
 ```python
 # Parse discovery date if it's a string
 discovery_date_str = data.get("analysis_date") or data.get("discovery_date")
@@ -173,6 +184,7 @@ if discovery_date_str and isinstance(discovery_date_str, str):
 **Problem**: Template crashes when rendering different schema types
 
 **Symptoms**:
+
 ```
 jinja2.exceptions.UndefinedError: 'PythonDeepAnalysisResult object' has no attribute 'risk_assessment'
 ```
@@ -196,6 +208,7 @@ class PythonDeepAnalysisResult(BaseModel):
 **Solution**: Template handles both schema types gracefully
 
 {% raw %}
+
 ```html
 <!-- Handle both CrewAI and Python schemas -->
 <div class="metric-card">
@@ -216,9 +229,11 @@ class PythonDeepAnalysisResult(BaseModel):
     {% endif %}
 </div>
 ```
+
 {% endraw %}
 
 **Key Techniques**:
+
 1. **Conditional checks**: {% raw %}`{% if field is defined %}`{% endraw %}
 2. **Fallback logic**: {% raw %}`{% elif alternative_field %}`{% endraw %}
 3. **Scale conversion**: `risk_score * 10` (0-1 → 0-10)
@@ -231,6 +246,7 @@ class PythonDeepAnalysisResult(BaseModel):
 **Problem**: Template fails with attribute access errors
 
 **Symptoms**:
+
 ```
 'dict' object has no attribute 'ticker'
 ```
@@ -240,6 +256,7 @@ class PythonDeepAnalysisResult(BaseModel):
 **Solution**: Use dict access (`[]`) or `.get()` method
 
 {% raw %}
+
 ```html
 <!-- WRONG: Attribute access (fails on dicts) -->
 {{ candidate.ticker }}
@@ -250,6 +267,7 @@ class PythonDeepAnalysisResult(BaseModel):
 <!-- BEST: Safe access with default -->
 {{ candidate.get('ticker', 'N/A') }}
 ```
+
 {% endraw %}
 
 **Smart Rationale Generation**:
@@ -292,6 +310,7 @@ def _generate_rationale(candidate: dict) -> str:
 **Problem**: Flow execution crashes with missing state fields
 
 **Symptoms**:
+
 ```
 AttributeError: 'StateWithId' object has no attribute 'errors'
 ```
@@ -325,6 +344,7 @@ class FinwizState(BaseModel):
 ```
 
 **Usage in Flow**:
+
 ```python
 # Now this works without AttributeError
 self.state.errors.append(f"Analysis failed for {ticker}: {error}")
@@ -339,6 +359,7 @@ self.state.errors.append(f"Analysis failed for {ticker}: {error}")
 **Problem**: Pre-commit hook blocks commits with false positive for `unittest.mock`
 
 **Symptoms**:
+
 ```
 ❌ Check for unittest.mock usage........................Failed
 - hook id: check-unittest-mock
@@ -351,11 +372,13 @@ scripts/fix_all_broken_links.py:
 **Root Cause**: Regex pattern too broad, matching documentation strings
 
 **Original Pattern** (too broad):
+
 ```bash
 grep -r "from unittest.mock\|import unittest.mock" tests/
 ```
 
 This matched:
+
 - ✅ Actual imports: `from unittest.mock import Mock`
 - ❌ Documentation: `"unittest.mock banned"`
 - ❌ Comments: `# unittest.mock is not allowed`
@@ -368,11 +391,13 @@ entry: bash -c 'if grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.m
 ```
 
 **Pattern Breakdown**:
+
 - `^[[:space:]]*` - Match start of line with optional whitespace
 - `-E` - Use extended regex
 - `\.` - Escaped dots for literal matching
 
 **Testing**:
+
 ```bash
 # Test on actual imports (should fail)
 echo "from unittest.mock import Mock" > /tmp/test.py

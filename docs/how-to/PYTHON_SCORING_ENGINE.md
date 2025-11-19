@@ -93,6 +93,7 @@ composite_score = (
 ### Stock Scoring (40% Fundamental Weight)
 
 **Fundamental Analysis Components:**
+
 - **ROE (Return on Equity)** - 40% of fundamental score
   - Target: 15%+ (Excellent: 20%+)
   - Measures management efficiency in generating returns
@@ -107,6 +108,7 @@ composite_score = (
   - Measures operational efficiency
 
 **Scoring Thresholds:**
+
 ```python
 # ROE Scoring
 if roe >= 0.20:     score = 1.0  # 20%+
@@ -119,6 +121,7 @@ else:               score = 0.2  # <5%
 ### ETF Scoring (40% Fundamental Weight)
 
 **Fundamental Analysis Components:**
+
 - **Expense Ratio** - 40% of fundamental score
   - Target: ≤0.25% (Excellent: ≤0.10%)
   - Lower fees improve long-term returns
@@ -132,6 +135,7 @@ else:               score = 0.2  # <5%
 ### Crypto Scoring (40% Fundamental Weight)
 
 **Fundamental Analysis Components:**
+
 - **Market Capitalization** - 50% of fundamental score
   - Target: ≥$1B (Excellent: ≥$100B)
   - Higher market cap indicates stability and adoption
@@ -145,6 +149,7 @@ else:               score = 0.2  # <5%
 ### Technical Analysis (30% Weight)
 
 **Universal Technical Components:**
+
 - **RSI (Relative Strength Index)** - 40% of technical score
   - Target range: 30-70 (Optimal: 40-60)
   - Measures momentum and overbought/oversold conditions
@@ -158,6 +163,7 @@ else:               score = 0.2  # <5%
 ### Risk Assessment (30% Weight)
 
 **Risk Components (Higher score = Lower risk):**
+
 - **Volatility** - 50% of risk score
   - Target: ≤15% annually (Excellent: ≤10%)
   - Lower volatility indicates stability
@@ -182,6 +188,7 @@ else:               score = 0.2  # <5%
 ### Scalability Benefits
 
 **Portfolio Analysis (66 holdings):**
+
 - AI-Based: 5.5-11 hours, $3.30-6.60
 - Python-Based: 11-33 minutes, $0.00
 - **Savings: 10-20x faster, 100% cost reduction**
@@ -201,6 +208,7 @@ else:               score = 0.2  # <5%
 The Python scoring engine supports three optimization modes:
 
 #### 1. Maximum Speed Mode (Default)
+
 ```bash
 # Environment Variables
 RISK_ASSESSMENT_USE_MINI=true
@@ -209,12 +217,14 @@ DEEP_ANALYSIS_AI_SUMMARY=false
 ```
 
 **Characteristics:**
+
 - **Execution Time**: 10-30 seconds per ticker
 - **LLM Calls**: 0 for calculations
 - **Cost**: $0.00 per ticker
 - **Components**: Python scoring + GPT-5-mini + minimal tools
 
 #### 2. Balanced Mode (Hybrid Approach)
+
 ```bash
 # Environment Variables  
 RISK_ASSESSMENT_USE_MINI=true
@@ -223,12 +233,14 @@ DEEP_ANALYSIS_AI_SUMMARY=true
 ```
 
 **Characteristics:**
+
 - **Execution Time**: 15-40 seconds per ticker
 - **LLM Calls**: 1 for optional AI summary
 - **Cost**: $0.01 per ticker
 - **Components**: Python scoring + optional AI summary + GPT-5-mini
 
 #### 3. Baseline Mode (AI Comparison)
+
 ```bash
 # Environment Variables
 RISK_ASSESSMENT_USE_MINI=false
@@ -237,6 +249,7 @@ DEEP_ANALYSIS_AI_SUMMARY=true
 ```
 
 **Characteristics:**
+
 - **Execution Time**: 5-10 minutes per ticker
 - **LLM Calls**: 5-10 for full AI analysis
 - **Cost**: $0.05-0.10 per ticker
@@ -557,6 +570,7 @@ def validate_scoring_accuracy(python_result, ai_result):
 ### From AI-Based to Python Scoring
 
 1. **Enable Python Scoring**:
+
    ```bash
    # Set environment variables
    export DEEP_ANALYSIS_AI_SUMMARY=false
@@ -565,6 +579,7 @@ def validate_scoring_accuracy(python_result, ai_result):
    ```
 
 2. **Update Crew Configuration**:
+
    ```python
    # In DeepAnalysisCrew
    @crew
@@ -579,6 +594,7 @@ def validate_scoring_accuracy(python_result, ai_result):
    ```
 
 3. **Validate Results**:
+
    ```python
    # Run parallel comparison
    python_result = python_scorer.calculate_composite_score(ticker, asset_class, data)
@@ -600,6 +616,7 @@ def validate_scoring_accuracy(python_result, ai_result):
 ### Common Issues
 
 **Issue**: Scores seem too high/low
+
 ```python
 # Solution: Check input data quality
 missing_fields = scorer._identify_missing_fields(data)
@@ -608,6 +625,7 @@ if missing_fields:
 ```
 
 **Issue**: Inconsistent grades between runs
+
 ```python
 # Solution: Verify deterministic behavior
 results = [scorer.calculate_composite_score(ticker, asset_class, data) for _ in range(3)]
@@ -615,6 +633,7 @@ assert all(r.grade == results[0].grade for r in results), "Non-deterministic res
 ```
 
 **Issue**: Performance slower than expected
+
 ```python
 # Solution: Check optimization mode
 from finwiz.utils.performance_config import get_optimization_mode
@@ -684,7 +703,8 @@ This engine enables high-frequency portfolio analysis at scale while maintaining
 
 **Version**: 1.0  
 **Last Updated**: 2025-01-25  
-**Related Documentation**: 
+**Related Documentation**:
+
 - [Jinja2 Template Documentation](JINJA2_TEMPLATES.md)
 - [Performance Configuration Guide](PERFORMANCE_CONFIGURATION.md)
 - [Deep Analysis Integration Guide](DEEP_ANALYSIS_INTEGRATION.md)

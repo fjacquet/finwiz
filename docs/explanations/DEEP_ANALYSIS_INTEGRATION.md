@@ -81,6 +81,7 @@ def data_collection_task(self) -> Task:
 ```
 
 **Data Structure Output:**
+
 ```python
 collected_data = {
     # Price data
@@ -146,6 +147,7 @@ def python_scoring_task(self) -> Task:
 ```
 
 **Python Scoring Implementation:**
+
 ```python
 from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 
@@ -198,6 +200,7 @@ def generate_html_report(result: DeepAnalysisResult, detailed_analysis: Dict[str
 ```
 
 **Template Data Structure:**
+
 ```python
 template_data = {
     # From DeepAnalysisResult
@@ -651,6 +654,7 @@ This integration serves as a model for other financial analysis systems seeking 
 **Version**: 1.0  
 **Last Updated**: 2025-01-25  
 **Related Documentation**:
+
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
 - [Jinja2 Templates Documentation](JINJA2_TEMPLATES.md)
 - [Performance Configuration Guide](PERFORMANCE_CONFIGURATION.md)

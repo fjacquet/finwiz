@@ -88,18 +88,21 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 **Principle**: Use Python for deterministic tasks, AI only where reasoning is required.
 
 **Benefits**:
+
 - **10-20x Faster**: Deterministic Python analysis vs AI-based processing
 - **100% Cost Reduction**: Zero LLM calls for calculations
 - **Deterministic Results**: Same input always produces same output
 - **Easier Testing**: Mathematical formulas are testable and auditable
 
 **When to Use AI**:
+
 - ✅ Analysis requiring reasoning (interpreting complex financial data)
 - ✅ Synthesis of complex information (combining multiple data sources)
 - ✅ Natural language understanding (parsing text)
 - ✅ Creative content generation (writing analysis narratives)
 
 **When to Use Python**:
+
 - ❌ HTML generation (use Jinja2 templates)
 - ❌ Data consolidation (use Python functions)
 - ❌ Calculations and formulas (use Python/numpy)
@@ -130,6 +133,7 @@ result = scorer.calculate_composite_score(
 ```
 
 **Performance Comparison**:
+
 - AI-based scoring: 45-90 seconds per holding
 - Python scoring: 2-5 seconds per holding
 - **Speedup**: 10-20x faster
@@ -140,6 +144,7 @@ result = scorer.calculate_composite_score(
 High-performance portfolio analysis with concurrent execution:
 
 **Configuration**:
+
 ```bash
 BATCH_PREFETCH_ENABLED=true
 DEEP_ANALYSIS_BATCH_SIZE=5  # Concurrent crews
@@ -147,6 +152,7 @@ BATCH_PREFETCH_MIN_HOLDINGS=10
 ```
 
 **Performance**:
+
 - 66 holdings: 5.5-11 hours → 20-40 minutes (10-20x speedup)
 - Data pre-fetch: 2-5 seconds (Yahoo Finance)
 - Concurrent execution: 5 crews in parallel (configurable)

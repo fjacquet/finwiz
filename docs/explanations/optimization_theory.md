@@ -16,27 +16,36 @@ Modern Portfolio Theory, developed by Harry Markowitz, forms the foundation of q
 ### Mathematical Framework
 
 **Expected Portfolio Return**
+
 ```
 E(Rp) = Σ wi × E(Ri)
 ```
+
 Where:
+
 - E(Rp) = Expected portfolio return
 - wi = Weight of asset i
 - E(Ri) = Expected return of asset i
 
 **Portfolio Variance**
+
 ```
 σp² = Σ Σ wi × wj × σij
 ```
+
 Where:
+
 - σp² = Portfolio variance
 - σij = Covariance between assets i and j
 
 **Sharpe Ratio**
+
 ```
 Sharpe = (E(Rp) - Rf) / σp
 ```
+
 Where:
+
 - Rf = Risk-free rate
 - σp = Portfolio standard deviation
 
@@ -45,12 +54,15 @@ Where:
 ### 1. Mean-Variance Optimization
 
 **Objective Function**
+
 ```
 Maximize: E(Rp) - (λ/2) × σp²
 ```
+
 Where λ is the risk aversion parameter.
 
 **Constraints**
+
 - Σ wi = 1 (weights sum to 1)
 - wi ≥ 0 (no short selling)
 - wi ≤ wmax (position limits)
@@ -58,13 +70,16 @@ Where λ is the risk aversion parameter.
 ### 2. Risk Parity
 
 **Equal Risk Contribution**
+
 ```
 RCi = wi × (∂σp/∂wi) = σp/n
 ```
+
 Where RCi is the risk contribution of asset i.
 
 **Objective**
 Minimize the sum of squared deviations from equal risk contribution:
+
 ```
 Minimize: Σ (RCi - σp/n)²
 ```
@@ -72,10 +87,13 @@ Minimize: Σ (RCi - σp/n)²
 ### 3. Black-Litterman Model
 
 **Enhanced Expected Returns**
+
 ```
 μBL = [(τΣ)⁻¹ + P'Ω⁻¹P]⁻¹ × [(τΣ)⁻¹μ + P'Ω⁻¹Q]
 ```
+
 Where:
+
 - μBL = Black-Litterman expected returns
 - τ = Scaling factor
 - Σ = Covariance matrix
@@ -93,24 +111,31 @@ Account for parameter uncertainty in optimization:
 ```
 Minimize: max{μ∈U} w'μ + λw'Σw
 ```
+
 Where U represents the uncertainty set for expected returns.
 
 ### 2. Factor Models
 
 **Multi-Factor Risk Model**
+
 ```
 Ri = αi + Σ βik × Fk + εi
 ```
+
 Where:
+
 - Fk = Factor k return
 - βik = Asset i's exposure to factor k
 - εi = Idiosyncratic return
 
 **Factor-Based Optimization**
+
 ```
 σp² = w'BFB'w + w'Dw
 ```
+
 Where:
+
 - B = Factor exposure matrix
 - F = Factor covariance matrix
 - D = Specific risk matrix
@@ -118,13 +143,16 @@ Where:
 ### 3. Regime-Switching Models
 
 **Markov Regime Switching**
+
 ```
 P(St = j | St-1 = i) = pij
 ```
+
 Where St represents the market regime at time t.
 
 **Regime-Dependent Optimization**
 Optimize for different market regimes:
+
 - Bull market parameters
 - Bear market parameters
 - Transition probabilities
@@ -134,6 +162,7 @@ Optimize for different market regimes:
 ### 1. Covariance Matrix Estimation
 
 **Sample Covariance**
+
 ```python
 import numpy as np
 
@@ -143,6 +172,7 @@ def calculate_sample_covariance(returns):
 ```
 
 **Shrinkage Estimators**
+
 ```python
 def ledoit_wolf_shrinkage(returns):
     """Ledoit-Wolf shrinkage estimator."""
@@ -161,6 +191,7 @@ def ledoit_wolf_shrinkage(returns):
 ### 2. Expected Return Estimation
 
 **Historical Mean**
+
 ```python
 def historical_mean_returns(returns, window=252):
     """Calculate historical mean returns."""
@@ -168,6 +199,7 @@ def historical_mean_returns(returns, window=252):
 ```
 
 **CAPM Expected Returns**
+
 ```python
 def capm_expected_returns(returns, market_returns, risk_free_rate):
     """Calculate CAPM expected returns."""
@@ -180,6 +212,7 @@ def capm_expected_returns(returns, market_returns, risk_free_rate):
 ### 3. Optimization Solvers
 
 **Quadratic Programming**
+
 ```python
 import cvxpy as cp
 
@@ -209,15 +242,19 @@ def mean_variance_optimization(mu, Sigma, risk_aversion):
 ### 1. Factor Risk Models
 
 **Fama-French Three-Factor Model**
+
 ```
 Ri - Rf = αi + βi(Rm - Rf) + siSMB + hiHML + εi
 ```
+
 Where:
+
 - SMB = Small Minus Big (size factor)
 - HML = High Minus Low (value factor)
 
 **Carhart Four-Factor Model**
 Adds momentum factor:
+
 ```
 Ri - Rf = αi + βi(Rm - Rf) + siSMB + hiHML + piPR1YR + εi
 ```
@@ -225,6 +262,7 @@ Ri - Rf = αi + βi(Rm - Rf) + siSMB + hiHML + piPR1YR + εi
 ### 2. Risk Budgeting
 
 **Risk Contribution Calculation**
+
 ```python
 def calculate_risk_contributions(weights, cov_matrix):
     """Calculate risk contributions for each asset."""
@@ -236,6 +274,7 @@ def calculate_risk_contributions(weights, cov_matrix):
 ```
 
 **Equal Risk Contribution Optimization**
+
 ```python
 def equal_risk_contribution(cov_matrix):
     """Optimize for equal risk contribution."""
@@ -265,10 +304,13 @@ def equal_risk_contribution(cov_matrix):
 ### 1. Brinson Attribution
 
 **Total Return Decomposition**
+
 ```
 Rp - Rb = Σ (wi - wbi) × Rbi + Σ wbi × (Ri - Rbi) + Σ (wi - wbi) × (Ri - Rbi)
 ```
+
 Where:
+
 - Asset Allocation Effect: (wi - wbi) × Rbi
 - Security Selection Effect: wbi × (Ri - Rbi)
 - Interaction Effect: (wi - wbi) × (Ri - Rbi)
@@ -276,6 +318,7 @@ Where:
 ### 2. Factor Attribution
 
 **Factor-Based Performance Attribution**
+
 ```python
 def factor_attribution(portfolio_returns, factor_returns, factor_loadings):
     """Attribute portfolio performance to factors."""
@@ -355,12 +398,14 @@ def calculate_performance_metrics(returns):
 ### 1. Model Limitations
 
 **Mean-Variance Optimization Issues**
+
 - Sensitive to input parameters
 - Assumes normal return distributions
 - Static optimization (single period)
 - No transaction costs consideration
 
 **Practical Challenges**
+
 - Parameter estimation error
 - Non-stationarity of returns
 - Regime changes
@@ -369,11 +414,13 @@ def calculate_performance_metrics(returns):
 ### 2. Robust Solutions
 
 **Regularization Techniques**
+
 - L1 regularization (Lasso) for sparsity
 - L2 regularization (Ridge) for stability
 - Elastic net combining both
 
 **Alternative Approaches**
+
 - Minimum variance portfolios
 - Equal-weight portfolios
 - Momentum-based strategies

@@ -85,18 +85,21 @@ alternatives = finder.find_alternatives(underperforming_holdings)
 To qualify as an A+ investment opportunity, assets must meet strict criteria:
 
 #### Stocks
+
 - **ROE ≥ 20%** - Strong return on equity
 - **Revenue Growth ≥ 15%** - Consistent revenue growth
 - **Debt/Equity ≤ 0.3** - Conservative debt levels
 - **Positive Free Cash Flow** - Strong cash generation
 
 #### ETFs
+
 - **Expense Ratio ≤ 0.15%** - Low fees for broad market ETFs
 - **Tracking Error ≤ 0.20%** - Accurate benchmark tracking
 - **AUM ≥ $1B** - Sufficient assets under management
 - **3+ Year Track Record** - Proven performance history
 
 #### Cryptocurrencies
+
 - **Market Cap ≥ $10B** - Established market presence
 - **Daily Volume ≥ $500M** - Adequate liquidity
 - **3+ Year Operating History** - Proven stability

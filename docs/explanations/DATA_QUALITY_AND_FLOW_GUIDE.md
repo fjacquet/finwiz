@@ -384,6 +384,7 @@ cat output/portfolio/portfolio_review.json | jq '.portfolio_review.holdings[] | 
 ```
 
 **Good Output**:
+
 ```json
 {
   "ticker": "AAPL",
@@ -398,6 +399,7 @@ cat output/portfolio/portfolio_review.json | jq '.portfolio_review.holdings[] | 
 ```
 
 **Bad Output** (indicates data consumption issue):
+
 ```json
 {
   "ticker": "AAPL",
@@ -591,6 +593,7 @@ grep "ReportDataValidator" logs/finwiz.log
 **Symptom**: No deep analysis output files
 
 **Diagnosis**:
+
 ```bash
 # Check if deep analysis was enabled
 grep "DEEP_ANALYSIS_ENABLED" logs/finwiz.log
@@ -600,6 +603,7 @@ grep "crew_error" logs/finwiz.log
 ```
 
 **Fix**:
+
 ```bash
 # Enable deep analysis
 export DEEP_ANALYSIS_ENABLED=true
@@ -613,6 +617,7 @@ uv run python src/finwiz/main.py
 **Symptom**: Holdings still show Grade D after merge
 
 **Diagnosis**:
+
 ```bash
 # Check merge logs for errors
 grep "DataMergeError" logs/finwiz.log
@@ -623,6 +628,7 @@ cat output/stock/stock_output_*.json | jq '.ticker'
 ```
 
 **Fix**:
+
 ```python
 # Verify ticker matching
 holdings_tickers = set(['AAPL', 'GOOGL', 'MSFT'])
@@ -639,6 +645,7 @@ print(f"Missing analysis for: {missing}")
 **Symptom**: Report generation fails with validation error
 
 **Diagnosis**:
+
 ```bash
 # Check validation error details
 grep "ReportValidationError" logs/finwiz.log
@@ -648,6 +655,7 @@ cat output/portfolio/portfolio_review.json | jq 'keys'
 ```
 
 **Fix**:
+
 ```python
 # Ensure all required fields are present
 required_fields = [
@@ -678,16 +686,19 @@ for field in required_fields:
 **Solution**:
 
 1. Check if deep analysis ran:
+
    ```bash
    ls -la output/stock/stock_output_*.json
    ```
 
 2. Check merge logs:
+
    ```bash
    grep "DeepAnalysisDataMerger" logs/finwiz.log
    ```
 
 3. Verify ticker matching:
+
    ```bash
    # Holdings tickers
    cat output/portfolio/portfolio_review.json | jq '.portfolio_review.holdings[].ticker'
@@ -697,6 +708,7 @@ for field in required_fields:
    ```
 
 4. Re-run with diagnostic logging:
+
    ```bash
    export LOG_LEVEL=DEBUG
    uv run python src/finwiz/main.py
@@ -709,17 +721,20 @@ for field in required_fields:
 **Solution**:
 
 1. Check URL generation logs:
+
    ```bash
    grep "SECFilingURLGenerator" logs/finwiz.log
    ```
 
 2. Verify API keys:
+
    ```bash
    echo $SEC_API_KEY
    echo $ALPHA_VANTAGE_API_KEY
    ```
 
 3. Test URL generation manually:
+
    ```python
    from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
    
@@ -729,6 +744,7 @@ for field in required_fields:
    ```
 
 4. Check URL validator:
+
    ```python
    from finwiz.utils.url_validator import URLValidator
    
@@ -744,11 +760,13 @@ for field in required_fields:
 **Solution**:
 
 1. Check data availability tracking:
+
    ```bash
    grep "DataAvailabilityTracker" logs/finwiz.log
    ```
 
 2. Verify data sources:
+
    ```python
    from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
    
@@ -758,6 +776,7 @@ for field in required_fields:
    ```
 
 3. Check report inputs:
+
    ```bash
    cat output/portfolio/portfolio_review.json | jq '.data_availability_summary'
    ```
@@ -769,16 +788,19 @@ for field in required_fields:
 **Solution**:
 
 1. Check alternative finder logs:
+
    ```bash
    grep "AlternativeFinder" logs/finwiz.log
    ```
 
 2. Verify alternatives in portfolio:
+
    ```bash
    cat output/portfolio/portfolio_review.json | jq '.portfolio_review.holdings[].alternatives'
    ```
 
 3. Test alternative finder manually:
+
    ```python
    from finwiz.tools.alternative_finder_tool import AlternativeFinder
    
@@ -794,6 +816,7 @@ for field in required_fields:
 **Solution**:
 
 1. Load quality metrics:
+
    ```python
    from finwiz.utils.data_quality_metrics import DataQualityMetrics
    
@@ -802,6 +825,7 @@ for field in required_fields:
    ```
 
 2. Identify specific issues:
+
    ```python
    if metrics.fallback_grades_count > 0:
        print(f"⚠️ {metrics.fallback_grades_count} fallback grades detected")
@@ -822,11 +846,13 @@ for field in required_fields:
 **Solution**:
 
 1. Check for reasoning loops:
+
    ```bash
    grep "reasoning_attempt" logs/finwiz.log | tail -20
    ```
 
 2. Set reasoning limits:
+
    ```python
    # In crew configuration
    agent = Agent(
@@ -836,6 +862,7 @@ for field in required_fields:
    ```
 
 3. Set API timeouts:
+
    ```python
    import httpx
    
@@ -850,11 +877,13 @@ for field in required_fields:
 **Solution**:
 
 1. Check validation error details:
+
    ```bash
    grep "ValidationError" logs/finwiz.log
    ```
 
 2. Verify data structure:
+
    ```python
    from pydantic import ValidationError
    from finwiz.schemas.portfolio_review import HoldingDecision
@@ -866,6 +895,7 @@ for field in required_fields:
    ```
 
 3. Fix data to match schema:
+
    ```python
    # Ensure all required fields present
    # Ensure field types match

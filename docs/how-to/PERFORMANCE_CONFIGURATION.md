@@ -11,6 +11,7 @@ FinWiz's performance configuration system provides three optimization modes that
 **Target Use Case**: Production portfolio analysis, high-volume processing
 
 **Configuration**:
+
 ```bash
 # Environment Variables
 RISK_ASSESSMENT_USE_MINI=true
@@ -20,6 +21,7 @@ DEEP_ANALYSIS_BATCH_SIZE=5
 ```
 
 **Performance Characteristics**:
+
 - **Execution Time**: 10-30 seconds per ticker
 - **LLM Calls**: 0 for calculations (Python scoring only)
 - **Cost per Ticker**: $0.00 for calculations
@@ -27,6 +29,7 @@ DEEP_ANALYSIS_BATCH_SIZE=5
 - **Cost Savings**: 100% vs baseline
 
 **Components**:
+
 - Python-based scoring engine (DeepAnalysisScorer)
 - GPT-5-mini for any remaining AI tasks
 - Minimal tool sets for focused analysis
@@ -34,6 +37,7 @@ DEEP_ANALYSIS_BATCH_SIZE=5
 - Batch processing enabled
 
 **Best For**:
+
 - Large portfolio analysis (50+ holdings)
 - Frequent analysis runs
 - Cost-sensitive environments
@@ -44,6 +48,7 @@ DEEP_ANALYSIS_BATCH_SIZE=5
 **Target Use Case**: Detailed analysis with optional AI insights
 
 **Configuration**:
+
 ```bash
 # Environment Variables
 RISK_ASSESSMENT_USE_MINI=true
@@ -53,6 +58,7 @@ DEEP_ANALYSIS_BATCH_SIZE=3
 ```
 
 **Performance Characteristics**:
+
 - **Execution Time**: 15-40 seconds per ticker
 - **LLM Calls**: 1 for optional AI summary
 - **Cost per Ticker**: $0.01
@@ -60,6 +66,7 @@ DEEP_ANALYSIS_BATCH_SIZE=3
 - **Cost Savings**: 80-90% vs baseline
 
 **Components**:
+
 - Python-based scoring engine (primary)
 - Optional AI summary generation (secondary)
 - GPT-5-mini for cost efficiency
@@ -67,6 +74,7 @@ DEEP_ANALYSIS_BATCH_SIZE=3
 - Smaller batch sizes for quality
 
 **Best For**:
+
 - Medium portfolios (10-50 holdings)
 - Quality-focused analysis
 - Hybrid AI/Python approach
@@ -77,6 +85,7 @@ DEEP_ANALYSIS_BATCH_SIZE=3
 **Target Use Case**: Debugging, validation, and AI comparison
 
 **Configuration**:
+
 ```bash
 # Environment Variables
 RISK_ASSESSMENT_USE_MINI=false
@@ -86,6 +95,7 @@ DEEP_ANALYSIS_BATCH_SIZE=1
 ```
 
 **Performance Characteristics**:
+
 - **Execution Time**: 5-10 minutes per ticker
 - **LLM Calls**: 5-10 for full AI analysis
 - **Cost per Ticker**: $0.05-0.10
@@ -93,6 +103,7 @@ DEEP_ANALYSIS_BATCH_SIZE=1
 - **Cost Savings**: 0% (baseline)
 
 **Components**:
+
 - Full AI-based analysis
 - GPT-4 for highest quality
 - Complete tool sets
@@ -100,6 +111,7 @@ DEEP_ANALYSIS_BATCH_SIZE=1
 - Full reasoning and planning enabled
 
 **Best For**:
+
 - Single ticker deep analysis
 - AI vs Python comparison
 - Debugging and validation
@@ -263,12 +275,14 @@ def get_recommended_batch_size(portfolio_size: int) -> int:
 ### Data Source Configuration
 
 **Primary Source - Yahoo Finance (Always Enabled)**:
+
 - Performance: ~2-5 seconds for 66 tickers
 - Coverage: All essential data (fundamentals, price, history)
 - Rate limit: 600 requests/minute
 - Recommendation: Always use (primary source)
 
 **Secondary Source - Alpha Vantage (Optional)**:
+
 - Performance: ~13 minutes for 66 tickers (free tier)
 - Coverage: Additional fundamental data
 - Rate limit: 5/minute (free), 75/minute (premium)
@@ -284,6 +298,7 @@ The system automatically falls back to sequential mode when:
 4. **Configuration**: `BATCH_PREFETCH_ENABLED=false`
 
 **Fallback Process**:
+
 ```python
 def _fallback_to_sequential_mode(self, reason: str) -> dict[str, Any]:
     """Fallback to sequential analysis mode."""
@@ -327,11 +342,13 @@ with memory_manager.monitor_memory("batch_analysis") as monitor:
 ### Error Handling
 
 **Partial Failure Handling**:
+
 - Individual ticker failures don't stop batch processing
 - Failed tickers are logged and marked in results
 - Analysis continues with available data
 
 **Complete Failure Recovery**:
+
 - Automatic fallback to sequential mode
 - Detailed logging of failure reasons
 - Graceful degradation without data loss
@@ -542,6 +559,7 @@ def optimize_for_budget(max_cost_usd: float, portfolio_size: int) -> Optimizatio
 ### Performance Issues
 
 **Issue**: Analysis taking longer than expected
+
 ```python
 # Diagnosis
 config_manager = get_performance_config_manager()
@@ -563,6 +581,7 @@ os.environ["ENABLE_ALPHA_VANTAGE"] = "false"  # Disable for speed
 ```
 
 **Issue**: High memory usage during batch processing
+
 ```python
 # Diagnosis
 import psutil
@@ -579,6 +598,7 @@ logger.info(f"Reduced batch size from {current_batch_size} to {new_batch_size}")
 ```
 
 **Issue**: Frequent fallback to sequential mode
+
 ```python
 # Diagnosis: Check fallback reasons in logs
 import subprocess
@@ -598,6 +618,7 @@ os.environ["DEEP_ANALYSIS_BATCH_SIZE"] = "3"
 ```
 
 **Issue**: Inconsistent results between runs
+
 ```python
 # Diagnosis: Check if using AI components
 if should_use_ai_summary():
@@ -608,6 +629,7 @@ os.environ["DEEP_ANALYSIS_AI_SUMMARY"] = "false"
 ```
 
 **Issue**: Individual tickers failing consistently
+
 ```python
 # Diagnosis: Check for ticker-specific failures
 import subprocess
@@ -632,6 +654,7 @@ logger.info(f"Ticker failure counts: {ticker_failures}")
 ### Configuration Issues
 
 **Issue**: Environment variables not taking effect
+
 ```python
 # Diagnosis: Check configuration loading
 config_manager = PerformanceConfigManager()
@@ -643,6 +666,7 @@ config_manager = PerformanceConfigManager()  # Reload from environment
 ```
 
 **Issue**: Unexpected optimization mode
+
 ```python
 # Diagnosis: Check mode determination logic
 use_mini = os.getenv("RISK_ASSESSMENT_USE_MINI", "true").lower() == "true"
@@ -715,6 +739,7 @@ This system enables FinWiz to scale from single-ticker analysis to large portfol
 **Version**: 1.0  
 **Last Updated**: 2025-01-25  
 **Related Documentation**:
+
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
 - [Batch Processing Guide](BATCH_PROCESSING.md)
 - [Performance Monitoring Guide](PERFORMANCE_MONITORING.md)

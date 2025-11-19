@@ -70,6 +70,7 @@ class MyNewCrewExport(CrewExportBase):
 ```
 
 **Key Requirements:**
+
 - Extend `CrewExportBase` for common fields
 - Use `extra='forbid'` for strict validation
 - Include `report_html_path` and `report_json_path`
@@ -121,6 +122,7 @@ def generate_export_task(self) -> Task:
 ```
 
 **Key Requirements:**
+
 - Use `@final_reporter` decorator to enforce empty tools
 - Final task must be synchronous (`async_execution=False`)
 - Save JSON to standardized path: `output/reports/{session_id}/{crew_name}/{ticker}_export.json`
@@ -203,8 +205,8 @@ class ReportConsolidator:
 
 If you need custom styling, extend the base template:
 
-
 {% raw %}
+
 ```html
 <!-- src/finwiz/templates/crew_reports/base.html -->
 <!DOCTYPE html>
@@ -261,14 +263,15 @@ If you need custom styling, extend the base template:
 </body>
 </html>
 ```
+
 {% endraw %}
 
 ### Step 2: Create Crew-Specific Template
 
 Create a template for your crew in `src/finwiz/templates/crew_reports/`:
 
-
 {% raw %}
+
 ```html
 <!-- src/finwiz/templates/crew_reports/my_new_crew_report.html -->
 {% extends "crew_reports/base.html" %}
@@ -331,9 +334,11 @@ Create a template for your crew in `src/finwiz/templates/crew_reports/`:
 </footer>
 {% endblock %}
 ```
+
 {% endraw %}
 
 **Template Best Practices:**
+
 - Use French for all user-facing text
 - Include responsive design for mobile/desktop
 - Support light/dark mode with CSS media queries
@@ -447,7 +452,7 @@ class StockCrewExportV2(CrewExportBase):
 
 Use this checklist to decide whether a task should use AI or Python:
 
-#### Use Python (NOT AI) For:
+#### Use Python (NOT AI) For
 
 - [ ] Is this task deterministic? (same input = same output)
 - [ ] Can this be expressed as a template?
@@ -457,7 +462,7 @@ Use this checklist to decide whether a task should use AI or Python:
 
 If you answered YES to any question, **use Python, not AI**.
 
-#### Use AI ONLY For:
+#### Use AI ONLY For
 
 - [ ] Does this require reasoning or judgment?
 - [ ] Does this involve interpreting complex data?
@@ -723,8 +728,8 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
 
 ### Pattern 4: Jinja2 Template with French Localization
 
-
 {% raw %}
+
 ```html
 {% extends "crew_reports/base.html" %}
 
@@ -751,6 +756,7 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
 </section>
 {% endblock %}
 ```
+
 {% endraw %}
 {% endraw %}
 
@@ -770,7 +776,8 @@ Follow these patterns to extend the architecture while maintaining these benefit
 
 **Version**: 1.0  
 **Last Updated**: 2025-01-25  
-**Related Docs**: 
+**Related Docs**:
+
 - [Architecture Design](../.kiro/specs/report-aggregation-architecture/design.md)
 - [Requirements](../.kiro/specs/report-aggregation-architecture/requirements.md)
 - [Implementation Tasks](../.kiro/specs/report-aggregation-architecture/tasks.md)

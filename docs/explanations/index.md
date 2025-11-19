@@ -120,6 +120,7 @@ Understand design decisions and trade-offs:
 **Core Principle**: Use Python for deterministic tasks, AI only where reasoning is required.
 
 **Why?**
+
 - **Performance**: 10-20x faster with Python
 - **Cost**: 100% reduction (zero LLM calls for calculations)
 - **Reliability**: Deterministic results, easier testing
@@ -132,6 +133,7 @@ Understand design decisions and trade-offs:
 **Core Principle**: All data validated with strict Pydantic schemas.
 
 **Why?**
+
 - **Type Safety**: Catch errors at validation time
 - **Documentation**: Schemas serve as documentation
 - **IDE Support**: Auto-completion and type checking
@@ -144,6 +146,7 @@ Understand design decisions and trade-offs:
 **Core Principle**: Pass file paths between crews, not large data objects.
 
 **Why?**
+
 - **Context Limits**: Avoids LLM context window limits
 - **Caching**: Enables efficient data caching
 - **Performance**: Reduces memory usage
@@ -156,6 +159,7 @@ Understand design decisions and trade-offs:
 **Core Principle**: Run independent tasks in parallel.
 
 **Why?**
+
 - **Performance**: 10-20x speedup for portfolio analysis
 - **Resource Utilization**: Better use of CPU cores
 - **Scalability**: Handles large portfolios efficiently

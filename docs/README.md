@@ -385,6 +385,7 @@ html_path = generator.generate_crew_report(
 ```
 
 **Benefits:**
+
 - ✅ **Free**: No LLM costs for HTML generation
 - ✅ **Fast**: Milliseconds instead of seconds
 - ✅ **Reliable**: 100% deterministic output
@@ -411,6 +412,7 @@ consolidated_path = f"output/reports/{session_id}/consolidated_report.json"
 ```
 
 **Benefits:**
+
 - ✅ **Instant**: Completes in milliseconds
 - ✅ **Deterministic**: Same inputs = same outputs
 - ✅ **Testable**: Easy to unit test with mock data
@@ -434,15 +436,18 @@ final_report_path = generator.generate_final_report(
 ### Cost Savings & Performance
 
 **Phase 1 (Report Templates):**
+
 - Cost savings: $6.00-10.30 per execution
 - Time savings: 106-200 seconds per execution
 - At scale (100 portfolios): $600-1,030 savings, 2.9-5.5 hours faster
 
 **Phase 2 (Calculation Helpers):**
+
 - Additional cost savings: $1.00-3.00 per execution
 - Additional time savings: 30-90 seconds per execution
 
 **Total Benefits:**
+
 - Cost: $7.00-13.30 savings per execution
 - Time: 136-290 seconds faster per execution
 - Quality: 100% consistent formatting
@@ -483,6 +488,7 @@ output/reports/{session_id}/
 ### AI Minimalism in Practice
 
 **Use AI For:**
+
 - ✅ Market trend interpretation and synthesis
 - ✅ SEC filing analysis and insights
 - ✅ Risk scenario analysis
@@ -490,6 +496,7 @@ output/reports/{session_id}/
 - ✅ Strategic recommendations
 
 **Use Python For:**
+
 - ❌ HTML report generation (Jinja2 templates)
 - ❌ Data consolidation (Python functions)
 - ❌ Technical indicator calculations (numpy/pandas)
@@ -560,12 +567,14 @@ Portfolio Analysis Complete
 ### Data Source Optimization
 
 **Primary Source - Yahoo Finance (Always Enabled)**:
+
 - Provides: Company info, fundamentals, price history, technical data
 - Performance: ~2-5 seconds for 66 tickers
 - Rate limit: 600 requests/minute
 - Coverage: All essential data for analysis
 
 **Secondary Source - Alpha Vantage (Optional)**:
+
 - Provides: Additional fundamental data, earnings estimates
 - Performance: ~13 minutes for 66 tickers (5 calls/minute free tier)
 - Rate limit: 5 calls/minute (free), 75 calls/minute (premium)
@@ -585,16 +594,19 @@ The system automatically optimizes batch sizes based on portfolio size:
 ### Error Handling & Resilience
 
 **Partial Failure Handling**:
+
 - Individual ticker failures don't stop batch processing
 - Failed tickers are logged and marked in results
 - Analysis continues with available data
 
 **Complete Failure Fallback**:
+
 - Detects when batch pre-fetch fails completely
 - Automatically falls back to sequential mode
 - Logs fallback reason and continues analysis
 
 **Memory Management**:
+
 - Monitors memory usage during batch processing
 - Automatically reduces batch size if memory usage is high
 - Cleans up resources after batch completion
@@ -624,6 +636,7 @@ The system tracks comprehensive batch processing metrics:
 ### Usage Examples
 
 **Enable Batch Processing (Default)**:
+
 ```bash
 # Optimal configuration for most use cases
 BATCH_PREFETCH_ENABLED=true
@@ -632,6 +645,7 @@ ENABLE_ALPHA_VANTAGE=false  # Yahoo Finance only (recommended)
 ```
 
 **Premium Alpha Vantage Configuration**:
+
 ```bash
 # For users with premium Alpha Vantage API
 BATCH_PREFETCH_ENABLED=true
@@ -641,6 +655,7 @@ DEEP_ANALYSIS_BATCH_SIZE=8
 ```
 
 **Disable Batch Processing**:
+
 ```bash
 # Fall back to sequential mode (for debugging)
 BATCH_PREFETCH_ENABLED=false
@@ -774,6 +789,7 @@ composite_score = (
 ```
 
 **Grade Assignment:**
+
 - **A+ (0.85-1.00)**: Exceptional quality
 - **A (0.75-0.84)**: High quality  
 - **B (0.65-0.74)**: Good quality
@@ -784,17 +800,20 @@ composite_score = (
 ### Asset-Specific Scoring
 
 **Stock Analysis:**
+
 - ROE (Return on Equity) - Target: 15%+
 - Debt-to-Equity Ratio - Target: ≤0.3
 - Revenue Growth - Target: 10%+
 - Profit Margin - Target: 10%+
 
 **ETF Analysis:**
+
 - Expense Ratio - Target: ≤0.25%
 - Tracking Error - Target: ≤0.50%
 - Assets Under Management - Target: ≥$1B
 
 **Crypto Analysis:**
+
 - Market Capitalization - Target: ≥$1B
 - 24-Hour Volume - Target: ≥$100M
 - Age/Maturity - Target: ≥2 years
@@ -802,28 +821,34 @@ composite_score = (
 ### Optimization Modes
 
 **Maximum Speed Mode (Default):**
+
 ```bash
 RISK_ASSESSMENT_USE_MINI=true
 USE_MINIMAL_RISK_TOOLS=true
 DEEP_ANALYSIS_AI_SUMMARY=false
 ```
+
 - **Time**: 10-30 seconds per ticker
 - **Cost**: $0.00 per ticker
 - **LLM Calls**: 0 for calculations
 
 **Balanced Mode (Hybrid):**
+
 ```bash
 DEEP_ANALYSIS_AI_SUMMARY=true  # Optional AI summary
 ```
+
 - **Time**: 15-40 seconds per ticker
 - **Cost**: $0.01 per ticker
 - **LLM Calls**: 1 for optional summary
 
 **Baseline Mode (AI Comparison):**
+
 ```bash
 RISK_ASSESSMENT_USE_MINI=false
 USE_MINIMAL_RISK_TOOLS=false
 ```
+
 - **Time**: 5-10 minutes per ticker
 - **Cost**: $0.05-0.10 per ticker
 - **Purpose**: Debugging and validation
@@ -859,6 +884,7 @@ print(f"Confidence: {result.confidence:.1%}")      # 85%
 ### Portfolio-Scale Benefits
 
 **Large Portfolio Analysis (66 holdings):**
+
 - **AI-Based**: 5.5-11 hours, $3.30-6.60
 - **Python-Based**: 11-33 minutes, $0.00
 - **Savings**: 10-20x faster, 100% cost reduction
@@ -866,6 +892,7 @@ print(f"Confidence: {result.confidence:.1%}")      # 85%
 ### Data Preservation
 
 The Python scoring engine preserves ALL analysis data:
+
 - ✅ Raw metrics (volatility, beta, ROE, RSI, MACD)
 - ✅ Sentiment data (scores, topics, article counts)
 - ✅ Technical indicators (support/resistance, trends)
@@ -1048,18 +1075,21 @@ FinWiz provides sophisticated financial analysis through specialized tools:
 FinWiz implements a sophisticated batch processing system that dramatically improves performance for portfolio analysis:
 
 **Batch Data Pre-Fetching**:
+
 - Fetches data for all holdings simultaneously before analysis begins
 - Yahoo Finance: ~2-5 seconds for 66 tickers (primary source)
 - Alpha Vantage: Optional secondary source with rate limiting
 - Eliminates API latency during crew execution
 
 **Concurrent Crew Execution**:
+
 - Processes multiple holdings in parallel batches
 - Configurable batch sizes (default: 5 concurrent crews)
 - Memory-aware batch sizing for large portfolios
 - Automatic load balancing across available resources
 
 **Performance Results**:
+
 - **66-holding portfolio**: 5.5-11 hours → 20-40 minutes (16-20x faster)
 - **100-holding portfolio**: 8.3-16.7 hours → 17-50 minutes (10-20x faster)
 - **Memory usage**: <500MB for large portfolios
@@ -1076,16 +1106,19 @@ To improve performance, FinWiz leverages asynchronous task execution for I/O-bou
 The batch processing system includes comprehensive error handling:
 
 **Graceful Degradation**:
+
 - Individual ticker failures don't stop batch processing
 - Automatic fallback to sequential mode if batch processing fails
 - Detailed error logging and reporting
 
 **Memory Management**:
+
 - Real-time memory monitoring during batch processing
 - Automatic batch size reduction if memory usage is high
 - Resource cleanup after batch completion
 
 **Rate Limiting**:
+
 - Intelligent rate limiting for all API providers
 - Exponential backoff for rate limit errors
 - Configurable rate limits for different API tiers
@@ -1274,6 +1307,7 @@ CIRCUIT_BREAKER_RECOVERY_TIMEOUT=300
 #### 4. Start Using Supabase
 
 FinWiz will automatically:
+
 - ✅ Cache analysis results for 24 hours (configurable)
 - ✅ Generate vector embeddings for semantic search
 - ✅ Create portfolio snapshots after analysis
@@ -1301,12 +1335,14 @@ Return Fresh Result
 ### Zero Impact Design
 
 **Non-Blocking Operations:**
+
 - Cache checks have strict 2-second timeout
 - Storage operations run in background tasks
 - Circuit breaker prevents cascading failures
 - Automatic fallback to file-based storage
 
 **Circuit Breaker Protection:**
+
 - Opens after 3 consecutive failures
 - Automatically recovers after 5 minutes
 - Logs state changes for monitoring
@@ -1315,17 +1351,20 @@ Return Fresh Result
 ### Security Features
 
 **Field-Level Encryption:**
+
 ```bash
 # Add to .env (minimum 32 characters)
 SUPABASE_ENCRYPTION_KEY=your_secure_encryption_key_here
 ```
 
 **Row-Level Security (RLS):**
+
 - User isolation with automatic user ID assignment
 - Service role bypass for backend operations
 - Backward compatibility for single-user mode
 
 **API Key Security:**
+
 - Environment variables only (never commit credentials)
 - Masked logging (first 8 characters only)
 - Periodic key rotation recommended
@@ -1345,12 +1384,14 @@ SUPABASE_MAX_RETRIES=1                  # Maximum retry attempts (default: 1)
 ```
 
 **Timeout Behavior:**
+
 - **Read Operations**: Cache lookups, data retrieval (10 seconds default)
 - **Write Operations**: Storing analysis results, embeddings (15 seconds default)
 - **Connectivity Test**: Startup validation check (5 seconds default)
 - **Retries**: Limited to 1 retry to prevent cascading delays
 
 **When to Adjust:**
+
 - Increase timeouts if you experience frequent timeout errors on slower networks
 - Decrease timeouts for faster failure detection in high-performance environments
 - Monitor timeout rates in logs to optimize for your infrastructure
@@ -1361,7 +1402,7 @@ FinWiz is designed to work perfectly with or without Supabase. When Supabase is 
 
 **Automatic Fallback Behavior:**
 
-1. **Startup Connectivity Test**: 
+1. **Startup Connectivity Test**:
    - Tests Supabase connection at startup (5-second timeout)
    - If test fails, caching is disabled automatically
    - Analysis proceeds normally without cache
@@ -1378,6 +1419,7 @@ FinWiz is designed to work perfectly with or without Supabase. When Supabase is 
    - Automatic recovery attempts after timeout period
 
 **User Experience:**
+
 - ✅ Analysis always completes successfully
 - ✅ No blocking delays waiting for Supabase
 - ✅ Clear logging of cache status
@@ -1440,6 +1482,7 @@ SUPABASE_CIRCUIT_BREAKER_TIMEOUT=60     # Recovery timeout in seconds (default: 
 ```
 
 **Configuration Guidelines:**
+
 - **Threshold**: Higher values (5-10) tolerate transient failures
 - **Timeout**: Shorter values (30-60s) enable faster recovery
 - **Production**: Use threshold=5, timeout=60 for balanced behavior
@@ -1455,6 +1498,7 @@ ANALYSIS_CACHE_TTL_HOURS=24            # Cache TTL in hours (default: 24)
 ```
 
 **Cache Behavior:**
+
 - When `CACHE_ENABLED=false`, all caching is disabled
 - When `SUPABASE_ENABLED=false`, Supabase caching is disabled
 - TTL controls how long cached results are considered fresh
@@ -1476,6 +1520,7 @@ uv run python -m finwiz.supabase.cli.migrate --directory output/reports/session_
 ```
 
 **Migration Features:**
+
 - Scans output directory for JSON exports
 - Validates against Pydantic schemas
 - Idempotent (safe to run multiple times)
@@ -1485,12 +1530,14 @@ uv run python -m finwiz.supabase.cli.migrate --directory output/reports/session_
 ### Monitoring
 
 **Key Metrics:**
+
 - Cache hit rate (target: 40%+)
 - Query performance (target: <200ms reads, <500ms writes)
 - Circuit breaker state (should be CLOSED)
 - Storage success rate (target: 95%+)
 
 **Supabase Dashboard:**
+
 - Database → Tables: View stored analyses
 - Database → Query Performance: Monitor slow queries
 - Settings → Database: Check resource usage
@@ -1512,6 +1559,7 @@ uv run python -m finwiz.supabase.cli.migrate --directory output/reports/session_
 **Timeout Troubleshooting Steps:**
 
 1. **Check Connectivity**:
+
    ```bash
    # Test Supabase connection
    curl -H "apikey: YOUR_SUPABASE_KEY" \
@@ -1519,6 +1567,7 @@ uv run python -m finwiz.supabase.cli.migrate --directory output/reports/session_
    ```
 
 2. **Increase Timeouts** (for slower networks):
+
    ```bash
    # Add to .env
    SUPABASE_READ_TIMEOUT=15.0
@@ -1581,12 +1630,14 @@ If you experience consistent timeout issues:
 ### Cost Analysis
 
 **Free Tier Limits (Supabase):**
+
 - 500MB database storage
 - 2GB bandwidth/month
 - 50,000 monthly active users
 - Sufficient for most individual users
 
 **Cost Savings Example (100 analyses/month):**
+
 - Without caching: $5-10 in API costs
 - With 40% cache hit rate: $3-6 in API costs
 - **Savings: $2-4/month** (pays for itself)
@@ -1610,6 +1661,7 @@ FinWiz features comprehensive documentation organized using the Diátaxis framew
 **Live Documentation**: Published automatically via GitHub Pages from the `docs/` directory
 
 **Key Features**:
+
 - **Diátaxis Framework**: Organized into Tutorials, How-to Guides, Reference, and Explanations
 - **Clean GitHub Pages**: Simple, fast documentation with Jekyll
 - **Mobile Responsive**: Optimized for all devices
@@ -1617,6 +1669,7 @@ FinWiz features comprehensive documentation organized using the Diátaxis framew
 - **Professional Navigation**: Clear hierarchical structure
 
 **Quick Start**:
+
 ```bash
 # Preview documentation locally
 make docs-serve
@@ -1644,23 +1697,27 @@ make docs-clean
 ### Documentation Organization (Diátaxis Framework)
 
 **📚 Tutorials** (Learning-oriented):
+
 - **[Getting Started](docs/tutorials/getting_started.md)**: Complete setup and first analysis walkthrough
 - **[First Analysis](docs/tutorials/first_analysis.md)**: Step-by-step tutorial for new users
 - **[Portfolio Analysis](docs/tutorials/portfolio_analysis.md)**: Comprehensive portfolio analysis tutorial
 
 **🛠️ How-to Guides** (Problem-solving):
+
 - **[Setup Environment](docs/how-to/setup_environment.md)**: Environment configuration and API keys
 - **[Performance Optimization](docs/how-to/PERFORMANCE_OPTIMIZATION_GUIDE.md)**: Optimization strategies and batch processing
 - **[Template Configuration](docs/how-to/template_configuration.md)**: Jinja2 template customization
 - **[Troubleshooting](docs/how-to/troubleshooting.md)**: Common issues and solutions
 
 **📖 Reference** (Information-oriented):
+
 - **[API Reference](docs/reference/API_REFERENCE.md)**: Complete API documentation for tools and schemas
 - **[CLI Commands](docs/reference/cli_commands.md)**: Command-line interface reference
 - **[Schema Documentation](docs/reference/schemas/)**: Interactive Pydantic model documentation
 - **[Configuration Reference](docs/reference/configuration.md)**: Complete configuration options
 
 **💡 Explanations** (Understanding-oriented):
+
 - **[Architecture](docs/explanations/ARCHITECTURE.md)**: System design and component relationships
 - **[Design Principles](docs/explanations/design_principles.md)**: Core design philosophy and decisions
 - **[Data Flow](docs/explanations/data_flow.md)**: Data processing and validation architecture
@@ -1677,12 +1734,14 @@ make docs-clean
 ### Documentation Maintenance
 
 **Governance Framework**:
+
 - **[Content Governance](docs/maintenance/content-governance.md)**: Review processes and quality standards
 - **[Style Guide](docs/maintenance/style-guide.md)**: Writing standards and formatting guidelines
 - **[Content Creation Guide](docs/maintenance/content-creation-guide.md)**: Workflows for creating documentation
 - **[Setup & Deployment](docs/maintenance/setup-deployment-guide.md)**: Technical setup and deployment procedures
 
 **Quality Assurance**:
+
 - **[Troubleshooting Guide](docs/maintenance/troubleshooting-guide.md)**: Common issues and solutions
 - **[Content Audit Schedule](docs/maintenance/content-audit-schedule.md)**: Regular review and update processes
 

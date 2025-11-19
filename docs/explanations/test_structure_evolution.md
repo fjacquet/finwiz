@@ -48,6 +48,7 @@ tests/
 ```
 
 **Problems**:
+
 - Difficult to navigate
 - No clear separation of concerns
 - Hard to run specific test categories
@@ -80,11 +81,13 @@ tests/
 ### 1. Crew-Specific Testing
 
 **New Structure**:
+
 - `tests/unit/crews/stock_crew/` - Stock analysis crew tests
 - `tests/unit/crews/etf_crew/` - ETF analysis crew tests  
 - `tests/unit/crews/crypto_crew/` - Cryptocurrency analysis crew tests
 
 **Benefits**:
+
 - Clear separation by asset class
 - Easy to add new crew tests
 - Follows CrewAI testing standards
@@ -93,10 +96,12 @@ tests/
 ### 2. Flow Orchestration Testing
 
 **New Structure**:
+
 - `tests/unit/flow/test_main_flow_integration.py` - Main flow orchestration
 - `tests/unit/flow/test_session_integration.py` - Session management
 
 **Benefits**:
+
 - Separates flow logic from business logic
 - Tests Flow state management patterns
 - Validates CrewAI Flow integration
@@ -104,6 +109,7 @@ tests/
 ### 3. Enhanced Tool Testing
 
 **Moved to `tests/unit/tools/`**:
+
 - Enhanced analysis tools (crypto, ETF, SEC)
 - Sentiment analysis tools
 - Technical analysis tools
@@ -111,6 +117,7 @@ tests/
 - Report generation tools
 
 **Benefits**:
+
 - Comprehensive tool coverage
 - Mock all external dependencies
 - Fast execution (< 5 seconds per suite)
@@ -118,12 +125,14 @@ tests/
 ### 4. Schema Validation Testing
 
 **Moved to `tests/unit/schemas/`**:
+
 - Pydantic model validation
 - Input/output contract testing
 - Reporter validation enforcement
 - Tool restriction testing
 
 **Benefits**:
+
 - Ensures data integrity
 - Validates strict Pydantic models
 - Tests schema evolution
@@ -131,12 +140,14 @@ tests/
 ### 5. Integration Testing
 
 **New `tests/integration/core_analysis/`**:
+
 - Crew output validation
 - Data flow validation
 - End-to-end analysis workflows
 - Validation pipeline testing
 
 **Benefits**:
+
 - Tests component interactions
 - Validates real data flows
 - Ensures system integration

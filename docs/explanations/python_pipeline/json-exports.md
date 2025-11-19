@@ -233,6 +233,7 @@ This document specifies the JSON export structures used throughout the Pure Pyth
 Pattern: `{ticker}_{session_id}.json`
 
 Examples:
+
 - `AAPL_analysis_session_123.json`
 - `SPY_analysis_session_123.json`
 - `BTC_analysis_session_123.json`
@@ -242,6 +243,7 @@ Examples:
 Pattern: `{type}_consolidated_{session_id}.json`
 
 Examples:
+
 - `deep_analysis_consolidated_analysis_session_123.json`
 
 ### Discovery Files
@@ -249,6 +251,7 @@ Examples:
 Pattern: `aplus_discovery_{session_id}.json`
 
 Examples:
+
 - `aplus_discovery_analysis_session_123.json`
 
 ### Backtesting Files
@@ -256,6 +259,7 @@ Examples:
 Pattern: `backtesting_results_{session_id}.json`
 
 Examples:
+
 - `backtesting_results_analysis_session_123.json`
 
 ## Directory Structure
