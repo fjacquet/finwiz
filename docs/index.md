@@ -1,7 +1,9 @@
 ---
-layout: default
+layout: home
 title: Home
 nav_order: 1
+description: "FinWiz - AI-powered financial analysis platform with CrewAI. Comprehensive analysis of stocks, ETFs, and cryptocurrencies with autonomous AI agents."
+permalink: /
 ---
 
 # FinWiz Documentation
