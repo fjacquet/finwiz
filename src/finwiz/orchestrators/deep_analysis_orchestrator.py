@@ -294,62 +294,71 @@ class DeepAnalysisOrchestrator:
 
     def _extract_collected_data(self, crew_output: Any) -> dict[str, Any] | None:
         """
-        Extract collected data from data_collection_task output.
+        Extract and flatten collected data from crew output for Python scoring.
 
-        The data_collection_task should store data in its output that can be
-        used by the Python scorer. This method extracts that collected data.
+        Uses CrewDataExtractor to parse crew output and flatten it into the
+        format expected by DeepAnalysisScorer.
 
         Args:
             crew_output: CrewAI crew execution result
 
         Returns:
-            Dictionary of collected data for Python scoring, or None if not found
+            Dictionary of flattened metrics for Python scoring, or None if extraction fails
 
         """
+        from finwiz.utils.data_extractor import CrewDataExtractor
+
         try:
-            # Try to extract from tasks_output (data_collection_task is first task)
-            if hasattr(crew_output, "tasks_output") and crew_output.tasks_output:
-                # Get first task output (data_collection_task)
-                data_task_output = crew_output.tasks_output[0]
+            extractor = CrewDataExtractor()
 
-                # Try to parse raw output as collected data
-                if hasattr(data_task_output, "raw"):
-                    raw = data_task_output.raw
-                    # Check if raw contains collected data markers
-                    if isinstance(raw, str) and "collected_data" in raw.lower():
-                        # Try to extract dict from Python code in raw output
-                        import re
-                        import ast
-
-                        # Look for dict assignment pattern
-                        match = re.search(r'context\s*=\s*(\{.*?\})', raw, re.DOTALL)
-                        if match:
-                            try:
-                                context = ast.literal_eval(match.group(1))
-                                if "collected_data" in context:
-                                    return context["collected_data"]
-                            except:
-                                pass
-
-                # Try pydantic output
-                if hasattr(data_task_output, "pydantic") and data_task_output.pydantic:
-                    pydantic_data = data_task_output.pydantic
-                    if hasattr(pydantic_data, "collected_data"):
-                        return pydantic_data.collected_data
-
-            # Try to extract from pydantic at top level
+            # Try to extract pydantic output first (most structured)
             if hasattr(crew_output, "pydantic") and crew_output.pydantic:
                 pydantic_data = crew_output.pydantic
-                # Check detailed_analysis or raw_metrics
-                if hasattr(pydantic_data, "detailed_analysis"):
-                    detailed = pydantic_data.detailed_analysis
-                    if isinstance(detailed, dict) and "raw_metrics" in detailed:
-                        return detailed["raw_metrics"]
+                # Convert pydantic model to dict
+                if hasattr(pydantic_data, "model_dump"):
+                    data_dict = pydantic_data.model_dump()
+                elif hasattr(pydantic_data, "dict"):
+                    data_dict = pydantic_data.dict()
+                else:
+                    data_dict = pydantic_data
+
+                self.logger.debug(f"Extracted pydantic data with keys: {list(data_dict.keys()) if isinstance(data_dict, dict) else 'not dict'}")
+                return data_dict
+
+            # Try raw output from tasks
+            if hasattr(crew_output, "tasks_output") and crew_output.tasks_output:
+                # Get output from data_collection_task (first task)
+                data_task = crew_output.tasks_output[0]
+
+                if hasattr(data_task, "pydantic") and data_task.pydantic:
+                    pydantic_data = data_task.pydantic
+                    if hasattr(pydantic_data, "model_dump"):
+                        data_dict = pydantic_data.model_dump()
+                    elif hasattr(pydantic_data, "dict"):
+                        data_dict = pydantic_data.dict()
+                    else:
+                        data_dict = pydantic_data
+
+                    self.logger.debug(f"Extracted task pydantic data with keys: {list(data_dict.keys()) if isinstance(data_dict, dict) else 'not dict'}")
+                    return data_dict
+
+                # Try raw JSON output
+                if hasattr(data_task, "raw") and isinstance(data_task.raw, str):
+                    import json
+
+                    try:
+                        data_dict = json.loads(data_task.raw)
+                        self.logger.debug(f"Parsed raw JSON with keys: {list(data_dict.keys()) if isinstance(data_dict, dict) else 'not dict'}")
+                        return data_dict
+                    except json.JSONDecodeError:
+                        self.logger.debug("Raw output is not valid JSON")
+
+            self.logger.warning("Could not extract structured data from crew output")
+            return None
 
         except Exception as e:
-            self.logger.debug(f"Failed to extract collected data: {e}")
-
-        return None
+            self.logger.error(f"Failed to extract collected data: {e}", exc_info=True)
+            return None
 
     def create_deep_analysis_result_from_crew_output(
         self, crew_output: Any, ticker: str, asset_class: str, crew_name: str = "DeepAnalysisCrew", cached: bool = False
