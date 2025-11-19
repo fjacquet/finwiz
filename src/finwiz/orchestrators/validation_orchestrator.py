@@ -68,23 +68,24 @@ class ValidationOrchestrator:
             "cache_enabled": False,
         }
 
-        # Test Supabase connectivity if cache service is available
+        # Initialize and test Supabase connectivity if cache service is available
         if self.cache_service:
             try:
-                self.logger.info("Testing Supabase connectivity...")
-                is_healthy = await self.cache_service.health_check()
+                self.logger.info("Initializing Supabase cache service...")
+                # Initialize cache service (performs connectivity test and sets is_enabled flag)
+                cache_enabled = await self.cache_service.initialize()
 
-                if is_healthy:
+                if cache_enabled:
                     self.logger.info("✓ Supabase connection successful")
                     validation_results["cache_enabled"] = True
                     self.state.cache_enabled = True
                 else:
-                    self.logger.warning("✗ Supabase health check failed - continuing without cache")
+                    self.logger.warning("✗ Supabase connectivity test failed - continuing without cache")
                     validation_results["cache_enabled"] = False
                     self.state.cache_enabled = False
 
             except Exception as e:
-                self.logger.warning(f"✗ Supabase connectivity test failed: {e}")
+                self.logger.warning(f"✗ Supabase initialization failed: {e}")
                 self.logger.info("Continuing without Supabase caching (graceful degradation)")
                 validation_results["cache_enabled"] = False
                 self.state.cache_enabled = False
