@@ -332,7 +332,6 @@ Create a template for your crew in `src/finwiz/templates/crew_reports/`:
 {% endblock %}
 ```
 {% endraw %}
-{% endraw %}
 
 **Template Best Practices:**
 - Use French for all user-facing text
