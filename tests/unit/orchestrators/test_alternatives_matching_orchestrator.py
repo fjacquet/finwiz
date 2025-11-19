@@ -90,7 +90,7 @@ class TestAlternativesMatchingOrchestrator:
                 "ticker": "IBM",
                 "grade": "D",
                 "composite_score": 0.55,
-                "risk_score": 4.5,  # Must be <= 5.0
+                "risk": {"score": 4.5},  # Nested structure - must be <= 5.0
                 "name": "IBM Corp",
                 "asset_class": "stock",
             }
@@ -172,7 +172,7 @@ class TestAlternativesMatchingOrchestrator:
                 "ticker": "IBM",
                 "grade": "C",
                 "composite_score": 0.65,
-                "risk_score": 4.8,  # Must be <= 5.0
+                "risk": {"score": 4.8},  # Nested structure - must be <= 5.0
                 "name": "IBM Corp",
                 "asset_class": "stock",
             }

@@ -78,13 +78,17 @@ class AlternativesMatchingOrchestrator:
             # Extract grade - handle both dict and object types
             if isinstance(holding, dict):
                 grade = holding.get("grade", "D")
-                risk_score = holding.get("risk_score")
+                # risk_score is in the risk assessment object, not at top level
+                risk_obj = holding.get("risk", {})
+                risk_score = risk_obj.get("score") if isinstance(risk_obj, dict) else getattr(risk_obj, "score", None)
                 composite_score = holding.get("composite_score")
                 name = holding.get("name", ticker)
                 asset_class = holding.get("asset_class", "stock")
             else:
                 grade = getattr(holding, "grade", "D")
-                risk_score = getattr(holding, "risk_score", None)
+                # risk_score is in the risk assessment object, not at top level
+                risk_obj = getattr(holding, "risk", None)
+                risk_score = risk_obj.score if risk_obj else None
                 composite_score = getattr(holding, "composite_score", None)
                 name = getattr(holding, "name", ticker)
                 asset_class = getattr(holding, "asset_class", "stock")
@@ -174,7 +178,8 @@ class AlternativesMatchingOrchestrator:
                 "ticker": ticker,
                 "grade": analysis.grade,
                 "composite_score": analysis.composite_score,
-                "risk_score": analysis.risk_score,
+                # risk_score is stored in DeepAnalysisResult, create nested risk object
+                "risk": {"score": analysis.risk_score} if analysis.risk_score is not None else {},
                 "name": getattr(analysis, "name", ticker),
                 "asset_class": analysis.asset_class,
             }

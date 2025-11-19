@@ -162,11 +162,9 @@ class DeepAnalysisOrchestrator:
                 analysis = deep_results[ticker]
                 holding["composite_score"] = analysis.composite_score
                 holding["grade"] = analysis.grade
-                holding["fundamental_score"] = analysis.fundamental_score
-                holding["technical_score"] = analysis.technical_score
-                holding["risk_score"] = analysis.risk_score
-                holding["confidence_level"] = analysis.confidence_level
-                holding["analysis_timestamp"] = analysis.analysis_timestamp
+                # NOTE: fundamental_score, technical_score, risk_score, confidence_level, analysis_timestamp
+                # are NOT in HoldingDecision schema and will cause Pydantic validation errors
+                # These fields exist in DeepAnalysisResult but should not be copied to holdings
 
             # Enrich with alternatives
             if ticker in alternatives_data:
