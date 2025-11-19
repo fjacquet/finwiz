@@ -97,7 +97,7 @@ class TestDeepAnalysisScorer:
         assert 0.0 <= result.fundamental_score <= 1.0
         assert 0.0 <= result.technical_score <= 1.0
         assert 0.0 <= result.risk_score <= 5.0  # Risk score is 0-5 scale
-        assert result.grade in ["A+", "A", "B", "C", "D", "F"]
+        assert result.grade in ["A+", "A", "B+", "B", "C+", "C", "D", "F"]
         assert result.recommendation in ["BUY", "HOLD", "SELL"]
         assert 0.0 <= result.confidence_level <= 1.0  # Fixed: confidence -> confidence_level
         assert len(result.rationale) >= 50
@@ -109,7 +109,7 @@ class TestDeepAnalysisScorer:
         assert result.ticker == "SPY"
         assert result.asset_class == "etf"
         assert 0.0 <= result.composite_score <= 1.0
-        assert result.grade in ["A+", "A", "B", "C", "D", "F"]
+        assert result.grade in ["A+", "A", "B+", "B", "C+", "C", "D", "F"]
 
     def test_should_calculate_composite_score_for_crypto(self, scorer, sample_crypto_data):
         """Test composite score calculation for crypto."""
@@ -118,7 +118,7 @@ class TestDeepAnalysisScorer:
         assert result.ticker == "BTC"
         assert result.asset_class == "crypto"
         assert 0.0 <= result.composite_score <= 1.0
-        assert result.grade in ["A+", "A", "B", "C", "D", "F"]
+        assert result.grade in ["A+", "A", "B+", "B", "C+", "C", "D", "F"]
 
     def test_should_calculate_stock_fundamental_score_excellent(self, scorer):
         """Test stock fundamental score with excellent metrics."""
@@ -289,8 +289,8 @@ class TestDeepAnalysisScorer:
         assert grade == "F"
 
     def test_should_generate_buy_recommendation(self, scorer):
-        """Test BUY recommendation for high scores."""
-        recommendation = scorer.generate_recommendation(0.80, "A")
+        """Test BUY recommendation for high scores (>= 0.85)."""
+        recommendation = scorer.generate_recommendation(0.85, "A")
         assert recommendation == "BUY"
 
     def test_should_generate_hold_recommendation(self, scorer):

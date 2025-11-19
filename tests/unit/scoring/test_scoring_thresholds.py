@@ -14,18 +14,18 @@ class TestScoringThresholds:
         """Test that default thresholds can be initialized."""
         thresholds = ScoringThresholds()
 
-        # Verify key thresholds are set
-        assert thresholds.grade_a_plus == 0.90
-        assert thresholds.grade_a == 0.80
-        assert thresholds.buy_threshold == 0.80
-        assert thresholds.sell_threshold == 0.60
+        # Verify key thresholds are set (official grading scale)
+        assert thresholds.grade_a_plus == 0.95
+        assert thresholds.grade_a == 0.85
+        assert thresholds.buy_threshold == 0.85
+        assert thresholds.sell_threshold == 0.65
 
     def test_get_thresholds_returns_default(self):
         """Test that get_thresholds() returns default instance."""
         thresholds = get_thresholds()
 
         assert isinstance(thresholds, ScoringThresholds)
-        assert thresholds.grade_a_plus == 0.90
+        assert thresholds.grade_a_plus == 0.95
 
     def test_custom_thresholds(self):
         """Test that custom thresholds can be created."""
@@ -204,13 +204,13 @@ class TestScoringThresholds:
         assert thresholds.grade_c > thresholds.grade_d
 
     def test_backward_compatibility(self):
-        """Test that default thresholds match original hardcoded values."""
+        """Test that default thresholds match official grading system."""
         thresholds = ScoringThresholds()
 
-        # Verify key thresholds match original values
-        assert thresholds.grade_a_plus == 0.90
-        assert thresholds.buy_threshold == 0.80
-        assert thresholds.sell_threshold == 0.60
+        # Verify key thresholds match official grading scale
+        assert thresholds.grade_a_plus == 0.95
+        assert thresholds.buy_threshold == 0.85
+        assert thresholds.sell_threshold == 0.65
         assert thresholds.roe_excellent == 0.20
         assert thresholds.expense_excellent == 0.001
         assert thresholds.volatility_very_low == 0.10

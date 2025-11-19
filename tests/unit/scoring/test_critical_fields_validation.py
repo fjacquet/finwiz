@@ -46,7 +46,7 @@ class TestCriticalFieldsValidation:
         assert result is not None
         assert result.ticker == "AAPL"
         assert result.composite_score > 0
-        assert result.grade in ["A+", "A", "B", "C", "D", "F"]
+        assert result.grade in ["A+", "A", "B+", "B", "C+", "C", "D", "F"]
 
     def test_should_fail_when_critical_field_missing(self, scorer, complete_stock_data):
         """Test that analysis FAILS when critical field is missing."""
