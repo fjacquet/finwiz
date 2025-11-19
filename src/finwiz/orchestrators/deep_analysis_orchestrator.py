@@ -307,31 +307,85 @@ class DeepAnalysisOrchestrator:
 
         """
         try:
-            self.logger.debug(f"Extracting raw tool outputs from crew execution...")
+            self.logger.info(f"🔍 DEBUG: Starting extraction from crew_output (type={type(crew_output).__name__})")
+
+            # Check crew_output attributes
+            crew_attrs = [a for a in dir(crew_output) if not a.startswith('_')]
+            self.logger.info(f"🔍 DEBUG: crew_output attributes: {crew_attrs[:20]}...")
 
             # Access tool outputs from tasks_output
-            if not hasattr(crew_output, "tasks_output") or not crew_output.tasks_output:
-                self.logger.warning("No tasks_output found in crew result")
+            if not hasattr(crew_output, "tasks_output"):
+                self.logger.error("❌ crew_output has no 'tasks_output' attribute!")
                 return None
+
+            if not crew_output.tasks_output:
+                self.logger.error("❌ crew_output.tasks_output is empty!")
+                return None
+
+            self.logger.info(f"🔍 DEBUG: Found {len(crew_output.tasks_output)} tasks in tasks_output")
 
             # Get data_collection_task output (first task)
             data_task = crew_output.tasks_output[0]
+            self.logger.info(f"🔍 DEBUG: Got first task from tasks_output")
 
-            # Look for tool outputs in the task
-            if hasattr(data_task, "output") and hasattr(data_task.output, "raw"):
-                raw_output = data_task.output.raw
-                self.logger.debug(f"Found raw output (type={type(raw_output)})")
+            # DEBUG: Comprehensive task exploration
+            self.logger.info(f"🔍 DEBUG: Task object type: {type(data_task).__name__}")
+            task_attrs = [a for a in dir(data_task) if not a.startswith('_')]
+            self.logger.info(f"🔍 DEBUG: Task attributes (non-private): {task_attrs}")
 
-                # Try to parse as JSON if string
+            # Check each attribute for potential data sources
+            # NOTE: Removed 'json' from list - accessing it raises ValueError if output_json not set
+            for attr in ['output', 'raw', 'pydantic', 'tool_output', 'result']:
+                if hasattr(data_task, attr):
+                    attr_value = getattr(data_task, attr)
+                    self.logger.info(f"🔍 DEBUG: Task.{attr}: type={type(attr_value).__name__}")
+                    # Special handling for raw - check if it's empty
+                    if attr == 'raw':
+                        if isinstance(attr_value, str):
+                            self.logger.info(f"🔍 DEBUG:   Task.raw length: {len(attr_value)} chars")
+                            if not attr_value:
+                                self.logger.warning("⚠️ Task.raw is EMPTY STRING!")
+                            else:
+                                # Show preview with escaped newlines so we can see full content
+                                preview = repr(attr_value[:500])  # repr() shows \n instead of actual newlines
+                                self.logger.info(f"🔍 DEBUG:   Task.raw preview (repr): {preview}")
+                    if attr == 'output' and attr_value:
+                        output_attrs = [a for a in dir(attr_value) if not a.startswith('_')]
+                        self.logger.info(f"🔍 DEBUG:   output attributes: {output_attrs}")
+
+            # Look for tool outputs in the task.raw (task IS the TaskOutput)
+            if hasattr(data_task, "raw") and data_task.raw:
+                raw_output = data_task.raw
+                self.logger.info(f"🔍 DEBUG: Found task.raw (length={len(raw_output)} chars)")
+
                 if isinstance(raw_output, str):
                     import json
+                    import re
+
+                    cleaned = raw_output.strip()
+
+                    # Remove markdown code fences if present
+                    if cleaned.startswith('```'):
+                        lines = cleaned.split('\n', 1)
+                        cleaned = lines[1] if len(lines) > 1 else cleaned
+                        cleaned = cleaned.rstrip('`').strip()
+                        self.logger.info("🔍 Stripped markdown code fence")
+
+                    # Extract JSON from Python assignment: context["x"] = {...}
+                    match = re.search(r'=\s*(\{.+\})\s*$', cleaned, re.DOTALL)
+                    if match:
+                        cleaned = match.group(1).strip()
+                        self.logger.info(f"🔍 Extracted JSON from assignment (length={len(cleaned)})")
+
+                    # Try parsing as JSON
                     try:
-                        parsed = json.loads(raw_output)
+                        parsed = json.loads(cleaned)
                         if isinstance(parsed, dict):
-                            self.logger.info(f"✅ Extracted raw data with keys: {list(parsed.keys())[:5]}...")
+                            self.logger.info(f"✅ Parsed JSON with keys: {list(parsed.keys())[:10]}")
                             return parsed
-                    except json.JSONDecodeError:
-                        self.logger.debug("Raw output is not JSON, trying text extraction")
+                    except json.JSONDecodeError as e:
+                        self.logger.warning(f"⚠️ JSON parse failed: {e}")
+                        self.logger.info(f"Cleaned text preview: {cleaned[:300]}")
 
             # If pydantic output exists, try to extract raw metrics from it
             if hasattr(crew_output, "pydantic") and crew_output.pydantic:
@@ -345,6 +399,41 @@ class DeepAnalysisOrchestrator:
 
                 if data_dict:
                     self.logger.info(f"✅ Extracted pydantic data with keys: {list(data_dict.keys())[:5]}...")
+
+                    # DEBUG: Comprehensive structure mapping
+                    import json
+
+                    # Log complete structure (truncated for readability)
+                    full_json = json.dumps(data_dict, indent=2, default=str)
+                    self.logger.info(f"🔍 DEBUG: Pydantic structure ({len(full_json)} chars):\n{full_json[:2000]}...")
+
+                    # Map out all top-level keys and their types
+                    self.logger.info("🔍 DEBUG: Structure map:")
+                    for key, value in data_dict.items():
+                        value_type = type(value).__name__
+                        if isinstance(value, dict):
+                            nested_keys = list(value.keys())[:5]
+                            self.logger.info(f"🔍 DEBUG:   {key}: dict with keys {nested_keys}...")
+                        elif isinstance(value, list):
+                            self.logger.info(f"🔍 DEBUG:   {key}: list with {len(value)} items")
+                        else:
+                            self.logger.info(f"🔍 DEBUG:   {key}: {value_type} = {str(value)[:100]}")
+
+                    # Check if metrics are nested in detailed_analysis
+                    if "detailed_analysis" in data_dict:
+                        detailed = data_dict["detailed_analysis"]
+                        self.logger.info(f"🔍 DEBUG: Found detailed_analysis (type={type(detailed).__name__})")
+
+                        if isinstance(detailed, dict):
+                            self.logger.info(f"🔍 DEBUG:   detailed_analysis keys: {list(detailed.keys())}")
+
+                            # Check component_scores (likely AI-generated scores, not raw values)
+                            if "component_scores" in detailed:
+                                scores = detailed["component_scores"]
+                                self.logger.info(f"🔍 DEBUG:   component_scores type: {type(scores).__name__}")
+                                if isinstance(scores, dict):
+                                    self.logger.info(f"🔍 DEBUG:   component_scores content: {json.dumps(scores, indent=4, default=str)}")
+
                     return data_dict
 
             self.logger.warning("Could not extract tool outputs - no raw data found")

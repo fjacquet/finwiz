@@ -389,11 +389,15 @@ class DeepAnalysisCrew:
     @agent
     def asset_analyst(self) -> Agent:
         """Agent that collects data for the provided ticker."""
+        # FIXED: Provide actual tools so agent can collect data!
+        # Use stock tools as default - they work for all asset classes via asset_class parameter
+        tools = get_stock_crew_tools(include_rag=False)
+
         return Agent(
             config=self.agents_config["asset_analyst"],
             verbose=True,
             reasoning=False,  # ⚡ PYTHON SCORING: No reasoning needed for data collection
-            tools=[],  # Tools will be set dynamically based on asset_class
+            tools=tools,
             llm=self._get_configured_llm(),
         )
 
