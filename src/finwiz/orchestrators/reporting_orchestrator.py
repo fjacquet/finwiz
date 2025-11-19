@@ -293,18 +293,22 @@ class ReportingOrchestrator:
             session_id = self.state.session_id or "default"
 
             # Read JSON files from disk for each asset class
+            # Deep analysis saves to output/deep_analysis_{asset_class}/ directories
             for asset_class in ["stock", "etf", "crypto"]:
-                asset_dir = Path(f"output/{asset_class}")
-                if asset_dir.exists():
-                    for json_file in asset_dir.glob(f"*_{session_id}.json"):
-                        try:
-                            data = self._read_json_file(str(json_file))
-                            ticker = data.get("ticker")
-                            if ticker:
-                                raw_deep_analysis[ticker] = data
-                                self.logger.debug(f"Loaded {ticker} from {json_file}: Score={data.get('composite_score', 0):.3f}, Grade={data.get('grade', 'N/A')}")
-                        except Exception as e:
-                            self.logger.warning(f"Failed to load {json_file}: {e}")
+                # Try both possible directory structures for backward compatibility
+                for base_dir in [f"output/deep_analysis_{asset_class}", f"output/{asset_class}"]:
+                    asset_dir = Path(base_dir)
+                    if asset_dir.exists():
+                        # Match files with either session_id or timestamp pattern
+                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob(f"*_output_*.json")):
+                            try:
+                                data = self._read_json_file(str(json_file))
+                                ticker = data.get("ticker")
+                                if ticker and ticker not in raw_deep_analysis:  # Avoid duplicates
+                                    raw_deep_analysis[ticker] = data
+                                    self.logger.debug(f"Loaded {ticker} from {json_file}: Score={data.get('composite_score', 0):.3f}, Grade={data.get('grade', 'N/A')}")
+                            except Exception as e:
+                                self.logger.warning(f"Failed to load {json_file}: {e}")
 
             if not raw_deep_analysis:
                 self.logger.warning("No deep analysis results found in JSON files")
