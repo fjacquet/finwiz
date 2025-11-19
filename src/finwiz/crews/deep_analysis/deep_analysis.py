@@ -417,7 +417,8 @@ class DeepAnalysisCrew:
         return Agent(
             config=self.agents_config["investment_reporter"],
             verbose=True,
-            reasoning=False,  # ⚡ PYTHON SCORING: No reasoning needed
+            reasoning=True,  # ✅ Enable reasoning to understand tool calling
+            max_reasoning_attempts=3,  # Limit reasoning loops
             tools=[DeepAnalysisScoringTool()],  # Python scoring tool
             llm=self._get_configured_llm(),
         )
