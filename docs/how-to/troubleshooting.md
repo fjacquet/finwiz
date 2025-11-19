@@ -219,8 +219,8 @@ class PythonDeepAnalysisResult(BaseModel):
 {% endraw %}
 
 **Key Techniques**:
-1. **Conditional checks**: `{%raw%}{% if field is defined %}{%endraw%}`
-2. **Fallback logic**: `{%raw%}{% elif alternative_field %}{%endraw%}`
+1. **Conditional checks**: {% raw %}`{% if field is defined %}`{% endraw %}
+2. **Fallback logic**: {% raw %}`{% elif alternative_field %}`{% endraw %}
 3. **Scale conversion**: `risk_score * 10` (0-1 → 0-10)
 4. **Graceful degradation**: Show "N/A" if data unavailable
 

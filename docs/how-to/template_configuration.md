@@ -47,7 +47,6 @@ All report templates extend the base template:
 
 {% raw %}
 ```jinja
-{%raw%}
 {% extends "crew_reports/base.html" %}
 
 {% block title %}Analyse Approfondie {{ ticker }} - FinWiz{% endblock %}
@@ -55,7 +54,6 @@ All report templates extend the base template:
 {% block content %}
 <!-- Template-specific content -->
 {% endblock %}
-{%endraw%}
 ```
 {% endraw %}
 
@@ -219,7 +217,7 @@ Templates dynamically show relevant metrics based on asset class:
 
 {% raw %}
 ```jinja
-{%raw%}
+
 <!-- Stock-specific metrics -->
 {% if asset_class == 'stock' %}
     {% if fundamental_details.roe is defined %}
@@ -249,7 +247,7 @@ Templates dynamically show relevant metrics based on asset class:
     </div>
     {% endif %}
 {% endif %}
-{%endraw%}
+
 ```
 {% endraw %}
 
@@ -259,7 +257,7 @@ Templates include conditional CSS classes based on values:
 
 {% raw %}
 ```jinja
-{%raw%}
+
 <!-- Risk-based color coding -->
 <p class="metric-value {% if technical_details.rsi < 30 %}risk-high{% elif technical_details.rsi > 70 %}risk-high{% else %}risk-low{% endif %}">
     {{ "%.1f"|format(technical_details.rsi) }}
@@ -270,7 +268,7 @@ Templates include conditional CSS classes based on values:
     {% if recommendation == 'BUY' %}✅{% elif recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
     <strong>{{ recommendation }}</strong> - Grade {{ grade }}
 </p>
-{%endraw%}
+
 ```
 {% endraw %}
 
@@ -297,7 +295,7 @@ To add a new section to the template:
 1. **Define the section structure**:
 {% raw %}
 ```jinja
-{%raw%}
+
 <!-- New Performance Metrics Section -->
 <div class="section performance-metrics">
     <h2>📈 Métriques de Performance</h2>
@@ -312,7 +310,7 @@ To add a new section to the template:
     </div>
     {% endif %}
 </div>
-{%endraw%}
+
 ```
 {% endraw %}
 
@@ -387,7 +385,7 @@ Create specialized templates by extending the base:
 
 {% raw %}
 ```jinja
-{%raw%}
+
 <!-- etf_deep_analysis_report.html.j2 -->
 {% extends "crew_reports/deep_analysis_report.html.j2" %}
 
@@ -419,7 +417,7 @@ Create specialized templates by extending the base:
     {% endif %}
 </div>
 {% endblock %}
-{%endraw%}
+
 ```
 {% endraw %}
 
@@ -705,7 +703,7 @@ template_data = {
 **Issue**: Formatting errors
 {% raw %}
 ```jinja
-{%raw%}
+
 <!-- Solution: Use safe filters and error handling -->
 {{ value|default("N/A") }}
 {{ percentage_value|default(0)|round(1) }}%
@@ -714,7 +712,7 @@ template_data = {
 {% else %}
     <p>Données non disponibles</p>
 {% endif %}
-{%endraw%}
+
 ```
 {% endraw %}
 
