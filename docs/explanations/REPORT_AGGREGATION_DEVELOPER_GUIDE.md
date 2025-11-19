@@ -758,7 +758,6 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
 ```
 
 {% endraw %}
-{% endraw %}
 
 ## Summary
 
