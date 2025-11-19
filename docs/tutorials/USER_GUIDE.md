@@ -80,7 +80,7 @@ FF_PERPLEXITY_RESEARCH=false
 PORTFOLIO_REVIEW_ENABLED=true
 
 # Performance Optimization (Deep Analysis)
-RISK_ASSESSMENT_USE_MINI=true    # Use GPT-5-mini for risk assessment (faster, cheaper)
+RISK_ASSESSMENT_USE_MINI=true    # Use gpt-4o-mini for risk assessment (faster, cheaper)
 USE_MINIMAL_RISK_TOOLS=true      # Use minimal tool set for risk assessor (Phase 2 optimization)
 
 # Portfolio Configuration
@@ -373,10 +373,10 @@ The DeepAnalysisCrew integrates into the 6-phase flow:
 
 The DeepAnalysisCrew includes two performance optimizations that can be configured via environment variables:
 
-**Phase 1: GPT-5-mini for Risk Assessment**
+**Phase 1: gpt-4o-mini for Risk Assessment**
 
 ```bash
-# Enable GPT-5-mini for risk assessment (default: true)
+# Enable gpt-4o-mini for risk assessment (default: true)
 RISK_ASSESSMENT_USE_MINI=true
 
 # Disable to use default LLM (GPT-4)
@@ -385,7 +385,7 @@ RISK_ASSESSMENT_USE_MINI=false
 
 **Benefits:**
 
-- Faster execution (GPT-5-mini is optimized for speed)
+- Faster execution (gpt-4o-mini is optimized for speed)
 - Lower cost per analysis
 - Maintains accuracy for straightforward risk calculations
 
@@ -575,7 +575,7 @@ class FinwizFlow(Flow[FinwizState]):
     def validate_data_integration(self):
         # State saved automatically after this method
         pass
-    
+
     @listen("validate_data_integration")
     def check_portfolio(self):
         # State saved automatically after this method
@@ -723,14 +723,14 @@ The system classifies errors and provides actionable remediation suggestions:
 
 **Remediation Suggestions:**
 
-| Error Type | Suggestion |
-|------------|------------|
-| Network | Check network connectivity and API status |
-| Timeout | Increase timeout or check API performance |
-| Rate Limit | Reduce parallelism or increase delays |
-| Authentication | Check API keys in environment variables |
-| Validation | Check ticker symbols and input data |
-| Unknown | Review error details and logs |
+| Error Type     | Suggestion                                |
+| -------------- | ----------------------------------------- |
+| Network        | Check network connectivity and API status |
+| Timeout        | Increase timeout or check API performance |
+| Rate Limit     | Reduce parallelism or increase delays     |
+| Authentication | Check API keys in environment variables   |
+| Validation     | Check ticker symbols and input data       |
+| Unknown        | Review error details and logs             |
 
 **Error Report Example:**
 
@@ -963,7 +963,7 @@ class CustomFlow(Flow[MyState]):
     def init(self):
         # Not persisted
         pass
-    
+
     @persist()  # Method-level persistence
     @listen("init")
     def important_step(self):
@@ -981,10 +981,10 @@ try:
 except Exception as e:
     error_type, is_retryable = classify_error(e)
     suggestion = get_remediation_suggestion(error_type)
-    
+
     logger.error(f"Failed to analyze {ticker}: {e}")
     logger.info(f"Remediation: {suggestion}")
-    
+
     if is_retryable:
         # Retry logic
         pass
@@ -1193,7 +1193,7 @@ export CACHE_BACKEND=file
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-03-10
 
 ---
@@ -1394,12 +1394,12 @@ await service.send_notification(
 
 ### Alert Levels
 
-| Level | Threshold | Response Time | Notification |
-|-------|-----------|---------------|--------------|
-| **CRITICAL** | >10% deviation | Immediate | Email + SMS |
-| **HIGH** | 8-10% deviation | 1 hour | Email + SMS |
-| **MEDIUM** | 5-8% deviation | 4 hours | Email |
-| **LOW** | 3-5% deviation | 24 hours | Email (digest) |
+| Level        | Threshold       | Response Time | Notification   |
+| ------------ | --------------- | ------------- | -------------- |
+| **CRITICAL** | >10% deviation  | Immediate     | Email + SMS    |
+| **HIGH**     | 8-10% deviation | 1 hour        | Email + SMS    |
+| **MEDIUM**   | 5-8% deviation  | 4 hours       | Email          |
+| **LOW**      | 3-5% deviation  | 24 hours      | Email (digest) |
 
 ## Knowledge Base Strategy
 
@@ -1693,26 +1693,26 @@ Centralized data management and coordination between analysis crews with validat
 ```yaml
 integration:
   output_dir: "output"
-  
+
   freshness:
     default_max_age_hours: 24
     crew_thresholds:
-      stock: 24      # Stock analysis valid for 24 hours
-      etf: 48        # ETF analysis valid for 48 hours
-      crypto: 12     # Crypto analysis valid for 12 hours
-      discovery: 72  # Discovery valid for 72 hours
+      stock: 24 # Stock analysis valid for 24 hours
+      etf: 48 # ETF analysis valid for 48 hours
+      crypto: 12 # Crypto analysis valid for 12 hours
+      discovery: 72 # Discovery valid for 72 hours
       portfolio: 168 # Portfolio review valid for 1 week
-  
+
   validation:
     strict_validation: true
     timeout_seconds: 30
     continue_on_warnings: true
-  
+
   error_handling:
     max_retries: 3
     retry_delay: 2
     graceful_degradation: true
-  
+
   logging:
     level: "INFO"
     structured: true
@@ -1807,5 +1807,5 @@ FINWIZ_GRACEFUL_DEGRADATION=true
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-03-10

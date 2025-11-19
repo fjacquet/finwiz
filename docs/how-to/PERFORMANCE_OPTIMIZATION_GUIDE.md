@@ -19,7 +19,7 @@ This guide documents the performance optimizations available in FinWiz's DeepAna
 
 FinWiz includes two configurable performance optimizations for the DeepAnalysisCrew:
 
-1. **Phase 1: GPT-5-mini for Risk Assessment** - Use faster, cheaper LLM for risk calculations
+1. **Phase 1: gpt-4o-mini for Risk Assessment** - Use faster, cheaper LLM for risk calculations
 2. **Phase 2: Minimal Tool Set** - Reduce tool initialization overhead for risk assessor
 
 Both optimizations are **enabled by default** and can be configured via environment variables.
@@ -29,7 +29,7 @@ Both optimizations are **enabled by default** and can be configured via environm
 ### Environment Variables
 
 ```bash
-# Phase 1: Use GPT-5-mini for risk assessment (default: true)
+# Phase 1: Use gpt-4o-mini for risk assessment (default: true)
 RISK_ASSESSMENT_USE_MINI=true
 
 # Phase 2: Use minimal tool set for risk assessor (default: true)
@@ -56,15 +56,15 @@ USE_MINIMAL_RISK_TOOLS=false
 uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
 ```
 
-## Phase 1: GPT-5-mini for Risk Assessment
+## Phase 1: gpt-4o-mini for Risk Assessment
 
 ### Description
 
-The risk assessor agent uses GPT-5-mini instead of the default LLM (GPT-4) for faster, cheaper execution while maintaining accuracy for straightforward risk calculations.
+The risk assessor agent uses gpt-4o-mini instead of the default LLM (GPT-4) for faster, cheaper execution while maintaining accuracy for straightforward risk calculations.
 
 ### Benefits
 
-- **Faster Execution**: GPT-5-mini is optimized for speed
+- **Faster Execution**: gpt-4o-mini is optimized for speed
 - **Lower Cost**: Reduced LLM API costs per analysis
 - **Maintained Accuracy**: Risk scores remain consistent for standard calculations
 
@@ -77,8 +77,8 @@ import os
 use_mini = os.getenv("RISK_ASSESSMENT_USE_MINI", "true").lower() == "true"
 
 if use_mini:
-    risk_llm = LLM(model="gpt-5-mini")
-    logger.info("Risk assessor using GPT-5-mini for faster execution")
+    risk_llm = LLM(model="gpt-4o-mini")
+    logger.info("Risk assessor using gpt-4o-mini for faster execution")
 else:
     risk_llm = self._get_configured_llm()
     logger.info("Risk assessor using default LLM")
@@ -131,13 +131,13 @@ The minimal tool set includes only essential tools for risk assessment:
 def _get_minimal_risk_tools(self, asset_class: str) -> list:
     """Get minimal tool set for risk assessment only."""
     tools = []
-    
+
     # Core risk metrics
     tools.append(QuantitativeAnalysisTool(asset_class=asset_class))
-    
+
     # Ticker validation
     tools.append(TickerValidationTool())
-    
+
     # Asset-specific tool
     if asset_class == "stock":
         tools.append(EnhancedSECAnalysisTool())
@@ -145,7 +145,7 @@ def _get_minimal_risk_tools(self, asset_class: str) -> list:
         tools.append(EnhancedETFAnalysisTool())
     elif asset_class == "crypto":
         tools.append(EnhancedCryptoAnalysisTool())
-    
+
     return make_tools_robust(tools)
 ```
 
@@ -200,17 +200,17 @@ RISK_ASSESSMENT_USE_MINI=false USE_MINIMAL_RISK_TOOLS=false \
 
 ### Expected Results
 
-| Configuration | Execution Time | Cost | Accuracy |
-|--------------|----------------|------|----------|
-| All Optimizations | 2-3 min | Low | High |
-| Phase 1 Only | 2.5-3.5 min | Low | High |
-| Phase 2 Only | 2.5-3.5 min | Medium | High |
-| Baseline | 3-4 min | Medium | High |
+| Configuration     | Execution Time | Cost   | Accuracy |
+| ----------------- | -------------- | ------ | -------- |
+| All Optimizations | 2-3 min        | Low    | High     |
+| Phase 1 Only      | 2.5-3.5 min    | Low    | High     |
+| Phase 2 Only      | 2.5-3.5 min    | Medium | High     |
+| Baseline          | 3-4 min        | Medium | High     |
 
 **Performance Impact:**
 
 - **20-30% reduction** in execution time with all optimizations
-- **Lower LLM API costs** with GPT-5-mini
+- **Lower LLM API costs** with gpt-4o-mini
 - **Maintained accuracy** for risk calculations
 
 ## Validation
@@ -276,7 +276,7 @@ diff output_optimized.txt output_baseline.txt
 
 1. Verify environment variables are set correctly
 2. Check logs for optimization status messages
-3. Ensure GPT-5-mini is available in your region
+3. Ensure gpt-4o-mini is available in your region
 4. Monitor API response times
 
 ### Issue: Tool initialization errors
@@ -342,7 +342,7 @@ USE_MINIMAL_RISK_TOOLS=false
 ```python
 # Logs indicate optimization status
 logger.info("⚡ PHASE 2: Using minimal tool set for risk assessor (3 tools)")
-logger.info("Risk assessor using GPT-5-mini for faster execution")
+logger.info("Risk assessor using gpt-4o-mini for faster execution")
 ```
 
 ## References
@@ -355,7 +355,7 @@ logger.info("Risk assessor using GPT-5-mini for faster execution")
 
 ---
 
-**Version**: 1.0  
-**Created**: 2025-01-25  
-**Last Updated**: 2025-01-25  
+**Version**: 1.0
+**Created**: 2025-01-25
+**Last Updated**: 2025-01-25
 **Status**: Active

@@ -64,29 +64,29 @@ The composite score is calculated using a weighted average of three components:
 ```python
 composite_score = (
     0.40 * fundamental_score +  # 40% weight
-    0.30 * technical_score +    # 30% weight  
+    0.30 * technical_score +    # 30% weight
     0.30 * risk_score          # 30% weight
 )
 ```
 
 ### Grade Thresholds
 
-| Score Range | Grade | Description |
-|-------------|-------|-------------|
+| Score Range | Grade | Description         |
+| ----------- | ----- | ------------------- |
 | 0.85 - 1.00 | A+    | Exceptional quality |
-| 0.75 - 0.84 | A     | High quality |
-| 0.65 - 0.74 | B     | Good quality |
-| 0.55 - 0.64 | C     | Average quality |
-| 0.45 - 0.54 | D     | Below average |
-| 0.00 - 0.44 | F     | Poor quality |
+| 0.75 - 0.84 | A     | High quality        |
+| 0.65 - 0.74 | B     | Good quality        |
+| 0.55 - 0.64 | C     | Average quality     |
+| 0.45 - 0.54 | D     | Below average       |
+| 0.00 - 0.44 | F     | Poor quality        |
 
 ### Recommendation Logic
 
-| Composite Score | Recommendation | Rationale |
-|----------------|----------------|-----------|
-| ≥ 0.70 (A- or better) | BUY | Strong fundamentals and favorable outlook |
-| 0.50 - 0.69 (B to C) | HOLD | Mixed signals, monitor developments |
-| < 0.50 (Below C) | SELL | Weak fundamentals or elevated risks |
+| Composite Score       | Recommendation | Rationale                                 |
+| --------------------- | -------------- | ----------------------------------------- |
+| ≥ 0.70 (A- or better) | BUY            | Strong fundamentals and favorable outlook |
+| 0.50 - 0.69 (B to C)  | HOLD           | Mixed signals, monitor developments       |
+| < 0.50 (Below C)      | SELL           | Weak fundamentals or elevated risks       |
 
 ## Asset-Specific Scoring
 
@@ -178,19 +178,19 @@ else:               score = 0.2  # <5%
 
 ### Speed Improvements
 
-| Metric | AI-Based Scoring | Python Scoring | Improvement |
-|--------|------------------|----------------|-------------|
-| **Execution Time** | 5-10 minutes | 10-30 seconds | **10-20x faster** |
-| **LLM Calls** | 5-10 per ticker | 0 per ticker | **100% reduction** |
-| **Cost per Ticker** | $0.05-0.10 | $0.00 | **100% cost savings** |
-| **Consistency** | Variable | Deterministic | **100% reproducible** |
+| Metric              | AI-Based Scoring | Python Scoring | Improvement           |
+| ------------------- | ---------------- | -------------- | --------------------- |
+| **Execution Time**  | 5-10 minutes     | 10-30 seconds  | **10-20x faster**     |
+| **LLM Calls**       | 5-10 per ticker  | 0 per ticker   | **100% reduction**    |
+| **Cost per Ticker** | \$0.05-0.10      | \$0.00         | **100% cost savings** |
+| **Consistency**     | Variable         | Deterministic  | **100% reproducible** |
 
 ### Scalability Benefits
 
 **Portfolio Analysis (66 holdings):**
 
-- AI-Based: 5.5-11 hours, $3.30-6.60
-- Python-Based: 11-33 minutes, $0.00
+- AI-Based: 5.5-11 hours, \$3.30-6.60
+- Python-Based: 11-33 minutes, \$0.00
 - **Savings: 10-20x faster, 100% cost reduction**
 
 ### Quality Improvements
@@ -220,13 +220,13 @@ DEEP_ANALYSIS_AI_SUMMARY=false
 
 - **Execution Time**: 10-30 seconds per ticker
 - **LLM Calls**: 0 for calculations
-- **Cost**: $0.00 per ticker
-- **Components**: Python scoring + GPT-5-mini + minimal tools
+- **Cost**: \$0.00 per ticker
+- **Components**: Python scoring + gpt-4o-mini + minimal tools
 
 #### 2. Balanced Mode (Hybrid Approach)
 
 ```bash
-# Environment Variables  
+# Environment Variables
 RISK_ASSESSMENT_USE_MINI=true
 USE_MINIMAL_RISK_TOOLS=true
 DEEP_ANALYSIS_AI_SUMMARY=true
@@ -236,8 +236,8 @@ DEEP_ANALYSIS_AI_SUMMARY=true
 
 - **Execution Time**: 15-40 seconds per ticker
 - **LLM Calls**: 1 for optional AI summary
-- **Cost**: $0.01 per ticker
-- **Components**: Python scoring + optional AI summary + GPT-5-mini
+- **Cost**: \$0.01 per ticker
+- **Components**: Python scoring + optional AI summary + gpt-4o-mini
 
 #### 3. Baseline Mode (AI Comparison)
 
@@ -252,7 +252,7 @@ DEEP_ANALYSIS_AI_SUMMARY=true
 
 - **Execution Time**: 5-10 minutes per ticker
 - **LLM Calls**: 5-10 for full AI analysis
-- **Cost**: $0.05-0.10 per ticker
+- **Cost**: \$0.05-0.10 per ticker
 - **Purpose**: Comparison and debugging baseline
 
 ### Batch Processing Configuration
@@ -289,7 +289,7 @@ data = {
 # Calculate composite score
 result = scorer.calculate_composite_score(
     ticker="AAPL",
-    asset_class="stock", 
+    asset_class="stock",
     data=data
 )
 
@@ -325,7 +325,7 @@ scorer.GRADE_THRESHOLDS = {
     0.90: "A+",  # Stricter A+ requirement
     0.80: "A",   # Stricter A requirement
     0.70: "B",
-    0.60: "C", 
+    0.60: "C",
     0.50: "D",
     0.0: "F"
 }
@@ -346,14 +346,14 @@ detailed_analysis = {
     # Raw metrics (Requirement 18.21)
     "raw_metrics": {
         "volatility": 0.18,
-        "beta": 1.1, 
+        "beta": 1.1,
         "max_drawdown": -0.15,
         "sharpe_ratio": 1.2,
         "rsi": 55.0,
         "macd": 0.05,
         # ... all original metrics
     },
-    
+
     # Sentiment data (Requirement 18.22)
     "sentiment_data": {
         "sentiment_score": 0.65,
@@ -361,7 +361,7 @@ detailed_analysis = {
         "article_count": 25,
         "news_sources": ["Reuters", "Bloomberg"],
     },
-    
+
     # Technical indicators (Requirement 18.23)
     "technical_indicators": {
         "support_levels": [145.0, 140.0],
@@ -369,7 +369,7 @@ detailed_analysis = {
         "trend_direction": "uptrend",
         "momentum_indicators": {...},
     },
-    
+
     # Fundamental data (Requirement 18.24)
     "fundamental_data": {
         "revenue": 365000000000,
@@ -377,7 +377,7 @@ detailed_analysis = {
         "sec_filings": {...},
         "financial_statements": {...},
     },
-    
+
     # Calculation results (Requirement 18.25)
     "calculation_results": {
         "composite_score": 0.78,
@@ -418,7 +418,7 @@ def _create_error_result(self, ticker: str, asset_class: str, error_msg: str) ->
         ticker=ticker,
         asset_class=asset_class,
         fundamental_score=0.3,
-        technical_score=0.3, 
+        technical_score=0.3,
         risk_score=0.3,
         composite_score=0.3,
         grade="D",
@@ -440,13 +440,13 @@ def test_should_calculate_stock_fundamental_score_with_excellent_metrics():
     scorer = DeepAnalysisScorer()
     data = {
         "roe": 0.25,              # 25% ROE -> 1.0 score
-        "debt_to_equity": 0.2,    # Low debt -> 1.0 score  
+        "debt_to_equity": 0.2,    # Low debt -> 1.0 score
         "revenue_growth": 0.30,   # 30% growth -> 1.0 score
         "profit_margin": 0.25     # 25% margin -> 1.0 score
     }
-    
+
     score, details = scorer._calculate_stock_fundamental_score(data, {})
-    
+
     # Weighted: 0.4*1.0 + 0.3*1.0 + 0.2*1.0 + 0.1*1.0 = 1.0
     assert score == 1.0
     assert details["roe_score"] == 1.0
@@ -459,9 +459,9 @@ def test_should_calculate_stock_fundamental_score_with_excellent_metrics():
 def test_should_complete_analysis_within_performance_targets():
     scorer = DeepAnalysisScorer()
     start_time = time.time()
-    
+
     result = scorer.calculate_composite_score("AAPL", "stock", sample_data)
-    
+
     execution_time = time.time() - start_time
     assert execution_time < 1.0  # Must complete in under 1 second
     assert result.composite_score >= 0.0
@@ -473,13 +473,13 @@ def test_should_complete_analysis_within_performance_targets():
 ```python
 def test_should_produce_identical_results_for_same_input():
     scorer = DeepAnalysisScorer()
-    
+
     # Run analysis multiple times with same input
     results = []
     for _ in range(5):
         result = scorer.calculate_composite_score("AAPL", "stock", sample_data)
         results.append(result)
-    
+
     # All results should be identical
     for result in results[1:]:
         assert result.composite_score == results[0].composite_score
@@ -500,12 +500,12 @@ def python_scoring_task(self) -> Task:
     return Task(
         description="""
         Use Python scoring engine for deterministic analysis.
-        
+
         Steps:
         1. Receive collected_data from data_collection_task
         2. Call DeepAnalysisScorer.analyze_and_export()
         3. Return DeepAnalysisResult and crew export dict
-        
+
         NO AI REASONING - Pure Python calculations only.
         """,
         agent=self.python_scorer(),
@@ -522,10 +522,10 @@ def python_scoring_task(self) -> Task:
 if should_use_ai_summary():
     # Python scoring completes first (10-30 seconds)
     python_result = scorer.calculate_composite_score(ticker, asset_class, data)
-    
+
     # Optional AI summary adds 5-10 seconds
     ai_summary = generate_ai_summary(python_result, data)
-    
+
     # Total time: 15-40 seconds vs 5-10 minutes
     # Total cost: $0.01 vs $0.05-0.10
 ```
@@ -539,7 +539,7 @@ if should_use_ai_summary():
 logger.info(
     f"🚀 PYTHON SCORING PERFORMANCE for {ticker}:\n"
     f"  ✅ Execution time: {execution_time:.2f}s (target: 10-30s)\n"
-    f"  ✅ LLM calls: 0 (target: 0)\n" 
+    f"  ✅ LLM calls: 0 (target: 0)\n"
     f"  ✅ Cost: $0.00 (target: $0.00)\n"
     f"  ✅ Data preservation: ALL raw metrics preserved\n"
     f"  ✅ Deterministic: Same input = same output"
@@ -553,14 +553,14 @@ logger.info(
 def validate_scoring_accuracy(python_result, ai_result):
     """Validate Python scoring accuracy against AI baseline."""
     score_diff = abs(python_result.composite_score - ai_result.composite_score)
-    
+
     # Scores should be within ±0.05
     assert score_diff <= 0.05, f"Score difference too large: {score_diff}"
-    
+
     # Grades should match for most cases
     if score_diff <= 0.02:
         assert python_result.grade == ai_result.grade
-    
+
     # Recommendations should align
     assert python_result.recommendation == ai_result.recommendation
 ```
@@ -599,7 +599,7 @@ def validate_scoring_accuracy(python_result, ai_result):
    # Run parallel comparison
    python_result = python_scorer.calculate_composite_score(ticker, asset_class, data)
    ai_result = ai_crew.kickoff(inputs={"ticker": ticker})
-   
+
    # Compare results
    validate_scoring_accuracy(python_result, ai_result)
    ```
@@ -674,13 +674,13 @@ logger.debug(f"Risk details: {result.risk_details}")
 # Custom scoring algorithm example
 class CustomStockScorer(DeepAnalysisScorer):
     """Custom scoring algorithm for specific use cases."""
-    
+
     def calculate_fundamental_score(self, asset_class: str, data: Dict[str, Any]) -> tuple[float, Dict[str, Any]]:
         """Override with custom fundamental scoring logic."""
         if asset_class == "stock":
             return self._custom_stock_scoring(data)
         return super().calculate_fundamental_score(asset_class, data)
-    
+
     def _custom_stock_scoring(self, data: Dict[str, Any]) -> tuple[float, Dict[str, Any]]:
         """Custom stock scoring algorithm."""
         # Implement custom logic
@@ -701,8 +701,8 @@ This engine enables high-frequency portfolio analysis at scale while maintaining
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-25  
+**Version**: 1.0
+**Last Updated**: 2025-01-25
 **Related Documentation**:
 
 - [Jinja2 Template Documentation](JINJA2_TEMPLATES.md)

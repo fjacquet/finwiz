@@ -82,7 +82,7 @@ FF_PERPLEXITY_RESEARCH=false
 PORTFOLIO_REVIEW_ENABLED=true
 
 # Performance Optimization (Deep Analysis)
-RISK_ASSESSMENT_USE_MINI=true    # Use GPT-5-mini for risk assessment (faster, cheaper)
+RISK_ASSESSMENT_USE_MINI=true    # Use gpt-4o-mini for risk assessment (faster, cheaper)
 USE_MINIMAL_RISK_TOOLS=true      # Use minimal tool set for risk assessor (Phase 2 optimization)
 
 # Portfolio Configuration
@@ -144,14 +144,14 @@ After analysis completes, you'll find:
 
 FinWiz uses a letter grade system to rate investments:
 
-| Grade | Meaning | Action |
-|-------|---------|--------|
+| Grade     | Meaning             | Action                     |
+| --------- | ------------------- | -------------------------- |
 | **A+** 🌟 | Exceptional quality | Keep, consider adding more |
-| **A** ✅ | High quality | Keep |
-| **B** 👍 | Good quality | Keep, monitor |
-| **C** ⚠️ | Average quality | Consider alternatives |
-| **D** 🔻 | Below average | Review for replacement |
-| **F** ❌ | Poor quality | Exit position |
+| **A** ✅  | High quality        | Keep                       |
+| **B** 👍  | Good quality        | Keep, monitor              |
+| **C** ⚠️  | Average quality     | Consider alternatives      |
+| **D** 🔻  | Below average       | Review for replacement     |
+| **F** ❌  | Poor quality        | Exit position              |
 
 ## Deployment Environments
 
@@ -289,5 +289,5 @@ Once you have FinWiz running successfully:
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

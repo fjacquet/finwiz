@@ -98,22 +98,33 @@ data_collection_task:
 python_scoring_task:
   description: >
     CRITICAL: SINGLE TICKER MODE - Calculate scores for ticker: {ticker}
-    
-    As a Python scoring specialist, use the DeepAnalysisScorer to calculate all scores,
-    grades, and recommendations for the single ticker {ticker} of asset class {asset_class}.
-    This task uses ONLY Python calculations with NO AI reasoning.
 
-    🚨 NO TOOLS - Use ONLY context from data_collection_task 🚨
-    - Access collected_data from data_collection_task context
-    - NEVER call any tools directly
-    - Use ONLY Python DeepAnalysisScorer for all calculations
+    As a Python scoring specialist, call the Deep Analysis Scorer tool to calculate
+    all scores, grades, and recommendations for the single ticker {ticker} of asset
+    class {asset_class}. This tool executes REAL Python code for deterministic calculations.
 
-    PYTHON SCORING PROCESS:
-    1. Extract collected_data from context
-    2. Import and instantiate DeepAnalysisScorer
-    3. Call scorer.calculate_composite_score(ticker, asset_class, collected_data)
-    4. Generate DeepAnalysisCrewExport from scoring results
-    5. Store results in context for downstream tasks
+    🔧 TOOL USAGE - Call Deep Analysis Scorer tool 🔧
+    You have access to the "Deep Analysis Scorer" tool which executes Python scoring.
+
+    CRITICAL INSTRUCTIONS:
+    1. Extract the collected data from data_collection_task context
+    2. Call the "Deep Analysis Scorer" tool ONCE with these parameters:
+       - ticker: "{ticker}"
+       - asset_class: "{asset_class}"
+       - current_price: (extract from collected data)
+       - For STOCKS: roe, debt_to_equity, revenue_growth, profit_margin
+       - For ETFs: expense_ratio, tracking_error, aum
+       - For CRYPTO: market_cap, volume_24h, age_years
+       - Risk metrics: volatility, beta, max_drawdown
+       - Technical: rsi, macd
+    3. The tool will return JSON with grade, score, and recommendation
+    4. Return the tool's output as your final result
+
+    PARAMETER EXTRACTION GUIDE:
+    - Extract numeric values from collected data (remove units like "USD", "billion")
+    - Convert strings to numbers: "850 billion USD" → 850000000000.0
+    - Map field names: "volume" → "volume_24h" for crypto
+    - Ensure all critical fields are present before calling tool
 
     CRITICAL: PRESERVE ALL DATA (Requirements 18.21-18.25)
     Ensure ALL raw data is preserved in the final export:

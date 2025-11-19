@@ -141,7 +141,7 @@ DEEP_PORTFOLIO_ANALYSIS=true
 
 ```bash
 # Performance Settings
-RISK_ASSESSMENT_USE_MINI=true    # Use GPT-5-mini for faster risk assessment
+RISK_ASSESSMENT_USE_MINI=true    # Use gpt-4o-mini for faster risk assessment
 USE_MINIMAL_RISK_TOOLS=true      # Use minimal tool set for risk assessor
 BATCH_PREFETCH_ENABLED=true      # Enable batch data prefetching
 DEEP_ANALYSIS_BATCH_SIZE=5       # Concurrent analysis batch size
@@ -337,42 +337,42 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 
 ### Core Settings
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `FINWIZ_ENV` | `development` | Environment type |
-| `LOG_LEVEL` | `INFO` | Logging level |
-| `VALIDATION_STRICTNESS` | `warn` | Validation mode |
-| `CACHE_BACKEND` | `hybrid` | Cache backend type |
+| Variable                | Default       | Description        |
+| ----------------------- | ------------- | ------------------ |
+| `FINWIZ_ENV`            | `development` | Environment type   |
+| `LOG_LEVEL`             | `INFO`        | Logging level      |
+| `VALIDATION_STRICTNESS` | `warn`        | Validation mode    |
+| `CACHE_BACKEND`         | `hybrid`      | Cache backend type |
 
 ### API Keys
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API access |
-| `SERPER_API_KEY` | Yes | Web search functionality |
-| `FIRECRAWL_API_KEY` | Yes | Web scraping |
-| `ALPHA_VANTAGE_API_KEY` | Yes | Financial data |
-| `TWELVE_DATA_API_KEY` | No | Technical indicators |
-| `COINMARKETCAP_API_KEY` | No | Crypto data |
-| `PPLX_API_KEY` | No | Perplexity search |
+| Variable                | Required | Description              |
+| ----------------------- | -------- | ------------------------ |
+| `OPENAI_API_KEY`        | Yes      | OpenAI API access        |
+| `SERPER_API_KEY`        | Yes      | Web search functionality |
+| `FIRECRAWL_API_KEY`     | Yes      | Web scraping             |
+| `ALPHA_VANTAGE_API_KEY` | Yes      | Financial data           |
+| `TWELVE_DATA_API_KEY`   | No       | Technical indicators     |
+| `COINMARKETCAP_API_KEY` | No       | Crypto data              |
+| `PPLX_API_KEY`          | No       | Perplexity search        |
 
 ### Performance Settings
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `RISK_ASSESSMENT_USE_MINI` | `true` | Use GPT-5-mini for risk |
-| `USE_MINIMAL_RISK_TOOLS` | `true` | Minimal tool set |
-| `BATCH_PREFETCH_ENABLED` | `true` | Enable batch processing |
-| `DEEP_ANALYSIS_BATCH_SIZE` | `5` | Concurrent batch size |
+| Variable                   | Default | Description              |
+| -------------------------- | ------- | ------------------------ |
+| `RISK_ASSESSMENT_USE_MINI` | `true`  | Use gpt-4o-mini for risk |
+| `USE_MINIMAL_RISK_TOOLS`   | `true`  | Minimal tool set         |
+| `BATCH_PREFETCH_ENABLED`   | `true`  | Enable batch processing  |
+| `DEEP_ANALYSIS_BATCH_SIZE` | `5`     | Concurrent batch size    |
 
 ### Feature Flags
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `FF_PERPLEXITY_RESEARCH` | `false` | Perplexity integration |
-| `FF_ENHANCED_SENTIMENT` | `true` | Enhanced sentiment analysis |
-| `FF_ADVANCED_TECHNICAL` | `true` | Advanced technical analysis |
-| `PORTFOLIO_REVIEW_ENABLED` | `true` | Portfolio review feature |
+| Variable                   | Default | Description                 |
+| -------------------------- | ------- | --------------------------- |
+| `FF_PERPLEXITY_RESEARCH`   | `false` | Perplexity integration      |
+| `FF_ENHANCED_SENTIMENT`    | `true`  | Enhanced sentiment analysis |
+| `FF_ADVANCED_TECHNICAL`    | `true`  | Advanced technical analysis |
+| `PORTFOLIO_REVIEW_ENABLED` | `true`  | Portfolio review feature    |
 
 ## Troubleshooting
 
@@ -522,5 +522,5 @@ After setting up your environment:
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

@@ -409,15 +409,16 @@ class DeepAnalysisCrew:
             llm=self._get_configured_llm(),
         )
 
-    @final_reporter
     @agent
     def investment_reporter(self) -> Agent:
-        """Agent that performs Python scoring calculations."""
+        """Agent that calls Python scoring tool."""
+        from finwiz.tools.deep_analysis_scoring_tool import DeepAnalysisScoringTool
+
         return Agent(
             config=self.agents_config["investment_reporter"],
             verbose=True,
-            reasoning=False,  # ⚡ PYTHON SCORING: No reasoning needed for Python calculations
-            tools=[],  # MUST be empty - enforced by @final_reporter decorator
+            reasoning=False,  # ⚡ PYTHON SCORING: No reasoning needed
+            tools=[DeepAnalysisScoringTool()],  # Python scoring tool
             llm=self._get_configured_llm(),
         )
 
@@ -552,16 +553,14 @@ class DeepAnalysisCrew:
             risk_assessor_agent = self.risk_assessor()  # Deprecated but kept for compatibility
             investment_reporter_agent = self.investment_reporter()
 
-            # Assign tools only to asset_analyst (data collection)
+            # Assign tools to agents
             asset_analyst_agent.tools = analyst_tools
-            # risk_assessor and investment_reporter have no tools (Python scoring approach)
+            # investment_reporter has DeepAnalysisScoringTool (set in agent definition)
+            # risk_assessor deprecated (no tools needed)
             logger.info(
-                f"⚡ PYTHON SCORING: Assigned {len(analyst_tools)} tools to asset_analyst for data collection. Risk assessment and scoring handled by Python DeepAnalysisScorer."
+                f"⚡ PYTHON SCORING TOOL: asset_analyst has {len(analyst_tools)} data collection tools. "
+                f"investment_reporter has {len(investment_reporter_agent.tools)} Python scoring tool."
             )
-
-            # Verify investment_reporter has no tools (enforced by @final_reporter)
-            if investment_reporter_agent.tools and len(investment_reporter_agent.tools) > 0:
-                logger.warning(f"Investment reporter has {len(investment_reporter_agent.tools)} tools - should be empty!")
 
             # Log performance targets
             logger.info(
