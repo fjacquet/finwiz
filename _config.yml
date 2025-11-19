@@ -18,10 +18,7 @@ plugins:
   - jekyll-remote-theme
 
 # Just the Docs Configuration
-color_scheme: finwiz # Custom FinWiz color scheme
-
-# Logo
-logo: "/assets/images/logo.png"
+color_scheme: dark # Use built-in dark theme
 
 # Search
 search_enabled: true
