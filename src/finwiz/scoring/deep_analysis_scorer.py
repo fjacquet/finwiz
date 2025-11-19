@@ -466,19 +466,33 @@ class DeepAnalysisScorer:
         """
         Assign letter grade based on composite score using configured thresholds.
 
+        Matches official grading system in grading_system.py:
+        - A+: >= 95%
+        - A:  >= 85%
+        - B+: >= 80%
+        - B:  >= 75%
+        - C+: >= 70%
+        - C:  >= 65%
+        - D:  >= 50%
+        - F:  < 50%
+
         Args:
             composite_score: Composite score (0.0 to 1.0)
 
         Returns:
-            Letter grade (A+, A, B, C, D, F)
+            Letter grade (A+, A, B+, B, C+, C, D, F)
 
         """
         if composite_score >= self.thresholds.grade_a_plus:
             return "A+"
         elif composite_score >= self.thresholds.grade_a:
             return "A"
+        elif composite_score >= self.thresholds.grade_b_plus:
+            return "B+"
         elif composite_score >= self.thresholds.grade_b:
             return "B"
+        elif composite_score >= self.thresholds.grade_c_plus:
+            return "C+"
         elif composite_score >= self.thresholds.grade_c:
             return "C"
         elif composite_score >= self.thresholds.grade_d:

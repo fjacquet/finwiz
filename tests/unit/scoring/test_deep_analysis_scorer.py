@@ -249,32 +249,42 @@ class TestDeepAnalysisScorer:
         assert details["beta_score"] == 0.2
 
     def test_should_assign_grade_aplus(self, scorer):
-        """Test grade assignment for A+ threshold."""
-        grade = scorer.assign_grade(0.90)
+        """Test grade assignment for A+ threshold (>= 95%)."""
+        grade = scorer.assign_grade(0.95)
         assert grade == "A+"
 
     def test_should_assign_grade_a(self, scorer):
-        """Test grade assignment for A threshold."""
-        grade = scorer.assign_grade(0.80)
+        """Test grade assignment for A threshold (>= 85%)."""
+        grade = scorer.assign_grade(0.85)
         assert grade == "A"
 
+    def test_should_assign_grade_b_plus(self, scorer):
+        """Test grade assignment for B+ threshold (>= 80%)."""
+        grade = scorer.assign_grade(0.80)
+        assert grade == "B+"
+
     def test_should_assign_grade_b(self, scorer):
-        """Test grade assignment for B threshold."""
-        grade = scorer.assign_grade(0.70)
+        """Test grade assignment for B threshold (>= 75%)."""
+        grade = scorer.assign_grade(0.75)
         assert grade == "B"
 
+    def test_should_assign_grade_c_plus(self, scorer):
+        """Test grade assignment for C+ threshold (>= 70%)."""
+        grade = scorer.assign_grade(0.70)
+        assert grade == "C+"
+
     def test_should_assign_grade_c(self, scorer):
-        """Test grade assignment for C threshold."""
-        grade = scorer.assign_grade(0.60)
+        """Test grade assignment for C threshold (>= 65%)."""
+        grade = scorer.assign_grade(0.65)
         assert grade == "C"
 
     def test_should_assign_grade_d(self, scorer):
-        """Test grade assignment for D threshold."""
+        """Test grade assignment for D threshold (>= 50%)."""
         grade = scorer.assign_grade(0.50)
         assert grade == "D"
 
     def test_should_assign_grade_f(self, scorer):
-        """Test grade assignment for F threshold."""
+        """Test grade assignment for F threshold (< 50%)."""
         grade = scorer.assign_grade(0.30)
         assert grade == "F"
 

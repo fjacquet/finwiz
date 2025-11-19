@@ -29,20 +29,23 @@ class ScoringThresholds:
 
     # ============================================================================
     # GRADE THRESHOLDS (Composite Score → Letter Grade)
+    # Matches official grading system in grading_system.py
     # ============================================================================
-    grade_a_plus: float = 0.90  # A+ grade threshold
-    grade_a: float = 0.80  # A grade threshold
-    grade_b: float = 0.70  # B grade threshold
-    grade_c: float = 0.60  # C grade threshold
-    grade_d: float = 0.50  # D grade threshold
+    grade_a_plus: float = 0.95  # A+ grade threshold (95%)
+    grade_a: float = 0.85  # A grade threshold (85%)
+    grade_b_plus: float = 0.80  # B+ grade threshold (80%)
+    grade_b: float = 0.75  # B grade threshold (75%)
+    grade_c_plus: float = 0.70  # C+ grade threshold (70%)
+    grade_c: float = 0.65  # C grade threshold (65%)
+    grade_d: float = 0.50  # D grade threshold (50%)
     # Below 0.50 = F grade
 
     # ============================================================================
     # RECOMMENDATION THRESHOLDS
     # ============================================================================
-    buy_threshold: float = 0.80  # BUY recommendation (A or better)
-    sell_threshold: float = 0.60  # SELL recommendation (below C)
-    # Between 0.60-0.80 = HOLD recommendation
+    buy_threshold: float = 0.85  # BUY recommendation (A or better)
+    sell_threshold: float = 0.65  # SELL recommendation (below C)
+    # Between 0.65-0.85 = HOLD recommendation
 
     # ============================================================================
     # STOCK FUNDAMENTAL THRESHOLDS
