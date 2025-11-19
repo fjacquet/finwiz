@@ -301,6 +301,17 @@ class DeepAnalysisOrchestrator:
     def _extract_scores(self, crew_output: Any, ticker: str, extractor: Any, warnings: list[str]) -> tuple[str, float, float | None, float | None, float | None]:
         """Extract scores from crew output."""
         from finwiz.exceptions.data_quality import MissingRequiredFieldError
+        from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
+
+        # Handle cached CrewAnalysisResult directly
+        if isinstance(crew_output, CrewAnalysisResult):
+            return (
+                crew_output.grade,
+                crew_output.composite_score,
+                crew_output.fundamental_score,
+                crew_output.technical_score,
+                crew_output.risk_score,
+            )
 
         if hasattr(crew_output, "pydantic") and crew_output.pydantic:
             pydantic_data = crew_output.pydantic
