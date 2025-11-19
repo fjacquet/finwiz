@@ -129,8 +129,8 @@ python_scoring_task:
     - Technical Score (30%): RSI, trend analysis, MACD momentum
     - Risk Score (30%): Volatility, max drawdown, beta (converted to 0-1 scale where 1=low risk)
     - Composite Score: Weighted average of above components
-    - Grade: A+ (≥0.85), A (≥0.75), B (≥0.65), C (≥0.55), D (≥0.45), F (<0.45)
-    - Recommendation: BUY (≥0.70), HOLD (0.50-0.70), SELL (<0.50)
+    - Grade: A+ (≥0.95), A (≥0.85), B+ (≥0.80), B (≥0.75), C+ (≥0.70), C (≥0.65), D (≥0.50), F (<0.50)
+    - Recommendation: BUY (≥0.85), HOLD (0.65-0.85), SELL (<0.65)
 
     PERFORMANCE TARGETS (Requirements 18.28-18.30):
     - Execution time: 10-30 seconds (vs 5-10 minutes with AI)
