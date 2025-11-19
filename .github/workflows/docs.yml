@@ -5,15 +5,15 @@ on:
     branches:
       - main
     paths:
-      - 'docs/**'
-      - 'mkdocs.yml'
-      - '.github/workflows/docs.yml'
+      - "docs/**"
+      - "mkdocs.yml"
+      - ".github/workflows/docs.yml"
   pull_request:
     branches:
       - main
     paths:
-      - 'docs/**'
-      - 'mkdocs.yml'
+      - "docs/**"
+      - "mkdocs.yml"
   workflow_dispatch:
 
 permissions:
@@ -35,18 +35,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for git-revision-date-localized plugin
+          fetch-depth: 0 # Full history for git-revision-date-localized plugin
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          enable-cache: true
+          enable-cache: false
 
       - name: Install dependencies
         run: |
@@ -93,12 +93,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          enable-cache: true
+          enable-cache: false
 
       - name: Install dependencies
         run: |
