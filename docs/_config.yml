@@ -3,7 +3,7 @@
 # Site Settings
 title: FinWiz Documentation
 description: AI-powered financial analysis platform with CrewAI
-baseurl: "" # Leave empty for root deployment
+baseurl: "/finwiz" # Leave empty for root deployment
 url: "https://fjacquet.github.io/finwiz" # Update with your actual GitHub Pages URL
 
 # Repository
