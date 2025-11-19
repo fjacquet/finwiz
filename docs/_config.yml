@@ -10,7 +10,7 @@ url: "https://fjacquet.github.io/finwiz" # Update with your actual GitHub Pages 
 repository: fjacquet/finwiz
 
 # Theme - Using Just the Docs for better documentation experience
-remote_theme: just-the-docs/just-the-docs
+remote_theme: just-the-docs
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
