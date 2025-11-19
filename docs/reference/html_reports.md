@@ -400,9 +400,11 @@ else:
 
 **Solution**: Provide default values in template:
 
+{% raw %}
 ```html
 {{ data.get('field_name', 'Default Value') }}
 ```
+{% endraw %}
 
 #### 4. Date Parsing Errors
 
@@ -421,6 +423,7 @@ if isinstance(date_str, str):
 
 Templates must handle both Python objects and dicts:
 
+{% raw %}
 ```html
 <!-- For Python objects (attribute access) -->
 {{ candidate.ticker }}
@@ -431,6 +434,7 @@ Templates must handle both Python objects and dicts:
 <!-- Safe approach (works for both) -->
 {{ candidate.get('ticker') if candidate is mapping else candidate.ticker }}
 ```
+{% endraw %}
 
 ---
 
@@ -453,6 +457,7 @@ All templates extend `base_template.html` which provides:
 
 1. Create new template in `src/finwiz/templates/`
 2. Extend base template:
+{% raw %}
    ```html
    {% extends "base_template.html" %}
    
@@ -462,6 +467,7 @@ All templates extend `base_template.html` which provides:
    <!-- Your content here -->
    {% endblock %}
    ```
+{% endraw %}
 
 3. Register in `template_renderer.py`:
    ```python
