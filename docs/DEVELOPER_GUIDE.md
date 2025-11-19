@@ -871,6 +871,7 @@ class HTMLReportGenerator:
 
 **Template**: `src/finwiz/templates/crew_reports/deep_analysis_report.html.j2`
 
+{% raw %}
 ```html
 {% extends "base.html" %}
 
