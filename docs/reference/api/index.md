@@ -11,8 +11,8 @@ Complete API documentation for FinWiz crews, tools, and schemas.
 ## Quick Links
 
 - [Main API Reference](../API_REFERENCE.md)
-- [CLI Commands](../cli_commands.md)
-- [Configuration Reference](../configuration.md)
+- [CLI Commands](cli_commands.md)
+- [Configuration Reference](configuration.md)
 
 ## API Categories
 
@@ -49,7 +49,7 @@ New to the FinWiz API? Check out these resources:
 
 - [Getting Started Tutorial](../../tutorials/getting_started.md)
 - [First Analysis](../../tutorials/first_analysis.md)
-- [API Examples](../API_REFERENCE.md#examples)
+- [API Examples](../API_REFERENCE.md)
 
 ## API Design Principles
 

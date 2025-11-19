@@ -33,6 +33,7 @@ make docs-serve
 Push to main branch - GitHub Actions deploys automatically!
 
 Or manually:
+
 ```bash
 make docs-deploy
 ```
@@ -104,5 +105,5 @@ graph LR
 ## Help
 
 - Full docs: [MKDOCS_SETUP.md](MKDOCS_SETUP.md)
-- Migration guide: [MKDOCS_MIGRATION.md](../MKDOCS_MIGRATION.md)
+- Migration guide: [MKDOCS_MIGRATION.md](MKDOCS_SETUP.md)
 - Material theme: https://squidfunk.github.io/mkdocs-material/

@@ -604,7 +604,7 @@ monitoring:
 
 ## See Also
 
-- [Investment Discovery Documentation](investment_discovery/) - Complete discovery guide
+- [Investment Discovery Documentation](index.md) - Complete discovery guide
 - [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - Portfolio analysis
 - [Alternative Finder](api_reference.md) - Alternative finding tool
 - [API Reference](api_reference.md) - Complete API documentation
@@ -683,7 +683,7 @@ monitoring:
 
 ## See Also
 
-- [Investment Discovery Documentation](investment_discovery/) - Complete discovery guide
+- [Investment Discovery Documentation](index.md) - Complete discovery guide
 - [Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md) - Portfolio analysis
 - [Alternative Finder](api_reference.md) - Alternative finding tool
 - [API Reference](api_reference.md) - Complete API documentation

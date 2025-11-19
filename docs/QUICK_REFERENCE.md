@@ -99,7 +99,7 @@ def hello():
     print("World")
 ```
 
-[Use descriptive link text](path/to/file.md)
+[Use descriptive link text](index.md)
 
 ```
 

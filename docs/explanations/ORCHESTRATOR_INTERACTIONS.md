@@ -509,7 +509,7 @@ async def run_discovery():
 
 - [Architecture Documentation](ARCHITECTURE.md)
 - [Developer Guide](DEVELOPER_GUIDE.md)
-- [Migration Guide](.kiro/specs/flow-orchestrator-refactoring/MIGRATION_GUIDE.md)
+- Migration Guide (internal spec)
 
 ---
 

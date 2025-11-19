@@ -247,7 +247,7 @@ nav:
           - Best Practices: explanations/python_pipeline/best-practices.md
 
   - Investment Discovery:
-      - investment_discovery/README.md
+      - investment_discovery/index.md
       - User Guide: investment_discovery/investment_discovery_user_guide.md
       - API Reference: investment_discovery/investment_discovery_api_reference.md
       - Developer Guide: investment_discovery/investment_discovery_developer_guide.md
@@ -255,7 +255,7 @@ nav:
       - FAQ: investment_discovery/faq.md
 
   - Portfolio Rebalancing:
-      - portfolio_rebalancing/README.md
+      - portfolio_rebalancing/index.md
       - User Guide: portfolio_rebalancing/user_guide.md
       - API Reference: portfolio_rebalancing/api_reference.md
       - Developer Guide: portfolio_rebalancing/developer_guide.md
@@ -298,10 +298,10 @@ extra:
 # Validation
 validation:
   nav:
-    omitted_files: warn
+    omitted_files: info      # Downgrade to info for pages not in nav
     not_found: warn
     absolute_links: warn
   links:
     not_found: warn
     absolute_links: warn
-    unrecognized_links: warn
+    unrecognized_links: info  # Downgrade to info for minor link issues

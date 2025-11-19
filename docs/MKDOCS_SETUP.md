@@ -222,6 +222,7 @@ uv run mkdocs gh-deploy --clean
 ```
 
 This will:
+
 1. Build the documentation
 2. Push to `gh-pages` branch
 3. Trigger GitHub Pages deployment
@@ -277,9 +278,11 @@ make docs-validate
 ### Build Warnings
 
 **"Excluding 'README.md' from the site"**
+
 - Solution: README.md conflicts with index.md. This is expected and safe to ignore.
 
 **"Page not included in nav"**
+
 - Solution: Add the page to `nav` section in `mkdocs.yml` or use `.pages` file
 
 ### Port Already in Use
@@ -294,6 +297,7 @@ uv run mkdocs serve -a localhost:8001
 ### Git Revision Plugin Warnings
 
 **"File has no git logs"**
+
 - Solution: Commit the file to git or ignore the warning (uses current timestamp)
 
 ### Plugin Not Found

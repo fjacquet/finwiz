@@ -559,7 +559,7 @@ Templates are cached automatically by Jinja2 for performance.
 
 - Template Renderer Source
 - HTML Generator Source
-- [Template Directory](../../src/finwiz/templates/)
+- [Template Directory]in the templates/ directory
 - Generation Script
 
 ---

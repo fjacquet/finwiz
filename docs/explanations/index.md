@@ -26,7 +26,7 @@ Explanations are **understanding-oriented** discussions that provide context and
 
 - **[Design Principles](design_principles.md)** - Core design philosophy
 - **[AI vs Rules](ai_vs_rules.md)** - When to use AI vs Python
-- **[AI Minimalism](ai_minimalism.md)** - AI Minimalism philosophy
+- **AI Minimalism (see CLAUDE.md)** - AI Minimalism philosophy
 - **[FinWiz vs Traditional Analysis](vs_traditional_analysis.md)** - Comparison with traditional tools
 
 ### Technical Concepts
@@ -51,7 +51,7 @@ Explanations are **understanding-oriented** discussions that provide context and
 ### Evolution and History
 
 - **[Test Structure Evolution](test_structure_evolution.md)** - Testing evolution
-- **[Architecture Decisions](architecture_decisions.md)** - Key design decisions
+- **Architecture Decisions (see CLAUDE.md)** - Key design decisions
 
 ## Explanation Categories
 
@@ -71,7 +71,7 @@ Start with these to understand FinWiz's design:
 Understand *why* FinWiz works this way:
 
 1. [AI vs Rules](ai_vs_rules.md) - When to use AI vs Python
-2. [AI Minimalism](ai_minimalism.md) - Minimize AI, maximize Python
+2. AI Minimalism (see CLAUDE.md) - Minimize AI, maximize Python
 3. [Data Quality](DATA_QUALITY_AND_FLOW_GUIDE.md) - Data quality principles
 4. [Error Handling](error_handling.md) - Error handling patterns
 
@@ -91,7 +91,7 @@ Detailed explanations of complex topics:
 Understand how FinWiz benefits you:
 
 1. [FinWiz vs Traditional Analysis](vs_traditional_analysis.md)
-2. [AI Minimalism](ai_minimalism.md)
+2. AI Minimalism (see CLAUDE.md)
 3. [Data Quality](DATA_QUALITY_AND_FLOW_GUIDE.md)
 4. [Deep Analysis](deep_analysis.md)
 
@@ -126,7 +126,7 @@ Understand design decisions and trade-offs:
 - **Reliability**: Deterministic results, easier testing
 - **Transparency**: Mathematical formulas are auditable
 
-**Learn More**: [AI Minimalism](ai_minimalism.md)
+**Learn More**: AI Minimalism (see CLAUDE.md)
 
 ### Pydantic-First Design
 
@@ -139,7 +139,7 @@ Understand design decisions and trade-offs:
 - **IDE Support**: Auto-completion and type checking
 - **API Stability**: Breaking changes detected early
 
-**Learn More**: [Design Principles](design_principles.md#pydantic-first)
+**Learn More**: [Design Principles](design_principles.md)
 
 ### File-Based Data Passing
 
@@ -152,7 +152,7 @@ Understand design decisions and trade-offs:
 - **Performance**: Reduces memory usage
 - **Debugging**: Easy to inspect intermediate results
 
-**Learn More**: [Flow Architecture](flow_architecture.md#file-based-data-passing)
+**Learn More**: [Flow Architecture](flow_architecture.md)
 
 ### Concurrent Execution
 
@@ -165,7 +165,7 @@ Understand design decisions and trade-offs:
 - **Scalability**: Handles large portfolios efficiently
 - **User Experience**: Faster results
 
-**Learn More**: [Architecture Overview](ARCHITECTURE.md#concurrent-execution)
+**Learn More**: [Architecture Overview](ARCHITECTURE.md)
 
 ## Architecture Diagrams
 
@@ -247,7 +247,7 @@ Portfolio CSV → Data Accessor → Validation → Cache
 | Debugging | More difficult | Easier |
 | Best For | Large portfolios | Small portfolios |
 
-**Learn More**: [Architecture Overview](ARCHITECTURE.md#batch-processing)
+**Learn More**: [Architecture Overview](ARCHITECTURE.md)
 
 ## Additional Resources
 

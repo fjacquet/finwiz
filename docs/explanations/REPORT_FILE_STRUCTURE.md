@@ -579,5 +579,5 @@ Follow these conventions to maintain consistency across the codebase.
 **Related Docs**:
 
 - [Developer Guide](REPORT_AGGREGATION_DEVELOPER_GUIDE.md)
-- [Architecture Design](../.kiro/specs/report-aggregation-architecture/design.md)
-- [Requirements](../.kiro/specs/report-aggregation-architecture/requirements.md)
+- Architecture Design (internal spec)
+- Requirements (internal spec)

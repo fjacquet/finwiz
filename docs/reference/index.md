@@ -18,10 +18,10 @@ Reference documentation is **information-oriented** material that provides detai
 ### API Documentation
 
 - **[API Overview](api/index.md)** - Complete API documentation
-- **[Data Access API](api/data_access.md)** - Data fetching and integration
-- **[Analysis API](api/analysis.md)** - Analysis crew interfaces
-- **[Scoring API](api/scoring.md)** - Python scoring engine
-- **[Reporting API](api/reporting.md)** - Report generation
+<!-- - **Data Access API** - Data fetching and integration (TBD) -->
+<!-- - **Analysis API** - Analysis crew interfaces (TBD) -->
+<!-- - **Scoring API** - Python scoring engine (TBD) -->
+<!-- - **Reporting API** - Report generation (TBD) -->
 
 ### Command-Line Interface
 
@@ -31,10 +31,10 @@ Reference documentation is **information-oriented** material that provides detai
 ### Schema Documentation
 
 - **[Schema Overview](schemas/index.md)** - Pydantic model documentation
-- **[Crew Export Schemas](schemas/crew_exports.md)** - Analysis output schemas
-- **[Portfolio Schemas](schemas/portfolio.md)** - Portfolio data models
-- **[Quantitative Schemas](schemas/quantitative.md)** - Quantitative analysis models
-- **[Validation Schemas](schemas/validation.md)** - Validation models
+<!-- - **Crew Export Schemas** - Analysis output schemas (TBD) -->
+<!-- - **Portfolio Schemas** - Portfolio data models (TBD) -->
+<!-- - **Quantitative Schemas** - Quantitative analysis models (TBD) -->
+<!-- - **Validation Schemas** - Validation models (TBD) -->
 
 ### Configuration
 
@@ -103,34 +103,34 @@ Operations reference:
 | Task | Reference |
 |------|-----------|
 | Run analysis | [CLI Commands](cli_commands.md#analysis-commands) |
-| Configure API keys | [Environment Variables](environment_variables.md#api-keys) |
+| Configure API keys | [Environment Variables](environment_variables.md) |
 | Customize agents | [Agent Configuration](agent_configuration.md) |
 | Validate data | [Schema Documentation](schemas/index.md) |
 | Check errors | [Error Codes](errors.md) |
 | Optimize performance | [Performance Metrics](performance.md) |
 
 ### API Quick Reference
-
-| Component | API Reference |
-|-----------|---------------|
-| Data Access | [Data Access API](api/data_access.md) |
-| Stock Analysis | [Analysis API](api/analysis.md#stock-analysis) |
-| ETF Analysis | [Analysis API](api/analysis.md#etf-analysis) |
-| Crypto Analysis | [Analysis API](api/analysis.md#crypto-analysis) |
-| Portfolio Review | [Analysis API](api/analysis.md#portfolio-review) |
-| Scoring Engine | [Scoring API](api/scoring.md) |
-| Report Generation | [Reporting API](api/reporting.md) |
-
+<!--  -->
+<!-- | Component | API Reference | -->
+<!-- |-----------|---------------| -->
+<!-- | Data Access | [Data Access API](api/data_access.md) | -->
+<!-- | Stock Analysis | [Analysis API](api/analysis.md#stock-analysis) | -->
+<!-- | ETF Analysis | [Analysis API](api/analysis.md#etf-analysis) | -->
+<!-- | Crypto Analysis | [Analysis API](api/analysis.md#crypto-analysis) | -->
+<!-- | Portfolio Review | [Analysis API](api/analysis.md#portfolio-review) | -->
+<!-- | Scoring Engine | [Scoring API](api/scoring.md) | -->
+<!-- | Report Generation | [Reporting API](api/reporting.md) | -->
+<!--  -->
 ### Schema Quick Reference
-
-| Schema Type | Documentation |
-|-------------|---------------|
-| Stock Analysis | [Crew Export Schemas](schemas/crew_exports.md#stock-analysis) |
-| ETF Analysis | [Crew Export Schemas](schemas/crew_exports.md#etf-analysis) |
-| Crypto Analysis | [Crew Export Schemas](schemas/crew_exports.md#crypto-analysis) |
-| Portfolio | [Portfolio Schemas](schemas/portfolio.md) |
-| Quantitative | [Quantitative Schemas](schemas/quantitative.md) |
-
+<!--  -->
+<!-- | Schema Type | Documentation | -->
+<!-- |-------------|---------------| -->
+<!-- | Stock Analysis | [Crew Export Schemas](schemas/crew_exports.md#stock-analysis) | -->
+<!-- | ETF Analysis | [Crew Export Schemas](schemas/crew_exports.md#etf-analysis) | -->
+<!-- | Crypto Analysis | [Crew Export Schemas](schemas/crew_exports.md#crypto-analysis) | -->
+<!-- | Portfolio | [Portfolio Schemas](schemas/portfolio.md) | -->
+<!-- | Quantitative | [Quantitative Schemas](schemas/quantitative.md) | -->
+<!--  -->
 ## Reference Documentation Standards
 
 All reference material follows these standards:

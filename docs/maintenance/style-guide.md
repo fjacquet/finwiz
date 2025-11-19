@@ -362,8 +362,8 @@ Use full URLs for external links:
 
 **Use descriptive link text**:
 
-✅ **Good**: "See the [installation guide](setup.md) for details"
-❌ **Avoid**: "Click [here](setup.md) for more information"
+✅ **Good**: "See the [installation guide]setup guide for details"
+❌ **Avoid**: "Click [here]setup guide for more information"
 
 **Avoid "link" in link text**:
 

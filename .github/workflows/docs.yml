@@ -112,7 +112,7 @@ jobs:
         continue-on-error: true
         run: |
           if command -v markdownlint &> /dev/null; then
-            markdownlint docs/
+            markdownlint -f docs/
           else
             echo "markdownlint not installed, skipping link check"
           fi

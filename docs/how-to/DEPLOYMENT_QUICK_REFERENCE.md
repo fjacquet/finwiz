@@ -136,8 +136,8 @@ Database operation timed out (repeated >10%)
 ## 📚 Documentation
 
 - **Full Guide**: [SUPABASE_DEPLOYMENT_GUIDE.md](SUPABASE_DEPLOYMENT_GUIDE.md)
-- **Validation**: [DEPLOYMENT_VALIDATION.md](DEPLOYMENT_VALIDATION.md)
-- **Summary**: [SUPABASE_TIMEOUT_FIX_SUMMARY.md](SUPABASE_TIMEOUT_FIX_SUMMARY.md)
+- **Validation**: DEPLOYMENT_VALIDATION (removed)
+- **Summary**: SUPABASE_TIMEOUT_FIX_SUMMARY (removed)
 
 ## 🎯 Deployment Checklist
 

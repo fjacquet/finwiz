@@ -522,7 +522,7 @@ time uv run python src/finwiz/main.py --mode portfolio_review
 
 - **[Getting Started Tutorial](../tutorials/getting_started.md)** - Basic CLI usage
 - **[Configuration Guide](../how-to/setup_environment.md)** - Environment setup
-- **[API Reference](api/)** - Programmatic interface
+- **[API Reference](api/index.md)** - Programmatic interface
 - **[Troubleshooting Guide](../how-to/troubleshooting.md)** - Common issues
 
 ---

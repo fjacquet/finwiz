@@ -777,6 +777,6 @@ Follow these patterns to extend the architecture while maintaining these benefit
 **Last Updated**: 2025-01-25  
 **Related Docs**:
 
-- [Architecture Design](../.kiro/specs/report-aggregation-architecture/design.md)
-- [Requirements](../.kiro/specs/report-aggregation-architecture/requirements.md)
-- [Implementation Tasks](../.kiro/specs/report-aggregation-architecture/tasks.md)
+- Architecture Design (internal spec)
+- Requirements (internal spec)
+- Implementation Tasks (internal spec)
