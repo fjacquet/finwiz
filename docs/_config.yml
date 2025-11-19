@@ -41,10 +41,7 @@ footer_content: "Copyright &copy; 2025 FinWiz. AI-powered financial analysis pla
 back_to_top: true
 back_to_top_text: "Back to top"
 
-# Aux links for the upper right navigation
-aux_links:
-  "FinWiz on GitHub":
-    - "//github.com/fjacquet/finwiz"
+
 
 # Makes Aux links open in a new tab
 aux_links_new_tab: true
