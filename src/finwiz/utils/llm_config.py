@@ -37,7 +37,7 @@ def get_configured_llm(model_override: str | None = None) -> LLM:
 
     """
     # Get model configuration from environment or use override
-    model = model_override or os.getenv("MODEL", "openai/gpt-5-mini")
+    model = model_override or os.getenv("MODEL", "openai/gpt-4o-mini")
     openai_api_key = os.getenv("OPENAI_API_KEY")
 
     if not openai_api_key:

@@ -377,7 +377,7 @@ class DeepAnalysisCrew:
         if self.perf_config.should_use_mini_model():
             # Create LLM directly with mini model for performance optimization
             return LLM(
-                model="openai/gpt-5-mini",
+                model="openai/gpt-4o-mini",
                 drop_params=True,
                 additional_drop_params=["stop"],
                 timeout=int(os.getenv("OPENAI_TIMEOUT", "300")),
@@ -465,16 +465,16 @@ class DeepAnalysisCrew:
         if mode == OptimizationMode.MAXIMUM_SPEED:
             # Maximum Speed: Python scoring only, no AI summary
             crew_tasks = [self.data_collection_task(), self.python_scoring_task()]
-            logger.info("⚡ MAXIMUM SPEED MODE: Python scoring + no AI summary + GPT-5-mini + minimal tools")
+            logger.info("⚡ MAXIMUM SPEED MODE: Python scoring + no AI summary + gpt-4o-mini + minimal tools")
 
         elif mode == OptimizationMode.BALANCED:
             # Balanced: Python scoring + optional AI summary
             crew_tasks = [self.data_collection_task(), self.python_scoring_task()]
             if self.perf_config.should_use_ai_summary():
                 crew_tasks.append(self.ai_summary_task())
-                logger.info("🤖 BALANCED MODE: Python scoring + AI summary + GPT-5-mini + minimal tools")
+                logger.info("🤖 BALANCED MODE: Python scoring + AI summary + gpt-4o-mini + minimal tools")
             else:
-                logger.info("⚡ BALANCED MODE: Python scoring + no AI summary + GPT-5-mini + minimal tools")
+                logger.info("⚡ BALANCED MODE: Python scoring + no AI summary + gpt-4o-mini + minimal tools")
 
         else:  # BASELINE mode
             # Baseline: Full AI scoring for comparison/debugging

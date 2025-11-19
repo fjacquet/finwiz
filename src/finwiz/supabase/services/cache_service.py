@@ -101,6 +101,36 @@ class CacheService:
             # Re-raise to fail fast on misconfiguration
             raise
 
+    async def health_check(self) -> bool:
+        """
+        Check cache service health without reinitialization.
+
+        Tests connectivity to Supabase without modifying the is_enabled flag.
+        Suitable for periodic health checks after initialization.
+
+        Returns:
+            True if cache service is healthy and available, False otherwise
+
+        """
+        if not self.client:
+            logger.debug("Health check: No Supabase client configured")
+            return False
+
+        if not self.is_enabled:
+            logger.debug("Health check: Cache service is disabled")
+            return False
+
+        try:
+            is_healthy = await self.client.test_connectivity()
+            if is_healthy:
+                logger.debug("✅ Cache service health check passed")
+            else:
+                logger.debug("⚠️ Cache service health check failed")
+            return is_healthy
+        except Exception as e:
+            logger.debug(f"⚠️ Cache service health check error: {e}")
+            return False
+
     async def get_or_execute(
         self,
         ticker: str,

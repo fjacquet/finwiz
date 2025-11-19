@@ -140,13 +140,13 @@ class PerformanceConfigManager:
                 "time_per_ticker": "10-30 seconds",
                 "llm_calls": "0 for calculations",
                 "cost_per_ticker": "$0 for calculations",
-                "description": "Python scoring + no AI summary + GPT-5-mini + minimal tools",
+                "description": "Python scoring + no AI summary + gpt-4o-mini + minimal tools",
             },
             OptimizationMode.BALANCED: {
                 "time_per_ticker": "15-40 seconds",
                 "llm_calls": "1 for summary",
                 "cost_per_ticker": "$0.01",
-                "description": "Python scoring + optional AI summary + GPT-5-mini + minimal tools",
+                "description": "Python scoring + optional AI summary + gpt-4o-mini + minimal tools",
             },
             OptimizationMode.BASELINE: {
                 "time_per_ticker": "5-10 minutes",

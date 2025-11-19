@@ -8,7 +8,9 @@ This module executes discovery analysis for crypto, stocks, and ETFs:
 - Discovery result consolidation
 """
 
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import FinwizState
@@ -65,6 +67,9 @@ class DiscoveryOrchestrator:
             }
 
             self._update_state_from_dict(result_data)
+
+            # Save results to disk
+            self._save_discovery_results("crypto", crypto_results)
 
             # Track successful Python execution
             if self.availability_tracker:
@@ -128,6 +133,9 @@ class DiscoveryOrchestrator:
 
             self._update_state_from_dict(result_data)
 
+            # Save results to disk
+            self._save_discovery_results("stock", stock_results)
+
             # Track successful Python execution
             if self.availability_tracker:
                 self.availability_tracker.track_data_source(
@@ -189,6 +197,9 @@ class DiscoveryOrchestrator:
             }
 
             self._update_state_from_dict(result_data)
+
+            # Save results to disk
+            self._save_discovery_results("etf", etf_results)
 
             # Track successful Python execution
             if self.availability_tracker:
@@ -255,6 +266,19 @@ class DiscoveryOrchestrator:
         self.state.investment_discovery_available = len(all_opportunities) > 0
         self.state.all_discovery_opportunities = all_opportunities
 
+        # Save consolidated results to discovery directory
+        consolidated_results = {
+            "timestamp": datetime.now().isoformat(),
+            "total_opportunities": len(all_opportunities),
+            "opportunities": all_opportunities,
+            "by_asset_class": {
+                "crypto": len(self.state.crypto_opportunities) if hasattr(self.state, "crypto_opportunities") and self.state.crypto_opportunities else 0,
+                "stock": len(self.state.stock_opportunities) if hasattr(self.state, "stock_opportunities") and self.state.stock_opportunities else 0,
+                "etf": len(self.state.etf_opportunities) if hasattr(self.state, "etf_opportunities") and self.state.etf_opportunities else 0,
+            },
+        }
+        self._save_discovery_results("discovery", consolidated_results)
+
         self.logger.info(f"✅ Discovery consolidation complete: {len(all_opportunities)} total opportunities")
 
         return {
@@ -273,3 +297,30 @@ class DiscoveryOrchestrator:
         """
         for key, value in data.items():
             setattr(self.state, key, value)
+
+    def _save_discovery_results(self, asset_class: str, results: dict[str, Any]) -> None:
+        """
+        Save discovery results to JSON file in output directory.
+
+        Args:
+            asset_class: Asset class name (stock, etf, crypto)
+            results: Discovery results to save
+
+        """
+        try:
+            # Create output directory
+            output_dir = Path("output") / asset_class
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_file = output_dir / f"discovery_output_{timestamp}.json"
+
+            # Save results
+            with open(output_file, "w") as f:
+                json.dump(results, f, indent=2, default=str)
+
+            self.logger.info(f"✅ Saved {asset_class} discovery results to {output_file}")
+
+        except Exception as e:
+            self.logger.warning(f"Failed to save {asset_class} discovery results: {e}")

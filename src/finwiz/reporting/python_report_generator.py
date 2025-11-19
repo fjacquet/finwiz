@@ -451,10 +451,26 @@ class PythonReportGenerator:
 
     def _generate_recommendations(self, portfolio_stats: dict[str, Any]) -> str:
         """Generate recommendations section."""
+        # Generate A+ holdings list
+        a_plus_list = ""
+        if portfolio_stats.get("a_plus_holdings"):
+            a_plus_items = []
+            for holding in portfolio_stats["a_plus_holdings"]:
+                # HoldingDecision is a Pydantic model - use attribute access, not .get()
+                ticker = getattr(holding, "ticker", "N/A")
+                grade = getattr(holding, "grade", "N/A")
+                score = getattr(holding, "composite_score", 0)
+                a_plus_items.append(f"<strong>{ticker}</strong> (Note: {grade}, Score: {score:.3f})")
+            a_plus_list = f"""
+      <p><strong>Positions A+ identifiées ({len(portfolio_stats['a_plus_holdings'])}):</strong></p>
+      <ul>
+        {"".join(f"<li>{item}</li>" for item in a_plus_items)}
+      </ul>"""
+
         return f"""
   <div class="section">
     <h2>💡 Recommandations Stratégiques</h2>
-    
+
     <div class="highlight warning">
       <h3>🎯 Actions Prioritaires</h3>
       <ul>
@@ -462,6 +478,7 @@ class PythonReportGenerator:
         <li><strong>Opportunités A+:</strong> {portfolio_stats["a_plus_count"]} positions excellent à conserver ou renforcer</li>
         <li><strong>Rééquilibrage:</strong> Considérer la diversification si concentration excessive</li>
       </ul>
+      {a_plus_list}
     </div>
     
     <h3>📈 Optimisations Suggérées</h3>
