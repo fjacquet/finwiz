@@ -302,25 +302,43 @@ class DiscoveryOrchestrator:
         """
         Save discovery results to JSON file in output directory.
 
+        Saves to standardized paths expected by APlusDiscoveryAccessor:
+        - output/discovery/a_plus_stocks.json
+        - output/discovery/a_plus_etfs.json
+        - output/discovery/a_plus_crypto.json
+
         Args:
-            asset_class: Asset class name (stock, etf, crypto)
+            asset_class: Asset class name (stock, etf, crypto, discovery)
             results: Discovery results to save
 
         """
         try:
-            # Create output directory
-            output_dir = Path("output") / asset_class
-            output_dir.mkdir(parents=True, exist_ok=True)
+            # Create discovery output directory
+            discovery_dir = Path("output") / "discovery"
+            discovery_dir.mkdir(parents=True, exist_ok=True)
 
-            # Generate filename with timestamp
+            # Determine filename based on asset class
+            if asset_class == "discovery":
+                # Consolidated results - save to general discovery file
+                output_file = discovery_dir / "consolidated_discovery.json"
+            else:
+                # Asset-specific A+ results - use standardized naming
+                output_file = discovery_dir / f"a_plus_{asset_class}s.json"
+
+            # Also save timestamped backup in asset-specific directory
+            asset_dir = Path("output") / asset_class
+            asset_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = output_dir / f"discovery_output_{timestamp}.json"
+            backup_file = asset_dir / f"discovery_output_{timestamp}.json"
 
-            # Save results
+            # Save to both locations
             with open(output_file, "w") as f:
                 json.dump(results, f, indent=2, default=str)
 
-            self.logger.info(f"✅ Saved {asset_class} discovery results to {output_file}")
+            with open(backup_file, "w") as f:
+                json.dump(results, f, indent=2, default=str)
+
+            self.logger.info(f"✅ Saved {asset_class} discovery results to {output_file} (backup: {backup_file})")
 
         except Exception as e:
             self.logger.warning(f"Failed to save {asset_class} discovery results: {e}")

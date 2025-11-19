@@ -7,6 +7,7 @@
 Crew planning adds a planning phase before each crew iteration. An `AgentPlanner` analyzes all crew information and creates a step-by-step plan that is injected into each task description.
 
 **Key Difference from Agent Reasoning:**
+
 - **Agent Reasoning** (`reasoning=True` on Agent) - Individual agent plans its own task
 - **Crew Planning** (`planning=True` on Crew) - Central planner creates plan for ALL tasks
 
@@ -25,10 +26,10 @@ my_crew = Crew(
 
 ## Configuration Options
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `planning` | bool | False | Enable/disable crew planning |
-| `planning_llm` | str | "gpt-5-mini" | LLM to use for planning |
+| Parameter      | Type | Default       | Description                  |
+| -------------- | ---- | ------------- | ---------------------------- |
+| `planning`     | bool | False         | Enable/disable crew planning |
+| `planning_llm` | str  | "gpt-4o-mini" | LLM to use for planning      |
 
 ### Custom Planning LLM
 
@@ -76,20 +77,25 @@ Agents execute tasks with plans
 **Step-by-Step Plan:**
 
 1. **Define Research Scope:**
+
    - Determine specific areas to focus on
 
 2. **Identify Reliable Sources:**
+
    - List reputable sources (journals, conferences, labs)
 
 3. **Collect Data:**
+
    - Search for latest papers and reports
    - Use targeted keywords
 
 4. **Analyze Findings:**
+
    - Read and summarize key points
    - Highlight new techniques and models
 
 5. **Organize Information:**
+
    - Categorize into relevant topics
    - Ensure concise but informative points
 
@@ -106,11 +112,13 @@ A list with 10 bullet points of the most relevant information.
 ### ⚠️ OpenAI API Key Required
 
 **Default behavior:**
-- Planning uses `gpt-5-mini` by default
+
+- Planning uses `gpt-4o-mini` by default
 - Requires valid OpenAI API key
 - Even if your agents use different LLMs!
 
 **Potential issues:**
+
 - Missing OpenAI key → Planning fails
 - Unexpected API calls to OpenAI
 - Cost implications (additional LLM calls)
@@ -118,36 +126,40 @@ A list with 10 bullet points of the most relevant information.
 ### 💰 Cost Implications
 
 **Per crew execution:**
+
 - 1 planning call per crew iteration
 - Tokens: ~1000-3000 per plan (depends on crew complexity)
-- Model: gpt-5-mini (default) or custom
+- Model: gpt-4o-mini (default) or custom
 
 **For FinWiz deep analysis:**
+
 - 66 holdings × 1 crew each = 66 planning calls
 - Estimated: 66,000-200,000 tokens
-- Cost: ~$0.01-0.03 per execution (gpt-5-mini)
+- Cost: ~\$0.01-0.03 per execution (gpt-4o-mini)
 
 ## Agent Reasoning vs Crew Planning
 
-| Feature | Agent Reasoning | Crew Planning |
-|---------|----------------|---------------|
-| **Scope** | Single agent, single task | All agents, all tasks |
-| **When** | Before task execution | Before crew iteration |
-| **Who plans** | The agent itself | Central AgentPlanner |
-| **Configuration** | `Agent(reasoning=True)` | `Crew(planning=True)` |
-| **LLM** | Agent's LLM | Separate planning LLM |
-| **Overhead** | Per task | Per crew execution |
-| **Use case** | Complex individual tasks | Coordinated multi-task workflows |
+| Feature           | Agent Reasoning           | Crew Planning                    |
+| ----------------- | ------------------------- | -------------------------------- |
+| **Scope**         | Single agent, single task | All agents, all tasks            |
+| **When**          | Before task execution     | Before crew iteration            |
+| **Who plans**     | The agent itself          | Central AgentPlanner             |
+| **Configuration** | `Agent(reasoning=True)`   | `Crew(planning=True)`            |
+| **LLM**           | Agent's LLM               | Separate planning LLM            |
+| **Overhead**      | Per task                  | Per crew execution               |
+| **Use case**      | Complex individual tasks  | Coordinated multi-task workflows |
 
 ## When to Use in FinWiz
 
 ### ✅ Use Crew Planning For:
+
 - **Multi-agent coordination** - Tasks depend on each other
 - **Complex workflows** - Multiple tasks with dependencies
 - **First-time execution** - No historical success patterns
 - **Experimental crews** - Testing new crew configurations
 
 ### ❌ Don't Use Crew Planning For:
+
 - **Single-agent crews** - Use agent reasoning instead
 - **Well-established workflows** - Proven task sequences
 - **High-volume operations** - 66 holdings = 66 planning calls
@@ -159,6 +171,7 @@ A list with 10 bullet points of the most relevant information.
 ### ❌ NOT RECOMMENDED for DeepAnalysisCrew
 
 **Reasons:**
+
 1. **Single-agent crew** - Only one agent per execution
 2. **Well-defined workflow** - Tasks are sequential and proven
 3. **High volume** - 66 holdings × planning overhead
@@ -178,7 +191,7 @@ class DeepAnalysisCrew(CrewBase):
             reasoning=True,  # ✅ Agent-level reasoning
             max_reasoning_attempts=3
         )
-    
+
     @crew
     def crew(self) -> Crew:
         return Crew(
@@ -230,17 +243,18 @@ class InvestmentDiscoveryCrew(CrewBase):
             tasks=self.tasks,
             process=Process.sequential,
             planning=True,  # ✅ Coordinates screening workflow
-            planning_llm="gpt-5-mini"
+            planning_llm="gpt-4o-mini"
         )
 ```
 
 ## Performance Considerations
 
 ### Planning Overhead
+
 - **Time**: Adds 10-30 seconds per crew execution
 - **API Calls**: 1 additional LLM call per execution
 - **Tokens**: ~1000-3000 tokens per plan
-- **Cost**: $0.0001-0.0003 per plan (gpt-5-mini)
+- **Cost**: \$0.0001-0.0003 per plan (gpt-4o-mini)
 
 ### Optimization Strategies
 
@@ -276,7 +290,7 @@ crew = Crew(
     agents=agents,
     tasks=tasks,
     planning=True,
-    planning_llm="gpt-5-mini"
+    planning_llm="gpt-4o-mini"
 )
 
 # Look for log entries like:
@@ -302,17 +316,17 @@ result = crew.kickoff()
 
 ## Decision Matrix for FinWiz
 
-| Crew | Agents | Tasks | Coordination | Volume | Planning? | Reason |
-|------|--------|-------|--------------|--------|-----------|--------|
-| DeepAnalysisCrew | 3 | 4 | Low | High (66×) | ❌ No | Use agent reasoning |
-| PortfolioRebalancingCrew | 4+ | 6+ | High | Low (1×) | ✅ Yes | Complex coordination |
-| InvestmentDiscoveryCrew | 4+ | 5+ | High | Low (3×) | ✅ Yes | Multi-agent screening |
-| ReportCrew | 1 | 1 | None | Low (1×) | ❌ No | Single consolidation task |
+| Crew                     | Agents | Tasks | Coordination | Volume     | Planning? | Reason                    |
+| ------------------------ | ------ | ----- | ------------ | ---------- | --------- | ------------------------- |
+| DeepAnalysisCrew         | 3      | 4     | Low          | High (66×) | ❌ No     | Use agent reasoning       |
+| PortfolioRebalancingCrew | 4+     | 6+    | High         | Low (1×)   | ✅ Yes    | Complex coordination      |
+| InvestmentDiscoveryCrew  | 4+     | 5+    | High         | Low (3×)   | ✅ Yes    | Multi-agent screening     |
+| ReportCrew               | 1      | 1     | None         | Low (1×)   | ❌ No     | Single consolidation task |
 
 ## Key Takeaways
 
 1. **Crew planning ≠ Agent reasoning** - Different scopes and purposes
-2. **OpenAI key required** - Default planning uses gpt-5-mini
+2. **OpenAI key required** - Default planning uses gpt-4o-mini
 3. **Cost implications** - Additional API calls per execution
 4. **Use selectively** - Best for multi-agent coordination
 5. **Not for high-volume** - Overhead multiplies with executions
@@ -323,10 +337,10 @@ result = crew.kickoff()
 
 - CrewAI Crew Planning Documentation (provided)
 - FinWiz existing crews: `deep_analysis.py`, `portfolio_rebalancing_crew/`
-- Cost analysis: OpenAI pricing for gpt-5-mini
+- Cost analysis: OpenAI pricing for gpt-4o-mini
 
 ---
 
-**Version**: 1.0  
-**Created**: 2025-01-11  
+**Version**: 1.0
+**Created**: 2025-01-11
 **Purpose**: Guide decision-making on crew planning vs agent reasoning for FinWiz

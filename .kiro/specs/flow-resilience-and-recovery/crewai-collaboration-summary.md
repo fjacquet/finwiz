@@ -27,12 +27,14 @@ agent = Agent(
 When `allow_delegation=True`, agents automatically get:
 
 ### 1. Delegate Work Tool
+
 ```python
 # Automatically available:
 # delegate_work(task: str, context: str, coworker: str)
 ```
 
 ### 2. Ask Question Tool
+
 ```python
 # Automatically available:
 # ask_question(question: str, context: str, coworker: str)
@@ -66,10 +68,10 @@ editing_task = Task(
 ```python
 collaborative_task = Task(
     description="""Create marketing strategy.
-    
+
     Writer: Focus on messaging
     Researcher: Provide market analysis
-    
+
     Work together to create comprehensive strategy.""",
     agent=writer  # Lead agent, can delegate to researcher
 )
@@ -179,11 +181,11 @@ agent = Agent(
 # ✅ Solution: Better context and specific roles
 Task(
     description="""Write technical blog post.
-    
+
     Context: Target audience is developers.
     Length: 1200 words
     Include: code examples, best practices
-    
+
     Delegate research to researcher if needed."""
 )
 ```
@@ -205,7 +207,7 @@ specialist2 = Agent(role="Specialist B", allow_delegation=False)
 agent = Agent(
     role="Senior Developer",
     backstory="""You lead development projects.
-    
+
     Collaboration guidelines:
     - Delegate research to Research Analyst
     - Ask Designer for UI/UX guidance
@@ -247,6 +249,7 @@ agent = Agent(
 ### DeepAnalysisCrew (3 agents)
 
 **Current Structure:**
+
 - asset_analyst (research + analysis)
 - risk_assessor (risk evaluation)
 - investment_reporter (consolidation)
@@ -275,6 +278,7 @@ investment_reporter = Agent(
 ```
 
 **Rationale:**
+
 - asset_analyst might need risk clarification
 - risk_assessor focuses on risk metrics
 - investment_reporter just consolidates (no delegation needed)
@@ -305,6 +309,7 @@ investment_reporter = Agent(
 ```
 
 **Rationale:**
+
 - Tasks are well-defined and sequential
 - Context passing via task dependencies is sufficient
 - Reduces complexity and API calls
@@ -313,15 +318,17 @@ investment_reporter = Agent(
 ## Performance Considerations
 
 ### Collaboration Overhead
+
 - **Time**: 5-15 seconds per delegation/question
 - **API Calls**: 1-2 additional LLM calls per collaboration
 - **Tokens**: ~200-500 tokens per interaction
-- **Cost**: $0.0001-0.0003 per interaction (gpt-5-mini)
+- **Cost**: \$0.0001-0.0003 per interaction (gpt-4o-mini)
 
 ### For FinWiz Deep Analysis (66 holdings)
+
 - If 10% of analyses involve delegation: 6-7 collaborations
 - Additional time: 30-105 seconds
-- Additional cost: $0.0006-0.0021
+- Additional cost: \$0.0006-0.0021
 - **Impact: Minimal** for occasional use
 
 ## Recommendation for FinWiz
@@ -340,7 +347,7 @@ class DeepAnalysisCrew(CrewBase):
             allow_delegation=True,  # Can ask risk_assessor
             verbose=True
         )
-    
+
     @agent
     def risk_assessor(self) -> Agent:
         return Agent(
@@ -350,7 +357,7 @@ class DeepAnalysisCrew(CrewBase):
             allow_delegation=False,  # Focused specialist
             verbose=True
         )
-    
+
     @final_reporter
     @agent
     def investment_reporter(self) -> Agent:
@@ -363,12 +370,14 @@ class DeepAnalysisCrew(CrewBase):
 ```
 
 **Benefits:**
+
 - asset_analyst can clarify risk questions
 - Maintains focus for specialists
 - Minimal overhead (rare delegation)
 - Flexibility for edge cases
 
 **Alternative (Simpler):**
+
 - Set `allow_delegation=False` for all agents
 - Rely on task context passing
 - Faster, simpler, but less flexible
@@ -404,6 +413,6 @@ class DeepAnalysisCrew(CrewBase):
 
 ---
 
-**Version**: 1.0  
-**Created**: 2025-01-11  
+**Version**: 1.0
+**Created**: 2025-01-11
 **Purpose**: Guide collaboration decisions for FinWiz crews

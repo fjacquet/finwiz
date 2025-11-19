@@ -243,13 +243,15 @@ class CrewDataExtractor:
         """
         Validate that grade matches composite score according to grading scale.
 
-        Grading scale:
-        - A+: >= 0.85
-        - A:  >= 0.75
-        - B:  >= 0.65
-        - C:  >= 0.55
-        - D:  >= 0.45
-        - F:  < 0.45
+        Uses the official grading scale from grading_system.py:
+        - A+: >= 0.95 (95%)
+        - A:  >= 0.85 (85%)
+        - B+: >= 0.80 (80%)
+        - B:  >= 0.75 (75%)
+        - C+: >= 0.70 (70%)
+        - C:  >= 0.65 (65%)
+        - D:  >= 0.50 (50%)
+        - F:  < 0.50
 
         Args:
             grade: Letter grade
@@ -261,21 +263,17 @@ class CrewDataExtractor:
 
         Example:
             >>> extractor = CrewDataExtractor()
-            >>> extractor.validate_grade_score_consistency("A", 0.80, "AAPL")
+            >>> extractor.validate_grade_score_consistency("A", 0.87, "AAPL")
             True
             >>> extractor.validate_grade_score_consistency("A+", 0.65, "AAPL")
             False
 
         """
-        # Define grade thresholds
-        grade_thresholds = {"A+": 0.85, "A": 0.75, "B": 0.65, "C": 0.55, "D": 0.45, "F": 0.0}
+        from finwiz.utils.grading_system import score_to_grade
 
-        # Determine expected grade from score
-        expected_grade = "F"
-        for threshold_grade, threshold_score in grade_thresholds.items():
-            if composite_score >= threshold_score:
-                expected_grade = threshold_grade
-                break
+        # Use official grading system
+        expected_grade_info = score_to_grade(composite_score)
+        expected_grade = expected_grade_info.grade
 
         # Check if grades match
         is_consistent = grade == expected_grade

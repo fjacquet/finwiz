@@ -56,7 +56,7 @@ Portfolio Input (CSV files)
                       ↓
               JSON Exports Created:
               • output/stock/*.json
-              • output/etf/*.json  
+              • output/etf/*.json
               • output/crypto/*.json
               • output/deep_analysis_consolidated.json
                       ↓
@@ -177,17 +177,20 @@ PHASE 4: Final Report
 **Rationale**:
 
 1. **Complete Information Required**: Rebalancing decisions require seeing ALL available options:
+
    - **Current holdings** (Stock/ETF/Crypto crew exports) - What do we own today?
    - **Deep analysis results** (DeepAnalysisCrew exports) - Detailed grades for underperforming holdings
    - **Discovery opportunities** (DiscoveryCrew export) - What A+ alternatives exist?
 
 2. **Optimization Problem**: Portfolio rebalancing is an optimization problem that requires:
+
    - Current allocation (from holdings analysis)
    - Quality assessment of each holding (from deep analysis)
    - Available alternatives (from discovery)
    - Risk/return tradeoffs across ALL options
 
 3. **Sequential Dependency**: Rebalancing cannot make informed decisions without:
+
    - Knowing which holdings are underperforming (requires analysis completion)
    - Knowing what A+ opportunities exist (requires discovery completion)
    - Having detailed grades for problematic holdings (requires deep analysis completion)
@@ -198,14 +201,14 @@ PHASE 4: Final Report
    Current Portfolio:
    - AAPL (Stock) - Grade B (from StockCrew)
    - IBM (Stock) - Grade D (from StockCrew)
-   
+
    Deep Analysis:
    - IBM detailed analysis (from DeepAnalysisCrew) - Grade D confirmed, sell recommended
-   
+
    Discovery:
    - MSFT (Stock) - Grade A+ opportunity (from DiscoveryCrew)
    - NVDA (Stock) - Grade A+ opportunity (from DiscoveryCrew)
-   
+
    Rebalancing Decision (requires ALL above):
    - Keep AAPL (Grade B is acceptable)
    - Sell IBM (Grade D confirmed by deep analysis)
@@ -220,7 +223,7 @@ PHASE 4: Final Report
    - Stock/ETF/Crypto crews analyze current holdings
    - DeepAnalysis crew analyzes underperformers
    - Discovery crew finds A+ opportunities
-   
+
    Phase 2 (Sequential - AFTER Phase 1):
    - Rebalancing crew receives ALL Phase 1 results
    - Makes informed optimization decisions
@@ -274,7 +277,7 @@ def execute_deep_analysis_crew(...)
 def execute_discovery_crew(...)
 
 # Phase 2: Sequential (waits for ALL Phase 1)
-@listen(and_("execute_stock_crew", "execute_etf_crew", "execute_crypto_crew", 
+@listen(and_("execute_stock_crew", "execute_etf_crew", "execute_crypto_crew",
              "execute_deep_analysis_crew", "execute_discovery_crew"))
 def execute_rebalancing_crew(...)
 ```
@@ -334,7 +337,7 @@ def crew(self) -> Crew:
         agents=self.agents,
         tasks=self.tasks,
         planning=True,
-        planning_llm="gpt-5-mini"  # Optimal planning quality
+        planning_llm="gpt-4o-mini"  # Optimal planning quality
     )
 ```
 
@@ -394,7 +397,7 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
 def process_data(self) -> dict[str, Any]:
     # Update structured state
     self.state.processing_complete = True
-    
+
     # Return data for downstream listeners
     return {"results": data}
 
@@ -409,14 +412,14 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 #### Configuration Matrix
 
-| Crew | Reasoning | Planning | Delegation | Execution Volume | Rationale |
-|------|-----------|----------|------------|------------------|-----------|
-| investment_discovery | ✅ Enable | ✅ Enable | ✅ Enable | 1 | 4 agents, 7 tasks, complex coordination |
-| portfolio_rebalancing | ✅ Enable | ✅ Enable | ✅ Enable | 1 | 3+ agents, 4+ tasks, optimization |
-| deep_analysis | ❌ Disable | ❌ Disable | ❌ Disable | 66+ | High volume - avoid overhead |
-| crypto_crew | ✅ Enable | ❌ Disable | Mixed | 1-10 | Complex analysis, simpler workflow |
-| stock_crew | ✅ Enable | ❌ Disable | Mixed | 1-10 | Complex analysis, simpler workflow |
-| etf_crew | ✅ Enable | ❌ Disable | Mixed | 1-10 | Complex analysis, simpler workflow |
+| Crew                  | Reasoning  | Planning   | Delegation | Execution Volume | Rationale                               |
+| --------------------- | ---------- | ---------- | ---------- | ---------------- | --------------------------------------- |
+| investment_discovery  | ✅ Enable  | ✅ Enable  | ✅ Enable  | 1                | 4 agents, 7 tasks, complex coordination |
+| portfolio_rebalancing | ✅ Enable  | ✅ Enable  | ✅ Enable  | 1                | 3+ agents, 4+ tasks, optimization       |
+| deep_analysis         | ❌ Disable | ❌ Disable | ❌ Disable | 66+              | High volume - avoid overhead            |
+| crypto_crew           | ✅ Enable  | ❌ Disable | Mixed      | 1-10             | Complex analysis, simpler workflow      |
+| stock_crew            | ✅ Enable  | ❌ Disable | Mixed      | 1-10             | Complex analysis, simpler workflow      |
+| etf_crew              | ✅ Enable  | ❌ Disable | Mixed      | 1-10             | Complex analysis, simpler workflow      |
 
 ### Crew Evaluation Results
 
@@ -429,16 +432,16 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 #### Evaluation Summary
 
-| Crew | AI Tasks | Python Tasks | Cost Savings | Time Savings | Priority |
-|------|----------|--------------|--------------|--------------|----------|
-| report_crew | 3 | 1 | $2.00-3.00 | 30-60s | **CRITICAL** |
-| investment_discovery_crew | 6 | 1 | $1.00-2.00 | 20-40s | HIGH |
-| portfolio_rebalancing_crew | 3 | 2 | $1.00-1.50 | 15-30s | HIGH |
-| deep_analysis | 3 | 1 | $0.40-0.80 | 10-20s | HIGH |
-| crypto_crew | 4 | 1 | $0.50-1.00 | 10-20s | MEDIUM |
-| stock_crew | 4 | 1 | $0.50-1.00 | 10-20s | MEDIUM |
-| etf_crew | 4 | 1 | $0.60-1.00 | 10-20s | MEDIUM |
-| **TOTAL** | **27** | **8** | **$6.00-10.30** | **106-200s** | - |
+| Crew                       | AI Tasks | Python Tasks | Cost Savings     | Time Savings | Priority     |
+| -------------------------- | -------- | ------------ | ---------------- | ------------ | ------------ |
+| report_crew                | 3        | 1            | \$2.00-3.00      | 30-60s       | **CRITICAL** |
+| investment_discovery_crew  | 6        | 1            | \$1.00-2.00      | 20-40s       | HIGH         |
+| portfolio_rebalancing_crew | 3        | 2            | \$1.00-1.50      | 15-30s       | HIGH         |
+| deep_analysis              | 3        | 1            | \$0.40-0.80      | 10-20s       | HIGH         |
+| crypto_crew                | 4        | 1            | \$0.50-1.00      | 10-20s       | MEDIUM       |
+| stock_crew                 | 4        | 1            | \$0.50-1.00      | 10-20s       | MEDIUM       |
+| etf_crew                   | 4        | 1            | \$0.60-1.00      | 10-20s       | MEDIUM       |
+| **TOTAL**                  | **27**   | **8**        | **\$6.00-10.30** | **106-200s** | -            |
 
 #### Key Findings by Crew
 
@@ -446,7 +449,7 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 - **AI Tasks (3)**: Financial integration, portfolio allocation, risk assessment
 - **Python Tasks (1)**: Comprehensive report generation (796-line task description!)
-- **Cost Savings**: $2.00-3.00 per execution (HIGHEST)
+- **Cost Savings**: \$2.00-3.00 per execution (HIGHEST)
 - **Time Savings**: 30-60 seconds (BIGGEST)
 - **Critical Issue**: Most expensive report generation in entire codebase
 - **Implementation**: Jinja2 template with French localization, SEC citation handling, anti-hallucination logic
@@ -456,7 +459,7 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 - **AI Tasks (6)**: ETF/stock/crypto discovery, validation, optimization, feedback learning
 - **Python Tasks (1)**: Report generation
-- **Cost Savings**: $1.00-2.00 per execution
+- **Cost Savings**: \$1.00-2.00 per execution
 - **Time Savings**: 20-40 seconds
 - **Implementation**: Jinja2 template with French localization
 - **Complexity**: MEDIUM (4-8 hours)
@@ -465,7 +468,7 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 - **AI Tasks (3)**: Holding analysis, alternatives finding, rebalancing strategy
 - **Python Tasks (2)**: Price target calculations, report generation
-- **Cost Savings**: $1.00-1.50 per execution
+- **Cost Savings**: \$1.00-1.50 per execution
 - **Time Savings**: 15-30 seconds
 - **Implementation**: Python calculator + Jinja2 template
 - **Complexity**: MEDIUM (1-2 days)
@@ -474,7 +477,7 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 - **AI Tasks (3)**: Deep analysis, technical analysis, risk assessment
 - **Python Tasks (1)**: Final report generation
-- **Cost Savings**: $0.40-0.80 per execution
+- **Cost Savings**: \$0.40-0.80 per execution
 - **Time Savings**: 10-20 seconds
 - **Volume Impact**: Runs 66+ times per portfolio (high-volume crew)
 - **Implementation**: Jinja2 template
@@ -484,7 +487,7 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 - **AI Tasks (4 each)**: Market analysis, screening, technical detail, risk assessment
 - **Python Tasks (1 each)**: Final report generation
-- **Cost Savings**: $0.50-1.00 per execution each
+- **Cost Savings**: \$0.50-1.00 per execution each
 - **Time Savings**: 10-20 seconds each
 - **Implementation**: Jinja2 templates
 - **Complexity**: LOW (2-4 hours each)
@@ -517,35 +520,39 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 **Priority Order**:
 
-1. **report_crew** (CRITICAL) - $2.00-3.00 savings, 30-60s faster
+1. **report_crew** (CRITICAL) - \$2.00-3.00 savings, 30-60s faster
+
    - Highest cost savings opportunity
    - Most complex implementation (1-2 days)
    - French localization with extensive sections
 
-2. **investment_discovery_crew** (HIGH) - $1.00-2.00 savings, 20-40s faster
+2. **investment_discovery_crew** (HIGH) - \$1.00-2.00 savings, 20-40s faster
+
    - Second highest savings
    - Medium complexity (4-8 hours)
    - French localization required
 
-3. **portfolio_rebalancing_crew** (HIGH) - $1.00-1.50 savings, 15-30s faster
+3. **portfolio_rebalancing_crew** (HIGH) - \$1.00-1.50 savings, 15-30s faster
+
    - Includes price target calculator
    - Medium complexity (1-2 days)
 
-4. **deep_analysis** (HIGH) - $0.40-0.80 savings, 10-20s faster
+4. **deep_analysis** (HIGH) - \$0.40-0.80 savings, 10-20s faster
+
    - High-volume crew (66+ executions)
    - Low complexity (2-4 hours)
    - Cumulative savings significant
 
-5. **crypto_crew, stock_crew, etf_crew** (MEDIUM) - $0.50-1.00 each
+5. **crypto_crew, stock_crew, etf_crew** (MEDIUM) - \$0.50-1.00 each
    - Similar implementations
    - Low complexity (2-4 hours each)
    - Can be done in parallel
 
 **Expected Phase 1 Results**:
 
-- **Total Cost Savings**: $6.00-10.30 per full portfolio analysis
+- **Total Cost Savings**: \$6.00-10.30 per full portfolio analysis
 - **Total Time Savings**: 106-200 seconds per execution
-- **At Scale (100 portfolios)**: $600-1,030 savings, 2.9-5.5 hours faster
+- **At Scale (100 portfolios)**: \$600-1,030 savings, 2.9-5.5 hours faster
 - **Consistency**: 100% consistent formatting across all reports
 - **Testability**: Full unit test coverage for all report generation
 
@@ -569,7 +576,7 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 **Expected Phase 2 Results**:
 
-- Additional $1.00-3.00 cost savings per execution
+- Additional \$1.00-3.00 cost savings per execution
 - Additional 30-90 seconds time savings
 - Testable calculation logic with full unit test coverage
 - Easier maintenance and debugging
@@ -585,9 +592,9 @@ def next_step(self, upstream_data: dict[str, Any]) -> dict[str, Any]:
 
 **Returns (Both Phases)**:
 
-- Per execution: $7.00-13.30 savings, 136-290s faster
-- Per 100 executions: $700-1,330 savings, 3.8-8.1 hours faster
-- Per 1000 executions: $7,000-13,300 savings, 38-81 hours faster
+- Per execution: \$7.00-13.30 savings, 136-290s faster
+- Per 100 executions: \$700-1,330 savings, 3.8-8.1 hours faster
+- Per 1000 executions: \$7,000-13,300 savings, 38-81 hours faster
 
 **Break-even Point**: ~50-100 portfolio analyses
 
@@ -622,50 +629,50 @@ from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 
 class PortfolioDeepAnalyzer:
     """Pure Python portfolio analysis - NO AI crews."""
-    
+
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.scorer = DeepAnalysisScorer()
-    
+
     def analyze_portfolio_holdings(
-        self, 
+        self,
         holdings: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Analyze multiple holdings concurrently using Python threading.
-        
+
         Requirements: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7
         """
         start_time = time.time()
         results = {}
-        
+
         # Process holdings concurrently (5-10 at a time)
         with ThreadPoolExecutor(max_workers=5) as executor:
             future_to_ticker = {
                 executor.submit(self._analyze_single_holding, holding): holding['ticker']
                 for holding in holdings
             }
-            
+
             for future in concurrent.futures.as_completed(future_to_ticker):
                 ticker = future_to_ticker[future]
                 try:
                     result = future.result()
                     results[ticker] = result
-                    
+
                     # Save JSON export to proper output directory
                     self._save_json_export(ticker, result)
-                    
+
                 except Exception as e:
                     logger.error(f"Analysis failed for {ticker}: {e}")
                     results[ticker] = self._create_error_result(ticker, str(e))
-        
+
         # Generate consolidated export
         consolidated_path = self._save_consolidated_export(results)
-        
+
         execution_time = time.time() - start_time
         logger.info(f"Portfolio analysis completed in {execution_time:.1f}s")
         logger.info(f"Performance: {len(holdings)/execution_time:.1f} holdings/second")
         logger.info(f"Cost: $0.00 (100% Python calculations)")
-        
+
         return {
             "results": results,
             "consolidated_path": consolidated_path,
@@ -673,16 +680,16 @@ class PortfolioDeepAnalyzer:
             "holdings_per_second": len(holdings)/execution_time,
             "cost": 0.0
         }
-    
+
     def _analyze_single_holding(self, holding: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze single holding using DeepAnalysisScorer."""
         ticker = holding['ticker']
-        
+
         # Extract data (this would normally come from tools)
         fundamental_metrics = self._extract_fundamental_data(holding)
         technical_metrics = self._extract_technical_data(holding)
         risk_metrics = self._extract_risk_data(holding)
-        
+
         # Use Python scorer (NO AI)
         result = self.scorer.score_ticker(
             ticker=ticker,
@@ -690,21 +697,21 @@ class PortfolioDeepAnalyzer:
             technical_metrics=technical_metrics,
             risk_metrics=risk_metrics
         )
-        
+
         return result
-    
+
     def _save_json_export(self, ticker: str, result: Dict[str, Any]) -> None:
         """Save JSON export to output directory (NOT just cache).
-        
+
         Requirements: 0.8, 0.9, 0.10, 0.11
         """
         asset_class = result.get('asset_class', 'stock')
         output_dir = Path(f"output/{asset_class}")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         export_path = output_dir / f"{ticker}_{self.session_id}.json"
         export_path.write_text(json.dumps(result, indent=2))
-        
+
         logger.info(f"JSON export saved: {export_path}")
 ```
 
@@ -738,15 +745,15 @@ output/
 ```python
 class APlusDiscoveryIntegrator:
     """Integrate A+ discovery with deep analysis results."""
-    
+
     def integrate_with_deep_analysis(self, session_id: str) -> Dict[str, Any]:
         """Read deep analysis results and identify A+ opportunities.
-        
+
         Requirements: 0.13, 0.14, 0.15, 0.16, 0.17
         """
         # Read deep analysis JSON exports from output directory
         deep_analysis_results = self._read_deep_analysis_exports(session_id)
-        
+
         # Identify A+ and A grade holdings
         aplus_opportunities = []
         for ticker, result in deep_analysis_results.items():
@@ -757,7 +764,7 @@ class APlusDiscoveryIntegrator:
                     'composite_score': result['composite_score'],
                     'recommendation': result['recommendation']
                 })
-        
+
         # Update discovery export
         discovery_export = {
             'has_a_plus_analysis': len(aplus_opportunities) > 0,
@@ -765,11 +772,11 @@ class APlusDiscoveryIntegrator:
             'opportunities': aplus_opportunities,
             'session_id': session_id
         }
-        
+
         # Save discovery export
         discovery_path = Path(f"output/discovery_{session_id}.json")
         discovery_path.write_text(json.dumps(discovery_export, indent=2))
-        
+
         return discovery_export
 ```
 
@@ -782,26 +789,26 @@ class APlusDiscoveryIntegrator:
 ```python
 class BacktestingPipelineConnector:
     """Connect backtesting to discovery results."""
-    
+
     def execute_backtesting_if_candidates_available(self, session_id: str) -> Dict[str, Any]:
         """Execute backtesting when A+ candidates are found.
-        
+
         Requirements: 0.18, 0.19, 0.20, 0.21
         """
         # Read A+ opportunities from discovery export
         discovery_path = Path(f"output/discovery_{session_id}.json")
         if not discovery_path.exists():
             return {"status": "no_discovery_data", "executed": False}
-        
+
         discovery_data = json.loads(discovery_path.read_text())
-        
+
         if not discovery_data.get('has_a_plus_analysis', False):
             return {"status": "no_aplus_candidates", "executed": False}
-        
+
         # Execute backtesting for A+ candidates
         candidates = discovery_data.get('opportunities', [])
         backtesting_results = []
-        
+
         for candidate in candidates:
             ticker = candidate['ticker']
             try:
@@ -810,7 +817,7 @@ class BacktestingPipelineConnector:
                 backtesting_results.append(result)
             except Exception as e:
                 logger.error(f"Backtesting failed for {ticker}: {e}")
-        
+
         # Save backtesting results
         backtesting_export = {
             'executed': True,
@@ -818,10 +825,10 @@ class BacktestingPipelineConnector:
             'results': backtesting_results,
             'session_id': session_id
         }
-        
+
         backtesting_path = Path(f"output/backtesting_{session_id}.json")
         backtesting_path.write_text(json.dumps(backtesting_export, indent=2))
-        
+
         return backtesting_export
 ```
 
@@ -837,26 +844,26 @@ from jinja2 import Environment, FileSystemLoader
 
 class PythonReportGenerator:
     """Generate reports using Jinja2 templates (NO AI).
-    
+
     Requirements: 0.22, 0.23, 0.24, 0.25, 0.26
     """
-    
+
     def __init__(self):
         self.env = Environment(
             loader=FileSystemLoader('src/finwiz/templates'),
             autoescape=True
         )
-    
+
     def generate_family_financial_plan(
-        self, 
+        self,
         portfolio_data: Dict[str, Any],
         session_id: str
     ) -> str:
         """Generate final French report using templates."""
-        
+
         # Load all analysis results
         analysis_data = self._load_all_analysis_results(session_id)
-        
+
         # Prepare template data
         template_data = {
             'portfolio': portfolio_data,
@@ -868,15 +875,15 @@ class PythonReportGenerator:
             'session_id': session_id,
             'generation_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
-        
+
         # Render template
         template = self.env.get_template('family_financial_plan.html.j2')
         html_content = template.render(**template_data)
-        
+
         # Save final report
         output_path = Path(f"output/finwiz_family_financial_plan_{session_id}.html")
         output_path.write_text(html_content, encoding='utf-8')
-        
+
         logger.info(f"Final report generated: {output_path}")
         return str(output_path)
 ```
@@ -891,26 +898,26 @@ class PythonReportGenerator:
 
 def main():
     """Demonstrate complete Python-based analysis pipeline."""
-    
+
     # Load portfolio data
     portfolio_data = load_portfolio_from_csv('data/portfolio.csv')
-    
+
     # Run pure Python analysis
     analyzer = PortfolioDeepAnalyzer(session_id="demo")
     analysis_results = analyzer.analyze_portfolio_holdings(portfolio_data)
-    
+
     # Integrate A+ discovery
     discovery_integrator = APlusDiscoveryIntegrator()
     discovery_results = discovery_integrator.integrate_with_deep_analysis("demo")
-    
+
     # Connect backtesting
     backtesting_connector = BacktestingPipelineConnector()
     backtesting_results = backtesting_connector.execute_backtesting_if_candidates_available("demo")
-    
+
     # Generate final report
     report_generator = PythonReportGenerator()
     final_report_path = report_generator.generate_family_financial_plan(portfolio_data, "demo")
-    
+
     # Log performance metrics
     logger.info("=== PYTHON ANALYSIS PERFORMANCE ===")
     logger.info(f"Total time: {analysis_results['execution_time']:.1f}s")
@@ -919,7 +926,7 @@ def main():
     logger.info(f"A+ opportunities found: {discovery_results['total_opportunities_found']}")
     logger.info(f"Backtesting executed: {backtesting_results['executed']}")
     logger.info(f"Final report: {final_report_path}")
-    
+
     # Prove 10-20x speed improvement
     estimated_ai_time = len(portfolio_data) * 300  # 5 minutes per holding
     speedup_factor = estimated_ai_time / analysis_results['execution_time']
@@ -947,7 +954,7 @@ class CrewExportBase(BaseModel):
     asset_class: str = Field(..., pattern="^(stock|etf|crypto)$")
     analysis_date: datetime = Field(default_factory=datetime.now)
     session_id: str = Field(..., description="Flow session identifier")
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -962,21 +969,21 @@ from finwiz.schemas.stock import TenKInsight, RiskAssessmentStandardized
 class StockCrewExport(CrewExportBase):
     """Export schema for Stock Crew analysis."""
     crew_name: str = Field(default="stock_crew")
-    
+
     # Analysis Results
     fundamental_analysis: TenKInsight
     risk_assessment: RiskAssessmentStandardized
     technical_indicators: Dict[str, Any]
-    
+
     # Scores and Grades
     composite_score: float = Field(..., ge=0.0, le=1.0)
     grade: str = Field(..., pattern="^(A\\+|A|B|C|D|F)$")
-    
+
     # Recommendations
     recommendation: str = Field(..., pattern="^(BUY|HOLD|SELL)$")
     confidence: float = Field(..., ge=0.0, le=1.0)
     rationale: str = Field(..., min_length=50)
-    
+
     # Metadata
     data_sources: List[str]
     report_html_path: str
@@ -991,25 +998,25 @@ from finwiz.schemas.etf import ETFFactsheet, ETFTopHolding
 class ETFCrewExport(CrewExportBase):
     """Export schema for ETF Crew analysis."""
     crew_name: str = Field(default="etf_crew")
-    
+
     # Analysis Results
     factsheet: ETFFactsheet
     top_holdings: List[ETFTopHolding]
     risk_assessment: RiskAssessmentStandardized
-    
+
     # Scores and Grades
     composite_score: float = Field(..., ge=0.0, le=1.0)
     grade: str = Field(..., pattern="^(A\\+|A|B|C|D|F)$")
-    
+
     # Cost Analysis
     expense_ratio: float
     tracking_error: Optional[float]
-    
+
     # Recommendations
     recommendation: str = Field(..., pattern="^(BUY|HOLD|SELL)$")
     confidence: float = Field(..., ge=0.0, le=1.0)
     rationale: str
-    
+
     # Metadata
     data_sources: List[str]
     report_html_path: str
@@ -1024,25 +1031,25 @@ from finwiz.schemas.crypto import CryptoThesis
 class CryptoCrewExport(CrewExportBase):
     """Export schema for Crypto Crew analysis."""
     crew_name: str = Field(default="crypto_crew")
-    
+
     # Analysis Results
     thesis: CryptoThesis
     risk_assessment: RiskAssessmentStandardized
     technical_analysis: Dict[str, Any]
-    
+
     # Scores and Grades
     composite_score: float = Field(..., ge=0.0, le=1.0)
     grade: str = Field(..., pattern="^(A\\+|A|B|C|D|F)$")
-    
+
     # Volatility Metrics
     volatility_30d: float
     max_drawdown: float
-    
+
     # Recommendations
     recommendation: str = Field(..., pattern="^(BUY|HOLD|SELL)$")
     confidence: float = Field(..., ge=0.0, le=1.0)
     rationale: str
-    
+
     # Metadata
     data_sources: List[str]
     report_html_path: str
@@ -1055,20 +1062,20 @@ class CryptoCrewExport(CrewExportBase):
 class DeepAnalysisCrewExport(CrewExportBase):
     """Export schema for Deep Analysis Crew."""
     crew_name: str = Field(default="deep_analysis_crew")
-    
+
     # Comprehensive Analysis
     detailed_analysis: Dict[str, Any]
     risk_assessment: RiskAssessmentStandardized
-    
+
     # Scores and Grades
     composite_score: float = Field(..., ge=0.0, le=1.0)
     grade: str = Field(..., pattern="^(A\\+|A|B|C|D|F)$")
-    
+
     # Recommendations
     recommendation: str = Field(..., pattern="^(BUY|HOLD|SELL)$")
     confidence: float = Field(..., ge=0.0, le=1.0)
     rationale: str
-    
+
     # Metadata
     data_sources: List[str]
     report_html_path: str
@@ -1091,12 +1098,12 @@ class DiscoveryCrewExport(CrewExportBase):
     """Export schema for Investment Discovery Crew."""
     crew_name: str = Field(default="discovery_crew")
     ticker: str = Field(default="N/A")  # Discovery doesn't analyze single ticker
-    
+
     # Discovery Results
     opportunities: List[DiscoveryOpportunity] = Field(..., max_items=10)
     screening_criteria: Dict[str, Any]
     market_context: str
-    
+
     # Metadata
     data_sources: List[str]
     report_html_path: str
@@ -1116,7 +1123,7 @@ class TradeRecommendation(BaseModel):
 
 class RebalancingCrewExport(CrewExportBase):
     """Export schema for Portfolio Rebalancing Crew.
-    
+
     This crew receives ALL analysis results as inputs:
     - Current holdings (stock/etf/crypto exports)
     - Deep analysis results (detailed grades)
@@ -1124,30 +1131,30 @@ class RebalancingCrewExport(CrewExportBase):
     """
     crew_name: str = Field(default="rebalancing_crew")
     ticker: str = Field(default="N/A")  # Portfolio-level analysis
-    
+
     # Input Summary (what the crew saw)
     holdings_analyzed: int = Field(..., description="Number of current holdings analyzed")
     deep_analyses_reviewed: int = Field(..., description="Number of deep analyses reviewed")
     opportunities_discovered: int = Field(..., description="Number of A+ opportunities found")
-    
+
     # Current State
     current_allocation: Dict[str, float] = Field(..., description="Current portfolio allocation by ticker")
     current_total_value: float
-    
+
     # Optimization Results
     target_allocation: Dict[str, float] = Field(..., description="Recommended allocation by ticker")
     trades_required: List[TradeRecommendation]
-    
+
     # Performance Metrics
     expected_return: float = Field(..., description="Expected annual return")
     expected_risk: float = Field(..., description="Expected volatility")
     sharpe_ratio: float = Field(..., description="Risk-adjusted return metric")
-    
+
     # Improvement Analysis
     improvement_summary: str = Field(..., description="How rebalancing improves portfolio")
     risk_reduction: float = Field(..., description="Expected risk reduction")
     return_improvement: float = Field(..., description="Expected return improvement")
-    
+
     # Metadata
     data_sources: List[str]
     report_html_path: str
@@ -1161,7 +1168,7 @@ class ConsolidatedReportExport(BaseModel):
     """Consolidated export from all SME crews."""
     session_id: str
     consolidation_date: datetime = Field(default_factory=datetime.now)
-    
+
     # SME Crew Results
     stock_analyses: List[StockCrewExport] = []
     etf_analyses: List[ETFCrewExport] = []
@@ -1169,11 +1176,11 @@ class ConsolidatedReportExport(BaseModel):
     deep_analyses: List[DeepAnalysisCrewExport] = []
     discovery_results: Optional[DiscoveryCrewExport] = None
     rebalancing_results: Optional[RebalancingCrewExport] = None
-    
+
     # Execution Metadata
     crew_execution_status: Dict[str, str]  # crew_name -> "completed" | "failed"
     total_execution_time: float
-    
+
     model_config = {"extra": "forbid"}
 ```
 
@@ -1188,7 +1195,7 @@ from crewai import Agent, Task, agent, task
 from finwiz.utils.agent_validators import final_reporter
 
 class StockCrew:
-    
+
     @final_reporter
     @agent
     def investment_reporter(self) -> Agent:
@@ -1198,14 +1205,14 @@ class StockCrew:
             tools=[],  # MUST be empty
             verbose=True
         )
-    
+
     @task
     def generate_export_task(self) -> Task:
         """Final task to create Pydantic export object."""
         return Task(
             description="""
             Consolidate all analysis findings from context into a StockCrewExport object.
-            
+
             Steps:
             1. Extract fundamental_analysis from context
             2. Extract risk_assessment from context
@@ -1215,7 +1222,7 @@ class StockCrew:
             6. Create StockCrewExport object
             7. Validate against Pydantic schema
             8. Save to JSON file
-            
+
             Output file: output/reports/{session_id}/stock_crew/stock_crew_export.json
             """,
             expected_output="StockCrewExport object saved to JSON",
@@ -1253,13 +1260,13 @@ from typing import Dict, Any
 
 class HTMLReportGenerator:
     """Generate HTML reports from JSON exports using Jinja2."""
-    
+
     def __init__(self, template_dir: str = "src/finwiz/templates"):
         self.env = Environment(
             loader=FileSystemLoader(template_dir),
             autoescape=True
         )
-    
+
     def generate_crew_report(
         self,
         crew_name: str,
@@ -1267,29 +1274,29 @@ class HTMLReportGenerator:
         output_path: Path
     ) -> str:
         """Generate HTML report for a crew.
-        
+
         Args:
             crew_name: Name of crew (stock_crew, etf_crew, etc.)
             export_data: Validated JSON export data
             output_path: Path to save HTML file
-            
+
         Returns:
             Path to generated HTML file
         """
         # Load appropriate template
         template_name = f"{crew_name}_report.html"
         template = self.env.get_template(template_name)
-        
+
         # Render template with data
         html_content = template.render(
             data=export_data,
             generation_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
-        
+
         # Save to file
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(html_content, encoding="utf-8")
-        
+
         return str(output_path)
 ```
 
@@ -1315,140 +1322,163 @@ class HTMLReportGenerator:
 ```html
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Rapport FinWiz{% endblock %}</title>
     <style>
-        /* Professional CSS with light/dark mode support */
+      /* Professional CSS with light/dark mode support */
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f5f5f5;
+        --text-primary: #2c3e50;
+        --text-secondary: #34495e;
+        --accent: #3498db;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+      }
+
+      @media (prefers-color-scheme: dark) {
         :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f5f5f5;
-            --text-primary: #2c3e50;
-            --text-secondary: #34495e;
-            --accent: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
+          --bg-primary: #1a1a1a;
+          --bg-secondary: #2d2d2d;
+          --text-primary: #ecf0f1;
+          --text-secondary: #bdc3c7;
+          --accent: #3498db;
         }
-        
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-primary: #1a1a1a;
-                --bg-secondary: #2d2d2d;
-                --text-primary: #ecf0f1;
-                --text-secondary: #bdc3c7;
-                --accent: #3498db;
-            }
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-        
-        h1 { color: var(--text-primary); border-bottom: 3px solid var(--accent); }
-        h2 { color: var(--text-secondary); margin-top: 30px; }
-        
-        .grade-a-plus { color: var(--success); font-weight: bold; }
-        .grade-a { color: #2ecc71; }
-        .grade-b { color: var(--warning); }
-        .grade-c { color: #e67e22; }
-        .grade-d { color: var(--danger); }
-        .grade-f { color: #c0392b; font-weight: bold; }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background-color: var(--bg-primary);
-        }
-        
-        th {
-            background-color: var(--accent);
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+
+      h1 {
+        color: var(--text-primary);
+        border-bottom: 3px solid var(--accent);
+      }
+      h2 {
+        color: var(--text-secondary);
+        margin-top: 30px;
+      }
+
+      .grade-a-plus {
+        color: var(--success);
+        font-weight: bold;
+      }
+      .grade-a {
+        color: #2ecc71;
+      }
+      .grade-b {
+        color: var(--warning);
+      }
+      .grade-c {
+        color: #e67e22;
+      }
+      .grade-d {
+        color: var(--danger);
+      }
+      .grade-f {
+        color: #c0392b;
+        font-weight: bold;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background-color: var(--bg-primary);
+      }
+
+      th {
+        background-color: var(--accent);
+        color: white;
+        padding: 12px;
+        text-align: left;
+      }
+
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     {% block content %}{% endblock %}
-</body>
+  </body>
 </html>
 ```
 
 #### Stock Report Template Example
 
 ```html
-{% extends "base.html" %}
-
-{% block title %}Analyse {{ data.ticker }} - FinWiz{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Analyse {{ data.ticker }} - FinWiz{%
+endblock %} {% block content %}
 <h1>📊 Analyse {{ data.ticker }} ({{ data.asset_class|upper }})</h1>
 <p><strong>Date:</strong> {{ data.analysis_date }}</p>
 <p><strong>Session:</strong> {{ data.session_id }}</p>
 
 <section>
-    <h2>Recommandation</h2>
-    <p class="grade-{{ data.grade|lower|replace('+', '-plus') }}">
-        {% if data.recommendation == 'BUY' %}✅{% elif data.recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
-        <strong>{{ data.recommendation }}</strong> - Grade {{ data.grade }}
-    </p>
-    <p><strong>Score Composite:</strong> {{ "%.2f"|format(data.composite_score * 100) }}%</p>
-    <p><strong>Confiance:</strong> {{ "%.0f"|format(data.confidence * 100) }}%</p>
-    <p><strong>Rationale:</strong> {{ data.rationale }}</p>
+  <h2>Recommandation</h2>
+  <p class="grade-{{ data.grade|lower|replace('+', '-plus') }}">
+    {% if data.recommendation == 'BUY' %}✅{% elif data.recommendation == 'SELL'
+    %}❌{% else %}⏸️{% endif %}
+    <strong>{{ data.recommendation }}</strong> - Grade {{ data.grade }}
+  </p>
+  <p>
+    <strong>Score Composite:</strong> {{ "%.2f"|format(data.composite_score *
+    100) }}%
+  </p>
+  <p><strong>Confiance:</strong> {{ "%.0f"|format(data.confidence * 100) }}%</p>
+  <p><strong>Rationale:</strong> {{ data.rationale }}</p>
 </section>
 
 <section>
-    <h2>Analyse Fondamentale</h2>
-    <table>
-        <tr>
-            <th>Métrique</th>
-            <th>Valeur</th>
-        </tr>
-        {% for key, value in data.fundamental_analysis.items() %}
-        <tr>
-            <td>{{ key }}</td>
-            <td>{{ value }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+  <h2>Analyse Fondamentale</h2>
+  <table>
+    <tr>
+      <th>Métrique</th>
+      <th>Valeur</th>
+    </tr>
+    {% for key, value in data.fundamental_analysis.items() %}
+    <tr>
+      <td>{{ key }}</td>
+      <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </section>
 
 <section>
-    <h2>Évaluation des Risques</h2>
-    <p><strong>Score de Risque:</strong> {{ data.risk_assessment.risk_score }}/10</p>
-    <p><strong>Facteurs de Risque:</strong></p>
-    <ul>
-        {% for factor in data.risk_assessment.risk_factors %}
-        <li>{{ factor }}</li>
-        {% endfor %}
-    </ul>
+  <h2>Évaluation des Risques</h2>
+  <p>
+    <strong>Score de Risque:</strong> {{ data.risk_assessment.risk_score }}/10
+  </p>
+  <p><strong>Facteurs de Risque:</strong></p>
+  <ul>
+    {% for factor in data.risk_assessment.risk_factors %}
+    <li>{{ factor }}</li>
+    {% endfor %}
+  </ul>
 </section>
 
 <section>
-    <h2>Sources de Données</h2>
-    <ul>
-        {% for source in data.data_sources %}
-        <li>{{ source }}</li>
-        {% endfor %}
-    </ul>
+  <h2>Sources de Données</h2>
+  <ul>
+    {% for source in data.data_sources %}
+    <li>{{ source }}</li>
+    {% endfor %}
+  </ul>
 </section>
 
 <footer>
-    <p><em>Généré le {{ generation_date }}</em></p>
+  <p><em>Généré le {{ generation_date }}</em></p>
 </footer>
 {% endblock %}
 ```
@@ -1467,17 +1497,17 @@ from pydantic import ValidationError
 
 class ReportConsolidator:
     """Consolidate crew reports using pure Python (NO AI)."""
-    
+
     def __init__(self, session_id: str, output_dir: Path):
         self.session_id = session_id
         self.output_dir = output_dir
-    
+
     def consolidate_reports(
         self,
         crew_export_paths: Dict[str, List[str]]
     ) -> ConsolidatedReportExport:
         """Consolidate all crew JSON exports.
-        
+
         Args:
             crew_export_paths: Dict mapping crew names to list of export file paths
                 {
@@ -1485,18 +1515,18 @@ class ReportConsolidator:
                     "etf_crew": ["path/to/SPY_export.json", ...],
                     ...
                 }
-        
+
         Returns:
             ConsolidatedReportExport object
         """
         import time
         start_time = time.time()
-        
+
         consolidated = ConsolidatedReportExport(
             session_id=self.session_id,
             crew_execution_status={}
         )
-        
+
         # Consolidate stock analyses
         if "stock_crew" in crew_export_paths:
             consolidated.stock_analyses = self._load_exports(
@@ -1506,7 +1536,7 @@ class ReportConsolidator:
             consolidated.crew_execution_status["stock_crew"] = (
                 "completed" if consolidated.stock_analyses else "failed"
             )
-        
+
         # Consolidate ETF analyses
         if "etf_crew" in crew_export_paths:
             consolidated.etf_analyses = self._load_exports(
@@ -1516,7 +1546,7 @@ class ReportConsolidator:
             consolidated.crew_execution_status["etf_crew"] = (
                 "completed" if consolidated.etf_analyses else "failed"
             )
-        
+
         # Consolidate crypto analyses
         if "crypto_crew" in crew_export_paths:
             consolidated.crypto_analyses = self._load_exports(
@@ -1526,7 +1556,7 @@ class ReportConsolidator:
             consolidated.crew_execution_status["crypto_crew"] = (
                 "completed" if consolidated.crypto_analyses else "failed"
             )
-        
+
         # Consolidate deep analyses
         if "deep_analysis_crew" in crew_export_paths:
             consolidated.deep_analyses = self._load_exports(
@@ -1536,7 +1566,7 @@ class ReportConsolidator:
             consolidated.crew_execution_status["deep_analysis_crew"] = (
                 "completed" if consolidated.deep_analyses else "failed"
             )
-        
+
         # Consolidate discovery results (single file)
         if "discovery_crew" in crew_export_paths:
             discovery_exports = self._load_exports(
@@ -1547,7 +1577,7 @@ class ReportConsolidator:
             consolidated.crew_execution_status["discovery_crew"] = (
                 "completed" if consolidated.discovery_results else "failed"
             )
-        
+
         # Consolidate rebalancing results (single file)
         if "rebalancing_crew" in crew_export_paths:
             rebalancing_exports = self._load_exports(
@@ -1558,18 +1588,18 @@ class ReportConsolidator:
             consolidated.crew_execution_status["rebalancing_crew"] = (
                 "completed" if consolidated.rebalancing_results else "failed"
             )
-        
+
         consolidated.total_execution_time = time.time() - start_time
-        
+
         # Save consolidated export
         output_path = self.output_dir / "consolidated_report.json"
         output_path.write_text(
             consolidated.model_dump_json(indent=2),
             encoding="utf-8"
         )
-        
+
         return consolidated
-    
+
     def _load_exports(
         self,
         file_paths: List[str],
@@ -1577,13 +1607,13 @@ class ReportConsolidator:
     ) -> List[BaseModel]:
         """Load and validate JSON exports."""
         exports = []
-        
+
         for path_str in file_paths:
             path = Path(path_str)
             if not path.exists():
                 logger.warning(f"Export file not found: {path}")
                 continue
-            
+
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
                 export = schema_class.model_validate(data)
@@ -1592,7 +1622,7 @@ class ReportConsolidator:
                 logger.error(f"Validation failed for {path}: {e}")
             except Exception as e:
                 logger.error(f"Failed to load {path}: {e}")
-        
+
         return exports
 ```
 
@@ -1605,29 +1635,29 @@ Final French report generated using Jinja2 template from consolidated JSON.
 ```python
 class FinalReportGenerator:
     """Generate final French report from consolidated JSON."""
-    
+
     def __init__(self, template_dir: str = "src/finwiz/templates"):
         self.env = Environment(
             loader=FileSystemLoader(template_dir),
             autoescape=True
         )
-    
+
     def generate_final_report(
         self,
         consolidated_data: ConsolidatedReportExport,
         output_path: Path
     ) -> str:
         """Generate final HTML report in French.
-        
+
         Args:
             consolidated_data: Consolidated export object
             output_path: Path to save final report
-            
+
         Returns:
             Path to generated HTML file
         """
         template = self.env.get_template("final_report.html")
-        
+
         # Prepare data for template
         template_data = {
             "session_id": consolidated_data.session_id,
@@ -1641,25 +1671,22 @@ class FinalReportGenerator:
             "execution_status": consolidated_data.crew_execution_status,
             "total_time": consolidated_data.total_execution_time
         }
-        
+
         # Render template
         html_content = template.render(**template_data)
-        
+
         # Save to file
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(html_content, encoding="utf-8")
-        
+
         return str(output_path)
 ```
 
 #### Final Report Template Structure
 
 ```html
-{% extends "base.html" %}
-
-{% block title %}Rapport FinWiz Consolidé{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Rapport FinWiz Consolidé{% endblock
+%} {% block content %}
 <h1>📊 Rapport d'Analyse FinWiz</h1>
 <p><strong>Session:</strong> {{ session_id }}</p>
 <p><strong>Date de Consolidation:</strong> {{ consolidation_date }}</p>
@@ -1667,131 +1694,153 @@ class FinalReportGenerator:
 
 <!-- Executive Summary -->
 <section>
-    <h2>Résumé Exécutif</h2>
-    <p>Analyse complète de {{ stock_analyses|length + etf_analyses|length + crypto_analyses|length }} actifs.</p>
-    
-    <h3>Statut d'Exécution</h3>
-    <table>
-        <tr>
-            <th>Crew</th>
-            <th>Statut</th>
-        </tr>
-        {% for crew_name, status in execution_status.items() %}
-        <tr>
-            <td>{{ crew_name }}</td>
-            <td>{{ "✅" if status == "completed" else "❌" }} {{ status }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+  <h2>Résumé Exécutif</h2>
+  <p>
+    Analyse complète de {{ stock_analyses|length + etf_analyses|length +
+    crypto_analyses|length }} actifs.
+  </p>
+
+  <h3>Statut d'Exécution</h3>
+  <table>
+    <tr>
+      <th>Crew</th>
+      <th>Statut</th>
+    </tr>
+    {% for crew_name, status in execution_status.items() %}
+    <tr>
+      <td>{{ crew_name }}</td>
+      <td>{{ "✅" if status == "completed" else "❌" }} {{ status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </section>
 
 <!-- Stock Analyses -->
 {% if stock_analyses %}
 <section>
-    <h2>📈 Analyses d'Actions</h2>
-    {% for analysis in stock_analyses %}
-    <div class="analysis-card">
-        <h3>{{ analysis.ticker }} - {{ analysis.fundamental_analysis.company_name }}</h3>
-        <p class="grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
-            <strong>Grade:</strong> {{ analysis.grade }} | 
-            <strong>Score:</strong> {{ "%.0f"|format(analysis.composite_score * 100) }}%
-        </p>
-        <p><strong>Recommandation:</strong> {{ analysis.recommendation }}</p>
-        <p>{{ analysis.rationale }}</p>
-    </div>
-    {% endfor %}
+  <h2>📈 Analyses d'Actions</h2>
+  {% for analysis in stock_analyses %}
+  <div class="analysis-card">
+    <h3>
+      {{ analysis.ticker }} - {{ analysis.fundamental_analysis.company_name }}
+    </h3>
+    <p class="grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
+      <strong>Grade:</strong> {{ analysis.grade }} | <strong>Score:</strong> {{
+      "%.0f"|format(analysis.composite_score * 100) }}%
+    </p>
+    <p><strong>Recommandation:</strong> {{ analysis.recommendation }}</p>
+    <p>{{ analysis.rationale }}</p>
+  </div>
+  {% endfor %}
 </section>
 {% endif %}
 
 <!-- ETF Analyses -->
 {% if etf_analyses %}
 <section>
-    <h2>📊 Analyses d'ETFs</h2>
-    {% for analysis in etf_analyses %}
-    <div class="analysis-card">
-        <h3>{{ analysis.ticker }}</h3>
-        <p class="grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
-            <strong>Grade:</strong> {{ analysis.grade }} | 
-            <strong>Score:</strong> {{ "%.0f"|format(analysis.composite_score * 100) }}%
-        </p>
-        <p><strong>Ratio de Frais:</strong> {{ "%.2f"|format(analysis.expense_ratio * 100) }}%</p>
-        <p><strong>Recommandation:</strong> {{ analysis.recommendation }}</p>
-    </div>
-    {% endfor %}
+  <h2>📊 Analyses d'ETFs</h2>
+  {% for analysis in etf_analyses %}
+  <div class="analysis-card">
+    <h3>{{ analysis.ticker }}</h3>
+    <p class="grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
+      <strong>Grade:</strong> {{ analysis.grade }} | <strong>Score:</strong> {{
+      "%.0f"|format(analysis.composite_score * 100) }}%
+    </p>
+    <p>
+      <strong>Ratio de Frais:</strong> {{ "%.2f"|format(analysis.expense_ratio *
+      100) }}%
+    </p>
+    <p><strong>Recommandation:</strong> {{ analysis.recommendation }}</p>
+  </div>
+  {% endfor %}
 </section>
 {% endif %}
 
 <!-- Crypto Analyses -->
 {% if crypto_analyses %}
 <section>
-    <h2>🪙 Analyses de Cryptomonnaies</h2>
-    {% for analysis in crypto_analyses %}
-    <div class="analysis-card">
-        <h3>{{ analysis.ticker }}</h3>
-        <p class="grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
-            <strong>Grade:</strong> {{ analysis.grade }} | 
-            <strong>Score:</strong> {{ "%.0f"|format(analysis.composite_score * 100) }}%
-        </p>
-        <p><strong>Volatilité 30j:</strong> {{ "%.2f"|format(analysis.volatility_30d * 100) }}%</p>
-        <p><strong>Recommandation:</strong> {{ analysis.recommendation }}</p>
-    </div>
-    {% endfor %}
+  <h2>🪙 Analyses de Cryptomonnaies</h2>
+  {% for analysis in crypto_analyses %}
+  <div class="analysis-card">
+    <h3>{{ analysis.ticker }}</h3>
+    <p class="grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
+      <strong>Grade:</strong> {{ analysis.grade }} | <strong>Score:</strong> {{
+      "%.0f"|format(analysis.composite_score * 100) }}%
+    </p>
+    <p>
+      <strong>Volatilité 30j:</strong> {{ "%.2f"|format(analysis.volatility_30d
+      * 100) }}%
+    </p>
+    <p><strong>Recommandation:</strong> {{ analysis.recommendation }}</p>
+  </div>
+  {% endfor %}
 </section>
 {% endif %}
 
 <!-- Discovery Results -->
 {% if discovery_results %}
 <section>
-    <h2>💎 Opportunités A+ Découvertes</h2>
-    <table>
-        <tr>
-            <th>Ticker</th>
-            <th>Nom</th>
-            <th>Classe</th>
-            <th>Score</th>
-            <th>Rationale</th>
-        </tr>
-        {% for opp in discovery_results.opportunities %}
-        <tr>
-            <td>{{ opp.ticker }}</td>
-            <td>{{ opp.name }}</td>
-            <td>{{ opp.asset_class }}</td>
-            <td class="grade-a-plus">{{ "%.0f"|format(opp.composite_score * 100) }}%</td>
-            <td>{{ opp.rationale }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+  <h2>💎 Opportunités A+ Découvertes</h2>
+  <table>
+    <tr>
+      <th>Ticker</th>
+      <th>Nom</th>
+      <th>Classe</th>
+      <th>Score</th>
+      <th>Rationale</th>
+    </tr>
+    {% for opp in discovery_results.opportunities %}
+    <tr>
+      <td>{{ opp.ticker }}</td>
+      <td>{{ opp.name }}</td>
+      <td>{{ opp.asset_class }}</td>
+      <td class="grade-a-plus">
+        {{ "%.0f"|format(opp.composite_score * 100) }}%
+      </td>
+      <td>{{ opp.rationale }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </section>
 {% endif %}
 
 <!-- Rebalancing Results -->
 {% if rebalancing_results %}
 <section>
-    <h2>⚖️ Recommandations de Rééquilibrage</h2>
-    <p><strong>Rendement Attendu:</strong> {{ "%.2f"|format(rebalancing_results.expected_return * 100) }}%</p>
-    <p><strong>Risque Attendu:</strong> {{ "%.2f"|format(rebalancing_results.expected_risk * 100) }}%</p>
-    <p><strong>Ratio de Sharpe:</strong> {{ "%.2f"|format(rebalancing_results.sharpe_ratio) }}</p>
-    
-    <h3>Transactions Requises</h3>
-    <table>
-        <tr>
-            <th>Action</th>
-            <th>Ticker</th>
-            <th>Quantité</th>
-        </tr>
-        {% for trade in rebalancing_results.trades_required %}
-        <tr>
-            <td>{{ trade.action }}</td>
-            <td>{{ trade.ticker }}</td>
-            <td>{{ trade.quantity }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+  <h2>⚖️ Recommandations de Rééquilibrage</h2>
+  <p>
+    <strong>Rendement Attendu:</strong> {{
+    "%.2f"|format(rebalancing_results.expected_return * 100) }}%
+  </p>
+  <p>
+    <strong>Risque Attendu:</strong> {{
+    "%.2f"|format(rebalancing_results.expected_risk * 100) }}%
+  </p>
+  <p>
+    <strong>Ratio de Sharpe:</strong> {{
+    "%.2f"|format(rebalancing_results.sharpe_ratio) }}
+  </p>
+
+  <h3>Transactions Requises</h3>
+  <table>
+    <tr>
+      <th>Action</th>
+      <th>Ticker</th>
+      <th>Quantité</th>
+    </tr>
+    {% for trade in rebalancing_results.trades_required %}
+    <tr>
+      <td>{{ trade.action }}</td>
+      <td>{{ trade.ticker }}</td>
+      <td>{{ trade.quantity }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </section>
 {% endif %}
 
 <footer>
-    <p><em>Rapport généré par FinWiz - {{ consolidation_date }}</em></p>
+  <p><em>Rapport généré par FinWiz - {{ consolidation_date }}</em></p>
 </footer>
 {% endblock %}
 ```
@@ -1809,16 +1858,16 @@ from typing import Dict, List, Optional, Any
 class ReportAggregationState(BaseModel):
     """Structured state for report aggregation flow."""
     session_id: str
-    
+
     # Crew execution tracking
     crew_export_paths: Dict[str, List[str]] = {}
     crew_html_paths: Dict[str, List[str]] = {}
     crew_execution_status: Dict[str, str] = {}
-    
+
     # Consolidation results
     consolidated_json_path: Optional[str] = None
     final_report_path: Optional[str] = None
-    
+
     # Error tracking
     errors: List[str] = []
 ```
@@ -1832,54 +1881,54 @@ import os
 
 class ReportAggregationFlow(Flow[ReportAggregationState]):
     """Flow for concurrent crew execution and report aggregation."""
-    
+
     @start()
     def initialize_flow(self) -> dict[str, Any]:
         """Initialize flow with session ID and output directories."""
         import uuid
-        
+
         session_id = str(uuid.uuid4())
         self.state.session_id = session_id
-        
+
         # Create output directory structure
         output_dir = Path(f"output/reports/{session_id}")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         return {"session_id": session_id, "output_dir": str(output_dir)}
-    
+
     # PHASE 1: Concurrent Analysis Crews
     @listen("initialize_flow")
     def execute_stock_crew(self, init_data: dict) -> dict[str, Any]:
         """Execute stock crew for each stock ticker."""
         from finwiz.crews.stock_crew.stock_crew import StockCrew
-        
+
         tickers = self._get_stock_tickers()
         export_paths = []
         html_paths = []
-        
+
         for ticker in tickers:
             try:
                 # Execute crew
                 crew = StockCrew()
                 result = crew.crew().kickoff(inputs={"ticker": ticker})
-                
+
                 # Generate HTML from JSON export
                 export_path = self._get_export_path("stock_crew", ticker)
                 html_path = self._generate_html_report("stock_crew", export_path)
-                
+
                 export_paths.append(str(export_path))
                 html_paths.append(html_path)
-                
+
             except Exception as e:
                 logger.error(f"Stock crew failed for {ticker}: {e}")
                 self.state.errors.append(f"stock_crew:{ticker}:{str(e)}")
-        
+
         self.state.crew_export_paths["stock_crew"] = export_paths
         self.state.crew_html_paths["stock_crew"] = html_paths
         self.state.crew_execution_status["stock_crew"] = (
             "completed" if export_paths else "failed"
         )
-        
+
         return {"crew": "stock_crew", "exports": export_paths}
 ```
 
@@ -1887,79 +1936,79 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
     def execute_etf_crew(self, init_data: dict) -> dict[str, Any]:
         """Execute ETF crew for each ETF ticker."""
         from finwiz.crews.etf_crew.etf_crew import EtfCrew
-        
+
         tickers = self._get_etf_tickers()
         export_paths = []
         html_paths = []
-        
+
         for ticker in tickers:
             try:
                 crew = EtfCrew()
                 result = crew.crew().kickoff(inputs={"ticker": ticker})
-                
+
                 export_path = self._get_export_path("etf_crew", ticker)
                 html_path = self._generate_html_report("etf_crew", export_path)
-                
+
                 export_paths.append(str(export_path))
                 html_paths.append(html_path)
-                
+
             except Exception as e:
                 logger.error(f"ETF crew failed for {ticker}: {e}")
                 self.state.errors.append(f"etf_crew:{ticker}:{str(e)}")
-        
+
         self.state.crew_export_paths["etf_crew"] = export_paths
         self.state.crew_html_paths["etf_crew"] = html_paths
         self.state.crew_execution_status["etf_crew"] = (
             "completed" if export_paths else "failed"
         )
-        
+
         return {"crew": "etf_crew", "exports": export_paths}
-    
+
     @listen("initialize_flow")
     def execute_crypto_crew(self, init_data: dict) -> dict[str, Any]:
         """Execute crypto crew for each crypto ticker."""
         from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
-        
+
         tickers = self._get_crypto_tickers()
         export_paths = []
         html_paths = []
-        
+
         for ticker in tickers:
             try:
                 crew = CryptoCrew()
                 result = crew.crew().kickoff(inputs={"ticker": ticker})
-                
+
                 export_path = self._get_export_path("crypto_crew", ticker)
                 html_path = self._generate_html_report("crypto_crew", export_path)
-                
+
                 export_paths.append(str(export_path))
                 html_paths.append(html_path)
-                
+
             except Exception as e:
                 logger.error(f"Crypto crew failed for {ticker}: {e}")
                 self.state.errors.append(f"crypto_crew:{ticker}:{str(e)}")
-        
+
         self.state.crew_export_paths["crypto_crew"] = export_paths
         self.state.crew_html_paths["crypto_crew"] = html_paths
         self.state.crew_execution_status["crypto_crew"] = (
             "completed" if export_paths else "failed"
         )
-        
+
         return {"crew": "crypto_crew", "exports": export_paths}
-    
+
     @listen(and_("execute_stock_crew", "execute_etf_crew", "execute_crypto_crew"))
     def execute_deep_analysis_crew(self, *holdings_results) -> dict[str, Any]:
         """Execute deep analysis crew for underperforming holdings.
-        
+
         Depends on holdings analysis to identify which assets need deep analysis.
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
-        
+
         # Read holdings analysis results to find underperformers (grade < B)
         underperforming_tickers = self._identify_underperforming_holdings()
         export_paths = []
         html_paths = []
-        
+
         for ticker, asset_class in underperforming_tickers:
             try:
                 crew = DeepAnalysisCrew()
@@ -1967,73 +2016,73 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
                     "ticker": ticker,
                     "asset_class": asset_class
                 })
-                
+
                 export_path = self._get_export_path("deep_analysis_crew", ticker)
                 html_path = self._generate_html_report("deep_analysis_crew", export_path)
-                
+
                 export_paths.append(str(export_path))
                 html_paths.append(html_path)
-                
+
             except Exception as e:
                 logger.error(f"Deep analysis crew failed for {ticker}: {e}")
                 self.state.errors.append(f"deep_analysis_crew:{ticker}:{str(e)}")
-        
+
         self.state.crew_export_paths["deep_analysis_crew"] = export_paths
         self.state.crew_html_paths["deep_analysis_crew"] = html_paths
         self.state.crew_execution_status["deep_analysis_crew"] = (
             "completed" if export_paths else "failed"
         )
-        
+
         return {"crew": "deep_analysis_crew", "exports": export_paths}
-    
+
     @listen(and_("execute_stock_crew", "execute_etf_crew", "execute_crypto_crew"))
     def execute_discovery_crew(self, *holdings_results) -> dict[str, Any]:
         """Execute discovery crew to find A+ opportunities.
-        
+
         Depends on holdings analysis to understand current portfolio context
         and find complementary opportunities.
         """
         from finwiz.crews.investment_discovery_crew.investment_discovery_crew import InvestmentDiscoveryCrew
-        
+
         try:
             crew = InvestmentDiscoveryCrew()
             result = crew.crew().kickoff(inputs={
                 "session_id": self.state.session_id
             })
-            
+
             export_path = self._get_export_path("discovery_crew", "discovery")
             html_path = self._generate_html_report("discovery_crew", export_path)
-            
+
             self.state.crew_export_paths["discovery_crew"] = [str(export_path)]
             self.state.crew_html_paths["discovery_crew"] = [html_path]
             self.state.crew_execution_status["discovery_crew"] = "completed"
-            
+
             return {"crew": "discovery_crew", "exports": [str(export_path)]}
-            
+
         except Exception as e:
             logger.error(f"Discovery crew failed: {e}")
             self.state.errors.append(f"discovery_crew:{str(e)}")
             self.state.crew_execution_status["discovery_crew"] = "failed"
             return {"crew": "discovery_crew", "exports": []}
-    
+
     # PHASE 2: Rebalancing (Waits for ALL analysis to complete)
     @listen(and_(
         "execute_stock_crew",
-        "execute_etf_crew", 
+        "execute_etf_crew",
         "execute_crypto_crew",
         "execute_deep_analysis_crew",
         "execute_discovery_crew"
     ))
     def execute_rebalancing_crew(self, *analysis_results) -> dict[str, Any]:
         """Execute rebalancing crew with ALL analysis results.
-        
+
         This crew sees:
         - Current holdings (stock/etf/crypto exports)
         - Deep analysis results (detailed grades)
         - Discovery opportunities (A+ alternatives)
         """
         from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import PortfolioRebalancingCrew
-        
+
         try:
             # Prepare inputs with ALL analysis file paths
             rebalancing_inputs = {
@@ -2044,89 +2093,89 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
                 "deep_analysis_exports": self.state.crew_export_paths.get("deep_analysis_crew", []),
                 "discovery_export": self.state.crew_export_paths.get("discovery_crew", [None])[0]
             }
-            
+
             crew = PortfolioRebalancingCrew()
             result = crew.crew().kickoff(inputs=rebalancing_inputs)
-            
+
             export_path = self._get_export_path("rebalancing_crew", "rebalancing")
             html_path = self._generate_html_report("rebalancing_crew", export_path)
-            
+
             self.state.crew_export_paths["rebalancing_crew"] = [str(export_path)]
             self.state.crew_html_paths["rebalancing_crew"] = [html_path]
             self.state.crew_execution_status["rebalancing_crew"] = "completed"
-            
+
             return {"crew": "rebalancing_crew", "exports": [str(export_path)]}
-            
+
         except Exception as e:
             logger.error(f"Rebalancing crew failed: {e}")
             self.state.errors.append(f"rebalancing_crew:{str(e)}")
             self.state.crew_execution_status["rebalancing_crew"] = "failed"
             return {"crew": "rebalancing_crew", "exports": []}
-    
+
     # PHASE 3: Python Consolidation (NO AI)
     @listen("execute_rebalancing_crew")
     def consolidate_reports(self, rebalancing_result: dict) -> dict[str, Any]:
         """Consolidate all crew reports using Python (NO AI)."""
-        
+
         consolidator = ReportConsolidator(
             session_id=self.state.session_id,
             output_dir=Path(f"output/reports/{self.state.session_id}")
         )
-        
+
         # Consolidate all crew exports
         consolidated = consolidator.consolidate_reports(
             crew_export_paths=self.state.crew_export_paths
         )
-        
+
         # Save consolidated JSON path
         consolidated_path = f"output/reports/{self.state.session_id}/consolidated_report.json"
         self.state.consolidated_json_path = consolidated_path
-        
+
         return {
             "consolidated_path": consolidated_path,
             "consolidated_data": consolidated.model_dump()
         }
-    
+
     # PHASE 4: Final Report Generation (Python Template)
     @listen("consolidate_reports")
     def generate_final_report(self, consolidation_data: dict) -> dict[str, Any]:
         """Generate final French report using Python template (NO AI)."""
-        
+
         # Load consolidated data
         consolidated_path = Path(consolidation_data["consolidated_path"])
         consolidated_json = json.loads(consolidated_path.read_text(encoding="utf-8"))
         consolidated = ConsolidatedReportExport.model_validate(consolidated_json)
-        
+
         # Generate final HTML report
         generator = FinalReportGenerator()
         final_report_path = Path(f"output/reports/{self.state.session_id}/final_report.html")
-        
+
         report_path = generator.generate_final_report(
             consolidated_data=consolidated,
             output_path=final_report_path
         )
-        
+
         self.state.final_report_path = report_path
-        
+
         return {
             "final_report_path": report_path,
             "session_id": self.state.session_id
         }
-    
+
     # Helper methods
     def _get_export_path(self, crew_name: str, ticker: str) -> Path:
         """Get export file path for crew and ticker."""
         return Path(
             f"output/reports/{self.state.session_id}/{crew_name}/{ticker}_export.json"
         )
-    
+
     def _generate_html_report(self, crew_name: str, export_path: Path) -> str:
         """Generate HTML report from JSON export."""
         generator = HTMLReportGenerator()
-        
+
         # Load export data
         export_data = json.loads(export_path.read_text(encoding="utf-8"))
-        
+
         # Generate HTML
         html_path = export_path.with_suffix(".html")
         return generator.generate_crew_report(
@@ -2146,33 +2195,33 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
 
 output/reports/{session_id}/
 ├── stock_crew/
-│   ├── AAPL_export.json
-│   ├── AAPL_report.html
-│   ├── MSFT_export.json
-│   └── MSFT_report.html
+│ ├── AAPL_export.json
+│ ├── AAPL_report.html
+│ ├── MSFT_export.json
+│ └── MSFT_report.html
 ├── etf_crew/
-│   ├── SPY_export.json
-│   ├── SPY_report.html
-│   ├── QQQ_export.json
-│   └── QQQ_report.html
+│ ├── SPY_export.json
+│ ├── SPY_report.html
+│ ├── QQQ_export.json
+│ └── QQQ_report.html
 ├── crypto_crew/
-│   ├── BTC_export.json
-│   ├── BTC_report.html
-│   ├── ETH_export.json
-│   └── ETH_report.html
+│ ├── BTC_export.json
+│ ├── BTC_report.html
+│ ├── ETH_export.json
+│ └── ETH_report.html
 ├── deep_analysis_crew/
-│   ├── AAPL_deep_export.json
-│   └── AAPL_deep_report.html
+│ ├── AAPL_deep_export.json
+│ └── AAPL_deep_report.html
 ├── discovery_crew/
-│   ├── discovery_export.json
-│   └── discovery_report.html
+│ ├── discovery_export.json
+│ └── discovery_report.html
 ├── rebalancing_crew/
-│   ├── rebalancing_export.json
-│   └── rebalancing_report.html
+│ ├── rebalancing_export.json
+│ └── rebalancing_report.html
 ├── consolidated_report.json
 └── final_report.html
 
-```
+````
 
 ### Report Manifest
 
@@ -2181,9 +2230,9 @@ class ReportManifest(BaseModel):
     """Manifest tracking all generated reports."""
     session_id: str
     generation_date: datetime
-    
+
     reports: List[ReportEntry] = []
-    
+
     class ReportEntry(BaseModel):
         crew_name: str
         ticker: str
@@ -2197,7 +2246,7 @@ class ReportManifest(BaseModel):
 manifest_path = Path(f"output/reports/{session_id}/manifest.json")
 manifest = ReportManifest(session_id=session_id, reports=report_entries)
 manifest_path.write_text(manifest.model_dump_json(indent=2))
-```
+````
 
 ## Error Handling
 
@@ -2206,7 +2255,7 @@ manifest_path.write_text(manifest.model_dump_json(indent=2))
 ```python
 class ErrorHandler:
     """Handle crew failures gracefully."""
-    
+
     def handle_crew_failure(
         self,
         crew_name: str,
@@ -2218,7 +2267,7 @@ class ErrorHandler:
             f"Crew {crew_name} failed for {ticker}: {error}",
             exc_info=True
         )
-        
+
         # Track error in state
         self.state.errors.append({
             "crew": crew_name,
@@ -2226,10 +2275,10 @@ class ErrorHandler:
             "error": str(error),
             "timestamp": datetime.now().isoformat()
         })
-        
+
         # Mark crew as failed
         self.state.crew_execution_status[crew_name] = "failed"
-    
+
     def generate_error_placeholder(
         self,
         crew_name: str,
@@ -2259,13 +2308,13 @@ def validate_and_recover(
         return schema_class.model_validate(data)
     except ValidationError as e:
         logger.error(f"Validation failed: {e}")
-        
+
         # Attempt to fix common issues
         if "grade" in str(e):
             data["grade"] = "N/A"
         if "composite_score" in str(e):
             data["composite_score"] = 0.0
-        
+
         # Retry validation
         try:
             return schema_class.model_validate(data)
@@ -2366,36 +2415,36 @@ import json
 
 class BatchDataPreFetcher:
     """Pre-fetch all data for all tickers in batch API calls."""
-    
+
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.cache_dir = Path(f"cache/batch_data/{session_id}")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.alpha_vantage_key = os.getenv("ALPHA_VANTAGE_API_KEY")
-    
+
     def prefetch_all_data(self, tickers: List[str]) -> Dict[str, Dict[str, Any]]:
         """Pre-fetch all data for all tickers.
-        
+
         Args:
             tickers: List of all ticker symbols to analyze
-            
+
         Returns:
             Dict mapping ticker to all pre-fetched data
         """
         logger.info(f"Starting batch data pre-fetch for {len(tickers)} tickers")
         start_time = time.time()
-        
+
         # Step 1: Batch fetch Yahoo Finance data (ONE API call!)
         logger.info("Fetching Yahoo Finance data in batch...")
         yf_data = self._fetch_yahoo_finance_batch(tickers)
         logger.info(f"Yahoo Finance batch fetch completed in {time.time() - start_time:.1f}s")
-        
+
         # Step 2: Batch fetch Alpha Vantage data (with rate limiting)
         logger.info("Fetching Alpha Vantage data with rate limiting...")
         av_start = time.time()
         av_data = asyncio.run(self._fetch_alpha_vantage_batch(tickers))
         logger.info(f"Alpha Vantage batch fetch completed in {time.time() - av_start:.1f}s")
-        
+
         # Step 3: Combine all data
         combined_data = {}
         for ticker in tickers:
@@ -2405,20 +2454,20 @@ class BatchDataPreFetcher:
                 "alpha_vantage": av_data.get(ticker, {}),
                 "fetch_timestamp": datetime.now().isoformat()
             }
-        
+
         # Step 4: Save to cache
         self._save_to_cache(combined_data)
-        
+
         total_time = time.time() - start_time
         logger.info(f"Batch data pre-fetch completed in {total_time:.1f}s ({total_time/len(tickers):.1f}s per ticker)")
-        
+
         return combined_data
-    
+
     def _fetch_yahoo_finance_batch(self, tickers: List[str]) -> Dict[str, Any]:
         """Fetch Yahoo Finance data for all tickers in ONE API call."""
         try:
             logger.info(f"Downloading data for {len(tickers)} tickers from Yahoo Finance...")
-            
+
             # Single batch API call for ALL tickers
             data = yf.download(
                 tickers=' '.join(tickers),
@@ -2428,10 +2477,10 @@ class BatchDataPreFetcher:
                 threads=True,  # Parallel download
                 progress=False
             )
-            
+
             # Also fetch ticker info
             tickers_obj = yf.Tickers(' '.join(tickers))
-            
+
             results = {}
             for ticker in tickers:
                 try:
@@ -2440,10 +2489,10 @@ class BatchDataPreFetcher:
                         ticker_data = data
                     else:
                         ticker_data = data[ticker]
-                    
+
                     # Ticker info
                     ticker_info = tickers_obj.tickers[ticker].info
-                    
+
                     results[ticker] = {
                         "symbol": ticker,
                         "name": ticker_info.get("shortName", "N/A"),
@@ -2458,39 +2507,39 @@ class BatchDataPreFetcher:
                         "avg_volume": float(ticker_data['Volume'].mean()) if not ticker_data.empty else "N/A",
                         "historical_data_points": len(ticker_data) if not ticker_data.empty else 0,
                     }
-                    
+
                     logger.debug(f"Successfully fetched Yahoo Finance data for {ticker}")
-                    
+
                 except Exception as e:
                     logger.warning(f"Failed to process Yahoo Finance data for {ticker}: {e}")
                     results[ticker] = {"error": str(e)}
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"Yahoo Finance batch download failed: {e}")
             return {ticker: {"error": str(e)} for ticker in tickers}
-    
+
     async def _fetch_alpha_vantage_batch(self, tickers: List[str]) -> Dict[str, Any]:
         """Fetch Alpha Vantage data with intelligent rate limiting."""
         if not self.alpha_vantage_key:
             logger.warning("Alpha Vantage API key not set, skipping")
             return {ticker: {"error": "API key not set"} for ticker in tickers}
-        
+
         # Rate limit: 5 calls/minute (free tier)
         rate_limit = 5
         delay_between_calls = 60 / rate_limit  # 12 seconds
-        
+
         results = {}
-        
+
         async with aiohttp.ClientSession() as session:
             for i, ticker in enumerate(tickers, 1):
                 try:
                     url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={self.alpha_vantage_key}"
-                    
+
                     async with session.get(url, timeout=15) as response:
                         data = await response.json()
-                        
+
                         if "Symbol" in data:
                             results[ticker] = {
                                 "symbol": ticker,
@@ -2506,24 +2555,24 @@ class BatchDataPreFetcher:
                             logger.debug(f"Successfully fetched Alpha Vantage data for {ticker} ({i}/{len(tickers)})")
                         else:
                             results[ticker] = {"error": "No data available"}
-                    
+
                     # Rate limiting delay (except for last ticker)
                     if i < len(tickers):
                         logger.debug(f"Rate limit delay: {delay_between_calls:.1f}s before next request")
                         await asyncio.sleep(delay_between_calls)
-                    
+
                 except Exception as e:
                     logger.warning(f"Failed to fetch Alpha Vantage data for {ticker}: {e}")
                     results[ticker] = {"error": str(e)}
-        
+
         return results
-    
+
     def _save_to_cache(self, data: Dict[str, Dict[str, Any]]) -> None:
         """Save pre-fetched data to cache."""
         cache_file = self.cache_dir / "batch_data.json"
         cache_file.write_text(json.dumps(data, indent=2, default=str))
         logger.info(f"Batch data saved to cache: {cache_file}")
-    
+
     def load_from_cache(self) -> Dict[str, Dict[str, Any]]:
         """Load pre-fetched data from cache."""
         cache_file = self.cache_dir / "batch_data.json"
@@ -2541,17 +2590,17 @@ Tools are modified to accept pre-fetched data instead of making API calls:
 ```python
 class YahooFinanceTickerInfoTool(BaseTool):
     """Get ticker info - supports pre-fetched data."""
-    
+
     name: str = "Yahoo Finance Ticker Info Tool"
     description: str = "Get ticker information (uses pre-fetched data if available)"
-    
+
     def _run(self, ticker: str, prefetched_data: Optional[Dict] = None) -> dict:
         """Execute ticker info lookup.
-        
+
         Args:
             ticker: Ticker symbol
             prefetched_data: Pre-fetched data from batch API call (optional)
-            
+
         Returns:
             Ticker information
         """
@@ -2559,12 +2608,12 @@ class YahooFinanceTickerInfoTool(BaseTool):
         if prefetched_data and "yahoo_finance" in prefetched_data:
             logger.debug(f"Using pre-fetched Yahoo Finance data for {ticker}")
             return prefetched_data["yahoo_finance"]
-        
+
         # Fallback to live API call (single-ticker mode)
         logger.debug(f"Fetching live Yahoo Finance data for {ticker}")
         ticker_data = yf.Ticker(ticker)
         info = ticker_data.info
-        
+
         return {
             "symbol": ticker,
             "name": info.get("shortName", "N/A"),
@@ -2574,17 +2623,17 @@ class YahooFinanceTickerInfoTool(BaseTool):
 
 class AlphaVantageCompanyOverviewTool(BaseTool):
     """Get company overview - supports pre-fetched data."""
-    
+
     name: str = "Alpha Vantage Company Overview"
     description: str = "Get company overview (uses pre-fetched data if available)"
-    
+
     def _run(self, ticker: str, prefetched_data: Optional[Dict] = None) -> str:
         """Execute company overview lookup.
-        
+
         Args:
             ticker: Ticker symbol
             prefetched_data: Pre-fetched data from batch API call (optional)
-            
+
         Returns:
             Company overview data
         """
@@ -2592,7 +2641,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         if prefetched_data and "alpha_vantage" in prefetched_data:
             logger.debug(f"Using pre-fetched Alpha Vantage data for {ticker}")
             return json.dumps(prefetched_data["alpha_vantage"], indent=2)
-        
+
         # Fallback to live API call (single-ticker mode)
         logger.debug(f"Fetching live Alpha Vantage data for {ticker}")
         # ... existing API call logic
@@ -2608,17 +2657,17 @@ from crewai import Agent, Task, Crew, agent, task, crew
 
 class DeepAnalysisCrew:
     """Deep analysis crew with pre-fetched data support."""
-    
+
     def __init__(self):
         self.agents_config = self._load_agents_config()
         self.tasks_config = self._load_tasks_config()
         self.prefetched_data = None
-    
+
     def set_prefetched_data(self, data: Dict[str, Any]) -> None:
         """Set pre-fetched data for this crew execution."""
         self.prefetched_data = data
         logger.debug(f"Pre-fetched data set for crew")
-    
+
     def get_tools_with_prefetched_data(self, asset_class: str) -> list:
         """Get tools configured to use pre-fetched data."""
         # Create tool instances with pre-fetched data injected
@@ -2628,14 +2677,14 @@ class DeepAnalysisCrew:
             TickerValidationTool(),
             # ... other tools
         ]
-        
+
         # Inject pre-fetched data into tool context
         for tool in tools:
             if hasattr(tool, 'set_prefetched_data'):
                 tool.set_prefetched_data(self.prefetched_data)
-        
+
         return tools
-    
+
     @agent
     def analyst(self) -> Agent:
         """Analyst configured to use pre-fetched data."""
@@ -2646,24 +2695,24 @@ class DeepAnalysisCrew:
             allow_delegation=False,
             verbose=True
         )
-    
+
     @task
     def analysis_task(self) -> Task:
         """Analysis task using pre-fetched data."""
         return Task(
             description="""
             Perform deep analysis on the provided ticker using PRE-FETCHED DATA.
-            
+
             IMPORTANT: All data has been pre-fetched. Tools will return cached data instantly.
             No API calls will be made during this analysis.
-            
+
             Steps:
             1. Validate ticker symbol
             2. Analyze fundamental data (from pre-fetched cache)
             3. Calculate risk metrics
             4. Generate grade and recommendation
             5. Create DeepAnalysisCrewExport object
-            
+
             Expected execution time: 10-20 seconds (no API latency)
             """,
             expected_output="DeepAnalysisCrewExport object",
@@ -2682,82 +2731,82 @@ import time
 
 class ReportAggregationFlow(Flow[ReportAggregationState]):
     """Flow with batch data pre-fetching."""
-    
+
     def __init__(self):
         super().__init__()
         self.batch_prefetch_enabled = os.getenv("BATCH_PREFETCH_ENABLED", "true").lower() == "true"
         self.prefetched_data = {}
-    
+
     @listen(and_("execute_stock_crew", "execute_etf_crew", "execute_crypto_crew"))
     def execute_deep_analysis_with_prefetch(self, *holdings_results) -> dict[str, Any]:
         """Execute deep analysis with batch data pre-fetching."""
         # Identify underperforming holdings
         underperformers = self._identify_underperforming_holdings()
-        
+
         if not underperformers:
             logger.info("No underperforming holdings found")
             return {"crew": "deep_analysis_crew", "exports": []}
-        
+
         tickers = [ticker for ticker, _ in underperformers]
         logger.info(f"Starting deep analysis for {len(tickers)} underperforming holdings")
-        
+
         # PHASE 1: Batch Data Pre-Fetching
         if self.batch_prefetch_enabled:
             logger.info("=" * 80)
             logger.info("PHASE 1: BATCH DATA PRE-FETCHING")
             logger.info("=" * 80)
-            
+
             prefetcher = BatchDataPreFetcher(self.state.session_id)
             self.prefetched_data = prefetcher.prefetch_all_data(tickers)
-            
+
             logger.info(f"Pre-fetched data for {len(self.prefetched_data)} tickers")
             logger.info("=" * 80)
-        
+
         # PHASE 2: Sequential Crew Execution (with zero API latency)
         logger.info("=" * 80)
         logger.info("PHASE 2: SEQUENTIAL CREW EXECUTION (NO API CALLS)")
         logger.info("=" * 80)
-        
+
         start_time = time.time()
         all_exports = []
         successful = 0
         failed = 0
-        
+
         for i, (ticker, asset_class) in enumerate(underperformers, 1):
             ticker_start = time.time()
-            
+
             try:
                 logger.info(f"Analyzing {ticker} ({i}/{len(underperformers)})...")
-                
+
                 # Create crew with pre-fetched data
                 crew = DeepAnalysisCrew()
                 if ticker in self.prefetched_data:
                     crew.set_prefetched_data(self.prefetched_data[ticker])
-                
+
                 # Execute crew (no API calls - reads from pre-fetched data)
                 result = crew.crew().kickoff(inputs={
                     "ticker": ticker,
                     "asset_class": asset_class,
                     "session_id": self.state.session_id
                 })
-                
+
                 # Collect export path
                 export_path = self._get_export_path("deep_analysis_crew", ticker)
                 if export_path.exists():
                     all_exports.append(str(export_path))
                     successful += 1
-                    
+
                     ticker_duration = time.time() - ticker_start
                     logger.info(f"✅ {ticker} completed in {ticker_duration:.1f}s")
                 else:
                     failed += 1
                     logger.warning(f"❌ {ticker} failed - export not found")
-                
+
             except Exception as e:
                 failed += 1
                 logger.error(f"❌ {ticker} failed: {e}")
                 self.state.errors.append(f"deep_analysis:{ticker}:{str(e)}")
-        
+
         # Log performance metrics
         total_duration = time.time() - start_time
         self._log_prefetch_performance(
@@ -2766,15 +2815,15 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
             failed=failed,
             total_duration=total_duration
         )
-        
+
         # Update state
         self.state.crew_export_paths["deep_analysis_crew"] = all_exports
         self.state.crew_execution_status["deep_analysis_crew"] = (
             "completed" if all_exports else "failed"
         )
-        
+
         return {"crew": "deep_analysis_crew", "exports": all_exports}
-    
+
     def _log_prefetch_performance(
         self,
         total_tickers: int,
@@ -2784,12 +2833,12 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
     ) -> None:
         """Log batch pre-fetch performance metrics."""
         avg_time_per_ticker = total_duration / total_tickers if total_tickers > 0 else 0
-        
+
         # Estimate sequential execution time WITHOUT pre-fetching (assume 60s per ticker)
         estimated_sequential_time = total_tickers * 60
         time_savings = estimated_sequential_time - total_duration
         time_savings_pct = (time_savings / estimated_sequential_time) * 100 if estimated_sequential_time > 0 else 0
-        
+
         logger.info("=" * 80)
         logger.info("BATCH PRE-FETCH PERFORMANCE SUMMARY")
         logger.info("=" * 80)
@@ -2801,7 +2850,7 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
         logger.info(f"Estimated time WITHOUT pre-fetching: {estimated_sequential_time:.1f}s ({estimated_sequential_time/60:.1f} minutes)")
         logger.info(f"Time savings: {time_savings:.1f}s ({time_savings/60:.1f} minutes, {time_savings_pct:.1f}%)")
         logger.info("=" * 80)
-        
+
         # Save metrics to file
         metrics_path = Path(f"output/reports/{self.state.session_id}/batch_prefetch_metrics.json")
         metrics_data = {
@@ -2825,7 +2874,7 @@ class ReportAggregationFlow(Flow[ReportAggregationState]):
 ```python
 class RateLimiter:
     """Intelligent rate limiter for batch API calls."""
-    
+
     def __init__(self, provider: str):
         self.provider = provider
         self.limits = {
@@ -2835,29 +2884,29 @@ class RateLimiter:
             "twelve_data_free": {"rpm": 8, "rps": None},  # 8 calls/minute
             "twelve_data_premium": {"rpm": 800, "rps": None},  # 800 calls/minute
         }
-        
+
         self.last_call_time = 0
         self.call_count = 0
         self.minute_start = time.time()
-    
+
     async def wait_if_needed(self) -> None:
         """Wait if rate limit would be exceeded."""
         limits = self.limits.get(self.provider, {})
-        
+
         # Check requests per second limit
         if limits.get("rps"):
             min_delay = 1.0 / limits["rps"]
             elapsed = time.time() - self.last_call_time
             if elapsed < min_delay:
                 await asyncio.sleep(min_delay - elapsed)
-        
+
         # Check requests per minute limit
         if limits.get("rpm"):
             # Reset counter if minute has passed
             if time.time() - self.minute_start >= 60:
                 self.call_count = 0
                 self.minute_start = time.time()
-            
+
             # Wait if limit reached
             if self.call_count >= limits["rpm"]:
                 wait_time = 60 - (time.time() - self.minute_start)
@@ -2866,7 +2915,7 @@ class RateLimiter:
                     await asyncio.sleep(wait_time)
                     self.call_count = 0
                     self.minute_start = time.time()
-        
+
         self.last_call_time = time.time()
         self.call_count += 1
 ```
@@ -2875,23 +2924,25 @@ class RateLimiter:
 
 **Expected Performance Improvements:**
 
-| Metric | Sequential (No Pre-Fetch) | With Batch Pre-Fetch | Improvement |
-|--------|---------------------------|----------------------|-------------|
-| API calls per ticker | 5-10 individual calls | 0 (pre-fetched) | 100% reduction |
-| Time per ticker | 60s (with API latency) | 15s (no API latency) | 75% faster |
-| Total time (66 tickers) | 66 minutes | 30 minutes | 55% faster |
-| Batch pre-fetch time | N/A | 13-15 minutes (one-time) | Amortized |
-| Memory usage | Low | Low | Same |
-| Success rate | 95% | 95% | Maintained |
+| Metric                  | Sequential (No Pre-Fetch) | With Batch Pre-Fetch     | Improvement    |
+| ----------------------- | ------------------------- | ------------------------ | -------------- |
+| API calls per ticker    | 5-10 individual calls     | 0 (pre-fetched)          | 100% reduction |
+| Time per ticker         | 60s (with API latency)    | 15s (no API latency)     | 75% faster     |
+| Total time (66 tickers) | 66 minutes                | 30 minutes               | 55% faster     |
+| Batch pre-fetch time    | N/A                       | 13-15 minutes (one-time) | Amortized      |
+| Memory usage            | Low                       | Low                      | Same           |
+| Success rate            | 95%                       | 95%                      | Maintained     |
 
 **Breakdown for 66 Tickers:**
 
 1. **Batch Pre-Fetch Phase** (one-time upfront):
+
    - Yahoo Finance batch download: ~30 seconds (ONE API call for all 66 tickers)
    - Alpha Vantage queue (5 calls/min): ~13 minutes (66 calls with rate limiting)
    - **Total pre-fetch time**: ~13-15 minutes
 
 2. **Crew Execution Phase** (sequential, no API calls):
+
    - Per ticker: ~15 seconds (no API latency)
    - **Total execution time**: 66 × 15s = 16.5 minutes
 
@@ -2920,6 +2971,7 @@ ALPHA_VANTAGE_RATE_LIMIT=5  # Free tier
 **Scalability:**
 
 - **Premium Alpha Vantage** (75 calls/min): Pre-fetch time reduces to ~1 minute
+
   - Total time: 1 min (pre-fetch) + 16.5 min (execution) = **17.5 minutes**
   - **Time savings**: 48.5 minutes (73% faster)
 
@@ -2937,11 +2989,11 @@ ALPHA_VANTAGE_RATE_LIMIT=5  # Free tier
 **Requirements Coverage**:
 
 - **Requirement 18**: Python-Based Scoring Engine for Deep Analysis
-- **Requirement 19**: Jinja2 Templates for Deep Analysis Reports  
+- **Requirement 19**: Jinja2 Templates for Deep Analysis Reports
 - **Requirement 20**: Pure Python Architecture Implementation
 - **Requirement 21**: Performance Optimization Configuration
 
-**Rationale**: Current deep analysis uses 5 AI tasks with extensive LLM reasoning for calculations that are fundamentally deterministic (composite scores, grades, risk scores). Analysis shows AI provides minimal unique value beyond reformatting tool outputs into prose, while consuming 5-10 minutes and $0.05-0.10 per ticker.
+**Rationale**: Current deep analysis uses 5 AI tasks with extensive LLM reasoning for calculations that are fundamentally deterministic (composite scores, grades, risk scores). Analysis shows AI provides minimal unique value beyond reformatting tool outputs into prose, while consuming 5-10 minutes and \$0.05-0.10 per ticker.
 
 ### Python-Based Scoring Engine for Deep Analysis (Requirement 18)
 
@@ -2962,10 +3014,10 @@ class ScoringWeights:
 
 class DeepAnalysisScorer:
     """Deterministic scoring engine for deep analysis."""
-    
+
     def __init__(self, weights: ScoringWeights = ScoringWeights()):
         self.weights = weights
-        
+
         # Grade thresholds
         self.grade_thresholds = {
             0.90: "A+", 0.85: "A", 0.80: "A-",
@@ -2973,7 +3025,7 @@ class DeepAnalysisScorer:
             0.60: "C+", 0.55: "C", 0.50: "C-",
             0.45: "D+", 0.40: "D", 0.35: "D-"
         }
-    
+
     def calculate_composite_score(
         self,
         fundamental_metrics: Dict[str, Any],
@@ -2981,129 +3033,129 @@ class DeepAnalysisScorer:
         risk_metrics: Dict[str, Any]
     ) -> float:
         """Calculate composite score using weighted formula.
-        
+
         Formula: 40% fundamental + 30% technical + 30% risk (Requirement 18.2)
-        
+
         Returns:
             Composite score (0.0-1.0)
         """
         fundamental_score = self._calculate_fundamental_score(fundamental_metrics)
         technical_score = self._calculate_technical_score(technical_metrics)
         risk_score = self._calculate_risk_score(risk_metrics)
-        
+
         composite = (
             fundamental_score * self.weights.fundamental +
             technical_score * self.weights.technical +
             (1.0 - risk_score / 5.0) * self.weights.risk  # Invert risk (lower is better)
         )
-        
+
         return max(0.0, min(1.0, composite))  # Clamp to [0.0, 1.0]
-    
+
     def _calculate_fundamental_score(self, metrics: Dict[str, Any]) -> float:
         """Calculate fundamental score from metrics.
-        
+
         Scoring rules (Requirement 18.3):
         - ROE bonus: +0.2 if >20%, +0.1 if >15%
         - Debt penalty: -0.1 if debt/equity >0.5, -0.2 if >1.0
         - Growth bonus: +0.2 if revenue growth >15%, +0.1 if >10%
-        
+
         Returns:
             Fundamental score (0.0-1.0)
         """
         base_score = 0.5
-        
+
         # ROE bonus
         roe = metrics.get("roe", 0)
         if roe > 0.20:
             base_score += 0.2
         elif roe > 0.15:
             base_score += 0.1
-        
+
         # Debt penalty
         debt_equity = metrics.get("debt_equity", 0)
         if debt_equity > 1.0:
             base_score -= 0.2
         elif debt_equity > 0.5:
             base_score -= 0.1
-        
+
         # Growth bonus
         revenue_growth = metrics.get("revenue_growth", 0)
         if revenue_growth > 0.15:
             base_score += 0.2
         elif revenue_growth > 0.10:
             base_score += 0.1
-        
+
         return max(0.0, min(1.0, base_score))
-    
+
     def _calculate_technical_score(self, metrics: Dict[str, Any]) -> float:
         """Calculate technical score from metrics.
-        
+
         Scoring rules:
         - RSI analysis: +0.1 if 40-60 (neutral), -0.2 if <30 or >70
         - Trend analysis: +0.3 if strong uptrend (SMA crossover), -0.3 if downtrend
-        
+
         Returns:
             Technical score (0.0-1.0)
         """
         base_score = 0.5
-        
+
         # RSI analysis
         rsi = metrics.get("rsi", 50)
         if 40 <= rsi <= 60:
             base_score += 0.1
         elif rsi < 30 or rsi > 70:
             base_score -= 0.2
-        
+
         # Trend analysis (SMA crossover)
         sma_50 = metrics.get("sma_50", 0)
         sma_200 = metrics.get("sma_200", 0)
         current_price = metrics.get("current_price", 0)
-        
+
         if sma_50 > 0 and sma_200 > 0 and current_price > 0:
             if sma_50 > sma_200 and current_price > sma_50:
                 base_score += 0.3  # Strong uptrend
             elif sma_50 < sma_200 and current_price < sma_50:
                 base_score -= 0.3  # Downtrend
-        
+
         return max(0.0, min(1.0, base_score))
-    
+
     def _calculate_risk_score(self, metrics: Dict[str, Any]) -> float:
         """Calculate risk score (0-5 scale, higher = riskier).
-        
+
         Scoring rules:
         - Base score: (volatility / 35) * 2.0
         - Drawdown penalty: (abs(max_drawdown) / 50) * 1.5
         - Beta adjustment: +0.5 if >1.5, -0.3 if <0.5
-        
+
         Returns:
             Risk score (0.0-5.0)
         """
         # Base score from volatility
         volatility = metrics.get("volatility", 0.20)
         base_score = (volatility / 0.35) * 2.0
-        
+
         # Drawdown penalty
         max_drawdown = abs(metrics.get("max_drawdown", 0))
         base_score += (max_drawdown / 0.50) * 1.5
-        
+
         # Beta adjustment
         beta = metrics.get("beta", 1.0)
         if beta > 1.5:
             base_score += 0.5
         elif beta < 0.5:
             base_score -= 0.3
-        
+
         return max(0.0, min(5.0, base_score))
-    
+
     def assign_grade(self, composite_score: float) -> str:
         """Assign letter grade based on composite score.
-        
+
         Thresholds (Requirement 18.6):
         - A+: ≥0.90, A: ≥0.85, A-: ≥0.80
         - B+: ≥0.75, B: ≥0.70, B-: ≥0.65
         - C+: ≥0.60, C: ≥0.55, C-: ≥0.50
         - D+: ≥0.45, D: ≥0.40, D-: ≥0.35, F: <0.35
-        
+
         Returns:
             Letter grade (A+ to F)
         """
@@ -3111,19 +3163,19 @@ class DeepAnalysisScorer:
             if composite_score >= threshold:
                 return grade
         return "F"
-    
+
     def generate_recommendation(
         self,
         grade: str,
         risk_score: float
     ) -> Tuple[str, str]:
         """Generate investment recommendation and rationale.
-        
+
         Rules (Requirement 18.7):
         - BUY: grade in [A+, A, A-] AND risk_score ≤ 3.0
         - HOLD: grade in [B+, B] AND risk_score ≤ 3.5, OR grade in [B-, C+, C]
         - SELL: grade in [D+, D, D-, F] OR risk_score > 4.0
-        
+
         Returns:
             Tuple of (recommendation, rationale)
         """
@@ -3142,9 +3194,9 @@ class DeepAnalysisScorer:
         else:
             recommendation = "SELL"
             rationale = f"Weak fundamentals and technicals (Grade {grade})"
-        
+
         return recommendation, rationale
-    
+
     def score_ticker(
         self,
         ticker: str,
@@ -3153,7 +3205,7 @@ class DeepAnalysisScorer:
         risk_metrics: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Complete scoring for a ticker.
-        
+
         Returns:
             Dict with composite_score, grade, recommendation, rationale, risk_score
         """
@@ -3162,11 +3214,11 @@ class DeepAnalysisScorer:
             technical_metrics,
             risk_metrics
         )
-        
+
         grade = self.assign_grade(composite_score)
         risk_score = self._calculate_risk_score(risk_metrics)
         recommendation, rationale = self.generate_recommendation(grade, risk_score)
-        
+
         return {
             "ticker": ticker,
             "composite_score": composite_score,
@@ -3189,82 +3241,101 @@ class DeepAnalysisScorer:
 <!-- src/finwiz/templates/deep_analysis_report.html.j2 -->
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Analyse {{ data.ticker }} - FinWiz</title>
     <style>
-        /* Professional CSS with light/dark mode support */
+      /* Professional CSS with light/dark mode support */
+      :root {
+        --bg-primary: #ffffff;
+        --text-primary: #2c3e50;
+        --accent: #3498db;
+        --success: #27ae60;
+        --danger: #e74c3c;
+      }
+
+      @media (prefers-color-scheme: dark) {
         :root {
-            --bg-primary: #ffffff;
-            --text-primary: #2c3e50;
-            --accent: #3498db;
-            --success: #27ae60;
-            --danger: #e74c3c;
+          --bg-primary: #1a1a1a;
+          --text-primary: #ecf0f1;
         }
-        
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-primary: #1a1a1a;
-                --text-primary: #ecf0f1;
-            }
-        }
-        
-        .grade-a-plus { color: var(--success); font-weight: bold; }
-        .grade-f { color: var(--danger); font-weight: bold; }
-        /* ... responsive design styles ... */
+      }
+
+      .grade-a-plus {
+        color: var(--success);
+        font-weight: bold;
+      }
+      .grade-f {
+        color: var(--danger);
+        font-weight: bold;
+      }
+      /* ... responsive design styles ... */
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>📊 Analyse {{ data.ticker }} ({{ data.asset_class|upper }})</h1>
-    
+
     <!-- Executive Summary (Résumé Exécutif) -->
     <section>
-        <h2>Résumé Exécutif</h2>
-        <p class="grade-{{ data.grade|lower|replace('+', '-plus') }}">
-            {% if data.recommendation == 'BUY' %}✅{% elif data.recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
-            <strong>{{ data.recommendation }}</strong> - Grade {{ data.grade }}
-        </p>
-        <p><strong>Score Composite:</strong> {{ "%.0f"|format(data.composite_score * 100) }}%</p>
+      <h2>Résumé Exécutif</h2>
+      <p class="grade-{{ data.grade|lower|replace('+', '-plus') }}">
+        {% if data.recommendation == 'BUY' %}✅{% elif data.recommendation ==
+        'SELL' %}❌{% else %}⏸️{% endif %}
+        <strong>{{ data.recommendation }}</strong> - Grade {{ data.grade }}
+      </p>
+      <p>
+        <strong>Score Composite:</strong> {{ "%.0f"|format(data.composite_score
+        * 100) }}%
+      </p>
     </section>
-    
+
     <!-- Key Metrics (Métriques Clés) -->
     <section>
-        <h2>💰 Métriques Clés</h2>
-        <table>
-            <tr><th>Score Fondamental</th><td>{{ "%.0f"|format(data.fundamental_score * 100) }}%</td></tr>
-            <tr><th>Score Technique</th><td>{{ "%.0f"|format(data.technical_score * 100) }}%</td></tr>
-            <tr><th>Score de Risque</th><td>{{ data.risk_score }}/5</td></tr>
-        </table>
+      <h2>💰 Métriques Clés</h2>
+      <table>
+        <tr>
+          <th>Score Fondamental</th>
+          <td>{{ "%.0f"|format(data.fundamental_score * 100) }}%</td>
+        </tr>
+        <tr>
+          <th>Score Technique</th>
+          <td>{{ "%.0f"|format(data.technical_score * 100) }}%</td>
+        </tr>
+        <tr>
+          <th>Score de Risque</th>
+          <td>{{ data.risk_score }}/5</td>
+        </tr>
+      </table>
     </section>
-    
+
     <!-- Rationale (Justification) -->
     <section>
-        <h2>Justification</h2>
-        <p>{{ data.rationale }}</p>
+      <h2>Justification</h2>
+      <p>{{ data.rationale }}</p>
     </section>
-    
+
     <!-- Risk Assessment (Évaluation des Risques) -->
     <section>
-        <h2>⚠️ Évaluation des Risques</h2>
-        <p><strong>Niveau de Risque:</strong> {{ data.risk_score }}/5</p>
-        <!-- Risk factors would be listed here -->
+      <h2>⚠️ Évaluation des Risques</h2>
+      <p><strong>Niveau de Risque:</strong> {{ data.risk_score }}/5</p>
+      <!-- Risk factors would be listed here -->
     </section>
-    
+
     <!-- Data Sources (Sources de Données) -->
     <section>
-        <h2>📋 Sources de Données</h2>
-        <ul>
-            {% for source in data.data_sources %}
-            <li>{{ source }}</li>
-            {% endfor %}
-        </ul>
+      <h2>📋 Sources de Données</h2>
+      <ul>
+        {% for source in data.data_sources %}
+        <li>{{ source }}</li>
+        {% endfor %}
+      </ul>
     </section>
-    
+
     <footer>
-        <p><em>Généré le {{ generation_date }} par FinWiz</em></p>
+      <p><em>Généré le {{ generation_date }} par FinWiz</em></p>
     </footer>
-</body>
+  </body>
 </html>
 ```
 
@@ -3279,48 +3350,48 @@ from datetime import datetime
 
 class DeepAnalysisReportGenerator:
     """Generate deep analysis HTML reports using Jinja2 templates.
-    
+
     Requirements: 19.9-19.18
     """
-    
+
     def __init__(self, template_dir: str = "src/finwiz/templates"):
         self.env = Environment(
             loader=FileSystemLoader(template_dir),
             autoescape=True
         )
-    
+
     def generate_report(
         self,
         analysis_result: Dict[str, Any],
         output_path: Path
     ) -> str:
         """Generate HTML report from analysis result.
-        
+
         Requirements: 19.12, 19.13, 19.14, 19.15, 19.16
         """
         # Load template
         template = self.env.get_template('deep_analysis_report.html.j2')
-        
+
         # Render with data
         html_content = template.render(
             data=analysis_result,
             generation_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
-        
+
         # Save to file
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(html_content, encoding="utf-8")
-        
+
         return str(output_path)
 ```
 
 #### Performance Comparison (Requirements 19.25-19.28)
 
-| Approach | Time per Report | Cost per Report | Quality | Testability |
-|----------|-----------------|-----------------|---------|-------------|
-| **AI Generation** | 30-60 seconds | $0.01-0.02 | Variable | Difficult |
-| **Jinja2 Templates** | <100ms | $0.00 | Consistent | Full unit tests |
-| **Improvement** | **300-600x faster** | **100% cost reduction** | **Deterministic** | **Fully testable** |
+| Approach             | Time per Report     | Cost per Report         | Quality           | Testability        |
+| -------------------- | ------------------- | ----------------------- | ----------------- | ------------------ |
+| **AI Generation**    | 30-60 seconds       | \$0.01-0.02             | Variable          | Difficult          |
+| **Jinja2 Templates** | <100ms              | \$0.00                  | Consistent        | Full unit tests    |
+| **Improvement**      | **300-600x faster** | **100% cost reduction** | **Deterministic** | **Fully testable** |
 
 ### Simplified Deep Analysis Crew (Requirements 18.11-18.20)
 
@@ -3329,21 +3400,21 @@ Deep Analysis crew simplified from 5 AI tasks to 2 tasks:
 ```python
 class DeepAnalysisCrew:
     """Simplified deep analysis crew using Python scoring."""
-    
+
     @task
     def data_collection_task(self) -> Task:
         """Task 1: Collect all data using tools (async)."""
         return Task(
             description="""
             Collect all required data for deep analysis of {ticker}.
-            
+
             Steps:
             1. Validate ticker using TickerValidationTool
             2. Fetch fundamental data using asset-specific tool
             3. Fetch technical indicators using QuantitativeAnalysisTool
             4. Fetch sentiment data using StandardizedSentimentTool
             5. Store all data in structured context dict
-            
+
             DO NOT perform any analysis or calculations.
             ONLY fetch and store data.
             """,
@@ -3351,20 +3422,20 @@ class DeepAnalysisCrew:
             agent=self.data_collector(),
             async_execution=True  # Parallel data fetching
         )
-    
+
     @task
     def python_scoring_task(self) -> Task:
         """Task 2: Calculate scores using Python (sync)."""
         return Task(
             description="""
             Calculate scores and generate recommendation using Python scoring engine.
-            
+
             Steps:
             1. Extract fetched data from context
             2. Call DeepAnalysisScorer.score_ticker() with data
             3. Create DeepAnalysisCrewExport object with results
             4. Save export to JSON file
-            
+
             NO AI reasoning or LLM calls required.
             Pure Python calculation.
             """,
@@ -3385,7 +3456,7 @@ Environment variables for performance tuning:
 
 ```bash
 # Core optimizations
-RISK_ASSESSMENT_USE_MINI=true          # Use GPT-5-mini for risk assessment
+RISK_ASSESSMENT_USE_MINI=true          # Use gpt-4o-mini for risk assessment
 USE_MINIMAL_RISK_TOOLS=true            # Use minimal tool set for risk assessor
 DEEP_ANALYSIS_AI_SUMMARY=false         # Disable optional AI summary (default)
 DEEP_ANALYSIS_BATCH_SIZE=5             # Batch size for concurrent execution
@@ -3400,30 +3471,30 @@ PERFORMANCE_REGRESSION_TESTS=true      # Enable performance regression testing
 ```python
 class OptimizationMode(Enum):
     """Performance optimization modes."""
-    MAXIMUM_SPEED = "maximum_speed"     # Python scoring + no AI + GPT-5-mini + minimal tools
-    BALANCED = "balanced"               # Python scoring + optional AI + GPT-5-mini + minimal tools  
+    MAXIMUM_SPEED = "maximum_speed"     # Python scoring + no AI + gpt-4o-mini + minimal tools
+    BALANCED = "balanced"               # Python scoring + optional AI + gpt-4o-mini + minimal tools
     BASELINE = "baseline"               # AI scoring (for comparison/debugging)
 
 class PerformanceConfig:
     """Performance optimization configuration."""
-    
+
     def __init__(self, mode: OptimizationMode = OptimizationMode.MAXIMUM_SPEED):
         self.mode = mode
         self._configure_mode()
-    
+
     def get_expected_performance(self) -> Dict[str, Any]:
         """Get expected performance characteristics by mode."""
         performance_specs = {
             OptimizationMode.MAXIMUM_SPEED: {
                 "time_per_ticker": "10-30 seconds",
                 "cost_per_ticker": "$0.00",
-                "portfolio_66_time": "10-30 minutes", 
+                "portfolio_66_time": "10-30 minutes",
                 "portfolio_66_cost": "$0.00",
                 "speedup_factor": "10-20x"
             },
             OptimizationMode.BALANCED: {
                 "time_per_ticker": "15-40 seconds",
-                "cost_per_ticker": "$0.01", 
+                "cost_per_ticker": "$0.01",
                 "portfolio_66_time": "15-40 minutes",
                 "portfolio_66_cost": "$0.66",
                 "speedup_factor": "8-15x"
@@ -3431,7 +3502,7 @@ class PerformanceConfig:
             OptimizationMode.BASELINE: {
                 "time_per_ticker": "5-10 minutes",
                 "cost_per_ticker": "$0.05-0.10",
-                "portfolio_66_time": "5.5-11 hours", 
+                "portfolio_66_time": "5.5-11 hours",
                 "portfolio_66_cost": "$3.30-6.60",
                 "speedup_factor": "1x (baseline)"
             }
@@ -3444,47 +3515,47 @@ class PerformanceConfig:
 ```python
 class PerformanceMonitor:
     """Monitor and validate performance metrics."""
-    
+
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.metrics = {
             "execution_times": [],
             "llm_calls": [],
-            "api_calls": [], 
+            "api_calls": [],
             "cost_estimates": []
         }
-    
+
     def validate_performance_targets(self, mode: OptimizationMode) -> Dict[str, bool]:
         """Validate that performance targets are met.
-        
+
         Requirements: 21.12, 21.13, 21.14
         """
         expected = PerformanceConfig(mode).get_expected_performance()
         actual = self.get_actual_performance()
-        
+
         validation_results = {
             "time_target_met": actual["avg_time_per_ticker"] <= self._parse_time_target(expected["time_per_ticker"]),
             "cost_target_met": actual["avg_cost_per_ticker"] <= self._parse_cost_target(expected["cost_per_ticker"]),
             "speedup_achieved": actual["speedup_factor"] >= self._parse_speedup_target(expected["speedup_factor"])
         }
-        
+
         # Alert if performance degrades >10%
         if not all(validation_results.values()):
             logger.warning("Performance targets not met!")
             for metric, passed in validation_results.items():
                 if not passed:
                     logger.warning(f"Failed: {metric}")
-        
+
         return validation_results
 ```
 
 ### Performance Comparison
 
-| Approach | Tasks | AI Reasoning | Time per Ticker | Cost per Ticker | Deterministic |
-|----------|-------|--------------|-----------------|-----------------|---------------|
-| **Current (AI)** | 5 tasks | Yes | 5-10 minutes | $0.05-0.10 | No |
-| **Python Scoring** | 2 tasks | No | 10-30 seconds | $0.00 (calculations) | Yes |
-| **Hybrid (Optional)** | 2 + 1 summary | Optional | 15-40 seconds | $0.01 (summary only) | Yes |
+| Approach              | Tasks         | AI Reasoning | Time per Ticker | Cost per Ticker       | Deterministic |
+| --------------------- | ------------- | ------------ | --------------- | --------------------- | ------------- |
+| **Current (AI)**      | 5 tasks       | Yes          | 5-10 minutes    | \$0.05-0.10           | No            |
+| **Python Scoring**    | 2 tasks       | No           | 10-30 seconds   | \$0.00 (calculations) | Yes           |
+| **Hybrid (Optional)** | 2 + 1 summary | Optional     | 15-40 seconds   | \$0.01 (summary only) | Yes           |
 
 **Benefits of Python Scoring:**
 
@@ -3518,23 +3589,23 @@ Optional AI summary generation for natural language polish:
 ```python
 class DeepAnalysisCrew:
     """Deep analysis with optional AI summary."""
-    
+
     def __init__(self):
         self.ai_summary_enabled = os.getenv("DEEP_ANALYSIS_AI_SUMMARY", "false").lower() == "true"
-    
+
     @task
     def optional_ai_summary_task(self) -> Task:
         """Optional Task 3: Generate AI prose summary (if enabled)."""
         if not self.ai_summary_enabled:
             return None  # Skip this task
-        
+
         return Task(
             description="""
             Generate natural language summary of analysis results.
-            
+
             Input: Python scoring results from context
             Output: Professional prose summary (2-3 paragraphs)
-            
+
             This is OPTIONAL polish only. All calculations are already complete.
             """,
             expected_output="Natural language summary",
@@ -3564,7 +3635,7 @@ DEEP_ANALYSIS_BATCH_SIZE=5  # Batch size for concurrent execution
 BATCH_PREFETCH_ENABLED=true  # Enable batch data pre-fetching
 
 # Risk Assessment Optimizations (from PERFORMANCE_OPTIMIZATION_GUIDE.md)
-RISK_ASSESSMENT_USE_MINI=true  # Use GPT-5-mini for risk assessment
+RISK_ASSESSMENT_USE_MINI=true  # Use gpt-4o-mini for risk assessment
 USE_MINIMAL_RISK_TOOLS=true  # Use minimal tool set for risk assessor
 ```
 
@@ -3575,17 +3646,17 @@ Three optimization modes for different use cases:
 ```python
 class OptimizationMode(Enum):
     """Performance optimization modes."""
-    MAXIMUM_SPEED = "maximum_speed"  # Python scoring + no AI summary + GPT-5-mini + minimal tools
-    BALANCED = "balanced"  # Python scoring + optional AI summary + GPT-5-mini + minimal tools
+    MAXIMUM_SPEED = "maximum_speed"  # Python scoring + no AI summary + gpt-4o-mini + minimal tools
+    BALANCED = "balanced"  # Python scoring + optional AI summary + gpt-4o-mini + minimal tools
     BASELINE = "baseline"  # AI scoring (for comparison/debugging)
 
 class PerformanceConfig:
     """Performance optimization configuration."""
-    
+
     def __init__(self, mode: OptimizationMode = OptimizationMode.MAXIMUM_SPEED):
         self.mode = mode
         self._configure_mode()
-    
+
     def _configure_mode(self):
         """Configure settings based on optimization mode."""
         if self.mode == OptimizationMode.MAXIMUM_SPEED:
@@ -3593,13 +3664,13 @@ class PerformanceConfig:
             os.environ["RISK_ASSESSMENT_USE_MINI"] = "true"
             os.environ["USE_MINIMAL_RISK_TOOLS"] = "true"
             os.environ["BATCH_PREFETCH_ENABLED"] = "true"
-            
+
         elif self.mode == OptimizationMode.BALANCED:
             os.environ["DEEP_ANALYSIS_AI_SUMMARY"] = "true"
             os.environ["RISK_ASSESSMENT_USE_MINI"] = "true"
             os.environ["USE_MINIMAL_RISK_TOOLS"] = "true"
             os.environ["BATCH_PREFETCH_ENABLED"] = "true"
-            
+
         elif self.mode == OptimizationMode.BASELINE:
             os.environ["DEEP_ANALYSIS_AI_SUMMARY"] = "false"
             os.environ["RISK_ASSESSMENT_USE_MINI"] = "false"
@@ -3614,7 +3685,7 @@ Track and log performance metrics:
 ```python
 class PerformanceMonitor:
     """Monitor and log performance metrics."""
-    
+
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.metrics = {
@@ -3623,7 +3694,7 @@ class PerformanceMonitor:
             "api_calls": [],
             "cost_estimates": []
         }
-    
+
     def log_ticker_analysis(
         self,
         ticker: str,
@@ -3637,13 +3708,13 @@ class PerformanceMonitor:
         self.metrics["llm_calls"].append(llm_calls)
         self.metrics["api_calls"].append(api_calls)
         self.metrics["cost_estimates"].append(cost_estimate)
-        
+
         logger.info(f"{ticker}: {execution_time:.1f}s, {llm_calls} LLM calls, ${cost_estimate:.4f}")
-    
+
     def generate_summary(self) -> Dict[str, Any]:
         """Generate performance summary."""
         total_tickers = len(self.metrics["execution_times"])
-        
+
         return {
             "total_tickers": total_tickers,
             "total_time": sum(self.metrics["execution_times"]),
@@ -3653,17 +3724,17 @@ class PerformanceMonitor:
             "total_cost": sum(self.metrics["cost_estimates"]),
             "avg_cost_per_ticker": sum(self.metrics["cost_estimates"]) / total_tickers if total_tickers > 0 else 0
         }
-    
+
     def compare_to_baseline(self, baseline_time: float, baseline_cost: float) -> Dict[str, Any]:
         """Compare actual performance to baseline."""
         summary = self.generate_summary()
-        
+
         time_savings = baseline_time - summary["total_time"]
         time_savings_pct = (time_savings / baseline_time) * 100 if baseline_time > 0 else 0
-        
+
         cost_savings = baseline_cost - summary["total_cost"]
         cost_savings_pct = (cost_savings / baseline_cost) * 100 if baseline_cost > 0 else 0
-        
+
         return {
             **summary,
             "baseline_time": baseline_time,
@@ -3678,11 +3749,11 @@ class PerformanceMonitor:
 
 ### Expected Performance by Mode
 
-| Mode | Time per Ticker | Cost per Ticker | 66-Ticker Portfolio Time | 66-Ticker Portfolio Cost |
-|------|-----------------|-----------------|--------------------------|--------------------------|
-| **Maximum Speed** | 10-30s | $0.00 | 10-30 min | $0.00 (calculations) |
-| **Balanced** | 15-40s | $0.01 | 15-40 min | $0.66 |
-| **Baseline (AI)** | 5-10 min | $0.05-0.10 | 5.5-11 hours | $3.30-6.60 |
+| Mode              | Time per Ticker | Cost per Ticker | 66-Ticker Portfolio Time | 66-Ticker Portfolio Cost |
+| ----------------- | --------------- | --------------- | ------------------------ | ------------------------ |
+| **Maximum Speed** | 10-30s          | \$0.00          | 10-30 min                | \$0.00 (calculations)    |
+| **Balanced**      | 15-40s          | \$0.01          | 15-40 min                | \$0.66                   |
+| **Baseline (AI)** | 5-10 min        | \$0.05-0.10     | 5.5-11 hours             | \$3.30-6.60              |
 
 **Speedup Factors:**
 
@@ -3705,14 +3776,14 @@ def test_should_calculate_composite_score():
     fundamental_metrics = {"roe": 0.22, "debt_equity": 0.3, "revenue_growth": 0.18}
     technical_metrics = {"rsi": 55, "sma_50": 150, "sma_200": 140, "current_price": 155}
     risk_metrics = {"volatility": 0.25, "max_drawdown": -0.15, "beta": 1.2}
-    
+
     # Act
     score = scorer.calculate_composite_score(
         fundamental_metrics,
         technical_metrics,
         risk_metrics
     )
-    
+
     # Assert
     assert 0.0 <= score <= 1.0
     assert score > 0.7  # Should be high given strong metrics
@@ -3721,7 +3792,7 @@ def test_should_assign_correct_grade():
     """Test grade assignment."""
     # Arrange
     scorer = DeepAnalysisScorer()
-    
+
     # Act & Assert
     assert scorer.assign_grade(0.92) == "A+"
     assert scorer.assign_grade(0.87) == "A"
@@ -3733,10 +3804,10 @@ def test_should_generate_buy_recommendation_for_strong_metrics():
     """Test recommendation generation."""
     # Arrange
     scorer = DeepAnalysisScorer()
-    
+
     # Act
     recommendation, rationale = scorer.generate_recommendation("A+", 2.5)
-    
+
     # Assert
     assert recommendation == "BUY"
     assert "Strong fundamentals" in rationale
@@ -3754,14 +3825,14 @@ def test_should_generate_html_from_json_export(tmp_path):
         "recommendation": "BUY"
     }
     output_path = tmp_path / "report.html"
-    
+
     # Act
     result_path = generator.generate_crew_report(
         crew_name="stock_crew",
         export_data=export_data,
         output_path=output_path
     )
-    
+
     # Assert
     assert output_path.exists()
     html_content = output_path.read_text()
@@ -3777,7 +3848,7 @@ def test_should_consolidate_multiple_crew_exports(tmp_path):
         session_id="test-session",
         output_dir=tmp_path
     )
-    
+
     # Create mock export files
     stock_export = tmp_path / "stock_export.json"
     stock_export.write_text(json.dumps({
@@ -3786,14 +3857,14 @@ def test_should_consolidate_multiple_crew_exports(tmp_path):
         "grade": "A+",
         "composite_score": 0.85
     }))
-    
+
     crew_export_paths = {
         "stock_crew": [str(stock_export)]
     }
-    
+
     # Act
     consolidated = consolidator.consolidate_reports(crew_export_paths)
-    
+
     # Assert
     assert len(consolidated.stock_analyses) == 1
     assert consolidated.stock_analyses[0].ticker == "AAPL"
@@ -3808,16 +3879,16 @@ def test_should_reject_invalid_export_data():
         "grade": "INVALID",  # Invalid grade
         "composite_score": 1.5  # Out of range
     }
-    
+
     # Act & Assert
     with pytest.raises(ValidationError):
         StockCrewExport.model_validate(invalid_data)
 ```
 
 ame="stock_crew",
-        export_data=export_data,
-        output_path=output_path
-    )
+export_data=export_data,
+output_path=output_path
+)
 
     # Assert
     assert output_path.exists()
@@ -3829,9 +3900,8 @@ ame="stock_crew",
 # Test data consolidation
 
 def test_should_consolidate_multiple_crew_exports(tmp_path):
-    """Test consolidation of crew exports."""
-    # Arrange
-    consolidator = ReportConsolidator("test-session", tmp_path)
+"""Test consolidation of crew exports.""" # Arrange
+consolidator = ReportConsolidator("test-session", tmp_path)
 
     # Create mock export files
     stock_export = tmp_path / "stock_crew" / "AAPL_export.json"
@@ -3841,14 +3911,14 @@ def test_should_consolidate_multiple_crew_exports(tmp_path):
         "grade": "A+",
         "composite_score": 0.85
     }))
-    
+
     crew_export_paths = {
         "stock_crew": [str(stock_export)]
     }
-    
+
     # Act
     consolidated = consolidator.consolidate_reports(crew_export_paths)
-    
+
     # Assert
     assert len(consolidated.stock_analyses) == 1
     assert consolidated.stock_analyses[0].ticker == "AAPL"
@@ -3857,25 +3927,24 @@ def test_should_consolidate_multiple_crew_exports(tmp_path):
 # Test batch data pre-fetcher
 
 def test_should_prefetch_data_for_multiple_tickers(mocker):
-    """Test batch data pre-fetching."""
-    # Arrange
-    prefetcher = BatchDataPreFetcher("test-session")
-    tickers = ["AAPL", "MSFT", "GOOGL"]
+"""Test batch data pre-fetching.""" # Arrange
+prefetcher = BatchDataPreFetcher("test-session")
+tickers = ["AAPL", "MSFT", "GOOGL"]
 
     # Mock Yahoo Finance batch download
     mock_yf_download = mocker.patch('yfinance.download')
     mock_yf_download.return_value = mocker.Mock()
-    
+
     # Act
     data = prefetcher.prefetch_all_data(tickers)
-    
+
     # Assert
     assert len(data) == 3
     assert "AAPL" in data
     assert "yahoo_finance" in data["AAPL"]
     mock_yf_download.assert_called_once()
 
-```
+````
 
 ### Integration Tests
 
@@ -3888,16 +3957,16 @@ def test_should_execute_deep_analysis_with_python_scoring():
     # Arrange
     crew = DeepAnalysisCrew()
     ticker = "AAPL"
-    
+
     # Act
     result = crew.crew().kickoff(inputs={"ticker": ticker, "asset_class": "stock"})
-    
+
     # Assert
     assert result is not None
     # Verify export file exists
     export_path = Path(f"output/reports/test-session/deep_analysis_crew/{ticker}_export.json")
     assert export_path.exists()
-    
+
     # Verify export contains required fields
     export_data = json.loads(export_path.read_text())
     assert export_data["ticker"] == ticker
@@ -3910,19 +3979,19 @@ def test_should_complete_full_flow_with_consolidation():
     """Test complete flow from analysis to final report."""
     # Arrange
     flow = ReportAggregationFlow()
-    
+
     # Act
     result = flow.kickoff()
-    
+
     # Assert
     assert flow.state.final_report_path is not None
     final_report = Path(flow.state.final_report_path)
     assert final_report.exists()
-    
+
     # Verify consolidated JSON exists
     consolidated_path = Path(flow.state.consolidated_json_path)
     assert consolidated_path.exists()
-```
+````
 
 ### Performance Tests
 
@@ -3934,16 +4003,16 @@ def test_should_achieve_target_performance_with_python_scoring():
     """Test that Python scoring achieves 10-20x speedup."""
     # Arrange
     ticker = "AAPL"
-    
+
     # Measure Python scoring time
     start_time = time.time()
     crew = DeepAnalysisCrew()  # With Python scoring
     result = crew.crew().kickoff(inputs={"ticker": ticker, "asset_class": "stock"})
     python_time = time.time() - start_time
-    
+
     # Assert
     assert python_time < 60  # Should complete in under 60 seconds
-    
+
     # Compare to baseline (assume 5 minutes for AI scoring)
     baseline_time = 300
     speedup_factor = baseline_time / python_time
@@ -3954,25 +4023,25 @@ def test_should_achieve_target_performance_with_batch_prefetch():
     """Test that batch pre-fetching achieves 55%+ time savings."""
     # Arrange
     tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]  # 5 tickers
-    
+
     # Measure with batch pre-fetch
     start_time = time.time()
     prefetcher = BatchDataPreFetcher("test-session")
     data = prefetcher.prefetch_all_data(tickers)
-    
+
     # Execute crews with pre-fetched data
     for ticker in tickers:
         crew = DeepAnalysisCrew()
         crew.set_prefetched_data(data[ticker])
         crew.crew().kickoff(inputs={"ticker": ticker, "asset_class": "stock"})
-    
+
     total_time = time.time() - start_time
-    
+
     # Assert
     # Baseline: 5 tickers × 60s = 300s
     # Target: <135s (55% savings)
     assert total_time < 135
-    
+
     time_savings_pct = ((300 - total_time) / 300) * 100
     assert time_savings_pct >= 55
 ```
@@ -3984,14 +4053,16 @@ This design implements a comprehensive reorganization of the FinWiz crew archite
 ### Requirements Coverage
 
 **Critical Fixes (Requirements 0.x):**
+
 - ✅ Pure Python deep analysis replacement (0.1-0.7)
-- ✅ Fixed JSON export directory structure (0.8-0.12) 
+- ✅ Fixed JSON export directory structure (0.8-0.12)
 - ✅ A+ discovery integration with deep analysis (0.13-0.17)
 - ✅ Backtesting pipeline connection (0.18-0.21)
 - ✅ Python report generation (0.22-0.26)
 - ✅ Integration demonstration script (0.31-0.34)
 
 **Core Architecture (Requirements 1-17):**
+
 - ✅ Pydantic-validated export objects (Req 1)
 - ✅ Python HTML generation with Jinja2 (Req 2)
 - ✅ Python data consolidation (Req 3)
@@ -4000,6 +4071,7 @@ This design implements a comprehensive reorganization of the FinWiz crew archite
 - ✅ Batch processing architecture (Req 17)
 
 **Pure Python Architecture (Requirements 18-21):**
+
 - ✅ Python-based scoring engine (Req 18)
 - ✅ Jinja2 templates for reports (Req 19)
 - ✅ Complete pure Python implementation (Req 20)
@@ -4056,7 +4128,7 @@ This design implements a comprehensive reorganization of the FinWiz crew archite
 **Phase 1: Critical Fixes (IMMEDIATE PRIORITY)** (Requirements 0.x)
 
 - Pure Python deep analysis replacement
-- Fixed JSON export directory structure  
+- Fixed JSON export directory structure
 - A+ discovery integration
 - Backtesting pipeline connection
 - Python report generation
@@ -4090,6 +4162,6 @@ This design achieves the project goals of fixing broken data flow, maximizing pe
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2025-01-25  
+**Version**: 2.0
+**Last Updated**: 2025-01-25
 **Major Updates**: Added Python-based scoring engine, Jinja2 templates for deep analysis, and performance optimization configuration based on Requirements 18-20

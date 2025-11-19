@@ -171,31 +171,31 @@ class TestValidateGradeScoreConsistency:
     """Test cases for validate_grade_score_consistency method."""
 
     def test_should_return_true_for_matching_a_plus_grade(self):
-        """Test that A+ grade matches score >= 0.85."""
+        """Test that A+ grade matches score >= 0.95."""
         # Arrange
         extractor = CrewDataExtractor()
 
         # Act & Assert
-        assert extractor.validate_grade_score_consistency("A+", 0.92, "AAPL") is True
-        assert extractor.validate_grade_score_consistency("A+", 0.85, "AAPL") is True
+        assert extractor.validate_grade_score_consistency("A+", 0.96, "AAPL") is True
+        assert extractor.validate_grade_score_consistency("A+", 0.95, "AAPL") is True
 
     def test_should_return_true_for_matching_a_grade(self):
-        """Test that A grade matches score >= 0.75."""
+        """Test that A grade matches score >= 0.85 and < 0.95."""
         # Arrange
         extractor = CrewDataExtractor()
 
         # Act & Assert
-        assert extractor.validate_grade_score_consistency("A", 0.80, "AAPL") is True
-        assert extractor.validate_grade_score_consistency("A", 0.75, "AAPL") is True
+        assert extractor.validate_grade_score_consistency("A", 0.87, "AAPL") is True
+        assert extractor.validate_grade_score_consistency("A", 0.85, "AAPL") is True
 
     def test_should_return_true_for_matching_b_grade(self):
-        """Test that B grade matches score >= 0.65."""
+        """Test that B grade matches score >= 0.75 and < 0.80."""
         # Arrange
         extractor = CrewDataExtractor()
 
         # Act & Assert
-        assert extractor.validate_grade_score_consistency("B", 0.70, "AAPL") is True
-        assert extractor.validate_grade_score_consistency("B", 0.65, "AAPL") is True
+        assert extractor.validate_grade_score_consistency("B", 0.77, "AAPL") is True
+        assert extractor.validate_grade_score_consistency("B", 0.75, "AAPL") is True
 
     def test_should_return_false_for_mismatched_grade(self):
         """Test that mismatched grade returns False."""
@@ -208,7 +208,7 @@ class TestValidateGradeScoreConsistency:
         assert extractor.validate_grade_score_consistency("F", 0.85, "AAPL") is False
 
     def test_should_return_true_for_f_grade_with_low_score(self):
-        """Test that F grade matches score < 0.45."""
+        """Test that F grade matches score < 0.50."""
         # Arrange
         extractor = CrewDataExtractor()
 

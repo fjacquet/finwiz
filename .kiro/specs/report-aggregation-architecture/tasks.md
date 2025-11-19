@@ -21,6 +21,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
 - [ ] 0. **CRITICAL: Fix Flow Integration with Python Components**
 
   - [x] 0.1 **Update Flow to Call Python Functions Instead of AI Crews**
+
     - Modify `FinwizFlow` in `src/finwiz/flows/flow_orchestrator.py`
     - Replace AI crew calls with `analyze_portfolio_with_python()` function calls
     - Replace AI report generation with `generate_python_report()` function calls
@@ -29,6 +30,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 20.20, 20.21, 20.22, 20.23, 20.24_
 
   - [x] 0.2 **Fix JSON Export Directory Structure**
+
     - Ensure `PortfolioDeepAnalyzer._export_json_files()` saves to proper output directories
     - Verify JSON files are created in `output/stock/`, `output/etf/`, `output/crypto/`
     - Generate consolidated export at `output/deep_analysis_consolidated_{session_id}.json`
@@ -36,6 +38,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 0.8, 0.9, 0.10, 0.11, 0.12, 20.25, 20.26, 20.27, 20.28_
 
   - [x] 0.3 **Integrate A+ Discovery with Deep Analysis Results**
+
     - Create `APlusDiscoveryIntegrator` class to read deep analysis JSON exports
     - Identify holdings with grades A+ and A from analysis results
     - Set `has_a_plus_analysis = true` when A+ holdings are found
@@ -44,6 +47,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 0.13, 0.14, 0.15, 0.16, 0.17_
 
   - [x] 0.4 **Connect Backtesting Pipeline to Discovery Results**
+
     - Create `BacktestingPipelineConnector` class to read A+ opportunities from discovery
     - Execute backtesting automatically when A+ candidates are available
     - Generate backtesting results and include in final report
@@ -67,7 +71,9 @@ Based on the implementation failure analysis, this plan has been updated to prio
 ## VALIDATION & TESTING (High Priority)
 
 - [x] 23. **End-to-End Integration Testing**
+
   - [x] 23.1 Test complete Python pipeline
+
     - Load real portfolio data from CSV files
     - Execute `analyze_portfolio_with_python()` and verify JSON exports
     - Test A+ discovery integration reads deep analysis results correctly
@@ -77,6 +83,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 20.29, 20.30, 20.31, 20.32, 20.33_
 
   - [x] 23.2 Performance validation
+
     - Measure execution time vs AI approach baseline
     - Validate cost savings (should be 100% for calculations)
     - Confirm deterministic results (same input = same output)
@@ -93,6 +100,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
 ## COMPLETED TASKS (Lower Priority)
 
 - [x] 1. Create Batch Data Pre-Fetcher Module
+
   - Create `src/finwiz/utils/batch_data_prefetcher.py` with `BatchDataPreFetcher` class
   - Implement `prefetch_all_data()` method for batch API calls
   - Implement `_fetch_yahoo_finance_batch()` using `yf.download()` for all tickers
@@ -102,25 +110,29 @@ Based on the implementation failure analysis, this plan has been updated to prio
   - _Requirements: 17.9, 17.10, 17.11, 17.22, 17.23, 17.24_
 
 - [x] 2. Modify Existing Tools for Pre-Fetched Data Support
+
   - [x] 2.1 Update YahooFinanceTickerInfoTool
+
     - Add `prefetched_data` optional parameter to `_run()` method
     - Check for pre-fetched data before making API call
     - Return pre-fetched data if available, otherwise fetch live
     - Add debug logging for data source (pre-fetched vs live)
     - _Requirements: 17.13, 17.14, 17.15_
-  
+
   - [x] 2.2 Update YahooFinanceHistoryTool
+
     - Add `prefetched_data` optional parameter
     - Use pre-fetched historical data if available
     - Maintain backward compatibility with live API calls
     - _Requirements: 17.13, 17.14, 17.15_
-  
+
   - [x] 2.3 Update AlphaVantageCompanyOverviewTool
+
     - Add `prefetched_data` optional parameter
     - Check for pre-fetched Alpha Vantage data
     - Fall back to live API call if not pre-fetched
     - _Requirements: 17.13, 17.14, 17.15_
-  
+
   - [x] 2.4 Update QuantitativeAnalysisTool
     - Add `prefetched_data` optional parameter
     - Use pre-fetched data for calculations when available
@@ -128,13 +140,15 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.13, 17.14_
 
 - [x] 3. Add Pre-Fetched Data Injection to Deep Analysis Crew
+
   - [x] 3.1 Update DeepAnalysisCrew class
+
     - Add `prefetched_data` instance variable
     - Add `set_prefetched_data()` method
     - Modify tool initialization to pass pre-fetched data
     - Update task descriptions to mention pre-fetched data usage
     - _Requirements: 17.29, 17.30, 17.31, 17.32_
-  
+
   - [x] 3.2 Update crew configuration
     - Set `reasoning=False` for batch mode performance
     - Set `allow_delegation=False` for focused execution
@@ -142,19 +156,22 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.33, 17.34, 17.35_
 
 - [x] 4. Integrate Batch Pre-Fetching into Flow
+
   - [x] 4.1 Update ReportAggregationFlow state model
+
     - Add `batch_prefetch_enabled` field
     - Add `prefetched_data` field for cached data
     - Add `batch_prefetch_metrics` field for performance tracking
     - _Requirements: 17.36, 17.37, 17.40_
-  
+
   - [x] 4.2 Implement batch pre-fetch in Flow
+
     - Add `execute_deep_analysis_with_prefetch()` method
     - Call `BatchDataPreFetcher.prefetch_all_data()` before crew execution
     - Store pre-fetched data in Flow state
     - Pass pre-fetched data to each crew instance
     - _Requirements: 17.36, 17.37, 17.38, 17.39, 17.40_
-  
+
   - [x] 4.3 Update crew execution loop
     - Iterate through underperforming holdings sequentially
     - Create DeepAnalysisCrew instance for each ticker
@@ -164,13 +181,15 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.41, 17.42_
 
 - [x] 5. Implement Performance Metrics Tracking
+
   - [x] 5.1 Add metrics logging
+
     - Log batch pre-fetch start and completion
     - Log per-ticker execution time
     - Calculate total time and time savings
     - Compare against estimated sequential time
     - _Requirements: 17.43, 17.44, 17.45, 17.61, 17.62, 17.63_
-  
+
   - [x] 5.2 Save metrics to JSON file
     - Create `batch_prefetch_metrics.json` in session output directory
     - Include total tickers, successful, failed, durations
@@ -179,6 +198,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.62, 17.63, 17.64_
 
 - [x] 6. Add Rate Limiting for Alpha Vantage
+
   - Create `src/finwiz/utils/rate_limiter.py` with `RateLimiter` class
   - Implement async rate limiting with configurable limits
   - Support different providers (Alpha Vantage free/premium, Twelve Data)
@@ -187,6 +207,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
   - _Requirements: 17.65, 17.66, 17.67, 17.68, 17.69_
 
 - [x] 7. Add Configuration and Environment Variables
+
   - Add `BATCH_PREFETCH_ENABLED` environment variable (default: true)
   - Add `ALPHA_VANTAGE_RATE_LIMIT` environment variable (default: 5)
   - Add configuration validation on Flow initialization
@@ -195,18 +216,21 @@ Based on the implementation failure analysis, this plan has been updated to prio
   - _Requirements: 17.57, 17.58, 17.59, 17.60_
 
 - [x] 8. Implement Error Handling and Resilience
+
   - [x] 8.1 Handle partial data fetch failures
+
     - Continue pre-fetching if individual tickers fail
     - Log failed tickers with error messages
     - Mark failed tickers in pre-fetched data cache
     - _Requirements: 17.52, 17.53, 17.54_
-  
+
   - [x] 8.2 Handle crew execution failures
+
     - Continue with remaining tickers if one fails
     - Collect all errors in Flow state
     - Generate error summary in final report
     - _Requirements: 17.52, 17.53, 17.54, 17.55_
-  
+
   - [x] 8.3 Add fallback to sequential mode
     - Detect if batch pre-fetch fails completely
     - Fall back to live API calls per ticker
@@ -214,12 +238,14 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.55_
 
 - [x] 9. Maintain Backward Compatibility
+
   - [x] 9.1 Support single-ticker mode
+
     - Detect single-ticker vs batch mode in Flow
     - Use existing tools without pre-fetched data for single-ticker
     - Maintain all existing single-ticker behavior
     - _Requirements: 17.48, 17.49, 17.50_
-  
+
   - [x] 9.2 Add mode detection logic
     - Check if analyzing portfolio (66+ holdings) vs single ticker
     - Enable batch pre-fetch automatically for portfolios
@@ -227,6 +253,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.51_
 
 - [x] 10. Add Memory Management
+
   - Monitor memory usage during pre-fetch and execution
   - Implement cache cleanup after Flow completion
   - Add memory usage logging to metrics
@@ -234,21 +261,24 @@ Based on the implementation failure analysis, this plan has been updated to prio
   - _Requirements: 17.70, 17.71, 17.72, 17.73, 17.74_
 
 - [x] 11. Write Unit Tests for Batch Components
+
   - [x] 11.1 Test BatchDataPreFetcher
+
     - Test `prefetch_all_data()` with mock API responses
     - Test Yahoo Finance batch download
     - Test Alpha Vantage rate limiting
     - Test cache save/load functionality
     - Test error handling for failed tickers
     - _Requirements: 17.75, 17.76_
-  
+
   - [x] 11.2 Test modified tools
+
     - Test tools with pre-fetched data
     - Test tools without pre-fetched data (fallback)
     - Test backward compatibility
     - Verify data quality matches live API calls
     - _Requirements: 17.75, 17.78_
-  
+
   - [ ] 11.3 Test Flow integration
     - Test batch pre-fetch execution
     - Test crew execution with pre-fetched data
@@ -257,19 +287,22 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.76, 17.77, 17.79, 17.80_
 
 - [x] 12. Performance Testing and Validation
+
   - [x] 12.1 Benchmark batch vs sequential execution
+
     - Run analysis on 10, 30, 66 tickers
     - Measure total time and time per ticker
     - Validate 55%+ time savings target
     - Compare API call counts
     - _Requirements: 17.17, 17.18, 17.19, 17.77_
-  
+
   - [x] 12.2 Validate data quality
+
     - Compare pre-fetched data vs live API data
     - Verify analysis results are identical
     - Check for data staleness issues
     - _Requirements: 17.78_
-  
+
   - [x] 12.3 Test rate limiting
     - Verify Alpha Vantage rate limit compliance
     - Test exponential backoff on rate limit errors
@@ -277,6 +310,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 17.79, 17.80_
 
 - [x] 13. Update Documentation
+
   - Update README with batch processing feature
   - Document environment variables and configuration
   - Add performance benchmarks to documentation
@@ -284,34 +318,39 @@ Based on the implementation failure analysis, this plan has been updated to prio
   - _Requirements: 17.20, 17.21_
 
 - [x] 14. Create Python-Based Scoring Engine for Deep Analysis ✅ **COMPLETED**
+
   - [x] 14.1 Create DeepAnalysisScorer class ✅ **IMPLEMENTED**
+
     - ✅ Created `src/finwiz/scoring/deep_analysis_scorer.py` with complete `DeepAnalysisScorer` class
     - ✅ Implemented `calculate_composite_score()` method (40% fundamental + 30% technical + 30% risk)
     - ✅ Implemented `calculate_fundamental_score()` method (ROE, debt, growth bonuses/penalties)
     - ✅ Implemented `calculate_technical_score()` method (RSI, trend analysis)
     - ✅ Implemented `calculate_risk_score()` method (0-5 scale from volatility, drawdown, beta)
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5_
-  
+
   - [x] 14.2 Implement grade assignment and recommendations ✅ **IMPLEMENTED**
+
     - ✅ Implemented `assign_grade()` method using composite score thresholds
     - ✅ Implemented `generate_recommendation()` method (BUY/HOLD/SELL logic)
     - ✅ Implemented `generate_rationale()` method for template-based explanations
     - ✅ Deterministic results (same input = same output)
     - ✅ Complete all calculations in <1 second per ticker
     - _Requirements: 18.6, 18.7, 18.8, 18.9, 18.10_
-  
+
   - [x] 14.3 Write unit tests for DeepAnalysisScorer ✅ **IMPLEMENTED**
 
 - [x] 15. Implement Portfolio Deep Analyzer ✅ **COMPLETED**
+
   - [x] 15.1 Create PortfolioDeepAnalyzer class ✅ **IMPLEMENTED**
+
     - ✅ Created `src/finwiz/scoring/portfolio_deep_analyzer.py`
     - ✅ Implemented `analyze_portfolio_holdings()` method for concurrent analysis
     - ✅ Uses existing `DeepAnalysisScorer` for all calculations
     - ✅ Generates JSON exports for each holding to proper output directories
     - ✅ Updates portfolio holdings with analysis results
-    - ✅ Logs performance metrics (time, holdings/second, cost = $0)
+    - ✅ Logs performance metrics (time, holdings/second, cost = \$0)
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7_
-  
+
   - [x] 15.2 Implement data extraction and scoring integration ✅ **IMPLEMENTED**
     - ✅ Created `_extract_holding_data()` method to prepare data for scoring
     - ✅ Created `_create_crew_export()` method to format results
@@ -321,7 +360,9 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 20.1, 20.2, 20.3, 20.4_
 
 - [x] 16. Implement Python Report Generator ✅ **COMPLETED**
+
   - [x] 16.1 Create PythonReportGenerator class ✅ **IMPLEMENTED**
+
     - ✅ Created `src/finwiz/reporting/python_report_generator.py`
     - ✅ Implemented `generate_family_financial_plan()` method
     - ✅ Uses Jinja2 templates for HTML generation (NO AI)
@@ -329,7 +370,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - ✅ Includes portfolio statistics and analysis summaries
     - ✅ Completes generation in milliseconds
     - _Requirements: 20.8, 20.9, 20.10, 20.11, 20.12, 20.13, 20.14_
-  
+
   - [x] 16.2 Implement report analysis and HTML generation ✅ **IMPLEMENTED**
     - ✅ Created `_analyze_portfolio_stats()` method for statistics
     - ✅ Created `_generate_html_report()` method for template rendering
@@ -340,14 +381,16 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 20.9, 20.10, 20.11, 20.12_
 
 - [x] 17. Create Integration Functions and Module Structure ✅ **COMPLETED**
+
   - [x] 17.1 Create convenience functions ✅ **IMPLEMENTED**
+
     - ✅ Implemented `analyze_portfolio_with_python()` convenience function
     - ✅ Implemented `generate_python_report()` convenience function
     - ✅ Updated `src/finwiz/scoring/__init__.py` to export new classes
     - ✅ Created `src/finwiz/reporting/__init__.py` module
     - ✅ Functions are importable from Flow methods
     - _Requirements: 20.15, 20.16, 20.17, 20.18, 20.19_
-  
+
   - [x] 17.2 Implement error handling and validation ✅ **IMPLEMENTED**
     - ✅ Added comprehensive error handling for all Python functions
     - ✅ Return structured results with performance metrics
@@ -357,14 +400,16 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 20.18, 20.19_
 
 - [x] 18. Create Integration Demonstration Script ✅ **COMPLETED**
+
   - [x] 18.1 Implement demonstration script ✅ **IMPLEMENTED**
+
     - ✅ Created `scripts/run_python_analysis.py`
     - ✅ Loads portfolio data from CSV files
     - ✅ Runs pure Python deep analysis
     - ✅ Generates Python-based reports
     - ✅ Logs performance metrics and comparisons
     - _Requirements: 20.34, 20.35, 20.36, 20.37, 20.38_
-  
+
   - [x] 18.2 Add performance validation and reporting ✅ **IMPLEMENTED**
     - ✅ Measures execution time vs AI approach
     - ✅ Calculates cost savings (should be 100% for calculations)
@@ -383,23 +428,27 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 18.39, 18.40_
 
 - [x] 15. Simplify Deep Analysis Crew to Use Python Scoring
+
   - [x] 15.1 Refactor DeepAnalysisCrew tasks
+
     - Simplify from 5 tasks to 2 tasks: Data Collection + Python Scoring
     - Update `config/tasks.yaml` to remove AI reasoning tasks
     - Create new `data_collection_task` (async) for fetching all data
     - Create new `python_scoring_task` (sync) for calling DeepAnalysisScorer
     - Remove tasks: deep_analysis_task, technical_analysis_task, risk_assessment_task, final_report_task, generate_export_task
     - _Requirements: 18.11, 18.12, 18.13, 18.14, 18.15, 18.16, 18.17, 18.18_
-  
+
   - [x] 15.2 Update DeepAnalysisCrew configuration
+
     - Set `reasoning=False` for all agents
     - Update agent backstories to reflect data collection + Python scoring approach
     - Update task descriptions to be explicit about no AI reasoning
     - Ensure data collection task stores all data in structured context dict
     - Ensure Python scoring task calls DeepAnalysisScorer with fetched data
     - _Requirements: 18.19, 18.20_
-  
+
   - [x] 15.3 Preserve all data in Python scoring approach
+
     - Ensure all raw metrics preserved (volatility, beta, ROE, debt/equity, RSI, MACD, etc.)
     - Ensure all sentiment data preserved (sentiment_score, trending_topics, article_count)
     - Ensure all technical indicators preserved (support/resistance, trend direction)
@@ -407,15 +456,16 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - Ensure all calculation results preserved (composite score, grade, recommendation, risk score)
     - Generate template-based rationale text
     - _Requirements: 18.21, 18.22, 18.23, 18.24, 18.25_
-  
+
   - [x] 15.4 Validate performance improvements
+
     - Measure execution time per ticker (target: 10-30 seconds vs 5-10 minutes)
     - Measure LLM call count per ticker (target: 0 for calculations)
-    - Measure cost per ticker (target: $0 for calculations)
+    - Measure cost per ticker (target: \$0 for calculations)
     - Validate 10-20x speedup achieved
     - Validate 100% cost reduction for calculations
     - _Requirements: 18.28, 18.29, 18.30_
-  
+
   - [x] 15.5 Implement optional AI summary (hybrid approach)
     - Add `DEEP_ANALYSIS_AI_SUMMARY` environment variable (default: false)
     - Implement optional single LLM call for prose summary after Python scoring
@@ -425,7 +475,9 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 18.31, 18.32, 18.33, 18.34, 18.35, 18.36_
 
 - [x] 16. Create Jinja2 Template for Deep Analysis Reports
+
   - [x] 16.1 Create deep analysis report template
+
     - Verify `src/finwiz/templates/crew_reports/deep_analysis_report.html.j2` exists (already created)
     - Update template to accept DeepAnalysisResult data as input variables
     - Ensure template generates professional French-language HTML report
@@ -435,8 +487,9 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - Ensure template is maintainable by developers
     - Support all asset classes (stock, ETF, crypto)
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7, 19.8_
-  
+
   - [x] 16.2 Create DeepAnalysisReportGenerator class
+
     - Create `src/finwiz/reporting/` directory
     - Create `src/finwiz/reporting/__init__.py`
     - Create `src/finwiz/reporting/deep_analysis_report_generator.py` with `DeepAnalysisReportGenerator` class
@@ -447,15 +500,16 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - Complete in <100ms per report
     - No LLM calls, no external API calls
     - _Requirements: 19.9, 19.10, 19.11, 19.12, 19.13, 19.14, 19.15, 19.16, 19.17, 19.18_
-  
+
   - [x] 16.3 Integrate report generator with Flow
+
     - Update Flow to call DeepAnalysisReportGenerator after Python scoring
     - Pass DeepAnalysisResult to report generator
     - Save generated HTML to: `output/reports/{session_id}/deep_analysis/{ticker}_report.html`
     - Ensure HTML generation completes in <100ms per report
     - Do not use AI agents or CrewAI tasks for HTML generation
     - _Requirements: 19.19, 19.20, 19.21, 19.22, 19.23, 19.24_
-  
+
   - [x] 16.4 Write unit tests for report generator
     - Test template rendering with mock DeepAnalysisResult data
     - Test all asset classes (stock, ETF, crypto)
@@ -467,7 +521,9 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 19.28, 19.29, 19.30, 19.31, 19.32, 19.33, 19.34_
 
 - [x] 17. Add Performance Optimization Configuration
+
   - [x] 17.1 Add configuration environment variables
+
     - Add `RISK_ASSESSMENT_USE_MINI` environment variable (default: true)
     - Add `USE_MINIMAL_RISK_TOOLS` environment variable (default: true)
     - Add `DEEP_ANALYSIS_AI_SUMMARY` environment variable (default: false)
@@ -475,17 +531,19 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - Validate configuration values on startup
     - Log configuration status at startup
     - _Requirements: 20.1, 20.2, 20.3, 20.4_
-  
+
   - [x] 17.2 Implement optimization modes
-    - Implement Maximum Speed mode (Python scoring + no AI summary + GPT-5-mini + minimal tools)
-    - Implement Balanced mode (Python scoring + optional AI summary + GPT-5-mini + minimal tools)
+
+    - Implement Maximum Speed mode (Python scoring + no AI summary + gpt-4o-mini + minimal tools)
+    - Implement Balanced mode (Python scoring + optional AI summary + gpt-4o-mini + minimal tools)
     - Implement Baseline mode (AI scoring for comparison/debugging)
     - Ensure Maximum Speed mode completes in 10-30 seconds per ticker
     - Ensure Balanced mode completes in 15-40 seconds per ticker
     - Ensure Baseline mode completes in 5-10 minutes per ticker
     - _Requirements: 20.5, 20.6, 20.7, 20.8_
-  
+
   - [x] 17.3 Add performance monitoring
+
     - Log execution time per ticker
     - Log LLM call count per ticker
     - Log API call count per ticker
@@ -493,7 +551,7 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - Track cumulative metrics for portfolio analysis
     - Compare actual vs baseline performance (time savings %, cost savings %, speedup factor)
     - _Requirements: 20.9, 20.10, 20.11_
-  
+
   - [x] 17.4 Validate optimization accuracy
     - Validate scores within ±0.05 of baseline
     - Validate grades match baseline
@@ -504,22 +562,25 @@ Based on the implementation failure analysis, this plan has been updated to prio
     - _Requirements: 20.12, 20.13, 20.14_
 
 - [ ] 18. Integration Testing for Python Scoring and Templates
+
   - [ ] 18.1 Test Python scoring vs AI scoring comparison
+
     - Analyze same ticker with both Python scoring and AI scoring (baseline)
     - Validate composite scores match within ±0.05
     - Validate grades match (same thresholds)
     - Validate recommendations match (same logic)
     - Validate performance improvement achieved (10-20x faster)
     - _Requirements: 18.38, 18.40_
-  
+
   - [ ] 18.2 Test end-to-end deep analysis with Python scoring
+
     - Test complete flow: data collection → Python scoring → Jinja2 report generation
     - Validate all data preserved (raw metrics, sentiment, technical, fundamental)
     - Validate report quality matches or exceeds AI-generated reports
     - Validate execution time (10-30 seconds per ticker)
-    - Validate cost ($0 for calculations, only API data costs)
+    - Validate cost (\$0 for calculations, only API data costs)
     - _Requirements: 18.37, 18.38, 18.39_
-  
+
   - [ ] 18.3 Test hybrid approach (optional AI summary)
     - Test with `DEEP_ANALYSIS_AI_SUMMARY=true`
     - Validate Python scoring completes first (10-30 seconds)

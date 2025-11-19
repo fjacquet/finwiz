@@ -25,11 +25,6 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 - **JSON Export**: Pydantic-validated data structure saved to output directory (not just cache)
 - **Template-Based Reporting**: HTML generation using Jinja2 templates instead of AI agents
 
-
-
-
-
-
 ## Requirements
 
 ### Requirement 0: CRITICAL FIXES FOR IMPLEMENTATION FAILURES
@@ -364,7 +359,7 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 14. THE System SHALL disable planning for these crews:
     - ❌ deep_analysis_crew (runs 66+ times per portfolio - overhead × 66 is too costly)
     - ❌ crypto_crew, stock_crew, etf_crew (simpler workflows, single execution)
-15. WHEN planning is enabled, THE Crew SHALL set `planning_llm="gpt-5-mini"` for optimal planning quality
+15. WHEN planning is enabled, THE Crew SHALL set `planning_llm="gpt-4o-mini"` for optimal planning quality
 
 #### Acceptance Criteria - Agent Delegation Configuration
 
@@ -388,15 +383,15 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 
 23. THE System SHALL implement the following configuration matrix:
 
-| Crew | Reasoning | Planning | Delegation | Execution Volume | Rationale |
-|------|-----------|----------|------------|------------------|-----------|
-| report_crew | Mixed | ✅ Enable | Mixed | 1 | 4 agents, 4 tasks, complex synthesis |
-| investment_discovery | ✅ Enable | ✅ Enable | ✅ Enable | 1 | 4 agents, 7 tasks, complex coordination |
-| portfolio_rebalancing | ✅ Enable | ✅ Enable | ✅ Enable | 1 | 3+ agents, 4+ tasks, optimization |
-| deep_analysis | ❌ Disable | ❌ Disable | ❌ Disable | 66+ | High volume - avoid overhead |
-| crypto_crew | ✅ Enable | ❌ Disable | Mixed | 1 | Complex analysis, simpler workflow |
-| stock_crew | ✅ Enable | ❌ Disable | Mixed | 1 | Complex analysis, simpler workflow |
-| etf_crew | ✅ Enable | ❌ Disable | Mixed | 1 | Complex analysis, simpler workflow |
+| Crew                  | Reasoning  | Planning   | Delegation | Execution Volume | Rationale                               |
+| --------------------- | ---------- | ---------- | ---------- | ---------------- | --------------------------------------- |
+| report_crew           | Mixed      | ✅ Enable  | Mixed      | 1                | 4 agents, 4 tasks, complex synthesis    |
+| investment_discovery  | ✅ Enable  | ✅ Enable  | ✅ Enable  | 1                | 4 agents, 7 tasks, complex coordination |
+| portfolio_rebalancing | ✅ Enable  | ✅ Enable  | ✅ Enable  | 1                | 3+ agents, 4+ tasks, optimization       |
+| deep_analysis         | ❌ Disable | ❌ Disable | ❌ Disable | 66+              | High volume - avoid overhead            |
+| crypto_crew           | ✅ Enable  | ❌ Disable | Mixed      | 1                | Complex analysis, simpler workflow      |
+| stock_crew            | ✅ Enable  | ❌ Disable | Mixed      | 1                | Complex analysis, simpler workflow      |
+| etf_crew              | ✅ Enable  | ❌ Disable | Mixed      | 1                | Complex analysis, simpler workflow      |
 
 #### Acceptance Criteria - Anti-Patterns to Avoid
 
@@ -551,7 +546,7 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 
 **User Story:** As a FinWiz developer, I want deep analysis scoring calculations done in pure Python instead of AI reasoning, so that analysis is 10-20x faster, 100% deterministic, fully testable, and eliminates LLM costs for calculations.
 
-**Context:** Current deep analysis uses 5 AI tasks per ticker with extensive LLM reasoning for calculations that are fundamentally deterministic (composite scores, grades, risk scores, recommendations). Analysis from DATA_LOSS_ANALYSIS.md shows that AI provides minimal unique value beyond reformatting tool outputs into prose, while consuming 5-10 minutes and $0.05-0.10 per ticker.
+**Context:** Current deep analysis uses 5 AI tasks per ticker with extensive LLM reasoning for calculations that are fundamentally deterministic (composite scores, grades, risk scores, recommendations). Analysis from DATA_LOSS_ANALYSIS.md shows that AI provides minimal unique value beyond reformatting tool outputs into prose, while consuming 5-10 minutes and \$0.05-0.10 per ticker.
 
 #### Acceptance Criteria - Python Scoring Engine
 
@@ -569,8 +564,8 @@ This updated specification addresses these critical failures with a **PURE PYTHO
    - RSI analysis: +0.1 if 40-60 (neutral), -0.2 if <30 or >70
    - Trend analysis: +0.3 if strong uptrend (SMA crossover), -0.3 if downtrend
 5. THE DeepAnalysisScorer SHALL calculate risk score (0-5 scale) from metrics:
-   - Base score: (volatility / 35) * 2.0
-   - Drawdown penalty: (abs(max_drawdown) / 50) * 1.5
+   - Base score: (volatility / 35) \* 2.0
+   - Drawdown penalty: (abs(max_drawdown) / 50) \* 1.5
    - Beta adjustment: +0.5 if >1.5, -0.3 if <0.5
 6. THE DeepAnalysisScorer SHALL assign grades using thresholds:
    - A+: ≥0.90, A: ≥0.85, A-: ≥0.80
@@ -654,7 +649,7 @@ This updated specification addresses these critical failures with a **PURE PYTHO
     - Target: 10-30 minutes (even without batch mode)
 30. THE Python scoring approach SHALL eliminate LLM costs for calculations:
     - Current: $3.30-6.60 per 66-holding portfolio (66 × $0.05-0.10)
-    - Target: $0.00 for calculations (only API data costs remain)
+    - Target: \$0.00 for calculations (only API data costs remain)
 
 #### Acceptance Criteria - Hybrid Approach (Optional)
 
@@ -664,7 +659,7 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 32. THE optional AI summary SHALL be configurable via environment variable:
     - `DEEP_ANALYSIS_AI_SUMMARY=true` (enable AI prose)
     - `DEEP_ANALYSIS_AI_SUMMARY=false` (use templates only, default)
-33. THE optional AI summary SHALL cost $0.01 per ticker (single LLM call)
+33. THE optional AI summary SHALL cost \$0.01 per ticker (single LLM call)
 34. THE optional AI summary SHALL complete in 5-10 seconds
 35. THE hybrid approach SHALL provide total time of 15-40 seconds (vs 5-10 minutes)
 36. THE hybrid approach SHALL provide 80-90% cost savings ($0.01 vs $0.05-0.10)
@@ -708,7 +703,7 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 
 **User Story:** As a FinWiz developer, I want deep analysis HTML reports generated using Jinja2 templates from Python scoring results, so that report generation is instant, free, deterministic, and maintainable.
 
-**Context:** Current deep analysis uses AI agents to generate HTML reports, which is slow (5-10 minutes), expensive ($0.05-0.10), non-deterministic, and violates AI Minimalism principle. HTML generation is a perfect use case for templates.
+**Context:** Current deep analysis uses AI agents to generate HTML reports, which is slow (5-10 minutes), expensive (\$0.05-0.10), non-deterministic, and violates AI Minimalism principle. HTML generation is a perfect use case for templates.
 
 #### Acceptance Criteria - Template Implementation
 
@@ -763,8 +758,8 @@ This updated specification addresses these critical failures with a **PURE PYTHO
     - AI: 30-60 seconds per report
     - Jinja2: <100ms per report
 26. THE Jinja2 approach SHALL eliminate LLM costs for HTML generation:
-    - AI: $0.01-0.02 per report
-    - Jinja2: $0.00 per report
+    - AI: \$0.01-0.02 per report
+    - Jinja2: \$0.00 per report
 27. THE Jinja2 approach SHALL produce consistent, professional output
 28. THE Jinja2 approach SHALL be fully testable with unit tests
 
@@ -821,7 +816,7 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 
 25. THE System SHALL create proper output directory structure:
     - `output/stock/` for stock analysis JSON exports
-    - `output/etf/` for ETF analysis JSON exports  
+    - `output/etf/` for ETF analysis JSON exports
     - `output/crypto/` for crypto analysis JSON exports
     - `output/deep_analysis_consolidated_{session_id}.json` for consolidated results
 26. THE System SHALL save final HTML report to `output/finwiz_family_financial_plan.html`
@@ -848,12 +843,12 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 
 **User Story:** As a FinWiz developer, I want configurable performance optimizations for deep analysis, so that I can balance speed, cost, and quality based on use case.
 
-**Context:** PERFORMANCE_OPTIMIZATION_GUIDE.md documents two existing optimizations (GPT-5-mini for risk assessment, minimal tool set) that provide 20-30% speedup. Combined with Python scoring, these optimizations can achieve 10-20x overall speedup.
+**Context:** PERFORMANCE_OPTIMIZATION_GUIDE.md documents two existing optimizations (gpt-4o-mini for risk assessment, minimal tool set) that provide 20-30% speedup. Combined with Python scoring, these optimizations can achieve 10-20x overall speedup.
 
 #### Acceptance Criteria - Configuration Options
 
 1. THE System SHALL support environment variable configuration for optimizations:
-   - `RISK_ASSESSMENT_USE_MINI=true` (use GPT-5-mini for risk assessment, default: true)
+   - `RISK_ASSESSMENT_USE_MINI=true` (use gpt-4o-mini for risk assessment, default: true)
    - `USE_MINIMAL_RISK_TOOLS=true` (use minimal tool set for risk assessor, default: true)
    - `DEEP_ANALYSIS_AI_SUMMARY=false` (disable optional AI summary, default: false)
    - `DEEP_ANALYSIS_BATCH_SIZE=5` (batch size for concurrent execution, default: 5)
@@ -864,8 +859,8 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 #### Acceptance Criteria - Optimization Modes
 
 5. THE System SHALL support three optimization modes:
-   - **Maximum Speed**: Python scoring + no AI summary + GPT-5-mini + minimal tools
-   - **Balanced**: Python scoring + optional AI summary + GPT-5-mini + minimal tools
+   - **Maximum Speed**: Python scoring + no AI summary + gpt-4o-mini + minimal tools
+   - **Balanced**: Python scoring + optional AI summary + gpt-4o-mini + minimal tools
    - **Baseline**: AI scoring (for comparison/debugging)
 6. THE Maximum Speed mode SHALL complete in 10-30 seconds per ticker
 7. THE Balanced mode SHALL complete in 15-40 seconds per ticker
@@ -874,10 +869,10 @@ This updated specification addresses these critical failures with a **PURE PYTHO
 #### Acceptance Criteria - Performance Monitoring
 
 9. THE System SHALL log performance metrics for each analysis:
-    - Execution time per ticker
-    - LLM call count
-    - API call count
-    - Cost estimate
+   - Execution time per ticker
+   - LLM call count
+   - API call count
+   - Cost estimate
 10. THE System SHALL track cumulative metrics for portfolio analysis:
     - Total execution time
     - Total LLM calls
@@ -1012,5 +1007,3 @@ The implementation will be considered successful when:
 The current AI-based approach has fundamentally failed to deliver promised outcomes. A **PURE PYTHON FIRST** approach is required to achieve the performance, cost, and reliability targets. This corrective action plan provides a clear path to success by eliminating AI where deterministic calculations are sufficient and reserving AI only for tasks requiring genuine reasoning.
 
 The key insight is: **If Python can do it, use Python. Be ruthless about eliminating unnecessary AI complexity.**
-
-
