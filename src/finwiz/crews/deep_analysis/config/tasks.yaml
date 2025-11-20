@@ -20,53 +20,66 @@
 
 data_collection_task:
   description: >
-    ⚡ NEW ARCHITECTURE: Agent READS Python calculation results (NO tool calling)
+    ⚡ DATA COLLECTION: Gather ALL required data for ticker {ticker}
 
-    CRITICAL: Python orchestrator already collected data and calculated scores.
-    You ONLY READ the Python results from input and format them nicely.
+    CRITICAL: SINGLE TICKER MODE - Collect data ONLY for {ticker} of asset class {asset_class}
+    You are a data collection specialist - NO analysis, NO scoring, just efficient data gathering.
 
-    Python provides you with these calculated results in the input:
-    - python_results: Complete DeepAnalysisResult object from Python scorer
-    - grade: Letter grade (A+, A, B+, B, C+, C, D, F)
-    - composite_score: Overall score (0.0-1.0)
-    - recommendation: Investment recommendation (BUY/HOLD/SELL)
+    🚨 CRITICAL TOOL USAGE RULES 🚨
+    - ALWAYS call tools with simple parameters: tool(ticker="{ticker}")
+    - NEVER pass JSON arrays or objects to tools
+    - Call tools ONE AT A TIME for the single ticker {ticker}
+    - NEVER ask for user input or clarification
 
-    YOUR TASK (NO TOOLS NEEDED):
-    1. READ the Python results from input (they're already calculated!)
-    2. Format the results into a clear, professional summary
-    3. Explain WHY the ticker received this grade/recommendation
-    4. Use the raw metrics from python_results to support your explanation
+    DATA TO COLLECT for {ticker}:
+    1. Price data (current price, historical prices)
+    2. Fundamental metrics:
+       - For STOCKS: ROE, debt-to-equity, revenue growth, profit margins
+       - For ETFs: expense ratio, tracking error, AUM, holdings
+       - For CRYPTO: market cap, volume, age, tokenomics
+    3. Technical indicators: RSI, MACD, support/resistance levels
+    4. Risk metrics: volatility, beta, max drawdown
+    5. Sentiment data: news sentiment, social media trends
 
-    CRITICAL RULES:
-    - NO tool calling - Python already collected all data
-    - NO calculations - Python already calculated scores
-    - NO assumptions - Only use data provided in python_results
-    - JUST format and explain the Python calculations in clear language
+    STORAGE FORMAT:
+    Store all collected data in structured context for Python scoring:
+    context["collected_data"] = {{
+      "ticker": "{ticker}",
+      "asset_class": "{asset_class}",
+      "collection_timestamp": current_timestamp,
+      "price_data": {{...}},
+      "fundamentals": {{...}},
+      "technical_indicators": {{...}},
+      "risk_metrics": {{...}},
+      "sentiment": {{...}}
+    }}
 
-    Example input you'll receive:
+    CRITICAL OUTPUT REQUIREMENT:
+    Output the collected data as a JSON structure that the orchestrator can parse.
+    Use this format EXACTLY:
+
     {{
       "ticker": "{ticker}",
       "asset_class": "{asset_class}",
-      "grade": "A",
-      "composite_score": 0.85,
-      "recommendation": "BUY",
-      "python_results": {{
-        "fundamental_score": 0.82,
-        "technical_score": 0.88,
-        "risk_score": 0.85,
-        "rationale": "Strong fundamentals with low risk..."
-      }}
+      "current_price": <number>,
+      "roe": <number or null>,
+      "debt_to_equity": <number or null>,
+      "volatility": <number or null>,
+      "beta": <number or null>,
+      "rsi": <number or null>,
+      "macd": <number or null>,
+      ... (all collected metrics)
     }}
-
-    Your output: Professional summary explaining these Python facts.
   expected_output: >
-    Professional formatted summary of Python calculation results for ticker {ticker}:
-    - Clear explanation of the grade ({grade}) and why it was calculated
-    - Summary of recommendation ({recommendation}) based on Python scores
-    - Explanation using raw metrics from python_results
-    - NO new calculations - just formatting Python's work
+    JSON structure containing ALL collected data for ticker {ticker}:
+    - Price data with current and historical prices
+    - Fundamental metrics (asset-class specific)
+    - Technical indicators (RSI, MACD, trends)
+    - Risk metrics (volatility, beta, drawdown)
+    - Sentiment data and news analysis
+    - Collection timestamp for freshness tracking
   agent: asset_analyst
-  async_execution: false  # Changed to sync - no I/O needed, just formatting
+  async_execution: false  # Sync for sequential data collection
 
 python_scoring_task:
   description: >

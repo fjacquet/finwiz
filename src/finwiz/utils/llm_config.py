@@ -47,16 +47,16 @@ def get_configured_llm(model_override: str | None = None) -> LLM:
     logger.info(f"Configuring LLM with model: {model}")
 
     try:
-        # Create LLM with drop_params to handle unsupported parameters
+        # Create LLM with proper configuration
+        # Note: drop_params is not supported in CrewAI 1.5.0 with OpenAI client
+        # Using LiteLLM format (openai/ prefix) for better compatibility
         llm = LLM(
             model=model,
-            drop_params=True,
-            additional_drop_params=["stop"],  # Drop the 'stop' parameter that causes issues
             timeout=int(os.getenv("OPENAI_TIMEOUT", "300")),
             max_retries=3,
         )
 
-        logger.info("LLM configured successfully with drop_params enabled")
+        logger.info(f"LLM configured successfully with model: {model}")
         return llm
 
     except Exception as e:

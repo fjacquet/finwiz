@@ -376,8 +376,6 @@ class DeepAnalysisCrew:
             # Create LLM directly with mini model for performance optimization
             return LLM(
                 model="openai/gpt-4o-mini",
-                drop_params=True,
-                additional_drop_params=["stop"],
                 timeout=int(os.getenv("OPENAI_TIMEOUT", "300")),
                 max_retries=3,
             )
