@@ -77,7 +77,11 @@ class SentimentResponseFormatter:
 
         if trending_topics:
             for i, topic in enumerate(trending_topics, 1):
-                response += f"{i}. **{topic['topic']}** - {topic['article_count']} articles (relevance: {topic['average_relevance']:.2f})\n"
+                # Use correct field names from sentiment_calculations.py
+                # Fields are: mention_count (not article_count), relevance_score (not average_relevance)
+                count = topic.get('mention_count', topic.get('article_count', 0))
+                relevance = topic.get('relevance_score', topic.get('average_relevance', 0.0))
+                response += f"{i}. **{topic['topic']}** - {count} articles (relevance: {relevance:.2f})\n"
         else:
             response += "No significant trending topics identified.\n"
 
@@ -262,8 +266,11 @@ An error occurred while performing sentiment analysis:
 
         for i, topic in enumerate(trending_topics, 1):
             response += f"### {i}. {topic['topic']}\n"
-            response += f"- **Mentions**: {topic['article_count']} articles\n"
-            response += f"- **Relevance**: {topic['average_relevance']:.2f}/1.0\n"
+            # Use correct field names from sentiment_calculations.py
+            count = topic.get('mention_count', topic.get('article_count', 0))
+            relevance = topic.get('relevance_score', topic.get('average_relevance', 0.0))
+            response += f"- **Mentions**: {count} articles\n"
+            response += f"- **Relevance**: {relevance:.2f}/1.0\n"
 
             if "sample_articles" in topic:
                 response += "- **Sample Headlines**:\n"
