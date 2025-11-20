@@ -66,11 +66,14 @@ class ScoringThresholds:
     # Above 2.0 (score: 0.2)
 
     # Revenue Growth - Higher is better
-    growth_excellent: float = 0.25  # 25%+ (score: 1.0)
-    growth_very_good: float = 0.15  # 15-25% (score: 0.8)
-    growth_good: float = 0.10  # 10-15% (score: 0.6)
-    growth_acceptable: float = 0.05  # 5-10% (score: 0.4)
-    # Below 5% (score: 0.2)
+    # Adjusted to be more reasonable for mature, established companies
+    # Negative growth still penalized, but low-single digit growth acceptable for quality companies
+    growth_excellent: float = 0.20  # 20%+ (score: 1.0)
+    growth_very_good: float = 0.12  # 12-20% (score: 0.8)
+    growth_good: float = 0.05  # 5-12% (score: 0.6)
+    growth_acceptable: float = 0.00  # 0-5% (score: 0.4)  # Flat growth OK for mature companies
+    growth_poor: float = -0.05  # 0 to -5% (score: 0.2)
+    # Below -5% (score: 0.1) - Significant revenue decline
 
     # Profit Margin - Higher is better
     margin_excellent: float = 0.20  # 20%+ (score: 1.0)
@@ -159,11 +162,12 @@ class ScoringThresholds:
     # ============================================================================
 
     # Volatility (Annual) - Lower is better
-    volatility_very_low: float = 0.10  # ≤10% (score: 1.0)
-    volatility_low: float = 0.15  # 10-15% (score: 0.8)
-    volatility_moderate: float = 0.25  # 15-25% (score: 0.6)
-    volatility_high: float = 0.40  # 25-40% (score: 0.4)
-    # Above 40% (score: 0.2)
+    # Adjusted to be more tolerant of cyclical sectors (semiconductors, industrials)
+    volatility_very_low: float = 0.15  # ≤15% (score: 1.0)
+    volatility_low: float = 0.25  # 15-25% (score: 0.8)
+    volatility_moderate: float = 0.35  # 25-35% (score: 0.6)
+    volatility_high: float = 0.50  # 35-50% (score: 0.4)
+    # Above 50% (score: 0.2)
 
     # Maximum Drawdown - Lower is better (stored as positive for comparison)
     drawdown_very_low: float = 0.10  # ≤10% (score: 1.0)

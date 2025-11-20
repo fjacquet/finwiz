@@ -160,15 +160,44 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
         data: Data dictionary to validate
 
     Raises:
-        CriticalFieldError: If any critical field is missing
+        CriticalFieldError: If any critical field is missing or has nonsensical values
 
     """
     critical_fields = get_critical_fields(asset_class)
     missing_fields = []
 
+    # Sanity check ranges for critical numeric fields
+    # These catch data extraction errors (e.g., defaults of 0.0 that passed through)
+    SANITY_CHECKS = {
+        # Stock metrics that should NEVER be exactly 0.0 for real companies
+        "roe": lambda v: v is not None and (v < -0.5 or v > 2.0 or v == 0.0),  # ROE exactly 0.0 is suspicious
+        "current_price": lambda v: v is not None and v <= 0.0,  # Price must be positive
+        # These CAN be 0.0 legitimately, so only check for None or extreme values
+        "debt_to_equity": lambda v: v is None or v < 0.0 or v > 100.0,
+        "revenue_growth": lambda v: v is None or v < -0.95 or v > 10.0,  # -95% to 1000%
+        "volatility": lambda v: v is None or v < 0.0 or v > 5.0,
+        "beta": lambda v: v is None or v < -5.0 or v > 10.0,
+        # ETF metrics
+        "expense_ratio": lambda v: v is None or v < 0.0 or v > 0.10,  # 0-10%
+        # Crypto metrics
+        "market_cap": lambda v: v is None or v <= 0.0,
+        "volume_24h": lambda v: v is None or v < 0.0,
+        "age_years": lambda v: v is None or v < 0.0 or v > 50.0,
+    }
+
     for field in critical_fields:
-        if field not in data or data[field] is None:
-            missing_fields.append(field)
+        value = data.get(field)
+
+        # Check if field is missing or None
+        if field not in data or value is None:
+            missing_fields.append(f"{field} (missing)")
+            continue
+
+        # Apply sanity checks for known problematic fields
+        if field in SANITY_CHECKS:
+            sanity_check = SANITY_CHECKS[field]
+            if sanity_check(value):
+                missing_fields.append(f"{field} (invalid value: {value})")
 
     if missing_fields:
         raise CriticalFieldError(ticker, asset_class, missing_fields)

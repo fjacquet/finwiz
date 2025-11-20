@@ -202,6 +202,9 @@ class DeepAnalysisScorer:
         """
         Compute weighted composite score from component scores.
 
+        Uses adaptive weights: high-quality companies (excellent fundamentals)
+        get more weight on fundamentals, less on technical/risk.
+
         Args:
             scores: Dictionary with component scores
 
@@ -209,12 +212,39 @@ class DeepAnalysisScorer:
             Weighted composite score (0.0 to 1.0)
 
         """
-        # Calculate weighted composite score using configured weights
+        # Detect quality companies based on fundamental metrics
+        fundamental_score = scores["fundamental_score"]
+        fundamental_details = scores.get("fundamental_details", {})
+
+        is_quality_company = self._is_quality_company(fundamental_score, fundamental_details)
+
+        # Adaptive weights based on company quality
+        if is_quality_company:
+            # Quality companies: emphasize fundamentals over short-term volatility
+            weight_fundamental = 0.50  # +10% from default 0.40
+            weight_technical = 0.25    # -5% from default 0.30
+            weight_risk = 0.25         # -5% from default 0.30
+            self.logger.info(f"✨ Quality company detected - using adaptive weights (50/25/25)")
+        else:
+            # Standard companies: use default balanced weights
+            weight_fundamental = self.thresholds.weight_fundamental  # 0.40
+            weight_technical = self.thresholds.weight_technical      # 0.30
+            weight_risk = self.thresholds.weight_risk                # 0.30
+
+        # Calculate weighted composite score
         composite_score = (
-            self.thresholds.weight_fundamental * scores["fundamental_score"]
-            + self.thresholds.weight_technical * scores["technical_score"]
-            + self.thresholds.weight_risk * scores["risk_score"]
+            weight_fundamental * scores["fundamental_score"]
+            + weight_technical * scores["technical_score"]
+            + weight_risk * scores["risk_score"]
         )
+
+        # Store adaptive weights in scores for transparency
+        scores["weights_used"] = {
+            "fundamental": weight_fundamental,
+            "technical": weight_technical,
+            "risk": weight_risk,
+            "is_quality_company": is_quality_company
+        }
 
         # Track composite score calculation in lineage
         self._lineage_tracker.add_calculation(
@@ -225,15 +255,17 @@ class DeepAnalysisScorer:
                 "technical_score": scores["technical_score"],
                 "risk_score": scores["risk_score"],
             },
-            calculation="Weighted average of component scores",
-            formula=f"{self.thresholds.weight_fundamental} * fundamental + {self.thresholds.weight_technical} * technical + {self.thresholds.weight_risk} * risk",
+            calculation="Weighted average of component scores (adaptive weights for quality companies)",
+            formula=f"{weight_fundamental} * fundamental + {weight_technical} * technical + {weight_risk} * risk",
             output=composite_score,
             metadata={
                 "weights": {
-                    "fundamental": self.thresholds.weight_fundamental,
-                    "technical": self.thresholds.weight_technical,
-                    "risk": self.thresholds.weight_risk,
-                }
+                    "fundamental": weight_fundamental,
+                    "technical": weight_technical,
+                    "risk": weight_risk,
+                },
+                "is_quality_company": is_quality_company,
+                "weight_type": "adaptive_quality" if is_quality_company else "standard"
             },
         )
 
@@ -461,6 +493,43 @@ class DeepAnalysisScorer:
         """
         # Delegate to component scorer
         return self.risk_scorer.calculate_risk_score(data)
+
+    def _is_quality_company(self, fundamental_score: float, fundamental_details: dict[str, Any]) -> bool:
+        """
+        Detect if company qualifies as "quality" for adaptive weights.
+
+        Quality criteria (stocks):
+        - High fundamental score (≥0.80 / 80%)
+        - Excellent ROE (≥20%)
+        - Low debt (debt/equity ≤0.5)
+        - Strong margins (≥15%)
+
+        Args:
+            fundamental_score: Overall fundamental score
+            fundamental_details: Detailed fundamental metrics
+
+        Returns:
+            True if company qualifies as quality
+
+        """
+        # Require strong fundamental score first
+        if fundamental_score < 0.80:
+            return False
+
+        # Stock-specific quality checks
+        roe = fundamental_details.get("roe", 0.0)
+        debt_to_equity = fundamental_details.get("debt_to_equity", 999)
+        profit_margin = fundamental_details.get("profit_margin", 0.0)
+
+        # Quality thresholds
+        has_high_roe = roe >= 0.20  # 20%+ ROE
+        has_low_debt = debt_to_equity <= 0.5  # Debt/Equity ≤ 0.5
+        has_strong_margins = profit_margin >= 0.15  # 15%+ margins
+
+        # Need at least 2 out of 3 quality indicators
+        quality_indicators = sum([has_high_roe, has_low_debt, has_strong_margins])
+
+        return quality_indicators >= 2
 
     def assign_grade(self, composite_score: float) -> str:
         """

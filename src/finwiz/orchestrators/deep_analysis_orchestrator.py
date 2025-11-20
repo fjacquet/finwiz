@@ -1014,11 +1014,45 @@ class DeepAnalysisOrchestrator:
             import re
 
             raw = str(crew_output.raw)
-            grade_match = re.search(r"[Gg]rade:\s*([A-F][+\-]?)", raw)
-            score_match = re.search(r"[Ss]core:\s*(0?\.\d+|\d+\.\d+)", raw)
+
+            # Try multiple regex patterns for flexibility
+            grade_patterns = [
+                r"[Gg]rade:\s*([A-F][+\-]?)",           # "Grade: A"
+                r"[Rr]ating:\s*([A-F][+\-]?)",          # "Rating: A"
+                r"[Oo]verall\s+[Gg]rade:\s*([A-F][+\-]?)",  # "Overall Grade: A"
+            ]
+            score_patterns = [
+                r"[Cc]omposite\s+[Ss]core:\s*(0?\.\d+|\d+\.\d+)",  # "Composite Score: 0.85"
+                r"[Ss]core:\s*(0?\.\d+|\d+\.\d+)",                 # "Score: 0.85"
+                r"[Oo]verall\s+[Ss]core:\s*(0?\.\d+|\d+\.\d+)",    # "Overall Score: 0.85"
+            ]
+
+            grade_match = None
+            for pattern in grade_patterns:
+                grade_match = re.search(pattern, raw)
+                if grade_match:
+                    break
+
+            score_match = None
+            for pattern in score_patterns:
+                score_match = re.search(pattern, raw)
+                if score_match:
+                    break
 
             if not grade_match or not score_match:
-                raise MissingRequiredFieldError(ticker=ticker, field="grade/score", context={"source": "raw"})
+                # Log raw output for debugging (truncated to avoid log spam)
+                raw_snippet = raw[:500] if len(raw) > 500 else raw
+                self.logger.error(f"Failed to extract grade/score for {ticker}. Raw output snippet: {raw_snippet}")
+                raise MissingRequiredFieldError(
+                    ticker=ticker,
+                    field="grade/score",
+                    context={
+                        "source": "raw",
+                        "found_grade": bool(grade_match),
+                        "found_score": bool(score_match),
+                        "raw_snippet": raw_snippet
+                    }
+                )
 
             return grade_match.group(1), float(score_match.group(1)), None, None, None
         else:

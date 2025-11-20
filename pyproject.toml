@@ -50,6 +50,7 @@ dependencies = [
     "empyrical-reloaded>=0.5.12",
     "crewai[tools]>=1.5.0",
     "qdrant-client>=1.16.0",
+    "litellm>=1.80.0",
 ]
 
 [project.scripts]

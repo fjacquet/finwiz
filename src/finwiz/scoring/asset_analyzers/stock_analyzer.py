@@ -154,7 +154,11 @@ class StockAnalyzer(AssetAnalyzer):
             return 0.2
 
     def _score_revenue_growth(self, revenue_growth: float) -> float:
-        """Score revenue growth rate using configured thresholds."""
+        """
+        Score revenue growth rate using configured thresholds.
+
+        Updated to be more tolerant of mature companies with low-single digit growth.
+        """
         if revenue_growth >= self.thresholds.growth_excellent:
             return 1.0
         elif revenue_growth >= self.thresholds.growth_very_good:
@@ -162,9 +166,11 @@ class StockAnalyzer(AssetAnalyzer):
         elif revenue_growth >= self.thresholds.growth_good:
             return 0.6
         elif revenue_growth >= self.thresholds.growth_acceptable:
-            return 0.4
+            return 0.4  # 0-5% growth is acceptable for mature companies
+        elif revenue_growth >= self.thresholds.growth_poor:
+            return 0.2  # 0 to -5% decline is concerning but not disastrous
         else:
-            return 0.2
+            return 0.1  # Significant revenue decline >5%
 
     def _score_profit_margin(self, profit_margin: float) -> float:
         """Score profit margin using configured thresholds."""

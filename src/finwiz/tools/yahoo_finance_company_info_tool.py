@@ -28,6 +28,20 @@ class YahooFinanceCompanyInfoTool(BaseTool):
             ticker_data = yf.Ticker(ticker)
             info = ticker_data.info
 
+            # Calculate revenue growth from actual financials (more reliable than info.get("revenueGrowth"))
+            revenue_growth = "N/A"
+            try:
+                financials = ticker_data.financials
+                if not financials.empty and 'Total Revenue' in financials.index:
+                    revenues = financials.loc['Total Revenue'].sort_index(ascending=False)
+                    if len(revenues) >= 2:
+                        latest = revenues.iloc[0]
+                        previous = revenues.iloc[1]
+                        revenue_growth = (latest - previous) / previous if previous != 0 else "N/A"
+            except Exception:
+                # Fallback to info field if calculation fails
+                revenue_growth = info.get("revenueGrowth", "N/A")
+
             # Create a focused company profile
             company_info = {
                 "symbol": ticker,
@@ -46,7 +60,7 @@ class YahooFinanceCompanyInfoTool(BaseTool):
                     # Convert to ratio by dividing by 100 (152.41% → 1.52 ratio)
                     "debt_to_equity": info.get("debtToEquity", "N/A") / 100 if isinstance(info.get("debtToEquity"), (int, float)) else "N/A",
                     "return_on_equity": info.get("returnOnEquity", "N/A"),
-                    "revenue_growth": info.get("revenueGrowth", "N/A"),
+                    "revenue_growth": revenue_growth,  # Calculated from actual financials
                     "earnings_growth": info.get("earningsGrowth", "N/A"),
                 },
                 "valuation_metrics": {

@@ -171,7 +171,7 @@ class PortfolioHoldingsProcessor:
         self,
         holdings: list[RawHolding],
         base_currency: str = "CHF",
-        keep_threshold: float = 0.55,
+        keep_threshold: float = 0.65,  # Aligned with sell_threshold (C grade)
     ) -> list[HoldingDecision]:
         """
         Process ALL holdings in parallel for massive performance gains.
