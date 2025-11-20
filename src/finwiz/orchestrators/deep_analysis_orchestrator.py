@@ -234,7 +234,7 @@ class DeepAnalysisOrchestrator:
             Dictionary with raw metrics for Python scoring
         """
         from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-        from finwiz.tools.enhanced_sentiment_tool import StandardizedSentimentAnalysisTool
+        from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
         from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
         from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
 
@@ -316,7 +316,7 @@ class DeepAnalysisOrchestrator:
         try:
             # STEP 2: Sentiment Analysis
             self.logger.info(f"🐍 Calling SentimentAnalysisTool for {ticker}")
-            sentiment_tool = StandardizedSentimentAnalysisTool()
+            sentiment_tool = EnhancedSentimentAnalysisTool()
             sentiment_result = sentiment_tool._run(
                 symbol=ticker,
                 asset_class=asset_class,
