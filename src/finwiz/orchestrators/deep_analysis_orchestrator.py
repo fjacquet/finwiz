@@ -235,6 +235,8 @@ class DeepAnalysisOrchestrator:
         """
         from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
         from finwiz.tools.enhanced_sentiment_tool import StandardizedSentimentAnalysisTool
+        from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+        from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
 
         self.logger.info(f"🐍 Python collecting data for {ticker} ({asset_class})")
 
@@ -245,7 +247,52 @@ class DeepAnalysisOrchestrator:
         }
 
         try:
-            # STEP 1: Quantitative Analysis (price, indicators, risk metrics)
+            # STEP 0: Yahoo Finance - Current price and basic info
+            self.logger.info(f"🐍 Calling YahooFinanceTickerInfoTool for {ticker}")
+            ticker_tool = YahooFinanceTickerInfoTool()
+            ticker_result = ticker_tool._run(ticker=ticker)
+
+            if "current_price" in ticker_result:
+                collected_data["current_price"] = ticker_result["current_price"]
+                self.logger.info(f"✅ Got current_price: {ticker_result['current_price']}")
+
+            collected_data["ticker_info"] = ticker_result
+
+        except Exception as e:
+            self.logger.error(f"❌ Ticker info failed: {e}", exc_info=True)
+            collected_data["ticker_info"] = {}
+
+        try:
+            # STEP 0.5: Yahoo Finance - Company fundamentals (ROE, debt/equity, revenue growth)
+            if asset_class.lower() == "stock":
+                self.logger.info(f"🐍 Calling YahooFinanceCompanyInfoTool for {ticker}")
+                company_tool = YahooFinanceCompanyInfoTool()
+                company_result = company_tool._run(ticker=ticker)
+
+                # Extract fundamental metrics to top level
+                if "financial_metrics" in company_result:
+                    metrics = company_result["financial_metrics"]
+                    if "return_on_equity" in metrics:
+                        collected_data["roe"] = metrics["return_on_equity"]
+                        self.logger.info(f"✅ Got roe: {metrics['return_on_equity']}")
+                    if "debt_to_equity" in metrics:
+                        collected_data["debt_to_equity"] = metrics["debt_to_equity"]
+                        self.logger.info(f"✅ Got debt_to_equity: {metrics['debt_to_equity']}")
+                    if "revenue_growth" in metrics:
+                        collected_data["revenue_growth"] = metrics["revenue_growth"]
+                        self.logger.info(f"✅ Got revenue_growth: {metrics['revenue_growth']}")
+                    if "profit_margin" in metrics:
+                        collected_data["profit_margin"] = metrics["profit_margin"]
+                        self.logger.info(f"✅ Got profit_margin: {metrics['profit_margin']}")
+
+                collected_data["company_info"] = company_result
+
+        except Exception as e:
+            self.logger.error(f"❌ Company info failed: {e}", exc_info=True)
+            collected_data["company_info"] = {}
+
+        try:
+            # STEP 1: Quantitative Analysis (volatility, beta, technical indicators, risk metrics)
             self.logger.info(f"🐍 Calling QuantitativeAnalysisTool for {ticker}")
             quant_tool = QuantitativeAnalysisTool()
             quant_result = quant_tool._run(
