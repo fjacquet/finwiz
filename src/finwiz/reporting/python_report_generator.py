@@ -466,13 +466,22 @@ class PythonReportGenerator:
         for holding in sorted_holdings:  # All holdings
             grade_class = f"grade-{holding.grade.lower().replace('+', '-plus')}"
 
-            # Determine recommendation badge
-            if "BUY" in holding.recommended_action:
+            # Determine recommendation badge based on grade (source of truth)
+            # Grade-based logic ensures consistency with scoring system
+            if holding.grade in ["A+", "A"]:
                 rec_badge = '<span class="badge badge-buy">ACHAT</span>'
-            elif "SELL" in holding.recommended_action:
+            elif holding.grade in ["D", "F"]:
                 rec_badge = '<span class="badge badge-sell">VENTE</span>'
-            else:
+            elif holding.grade in ["B+", "B", "C+", "C"]:
                 rec_badge = '<span class="badge badge-hold">CONSERVER</span>'
+            else:
+                # Fallback to recommended_action for edge cases
+                if "BUY" in holding.recommended_action:
+                    rec_badge = '<span class="badge badge-buy">ACHAT</span>'
+                elif "SELL" in holding.recommended_action:
+                    rec_badge = '<span class="badge badge-sell">VENTE</span>'
+                else:
+                    rec_badge = '<span class="badge badge-hold">CONSERVER</span>'
 
             holdings_html += f"""
         <tr>
