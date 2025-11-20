@@ -752,6 +752,11 @@ class DeepAnalysisOrchestrator:
                 self.logger.error("❌ crew_output.tasks_output is empty!")
                 return None
 
+            # Verify tasks_output is actually a list/tuple (not Mock or other unexpected type)
+            if not isinstance(crew_output.tasks_output, (list, tuple)):
+                self.logger.error(f"❌ crew_output.tasks_output is not a list/tuple! Got {type(crew_output.tasks_output).__name__}")
+                return None
+
             self.logger.info(f"🔍 DEBUG: Found {len(crew_output.tasks_output)} tasks in tasks_output")
 
             # Get data_collection_task output (first task)
