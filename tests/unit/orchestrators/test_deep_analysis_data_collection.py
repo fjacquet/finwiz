@@ -196,57 +196,60 @@ class TestPythonDataCollection:
 
     def test_collect_data_handles_tool_failures(self, mocker, orchestrator):
         """Test graceful handling when individual tools fail."""
-        with mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run') as mock_ticker, \
-             mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run') as mock_company, \
-             mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run') as mock_quant, \
-             mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run') as mock_sentiment:
+        # ✅ CORRECT pytest-mock pattern: NO context managers
+        mock_ticker = mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run')
+        mock_company = mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run')
+        mock_quant = mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
+        mock_sentiment = mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run')
 
-            # Configure one tool to succeed, others to fail
-            mock_ticker.return_value = {"current_price": 150.0}
-            mock_company.side_effect = Exception("API rate limit")
-            mock_quant.side_effect = Exception("Connection timeout")
-            mock_sentiment.return_value = json.dumps({"overall_sentiment": {"score": 0.6}})
+        # Configure one tool to succeed, others to fail
+        mock_ticker.return_value = {"current_price": 150.0}
+        mock_company.side_effect = Exception("API rate limit")
+        mock_quant.side_effect = Exception("Connection timeout")
+        mock_sentiment.return_value = json.dumps({"overall_sentiment": {"score": 0.6}})
 
-            # Execute - should not raise exception
-            result = orchestrator._collect_data_with_python("TSLA", "stock", batch_enabled=False)
+        # Execute - should not raise exception
+        result = orchestrator._collect_data_with_python("TSLA", "stock", batch_enabled=False)
 
-            # Verify basic structure exists
-            assert result["ticker"] == "TSLA"
-            assert result["asset_class"] == "stock"
-            assert result["current_price"] == 150.0
+        # Verify basic structure exists
+        assert result["ticker"] == "TSLA"
+        assert result["asset_class"] == "stock"
+        assert result["current_price"] == 150.0
 
-            # Failed tools should have empty data (quantitative_analysis would have been {})
-            # Since company_info and quantitative_analysis failed, they won't contribute flattened fields
+        # Failed tools should have empty data (quantitative_analysis would have been {})
+        # Since company_info and quantitative_analysis failed, they won't contribute flattened fields
 
-            # Successful tool data should be flattened and present
-            # Sentiment data should have been flattened from the successful call
-            assert "score" in result  # From sentiment_analysis.overall_sentiment.score
+        # Successful tool data should be flattened and present
+        # Sentiment data should have been flattened: overall_sentiment.score → score
+        assert "score" in result
+        assert result["score"] == 0.6
 
     def test_collect_data_etf_skips_sec_analysis(self, mocker, orchestrator):
         """Test that ETF assets skip SEC analysis (stock-only feature)."""
-        with mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run') as mock_ticker, \
-             mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run') as mock_company, \
-             mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run') as mock_quant, \
-             mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run') as mock_sentiment, \
-             mocker.patch('finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run') as mock_sec:
+        # ✅ CORRECT pytest-mock pattern: NO context managers
+        mock_ticker = mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run')
+        mock_company = mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run')
+        mock_quant = mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
+        mock_sentiment = mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run')
+        mock_sec = mocker.patch('finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run')
 
-            mock_ticker.return_value = {"current_price": 420.0}
-            mock_quant.return_value = json.dumps({"technical_indicators": {"rsi": 55}})
-            mock_sentiment.return_value = json.dumps({"overall_sentiment": {"score": 0.65}})
+        mock_ticker.return_value = {"current_price": 420.0}
+        mock_quant.return_value = json.dumps({"technical_indicators": {"rsi": 55}})
+        mock_sentiment.return_value = json.dumps({"overall_sentiment": {"score": 0.65}})
 
-            # Execute for ETF
-            result = orchestrator._collect_data_with_python("SPY", "etf", batch_enabled=False)
+        # Execute for ETF
+        result = orchestrator._collect_data_with_python("SPY", "etf", batch_enabled=False)
 
-            # SEC tool should NOT be called for ETFs
-            mock_sec.assert_not_called()
+        # SEC tool should NOT be called for ETFs
+        mock_sec.assert_not_called()
 
-            # Company info should also not be called for ETFs
-            mock_company.assert_not_called()
+        # Company info should also not be called for ETFs
+        mock_company.assert_not_called()
 
-            # Other tools should be called
-            mock_ticker.assert_called_once()
-            mock_quant.assert_called_once()
-            mock_sentiment.assert_called_once()
+        # Other tools should be called
+        mock_ticker.assert_called_once()
+        mock_quant.assert_called_once()
+        mock_sentiment.assert_called_once()
 
     def test_flatten_collected_data(self, mocker, orchestrator):
         """Test data flattening for Python scorer consumption."""
@@ -307,79 +310,82 @@ class TestPythonDataCollection:
             }
         }
 
-        with mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run') as mock_ticker, \
-             mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run') as mock_company:
+        # ✅ CORRECT pytest-mock pattern: NO context managers
+        mock_ticker = mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run')
+        mock_company = mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run')
 
-            mock_ticker.return_value = {"current_price": edge_case_data["current_price"]}
-            mock_company.return_value = {"financial_metrics": edge_case_data["financial_metrics"]}
+        mock_ticker.return_value = {"current_price": edge_case_data["current_price"]}
+        mock_company.return_value = {"financial_metrics": edge_case_data["financial_metrics"]}
 
-            # Should handle edge cases without crashing
-            result = orchestrator._collect_data_with_python("PENNY", "stock", batch_enabled=False)
+        # Should handle edge cases without crashing
+        result = orchestrator._collect_data_with_python("PENNY", "stock", batch_enabled=False)
 
-            assert result["current_price"] == 0.0001
-            # NaN and None values should be handled gracefully in flattening
+        assert result["current_price"] == 0.0001
+        # NaN and None values should be handled gracefully in flattening
 
     def test_json_parsing_robustness(self, mocker, orchestrator):
         """Test robust JSON parsing from tool outputs."""
-        with mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run') as mock_ticker, \
-             mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run') as mock_company, \
-             mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run') as mock_quant, \
-             mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run') as mock_sentiment, \
-             mocker.patch('finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run') as mock_sec:
+        # ✅ CORRECT pytest-mock pattern: NO context managers
+        mock_ticker = mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run')
+        mock_company = mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run')
+        mock_quant = mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
+        mock_sentiment = mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run')
+        mock_sec = mocker.patch('finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run')
 
-            # Mock minimal responses for other tools
-            mock_ticker.return_value = {"current_price": 100.0}
-            mock_company.return_value = {}
-            mock_sentiment.return_value = json.dumps({})
-            mock_sec.return_value = json.dumps({})
+        # Mock minimal responses for other tools
+        mock_ticker.return_value = {"current_price": 100.0}
+        mock_company.return_value = {}
+        mock_sentiment.return_value = json.dumps({})
+        mock_sec.return_value = json.dumps({})
 
-            # Test 1: Already parsed dict
-            mock_quant.return_value = {"technical_indicators": {"rsi": 60}}
-            result = orchestrator._collect_data_with_python("TEST1", "stock", batch_enabled=False)
-            # After flattening, rsi should be at top level
-            assert "rsi" in result
+        # Test 1: Already parsed dict
+        mock_quant.return_value = {"technical_indicators": {"rsi": 60}}
+        result = orchestrator._collect_data_with_python("TEST1", "stock", batch_enabled=False)
+        # After flattening, rsi should be at top level
+        assert "rsi" in result
 
-            # Test 2: JSON string
-            mock_quant.return_value = '{"technical_indicators": {"rsi": 55}}'
-            result = orchestrator._collect_data_with_python("TEST2", "stock", batch_enabled=False)
-            assert "rsi" in result
-            assert result["rsi"] == 55
+        # Test 2: JSON string
+        mock_quant.return_value = '{"technical_indicators": {"rsi": 55}}'
+        result = orchestrator._collect_data_with_python("TEST2", "stock", batch_enabled=False)
+        assert "rsi" in result
+        assert result["rsi"] == 55
 
-            # Test 3: Malformed JSON - should be caught and handled
-            mock_quant.return_value = '{"invalid": json}'
-            result = orchestrator._collect_data_with_python("TEST3", "stock", batch_enabled=False)
-            # With malformed JSON, quantitative_analysis will be {} and won't contribute fields
-            assert "rsi" not in result  # No RSI since JSON was malformed
+        # Test 3: Malformed JSON - should be caught and handled
+        mock_quant.return_value = '{"invalid": json}'
+        result = orchestrator._collect_data_with_python("TEST3", "stock", batch_enabled=False)
+        # With malformed JSON, quantitative_analysis will be {} and won't contribute fields
+        assert "rsi" not in result  # No RSI since JSON was malformed
 
     @pytest.mark.integration
-    def test_scorer_integration(self, orchestrator, mock_yahoo_ticker_data,
+    def test_scorer_integration(self, mocker, orchestrator, mock_yahoo_ticker_data,
                                 mock_yahoo_company_data, mock_quantitative_data):
         """Test that collected data integrates correctly with Python scorer."""
-        with mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run') as mock_ticker, \
-             mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run') as mock_company, \
-             mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run') as mock_quant, \
-             mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run'):
+        # ✅ CORRECT pytest-mock pattern: NO context managers
+        mock_ticker = mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run')
+        mock_company = mocker.patch('finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run')
+        mock_quant = mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
+        mocker.patch('finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run')
 
-            mock_ticker.return_value = mock_yahoo_ticker_data
-            mock_company.return_value = mock_yahoo_company_data
-            mock_quant.return_value = mock_quantitative_data
+        mock_ticker.return_value = mock_yahoo_ticker_data
+        mock_company.return_value = mock_yahoo_company_data
+        mock_quant.return_value = mock_quantitative_data
 
-            # Test the full flow including scorer
-            from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
+        # Test the full flow including scorer
+        from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 
-            raw_data = orchestrator._collect_data_with_python("AAPL", "stock", batch_enabled=False)
+        raw_data = orchestrator._collect_data_with_python("AAPL", "stock", batch_enabled=False)
 
-            scorer = DeepAnalysisScorer()
-            scoring_result = scorer.calculate_composite_score("AAPL", "stock", raw_data)
+        scorer = DeepAnalysisScorer()
+        scoring_result = scorer.calculate_composite_score("AAPL", "stock", raw_data)
 
-            # Verify scorer produces valid output
-            assert scoring_result is not None
-            assert hasattr(scoring_result, 'ticker')
-            assert hasattr(scoring_result, 'composite_score')
-            assert hasattr(scoring_result, 'grade')
-            assert scoring_result.ticker == "AAPL"
-            assert 0 <= scoring_result.composite_score <= 1.0
-            assert scoring_result.grade in ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F']
+        # Verify scorer produces valid output
+        assert scoring_result is not None
+        assert hasattr(scoring_result, 'ticker')
+        assert hasattr(scoring_result, 'composite_score')
+        assert hasattr(scoring_result, 'grade')
+        assert scoring_result.ticker == "AAPL"
+        assert 0 <= scoring_result.composite_score <= 1.0
+        assert scoring_result.grade in ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F']
 
     def test_import_stability(self):
         """Test that all required imports work without errors."""
@@ -401,16 +407,17 @@ class TestPythonDataCollection:
 
     def test_batch_mode_parameter_propagation(self, mocker, orchestrator):
         """Test that batch_enabled parameter is properly used."""
-        with mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run') as mock_ticker:
-            mock_ticker.return_value = {"current_price": 100.0}
+        # ✅ CORRECT pytest-mock pattern: NO context managers
+        mock_ticker = mocker.patch('finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run')
+        mock_ticker.return_value = {"current_price": 100.0}
 
-            # Test with batch_enabled=True
-            result = orchestrator._collect_data_with_python("BATCH1", "stock", batch_enabled=True)
-            assert result["ticker"] == "BATCH1"
+        # Test with batch_enabled=True
+        result = orchestrator._collect_data_with_python("BATCH1", "stock", batch_enabled=True)
+        assert result["ticker"] == "BATCH1"
 
-            # Test with batch_enabled=False
-            result = orchestrator._collect_data_with_python("BATCH2", "stock", batch_enabled=False)
-            assert result["ticker"] == "BATCH2"
+        # Test with batch_enabled=False
+        result = orchestrator._collect_data_with_python("BATCH2", "stock", batch_enabled=False)
+        assert result["ticker"] == "BATCH2"
 
-            # Both should work without issues
-            assert mock_ticker.call_count == 2
+        # Both should work without issues
+        assert mock_ticker.call_count == 2
