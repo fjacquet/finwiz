@@ -315,21 +315,31 @@ class DeepAnalysisOrchestrator:
             if key in data:
                 flattened[key] = data[key]
 
-        # Extract from nested structures
-        nested_sections = ["quantitative_analysis", "sec_analysis", "sentiment_analysis", "ticker_validation"]
-
-        for section in nested_sections:
-            if section in data and isinstance(data[section], dict):
-                self._flatten_recursive(data[section], flattened, prefix="")
-
         # CRITICAL FIX: Sometimes agent nests sections inside ticker_validation
-        # Check if ticker_validation contains the other sections
+        # Check if ticker_validation contains the other sections FIRST before processing
         if "ticker_validation" in data and isinstance(data["ticker_validation"], dict):
             ticker_val = data["ticker_validation"]
+
+            # Extract the nested sections if they're wrongly placed inside ticker_validation
             for section in ["quantitative_analysis", "sec_analysis", "sentiment_analysis"]:
                 if section in ticker_val and isinstance(ticker_val[section], dict):
                     self.logger.info(f"🔍 Found {section} nested inside ticker_validation, extracting...")
-                    self._flatten_recursive(ticker_val[section], flattened, prefix="")
+                    # Move it to top level for proper processing
+                    data[section] = ticker_val[section]
+
+            # Also process ticker_validation itself for basic fields
+            if "valid" in ticker_val:
+                flattened["valid"] = ticker_val["valid"]
+            if "company_name" in ticker_val:
+                flattened["company_name"] = ticker_val["company_name"]
+
+        # Now extract from nested structures (including the ones we just moved to top level)
+        nested_sections = ["quantitative_analysis", "sec_analysis", "sentiment_analysis"]
+
+        for section in nested_sections:
+            if section in data and isinstance(data[section], dict):
+                self.logger.info(f"🔍 Processing section: {section}")
+                self._flatten_recursive(data[section], flattened, prefix="")
 
         return flattened
 
@@ -446,21 +456,31 @@ class DeepAnalysisOrchestrator:
                         cleaned = cleaned.rstrip('`').strip()
                         self.logger.info("🔍 Stripped markdown code fence")
 
-                    # Extract JSON from Python assignment: context["x"] = {...}
-                    # Try multiple patterns to handle different agent output formats
-                    match = re.search(r'=\s*(\{.+)', cleaned, re.DOTALL)  # More permissive: don't require closing }
-                    if match:
-                        cleaned = match.group(1).strip()
-                        self.logger.info(f"🔍 Extracted JSON from assignment (length={len(cleaned)})")
-
-                        # CRITICAL: Try to fix malformed JSON by ensuring proper closing
-                        # Count braces and add missing closing braces
+                    # CRITICAL: Check if the output is already pure JSON (starts with {)
+                    if cleaned.startswith('{'):
+                        self.logger.info("🔍 Raw output is already JSON format")
+                        # Ensure proper closing if malformed
                         open_braces = cleaned.count('{')
                         close_braces = cleaned.count('}')
                         if open_braces > close_braces:
                             missing = open_braces - close_braces
                             cleaned = cleaned + ('}' * missing)
                             self.logger.info(f"🔍 Fixed malformed JSON: added {missing} closing braces")
+                    else:
+                        # Try to extract JSON from Python assignment: context["x"] = {...}
+                        match = re.search(r'=\s*(\{.+)', cleaned, re.DOTALL)  # More permissive: don't require closing }
+                        if match:
+                            cleaned = match.group(1).strip()
+                            self.logger.info(f"🔍 Extracted JSON from assignment (length={len(cleaned)})")
+
+                            # CRITICAL: Try to fix malformed JSON by ensuring proper closing
+                            # Count braces and add missing closing braces
+                            open_braces = cleaned.count('{')
+                            close_braces = cleaned.count('}')
+                            if open_braces > close_braces:
+                                missing = open_braces - close_braces
+                                cleaned = cleaned + ('}' * missing)
+                                self.logger.info(f"🔍 Fixed malformed JSON: added {missing} closing braces")
 
                     # Try parsing as JSON
                     try:
@@ -479,6 +499,24 @@ class DeepAnalysisOrchestrator:
                             # But data comes nested in: quantitative_analysis.prices.current_price
                             flattened = self._flatten_collected_data(parsed)
                             self.logger.info(f"🔍 Flattened to {len(flattened)} top-level fields")
+
+                            # DEBUG: Log what fields we actually have
+                            available_fields = sorted([k for k in flattened.keys() if not k.startswith('_')])
+                            self.logger.info(f"📋 Available fields: {available_fields}")
+
+                            # DEBUG: Check for critical fields
+                            critical_fields = ['current_price', 'roe', 'debt_to_equity', 'revenue_growth',
+                                              'volatility', 'beta', 'expense_ratio', 'volume_24h']
+                            missing = [f for f in critical_fields if f not in flattened]
+                            if missing:
+                                self.logger.warning(f"⚠️ Missing critical fields: {missing}")
+
+                                # DEBUG: Check for similar field names that might be the data we need
+                                for field in missing:
+                                    similar = [k for k in flattened.keys() if field.replace('_', '') in k.lower().replace('_', '')
+                                              or k.lower().replace('_', '') in field.replace('_', '')]
+                                    if similar:
+                                        self.logger.info(f"   → Possible match for '{field}': {similar}")
 
                             return flattened
                     except json.JSONDecodeError as e:

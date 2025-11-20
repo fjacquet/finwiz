@@ -42,10 +42,9 @@ class TestDeepAnalysisCrew:
             config = yaml.safe_load(f)
 
         # Verify all required tasks are present (Python scoring approach)
-        # NOTE: The crew was refactored to use Python scoring instead of AI tasks
+        # NOTE: Crew only collects data - orchestrator handles Python scoring
         required_tasks = [
-            "data_collection_task",  # Async data collection
-            "python_scoring_task",  # Sync Python scoring
+            "data_collection_task",  # Async data collection - orchestrator scores it
         ]
 
         # Optional AI summary task (only when DEEP_ANALYSIS_AI_SUMMARY=true)

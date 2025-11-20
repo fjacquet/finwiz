@@ -439,7 +439,14 @@ class DeepAnalysisCrew:
     @sync_task
     @task
     def python_scoring_task(self) -> Task:
-        """Calculate scores using Python DeepAnalysisScorer."""
+        """
+        DEPRECATED: This task is no longer used in the crew workflow.
+
+        Python scoring is now handled by the orchestrator (deep_analysis_orchestrator.py)
+        which extracts collected data from crew output and calls DeepAnalysisScorer directly.
+
+        This method is kept for backward compatibility and testing purposes only.
+        """
         return Task(
             config=self.tasks_config["python_scoring_task"],
             output_pydantic=DeepAnalysisCrewExport,
@@ -469,24 +476,23 @@ class DeepAnalysisCrew:
         mode = self.perf_config.get_mode()
 
         if mode == OptimizationMode.MAXIMUM_SPEED:
-            # Maximum Speed: Python scoring only, no AI summary
-            crew_tasks = [self.data_collection_task(), self.python_scoring_task()]
-            logger.info("⚡ MAXIMUM SPEED MODE: Python scoring + no AI summary + gpt-4o-mini + minimal tools")
+            # Maximum Speed: Data collection only - orchestrator handles Python scoring
+            crew_tasks = [self.data_collection_task()]
+            logger.info("⚡ MAXIMUM SPEED MODE: Data collection only - orchestrator does Python scoring")
 
         elif mode == OptimizationMode.BALANCED:
-            # Balanced: Python scoring + optional AI summary
-            crew_tasks = [self.data_collection_task(), self.python_scoring_task()]
+            # Balanced: Data collection + optional AI summary
+            crew_tasks = [self.data_collection_task()]
             if self.perf_config.should_use_ai_summary():
                 crew_tasks.append(self.ai_summary_task())
-                logger.info("🤖 BALANCED MODE: Python scoring + AI summary + gpt-4o-mini + minimal tools")
+                logger.info("🤖 BALANCED MODE: Data collection + AI summary - orchestrator does Python scoring")
             else:
-                logger.info("⚡ BALANCED MODE: Python scoring + no AI summary + gpt-4o-mini + minimal tools")
+                logger.info("⚡ BALANCED MODE: Data collection only - orchestrator does Python scoring")
 
         else:  # BASELINE mode
-            # Baseline: Full AI scoring for comparison/debugging
+            # Baseline: Data collection only - orchestrator handles Python scoring
             crew_tasks = [
-                self.data_collection_task(),
-                self.python_scoring_task(),  # Still use Python scoring but with full tools
+                self.data_collection_task(),  # Only collect data - orchestrator scores it
             ]
             logger.info("🔍 BASELINE MODE: AI scoring for comparison/debugging")
 
