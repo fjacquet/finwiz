@@ -233,6 +233,7 @@ class DeepAnalysisOrchestrator:
         Returns:
             Dictionary with raw metrics for Python scoring
         """
+        import json
         from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
         from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
         from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
@@ -304,7 +305,6 @@ class DeepAnalysisOrchestrator:
             )
 
             # Parse quant result (it returns JSON string)
-            import json
             quant_data = json.loads(quant_result) if isinstance(quant_result, str) else quant_result
             collected_data["quantitative_analysis"] = quant_data
             self.logger.info(f"✅ Got quantitative data with keys: {list(quant_data.keys())[:5]}")
@@ -318,11 +318,10 @@ class DeepAnalysisOrchestrator:
             self.logger.info(f"🐍 Calling SentimentAnalysisTool for {ticker}")
             sentiment_tool = EnhancedSentimentAnalysisTool()
             sentiment_result = sentiment_tool._run(
-                symbol=ticker,
-                asset_class=asset_class,
+                ticker=ticker,
+                asset_type=asset_class,
                 max_articles=20,
-                days_back=30,
-                include_trending=True
+                days_back=30
             )
 
             # Parse sentiment result
@@ -338,7 +337,7 @@ class DeepAnalysisOrchestrator:
             # STEP 3: SEC Analysis (stocks only - fundamentals like ROE, debt/equity)
             if asset_class.lower() == "stock":
                 self.logger.info(f"🐍 Calling SEC Analysis for {ticker}")
-                from finwiz.tools.sec_analysis_tool import EnhancedSECAnalysisTool
+                from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
 
                 sec_tool = EnhancedSECAnalysisTool()
                 sec_result = sec_tool._run(
@@ -512,10 +511,13 @@ class DeepAnalysisOrchestrator:
         """
         flattened = {}
 
-        # Keep top-level metadata
-        for key in ["ticker", "asset_class", "collection_timestamp"]:
-            if key in data:
-                flattened[key] = data[key]
+        # Keep ALL top-level fields (including current_price, roe, debt_to_equity, etc.)
+        # These were explicitly extracted by _collect_data_with_python
+        for key, value in data.items():
+            # Skip only the nested sections we'll process separately
+            if key not in ["ticker_info", "company_info", "quantitative_analysis", "sec_analysis", "sentiment_analysis", "ticker_validation"]:
+                if isinstance(value, (int, float, str, bool, type(None))):
+                    flattened[key] = value
 
         # CRITICAL FIX: Sometimes agent nests sections inside ticker_validation
         # Check if ticker_validation contains the other sections FIRST before processing
@@ -536,7 +538,8 @@ class DeepAnalysisOrchestrator:
                 flattened["company_name"] = ticker_val["company_name"]
 
         # Now extract from nested structures (including the ones we just moved to top level)
-        nested_sections = ["quantitative_analysis", "sec_analysis", "sentiment_analysis"]
+        # Also process ticker_info and company_info which contain nested data
+        nested_sections = ["ticker_info", "company_info", "quantitative_analysis", "sec_analysis", "sentiment_analysis"]
 
         for section in nested_sections:
             if section in data and isinstance(data[section], dict):
