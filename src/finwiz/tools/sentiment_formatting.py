@@ -100,7 +100,7 @@ class SentimentResponseFormatter:
                 response += f"{i}. {sentiment_emoji} **{article['title']}**{source_tag}\n"
                 response += f"   - Publisher: {article['publisher']}\n"
                 response += f"   - Impact Score: {article['impact_score']:.3f}\n"
-                response += f"   - Date: {article['date']}\n"
+                response += f"   - Date: {article.get('date', article.get('published_date', 'Unknown'))}\n"
 
                 # Add Sonar-specific metrics if available
                 if article.get("source") == "perplexity_sonar":

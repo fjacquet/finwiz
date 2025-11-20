@@ -79,14 +79,46 @@ class EnhancedSentimentAnalysisTool(BaseTool):
             sonar_fallback_used = enhanced_news_data.get("sonar_fallback_used", False)
 
             if combined_count == 0:
-                return self.formatter.format_no_data_response(ticker, asset_type)
+                # Return structured no-data response
+                return {
+                    "formatted_analysis": self.formatter.format_no_data_response(ticker, asset_type),
+                    "sentiment_score": 0.0,
+                    "overall_sentiment": "neutral",
+                    "confidence": 0.0,
+                    "positive_ratio": 0.0,
+                    "negative_ratio": 0.0,
+                    "neutral_ratio": 0.0,
+                    "total_articles": 0,
+                    "sentiment_distribution": {},
+                    "trending_topics": [],
+                    "article_count": 0,
+                    "news_sources": [],
+                    "sentiment_breakdown": {},
+                    "no_data": True,
+                }
 
             # Filter news by date range
             filtered_yahoo = self.data_sources.filter_news_by_date(yahoo_articles, days_back)
             filtered_sonar = self.data_sources.filter_sonar_articles_by_date(sonar_articles, days_back)
 
             if not filtered_yahoo and not filtered_sonar:
-                return self.formatter.format_no_recent_news_response(ticker, asset_type, days_back)
+                # Return structured no-recent-news response
+                return {
+                    "formatted_analysis": self.formatter.format_no_recent_news_response(ticker, asset_type, days_back),
+                    "sentiment_score": 0.0,
+                    "overall_sentiment": "neutral",
+                    "confidence": 0.0,
+                    "positive_ratio": 0.0,
+                    "negative_ratio": 0.0,
+                    "neutral_ratio": 0.0,
+                    "total_articles": 0,
+                    "sentiment_distribution": {},
+                    "trending_topics": [],
+                    "article_count": 0,
+                    "news_sources": [],
+                    "sentiment_breakdown": {},
+                    "no_recent_news": True,
+                }
 
             # Combine filtered articles for analysis
             combined_articles = self.data_sources.combine_article_sources(filtered_yahoo, filtered_sonar)
@@ -104,7 +136,7 @@ class EnhancedSentimentAnalysisTool(BaseTool):
             market_outlook = self.calculator.generate_market_outlook(sentiment_analysis, trending_topics, asset_type)
 
             # Format comprehensive response with Sonar integration
-            return self.formatter.format_comprehensive_response(
+            formatted_response = self.formatter.format_comprehensive_response(
                 ticker=ticker,
                 asset_type=asset_type,
                 sentiment_analysis=sentiment_analysis,
@@ -117,9 +149,43 @@ class EnhancedSentimentAnalysisTool(BaseTool):
                 sonar_fallback_used=sonar_fallback_used,
             )
 
+            # Return both structured data AND formatted text for compatibility
+            # The orchestrator can extract the structured data it needs
+            return {
+                "formatted_analysis": formatted_response,
+                "sentiment_score": sentiment_analysis.get("sentiment_score", 0.0),
+                "overall_sentiment": sentiment_analysis.get("overall_sentiment", "neutral"),
+                "confidence": sentiment_analysis.get("confidence", 0.0),
+                "positive_ratio": sentiment_analysis.get("positive_ratio", 0.0),
+                "negative_ratio": sentiment_analysis.get("negative_ratio", 0.0),
+                "neutral_ratio": sentiment_analysis.get("neutral_ratio", 0.0),
+                "total_articles": sentiment_analysis.get("total_articles", 0),
+                "sentiment_distribution": sentiment_analysis.get("sentiment_distribution", {}),
+                "trending_topics": trending_topics,
+                "article_count": len(combined_articles),
+                "news_sources": self.data_sources.get_data_sources_list(filtered_yahoo, filtered_sonar),
+                "sentiment_breakdown": sentiment_analysis.get("sentiment_distribution", {}),
+            }
+
         except Exception as e:
             logger.error(f"Error in enhanced sentiment analysis for {ticker}: {str(e)}")
-            return self.formatter.format_error_response(ticker, asset_type, str(e))
+            # Return structured error data for consistency
+            return {
+                "formatted_analysis": self.formatter.format_error_response(ticker, asset_type, str(e)),
+                "sentiment_score": 0.0,
+                "overall_sentiment": "neutral",
+                "confidence": 0.0,
+                "positive_ratio": 0.0,
+                "negative_ratio": 0.0,
+                "neutral_ratio": 0.0,
+                "total_articles": 0,
+                "sentiment_distribution": {},
+                "trending_topics": [],
+                "article_count": 0,
+                "news_sources": [],
+                "sentiment_breakdown": {},
+                "error": str(e),
+            }
 
 
 logger = get_logger(__name__)

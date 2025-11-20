@@ -264,8 +264,62 @@ class DeepAnalysisOrchestrator:
             collected_data["ticker_info"] = {}
 
         try:
-            # STEP 0.5: Yahoo Finance - Company fundamentals (ROE, debt/equity, revenue growth)
-            if asset_class.lower() == "stock":
+            # STEP 0.5: Asset-specific data collection
+            if asset_class.lower() == "crypto":
+                # Collect crypto-specific data (volume_24h, age_years, market_cap)
+                self.logger.info(f"🐍 Calling EnhancedCryptoAnalysisTool for {ticker}")
+                from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
+
+                crypto_tool = EnhancedCryptoAnalysisTool()
+                crypto_result = crypto_tool._run(
+                    symbol=ticker,
+                    include_thesis=False,  # We only need data
+                    include_risk_assessment=False,
+                    include_perplexity=False
+                )
+
+                # Extract crypto-specific metrics
+                if isinstance(crypto_result, dict):
+                    # Check if crypto_data is nested or at top level
+                    crypto_data = crypto_result.get("crypto_data", crypto_result)
+
+                    # Map total_volume to volume_24h (CoinGecko uses total_volume)
+                    collected_data["volume_24h"] = crypto_data.get("total_volume", crypto_data.get("volume_24h", 0.0))
+                    collected_data["market_cap"] = crypto_data.get("market_cap", 0.0)
+
+                    # Also store circulating and max supply for scoring
+                    collected_data["circulating_supply"] = crypto_data.get("circulating_supply", 0.0)
+                    collected_data["max_supply"] = crypto_data.get("max_supply", crypto_data.get("total_supply", 0.0))
+
+                    # Calculate age_years from genesis date if available
+                    # For now, use a mapping for known cryptos
+                    age_mapping = {
+                        "BTC": 15.0,   # Since 2009
+                        "BTC-USD": 15.0,
+                        "ETH": 9.0,    # Since 2015
+                        "ETH-USD": 9.0,
+                        "ADA": 7.0,    # Since 2017
+                        "ADA-USD": 7.0,
+                        "SOL": 4.0,    # Since 2020
+                        "SOL-USD": 4.0,
+                        "AVAX": 4.0,   # Since 2020
+                        "AVAX-USD": 4.0,
+                        "DOT": 4.0,    # Since 2020
+                        "DOT-USD": 4.0,
+                    }
+                    ticker_base = ticker.replace("-USD", "").upper()
+                    collected_data["age_years"] = age_mapping.get(ticker_base, 3.0)  # Default 3 years
+
+                    self.logger.info(f"✅ Got crypto data: volume_24h={collected_data['volume_24h']}, age_years={collected_data['age_years']}, market_cap={collected_data['market_cap']}")
+                    collected_data["crypto_info"] = crypto_result
+                else:
+                    self.logger.warning(f"⚠️ Crypto tool returned unexpected type: {type(crypto_result)}")
+                    # Set default values for required fields
+                    collected_data["volume_24h"] = 1e9  # Default $1B volume
+                    collected_data["age_years"] = 3.0   # Default 3 years
+                    collected_data["market_cap"] = 10e9  # Default $10B market cap
+
+            elif asset_class.lower() == "stock":
                 self.logger.info(f"🐍 Calling YahooFinanceCompanyInfoTool for {ticker}")
                 company_tool = YahooFinanceCompanyInfoTool()
                 company_result = company_tool._run(ticker=ticker)
@@ -289,8 +343,15 @@ class DeepAnalysisOrchestrator:
                 collected_data["company_info"] = company_result
 
         except Exception as e:
-            self.logger.error(f"❌ Company info failed: {e}", exc_info=True)
-            collected_data["company_info"] = {}
+            self.logger.error(f"❌ Asset-specific data collection failed: {e}", exc_info=True)
+            # Ensure crypto fields exist with defaults if it was a crypto asset
+            if asset_class.lower() == "crypto":
+                collected_data["volume_24h"] = 1e9  # Default $1B volume
+                collected_data["age_years"] = 3.0   # Default 3 years
+                collected_data["market_cap"] = 10e9  # Default $10B market cap
+                collected_data["crypto_info"] = {}
+            else:
+                collected_data["company_info"] = {}
 
         try:
             # STEP 1: Quantitative Analysis (volatility, beta, technical indicators, risk metrics)
@@ -335,25 +396,30 @@ class DeepAnalysisOrchestrator:
                 days_back=30
             )
 
-            # Store sentiment result (it's already formatted markdown text, not JSON)
-            # The sentiment tool returns markdown strings, not JSON objects
-            if isinstance(sentiment_result, str):
-                # Check if it's an error message
-                if sentiment_result.startswith("Error:") or "No data available" in sentiment_result:
-                    self.logger.warning(f"⚠️ Sentiment tool returned error/warning: {sentiment_result[:100]}")
-                    collected_data["sentiment_analysis"] = {"error": sentiment_result}
-                else:
-                    # Store the markdown analysis text
-                    collected_data["sentiment_analysis"] = {"analysis_text": sentiment_result}
-                    self.logger.info(f"✅ Got sentiment analysis ({len(sentiment_result)} chars)")
-            else:
-                # Unexpected type - store as-is
+            # Store sentiment result (now returns structured data)
+            if isinstance(sentiment_result, dict):
+                # Extract sentiment score and other key fields to top level
+                collected_data["sentiment_score"] = sentiment_result.get("sentiment_score", 0.0)
+                collected_data["overall_sentiment"] = sentiment_result.get("overall_sentiment", "neutral")
+                collected_data["sentiment_confidence"] = sentiment_result.get("confidence", 0.0)
+                collected_data["trending_topics"] = sentiment_result.get("trending_topics", [])
+                collected_data["article_count"] = sentiment_result.get("article_count", 0)
+                collected_data["news_sources"] = sentiment_result.get("news_sources", [])
+                collected_data["sentiment_breakdown"] = sentiment_result.get("sentiment_breakdown", {})
+
+                # Store full sentiment analysis for detailed reporting
                 collected_data["sentiment_analysis"] = sentiment_result
-                self.logger.info(f"✅ Got sentiment data with keys: {list(sentiment_result.keys())[:5] if isinstance(sentiment_result, dict) else 'N/A'}")
+                self.logger.info(f"✅ Got sentiment data: score={collected_data['sentiment_score']:.3f}, sentiment={collected_data['overall_sentiment']}")
+            else:
+                # Fallback for legacy string response
+                self.logger.warning(f"⚠️ Sentiment tool returned unexpected type: {type(sentiment_result)}")
+                collected_data["sentiment_analysis"] = {"error": "Unexpected response type"}
+                collected_data["sentiment_score"] = 0.0
 
         except Exception as e:
             self.logger.error(f"❌ Sentiment analysis failed: {e}", exc_info=True)
             collected_data["sentiment_analysis"] = {}
+            collected_data["sentiment_score"] = 0.0  # Ensure sentiment_score exists even on error
 
         try:
             # STEP 3: SEC Analysis (stocks only - fundamentals like ROE, debt/equity)
@@ -641,7 +707,9 @@ class DeepAnalysisOrchestrator:
                 # For primitives (numbers, strings, bools), add to target
                 if isinstance(value, (int, float, str, bool, type(None))):
                     # Use simple key name (no prefix) for cleaner top-level access
-                    target[key] = value
+                    # IMPORTANT: Don't overwrite if already set (e.g., from performance_metrics)
+                    if key not in target:
+                        target[key] = value
                 # For nested dicts, recurse
                 elif isinstance(value, dict):
                     self._flatten_recursive(value, target, prefix="")

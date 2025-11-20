@@ -427,6 +427,15 @@ class SentimentCalculator:
             # Normalize to 0-1 range
             impact_score = min(1.0, max(0.0, impact_score))
 
+            # Determine sentiment category
+            sentiment_value = self._calculate_base_sentiment(content)
+            if sentiment_value > 0.1:
+                sentiment_category = "bullish"
+            elif sentiment_value < -0.1:
+                sentiment_category = "bearish"
+            else:
+                sentiment_category = "neutral"
+
             # Add to results
             impact_articles.append(
                 {
@@ -436,6 +445,8 @@ class SentimentCalculator:
                     "impact_score": round(impact_score, 3),
                     "url": article.get("link", ""),
                     "summary": (article.get("summary", "")[:200] + "..." if len(article.get("summary", "")) > 200 else article.get("summary", "")),
+                    "sentiment": sentiment_category,  # Add sentiment field
+                    "source": article.get("source", "yahoo_finance"),  # Add source field
                 }
             )
 
