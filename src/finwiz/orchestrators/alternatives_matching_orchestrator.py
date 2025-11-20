@@ -78,17 +78,21 @@ class AlternativesMatchingOrchestrator:
             # Extract grade - handle both dict and object types
             if isinstance(holding, dict):
                 grade = holding.get("grade", "D")
-                # risk_score is in the risk assessment object, not at top level
-                risk_obj = holding.get("risk", {})
-                risk_score = risk_obj.get("score") if isinstance(risk_obj, dict) else getattr(risk_obj, "score", None)
+                # Try risk_score directly first (Python scorer), then fall back to risk.score (legacy)
+                risk_score = holding.get("risk_score")
+                if risk_score is None:
+                    risk_obj = holding.get("risk", {})
+                    risk_score = risk_obj.get("score") if isinstance(risk_obj, dict) else getattr(risk_obj, "score", None)
                 composite_score = holding.get("composite_score")
                 name = holding.get("name", ticker)
                 asset_class = holding.get("asset_class", "stock")
             else:
                 grade = getattr(holding, "grade", "D")
-                # risk_score is in the risk assessment object, not at top level
-                risk_obj = getattr(holding, "risk", None)
-                risk_score = risk_obj.score if risk_obj else None
+                # Try risk_score directly first (DeepAnalysisResult), then fall back to risk.score (legacy)
+                risk_score = getattr(holding, "risk_score", None)
+                if risk_score is None:
+                    risk_obj = getattr(holding, "risk", None)
+                    risk_score = risk_obj.score if risk_obj else None
                 composite_score = getattr(holding, "composite_score", None)
                 name = getattr(holding, "name", ticker)
                 asset_class = getattr(holding, "asset_class", "stock")
