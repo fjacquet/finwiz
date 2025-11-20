@@ -26,7 +26,11 @@ class TestStockCrew:
 
     @pytest.fixture
     def mock_yahoo_finance_data(self):
-        """Create mock Yahoo Finance data."""
+        """Create mock Yahoo Finance data.
+
+        Note: yfinance returns debtToEquity as percentage (173.0 = 173%),
+        which gets converted to ratio (1.73) by yahoo_finance_company_info_tool.
+        """
         return {
             "symbol": "AAPL",
             "longName": "Apple Inc.",
@@ -35,8 +39,8 @@ class TestStockCrew:
             "trailingPE": 25.5,
             "forwardPE": 22.3,
             "priceToBook": 8.2,
-            "debtToEquity": 1.73,
-            "returnOnEquity": 0.825,
+            "debtToEquity": 173.0,  # yfinance format: percentage (173.0 = 173%)
+            "returnOnEquity": 0.825,  # yfinance format: decimal (0.825 = 82.5%)
             "revenueGrowth": 0.085,
             "earningsGrowth": 0.12,
             "sector": "Technology",

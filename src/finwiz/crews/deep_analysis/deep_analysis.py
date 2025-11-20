@@ -120,11 +120,9 @@ class DeepAnalysisCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
-        # Make Pydantic models available for CrewAI resolution BEFORE super().__init__()
+        # Make Pydantic models available for CrewAI resolution
         self.DeepAnalysisResult = output_pydantic(DeepAnalysisResult)
         self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
-
-        super().__init__()
 
         # Initialize structured logger
         self.crew_logger = CrewLogger("DeepAnalysisCrew")
