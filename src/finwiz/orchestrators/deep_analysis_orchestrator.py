@@ -309,6 +309,17 @@ class DeepAnalysisOrchestrator:
             collected_data["quantitative_analysis"] = quant_data
             self.logger.info(f"✅ Got quantitative data with keys: {list(quant_data.keys())[:5]}")
 
+            # DEBUG: Check if beta is in the data
+            if "performance_metrics" in quant_data:
+                perf_keys = list(quant_data["performance_metrics"].keys()) if isinstance(quant_data["performance_metrics"], dict) else "not a dict"
+                self.logger.info(f"🔍 DEBUG: performance_metrics keys: {perf_keys}")
+                if isinstance(quant_data["performance_metrics"], dict) and "beta" in quant_data["performance_metrics"]:
+                    self.logger.info(f"🔍 DEBUG: Found beta={quant_data['performance_metrics']['beta']} in quantitative data")
+                else:
+                    self.logger.warning(f"⚠️ DEBUG: Beta NOT found in performance_metrics!")
+            else:
+                self.logger.warning(f"⚠️ DEBUG: No performance_metrics in quantitative data!")
+
         except Exception as e:
             self.logger.error(f"❌ Quantitative analysis failed: {e}", exc_info=True)
             collected_data["quantitative_analysis"] = {}
@@ -324,10 +335,21 @@ class DeepAnalysisOrchestrator:
                 days_back=30
             )
 
-            # Parse sentiment result
-            sentiment_data = json.loads(sentiment_result) if isinstance(sentiment_result, str) else sentiment_result
-            collected_data["sentiment_analysis"] = sentiment_data
-            self.logger.info(f"✅ Got sentiment data with keys: {list(sentiment_data.keys())[:5]}")
+            # Store sentiment result (it's already formatted markdown text, not JSON)
+            # The sentiment tool returns markdown strings, not JSON objects
+            if isinstance(sentiment_result, str):
+                # Check if it's an error message
+                if sentiment_result.startswith("Error:") or "No data available" in sentiment_result:
+                    self.logger.warning(f"⚠️ Sentiment tool returned error/warning: {sentiment_result[:100]}")
+                    collected_data["sentiment_analysis"] = {"error": sentiment_result}
+                else:
+                    # Store the markdown analysis text
+                    collected_data["sentiment_analysis"] = {"analysis_text": sentiment_result}
+                    self.logger.info(f"✅ Got sentiment analysis ({len(sentiment_result)} chars)")
+            else:
+                # Unexpected type - store as-is
+                collected_data["sentiment_analysis"] = sentiment_result
+                self.logger.info(f"✅ Got sentiment data with keys: {list(sentiment_result.keys())[:5] if isinstance(sentiment_result, dict) else 'N/A'}")
 
         except Exception as e:
             self.logger.error(f"❌ Sentiment analysis failed: {e}", exc_info=True)
@@ -559,16 +581,22 @@ class DeepAnalysisOrchestrator:
         # This ensures critical fields like beta, volatility, etc. are captured correctly
         if "quantitative_analysis" in data and isinstance(data["quantitative_analysis"], dict):
             quant = data["quantitative_analysis"]
+            self.logger.info(f"🔍 FLATTEN: Found quantitative_analysis with keys: {list(quant.keys())[:10]}")
 
             # Extract performance_metrics fields (beta, volatility, max_drawdown, etc.)
             if "performance_metrics" in quant and isinstance(quant["performance_metrics"], dict):
                 perf = quant["performance_metrics"]
+                self.logger.info(f"🔍 FLATTEN: Found performance_metrics with keys: {list(perf.keys())}")
                 critical_perf_fields = ["beta", "volatility", "max_drawdown", "sharpe_ratio",
                                        "total_return", "annualized_return"]
                 for field in critical_perf_fields:
                     if field in perf and perf[field] is not None:
                         flattened[field] = perf[field]
-                        self.logger.debug(f"✅ Extracted {field}={perf[field]} from performance_metrics")
+                        self.logger.info(f"✅ FLATTEN: Extracted {field}={perf[field]} from performance_metrics")
+                    else:
+                        self.logger.warning(f"⚠️ FLATTEN: Field {field} not found or is None in performance_metrics")
+            else:
+                self.logger.warning(f"⚠️ FLATTEN: No performance_metrics dict in quantitative_analysis")
 
             # Extract technical_analysis fields (RSI, MACD, etc.)
             if "technical_analysis" in quant and isinstance(quant["technical_analysis"], dict):
