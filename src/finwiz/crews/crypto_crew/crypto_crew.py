@@ -42,8 +42,9 @@ current_script_path = Path(__file__).resolve()
 crew_dir = current_script_path.parent
 
 # Get standardized tool set for crypto crew and make them robust
+# TEMPORARILY DISABLED RAG due to qdrant-client version conflict
 raw_research_tools = get_crypto_crew_tools(
-    include_rag=True,
+    include_rag=False,  # Temporarily disabled
     include_quantitative=True,
     collection_suffix="crypto",
 )

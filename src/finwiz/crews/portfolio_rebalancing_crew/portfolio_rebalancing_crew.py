@@ -52,7 +52,8 @@ standardized_risk_tool = StandardizedRiskScoringTool()
 quantitative_tool = get_quantitative_analysis_tool()
 
 # Get RAG tools for knowledge retrieval and storage
-rag_tools = get_rag_tools(collection_suffix="portfolio_rebalancing")
+# rag_tools = get_rag_tools(collection_suffix="portfolio_rebalancing")  # DISABLED - qdrant conflict
+rag_tools = []  # Empty list
 
 # Initialize new portfolio holdings analysis tools
 holding_analyzer_orchestrator = HoldingAnalyzerOrchestrator()

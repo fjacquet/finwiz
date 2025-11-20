@@ -35,7 +35,8 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # Get RAG tools for knowledge retrieval and storage and make them robust
-raw_rag_tools = get_rag_tools(collection_suffix="report")
+# raw_rag_tools = get_rag_tools(collection_suffix="report")  # DISABLED - qdrant conflict
+raw_rag_tools = []  # Empty list
 rag_tools = make_tools_robust(raw_rag_tools)
 
 

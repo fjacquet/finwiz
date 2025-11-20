@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from crewai.flow import Flow, and_, listen, start
-from crewai.flow.persistence import persist
+# from crewai.flow.persistence import persist  # TEMPORARILY DISABLED
 
 from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 from finwiz.config.resilience_config import get_resilience_config
@@ -43,7 +43,7 @@ class OrchestratorDependencies:
     cache_enabled: bool = False
 
 
-@persist()  # Enable automatic state persistence after each flow method
+# @persist()  # TEMPORARILY DISABLED - Testing if persistence causes parallel execution
 class FinwizFlow(Flow[FinwizState]):
     """
     Refactored orchestrator for the financial analysis workflow.
@@ -69,8 +69,8 @@ class FinwizFlow(Flow[FinwizState]):
 
     Workflow Phases:
         1. Data Validation: validate_data_integration()
-        2. Portfolio Analysis: check_portfolio()
-        3. Deep Analysis: analyze_and_update_portfolio()
+        2. Deep Analysis: analyze_and_update_portfolio()
+        3. Portfolio Analysis: check_portfolio()
         4. Discovery: check_crypto(), check_stock(), check_etf()
         5. Alternative Matching: match_alternatives_after_discovery()
         6. Rebalancing: check_portfolio_rebalancing()
@@ -377,61 +377,80 @@ class FinwizFlow(Flow[FinwizState]):
     # Flow listeners - delegate to orchestrators
 
     @start()
-    async def validate_data_integration(self) -> dict[str, Any]:
+    async def run_sequential_workflow(self) -> dict[str, Any]:
         """
-        Validate data integration system before crew execution.
+        MANUAL SEQUENTIAL EXECUTION - bypasses broken @listen decorators.
 
-        Phase 1: Data Validation
-
-        Delegation:
-            Delegates to ValidationOrchestrator.validate_data_integration()
-
-        Responsibilities:
-            - Test Supabase connectivity and cache availability
-            - Initialize data integration manager
-            - Verify crew data integration system is operational
-
-        Returns:
-            dict: Validation results with cache status
-
-        Triggers:
-            check_portfolio (Phase 2)
-
+        Executes the complete workflow in explicit order:
+        1. Data validation
+        2. Portfolio review (loads holdings from CSV)
+        3. Deep analysis (analyzes the loaded holdings)
+        4. Discovery (if enabled)
+        5. Rebalancing (if enabled)
+        6. Reporting
         """
+        logger.info("🚀 Starting MANUAL sequential workflow execution")
+
+        # Phase 1: Data Validation
+        logger.info("=" * 80)
+        logger.info("MANUAL PHASE 1: Data Integration Validation")
+        logger.info("=" * 80)
+        await self.validation_orch.validate_data_integration()
+
+        # Phase 2: Portfolio Review (loads holdings from CSV FIRST)
+        logger.info("=" * 80)
+        logger.info("MANUAL PHASE 2: Portfolio Review")
+        logger.info("=" * 80)
+        await self.validation_orch.check_portfolio()
+
+        # Phase 3: Deep Analysis (analyzes the loaded holdings)
+        logger.info("=" * 80)
+        logger.info("MANUAL PHASE 3: Deep Analysis")
+        logger.info("=" * 80)
+        await self.deep_analysis_orch.analyze_and_update_portfolio()
+
+        # Phase 4: Discovery (if enabled)
+        import os
+        discovery_data = {}  # Default empty dict
+        if os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true":
+            logger.info("=" * 80)
+            logger.info("MANUAL PHASE 4: Investment Discovery")
+            logger.info("=" * 80)
+            self.discovery_orch.check_crypto()
+            self.discovery_orch.check_stock()
+            self.discovery_orch.check_etf()
+            discovery_result = self.discovery_orch.check_investment_discovery()  # SYNC - no await
+            if discovery_result:
+                discovery_data = discovery_result
+
+        # Phase 5: Alternative Matching
+        logger.info("=" * 80)
+        logger.info("MANUAL PHASE 5: Alternative Matching")
+        logger.info("=" * 80)
+        self.alternatives_orch.match_alternatives_after_discovery(discovery_data)  # SYNC - no await
+
+        # Phase 6: Reporting
+        logger.info("=" * 80)
+        logger.info("MANUAL PHASE 6: Final Reporting")
+        logger.info("=" * 80)
+        self.validation_orch.pre_validate_reporter_input()  # SYNC - no await
+        self.reporting_orch.report()  # SYNC - no await
+
+        logger.info("✅ MANUAL sequential workflow completed")
+        return {"status": "completed"}
+
+    # DISABLED - @listen decorators don't work
+    # @listen("validate_data_integration")
+    async def validate_data_integration_DISABLED(self) -> dict[str, Any]:
+        """DISABLED - Called manually from run_sequential_workflow instead."""
         return await self.validation_orch.validate_data_integration()
 
-    @start("validate_data_integration")
     @listen("validate_data_integration")
-    async def check_portfolio(self) -> dict[str, Any]:
-        """
-        Run portfolio keep-or-sell review orchestrator.
-
-        Phase 2: Portfolio Analysis
-
-        Delegation:
-            Delegates to ValidationOrchestrator.check_portfolio()
-
-        Responsibilities:
-            - Execute portfolio review crew
-            - Generate keep/sell decisions for each holding
-            - Create initial portfolio review structure
-            - Track portfolio analysis success/failure
-
-        Returns:
-            dict: Portfolio review results with decisions
-
-        Triggers:
-            analyze_and_update_portfolio (Phase 3)
-
-        """
-        return await self.validation_orch.check_portfolio()
-
-    @listen("check_portfolio")
     async def analyze_and_update_portfolio(self) -> dict[str, Any]:
         """
         Perform deep analysis and update portfolio review.
 
-        Phase 3: Deep Analysis & Portfolio Update (Atomic Operation)
+        Phase 2: Deep Analysis & Portfolio Update (Atomic Operation)
 
         Delegation:
             Delegates to DeepAnalysisOrchestrator.analyze_and_update_portfolio()
@@ -451,12 +470,37 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Consolidated analysis results with alternatives
 
         Triggers:
-            check_crypto, check_stock, check_etf (Phase 4)
+            check_portfolio (Phase 3)
 
         """
         return await self.deep_analysis_orch.analyze_and_update_portfolio()
 
     @listen("analyze_and_update_portfolio")
+    async def check_portfolio(self) -> dict[str, Any]:
+        """
+        Run portfolio keep-or-sell review orchestrator.
+
+        Phase 3: Portfolio Analysis
+
+        Delegation:
+            Delegates to ValidationOrchestrator.check_portfolio()
+
+        Responsibilities:
+            - Execute portfolio review crew
+            - Generate keep/sell decisions for each holding using deep analysis results
+            - Create portfolio review structure enriched with deep analysis data
+            - Track portfolio analysis success/failure
+
+        Returns:
+            dict: Portfolio review results with decisions based on deep analysis
+
+        Triggers:
+            check_crypto, check_stock, check_etf (Phase 4)
+
+        """
+        return await self.validation_orch.check_portfolio()
+
+    @listen("check_portfolio")
     def check_crypto(self) -> dict[str, Any]:
         """
         Initiate cryptocurrency discovery.
@@ -480,7 +524,7 @@ class FinwizFlow(Flow[FinwizState]):
         """
         return self.discovery_orch.check_crypto()
 
-    @listen("analyze_and_update_portfolio")
+    @listen("check_portfolio")
     def check_stock(self) -> dict[str, Any]:
         """
         Initiate stock discovery.
@@ -504,7 +548,7 @@ class FinwizFlow(Flow[FinwizState]):
         """
         return self.discovery_orch.check_stock()
 
-    @listen("analyze_and_update_portfolio")
+    @listen("check_portfolio")
     def check_etf(self) -> dict[str, Any]:
         """
         Initiate ETF discovery.

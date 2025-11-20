@@ -40,7 +40,8 @@ load_dotenv()
 # Get specialized tools
 investment_discovery_tools = get_investment_discovery_tools()
 quantitative_tool = get_quantitative_analysis_tool()
-rag_tools = get_rag_tools(collection_suffix="investment_discovery")
+# rag_tools = get_rag_tools(collection_suffix="investment_discovery")  # DISABLED - qdrant conflict
+rag_tools = []  # Empty list instead
 feedback_tools = get_feedback_tools()
 
 # Get asset-specific research tools

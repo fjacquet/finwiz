@@ -306,6 +306,66 @@ class PythonReportGenerator:
       h1 { font-size: 1.8em; }
       .stats-grid { grid-template-columns: 1fr; }
     }
+
+    /* Dark Mode Support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #e0e0e0;
+      }
+      h2 {
+        color: #a8c0db;
+        border-bottom-color: #5a7fa0;
+      }
+      h3 {
+        color: #b8c9da;
+      }
+      .section {
+        background: #2d2d2d;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      }
+      table {
+        background: #2d2d2d;
+      }
+      th {
+        background: #3a5a7a;
+      }
+      th, td {
+        border-bottom-color: #404040;
+      }
+      .stat-card {
+        background: #383838;
+      }
+      .stat-number {
+        color: #a8c0db;
+      }
+      .muted {
+        color: #999;
+      }
+      .highlight {
+        background: #3d3520;
+        border-color: #5a4d28;
+      }
+      .success {
+        background: #1e3a28;
+        border-color: #2d5a3d;
+        color: #8bc98d;
+      }
+      .warning {
+        background: #3d3520;
+        border-color: #5a4d28;
+        color: #f1c40f;
+      }
+      .danger {
+        background: #3a1f1f;
+        border-color: #5a3030;
+        color: #e79b9b;
+      }
+      footer {
+        color: #999;
+        border-top-color: #404040;
+      }
+    }
         """
 
     def _generate_executive_summary(self, portfolio_stats: dict[str, Any]) -> str:

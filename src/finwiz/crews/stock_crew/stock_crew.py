@@ -48,7 +48,7 @@ load_dotenv()
 
 # Get standardized tool set for stock crew and make them robust
 raw_tools = get_stock_crew_tools(
-    include_rag=True,
+    include_rag=False,  # Disabled - qdrant-client conflict
     include_quantitative=True,
     collection_suffix="stock",
 )

@@ -293,21 +293,32 @@ class ReportingOrchestrator:
             session_id = self.state.session_id or "default"
 
             # Read JSON files from disk for each asset class
-            # Deep analysis saves to output/deep_analysis_{asset_class}/ directories
+            # Deep analysis saves to cache/portfolio_analysis/{asset_class}/ and output/deep_analysis_{asset_class}/ directories
             for asset_class in ["stock", "etf", "crypto"]:
-                # Try both possible directory structures for backward compatibility
-                for base_dir in [f"output/deep_analysis_{asset_class}", f"output/{asset_class}"]:
+                # Try multiple directory structures (cache first for Python scorer results, then output directories)
+                for base_dir in [f"cache/portfolio_analysis/{asset_class}", f"output/deep_analysis_{asset_class}", f"output/{asset_class}"]:
                     asset_dir = Path(base_dir)
                     if asset_dir.exists():
-                        # Match files with either session_id or timestamp pattern
-                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob(f"*_output_*.json")):
+                        # Match files with either session_id or timestamp pattern (cache uses YYYY-MM-DD pattern)
+                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob(f"*_output_*.json")) + list(asset_dir.glob(f"*_20*.json")):
                             try:
                                 data = self._read_json_file(str(json_file))
 
-                                # Handle nested pydantic structure from CrewAI output
-                                if "pydantic" in data and isinstance(data["pydantic"], dict):
+                                # Handle different data structures:
+                                # 1. Cache format: {"ticker": "X", "analysis": {...}}
+                                # 2. CrewAI format: {"pydantic": {...}}
+                                # 3. Direct format: {"ticker": "X", "composite_score": ...}
+                                if "analysis" in data and isinstance(data["analysis"], dict):
+                                    # Cache format - extract analysis data
+                                    analysis_data = data["analysis"]
+                                    # Ensure ticker is in analysis_data
+                                    if "ticker" not in analysis_data and "ticker" in data:
+                                        analysis_data["ticker"] = data["ticker"]
+                                elif "pydantic" in data and isinstance(data["pydantic"], dict):
+                                    # CrewAI format
                                     analysis_data = data["pydantic"]
                                 else:
+                                    # Direct format
                                     analysis_data = data
 
                                 ticker = analysis_data.get("ticker")

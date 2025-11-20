@@ -42,7 +42,9 @@ class YahooFinanceCompanyInfoTool(BaseTool):
                     "revenue": info.get("totalRevenue", "N/A"),
                     "profit_margin": info.get("profitMargins", "N/A"),
                     "ebitda": info.get("ebitda", "N/A"),
-                    "debt_to_equity": info.get("debtToEquity", "N/A"),
+                    # yfinance returns debtToEquity as percentage (152.41 = 152.41%)
+                    # Convert to ratio by dividing by 100 (152.41% → 1.52 ratio)
+                    "debt_to_equity": info.get("debtToEquity", "N/A") / 100 if isinstance(info.get("debtToEquity"), (int, float)) else "N/A",
                     "return_on_equity": info.get("returnOnEquity", "N/A"),
                     "revenue_growth": info.get("revenueGrowth", "N/A"),
                     "earnings_growth": info.get("earningsGrowth", "N/A"),
