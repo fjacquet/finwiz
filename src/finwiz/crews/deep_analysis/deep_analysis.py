@@ -388,16 +388,17 @@ class DeepAnalysisCrew:
 
     @agent
     def asset_analyst(self) -> Agent:
-        """Agent that collects data for the provided ticker."""
-        # FIXED: Provide actual tools so agent can collect data!
-        # Use stock tools as default - they work for all asset classes via asset_class parameter
-        tools = get_stock_crew_tools(include_rag=False)
+        """
+        Agent that formats Python calculation results.
 
+        CRITICAL: NO TOOLS - Python orchestrator calls tools and calculates scores.
+        This agent only READS the Python results from input and formats them nicely.
+        """
         return Agent(
             config=self.agents_config["asset_analyst"],
             verbose=True,
-            reasoning=False,  # ⚡ PYTHON SCORING: No reasoning needed for data collection
-            tools=tools,
+            reasoning=False,  # No reasoning needed - just format Python results
+            tools=[],  # NO TOOLS - Python does all tool calling
             llm=self._get_configured_llm(),
         )
 
@@ -415,15 +416,17 @@ class DeepAnalysisCrew:
 
     @agent
     def investment_reporter(self) -> Agent:
-        """Agent that calls Python scoring tool."""
-        from finwiz.tools.deep_analysis_scoring_tool import DeepAnalysisScoringTool
+        """
+        Agent that formats Python calculation results into reports.
 
+        CRITICAL: NO TOOLS - Python orchestrator already calculated all scores.
+        This agent only READS the Python results from input and creates formatted reports.
+        """
         return Agent(
             config=self.agents_config["investment_reporter"],
             verbose=True,
-            reasoning=True,  # ✅ Enable reasoning to understand tool calling
-            max_reasoning_attempts=3,  # Limit reasoning loops
-            tools=[DeepAnalysisScoringTool()],  # Python scoring tool
+            reasoning=False,  # No reasoning needed - just format Python results
+            tools=[],  # NO TOOLS - Python already did all calculations
             llm=self._get_configured_llm(),
         )
 

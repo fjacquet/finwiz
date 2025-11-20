@@ -218,14 +218,170 @@ class DeepAnalysisOrchestrator:
 
         return results
 
+    def _collect_data_with_python(self, ticker: str, asset_class: str, batch_enabled: bool) -> dict[str, Any]:
+        """
+        Python directly calls tools to collect raw financial data.
+
+        This ensures 100% reliable data collection - agents can't "forget" to run tools.
+        Python gets raw facts (current_price=150.0, roe=0.25) for scoring.
+
+        Args:
+            ticker: Ticker symbol
+            asset_class: Asset class (stock/etf/crypto)
+            batch_enabled: Whether batch mode is enabled
+
+        Returns:
+            Dictionary with raw metrics for Python scoring
+        """
+        from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
+        from finwiz.tools.enhanced_sentiment_tool import StandardizedSentimentAnalysisTool
+
+        self.logger.info(f"🐍 Python collecting data for {ticker} ({asset_class})")
+
+        collected_data = {
+            "ticker": ticker,
+            "asset_class": asset_class,
+            "collection_timestamp": self.state.full_date,
+        }
+
+        try:
+            # STEP 1: Quantitative Analysis (price, indicators, risk metrics)
+            self.logger.info(f"🐍 Calling QuantitativeAnalysisTool for {ticker}")
+            quant_tool = QuantitativeAnalysisTool()
+            quant_result = quant_tool._run(
+                symbol=ticker,
+                asset_class=asset_class,
+                analysis_type="comprehensive",
+                timeframe="1y",
+                strategy="sma_crossover"
+            )
+
+            # Parse quant result (it returns JSON string)
+            import json
+            quant_data = json.loads(quant_result) if isinstance(quant_result, str) else quant_result
+            collected_data["quantitative_analysis"] = quant_data
+            self.logger.info(f"✅ Got quantitative data with keys: {list(quant_data.keys())[:5]}")
+
+        except Exception as e:
+            self.logger.error(f"❌ Quantitative analysis failed: {e}", exc_info=True)
+            collected_data["quantitative_analysis"] = {}
+
+        try:
+            # STEP 2: Sentiment Analysis
+            self.logger.info(f"🐍 Calling SentimentAnalysisTool for {ticker}")
+            sentiment_tool = StandardizedSentimentAnalysisTool()
+            sentiment_result = sentiment_tool._run(
+                symbol=ticker,
+                asset_class=asset_class,
+                max_articles=20,
+                days_back=30,
+                include_trending=True
+            )
+
+            # Parse sentiment result
+            sentiment_data = json.loads(sentiment_result) if isinstance(sentiment_result, str) else sentiment_result
+            collected_data["sentiment_analysis"] = sentiment_data
+            self.logger.info(f"✅ Got sentiment data with keys: {list(sentiment_data.keys())[:5]}")
+
+        except Exception as e:
+            self.logger.error(f"❌ Sentiment analysis failed: {e}", exc_info=True)
+            collected_data["sentiment_analysis"] = {}
+
+        try:
+            # STEP 3: SEC Analysis (stocks only - fundamentals like ROE, debt/equity)
+            if asset_class.lower() == "stock":
+                self.logger.info(f"🐍 Calling SEC Analysis for {ticker}")
+                from finwiz.tools.sec_analysis_tool import EnhancedSECAnalysisTool
+
+                sec_tool = EnhancedSECAnalysisTool()
+                sec_result = sec_tool._run(
+                    ticker=ticker,
+                    form_type="10-K",
+                    sections=["Item 1", "Item 1A", "Item 7"],
+                    risk_assessment=True,
+                    include_perplexity=False  # Disabled for speed
+                )
+
+                # Parse SEC result
+                sec_data = json.loads(sec_result) if isinstance(sec_result, str) else sec_result
+                collected_data["sec_analysis"] = sec_data
+                self.logger.info(f"✅ Got SEC data with keys: {list(sec_data.keys())[:5]}")
+
+        except Exception as e:
+            self.logger.error(f"❌ SEC analysis failed: {e}", exc_info=True)
+            collected_data["sec_analysis"] = {}
+
+        # Flatten nested structures for Python scorer
+        flattened = self._flatten_collected_data(collected_data)
+
+        self.logger.info(f"✅ Python collected {len(flattened)} fields: {list(flattened.keys())[:10]}")
+        return flattened
+
     def _process_single_holding(self, ticker: str, asset_class: str, cache_mgr: Any, cache_ttl: int, batch_enabled: bool) -> DeepAnalysisResult | None:
         """Process a single holding with caching."""
         cached = cache_mgr.get_cached_analysis(ticker, asset_class)
         if cached and cached.is_fresh(cache_ttl):
             return self.create_deep_analysis_result_from_crew_output(cached.analysis, ticker, asset_class, cached.analysis.crew_name, True)
 
-        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+        # STEP 1: PYTHON calls tools directly (NO agent involvement)
+        self.logger.info(f"🐍 Step 1: Python collecting data for {ticker}")
+        raw_data = self._collect_data_with_python(ticker, asset_class, batch_enabled)
 
+        # STEP 2: PYTHON calculates scores using raw data
+        self.logger.info(f"🐍 Step 2: Python calculating scores for {ticker}")
+        try:
+            from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
+
+            scorer = DeepAnalysisScorer()
+            python_result = scorer.calculate_composite_score(ticker, asset_class, raw_data)
+
+            self.logger.info(f"✅ Python scoring: {ticker} = {python_result.grade} ({python_result.composite_score:.3f})")
+
+            # Cache Python result
+            cache_mgr.cache_analysis(ticker, asset_class, python_result)
+
+            # Store to disk
+            if self.integration_manager:
+                try:
+                    crew_name = f"deep_analysis_{asset_class}"
+                    self.integration_manager.store_crew_output(crew_name, python_result)
+                except Exception as e:
+                    self.logger.warning(f"Failed to store Python result: {e}")
+
+            # STEP 3: Pass Python results to agent as INPUT (agent just formats)
+            self.logger.info(f"🐍 Step 3: Passing Python results to agent for formatting")
+
+            from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+            crew = DeepAnalysisCrew()
+
+            # Agent receives Python calculations as facts - NO tool calling
+            result = crew.crew().kickoff(
+                inputs={
+                    "ticker": ticker,
+                    "asset_class": asset_class,
+                    "current_day": self.state.current_day,
+                    "current_month": self.state.current_month,
+                    "current_year": self.state.current_year,
+                    "current_date": self.state.current_date,
+                    "full_date": self.state.full_date,
+                    "timestamp": self.state.timestamp,
+                    "report_language": self.state.report_language,
+                    # CRITICAL: Pass Python results as input - agent just reads these facts
+                    "python_results": python_result.model_dump(),
+                    "grade": python_result.grade,
+                    "composite_score": python_result.composite_score,
+                    "recommendation": python_result.recommendation,
+                }
+            )
+
+            return python_result  # Return Python result (NOT agent output)
+
+        except Exception as e:
+            self.logger.error(f"Python scoring failed for {ticker}: {e}", exc_info=True)
+            # Fallback: Still try agent-based approach
+
+        # FALLBACK: Old agent-based approach (if Python scoring fails)
+        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
         crew = DeepAnalysisCrew()
 
         if batch_enabled and self.state.prefetched_data:
@@ -245,8 +401,7 @@ class DeepAnalysisOrchestrator:
             }
         )
 
-        # PYTHON SCORING: Call DeepAnalysisScorer with collected data
-        # This replaces AI-generated fake scores with real Python calculations
+        # OLD APPROACH: Extract collected data from agent output
         try:
             from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 

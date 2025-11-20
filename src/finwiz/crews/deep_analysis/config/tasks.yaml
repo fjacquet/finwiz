@@ -20,80 +20,53 @@
 
 data_collection_task:
   description: >
-    CRITICAL: SINGLE TICKER MODE - Collect ALL data for ticker: {ticker}
-    
-    As a data collection specialist, fetch ALL required data for the single ticker 
-    {ticker} of asset class {asset_class}. This task focuses ONLY on data collection,
-    with NO AI reasoning or analysis. All calculations will be done by Python scoring.
+    ⚡ NEW ARCHITECTURE: Agent READS Python calculation results (NO tool calling)
 
-    CRITICAL DATE CONTEXT:
-    - TODAY'S DATE IS {full_date} - Use this as your reference point for data collection
-    - Collect current market data as of {full_date}
+    CRITICAL: Python orchestrator already collected data and calculated scores.
+    You ONLY READ the Python results from input and format them nicely.
 
-    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
-    - NEVER pass JSON arrays or multiple tickers to tools
-    - ALWAYS call each tool ONCE with the single ticker: {ticker}
-    - Use exact parameter names: ticker="{ticker}", symbol="{ticker}", asset_class="{asset_class}"
-    
-    📊 BATCH MODE WITH PRE-FETCHED DATA (Requirement 17.32):
-    When running in batch mode, tools will automatically use pre-fetched data instead of 
-    making live API calls. This eliminates API latency and enables zero-latency execution.
-    
-    PRE-FETCHED DATA SOURCES:
-    - Yahoo Finance: Price data, company info, historical data (pre-fetched in batch)
-    - Alpha Vantage: Company overview, fundamentals (pre-fetched with rate limiting)
-    - Tools will check for pre-fetched data first, then fall back to live API if needed
+    Python provides you with these calculated results in the input:
+    - python_results: Complete DeepAnalysisResult object from Python scorer
+    - grade: Letter grade (A+, A, B+, B, C+, C, D, F)
+    - composite_score: Overall score (0.0-1.0)
+    - recommendation: Investment recommendation (BUY/HOLD/SELL)
 
-    DATA COLLECTION PROCESS (NO AI REASONING):
-    1. Validate ticker existence using Ticker Validation Tool
-    2. For stocks: Use Enhanced SEC Analysis Tool with parameters:
-       - ticker: "{ticker}"
-       - form_type: "10-K"
-       - sections: ["Item 1", "Item 1A", "Item 7"]
-       - risk_assessment: true
-       - include_perplexity: false  # ⚡ OPTIMIZED: Disabled to reduce API latency
-    3. For all asset classes: Use Quantitative Analysis Tool with parameters:
-       - symbol: "{ticker}"
-       - asset_class: "{asset_class}"
-       - analysis_type: "comprehensive"
-       - timeframe: "1y"
-       - strategy: "sma_crossover"
-    4. Use Standardized Sentiment Analysis Tool with parameters:
-       - symbol: "{ticker}"
-       - asset_class: "{asset_class}"
-       - max_articles: 20  # ⚡ OPTIMIZED: Reduced from 50 to speed up analysis
-       - days_back: 30  # ⚡ OPTIMIZED: Reduced from 90 to focus on recent sentiment
-       - include_trending: true
+    YOUR TASK (NO TOOLS NEEDED):
+    1. READ the Python results from input (they're already calculated!)
+    2. Format the results into a clear, professional summary
+    3. Explain WHY the ticker received this grade/recommendation
+    4. Use the raw metrics from python_results to support your explanation
 
-    CRITICAL: NO AI ANALYSIS OR REASONING
-    - Do NOT interpret the data
-    - Do NOT calculate scores or grades
-    - Do NOT make recommendations
-    - ONLY collect and store raw data in structured context dict
+    CRITICAL RULES:
+    - NO tool calling - Python already collected all data
+    - NO calculations - Python already calculated scores
+    - NO assumptions - Only use data provided in python_results
+    - JUST format and explain the Python calculations in clear language
 
-    CONTEXT STORAGE FORMAT:
-    Store ALL collected data in context with this structure:
-    context["collected_data"] = {{
-        "ticker": "{ticker}",
-        "asset_class": "{asset_class}",
-        "collection_timestamp": "2025-01-25T10:30:00Z",
-        "ticker_validation": {{...}},
-        "quantitative_analysis": {{...}},
-        "sentiment_analysis": {{...}},
-        "sec_analysis": {{...}} (stocks only),
-        "etf_analysis": {{...}} (ETFs only),
-        "crypto_analysis": {{...}} (crypto only)
+    Example input you'll receive:
+    {{
+      "ticker": "{ticker}",
+      "asset_class": "{asset_class}",
+      "grade": "A",
+      "composite_score": 0.85,
+      "recommendation": "BUY",
+      "python_results": {{
+        "fundamental_score": 0.82,
+        "technical_score": 0.88,
+        "risk_score": 0.85,
+        "rationale": "Strong fundamentals with low risk..."
+      }}
     }}
+
+    Your output: Professional summary explaining these Python facts.
   expected_output: >
-    Raw data collection results for ticker {ticker} stored in structured context:
-    - Ticker validation results
-    - Quantitative analysis data (prices, indicators, metrics)
-    - Sentiment analysis data (scores, articles, trends)
-    - Asset-specific data (SEC filings for stocks, ETF data, crypto metrics)
-    - Collection timestamp and data sources
-    - NO analysis, scores, grades, or recommendations (handled by Python scoring)
+    Professional formatted summary of Python calculation results for ticker {ticker}:
+    - Clear explanation of the grade ({grade}) and why it was calculated
+    - Summary of recommendation ({recommendation}) based on Python scores
+    - Explanation using raw metrics from python_results
+    - NO new calculations - just formatting Python's work
   agent: asset_analyst
-  async_execution: true  # ✅ Parallel I/O: Enable async for data fetching
+  async_execution: false  # Changed to sync - no I/O needed, just formatting
 
 python_scoring_task:
   description: >
