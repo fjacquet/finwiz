@@ -348,10 +348,21 @@ class DeepAnalysisOrchestrator:
                     include_perplexity=False  # Disabled for speed
                 )
 
-                # Parse SEC result
-                sec_data = json.loads(sec_result) if isinstance(sec_result, str) else sec_result
-                collected_data["sec_analysis"] = sec_data
-                self.logger.info(f"✅ Got SEC data with keys: {list(sec_data.keys())[:5]}")
+                # Store SEC result (it's already formatted markdown text, not JSON)
+                # The SEC tool returns markdown strings, not JSON objects
+                if isinstance(sec_result, str):
+                    # Check if it's an error message
+                    if sec_result.startswith("Error:") or sec_result.startswith("No SEC filings"):
+                        self.logger.warning(f"⚠️ SEC tool returned error/warning: {sec_result[:100]}")
+                        collected_data["sec_analysis"] = {"error": sec_result}
+                    else:
+                        # Store the markdown analysis text
+                        collected_data["sec_analysis"] = {"analysis_text": sec_result}
+                        self.logger.info(f"✅ Got SEC analysis ({len(sec_result)} chars)")
+                else:
+                    # Unexpected type - store as-is
+                    collected_data["sec_analysis"] = sec_result
+                    self.logger.info(f"✅ Got SEC data with keys: {list(sec_result.keys())[:5] if isinstance(sec_result, dict) else 'N/A'}")
 
         except Exception as e:
             self.logger.error(f"❌ SEC analysis failed: {e}", exc_info=True)
@@ -433,6 +444,8 @@ class DeepAnalysisOrchestrator:
         if batch_enabled and self.state.prefetched_data:
             crew.set_prefetched_data(self.state.prefetched_data)
 
+        # Provide placeholder values for template variables expected by tasks.yaml
+        # These will be replaced by actual values if agent-based scoring works
         result = crew.crew().kickoff(
             inputs={
                 "ticker": ticker,
@@ -444,6 +457,11 @@ class DeepAnalysisOrchestrator:
                 "full_date": self.state.full_date,
                 "timestamp": self.state.timestamp,
                 "report_language": self.state.report_language,
+                # Placeholder values for Python scoring results (used in task templates)
+                "grade": "N/A",
+                "composite_score": 0.0,
+                "recommendation": "PENDING",
+                "python_results": {},
             }
         )
 
@@ -536,6 +554,32 @@ class DeepAnalysisOrchestrator:
                 flattened["valid"] = ticker_val["valid"]
             if "company_name" in ticker_val:
                 flattened["company_name"] = ticker_val["company_name"]
+
+        # CRITICAL: Explicitly extract well-known nested fields BEFORE general flattening
+        # This ensures critical fields like beta, volatility, etc. are captured correctly
+        if "quantitative_analysis" in data and isinstance(data["quantitative_analysis"], dict):
+            quant = data["quantitative_analysis"]
+
+            # Extract performance_metrics fields (beta, volatility, max_drawdown, etc.)
+            if "performance_metrics" in quant and isinstance(quant["performance_metrics"], dict):
+                perf = quant["performance_metrics"]
+                critical_perf_fields = ["beta", "volatility", "max_drawdown", "sharpe_ratio",
+                                       "total_return", "annualized_return"]
+                for field in critical_perf_fields:
+                    if field in perf and perf[field] is not None:
+                        flattened[field] = perf[field]
+                        self.logger.debug(f"✅ Extracted {field}={perf[field]} from performance_metrics")
+
+            # Extract technical_analysis fields (RSI, MACD, etc.)
+            if "technical_analysis" in quant and isinstance(quant["technical_analysis"], dict):
+                tech = quant["technical_analysis"]
+                if "technical_indicators" in tech and isinstance(tech["technical_indicators"], dict):
+                    indicators = tech["technical_indicators"]
+                    critical_tech_fields = ["rsi", "macd", "macd_signal"]
+                    for field in critical_tech_fields:
+                        if field in indicators and indicators[field] is not None:
+                            flattened[field] = indicators[field]
+                            self.logger.debug(f"✅ Extracted {field}={indicators[field]} from technical_indicators")
 
         # Now extract from nested structures (including the ones we just moved to top level)
         # Also process ticker_info and company_info which contain nested data

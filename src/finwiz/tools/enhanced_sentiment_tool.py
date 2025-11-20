@@ -51,13 +51,27 @@ class EnhancedSentimentAnalysisTool(BaseTool):
         """Get Perplexity integration instance if enabled."""
         return self.data_sources.get_perplexity_integration()
 
-    def _run(self, ticker: str, asset_type: str = "stock", days_back: int = 7, max_articles: int = 20) -> str:
+    def _run(self, ticker: str, asset_type: str, days_back: int = 7, max_articles: int = 20) -> str:
         """Execute enhanced sentiment analysis."""
         try:
             logger.info(f"Starting enhanced sentiment analysis for {ticker} ({asset_type})")
 
             # Get enhanced news data from multiple sources including Sonar
-            enhanced_news_data = asyncio.run(self.data_sources.get_enhanced_news_data(ticker, asset_type, max_articles))
+            # Handle both running and non-running event loop scenarios
+            try:
+                # Check if event loop is already running (CrewAI Flow context)
+                loop = asyncio.get_running_loop()
+                # Use ThreadPoolExecutor to run async code in a new thread with its own event loop
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(
+                        asyncio.run,
+                        self.data_sources.get_enhanced_news_data(ticker, asset_type, max_articles)
+                    )
+                    enhanced_news_data = future.result()
+            except RuntimeError:
+                # No event loop running, safe to use asyncio.run()
+                enhanced_news_data = asyncio.run(self.data_sources.get_enhanced_news_data(ticker, asset_type, max_articles))
 
             yahoo_articles = enhanced_news_data.get("yahoo_articles", [])
             sonar_articles = enhanced_news_data.get("sonar_articles", [])
