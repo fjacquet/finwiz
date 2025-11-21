@@ -12,11 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Scoring System Enhancements:**
 
 - **Adaptive Weighting for Quality Companies**: Automatically detect quality companies (2+ of: ROE ≥20%, Debt ≤0.5, Margin ≥15%) and apply 50/25/25 weights (fundamental/technical/risk) instead of standard 40/30/30
-- **Data Sanity Checks**: Comprehensive validation rejecting obviously invalid data (ROE=0.0, price≤$0, debt>100x equity, etc.)
+- **Data Sanity Checks**: Comprehensive validation rejecting obviously invalid data (ROE=0.0, price≤\$0, debt>100x equity, etc.)
 - **Calculated Revenue Growth**: Compute growth from actual financial statements instead of relying on stale yfinance `revenueGrowth` field
 - **Enhanced Error Extraction**: Flexible regex patterns for extracting grades/scores from raw crew output with debug logging
 
 **Documentation:**
+
 - Comprehensive [Deep Analysis Scoring System](../explanations/deep_analysis.md) documentation with real-world examples
 - Complete [Recommendation Engine](../explanations/recommendation_engine.md) guide explaining BUY/HOLD/SELL logic
 - Detailed [Investment Methodology](../explanations/investment_methodology.md) covering philosophy and decision framework
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Consistent with HOLD recommendation threshold
 
 **Data Quality Improvements:**
+
 - Revenue growth calculation: ASML corrected from 0.7% (stale) → 2.56% (calculated)
 - ROE sanity check: Reject ROE exactly 0.0 as data error
 - Comprehensive field validation with reasonable numeric ranges
@@ -180,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Links
 
-- [Documentation](../README.md)
+- [Documentation](../index.md)
 - [GitHub Repository](https://github.com/finwiz/finwiz)
 - [Issue Tracker](https://github.com/finwiz/finwiz/issues)
 - [Release Notes](https://github.com/finwiz/finwiz/releases)
