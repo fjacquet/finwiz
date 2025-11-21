@@ -95,22 +95,22 @@ class TestPythonDataCollection:
 
     @pytest.fixture
     def mock_sentiment_data(self):
-        """Mock sentiment analysis tool response."""
-        return json.dumps({
-            "overall_sentiment": {
-                "score": 0.72,
-                "label": "POSITIVE",
-                "confidence": 0.85
-            },
-            "news_sentiment": {
-                "articles_analyzed": 20,
-                "positive_ratio": 0.65,
-                "negative_ratio": 0.15,
-                "neutral_ratio": 0.20
-            },
+        """Mock sentiment analysis tool response (matches actual EnhancedSentimentAnalysisTool output)."""
+        return {
+            "formatted_analysis": "Sentiment analysis for AAPL...",
+            "sentiment_score": 0.72,
+            "overall_sentiment": "POSITIVE",
+            "confidence": 0.85,
+            "positive_ratio": 0.65,
+            "negative_ratio": 0.15,
+            "neutral_ratio": 0.20,
+            "total_articles": 20,
+            "sentiment_distribution": {"positive": 13, "negative": 3, "neutral": 4},
             "trending_topics": ["AI expansion", "Services growth", "China market"],
-            "sentiment_trend": "improving"
-        })
+            "article_count": 20,
+            "news_sources": ["Yahoo Finance", "Sonar"],
+            "sentiment_breakdown": {"positive": 13, "negative": 3, "neutral": 4},
+        }
 
     @pytest.fixture
     def mock_sec_data(self):
@@ -191,8 +191,10 @@ class TestPythonDataCollection:
         assert "volatility" in result  # From quantitative_analysis.risk_metrics.volatility
 
         # Sentiment data should be flattened
-        assert "score" in result or "sentiment_score" in result  # From sentiment_analysis
-        assert "label" in result or "sentiment_label" in result
+        assert "sentiment_score" in result  # From sentiment tool output
+        assert result["sentiment_score"] == 0.72
+        assert "overall_sentiment" in result
+        assert result["overall_sentiment"] == "POSITIVE"
 
     def test_collect_data_handles_tool_failures(self, mocker, orchestrator):
         """Test graceful handling when individual tools fail."""
@@ -206,7 +208,11 @@ class TestPythonDataCollection:
         mock_ticker.return_value = {"current_price": 150.0}
         mock_company.side_effect = Exception("API rate limit")
         mock_quant.side_effect = Exception("Connection timeout")
-        mock_sentiment.return_value = json.dumps({"overall_sentiment": {"score": 0.6}})
+        mock_sentiment.return_value = {
+            "sentiment_score": 0.6,
+            "overall_sentiment": "neutral",
+            "confidence": 0.5,
+        }
 
         # Execute - should not raise exception
         result = orchestrator._collect_data_with_python("TSLA", "stock", batch_enabled=False)
@@ -219,10 +225,12 @@ class TestPythonDataCollection:
         # Failed tools should have empty data (quantitative_analysis would have been {})
         # Since company_info and quantitative_analysis failed, they won't contribute flattened fields
 
-        # Successful tool data should be flattened and present
-        # Sentiment data should have been flattened: overall_sentiment.score → score
-        assert "score" in result
-        assert result["score"] == 0.6
+        # Successful tool data should be present
+        # Sentiment data should be at top level
+        assert "sentiment_score" in result
+        assert result["sentiment_score"] == 0.6
+        assert "overall_sentiment" in result
+        assert result["overall_sentiment"] == "neutral"
 
     def test_collect_data_etf_skips_sec_analysis(self, mocker, orchestrator):
         """Test that ETF assets skip SEC analysis (stock-only feature)."""
@@ -235,7 +243,11 @@ class TestPythonDataCollection:
 
         mock_ticker.return_value = {"current_price": 420.0}
         mock_quant.return_value = json.dumps({"technical_indicators": {"rsi": 55}})
-        mock_sentiment.return_value = json.dumps({"overall_sentiment": {"score": 0.65}})
+        mock_sentiment.return_value = {
+            "sentiment_score": 0.65,
+            "overall_sentiment": "neutral",
+            "confidence": 0.7,
+        }
 
         # Execute for ETF
         result = orchestrator._collect_data_with_python("SPY", "etf", batch_enabled=False)
@@ -335,7 +347,11 @@ class TestPythonDataCollection:
         # Mock minimal responses for other tools
         mock_ticker.return_value = {"current_price": 100.0}
         mock_company.return_value = {}
-        mock_sentiment.return_value = json.dumps({})
+        mock_sentiment.return_value = {
+            "sentiment_score": 0.0,
+            "overall_sentiment": "neutral",
+            "confidence": 0.0,
+        }
         mock_sec.return_value = json.dumps({})
 
         # Test 1: Already parsed dict
