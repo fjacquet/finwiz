@@ -302,6 +302,9 @@ result = scorer.calculate_composite_score(
 - Risk assessment calculations
 - Performance metrics
 
+**Architecture Note**:
+For detailed analysis of the Python vs AI production split and future hybrid architecture plans, see [docs/architecture/python-ai-analysis-architecture.md](docs/architecture/python-ai-analysis-architecture.md). This document outlines the vision for combining Python's deterministic calculations with AI's contextual analysis to restore analytical richness while maintaining performance.
+
 ## Important Patterns
 
 ### 1. Final Reporter Pattern
@@ -516,8 +519,9 @@ The codebase has undergone significant modernization:
 
 **Current Status**:
 - Files >600 lines: 17 remaining (started with 27)
-- Test Pass Rate: 82.2% (target: >95%)
-- Phase 0 (Fix Test Suite) is **CRITICAL PRIORITY** blocking all refactoring
+- Test Pass Rate: Improving (4 critical failures fixed 2025-11-21, full suite measurement pending)
+- Phase 0 (Fix Test Suite): ✅ **Critical tests fixed** - 4/4 known failures resolved
+- See [docs/testing/test-suite-status.md](docs/testing/test-suite-status.md) for detailed test suite status
 
 ## Refactoring Standards
 
