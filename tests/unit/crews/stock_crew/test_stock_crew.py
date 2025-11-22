@@ -26,7 +26,8 @@ class TestStockCrew:
 
     @pytest.fixture
     def mock_yahoo_finance_data(self):
-        """Create mock Yahoo Finance data.
+        """
+        Create mock Yahoo Finance data.
 
         Note: yfinance returns debtToEquity as percentage (173.0 = 173%),
         which gets converted to ratio (1.73) by yahoo_finance_company_info_tool.
