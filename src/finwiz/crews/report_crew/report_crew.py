@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
@@ -25,7 +25,6 @@ from finwiz.integration.backtesting_extractor import BacktestingDataExtractor
 from finwiz.integration.data_accessor import CrewDataAccessor
 from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
 from finwiz.integration.manager import CrewDataIntegrationManager
-from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.task_decorators import async_task, sync_task
@@ -106,6 +105,17 @@ class ReportCrew:
             availability_tracker=availability_tracker,
         )
 
+    def _get_configured_llm(self) -> Agent:
+        """
+        Get configured LLM instance for this crew.
+        
+        Uses LLM_MODEL_STANDARD environment variable.
+        """
+        from crewai import LLM
+        from finwiz.utils.llm_config import get_configured_llm
+        
+        return get_configured_llm(model_type="standard")
+
     @agent
     def financial_integration_analyst(self) -> Agent:
         """Agent that integrates Stock/ETF/Crypto analyses into unified narrative."""
@@ -114,6 +124,7 @@ class ReportCrew:
             verbose=True,
             reasoning=True,
             tools=self.tools,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -124,6 +135,7 @@ class ReportCrew:
             verbose=True,
             tools=self.tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -134,6 +146,7 @@ class ReportCrew:
             verbose=True,
             tools=self.tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @final_reporter
@@ -144,6 +157,7 @@ class ReportCrew:
             config=self.agents_config["investment_reporter"],
             verbose=True,
             tools=[],
+            llm=self._get_configured_llm(),
         )
 
     @async_task

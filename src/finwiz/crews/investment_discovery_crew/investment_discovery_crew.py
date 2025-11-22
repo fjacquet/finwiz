@@ -7,7 +7,7 @@ The crew transforms FinWiz from a reactive evaluator to a proactive discoverer
 of exceptional investment opportunities.
 """
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from crewai_tools import DirectoryReadTool, FileReadTool
@@ -30,7 +30,6 @@ from finwiz.tools.optimization_tool import get_optimization_tool
 from finwiz.tools.portfolio_analysis_tool import get_portfolio_analysis_tool
 from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_tool
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.risk_assessment_tool import get_risk_assessment_tool
 from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.task_decorators import async_task, sync_task
@@ -121,6 +120,16 @@ class InvestmentDiscoveryCrew:
 
         super().__init__()
 
+    def _get_configured_llm(self) -> LLM:
+        """
+        Get configured LLM instance for this crew.
+        
+        Uses LLM_MODEL_STANDARD environment variable.
+        """
+        from finwiz.utils.llm_config import get_configured_llm
+        
+        return get_configured_llm(model_type="standard")
+
     @agent
     def etf_discovery_agent(self) -> Agent:
         """ETF Discovery Agent specialized in finding A+ grade ETFs."""
@@ -129,6 +138,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=etf_discovery_tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -139,6 +149,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=stock_discovery_tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -149,6 +160,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=crypto_discovery_tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -159,6 +171,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=portfolio_tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -181,6 +194,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=validation_tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -191,6 +205,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=feedback_tools + [quantitative_tool] + rag_tools,
             reasoning=True,
+            llm=self._get_configured_llm(),
         )
 
     @final_reporter
@@ -201,6 +216,7 @@ class InvestmentDiscoveryCrew:
             config=self.agents_config["investment_reporter"],
             tools=[],  # MUST be empty - enforced by @final_reporter decorator
             verbose=True,
+            llm=self._get_configured_llm(),
         )
 
     @async_task

@@ -95,8 +95,12 @@ class CryptoCrew:
         self.crew_logger = CrewLogger("CryptoCrew")
 
     def _get_configured_llm(self) -> LLM:
-        """Get configured LLM instance for this crew."""
-        return get_configured_llm()
+        """
+        Get configured LLM instance for this crew.
+        
+        Uses LLM_MODEL_STANDARD environment variable.
+        """
+        return get_configured_llm(model_type="standard")
 
     @agent
     def market_analyst(self) -> Agent:

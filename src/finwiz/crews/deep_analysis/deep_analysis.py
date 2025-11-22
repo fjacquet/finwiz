@@ -58,7 +58,6 @@ FRESHNESS THRESHOLDS:
 - SEC filings: 7 days maximum (static data)
 """
 
-import os
 import time
 from typing import Any
 
@@ -77,7 +76,6 @@ from finwiz.tools.tool_factories import (
     get_etf_crew_tools,
     get_stock_crew_tools,
 )
-from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
 from finwiz.utils.performance_config import OptimizationMode, get_performance_config_manager
@@ -123,6 +121,13 @@ class DeepAnalysisCrew:
         # Make Pydantic models available for CrewAI resolution
         self.DeepAnalysisResult = output_pydantic(DeepAnalysisResult)
         self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
+        
+        # Import and register hybrid analysis models
+        from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
+        from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
+        
+        self.QualitativeInsights = output_pydantic(QualitativeInsights)
+        self.EnrichedAnalysis = output_pydantic(EnrichedAnalysis)
 
         # Initialize structured logger
         self.crew_logger = CrewLogger("DeepAnalysisCrew")
@@ -370,17 +375,20 @@ class DeepAnalysisCrew:
         }
 
     def _get_configured_llm(self) -> LLM:
-        """Get configured LLM instance for this crew based on optimization mode."""
+        """
+        Get configured LLM instance for this crew based on optimization mode.
+
+        Uses environment variables:
+            - LLM_MODEL_MINI for performance-optimized operations
+            - LLM_MODEL_STANDARD for standard operations
+        """
+        from finwiz.utils.llm_config import get_mini_llm
+
         # Use mini model for maximum speed and balanced modes
         if self.perf_config.should_use_mini_model():
-            # Create LLM directly with mini model for performance optimization
-            return LLM(
-                model="openai/gpt-4o-mini",
-                timeout=int(os.getenv("OPENAI_TIMEOUT", "300")),
-                max_retries=3,
-            )
+            return get_mini_llm()
         else:
-            return get_configured_llm()
+            return get_configured_llm(model_type="standard")
 
     @agent
     def asset_analyst(self) -> Agent:
