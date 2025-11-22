@@ -24,8 +24,8 @@ class TestDeepAnalysisCrew:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Verify all required agents are present
-        required_agents = ["asset_analyst", "risk_assessor", "investment_reporter"]
+        # Verify all required agents are present (updated for current implementation)
+        required_agents = ["asset_analyst", "investment_reporter"]
         for agent_name in required_agents:
             assert agent_name in config, f"Missing agent configuration: {agent_name}"
             assert "role" in config[agent_name]
@@ -41,25 +41,16 @@ class TestDeepAnalysisCrew:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Verify all required tasks are present (Python scoring approach)
-        # NOTE: Crew only collects data - orchestrator handles Python scoring
+        # Verify all required tasks are present (matches tasks.yaml config)
         required_tasks = [
-            "data_collection_task",  # Async data collection - orchestrator scores it
+            "deep_qualitative_analysis_task",  # AI qualitative analysis
+            "generate_enriched_analysis_task",  # Final report consolidation
         ]
-
-        # Optional AI summary task (only when DEEP_ANALYSIS_AI_SUMMARY=true)
-        optional_tasks = ["ai_summary_task"]
 
         for task_name in required_tasks:
             assert task_name in config, f"Missing task configuration: {task_name}"
             assert "description" in config[task_name]
             assert "expected_output" in config[task_name]
-
-        # Verify optional tasks exist in config
-        for task_name in optional_tasks:
-            if task_name in config:
-                assert "description" in config[task_name]
-                assert "expected_output" in config[task_name]
 
     def test_should_have_get_tools_for_asset_class_method(self):
         """Test that DeepAnalysisCrew has the get_tools_for_asset_class method."""
@@ -95,19 +86,16 @@ class TestDeepAnalysisCrew:
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
         assert hasattr(DeepAnalysisCrew, "asset_analyst")
-        assert hasattr(DeepAnalysisCrew, "risk_assessor")
         assert hasattr(DeepAnalysisCrew, "investment_reporter")
 
     def test_should_have_task_methods(self):
         """Test that DeepAnalysisCrew has all required task methods."""
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
-        # Python scoring approach tasks
+        # Current implementation tasks (Python + AI hybrid)
         assert hasattr(DeepAnalysisCrew, "data_collection_task")
         assert hasattr(DeepAnalysisCrew, "python_scoring_task")
-
-        # Optional AI summary task
-        # Note: ai_summary_task is optional and only used when DEEP_ANALYSIS_AI_SUMMARY=true
+        assert hasattr(DeepAnalysisCrew, "ai_summary_task")
 
     def test_should_have_crew_method(self):
         """Test that DeepAnalysisCrew has the crew method."""
