@@ -32,8 +32,8 @@ class YahooFinanceCompanyInfoTool(BaseTool):
             revenue_growth = "N/A"
             try:
                 financials = ticker_data.financials
-                if not financials.empty and 'Total Revenue' in financials.index:
-                    revenues = financials.loc['Total Revenue'].sort_index(ascending=False)
+                if not financials.empty and "Total Revenue" in financials.index:
+                    revenues = financials.loc["Total Revenue"].sort_index(ascending=False)
                     if len(revenues) >= 2:
                         latest = revenues.iloc[0]
                         previous = revenues.iloc[1]

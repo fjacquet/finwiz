@@ -76,16 +76,16 @@ class ValuationTool(BaseTool):
     name: str = "valuation_tool"
     description: str = """
     Calculate stock price targets using multiple valuation methodologies.
-    
+
     Supports:
     - DCF valuation (requires cash_flows, discount_rate, terminal_growth)
     - P/E multiple valuation (requires earnings_per_share, target_pe_ratio)
     - Technical analysis (requires price_history)
     - Consensus target combining all methods
-    
+
     Returns JSON with target prices, upside percentages, confidence levels,
     and detailed assumptions for each method.
-    
+
     Input format:
     {
         "ticker": "AAPL",

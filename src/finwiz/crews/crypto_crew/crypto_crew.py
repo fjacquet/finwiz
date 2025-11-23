@@ -97,7 +97,7 @@ class CryptoCrew:
     def _get_configured_llm(self) -> LLM:
         """
         Get configured LLM instance for this crew.
-        
+
         Uses LLM_MODEL_STANDARD environment variable.
         """
         return get_configured_llm(model_type="standard")

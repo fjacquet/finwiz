@@ -92,10 +92,9 @@ class TestDeepAnalysisCrew:
         """Test that DeepAnalysisCrew has all required task methods."""
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
-        # Current implementation tasks (Python + AI hybrid)
-        assert hasattr(DeepAnalysisCrew, "data_collection_task")
-        assert hasattr(DeepAnalysisCrew, "python_scoring_task")
-        assert hasattr(DeepAnalysisCrew, "ai_summary_task")
+        # Hybrid architecture tasks (Python metrics + AI qualitative analysis)
+        assert hasattr(DeepAnalysisCrew, "deep_qualitative_analysis_task")
+        assert hasattr(DeepAnalysisCrew, "generate_enriched_analysis_task")
 
     def test_should_have_crew_method(self):
         """Test that DeepAnalysisCrew has the crew method."""
@@ -110,3 +109,63 @@ class TestDeepAnalysisCrew:
 
         assert agents_config.exists(), "agents.yaml configuration file not found"
         assert tasks_config.exists(), "tasks.yaml configuration file not found"
+
+    def test_should_instantiate_crew_without_keyerror(self):
+        """
+        Test that DeepAnalysisCrew instantiates without KeyError.
+        
+        This verifies that the deprecated risk_assessor agent has been properly removed
+        and the crew only references agents that exist in agents.yaml.
+        
+        Requirements: 2.1
+        """
+        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+
+        # Should instantiate without KeyError
+        crew = DeepAnalysisCrew()
+
+        # Verify crew was created successfully
+        assert crew is not None
+        assert hasattr(crew, 'agents_config')
+        assert hasattr(crew, 'tasks_config')
+
+    def test_should_have_exactly_two_agents(self):
+        """
+        Test that the crew contains exactly 2 agents.
+        
+        Verifies that only asset_analyst and investment_reporter are present,
+        confirming the risk_assessor has been removed.
+        
+        Requirements: 2.2
+        """
+        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+
+        crew = DeepAnalysisCrew()
+
+        # Check agents_config has exactly 2 agents
+        assert len(crew.agents_config) == 2, f"Expected 2 agents, found {len(crew.agents_config)}"
+
+        # Verify the correct agents are present
+        assert "asset_analyst" in crew.agents_config
+        assert "investment_reporter" in crew.agents_config
+
+        # Verify risk_assessor is NOT present
+        assert "risk_assessor" not in crew.agents_config
+
+    def test_should_not_reference_risk_assessor_in_code(self):
+        """
+        Test that the crew code does not reference risk_assessor.
+        
+        Verifies that all code references to the deprecated agent have been removed.
+        
+        Requirements: 1.1, 1.2, 1.4
+        """
+        import inspect
+
+        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+
+        # Get the source code of the DeepAnalysisCrew class
+        source = inspect.getsource(DeepAnalysisCrew)
+
+        # Verify no references to risk_assessor in the source code
+        assert "risk_assessor" not in source.lower(), "Found reference to risk_assessor in crew code"

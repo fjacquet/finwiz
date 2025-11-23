@@ -15,14 +15,12 @@ os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "test-key")
 os.environ["SERPER_API_KEY"] = os.environ.get("SERPER_API_KEY", "test-key")
 os.environ["DEEP_ANALYSIS_BATCH_SIZE"] = "1"
 
-from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
-from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 from finwiz.flow_state import FinwizState
+from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
 
 
 def test_extraction():
     """Test the extraction with a simple example."""
-
     # Create orchestrator with mock state
     state = FinwizState()
     orchestrator = DeepAnalysisOrchestrator(state)
@@ -94,7 +92,7 @@ def test_extraction():
             print(f"  - {key}: {value} ({type(value).__name__})")
 
         # Check for critical fields
-        critical_stock = ['current_price', 'roe', 'debt_to_equity', 'revenue_growth', 'volatility', 'beta']
+        critical_stock = ["current_price", "roe", "debt_to_equity", "revenue_growth", "volatility", "beta"]
         print("\n🔍 Critical fields check:")
         for field in critical_stock:
             if field in extracted:

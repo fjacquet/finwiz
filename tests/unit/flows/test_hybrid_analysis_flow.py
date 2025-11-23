@@ -14,6 +14,45 @@ from hypothesis import strategies as st
 
 from finwiz.flows.hybrid_analysis_flow import HybridAnalysisFlow
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
+from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+
+
+def create_valid_quantitative_data(
+    composite_score: float = 0.5,
+    fundamental_score: float = 0.5,
+    technical_score: float = 0.5,
+    risk_score: float = 2.5,  # Must be <= 5.0
+    grade: str = "B",
+    recommendation: str = "HOLD",
+) -> dict:
+    """Create valid quantitative analysis data with all required fields."""
+    return {
+        "composite_score": composite_score,
+        "fundamental_score": fundamental_score,
+        "technical_score": technical_score,
+        "risk_score": min(risk_score, 5.0),  # Ensure max 5.0
+        "grade": grade,
+        "preliminary_recommendation": recommendation,
+        "fundamental_metrics": {"roe": 0.25, "debt_to_equity": 0.5},
+        "technical_indicators": {"rsi": 55.0, "macd": 1.2},
+        "risk_metrics": {"volatility": 0.15, "beta": 1.1},
+        "calculation_timestamp": datetime.now().isoformat(),
+        "data_quality": DataQualityMetrics(
+            completeness_score=0.95,
+            freshness_score=1.0,
+            accuracy_confidence=0.90,
+            source_reliability=0.85,
+            missing_fields=[],
+        ).model_dump(),
+        "data_lineage": DataLineage(
+            primary_sources=["yfinance"],
+            collection_timestamp=datetime.now(),
+            transformation_steps=["normalize"],
+            cache_status="fresh",
+        ).model_dump(),
+        "confidence_level": 0.90,
+        "python_rationale": "Template-generated analysis based on quantitative metrics",
+    }
 
 
 class TestHybridAnalysisFlowExecutionSequence:
@@ -89,17 +128,25 @@ class TestHybridAnalysisFlowExecutionSequence:
         flow = HybridAnalysisFlow()
 
         # Mock the scorer to return predictable results
-        mock_result = mocker.Mock()
-        mock_result.composite_score = composite_score
-        mock_result.fundamental_score = 0.8
-        mock_result.technical_score = 0.7
-        mock_result.risk_score = 2.5
-        mock_result.grade = "A"
-        mock_result.recommendation = "BUY"
-        mock_result.fundamental_metrics = {}
-        mock_result.technical_indicators = {}
-        mock_result.risk_metrics = {}
-        mock_result.rationale = "Test rationale"
+        from finwiz.flow_state import DeepAnalysisResult
+
+        mock_result = DeepAnalysisResult(
+            ticker=ticker,
+            asset_class=asset_class,
+            crew_name="deep_analysis",
+            composite_score=composite_score,
+            fundamental_score=0.8,
+            technical_score=0.7,
+            risk_score=2.5,
+            grade="A",
+            recommendation="BUY",
+            rationale="Test rationale",
+            fundamental_details={},
+            technical_details={},
+            risk_details={},
+            data_freshness_hours=1.0,
+            confidence_level=0.9,
+        )
 
         flow.scorer.calculate_composite_score = mocker.Mock(return_value=mock_result)
 
@@ -153,17 +200,25 @@ class TestHybridAnalysisFlowExecutionSequence:
         assert flow.state.processing_start > 0
 
         # Mock scorer for step 2
-        mock_result = mocker.Mock()
-        mock_result.composite_score = 0.85
-        mock_result.fundamental_score = 0.8
-        mock_result.technical_score = 0.7
-        mock_result.risk_score = 2.5
-        mock_result.grade = "A"
-        mock_result.recommendation = "BUY"
-        mock_result.fundamental_metrics = {}
-        mock_result.technical_indicators = {}
-        mock_result.risk_metrics = {}
-        mock_result.rationale = "Test rationale for analysis"
+        from finwiz.flow_state import DeepAnalysisResult
+
+        mock_result = DeepAnalysisResult(
+            ticker="AAPL",
+            asset_class="stock",
+            crew_name="deep_analysis",
+            composite_score=0.85,
+            fundamental_score=0.8,
+            technical_score=0.7,
+            risk_score=2.5,
+            grade="A",
+            recommendation="BUY",
+            rationale="Test rationale for analysis",
+            fundamental_details={},
+            technical_details={},
+            risk_details={},
+            data_freshness_hours=1.0,
+            confidence_level=0.9,
+        )
 
         flow.scorer.calculate_composite_score = mocker.Mock(return_value=mock_result)
 
@@ -201,17 +256,25 @@ class TestHybridAnalysisFlowExecutionSequence:
         assert step1_output["raw_data"]["volume"] == 1000000
 
         # Mock scorer
-        mock_result = mocker.Mock()
-        mock_result.composite_score = 0.75
-        mock_result.fundamental_score = 0.8
-        mock_result.technical_score = 0.7
-        mock_result.risk_score = 2.5
-        mock_result.grade = "B+"
-        mock_result.recommendation = "HOLD"
-        mock_result.fundamental_metrics = {}
-        mock_result.technical_indicators = {}
-        mock_result.risk_metrics = {}
-        mock_result.rationale = "Test rationale for analysis"
+        from finwiz.flow_state import DeepAnalysisResult
+
+        mock_result = DeepAnalysisResult(
+            ticker="MSFT",
+            asset_class="stock",
+            crew_name="deep_analysis",
+            composite_score=0.75,
+            fundamental_score=0.8,
+            technical_score=0.7,
+            risk_score=2.5,
+            grade="B+",
+            recommendation="HOLD",
+            rationale="Test rationale for analysis",
+            fundamental_details={},
+            technical_details={},
+            risk_details={},
+            data_freshness_hours=1.0,
+            confidence_level=0.9,
+        )
 
         flow.scorer.calculate_composite_score = mocker.Mock(return_value=mock_result)
 
@@ -266,31 +329,20 @@ class TestAIContextIsolation:
         # Arrange
         flow = HybridAnalysisFlow()
 
-        # Create quantitative analysis data with generated values
-        quant_data = {
-            "composite_score": composite_score,
-            "fundamental_score": fundamental_score,
-            "technical_score": technical_score,
-            "risk_score": risk_score,
-            "grade": grade,
-            "preliminary_recommendation": recommendation,
-            "fundamental_metrics": {"roe": 0.25, "debt_to_equity": 0.5},
-            "technical_indicators": {"rsi": 55.0, "macd": 1.2},
-            "risk_metrics": {"volatility": 0.15, "beta": 1.1},
-        }
+        # Create quantitative analysis data with generated values using helper
+        quant_data = create_valid_quantitative_data(
+            composite_score=composite_score,
+            fundamental_score=fundamental_score,
+            technical_score=technical_score,
+            risk_score=risk_score,
+            grade=grade,
+            recommendation=recommendation,
+        )
 
         # Create a deep copy to verify immutability
-        original_quant_data = {
-            "composite_score": composite_score,
-            "fundamental_score": fundamental_score,
-            "technical_score": technical_score,
-            "risk_score": risk_score,
-            "grade": grade,
-            "preliminary_recommendation": recommendation,
-            "fundamental_metrics": {"roe": 0.25, "debt_to_equity": 0.5},
-            "technical_indicators": {"rsi": 55.0, "macd": 1.2},
-            "risk_metrics": {"volatility": 0.15, "beta": 1.1},
-        }
+        import copy
+
+        original_quant_data = copy.deepcopy(quant_data)
 
         upstream_data = {
             "ticker": ticker,
@@ -302,31 +354,70 @@ class TestAIContextIsolation:
         # Mock the crew execution to verify inputs
         crew_inputs_received = {}
 
-        def mock_get_crew(ac):
-            mock_crew_instance = mocker.Mock()
-            mock_crew_obj = mocker.Mock()
+        def mock_execute_crew(asset_class: str, inputs: dict):
+            # Capture the inputs passed to crew
+            crew_inputs_received.update(inputs)
+            # Simulate AI trying to modify context (should not affect original)
+            if "quantitative_analysis" in inputs:
+                inputs["quantitative_analysis"]["composite_score"] = 0.99
+            # Return mock result (simulating crew output)
+            return mocker.Mock()
 
-            def mock_kickoff(inputs):
-                # Capture the inputs passed to crew
-                crew_inputs_received.update(inputs)
-                # Simulate AI trying to modify context (should not affect original)
-                if "quantitative_analysis" in inputs:
-                    inputs["quantitative_analysis"]["composite_score"] = 0.99
-                # Return mock result
-                return mocker.Mock()
+        mocker.patch.object(flow, "_execute_crew", side_effect=mock_execute_crew)
+        mocker.patch.object(flow, "_extract_raw_output", return_value={})
 
-            mock_crew_obj.kickoff = mock_kickoff
-            mock_crew_instance.crew = mocker.Mock(return_value=mock_crew_obj)
-            return mock_crew_instance
+        # Mock validate_ai_output_with_retry to return a QualitativeInsights object
+        from datetime import datetime
 
-        flow._get_analysis_crew = mock_get_crew
-        flow._convert_to_qualitative_insights = mocker.Mock(return_value=mocker.Mock(model_dump=mocker.Mock(return_value={})))
+        from finwiz.schemas.hybrid_analysis.qualitative import (
+            ContextualRiskInsights,
+            FundamentalContextInsights,
+            InvestmentSynthesis,
+            QualitativeInsights,
+            SecAnalysisInsights,
+            TechnicalStrategyInsights,
+        )
+
+        mock_insights = QualitativeInsights(
+            sec_insights=SecAnalysisInsights(
+                business_model="Test business model analysis " * 20,
+                competitive_advantages=["Strong brand"],
+                risk_factors=["Market competition"],
+            ),
+            fundamental_context=FundamentalContextInsights(
+                industry_analysis="Test industry analysis " * 20,
+                growth_drivers=["Innovation"],
+                competitive_positioning="Market leader in segment with strong positioning and advantages",
+                management_assessment="Experienced leadership team with proven track record of success",
+            ),
+            technical_strategy=TechnicalStrategyInsights(
+                chart_patterns=["Bullish flag"],
+                support_resistance="Support at 100 with strong buying interest, resistance at 120 with profit taking",
+                entry_exit_strategy="Test entry exit strategy " * 20,
+                timing_assessment="Positive momentum with strong volume and upward trend continuation expected",
+            ),
+            contextual_risks=ContextualRiskInsights(regulatory_risks=["Regulatory changes"], geopolitical_risks=["Trade tensions"]),
+            investment_synthesis=InvestmentSynthesis(
+                investment_thesis="Test investment thesis " * 40,
+                bull_case="Test bull case " * 20,
+                base_case="Test base case " * 20,
+                bear_case="Test bear case " * 20,
+                scenario_probabilities={"bull": 0.3, "base": 0.5, "bear": 0.2},
+                final_recommendation="BUY",
+                recommendation_confidence="HIGH",
+                action_plan={
+                    "immediate_actions": ["Monitor"],
+                    "monitoring_points": ["Price"],
+                    "exit_triggers": ["Loss"],
+                },
+            ),
+            analysis_timestamp=datetime.now(),
+            ai_confidence=0.85,
+        )
+        mocker.patch("finwiz.validation.ai_output_validator.validate_ai_output_with_retry", return_value=mock_insights)
 
         # Act
-        try:
-            flow.analyze_qualitative_insights(upstream_data)
-        except Exception:
-            pass  # We're testing the inputs, not the full execution
+        flow.analyze_qualitative_insights(upstream_data)
 
         # Assert - Verify quantitative data was passed as context
         assert "quantitative_analysis" in crew_inputs_received
@@ -375,32 +466,71 @@ class TestAIContextIsolation:
             "ticker": ticker,
             "asset_class": asset_class,
             "company_name": f"{ticker} Corporation",
-            "quantitative_analysis": {
-                "composite_score": composite_score,
-                "grade": grade,
-                "preliminary_recommendation": recommendation,
-                "fundamental_metrics": {"roe": 0.20},
-                "technical_indicators": {"rsi": 60.0},
-                "risk_metrics": {"volatility": 0.12},
-            },
+            "quantitative_analysis": create_valid_quantitative_data(
+                composite_score=composite_score,
+                grade=grade,
+                recommendation=recommendation,
+            ),
         }
 
         crew_inputs_received = {}
 
-        def mock_get_crew(ac):
-            mock_crew_instance = mocker.Mock()
-            mock_crew_obj = mocker.Mock()
+        def mock_execute_crew(asset_class: str, inputs: dict):
+            crew_inputs_received.update(inputs)
+            return mocker.Mock()
 
-            def mock_kickoff(inputs):
-                crew_inputs_received.update(inputs)
-                return mocker.Mock()
+        mocker.patch.object(flow, "_execute_crew", side_effect=mock_execute_crew)
+        mocker.patch.object(flow, "_extract_raw_output", return_value={})
 
-            mock_crew_obj.kickoff = mock_kickoff
-            mock_crew_instance.crew = mocker.Mock(return_value=mock_crew_obj)
-            return mock_crew_instance
+        # Mock validate_ai_output_with_retry to return a QualitativeInsights object
+        from datetime import datetime
 
-        flow._get_analysis_crew = mock_get_crew
-        flow._convert_to_qualitative_insights = mocker.Mock(return_value=mocker.Mock(model_dump=mocker.Mock(return_value={})))
+        from finwiz.schemas.hybrid_analysis.qualitative import (
+            ContextualRiskInsights,
+            FundamentalContextInsights,
+            InvestmentSynthesis,
+            QualitativeInsights,
+            SecAnalysisInsights,
+            TechnicalStrategyInsights,
+        )
+
+        mock_insights = QualitativeInsights(
+            sec_insights=SecAnalysisInsights(
+                business_model="Test business model analysis " * 20,
+                competitive_advantages=["Strong brand"],
+                risk_factors=["Market competition"],
+            ),
+            fundamental_context=FundamentalContextInsights(
+                industry_analysis="Test industry analysis " * 20,
+                growth_drivers=["Innovation"],
+                competitive_positioning="Market leader in segment with strong positioning and advantages",
+                management_assessment="Experienced leadership team with proven track record of success",
+            ),
+            technical_strategy=TechnicalStrategyInsights(
+                chart_patterns=["Bullish flag"],
+                support_resistance="Support at 100 with strong buying interest, resistance at 120 with profit taking",
+                entry_exit_strategy="Test entry exit strategy " * 20,
+                timing_assessment="Positive momentum with strong volume and upward trend continuation expected",
+            ),
+            contextual_risks=ContextualRiskInsights(regulatory_risks=["Regulatory changes"], geopolitical_risks=["Trade tensions"]),
+            investment_synthesis=InvestmentSynthesis(
+                investment_thesis="Test investment thesis " * 40,
+                bull_case="Test bull case " * 20,
+                base_case="Test base case " * 20,
+                bear_case="Test bear case " * 20,
+                scenario_probabilities={"bull": 0.3, "base": 0.5, "bear": 0.2},
+                final_recommendation="BUY",
+                recommendation_confidence="HIGH",
+                action_plan={
+                    "immediate_actions": ["Monitor"],
+                    "monitoring_points": ["Price"],
+                    "exit_triggers": ["Loss"],
+                },
+            ),
+            analysis_timestamp=datetime.now(),
+            ai_confidence=0.85,
+        )
+        mocker.patch("finwiz.validation.ai_output_validator.validate_ai_output_with_retry", return_value=mock_insights)
 
         # Act
         try:

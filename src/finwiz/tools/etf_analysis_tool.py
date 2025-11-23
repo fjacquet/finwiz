@@ -77,7 +77,7 @@ class ETFAnalysisTool(BaseTool):
     name: str = "etf_analysis_tool"
     description: str = """
     Analyze ETF quality using multiple metrics and provide comprehensive assessment.
-    
+
     Calculates:
     - Tracking error: How closely ETF follows benchmark
     - Correlation: Relationship with benchmark returns
@@ -85,9 +85,9 @@ class ETFAnalysisTool(BaseTool):
     - Liquidity score: Trading ease based on volume, spread, size
     - Concentration risk: Top holdings concentration
     - Efficiency score: Overall ETF quality rating
-    
+
     Returns JSON with detailed metrics, scores, and ratings for each dimension.
-    
+
     Input format:
     {
         "ticker": "SPY",

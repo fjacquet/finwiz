@@ -13,11 +13,14 @@ Requirements addressed: 7.1, 7.2, 7.3 from investment discovery spec.
 import asyncio
 from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.investment_discovery import APlusAnalysis, MarketRegime
+
+if TYPE_CHECKING:
+    from finwiz.utils.monitoring_alerts import AlertSeverity
 from finwiz.schemas.portfolio_review import Grade
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.logger import get_logger

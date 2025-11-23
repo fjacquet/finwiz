@@ -63,11 +63,9 @@ class EnhancedSentimentAnalysisTool(BaseTool):
                 loop = asyncio.get_running_loop()
                 # Use ThreadPoolExecutor to run async code in a new thread with its own event loop
                 import concurrent.futures
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(
-                        asyncio.run,
-                        self.data_sources.get_enhanced_news_data(ticker, asset_type, max_articles)
-                    )
+                    future = executor.submit(asyncio.run, self.data_sources.get_enhanced_news_data(ticker, asset_type, max_articles))
                     enhanced_news_data = future.result()
             except RuntimeError:
                 # No event loop running, safe to use asyncio.run()

@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from crewai.flow import Flow, and_, listen, start
-# from crewai.flow.persistence import persist  # TEMPORARILY DISABLED
 
+# from crewai.flow.persistence import persist  # TEMPORARILY DISABLED
 from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 from finwiz.config.resilience_config import get_resilience_config
 from finwiz.crew_factory import CrewFactory
@@ -411,6 +411,7 @@ class FinwizFlow(Flow[FinwizState]):
 
         # Phase 4: Discovery (if enabled)
         import os
+
         discovery_data = {}  # Default empty dict
         if os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true":
             logger.info("=" * 80)

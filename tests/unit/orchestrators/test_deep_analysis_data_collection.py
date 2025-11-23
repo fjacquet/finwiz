@@ -105,14 +105,30 @@ class TestPythonDataCollection:
         """Test successful data collection from all tools."""
         # Setup mocks
         mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
-        mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
+
+        # Mock DataSourceOrchestrator for stock fundamental data
+        from datetime import datetime
+
+        from finwiz.data.data_source_orchestrator import OrchestrationResult
+
+        mock_orchestration_result = OrchestrationResult(
+            ticker="AAPL",
+            timestamp=datetime.now(),
+            return_on_equity=mock_yahoo_company_data["financial_metrics"]["return_on_equity"],
+            debt_to_equity=mock_yahoo_company_data["financial_metrics"]["debt_to_equity"],
+            revenue_growth=mock_yahoo_company_data["financial_metrics"]["revenue_growth"],
+            profit_margin=mock_yahoo_company_data["financial_metrics"]["profit_margin"],
+            sources_succeeded=["YFinance"],
+            confidence=1.0,
+        )
+        mock_data_orchestrator = mocker.patch.object(orchestrator.data_orchestrator, "get_fundamental_data", new=mocker.AsyncMock(return_value=mock_orchestration_result))
+
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
         mock_sentiment = mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run")
         mock_sec = mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run")
 
         # Configure mocks
         mock_ticker.return_value = mock_yahoo_ticker_data
-        mock_company.return_value = mock_yahoo_company_data
         mock_quant.return_value = mock_quantitative_data
         mock_sentiment.return_value = mock_sentiment_data
         mock_sec.return_value = mock_sec_data
@@ -122,7 +138,7 @@ class TestPythonDataCollection:
 
         # Verify all tools were called
         mock_ticker.assert_called_once_with(ticker="AAPL")
-        mock_company.assert_called_once_with(ticker="AAPL")
+        # DataSourceOrchestrator is called for stocks instead of YahooFinanceCompanyInfoTool
         mock_quant.assert_called_once()
         mock_sentiment.assert_called_once()
         mock_sec.assert_called_once()

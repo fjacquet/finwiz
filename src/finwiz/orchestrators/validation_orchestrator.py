@@ -127,11 +127,11 @@ class ValidationOrchestrator:
         try:
             # Run portfolio review (loads CSV, builds decisions) - MUST await async function
             review_path = await run(flow_state=self.state)
-            
+
             # Load the generated review JSON
             import json
             from pathlib import Path
-            
+
             review_data = json.loads(Path(review_path).read_text(encoding="utf-8"))
 
             # Update state

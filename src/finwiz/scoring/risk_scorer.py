@@ -40,6 +40,17 @@ class RiskScorer:
         """
         self.logger = logger
         self.thresholds = thresholds or get_thresholds()
+        self._data_quality_metrics = None
+
+    def set_data_quality_metrics(self, metrics: Any) -> None:
+        """
+        Set data quality metrics tracker.
+
+        Args:
+            metrics: DataQualityMetrics instance for tracking field calculations
+
+        """
+        self._data_quality_metrics = metrics
 
     def calculate_risk_score(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         """
@@ -130,8 +141,33 @@ class RiskScorer:
         """
         try:
             value = data.get(key)
+            final_default = default if default is not None else 0.0
             if value is None:
-                return default if default is not None else 0.0
-            return float(value)
+                self._track_calculated_field(key, None, final_default)
+                return final_default
+            float_value = float(value)
+            self._track_calculated_field(key, float_value, final_default)
+            return float_value
         except (ValueError, TypeError):
-            return default if default is not None else 0.0
+            final_default = default if default is not None else 0.0
+            self._track_calculated_field(key, None, final_default)
+            return final_default
+
+    def _track_calculated_field(self, field_name: str, value: Any, default: Any) -> None:
+        """
+        Track whether a field was successfully calculated or defaulted.
+
+        Args:
+            field_name: Name of the field
+            value: Actual value extracted
+            default: Default value that would be used
+
+        """
+        if self._data_quality_metrics is None:
+            return
+
+        # If value equals default, it means we're using fallback
+        if value == default or value is None:
+            self._data_quality_metrics.record_defaulted_field(field_name, default)
+        else:
+            self._data_quality_metrics.record_calculated_field(field_name)

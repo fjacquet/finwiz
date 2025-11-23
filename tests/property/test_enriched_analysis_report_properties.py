@@ -15,7 +15,6 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from finwiz.reporting.enriched_analysis_report_generator import EnrichedAnalysisReportGenerator
-from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
 
 
 # Strategy for generating valid EnrichedAnalysis data
@@ -28,7 +27,7 @@ def enriched_analysis_strategy(draw):
     rationale_word_count = draw(st.integers(min_value=500, max_value=1000))
     business_model_word_count = draw(st.integers(min_value=100, max_value=500))
     thesis_word_count = draw(st.integers(min_value=200, max_value=800))
-    
+
     # Ensure total meets 2000 word minimum
     current_total = exec_word_count + rationale_word_count + business_model_word_count + thesis_word_count
     if current_total < 2000:

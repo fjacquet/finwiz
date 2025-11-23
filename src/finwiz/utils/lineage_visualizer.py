@@ -336,7 +336,7 @@ class LineageVisualizer:
 </head>
 <body>
     <h1>📊 Data Lineage: {lineage.ticker}</h1>
-    
+
     <div class="info">
         <p><strong>Asset Class:</strong> {lineage.asset_class}</p>
         <p><strong>Analysis Timestamp:</strong> {lineage.analysis_timestamp}</p>
@@ -344,13 +344,13 @@ class LineageVisualizer:
         <p><strong>Formula Version:</strong> {lineage.formula_version or "N/A"}</p>
         <p><strong>Completeness:</strong> {lineage.completeness * 100:.1f}%</p>
     </div>
-    
+
     <div class="diagram-container">
         <div class="mermaid">
 {diagram_code}
         </div>
     </div>
-    
+
     <script>
         mermaid.initialize({{ startOnLoad: true, theme: 'default' }});
     </script>

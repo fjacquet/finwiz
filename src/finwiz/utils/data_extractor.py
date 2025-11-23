@@ -132,7 +132,7 @@ class CrewDataExtractor:
 
                         # Track type conversion transformation if needed
                         raw_value = perf_metrics.get(field_name)
-                        if raw_value is not None and type(raw_value) != type(value):
+                        if raw_value is not None and type(raw_value) is not type(value):
                             self.lineage_tracker.add_transformation(
                                 transformation_id=f"convert_{field_name}",
                                 operation="type_conversion",
@@ -222,7 +222,7 @@ class CrewDataExtractor:
                 )
 
                 # Track type conversion for composite_score if needed
-                if type(data["composite_score"]) != float:
+                if not isinstance(data["composite_score"], float):
                     self.lineage_tracker.add_transformation(
                         transformation_id="convert_composite_score",
                         operation="type_conversion",

@@ -79,8 +79,8 @@ class SentimentResponseFormatter:
             for i, topic in enumerate(trending_topics, 1):
                 # Use correct field names from sentiment_calculations.py
                 # Fields are: mention_count (not article_count), relevance_score (not average_relevance)
-                count = topic.get('mention_count', topic.get('article_count', 0))
-                relevance = topic.get('relevance_score', topic.get('average_relevance', 0.0))
+                count = topic.get("mention_count", topic.get("article_count", 0))
+                relevance = topic.get("relevance_score", topic.get("average_relevance", 0.0))
                 response += f"{i}. **{topic['topic']}** - {count} articles (relevance: {relevance:.2f})\n"
         else:
             response += "No significant trending topics identified.\n"
@@ -267,8 +267,8 @@ An error occurred while performing sentiment analysis:
         for i, topic in enumerate(trending_topics, 1):
             response += f"### {i}. {topic['topic']}\n"
             # Use correct field names from sentiment_calculations.py
-            count = topic.get('mention_count', topic.get('article_count', 0))
-            relevance = topic.get('relevance_score', topic.get('average_relevance', 0.0))
+            count = topic.get("mention_count", topic.get("article_count", 0))
+            relevance = topic.get("relevance_score", topic.get("average_relevance", 0.0))
             response += f"- **Mentions**: {count} articles\n"
             response += f"- **Relevance**: {relevance:.2f}/1.0\n"
 

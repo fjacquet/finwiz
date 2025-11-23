@@ -123,11 +123,11 @@ class InvestmentDiscoveryCrew:
     def _get_configured_llm(self) -> LLM:
         """
         Get configured LLM instance for this crew.
-        
+
         Uses LLM_MODEL_STANDARD environment variable.
         """
         from finwiz.utils.llm_config import get_configured_llm
-        
+
         return get_configured_llm(model_type="standard")
 
     @agent

@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from crewai import LLM, Agent, Crew, Process, Task
+from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
@@ -108,12 +108,11 @@ class ReportCrew:
     def _get_configured_llm(self) -> Agent:
         """
         Get configured LLM instance for this crew.
-        
+
         Uses LLM_MODEL_STANDARD environment variable.
         """
-        from crewai import LLM
         from finwiz.utils.llm_config import get_configured_llm
-        
+
         return get_configured_llm(model_type="standard")
 
     @agent

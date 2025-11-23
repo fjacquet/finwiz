@@ -146,7 +146,7 @@ class TestDeepAnalysisOrchestratorProperties:
         state = FinwizState()
         batch_prefetch_config = mocker.Mock()
         batch_prefetch_config.enabled = False
-        
+
         orchestrator = DeepAnalysisOrchestrator(
             state=state,
             batch_prefetch_config=batch_prefetch_config,

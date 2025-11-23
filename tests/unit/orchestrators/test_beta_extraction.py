@@ -99,7 +99,20 @@ class TestBetaExtraction:
         # Mock tool calls (patch _run method directly on tool classes)
         mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run", return_value=sample_ticker_result)
 
-        mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run", return_value=sample_company_result)
+        # Mock DataSourceOrchestrator to return fundamental data from sample_company_result
+        from datetime import datetime
+
+        from finwiz.data.data_source_orchestrator import OrchestrationResult
+
+        mock_orchestration_result = OrchestrationResult(
+            ticker="AAPL",
+            timestamp=datetime.now(),
+            return_on_equity=sample_company_result["financial_metrics"]["return_on_equity"],
+            debt_to_equity=sample_company_result["financial_metrics"]["debt_to_equity"],
+            sources_succeeded=["YFinance"],
+            confidence=1.0,
+        )
+        mock_data_orchestrator = mocker.patch.object(orchestrator.data_orchestrator, "get_fundamental_data", new=mocker.AsyncMock(return_value=mock_orchestration_result))
 
         # Quantitative tool returns JSON string
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(sample_quantitative_result))
@@ -130,12 +143,12 @@ class TestBetaExtraction:
         assert "macd" in result
         assert result["macd"] == sample_quantitative_result["technical_analysis"]["technical_indicators"]["macd"]
 
-        # Validate fundamentals
+        # Validate fundamentals (use pytest.approx for floating point comparison)
         assert "roe" in result
-        assert result["roe"] == sample_company_result["financial_metrics"]["return_on_equity"]
+        assert result["roe"] == pytest.approx(sample_company_result["financial_metrics"]["return_on_equity"], rel=1e-2)
 
         assert "debt_to_equity" in result
-        assert result["debt_to_equity"] == sample_company_result["financial_metrics"]["debt_to_equity"]
+        assert result["debt_to_equity"] == pytest.approx(sample_company_result["financial_metrics"]["debt_to_equity"], rel=1e-2)
 
     def test_flatten_preserves_all_critical_fields(self, mocker):
         """

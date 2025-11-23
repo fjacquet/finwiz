@@ -93,8 +93,9 @@ class DataAvailabilityTracker:
                 # Handle both datetime objects and ISO format strings
                 if isinstance(last_updated, str):
                     from dateutil import parser
+
                     last_updated = parser.isoparse(last_updated)
-                
+
                 age_delta = datetime.now() - last_updated
                 age_hours = age_delta.total_seconds() / 3600
 
