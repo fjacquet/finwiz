@@ -223,6 +223,69 @@ class JsonToHtmlConverter:
         elif "backtesting" in json_path.name:
             context.setdefault("strategy_name", "Default Strategy")
 
+        # Handle deep_analysis output format with raw_output string
+        elif "deep_analysis" in json_path.name and "raw_output" in data:
+            # Parse the raw_output string to extract fields
+            raw_output = data.get("raw_output", "")
+            context = self._parse_raw_output(raw_output, context)
+            
+            # Add default values for missing template fields
+            context.setdefault("processing_time_seconds", 0.0)
+            context.setdefault("llm_cost_dollars", 0.0)
+            context.setdefault("company_name", context.get("ticker", "Unknown"))
+            context.setdefault("analysis_date", datetime.now())
+            context.setdefault("executive_summary", context.get("rationale", "No summary available"))
+            context.setdefault("final_recommendation", context.get("recommendation", "HOLD"))
+            context.setdefault("final_grade", context.get("grade", "N/A"))
+            context.setdefault("recommendation_confidence", "Medium")
+            context.setdefault("final_score", context.get("composite_score", 0.0))
+            context.setdefault("investment_rationale", context.get("rationale", ""))
+            
+            # Extract metrics from parsed details
+            context.setdefault("fundamental_metrics", context.get("fundamental_details", {}))
+            context.setdefault("technical_indicators", context.get("technical_details", {}))
+            context.setdefault("risk_metrics", context.get("risk_details", {}))
+            
+            # Set default empty structures for missing sections
+            context.setdefault("sec_insights", {
+                "business_model": "Not available",
+                "competitive_advantages": [],
+                "strategic_initiatives": []
+            })
+            context.setdefault("fundamental_context", {
+                "industry_analysis": "Not available",
+                "growth_drivers": [],
+                "competitive_positioning": "Not available",
+                "management_assessment": "Not available"
+            })
+            context.setdefault("technical_strategy", {
+                "chart_patterns": [],
+                "support_resistance": "Not available",
+                "entry_exit_strategy": "Not available",
+                "timing_assessment": "Not available"
+            })
+            context.setdefault("contextual_risks", {
+                "regulatory_risks": [],
+                "geopolitical_risks": [],
+                "competitive_risks": [],
+                "operational_risks": [],
+                "stress_scenarios": []
+            })
+            context.setdefault("investment_synthesis", {
+                "scenario_probabilities": {"bull": 0.33, "base": 0.34, "bear": 0.33},
+                "bull_case": "Not available",
+                "base_case": "Not available",
+                "bear_case": "Not available",
+                "action_plan": {
+                    "immediate_actions": [],
+                    "monitoring_points": [],
+                    "exit_triggers": []
+                }
+            })
+            context.setdefault("report_word_count", 0)
+            context.setdefault("unique_insights_count", 0)
+            context.setdefault("qualitative", {"ai_confidence": 0.0})
+
         return context
 
     def _infer_asset_class(self, json_path: Path) -> str:
@@ -235,6 +298,51 @@ class JsonToHtmlConverter:
         elif "crypto" in name_lower:
             return "crypto"
         return "mixed"
+
+    def _parse_raw_output(self, raw_output: str, context: dict[str, Any]) -> dict[str, Any]:
+        """
+        Parse raw_output string from deep analysis to extract fields.
+        
+        The raw_output is a string representation of a Pydantic model with key=value pairs.
+        
+        Args:
+            raw_output: String containing key=value pairs
+            context: Existing context dictionary to update
+            
+        Returns:
+            Updated context dictionary
+        """
+        import re
+        
+        # Extract simple key=value pairs (for strings, numbers, booleans)
+        simple_pattern = r"(\w+)=(['\"]?)([^'\"=\s{}[\]]+)\2(?=\s+\w+=|\s*$)"
+        for match in re.finditer(simple_pattern, raw_output):
+            key, _, value = match.groups()
+            # Try to convert to appropriate type
+            if value.lower() in ('true', 'false'):
+                context[key] = value.lower() == 'true'
+            elif value.replace('.', '', 1).replace('-', '', 1).isdigit():
+                context[key] = float(value) if '.' in value else int(value)
+            else:
+                context[key] = value
+        
+        # Extract dict values (e.g., risk_details={...})
+        dict_pattern = r"(\w+)=\{([^}]+)\}"
+        for match in re.finditer(dict_pattern, raw_output):
+            key, dict_content = match.groups()
+            # Parse the dict content
+            dict_data = {}
+            for item_match in re.finditer(r"'(\w+)':\s*([^,}]+)", dict_content):
+                item_key, item_value = item_match.groups()
+                item_value = item_value.strip()
+                # Convert to appropriate type
+                if item_value.replace('.', '', 1).replace('-', '', 1).isdigit():
+                    dict_data[item_key] = float(item_value) if '.' in item_value else int(item_value)
+                else:
+                    dict_data[item_key] = item_value.strip("'\"")
+            context[key] = dict_data
+        
+        return context
 
 
 def convert_all_json_to_html(output_dir: str = "output") -> dict[str, list[str]]:
