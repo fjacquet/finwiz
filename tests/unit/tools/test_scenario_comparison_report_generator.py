@@ -280,9 +280,7 @@ class TestScenarioComparisonReportGenerator:
         assert isinstance(key_findings, list)
         assert len(key_findings) > 0
 
-        # Should include rebalancing benefit finding (if rebalancing_benefit exists)
         benefit_finding = next((f for f in key_findings if "benefit" in f.lower()), None)
-        # Note: rebalancing_benefit may not exist in MonteCarloResult, so this test is optional
 
     def test_should_extract_priority_actions_when_called(self, report_generator, sample_scenario_report):
         # Act
