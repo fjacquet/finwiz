@@ -84,14 +84,8 @@ def generate_html_for_files(json_files: list[Path], force: bool = False) -> tupl
 
         # Generate HTML (reads JSON file internally)
         try:
-            # Load JSON data
-            import json
-
-            with open(json_path) as f:
-                output_data = json.load(f)
-
             # Generate HTML
-            result_path = auto_generate_html(json_path, output_data, crew_name)
+            result_path = auto_generate_html(json_path)
 
             if result_path:
                 logger.info(f"  ✅ Generated: {result_path.relative_to(json_path.parents[1])}")
