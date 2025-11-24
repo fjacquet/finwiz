@@ -1,7 +1,7 @@
 """Unit tests for StockAnalyzer."""
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.scoring.asset_analyzers.stock_analyzer import StockAnalyzer
 

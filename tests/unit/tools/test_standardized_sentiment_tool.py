@@ -5,10 +5,10 @@ Tests the standardized sentiment analysis capabilities including weighted scorin
 trending topics extraction, and consistent methodology across asset classes.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.standardized_sentiment_tool import (
     CrossAssetSentimentComparatorTool,

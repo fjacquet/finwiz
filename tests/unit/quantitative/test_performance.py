@@ -8,12 +8,12 @@ Tests cover:
 - Risk-adjusted return analysis and benchmarking
 """
 
-from pytest import approx
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.config import BacktestConfig
 from finwiz.quantitative.performance import (

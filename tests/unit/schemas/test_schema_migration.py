@@ -5,11 +5,11 @@ This module tests the migration functionality that ensures backward compatibilit
 when upgrading from v1 schemas (without A+ fields) to v2 schemas (with A+ fields).
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.migration import (
     SchemaMigrationError,

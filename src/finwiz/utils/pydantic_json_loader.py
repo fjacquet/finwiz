@@ -27,7 +27,7 @@ class PydanticValidationError(Exception):
         self.validation_errors = validation_errors or []
 
 
-def load_json_with_validation(
+def load_json_with_validation(  # noqa: UP047
     file_path: str | Path,
     model: type[T],
     strict: bool = True,
@@ -87,7 +87,7 @@ def load_json_with_validation(
             return model.model_construct(**data)  # type: ignore
 
 
-def load_json_string_with_validation(
+def load_json_string_with_validation(  # noqa: UP047
     json_string: str,
     model: type[T],
     strict: bool = True,
@@ -140,7 +140,7 @@ def load_json_string_with_validation(
             return model.model_construct(**data)  # type: ignore
 
 
-def load_json_dict_with_validation(
+def load_json_dict_with_validation(  # noqa: UP047
     data: dict[str, Any],
     model: type[T],
     strict: bool = True,
@@ -226,7 +226,7 @@ def save_json_with_validation(
     logger.debug(f"Successfully saved validated data to {file_path}")
 
 
-def validate_crew_output(
+def validate_crew_output(  # noqa: UP047
     crew_output: Any,
     expected_model: type[T],
     crew_name: str,

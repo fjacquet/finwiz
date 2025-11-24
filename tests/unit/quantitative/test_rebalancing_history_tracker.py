@@ -5,13 +5,13 @@ Tests cover historical tracking, performance attribution analysis, trend analysi
 and analytics dashboard generation functionality.
 """
 
-from pytest import approx
 import json
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.rebalancing_history_tracker import RebalancingHistoryTracker
 from finwiz.schemas.portfolio_rebalancing import (

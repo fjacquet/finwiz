@@ -1,7 +1,7 @@
 """Unit tests for MACD signal extraction fix in quantitative analysis tool."""
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 
 class TestMACDExtractionFix:

@@ -4,10 +4,10 @@ Unit tests for CrewDataExtractor.
 Tests the data extraction and validation utilities for crew outputs.
 """
 
-from pytest import approx
 import json
 
 import pytest
+from pytest import approx
 
 from finwiz.exceptions.data_quality import MissingRequiredFieldError
 from finwiz.utils.data_extractor import CrewDataExtractor

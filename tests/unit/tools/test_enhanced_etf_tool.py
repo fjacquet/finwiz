@@ -5,11 +5,11 @@ Tests the enhanced ETF factsheet parsing, holdings extraction,
 tracking analysis, and standardized risk assessment capabilities.
 """
 
-from pytest import approx
 from datetime import date
 
 import pytest
 from bs4 import BeautifulSoup
+from pytest import approx
 
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisInput, EnhancedETFAnalysisTool, ETFTrackingAnalysisTool
 from finwiz.tools.etf.etf_analyzers import ETFAnalyzer

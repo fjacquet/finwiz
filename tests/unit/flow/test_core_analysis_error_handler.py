@@ -5,10 +5,10 @@ Tests the error handling and graceful degradation functionality
 for core analysis crews.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.utils.core_analysis_error_handler import CoreAnalysisErrorHandler, CrewErrorContext, CrewFailureType

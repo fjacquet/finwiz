@@ -1,7 +1,7 @@
 """Unit tests for ETFAnalyzer."""
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.scoring.asset_analyzers.etf_analyzer import ETFAnalyzer
 

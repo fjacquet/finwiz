@@ -4,10 +4,10 @@ Unit tests for notification service.
 Tests cover email/SMS notifications, user preferences, and notification delivery.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.portfolio_monitor import AlertSeverity, AlertType, PortfolioAlert
 from finwiz.tools.notification_service import (

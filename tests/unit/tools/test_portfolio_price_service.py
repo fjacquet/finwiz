@@ -5,11 +5,11 @@ Tests the portfolio price data service with mocked API responses,
 caching functionality, fallback mechanisms, and error handling.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.portfolio_rebalancing import PriceData
 from finwiz.tools.portfolio_price_service import (

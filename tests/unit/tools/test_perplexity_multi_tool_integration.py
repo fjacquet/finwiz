@@ -6,9 +6,10 @@ verifying that each analysis type works with combined traditional and Sonar data
 and testing error handling and graceful degradation scenarios across all integrated tools.
 """
 
-from pytest import approx
 import asyncio
 import datetime
+
+from pytest import approx
 
 from finwiz.schemas.perplexity import SonarArticle, SonarSearchResult
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool

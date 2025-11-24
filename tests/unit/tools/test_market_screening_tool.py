@@ -5,10 +5,10 @@ Tests the comprehensive market screening functionality for ETFs, stocks,
 and cryptocurrencies with A+ criteria filtering.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.tools import MarketScreeningInput, MarketScreeningResult
 from finwiz.tools.market_screening_tool import MarketScreeningTool

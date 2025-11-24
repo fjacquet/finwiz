@@ -5,12 +5,12 @@ Tests JSON parsing error handling, schema validation error handling,
 and sanitized logging functionality.
 """
 
-from pytest import approx
 import json
 import logging
 
 import pytest
 from pydantic import BaseModel, Field
+from pytest import approx
 
 from finwiz.utils.json_error_handlers import (
     JSONParsingError,

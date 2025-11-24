@@ -4,12 +4,12 @@ Unit tests for metrics export functionality in FinwizFlow.
 Tests the _export_metrics() method that exports flow execution metrics to JSON.
 """
 
-from pytest import approx
 import json
 import os
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.config.resilience_config import ResilienceConfig
 from finwiz.flow_state import FinwizState

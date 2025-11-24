@@ -5,6 +5,7 @@ Tests the threshold-based scoring utilities used across different scorers.
 """
 
 from pytest import approx
+
 from finwiz.scoring.scoring_utils import (
     calculate_threshold_score,
     interpolate_threshold_score,

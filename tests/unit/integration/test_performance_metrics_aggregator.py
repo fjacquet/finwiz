@@ -5,10 +5,10 @@ Tests aggregation logic for performance metrics by asset type and regime,
 portfolio impact calculations, and comprehensive report generation.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.backtesting_extractor import BacktestingDataExtractor, RegimePerformance
 from finwiz.integration.performance_metrics_aggregator import (

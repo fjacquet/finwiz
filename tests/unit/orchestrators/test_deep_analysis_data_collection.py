@@ -11,11 +11,11 @@ This test suite validates:
 Created by pytest-test-architect for AI Minimalism validation.
 """
 
-from pytest import approx
 import json
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator

@@ -5,8 +5,8 @@ Tests verify that high-quality stocks (AAPL, MSFT, ASML) receive appropriate
 grades when using shallow validation (deep analysis disabled).
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,

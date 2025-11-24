@@ -9,7 +9,6 @@ Tests cover:
 - Data quality reporting and scoring
 """
 
-from pytest import approx
 import pickle
 import tempfile
 from datetime import datetime, timedelta
@@ -18,6 +17,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from faker import Faker
+from pytest import approx
 
 from finwiz.quantitative.config import DataProvider, QuantConfig
 from finwiz.quantitative.data import (

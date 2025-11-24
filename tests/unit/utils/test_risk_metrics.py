@@ -12,10 +12,10 @@ Tests cover:
 - Edge cases (zero volatility, negative returns, empty data)
 """
 
-from pytest import approx
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.utils.risk_metrics import (
     calculate_beta,

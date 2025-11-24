@@ -5,10 +5,10 @@ Tests regime-specific performance extraction including bull/bear/sideways market
 consistency scores, and performance comparison tables.
 """
 
-from pytest import approx
 import logging
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.backtesting_extractor import BacktestingDataExtractor, RegimePerformance
 from finwiz.schemas.investment_discovery import ValidationResult

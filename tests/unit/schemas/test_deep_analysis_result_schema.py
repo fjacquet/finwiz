@@ -5,11 +5,11 @@ Tests the enhanced DeepAnalysisResult Pydantic schema with all required fields,
 validation rules, and the extra='forbid' configuration.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.flow_state import DeepAnalysisResult
 

@@ -9,10 +9,10 @@ Tests RAG service functionality including:
 - Mock VectorRepository and AnalysisRepository
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.supabase.models import AnalysisRecord
 from finwiz.supabase.repositories.analysis_repository import AnalysisRepository

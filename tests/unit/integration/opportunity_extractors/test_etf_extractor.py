@@ -4,8 +4,8 @@ Unit tests for ETFOpportunityExtractor.
 Tests ETF-specific extraction logic using the Template Method pattern.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.integration.opportunity_extractors import ETFOpportunityExtractor
 

@@ -4,11 +4,11 @@ Unit tests for AI output validation infrastructure.
 Tests Requirements 12.1-12.7 from the hybrid analysis spec.
 """
 
-from pytest import approx
 from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
 from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis

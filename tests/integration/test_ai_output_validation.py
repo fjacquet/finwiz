@@ -416,28 +416,28 @@ class TestAIOutputValidationIntegration:
 class TestRealCrewExecutionWithValidation:
     """
     Integration tests with real crew execution and AI output validation.
-    
+
     These tests actually execute crews with LLM calls to verify:
     - Real crew output passes validation
     - Retry logic works with actual AI responses
     - Fallback mechanisms work in practice
     - Tool call detection works with real outputs
-    
+
     Requirements: 12.1-12.7
     """
 
     def test_real_crew_execution_with_valid_output(self):
         """
         Test real crew execution produces valid output.
-        
+
         Verifies:
         - Real crew can be executed
         - Output passes validation
         - QualitativeInsights schema is satisfied
         - All required fields are present
-        
+
         Requirements: 12.1, 12.2, 12.7
-        
+
         Note: This test requires actual LLM API calls and may take 30+ seconds.
         It's marked as integration and will be skipped if API keys are not available.
         """
@@ -541,12 +541,12 @@ class TestRealCrewExecutionWithValidation:
     def test_real_crew_with_retry_simulation(self, mocker):
         """
         Test retry logic with simulated invalid output from real crew.
-        
+
         Verifies:
         - Retry callback is invoked when output is invalid
         - Format instructions are provided
         - System can recover with valid output on retry
-        
+
         Requirements: 12.3, 12.4
         """
         # Arrange
@@ -651,13 +651,13 @@ class TestRealCrewExecutionWithValidation:
     def test_fallback_mechanism_with_real_quantitative_data(self):
         """
         Test Python-only fallback with realistic quantitative data.
-        
+
         Verifies:
         - Fallback creates valid QualitativeInsights
         - Content is derived from quantitative analysis
         - All required fields are populated
         - Fallback is usable for downstream processing
-        
+
         Requirements: 12.4
         """
         # Arrange
@@ -725,12 +725,12 @@ class TestRealCrewExecutionWithValidation:
     def test_tool_call_detection_in_practice(self):
         """
         Test that tool call detection works with realistic output structures.
-        
+
         Verifies:
         - Various tool call formats are detected
         - System rejects tool calls appropriately
         - Error messages are clear
-        
+
         Requirements: 12.6
         """
         # Arrange
@@ -782,13 +782,13 @@ class TestRealCrewExecutionWithValidation:
     def test_format_instructions_are_comprehensive(self):
         """
         Test that format instructions provided to retry callback are comprehensive.
-        
+
         Verifies:
         - Format instructions include all required fields
         - Instructions include field descriptions
         - Instructions include example structure
         - Instructions are actionable for LLM
-        
+
         Requirements: 12.7
         """
         # Arrange

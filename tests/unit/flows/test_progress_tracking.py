@@ -4,10 +4,10 @@ Unit tests for progress tracking helper method in FinwizFlow.
 Tests the _update_progress() method that calculates and updates progress metrics.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.flows.flow_orchestrator import FinwizFlow
 

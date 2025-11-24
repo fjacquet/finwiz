@@ -4,11 +4,11 @@ Unit tests for Crew Export Pydantic schemas.
 Tests validation for all CrewExport schemas with strict validation (extra='forbid').
 """
 
-from pytest import approx
 from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.crew_exports import (
     ConsolidatedReportExport,

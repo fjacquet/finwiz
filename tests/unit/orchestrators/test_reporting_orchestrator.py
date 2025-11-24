@@ -4,10 +4,10 @@ Unit tests for ReportingOrchestrator.
 Tests report consolidation, HTML generation, and export path management.
 """
 
-from pytest import approx
 import json
 
 import pytest
+from pytest import approx
 
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator

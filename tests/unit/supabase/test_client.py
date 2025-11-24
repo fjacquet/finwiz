@@ -9,8 +9,8 @@ Tests connectivity test functionality including:
 - Missing credentials
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.supabase.client import SupabaseClient
 

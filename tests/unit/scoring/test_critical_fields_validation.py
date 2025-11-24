@@ -5,8 +5,8 @@ Tests that the scorer FAILS FAST when critical fields are missing,
 rather than silently using hardcoded fallback values.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.config.critical_fields_config import CriticalFieldError
 from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer

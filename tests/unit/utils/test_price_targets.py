@@ -11,9 +11,9 @@ Tests cover:
 - Edge cases (empty data, invalid inputs, zero values)
 """
 
-from pytest import approx
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.utils.price_targets import (
     PriceTarget,

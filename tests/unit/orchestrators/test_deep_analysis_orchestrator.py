@@ -1,12 +1,12 @@
 """Unit tests for DeepAnalysisOrchestrator."""
 
-from pytest import approx
 import json
 from pathlib import Path
 
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+from pytest import approx
 
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator

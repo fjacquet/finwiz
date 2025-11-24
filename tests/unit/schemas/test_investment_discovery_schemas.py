@@ -5,10 +5,10 @@ This module tests the A+ discovery schemas to ensure proper integration
 with the existing FinWiz grading system and validation.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.investment_discovery import (

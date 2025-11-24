@@ -5,6 +5,7 @@ Tests the ToolResult dataclass for consistent error handling across tools.
 """
 
 from pytest import approx
+
 from finwiz.tools.tool_result import ToolResult
 
 

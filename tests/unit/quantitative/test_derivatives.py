@@ -5,10 +5,10 @@ Tests the DerivativesPricer class and related functionality for option pricing,
 bond pricing, and risk analytics using both Black-Scholes and QuantLib models.
 """
 
-from pytest import approx
 import math
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.derivatives import (
     BondParameters,

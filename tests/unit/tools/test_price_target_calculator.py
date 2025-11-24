@@ -5,10 +5,10 @@ Tests fair value calculations, technical level detection, buy/sell target logic,
 multi-currency support, and confidence scoring.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.price_target_calculator import (
     FundamentalData,

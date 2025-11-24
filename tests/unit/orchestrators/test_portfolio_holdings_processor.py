@@ -5,10 +5,10 @@ Tests the PortfolioHoldingsProcessor class for loading holdings from CSV files,
 processing all holdings including failed validations, and generating processing summaries.
 """
 
-from pytest import approx
 import csv
 
 import pytest
+from pytest import approx
 
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,

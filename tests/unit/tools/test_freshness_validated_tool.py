@@ -4,11 +4,11 @@ Unit tests for FreshnessValidatedTool wrapper.
 Tests the tool wrapper that adds freshness validation to existing CrewAI tools.
 """
 
-from pytest import approx
 from datetime import UTC, datetime, timedelta
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+from pytest import approx
 
 from finwiz.utils.data_freshness_validator import DataFreshnessValidator
 from finwiz.utils.freshness_validated_tool import FreshnessValidatedTool, RefreshResult, add_freshness_validation

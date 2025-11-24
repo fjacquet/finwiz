@@ -5,10 +5,10 @@ Tests crew output parsing, grade distribution calculation,
 SEC URL extraction, and URL validation/fixing.
 """
 
-from pytest import approx
 import pytest
-
 from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
+from pytest import approx
+
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
 

@@ -9,11 +9,11 @@ Tests portfolio repository functionality including:
 - Mock Supabase client
 """
 
-from pytest import approx
 import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.supabase.client import SupabaseClient
 from finwiz.supabase.models import PortfolioSnapshot

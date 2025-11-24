@@ -5,10 +5,10 @@ Tests the PortfolioAnalyzer class functionality including weighting calculations
 rebalancing need identification, portfolio metrics, and error handling.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.portfolio_analyzer import (
     InsufficientDataError,

@@ -5,10 +5,10 @@ Tests extraction of screening criteria, validation statistics, fundamental/techn
 and methodology summaries from discovery crew outputs.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.discovery_methodology_extractor import (
     DiscoveryMethodologyExtractor,

@@ -5,10 +5,10 @@ Tests response time monitoring, rate limiting scenarios, and failure handling
 to ensure compliance with performance requirements.
 """
 
-from pytest import approx
 import time
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.tools.perplexity_performance import PerplexityPerformanceMonitor

@@ -6,6 +6,7 @@ is working correctly and prevents fake news articles from being generated.
 """
 
 from pytest import approx
+
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 
 

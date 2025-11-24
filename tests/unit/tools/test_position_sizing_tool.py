@@ -5,8 +5,8 @@ Tests risk-based sizing, correlation analysis, concentration limits,
 sizing actions, and portfolio allocation validation.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.tools.position_sizing_tool import (
     HoldingSizingProfile,

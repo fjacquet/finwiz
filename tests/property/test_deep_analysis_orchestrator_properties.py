@@ -1,5 +1,4 @@
-"""
-Property-based tests for DeepAnalysisOrchestrator.
+"""Property-based tests for DeepAnalysisOrchestrator.
 
 Tests system reliability, performance constraints, batch processing, and metadata tracking.
 
@@ -15,12 +14,12 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-# Skip tests that depend on unimplemented cache manager features
-pytestmark = pytest.mark.skip(reason="Tests depend on cache manager features not yet implemented")
-
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
+
+# Skip tests that depend on unimplemented cache manager features
+pytestmark = pytest.mark.skip(reason="Tests depend on cache manager features not yet implemented")
 
 
 class TestDeepAnalysisOrchestratorProperties:

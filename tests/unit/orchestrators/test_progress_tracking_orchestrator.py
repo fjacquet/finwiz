@@ -4,13 +4,13 @@ Unit tests for ProgressTrackingOrchestrator.
 Tests progress calculation, metrics file saving, and progress logging.
 """
 
-from pytest import approx
 import json
 from datetime import datetime
 
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+from pytest import approx
 
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.progress_tracking_orchestrator import ProgressTrackingOrchestrator

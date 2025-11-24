@@ -4,8 +4,8 @@ Unit tests for FundamentalScorer.
 Tests the fundamental scoring logic for stocks, ETFs, and cryptocurrencies.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
 

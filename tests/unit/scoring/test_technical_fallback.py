@@ -11,10 +11,10 @@ Tests cover:
 - Price history extraction from various formats
 """
 
-from pytest import approx
 import pandas as pd
 import pytest
 from faker import Faker
+from pytest import approx
 
 from finwiz.scoring.technical_fallback import (
     calculate_missing_technical_indicators,

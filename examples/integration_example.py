@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""
-Example showing how to integrate inline HTML generation into existing FinWiz code.
+"""Example showing how to integrate inline HTML generation into existing FinWiz code.
 
-This demonstrates the before/after of adding HTML generation to existing functions.
-"""
+This demonstrates the before/after of adding HTML generation to existing functions."""
 
 import json
 import sys
@@ -47,7 +45,7 @@ def save_backtesting_results_old(results_data, output_path):
 # AFTER: Updated FinWiz code (JSON + HTML)
 # ============================================================================
 
-from finwiz.utils.html_generator import JSONWriter, auto_html, save_backtesting_results, save_portfolio_review
+from finwiz.utils.html_generator import JSONWriter, auto_html, save_backtesting_results, save_portfolio_review  # noqa: E402
 
 
 def save_portfolio_analysis_new(portfolio_data, output_path):

@@ -2,11 +2,11 @@
 Unit tests for JSON to HTML converter.
 """
 
-from pytest import approx
 import json
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.utils.json_to_html_converter import JsonToHtmlConverter
 

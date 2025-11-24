@@ -5,13 +5,13 @@ Tests the flow execution sequence and state management for the hybrid
 Python/AI analysis architecture.
 """
 
-from pytest import approx
 import logging
 import time
 from datetime import datetime
 
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+from pytest import approx
 
 from finwiz.flows.hybrid_analysis_flow import HybridAnalysisFlow
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis

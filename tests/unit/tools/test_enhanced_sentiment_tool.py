@@ -1,9 +1,9 @@
 """Tests for Enhanced Sentiment Analysis Tool."""
 
-from pytest import approx
 import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
 

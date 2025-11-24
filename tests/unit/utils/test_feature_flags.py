@@ -5,9 +5,10 @@ Tests feature flag evaluation, circuit breaker patterns, fallback strategies,
 and graceful degradation logic.
 """
 
-from pytest import approx
 import os
 import time
+
+from pytest import approx
 
 from finwiz.utils.feature_flags import (
     FallbackStrategy,

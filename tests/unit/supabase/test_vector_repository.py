@@ -9,8 +9,8 @@ Tests vector repository functionality including:
 - Mock OpenAI API and Supabase client
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.supabase.client import SupabaseClient
 from finwiz.supabase.repositories.vector_repository import VectorRepository

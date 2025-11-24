@@ -5,13 +5,13 @@ Tests configuration loading, validation, feature flag integration,
 and environment variable management for the quantitative analysis framework.
 """
 
-from pytest import approx
 import os
 import tempfile
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.quantitative.config import (
     BacktestConfig,

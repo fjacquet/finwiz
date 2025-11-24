@@ -5,12 +5,12 @@ Tests advanced technical analysis including Fibonacci retracements, support/resi
 identification, and confluence zone detection with mocked price data.
 """
 
-from pytest import approx
 import datetime
 
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.tools.technical_analyzer import TechnicalAnalyzer
 from finwiz.tools.technical_models import (

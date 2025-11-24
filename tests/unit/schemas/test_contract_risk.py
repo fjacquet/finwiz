@@ -1,8 +1,8 @@
 from __future__ import annotations
-from pytest import approx
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas import RiskAssessmentStandardized
 

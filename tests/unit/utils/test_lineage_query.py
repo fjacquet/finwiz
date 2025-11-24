@@ -5,10 +5,10 @@ Tests the LineageQuery class and convenience functions for querying
 data lineage information.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.data_lineage import CalculationStep, DataLineage, DataSource
 from finwiz.utils.lineage_query import (

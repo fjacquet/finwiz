@@ -9,8 +9,8 @@ scoring logic extracted to separate modules. Tests now focus on the public API
 (_run method) rather than internal implementation details.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.schemas.tools import APlusScoringInput
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool

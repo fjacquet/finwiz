@@ -5,8 +5,8 @@ Tests the externalized performance validation logic to ensure correct
 validation against target metrics.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.crews.helpers.performance_validation import validate_performance_targets
 

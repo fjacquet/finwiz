@@ -5,6 +5,7 @@ Tests the field-level tracking functionality added in Task 1.2.
 """
 
 from pytest import approx
+
 from finwiz.utils.data_quality_metrics import DataQualityMetrics
 
 

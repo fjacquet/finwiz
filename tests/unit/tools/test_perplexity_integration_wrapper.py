@@ -5,13 +5,13 @@ This module tests the PerplexityAnalysisIntegration wrapper class, including
 JSON response parsing, error handling, and SonarArticle model validation.
 """
 
-from pytest import approx
 import asyncio
 import json
 import os
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.perplexity import (
     PerplexityConfig,

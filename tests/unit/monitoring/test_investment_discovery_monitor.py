@@ -5,10 +5,10 @@ Tests the monitoring system for investment discovery operations,
 including metrics collection, alerting, and dashboard functionality.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.monitoring.investment_discovery_monitor import (
     DiscoveryMetrics,

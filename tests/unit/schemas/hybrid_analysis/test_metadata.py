@@ -8,13 +8,13 @@ Tests that DataQualityMetrics and DataLineage schemas properly validate
 data quality scores, timestamps, and source tracking.
 """
 
-from pytest import approx
 from datetime import UTC, datetime
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.metadata import (
     DataLineage,

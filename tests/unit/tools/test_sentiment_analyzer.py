@@ -5,10 +5,10 @@ Tests multi-source sentiment analysis with mocked API responses to ensure
 proper integration, weighted scoring, and trending topic extraction.
 """
 
-from pytest import approx
 import asyncio
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.sentiment_analyzer import (
     SentimentAnalysisResult,

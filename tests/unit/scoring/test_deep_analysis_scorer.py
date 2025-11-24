@@ -12,8 +12,8 @@ Tests cover:
 - Deterministic behavior (same input = same output)
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.scoring.deep_analysis_scorer import DeepAnalysisResult, DeepAnalysisScorer
 

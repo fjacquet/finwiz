@@ -5,8 +5,8 @@ Tests the SECFilingURLGenerator class for generating valid SEC filing URLs,
 CIK lookup, URL verification, and error handling.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
 

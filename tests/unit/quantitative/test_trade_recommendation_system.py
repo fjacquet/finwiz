@@ -5,8 +5,8 @@ Tests priority scoring, quantity calculations, cost estimation,
 rationale generation, and trade validation.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.cost_analyzer import BrokerType
 from finwiz.quantitative.trade_recommendation_system import (

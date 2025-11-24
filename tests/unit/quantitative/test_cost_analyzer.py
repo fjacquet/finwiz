@@ -6,9 +6,8 @@ bid-ask spread estimation, market impact modeling, and cost-benefit analysis.
 """
 from __future__ import annotations
 
-from pytest import approx
-
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.cost_analyzer import (
     BrokerType,

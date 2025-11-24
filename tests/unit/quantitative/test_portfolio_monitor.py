@@ -4,10 +4,10 @@ Unit tests for portfolio monitoring system.
 Tests cover portfolio drift monitoring, alert generation, and health dashboard functionality.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.portfolio_monitor import (
     AlertSeverity,

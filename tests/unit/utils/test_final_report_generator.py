@@ -5,11 +5,11 @@ Tests Python-based final report generation using Jinja2 templates (NO AI).
 Following AI Minimalism principle: Python templates, not AI agents.
 """
 
-from pytest import approx
 from datetime import datetime
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.crew_exports import ConsolidatedReportExport
 from finwiz.utils.final_report_generator import FinalReportGenerator

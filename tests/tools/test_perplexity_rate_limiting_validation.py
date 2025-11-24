@@ -5,8 +5,8 @@ Focused tests for exponential backoff, circuit breaker behavior, and
 performance validation to ensure compliance with requirements.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,

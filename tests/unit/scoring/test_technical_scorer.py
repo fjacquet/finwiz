@@ -4,8 +4,8 @@ Unit tests for TechnicalScorer.
 Tests the technical analysis scoring logic.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.scoring.technical_scorer import TechnicalScorer
 

@@ -5,11 +5,11 @@ Tests the core monitoring functionality including grade degradation detection,
 alert generation, performance tracking, and automated re-evaluation triggers.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.investment_discovery import APlusAnalysis, InvestmentCandidate, MarketRegime
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool

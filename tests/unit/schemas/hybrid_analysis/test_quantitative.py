@@ -8,13 +8,13 @@ Tests that QuantitativeAnalysis schema properly validates scores, grades,
 and recommendations from Python calculations.
 """
 
-from pytest import approx
 from datetime import UTC, datetime
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.metadata import (
     DataLineage,

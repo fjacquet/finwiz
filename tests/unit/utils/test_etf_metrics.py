@@ -11,10 +11,10 @@ Tests cover:
 - Edge cases (empty data, zero values, extreme values)
 """
 
-from pytest import approx
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.utils.etf_metrics import (
     calculate_concentration_risk,

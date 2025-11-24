@@ -2,10 +2,10 @@
 Unit tests for BacktestingDataExtractor.
 """
 
-from pytest import approx
 import logging
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.backtesting_extractor import (
     BacktestingDataExtractor,

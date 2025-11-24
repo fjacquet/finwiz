@@ -1,7 +1,7 @@
 """Unit tests for CryptoAnalyzer."""
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.scoring.asset_analyzers.crypto_analyzer import CryptoAnalyzer
 

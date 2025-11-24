@@ -1,7 +1,7 @@
 """Unit tests for ResilienceConfig."""
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.config.resilience_config import (
     ResilienceConfig,

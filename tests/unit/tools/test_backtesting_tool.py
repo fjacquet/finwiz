@@ -5,12 +5,12 @@ Tests the backtesting tool functionality including multi-regime analysis,
 risk-adjusted performance metrics, and validation criteria.
 """
 
-from pytest import approx
 import json
 from datetime import datetime
 
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.tools.backtesting_tool import (
     BacktestingInput,

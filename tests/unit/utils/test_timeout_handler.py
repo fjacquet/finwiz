@@ -5,10 +5,10 @@ Tests timeout enforcement, graceful fallback, successful execution,
 and logging of timeout events.
 """
 
-from pytest import approx
 import asyncio
 
 import pytest
+from pytest import approx
 
 from finwiz.utils.timeout_handler import with_timeout, with_timeout_graceful
 

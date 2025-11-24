@@ -5,10 +5,10 @@ Tests the data availability tracking functionality including source tracking,
 freshness warnings, and summary generation.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.data_availability_tracker import (
     DataAvailabilitySummary,

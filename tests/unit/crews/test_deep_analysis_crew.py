@@ -113,10 +113,10 @@ class TestDeepAnalysisCrew:
     def test_should_instantiate_crew_without_keyerror(self):
         """
         Test that DeepAnalysisCrew instantiates without KeyError.
-        
+
         This verifies that the deprecated risk_assessor agent has been properly removed
         and the crew only references agents that exist in agents.yaml.
-        
+
         Requirements: 2.1
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
@@ -132,10 +132,10 @@ class TestDeepAnalysisCrew:
     def test_should_have_exactly_two_agents(self):
         """
         Test that the crew contains exactly 2 agents.
-        
+
         Verifies that only asset_analyst and investment_reporter are present,
         confirming the risk_assessor has been removed.
-        
+
         Requirements: 2.2
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
@@ -155,9 +155,9 @@ class TestDeepAnalysisCrew:
     def test_should_not_reference_risk_assessor_in_code(self):
         """
         Test that the crew code does not reference risk_assessor.
-        
+
         Verifies that all code references to the deprecated agent have been removed.
-        
+
         Requirements: 1.1, 1.2, 1.4
         """
         import inspect

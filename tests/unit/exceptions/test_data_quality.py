@@ -4,8 +4,8 @@ Unit tests for data quality exceptions.
 Tests the custom exception classes used for data quality error handling.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.exceptions.data_quality import (
     DataQualityError,

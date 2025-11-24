@@ -1,10 +1,10 @@
 """Unit tests for HoldingAnalyzerOrchestrator."""
 
-from pytest import approx
 import json
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor

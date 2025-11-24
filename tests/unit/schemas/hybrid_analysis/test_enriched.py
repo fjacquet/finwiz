@@ -9,11 +9,11 @@ Tests that EnrichedAnalysis properly merges quantitative and qualitative data
 and enforces quality thresholds.
 """
 
-from pytest import approx
 from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
 from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics

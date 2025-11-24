@@ -1,11 +1,11 @@
 """End-to-end integration test for complete orchestrator flow."""
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
-
 from finwiz.data.adapters.base_adapter import FundamentalData
+from pytest import approx
+
 from finwiz.flows.hybrid_analysis_flow import HybridAnalysisFlow
 
 

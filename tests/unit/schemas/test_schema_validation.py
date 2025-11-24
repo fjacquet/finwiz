@@ -5,12 +5,11 @@ Tests all FinWiz schemas with valid and invalid data, including field constraint
 """
 from __future__ import annotations
 
-from pytest import approx
-
 from datetime import UTC, date, datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas import (
     CryptoMarketAnalysis,

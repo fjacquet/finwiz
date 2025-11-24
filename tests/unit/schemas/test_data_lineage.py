@@ -5,11 +5,11 @@ Tests the DataSource, Transformation, CalculationStep, and DataLineage models
 to ensure proper validation and functionality.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.data_lineage import CalculationStep, DataLineage, DataSource, Transformation
 

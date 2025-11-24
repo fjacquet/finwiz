@@ -9,12 +9,12 @@ Tests cover:
 - Data validation and input sanitization
 """
 
-from pytest import approx
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.config import TechnicalIndicator
 from finwiz.quantitative.technical import (

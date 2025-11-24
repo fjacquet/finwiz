@@ -5,10 +5,10 @@ Tests the generation of HTML reports for scenario analysis results
 including side-by-side comparisons and visualizations.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.scenario_analysis import (
     ScenarioAnalysisReport,

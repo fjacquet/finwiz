@@ -5,10 +5,10 @@ Tests the critical failure alert functionality when deep analysis
 experiences high failure rates.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.monitoring.alerting import AlertManager, AlertSeverity, AlertType
 

@@ -6,14 +6,14 @@ This module tests the fix for the RagTool schema validation issue where
 similarity_threshold and limit were incorrectly marked as required.
 """
 
-from pytest import approx
 import pytest
 from pydantic import ValidationError
+from pytest import approx
+
+from finwiz.tools.rag_tools import KnowledgeBaseTool, get_rag_tools
 
 # Skip entire module if qdrant_client has import issues
 pytestmark = pytest.mark.skip(reason="qdrant_client import issues - requires dependency update")
-
-from finwiz.tools.rag_tools import KnowledgeBaseTool, get_rag_tools
 
 
 def test_knowledge_base_tool_schema_validation() -> None:

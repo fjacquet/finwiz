@@ -10,7 +10,6 @@ Tests cover:
 - Multi-strategy backtesting
 """
 
-from pytest import approx
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -19,6 +18,7 @@ import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no off
 import pandas as pd
 import pytest
 from faker import Faker
+from pytest import approx
 
 from finwiz.quantitative.backtesting import (
     BacktestingEngine,

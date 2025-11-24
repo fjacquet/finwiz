@@ -5,13 +5,13 @@ Tests state discovery, metadata extraction, user prompts, state loading,
 cleanup, and error handling with mocked file system and SQLite operations.
 """
 
-from pytest import approx
 import json
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.utils.flow_state_manager import FlowStateManager
 

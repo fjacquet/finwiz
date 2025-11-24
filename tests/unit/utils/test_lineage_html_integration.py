@@ -4,10 +4,10 @@ Unit tests for lineage HTML integration.
 Tests the HTML integration functions for data lineage in reports.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.data_lineage import DataLineage
 from finwiz.utils.lineage_html_integration import (

@@ -5,8 +5,9 @@ Tests the data freshness validation logic including timestamp extraction,
 age calculation, and market schedule adjustments.
 """
 
-from pytest import approx
 from datetime import UTC, datetime, timedelta
+
+from pytest import approx
 
 from finwiz.utils.data_freshness_validator import DataFreshnessValidator, FreshnessResult, MarketCalendar
 

@@ -5,11 +5,11 @@ Tests cover all optimization strategies, constraint handling, and edge cases
 following FinWiz testing standards with comprehensive mocking.
 """
 
-from pytest import approx
 import os
 import sys
 
 import pytest
+from pytest import approx
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 

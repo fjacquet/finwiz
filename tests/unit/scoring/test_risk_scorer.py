@@ -4,8 +4,8 @@ Unit tests for RiskScorer.
 Tests the risk assessment scoring logic.
 """
 
-from pytest import approx
 import pytest
+from pytest import approx
 
 from finwiz.scoring.risk_scorer import RiskScorer
 

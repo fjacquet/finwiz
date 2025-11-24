@@ -5,9 +5,9 @@ Tests scenario analysis functionality including what-if analysis,
 sensitivity analysis, Monte Carlo simulations, and scenario comparisons.
 """
 
-from pytest import approx
 import numpy as np
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.scenario_analysis import (
     ScenarioAnalysisReport,

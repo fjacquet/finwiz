@@ -10,11 +10,11 @@ This test validates that the orchestrator correctly:
 Uses pytest-mock for all external dependencies.
 """
 
-from pytest import approx
 import json
 
 import pytest
 from faker import Faker
+from pytest import approx
 
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
 

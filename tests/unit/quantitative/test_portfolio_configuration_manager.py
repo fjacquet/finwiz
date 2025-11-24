@@ -5,12 +5,12 @@ Tests comprehensive configuration management including saving/loading,
 versioning, validation, templates, and import/export functionality.
 """
 
-from pytest import approx
 import json
 import tempfile
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.portfolio_configuration_manager import (
     ConfigurationTemplate,

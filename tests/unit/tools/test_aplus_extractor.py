@@ -5,10 +5,10 @@ Tests the extraction and processing of A+ investment opportunities from
 discovery crew markdown files with full mocking to avoid file system dependencies.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.aplus_extractor import APlusDataExtractor
 from finwiz.schemas.integration import APlusOpportunityCollection

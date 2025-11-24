@@ -5,10 +5,10 @@ Tests extraction of market regime, VIX indicators, macro indicators,
 and market context summaries from discovery crew outputs.
 """
 
-from pytest import approx
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.market_context_extractor import MarketContextExtractor, MarketContextSummary
 from finwiz.schemas.investment_discovery import APlusCriteria, APlusDiscoveryResult, MarketRegime

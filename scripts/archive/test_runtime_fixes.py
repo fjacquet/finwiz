@@ -11,7 +11,7 @@ def test_imports():
     print("Testing imports...")
 
     try:
-        from langchain_text_splitters import CharacterTextSplitter
+        from langchain_text_splitters import CharacterTextSplitter  # noqa: F401
 
         print("✅ langchain_text_splitters import works")
     except ImportError as e:

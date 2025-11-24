@@ -4,10 +4,10 @@ Unit tests for HoldingAnalyzerOrchestrator performance optimizations.
 Tests caching, rate limiting, parallel processing, and connection pooling.
 """
 
-from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
