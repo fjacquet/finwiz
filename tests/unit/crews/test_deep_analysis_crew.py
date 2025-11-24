@@ -126,8 +126,8 @@ class TestDeepAnalysisCrew:
 
         # Verify crew was created successfully
         assert crew is not None
-        assert hasattr(crew, 'agents_config')
-        assert hasattr(crew, 'tasks_config')
+        assert hasattr(crew, "agents_config")
+        assert hasattr(crew, "tasks_config")
 
     def test_should_have_exactly_two_agents(self):
         """

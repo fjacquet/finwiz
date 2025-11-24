@@ -36,9 +36,7 @@ from finwiz.schemas.hybrid_analysis import (
 def _deprecation_warning(old_name: str, new_name: str) -> None:
     """Issue deprecation warning for legacy schema usage."""
     warnings.warn(
-        f"{old_name} is deprecated and will be removed in a future version. "
-        f"Use {new_name} instead. "
-        f"See finwiz.schemas.hybrid_analysis for the new schema structure.",
+        f"{old_name} is deprecated and will be removed in a future version. Use {new_name} instead. See finwiz.schemas.hybrid_analysis for the new schema structure.",
         DeprecationWarning,
         stacklevel=3,
     )

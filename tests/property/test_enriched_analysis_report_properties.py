@@ -32,7 +32,7 @@ def enriched_analysis_strategy(draw):
     current_total = exec_word_count + rationale_word_count + business_model_word_count + thesis_word_count
     if current_total < 2000:
         # Add extra words to thesis to reach minimum
-        thesis_word_count += (2000 - current_total)
+        thesis_word_count += 2000 - current_total
 
     # Generate text with specified word counts
     exec_summary = " ".join(["word"] * exec_word_count)

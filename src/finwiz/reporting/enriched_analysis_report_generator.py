@@ -110,10 +110,7 @@ class EnrichedAnalysisReportGenerator:
             word_count = result_data.get("report_word_count", 0)
             insights_count = result_data.get("unique_insights_count", 0)
 
-            self.logger.info(
-                f"✅ Report generated in {execution_time * 1000:.1f}ms for {ticker} "
-                f"({word_count} words, {insights_count} insights)"
-            )
+            self.logger.info(f"✅ Report generated in {execution_time * 1000:.1f}ms for {ticker} ({word_count} words, {insights_count} insights)")
 
             return html_content
 
@@ -171,9 +168,7 @@ class EnrichedAnalysisReportGenerator:
             raise ValueError(error_msg)
 
         self.logger.info(
-            f"✅ Quality validation passed for {ticker}: "
-            f"{word_count} words, {insights_count} insights, "
-            f"{exec_word_count} exec words, {rationale_word_count} rationale words"
+            f"✅ Quality validation passed for {ticker}: {word_count} words, {insights_count} insights, {exec_word_count} exec words, {rationale_word_count} rationale words"
         )
 
     def _prepare_template_variables(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -229,9 +224,7 @@ class EnrichedAnalysisReportGenerator:
 
         return template_vars
 
-    def generate_and_save_report(
-        self, enriched_analysis: EnrichedAnalysis | dict[str, Any], output_path: str | Path
-    ) -> str:
+    def generate_and_save_report(self, enriched_analysis: EnrichedAnalysis | dict[str, Any], output_path: str | Path) -> str:
         """
         Generate HTML report and save to file.
 

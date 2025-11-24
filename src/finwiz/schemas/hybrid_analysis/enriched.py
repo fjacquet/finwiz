@@ -81,16 +81,58 @@ class EnrichedAnalysis(BaseModel):
     @property
     def calculated_word_count(self) -> int:
         """
-        Calculate actual word count from report content.
+        Calculate actual word count from all report content.
+
+        Counts words from all text sections including:
+        - Executive summary
+        - Investment rationale
+        - SEC insights (business model, competitive advantages, risk factors, strategic initiatives)
+        - Fundamental context (industry analysis, growth drivers, competitive positioning, management assessment)
+        - Technical strategy (chart patterns, support/resistance, entry/exit strategy, timing assessment)
+        - Contextual risks (all risk categories and stress scenarios)
+        - Investment synthesis (investment thesis, bull/base/bear cases)
 
         Returns:
             Total word count from all text sections
 
         """
-        sections = [
-            self.executive_summary,
-            self.investment_rationale,
-            self.qualitative.sec_insights.business_model,
-            self.qualitative.investment_synthesis.investment_thesis,
-        ]
-        return len(" ".join(sections).split())
+        sections = []
+
+        # Core summaries
+        sections.append(self.executive_summary)
+        sections.append(self.investment_rationale)
+
+        # SEC insights
+        sections.append(self.qualitative.sec_insights.business_model)
+        sections.extend(self.qualitative.sec_insights.competitive_advantages)
+        sections.extend(self.qualitative.sec_insights.risk_factors)
+        sections.extend(self.qualitative.sec_insights.strategic_initiatives)
+
+        # Fundamental context
+        sections.append(self.qualitative.fundamental_context.industry_analysis)
+        sections.extend(self.qualitative.fundamental_context.growth_drivers)
+        sections.append(self.qualitative.fundamental_context.competitive_positioning)
+        sections.append(self.qualitative.fundamental_context.management_assessment)
+
+        # Technical strategy
+        sections.extend(self.qualitative.technical_strategy.chart_patterns)
+        sections.append(self.qualitative.technical_strategy.support_resistance)
+        sections.append(self.qualitative.technical_strategy.entry_exit_strategy)
+        sections.append(self.qualitative.technical_strategy.timing_assessment)
+
+        # Contextual risks
+        sections.extend(self.qualitative.contextual_risks.regulatory_risks)
+        sections.extend(self.qualitative.contextual_risks.geopolitical_risks)
+        sections.extend(self.qualitative.contextual_risks.competitive_risks)
+        sections.extend(self.qualitative.contextual_risks.operational_risks)
+        sections.extend(self.qualitative.contextual_risks.stress_scenarios)
+
+        # Investment synthesis
+        sections.append(self.qualitative.investment_synthesis.investment_thesis)
+        sections.append(self.qualitative.investment_synthesis.bull_case)
+        sections.append(self.qualitative.investment_synthesis.base_case)
+        sections.append(self.qualitative.investment_synthesis.bear_case)
+
+        # Combine all sections and count words
+        combined_text = " ".join(str(section) for section in sections if section)
+        return len(combined_text.split())

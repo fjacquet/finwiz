@@ -487,8 +487,8 @@ class EnhancedSECAnalysisTool(BaseTool):
         else:
             response += "No significant insights extracted from SEC filing.\n\n"
 
-        # Risk Assessment
-        if risk_assessment_result:
+        # Risk Assessment (only include if risk_assessment_result is not None)
+        if risk_assessment_result is not None:
             response += "## ⚠️ Risk Assessment\n"
             response += f"- **Risk Score**: {risk_assessment_result['score']}/5.0\n"
             response += f"- **Risk Level**: {risk_assessment_result['level']}\n"
@@ -520,7 +520,8 @@ class EnhancedSECAnalysisTool(BaseTool):
         response += "## 📈 Enhanced Analysis Summary\n"
         response += f"This comprehensive SEC analysis for {ticker} combines:\n"
         response += f"- **SEC Filing Analysis**: Detailed insights from {form_type} sections\n"
-        response += "- **Risk Assessment**: Standardized risk scoring based on filing content\n"
+        if risk_assessment_result is not None:
+            response += "- **Risk Assessment**: Standardized risk scoring based on filing content\n"
         response += "- **Structured Extraction**: Key excerpts with proper citations\n"
 
         if perplexity_insights:

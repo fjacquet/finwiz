@@ -1,6 +1,7 @@
 """Unit tests for MACD signal extraction fix in quantitative analysis tool."""
 
 import math
+
 import pytest
 
 

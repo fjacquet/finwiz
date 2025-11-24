@@ -11,7 +11,6 @@ Usage:
     max_time = settings.hybrid_analysis.max_processing_time_seconds
 """
 
-
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

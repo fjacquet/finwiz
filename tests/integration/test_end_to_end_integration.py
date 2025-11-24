@@ -3,9 +3,9 @@
 from datetime import datetime
 
 import pytest
-from finwiz.data.adapters.base_adapter import FundamentalData
 from pytest import approx
 
+from finwiz.data.adapters.base_adapter import FundamentalData
 from finwiz.flows.hybrid_analysis_flow import HybridAnalysisFlow
 
 
@@ -79,7 +79,7 @@ class TestEndToEndIntegration:
             }
         }
 
-        mocker.patch("finwiz.flows.hybrid_analysis_flow.EnhancedETFAnalysisTool", return_value=mock_etf_tool)
+        mocker.patch("finwiz.tools.enhanced_etf_tool.EnhancedETFAnalysisTool", return_value=mock_etf_tool)
 
         # Set up flow state
         flow.state.ticker = "SPY"
@@ -117,7 +117,7 @@ class TestEndToEndIntegration:
             }
         }
 
-        mocker.patch("finwiz.flows.hybrid_analysis_flow.EnhancedCryptoAnalysisTool", return_value=mock_crypto_tool)
+        mocker.patch("finwiz.tools.enhanced_crypto_tool.EnhancedCryptoAnalysisTool", return_value=mock_crypto_tool)
 
         # Set up flow state
         flow.state.ticker = "BTC-USD"
@@ -175,7 +175,7 @@ class TestEndToEndIntegration:
                 "dividend_yield": 0.015,
             }
         }
-        mocker.patch("finwiz.flows.hybrid_analysis_flow.EnhancedETFAnalysisTool", return_value=mock_etf_tool)
+        mocker.patch("finwiz.tools.enhanced_etf_tool.EnhancedETFAnalysisTool", return_value=mock_etf_tool)
 
         # Mock crypto tool
         mock_crypto_tool = mocker.Mock()
@@ -187,7 +187,7 @@ class TestEndToEndIntegration:
                 "max_supply": 21e6,
             }
         }
-        mocker.patch("finwiz.flows.hybrid_analysis_flow.EnhancedCryptoAnalysisTool", return_value=mock_crypto_tool)
+        mocker.patch("finwiz.tools.enhanced_crypto_tool.EnhancedCryptoAnalysisTool", return_value=mock_crypto_tool)
 
         # Test each asset class
         holdings = [

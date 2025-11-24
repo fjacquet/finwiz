@@ -4,6 +4,7 @@ Unit tests for the CostAnalyzer class.
 Tests comprehensive transaction cost modeling including commission calculation,
 bid-ask spread estimation, market impact modeling, and cost-benefit analysis.
 """
+
 from __future__ import annotations
 
 import pytest

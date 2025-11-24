@@ -50,6 +50,7 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
 
         # Initialize DataSourceOrchestrator for multi-source data acquisition
         from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
+
         self.data_orchestrator = DataSourceOrchestrator(
             total_timeout=10.0,
             per_source_timeout=3.0,
@@ -114,8 +115,8 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
         """
         import asyncio
 
-        # If raw_data already provided in state, use it
-        if self.state.raw_data:
+        # If raw_data already provided in state for THIS ticker, use it
+        if self.state.raw_data and self.state.raw_data.get("ticker") == ticker:
             logger.info(f"Using pre-populated raw_data for {ticker}")
             return self.state.raw_data
 
@@ -135,16 +136,12 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
                     loop = asyncio.get_running_loop()
                     # We're in an async context, await directly
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as executor:
-                        orchestration_result = executor.submit(
-                            asyncio.run,
-                            self.data_orchestrator.get_fundamental_data(ticker, sector=None)
-                        ).result()
+                        orchestration_result = executor.submit(asyncio.run, self.data_orchestrator.get_fundamental_data(ticker, sector=None)).result()
                 except RuntimeError:
                     # No running loop, use asyncio.run()
-                    orchestration_result = asyncio.run(
-                        self.data_orchestrator.get_fundamental_data(ticker, sector=None)
-                    )
+                    orchestration_result = asyncio.run(self.data_orchestrator.get_fundamental_data(ticker, sector=None))
 
                 # Extract fundamental metrics
                 if orchestration_result.return_on_equity is not None:
@@ -207,10 +204,7 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
                     collected_data["tracking_error"] = etf_data.get("tracking_error", 0.0)
                     collected_data["dividend_yield"] = etf_data.get("dividend_yield", 0.0)
 
-                    logger.info(
-                        f"✅ Got ETF data: expense_ratio={collected_data['expense_ratio']}, "
-                        f"aum={collected_data['aum']}, tracking_error={collected_data['tracking_error']}"
-                    )
+                    logger.info(f"✅ Got ETF data: expense_ratio={collected_data['expense_ratio']}, aum={collected_data['aum']}, tracking_error={collected_data['tracking_error']}")
                     collected_data["etf_info"] = etf_result
                 else:
                     logger.warning(f"⚠️ ETF tool returned unexpected type: {type(etf_result)}")
@@ -254,19 +248,24 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
                     # Calculate age_years from genesis date if available
                     # For now, use a mapping for known cryptos
                     age_mapping = {
-                        "BTC": 15.0, "BTC-USD": 15.0,
-                        "ETH": 9.0, "ETH-USD": 9.0,
-                        "ADA": 7.0, "ADA-USD": 7.0,
-                        "SOL": 4.0, "SOL-USD": 4.0,
-                        "AVAX": 4.0, "AVAX-USD": 4.0,
-                        "DOT": 4.0, "DOT-USD": 4.0,
+                        "BTC": 15.0,
+                        "BTC-USD": 15.0,
+                        "ETH": 9.0,
+                        "ETH-USD": 9.0,
+                        "ADA": 7.0,
+                        "ADA-USD": 7.0,
+                        "SOL": 4.0,
+                        "SOL-USD": 4.0,
+                        "AVAX": 4.0,
+                        "AVAX-USD": 4.0,
+                        "DOT": 4.0,
+                        "DOT-USD": 4.0,
                     }
                     ticker_base = ticker.replace("-USD", "").upper()
                     collected_data["age_years"] = age_mapping.get(ticker_base, 3.0)  # Default 3 years
 
                     logger.info(
-                        f"✅ Got crypto data: volume_24h={collected_data['volume_24h']}, "
-                        f"age_years={collected_data['age_years']}, market_cap={collected_data['market_cap']}"
+                        f"✅ Got crypto data: volume_24h={collected_data['volume_24h']}, age_years={collected_data['age_years']}, market_cap={collected_data['market_cap']}"
                     )
                     collected_data["crypto_info"] = crypto_result
                 else:
@@ -659,7 +658,15 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
             processing_time = self._calculate_processing_time(data)
             llm_cost = self._calculate_llm_cost(data)
 
-            # Create enriched analysis
+            # Calculate word count BEFORE creating model (Pydantic validates on creation)
+            # We need to calculate it manually here since we can't create the model first
+            word_count = self._calculate_word_count_manually(
+                executive_summary,
+                qualitative.investment_synthesis.investment_thesis,
+                qualitative
+            )
+
+            # Create enriched analysis with calculated word count
             enriched = EnrichedAnalysis(
                 ticker=ticker,
                 company_name=company_name,
@@ -672,14 +679,11 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
                 recommendation_confidence=qualitative.investment_synthesis.recommendation_confidence,
                 executive_summary=executive_summary,
                 investment_rationale=qualitative.investment_synthesis.investment_thesis,
-                report_word_count=0,  # Will be calculated
+                report_word_count=word_count,
                 unique_insights_count=unique_insights_count,
                 processing_time_seconds=processing_time,
                 llm_cost_dollars=llm_cost,
             )
-
-            # Validate and update word count
-            enriched.report_word_count = enriched.calculated_word_count
 
             logger.info(f"Synthesis complete for {ticker}: Final recommendation {enriched.final_recommendation}")
 
@@ -728,22 +732,142 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
             Executive summary (minimum 200 words)
 
         """
-        # Combine key insights from both analyses
-        summary_parts = [
-            f"Grade: {quantitative.grade} (Score: {quantitative.composite_score:.2f})",
-            f"Recommendation: {qualitative.investment_synthesis.final_recommendation}",
-            qualitative.investment_synthesis.investment_thesis[:500],
-            qualitative.sec_insights.business_model[:300],
-        ]
+        # Build comprehensive executive summary
+        summary_parts = []
 
+        # Opening with grade and recommendation
+        summary_parts.append(
+            f"Investment Grade: {quantitative.grade} with composite score of {quantitative.composite_score:.2f}. "
+            f"Final Recommendation: {qualitative.investment_synthesis.final_recommendation} "
+            f"(Confidence: {qualitative.investment_synthesis.recommendation_confidence})."
+        )
+
+        # Quantitative highlights
+        summary_parts.append(
+            f"Quantitative Analysis: Fundamental score {quantitative.fundamental_score:.2f}, "
+            f"Technical score {quantitative.technical_score:.2f}, "
+            f"Risk score {quantitative.risk_score:.2f}."
+        )
+
+        # Business model summary (first 200 chars)
+        if qualitative.sec_insights.business_model:
+            business_summary = qualitative.sec_insights.business_model[:200].strip()
+            if not business_summary.endswith('.'):
+                business_summary += '...'
+            summary_parts.append(f"Business Model: {business_summary}")
+
+        # Key competitive advantages (top 3)
+        if qualitative.sec_insights.competitive_advantages:
+            advantages = qualitative.sec_insights.competitive_advantages[:3]
+            summary_parts.append(
+                f"Key Competitive Advantages: {', '.join(advantages)}."
+            )
+
+        # Industry context (first 150 chars)
+        if qualitative.fundamental_context.industry_analysis:
+            industry_summary = qualitative.fundamental_context.industry_analysis[:150].strip()
+            if not industry_summary.endswith('.'):
+                industry_summary += '...'
+            summary_parts.append(f"Industry Context: {industry_summary}")
+
+        # Investment thesis excerpt (first 300 chars)
+        if qualitative.investment_synthesis.investment_thesis:
+            thesis_excerpt = qualitative.investment_synthesis.investment_thesis[:300].strip()
+            if not thesis_excerpt.endswith('.'):
+                thesis_excerpt += '...'
+            summary_parts.append(f"Investment Thesis: {thesis_excerpt}")
+
+        # Risk highlights (top 3)
+        if qualitative.sec_insights.risk_factors:
+            risks = qualitative.sec_insights.risk_factors[:3]
+            summary_parts.append(
+                f"Key Risk Factors: {', '.join(risks)}."
+            )
+
+        # Technical strategy summary
+        if qualitative.technical_strategy.timing_assessment:
+            timing = qualitative.technical_strategy.timing_assessment[:100].strip()
+            if not timing.endswith('.'):
+                timing += '...'
+            summary_parts.append(f"Technical Timing: {timing}")
+
+        # Combine all parts
         summary = " ".join(summary_parts)
 
-        # Ensure minimum length
-        if len(summary.split()) < 200:
-            logger.warning("Executive summary below 200 words, padding with rationale")
+        # Ensure minimum 200 words
+        word_count = len(summary.split())
+        if word_count < 200:
+            logger.warning(f"Executive summary has {word_count} words, padding to meet 200-word minimum")
+            # Add Python rationale to reach minimum
             summary += " " + quantitative.python_rationale
 
+            # If still short, add more context
+            if len(summary.split()) < 200:
+                summary += " " + qualitative.fundamental_context.competitive_positioning
+                summary += " " + qualitative.fundamental_context.management_assessment
+
         return summary
+
+    def _calculate_word_count_manually(
+        self,
+        executive_summary: str,
+        investment_rationale: str,
+        qualitative: QualitativeInsights
+    ) -> int:
+        """
+        Calculate word count manually before model creation.
+        
+        This duplicates the logic from EnrichedAnalysis.calculated_word_count
+        but is needed because Pydantic validates on model creation.
+        
+        Args:
+            executive_summary: Executive summary text
+            investment_rationale: Investment rationale text
+            qualitative: Qualitative insights
+            
+        Returns:
+            Total word count
+        """
+        sections = []
+
+        # Core summaries
+        sections.append(executive_summary)
+        sections.append(investment_rationale)
+
+        # SEC insights
+        sections.append(qualitative.sec_insights.business_model)
+        sections.extend(qualitative.sec_insights.competitive_advantages)
+        sections.extend(qualitative.sec_insights.risk_factors)
+        sections.extend(qualitative.sec_insights.strategic_initiatives)
+
+        # Fundamental context
+        sections.append(qualitative.fundamental_context.industry_analysis)
+        sections.extend(qualitative.fundamental_context.growth_drivers)
+        sections.append(qualitative.fundamental_context.competitive_positioning)
+        sections.append(qualitative.fundamental_context.management_assessment)
+
+        # Technical strategy
+        sections.extend(qualitative.technical_strategy.chart_patterns)
+        sections.append(qualitative.technical_strategy.support_resistance)
+        sections.append(qualitative.technical_strategy.entry_exit_strategy)
+        sections.append(qualitative.technical_strategy.timing_assessment)
+
+        # Contextual risks
+        sections.extend(qualitative.contextual_risks.regulatory_risks)
+        sections.extend(qualitative.contextual_risks.geopolitical_risks)
+        sections.extend(qualitative.contextual_risks.competitive_risks)
+        sections.extend(qualitative.contextual_risks.operational_risks)
+        sections.extend(qualitative.contextual_risks.stress_scenarios)
+
+        # Investment synthesis
+        sections.append(qualitative.investment_synthesis.investment_thesis)
+        sections.append(qualitative.investment_synthesis.bull_case)
+        sections.append(qualitative.investment_synthesis.base_case)
+        sections.append(qualitative.investment_synthesis.bear_case)
+
+        # Combine all sections and count words
+        combined_text = " ".join(str(section) for section in sections if section)
+        return len(combined_text.split())
 
     def _count_unique_insights(self, qualitative: QualitativeInsights) -> int:
         """

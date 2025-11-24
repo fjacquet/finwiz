@@ -1,9 +1,10 @@
 """Integration tests for DataSourceOrchestrator with DeepAnalysisOrchestrator."""
 
 import pytest
+from pytest import approx
+
 from finwiz.data.adapters.base_adapter import FundamentalData
 from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
-from pytest import approx
 
 
 class TestOrchestratorIntegration:

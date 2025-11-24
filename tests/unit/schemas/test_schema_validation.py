@@ -3,6 +3,7 @@ Unit tests for comprehensive schema validation.
 
 Tests all FinWiz schemas with valid and invalid data, including field constraints.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, date, datetime

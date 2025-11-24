@@ -40,7 +40,6 @@ class TestAIOutputValidationIntegration:
         # Arrange
         from datetime import datetime
 
-
         valid_output = {
             "sec_insights": {
                 "business_model": "Test business model analysis with comprehensive details about the company's operations " * 5,
@@ -408,7 +407,6 @@ class TestAIOutputValidationIntegration:
         # Assert
         assert isinstance(result, QualitativeInsights)
         assert retry_callback.call_count == 1, "Should retry exactly once"
-
 
 
 @pytest.mark.integration

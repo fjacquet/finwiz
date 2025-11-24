@@ -32,8 +32,8 @@ class TestDeepAnalysisCrewIntegration:
 
         # Verify crew was created successfully
         assert crew is not None
-        assert hasattr(crew, 'agents_config')
-        assert hasattr(crew, 'tasks_config')
+        assert hasattr(crew, "agents_config")
+        assert hasattr(crew, "tasks_config")
 
         # Verify exactly 2 agents
         assert len(crew.agents_config) == 2
@@ -41,10 +41,7 @@ class TestDeepAnalysisCrewIntegration:
         assert "investment_reporter" in crew.agents_config
         assert "risk_assessor" not in crew.agents_config
 
-    @pytest.mark.skipif(
-        not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
-        reason="Requires API keys for crew execution"
-    )
+    @pytest.mark.skipif(not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"), reason="Requires API keys for crew execution")
     def test_should_execute_crew_for_btc_usd_without_error(self):
         """
         Test that DeepAnalysisCrew executes for BTC-USD without errors.
@@ -60,10 +57,7 @@ class TestDeepAnalysisCrewIntegration:
         crew = DeepAnalysisCrew()
 
         # Prepare inputs for BTC-USD (the failing case)
-        inputs = {
-            "ticker": "BTC-USD",
-            "asset_class": "crypto"
-        }
+        inputs = {"ticker": "BTC-USD", "asset_class": "crypto"}
 
         # Execute crew - should not raise KeyError
         try:
@@ -101,11 +95,11 @@ class TestDeepAnalysisCrewIntegration:
         crew = DeepAnalysisCrew()
 
         # Verify required agent methods exist
-        assert hasattr(crew, 'asset_analyst'), "Missing asset_analyst method"
-        assert hasattr(crew, 'investment_reporter'), "Missing investment_reporter method"
+        assert hasattr(crew, "asset_analyst"), "Missing asset_analyst method"
+        assert hasattr(crew, "investment_reporter"), "Missing investment_reporter method"
 
         # Verify risk_assessor method does NOT exist
-        assert not hasattr(crew, 'risk_assessor'), "risk_assessor method still exists"
+        assert not hasattr(crew, "risk_assessor"), "risk_assessor method still exists"
 
     def test_should_not_log_deprecation_warnings(self, caplog):
         """
@@ -151,7 +145,7 @@ class TestDeepAnalysisCrewIntegration:
             crew = DeepAnalysisCrew()
 
             # Verify get_tools_for_asset_class method exists
-            assert hasattr(crew, 'get_tools_for_asset_class')
+            assert hasattr(crew, "get_tools_for_asset_class")
 
             # Verify the method accepts the asset class without error
             # (we don't call it to avoid import issues in tests)

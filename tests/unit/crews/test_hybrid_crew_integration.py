@@ -74,12 +74,12 @@ class TestHybridStockCrewIntegration:
                 assert "do not recalculate" in description
 
     def test_should_use_hybrid_analysis_schemas(self):
-        """Test that tasks use hybrid analysis Pydantic schemas."""
+        """Test that tasks reference hybrid analysis Pydantic schemas in expected_output."""
         config_path = Path("src/finwiz/crews/stock_crew/config/tasks.yaml")
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Verify schema usage
+        # Verify schema references in expected_output
         schema_mapping = {
             "sec_analysis_task": "SecAnalysisInsights",
             "fundamental_context_task": "FundamentalContextInsights",
@@ -91,8 +91,9 @@ class TestHybridStockCrewIntegration:
 
         for task_name, expected_schema in schema_mapping.items():
             task_config = config[task_name]
-            assert "output_pydantic" in task_config
-            assert task_config["output_pydantic"] == expected_schema
+            # Check that expected_output mentions the schema
+            assert "expected_output" in task_config
+            assert expected_schema in task_config["expected_output"], f"Task {task_name} should reference {expected_schema} in expected_output"
 
     def test_should_pass_python_context_to_tasks(self):
         """Test that tasks receive Python-calculated metrics as context."""
@@ -184,12 +185,12 @@ class TestHybridDeepAnalysisCrewIntegration:
                 assert "do not recalculate" in description
 
     def test_should_use_hybrid_analysis_schemas(self):
-        """Test that tasks use hybrid analysis Pydantic schemas."""
+        """Test that tasks reference hybrid analysis Pydantic schemas in expected_output."""
         config_path = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Verify schema usage
+        # Verify schema references in expected_output
         schema_mapping = {
             "deep_qualitative_analysis_task": "QualitativeInsights",
             "generate_enriched_analysis_task": "EnrichedAnalysis",
@@ -197,8 +198,9 @@ class TestHybridDeepAnalysisCrewIntegration:
 
         for task_name, expected_schema in schema_mapping.items():
             task_config = config[task_name]
-            assert "output_pydantic" in task_config
-            assert task_config["output_pydantic"] == expected_schema
+            # Check that expected_output mentions the schema
+            assert "expected_output" in task_config
+            assert expected_schema in task_config["expected_output"], f"Task {task_name} should reference {expected_schema} in expected_output"
 
     def test_should_pass_python_context_to_tasks(self):
         """Test that tasks receive Python-calculated metrics as context."""

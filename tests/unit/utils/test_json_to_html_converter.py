@@ -40,9 +40,7 @@ class TestJsonToHtmlConverter:
         json_path.write_text(json.dumps(json_data))
         return json_path
 
-    def test_should_convert_deep_analysis_json_without_processing_time(
-        self, converter, sample_deep_analysis_json
-    ):
+    def test_should_convert_deep_analysis_json_without_processing_time(self, converter, sample_deep_analysis_json):
         """Test conversion of deep analysis JSON without processing_time_seconds field."""
         # Act
         result = converter.convert_file(sample_deep_analysis_json)
@@ -62,10 +60,7 @@ class TestJsonToHtmlConverter:
     def test_should_parse_raw_output_fields(self, converter):
         """Test parsing of raw_output string to extract fields."""
         # Arrange
-        raw_output = (
-            "ticker='AAPL' composite_score=0.85 grade='A' "
-            "risk_details={'volatility': 0.25, 'beta': 1.0}"
-        )
+        raw_output = "ticker='AAPL' composite_score=0.85 grade='A' risk_details={'volatility': 0.25, 'beta': 1.0}"
         context = {}
 
         # Act
@@ -78,9 +73,7 @@ class TestJsonToHtmlConverter:
         assert "risk_details" in result
         assert result["risk_details"]["volatility"] == approx(0.25)
 
-    def test_should_provide_default_values_for_missing_fields(
-        self, converter, sample_deep_analysis_json
-    ):
+    def test_should_provide_default_values_for_missing_fields(self, converter, sample_deep_analysis_json):
         """Test that missing template fields get default values."""
         # Act
         result = converter.convert_file(sample_deep_analysis_json)

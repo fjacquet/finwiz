@@ -6,9 +6,9 @@ SEC URL extraction, and URL validation/fixing.
 """
 
 import pytest
-from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
 from pytest import approx
 
+from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
 

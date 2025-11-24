@@ -370,9 +370,7 @@ def test_should_retry_with_format_instructions(sample_quantitative):
             return "Invalid string output"
 
     # Start with invalid output
-    result = validate_ai_output_with_retry(
-        "Invalid string output", sample_quantitative, retry_callback=mock_retry_callback, max_retries=2
-    )
+    result = validate_ai_output_with_retry("Invalid string output", sample_quantitative, retry_callback=mock_retry_callback, max_retries=2)
 
     # Verify retry was called
     assert retry_count == 2
@@ -397,9 +395,7 @@ def test_should_fallback_after_max_retries(sample_quantitative):
         return "Still invalid"
 
     # Start with invalid output
-    result = validate_ai_output_with_retry(
-        "Invalid string output", sample_quantitative, retry_callback=mock_retry_callback, max_retries=2
-    )
+    result = validate_ai_output_with_retry("Invalid string output", sample_quantitative, retry_callback=mock_retry_callback, max_retries=2)
 
     # Verify fallback was used
     assert isinstance(result, QualitativeInsights)
@@ -416,9 +412,7 @@ def test_should_limit_retries_to_two(sample_quantitative):
         retry_count += 1
         return "Still invalid"
 
-    validate_ai_output_with_retry(
-        "Invalid string output", sample_quantitative, retry_callback=mock_retry_callback, max_retries=2
-    )
+    validate_ai_output_with_retry("Invalid string output", sample_quantitative, retry_callback=mock_retry_callback, max_retries=2)
 
     # Verify exactly 2 retries (not more)
     assert retry_count == 2
@@ -491,9 +485,7 @@ def test_should_handle_tool_call_error_in_retry_flow(sample_quantitative):
                 "ai_confidence": 0.85,
             }
 
-    result = validate_ai_output_with_retry(
-        {"tool_calls": [{"name": "initial_tool"}]}, sample_quantitative, retry_callback=mock_retry_callback, max_retries=2
-    )
+    result = validate_ai_output_with_retry({"tool_calls": [{"name": "initial_tool"}]}, sample_quantitative, retry_callback=mock_retry_callback, max_retries=2)
 
     # Verify retry was triggered by tool call error
     assert retry_count == 2

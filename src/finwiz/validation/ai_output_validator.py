@@ -86,17 +86,12 @@ def validate_ai_output_structure(result: Any) -> dict:
     """
     # Check 1: Must be a dict (Requirement 12.5)
     if not isinstance(result, dict):
-        raise OutputParsingError(
-            f"Expected dict output, got {type(result).__name__}. "
-            f"AI must return a structured JSON object, not {type(result).__name__}."
-        )
+        raise OutputParsingError(f"Expected dict output, got {type(result).__name__}. AI must return a structured JSON object, not {type(result).__name__}.")
 
     # Check 2: Detect tool calls (Requirement 12.6)
     if "tool_calls" in result or "function_call" in result:
         raise ToolCallInsteadOfAnalysisError(
-            "AI returned tool calls instead of analysis. "
-            "The AI agent attempted to call tools rather than providing analysis. "
-            "Retrying with corrected prompt."
+            "AI returned tool calls instead of analysis. The AI agent attempted to call tools rather than providing analysis. Retrying with corrected prompt."
         )
 
     # Check 3: Verify expected top-level keys
@@ -275,10 +270,7 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
     """
     from datetime import datetime
 
-    logger.warning(
-        "Creating Python-only qualitative insights. "
-        "AI analysis failed after maximum retry attempts."
-    )
+    logger.warning("Creating Python-only qualitative insights. AI analysis failed after maximum retry attempts.")
 
     # Create minimal qualitative insights from quantitative data
     return QualitativeInsights(
@@ -303,21 +295,12 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
                 "This fallback provides only quantitative metrics without industry context."
             ),
             "growth_drivers": ["Based on quantitative fundamental metrics only"],
-            "competitive_positioning": (
-                "Not assessed - AI analysis unavailable. Competitive positioning requires "
-                "qualitative analysis which failed after retry attempts."
-            ),
-            "management_assessment": (
-                "Not assessed - AI analysis unavailable. Management quality assessment requires "
-                "qualitative analysis which failed after retry attempts."
-            ),
+            "competitive_positioning": ("Not assessed - AI analysis unavailable. Competitive positioning requires qualitative analysis which failed after retry attempts."),
+            "management_assessment": ("Not assessed - AI analysis unavailable. Management quality assessment requires qualitative analysis which failed after retry attempts."),
         },
         technical_strategy={
             "chart_patterns": ["Technical analysis based on quantitative indicators only"],
-            "support_resistance": (
-                "Not assessed - AI analysis unavailable. Support and resistance levels require "
-                "qualitative chart analysis which failed after retry attempts."
-            ),
+            "support_resistance": ("Not assessed - AI analysis unavailable. Support and resistance levels require qualitative chart analysis which failed after retry attempts."),
             "entry_exit_strategy": (
                 f"Based on quantitative analysis only. Grade: {quantitative.grade}. "
                 f"Technical score: {quantitative.technical_score:.2f}. "
@@ -325,10 +308,7 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
                 "For detailed entry/exit strategy, AI crew must execute successfully. "
                 "This fallback provides only basic quantitative guidance."
             ),
-            "timing_assessment": (
-                "Not assessed - AI analysis unavailable. Market timing assessment requires "
-                "qualitative analysis which failed after retry attempts."
-            ),
+            "timing_assessment": ("Not assessed - AI analysis unavailable. Market timing assessment requires qualitative analysis which failed after retry attempts."),
         },
         contextual_risks={
             "regulatory_risks": [],
@@ -448,10 +428,7 @@ def validate_ai_output_with_retry(
                     break
             else:
                 # Max retries exceeded - fallback to Python-only
-                logger.error(
-                    f"AI output validation failed after {max_retries} retry attempts. "
-                    f"Falling back to Python-only analysis (Requirement 12.4)"
-                )
+                logger.error(f"AI output validation failed after {max_retries} retry attempts. Falling back to Python-only analysis (Requirement 12.4)")
                 return create_python_only_qualitative(quantitative)
 
     # Should not reach here, but fallback just in case

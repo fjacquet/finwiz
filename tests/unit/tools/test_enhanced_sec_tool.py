@@ -270,19 +270,42 @@ class TestIntegrationScenarios:
         mocker.patch.object(tool, "_fetch_latest_filing", return_value=mock_filing)
         mocker.patch.object(tool, "_download_html", return_value="<html>test content</html>")
 
-        # Mock document processing
-        mock_doc = mocker.Mock()
-        mock_doc.page_content = "Test content for section analysis"
+        # Mock the _extract_section_insights method directly to avoid FAISS dependency
+        mock_insights = [
+            {
+                "ticker": "AAPL",
+                "filing_url": mock_filing["filing_url"],
+                "filed_at": mock_filing["filed_at"],
+                "section": "Item 1",
+                "excerpt": "Test content for Item 1",
+                "sec_citation": "10-K (2024), Item 1",
+                "relevance_rank": 1,
+            },
+            {
+                "ticker": "AAPL",
+                "filing_url": mock_filing["filing_url"],
+                "filed_at": mock_filing["filed_at"],
+                "section": "Item 1A",
+                "excerpt": "Test content for Item 1A with risk factors",
+                "sec_citation": "10-K (2024), Item 1A",
+                "relevance_rank": 1,
+            },
+        ]
 
-        mock_retriever = mocker.Mock()
-        mock_retriever.invoke.return_value = [mock_doc]  # Changed from get_relevant_documents to invoke
-
-        mock_faiss = mocker.Mock()
-        mock_faiss.from_documents.return_value.as_retriever.return_value = mock_retriever
-
-        mocker.patch("finwiz.tools.enhanced_sec_tool.FAISS", mock_faiss)
-        mocker.patch("finwiz.tools.enhanced_sec_tool.OpenAIEmbeddings")
-        mocker.patch("finwiz.tools.enhanced_sec_tool.partition_html", return_value=["test"])
+        mocker.patch.object(tool, "_extract_section_insights", return_value=mock_insights)
+        mocker.patch.object(
+            tool,
+            "_perform_risk_assessment",
+            return_value={
+                "ticker": "AAPL",
+                "scale": "0_5",
+                "score": 2.5,
+                "level": "Medium",
+                "risk_factors": ["Competition risk", "Regulatory risk"],
+                "filing_source": mock_filing["filing_url"],
+                "assessment_date": "2024-01-01",
+            },
+        )
 
         # Act
         result = tool._run(ticker="AAPL", sections=["Item 1", "Item 1A", "Item 7"], risk_assessment=True)
@@ -308,19 +331,20 @@ class TestIntegrationScenarios:
         mocker.patch.object(tool, "_fetch_latest_filing", return_value=mock_filing)
         mocker.patch.object(tool, "_download_html", return_value="<html>test</html>")
 
-        # Mock document processing
-        mock_doc = mocker.Mock()
-        mock_doc.page_content = "Test content"
+        # Mock insights extraction to avoid FAISS dependency
+        mock_insights = [
+            {
+                "ticker": "AAPL",
+                "filing_url": mock_filing["filing_url"],
+                "filed_at": mock_filing["filed_at"],
+                "section": "Item 1",
+                "excerpt": "Test content",
+                "sec_citation": "10-K (2024), Item 1",
+                "relevance_rank": 1,
+            }
+        ]
 
-        mock_retriever = mocker.Mock()
-        mock_retriever.invoke.return_value = [mock_doc]  # Changed from get_relevant_documents to invoke
-
-        mock_faiss = mocker.Mock()
-        mock_faiss.from_documents.return_value.as_retriever.return_value = mock_retriever
-
-        mocker.patch("finwiz.tools.enhanced_sec_tool.FAISS", mock_faiss)
-        mocker.patch("finwiz.tools.enhanced_sec_tool.OpenAIEmbeddings")
-        mocker.patch("finwiz.tools.enhanced_sec_tool.partition_html", return_value=["test"])
+        mocker.patch.object(tool, "_extract_section_insights", return_value=mock_insights)
 
         # Act
         result = tool._run(ticker="AAPL", risk_assessment=False)
@@ -330,4 +354,4 @@ class TestIntegrationScenarios:
         assert "Error" not in result
         assert "AAPL" in result
         # When risk_assessment=False, the Risk Assessment section should not be present
-        assert "Risk Assessment" not in result or "Risk Assessment" in result  # May or may not be present depending on implementation
+        assert "Risk Assessment" not in result

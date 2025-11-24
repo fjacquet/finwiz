@@ -32,11 +32,7 @@ def text_strategy(min_length: int, max_length: int = None):
         max_length = min_length + 100
     # Use 33-126 to exclude space (32) at boundaries, preventing strip issues
     # This ensures stripped length still meets minimum after Pydantic validation
-    return st.text(
-        min_size=min_length,
-        max_size=max_length,
-        alphabet=st.characters(min_codepoint=33, max_codepoint=126)
-    ).filter(lambda x: len(x.strip()) >= min_length)
+    return st.text(min_size=min_length, max_size=max_length, alphabet=st.characters(min_codepoint=33, max_codepoint=126)).filter(lambda x: len(x.strip()) >= min_length)
 
 
 # Property 4: AI Output Schema Compliance

@@ -95,19 +95,12 @@ class TestDeepAnalysisOrchestratorProperties:
             mock_result.risk_score = 3.0
             return mock_result
 
-        mocker.patch.object(
-            orchestrator,
-            "_process_single_holding",
-            side_effect=mock_process_holding
-        )
+        mocker.patch.object(orchestrator, "_process_single_holding", side_effect=mock_process_holding)
 
         # Mock cache manager
         mock_cache_mgr = mocker.Mock()
         mock_cache_mgr.log_cache_stats = mocker.Mock()
-        mocker.patch(
-            "finwiz.orchestrators.deep_analysis_orchestrator.get_analysis_cache_manager",
-            return_value=mock_cache_mgr
-        )
+        mocker.patch("finwiz.orchestrators.deep_analysis_orchestrator.get_analysis_cache_manager", return_value=mock_cache_mgr)
 
         # Act
         results = orchestrator.run_deep_analysis_on_holdings(holdings)
@@ -120,8 +113,7 @@ class TestDeepAnalysisOrchestratorProperties:
 
         # Assert - Failed holdings tracked
         expected_failures = min(num_failures, num_holdings)
-        assert len(state.failed_holdings) == expected_failures, \
-            f"Expected {expected_failures} failed holdings, got {len(state.failed_holdings)}"
+        assert len(state.failed_holdings) == expected_failures, f"Expected {expected_failures} failed holdings, got {len(state.failed_holdings)}"
 
     # Property 11: Performance Constraints
     # **Validates: Requirements 7.1, 7.2**
@@ -165,18 +157,14 @@ class TestDeepAnalysisOrchestratorProperties:
 
         # Assert - Performance constraints
         if processing_time > 30.0:
-            assert any("Processing time exceeded" in w for w in warnings), \
-                "Must warn when processing time >30s"
+            assert any("Processing time exceeded" in w for w in warnings), "Must warn when processing time >30s"
         else:
-            assert not any("Processing time exceeded" in w for w in warnings), \
-                "Must not warn when processing time ≤30s"
+            assert not any("Processing time exceeded" in w for w in warnings), "Must not warn when processing time ≤30s"
 
         if llm_cost > 0.10:
-            assert any("LLM cost exceeded" in w for w in warnings), \
-                "Must warn when LLM cost >$0.10"
+            assert any("LLM cost exceeded" in w for w in warnings), "Must warn when LLM cost >$0.10"
         else:
-            assert not any("LLM cost exceeded" in w for w in warnings), \
-                "Must not warn when LLM cost ≤$0.10"
+            assert not any("LLM cost exceeded" in w for w in warnings), "Must not warn when LLM cost ≤$0.10"
 
     # Property 12: Batch Processing Performance
     # **Validates: Requirements 10.1, 10.2**
@@ -210,10 +198,7 @@ class TestDeepAnalysisOrchestratorProperties:
         )
 
         # Create test holdings
-        holdings = [
-            {"ticker": f"TEST{i}", "asset_class": "stock"}
-            for i in range(num_holdings)
-        ]
+        holdings = [{"ticker": f"TEST{i}", "asset_class": "stock"} for i in range(num_holdings)]
 
         # Mock _process_single_holding to return quickly
         def mock_process_holding(ticker, asset_class, cache_mgr, cache_ttl, batch_enabled):
@@ -225,19 +210,12 @@ class TestDeepAnalysisOrchestratorProperties:
             mock_result.risk_score = 3.0
             return mock_result
 
-        mocker.patch.object(
-            orchestrator,
-            "_process_single_holding",
-            side_effect=mock_process_holding
-        )
+        mocker.patch.object(orchestrator, "_process_single_holding", side_effect=mock_process_holding)
 
         # Mock cache manager
         mock_cache_mgr = mocker.Mock()
         mock_cache_mgr.log_cache_stats = mocker.Mock()
-        mocker.patch(
-            "finwiz.orchestrators.deep_analysis_orchestrator.get_analysis_cache_manager",
-            return_value=mock_cache_mgr
-        )
+        mocker.patch("finwiz.orchestrators.deep_analysis_orchestrator.get_analysis_cache_manager", return_value=mock_cache_mgr)
 
         # Act
         start_time = time.time()
@@ -246,17 +224,14 @@ class TestDeepAnalysisOrchestratorProperties:
 
         # Assert - Total time constraint (≤1800s for 66 holdings)
         max_time = (num_holdings / 66) * 1800  # Scale based on actual count
-        assert total_time <= max_time, \
-            f"Batch processing took {total_time:.1f}s, must be ≤{max_time:.1f}s"
+        assert total_time <= max_time, f"Batch processing took {total_time:.1f}s, must be ≤{max_time:.1f}s"
 
         # Assert - All holdings processed
-        assert len(results) == num_holdings, \
-            f"Expected {num_holdings} results, got {len(results)}"
+        assert len(results) == num_holdings, f"Expected {num_holdings} results, got {len(results)}"
 
         # Assert - Per-holding time constraint (≤30s average)
         avg_time_per_holding = total_time / num_holdings if num_holdings > 0 else 0
-        assert avg_time_per_holding <= 30.0, \
-            f"Average time per holding {avg_time_per_holding:.1f}s must be ≤30s"
+        assert avg_time_per_holding <= 30.0, f"Average time per holding {avg_time_per_holding:.1f}s must be ≤30s"
 
     # Property 10: Processing Metadata Tracking
     # **Validates: Requirements 4.3**
@@ -286,11 +261,13 @@ class TestDeepAnalysisOrchestratorProperties:
 
         # Mock time.time() to return our controlled values
         import time as time_module
+
         original_time = time_module.time
 
         try:
             # First call returns start_time, second returns end_time
             call_count = [0]
+
             def mock_time():
                 call_count[0] += 1
                 return start_time if call_count[0] == 1 else end_time
@@ -312,8 +289,7 @@ class TestDeepAnalysisOrchestratorProperties:
 
             # Assert - Processing time is reasonable
             expected_time = end_time - start_time
-            assert abs(processing_time - expected_time) < 0.1, \
-                f"Processing time {processing_time} should be close to {expected_time}"
+            assert abs(processing_time - expected_time) < 0.1, f"Processing time {processing_time} should be close to {expected_time}"
 
         finally:
             # Restore original time function
@@ -349,11 +325,7 @@ class TestDeepAnalysisOrchestratorProperties:
             "company_name": f"{ticker} Corp",
             "current_price": 100.0,
         }
-        mocker.patch.object(
-            orchestrator,
-            "_collect_data_with_python",
-            return_value=mock_data
-        )
+        mocker.patch.object(orchestrator, "_collect_data_with_python", return_value=mock_data)
 
         # Mock DeepAnalysisScorer
         mock_scorer = mocker.Mock()
@@ -370,10 +342,7 @@ class TestDeepAnalysisOrchestratorProperties:
         mock_result.risk_metrics = {}
 
         mock_scorer.calculate_composite_score.return_value = mock_result
-        mocker.patch(
-            "finwiz.orchestrators.deep_analysis_orchestrator.DeepAnalysisScorer",
-            return_value=mock_scorer
-        )
+        mocker.patch("finwiz.orchestrators.deep_analysis_orchestrator.DeepAnalysisScorer", return_value=mock_scorer)
 
         # Act
         error = Exception("AI analysis failed")
@@ -383,12 +352,10 @@ class TestDeepAnalysisOrchestratorProperties:
         assert fallback is not None, "Fallback analysis must be created"
 
         # Assert - LOW confidence
-        assert fallback.recommendation_confidence == "LOW", \
-            "Fallback analysis must have LOW confidence"
+        assert fallback.recommendation_confidence == "LOW", "Fallback analysis must have LOW confidence"
 
         # Assert - Valid EnrichedAnalysis
-        assert isinstance(fallback, EnrichedAnalysis), \
-            "Fallback must be EnrichedAnalysis instance"
+        assert isinstance(fallback, EnrichedAnalysis), "Fallback must be EnrichedAnalysis instance"
         assert fallback.ticker == ticker, "Ticker must match"
         assert fallback.asset_class == asset_class, "Asset class must match"
         assert fallback.final_grade == "B", "Grade must be from Python calculation"
@@ -405,9 +372,7 @@ class TestDeepAnalysisOrchestratorProperties:
         max_examples=20,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_quality_validation_detects_threshold_violations(
-        self, mocker, word_count, insights_count, processing_time, llm_cost
-    ):
+    def test_quality_validation_detects_threshold_violations(self, mocker, word_count, insights_count, processing_time, llm_cost):
         """
         Property: Quality validation detects all threshold violations.
 
@@ -433,32 +398,24 @@ class TestDeepAnalysisOrchestratorProperties:
 
         # Assert - Word count threshold
         if word_count < 2000:
-            assert any("Word count below threshold" in w for w in warnings), \
-                f"Must warn when word_count {word_count} <2000"
+            assert any("Word count below threshold" in w for w in warnings), f"Must warn when word_count {word_count} <2000"
         else:
-            assert not any("Word count below threshold" in w for w in warnings), \
-                f"Must not warn when word_count {word_count} ≥2000"
+            assert not any("Word count below threshold" in w for w in warnings), f"Must not warn when word_count {word_count} ≥2000"
 
         # Assert - Insights count threshold
         if insights_count < 5:
-            assert any("Insights count below threshold" in w for w in warnings), \
-                f"Must warn when insights_count {insights_count} <5"
+            assert any("Insights count below threshold" in w for w in warnings), f"Must warn when insights_count {insights_count} <5"
         else:
-            assert not any("Insights count below threshold" in w for w in warnings), \
-                f"Must not warn when insights_count {insights_count} ≥5"
+            assert not any("Insights count below threshold" in w for w in warnings), f"Must not warn when insights_count {insights_count} ≥5"
 
         # Assert - Processing time threshold
         if processing_time > 30.0:
-            assert any("Processing time exceeded" in w for w in warnings), \
-                f"Must warn when processing_time {processing_time:.1f}s >30s"
+            assert any("Processing time exceeded" in w for w in warnings), f"Must warn when processing_time {processing_time:.1f}s >30s"
         else:
-            assert not any("Processing time exceeded" in w for w in warnings), \
-                f"Must not warn when processing_time {processing_time:.1f}s ≤30s"
+            assert not any("Processing time exceeded" in w for w in warnings), f"Must not warn when processing_time {processing_time:.1f}s ≤30s"
 
         # Assert - LLM cost threshold
         if llm_cost > 0.10:
-            assert any("LLM cost exceeded" in w for w in warnings), \
-                f"Must warn when llm_cost ${llm_cost:.3f} >$0.10"
+            assert any("LLM cost exceeded" in w for w in warnings), f"Must warn when llm_cost ${llm_cost:.3f} >$0.10"
         else:
-            assert not any("LLM cost exceeded" in w for w in warnings), \
-                f"Must not warn when llm_cost ${llm_cost:.3f} ≤$0.10"
+            assert not any("LLM cost exceeded" in w for w in warnings), f"Must not warn when llm_cost ${llm_cost:.3f} ≤$0.10"

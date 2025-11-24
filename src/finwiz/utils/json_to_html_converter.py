@@ -247,41 +247,25 @@ class JsonToHtmlConverter:
             context.setdefault("risk_metrics", context.get("risk_details", {}))
 
             # Set default empty structures for missing sections
-            context.setdefault("sec_insights", {
-                "business_model": "Not available",
-                "competitive_advantages": [],
-                "strategic_initiatives": []
-            })
-            context.setdefault("fundamental_context", {
-                "industry_analysis": "Not available",
-                "growth_drivers": [],
-                "competitive_positioning": "Not available",
-                "management_assessment": "Not available"
-            })
-            context.setdefault("technical_strategy", {
-                "chart_patterns": [],
-                "support_resistance": "Not available",
-                "entry_exit_strategy": "Not available",
-                "timing_assessment": "Not available"
-            })
-            context.setdefault("contextual_risks", {
-                "regulatory_risks": [],
-                "geopolitical_risks": [],
-                "competitive_risks": [],
-                "operational_risks": [],
-                "stress_scenarios": []
-            })
-            context.setdefault("investment_synthesis", {
-                "scenario_probabilities": {"bull": 0.33, "base": 0.34, "bear": 0.33},
-                "bull_case": "Not available",
-                "base_case": "Not available",
-                "bear_case": "Not available",
-                "action_plan": {
-                    "immediate_actions": [],
-                    "monitoring_points": [],
-                    "exit_triggers": []
-                }
-            })
+            context.setdefault("sec_insights", {"business_model": "Not available", "competitive_advantages": [], "strategic_initiatives": []})
+            context.setdefault(
+                "fundamental_context",
+                {"industry_analysis": "Not available", "growth_drivers": [], "competitive_positioning": "Not available", "management_assessment": "Not available"},
+            )
+            context.setdefault(
+                "technical_strategy", {"chart_patterns": [], "support_resistance": "Not available", "entry_exit_strategy": "Not available", "timing_assessment": "Not available"}
+            )
+            context.setdefault("contextual_risks", {"regulatory_risks": [], "geopolitical_risks": [], "competitive_risks": [], "operational_risks": [], "stress_scenarios": []})
+            context.setdefault(
+                "investment_synthesis",
+                {
+                    "scenario_probabilities": {"bull": 0.33, "base": 0.34, "bear": 0.33},
+                    "bull_case": "Not available",
+                    "base_case": "Not available",
+                    "bear_case": "Not available",
+                    "action_plan": {"immediate_actions": [], "monitoring_points": [], "exit_triggers": []},
+                },
+            )
             context.setdefault("report_word_count", 0)
             context.setdefault("unique_insights_count", 0)
             context.setdefault("qualitative", {"ai_confidence": 0.0})
@@ -320,10 +304,10 @@ class JsonToHtmlConverter:
         for match in re.finditer(simple_pattern, raw_output):
             key, _, value = match.groups()
             # Try to convert to appropriate type
-            if value.lower() in ('true', 'false'):
-                context[key] = value.lower() == 'true'
-            elif value.replace('.', '', 1).replace('-', '', 1).isdigit():
-                context[key] = float(value) if '.' in value else int(value)
+            if value.lower() in ("true", "false"):
+                context[key] = value.lower() == "true"
+            elif value.replace(".", "", 1).replace("-", "", 1).isdigit():
+                context[key] = float(value) if "." in value else int(value)
             else:
                 context[key] = value
 
@@ -337,8 +321,8 @@ class JsonToHtmlConverter:
                 item_key, item_value = item_match.groups()
                 item_value = item_value.strip()
                 # Convert to appropriate type
-                if item_value.replace('.', '', 1).replace('-', '', 1).isdigit():
-                    dict_data[item_key] = float(item_value) if '.' in item_value else int(item_value)
+                if item_value.replace(".", "", 1).replace("-", "", 1).isdigit():
+                    dict_data[item_key] = float(item_value) if "." in item_value else int(item_value)
                 else:
                     dict_data[item_key] = item_value.strip("'\"")
             context[key] = dict_data
