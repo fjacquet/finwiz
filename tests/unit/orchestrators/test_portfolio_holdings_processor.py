@@ -8,6 +8,7 @@ processing all holdings including failed validations, and generating processing 
 import csv
 
 import pytest
+from pytest import approx
 
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,
@@ -221,7 +222,7 @@ class TestPortfolioHoldingsProcessor:
         assert len(decisions) == 1
         assert decisions[0].ticker == "AAPL"
         assert decisions[0].decision == "KEEP"
-        assert decisions[0].composite_score == 0.75  # Updated: stocks get 0.75 base score
+        assert decisions[0].composite_score == approx(0.75)  # Updated: stocks get 0.75 base score
         assert decisions[0].data_freshness == "fresh"
 
     async def test_should_process_holdings_with_invalid_ticker(self, processor, mocker):
@@ -294,7 +295,7 @@ class TestPortfolioHoldingsProcessor:
         assert decisions[1].ticker == "ERROR"
         assert decisions[1].decision == "SELL"
         # When validation fails, score is 0.3 (invalid ticker base score)
-        assert decisions[1].composite_score == 0.3
+        assert decisions[1].composite_score == approx(0.3)
 
     async def test_should_generate_processing_summary(self, processor, mocker):
         """Test generation of processing summary."""

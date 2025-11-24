@@ -14,6 +14,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.metadata import (
     DataLineage,
@@ -258,7 +259,7 @@ def test_quantitative_analysis_boundary_values():
         confidence_level=0.0,
         python_rationale="Minimum values",
     )
-    assert analysis_min.composite_score == 0.0
+    assert analysis_min.composite_score == approx(0.0)
     assert analysis_min.grade == "F"
 
     # Maximum values
@@ -287,5 +288,5 @@ def test_quantitative_analysis_boundary_values():
         confidence_level=1.0,
         python_rationale="Maximum values",
     )
-    assert analysis_max.composite_score == 1.0
+    assert analysis_max.composite_score == approx(1.0)
     assert analysis_max.grade == "A+"

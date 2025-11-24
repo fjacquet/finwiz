@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas import RiskAssessmentStandardized
 
 
 def test_risk_valid_bounds() -> None:
     r = RiskAssessmentStandardized(score=0.0, level="Low")
-    assert r.score == 0.0
+    assert r.score == approx(0.0)
     r2 = RiskAssessmentStandardized(score=5.0, level="Very High")
-    assert r2.score == 5.0
+    assert r2.score == approx(5.0)
 
 
 def test_risk_out_of_bounds() -> None:

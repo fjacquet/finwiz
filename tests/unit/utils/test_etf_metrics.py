@@ -14,6 +14,7 @@ Tests cover:
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.utils.etf_metrics import (
     calculate_concentration_risk,
@@ -79,7 +80,7 @@ class TestCalculateTrackingError:
         te = calculate_tracking_error(etf_returns, benchmark_returns)
 
         # Assert
-        assert te == 0.0
+        assert te == approx(0.0)
 
     def test_should_return_zero_when_insufficient_data(self):
         """Test tracking error with single data point."""
@@ -91,7 +92,7 @@ class TestCalculateTrackingError:
         te = calculate_tracking_error(etf_returns, benchmark_returns)
 
         # Assert
-        assert te == 0.0
+        assert te == approx(0.0)
 
     def test_should_handle_misaligned_indices(self):
         """Test tracking error with misaligned series indices."""
@@ -161,7 +162,7 @@ class TestCalculateCorrelation:
         corr = calculate_correlation(etf_returns, benchmark_returns)
 
         # Assert
-        assert corr == 0.0
+        assert corr == approx(0.0)
 
     def test_should_return_zero_when_insufficient_data(self):
         """Test correlation with single data point."""
@@ -173,7 +174,7 @@ class TestCalculateCorrelation:
         corr = calculate_correlation(etf_returns, benchmark_returns)
 
         # Assert
-        assert corr == 0.0
+        assert corr == approx(0.0)
 
     def test_should_handle_misaligned_indices(self):
         """Test correlation with misaligned series indices."""
@@ -250,7 +251,7 @@ class TestCalculateExpenseImpact:
         impact = calculate_expense_impact(returns, expense_ratio=0.0, years=10)
 
         # Assert
-        assert impact["annual_drag"] == 0.0
+        assert impact["annual_drag"] == approx(0.0)
         assert impact["cumulative_cost"] == pytest.approx(0.0, abs=1e-10)
 
     def test_should_return_zero_when_empty_returns(self):
@@ -262,8 +263,8 @@ class TestCalculateExpenseImpact:
         impact = calculate_expense_impact(returns, expense_ratio=0.0050, years=10)
 
         # Assert
-        assert impact["annual_drag"] == 0.0
-        assert impact["cumulative_cost"] == 0.0
+        assert impact["annual_drag"] == approx(0.0)
+        assert impact["cumulative_cost"] == approx(0.0)
 
 
 class TestCalculateLiquidityScore:
@@ -458,9 +459,9 @@ class TestCalculateConcentrationRisk:
         risk = calculate_concentration_risk(holdings)
 
         # Assert
-        assert risk["top_n_concentration"] == 0.0
-        assert risk["herfindahl_index"] == 0.0
-        assert risk["effective_n_holdings"] == 0.0
+        assert risk["top_n_concentration"] == approx(0.0)
+        assert risk["herfindahl_index"] == approx(0.0)
+        assert risk["effective_n_holdings"] == approx(0.0)
         assert risk["concentration_rating"] == "Unknown"
 
     def test_should_handle_holdings_without_weight_key(self):
@@ -572,8 +573,8 @@ class TestCalculateETFEfficiencyScore:
         # Assert
         assert isinstance(score, dict)
         # Zero tracking and expense should give high scores
-        assert score["tracking_score"] == 100.0
-        assert score["cost_score"] == 100.0
+        assert score["tracking_score"] == approx(100.0)
+        assert score["cost_score"] == approx(100.0)
 
 
 class TestETFMetricsEdgeCases:
@@ -618,8 +619,8 @@ class TestETFMetricsEdgeCases:
         risk = calculate_concentration_risk(holdings)
 
         # Assert
-        assert risk["top_n_concentration"] == 1.0
-        assert risk["herfindahl_index"] == 1.0
+        assert risk["top_n_concentration"] == approx(1.0)
+        assert risk["herfindahl_index"] == approx(1.0)
         assert risk["effective_n_holdings"] == pytest.approx(1.0, rel=1e-6)
         assert risk["concentration_rating"] == "Very High"
 

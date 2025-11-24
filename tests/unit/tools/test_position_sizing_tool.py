@@ -6,6 +6,7 @@ sizing actions, and portfolio allocation validation.
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.position_sizing_tool import (
     HoldingSizingProfile,
@@ -314,7 +315,7 @@ class TestPositionSizingTool:
         )
 
         # Assert
-        assert result.current_size_pct == 0.0
+        assert result.current_size_pct == approx(0.0)
         # Tool may recommend 0% for new positions or suggest a size
         assert result.recommended_size_pct >= 0.0
         assert result.sizing_action in ["add", "hold"]

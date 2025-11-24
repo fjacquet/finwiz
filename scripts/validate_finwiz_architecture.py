@@ -214,9 +214,9 @@ class FinWizArchitectureValidator:
         )
 
         missing_fields = []
-        for field in required_fields:
-            if f"{field}:" not in content and f"{field} =" not in content:
-                missing_fields.append(field)
+        for required_field in required_fields:
+            if f"{required_field}:" not in content and f"{required_field} =" not in content:
+                missing_fields.append(required_field)
 
         passed = len(missing_fields) == 0 and has_extra_forbid
 

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.utils.flow_state_manager import FlowStateManager
 
@@ -171,7 +172,7 @@ class TestFlowStateManager:
         assert metadata["uuid"] == "test-uuid-123"
         assert metadata["holdings_processed"] == 10
         assert metadata["total_holdings"] == 20
-        assert metadata["progress_pct"] == 50.0
+        assert metadata["progress_pct"] == approx(50.0)
         assert metadata["is_stale"] is False
 
         mock_conn.cursor.assert_called_once()
@@ -319,7 +320,7 @@ class TestFlowStateManager:
 
         # Assert
         assert metadata is not None
-        assert metadata["progress_pct"] == 50.0
+        assert metadata["progress_pct"] == approx(50.0)
 
     def test_should_handle_zero_total_holdings(self, manager, mocker, mock_state_file):
         """Test progress percentage when total_holdings is 0."""
@@ -345,7 +346,7 @@ class TestFlowStateManager:
 
         # Assert
         assert metadata is not None
-        assert metadata["progress_pct"] == 0.0  # Avoid division by zero
+        assert metadata["progress_pct"] == approx(0.0)  # Avoid division by zero
 
     def test_should_return_none_when_no_states_for_prompt(self, manager):
         """Test prompt returns None when states list is empty."""

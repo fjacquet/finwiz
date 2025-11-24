@@ -4,10 +4,10 @@ Unit tests for the CostAnalyzer class.
 Tests comprehensive transaction cost modeling including commission calculation,
 bid-ask spread estimation, market impact modeling, and cost-benefit analysis.
 """
-
 from __future__ import annotations
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.cost_analyzer import (
     BrokerType,
@@ -111,9 +111,9 @@ class TestCostAnalyzer:
 
         # Assert
         assert spread_estimate.symbol == "SPY"
-        assert spread_estimate.estimated_spread_bps == 2.0  # ETF should have 2 bps
-        assert spread_estimate.estimated_spread_percentage == 0.0002
-        assert spread_estimate.estimated_spread_cost == 2.0  # 10000 * 0.0002
+        assert spread_estimate.estimated_spread_bps == approx(2.0)  # ETF should have 2 bps
+        assert spread_estimate.estimated_spread_percentage == approx(0.0002)
+        assert spread_estimate.estimated_spread_cost == approx(2.0)  # 10000 * 0.0002
         assert "ETF classification" in spread_estimate.factors_considered
 
     def test_should_estimate_wider_spread_for_small_cap_stocks(self):
@@ -124,8 +124,8 @@ class TestCostAnalyzer:
         spread_estimate = analyzer.estimate_bid_ask_spread("SMALLCAP", 5000.0)
 
         # Assert
-        assert spread_estimate.estimated_spread_bps == 15.0  # Small cap should have 15 bps
-        assert spread_estimate.estimated_spread_cost == 7.5  # 5000 * 0.0015
+        assert spread_estimate.estimated_spread_bps == approx(15.0)  # Small cap should have 15 bps
+        assert spread_estimate.estimated_spread_cost == approx(7.5)  # 5000 * 0.0015
 
     def test_should_adjust_spread_for_high_volatility_when_market_data_provided(self):
         # Arrange
@@ -142,7 +142,7 @@ class TestCostAnalyzer:
 
         # Assert
         # Base spread (15 bps for small cap) * 1.5 for high volatility = 22.5 bps
-        assert spread_estimate.estimated_spread_bps == 22.5
+        assert spread_estimate.estimated_spread_bps == approx(22.5)
         assert "High volatility adjustment" in spread_estimate.factors_considered
 
     def test_should_estimate_negligible_market_impact_for_small_trades(self):
@@ -154,9 +154,9 @@ class TestCostAnalyzer:
 
         # Assert
         assert impact_estimate.symbol == "AAPL"
-        assert impact_estimate.estimated_impact_bps == 0.0
+        assert impact_estimate.estimated_impact_bps == approx(0.0)
         assert impact_estimate.impact_category == "NEGLIGIBLE"
-        assert impact_estimate.estimated_impact_cost == 0.0
+        assert impact_estimate.estimated_impact_cost == approx(0.0)
         assert len(impact_estimate.mitigation_suggestions) == 0
 
     def test_should_estimate_moderate_market_impact_for_medium_trades(self):
@@ -220,11 +220,11 @@ class TestCostAnalyzer:
         cost_analysis = analyzer.analyze_transaction_costs([], portfolio, config)
 
         # Assert
-        assert cost_analysis.total_transaction_costs == 0.0
-        assert cost_analysis.commission_costs == 0.0
-        assert cost_analysis.spread_costs == 0.0
-        assert cost_analysis.market_impact_costs == 0.0
-        assert cost_analysis.cost_as_percentage == 0.0
+        assert cost_analysis.total_transaction_costs == approx(0.0)
+        assert cost_analysis.commission_costs == approx(0.0)
+        assert cost_analysis.spread_costs == approx(0.0)
+        assert cost_analysis.market_impact_costs == approx(0.0)
+        assert cost_analysis.cost_as_percentage == approx(0.0)
         assert cost_analysis.break_even_days is None
 
     def test_should_analyze_comprehensive_costs_when_trade_recommendations_provided(self):
@@ -335,8 +335,8 @@ class TestCostAnalyzer:
         cost_benefit = analyzer.perform_cost_benefit_analysis(50.0, trade_recommendations, portfolio, config)
 
         # Assert
-        assert cost_benefit.total_rebalancing_cost == 50.0
-        assert cost_benefit.cost_as_percentage_of_portfolio == 0.05  # 50/100000 * 100
+        assert cost_benefit.total_rebalancing_cost == approx(50.0)
+        assert cost_benefit.cost_as_percentage_of_portfolio == approx(0.05)  # 50/100000 * 100
         assert cost_benefit.recommendation == "PROCEED"
         assert "reasonable" in cost_benefit.rationale.lower()
 
@@ -383,7 +383,7 @@ class TestCostAnalyzer:
         cost_benefit = analyzer.perform_cost_benefit_analysis(2000.0, trade_recommendations, portfolio, config)
 
         # Assert
-        assert cost_benefit.cost_as_percentage_of_portfolio == 4.0
+        assert cost_benefit.cost_as_percentage_of_portfolio == approx(4.0)
         assert cost_benefit.recommendation == "REJECT"
         assert "excessive" in cost_benefit.rationale.lower()
 
@@ -484,7 +484,7 @@ class TestCostAnalyzer:
         volume_value = analyzer._estimate_avg_daily_volume_value("AAPL", market_data)
 
         # Assert
-        assert volume_value == 150000000.0  # 1M shares * $150
+        assert volume_value == approx(150000000.0)  # 1M shares * $150
 
     def test_should_use_fallback_volume_estimates_when_no_market_data(self):
         # Arrange
@@ -495,8 +495,8 @@ class TestCostAnalyzer:
         small_cap_volume = analyzer._estimate_avg_daily_volume_value("SMALLCAP", None)
 
         # Assert
-        assert large_cap_volume == 100000000.0  # $100M for large cap
-        assert small_cap_volume == 5000000.0  # $5M for small cap
+        assert large_cap_volume == approx(100000000.0)  # $100M for large cap
+        assert small_cap_volume == approx(5000000.0)  # $5M for small cap
 
     def test_should_handle_edge_case_with_zero_trade_value(self):
         # Arrange
@@ -509,8 +509,8 @@ class TestCostAnalyzer:
 
         # Assert
         assert commission >= 0.0
-        assert spread_estimate.estimated_spread_cost == 0.0
-        assert impact_estimate.estimated_impact_cost == 0.0
+        assert spread_estimate.estimated_spread_cost == approx(0.0)
+        assert impact_estimate.estimated_impact_cost == approx(0.0)
 
     def test_should_handle_edge_case_with_very_large_trade_value(self):
         # Arrange

@@ -5,6 +5,7 @@ Tests the custom exception classes used for data quality error handling.
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.exceptions.data_quality import (
     DataQualityError,
@@ -58,7 +59,7 @@ class TestGradeScoreMismatchError:
         # Assert
         assert error.ticker == "AAPL"
         assert error.grade == "A+"
-        assert error.score == 0.65
+        assert error.score == approx(0.65)
         assert error.expected_grade == "B"
 
     def test_should_include_all_details_in_error_message(self):

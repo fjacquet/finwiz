@@ -7,6 +7,7 @@ Tests the HTML integration functions for data lineage in reports.
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.data_lineage import DataLineage
 from finwiz.utils.lineage_html_integration import (
@@ -134,7 +135,7 @@ class TestAddLineageToReportData:
         summary = result["lineage_summary"]
         assert summary["total_sources"] == 2
         assert summary["total_calculations"] == 1
-        assert summary["completeness"] == 1.0
+        assert summary["completeness"] == approx(1.0)
         assert "beta" in summary["defaulted_fields"]
 
     def test_should_generate_lineage_html(self, sample_lineage_dict):
@@ -164,7 +165,7 @@ class TestAddLineageToReportData:
 
         assert result["ticker"] == "AAPL"
         assert result["grade"] == "B"
-        assert result["score"] == 0.8
+        assert result["score"] == approx(0.8)
 
 
 class TestGetLineageQualityBadge:

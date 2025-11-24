@@ -8,6 +8,7 @@ tax-loss harvesting awareness, and position size validation.
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.risk_manager import (
     ConcentrationLimits,
@@ -169,9 +170,9 @@ class TestRiskManager:
 
         # Assert
         assert risk_manager.config is not None
-        assert risk_manager.config.concentration_limits.max_single_position == 0.20
-        assert risk_manager.config.turnover_limits.max_monthly_turnover == 0.25
-        assert risk_manager.config.volatility_thresholds.high_volatility_threshold == 0.30
+        assert risk_manager.config.concentration_limits.max_single_position == approx(0.20)
+        assert risk_manager.config.turnover_limits.max_monthly_turnover == approx(0.25)
+        assert risk_manager.config.volatility_thresholds.high_volatility_threshold == approx(0.30)
 
     def test_should_initialize_with_custom_config_when_config_provided(self):
         """Test RiskManager initialization with custom configuration."""
@@ -184,7 +185,7 @@ class TestRiskManager:
         risk_manager = RiskManager(config)
 
         # Assert
-        assert risk_manager.config.concentration_limits.max_single_position == 0.15
+        assert risk_manager.config.concentration_limits.max_single_position == approx(0.15)
 
     def test_should_detect_concentration_violations_when_position_exceeds_limit(self, risk_manager, sample_portfolio_config, mocker):
         """Test detection of concentration limit violations."""
@@ -432,7 +433,7 @@ class TestRiskManager:
         # Assert
         tax_warnings = [w for w in risk_assessment.warnings if w.warning_type == RiskWarningType.TAX_IMPLICATIONS]
         assert len(tax_warnings) == 0
-        assert risk_assessment.tax_efficiency_score == 5.0  # Neutral score
+        assert risk_assessment.tax_efficiency_score == approx(5.0)  # Neutral score
 
     def test_should_handle_missing_cost_basis_gracefully(self, risk_manager, sample_portfolio_config, sample_rebalancing_result):
         """Test handling of missing cost basis information."""
@@ -480,7 +481,7 @@ class TestRiskManager:
         """Test correct scaling of volatility risk."""
         # Test low volatility
         low_vol_risk = risk_manager._calculate_volatility_risk(0.10)
-        assert low_vol_risk == 2.0
+        assert low_vol_risk == approx(2.0)
 
         # Test medium volatility
         medium_vol_risk = risk_manager._calculate_volatility_risk(0.25)

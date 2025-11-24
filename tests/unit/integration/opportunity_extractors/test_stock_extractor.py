@@ -5,6 +5,7 @@ Tests stock-specific extraction logic using the Template Method pattern.
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.opportunity_extractors import StockOpportunityExtractor
 
@@ -108,14 +109,14 @@ class TestStockOpportunityExtractor:
         assert opportunity["name"] == "NVIDIA Corporation"
         assert opportunity["grade"] == "A+"
         assert opportunity["composite_score"] > 0
-        assert opportunity["confidence"] == 0.85  # A+ confidence
-        assert opportunity["risk_score"] == 3.5
+        assert opportunity["confidence"] == approx(0.85)  # A+ confidence
+        assert opportunity["risk_score"] == approx(3.5)
         assert "Moat: Technology" in opportunity["rationale"]
         assert "Strength: Wide" in opportunity["rationale"]
         assert opportunity["allocation_recommendation"] == "GPU dominance"
         assert opportunity["replacement_note"] == "Dollar-cost averaging"
         assert "roe_3y_avg" in opportunity["key_metrics"]
-        assert opportunity["key_metrics"]["roe_3y_avg"] == 0.45
+        assert opportunity["key_metrics"]["roe_3y_avg"] == approx(0.45)
 
     def test_should_build_opportunity_with_string_moat_analysis(self, extractor, stock_candidate_with_string_moat):
         """Test building opportunity with moat_analysis as string."""
@@ -127,7 +128,7 @@ class TestStockOpportunityExtractor:
         assert opportunity["symbol"] == "AAPL"
         assert opportunity["name"] == "Apple Inc."
         assert opportunity["grade"] == "A"
-        assert opportunity["confidence"] == 0.75  # A confidence
+        assert opportunity["confidence"] == approx(0.75)  # A confidence
         assert "Strong brand and ecosystem" in opportunity["rationale"]
         assert opportunity["allocation_recommendation"] == ""
 
@@ -180,7 +181,7 @@ class TestStockOpportunityExtractor:
 
         # Assert
         assert opportunity is not None
-        assert opportunity["risk_score"] == 5.0  # Default
+        assert opportunity["risk_score"] == approx(5.0)  # Default
 
     def test_should_return_empty_list_for_empty_candidates(self, extractor):
         """Test extraction with empty candidates list."""

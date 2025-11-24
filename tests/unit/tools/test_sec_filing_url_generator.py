@@ -6,6 +6,7 @@ CIK lookup, URL verification, and error handling.
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
 
@@ -24,7 +25,7 @@ class TestSECFilingURLGenerator:
         generator = SECFilingURLGenerator()
 
         # Assert
-        assert generator.timeout == 10.0
+        assert generator.timeout == approx(10.0)
         assert generator._cik_cache == {}
 
     def test_should_initialize_with_custom_timeout(self):
@@ -33,7 +34,7 @@ class TestSECFilingURLGenerator:
         generator = SECFilingURLGenerator(timeout=5.0)
 
         # Assert
-        assert generator.timeout == 5.0
+        assert generator.timeout == approx(5.0)
 
     def test_should_get_cik_for_valid_ticker(self, generator, mocker):
         """Test CIK lookup for valid ticker."""

@@ -6,6 +6,7 @@ rather than silently using hardcoded fallback values.
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.config.critical_fields_config import CriticalFieldError
 from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
@@ -215,8 +216,8 @@ class TestCriticalFieldsConfig:
         from finwiz.config.critical_fields_config import get_safe_default
 
         # Technical indicators should have neutral defaults
-        assert get_safe_default("rsi") == 50.0  # Neutral RSI
-        assert get_safe_default("macd") == 0.0  # Neutral MACD
+        assert get_safe_default("rsi") == approx(50.0)  # Neutral RSI
+        assert get_safe_default("macd") == approx(0.0)  # Neutral MACD
 
         # Critical fields should NOT have defaults
         assert get_safe_default("roe") is None

@@ -6,6 +6,7 @@ rationale generation, and trade validation.
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.cost_analyzer import BrokerType
 from finwiz.quantitative.trade_recommendation_system import (
@@ -121,8 +122,8 @@ class TestTradeRecommendationSystem:
         aapl_rec = next(r for r in recommendations if r.symbol == "AAPL")
         assert aapl_rec.action == TradeAction.BUY
         assert aapl_rec.quantity > 0
-        assert aapl_rec.current_weight == 0.3
-        assert aapl_rec.target_weight == 0.4
+        assert aapl_rec.current_weight == approx(0.3)
+        assert aapl_rec.target_weight == approx(0.4)
         assert aapl_rec.priority in [1, 2]
         assert len(aapl_rec.rationale) >= 10
 
@@ -130,8 +131,8 @@ class TestTradeRecommendationSystem:
         googl_rec = next(r for r in recommendations if r.symbol == "GOOGL")
         assert googl_rec.action == TradeAction.SELL
         assert googl_rec.quantity > 0
-        assert googl_rec.current_weight == 0.4
-        assert googl_rec.target_weight == 0.3
+        assert googl_rec.current_weight == approx(0.4)
+        assert googl_rec.target_weight == approx(0.3)
         assert googl_rec.priority in [1, 2]
         assert len(googl_rec.rationale) >= 10
 
@@ -264,8 +265,8 @@ class TestTradeRecommendationSystem:
         aapl_priority = priority_scores[0]  # First calculation is AAPL
         googl_priority = priority_scores[1]  # Second calculation is GOOGL
 
-        assert aapl_priority.urgency_score == 0.8
-        assert googl_priority.urgency_score == 0.6
+        assert aapl_priority.urgency_score == approx(0.8)
+        assert googl_priority.urgency_score == approx(0.6)
         assert aapl_priority.overall_priority > googl_priority.overall_priority
 
         # Check that priority ranks are assigned (1 = highest)

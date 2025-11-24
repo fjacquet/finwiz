@@ -9,6 +9,8 @@ and testing error handling and graceful degradation scenarios across all integra
 import asyncio
 import datetime
 
+from pytest import approx
+
 from finwiz.schemas.perplexity import SonarArticle, SonarSearchResult
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
@@ -469,7 +471,7 @@ class TestMultiToolIntegrationScenarios:
         assert sonar_article.get("source") == "perplexity_sonar"
         # Optional fields - check if present
         if "relevance_score" in sonar_article:
-            assert sonar_article["relevance_score"] == 0.90
+            assert sonar_article["relevance_score"] == approx(0.90)
         if "content_type" in sonar_article:
             assert sonar_article["content_type"] == "analysis"
 
@@ -624,7 +626,7 @@ class TestMultiToolIntegrationScenarios:
         yahoo_article = next(a for a in combined_articles if a.get("source") == "yahoo_finance")
         assert yahoo_article["title"] == "Apple Earnings Beat"
         assert yahoo_article["publisher"] == "Reuters"
-        assert yahoo_article["published_time"] == 1640995200.0
+        assert yahoo_article["published_time"] == approx(1640995200.0)
 
         # Verify Sonar article is properly converted
         sonar_article = next(a for a in combined_articles if a.get("source") == "perplexity_sonar")
@@ -633,7 +635,7 @@ class TestMultiToolIntegrationScenarios:
         assert sonar_article["publisher"] in ["Bloomberg", "Perplexity Sonar"]
         # Optional fields - check if preserved
         if "relevance_score" in sonar_article:
-            assert sonar_article["relevance_score"] == 0.85
+            assert sonar_article["relevance_score"] == approx(0.85)
         if "content_type" in sonar_article:
             assert sonar_article["content_type"] == "analysis"
 

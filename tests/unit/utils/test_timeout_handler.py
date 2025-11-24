@@ -8,6 +8,7 @@ and logging of timeout events.
 import asyncio
 
 import pytest
+from pytest import approx
 
 from finwiz.utils.timeout_handler import with_timeout, with_timeout_graceful
 
@@ -57,7 +58,7 @@ class TestWithTimeout:
 
         # Assert
         assert result["ticker"] == "AAPL"
-        assert result["price"] == 150.0
+        assert result["price"] == approx(150.0)
 
     @pytest.mark.asyncio
     async def test_should_log_start_and_completion(self, mocker):

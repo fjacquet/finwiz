@@ -12,6 +12,7 @@ Tests RAG service functionality including:
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.supabase.models import AnalysisRecord
 from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
@@ -139,8 +140,8 @@ class TestHistoricalAnalysisService:
         assert context[0]["asset_class"] == "stock"
         assert context[0]["grade"] == "A+"
         assert context[0]["recommendation"] == "BUY"
-        assert context[0]["composite_score"] == 0.90
-        assert context[0]["similarity"] == 0.95
+        assert context[0]["composite_score"] == approx(0.90)
+        assert context[0]["similarity"] == approx(0.95)
         assert "Strong fundamentals" in context[0]["summary"]
         assert context[0]["created_at"] == "2025-10-01T12:00:00"
 
@@ -243,7 +244,7 @@ class TestHistoricalAnalysisService:
 
         # Assert - should use default threshold 0.7
         call_args = mock_vector_repo.search_similar.call_args
-        assert call_args[1]["similarity_threshold"] == 0.7
+        assert call_args[1]["similarity_threshold"] == approx(0.7)
 
     @pytest.mark.asyncio
     async def test_should_handle_analysis_retrieval_failure_gracefully(
@@ -526,7 +527,7 @@ class TestHistoricalAnalysisService:
         assert "AAPL" in call_args[1]["query"]
         assert "stock" in call_args[1]["query"]
         assert call_args[1]["limit"] == 3
-        assert call_args[1]["similarity_threshold"] == 0.7
+        assert call_args[1]["similarity_threshold"] == approx(0.7)
 
     @pytest.mark.asyncio
     async def test_should_use_custom_limit_in_get_context(self, rag_service, mock_vector_repo):
@@ -554,7 +555,7 @@ class TestHistoricalAnalysisService:
 
         # Assert
         call_args = mock_vector_repo.search_similar.call_args
-        assert call_args[1]["similarity_threshold"] == 0.8
+        assert call_args[1]["similarity_threshold"] == approx(0.8)
 
     @pytest.mark.asyncio
     async def test_should_log_context_retrieval_success(

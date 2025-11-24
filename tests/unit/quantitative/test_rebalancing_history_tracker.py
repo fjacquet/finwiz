@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.rebalancing_history_tracker import RebalancingHistoryTracker
 from finwiz.schemas.portfolio_rebalancing import (
@@ -205,7 +206,7 @@ class TestRebalancingHistoryTracker:
         assert len(history) == 1
 
         entry = history[0]
-        assert entry.total_transaction_costs == 40.0  # Sum of trade costs
+        assert entry.total_transaction_costs == approx(40.0)  # Sum of trade costs
         assert entry.positions_rebalanced == 2  # Both trades have quantity > 0
         assert entry.deviation_improvement > 0  # Should show improvement
 

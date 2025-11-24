@@ -4,6 +4,8 @@ Unit tests for DataQualityMetrics enhancements.
 Tests the field-level tracking functionality added in Task 1.2.
 """
 
+from pytest import approx
+
 from finwiz.utils.data_quality_metrics import DataQualityMetrics
 
 
@@ -84,7 +86,7 @@ class TestCompletenessScore:
         completeness = metrics.calculate_completeness_score()
 
         # Assert
-        assert completeness == 1.0
+        assert completeness == approx(1.0)
 
     def test_should_calculate_partial_completeness(self):
         """Test completeness score when some fields are calculated."""
@@ -98,7 +100,7 @@ class TestCompletenessScore:
         completeness = metrics.calculate_completeness_score()
 
         # Assert
-        assert completeness == 0.5  # 2 out of 4 fields
+        assert completeness == approx(0.5)  # 2 out of 4 fields
 
     def test_should_return_neutral_when_no_fields_expected(self):
         """Test completeness score when no fields are expected."""
@@ -109,7 +111,7 @@ class TestCompletenessScore:
         completeness = metrics.calculate_completeness_score()
 
         # Assert
-        assert completeness == 0.5  # Neutral score
+        assert completeness == approx(0.5)  # Neutral score
 
 
 class TestQualityLevel:
@@ -237,7 +239,7 @@ class TestGetSummary:
 
         # Assert
         assert "completeness_score" in summary
-        assert summary["completeness_score"] == 0.5  # 1 out of 2
+        assert summary["completeness_score"] == approx(0.5)  # 1 out of 2
 
     def test_should_include_quality_level_in_summary(self):
         """Test that summary includes quality level."""

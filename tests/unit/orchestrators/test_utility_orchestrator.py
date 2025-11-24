@@ -6,8 +6,9 @@ SEC URL extraction, and URL validation/fixing.
 """
 
 import pytest
-
 from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
+from pytest import approx
+
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
 
@@ -48,10 +49,10 @@ class TestUtilityOrchestrator:
         assert result.ticker == "AAPL"
         assert result.asset_class == "stock"
         assert result.crew_name == "test_crew"
-        assert result.fundamental_score == 0.85
-        assert result.technical_score == 0.75
-        assert result.risk_score == 0.5  # Normalized from 2.5/5
-        assert result.composite_score == 0.80
+        assert result.fundamental_score == approx(0.85)
+        assert result.technical_score == approx(0.75)
+        assert result.risk_score == approx(0.5)  # Normalized from 2.5/5
+        assert result.composite_score == approx(0.80)
         assert result.grade in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]
 
     def test_parse_crew_output_calculates_composite_when_missing(self, orchestrator, mocker):
@@ -100,9 +101,9 @@ class TestUtilityOrchestrator:
         )
 
         # Assert
-        assert result.fundamental_score == 0.85
-        assert result.technical_score == 0.75
-        assert result.risk_score == 0.5  # Normalized from 2.5/5
+        assert result.fundamental_score == approx(0.85)
+        assert result.technical_score == approx(0.75)
+        assert result.risk_score == approx(0.5)  # Normalized from 2.5/5
         assert result.composite_score is not None
 
     def test_parse_crew_output_raises_on_missing_scores(self, orchestrator, mocker):

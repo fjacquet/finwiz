@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.investment_discovery import APlusAnalysis, InvestmentCandidate, MarketRegime
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
@@ -123,8 +124,8 @@ class TestAPlusMonitoringSystem:
         assert metrics.asset_type == "stock"
         assert metrics.initial_grade == "A+"
         assert metrics.current_grade == "A+"
-        assert metrics.initial_score == 0.96
-        assert metrics.current_score == 0.96
+        assert metrics.initial_score == approx(0.96)
+        assert metrics.current_score == approx(0.96)
         assert metrics.is_active is True
 
     def test_should_remove_investment_from_monitor_when_requested(self, monitoring_system, sample_analysis):
@@ -178,7 +179,7 @@ class TestAPlusMonitoringSystem:
         # Assert
         assert result is not None
         assert result.candidate.symbol == "AAPL"
-        assert result.composite_score == 0.96
+        assert result.composite_score == approx(0.96)
         mock_scoring_tool._run.assert_called_once()
 
     @pytest.mark.asyncio
@@ -221,7 +222,7 @@ class TestAPlusMonitoringSystem:
         # Assert
         metrics = monitoring_system.monitored_investments["AAPL"]
         assert metrics.current_grade == "B+"
-        assert metrics.current_score == 0.82
+        assert metrics.current_score == approx(0.82)
         assert len(monitoring_system.alert_history) == 1
 
         alert = monitoring_system.alert_history[0]
@@ -317,7 +318,7 @@ class TestAPlusMonitoringSystem:
         assert summary["total_investments"] == 2
         assert summary["a_plus_count"] == 1  # Only AAPL still A+
         assert summary["degraded_count"] == 1  # MSFT degraded
-        assert summary["a_plus_percentage"] == 50.0
+        assert summary["a_plus_percentage"] == approx(50.0)
         assert summary["monitoring_health"] == "needs_attention"
 
     def test_should_generate_empty_summary_when_no_investments(self, monitoring_system):
@@ -429,7 +430,7 @@ class TestAPlusMonitoringSystem:
 
         assert alert.symbol == "AAPL"
         assert alert.severity == AlertSeverity.HIGH
-        assert alert.score_change == -0.08
+        assert alert.score_change == approx(-0.08)
 
         # Invalid score (out of range)
         with pytest.raises(ValidationError):

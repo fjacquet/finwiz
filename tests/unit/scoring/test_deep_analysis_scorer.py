@@ -13,6 +13,7 @@ Tests cover:
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.scoring.deep_analysis_scorer import DeepAnalysisResult, DeepAnalysisScorer
 
@@ -132,11 +133,11 @@ class TestDeepAnalysisScorer:
         score, details = scorer.calculate_fundamental_score("stock", data)
 
         assert score > 0.8  # Should be high score
-        assert details["roe"] == 0.30
-        assert details["roe_score"] == 1.0  # Excellent ROE
-        assert details["debt_score"] == 1.0  # Very low debt
-        assert details["growth_score"] == 1.0  # Excellent growth
-        assert details["margin_score"] == 1.0  # Excellent margin
+        assert details["roe"] == approx(0.30)
+        assert details["roe_score"] == approx(1.0)  # Excellent ROE
+        assert details["debt_score"] == approx(1.0)  # Very low debt
+        assert details["growth_score"] == approx(1.0)  # Excellent growth
+        assert details["margin_score"] == approx(1.0)  # Excellent margin
 
     def test_should_calculate_stock_fundamental_score_poor(self, scorer):
         """Test stock fundamental score with poor metrics."""
@@ -150,10 +151,10 @@ class TestDeepAnalysisScorer:
         score, details = scorer.calculate_fundamental_score("stock", data)
 
         assert score < 0.4  # Should be low score
-        assert details["roe_score"] == 0.2  # Poor ROE
-        assert details["debt_score"] == 0.2  # Very high debt
-        assert details["growth_score"] == 0.2  # Negative growth
-        assert details["margin_score"] == 0.2  # Poor margin
+        assert details["roe_score"] == approx(0.2)  # Poor ROE
+        assert details["debt_score"] == approx(0.2)  # Very high debt
+        assert details["growth_score"] == approx(0.2)  # Negative growth
+        assert details["margin_score"] == approx(0.2)  # Poor margin
 
     def test_should_calculate_etf_fundamental_score_excellent(self, scorer):
         """Test ETF fundamental score with excellent metrics."""
@@ -166,9 +167,9 @@ class TestDeepAnalysisScorer:
         score, details = scorer.calculate_fundamental_score("etf", data)
 
         assert score > 0.8  # Should be high score
-        assert details["expense_score"] == 1.0
-        assert details["tracking_score"] == 1.0
-        assert details["aum_score"] == 1.0
+        assert details["expense_score"] == approx(1.0)
+        assert details["tracking_score"] == approx(1.0)
+        assert details["aum_score"] == approx(1.0)
 
     def test_should_calculate_crypto_fundamental_score_excellent(self, scorer):
         """Test crypto fundamental score with excellent metrics."""
@@ -181,9 +182,9 @@ class TestDeepAnalysisScorer:
         score, details = scorer.calculate_fundamental_score("crypto", data)
 
         assert score > 0.8  # Should be high score
-        assert details["market_cap_score"] == 1.0  # Fixed: was cap_score
-        assert details["volume_score"] == 1.0
-        assert details["age_score"] == 1.0
+        assert details["market_cap_score"] == approx(1.0)  # Fixed: was cap_score
+        assert details["volume_score"] == approx(1.0)
+        assert details["age_score"] == approx(1.0)
 
     def test_should_calculate_technical_score_bullish(self, scorer):
         """Test technical score with bullish indicators."""
@@ -200,7 +201,7 @@ class TestDeepAnalysisScorer:
 
         assert score > 0.7  # Should be high score for bullish setup
         assert details["trend_direction"] == "strong_uptrend"
-        assert details["momentum_score"] == 1.0  # Strong bullish momentum
+        assert details["momentum_score"] == approx(1.0)  # Strong bullish momentum
 
     def test_should_calculate_technical_score_bearish(self, scorer):
         """Test technical score with bearish indicators."""
@@ -229,9 +230,9 @@ class TestDeepAnalysisScorer:
         score, details = scorer.calculate_risk_score(data)
 
         assert score > 0.8  # Should be high score (low risk)
-        assert details["volatility_score"] == 1.0
-        assert details["drawdown_score"] == 1.0
-        assert details["beta_score"] == 1.0
+        assert details["volatility_score"] == approx(1.0)
+        assert details["drawdown_score"] == approx(1.0)
+        assert details["beta_score"] == approx(1.0)
 
     def test_should_calculate_risk_score_high_risk(self, scorer):
         """Test risk score with high risk metrics."""
@@ -244,9 +245,9 @@ class TestDeepAnalysisScorer:
         score, details = scorer.calculate_risk_score(data)
 
         assert score < 0.3  # Should be very low score (high risk)
-        assert details["volatility_score"] == 0.2  # Above 0.5 threshold
-        assert details["drawdown_score"] == 0.2  # Above 0.5 threshold
-        assert details["beta_score"] == 0.2  # Above 2.0 threshold
+        assert details["volatility_score"] == approx(0.2)  # Above 0.5 threshold
+        assert details["drawdown_score"] == approx(0.2)  # Above 0.5 threshold
+        assert details["beta_score"] == approx(0.2)  # Above 2.0 threshold
 
     def test_should_assign_grade_aplus(self, scorer):
         """Test grade assignment for A+ threshold (>= 95%)."""

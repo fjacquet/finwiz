@@ -8,6 +8,7 @@ freshness warnings, and summary generation.
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.data_availability_tracker import (
     DataAvailabilitySummary,
@@ -34,7 +35,7 @@ class TestDataAvailabilityTracker:
         tracker = DataAvailabilityTracker()
 
         # Assert
-        assert tracker.stale_threshold_hours == 168.0
+        assert tracker.stale_threshold_hours == approx(168.0)
         assert len(tracker._tracked_sources) == 0
 
     def test_should_initialize_with_custom_threshold(self):
@@ -43,7 +44,7 @@ class TestDataAvailabilityTracker:
         tracker = DataAvailabilityTracker(stale_threshold_hours=24.0)
 
         # Assert
-        assert tracker.stale_threshold_hours == 24.0
+        assert tracker.stale_threshold_hours == approx(24.0)
 
     def test_should_track_available_data_source(self, tracker, sample_timestamp):
         """Test tracking an available data source."""
@@ -62,7 +63,7 @@ class TestDataAvailabilityTracker:
         assert source_status is not None
         assert source_status.source_name == "sentiment"
         assert source_status.status == "available"
-        assert source_status.age_hours == 48.0
+        assert source_status.age_hours == approx(48.0)
         assert source_status.record_count == 100
 
     def test_should_track_unavailable_data_source(self, tracker):
@@ -321,7 +322,7 @@ class TestDataAvailabilityTracker:
         source_status = tracker.get_source_status("sentiment")
         assert source_status is not None
         assert source_status.status == "stale"
-        assert source_status.age_hours == 200.0
+        assert source_status.age_hours == approx(200.0)
 
     def test_should_generate_summary_with_freshness_warnings(self, tracker):
         """Test that summary includes freshness warnings."""

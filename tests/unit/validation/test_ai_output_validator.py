@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
 from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
@@ -274,7 +275,7 @@ def test_should_create_python_only_fallback(sample_quantitative):
     assert str(sample_quantitative.composite_score) in result.investment_synthesis.investment_thesis
 
     # Verify AI confidence is zero
-    assert result.ai_confidence == 0.0
+    assert result.ai_confidence == approx(0.0)
 
     # Verify recommendation matches quantitative
     assert result.investment_synthesis.final_recommendation == sample_quantitative.preliminary_recommendation
@@ -402,7 +403,7 @@ def test_should_fallback_after_max_retries(sample_quantitative):
 
     # Verify fallback was used
     assert isinstance(result, QualitativeInsights)
-    assert result.ai_confidence == 0.0  # Python-only fallback
+    assert result.ai_confidence == approx(0.0)  # Python-only fallback
     assert "AI analysis unavailable" in result.sec_insights.business_model
 
 

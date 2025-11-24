@@ -9,6 +9,7 @@ import os
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.config.resilience_config import ResilienceConfig
 from finwiz.flow_state import FinwizState
@@ -105,7 +106,7 @@ class TestMetricsExport:
         assert metrics["total_holdings"] == 10
         assert metrics["holdings_processed"] == 8
         assert metrics["holdings_remaining"] == 2
-        assert metrics["progress_percentage"] == 80.0
+        assert metrics["progress_percentage"] == approx(80.0)
 
     def test_should_calculate_success_rate(self, flow_with_state):
         """Test that success rate is calculated correctly."""
@@ -124,7 +125,7 @@ class TestMetricsExport:
         # 6/10 = 60% success rate
         assert metrics["success_count"] == 6
         assert metrics["failed_count"] == 2
-        assert metrics["success_rate"] == 60.0
+        assert metrics["success_rate"] == approx(60.0)
 
     def test_should_include_retry_metrics(self, flow_with_state):
         """Test that retry metrics are included."""
@@ -176,8 +177,8 @@ class TestMetricsExport:
         # Verify resilience config
         config = metrics["resilience_config"]
         assert config["max_retries"] == 3
-        assert config["retry_base_delay"] == 2.0
-        assert config["retry_max_delay"] == 60.0
+        assert config["retry_base_delay"] == approx(2.0)
+        assert config["retry_max_delay"] == approx(60.0)
         assert config["holding_timeout"] == 300
         assert config["flow_timeout"] == 7200
         assert config["parallel_limit"] == 10

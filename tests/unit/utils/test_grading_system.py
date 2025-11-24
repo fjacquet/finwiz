@@ -5,6 +5,8 @@ Tests the conversion of composite scores to letter grades and
 the generation of portfolio-wide grade summaries.
 """
 
+from pytest import approx
+
 from finwiz.utils.grading_system import (
     format_grade_display,
     get_portfolio_grade_summary,
@@ -25,7 +27,7 @@ class TestScoreToGrade:
 
         # Assert
         assert grade_info.grade == "A+"
-        assert grade_info.percentage == 98.0
+        assert grade_info.percentage == approx(98.0)
         assert "Excellent" in grade_info.description
         assert "Augmentez" in grade_info.action
         assert grade_info.emoji == "🏆"
@@ -40,7 +42,7 @@ class TestScoreToGrade:
 
         # Assert
         assert grade_info.grade == "A"
-        assert grade_info.percentage == 88.0
+        assert grade_info.percentage == approx(88.0)
         assert "Très bon" in grade_info.description
 
     def test_should_return_b_when_good_score(self):
@@ -53,7 +55,7 @@ class TestScoreToGrade:
 
         # Assert
         assert grade_info.grade == "B"
-        assert grade_info.percentage == 77.0
+        assert grade_info.percentage == approx(77.0)
         assert "Bon" in grade_info.description
         assert "Maintenez" in grade_info.action
 
@@ -67,7 +69,7 @@ class TestScoreToGrade:
 
         # Assert
         assert grade_info.grade == "C"
-        assert grade_info.percentage == 67.0
+        assert grade_info.percentage == approx(67.0)
         assert "Passable" in grade_info.description
 
     def test_should_return_f_when_failing_score(self):
@@ -80,7 +82,7 @@ class TestScoreToGrade:
 
         # Assert
         assert grade_info.grade == "F"
-        assert grade_info.percentage == 0.0
+        assert grade_info.percentage == approx(0.0)
         assert "Échec" in grade_info.description
         assert "Vendez" in grade_info.action
         assert grade_info.emoji == "❌"
@@ -164,11 +166,11 @@ class TestPortfolioGradeSummary:
         # Assert
         distribution = summary["distribution"]
         assert distribution["A"]["count"] == 2
-        assert distribution["A"]["percentage"] == 40.0
+        assert distribution["A"]["percentage"] == approx(40.0)
         assert distribution["B"]["count"] == 2
-        assert distribution["B"]["percentage"] == 40.0
+        assert distribution["B"]["percentage"] == approx(40.0)
         assert distribution["F"]["count"] == 1
-        assert distribution["F"]["percentage"] == 20.0
+        assert distribution["F"]["percentage"] == approx(20.0)
 
     def test_should_handle_empty_portfolio(self):
         """Test handling of empty portfolio."""
@@ -195,7 +197,7 @@ class TestPortfolioGradeSummary:
         assert summary["average_grade"] == "A"
         assert summary["total_positions"] == 1
         assert summary["distribution"]["A"]["count"] == 1
-        assert summary["distribution"]["A"]["percentage"] == 100.0
+        assert summary["distribution"]["A"]["percentage"] == approx(100.0)
 
 
 class TestGradeSystemIntegration:

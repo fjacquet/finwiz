@@ -7,6 +7,7 @@ Tests caching, rate limiting, parallel processing, and connection pooling.
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
@@ -149,7 +150,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
 
         # Assert
         assert result.ticker == ticker
-        assert result.composite_score == 0.85
+        assert result.composite_score == approx(0.85)
         mock_cache_get.assert_called_once()
 
     @pytest.mark.asyncio
@@ -227,8 +228,8 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         assert result.ticker == "AAPL"
         assert result.data_freshness == "stale"
         assert result.crew_analysis_used is None
-        assert result.confidence_level == 0.3
-        assert result.composite_score == 0.60  # Baseline for stocks
+        assert result.confidence_level == approx(0.3)
+        assert result.composite_score == approx(0.60)  # Baseline for stocks
 
     def test_should_use_different_baseline_scores_by_asset_class(self, orchestrator):
         """Test that different asset classes have different baseline scores."""
@@ -238,9 +239,9 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         crypto_result = HoldingProcessor.create_baseline_analysis("BTC", "crypto", "USD", "Bitcoin")
 
         # Assert
-        assert stock_result.composite_score == 0.60
-        assert etf_result.composite_score == 0.65
-        assert crypto_result.composite_score == 0.55
+        assert stock_result.composite_score == approx(0.60)
+        assert etf_result.composite_score == approx(0.65)
+        assert crypto_result.composite_score == approx(0.55)
 
     def test_should_extract_fundamental_analysis_from_stock_crew_output(self, orchestrator):
         """Test extraction of fundamental analysis from stock crew output."""
@@ -326,7 +327,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         result = HoldingProcessor.extract_composite_score(crew_output)
 
         # Assert
-        assert result == 0.85
+        assert result == approx(0.85)
 
     def test_should_return_default_score_when_not_in_crew_output(self, orchestrator):
         """Test that default score is returned when not in crew output."""
@@ -337,7 +338,7 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         result = HoldingProcessor.extract_composite_score(crew_output)
 
         # Assert
-        assert result == 0.65  # Default baseline
+        assert result == approx(0.65)  # Default baseline
 
     def test_should_check_ticker_in_crew_output(self, orchestrator):
         """Test ticker checking in crew output."""

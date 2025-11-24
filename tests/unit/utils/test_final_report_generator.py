@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.crew_exports import ConsolidatedReportExport
 from finwiz.utils.final_report_generator import FinalReportGenerator
@@ -217,7 +218,7 @@ class TestFinalReportGeneratorTemplateData:
         assert template_data["session_id"] == "test-session"
         assert "consolidation_date" in template_data
         assert "total_time" in template_data
-        assert template_data["total_time"] == 1.5
+        assert template_data["total_time"] == approx(1.5)
         assert "stock_analyses" in template_data
         assert "etf_analyses" in template_data
         assert "crypto_analyses" in template_data

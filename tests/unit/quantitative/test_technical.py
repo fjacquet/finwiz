@@ -14,6 +14,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.config import TechnicalIndicator
 from finwiz.quantitative.technical import (
@@ -217,7 +218,7 @@ class TestTechnicalAnalysisEngine:
         assert "lower_band" in result.raw_values
         assert len(result.signals) >= 0
         assert result.metadata["period"] == 20
-        assert result.metadata["std_dev"] == 2.0
+        assert result.metadata["std_dev"] == approx(2.0)
 
     def test_calculate_bollinger_bands_signals(self, engine):
         """Test Bollinger Bands signal generation for extreme conditions."""

@@ -1,6 +1,7 @@
 """Unit tests for ResilienceConfig."""
 
 import pytest
+from pytest import approx
 
 from finwiz.config.resilience_config import (
     ResilienceConfig,
@@ -39,8 +40,8 @@ class TestResilienceConfig:
 
         # Assert
         assert config.max_retries == 3
-        assert config.retry_base_delay == 2.0
-        assert config.retry_max_delay == 60.0
+        assert config.retry_base_delay == approx(2.0)
+        assert config.retry_max_delay == approx(60.0)
         assert config.holding_timeout == 300
         assert config.flow_timeout == 7200
         assert config.auto_resume is False
@@ -310,8 +311,8 @@ class TestResilienceConfig:
 
         # Assert
         assert config.max_retries == 5
-        assert config.retry_base_delay == 3.0
-        assert config.retry_max_delay == 120.0
+        assert config.retry_base_delay == approx(3.0)
+        assert config.retry_max_delay == approx(120.0)
         assert config.holding_timeout == 600
         assert config.flow_timeout == 10800
         assert config.auto_resume is True
@@ -329,8 +330,8 @@ class TestResilienceConfig:
 
         # Assert
         assert config.max_retries == 3
-        assert config.retry_base_delay == 2.0
-        assert config.retry_max_delay == 60.0
+        assert config.retry_base_delay == approx(2.0)
+        assert config.retry_max_delay == approx(60.0)
         assert config.holding_timeout == 300
         assert config.flow_timeout == 7200
         assert config.auto_resume is False
@@ -355,8 +356,8 @@ class TestResilienceConfig:
 
         # Assert
         assert config.max_retries == 5
-        assert config.retry_base_delay == 2.0  # default
-        assert config.retry_max_delay == 60.0  # default
+        assert config.retry_base_delay == approx(2.0)  # default
+        assert config.retry_max_delay == approx(60.0)  # default
         assert config.holding_timeout == 300  # default
         assert config.flow_timeout == 10800
         assert config.auto_resume is False  # default
@@ -562,8 +563,8 @@ class TestResilienceConfig:
         config = get_resilience_config()
 
         # Assert
-        assert config.retry_base_delay == 2.5
-        assert config.retry_max_delay == 90.75
+        assert config.retry_base_delay == approx(2.5)
+        assert config.retry_max_delay == approx(90.75)
 
     def test_should_handle_integer_values_for_timeouts(self, mocker):
         """Test that integer values are properly parsed for timeout settings."""

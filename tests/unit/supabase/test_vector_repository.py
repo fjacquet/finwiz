@@ -10,6 +10,7 @@ Tests vector repository functionality including:
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.supabase.client import SupabaseClient
 from finwiz.supabase.repositories.vector_repository import VectorRepository
@@ -120,7 +121,7 @@ class TestVectorRepository:
         # Verify database insert was called
         mock_supabase_client.execute_with_timeout.assert_called_once()
         call_args = mock_supabase_client.execute_with_timeout.call_args
-        assert call_args[1]["timeout"] == 5.0
+        assert call_args[1]["timeout"] == approx(5.0)
 
     @pytest.mark.asyncio
     async def test_should_retry_storage_on_failure(self, vector_repository, mock_supabase_client, mock_embedding_service, sample_embedding, mocker):
@@ -484,4 +485,4 @@ class TestVectorRepository:
         # Assert
         # Verify timeout was set to 5.0 seconds
         call_args = mock_supabase_client.execute_with_timeout.call_args
-        assert call_args[1]["timeout"] == 5.0
+        assert call_args[1]["timeout"] == approx(5.0)

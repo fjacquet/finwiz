@@ -8,11 +8,12 @@ similarity_threshold and limit were incorrectly marked as required.
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
+
+from finwiz.tools.rag_tools import KnowledgeBaseTool, get_rag_tools
 
 # Skip entire module if qdrant_client has import issues
 pytestmark = pytest.mark.skip(reason="qdrant_client import issues - requires dependency update")
-
-from finwiz.tools.rag_tools import KnowledgeBaseTool, get_rag_tools
 
 
 def test_knowledge_base_tool_schema_validation() -> None:
@@ -36,7 +37,7 @@ def test_knowledge_base_tool_schema_validation() -> None:
         similarity_threshold=0.75,
     )
     assert schema.query == "What is Bitcoin?"
-    assert schema.similarity_threshold == 0.75
+    assert schema.similarity_threshold == approx(0.75)
     assert schema.limit is None
 
     # Test 3: Schema validation with all parameters
@@ -46,7 +47,7 @@ def test_knowledge_base_tool_schema_validation() -> None:
         limit=5,
     )
     assert schema.query == "What is Bitcoin?"
-    assert schema.similarity_threshold == 0.75
+    assert schema.similarity_threshold == approx(0.75)
     assert schema.limit == 5
 
 

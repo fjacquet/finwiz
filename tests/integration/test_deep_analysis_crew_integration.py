@@ -19,10 +19,10 @@ class TestDeepAnalysisCrewIntegration:
     def test_should_instantiate_crew_for_crypto_without_keyerror(self):
         """
         Test that DeepAnalysisCrew instantiates for crypto without KeyError.
-        
+
         This verifies the fix for the production bug where risk_assessor
         was causing KeyError during crew instantiation.
-        
+
         Requirements: 2.1
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
@@ -48,10 +48,10 @@ class TestDeepAnalysisCrewIntegration:
     def test_should_execute_crew_for_btc_usd_without_error(self):
         """
         Test that DeepAnalysisCrew executes for BTC-USD without errors.
-        
+
         This is the specific failing case from production that triggered
         the KeyError: 'risk_assessor' bug.
-        
+
         Requirements: 2.1, 2.4
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
@@ -90,10 +90,10 @@ class TestDeepAnalysisCrewIntegration:
     def test_should_verify_agent_methods_exist(self):
         """
         Test that crew has the correct agent methods.
-        
+
         Verifies that only asset_analyst and investment_reporter methods exist,
         confirming risk_assessor has been removed.
-        
+
         Requirements: 2.2
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
@@ -110,9 +110,9 @@ class TestDeepAnalysisCrewIntegration:
     def test_should_not_log_deprecation_warnings(self, caplog):
         """
         Test that crew instantiation doesn't log deprecation warnings.
-        
+
         Verifies that all references to deprecated risk_assessor have been removed.
-        
+
         Requirements: 2.3
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
@@ -136,10 +136,10 @@ class TestDeepAnalysisCrewIntegration:
     def test_should_support_all_asset_classes_tool_routing(self):
         """
         Test that crew supports tool routing for all asset classes.
-        
+
         Verifies that the dynamic tool routing works for stock, etf, and crypto
         without actually instantiating the full crew.
-        
+
         Requirements: 2.5
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew

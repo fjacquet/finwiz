@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.utils.json_to_html_converter import JsonToHtmlConverter
 
@@ -72,10 +73,10 @@ class TestJsonToHtmlConverter:
 
         # Assert
         assert result["ticker"] == "AAPL"
-        assert result["composite_score"] == 0.85
+        assert result["composite_score"] == approx(0.85)
         assert result["grade"] == "A"
         assert "risk_details" in result
-        assert result["risk_details"]["volatility"] == 0.25
+        assert result["risk_details"]["volatility"] == approx(0.25)
 
     def test_should_provide_default_values_for_missing_fields(
         self, converter, sample_deep_analysis_json

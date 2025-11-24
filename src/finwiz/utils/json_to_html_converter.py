@@ -228,7 +228,7 @@ class JsonToHtmlConverter:
             # Parse the raw_output string to extract fields
             raw_output = data.get("raw_output", "")
             context = self._parse_raw_output(raw_output, context)
-            
+
             # Add default values for missing template fields
             context.setdefault("processing_time_seconds", 0.0)
             context.setdefault("llm_cost_dollars", 0.0)
@@ -240,12 +240,12 @@ class JsonToHtmlConverter:
             context.setdefault("recommendation_confidence", "Medium")
             context.setdefault("final_score", context.get("composite_score", 0.0))
             context.setdefault("investment_rationale", context.get("rationale", ""))
-            
+
             # Extract metrics from parsed details
             context.setdefault("fundamental_metrics", context.get("fundamental_details", {}))
             context.setdefault("technical_indicators", context.get("technical_details", {}))
             context.setdefault("risk_metrics", context.get("risk_details", {}))
-            
+
             # Set default empty structures for missing sections
             context.setdefault("sec_insights", {
                 "business_model": "Not available",
@@ -302,18 +302,19 @@ class JsonToHtmlConverter:
     def _parse_raw_output(self, raw_output: str, context: dict[str, Any]) -> dict[str, Any]:
         """
         Parse raw_output string from deep analysis to extract fields.
-        
+
         The raw_output is a string representation of a Pydantic model with key=value pairs.
-        
+
         Args:
             raw_output: String containing key=value pairs
             context: Existing context dictionary to update
-            
+
         Returns:
             Updated context dictionary
+
         """
         import re
-        
+
         # Extract simple key=value pairs (for strings, numbers, booleans)
         simple_pattern = r"(\w+)=(['\"]?)([^'\"=\s{}[\]]+)\2(?=\s+\w+=|\s*$)"
         for match in re.finditer(simple_pattern, raw_output):
@@ -325,7 +326,7 @@ class JsonToHtmlConverter:
                 context[key] = float(value) if '.' in value else int(value)
             else:
                 context[key] = value
-        
+
         # Extract dict values (e.g., risk_details={...})
         dict_pattern = r"(\w+)=\{([^}]+)\}"
         for match in re.finditer(dict_pattern, raw_output):
@@ -341,7 +342,7 @@ class JsonToHtmlConverter:
                 else:
                     dict_data[item_key] = item_value.strip("'\"")
             context[key] = dict_data
-        
+
         return context
 
 

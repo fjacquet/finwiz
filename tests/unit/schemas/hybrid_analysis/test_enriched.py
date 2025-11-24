@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
 from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
@@ -120,7 +121,7 @@ def test_enriched_analysis_contains_both_quantitative_and_qualitative():
 
     # Verify quantitative fields present
     assert enriched.quantitative is not None
-    assert enriched.quantitative.composite_score == 0.85
+    assert enriched.quantitative.composite_score == approx(0.85)
     assert enriched.quantitative.grade == "A"
 
     # Verify qualitative fields present

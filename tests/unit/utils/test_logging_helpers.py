@@ -5,6 +5,8 @@ Tests the CrewLogger class to ensure it correctly logs crew execution
 events with structured fields for start, completion, and error scenarios.
 """
 
+from pytest import approx
+
 from finwiz.utils.logging_helpers import CrewLogger
 
 
@@ -117,7 +119,7 @@ class TestCrewLogger:
         # Verify structured extra fields
         extra = call_args[1]["extra"]
         assert extra["crew"] == "ReportCrew"
-        assert extra["duration"] == 45.67
+        assert extra["duration"] == approx(45.67)
         assert extra["event"] == "crew_complete"
 
     def test_should_log_complete_with_short_duration(self, mocker):
@@ -142,7 +144,7 @@ class TestCrewLogger:
 
         # Verify exact duration value in extra fields
         extra = call_args[1]["extra"]
-        assert extra["duration"] == 0.123
+        assert extra["duration"] == approx(0.123)
 
     def test_should_log_error_with_exception_info(self, mocker):
         """Test log_error includes error type and exception info."""

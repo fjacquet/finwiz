@@ -8,6 +8,7 @@ portfolio impact calculations, and comprehensive report generation.
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.backtesting_extractor import BacktestingDataExtractor, RegimePerformance
 from finwiz.integration.performance_metrics_aggregator import (
@@ -181,13 +182,13 @@ class TestPerformanceMetricsAggregator:
 
         bull_metrics = result["bull"]
         assert bull_metrics.count == 1
-        assert bull_metrics.average_return == 20.0
-        assert bull_metrics.average_sharpe == 1.8
+        assert bull_metrics.average_return == approx(20.0)
+        assert bull_metrics.average_sharpe == approx(1.8)
 
         bear_metrics = result["bear"]
         assert bear_metrics.count == 1
-        assert bear_metrics.average_return == 5.0
-        assert bear_metrics.average_sharpe == 0.8
+        assert bear_metrics.average_return == approx(5.0)
+        assert bear_metrics.average_sharpe == approx(0.8)
 
     def test_should_handle_empty_validation_results_for_regime(self, aggregator):
         """Test regime aggregation with empty validation results."""
@@ -253,8 +254,8 @@ class TestPerformanceMetricsAggregator:
         # Assert
         assert result.total_opportunities == 0
         assert result.high_confidence_count == 0
-        assert result.expected_grade_improvement == 0.0
-        assert result.expected_return_improvement == 0.0
+        assert result.expected_grade_improvement == approx(0.0)
+        assert result.expected_return_improvement == approx(0.0)
         assert result.risk_impact == "neutral"
         assert result.diversification_impact == "neutral"
         assert result.implementation_complexity == "low"

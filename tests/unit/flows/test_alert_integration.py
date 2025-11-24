@@ -8,6 +8,7 @@ experiences high failure rates.
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.monitoring.alerting import AlertManager, AlertSeverity, AlertType
 
@@ -61,7 +62,7 @@ class TestAlertManagerIntegration:
         assert "6 out of 10" in alert.message
         assert alert.metadata["failed_holdings"] == failed_holdings
         assert alert.metadata["total_holdings"] == 10
-        assert alert.metadata["failure_rate"] == 0.6
+        assert alert.metadata["failure_rate"] == approx(0.6)
 
     def test_should_calculate_failure_rate_correctly(self):
         """Test that failure rate calculation is accurate."""
@@ -73,7 +74,7 @@ class TestAlertManagerIntegration:
         failure_rate = len(failed_holdings) / total_holdings
 
         # Assert
-        assert failure_rate == 0.55  # 11/20
+        assert failure_rate == approx(0.55)  # 11/20
         assert failure_rate > 0.5  # Should trigger alert
 
     @pytest.mark.asyncio
@@ -133,5 +134,5 @@ class TestAlertManagerIntegration:
             failure_rate = 0.0
 
         # Assert - should not trigger alert (no division by zero)
-        assert failure_rate == 0.0
+        assert failure_rate == approx(0.0)
         assert failure_rate <= 0.5  # Would not trigger alert

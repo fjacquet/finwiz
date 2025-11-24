@@ -5,6 +5,7 @@ Unit tests for BacktestingDataExtractor.
 import logging
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.backtesting_extractor import (
     BacktestingDataExtractor,
@@ -74,9 +75,9 @@ class TestBacktestingDataExtractor:
         # Assert
         assert metrics is not None
         assert metrics.annualized_return is not None
-        assert metrics.sharpe_ratio == 1.5
-        assert metrics.sortino_ratio == 1.8
-        assert metrics.max_drawdown == -0.15
+        assert metrics.sharpe_ratio == approx(1.5)
+        assert metrics.sortino_ratio == approx(1.8)
+        assert metrics.max_drawdown == approx(-0.15)
         assert metrics.win_rate is not None
         assert metrics.calmar_ratio is not None
         assert metrics.backtest_period_years == 5
@@ -93,9 +94,9 @@ class TestBacktestingDataExtractor:
         assert metrics.win_rate is None
         # Schema-provided values will be present (0.0 in this case)
         # but our extractor will convert them appropriately
-        assert metrics.sharpe_ratio == 0.0  # From schema
-        assert metrics.sortino_ratio == 0.0  # From schema
-        assert metrics.max_drawdown == 0.0  # From schema
+        assert metrics.sharpe_ratio == approx(0.0)  # From schema
+        assert metrics.sortino_ratio == approx(0.0)  # From schema
+        assert metrics.max_drawdown == approx(0.0)  # From schema
 
     def test_should_log_missing_metrics(self, extractor, incomplete_validation_result, caplog):
         """Test that missing metrics are logged."""
@@ -129,8 +130,8 @@ class TestBacktestingDataExtractor:
         # Assert
         assert metrics is not None
         # Zero sharpe ratio is valid (though poor performance)
-        assert metrics.sharpe_ratio == 0.0
-        assert metrics.sortino_ratio == 1.5  # Valid value preserved
+        assert metrics.sharpe_ratio == approx(0.0)
+        assert metrics.sortino_ratio == approx(1.5)  # Valid value preserved
 
     def test_get_available_metrics_should_return_dict_with_none_values(self, extractor):
         """Test get_available_metrics returns dict with None for missing values."""
@@ -150,12 +151,12 @@ class TestBacktestingDataExtractor:
         result = extractor.get_available_metrics(metrics)
 
         # Assert
-        assert result["annualized_return"] == 12.5
-        assert result["sharpe_ratio"] == 1.5
+        assert result["annualized_return"] == approx(12.5)
+        assert result["sharpe_ratio"] == approx(1.5)
         assert result["sortino_ratio"] is None
         assert result["calmar_ratio"] is None
-        assert result["max_drawdown"] == -0.15
-        assert result["win_rate"] == 0.65
+        assert result["max_drawdown"] == approx(-0.15)
+        assert result["win_rate"] == approx(0.65)
 
     def test_get_available_metrics_should_handle_none_input(self, extractor):
         """Test get_available_metrics handles None input."""
@@ -249,8 +250,8 @@ class TestBacktestingDataExtractor:
 
         # Assert
         assert metrics is not None
-        assert metrics.sharpe_ratio == 1.5
-        assert metrics.sortino_ratio == 1.8
+        assert metrics.sharpe_ratio == approx(1.5)
+        assert metrics.sortino_ratio == approx(1.8)
         assert metrics.calmar_ratio is not None
 
     def test_should_log_available_and_missing_metrics(self, extractor, complete_validation_result, caplog):
@@ -286,7 +287,7 @@ class TestBacktestingDataExtractor:
         # Assert
         assert metrics is not None
         assert metrics.sharpe_ratio is None  # Invalid value converted to None
-        assert metrics.sortino_ratio == 1.5  # Valid value preserved
+        assert metrics.sortino_ratio == approx(1.5)  # Valid value preserved
 
     def test_should_calculate_win_rate_from_validation_details(self, extractor, complete_validation_result):
         """Test win rate calculation from validation details."""

@@ -7,16 +7,15 @@ financial knowledge across different crews.
 """
 
 import pytest
-
-# Skip entire module if qdrant_client has import issues
-pytestmark = pytest.mark.skip(reason="qdrant_client import issues - requires dependency update")
-
 from crewai_tools import RagTool
 from pydantic import ValidationError
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
 from finwiz.tools.rag_tools import KnowledgeBaseTool, get_rag_tools
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
+
+# Skip entire module if qdrant_client has import issues
+pytestmark = pytest.mark.skip(reason="qdrant_client import issues - requires dependency update")
 
 
 def test_knowledge_base_tool_schema() -> None:

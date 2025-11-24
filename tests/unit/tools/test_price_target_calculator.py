@@ -8,6 +8,7 @@ multi-currency support, and confidence scoring.
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.price_target_calculator import (
     FundamentalData,
@@ -67,7 +68,7 @@ class TestPriceTargetCalculator:
         )
 
         # Assert
-        assert result.current_price == 100.0
+        assert result.current_price == approx(100.0)
         assert result.currency == "USD"
         assert result.fair_value_estimate is not None
         assert result.buy_target_primary is not None
@@ -89,7 +90,7 @@ class TestPriceTargetCalculator:
         )
 
         # Assert
-        assert result.current_price == 100.0
+        assert result.current_price == approx(100.0)
         assert result.buy_target_primary is None
         assert result.sell_target_primary is not None
         assert "Not recommended" in result.buy_rationale
@@ -108,7 +109,7 @@ class TestPriceTargetCalculator:
         )
 
         # Assert
-        assert result.current_price == 100.0
+        assert result.current_price == approx(100.0)
         assert result.buy_target_primary is not None
         assert result.buy_target_secondary is not None
         assert result.sell_target_primary is not None
@@ -179,10 +180,10 @@ class TestPriceTargetCalculator:
         # Assert
         assert len(support) == 2
         assert len(resistance) == 2
-        assert support[0] == 95.0  # 5% below
-        assert support[1] == 90.0  # 10% below
-        assert resistance[0] == 105.0  # 5% above
-        assert resistance[1] == 110.0  # 10% above
+        assert support[0] == approx(95.0)  # 5% below
+        assert support[1] == approx(90.0)  # 10% below
+        assert resistance[0] == approx(105.0)  # 5% above
+        assert resistance[1] == approx(110.0)  # 10% above
 
     def test_should_calculate_buy_targets_for_keep_decision(self, calculator):
         """Test buy target calculation for KEEP recommendation."""
@@ -337,7 +338,7 @@ class TestPriceTargetCalculator:
         )
 
         # Assert
-        assert result.current_price == 100.0
+        assert result.current_price == approx(100.0)
         assert result.fair_value_estimate is None
         assert result.buy_target_primary is not None  # Should still calculate targets
 
@@ -355,7 +356,7 @@ class TestPriceTargetCalculator:
         )
 
         # Assert
-        assert result.current_price == 100.0
+        assert result.current_price == approx(100.0)
         assert result.fair_value_estimate is not None
         assert len(result.support_levels) > 0  # Should use percentage-based levels
 
@@ -372,7 +373,7 @@ class TestPriceTargetCalculator:
         )
 
         # Assert
-        assert result.current_price == 400.0
+        assert result.current_price == approx(400.0)
         assert result.fair_value_estimate is not None
         assert result.buy_target_primary is not None
 
@@ -397,6 +398,6 @@ class TestPriceTargetCalculator:
         )
 
         # Assert
-        assert result.current_price == 50000.0
+        assert result.current_price == approx(50000.0)
         assert result.fair_value_estimate is None  # Crypto doesn't use fair value
         assert result.buy_target_primary is not None

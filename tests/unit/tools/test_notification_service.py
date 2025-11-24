@@ -7,6 +7,7 @@ Tests cover email/SMS notifications, user preferences, and notification delivery
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.portfolio_monitor import AlertSeverity, AlertType, PortfolioAlert
 from finwiz.tools.notification_service import (
@@ -605,6 +606,6 @@ class TestNotificationService:
         assert stats["total_notifications_sent"] == 2
         assert stats["successful_notifications"] == 1
         assert stats["failed_notifications"] == 1
-        assert stats["success_rate"] == 0.5
+        assert stats["success_rate"] == approx(0.5)
         assert NotificationType.EMAIL in stats["registered_providers"]
         assert NotificationType.SMS in stats["registered_providers"]

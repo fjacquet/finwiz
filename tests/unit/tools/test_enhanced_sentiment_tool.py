@@ -3,6 +3,7 @@
 import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
 
@@ -476,7 +477,7 @@ class TestEnhancedSentimentAnalysisTool:
         result = self.tool.calculator.analyze_sentiment(neutral_news, "AAPL", "stock")
 
         assert result["overall_sentiment"] == "neutral"
-        assert result["sentiment_score"] == 0.0
+        assert result["sentiment_score"] == approx(0.0)
         assert result["sentiment_distribution"]["neutral"] == 1
 
     def test_extract_trending_topics(self):

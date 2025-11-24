@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.quantitative.config import (
     BacktestConfig,
@@ -86,7 +87,7 @@ class TestQuantConfig:
         assert DataProvider.TWELVE_DATA in config.fallback_data_providers
         assert config.default_lookback_days == 252
         assert config.min_data_points == 50
-        assert config.risk_free_rate == 0.02
+        assert config.risk_free_rate == approx(0.02)
         assert TechnicalIndicator.SMA in config.enabled_indicators
         assert TechnicalIndicator.RSI in config.enabled_indicators
         assert config.feature_flags_enabled is True
@@ -149,14 +150,14 @@ class TestQuantConfig:
         """Test validation of risk-free rate parameter."""
         # Test valid range
         config = QuantConfig(risk_free_rate=0.05)
-        assert config.risk_free_rate == 0.05
+        assert config.risk_free_rate == approx(0.05)
 
         # Test boundary values
         config = QuantConfig(risk_free_rate=0.0)
-        assert config.risk_free_rate == 0.0
+        assert config.risk_free_rate == approx(0.0)
 
         config = QuantConfig(risk_free_rate=0.1)
-        assert config.risk_free_rate == 0.1
+        assert config.risk_free_rate == approx(0.1)
 
         # Test invalid values
         with pytest.raises(ValidationError):
@@ -254,17 +255,17 @@ class TestBacktestConfig:
 
         # Assert
         assert config.framework == BacktestFramework.BACKTRADER
-        assert config.initial_capital == 100000.0
+        assert config.initial_capital == approx(100000.0)
         assert config.position_sizing_method == "fixed_amount"
-        assert config.max_position_size == 0.1
-        assert config.stop_loss_pct == 0.05
-        assert config.take_profit_pct == 0.15
-        assert config.max_drawdown_limit == 0.2
-        assert config.commission_pct == 0.001
-        assert config.slippage_pct == 0.0005
+        assert config.max_position_size == approx(0.1)
+        assert config.stop_loss_pct == approx(0.05)
+        assert config.take_profit_pct == approx(0.15)
+        assert config.max_drawdown_limit == approx(0.2)
+        assert config.commission_pct == approx(0.001)
+        assert config.slippage_pct == approx(0.0005)
         assert config.benchmark_symbol == "SPY"
         assert config.rebalancing_frequency == "monthly"
-        assert config.confidence_level == 0.95
+        assert config.confidence_level == approx(0.95)
         assert config.rolling_window_days == 252
         assert config.generate_plots is True
         assert config.save_trades is True
@@ -274,7 +275,7 @@ class TestBacktestConfig:
         """Test validation of initial capital parameter."""
         # Test valid value
         config = BacktestConfig(initial_capital=50000.0)
-        assert config.initial_capital == 50000.0
+        assert config.initial_capital == approx(50000.0)
 
         # Test invalid values
         with pytest.raises(ValidationError):
@@ -299,11 +300,11 @@ class TestBacktestConfig:
         """Test validation of maximum position size parameter."""
         # Test valid range
         config = BacktestConfig(max_position_size=0.05)
-        assert config.max_position_size == 0.05
+        assert config.max_position_size == approx(0.05)
 
         # Test boundary values
         config = BacktestConfig(max_position_size=1.0)
-        assert config.max_position_size == 1.0
+        assert config.max_position_size == approx(1.0)
 
         # Test invalid values
         with pytest.raises(ValidationError):
@@ -346,7 +347,7 @@ class TestBacktestConfig:
         """Test validation of confidence level parameter."""
         # Test valid range
         config = BacktestConfig(confidence_level=0.99)
-        assert config.confidence_level == 0.99
+        assert config.confidence_level == approx(0.99)
 
         # Test invalid values
         with pytest.raises(ValidationError):
@@ -373,7 +374,7 @@ class TestScreenerConfig:
         assert config.min_market_cap == 1e9
         assert config.max_market_cap is None
         assert config.min_avg_volume == 1000000
-        assert config.min_price == 5.0
+        assert config.min_price == approx(5.0)
         assert ScreeningCriteria.PE_RATIO in config.screening_criteria
         assert ScreeningCriteria.ROE in config.screening_criteria
         assert config.max_results == 50
@@ -516,7 +517,7 @@ class TestQuantitativeConfigManager:
         # Assert
         assert manager.quant_config.primary_data_provider == DataProvider.ALPHA_VANTAGE
         assert manager.quant_config.default_lookback_days == 500
-        assert manager.quant_config.risk_free_rate == 0.03
+        assert manager.quant_config.risk_free_rate == approx(0.03)
 
     def test_should_load_backtest_config_from_environment_when_available(self, mocker):
         """Test loading backtesting configuration from environment variables."""
@@ -531,8 +532,8 @@ class TestQuantitativeConfigManager:
         manager = QuantitativeConfigManager()
 
         # Assert
-        assert manager.backtest_config.initial_capital == 250000.0
-        assert manager.backtest_config.commission_pct == 0.002
+        assert manager.backtest_config.initial_capital == approx(250000.0)
+        assert manager.backtest_config.commission_pct == approx(0.002)
         assert manager.backtest_config.framework == BacktestFramework.ZIPLINE
 
     def test_should_load_screener_config_from_environment_when_available(self, mocker):
@@ -727,7 +728,7 @@ class TestEnvironmentVariableHandling:
 
         # Assert
         # Should use default value when environment variable is invalid
-        assert manager.backtest_config.initial_capital == 100000.0  # Default value
+        assert manager.backtest_config.initial_capital == approx(100000.0)  # Default value
 
     def test_should_use_default_when_invalid_screener_environment_value_provided(self, mocker):
         """Test handling of invalid screener environment variable values."""

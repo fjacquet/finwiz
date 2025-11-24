@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+from pytest import approx
 
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
@@ -73,10 +74,10 @@ class TestDeepAnalysisOrchestrator:
         assert result.ticker == "AAPL"
         assert result.asset_class == "stock"
         assert result.grade == "A"
-        assert result.composite_score == 0.85
-        assert result.fundamental_score == 0.9
-        assert result.technical_score == 0.8
-        assert result.risk_score == 2.5
+        assert result.composite_score == approx(0.85)
+        assert result.fundamental_score == approx(0.9)
+        assert result.technical_score == approx(0.8)
+        assert result.risk_score == approx(2.5)
 
     def test_should_parse_from_raw_output(self, orchestrator, mocker):
         """Test parsing from raw text output."""
@@ -91,7 +92,7 @@ class TestDeepAnalysisOrchestrator:
         # Assert
         assert result.ticker == "MSFT"
         assert result.grade == "B"
-        assert result.composite_score == 0.75
+        assert result.composite_score == approx(0.75)
 
     def test_should_save_metrics_to_file(self, orchestrator, tmp_path):
         """Test metrics file saving."""

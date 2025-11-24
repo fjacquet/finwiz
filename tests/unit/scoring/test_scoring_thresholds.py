@@ -4,6 +4,8 @@ Unit tests for ScoringThresholds configuration.
 Tests the centralized scoring thresholds configuration introduced in Phase 2A.3.
 """
 
+from pytest import approx
+
 from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
 
 
@@ -15,64 +17,64 @@ class TestScoringThresholds:
         thresholds = ScoringThresholds()
 
         # Verify key thresholds are set (official grading scale)
-        assert thresholds.grade_a_plus == 0.95
-        assert thresholds.grade_a == 0.85
-        assert thresholds.buy_threshold == 0.85
-        assert thresholds.sell_threshold == 0.65
+        assert thresholds.grade_a_plus == approx(0.95)
+        assert thresholds.grade_a == approx(0.85)
+        assert thresholds.buy_threshold == approx(0.85)
+        assert thresholds.sell_threshold == approx(0.65)
 
     def test_get_thresholds_returns_default(self):
         """Test that get_thresholds() returns default instance."""
         thresholds = get_thresholds()
 
         assert isinstance(thresholds, ScoringThresholds)
-        assert thresholds.grade_a_plus == 0.95
+        assert thresholds.grade_a_plus == approx(0.95)
 
     def test_custom_thresholds(self):
         """Test that custom thresholds can be created."""
         custom = ScoringThresholds(grade_a_plus=0.95, grade_a=0.85, buy_threshold=0.85, sell_threshold=0.55)
 
-        assert custom.grade_a_plus == 0.95
-        assert custom.grade_a == 0.85
-        assert custom.buy_threshold == 0.85
-        assert custom.sell_threshold == 0.55
+        assert custom.grade_a_plus == approx(0.95)
+        assert custom.grade_a == approx(0.85)
+        assert custom.buy_threshold == approx(0.85)
+        assert custom.sell_threshold == approx(0.55)
 
     def test_stock_fundamental_thresholds(self):
         """Test stock fundamental thresholds are properly set."""
         thresholds = ScoringThresholds()
 
         # ROE thresholds
-        assert thresholds.roe_excellent == 0.20
-        assert thresholds.roe_very_good == 0.15
-        assert thresholds.roe_good == 0.10
-        assert thresholds.roe_acceptable == 0.05
+        assert thresholds.roe_excellent == approx(0.20)
+        assert thresholds.roe_very_good == approx(0.15)
+        assert thresholds.roe_good == approx(0.10)
+        assert thresholds.roe_acceptable == approx(0.05)
 
         # Debt thresholds
-        assert thresholds.debt_very_low == 0.3
-        assert thresholds.debt_low == 0.5
-        assert thresholds.debt_moderate == 1.0
-        assert thresholds.debt_high == 2.0
+        assert thresholds.debt_very_low == approx(0.3)
+        assert thresholds.debt_low == approx(0.5)
+        assert thresholds.debt_moderate == approx(1.0)
+        assert thresholds.debt_high == approx(2.0)
 
         # Growth thresholds (updated to match current implementation)
-        assert thresholds.growth_excellent == 0.20  # Updated from 0.25
-        assert thresholds.growth_very_good == 0.12  # Updated from 0.15
-        assert thresholds.growth_good == 0.05  # Updated from 0.10
-        assert thresholds.growth_acceptable == 0.0  # Updated from 0.05
+        assert thresholds.growth_excellent == approx(0.20)  # Updated from 0.25
+        assert thresholds.growth_very_good == approx(0.12)  # Updated from 0.15
+        assert thresholds.growth_good == approx(0.05)  # Updated from 0.10
+        assert thresholds.growth_acceptable == approx(0.0)  # Updated from 0.05
 
     def test_etf_fundamental_thresholds(self):
         """Test ETF fundamental thresholds are properly set."""
         thresholds = ScoringThresholds()
 
         # Expense ratio thresholds
-        assert thresholds.expense_excellent == 0.001
-        assert thresholds.expense_very_good == 0.0025
-        assert thresholds.expense_good == 0.005
-        assert thresholds.expense_acceptable == 0.01
+        assert thresholds.expense_excellent == approx(0.001)
+        assert thresholds.expense_very_good == approx(0.0025)
+        assert thresholds.expense_good == approx(0.005)
+        assert thresholds.expense_acceptable == approx(0.01)
 
         # Tracking error thresholds
-        assert thresholds.tracking_excellent == 0.002
-        assert thresholds.tracking_very_good == 0.005
-        assert thresholds.tracking_good == 0.01
-        assert thresholds.tracking_acceptable == 0.02
+        assert thresholds.tracking_excellent == approx(0.002)
+        assert thresholds.tracking_very_good == approx(0.005)
+        assert thresholds.tracking_good == approx(0.01)
+        assert thresholds.tracking_acceptable == approx(0.02)
 
         # AUM thresholds
         assert thresholds.aum_excellent == 5e9
@@ -97,71 +99,71 @@ class TestScoringThresholds:
         assert thresholds.volume_moderate == 10e6
 
         # Age thresholds
-        assert thresholds.age_very_established == 5.0
-        assert thresholds.age_established == 3.0
-        assert thresholds.age_maturing == 2.0
-        assert thresholds.age_young == 1.0
+        assert thresholds.age_very_established == approx(5.0)
+        assert thresholds.age_established == approx(3.0)
+        assert thresholds.age_maturing == approx(2.0)
+        assert thresholds.age_young == approx(1.0)
 
     def test_technical_analysis_thresholds(self):
         """Test technical analysis thresholds are properly set."""
         thresholds = ScoringThresholds()
 
         # RSI thresholds
-        assert thresholds.rsi_neutral_min == 40.0
-        assert thresholds.rsi_neutral_max == 60.0
-        assert thresholds.rsi_good_min == 30.0
-        assert thresholds.rsi_good_max == 70.0
+        assert thresholds.rsi_neutral_min == approx(40.0)
+        assert thresholds.rsi_neutral_max == approx(60.0)
+        assert thresholds.rsi_good_min == approx(30.0)
+        assert thresholds.rsi_good_max == approx(70.0)
 
         # MACD threshold
-        assert thresholds.macd_neutral_threshold == 0.1
+        assert thresholds.macd_neutral_threshold == approx(0.1)
 
     def test_risk_assessment_thresholds(self):
         """Test risk assessment thresholds are properly set."""
         thresholds = ScoringThresholds()
 
         # Volatility thresholds (updated to match current implementation)
-        assert thresholds.volatility_very_low == 0.15  # Updated from 0.10
-        assert thresholds.volatility_low == 0.25  # Updated from 0.15
-        assert thresholds.volatility_moderate == 0.35  # Updated from 0.25
-        assert thresholds.volatility_high == 0.50  # Updated from 0.40
+        assert thresholds.volatility_very_low == approx(0.15)  # Updated from 0.10
+        assert thresholds.volatility_low == approx(0.25)  # Updated from 0.15
+        assert thresholds.volatility_moderate == approx(0.35)  # Updated from 0.25
+        assert thresholds.volatility_high == approx(0.50)  # Updated from 0.40
 
         # Drawdown thresholds
-        assert thresholds.drawdown_very_low == 0.10
-        assert thresholds.drawdown_low == 0.20
-        assert thresholds.drawdown_moderate == 0.35
-        assert thresholds.drawdown_high == 0.50
+        assert thresholds.drawdown_very_low == approx(0.10)
+        assert thresholds.drawdown_low == approx(0.20)
+        assert thresholds.drawdown_moderate == approx(0.35)
+        assert thresholds.drawdown_high == approx(0.50)
 
         # Beta thresholds
-        assert thresholds.beta_excellent == 0.20
-        assert thresholds.beta_very_good == 0.40
-        assert thresholds.beta_good == 0.60
-        assert thresholds.beta_acceptable == 1.00
+        assert thresholds.beta_excellent == approx(0.20)
+        assert thresholds.beta_very_good == approx(0.40)
+        assert thresholds.beta_good == approx(0.60)
+        assert thresholds.beta_acceptable == approx(1.00)
 
     def test_component_weights(self):
         """Test that component weights are properly set."""
         thresholds = ScoringThresholds()
 
         # Composite score weights
-        assert thresholds.weight_fundamental == 0.40
-        assert thresholds.weight_technical == 0.30
-        assert thresholds.weight_risk == 0.30
+        assert thresholds.weight_fundamental == approx(0.40)
+        assert thresholds.weight_technical == approx(0.30)
+        assert thresholds.weight_risk == approx(0.30)
 
         # Stock weights
-        assert thresholds.weight_stock_roe == 0.40
-        assert thresholds.weight_stock_debt == 0.30
-        assert thresholds.weight_stock_growth == 0.20
-        assert thresholds.weight_stock_margin == 0.10
+        assert thresholds.weight_stock_roe == approx(0.40)
+        assert thresholds.weight_stock_debt == approx(0.30)
+        assert thresholds.weight_stock_growth == approx(0.20)
+        assert thresholds.weight_stock_margin == approx(0.10)
 
         # ETF weights
-        assert thresholds.weight_etf_expense == 0.50
-        assert thresholds.weight_etf_tracking == 0.30
-        assert thresholds.weight_etf_aum == 0.20
+        assert thresholds.weight_etf_expense == approx(0.50)
+        assert thresholds.weight_etf_tracking == approx(0.30)
+        assert thresholds.weight_etf_aum == approx(0.20)
 
         # Crypto weights
-        assert thresholds.weight_crypto_market_cap == 0.40
-        assert thresholds.weight_crypto_volume == 0.30
-        assert thresholds.weight_crypto_age == 0.20
-        assert thresholds.weight_crypto_supply == 0.10
+        assert thresholds.weight_crypto_market_cap == approx(0.40)
+        assert thresholds.weight_crypto_volume == approx(0.30)
+        assert thresholds.weight_crypto_age == approx(0.20)
+        assert thresholds.weight_crypto_supply == approx(0.10)
 
     def test_weights_sum_to_one(self):
         """Test that component weights sum to 1.0."""
@@ -208,9 +210,9 @@ class TestScoringThresholds:
         thresholds = ScoringThresholds()
 
         # Verify key thresholds match official grading scale
-        assert thresholds.grade_a_plus == 0.95
-        assert thresholds.buy_threshold == 0.85
-        assert thresholds.sell_threshold == 0.65
-        assert thresholds.roe_excellent == 0.20
-        assert thresholds.expense_excellent == 0.001
-        assert thresholds.volatility_very_low == 0.15  # Updated from 0.10
+        assert thresholds.grade_a_plus == approx(0.95)
+        assert thresholds.buy_threshold == approx(0.85)
+        assert thresholds.sell_threshold == approx(0.65)
+        assert thresholds.roe_excellent == approx(0.20)
+        assert thresholds.expense_excellent == approx(0.001)
+        assert thresholds.volatility_very_low == approx(0.15)  # Updated from 0.10

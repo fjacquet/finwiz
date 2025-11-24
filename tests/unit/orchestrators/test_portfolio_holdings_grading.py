@@ -6,6 +6,7 @@ grades when using shallow validation (deep analysis disabled).
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,
@@ -51,7 +52,7 @@ class TestPortfolioHoldingsGrading:
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
-        assert decision.composite_score == 0.75, "Valid stock should get 0.75 score"
+        assert decision.composite_score == approx(0.75), "Valid stock should get 0.75 score"
         assert decision.grade == "B", f"Expected B grade, got {decision.grade}"
         assert decision.decision == "KEEP", "Valid stock with B grade should be KEEP"
 
@@ -78,7 +79,7 @@ class TestPortfolioHoldingsGrading:
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
-        assert decision.composite_score == 0.75
+        assert decision.composite_score == approx(0.75)
         assert decision.grade == "B"
         assert decision.decision == "KEEP"
 
@@ -105,7 +106,7 @@ class TestPortfolioHoldingsGrading:
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
-        assert decision.composite_score == 0.75
+        assert decision.composite_score == approx(0.75)
         assert decision.grade == "B"
         assert decision.decision == "KEEP"
 
@@ -132,7 +133,7 @@ class TestPortfolioHoldingsGrading:
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
-        assert decision.composite_score == 0.80, "Valid ETF should get 0.80 score"
+        assert decision.composite_score == approx(0.80), "Valid ETF should get 0.80 score"
         assert decision.grade == "B+", f"Expected B+ grade, got {decision.grade}"
         assert decision.decision == "KEEP"
 
@@ -159,7 +160,7 @@ class TestPortfolioHoldingsGrading:
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
         # Assert
-        assert decision.composite_score == 0.3, "Invalid ticker should get 0.3 score"
+        assert decision.composite_score == approx(0.3), "Invalid ticker should get 0.3 score"
         assert decision.grade == "F", f"Expected F grade, got {decision.grade}"
         assert decision.decision == "SELL"
 
@@ -197,7 +198,7 @@ class TestPortfolioHoldingsGrading:
         score = processor._calculate_score(is_valid=True, asset_class="stock")
 
         # Assert
-        assert score == 0.75
+        assert score == approx(0.75)
         grade_info = score_to_grade(score)
         assert grade_info.grade == "B"
 
@@ -207,7 +208,7 @@ class TestPortfolioHoldingsGrading:
         score = processor._calculate_score(is_valid=True, asset_class="etf")
 
         # Assert
-        assert score == 0.80
+        assert score == approx(0.80)
         grade_info = score_to_grade(score)
         assert grade_info.grade == "B+"
 
@@ -217,7 +218,7 @@ class TestPortfolioHoldingsGrading:
         score = processor._calculate_score(is_valid=True, asset_class="crypto")
 
         # Assert
-        assert score == 0.75
+        assert score == approx(0.75)
         grade_info = score_to_grade(score)
         assert grade_info.grade == "B"
 
@@ -227,7 +228,7 @@ class TestPortfolioHoldingsGrading:
         score = processor._calculate_score(is_valid=False, asset_class="stock")
 
         # Assert
-        assert score == 0.3
+        assert score == approx(0.3)
         grade_info = score_to_grade(score)
         assert grade_info.grade == "F"
 
@@ -275,7 +276,7 @@ class TestPortfolioHoldingsGrading:
         assert len(decisions) == 3
         for decision in decisions:
             assert decision.grade == "B", f"{decision.ticker} should have B grade"
-            assert decision.composite_score == 0.75
+            assert decision.composite_score == approx(0.75)
             assert decision.decision == "KEEP"
 
     async def test_should_indicate_data_freshness_as_fresh_for_valid_holdings(self, processor, mocker):

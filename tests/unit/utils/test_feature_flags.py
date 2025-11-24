@@ -8,6 +8,8 @@ and graceful degradation logic.
 import os
 import time
 
+from pytest import approx
+
 from finwiz.utils.feature_flags import (
     FallbackStrategy,
     FeatureFlagConfig,
@@ -77,7 +79,7 @@ class TestFeatureFlags:
 
         # Assert
         config = flags.flags["enhanced_sentiment_analysis"]
-        assert config.rollout_percentage == 75.5
+        assert config.rollout_percentage == approx(75.5)
 
     def test_should_handle_invalid_environment_values_gracefully(self, mocker):
         """Test graceful handling of invalid environment variable values."""
@@ -89,7 +91,7 @@ class TestFeatureFlags:
 
         # Should use defaults for invalid values
         config = flags.flags["enhanced_sentiment_analysis"]
-        assert config.rollout_percentage == 100.0  # Default value
+        assert config.rollout_percentage == approx(100.0)  # Default value
 
     def test_should_evaluate_boolean_strategy_correctly(self):
         """Test boolean strategy evaluation."""
@@ -290,7 +292,7 @@ class TestFeatureFlags:
         # Assert
         assert result is not None
         assert "sentiment_score" in result
-        assert result["sentiment_score"] == 0.0  # Default value
+        assert result["sentiment_score"] == approx(0.0)  # Default value
 
     def test_should_return_none_for_disable_fallback_strategy(self):
         """Test disable fallback strategy returns None."""

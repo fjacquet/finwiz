@@ -4,6 +4,7 @@ from datetime import datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.portfolio_review import (
@@ -41,11 +42,11 @@ class TestPriceTargets:
         )
 
         # Assert
-        assert price_targets.current_price == 150.0
+        assert price_targets.current_price == approx(150.0)
         assert price_targets.currency == "USD"
-        assert price_targets.fair_value_estimate == 160.0
-        assert price_targets.buy_target_primary == 145.0
-        assert price_targets.confidence_level == 0.8
+        assert price_targets.fair_value_estimate == approx(160.0)
+        assert price_targets.buy_target_primary == approx(145.0)
+        assert price_targets.confidence_level == approx(0.8)
         assert len(price_targets.support_levels) == 2
         assert len(price_targets.data_sources) == 2
 
@@ -59,11 +60,11 @@ class TestPriceTargets:
         )
 
         # Assert
-        assert price_targets.current_price == 100.0
+        assert price_targets.current_price == approx(100.0)
         assert price_targets.currency == "EUR"
         assert price_targets.fair_value_estimate is None
         assert price_targets.buy_target_primary is None
-        assert price_targets.confidence_level == 0.5  # Default
+        assert price_targets.confidence_level == approx(0.5)  # Default
 
     def test_should_validate_confidence_level_range(self):
         """Test that confidence level must be between 0 and 1."""
@@ -95,8 +96,8 @@ class TestPositionSizeRecommendation:
         )
 
         # Assert
-        assert position_sizing.current_size_pct == 8.0
-        assert position_sizing.recommended_size_pct == 5.0
+        assert position_sizing.current_size_pct == approx(8.0)
+        assert position_sizing.recommended_size_pct == approx(5.0)
         assert position_sizing.sizing_action == "trim"
         assert position_sizing.concentration_limits_applied is True
 
@@ -148,7 +149,7 @@ class TestAlternativeEnhancements:
         # Assert
         assert alternative.transition_strategy == "Gradual swap over 3 months"
         assert alternative.swap_timing == "gradual"
-        assert alternative.expense_ratio_savings == 0.05
+        assert alternative.expense_ratio_savings == approx(0.05)
 
     def test_should_validate_swap_timing_values(self):
         """Test that swap timing must be one of allowed values."""
@@ -203,8 +204,8 @@ class TestHoldingDecisionEnhancements:
 
         # Assert
         assert holding.price_targets is not None
-        assert holding.price_targets.current_price == 150.0
-        assert holding.price_targets.fair_value_estimate == 160.0
+        assert holding.price_targets.current_price == approx(150.0)
+        assert holding.price_targets.fair_value_estimate == approx(160.0)
 
     def test_should_create_holding_decision_with_position_sizing(self):
         """Test creating holding decision with position sizing."""
@@ -240,7 +241,7 @@ class TestHoldingDecisionEnhancements:
         # Assert
         assert holding.position_sizing is not None
         assert holding.position_sizing.sizing_action == "trim"
-        assert holding.position_sizing.current_size_pct == 8.0
+        assert holding.position_sizing.current_size_pct == approx(8.0)
 
     def test_should_create_holding_decision_with_data_freshness(self):
         """Test creating holding decision with data freshness tracking."""

@@ -7,6 +7,7 @@ Tests the data extraction and validation utilities for crew outputs.
 import json
 
 import pytest
+from pytest import approx
 
 from finwiz.exceptions.data_quality import MissingRequiredFieldError
 from finwiz.utils.data_extractor import CrewDataExtractor
@@ -25,9 +26,9 @@ class TestExtractQuantitativeMetrics:
         result = extractor.extract_quantitative_metrics(crew_output, "AAPL")
 
         # Assert
-        assert result["volatility"] == 0.25
-        assert result["max_drawdown"] == -0.15
-        assert result["beta"] == 1.2
+        assert result["volatility"] == approx(0.25)
+        assert result["max_drawdown"] == approx(-0.15)
+        assert result["beta"] == approx(1.2)
 
     def test_should_extract_metrics_from_json_string(self):
         """Test extracting metrics from JSON string input."""
@@ -39,8 +40,8 @@ class TestExtractQuantitativeMetrics:
         result = extractor.extract_quantitative_metrics(crew_output, "AAPL")
 
         # Assert
-        assert result["volatility"] == 0.30
-        assert result["max_drawdown"] == -0.20
+        assert result["volatility"] == approx(0.30)
+        assert result["max_drawdown"] == approx(-0.20)
 
     def test_should_raise_error_when_volatility_missing(self):
         """Test that error is raised when volatility is missing."""
@@ -105,7 +106,7 @@ class TestExtractGradeAndScore:
 
         # Assert
         assert result["grade"] == "A"
-        assert result["composite_score"] == 0.85
+        assert result["composite_score"] == approx(0.85)
 
     def test_should_extract_grade_and_score_from_json_string(self):
         """Test extracting grade and score from JSON string."""
@@ -118,7 +119,7 @@ class TestExtractGradeAndScore:
 
         # Assert
         assert result["grade"] == "A+"
-        assert result["composite_score"] == 0.92
+        assert result["composite_score"] == approx(0.92)
 
     def test_should_raise_error_when_grade_missing(self):
         """Test that error is raised when grade is missing."""

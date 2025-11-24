@@ -8,6 +8,7 @@ proper integration, weighted scoring, and trending topic extraction.
 import asyncio
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.sentiment_analyzer import (
     SentimentAnalysisResult,
@@ -127,7 +128,7 @@ class TestSentimentAnalyzer:
         # Test neutral sentiment
         neutral_text = "The company announced a meeting"
         neu_score = analyzer._calculate_keyword_sentiment(neutral_text)
-        assert neu_score == 0.0
+        assert neu_score == approx(0.0)
 
     def test_should_identify_crypto_tickers_correctly(self, analyzer):
         """Test cryptocurrency ticker identification."""
@@ -324,8 +325,8 @@ class TestSentimentAnalyzer:
         # Should return empty result
         assert isinstance(result, SentimentAnalysisResult)
         assert result.ticker == "AAPL"
-        assert result.overall_sentiment_score == 0.0
-        assert result.confidence_level == 0.0
+        assert result.overall_sentiment_score == approx(0.0)
+        assert result.confidence_level == approx(0.0)
         assert result.total_articles == 0
         assert len(result.sources) == 0
 
@@ -346,7 +347,7 @@ class TestSentimentAnalyzer:
         market_sentiment = analyzer.to_market_sentiment(result)
 
         assert market_sentiment.ticker == "AAPL"
-        assert market_sentiment.mean_score == 0.25
+        assert market_sentiment.mean_score == approx(0.25)
         assert "pos" in market_sentiment.counts
         assert "neu" in market_sentiment.counts
         assert "neg" in market_sentiment.counts
@@ -365,7 +366,7 @@ class TestSentimentAnalyzer:
 
         # Test with no sources
         confidence = analyzer._calculate_confidence([], 0)
-        assert confidence == 0.0
+        assert confidence == approx(0.0)
 
     def test_should_handle_missing_api_keys_gracefully(self, mocker):
         """Test handling of missing API keys."""

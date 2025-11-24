@@ -18,6 +18,7 @@ import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no off
 import pandas as pd
 import pytest
 from faker import Faker
+from pytest import approx
 
 from finwiz.quantitative.backtesting import (
     BacktestingEngine,
@@ -89,7 +90,7 @@ class TestTrade:
             quantity=100,
             strategy_name="TestStrategy",
         )
-        assert trade.entry_price == 100.50
+        assert trade.entry_price == approx(100.50)
 
         # Test invalid price
         with pytest.raises(ValueError):
@@ -118,7 +119,7 @@ class TestTrade:
             exit_price=110.0,
             strategy_name="TestStrategy",
         )
-        assert trade.exit_price == 110.0
+        assert trade.exit_price == approx(110.0)
 
         # Test invalid exit price
         with pytest.raises(ValueError):
@@ -282,8 +283,8 @@ class TestBacktestResult:
         assert result.end_date == end_date
         assert result.initial_capital == initial_capital
         assert result.final_value == final_value
-        assert result.total_return == 10.0
-        assert result.win_rate == 0.6  # 30/50
+        assert result.total_return == approx(10.0)
+        assert result.win_rate == approx(0.6)  # 30/50
 
     def test_should_calculate_win_rate_automatically(self):
         """Test automatic win rate calculation."""
@@ -306,7 +307,7 @@ class TestBacktestResult:
         )
 
         # Assert
-        assert result.win_rate == 0.75
+        assert result.win_rate == approx(0.75)
 
     def test_should_handle_zero_trades_for_win_rate(self):
         """Test win rate calculation with zero trades."""
@@ -329,7 +330,7 @@ class TestBacktestResult:
         )
 
         # Assert
-        assert result.win_rate == 0.0
+        assert result.win_rate == approx(0.0)
 
 
 class TestStrategyFramework:
@@ -501,7 +502,7 @@ class TestBacktestingEngine:
         assert result.symbol == symbol
         assert result.start_date == start_date
         assert result.end_date == end_date
-        assert result.initial_capital == 100000.0
+        assert result.initial_capital == approx(100000.0)
         assert result.final_value > 0
 
         # Verify data manager was called
@@ -628,7 +629,7 @@ class TestBacktestingEngine:
         cvar_95 = backtesting_engine.performance_analyzer.calculate_cvar(portfolio_values, 0.95)
 
         # Assert
-        assert volatility == 0.0
+        assert volatility == approx(0.0)
         assert var_95 is None
         assert cvar_95 is None
 
@@ -753,7 +754,7 @@ class TestRiskManagement:
         """Test stop loss parameter validation."""
         # Test valid stop loss percentage
         config = BacktestConfig(stop_loss_pct=0.05)
-        assert config.stop_loss_pct == 0.05
+        assert config.stop_loss_pct == approx(0.05)
 
         # Test that stop loss is optional
         config_no_stop = BacktestConfig(stop_loss_pct=None)
@@ -763,7 +764,7 @@ class TestRiskManagement:
         """Test take profit parameter validation."""
         # Test valid take profit percentage
         config = BacktestConfig(take_profit_pct=0.15)
-        assert config.take_profit_pct == 0.15
+        assert config.take_profit_pct == approx(0.15)
 
         # Test that take profit is optional
         config_no_tp = BacktestConfig(take_profit_pct=None)
@@ -773,14 +774,14 @@ class TestRiskManagement:
         """Test maximum drawdown limit validation."""
         # Test valid drawdown limit
         config = BacktestConfig(max_drawdown_limit=0.2)
-        assert config.max_drawdown_limit == 0.2
+        assert config.max_drawdown_limit == approx(0.2)
 
         # Test boundary values
         config_min = BacktestConfig(max_drawdown_limit=0.01)
-        assert config_min.max_drawdown_limit == 0.01
+        assert config_min.max_drawdown_limit == approx(0.01)
 
         config_max = BacktestConfig(max_drawdown_limit=1.0)
-        assert config_max.max_drawdown_limit == 1.0
+        assert config_max.max_drawdown_limit == approx(1.0)
 
 
 class TestStrategyExecution:
@@ -1101,7 +1102,7 @@ class TestStrategyExecution:
 
         # Both should have valid results
         for result in results:
-            assert result.initial_capital == 100000.0
+            assert result.initial_capital == approx(100000.0)
             assert result.final_value > 0
             assert result.total_trades >= 0
 

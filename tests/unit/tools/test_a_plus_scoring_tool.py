@@ -10,6 +10,7 @@ scoring logic extracted to separate modules. Tests now focus on the public API
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.schemas.tools import APlusScoringInput
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
@@ -322,7 +323,7 @@ class TestAPlusScoringTool:
 
         assert valid_input.symbol == "AAPL"
         assert valid_input.asset_type == "stock"
-        assert valid_input.fundamental_data["roe"] == 0.25
+        assert valid_input.fundamental_data["roe"] == approx(0.25)
 
     def test_should_handle_empty_fundamental_data_when_none_provided(self):
         """Test handling of empty fundamental data."""

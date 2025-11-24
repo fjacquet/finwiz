@@ -6,6 +6,7 @@ performance validation to ensure compliance with requirements.
 """
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,
@@ -158,7 +159,7 @@ class TestPerplexityPerformanceValidation:
 
         # Verify basic statistics
         assert summary["total_requests"] == 6
-        assert summary["avg_response_time_ms"] == 1750.0
+        assert summary["avg_response_time_ms"] == approx(1750.0)
         assert summary["min_response_time_ms"] == 500
         assert summary["max_response_time_ms"] == 3000
         # For 6 items [500, 1000, 1500, 2000, 2500, 3000], median is average of 3rd and 4th items
@@ -270,7 +271,7 @@ class TestPerplexityBenchmarkResults:
         assert summary["total_requests"] == 4
         assert summary["success_count"] == 4
         assert summary["failure_count"] == 0
-        assert summary["avg_response_time_ms"] == 1250.0
+        assert summary["avg_response_time_ms"] == approx(1250.0)
         assert "compliance_rate" in summary
         assert "meets_2x_baseline_requirement" in summary
 

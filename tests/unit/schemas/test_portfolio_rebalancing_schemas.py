@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.portfolio_rebalancing import (
     CostAnalysis,
@@ -37,8 +38,8 @@ class TestHolding:
 
         # Assert
         assert holding.symbol == "AAPL"
-        assert holding.shares == 100.0
-        assert holding.cost_basis == 150.0
+        assert holding.shares == approx(100.0)
+        assert holding.cost_basis == approx(150.0)
         assert holding.acquisition_date == datetime(2023, 1, 1)
 
     def test_should_create_valid_holding_when_optional_fields_omitted(self):
@@ -47,7 +48,7 @@ class TestHolding:
 
         # Assert
         assert holding.symbol == "MSFT"
-        assert holding.shares == 50.0
+        assert holding.shares == approx(50.0)
         assert holding.cost_basis is None
         assert holding.acquisition_date is None
 
@@ -140,10 +141,10 @@ class TestPortfolioConfiguration:
         assert len(config.holdings) == 3
         assert config.target_weights == target_weights
         assert config.tolerance_bands == tolerance_bands
-        assert config.global_tolerance == 0.04
-        assert config.available_capital == 1000.0
-        assert config.transaction_cost_rate == 0.002
-        assert config.min_trade_size == 0.1
+        assert config.global_tolerance == approx(0.04)
+        assert config.available_capital == approx(1000.0)
+        assert config.transaction_cost_rate == approx(0.002)
+        assert config.min_trade_size == approx(0.1)
         assert config.rebalancing_method == RebalancingMethod.MINIMIZE_COSTS
 
     def test_should_create_valid_configuration_with_defaults(self):
@@ -155,10 +156,10 @@ class TestPortfolioConfiguration:
         config = PortfolioConfiguration(holdings=holdings, target_weights=target_weights)
 
         # Assert
-        assert config.global_tolerance == 0.05
-        assert config.available_capital == 0.0
-        assert config.transaction_cost_rate == 0.001
-        assert config.min_trade_size == 0.01
+        assert config.global_tolerance == approx(0.05)
+        assert config.available_capital == approx(0.0)
+        assert config.transaction_cost_rate == approx(0.001)
+        assert config.min_trade_size == approx(0.01)
         assert config.rebalancing_method == RebalancingMethod.MINIMIZE_TRADES
         assert config.tolerance_bands == {}
 
@@ -309,10 +310,10 @@ class TestTradeRecommendation:
         # Assert
         assert trade.symbol == "AAPL"
         assert trade.action == TradeAction.BUY
-        assert trade.quantity == 10.0
-        assert trade.current_price == 150.0
-        assert trade.trade_value == 1500.0
-        assert trade.total_estimated_cost == 1.5
+        assert trade.quantity == approx(10.0)
+        assert trade.current_price == approx(150.0)
+        assert trade.trade_value == approx(1500.0)
+        assert trade.total_estimated_cost == approx(1.5)
 
     def test_should_create_valid_sell_recommendation(self):
         # Arrange & Act
@@ -336,8 +337,8 @@ class TestTradeRecommendation:
 
         # Assert
         assert trade.action == TradeAction.SELL
-        assert trade.quantity == 5.0
-        assert trade.weight_deviation == 0.10
+        assert trade.quantity == approx(5.0)
+        assert trade.weight_deviation == approx(0.10)
 
     def test_should_create_valid_hold_recommendation(self):
         # Arrange & Act
@@ -361,8 +362,8 @@ class TestTradeRecommendation:
 
         # Assert
         assert trade.action == TradeAction.HOLD
-        assert trade.quantity == 0.0
-        assert trade.trade_value == 0.0
+        assert trade.quantity == approx(0.0)
+        assert trade.trade_value == approx(0.0)
 
     def test_should_raise_error_when_trade_value_inconsistent(self):
         # Arrange & Act & Assert
@@ -517,7 +518,7 @@ class TestPortfolioAnalysis:
         )
 
         # Assert
-        assert analysis.total_value == 100000.0
+        assert analysis.total_value == approx(100000.0)
         assert len(analysis.weightings) == 3
         assert analysis.positions_needing_rebalancing == ["AAPL"]
 
@@ -606,9 +607,9 @@ class TestRebalancingResult:
         )
 
         # Assert
-        assert result.current_risk_score == 6.0
-        assert result.projected_risk_score == 5.5
-        assert result.risk_improvement == 0.5
+        assert result.current_risk_score == approx(6.0)
+        assert result.projected_risk_score == approx(5.5)
+        assert result.risk_improvement == approx(0.5)
         assert len(result.trade_recommendations) == 1
 
     def test_should_raise_error_when_trade_count_mismatch(self):
@@ -683,7 +684,7 @@ class TestPriceData:
 
         # Assert
         assert price_data.symbol == "AAPL"
-        assert price_data.price == 150.0
+        assert price_data.price == approx(150.0)
         assert price_data.source == "yahoo_finance"
         assert price_data.currency == "USD"
 
@@ -757,11 +758,11 @@ class TestCostAnalysis:
         )
 
         # Assert
-        assert cost_analysis.total_transaction_costs == 10.0
-        assert cost_analysis.commission_costs == 5.0
-        assert cost_analysis.spread_costs == 3.0
-        assert cost_analysis.market_impact_costs == 2.0
-        assert cost_analysis.cost_as_percentage == 0.01
+        assert cost_analysis.total_transaction_costs == approx(10.0)
+        assert cost_analysis.commission_costs == approx(5.0)
+        assert cost_analysis.spread_costs == approx(3.0)
+        assert cost_analysis.market_impact_costs == approx(2.0)
+        assert cost_analysis.cost_as_percentage == approx(0.01)
         assert cost_analysis.break_even_days == 30
 
     def test_should_raise_error_when_negative_costs(self):
@@ -789,11 +790,11 @@ class TestRebalancingNeed:
 
         # Assert
         assert need.symbol == "AAPL"
-        assert need.current_weight == 0.35
-        assert need.target_weight == 0.30
-        assert need.deviation == 0.05
+        assert need.current_weight == approx(0.35)
+        assert need.target_weight == approx(0.30)
+        assert need.deviation == approx(0.05)
         assert need.needs_rebalancing is True
-        assert need.urgency_score == 0.7
+        assert need.urgency_score == approx(0.7)
 
 
 class TestPortfolioMetrics:
@@ -813,11 +814,11 @@ class TestPortfolioMetrics:
         )
 
         # Assert
-        assert metrics.total_value == 100000.0
+        assert metrics.total_value == approx(100000.0)
         assert metrics.number_of_positions == 5
-        assert metrics.largest_position_weight == 0.35
-        assert metrics.concentration_risk_score == 6.0
-        assert metrics.diversification_ratio == 0.8
-        assert metrics.effective_number_of_positions == 4.2
-        assert metrics.turnover_if_rebalanced == 0.15
-        assert metrics.cash_weight == 0.05
+        assert metrics.largest_position_weight == approx(0.35)
+        assert metrics.concentration_risk_score == approx(6.0)
+        assert metrics.diversification_ratio == approx(0.8)
+        assert metrics.effective_number_of_positions == approx(4.2)
+        assert metrics.turnover_if_rebalanced == approx(0.15)
+        assert metrics.cash_weight == approx(0.05)

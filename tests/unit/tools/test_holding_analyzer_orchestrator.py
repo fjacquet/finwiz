@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
@@ -93,8 +94,8 @@ class TestHoldingAnalyzerOrchestrator:
         assert result.currency == "USD"
         assert result.data_freshness == "stale"
         assert result.crew_analysis_used is None
-        assert result.composite_score == 0.60  # Baseline for stocks
-        assert result.confidence_level == 0.3  # Low confidence for baseline
+        assert result.composite_score == approx(0.60)  # Baseline for stocks
+        assert result.confidence_level == approx(0.3)  # Low confidence for baseline
 
     def test_should_use_cached_analysis_when_fresh(self, orchestrator, mock_stock_output):
         """Test using cached analysis when it's fresh."""
@@ -111,7 +112,7 @@ class TestHoldingAnalyzerOrchestrator:
         assert result.ticker == "AAPL"
         assert result.data_freshness in ["fresh", "recent"]
         assert result.crew_analysis_used == "stock_crew"
-        assert result.composite_score == 0.85
+        assert result.composite_score == approx(0.85)
         assert result.confidence_level >= 0.6
 
     def test_should_extract_fundamental_analysis_from_stock_crew(self, orchestrator, mock_stock_output):
@@ -126,7 +127,7 @@ class TestHoldingAnalyzerOrchestrator:
         # Assert
         assert result.fundamental_analysis is not None
         assert "ten_k_insights" in result.fundamental_analysis
-        assert result.fundamental_analysis["ten_k_insights"]["revenue_growth"] == 0.15
+        assert result.fundamental_analysis["ten_k_insights"]["revenue_growth"] == approx(0.15)
 
     def test_should_extract_technical_analysis_from_crew_output(self, orchestrator, mock_stock_output):
         """Test extraction of technical analysis from crew output."""
@@ -167,7 +168,7 @@ class TestHoldingAnalyzerOrchestrator:
 
         # Assert
         assert result.asset_class == "etf"
-        assert result.composite_score == 0.65  # Baseline for ETFs
+        assert result.composite_score == approx(0.65)  # Baseline for ETFs
         assert result.data_freshness == "stale"
 
     def test_should_return_baseline_for_crypto_when_no_cache(self, orchestrator):
@@ -181,7 +182,7 @@ class TestHoldingAnalyzerOrchestrator:
 
         # Assert
         assert result.asset_class == "crypto"
-        assert result.composite_score == 0.55  # Baseline for crypto
+        assert result.composite_score == approx(0.55)  # Baseline for crypto
         assert result.data_freshness == "stale"
 
     def test_should_handle_missing_pydantic_output_gracefully(self, orchestrator, tmp_path):
@@ -318,6 +319,6 @@ class TestHoldingAnalyzerOrchestrator:
 
         # Assert
         assert result.fundamental_analysis is not None
-        assert result.fundamental_analysis["expense_ratio"] == 0.07
-        assert result.fundamental_analysis["tracking_error"] == 0.02
+        assert result.fundamental_analysis["expense_ratio"] == approx(0.07)
+        assert result.fundamental_analysis["tracking_error"] == approx(0.02)
         assert len(result.fundamental_analysis["holdings"]) == 2

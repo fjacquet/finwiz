@@ -9,6 +9,7 @@ import os
 import sys
 
 import pytest
+from pytest import approx
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 
@@ -636,7 +637,7 @@ class TestRebalancingEngine:
         # Assert
         assert len(result) == 1
         assert result[0].symbol == "AAPL"
-        assert result[0].quantity == 15.0  # Combined quantity
+        assert result[0].quantity == approx(15.0)  # Combined quantity
         assert result[0].action == TradeAction.BUY
         assert "Combined" in result[0].rationale
 
@@ -673,8 +674,8 @@ class TestRebalancingEngine:
         result = engine.calculate_tax_implications(trades, holdings)
 
         # Assert
-        assert result["total_realized_gains"] == 5000.0  # 100 shares * $50 gain
-        assert result["long_term_gains"] == 5000.0
+        assert result["total_realized_gains"] == approx(5000.0)  # 100 shares * $50 gain
+        assert result["long_term_gains"] == approx(5000.0)
         assert len(result["tax_inefficient_trades"]) == 1
         assert result["tax_inefficient_trades"][0]["symbol"] == "AAPL"
 
@@ -711,8 +712,8 @@ class TestRebalancingEngine:
         result = engine.calculate_tax_implications(trades, holdings)
 
         # Assert
-        assert result["total_realized_gains"] == 0.0
-        assert result["total_realized_losses"] == 0.0
+        assert result["total_realized_gains"] == approx(0.0)
+        assert result["total_realized_losses"] == approx(0.0)
         assert len(result["tax_efficient_trades"]) == 0
         assert len(result["tax_inefficient_trades"]) == 0
 
@@ -739,4 +740,4 @@ class TestRebalancingEngine:
         assert "capital" in constraint_types
 
         min_trade_constraint = next(c for c in constraints if c.constraint_type == "min_trade_size")
-        assert min_trade_constraint.value == 100.0
+        assert min_trade_constraint.value == approx(100.0)

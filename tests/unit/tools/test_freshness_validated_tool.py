@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+from pytest import approx
 
 from finwiz.utils.data_freshness_validator import DataFreshnessValidator
 from finwiz.utils.freshness_validated_tool import FreshnessValidatedTool, RefreshResult, add_freshness_validation
@@ -121,7 +122,7 @@ class TestFreshnessValidatedTool:
 
         assert isinstance(result, dict)
         assert result["symbol"] == "AAPL"
-        assert result["price"] == 150.0
+        assert result["price"] == approx(150.0)
         assert "_freshness_info" in result
         assert result["_freshness_info"]["is_fresh"] is True
         assert mock_tool.call_count == 1

@@ -1,9 +1,9 @@
 """Integration tests for DataSourceOrchestrator with DeepAnalysisOrchestrator."""
 
 import pytest
-
 from finwiz.data.adapters.base_adapter import FundamentalData
 from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
+from pytest import approx
 
 
 class TestOrchestratorIntegration:
@@ -45,10 +45,10 @@ class TestOrchestratorIntegration:
 
         # Assert
         assert result.ticker == "AAPL"
-        assert result.return_on_equity == 0.25
-        assert result.debt_to_equity == 0.5
-        assert result.revenue_growth == 0.15
-        assert result.profit_margin == 0.20
+        assert result.return_on_equity == approx(0.25)
+        assert result.debt_to_equity == approx(0.5)
+        assert result.revenue_growth == approx(0.15)
+        assert result.profit_margin == approx(0.20)
         assert result.is_complete()
         assert result.confidence > 0.9  # High confidence for primary source
         assert "YFinance" in result.sources_succeeded
@@ -89,8 +89,8 @@ class TestOrchestratorIntegration:
         result = await orchestrator.get_fundamental_data("AAPL", sector="Technology")
 
         # Assert
-        assert result.return_on_equity == 0.25
-        assert result.revenue_growth == 0.15
+        assert result.return_on_equity == approx(0.25)
+        assert result.revenue_growth == approx(0.15)
         # Fallback should fill missing fields
         assert result.debt_to_equity is not None  # Filled by industry averages
         assert result.profit_margin is not None  # Filled by industry averages

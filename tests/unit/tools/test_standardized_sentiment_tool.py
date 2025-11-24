@@ -8,6 +8,7 @@ trending topics extraction, and consistent methodology across asset classes.
 from datetime import datetime, timedelta
 
 import pytest
+from pytest import approx
 
 from finwiz.tools.standardized_sentiment_tool import (
     CrossAssetSentimentComparatorTool,
@@ -311,7 +312,7 @@ class TestStandardizedSentimentAnalysisTool:
         # Assert
         assert "error" in result
         assert "No news articles found" in result["error"]
-        assert result["mean_score"] == 0.0
+        assert result["mean_score"] == approx(0.0)
         assert result["counts"] == {"pos": 0, "neu": 0, "neg": 0}
         assert result["top_pos"] == []
         assert result["top_neg"] == []

@@ -8,6 +8,7 @@ consistency scores, and performance comparison tables.
 import logging
 
 import pytest
+from pytest import approx
 
 from finwiz.integration.backtesting_extractor import BacktestingDataExtractor, RegimePerformance
 from finwiz.schemas.investment_discovery import ValidationResult
@@ -159,7 +160,7 @@ class TestRegimePerformanceAnalysis:
             assert perf.max_drawdown <= 0  # Drawdown should be negative
             # Bear market should have worst drawdown
             if regime == "bear":
-                assert perf.max_drawdown == -25.0
+                assert perf.max_drawdown == approx(-25.0)
 
     def test_should_extract_win_rates_for_each_regime(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test win rate extraction for each regime."""
@@ -171,7 +172,7 @@ class TestRegimePerformanceAnalysis:
             assert 0 <= perf.win_rate <= 1
             # Bull market should have highest win rate
             if regime == "bull":
-                assert perf.win_rate == 0.75
+                assert perf.win_rate == approx(0.75)
 
     def test_should_generate_performance_comparison_table_data(self, extractor: BacktestingDataExtractor, multi_regime_validation_result: ValidationResult) -> None:
         """Test generation of data suitable for performance comparison tables."""

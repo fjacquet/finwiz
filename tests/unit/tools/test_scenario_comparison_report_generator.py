@@ -8,6 +8,7 @@ including side-by-side comparisons and visualizations.
 from datetime import datetime
 
 import pytest
+from pytest import approx
 
 from finwiz.quantitative.scenario_analysis import (
     ScenarioAnalysisReport,
@@ -210,8 +211,8 @@ class TestScenarioComparisonReportGenerator:
 
         tolerance_chart = sensitivity_charts["tolerance_band"]
         assert tolerance_chart["parameter_name"] == "Tolerance Band"
-        assert tolerance_chart["optimal_value"] == 0.05  # Should be the value with minimum cost
-        assert tolerance_chart["sensitivity_score"] == 4.0  # (900-500)/100 = 4.0
+        assert tolerance_chart["optimal_value"] == approx(0.05)  # Should be the value with minimum cost
+        assert tolerance_chart["sensitivity_score"] == approx(4.0)  # (900-500)/100 = 4.0
         assert len(tolerance_chart["x_values"]) == 3
         assert len(tolerance_chart["y_values"]) == 3
 

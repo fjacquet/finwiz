@@ -9,6 +9,7 @@ from datetime import datetime
 
 import pytest
 from pydantic import ValidationError
+from pytest import approx
 
 from finwiz.schemas.data_lineage import CalculationStep, DataLineage, DataSource, Transformation
 
@@ -31,7 +32,7 @@ class TestDataSource:
         assert source.source_id == "src_1"
         assert source.source_type == "api"
         assert source.source_name == "Yahoo Finance"
-        assert source.raw_value == 0.25
+        assert source.raw_value == approx(0.25)
         assert source.field_name == "volatility"
         assert source.metadata["endpoint"] == "/quote"
 
@@ -94,7 +95,7 @@ class TestDataSource:
             raw_value=0.25,
             field_name="test",
         )
-        assert source1.raw_value == 0.25
+        assert source1.raw_value == approx(0.25)
 
         # String
         source2 = DataSource(
@@ -161,7 +162,7 @@ class TestTransformation:
         assert transform.transformation_id == "trans_1"
         assert transform.operation == "type_conversion"
         assert transform.input_values == {"volatility": "0.25"}
-        assert transform.output_value == 0.25
+        assert transform.output_value == approx(0.25)
         assert transform.formula == "float(value)"
 
     def test_should_auto_generate_timestamp(self):
@@ -251,8 +252,8 @@ class TestCalculationStep:
         assert calc.inputs == {"volatility": 0.25, "max_drawdown": -0.15}
         assert calc.calculation == "Weighted average of risk metrics"
         assert calc.formula == "0.4*volatility + 0.3*max_drawdown"
-        assert calc.output == 0.85
-        assert calc.metadata["weights"]["volatility"] == 0.4
+        assert calc.output == approx(0.85)
+        assert calc.metadata["weights"]["volatility"] == approx(0.4)
 
     def test_should_auto_generate_timestamp(self):
         """Test that timestamp is auto-generated if not provided."""
@@ -341,7 +342,7 @@ class TestDataLineage:
         assert lineage.transformations == []
         assert lineage.calculations == []
         assert lineage.final_values == {}
-        assert lineage.completeness == 1.0
+        assert lineage.completeness == approx(1.0)
 
     def test_should_auto_generate_analysis_timestamp(self):
         """Test that analysis_timestamp is auto-generated."""
@@ -362,13 +363,13 @@ class TestDataLineage:
         """Test that completeness must be between 0.0 and 1.0."""
         # Valid completeness
         lineage1 = DataLineage(ticker="AAPL", asset_class="stock", completeness=0.0)
-        assert lineage1.completeness == 0.0
+        assert lineage1.completeness == approx(0.0)
 
         lineage2 = DataLineage(ticker="AAPL", asset_class="stock", completeness=0.5)
-        assert lineage2.completeness == 0.5
+        assert lineage2.completeness == approx(0.5)
 
         lineage3 = DataLineage(ticker="AAPL", asset_class="stock", completeness=1.0)
-        assert lineage3.completeness == 1.0
+        assert lineage3.completeness == approx(1.0)
 
         # Invalid completeness (< 0)
         with pytest.raises(ValidationError):
@@ -394,7 +395,7 @@ class TestDataLineage:
         assert len(lineage.sources) == 1
         assert lineage.sources[0].source_id == "src_1"
         assert lineage.sources[0].field_name == "volatility"
-        assert lineage.sources[0].raw_value == 0.25
+        assert lineage.sources[0].raw_value == approx(0.25)
 
     def test_should_add_transformation_via_helper_method(self):
         """Test adding a transformation using add_transformation() method."""
@@ -454,7 +455,7 @@ class TestDataLineage:
         source = lineage.get_source_by_field("volatility")
         assert source is not None
         assert source.field_name == "volatility"
-        assert source.raw_value == 0.25
+        assert source.raw_value == approx(0.25)
 
         # Get non-existent source
         source = lineage.get_source_by_field("nonexistent")
@@ -484,7 +485,7 @@ class TestDataLineage:
         calc = lineage.get_calculation_by_name("composite_score")
         assert calc is not None
         assert calc.step_name == "composite_score"
-        assert calc.output == 0.85
+        assert calc.output == approx(0.85)
 
         # Get non-existent calculation
         calc = lineage.get_calculation_by_name("nonexistent")
