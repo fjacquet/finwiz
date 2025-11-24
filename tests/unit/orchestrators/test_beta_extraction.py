@@ -43,9 +43,7 @@ def sample_quantitative_result(fake):
                 "macd_signal": fake.pyfloat(min_value=-5, max_value=5, right_digits=2),
             }
         },
-        "prices": {
-            "current_price": fake.pyfloat(min_value=100, max_value=200, right_digits=2)
-        }
+        "prices": {"current_price": fake.pyfloat(min_value=100, max_value=200, right_digits=2)},
     }
 
 
@@ -58,7 +56,7 @@ def sample_ticker_result(fake):
         "current_price": fake.pyfloat(min_value=100, max_value=200, right_digits=2),
         "market_cap": fake.random_int(min=1_000_000_000, max=3_000_000_000_000),
         "pe_ratio": fake.pyfloat(min_value=10, max_value=40, right_digits=2),
-        "data_source": "live_api"
+        "data_source": "live_api",
     }
 
 
@@ -73,16 +71,14 @@ def sample_company_result(fake):
             "debt_to_equity": fake.pyfloat(min_value=0.1, max_value=1.5, right_digits=2),
             "revenue_growth": fake.pyfloat(min_value=0.05, max_value=0.3, right_digits=3),
             "profit_margin": fake.pyfloat(min_value=0.1, max_value=0.3, right_digits=3),
-        }
+        },
     }
 
 
 class TestBetaExtraction:
     """Test beta extraction from quantitative analysis."""
 
-    def test_beta_extraction_from_nested_structure(
-        self, mocker, sample_quantitative_result, sample_ticker_result, sample_company_result
-    ):
+    def test_beta_extraction_from_nested_structure(self, mocker, sample_quantitative_result, sample_ticker_result, sample_company_result):
         """
         Test that beta is correctly extracted from nested performance_metrics.
 
@@ -101,34 +97,33 @@ class TestBetaExtraction:
         orchestrator = DeepAnalysisOrchestrator(state=mock_state)
 
         # Mock tool calls (patch _run method directly on tool classes)
-        mock_ticker = mocker.patch(
-            'finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run',
-            return_value=sample_ticker_result
-        )
+        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run", return_value=sample_ticker_result)
 
-        mock_company = mocker.patch(
-            'finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run',
-            return_value=sample_company_result
+        # Mock DataSourceOrchestrator to return fundamental data from sample_company_result
+        from datetime import datetime
+
+        from finwiz.data.data_source_orchestrator import OrchestrationResult
+
+        mock_orchestration_result = OrchestrationResult(
+            ticker="AAPL",
+            timestamp=datetime.now(),
+            return_on_equity=sample_company_result["financial_metrics"]["return_on_equity"],
+            debt_to_equity=sample_company_result["financial_metrics"]["debt_to_equity"],
+            sources_succeeded=["YFinance"],
+            confidence=1.0,
         )
+        mock_data_orchestrator = mocker.patch.object(orchestrator.data_orchestrator, "get_fundamental_data", new=mocker.AsyncMock(return_value=mock_orchestration_result))
 
         # Quantitative tool returns JSON string
-        mock_quant = mocker.patch(
-            'finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run',
-            return_value=json.dumps(sample_quantitative_result)
-        )
+        mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(sample_quantitative_result))
 
         # Mock sentiment tool (returns markdown)
         mock_sentiment = mocker.patch(
-            'finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run',
-            return_value="# Sentiment Analysis\n\nPositive sentiment detected."
+            "finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run", return_value="# Sentiment Analysis\n\nPositive sentiment detected."
         )
 
         # Call data collection
-        result = orchestrator._collect_data_with_python(
-            ticker="AAPL",
-            asset_class="stock",
-            batch_enabled=False
-        )
+        result = orchestrator._collect_data_with_python(ticker="AAPL", asset_class="stock", batch_enabled=False)
 
         # Validate beta is extracted
         assert "beta" in result, "Beta field must be present in flattened data"
@@ -148,12 +143,12 @@ class TestBetaExtraction:
         assert "macd" in result
         assert result["macd"] == sample_quantitative_result["technical_analysis"]["technical_indicators"]["macd"]
 
-        # Validate fundamentals
+        # Validate fundamentals (use pytest.approx for floating point comparison)
         assert "roe" in result
-        assert result["roe"] == sample_company_result["financial_metrics"]["return_on_equity"]
+        assert result["roe"] == pytest.approx(sample_company_result["financial_metrics"]["return_on_equity"], rel=1e-2)
 
         assert "debt_to_equity" in result
-        assert result["debt_to_equity"] == sample_company_result["financial_metrics"]["debt_to_equity"]
+        assert result["debt_to_equity"] == pytest.approx(sample_company_result["financial_metrics"]["debt_to_equity"], rel=1e-2)
 
     def test_flatten_preserves_all_critical_fields(self, mocker):
         """
@@ -189,19 +184,15 @@ class TestBetaExtraction:
                         "macd": 2.3,
                         "macd_signal": 1.9,
                     }
-                }
-            }
+                },
+            },
         }
 
         # Call flattening
         flattened = orchestrator._flatten_collected_data(nested_data)
 
         # Validate all fields present
-        expected_fields = [
-            "ticker", "asset_class", "current_price", "roe",
-            "beta", "volatility", "max_drawdown", "sharpe_ratio",
-            "rsi", "macd", "macd_signal"
-        ]
+        expected_fields = ["ticker", "asset_class", "current_price", "roe", "beta", "volatility", "max_drawdown", "sharpe_ratio", "rsi", "macd", "macd_signal"]
 
         for field in expected_fields:
             assert field in flattened, f"Critical field '{field}' missing after flattening"
@@ -227,15 +218,9 @@ class TestBetaExtraction:
         orchestrator = DeepAnalysisOrchestrator(state=mock_state)
 
         # Mock tools (patch _run method directly on tool classes)
-        mocker.patch(
-            'finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run',
-            return_value=sample_ticker_result
-        )
+        mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run", return_value=sample_ticker_result)
 
-        mocker.patch(
-            'finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run',
-            return_value=sample_company_result
-        )
+        mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run", return_value=sample_company_result)
 
         # Quantitative tool returns data WITHOUT beta
         quant_result_no_beta = {
@@ -244,49 +229,38 @@ class TestBetaExtraction:
                 # beta is missing!
             }
         }
-        mocker.patch(
-            'finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run',
-            return_value=json.dumps(quant_result_no_beta)
-        )
+        mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(quant_result_no_beta))
 
         # Mock sentiment and SEC
-        mocker.patch(
-            'finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run',
-            return_value="# Sentiment\n\nPositive"
-        )
+        mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run", return_value="# Sentiment\n\nPositive")
 
-        mocker.patch(
-            'finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run',
-            return_value="# SEC Analysis\n\nNo filings"
-        )
+        mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run", return_value="# SEC Analysis\n\nNo filings")
 
         # Spy on logger to verify warning
-        mock_logger = mocker.patch.object(orchestrator, 'logger')
+        mock_logger = mocker.patch.object(orchestrator, "logger")
 
         # Call data collection
-        result = orchestrator._collect_data_with_python(
-            ticker="AAPL",
-            asset_class="stock",
-            batch_enabled=False
-        )
+        result = orchestrator._collect_data_with_python(ticker="AAPL", asset_class="stock", batch_enabled=False)
 
         # Verify beta is missing
         assert "beta" not in result or result.get("beta") is None
 
         # Verify warning was logged
-        warning_calls = [call for call in mock_logger.warning.call_args_list
-                        if 'beta' in str(call).lower()]
+        warning_calls = [call for call in mock_logger.warning.call_args_list if "beta" in str(call).lower()]
         assert len(warning_calls) > 0, "Should log warning about missing beta field"
 
 
 class TestCriticalFieldValidation:
     """Test validation of all critical fields for each asset class."""
 
-    @pytest.mark.parametrize("asset_class,required_fields", [
-        ("stock", ["current_price", "roe", "debt_to_equity", "revenue_growth", "volatility", "beta"]),
-        ("etf", ["current_price", "expense_ratio", "volatility"]),
-        ("crypto", ["current_price", "market_cap", "volume_24h", "volatility", "age_years"]),
-    ])
+    @pytest.mark.parametrize(
+        "asset_class,required_fields",
+        [
+            ("stock", ["current_price", "roe", "debt_to_equity", "revenue_growth", "volatility", "beta"]),
+            ("etf", ["current_price", "expense_ratio", "volatility"]),
+            ("crypto", ["current_price", "market_cap", "volume_24h", "volatility", "age_years"]),
+        ],
+    )
     def test_required_fields_by_asset_class(self, mocker, asset_class, required_fields):
         """
         Test that required fields are identified for each asset class.
@@ -301,9 +275,7 @@ class TestCriticalFieldValidation:
         for field in required_fields:
             assert field in critical_fields, f"{field} should be critical for {asset_class}"
 
-    def test_stock_data_collection_includes_fundamentals(
-        self, mocker, sample_ticker_result, sample_company_result, sample_quantitative_result
-    ):
+    def test_stock_data_collection_includes_fundamentals(self, mocker, sample_ticker_result, sample_company_result, sample_quantitative_result):
         """
         Test that stock data collection includes all fundamental metrics.
 
@@ -317,37 +289,18 @@ class TestCriticalFieldValidation:
         orchestrator = DeepAnalysisOrchestrator(state=mock_state)
 
         # Mock all tools (patch _run method directly on tool classes)
-        mocker.patch(
-            'finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run',
-            return_value=sample_ticker_result
-        )
+        mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run", return_value=sample_ticker_result)
 
-        mocker.patch(
-            'finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run',
-            return_value=sample_company_result
-        )
+        mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run", return_value=sample_company_result)
 
-        mocker.patch(
-            'finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run',
-            return_value=json.dumps(sample_quantitative_result)
-        )
+        mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(sample_quantitative_result))
 
-        mocker.patch(
-            'finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run',
-            return_value="# Sentiment\n\nPositive"
-        )
+        mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run", return_value="# Sentiment\n\nPositive")
 
-        mocker.patch(
-            'finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run',
-            return_value="# SEC Analysis\n\nStrong fundamentals"
-        )
+        mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run", return_value="# SEC Analysis\n\nStrong fundamentals")
 
         # Call data collection for STOCK
-        result = orchestrator._collect_data_with_python(
-            ticker="AAPL",
-            asset_class="stock",
-            batch_enabled=False
-        )
+        result = orchestrator._collect_data_with_python(ticker="AAPL", asset_class="stock", batch_enabled=False)
 
         # Verify fundamental metrics
         assert "roe" in result, "Stock analysis requires ROE"

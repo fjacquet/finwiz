@@ -107,9 +107,11 @@ coverage-check:
 
 # Code Quality
 lint:
-	ruff check .
+	ruff check --fix .
+	ruff format .
 
 format:
+	ruff check --fix .
 	ruff format .
 
 check: lint test check-unittest-mock docs-validate
@@ -136,7 +138,7 @@ check-unittest-mock:
 
 # Cleanup
 clean:
-	rm -rf .mypy_cache .pytest_cache .ruff_cache htmlcov
+	rm -rf .mypy_cache .pytest_cache .ruff_cache htmlcov output cache logs
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
 	find . -name ".DS_Store" -delete

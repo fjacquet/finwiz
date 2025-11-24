@@ -255,12 +255,12 @@ class StockCrew:
     def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:
         if inputs is None:
             inputs = {}
-        
+
         # PYTHON SERVICE: Get historical analysis context from Supabase
         # This is NOT an agent tool - it's called before crew execution
         ticker = inputs.get("ticker", "")
         asset_class = inputs.get("asset_class", "stock")
-        
+
         historical_context = get_historical_context_for_inputs(ticker, asset_class)
         if historical_context:
             # Add to inputs so task descriptions can reference it
@@ -269,7 +269,7 @@ class StockCrew:
         else:
             # Graceful fallback - empty string if unavailable
             inputs["historical_context"] = ""
-        
+
         # Execute crew with enhanced inputs
         crew_instance = self.crew()
         result = crew_instance.kickoff(inputs=inputs)
@@ -282,9 +282,9 @@ Then in task descriptions (config/tasks.yaml), reference the historical context:
 analysis_task:
   description: >
     Analyze {ticker} ({asset_class}) with comprehensive research.
-    
+
     {historical_context}
-    
+
     Perform the following analysis steps:
     1. Validate ticker using TickerValidationTool
     2. Fetch financial data

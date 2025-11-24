@@ -19,6 +19,10 @@ from finwiz.flow_state import DeepAnalysisResult
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
 from finwiz.scoring.risk_scorer import RiskScorer
 from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
+from finwiz.scoring.technical_fallback import (
+    calculate_missing_technical_indicators,
+    get_price_history_from_data,
+)
 from finwiz.scoring.technical_scorer import TechnicalScorer
 
 logger = logging.getLogger(__name__)
@@ -142,6 +146,7 @@ class DeepAnalysisScorer:
         # Define expected fields based on asset class
         expected_fields = self._get_expected_fields(asset_class)
         self._data_quality_metrics.set_expected_fields(expected_fields)
+        self.logger.info(f"📋 Initialized data quality tracking for {ticker} ({asset_class}): expecting {len(expected_fields)} fields")
 
     def _validate_critical_fields(self, ticker: str, asset_class: str, data: dict[str, Any]) -> None:
         """
@@ -184,6 +189,10 @@ class DeepAnalysisScorer:
             Dictionary with component scores and details
 
         """
+        # Calculate missing technical indicators as fallback
+        price_history = get_price_history_from_data(data)
+        data = calculate_missing_technical_indicators(data, price_history)
+
         # Calculate component scores (with data quality tracking)
         fundamental_score, fundamental_details = self.calculate_fundamental_score(asset_class, data)
         technical_score, technical_details = self.calculate_technical_score(data)
@@ -222,29 +231,20 @@ class DeepAnalysisScorer:
         if is_quality_company:
             # Quality companies: emphasize fundamentals over short-term volatility
             weight_fundamental = 0.50  # +10% from default 0.40
-            weight_technical = 0.25    # -5% from default 0.30
-            weight_risk = 0.25         # -5% from default 0.30
-            self.logger.info(f"✨ Quality company detected - using adaptive weights (50/25/25)")
+            weight_technical = 0.25  # -5% from default 0.30
+            weight_risk = 0.25  # -5% from default 0.30
+            self.logger.info("✨ Quality company detected - using adaptive weights (50/25/25)")
         else:
             # Standard companies: use default balanced weights
             weight_fundamental = self.thresholds.weight_fundamental  # 0.40
-            weight_technical = self.thresholds.weight_technical      # 0.30
-            weight_risk = self.thresholds.weight_risk                # 0.30
+            weight_technical = self.thresholds.weight_technical  # 0.30
+            weight_risk = self.thresholds.weight_risk  # 0.30
 
         # Calculate weighted composite score
-        composite_score = (
-            weight_fundamental * scores["fundamental_score"]
-            + weight_technical * scores["technical_score"]
-            + weight_risk * scores["risk_score"]
-        )
+        composite_score = weight_fundamental * scores["fundamental_score"] + weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]
 
         # Store adaptive weights in scores for transparency
-        scores["weights_used"] = {
-            "fundamental": weight_fundamental,
-            "technical": weight_technical,
-            "risk": weight_risk,
-            "is_quality_company": is_quality_company
-        }
+        scores["weights_used"] = {"fundamental": weight_fundamental, "technical": weight_technical, "risk": weight_risk, "is_quality_company": is_quality_company}
 
         # Track composite score calculation in lineage
         self._lineage_tracker.add_calculation(
@@ -265,7 +265,7 @@ class DeepAnalysisScorer:
                     "risk": weight_risk,
                 },
                 "is_quality_company": is_quality_company,
-                "weight_type": "adaptive_quality" if is_quality_company else "standard"
+                "weight_type": "adaptive_quality" if is_quality_company else "standard",
             },
         )
 
@@ -336,8 +336,16 @@ class DeepAnalysisScorer:
         # Get data quality summary
         data_quality_summary = self._data_quality_metrics.get_summary()
 
-        # Log data quality warnings if needed
+        # Log data quality metrics
         quality_level = data_quality_summary["quality_level"]
+        field_tracking = data_quality_summary.get("field_tracking", {})
+        self.logger.info(
+            f"📊 Data quality for {ticker}: "
+            f"completeness={data_quality_summary['completeness_score']:.1%}, "
+            f"quality={data_quality_summary['quality_score']:.1%}, "
+            f"calculated={field_tracking.get('calculated', 0)}/{field_tracking.get('total_expected', 0)} fields"
+        )
+
         if quality_level == "low":
             self.logger.warning(
                 f"⚠️ Low data quality for {ticker}: completeness={data_quality_summary['completeness_score']:.1%}, quality={data_quality_summary['quality_score']:.1%}"
@@ -476,6 +484,10 @@ class DeepAnalysisScorer:
             Tuple of (score, details_dict)
 
         """
+        # Pass data quality metrics to technical scorer
+        if self._data_quality_metrics is not None:
+            self.technical_scorer.set_data_quality_metrics(self._data_quality_metrics)
+
         # Delegate to component scorer
         return self.technical_scorer.calculate_technical_score(data)
 
@@ -491,6 +503,10 @@ class DeepAnalysisScorer:
             Tuple of (score, details_dict)
 
         """
+        # Pass data quality metrics to risk scorer
+        if self._data_quality_metrics is not None:
+            self.risk_scorer.set_data_quality_metrics(self._data_quality_metrics)
+
         # Delegate to component scorer
         return self.risk_scorer.calculate_risk_score(data)
 

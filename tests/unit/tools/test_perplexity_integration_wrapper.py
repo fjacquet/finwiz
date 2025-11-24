@@ -385,6 +385,9 @@ class TestPerplexityIntegrationWrapper:
         # Mock HTTP request timeout
         mocker.patch("requests.post", side_effect=Exception("Request timeout"))
 
+        # Mock sleep to avoid actual retry delays (CRITICAL for fast tests)
+        mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
+
         # Act
         result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))
 
@@ -401,6 +404,9 @@ class TestPerplexityIntegrationWrapper:
 
         # Mock HTTP connection error
         mocker.patch("requests.post", side_effect=Exception("Connection failed"))
+
+        # Mock sleep to avoid actual retry delays (CRITICAL for fast tests)
+        mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
 
         # Act
         result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))

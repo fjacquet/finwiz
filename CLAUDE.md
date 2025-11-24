@@ -214,13 +214,23 @@ def reporter(self) -> Agent:
 ```yaml
 # config/tasks.yaml
 analysis_task:
-  description: "Analyze {ticker} with quantitative metrics"
+  description: >
+    Analyze {ticker} with quantitative metrics
+    
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with {{ and ending with }}
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+  
   expected_output: "Structured analysis with risk assessment"
   output_pydantic: "TenKInsight"
   output_json: true
   agent: analyst
   async_execution: true  # Except final task
 ```
+
+**CRITICAL**: Every task with `output_json: true` or `output_pydantic` MUST include the JSON OUTPUT REQUIREMENTS section in its description to prevent LLM from adding explanatory text.
 
 ### Tool Factories Pattern
 

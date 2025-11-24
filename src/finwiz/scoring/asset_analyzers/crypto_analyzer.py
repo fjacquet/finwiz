@@ -32,6 +32,7 @@ class CryptoAnalyzer(AssetAnalyzer):
 
     def __init__(self) -> None:
         """Initialize the crypto analyzer."""
+        super().__init__()  # Initialize base class
         self.logger = logger
         self.thresholds = get_thresholds()  # Default thresholds
 
@@ -188,7 +189,11 @@ class CryptoAnalyzer(AssetAnalyzer):
         try:
             value = data.get(key)
             if value is None:
+                self._track_calculated_field(key, None, default)
                 return default
-            return float(value)
+            float_value = float(value)
+            self._track_calculated_field(key, float_value, default)
+            return float_value
         except (ValueError, TypeError):
+            self._track_calculated_field(key, None, default)
             return default

@@ -66,6 +66,10 @@ class FundamentalScorer:
             # Pass thresholds to analyzer
             analyzer.set_thresholds(self.thresholds)
 
+            # Pass data quality metrics to analyzer for field tracking
+            if self._data_quality_metrics is not None:
+                analyzer.set_data_quality_metrics(self._data_quality_metrics)
+
             # Delegate to asset-specific analyzer
             return analyzer.calculate_fundamental_score(data)
 

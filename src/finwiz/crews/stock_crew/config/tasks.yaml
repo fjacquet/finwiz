@@ -1,452 +1,402 @@
 # ============================================================================
-# DISCOVERY CREW - Designed to screen and identify top 10 assets
+# STOCK CREW - HYBRID PYTHON/AI ANALYSIS ARCHITECTURE
 # ============================================================================
-# For single-ticker deep analysis, use DeepAnalysisCrew instead
-# Runs AFTER portfolio analysis to find NEW opportunities
+# This crew implements the hybrid approach where:
+# - Python performs ALL deterministic calculations (scores, grades, metrics)
+# - AI agents provide ONLY qualitative insights and contextual analysis
+# - NO financial recalculations by AI - Python metrics are READ-ONLY context
 # ============================================================================
 
-# Market Analysis Tasks
-market_technical_analysis_task:
+sec_analysis_task:
   description: >
-    Define the market and technical analysis task.
-
-    This task involves researching stock market trends and conducting in-depth
-    financial analysis of companies, focusing on identifying promising stocks
-    and evaluating their fundamentals, valuation, and growth prospects.
-
-    Research and identify current market trends in established sectors of the
-    stock market. Focus on stable, blue-chip companies with strong
-    fundamentals and consistent performance.
-
-    1. Identify key market trends and growth sectors as of {full_date}.
-    2. Analyze current market sentiment and adoption potential.
-    3. Examine historical patterns indicating growth potential, considering 
-    the present market context as of {full_date}.
-
-    CRITICAL OUTPUT FORMAT:
-    - Return ONLY the MarketTrend object directly - do NOT wrap it in additional fields
-    - Do NOT add wrapper fields like "data", "trends", "analysis", etc.
-    - The JSON must match the MarketTrend schema exactly
+    Analyze SEC 10-K and 10-Q filings for {ticker} to extract qualitative business insights.
     
-    REQUIRED ENUM VALUES (use EXACTLY these values):
-    - market_sentiment: MUST be one of: "bullish", "bearish", "neutral", "mixed" (lowercase)
+    CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
+    - Python has calculated ALL financial metrics (ROE, debt ratios, growth rates)
+    - Python grade: {grade}, composite score: {composite_score}
+    - Python preliminary recommendation: {preliminary_recommendation}
     
-    OUTPUT: Return a structured JSON output conforming to the MarketTrend schema.
+    YOUR EXCLUSIVE FOCUS (Qualitative Analysis Only):
+    1. Business Model Deep Dive
+       - How does the company make money?
+       - What are the key revenue streams?
+       - What is the business model sustainability?
+    
+    2. Competitive Advantages Analysis
+       - What moats protect the business?
+       - What makes this company unique?
+       - How defensible is the competitive position?
+    
+    3. Strategic Direction Assessment
+       - What are the key strategic initiatives?
+       - How is management positioning for growth?
+       - What are the innovation priorities?
+    
+    4. Risk Factors from Filings
+       - What risks does management disclose?
+       - What are the material uncertainties?
+       - What could disrupt the business model?
+    
+    DO NOT recalculate any financial metrics - focus on qualitative business insights.
+    Use the Enhanced SEC Analysis Tool to fetch filing data, then interpret qualitatively.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured analysis of current stock market trends and emerging sectors with
-    growth potential, conforming to the MarketTrend Pydantic schema.
-    
-    IMPORTANT: Return the object directly without any wrapper fields.
-  agent: market_technical_analyst
-  output_pydantic: MarketTrend
-  output_file: "output/stock/stock_market_trends.json"
+    SecAnalysisInsights Pydantic object containing:
+    - business_model: Comprehensive business model analysis (minimum 100 words)
+    - competitive_advantages: List of identified competitive advantages
+    - risk_factors: Risk factors from SEC filings with severity ratings
+    - strategic_initiatives: Key strategic initiatives with expected impact
+  
+  agent: sec_analyst
+  output_pydantic: SecAnalysisInsights
   async_execution: true
 
-# Stock Screening Tasks
-stock_screening_task:
+fundamental_context_task:
   description: >
-    FIRST: Read the schema files docs/schemas/MarketSentiment.schema.json and 
-    docs/schemas/examples/market_sentiment.example.json to understand the exact output format required.
+    Provide industry context and competitive positioning for {ticker}.
     
-    As an AI-driven financial analyst, use your reasoning capabilities to screen and identify 
-    the top 10 stable, blue-chip stocks with strong fundamentals. Your analysis should demonstrate 
-    clear AI reasoning and decision-making throughout the process.
-
-    AI REASONING REQUIREMENTS:
-    - Apply intelligent reasoning to evaluate each stock's potential
-    - Provide clear rationale for why each stock was selected or rejected
-    - Demonstrate understanding of market dynamics and financial relationships
-    - Show adaptive thinking based on current market conditions as of {full_date}
-    - Generate insights that go beyond simple rule-based calculations
+    CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
+    - Python has calculated ROE: {fundamental_metrics[roe]}
+    - Python has calculated debt/equity: {fundamental_metrics[debt_to_equity]}
+    - Python has calculated revenue growth: {fundamental_metrics[revenue_growth]}
+    - Python fundamental score: {fundamental_score}
     
-    CRITICAL DATE CONTEXT:
-    - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
-    - All analysis must reflect market conditions as of {full_date}, NOT historical dates
-    - When searching or analyzing, use {full_date} as the current date context
-
-    ANALYSIS PROCESS (AI-DRIVEN):
-    1. Use AI reasoning to screen stocks using stability and value metrics, explaining your methodology
-    2. Apply intelligent evaluation of financial fundamentals and dividend history with clear reasoning
-    3. Demonstrate AI assessment of management teams and corporate governance quality
-    4. Use reasoning to select the top 10 stocks with optimal risk-return profiles
-    5. Validate each proposed ticker using the "Ticker Existence Validation Tool":
-       - For equities/ETFs use Yahoo Finance existence and quoteType
-       - For crypto proposals (if any), validate via Coinbase Products API
-       - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones
-    6. AI-driven sentiment analysis: Use the "Standardized Sentiment Analysis Tool" with intelligent interpretation:
-       - FIRST: Read docs/schemas/examples/market_sentiment.example.json to understand the exact output format
-       - Apply AI reasoning to analyze recent headlines/snippets (last 30–90 days) for each candidate
-       - Use intelligent classification with weighted scoring and confidence intervals
-       - Generate AI insights on aggregate metrics: mean score, weighted score, counts per label
-       - IMPORTANT: Use only "pos", "neu", "neg" as keys in the counts field (not "Bullish", "Bearish", etc.)
-       - Apply reasoning to extract trending topics with relevance scoring
-       - Use AI judgment to select top 3 positive/negative headlines with source URLs and dates
-       - Apply standardized cross-asset sentiment methodology with intelligent adaptation
-
-    AI OUTPUT REQUIREMENTS:
-    - Include explicit AI reasoning for each stock selection
-    - Provide confidence levels based on AI analysis
-    - Demonstrate understanding of market interconnections
-    - Show adaptive thinking for current market conditions as of {full_date}
-    - Generate actionable insights that reflect AI decision-making
-
-    Today is {full_date}. Ensure your AI analysis reflects current market
-    conditions. IMPORTANT: Use only real, existing stocks with accurate ticker
-    symbols.
-
-    CRITICAL OUTPUT FORMAT:
-    - Return ONLY the StockScreeningResult object directly - do NOT wrap it in additional fields
-    - Do NOT add wrapper fields like "data", "results", "stocks", etc.
-    - The JSON must match the StockScreeningResult schema exactly
+    YOUR EXCLUSIVE FOCUS (Qualitative Context Only):
+    1. Industry Analysis
+       - What are the key industry trends?
+       - How is the competitive landscape evolving?
+       - What are the industry growth drivers?
     
-    REQUIRED ENUM VALUES (use EXACTLY these values):
-    - sentiment.counts keys: MUST be exactly "pos", "neu", "neg" (NOT "Bullish", "Bearish", "Neutral")
+    2. Growth Drivers
+       - What catalysts could drive future growth?
+       - What market opportunities exist?
+       - What are the expansion possibilities?
     
-    OUTPUT: Return a structured JSON output conforming to the StockScreeningResult schema.
+    3. Competitive Positioning
+       - How does the company compare to peers?
+       - What is the market share trajectory?
+       - What are the competitive strengths/weaknesses?
+    
+    4. Management Assessment
+       - What is the management track record?
+       - How effective is capital allocation?
+       - What is the corporate governance quality?
+    
+    DO NOT recalculate ROE, debt ratios, or growth rates - provide context for these metrics.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured list of 10 emerging stocks with potential, conforming to the 
-    StockScreeningResult Pydantic schema. Include ticker symbols, analysis, and 
-    market sentiment summaries with aggregate metrics and cited headlines.
-    
-    CRITICAL SCHEMA REQUIREMENTS:
-    - Read docs/schemas/MarketSentiment.schema.json and docs/schemas/examples/market_sentiment.example.json
-    - The counts field MUST use exactly these keys: "pos", "neu", "neg" (NOT "Bullish", "Bearish", etc.)
-    - All dates must be in ISO format with timezone (e.g., "2025-09-27T00:00:00Z")
-    - Follow the exact schema structure shown in the example files
-    - Return the object directly without any wrapper fields
-  agent: market_technical_analyst
-  output_pydantic: StockScreeningResult
-  output_file: "output/stock/emerging_stocks_analysis.json"
+    FundamentalContextInsights Pydantic object containing:
+    - industry_analysis: Industry context and trends (minimum 100 words)
+    - growth_drivers: Key growth drivers and catalysts
+    - competitive_positioning: Competitive positioning analysis
+    - management_assessment: Management quality and track record
+  
+  agent: fundamental_analyst
+  output_pydantic: FundamentalContextInsights
   async_execution: true
   depends_on:
-    - market_technical_analysis_task
+    - sec_analysis_task
 
-# Technical Detail Tasks
-technical_detail_task:
+technical_strategy_task:
   description: >
-    As an AI financial analyst, perform detailed technical analysis on each of the 10 stocks 
-    identified in the previous stock_screening_task. Use the ticker symbols from the 
-    StockScreeningResult context to analyze each stock using advanced reasoning and 
-    decision-making capabilities.
-
-    CRITICAL CONTEXT USAGE:
-    - The previous task (stock_screening_task) has provided the 10 ticker symbols in the context
-    - Check your context/memory for the StockScreeningResult from the previous task
-    - If you can see the tickers in the context, use those
-    - If the context is not available, analyze these 10 blue-chip stocks: AAPL, MSFT, GOOGL, AMZN, NVDA, JPM, JNJ, PG, XOM, MA
-    - Do NOT search the knowledge base
-    - Do NOT use file listing tools
-    - Do NOT use "Read a file's content" tool
-    - START ANALYSIS IMMEDIATELY with the tickers (from context or the default list above)
-
-    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
-    - NEVER EVER pass JSON arrays like [{...}, {...}] to ANY tool
-    - NEVER pass JSON strings to tools  
-    - ALWAYS call tools with simple key=value parameters: tool(ticker="AAPL")
-    - Call each tool ONCE PER TICKER individually
-    - Do NOT use "List files in directory" or "Read a file's content" tools
-    - Use ONLY the analysis tools: Enhanced SEC Analysis, Quantitative Analysis, etc.
-
-    AI REASONING REQUIREMENTS:
-    - Apply intelligent reasoning to interpret financial data and technical indicators
-    - Provide clear AI-generated insights that go beyond simple data reporting
-    - Demonstrate understanding of complex financial relationships and market dynamics
-    - Show adaptive analysis based on current market conditions and company-specific factors
-    - Generate investment recommendations based on AI reasoning, not just algorithmic rules
-
-    AI-DRIVEN ANALYSIS PROCESS:
-    1. Use AI reasoning to analyze financial fundamentals for each stock using latest data as of {full_date}:
-       - Apply intelligent interpretation of financial metrics and ratios
-       - Generate insights on financial health and performance trends
-       - Provide reasoned assessment of financial strength and weaknesses
-    2. Apply AI assessment of growth scalability and efficiency metrics:
-       - Use reasoning to evaluate sustainable growth potential
-       - Generate insights on operational efficiency and competitive positioning
-    3. Use AI reasoning to evaluate balance sheet strength and risk factors as of {full_date}:
-       - Apply intelligent risk assessment beyond simple ratio analysis
-       - Generate insights on financial stability and potential vulnerabilities
-    4. Apply AI reasoning to examine competitive advantages and innovation potential:
-       - Use intelligent analysis of competitive moats and market positioning
-       - Generate insights on innovation capacity and future growth drivers
-    5. AI-enhanced 10-K extraction: Use the "Enhanced SEC Analysis Tool" with intelligent interpretation:
-       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
-         * ticker: "AAPL" (one ticker at a time)
-         * form_type: "10-K"
-         * sections: ["Item 1", "Item 1A", "Item 7"]
-         * risk_assessment: true
-         * include_perplexity: true
-       - Apply AI reasoning to extract and synthesize insights from SEC filings
-       - Generate intelligent summaries of Business Overview, Risk Factors, MD&A, and Market Risk Disclosures
-       - Use AI to identify material year-over-year changes and their implications
-       - Provide AI-generated risk assessments with clear reasoning
-    6. AI-driven technical indicators analysis: Use tools with intelligent interpretation:
-       - Apply AI reasoning to interpret RSI/MACD/Bollinger Bands signals
-       - Generate insights on technical patterns and their implications
-       - Use AI to synthesize multiple indicator signals into coherent analysis
-    7. AI-enhanced quantitative analysis: Use the "Quantitative Analysis Tool" with intelligent interpretation:
-       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
-         * symbol: "AAPL" (one ticker at a time)
-         * asset_class: "stock"
-         * analysis_type: "comprehensive"
-         * timeframe: "1y"
-         * strategy: "sma_crossover"
-       - Apply AI reasoning to interpret backtesting results and performance metrics
-       - Generate AI-driven investment recommendations based on quantitative insights
-       - Use reasoning to assess risk-adjusted performance and portfolio fit
-    8. AI-interpreted charts: Generate and intelligently analyze visual charts:
-       - Use AI reasoning to interpret chart patterns and technical formations
-       - Generate insights on price action and trend analysis
-
-    AI OUTPUT REQUIREMENTS:
-    - Include explicit AI reasoning for each technical assessment
-    - Provide AI-generated confidence levels and uncertainty acknowledgments
-    - Demonstrate intelligent synthesis of multiple data sources
-    - Show adaptive thinking for current market conditions as of {full_date}
-    - Generate actionable investment insights based on AI decision-making
-
-    Ensure your AI analysis reflects the company's status as of {full_date}.
+    Interpret technical patterns and develop entry/exit strategy for {ticker}.
     
-    CRITICAL OUTPUT FORMAT:
-    - Return ONLY the StockTechnicalAnalysis object directly - do NOT wrap it in additional fields
-    - Do NOT add wrapper fields like "data", "analysis", "results", etc.
-    - The JSON must match the StockTechnicalAnalysis schema exactly
+    CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
+    - Python has calculated RSI: {technical_indicators[rsi]}
+    - Python has calculated MACD: {technical_indicators[macd]}
+    - Python has calculated trend strength: {technical_indicators[trend_strength]}
+    - Python technical score: {technical_score}
     
-    REQUIRED ENUM VALUES (use EXACTLY these values):
-    - recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase)
+    YOUR EXCLUSIVE FOCUS (Qualitative Technical Analysis Only):
+    1. Chart Patterns
+       - What chart patterns are forming?
+       - What technical formations are significant?
+       - What do the patterns suggest about momentum?
     
-    OUTPUT: Return a structured JSON output conforming to the StockTechnicalAnalysis schema.
+    2. Support/Resistance Levels
+       - What are the key support levels?
+       - What are the key resistance levels?
+       - What price levels are critical?
+    
+    3. Entry/Exit Strategy
+       - What are optimal entry points?
+       - What are target exit prices?
+       - What stop-loss levels are appropriate?
+    
+    4. Timing Assessment
+       - Is this a good time to enter?
+       - What is the momentum direction?
+       - What are the timing risks?
+    
+    DO NOT recalculate RSI, MACD, or other indicators - interpret the signals qualitatively.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured technical assessment of each stock conforming to the StockTechnicalAnalysis 
-    Pydantic schema. Include financial metrics, 10-K insights with SEC citations, quantitative 
-    analysis with backtesting results, and investment recommendations.
-    
-    IMPORTANT: Return the object directly without any wrapper fields.
-  agent: market_technical_analyst
-  output_pydantic: StockTechnicalAnalysis
-  output_file: "output/stock/stock_technical_details.json"
+    TechnicalStrategyInsights Pydantic object containing:
+    - chart_patterns: Identified chart patterns and formations
+    - support_resistance: Key support and resistance levels
+    - entry_exit_strategy: Entry/exit strategy with price targets (minimum 100 words)
+    - timing_assessment: Market timing and momentum assessment
+  
+  agent: technical_analyst
+  output_pydantic: TechnicalStrategyInsights
   async_execution: true
   depends_on:
-    - stock_screening_task
+    - fundamental_context_task
 
-# Risk Analysis Tasks
-stock_risk_assessment_task:
+contextual_risk_task:
   description: >
-    As an AI risk assessment specialist, evaluate risks for each of the 10 stocks using advanced 
-    reasoning and intelligent decision-making. Your analysis should demonstrate clear AI thinking 
-    and provide insights that go beyond simple rule-based risk scoring.
-
-    ⚠️ CRITICAL TOOL USAGE RULES ⚠️
-    - NEVER pass JSON arrays or multiple tickers to tools
-    - ALWAYS call each tool ONCE PER TICKER individually
-    - Use the exact parameter names and formats shown in the instructions below
-    - Tools expect individual parameters, NOT JSON strings or arrays
-
-    AI REASONING REQUIREMENTS:
-    - Apply intelligent risk assessment that considers complex interdependencies
-    - Provide clear AI-generated insights on risk factors and their potential impacts
-    - Demonstrate understanding of systemic vs. idiosyncratic risks
-    - Show adaptive risk analysis based on current market conditions and company-specific factors
-    - Generate risk mitigation strategies based on AI reasoning
-
-    CRITICAL: Use the stocks from the technical_detail_task output (context). Do NOT ask for user input.
-    Extract the ticker symbols and analyze each one.
-
-    AI-DRIVEN RISK ASSESSMENT PROCESS:
-    1. AI-enhanced SEC analysis: Use the "Enhanced SEC Analysis Tool" with intelligent interpretation:
-       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
-         * ticker: "AAPL" (one ticker at a time)
-         * form_type: "10-K"
-         * sections: ["Item 1A", "Item 7", "Item 7A"]
-         * risk_assessment: true
-         * include_perplexity: false
-       - Apply AI reasoning to extract and synthesize risk factors from 10-K filings
-       - Generate intelligent risk categorization and impact assessment
-       - Use AI to identify emerging risks not explicitly stated in filings
-    2. AI-driven regulatory risk assessment: Apply intelligent analysis of regulatory challenges:
-       - Use reasoning to assess regulatory compliance status and future regulatory risks
-       - Generate insights on regulatory trends and their potential impacts
-    3. AI-powered financial stability analysis: Use intelligent assessment of financial risks:
-       - Apply AI reasoning to evaluate debt structure and liquidity risks
-       - Generate insights on financial stability under various stress scenarios
-    4. AI-driven valuation risk analysis: Apply intelligent valuation risk assessment:
-       - Use reasoning to evaluate P/E ratios, revenue concentration, and growth sustainability
-       - Generate insights on valuation risks relative to market conditions and peer comparisons
-    5. AI-enhanced competitive risk assessment: Apply intelligent competitive analysis:
-       - Use reasoning to evaluate competitive threats and market positioning
-       - Generate insights on competitive moats and vulnerability to disruption
-    6. AI-driven governance risk analysis: Apply intelligent assessment of management risks:
-       - Use reasoning to evaluate management quality and corporate governance
-       - Generate insights on governance risks and their potential impacts
-    7. AI-enhanced risk scoring: Apply the "Standardized Risk Scoring Tool" with intelligent interpretation:
-       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
-         * symbol: "AAPL" (one ticker at a time)
-         * asset_class: "stock"
-         * risk_factors: ["list", "of", "identified", "risks"]
-       - Use AI reasoning to generate consistent 0-5 risk scores with clear justification
-       - Provide AI-generated confidence levels and uncertainty acknowledgments
-    8. AI-driven quantitative risk assessment: Use the "Quantitative Analysis Tool" with intelligent interpretation:
-       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
-         * symbol: "AAPL" (one ticker at a time)
-         * asset_class: "stock"
-         * analysis_type: "comprehensive"
-         * timeframe: "1y"
-         * strategy: "sma_crossover"
-       - Apply AI reasoning to interpret VaR, drawdown analysis, and risk-adjusted metrics
-       - Generate AI insights on portfolio risk contributions and correlations
-       - Use reasoning to assess risk-adjusted performance in current market context
-    9. AI-enhanced sentiment risk analysis: Use the "Standardized Sentiment Analysis Tool" with intelligent interpretation:
-       - IMPORTANT: Call the tool ONCE PER TICKER with these parameters:
-         * symbol: "AAPL" (one ticker at a time)
-         * asset_class: "stock"
-         * max_articles: 50
-         * days_back: 90
-         * include_trending: true
-       - Apply AI reasoning to analyze sentiment trends and their risk implications
-       - Generate insights on sentiment-driven risks and market perception risks
-       - Use AI to identify sentiment patterns that may indicate emerging risks
-
-    AI OUTPUT REQUIREMENTS:
-    - Include explicit AI reasoning for each risk assessment
-    - Provide AI-generated risk scenarios and their probability assessments
-    - Demonstrate intelligent synthesis of multiple risk factors
-    - Show adaptive risk thinking for current market conditions
-    - Generate actionable risk mitigation strategies based on AI decision-making
-    - Include AI confidence levels and acknowledgment of uncertainties
-
-    Follow the output instructions in docs/output_formatting_guide.md.
+    Analyze contextual risks for {ticker} beyond quantitative metrics.
+    
+    CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
+    - Python has calculated volatility: {risk_metrics[volatility]}
+    - Python has calculated beta: {risk_metrics[beta]}
+    - Python has calculated max drawdown: {risk_metrics[max_drawdown]}
+    - Python risk score: {risk_score}
+    
+    YOUR EXCLUSIVE FOCUS (Qualitative Risk Analysis Only):
+    1. Regulatory Risks
+       - What regulatory changes could impact the business?
+       - What compliance challenges exist?
+       - What policy risks are material?
+    
+    2. Geopolitical Risks
+       - What geopolitical events could affect operations?
+       - What macroeconomic risks are relevant?
+       - What currency or trade risks exist?
+    
+    3. Competitive Risks
+       - What competitive threats are emerging?
+       - What disruption risks exist?
+       - What market share risks are present?
+    
+    4. Operational Risks
+       - What execution risks exist?
+       - What supply chain vulnerabilities are present?
+       - What operational challenges could arise?
+    
+    5. Stress Scenarios
+       - What worst-case scenarios should be considered?
+       - How resilient is the business model?
+       - What are the tail risks?
+    
+    DO NOT recalculate volatility, beta, or drawdown - identify qualitative risk factors.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A detailed risk profile for each stock covering regulatory, financial,
-    valuation, competitive, and governance risks. Include standardized risk scores
-    (0-5 scale) with consistent methodology. Include a "Market Sentiment"
-    subsection per ticker with aggregates and cited examples. Include a "Quantitative Risk Metrics"
-    subsection with VaR, drawdown analysis, and risk-adjusted performance metrics.
-    The report should be formatted in professional looking HTML with emojis for better
-    visualization.
-    Also include a machine-readable JSON appendix containing:
-    - risk_assessments[] matching the RiskAssessmentStandardized schema for each ticker
-    - quantitative_risk_metrics[] with comprehensive risk analysis for each ticker
-    The report should be formatted in HTML with emojis for better
-    visualization.
-  agent: investment_risk_analyst
-  output_file: "output/stock/stock_investment_risk_strategy_en.html"
+    ContextualRiskInsights Pydantic object containing:
+    - regulatory_risks: Regulatory and compliance risks
+    - geopolitical_risks: Geopolitical and macroeconomic risks
+    - competitive_risks: Competitive and market risks
+    - operational_risks: Operational and execution risks
+    - stress_scenarios: Stress test scenarios and outcomes
+  
+  agent: risk_analyst
+  output_pydantic: ContextualRiskInsights
   async_execution: true
   depends_on:
-    - technical_detail_task
+    - technical_strategy_task
 
-# translation_task:
-#   description: >
-#     Translate the comprehensive English stock investment report to French
-#     while preserving the exact HTML structure, CSS styling, emojis, and formatting.
-#     Maintain all technical financial terminology accuracy and professional tone.
-#     Do not modify the HTML structure, CSS classes, or visual elements - only translate
-#     the text content within HTML tags.
-#   expected_output: >
-#     A complete French translation of the stock investment report with
-#     identical HTML structure, formatting, and visual elements. All financial
-#     terminology should be accurately translated while maintaining professional
-#     investment report standards.
-#   agent: translator
-#   output_file: "output/stock/stock_investment_risk_strategy_fr.html"
-#   async_execution: false
-#   depends_on:
-#     - stock_risk_assessment_task
-
-
-# Export Generation Task
-generate_export_task:
+investment_synthesis_task:
   description: >
-    Consolidate all stock analysis findings from context into a StockCrewExport object.
+    Synthesize all analyses into comprehensive investment strategy for {ticker}.
     
-    CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
-    from previous tasks to extract all required information.
+    CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
+    - Python grade: {grade}, composite score: {composite_score}
+    - Python preliminary recommendation: {preliminary_recommendation}
+    - Python fundamental score: {fundamental_score}
+    - Python technical score: {technical_score}
+    - Python risk score: {risk_score}
+    - SEC insights from sec_analysis_task
+    - Fundamental context from fundamental_context_task
+    - Technical strategy from technical_strategy_task
+    - Contextual risks from contextual_risk_task
+    
+    YOUR ROLE (Synthesis & Strategic Guidance):
+    1. Investment Thesis Development (200+ words)
+       - Synthesize Python metrics with qualitative insights
+       - Develop comprehensive investment rationale
+       - Explain the investment opportunity clearly
+    
+    2. Scenario Analysis
+       - Bull Case: What could drive outperformance?
+       - Base Case: What is the most likely outcome?
+       - Bear Case: What could go wrong?
+       - Assign probabilities to each scenario
+    
+    3. Recommendation Refinement
+       - Start with Python preliminary recommendation
+       - Refine based on qualitative insights
+       - Assess confidence level (LOW/MEDIUM/HIGH)
+       - Provide clear reasoning for any changes
+    
+    4. Actionable Strategy Development
+       - Immediate actions to take
+       - Key monitoring points
+       - Exit triggers and stop-loss levels
+    
+    DO NOT recalculate scores or grades - synthesize Python metrics with AI insights.
+    
+    OUTPUT FORMAT SPECIFICATION (Requirement 12.7):
+    Return a valid JSON object matching the InvestmentSynthesis schema exactly.
+    
+    REQUIRED FIELDS WITH DESCRIPTIONS:
+    - investment_thesis (string, min 200 words): Comprehensive investment thesis synthesizing all analyses
+    - bull_case (string, min 100 words): Optimistic scenario with specific catalysts and drivers
+    - base_case (string, min 100 words): Most likely scenario with realistic expectations
+    - bear_case (string, min 100 words): Pessimistic scenario with specific risks and concerns
+    - scenario_probabilities (dict): Probabilities for "bull", "base", "bear" keys (must sum to 1.0)
+    - final_recommendation (string): Exactly "BUY", "HOLD", or "SELL" (uppercase)
+    - recommendation_confidence (string): Exactly "LOW", "MEDIUM", or "HIGH" (uppercase)
+    - action_plan (dict): Must contain three keys: "immediate_actions", "monitoring_points", "exit_triggers" (each a list of strings)
+    
+    EXAMPLE OUTPUT (Requirement 12.7):
+    {{
+      "investment_thesis": "Apple represents a compelling investment opportunity at current levels due to several converging factors. The company's transition to a services-focused business model is accelerating, with services revenue growing at 15% annually and now representing 22% of total revenue. This shift provides more predictable, higher-margin revenue streams that command premium valuations. The iPhone replacement cycle remains healthy with the iPhone 15 driving solid upgrade momentum, particularly in international markets. Management's capital allocation strategy continues to be shareholder-friendly, with $90B in annual buybacks reducing share count by 3% annually. The company's ecosystem lock-in creates powerful network effects, with over 2 billion active devices creating a massive installed base for services expansion. Recent product launches including Vision Pro demonstrate continued innovation capability, though near-term revenue contribution will be modest. The balance sheet remains fortress-like with $162B in net cash, providing flexibility for M&A, R&D investment, and continued capital returns. Valuation at 28x forward earnings is reasonable given the quality of the business, though not cheap. Overall, the combination of services growth, ecosystem strength, capital returns, and innovation pipeline supports a positive long-term outlook despite near-term macro headwinds.",
+      "bull_case": "In the bull scenario, Apple's services business accelerates beyond expectations, reaching 30% of total revenue within 3 years driven by strong App Store growth, Apple Pay adoption, and new subscription offerings. Vision Pro gains traction faster than anticipated, creating a new $20B+ revenue stream by 2027. The India market becomes a major growth driver, with iPhone market share doubling from current levels as the middle class expands. Regulatory headwinds prove manageable, with the company successfully navigating EU regulations without material margin impact. The AI integration across products drives a super-cycle upgrade, with consumers eager to access new AI-powered features. Gross margins expand to 45% as services mix increases and supply chain efficiencies improve. This scenario could drive the stock to $220-240, representing 25-35% upside from current levels.",
+      "base_case": "The base case assumes steady execution of Apple's current strategy with services growing 12-15% annually and iPhone revenue remaining relatively flat with modest unit growth offset by pricing pressure. Vision Pro launches successfully but remains a niche product for the next 2-3 years, contributing $5-8B in annual revenue. Regulatory challenges result in some App Store fee reductions in Europe but don't materially impact overall profitability. Gross margins remain stable in the 43-44% range. The company continues aggressive buybacks, reducing share count by 3% annually. China revenue stabilizes after recent weakness, growing low single digits. This scenario supports a stock price of $185-195, representing 5-10% upside with dividend yield providing additional returns. This is the most probable outcome with 50% likelihood.",
+      "bear_case": "In the bear scenario, iPhone demand weakens significantly as smartphone market saturation intensifies and replacement cycles extend beyond 4 years. Services growth slows to high single digits as regulatory pressure forces App Store fee reductions globally and alternative payment systems gain traction. Vision Pro fails to gain mainstream adoption, becoming a niche product with limited revenue contribution. China-US tensions escalate, resulting in a 30% decline in China revenue due to nationalist sentiment and government restrictions. Regulatory fines and compliance costs impact margins, with gross margins compressing to 40%. The company struggles to find the next major product category, with innovation appearing incremental rather than revolutionary. This scenario could see the stock decline to $140-150, representing 15-20% downside risk.",
+      "scenario_probabilities": {{
+        "bull": 0.25,
+        "base": 0.50,
+        "bear": 0.25
+      }},
+      "final_recommendation": "BUY",
+      "recommendation_confidence": "HIGH",
+      "action_plan": {{
+        "immediate_actions": [
+          "Initiate position with 25% of target allocation on any pullback to $172-175 range",
+          "Set initial stop-loss at $168 to limit downside risk to 5%",
+          "Monitor Q1 2025 earnings (late January) for services growth acceleration and iPhone demand trends"
+        ],
+        "monitoring_points": [
+          "Services revenue growth rate - target 15%+ to validate thesis",
+          "iPhone ASP trends - watch for pricing power maintenance",
+          "China revenue trajectory - stabilization is key assumption",
+          "Vision Pro adoption metrics - units sold and developer ecosystem growth",
+          "Regulatory developments in EU and US - assess margin impact",
+          "Gross margin trends - watch for services mix benefits"
+        ],
+        "exit_triggers": [
+          "Break below $165 on high volume - invalidates technical setup",
+          "Services growth decelerates below 10% for two consecutive quarters",
+          "China revenue declines exceed 20% year-over-year",
+          "Regulatory actions result in margin compression below 42%",
+          "Management guidance suggests iPhone demand weakness beyond seasonal patterns"
+        ]
+      }}
+    }}
+    
+    VALIDATION REQUIREMENTS (Requirement 12.1-12.6):
+    - Output MUST be a valid JSON object (not string, list, or other type)
+    - Do NOT return tool_calls or function_call keys
+    - All required fields MUST be present
+    - Text fields MUST meet minimum word counts
+    - scenario_probabilities MUST sum to 1.0 (e.g., 0.25 + 0.50 + 0.25 = 1.0)
+    - final_recommendation MUST be exactly "BUY", "HOLD", or "SELL" (uppercase)
+    - recommendation_confidence MUST be exactly "LOW", "MEDIUM", or "HIGH" (uppercase)
+    - action_plan MUST contain exactly three keys: "immediate_actions", "monitoring_points", "exit_triggers"
+    - Each action_plan key must contain a list of strings (minimum 1 item per list)
+    - If output fails validation, system will retry with explicit format instructions
+    - After 2 failed attempts, fallback to Python-only analysis
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+  expected_output: >
+    InvestmentSynthesis Pydantic object containing:
+    - investment_thesis: Comprehensive investment thesis (minimum 200 words)
+    - bull_case: Bull case scenario with catalysts (minimum 100 words)
+    - base_case: Base case scenario (minimum 100 words)
+    - bear_case: Bear case scenario with risks (minimum 100 words)
+    - scenario_probabilities: Probabilities for bull/base/bear (must sum to 1.0)
+    - final_recommendation: Final AI-refined recommendation (BUY/HOLD/SELL)
+    - recommendation_confidence: AI confidence level (LOW/MEDIUM/HIGH)
+    - action_plan: Actionable steps (immediate_actions, monitoring_points, exit_triggers)
+  
+  agent: investment_strategist
+  output_pydantic: InvestmentSynthesis
+  async_execution: true
+  depends_on:
+    - contextual_risk_task
+
+generate_enriched_analysis_task:
+  description: >
+    Consolidate Python metrics and AI insights into EnrichedAnalysis for {ticker}.
+    
+    CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS.
+    Use ONLY the context from previous tasks.
     
     CONTEXT SOURCES:
-    - market_technical_analysis_task: Market trends and sentiment
-    - stock_screening_task: Stock screening results and market sentiment
-    - technical_detail_task: Technical analysis, 10-K insights, quantitative metrics
-    - stock_risk_assessment_task: Risk assessment and risk scores
+    - Python quantitative analysis: QuantitativeAnalysis object with all scores/metrics
+    - sec_analysis_task: SecAnalysisInsights
+    - fundamental_context_task: FundamentalContextInsights
+    - technical_strategy_task: TechnicalStrategyInsights
+    - contextual_risk_task: ContextualRiskInsights
+    - investment_synthesis_task: InvestmentSynthesis
     
-    REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
-    1. fundamental_analysis (TenKInsight):
-       - Extract from technical_detail_task context
-       - Include business overview, financial metrics, growth prospects
-    
-    2. risk_assessment (RiskAssessmentStandardized):
-       - Extract from stock_risk_assessment_task context
-       - Include risk_score (0-5), risk_factors, systematic_risk, idiosyncratic_risk
-    
-    3. technical_indicators (dict):
-       - Extract from technical_detail_task context
-       - Include RSI, MACD, Bollinger Bands, moving averages
-    
-    4. composite_score (float 0.0-1.0):
-       - Calculate based on all analysis dimensions
-       - Weight: 40% fundamental, 30% technical, 30% risk
-       - Formula: (fundamental_score * 0.4) + (technical_score * 0.3) + ((5 - risk_score) / 5 * 0.3)
-    
-    5. grade (A+ to F):
-       - A+: composite_score >= 0.85
-       - A: composite_score >= 0.75
-       - B: composite_score >= 0.65
-       - C: composite_score >= 0.55
-       - D: composite_score >= 0.45
-       - F: composite_score < 0.45
-    
-    6. recommendation (BUY/HOLD/SELL):
-       - BUY: grade >= B AND positive technical signals
-       - HOLD: grade = C OR mixed signals
-       - SELL: grade <= D OR negative technical signals
-    
-    7. confidence (float 0.0-1.0):
-       - Based on data quality and consistency across analyses
-       - High confidence (0.8-1.0): All analyses agree, strong signals
-       - Medium confidence (0.5-0.8): Some disagreement, mixed signals
-       - Low confidence (0.0-0.5): Conflicting analyses, weak signals
-    
-    8. rationale (string, min 50 chars):
-       - Explain the recommendation based on all analysis findings
-       - Reference specific metrics and insights from context
-       - Address key strengths and weaknesses
-       - Mention risk factors and mitigation strategies
-    
-    9. data_sources (list of strings):
-       - List all data sources used: ["SEC EDGAR", "Yahoo Finance", "Alpha Vantage", etc.]
-    
-    10. report_html_path (string):
-        - Set to: "output/reports/{session_id}/stock_crew/{ticker}_report.html"
-    
-    11. report_json_path (string):
-        - Set to: "output/reports/{session_id}/stock_crew/{ticker}_export.json"
-    
-    METADATA FIELDS (auto-populated):
-    - crew_name: "stock_crew" (default)
-    - ticker: From input parameter {ticker}
-    - asset_class: "stock" (default)
-    - session_id: From input parameter {session_id}
-    - analysis_date: Current timestamp (auto-generated)
-    
-    OUTPUT FORMAT:
-    - Return a valid StockCrewExport Pydantic object
-    - All fields must conform to schema validation
-    - Use extra='forbid' - no additional fields allowed
-    - Ensure all required fields are present
+    CONSOLIDATION PROCESS:
+    1. Extract QuantitativeAnalysis from context (Python-calculated)
+    2. Build QualitativeInsights from AI task outputs:
+       - sec_insights from sec_analysis_task
+       - fundamental_context from fundamental_context_task
+       - technical_strategy from technical_strategy_task
+       - contextual_risks from contextual_risk_task
+       - investment_synthesis from investment_synthesis_task
+    3. Create EnrichedAnalysis combining both:
+       - ticker: {ticker}
+       - company_name: {company_name}
+       - asset_class: "stock"
+       - quantitative: QuantitativeAnalysis (from Python)
+       - qualitative: QualitativeInsights (from AI)
+       - final_grade: Use Python grade
+       - final_score: Use Python composite_score
+       - final_recommendation: Use AI-refined recommendation from synthesis
+       - recommendation_confidence: Use AI confidence from synthesis
+       - executive_summary: Generate from investment thesis
+       - investment_rationale: Use investment thesis from synthesis
+       - report_word_count: Calculate from all text content
+       - unique_insights_count: Count unique insights from AI analysis
+       - processing_time_seconds: Calculate from timestamps
+       - llm_cost_dollars: Estimate from LLM calls
     
     VALIDATION:
-    - composite_score must be between 0.0 and 1.0
-    - grade must be one of: A+, A, B, C, D, F
-    - recommendation must be one of: BUY, HOLD, SELL
-    - confidence must be between 0.0 and 1.0
-    - rationale must be at least 50 characters
-    - All nested objects must conform to their schemas
-    
-    Today is {full_date}. Use this date for analysis_date if not auto-generated.
+    - Ensure report_word_count >= 2000
+    - Ensure unique_insights_count >= 5
+    - Validate all required fields are present
+    - Ensure schema compliance
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A validated StockCrewExport Pydantic object containing all analysis findings,
-    scores, grades, and recommendations. The object will be automatically saved
-    to JSON at the specified report_json_path.
+    EnrichedAnalysis Pydantic object containing:
+    - Complete Python quantitative analysis (READ-ONLY from context)
+    - Complete AI qualitative insights (from all AI tasks)
+    - Final synthesized recommendation and confidence
+    - Executive summary and investment rationale
+    - Quality metrics (word count >= 2000, insights >= 5)
+    - Processing metadata (time, cost)
+  
   agent: investment_reporter
-  output_pydantic: StockCrewExport
+  output_pydantic: EnrichedAnalysis
   output_json: true
-  async_execution: false
+  async_execution: false  # Final task must be synchronous
   depends_on:
-    - stock_risk_assessment_task
+    - investment_synthesis_task

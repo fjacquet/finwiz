@@ -1,5 +1,7 @@
 # Design Document: Unified Deep Analysis Crew for Single-Ticker Analysis
 
+> **⚠️ SUPERSEDED**: This spec described the original 3-agent design. The implementation was simplified to 2 agents (asset_analyst, investment_reporter) during Python/AI Hybrid refactoring. See `.kiro/specs/python-ai-hybrid-analysis/` for current architecture.
+
 ## Overview
 
 This design document specifies the technical architecture for **ONE unified CrewAI crew** (`DeepAnalysisCrew`) optimized for single-ticker deep analysis across all asset classes: stocks, ETFs, and cryptocurrencies. This crew handles all asset types through dynamic tool routing based on the `asset_class` parameter, eliminating code duplication and providing a single source of truth for deep analysis logic.

@@ -28,6 +28,11 @@ etf_market_trends_task:
     - The JSON must match the ETFMarketTrend schema exactly
     
     OUTPUT: Return a structured JSON output conforming to the ETFMarketTrend schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured analysis of current ETF market trends conforming to the ETFMarketTrend 
     Pydantic schema. Include growth trends, global factors, and market insights.
@@ -83,6 +88,11 @@ etf_screening_task:
     - The JSON must match the ETFScreeningResult schema exactly
     
     OUTPUT: Return a structured JSON output conforming to the ETFScreeningResult schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured list of 10 stable, diversified ETFs conforming to the ETFScreeningResult 
     Pydantic schema. Include analysis, validation status, and AI-driven insights.
@@ -134,6 +144,11 @@ etf_technical_detail_task:
     - quantitative_metrics.recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase, if provided)
     
     OUTPUT: Return a structured JSON output conforming to the ETFTechnicalAnalysis schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured technical assessment of each ETF conforming to the ETFTechnicalAnalysis 
     Pydantic schema. Include ETF structure, tracking accuracy, liquidity profile, fund 
@@ -187,6 +202,11 @@ etf_risk_assessment_task:
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     
     Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is based on information available as of {full_date}.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A detailed risk profile for each ETF covering volatility, concentration, liquidity, counterparty, and regulatory risks.
     Include standardized risk scores (0-5 scale) with consistent methodology across all ETFs.

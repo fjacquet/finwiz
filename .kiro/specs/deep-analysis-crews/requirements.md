@@ -1,5 +1,7 @@
 # Requirements Document: Deep Analysis Crews for Single-Ticker Analysis
 
+> **⚠️ SUPERSEDED**: This spec described the original 3-agent design. The implementation was simplified to 2 agents (asset_analyst, investment_reporter) during Python/AI Hybrid refactoring. See `.kiro/specs/python-ai-hybrid-analysis/` for current architecture.
+
 ## Introduction
 
 This spec defines the creation of **ONE unified CrewAI crew** (`DeepAnalysisCrew`) for in-depth analysis of single tickers across all asset classes: stocks, ETFs, and cryptocurrencies. This crew addresses the architectural mismatch where existing discovery crews (`StockCrew`, `EtfCrew`, `CryptoCrew`) are designed to screen and analyze 10 assets but are being incorrectly used for deep analysis of individual holdings in the portfolio analysis workflow.

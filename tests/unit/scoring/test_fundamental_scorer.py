@@ -39,7 +39,7 @@ class TestFundamentalScorer:
         data = {
             "roe": 0.02,  # 2% ROE (poor)
             "debt_to_equity": 3.0,  # High debt (poor)
-            "revenue_growth": 0.01,  # 1% growth (poor)
+            "revenue_growth": -0.03,  # -3% growth (declining, poor)
             "profit_margin": 0.02,  # 2% margin (poor)
         }
 
@@ -48,7 +48,7 @@ class TestFundamentalScorer:
         assert score < 0.3  # Should be low
         assert details["roe_score"] == 0.2
         assert details["debt_score"] == 0.2
-        assert details["growth_score"] == 0.2
+        assert details["growth_score"] == 0.2  # Negative growth below acceptable threshold
         assert details["margin_score"] == 0.2
 
     def test_etf_fundamental_score_excellent(self, scorer):

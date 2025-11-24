@@ -390,7 +390,7 @@ class RegistryManager:
             else:
                 # For other crews, get all JSON files
                 output_files = list(crew_output_dir.glob("*.json"))
-            
+
             if not output_files:
                 self.logger.warning(f"No output files found for {crew_name} crew")
                 return None
@@ -423,18 +423,18 @@ class RegistryManager:
             else:
                 # For other crew types, return the newest single file
                 newest_file = max(output_files, key=lambda f: f.stat().st_mtime)
-                
+
                 # Check if file is empty before trying to parse
                 if newest_file.stat().st_size == 0:
                     self.logger.warning(f"Cache file for {crew_name} crew is empty: {newest_file}")
                     return None
-                
+
                 with open(newest_file, encoding="utf-8") as f:
                     content = f.read().strip()
                     if not content:
                         self.logger.warning(f"Cache file for {crew_name} crew has no content: {newest_file}")
                         return None
-                    
+
                     try:
                         data = json.loads(content)
                         self.logger.debug(f"Successfully loaded data for {crew_name} crew from {newest_file}")

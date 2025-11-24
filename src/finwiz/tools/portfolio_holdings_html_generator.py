@@ -125,39 +125,39 @@ class PortfolioHoldingsHTMLGenerator:
         return f"""
         <div class="improvement-summary">
             <h2>📊 Résumé d'Amélioration du Portefeuille</h2>
-            
+
             <div class="metric-grid">
                 <div class="metric-item">
                     <h4>🔍 Analyse Approfondie</h4>
                     <div class="value">{deep_count}</div>
                     <div style="font-size:0.9em;opacity:0.9">sur {len(portfolio_review.holdings)} positions</div>
                 </div>
-                
+
                 <div class="metric-item">
                     <h4>⚡ Validation Rapide</h4>
                     <div class="value">{shallow_count}</div>
                     <div style="font-size:0.9em;opacity:0.9">positions</div>
                 </div>
-                
+
                 <div class="metric-item">
                     <h4>💎 Alternatives A+</h4>
                     <div class="value">{holdings_with_alternatives}</div>
                     <div style="font-size:0.9em;opacity:0.9">positions avec alternatives</div>
                 </div>
-                
+
                 <div class="metric-item">
                     <h4>📈 Amélioration Potentielle</h4>
                     <div class="value">+{potential_improvement:.2f}</div>
                     <div style="font-size:0.9em;opacity:0.9">amélioration de note</div>
                 </div>
-                
+
                 <div class="metric-item">
                     <h4>🛡️ Réduction du Risque</h4>
                     <div class="value">{avg_risk_reduction:.2f}</div>
                     <div style="font-size:0.9em;opacity:0.9">réduction moyenne estimée</div>
                 </div>
             </div>
-            
+
             <div style="margin-top:30px">
                 <h3 style="color:#fff;margin-bottom:15px">Distribution des Notes</h3>
                 {"".join(grade_bars)}
@@ -243,17 +243,17 @@ class PortfolioHoldingsHTMLGenerator:
         return f"""
         <div class="data-completeness">
             <h3>📋 Complétude des Données</h3>
-            
+
             <div style="margin:15px 0">
                 <h4 style="color:#2c3e50;margin-bottom:10px">Équipes d'Analyse Utilisées</h4>
                 {crew_status_html}
             </div>
-            
+
             <div style="margin:15px 0">
                 <h4 style="color:#2c3e50;margin-bottom:10px">Fraîcheur des Données</h4>
                 {freshness_status_html}
             </div>
-            
+
             <div style="margin:15px 0">
                 <h4 style="color:#2c3e50;margin-bottom:10px">Sources de Données</h4>
                 <ul>

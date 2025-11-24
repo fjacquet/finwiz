@@ -8,7 +8,7 @@ recommendations, and validate risk constraints.
 
 from typing import Any
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from crewai_tools import DirectoryReadTool, FileReadTool
@@ -28,7 +28,6 @@ from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_to
 from finwiz.tools.position_sizing_tool import PositionSizingTool
 from finwiz.tools.price_target_calculator import PriceTargetCalculator
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
@@ -127,6 +126,16 @@ class PortfolioRebalancingCrew:
 
         super().__init__()
 
+    def _get_configured_llm(self) -> LLM:
+        """
+        Get configured LLM instance for this crew.
+
+        Uses LLM_MODEL_STANDARD environment variable.
+        """
+        from finwiz.utils.llm_config import get_configured_llm
+
+        return get_configured_llm(model_type="standard")
+
     @agent
     def holding_analyzer(self) -> Agent:
         """Agent that coordinates deep analysis for individual holdings."""
@@ -136,6 +145,7 @@ class PortfolioRebalancingCrew:
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -147,6 +157,7 @@ class PortfolioRebalancingCrew:
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -158,6 +169,7 @@ class PortfolioRebalancingCrew:
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -169,6 +181,7 @@ class PortfolioRebalancingCrew:
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite reasoning loops
             tools=holding_analysis_tools,
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -180,6 +193,7 @@ class PortfolioRebalancingCrew:
             tools=holding_analysis_tools,
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite reasoning loops
+            llm=self._get_configured_llm(),
         )
 
     @agent
@@ -191,6 +205,7 @@ class PortfolioRebalancingCrew:
             tools=holding_analysis_tools,
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite reasoning loops
+            llm=self._get_configured_llm(),
         )
 
     @final_reporter
@@ -201,6 +216,7 @@ class PortfolioRebalancingCrew:
             config=self.agents_config["investment_reporter"],
             tools=[],  # MUST be empty - enforced by @final_reporter decorator
             verbose=True,
+            llm=self._get_configured_llm(),
         )
 
     # @agent

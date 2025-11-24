@@ -74,6 +74,9 @@ class ReportingOrchestrator:
             if deep_analysis_results:
                 self._merge_deep_analysis_into_portfolio(portfolio_review, deep_analysis_results)
 
+                # Save the merged portfolio review back to disk
+                self._save_merged_portfolio_review(portfolio_review)
+
             # Generate Python-based report
             report_path = self._generate_python_report(portfolio_review, deep_analysis_results)
 
@@ -83,6 +86,11 @@ class ReportingOrchestrator:
             self.state.report_generation_method = "python_templates"
 
             self.logger.info(f"✅ Python report generation completed: {report_path}")
+
+            # Print to console for visibility
+            print(f"\n{'=' * 80}")
+            print(f"✅ REPORT GENERATED: {report_path}")
+            print(f"{'=' * 80}\n")
 
             return {
                 "report_generation_complete": True,
@@ -300,7 +308,7 @@ class ReportingOrchestrator:
                     asset_dir = Path(base_dir)
                     if asset_dir.exists():
                         # Match files with either session_id or timestamp pattern (cache uses YYYY-MM-DD pattern)
-                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob(f"*_output_*.json")) + list(asset_dir.glob(f"*_20*.json")):
+                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob("*_output_*.json")) + list(asset_dir.glob("*_20*.json")):
                             try:
                                 data = self._read_json_file(str(json_file))
 
@@ -324,7 +332,9 @@ class ReportingOrchestrator:
                                 ticker = analysis_data.get("ticker")
                                 if ticker and ticker not in raw_deep_analysis:  # Avoid duplicates
                                     raw_deep_analysis[ticker] = analysis_data
-                                    self.logger.debug(f"Loaded {ticker} from {json_file}: Score={analysis_data.get('composite_score', 0):.3f}, Grade={analysis_data.get('grade', 'N/A')}")
+                                    self.logger.debug(
+                                        f"Loaded {ticker} from {json_file}: Score={analysis_data.get('composite_score', 0):.3f}, Grade={analysis_data.get('grade', 'N/A')}"
+                                    )
                             except Exception as e:
                                 self.logger.warning(f"Failed to load {json_file}: {e}")
 
@@ -370,6 +380,13 @@ class ReportingOrchestrator:
                     "composite_score": result.get("composite_score", 0.0),
                     "recommendation": result.get("recommendation", "HOLD"),
                     "asset_class": result.get("asset_class"),
+                    # Include detailed scores for individual HTML reports
+                    "fundamental_score": result.get("fundamental_score", 0.0),
+                    "technical_score": result.get("technical_score", 0.0),
+                    "risk_score": result.get("risk_score", 0.0),
+                    "fundamental_details": result.get("fundamental_details", {}),
+                    "technical_details": result.get("technical_details", {}),
+                    "risk_details": result.get("risk_details", {}),
                 }
                 for ticker, result in raw_deep_analysis.items()
             },
@@ -441,10 +458,15 @@ class ReportingOrchestrator:
         from finwiz.reporting.python_report_generator import generate_python_report
 
         session_id = self.state.session_id or "default"
+
+        # Load discovery results if available
+        discovery_results = self._read_discovery_results()
+
         report_path = generate_python_report(
             portfolio_review=portfolio_review,
             deep_analysis_results=deep_analysis_results,
             session_id=session_id,
+            discovery_results=discovery_results,
         )
 
         return report_path
@@ -478,3 +500,45 @@ class ReportingOrchestrator:
 
         # Otherwise read from files
         return self._read_deep_analysis_from_files()
+
+    def _read_discovery_results(self) -> dict[str, Any] | None:
+        """Read discovery results from JSON file."""
+        try:
+            self.logger.info("Reading discovery results from JSON file...")
+
+            # Try to load consolidated discovery file
+            discovery_path = Path("output/discovery/consolidated_discovery.json")
+            if discovery_path.exists():
+                data = self._read_json_file(str(discovery_path))
+                self.logger.info(f"Loaded discovery results: {len(data.get('opportunities', []))} opportunities")
+                return data
+
+            self.logger.warning("No discovery results file found")
+            return None
+
+        except Exception as e:
+            self.logger.error(f"Failed to read discovery results: {e}")
+            return None
+
+    def _save_merged_portfolio_review(self, portfolio_review: PortfolioReview) -> None:
+        """Save the merged portfolio review back to disk."""
+        try:
+            self.logger.info("Saving merged portfolio review with deep analysis scores...")
+
+            # Save to the standard portfolio review location
+            output_path = Path("output/portfolio/portfolio_review.json")
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Use Pydantic's JSON serialization
+            portfolio_json = portfolio_review.model_dump_json(indent=2)
+            output_path.write_text(portfolio_json, encoding="utf-8")
+
+            self.logger.info(f"✅ Saved merged portfolio review to {output_path}")
+
+            # Log score summary for verification
+            scores = [h.composite_score for h in portfolio_review.holdings]
+            avg_score = sum(scores) / len(scores) if scores else 0
+            self.logger.info(f"📊 Merged portfolio stats: {len(scores)} holdings, avg score: {avg_score:.3f}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to save merged portfolio review: {e}", exc_info=True)

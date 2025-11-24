@@ -8,10 +8,14 @@ session management, and environment initialization.
 
 import argparse
 import os
+from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
 
 from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
+
+if TYPE_CHECKING:
+    from finwiz.flows.flow_orchestrator_refactored import FinwizFlow
 from finwiz.tools.logger import get_logger
 from finwiz.utils.configuration_manager import ConfigurationError, get_configuration_manager
 from finwiz.utils.flow_state_manager import FlowStateManager

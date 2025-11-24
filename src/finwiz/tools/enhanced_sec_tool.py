@@ -13,8 +13,6 @@ from typing import Any
 
 import requests
 from crewai.tools import BaseTool
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import CharacterTextSplitter
 from pydantic import BaseModel
 
@@ -268,32 +266,40 @@ class EnhancedSECAnalysisTool(BaseTool):
         """Extract insights from a specific SEC filing section."""
         # Define section-specific queries
         section_queries = {
-            "Item 1": "business description, operations, products, services, competitive advantages",
-            "Item 1A": "risk factors, business risks, market risks, operational risks",
-            "Item 7": "management discussion analysis, financial performance, liquidity, capital resources",
-            "Item 7A": "quantitative qualitative disclosures market risk, interest rate risk, foreign exchange risk",
-            "Item 8": "financial statements, balance sheet, income statement, cash flow statement",
+            "Item 1": ["business", "operations", "products", "services", "competitive"],
+            "Item 1A": ["risk", "factors", "market", "operational"],
+            "Item 7": ["management", "discussion", "analysis", "financial", "performance", "liquidity"],
+            "Item 7A": ["quantitative", "qualitative", "market risk", "interest rate", "foreign exchange"],
+            "Item 8": ["financial statements", "balance sheet", "income statement", "cash flow"],
         }
 
-        query = section_queries.get(section, f"information about {section}")
+        keywords = section_queries.get(section, ["information"])
 
-        # Use vector similarity search to find relevant content
-        retriever = FAISS.from_documents(docs, OpenAIEmbeddings()).as_retriever(search_kwargs={"k": 3})
-        results = retriever.invoke(query)
+        # Use simple keyword-based text matching instead of vector search
+        # Score each document by keyword matches
+        scored_docs = []
+        for doc in docs:
+            content_lower = doc.page_content.lower()
+            score = sum(1 for keyword in keywords if keyword.lower() in content_lower)
+            if score > 0 and len(doc.page_content.strip()) > 50:
+                scored_docs.append((score, doc))
+
+        # Sort by score (descending) and take top 3
+        scored_docs.sort(key=lambda x: x[0], reverse=True)
+        results = [doc for _, doc in scored_docs[:3]]
 
         insights = []
         for i, result in enumerate(results):
-            if len(result.page_content.strip()) > 50:  # Filter out very short excerpts
-                insight_data = {
-                    "ticker": ticker,
-                    "filing_url": filing["filing_url"],
-                    "filed_at": filing["filed_at"],
-                    "section": section,
-                    "excerpt": result.page_content.strip()[:1000],  # Limit excerpt length
-                    "sec_citation": f"10-K ({filing['filed_at'][:4]}), {section}",
-                    "relevance_rank": i + 1,
-                }
-                insights.append(insight_data)
+            insight_data = {
+                "ticker": ticker,
+                "filing_url": filing["filing_url"],
+                "filed_at": filing["filed_at"],
+                "section": section,
+                "excerpt": result.page_content.strip()[:1000],  # Limit excerpt length
+                "sec_citation": f"10-K ({filing['filed_at'][:4]}), {section}",
+                "relevance_rank": i + 1,
+            }
+            insights.append(insight_data)
 
         return insights
 

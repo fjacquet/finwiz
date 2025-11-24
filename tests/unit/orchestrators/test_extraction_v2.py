@@ -14,19 +14,18 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "test-key")
 os.environ["SERPER_API_KEY"] = os.environ.get("SERPER_API_KEY", "test-key")
 
-from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
 from finwiz.flow_state import FinwizState
+from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
 
 
 def test_extraction_actual():
     """Test with the actual output structure from the agent."""
-
     # Create orchestrator with mock state
     state = FinwizState()
     orchestrator = DeepAnalysisOrchestrator(state)
 
     # This is the ACTUAL raw output from task 1 (data_collection_task)
-    mock_raw_output = '''{"ticker":"AAPL","asset_class":"stock","collection_timestamp":"2025-11-19T00:00:00Z","ticker_validation":{"symbol":"AAPL","asset_class":"stock","valid":true,"reason":null,"meta":{},"quantitative_analysis":{"symbol":"AAPL","analysis_type":"comprehensive","timeframe":"1y","data":{"sma_short":150.0,"sma_long":145.0,"performance":{"1m":5.5,"3m":15.2,"6m":25.0,"1y":30.1},"buy_signals":3,"sell_signals":1}},"sentiment_analysis":{"symbol":"AAPL","sentiment_score":0.75,"articles":[{"title":"Apple's New Product Launch: What to Expect","source":"TechCrunch","date":"2025-10-15"}],"trending_topics":["AI Integration","Product Launch","Market Expansion"]},"sec_analysis":{"ticker":"AAPL","form_type":"10-K","sections":{"Item 1":"Business Description","Item 1A":"Risk Factors","Item 7":"Financial Information"},"risk_assessment":{"overall":"low","details":{"business_risk":"stable","financial_risk":"minimal"}}}}}'''
+    mock_raw_output = """{"ticker":"AAPL","asset_class":"stock","collection_timestamp":"2025-11-19T00:00:00Z","ticker_validation":{"symbol":"AAPL","asset_class":"stock","valid":true,"reason":null,"meta":{},"quantitative_analysis":{"symbol":"AAPL","analysis_type":"comprehensive","timeframe":"1y","data":{"sma_short":150.0,"sma_long":145.0,"performance":{"1m":5.5,"3m":15.2,"6m":25.0,"1y":30.1},"buy_signals":3,"sell_signals":1}},"sentiment_analysis":{"symbol":"AAPL","sentiment_score":0.75,"articles":[{"title":"Apple's New Product Launch: What to Expect","source":"TechCrunch","date":"2025-10-15"}],"trending_topics":["AI Integration","Product Launch","Market Expansion"]},"sec_analysis":{"ticker":"AAPL","form_type":"10-K","sections":{"Item 1":"Business Description","Item 1A":"Risk Factors","Item 7":"Financial Information"},"risk_assessment":{"overall":"low","details":{"business_risk":"stable","financial_risk":"minimal"}}}}}"""
 
     # Create a mock TaskOutput
     class MockTaskOutput:
@@ -40,7 +39,7 @@ def test_extraction_actual():
             # Task 1: data collection (has the wrong structure)
             # Task 2: python scoring (has detailed_analysis with the data we need)
             task1_raw = mock_raw_output
-            task2_raw = '''{"crew_name":"DeepAnalysisCrew","ticker":"AAPL","asset_class":"stock","session_id":"2025-11-19T00:00:00Z","analysis_date":"2025-11-19T00:00:00Z","detailed_analysis":{"roe":0.12,"debt_to_equity":0.5,"revenue_growth":0.07,"profit_margin":0.21,"volatility":0.2,"beta":1.1,"rsi":65.0,"macd":0.05},"risk_assessment":{"scale":"1-5","score":4.0,"level":"low","risk_factors":["market volatility","competitive pressure"]},"composite_score":0.87,"grade":"A","recommendation":"BUY","confidence":0.9,"rationale":"The company's strong financials..."}'''
+            task2_raw = """{"crew_name":"DeepAnalysisCrew","ticker":"AAPL","asset_class":"stock","session_id":"2025-11-19T00:00:00Z","analysis_date":"2025-11-19T00:00:00Z","detailed_analysis":{"roe":0.12,"debt_to_equity":0.5,"revenue_growth":0.07,"profit_margin":0.21,"volatility":0.2,"beta":1.1,"rsi":65.0,"macd":0.05},"risk_assessment":{"scale":"1-5","score":4.0,"level":"low","risk_factors":["market volatility","competitive pressure"]},"composite_score":0.87,"grade":"A","recommendation":"BUY","confidence":0.9,"rationale":"The company's strong financials..."}"""
 
             self.tasks_output = [MockTaskOutput(task1_raw), MockTaskOutput(task2_raw)]
             self.pydantic = None
@@ -60,7 +59,7 @@ def test_extraction_actual():
                 print(f"  - {key}: {value} ({type(value).__name__})")
 
         # Check for critical fields
-        critical_stock = ['current_price', 'roe', 'debt_to_equity', 'revenue_growth', 'volatility', 'beta']
+        critical_stock = ["current_price", "roe", "debt_to_equity", "revenue_growth", "volatility", "beta"]
         print("\n🔍 Critical fields check:")
         for field in critical_stock:
             if field in extracted:
@@ -76,13 +75,13 @@ def test_extraction_actual():
     else:
         print("❌ Extraction failed - no data returned")
 
-
     # Now let's try extracting from Task 2 instead
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TRYING TASK 2 OUTPUT:")
 
     # Modify to extract from task 2
     import json
+
     task2_data = json.loads(crew_output.tasks_output[1].raw)
     if "detailed_analysis" in task2_data:
         print("\n✅ Found detailed_analysis in Task 2!")

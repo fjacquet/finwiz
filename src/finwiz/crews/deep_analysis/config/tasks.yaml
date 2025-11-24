@@ -1,218 +1,296 @@
 # ============================================================================
-# SIMPLIFIED DEEP ANALYSIS CREW - PYTHON SCORING APPROACH
+# DEEP ANALYSIS CREW - HYBRID PYTHON/AI ANALYSIS ARCHITECTURE
 # ============================================================================
-# This configuration implements the Python scoring approach with only 2 tasks:
-# 1. data_collection_task (async) - Fetch all required data
-# 2. python_scoring_task (sync) - Call DeepAnalysisScorer for calculations
+# This crew implements the hybrid approach for portfolio holdings analysis:
+# - Python performs ALL deterministic calculations (scores, grades, metrics)
+# - AI agent provides ONLY qualitative insights and contextual analysis
+# - NO financial recalculations by AI - Python metrics are READ-ONLY context
 #
-# REMOVED TASKS (replaced by Python scoring):
-# - deep_analysis_task (AI reasoning replaced by Python calculations)
-# - technical_analysis_task (AI reasoning replaced by Python calculations)  
-# - risk_assessment_task (AI reasoning replaced by Python calculations)
-# - final_report_task (AI reasoning replaced by Python template)
-# - generate_export_task (AI reasoning replaced by Python data consolidation)
-#
-# PERFORMANCE TARGETS:
-# - Execution time: 10-30 seconds (vs 5-10 minutes with AI)
-# - LLM calls: 0 for calculations (vs 15-25 with AI)
-# - Cost: $0 for calculations (vs $0.05-0.10 with AI)
+# This crew is designed for SINGLE TICKER analysis of portfolio holdings.
+# For discovery of new opportunities, use StockCrew, EtfCrew, or CryptoCrew.
 # ============================================================================
 
-data_collection_task:
+deep_qualitative_analysis_task:
   description: >
-    ⚡ DATA COLLECTION: Gather ALL required data for ticker {ticker}
+    Perform comprehensive qualitative analysis for portfolio holding {ticker}.
 
-    CRITICAL: SINGLE TICKER MODE - Collect data ONLY for {ticker} of asset class {asset_class}
-    You are a data collection specialist - NO analysis, NO scoring, just efficient data gathering.
+    CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
+    - Python has calculated ALL financial metrics, scores, and grades
+    - Python grade: {grade}, composite score: {composite_score}
+    - Python preliminary recommendation: {preliminary_recommendation}
+    - Python fundamental score: {fundamental_score}
+    - Python technical score: {technical_score}
+    - Python risk score: {risk_score}
+    - All detailed metrics: {fundamental_metrics}, {technical_indicators}, {risk_metrics}
 
-    🚨 CRITICAL TOOL USAGE RULES 🚨
-    - ALWAYS call tools with simple parameters: tool(ticker="{ticker}")
-    - NEVER pass JSON arrays or objects to tools
-    - Call tools ONE AT A TIME for the single ticker {ticker}
-    - NEVER ask for user input or clarification
+    YOUR EXCLUSIVE FOCUS (Qualitative Analysis Only):
 
-    DATA TO COLLECT for {ticker}:
-    1. Price data (current price, historical prices)
-    2. Fundamental metrics:
-       - For STOCKS: ROE, debt-to-equity, revenue growth, profit margins
-       - For ETFs: expense ratio, tracking error, AUM, holdings
-       - For CRYPTO: market cap, volume, age, tokenomics
-    3. Technical indicators: RSI, MACD, support/resistance levels
-    4. Risk metrics: volatility, beta, max drawdown
-    5. Sentiment data: news sentiment, social media trends
+    1. SEC ANALYSIS (Business Insights)
+       - Business model analysis and sustainability
+       - Competitive advantages and moats
+       - Risk factors from SEC filings
+       - Strategic initiatives and direction
+       - DO NOT recalculate financial metrics
 
-    STORAGE FORMAT:
-    Store all collected data in structured context for Python scoring:
-    context["collected_data"] = {{
-      "ticker": "{ticker}",
-      "asset_class": "{asset_class}",
-      "collection_timestamp": current_timestamp,
-      "price_data": {{...}},
-      "fundamentals": {{...}},
-      "technical_indicators": {{...}},
-      "risk_metrics": {{...}},
-      "sentiment": {{...}}
-    }}
+    2. FUNDAMENTAL CONTEXT (Industry & Competition)
+       - Industry trends and competitive landscape
+       - Growth drivers and catalysts
+       - Competitive positioning vs peers
+       - Management quality and track record
+       - DO NOT recalculate ROE, debt ratios, or growth rates
 
-    CRITICAL OUTPUT REQUIREMENT:
-    Output the collected data as a JSON structure that the orchestrator can parse.
-    Use this format EXACTLY:
+    3. TECHNICAL STRATEGY (Chart Patterns & Timing)
+       - Chart patterns and formations
+       - Support and resistance levels
+       - Entry/exit strategy with price targets
+       - Market timing and momentum assessment
+       - DO NOT recalculate RSI, MACD, or other indicators
 
+    4. CONTEXTUAL RISKS (Qualitative Risk Factors)
+       - Regulatory and compliance risks
+       - Geopolitical and macroeconomic risks
+       - Competitive threats and market risks
+       - Operational and execution risks
+       - Stress test scenarios
+       - DO NOT recalculate volatility, beta, or drawdown
+
+    5. INVESTMENT SYNTHESIS (Strategic Guidance)
+       - Comprehensive investment thesis (200+ words)
+       - Bull/base/bear scenarios with probabilities
+       - Final recommendation (refine Python preliminary)
+       - Confidence assessment (LOW/MEDIUM/HIGH)
+       - Actionable strategy (entry/exit, monitoring, triggers)
+       - DO NOT recalculate composite score or grade
+
+    PORTFOLIO CONTEXT:
+    - This is a KEEP/SELL decision for an existing holding
+    - Consider portfolio diversification and correlation
+    - Assess whether holding still fits portfolio strategy
+    - Recommend alternatives if suggesting SELL
+
+    OUTPUT FORMAT SPECIFICATION (Requirement 12.7):
+    Return a valid JSON object matching the QualitativeInsights schema exactly.
+
+    REQUIRED FIELDS WITH DESCRIPTIONS:
+    - sec_insights (object): SecAnalysisInsights with business_model (min 100 words), competitive_advantages (list), risk_factors (list), strategic_initiatives (list)
+    - fundamental_context (object): FundamentalContextInsights with industry_analysis (min 100 words), growth_drivers (list), competitive_positioning (min 50 words), management_assessment (min 50 words)
+    - technical_strategy (object): TechnicalStrategyInsights with chart_patterns (list), support_resistance (min 50 words), entry_exit_strategy (min 100 words), timing_assessment (min 50 words)
+    - contextual_risks (object): ContextualRiskInsights with regulatory_risks (list), geopolitical_risks (list), competitive_risks (list), operational_risks (list), stress_scenarios (list)
+    - investment_synthesis (object): InvestmentSynthesis with investment_thesis (min 200 words), bull_case (min 100 words), base_case (min 100 words), bear_case (min 100 words), scenario_probabilities (dict), final_recommendation (BUY/HOLD/SELL), recommendation_confidence (LOW/MEDIUM/HIGH), action_plan (dict with 3 keys)
+    - analysis_timestamp (string): ISO 8601 format datetime (e.g., "2025-01-22T10:30:00Z")
+    - ai_confidence (float): Between 0.0 and 1.0
+
+    PYDANTIC SCHEMA REFERENCE:
+    Your output MUST match this exact Pydantic structure:
+
+    class SecAnalysisInsights:
+        business_model: str (min 100 chars)
+        competitive_advantages: list[str] (min 1 item)
+        risk_factors: list[str] (min 1 item)
+        strategic_initiatives: list[str]
+
+    class FundamentalContextInsights:
+        industry_analysis: str (min 100 chars)
+        growth_drivers: list[str] (min 1 item)
+        competitive_positioning: str (min 50 chars)
+        management_assessment: str (min 50 chars)
+
+    class TechnicalStrategyInsights:
+        chart_patterns: list[str] (min 1 item)
+        support_resistance: str (min 50 chars)
+        entry_exit_strategy: str (min 100 chars)
+        timing_assessment: str (min 50 chars)
+
+    class ContextualRiskInsights:
+        regulatory_risks: list[str]
+        geopolitical_risks: list[str]
+        competitive_risks: list[str]
+        operational_risks: list[str]
+        stress_scenarios: list[str]
+
+    class InvestmentSynthesis:
+        investment_thesis: str (min 200 chars)
+        bull_case: str (min 100 chars)
+        base_case: str (min 100 chars)
+        bear_case: str (min 100 chars)
+        scenario_probabilities: dict[str, float] (keys: "bull", "base", "bear", must sum to 1.0)
+        final_recommendation: str (MUST be "BUY", "HOLD", or "SELL")
+        recommendation_confidence: str (MUST be "LOW", "MEDIUM", or "HIGH")
+        action_plan: dict[str, list[str]] (keys: "immediate_actions", "monitoring_points", "exit_triggers")
+
+    class QualitativeInsights (ROOT):
+        sec_insights: SecAnalysisInsights
+        fundamental_context: FundamentalContextInsights
+        technical_strategy: TechnicalStrategyInsights
+        contextual_risks: ContextualRiskInsights
+        investment_synthesis: InvestmentSynthesis
+        analysis_timestamp: str (ISO 8601)
+        ai_confidence: float (0.0-1.0)
+
+    EXAMPLE OUTPUT (Requirement 12.7):
     {{
-      "ticker": "{ticker}",
-      "asset_class": "{asset_class}",
-      "current_price": <number>,
-      "roe": <number or null>,
-      "debt_to_equity": <number or null>,
-      "volatility": <number or null>,
-      "beta": <number or null>,
-      "rsi": <number or null>,
-      "macd": <number or null>,
-      ... (all collected metrics)
-    }}
-  expected_output: >
-    JSON structure containing ALL collected data for ticker {ticker}:
-    - Price data with current and historical prices
-    - Fundamental metrics (asset-class specific)
-    - Technical indicators (RSI, MACD, trends)
-    - Risk metrics (volatility, beta, drawdown)
-    - Sentiment data and news analysis
-    - Collection timestamp for freshness tracking
-  agent: asset_analyst
-  async_execution: false  # Sync for sequential data collection
-
-python_scoring_task:
-  description: >
-    CRITICAL: SINGLE TICKER MODE - Calculate scores for ticker: {ticker}
-
-    As a Python scoring specialist, call the Deep Analysis Scorer tool to calculate
-    all scores, grades, and recommendations for the single ticker {ticker} of asset
-    class {asset_class}. This tool executes REAL Python code for deterministic calculations.
-
-    🔧 TOOL USAGE - Call Deep Analysis Scorer tool 🔧
-    You have access to the "Deep Analysis Scorer" tool which executes Python scoring.
-
-    CRITICAL INSTRUCTIONS:
-    1. Extract the collected data from data_collection_task context
-    2. Call the "Deep Analysis Scorer" tool ONCE with these parameters:
-       - ticker: "{ticker}"
-       - asset_class: "{asset_class}"
-       - current_price: (extract from collected data)
-       - For STOCKS: roe, debt_to_equity, revenue_growth, profit_margin
-       - For ETFs: expense_ratio, tracking_error, aum
-       - For CRYPTO: market_cap, volume_24h, age_years
-       - Risk metrics: volatility, beta, max_drawdown
-       - Technical: rsi, macd
-    3. The tool will return JSON with grade, score, and recommendation
-    4. Return the tool's output as your final result
-
-    PARAMETER EXTRACTION GUIDE:
-    - Extract numeric values from collected data (remove units like "USD", "billion")
-    - Convert strings to numbers: "850 billion USD" → 850000000000.0
-    - Map field names: "volume" → "volume_24h" for crypto
-    - Ensure all critical fields are present before calling tool
-
-    CRITICAL: PRESERVE ALL DATA (Requirements 18.21-18.25)
-    Ensure ALL raw data is preserved in the final export:
-    - Raw metrics: volatility, beta, ROE, debt/equity, RSI, MACD, etc.
-    - Sentiment data: sentiment_score, trending_topics, article_count
-    - Technical indicators: support/resistance, trend direction
-    - Fundamental data: revenue, earnings, cash flow
-    - Calculation results: composite score, grade, recommendation, risk score
-    - Template-based rationale text (generated by DeepAnalysisScorer)
-
-    SCORING COMPONENTS (handled by DeepAnalysisScorer):
-    - Fundamental Score (40%): ROE, debt, growth, margins (stocks) / expense ratio, tracking error (ETFs) / market cap, volume (crypto)
-    - Technical Score (30%): RSI, trend analysis, MACD momentum
-    - Risk Score (30%): Volatility, max drawdown, beta (converted to 0-1 scale where 1=low risk)
-    - Composite Score: Weighted average of above components
-    - Grade: A+ (≥0.95), A (≥0.85), B+ (≥0.80), B (≥0.75), C+ (≥0.70), C (≥0.65), D (≥0.50), F (<0.50)
-    - Recommendation: BUY (≥0.85), HOLD (0.65-0.85), SELL (<0.65)
-
-    PERFORMANCE TARGETS (Requirements 18.28-18.30):
-    - Execution time: 10-30 seconds (vs 5-10 minutes with AI)
-    - LLM calls: 0 for calculations (vs 15-25 with AI)
-    - Cost: $0 for calculations (vs $0.05-0.10 with AI)
-    - Speedup: 10-20x faster than AI approach
-    - Cost reduction: 100% for calculations
-
-    CONTEXT STORAGE FORMAT:
-    Store scoring results in context:
-    context["scoring_results"] = {{
-        "ticker": "{ticker}",
-        "asset_class": "{asset_class}",
-        "scoring_timestamp": "2025-01-25T10:30:00Z",
-        "deep_analysis_result": DeepAnalysisResult object,
-        "crew_export": DeepAnalysisCrewExport object,
-        "performance_metrics": {{
-            "execution_time_seconds": float,
-            "llm_calls_count": 0,
-            "calculation_cost_usd": 0.0
+      "sec_insights": {{
+        "business_model": "Comprehensive analysis of how the company generates revenue... (minimum 100 words)",
+        "competitive_advantages": ["Brand loyalty and ecosystem lock-in", "Vertical integration", "Premium pricing power"],
+        "risk_factors": ["Regulatory scrutiny in EU markets", "Supply chain concentration", "Market saturation"],
+        "strategic_initiatives": ["Services expansion", "Geographic diversification", "AI integration"]
+      }},
+      "fundamental_context": {{
+        "industry_analysis": "Industry trends and competitive dynamics... (minimum 100 words)",
+        "growth_drivers": ["Emerging market penetration", "Product innovation", "Market share gains"],
+        "competitive_positioning": "Market leader with 50%+ profit share in premium segment... (minimum 50 words)",
+        "management_assessment": "Strong track record of capital allocation and innovation... (minimum 50 words)"
+      }},
+      "technical_strategy": {{
+        "chart_patterns": ["Ascending triangle", "Golden cross on 50/200 MA"],
+        "support_resistance": "Key support at $170, $165, $160. Resistance at $185, $190, $200... (minimum 50 words)",
+        "entry_exit_strategy": "Enter on pullback to $172-175 range with volume confirmation. Take profits at $190, trailing stop at 8%... (minimum 100 words)",
+        "timing_assessment": "Momentum indicators suggest favorable entry timing... (minimum 50 words)"
+      }},
+      "contextual_risks": {{
+        "regulatory_risks": ["EU DMA compliance", "US antitrust investigations"],
+        "geopolitical_risks": ["China-US tensions", "Taiwan supply chain risk"],
+        "competitive_risks": ["Android competition", "Market share erosion"],
+        "operational_risks": ["Supplier concentration", "Product launch delays"],
+        "stress_scenarios": ["Regulatory fines impact margins", "China sales decline 30%"]
+      }},
+      "investment_synthesis": {{
+        "investment_thesis": "Comprehensive investment thesis combining all analysis... (minimum 200 words)",
+        "bull_case": "Services accelerate to 30% of revenue, Vision Pro succeeds... (minimum 100 words)",
+        "base_case": "Steady iPhone replacement cycle, services grow 15% annually... (minimum 100 words)",
+        "bear_case": "iPhone demand weakens, regulatory fines impact margins... (minimum 100 words)",
+        "scenario_probabilities": {{"bull": 0.25, "base": 0.50, "bear": 0.25}},
+        "final_recommendation": "BUY",
+        "recommendation_confidence": "HIGH",
+        "action_plan": {{
+          "immediate_actions": ["Accumulate on dips to $172-175", "Set initial stop at $168"],
+          "monitoring_points": ["Q1 earnings for services growth", "Regulatory developments"],
+          "exit_triggers": ["Break below $165", "Fundamental deterioration"]
         }}
+      }},
+      "analysis_timestamp": "2025-01-22T10:30:00Z",
+      "ai_confidence": 0.85
     }}
-  expected_output: >
-    Python scoring results for ticker {ticker} including:
-    - DeepAnalysisResult with all component scores and details
-    - DeepAnalysisCrewExport ready for JSON serialization
-    - Composite score (0.0-1.0) and letter grade (A+ to F)
-    - Investment recommendation (BUY/HOLD/SELL) with confidence
-    - Template-based rationale explaining the recommendation
-    - All raw data preserved from data collection
-    - Performance metrics (execution time, LLM calls=0, cost=$0)
-  agent: investment_reporter
-  async_execution: false  # ❌ Must be synchronous: Final task requirement
-  depends_on:
-    - data_collection_task
 
-# Optional AI Summary Task (Hybrid Approach)
-ai_summary_task:
+    CRITICAL JSON SYNTAX:
+    - Notice NO trailing comma after last item in arrays: ["item1", "item2"]  ✅
+    - Notice NO trailing comma after last object property: "key": "value"  ✅
+    - Invalid examples to AVOID: ["item1", "item2",]  ❌  or {{"key": "value",}}  ❌
+
+    VALIDATION REQUIREMENTS (Requirement 12.1-12.6):
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with {{ and ending with }}
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - Do NOT return tool_calls or function_call keys
+    - All required fields MUST be present with correct types
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+    - Ensure valid JSON syntax - use online JSON validator if needed
+    - Text fields MUST meet minimum word counts:
+      * business_model >= 100 words
+      * industry_analysis >= 100 words
+      * competitive_positioning >= 50 words
+      * management_assessment >= 50 words
+      * support_resistance >= 50 words
+      * entry_exit_strategy >= 100 words
+      * timing_assessment >= 50 words
+      * investment_thesis >= 200 words
+      * bull_case >= 100 words
+      * base_case >= 100 words
+      * bear_case >= 100 words
+    - List fields MUST contain at least 1 item:
+      * competitive_advantages, risk_factors, growth_drivers, chart_patterns
+    - scenario_probabilities MUST sum to 1.0 (e.g., {{"bull": 0.25, "base": 0.50, "bear": 0.25}})
+    - final_recommendation MUST be exactly "BUY", "HOLD", or "SELL" (uppercase)
+    - recommendation_confidence MUST be exactly "LOW", "MEDIUM", or "HIGH" (uppercase)
+    - action_plan MUST contain exactly three keys: "immediate_actions", "monitoring_points", "exit_triggers"
+    - Each action_plan key must contain a list of strings (minimum 1 item per list)
+    - analysis_timestamp MUST be valid ISO 8601 format (e.g., "2025-01-22T10:30:00Z")
+    - ai_confidence MUST be between 0.0 and 1.0
+    - If output fails validation, system will retry with explicit format instructions (Requirement 12.3)
+    - After 2 failed attempts, fallback to Python-only analysis (Requirement 12.4)
+
+  expected_output: >
+    QualitativeInsights Pydantic object containing:
+    - sec_insights: Business model (100+ words), competitive advantages (1+ items), risks (1+ items), strategic initiatives
+    - fundamental_context: Industry analysis (100+ words), growth drivers (1+ items), competitive positioning (50+ words), management (50+ words)
+    - technical_strategy: Chart patterns (1+ items), support/resistance (50+ words), entry/exit strategy (100+ words), timing (50+ words)
+    - contextual_risks: Regulatory, geopolitical, competitive, operational risks, stress scenarios
+    - investment_synthesis: Investment thesis (200+ words), bull/base/bear cases (100+ words each), scenario probabilities (sum=1.0), recommendation (BUY/HOLD/SELL), confidence (LOW/MEDIUM/HIGH), action plan (3 keys)
+    - analysis_timestamp: ISO 8601 format datetime
+    - ai_confidence: Float between 0.0 and 1.0
+
+  agent: asset_analyst
+  async_execution: true
+
+generate_enriched_analysis_task:
   description: >
-    OPTIONAL: Generate AI prose summary for ticker: {ticker} (HYBRID APPROACH)
-    
-    This task is ONLY executed when DEEP_ANALYSIS_AI_SUMMARY=true environment variable is set.
-    It provides a hybrid approach: Python scoring (fast, cheap) + optional AI summary (prose).
+    Consolidate Python metrics and AI insights into EnrichedAnalysis for {ticker}.
 
-    🚨 HYBRID APPROACH RULES 🚨
-    - Python scoring MUST complete first (python_scoring_task)
-    - This task adds AI-generated prose summary AFTER Python calculations
-    - Use context from python_scoring_task for all scores and data
-    - NEVER recalculate scores - only generate prose summary
+    CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS.
+    Use ONLY the context from previous tasks.
 
-    PERFORMANCE TARGETS (Requirements 18.31-18.36):
-    - Total time: 15-40 seconds (Python scoring 10-30s + AI summary 5-10s)
-    - Cost: $0.01 per ticker (only for AI summary, not calculations)
-    - Cost savings: 80-90% vs full AI approach ($0.01 vs $0.05-0.10)
-    - Speedup: Still 8-15x faster than full AI approach
+    CONTEXT SOURCES:
+    - Python quantitative analysis: QuantitativeAnalysis object with all scores/metrics
+    - deep_qualitative_analysis_task: QualitativeInsights with all AI analysis
 
-    AI SUMMARY PROCESS:
-    1. Extract scoring results from python_scoring_task context
-    2. Extract detailed_analysis from python_scoring_task context
-    3. Generate professional prose summary using AI reasoning
-    4. Enhance rationale with AI-generated insights
-    5. Create narrative explanation of the Python-calculated scores
-    6. Store enhanced summary in context for potential downstream use
+    CONSOLIDATION PROCESS:
+    1. Extract QuantitativeAnalysis from context (Python-calculated)
+       - composite_score, fundamental_score, technical_score, risk_score
+       - grade, preliminary_recommendation
+       - All detailed metrics (fundamental, technical, risk)
+       - Data quality and lineage metadata
 
-    CRITICAL: NO RECALCULATION
-    - Do NOT recalculate any scores, grades, or recommendations
-    - Use ONLY the Python-calculated values from context
-    - Focus on generating compelling prose explanation
-    - Add market context and qualitative insights
-    - Enhance the template-based rationale with AI narrative
+    2. Extract QualitativeInsights from deep_qualitative_analysis_task
+       - sec_insights (business model, competitive advantages, risks)
+       - fundamental_context (industry, growth drivers, positioning)
+       - technical_strategy (patterns, support/resistance, entry/exit)
+       - contextual_risks (regulatory, geopolitical, competitive, operational)
+       - investment_synthesis (thesis, scenarios, recommendation, action plan)
 
-    OUTPUT REQUIREMENTS:
-    - Enhanced rationale with AI-generated prose
-    - Market context and qualitative insights
-    - Professional investment narrative
-    - Clear explanation of Python-calculated scores
-    - French language for user-facing content
+    3. Create EnrichedAnalysis combining both:
+       - ticker: {ticker}
+       - company_name: {company_name}
+       - asset_class: {asset_class}
+       - analysis_date: Current timestamp
+       - quantitative: QuantitativeAnalysis (from Python)
+       - qualitative: QualitativeInsights (from AI)
+       - final_grade: Use Python grade
+       - final_score: Use Python composite_score
+       - final_recommendation: Use AI-refined recommendation from synthesis
+       - recommendation_confidence: Use AI confidence from synthesis
+       - executive_summary: Generate from investment thesis (200+ words)
+       - investment_rationale: Use investment thesis from synthesis (500+ words)
+       - report_word_count: Calculate from all text content
+       - unique_insights_count: Count unique insights from AI analysis
+       - processing_time_seconds: Calculate from timestamps
+       - llm_cost_dollars: Estimate from LLM calls
+
+    VALIDATION REQUIREMENTS:
+    - report_word_count MUST be >= 2000 words
+    - unique_insights_count MUST be >= 5 insights
+    - executive_summary MUST be >= 200 words
+    - investment_rationale MUST be >= 500 words
+    - All required fields must be present
+    - Schema compliance must be validated
+
+    QUALITY CHECKS:
+    - Verify Python metrics are preserved (not recalculated)
+    - Verify AI insights are comprehensive
+    - Verify recommendation is well-justified
+    - Verify action plan is actionable
+    - Verify word count and insights thresholds are met
+
   expected_output: >
-    AI-enhanced summary for ticker {ticker} including:
-    - Professional prose summary of Python-calculated results
-    - Enhanced rationale with market context and insights
-    - Qualitative analysis complementing quantitative scores
-    - Clear narrative explanation of recommendation
-    - All based on Python-calculated scores (no recalculation)
+    EnrichedAnalysis Pydantic object containing:
+    - Complete Python quantitative analysis (READ-ONLY from context)
+    - Complete AI qualitative insights (from deep_qualitative_analysis_task)
+    - Final synthesized recommendation and confidence
+    - Executive summary (>= 200 words) and investment rationale (>= 500 words)
+    - Quality metrics (word count >= 2000, insights >= 5)
+    - Processing metadata (time, cost)
+    - All validation requirements met
+
   agent: investment_reporter
-  async_execution: false  # ❌ Must be synchronous: Optional final enhancement
+  async_execution: false # Final task must be synchronous
   depends_on:
-    - python_scoring_task
+    - deep_qualitative_analysis_task

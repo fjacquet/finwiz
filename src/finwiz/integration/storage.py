@@ -14,6 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from finwiz.integration.html_auto_generator import auto_generate_html
 from finwiz.schemas.integration import CrewOutputMetadata
 
 
@@ -152,6 +153,9 @@ class CrewOutputStorage:
             # Store output data
             with open(storage_path, "w", encoding="utf-8") as f:
                 json.dump(storage_data, f, indent=2, ensure_ascii=False, default=str)
+
+            # Auto-generate HTML report from JSON
+            auto_generate_html(storage_path)
 
             # Store metadata (without extra fields that aren't in the schema)
             metadata_dict = metadata.model_dump()

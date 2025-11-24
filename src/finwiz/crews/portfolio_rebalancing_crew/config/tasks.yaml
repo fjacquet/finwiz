@@ -35,6 +35,11 @@ analyze_holding_task:
     - risk.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized first letter only)
     
     OUTPUT: Return a structured JSON output conforming to the HoldingDecision schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured complete HoldingDecision object conforming to the HoldingDecision Pydantic 
     schema. Include fundamental/technical analysis, SEC citations (if applicable), data 
@@ -76,6 +81,11 @@ calculate_price_targets_task:
     - The JSON must match the PriceTargets schema exactly
     
     OUTPUT: Return a structured JSON output conforming to the PriceTargets schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured complete PriceTargets object conforming to the PriceTargets Pydantic schema. 
     Include current price, fair value estimate, buy targets (primary/secondary), sell targets 
@@ -129,6 +139,11 @@ find_alternatives_task:
     - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization and plus signs)
     
     OUTPUT: Return a structured JSON output conforming to the Alternative schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured list of 0-3 Alternative objects conforming to the Alternative Pydantic schema 
     for holdings graded below B. Each alternative includes ticker, name, grade, composite score, 
@@ -179,6 +194,11 @@ portfolio_analysis_task:
     - For any position sizing recommendations, sizing_action: MUST be one of: "add", "trim", "hold", "exit" (lowercase, no other values allowed)
     
     OUTPUT: Return a structured JSON output conforming to the PortfolioAnalysis schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured comprehensive portfolio analysis conforming to the PortfolioAnalysis Pydantic 
     schema. Include current weightings, target deviations, risk metrics, positions requiring 
@@ -238,6 +258,11 @@ rebalancing_optimization_task:
     - For any risk assessments, risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized first letter only)
     
     OUTPUT: Return a structured JSON output conforming to the RebalancingRecommendation schema.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured detailed trade recommendations conforming to the RebalancingRecommendation 
     Pydantic schema. Include buy/sell quantities, estimated costs, priority rankings, 
@@ -284,6 +309,11 @@ risk_validation_task:
     comply with established risk management policies.
 
     OUTPUT: Return comprehensive risk validation with compliance status, position sizing recommendations, and mitigation strategies.
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A detailed risk assessment of rebalancing recommendations including compliance validation, 
     risk scores, stress test results, position sizing recommendations, and mitigation strategies. 

@@ -212,8 +212,7 @@ class TestAPIBackwardCompatibility:
         method_name=st.sampled_from(
             [
                 # Flow listener methods (public API)
-                "validate_data_integration",
-                "check_portfolio",
+                "run_sequential_workflow",  # Start method (replaces validate_data_integration)
                 "analyze_and_update_portfolio",
                 "match_alternatives_after_discovery",
                 "check_crypto",
@@ -269,14 +268,13 @@ class TestAPIBackwardCompatibility:
         method_pairs=st.lists(
             st.sampled_from(
                 [
-                    "validate_data_integration",
-                    "check_portfolio",
+                    "run_sequential_workflow",  # Start method (replaces validate_data_integration)
                     "analyze_and_update_portfolio",
                     "report",
                 ]
             ),
             min_size=2,
-            max_size=4,
+            max_size=3,
             unique=True,
         )
     )
@@ -342,8 +340,7 @@ class TestAPIBackwardCompatibility:
     @given(
         method_name=st.sampled_from(
             [
-                "validate_data_integration",
-                "check_portfolio",
+                "run_sequential_workflow",  # Start method (replaces validate_data_integration)
                 "analyze_and_update_portfolio",
                 "match_alternatives_after_discovery",
                 "check_crypto",

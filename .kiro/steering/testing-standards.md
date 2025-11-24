@@ -559,7 +559,7 @@ class TestDeepAnalysisCrew:
         with open(config_path) as f:
             config = yaml.safe_load(f)
         
-        required_agents = ["asset_analyst", "risk_assessor", "investment_reporter"]
+        required_agents = ["asset_analyst", "investment_reporter"]
         for agent_name in required_agents:
             assert agent_name in config
             assert "role" in config[agent_name]

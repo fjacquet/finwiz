@@ -53,7 +53,7 @@ def generate_lineage_section_html(lineage_dict: dict[str, Any] | None, ticker: s
         html = f"""
         <div class="lineage-section" style="margin-top: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 5px;">
             <h2>📊 Data Lineage</h2>
-            
+
             <div class="lineage-summary" style="margin-bottom: 20px;">
                 <h3>Summary</h3>
                 <ul>
@@ -64,7 +64,7 @@ def generate_lineage_section_html(lineage_dict: dict[str, Any] | None, ticker: s
                     <li><strong>Calculations:</strong> {len(lineage.calculations)} steps</li>
                     <li><strong>Completeness:</strong> {lineage.completeness * 100:.1f}%</li>
                 </ul>
-                
+
                 <h4>Data Sources by Type</h4>
                 <ul>
         """
@@ -84,7 +84,7 @@ def generate_lineage_section_html(lineage_dict: dict[str, Any] | None, ticker: s
 
         html += """
             </div>
-            
+
             <div class="lineage-diagram" style="background-color: white; padding: 20px; border-radius: 5px; margin-top: 20px;">
                 <h3>Calculation Flow</h3>
                 <div class="mermaid">
@@ -95,7 +95,7 @@ def generate_lineage_section_html(lineage_dict: dict[str, Any] | None, ticker: s
         html += """
                 </div>
             </div>
-            
+
             <div class="lineage-export" style="margin-top: 20px;">
                 <h3>Export Options</h3>
                 <p>
@@ -109,7 +109,7 @@ def generate_lineage_section_html(lineage_dict: dict[str, Any] | None, ticker: s
                 </ul>
             </div>
         </div>
-        
+
         <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
         <script>
             mermaid.initialize({ startOnLoad: true, theme: 'default' });

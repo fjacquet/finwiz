@@ -27,6 +27,10 @@ class AssetAnalyzer(ABC):
     Phase 2A.3: Supports centralized ScoringThresholds for all thresholds.
     """
 
+    def __init__(self) -> None:
+        """Initialize base analyzer."""
+        self._data_quality_metrics = None
+
     def set_thresholds(self, thresholds: ScoringThresholds) -> None:
         """
         Set scoring thresholds for this analyzer.
@@ -36,6 +40,35 @@ class AssetAnalyzer(ABC):
 
         """
         self.thresholds = thresholds
+
+    def set_data_quality_metrics(self, metrics: Any) -> None:
+        """
+        Set data quality metrics tracker.
+
+        Args:
+            metrics: DataQualityMetrics instance for tracking field calculations
+
+        """
+        self._data_quality_metrics = metrics
+
+    def _track_calculated_field(self, field_name: str, value: Any, default: Any) -> None:
+        """
+        Track whether a field was successfully calculated or defaulted.
+
+        Args:
+            field_name: Name of the field
+            value: Actual value extracted
+            default: Default value that would be used
+
+        """
+        if self._data_quality_metrics is None:
+            return
+
+        # If value equals default, it means we're using fallback
+        if value == default or value is None:
+            self._data_quality_metrics.record_defaulted_field(field_name, default)
+        else:
+            self._data_quality_metrics.record_calculated_field(field_name)
 
     @abstractmethod
     def calculate_fundamental_score(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:

@@ -58,7 +58,6 @@ FRESHNESS THRESHOLDS:
 - SEC filings: 7 days maximum (static data)
 """
 
-import os
 import time
 from typing import Any
 
@@ -69,7 +68,6 @@ from dotenv import load_dotenv
 
 from finwiz.flow_state import DeepAnalysisResult
 from finwiz.schemas.common import RiskAssessmentStandardized
-from finwiz.schemas.crew_exports import DeepAnalysisCrewExport
 from finwiz.tools.logger import get_logger
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import (
@@ -77,10 +75,9 @@ from finwiz.tools.tool_factories import (
     get_etf_crew_tools,
     get_stock_crew_tools,
 )
-from finwiz.utils.agent_validators import final_reporter
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
-from finwiz.utils.performance_config import OptimizationMode, get_performance_config_manager
+from finwiz.utils.performance_config import get_performance_config_manager
 from finwiz.utils.performance_monitor import get_performance_monitor
 from finwiz.utils.task_decorators import async_task, sync_task
 
@@ -120,7 +117,15 @@ class DeepAnalysisCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
-        # Make Pydantic models available for CrewAI resolution
+        # Import Pydantic models for Task output_pydantic (use raw classes)
+        from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
+        from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
+
+        # Store raw Pydantic classes for Task.output_pydantic
+        self.QualitativeInsights = QualitativeInsights
+        self.EnrichedAnalysis = EnrichedAnalysis
+
+        # Make Pydantic models available for CrewAI resolution (wrapped versions)
         self.DeepAnalysisResult = output_pydantic(DeepAnalysisResult)
         self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
 
@@ -370,17 +375,20 @@ class DeepAnalysisCrew:
         }
 
     def _get_configured_llm(self) -> LLM:
-        """Get configured LLM instance for this crew based on optimization mode."""
+        """
+        Get configured LLM instance for this crew based on optimization mode.
+
+        Uses environment variables:
+            - LLM_MODEL_MINI for performance-optimized operations
+            - LLM_MODEL_STANDARD for standard operations
+        """
+        from finwiz.utils.llm_config import get_mini_llm
+
         # Use mini model for maximum speed and balanced modes
         if self.perf_config.should_use_mini_model():
-            # Create LLM directly with mini model for performance optimization
-            return LLM(
-                model="openai/gpt-4o-mini",
-                timeout=int(os.getenv("OPENAI_TIMEOUT", "300")),
-                max_retries=3,
-            )
+            return get_mini_llm()
         else:
-            return get_configured_llm()
+            return get_configured_llm(model_type="standard")
 
     @agent
     def asset_analyst(self) -> Agent:
@@ -395,18 +403,6 @@ class DeepAnalysisCrew:
             verbose=True,
             reasoning=False,  # No reasoning needed - just format Python results
             tools=[],  # NO TOOLS - Python does all tool calling
-            llm=self._get_configured_llm(),
-        )
-
-    @agent
-    def risk_assessor(self) -> Agent:
-        """DEPRECATED: Agent no longer used in Python scoring approach."""
-        # This agent is kept for compatibility but not used in the simplified workflow
-        return Agent(
-            config=self.agents_config["risk_assessor"],
-            verbose=True,
-            reasoning=False,  # ⚡ PYTHON SCORING: No reasoning needed
-            tools=[],  # No tools needed - deprecated
             llm=self._get_configured_llm(),
         )
 
@@ -428,72 +424,54 @@ class DeepAnalysisCrew:
 
     @async_task
     @task
-    def data_collection_task(self) -> Task:
-        """Collect all required data for the provided ticker."""
+    def deep_qualitative_analysis_task(self) -> Task:
+        """
+        AI performs qualitative analysis using Python metrics as READ-ONLY context.
+
+        Python metrics (scores, grades, metrics) are provided as context.
+        AI focuses on qualitative insights: business model, competitive analysis,
+        chart patterns, risk factors, and investment synthesis.
+        """
         return Task(
-            config=self.tasks_config["data_collection_task"],
+            config=self.tasks_config["deep_qualitative_analysis_task"],
             verbose=True,
+            output_pydantic=self.QualitativeInsights,
         )
 
     @sync_task
     @task
-    def python_scoring_task(self) -> Task:
+    def generate_enriched_analysis_task(self) -> Task:
         """
-        DEPRECATED: This task is no longer used in the crew workflow.
+        Final reporter consolidates Python metrics + AI insights.
 
-        Python scoring is now handled by the orchestrator (deep_analysis_orchestrator.py)
-        which extracts collected data from crew output and calls DeepAnalysisScorer directly.
-
-        This method is kept for backward compatibility and testing purposes only.
+        This is a FINAL REPORTER task with NO TOOLS.
+        Consolidates QuantitativeAnalysis (Python) + QualitativeInsights (AI)
+        into EnrichedAnalysis output.
         """
         return Task(
-            config=self.tasks_config["python_scoring_task"],
-            output_pydantic=DeepAnalysisCrewExport,
+            config=self.tasks_config["generate_enriched_analysis_task"],
             verbose=True,
-        )
-
-    @sync_task
-    @task
-    def ai_summary_task(self) -> Task:
-        """Optional AI summary task for hybrid approach."""
-        return Task(
-            config=self.tasks_config["ai_summary_task"],
-            verbose=True,
+            output_pydantic=self.EnrichedAnalysis,
         )
 
     @crew
     def crew(self) -> Crew:
         """
-        Create a unified deep analysis crew with dynamic tool routing.
+        Create a unified deep analysis crew with hybrid Python/AI architecture.
 
-        Uses a sequential workflow for analysis with validation steps to ensure
-        high-quality, consistent output formats.
+        Uses a sequential workflow:
+        1. deep_qualitative_analysis_task - AI provides qualitative insights
+        2. generate_enriched_analysis_task - Consolidates Python metrics + AI insights
 
-        Conditionally includes AI summary task based on DEEP_ANALYSIS_AI_SUMMARY environment variable.
+        Python metrics are calculated by orchestrator BEFORE crew execution.
+        AI agent receives Python metrics as READ-ONLY context.
         """
-        # Determine tasks based on optimization mode
-        mode = self.perf_config.get_mode()
-
-        if mode == OptimizationMode.MAXIMUM_SPEED:
-            # Maximum Speed: Data collection only - orchestrator handles Python scoring
-            crew_tasks = [self.data_collection_task()]
-            logger.info("⚡ MAXIMUM SPEED MODE: Data collection only - orchestrator does Python scoring")
-
-        elif mode == OptimizationMode.BALANCED:
-            # Balanced: Data collection + optional AI summary
-            crew_tasks = [self.data_collection_task()]
-            if self.perf_config.should_use_ai_summary():
-                crew_tasks.append(self.ai_summary_task())
-                logger.info("🤖 BALANCED MODE: Data collection + AI summary - orchestrator does Python scoring")
-            else:
-                logger.info("⚡ BALANCED MODE: Data collection only - orchestrator does Python scoring")
-
-        else:  # BASELINE mode
-            # Baseline: Data collection only - orchestrator handles Python scoring
-            crew_tasks = [
-                self.data_collection_task(),  # Only collect data - orchestrator scores it
-            ]
-            logger.info("🔍 BASELINE MODE: AI scoring for comparison/debugging")
+        # Hybrid architecture: Python metrics + AI qualitative analysis
+        crew_tasks = [
+            self.deep_qualitative_analysis_task(),
+            self.generate_enriched_analysis_task(),
+        ]
+        logger.info("🔬 HYBRID MODE: Python metrics + AI qualitative analysis")
 
         from finwiz.utils.llm_config import get_manager_llm
 
@@ -560,13 +538,11 @@ class DeepAnalysisCrew:
             # Dynamically assign tools to agents by calling agent methods
             # Get agent instances
             asset_analyst_agent = self.asset_analyst()
-            risk_assessor_agent = self.risk_assessor()  # Deprecated but kept for compatibility
             investment_reporter_agent = self.investment_reporter()
 
             # Assign tools to agents
             asset_analyst_agent.tools = analyst_tools
             # investment_reporter has DeepAnalysisScoringTool (set in agent definition)
-            # risk_assessor deprecated (no tools needed)
             logger.info(
                 f"⚡ PYTHON SCORING TOOL: asset_analyst has {len(analyst_tools)} data collection tools. "
                 f"investment_reporter has {len(investment_reporter_agent.tools)} Python scoring tool."

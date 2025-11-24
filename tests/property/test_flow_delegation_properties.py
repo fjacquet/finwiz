@@ -92,7 +92,7 @@ class TestFlowDelegationProperties:
     @given(
         method_data=st.sampled_from(
             [
-                ("validate_data_integration", "validation_orch", "validate_data_integration"),
+                # Note: validate_data_integration is called manually, not a listener
                 ("check_portfolio", "validation_orch", "check_portfolio"),
                 ("analyze_and_update_portfolio", "deep_analysis_orch", "analyze_and_update_portfolio"),
                 ("match_alternatives_after_discovery", "alternatives_orch", "match_alternatives_after_discovery"),

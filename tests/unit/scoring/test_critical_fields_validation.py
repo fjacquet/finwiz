@@ -61,7 +61,8 @@ class TestCriticalFieldsValidation:
         # Verify error details
         assert exc_info.value.ticker == "AAPL"
         assert exc_info.value.asset_class == "stock"
-        assert "roe" in exc_info.value.missing_fields
+        # Implementation adds " (missing)" suffix to field names
+        assert any("roe" in field for field in exc_info.value.missing_fields)
 
     def test_should_fail_when_multiple_critical_fields_missing(self, scorer):
         """Test that analysis FAILS when multiple critical fields are missing."""
@@ -76,10 +77,10 @@ class TestCriticalFieldsValidation:
         with pytest.raises(CriticalFieldError) as exc_info:
             scorer.calculate_composite_score("AAPL", "stock", incomplete_data)
 
-        # Verify multiple fields reported
+        # Verify multiple fields reported (implementation adds " (missing)" suffix)
         assert len(exc_info.value.missing_fields) > 1
-        assert "current_price" in exc_info.value.missing_fields
-        assert "roe" in exc_info.value.missing_fields
+        assert any("current_price" in field for field in exc_info.value.missing_fields)
+        assert any("roe" in field for field in exc_info.value.missing_fields)
 
     def test_should_use_safe_default_for_optional_field(self, scorer, complete_stock_data):
         """Test that optional fields can use safe defaults."""
@@ -111,7 +112,8 @@ class TestCriticalFieldsValidation:
         with pytest.raises(CriticalFieldError) as exc_info:
             scorer.calculate_composite_score("SPY", "etf", incomplete_etf_data)
 
-        assert "expense_ratio" in exc_info.value.missing_fields
+        # Implementation adds " (missing)" suffix to field names
+        assert any("expense_ratio" in field for field in exc_info.value.missing_fields)
 
     def test_should_fail_for_crypto_missing_critical_fields(self, scorer):
         """Test that crypto analysis fails when critical fields missing."""
@@ -129,7 +131,8 @@ class TestCriticalFieldsValidation:
         with pytest.raises(CriticalFieldError) as exc_info:
             scorer.calculate_composite_score("BTC", "crypto", incomplete_crypto_data)
 
-        assert "market_cap" in exc_info.value.missing_fields
+        # Implementation adds " (missing)" suffix to field names
+        assert any("market_cap" in field for field in exc_info.value.missing_fields)
 
     @pytest.mark.skip(reason="Data quality tracking feature not fully implemented - tracked in separate issue")
     def test_should_track_defaulted_optional_fields_in_data_quality(self, scorer, complete_stock_data):

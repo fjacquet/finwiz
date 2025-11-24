@@ -29,7 +29,9 @@ class PythonReportGenerator:
         self.output_dir = Path(output_dir)
         self.logger = logger
 
-    def generate_family_financial_plan(self, portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default") -> str:
+    def generate_family_financial_plan(
+        self, portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default", discovery_results: dict[str, Any] | None = None
+    ) -> str:
         """
         Generate comprehensive family financial plan HTML report.
 
@@ -37,6 +39,7 @@ class PythonReportGenerator:
             portfolio_review: Portfolio review data
             deep_analysis_results: Deep analysis results (if available)
             session_id: Session identifier
+            discovery_results: A+ discovery results (if available)
 
         Returns:
             Path to generated HTML report
@@ -49,11 +52,16 @@ class PythonReportGenerator:
         # Analyze portfolio data
         portfolio_stats = self._analyze_portfolio_stats(portfolio_review)
 
+        # Generate individual HTML reports for each deep analysis
+        if deep_analysis_results and "results_by_ticker" in deep_analysis_results:
+            self._generate_individual_deep_analysis_reports(deep_analysis_results["results_by_ticker"])
+
         # Generate HTML content
         html_content = self._generate_html_report(
             portfolio_review=portfolio_review,
             portfolio_stats=portfolio_stats,
             deep_analysis_results=deep_analysis_results,
+            discovery_results=discovery_results,
             session_id=session_id,
         )
 
@@ -145,6 +153,7 @@ class PythonReportGenerator:
         portfolio_review: PortfolioReview,
         portfolio_stats: dict[str, Any],
         deep_analysis_results: dict[str, Any] | None,
+        discovery_results: dict[str, Any] | None,
         session_id: str,
     ) -> str:
         """Generate complete HTML report."""
@@ -170,17 +179,19 @@ class PythonReportGenerator:
   </header>
 
   {self._generate_executive_summary(portfolio_stats)}
-  
+
   {self._generate_portfolio_overview(portfolio_review, portfolio_stats)}
-  
+
   {self._generate_holdings_analysis(portfolio_review.holdings)}
-  
-  {self._generate_recommendations(portfolio_stats)}
-  
+
+  {self._generate_recommendations(portfolio_stats, discovery_results)}
+
+  {self._generate_discovery_section(discovery_results)}
+
   {self._generate_deep_analysis_section(deep_analysis_results)}
-  
+
   {self._generate_performance_metrics(deep_analysis_results)}
-  
+
   <footer>
     <p>📋 Rapport généré par FinWiz • Analyse Python déterministe</p>
     <p class="small">⚡ Performance: Analyse complète en quelques secondes • 100% réduction des coûts LLM</p>
@@ -193,49 +204,49 @@ class PythonReportGenerator:
     def _get_css_styles(self) -> str:
         """Get CSS styles for the report."""
         return """
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      line-height: 1.6; 
-      color: #333; 
-      margin: 0; 
-      padding: 20px; 
-      background: #f8f9fa; 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
     }
-    header { 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-      color: white; 
-      padding: 30px; 
-      border-radius: 12px; 
-      margin-bottom: 30px; 
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     h1 { margin: 0 0 10px 0; font-size: 2.2em; }
     h2 { color: #2c3e50; margin: 30px 0 15px 0; border-bottom: 2px solid #3498db; padding-bottom: 8px; }
     h3 { color: #34495e; margin: 20px 0 10px 0; }
-    .section { 
-      background: white; 
-      border-radius: 8px; 
-      padding: 25px; 
-      margin-bottom: 20px; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .muted { color: #7f8c8d; font-size: 0.9em; }
     .small { font-size: 0.85em; }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin: 15px 0; 
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
       background: white;
     }
-    th, td { 
-      padding: 12px; 
-      text-align: left; 
-      border-bottom: 1px solid #ecf0f1; 
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ecf0f1;
     }
-    th { 
-      background: #3498db; 
-      color: white; 
-      font-weight: 600; 
+    th {
+      background: #3498db;
+      color: white;
+      font-weight: 600;
     }
     .grade-a-plus { color: #27ae60; font-weight: bold; }
     .grade-a { color: #2ecc71; font-weight: bold; }
@@ -243,62 +254,62 @@ class PythonReportGenerator:
     .grade-c { color: #e67e22; font-weight: bold; }
     .grade-d { color: #e74c3c; font-weight: bold; }
     .grade-f { color: #c0392b; font-weight: bold; }
-    .badge { 
-      display: inline-block; 
-      padding: 4px 12px; 
-      border-radius: 20px; 
-      font-size: 0.8em; 
-      font-weight: bold; 
-      margin: 2px; 
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: bold;
+      margin: 2px;
     }
     .badge-buy { background: #d5f4e6; color: #27ae60; }
     .badge-hold { background: #fef9e7; color: #f39c12; }
     .badge-sell { background: #fadbd8; color: #e74c3c; }
-    .stats-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-      gap: 15px; 
-      margin: 20px 0; 
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
     }
-    .stat-card { 
-      background: #ecf0f1; 
-      padding: 15px; 
-      border-radius: 8px; 
-      text-align: center; 
+    .stat-card {
+      background: #ecf0f1;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
     }
-    .stat-number { 
-      font-size: 2em; 
-      font-weight: bold; 
-      color: #2c3e50; 
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      color: #2c3e50;
     }
-    .highlight { 
-      background: #fff3cd; 
-      border: 1px solid #ffeaa7; 
-      border-radius: 6px; 
-      padding: 15px; 
-      margin: 15px 0; 
+    .highlight {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 15px 0;
     }
-    .success { 
-      background: #d4edda; 
-      border: 1px solid #c3e6cb; 
-      color: #155724; 
+    .success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
     }
-    .warning { 
-      background: #fff3cd; 
-      border: 1px solid #ffeaa7; 
-      color: #856404; 
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
     }
-    .danger { 
-      background: #f8d7da; 
-      border: 1px solid #f5c6cb; 
-      color: #721c24; 
+    .danger {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
     }
-    footer { 
-      margin-top: 40px; 
-      padding: 20px; 
-      text-align: center; 
-      color: #7f8c8d; 
-      border-top: 1px solid #ecf0f1; 
+    footer {
+      margin-top: 40px;
+      padding: 20px;
+      text-align: center;
+      color: #7f8c8d;
+      border-top: 1px solid #ecf0f1;
     }
     @media (max-width: 768px) {
       body { padding: 10px; }
@@ -375,12 +386,12 @@ class PythonReportGenerator:
         return f"""
   <div class="section">
     <h2>📋 Résumé Exécutif</h2>
-    
+
     <div class="highlight success">
       <h3>🎯 Note Globale du Portefeuille: <span class="{grade_class}">{portfolio_stats["portfolio_grade"]}</span></h3>
       <p>Score moyen: <strong>{portfolio_stats["average_score"]:.3f}</strong> sur 1.000</p>
     </div>
-    
+
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number">{portfolio_stats["total_holdings"]}</div>
@@ -399,7 +410,7 @@ class PythonReportGenerator:
         <div>Recommandations VENTE</div>
       </div>
     </div>
-    
+
     <h3>🚀 Points Clés</h3>
     <ul>
       <li><strong>Analyse ultra-rapide:</strong> Traitement Python en quelques secondes (vs 5-10 minutes avec IA)</li>
@@ -415,7 +426,7 @@ class PythonReportGenerator:
         return f"""
   <div class="section">
     <h2>📊 Aperçu du Portefeuille</h2>
-    
+
     <h3>Répartition par Classe d'Actifs</h3>
     <table>
       <thead>
@@ -439,7 +450,7 @@ class PythonReportGenerator:
         </tr>
       </tbody>
     </table>
-    
+
     <h3>Distribution des Notes</h3>
     <table>
       <thead>
@@ -497,7 +508,7 @@ class PythonReportGenerator:
         return f"""
   <div class="section">
     <h2>🔍 Analyse Détaillée des Positions</h2>
-    
+
     <table>
       <thead>
         <tr>
@@ -513,12 +524,12 @@ class PythonReportGenerator:
         {holdings_html}
       </tbody>
     </table>
-    
+
     <p class="small muted">Affichage de toutes les positions triées par note et score.</p>
   </div>
         """
 
-    def _generate_recommendations(self, portfolio_stats: dict[str, Any]) -> str:
+    def _generate_recommendations(self, portfolio_stats: dict[str, Any], discovery_results: dict[str, Any] | None = None) -> str:
         """Generate recommendations section."""
         # Generate A+ holdings list
         a_plus_list = ""
@@ -531,10 +542,15 @@ class PythonReportGenerator:
                 score = getattr(holding, "composite_score", 0)
                 a_plus_items.append(f"<strong>{ticker}</strong> (Note: {grade}, Score: {score:.3f})")
             a_plus_list = f"""
-      <p><strong>Positions A+ identifiées ({len(portfolio_stats['a_plus_holdings'])}):</strong></p>
+      <p><strong>Positions A+ identifiées ({len(portfolio_stats["a_plus_holdings"])}):</strong></p>
       <ul>
         {"".join(f"<li>{item}</li>" for item in a_plus_items)}
       </ul>"""
+
+        # Add discovery opportunities count
+        discovery_count = 0
+        if discovery_results and "opportunities" in discovery_results:
+            discovery_count = len(discovery_results["opportunities"])
 
         return f"""
   <div class="section">
@@ -544,12 +560,13 @@ class PythonReportGenerator:
       <h3>🎯 Actions Prioritaires</h3>
       <ul>
         <li><strong>Positions à vendre:</strong> {portfolio_stats["recommendation_counts"]["SELL"]} positions nécessitent une attention immédiate</li>
-        <li><strong>Opportunités A+:</strong> {portfolio_stats["a_plus_count"]} positions excellent à conserver ou renforcer</li>
+        <li><strong>Opportunités A+ (portefeuille actuel):</strong> {portfolio_stats["a_plus_count"]} positions excellent à conserver ou renforcer</li>
+        <li><strong>Nouvelles opportunités A+ découvertes:</strong> {discovery_count} actifs prometteurs identifiés</li>
         <li><strong>Rééquilibrage:</strong> Considérer la diversification si concentration excessive</li>
       </ul>
       {a_plus_list}
     </div>
-    
+
     <h3>📈 Optimisations Suggérées</h3>
     <ul>
       <li><strong>Réduction des risques:</strong> Remplacer les positions notées D/F par des alternatives A/B</li>
@@ -557,7 +574,7 @@ class PythonReportGenerator:
       <li><strong>Diversification:</strong> Équilibrer entre actions, ETFs et crypto selon profil de risque</li>
       <li><strong>Coûts:</strong> Privilégier les ETFs à faibles frais pour l'exposition passive</li>
     </ul>
-    
+
     <div class="highlight success">
       <h3>✅ Avantages de l'Analyse Python</h3>
       <ul>
@@ -591,7 +608,7 @@ class PythonReportGenerator:
         return f"""
   <div class="section">
     <h2>🔬 Analyse Approfondie Python</h2>
-    
+
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number">{successful}</div>
@@ -606,7 +623,7 @@ class PythonReportGenerator:
         <div>Taux de Réussite</div>
       </div>
     </div>
-    
+
     <div class="highlight {"success" if successful > 0 else "success"}">
       <h3>{"✅ Analyse Approfondie Complétée" if successful > 0 else "✅ Aucune Analyse Approfondie Nécessaire"}</h3>
       <p>{"L'analyse approfondie Python a été exécutée avec succès sur " + str(successful) + " positions." if successful > 0 else "Toutes vos positions ont un grade satisfaisant (≥B). L'analyse approfondie ne s'exécute que sur les positions nécessitant une attention particulière (grade < B)."}</p>
@@ -633,7 +650,7 @@ class PythonReportGenerator:
         return f"""
   <div class="section">
     <h2>⚡ Métriques de Performance</h2>
-    
+
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number">{metrics.get("total_execution_time_seconds", 0):.1f}s</div>
@@ -652,7 +669,7 @@ class PythonReportGenerator:
         <div>Coût Estimé</div>
       </div>
     </div>
-    
+
     <div class="highlight success">
       <h3>🚀 Performance Exceptionnelle</h3>
       <ul>
@@ -665,12 +682,297 @@ class PythonReportGenerator:
   </div>
         """
 
+    def _generate_discovery_section(self, discovery_results: dict[str, Any] | None) -> str:
+        """Generate A+ discovery opportunities section."""
+        if not discovery_results or "opportunities" not in discovery_results:
+            return """
+  <div class="section">
+    <h2>🔍 Découverte d'Opportunités A+</h2>
+    <div class="highlight warning">
+      <p><strong>Aucune nouvelle opportunité A+ découverte.</strong></p>
+      <p>L'analyse de découverte n'a pas identifié de nouveaux actifs prometteurs dans cette session.</p>
+    </div>
+  </div>
+            """
 
-def generate_python_report(portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default") -> str:
+        opportunities = discovery_results["opportunities"]
+        total_opps = len(opportunities)
+
+        # Group by asset class
+        by_class = {"stock": [], "etf": [], "crypto": []}
+        for opp in opportunities:
+            asset_class = opp.get("ticker", "").lower()
+            if "btc" in asset_class or "eth" in asset_class:
+                by_class["crypto"].append(opp)
+            elif "vt" in asset_class or "vx" in asset_class or "bnd" in asset_class:
+                by_class["etf"].append(opp)
+            else:
+                by_class["stock"].append(opp)
+
+        # Generate opportunity rows
+        opps_html = ""
+        for opp in opportunities:
+            ticker = opp.get("ticker", "N/A")
+            name = opp.get("name", "N/A")
+            grade = opp.get("grade", "A+")
+            score = opp.get("composite_score", 0)
+            recommendation = opp.get("recommendation", "BUY")
+            rationale = opp.get("rationale", "Opportunité prometteuse identifiée par analyse Python")
+
+            grade_class = f"grade-{grade.lower().replace('+', '-plus')}"
+            rec_badge = '<span class="badge badge-buy">ACHAT</span>' if "BUY" in recommendation else '<span class="badge badge-hold">SURVEILLER</span>'
+
+            opps_html += f"""
+        <tr>
+          <td><strong>{ticker}</strong><br><small>{name}</small></td>
+          <td class="{grade_class}"><strong>{grade}</strong></td>
+          <td>{score:.3f}</td>
+          <td>{rec_badge}</td>
+          <td><small>{rationale[:100]}...</small></td>
+        </tr>
+            """
+
+        return f"""
+  <div class="section">
+    <h2>🔍 Découverte d'Opportunités A+</h2>
+
+    <div class="highlight success">
+      <h3>✨ {total_opps} Nouvelles Opportunités Identifiées</h3>
+      <p>L'analyse de découverte Python a identifié {total_opps} actifs prometteurs de grade A/A+ qui pourraient améliorer votre portefeuille.</p>
+      <ul>
+        <li><strong>Actions:</strong> {len(by_class["stock"])} opportunités</li>
+        <li><strong>ETFs:</strong> {len(by_class["etf"])} opportunités</li>
+        <li><strong>Crypto:</strong> {len(by_class["crypto"])} opportunités</li>
+      </ul>
+    </div>
+
+    <h3>📋 Liste des Opportunités Découvertes</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker / Nom</th>
+          <th>Note</th>
+          <th>Score</th>
+          <th>Recommandation</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        {opps_html}
+      </tbody>
+    </table>
+
+    <div class="highlight warning">
+      <h3>💡 Comment Utiliser Ces Opportunités</h3>
+      <ul>
+        <li><strong>Remplacement:</strong> Considérez remplacer vos positions D/F par ces actifs A/A+</li>
+        <li><strong>Diversification:</strong> Ajoutez ces actifs pour équilibrer votre portefeuille</li>
+        <li><strong>DCA:</strong> Établissez un plan d'achat progressif (Dollar Cost Averaging)</li>
+        <li><strong>Due Diligence:</strong> Effectuez vos propres recherches avant d'investir</li>
+      </ul>
+    </div>
+  </div>
+        """
+
+    def _generate_individual_deep_analysis_reports(self, results_by_ticker: dict[str, Any]) -> None:
+        """Generate individual HTML reports for each deep analysis."""
+        self.logger.info(f"Generating individual HTML reports for {len(results_by_ticker)} deep analyses...")
+
+        for ticker, result in results_by_ticker.items():
+            try:
+                # Generate individual report
+                individual_html = self._generate_individual_report_html(ticker, result)
+
+                # Determine output path based on asset class
+                asset_class = result.get("asset_class", "unknown")
+                report_dir = self.output_dir / f"deep_analysis_{asset_class}"
+                report_dir.mkdir(parents=True, exist_ok=True)
+
+                report_path = report_dir / f"{ticker}_deep_analysis.html"
+
+                with open(report_path, "w", encoding="utf-8") as f:
+                    f.write(individual_html)
+
+                self.logger.info(f"✅ Generated individual report for {ticker}: {report_path}")
+
+            except Exception as e:
+                self.logger.error(f"Failed to generate individual report for {ticker}: {e}")
+
+    def _generate_individual_report_html(self, ticker: str, result: dict[str, Any]) -> str:
+        """Generate HTML for individual deep analysis report."""
+        timestamp = datetime.now().strftime("%d %B %Y à %H:%M")
+
+        grade = result.get("grade", "N/A")
+        score = result.get("composite_score", 0)
+        recommendation = result.get("recommendation", "HOLD")
+        asset_class = result.get("asset_class", "unknown")
+
+        grade_class = f"grade-{grade.lower().replace('+', '-plus')}"
+
+        return f"""<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Analyse Approfondie: {ticker} — FinWiz</title>
+  <style>{self._get_css_styles()}</style>
+</head>
+<body>
+  <header>
+    <h1>🔬 Analyse Approfondie: {ticker}</h1>
+    <div class="muted">Généré le {timestamp} • Analyse Python déterministe</div>
+  </header>
+
+  <div class="section">
+    <h2>📊 Résumé de l'Analyse</h2>
+    <div class="highlight success">
+      <h3>Note: <span class="{grade_class}">{grade}</span></h3>
+      <p><strong>Score Composite:</strong> {score:.3f}</p>
+      <p><strong>Recommandation:</strong> {recommendation}</p>
+      <p><strong>Classe d'Actif:</strong> {asset_class.upper()}</p>
+    </div>
+  </div>
+
+  {self._generate_detailed_scores_section(result)}
+
+  {self._generate_fundamental_details(result)}
+
+  {self._generate_technical_details(result)}
+
+  {self._generate_risk_details(result)}
+
+  <footer>
+    <p>📋 Rapport généré par FinWiz • Analyse Python déterministe</p>
+    <p class="small"><a href="../../finwiz_family_financial_plan.html">← Retour au rapport principal</a></p>
+  </footer>
+</body>
+</html>"""
+
+    def _generate_detailed_scores_section(self, result: dict[str, Any]) -> str:
+        """Generate detailed score breakdown section."""
+        fundamental = result.get("fundamental_score", 0)
+        technical = result.get("technical_score", 0)
+        risk = result.get("risk_score", 0)
+
+        return f"""
+  <div class="section">
+    <h2>📊 Décomposition des Scores</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{fundamental:.3f}</div>
+        <div>Score Fondamental</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{technical:.3f}</div>
+        <div>Score Technique</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{risk:.3f}</div>
+        <div>Score de Risque</div>
+      </div>
+    </div>
+  </div>
+        """
+
+    def _generate_fundamental_details(self, result: dict[str, Any]) -> str:
+        """Generate fundamental analysis details."""
+        details = result.get("fundamental_details", {})
+        if not details:
+            return ""
+
+        metrics_html = ""
+        for metric, value in details.items():
+            # Format metric name (convert snake_case to Title Case)
+            metric_name = metric.replace("_", " ").title()
+            # Format value based on type
+            if isinstance(value, float):
+                formatted_value = f"{value:.3f}"
+            elif isinstance(value, bool):
+                formatted_value = "✅" if value else "❌"
+            else:
+                formatted_value = str(value)
+            metrics_html += f"        <li><strong>{metric_name}:</strong> {formatted_value}</li>\n"
+
+        return f"""
+  <div class="section">
+    <h2>💼 Analyse Fondamentale</h2>
+    <div class="highlight">
+      <h3>Métriques Fondamentales</h3>
+      <ul>
+{metrics_html}
+      </ul>
+    </div>
+  </div>
+        """
+
+    def _generate_technical_details(self, result: dict[str, Any]) -> str:
+        """Generate technical analysis details."""
+        details = result.get("technical_details", {})
+        if not details:
+            return ""
+
+        metrics_html = ""
+        for metric, value in details.items():
+            metric_name = metric.replace("_", " ").title()
+            if isinstance(value, float):
+                formatted_value = f"{value:.3f}"
+            elif isinstance(value, bool):
+                formatted_value = "✅" if value else "❌"
+            else:
+                formatted_value = str(value)
+            metrics_html += f"        <li><strong>{metric_name}:</strong> {formatted_value}</li>\n"
+
+        return f"""
+  <div class="section">
+    <h2>📈 Analyse Technique</h2>
+    <div class="highlight">
+      <h3>Indicateurs Techniques</h3>
+      <ul>
+{metrics_html}
+      </ul>
+    </div>
+  </div>
+        """
+
+    def _generate_risk_details(self, result: dict[str, Any]) -> str:
+        """Generate risk analysis details."""
+        details = result.get("risk_details", {})
+        if not details:
+            return ""
+
+        metrics_html = ""
+        for metric, value in details.items():
+            metric_name = metric.replace("_", " ").title()
+            if isinstance(value, float):
+                formatted_value = f"{value:.3f}"
+            elif isinstance(value, bool):
+                formatted_value = "✅" if value else "❌"
+            else:
+                formatted_value = str(value)
+            metrics_html += f"        <li><strong>{metric_name}:</strong> {formatted_value}</li>\n"
+
+        return f"""
+  <div class="section">
+    <h2>⚠️ Analyse de Risque</h2>
+    <div class="highlight warning">
+      <h3>Facteurs de Risque</h3>
+      <ul>
+{metrics_html}
+      </ul>
+    </div>
+  </div>
+        """
+
+
+def generate_python_report(
+    portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default", discovery_results: dict[str, Any] | None = None
+) -> str:
     """
     Convenience function to generate Python-based report.
 
     This replaces AI-based report generation with fast template-based HTML.
     """
     generator = PythonReportGenerator()
-    return generator.generate_family_financial_plan(portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id)
+    return generator.generate_family_financial_plan(
+        portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id, discovery_results=discovery_results
+    )

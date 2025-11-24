@@ -12,11 +12,11 @@ Created by quantitative-finance-engineer for AI Minimalism validation.
 """
 
 import math
-import numpy as np
+
 import pytest
 
-from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 from finwiz.flow_state import DeepAnalysisResult
+from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 
 
 class TestFinancialCalculations:
@@ -43,7 +43,7 @@ class TestFinancialCalculations:
             # Optional fields
             "profit_margin": 0.20,  # 20% margin - good
             "pe_ratio": 18,  # Reasonable P/E
-            "dividend_yield": 0.02  # 2% yield
+            "dividend_yield": 0.02,  # 2% yield
         }
 
         result = scorer.calculate_composite_score("TEST", "stock", test_data)
@@ -55,7 +55,7 @@ class TestFinancialCalculations:
 
         # Verify score ranges
         assert 0 <= result.composite_score <= 1.0
-        assert result.grade in ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F']
+        assert result.grade in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]
 
         # With these strong fundamentals, expect high score
         assert result.composite_score > 0.7, "Strong fundamentals should yield high score"
@@ -77,7 +77,7 @@ class TestFinancialCalculations:
             "sma_20": 98,  # Price above SMA20 - bullish
             "sma_50": 95,  # Price above SMA50 - bullish
             "volume": 1000000,  # Good volume
-            "average_volume": 900000  # Above average volume
+            "average_volume": 900000,  # Above average volume
         }
 
         result = scorer.calculate_composite_score("TECH", "stock", test_data)
@@ -86,7 +86,7 @@ class TestFinancialCalculations:
         assert result.composite_score > 0.5, "Positive technicals should yield decent score"
 
         # Check that technical metrics were considered
-        assert hasattr(result, 'technical_score') or result.composite_score != 0
+        assert hasattr(result, "technical_score") or result.composite_score != 0
 
     def test_risk_metrics_impact(self, scorer):
         """Test that risk metrics properly impact scoring."""
@@ -104,7 +104,7 @@ class TestFinancialCalculations:
             # Optional risk fields
             "max_drawdown": -0.60,  # 60% drawdown - severe
             "sharpe_ratio": 0.3,  # Poor risk-adjusted return
-            "value_at_risk": -0.15  # High VaR
+            "value_at_risk": -0.15,  # High VaR
         }
 
         high_risk_result = scorer.calculate_composite_score("RISKY", "stock", high_risk_data)
@@ -123,14 +123,13 @@ class TestFinancialCalculations:
             # Optional risk fields
             "max_drawdown": -0.05,  # 5% drawdown - minimal
             "sharpe_ratio": 2.0,  # Excellent risk-adjusted return
-            "value_at_risk": -0.02  # Low VaR
+            "value_at_risk": -0.02,  # Low VaR
         }
 
         low_risk_result = scorer.calculate_composite_score("SAFE", "stock", low_risk_data)
 
         # Low risk should score better than high risk
-        assert low_risk_result.composite_score > high_risk_result.composite_score, \
-            "Low risk assets should score better than high risk"
+        assert low_risk_result.composite_score > high_risk_result.composite_score, "Low risk assets should score better than high risk"
 
     def test_edge_case_negative_values(self, scorer):
         """Test handling of negative financial metrics."""
@@ -146,7 +145,7 @@ class TestFinancialCalculations:
             "beta": 1.5,
             # Optional negative fields
             "profit_margin": -0.10,  # Negative margin
-            "earnings_growth": -0.30  # Declining earnings
+            "earnings_growth": -0.30,  # Declining earnings
         }
 
         result = scorer.calculate_composite_score("LOSS", "stock", test_data)
@@ -157,7 +156,7 @@ class TestFinancialCalculations:
 
         # Negative fundamentals should yield low score
         assert result.composite_score < 0.5, "Negative metrics should yield low score"
-        assert result.grade in ['C-', 'D', 'F'], "Poor metrics should yield low grade"
+        assert result.grade in ["C-", "D", "F"], "Poor metrics should yield low grade"
 
     def test_edge_case_nan_and_infinity(self, scorer):
         """Test handling of NaN and infinity values."""
@@ -167,12 +166,12 @@ class TestFinancialCalculations:
             # Critical fields
             "current_price": 50.0,
             "roe": 0.05,  # Normal ROE
-            "debt_to_equity": float('nan'),  # NaN value
-            "revenue_growth": None,  # None value (will use default)
+            "debt_to_equity": float("nan"),  # NaN value
+            "revenue_growth": 0.10,  # Provide valid value (revenue_growth is now required)
             "volatility": 0.30,
             "beta": 1.0,
             # Optional edge cases
-            "pe_ratio": float('inf'),  # Infinity P/E (no earnings)
+            "pe_ratio": float("inf"),  # Infinity P/E (no earnings)
         }
 
         # Should handle edge cases gracefully
@@ -197,7 +196,7 @@ class TestFinancialCalculations:
             "aum": 400000000000,  # $400B AUM
             "nav_discount": -0.001,  # Trading at slight discount
             "dividend_yield": 0.013,  # 1.3% yield
-            "sharpe_ratio": 1.2
+            "sharpe_ratio": 1.2,
         }
 
         result = scorer.calculate_composite_score("SPY", "etf", etf_data)
@@ -221,7 +220,7 @@ class TestFinancialCalculations:
             "network_value": 0.8,  # High network value
             "developer_activity": 100,  # Active development
             "social_sentiment": 0.7,  # Positive sentiment
-            "returns_1y": 1.5  # 150% yearly return
+            "returns_1y": 1.5,  # 150% yearly return
         }
 
         result = scorer.calculate_composite_score("BTC", "crypto", crypto_data)
@@ -234,31 +233,32 @@ class TestFinancialCalculations:
         """Test that grades correspond to correct score boundaries."""
         # Test grade boundaries
         grade_tests = [
-            (0.95, 'A+'),  # Top tier
-            (0.90, 'A+'),
-            (0.85, 'A'),
-            (0.80, 'A-'),
-            (0.75, 'B+'),
-            (0.70, 'B'),
-            (0.65, 'B-'),
-            (0.60, 'C+'),
-            (0.55, 'C'),
-            (0.50, 'C-'),
-            (0.40, 'D'),
-            (0.20, 'F')
+            (0.95, "A+"),  # Top tier
+            (0.90, "A+"),
+            (0.85, "A"),
+            (0.80, "A-"),
+            (0.75, "B+"),
+            (0.70, "B"),
+            (0.65, "B-"),
+            (0.60, "C+"),
+            (0.55, "C"),
+            (0.50, "C-"),
+            (0.40, "D"),
+            (0.20, "F"),
         ]
 
         for score, expected_grade in grade_tests:
-            # Create mock result with specific score
+            # Create mock result with specific score using current schema
             result = DeepAnalysisResult(
                 ticker="TEST",
                 asset_class="stock",
+                crew_name="test_crew",
                 composite_score=score,
                 grade="",  # Will be calculated
-                recommendation="",
-                risk_assessment={},
-                technical_indicators={},
-                analyst_consensus={}
+                recommendation="HOLD",
+                rationale="Test rationale",
+                data_freshness_hours=1.0,
+                confidence_level=0.8,
             )
 
             # Calculate grade from score
@@ -303,7 +303,7 @@ class TestFinancialCalculations:
             # Optional strong indicators
             "profit_margin": 0.25,  # High margin
             "pe_ratio": 15,  # Reasonable valuation
-            "rsi": 45  # Not overbought
+            "rsi": 45,  # Not overbought
         }
 
         strong_result = scorer.calculate_composite_score("WIN", "stock", strong_data)
@@ -326,7 +326,7 @@ class TestFinancialCalculations:
             # Optional weak indicators
             "profit_margin": -0.05,  # Negative margin
             "pe_ratio": 50,  # Overvalued
-            "rsi": 85  # Overbought
+            "rsi": 85,  # Overbought
         }
 
         weak_result = scorer.calculate_composite_score("LOSE", "stock", weak_data)
@@ -347,7 +347,7 @@ class TestFinancialCalculations:
             "revenue_growth": 0.10,
             "volatility": 0.20,
             "beta": 1.0,
-            "profit_margin": 0.15
+            "profit_margin": 0.15,
         }
 
         # Create data with critical fields + technicals
@@ -361,7 +361,7 @@ class TestFinancialCalculations:
             "volatility": 0.20,
             "beta": 1.0,
             "rsi": 50,
-            "volume": 1000000
+            "volume": 1000000,
         }
 
         # Create data with both
@@ -392,7 +392,7 @@ class TestFinancialCalculations:
             "revenue_growth": 0.111111111,
             "volatility": 0.234567890,
             "beta": 1.23456789,
-            "sharpe_ratio": 1.987654321
+            "sharpe_ratio": 1.987654321,
         }
 
         result = scorer.calculate_composite_score("PREC", "stock", precise_data)
@@ -401,30 +401,21 @@ class TestFinancialCalculations:
         assert isinstance(result.composite_score, float)
         # Check that score is not overly precise (e.g., rounded to 3-4 decimals)
         score_str = str(result.composite_score)
-        if '.' in score_str:
-            decimal_places = len(score_str.split('.')[1])
+        if "." in score_str:
+            decimal_places = len(score_str.split(".")[1])
             assert decimal_places <= 10, "Score should not have excessive decimal places"
 
     def test_missing_data_handling(self, scorer):
         """Test scorer handles missing data gracefully."""
         # Only critical fields (minimal data)
-        minimal_data = {
-            "ticker": "MIN",
-            "asset_class": "stock",
-            "current_price": 50.0,
-            "roe": 0.10,
-            "debt_to_equity": 1.0,
-            "revenue_growth": 0.05,
-            "volatility": 0.25,
-            "beta": 1.0
-        }
+        minimal_data = {"ticker": "MIN", "asset_class": "stock", "current_price": 50.0, "roe": 0.10, "debt_to_equity": 1.0, "revenue_growth": 0.05, "volatility": 0.25, "beta": 1.0}
 
         result = scorer.calculate_composite_score("MIN", "stock", minimal_data)
 
         # Should produce valid result even with minimal data
         assert result is not None
         assert 0 <= result.composite_score <= 1.0
-        assert result.grade in ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F']
+        assert result.grade in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]
 
     @pytest.mark.parametrize("asset_class", ["stock", "etf", "crypto"])
     def test_asset_class_scoring_differences(self, scorer, asset_class):
@@ -441,18 +432,10 @@ class TestFinancialCalculations:
                 "volatility": 0.30,
                 "beta": 1.2,
                 "returns_1y": 0.20,
-                "volume": 1000000
+                "volume": 1000000,
             }
         elif asset_class == "etf":
-            test_data = {
-                "ticker": "TEST",
-                "asset_class": asset_class,
-                "current_price": 100.0,
-                "expense_ratio": 0.005,
-                "volatility": 0.30,
-                "returns_1y": 0.20,
-                "volume": 1000000
-            }
+            test_data = {"ticker": "TEST", "asset_class": asset_class, "current_price": 100.0, "expense_ratio": 0.005, "volatility": 0.30, "returns_1y": 0.20, "volume": 1000000}
         else:  # crypto
             test_data = {
                 "ticker": "TEST",
@@ -462,7 +445,7 @@ class TestFinancialCalculations:
                 "volume_24h": 10000000,
                 "volatility": 0.30,
                 "age_years": 3,
-                "returns_1y": 0.20
+                "returns_1y": 0.20,
             }
 
         result = scorer.calculate_composite_score("TEST", asset_class, test_data)

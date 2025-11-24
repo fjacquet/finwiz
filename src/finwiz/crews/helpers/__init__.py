@@ -1,30 +1,20 @@
 """
-Helper modules for CrewAI crews.
+Helper functions for CrewAI crews.
 
-This package contains shared helper utilities for crew data integration,
-context preparation, and data extraction.
+This module provides testable helper functions that are used by various crews
+but don't belong in the crew classes themselves.
 """
 
-from finwiz.crews.helpers.context_preparation import ContextPreparationManager
-from finwiz.crews.helpers.data_extraction_helpers import (
-    DataAgeExtractor,
-    DeepAnalysisExtractor,
-    MetricsExtractor,
-    TickerValidator,
-)
-from finwiz.crews.helpers.data_integration_helpers import (
-    BacktestingStatusHelper,
-    ContextMerger,
-    DiscoveryStatusHelper,
+from finwiz.crews.helpers.llm_config import get_crew_llm
+from finwiz.crews.helpers.performance_validation import validate_performance_targets
+from finwiz.crews.helpers.tool_routing import (
+    get_minimal_risk_tools,
+    get_tools_for_asset_class,
 )
 
 __all__ = [
-    "ContextPreparationManager",
-    "DataAgeExtractor",
-    "DeepAnalysisExtractor",
-    "MetricsExtractor",
-    "TickerValidator",
-    "BacktestingStatusHelper",
-    "ContextMerger",
-    "DiscoveryStatusHelper",
+    "get_tools_for_asset_class",
+    "get_minimal_risk_tools",
+    "validate_performance_targets",
+    "get_crew_llm",
 ]

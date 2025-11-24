@@ -48,9 +48,12 @@ dependencies = [
     "mkdocs-git-revision-date-localized-plugin>=1.5.0",
     "nest-asyncio>=1.6.0",
     "empyrical-reloaded>=0.5.12",
-    "crewai[tools]>=1.5.0",
+    "crewai[google-genai,tools]>=1.5.0",
     "qdrant-client>=1.16.0",
     "litellm>=1.80.0",
+    "intrinio>=0.2.1",
+    "eod>=0.2.1",
+    "langchain-openai>=1.0.3",
 ]
 
 [project.scripts]

@@ -364,6 +364,94 @@ class TestReportingOrchestrator:
         assert state.report_generation_success is False
         assert state.report_generation_error is not None
 
+    def test_should_read_discovery_results(self, orchestrator, tmp_path, mocker):
+        """Test reading discovery results from JSON file."""
+        # Arrange
+        discovery_data = {
+            "timestamp": "2025-11-23T16:18:02.525924",
+            "total_opportunities": 8,
+            "opportunities": [
+                {"ticker": "MSFT", "name": "Microsoft", "grade": "A+", "composite_score": 0.94, "recommendation": "BUY"},
+                {"ticker": "NVDA", "name": "NVIDIA", "grade": "A+", "composite_score": 0.91, "recommendation": "BUY"},
+            ],
+            "by_asset_class": {"stock": 3, "etf": 3, "crypto": 2},
+        }
+
+        # Create mock discovery file
+        discovery_path = tmp_path / "output" / "discovery" / "consolidated_discovery.json"
+        discovery_path.parent.mkdir(parents=True, exist_ok=True)
+        import json
+
+        with open(discovery_path, "w") as f:
+            json.dump(discovery_data, f)
+
+        # Mock Path to return our temp path
+        mocker.patch("finwiz.orchestrators.reporting_orchestrator.Path", return_value=discovery_path)
+
+        # Act
+        result = orchestrator._read_discovery_results()
+
+        # Assert
+        assert result is not None
+        assert result["total_opportunities"] == 8
+        assert len(result["opportunities"]) == 2
+
+    def test_should_handle_missing_discovery_results(self, orchestrator, mocker):
+        """Test handling when discovery results file doesn't exist."""
+        # Arrange
+        from pathlib import Path
+
+        fake_path = mocker.Mock(spec=Path)
+        fake_path.exists.return_value = False
+        mocker.patch("finwiz.orchestrators.reporting_orchestrator.Path", return_value=fake_path)
+
+        # Act
+        result = orchestrator._read_discovery_results()
+
+        # Assert
+        assert result is None
+
+    def test_should_save_merged_portfolio_review(self, orchestrator, sample_portfolio_review, tmp_path, mocker):
+        """Test saving merged portfolio review to disk."""
+        # Arrange
+        output_path = tmp_path / "output" / "portfolio" / "portfolio_review.json"
+
+        # Mock Path to return our temp path
+        mocker.patch("finwiz.orchestrators.reporting_orchestrator.Path", return_value=output_path)
+
+        # Act
+        orchestrator._save_merged_portfolio_review(sample_portfolio_review)
+
+        # Assert
+        assert output_path.exists()
+
+        # Verify content
+        import json
+
+        with open(output_path) as f:
+            saved_data = json.load(f)
+
+        assert len(saved_data["holdings"]) == 2
+        assert saved_data["holdings"][0]["ticker"] == "AAPL"
+        assert saved_data["holdings"][0]["composite_score"] == 0.85
+
+    def test_should_log_score_summary_when_saving(self, orchestrator, sample_portfolio_review, tmp_path, mocker):
+        """Test that score summary is logged when saving merged portfolio."""
+        # Arrange
+        output_path = tmp_path / "output" / "portfolio" / "portfolio_review.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Mock the logger to verify it's called
+        mock_logger = mocker.patch.object(orchestrator, "logger")
+
+        # Act
+        orchestrator._save_merged_portfolio_review(sample_portfolio_review)
+
+        # Assert - verify logger was called with score summary
+        calls = [str(call) for call in mock_logger.info.call_args_list]
+        assert any("Merged portfolio stats" in str(call) for call in calls)
+        assert any("2 holdings" in str(call) for call in calls)
+
     def test_should_read_json_file(self, orchestrator, tmp_path):
         """Test reading JSON file."""
         # Arrange

@@ -1,5 +1,7 @@
 # Design Document Update Summary
 
+> **⚠️ SUPERSEDED**: This document describes updates to the original 3-agent design. The implementation was simplified to 2 agents (asset_analyst, investment_reporter) during Python/AI Hybrid refactoring. See `.kiro/specs/python-ai-hybrid-analysis/` for current architecture.
+
 ## Date: 2025-01-11
 
 ## Overview

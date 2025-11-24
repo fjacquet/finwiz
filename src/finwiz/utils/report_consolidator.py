@@ -42,6 +42,7 @@ from finwiz.schemas.crew_exports import (
     RebalancingCrewExport,
     StockCrewExport,
 )
+from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
 from finwiz.schemas.python_analysis import PythonDeepAnalysisResult
 from finwiz.tools.logger import get_logger
 
@@ -375,21 +376,28 @@ class ReportConsolidator:
 
         return exports
 
-    def _load_deep_analysis_exports(self, file_paths: list[str]) -> list[DeepAnalysisCrewExport | PythonDeepAnalysisResult]:
+    def _load_deep_analysis_exports(self, file_paths: list[str]) -> list[DeepAnalysisCrewExport | PythonDeepAnalysisResult | EnrichedAnalysis]:
         """
         Load deep analysis exports with automatic schema detection.
 
-        Supports both CrewAI deep analysis exports and Python analyzer results.
-        Automatically detects which schema to use based on the crew_name field.
+        Supports:
+        - CrewAI deep analysis exports (legacy)
+        - Python analyzer results (legacy)
+        - EnrichedAnalysis (new hybrid analysis schema)
+
+        Automatically detects which schema to use based on the crew_name field
+        or presence of hybrid analysis fields.
 
         Args:
             file_paths: List of file paths to load
 
         Returns:
-            List of validated export objects (mixed CrewAI and Python)
+            List of validated export objects (mixed CrewAI, Python, and hybrid)
+
+        Requirements: 9.1 (Support new schema formats)
 
         """
-        exports: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult] = []
+        exports: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult | EnrichedAnalysis] = []
 
         logger.debug(f"Loading {len(file_paths)} deep analysis files with auto-detection")
 
@@ -407,23 +415,33 @@ class ReportConsolidator:
                 # Read and parse JSON
                 data = json.loads(path.read_text(encoding="utf-8"))
 
-                # Detect schema based on crew_name
+                # Detect schema based on structure
                 crew_name = data.get("crew_name", "")
 
-                if crew_name == "PythonDeepAnalyzer":
-                    # Python analyzer output
+                # Check for EnrichedAnalysis (new hybrid schema)
+                if "quantitative" in data and "qualitative" in data:
+                    # New hybrid analysis format
+                    export = EnrichedAnalysis.model_validate(data)
+                    logger.debug(f"✅ Validated {path} as EnrichedAnalysis (hybrid)")
+                elif crew_name == "PythonDeepAnalyzer":
+                    # Python analyzer output (legacy)
                     export = PythonDeepAnalysisResult.model_validate(data)
-                    logger.debug(f"✅ Validated {path} as PythonDeepAnalysisResult")
+                    logger.debug(f"✅ Validated {path} as PythonDeepAnalysisResult (legacy)")
                 else:
-                    # CrewAI deep analysis output
+                    # CrewAI deep analysis output (legacy)
                     export = DeepAnalysisCrewExport.model_validate(data)
-                    logger.debug(f"✅ Validated {path} as DeepAnalysisCrewExport")
+                    logger.debug(f"✅ Validated {path} as DeepAnalysisCrewExport (legacy)")
 
                 exports.append(export)
 
             except ValidationError as e:
                 # Log detailed validation errors
-                schema_name = "PythonDeepAnalysisResult" if crew_name == "PythonDeepAnalyzer" else "DeepAnalysisCrewExport"
+                if "quantitative" in data and "qualitative" in data:
+                    schema_name = "EnrichedAnalysis"
+                elif crew_name == "PythonDeepAnalyzer":
+                    schema_name = "PythonDeepAnalysisResult"
+                else:
+                    schema_name = "DeepAnalysisCrewExport"
                 logger.error(f"Validation failed for {path} against {schema_name}:")
                 validation_details = []
                 for error in e.errors():

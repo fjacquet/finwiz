@@ -133,10 +133,14 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("AAPL", "stock", 7, 10)
 
-        assert "Enhanced Sentiment Analysis for AAPL (STOCK)" in result
-        assert "📊 Sentiment Overview" in result
-        assert "🔍 Market Outlook" in result
-        assert "**Total Articles Analyzed**: 1" in result
+        # Result is a dict with 'formatted_analysis' key
+        assert isinstance(result, dict)
+        assert "formatted_analysis" in result
+        formatted = result["formatted_analysis"]
+        assert "Enhanced Sentiment Analysis for AAPL (STOCK)" in formatted
+        assert "📊 Sentiment Overview" in formatted
+        assert "🔍 Market Outlook" in formatted
+        assert "**Total Articles Analyzed**: 1" in formatted
 
     def test_successful_sentiment_analysis_etf(self, mocker):
         """Test successful sentiment analysis for ETF."""
@@ -234,8 +238,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("VTI", "etf", 7, 10)
 
-        assert "Enhanced Sentiment Analysis for VTI (ETF)" in result
-        assert "📊 Sentiment Overview" in result
+        # Result is a dict with 'formatted_analysis' key
+        assert isinstance(result, dict)
+        assert "formatted_analysis" in result
+        formatted = result["formatted_analysis"]
+        assert "Enhanced Sentiment Analysis for VTI (ETF)" in formatted
+        assert "📊 Sentiment Overview" in formatted
 
     def test_successful_sentiment_analysis_crypto(self, mocker):
         """Test successful sentiment analysis for crypto."""
@@ -333,8 +341,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("BTC-USD", "crypto", 7, 10)
 
-        assert "Enhanced Sentiment Analysis for BTC-USD (CRYPTO)" in result
-        assert "📊 Sentiment Overview" in result
+        # Result is a dict with 'formatted_analysis' key
+        assert isinstance(result, dict)
+        assert "formatted_analysis" in result
+        formatted = result["formatted_analysis"]
+        assert "Enhanced Sentiment Analysis for BTC-USD (CRYPTO)" in formatted
+        assert "📊 Sentiment Overview" in formatted
 
     def test_no_news_available(self, mocker):
         """Test handling when no news is available."""
@@ -352,8 +364,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("UNKNOWN", "stock", 7, 10)
 
-        assert "⚠️ No Data Available" in result
-        assert "no recent news articles were found" in result
+        # Result is a dict with 'formatted_analysis' key
+        assert isinstance(result, dict)
+        assert "formatted_analysis" in result
+        formatted = result["formatted_analysis"]
+        assert "⚠️ No Data Available" in formatted
+        assert "no recent news articles were found" in formatted
 
     def test_no_recent_news(self, mocker):
         """Test handling when no recent news is available."""
@@ -387,8 +403,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("AAPL", "stock", 7, 10)
 
-        assert "⚠️ No Recent News Found" in result
-        assert "within the last 7 days" in result
+        # Result is a dict with 'formatted_analysis' key
+        assert isinstance(result, dict)
+        assert "formatted_analysis" in result
+        formatted = result["formatted_analysis"]
+        assert "⚠️ No Recent News Found" in formatted
+        assert "within the last 7 days" in formatted
 
     def test_filter_news_by_date(self):
         """Test news filtering by date range."""
@@ -553,9 +573,13 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("INVALID", "stock", 7, 10)
 
-        assert "❌ Analysis Failed" in result
-        assert "INVALID" in result
-        assert "API Error" in result
+        # Result is a dict with 'formatted_analysis' key
+        assert isinstance(result, dict)
+        assert "formatted_analysis" in result
+        formatted = result["formatted_analysis"]
+        assert "❌ Analysis Failed" in formatted
+        assert "INVALID" in formatted
+        assert "API Error" in formatted
 
     def test_input_validation(self):
         """Test input parameter validation."""

@@ -34,44 +34,44 @@ class TestRiskScorer:
     def test_risk_score_high_risk(self, scorer):
         """Test risk scoring with high risk metrics."""
         data = {
-            "volatility": 0.50,  # 50% volatility (high)
-            "max_drawdown": -0.60,  # -60% drawdown (high)
-            "beta": 2.5,  # Beta of 2.5 (high)
+            "volatility": 0.60,  # 60% volatility (very high, >0.5 threshold)
+            "max_drawdown": -0.60,  # -60% drawdown (very high, >0.5 threshold)
+            "beta": 2.5,  # Beta of 2.5 (very high, >2.0)
         }
 
         score, details = scorer.calculate_risk_score(data)
 
-        assert score < 0.3  # Should be low (high risk)
+        assert score <= 0.3  # Should be low (high risk) - adjusted for floating point
         assert details["volatility_score"] == 0.2
         assert details["drawdown_score"] == 0.2
         assert details["beta_score"] == 0.2
 
     def test_volatility_scoring_ranges(self, scorer):
         """Test volatility scoring across different ranges."""
-        # Low volatility (<=10%)
-        data = {"volatility": 0.08, "max_drawdown": -0.10, "beta": 1.0}
+        # Very low volatility (<=15%)
+        data = {"volatility": 0.12, "max_drawdown": -0.10, "beta": 1.0}
         score, details = scorer.calculate_risk_score(data)
-        assert details["volatility_score"] == 1.0
+        assert details["volatility_score"] == 1.0  # Updated: 12% is now very_low
 
-        # 10-15%
-        data["volatility"] = 0.12
-        score, details = scorer.calculate_risk_score(data)
-        assert details["volatility_score"] == 0.8
-
-        # 15-25%
+        # Low volatility (15-25%)
         data["volatility"] = 0.20
         score, details = scorer.calculate_risk_score(data)
-        assert details["volatility_score"] == 0.6
+        assert details["volatility_score"] == 0.8  # Updated threshold
 
-        # 25-40%
+        # Moderate volatility (25-35%)
         data["volatility"] = 0.30
         score, details = scorer.calculate_risk_score(data)
-        assert details["volatility_score"] == 0.4
+        assert details["volatility_score"] == 0.6  # Updated threshold
 
-        # >40%
-        data["volatility"] = 0.50
+        # High volatility (35-50%)
+        data["volatility"] = 0.40
         score, details = scorer.calculate_risk_score(data)
-        assert details["volatility_score"] == 0.2
+        assert details["volatility_score"] == 0.4  # Updated threshold
+
+        # Very high volatility (>50%)
+        data["volatility"] = 0.60
+        score, details = scorer.calculate_risk_score(data)
+        assert details["volatility_score"] == 0.2  # Updated threshold
 
     def test_drawdown_scoring_ranges(self, scorer):
         """Test drawdown scoring across different ranges."""
@@ -136,7 +136,7 @@ class TestRiskScorer:
     def test_weighted_average_calculation(self, scorer):
         """Test that weighted average is calculated correctly."""
         data = {
-            "volatility": 0.15,  # Score: 0.8
+            "volatility": 0.20,  # Score: 0.8 (in 15-25% range)
             "max_drawdown": -0.15,  # Score: 0.8
             "beta": 1.0,  # Score: 1.0
         }

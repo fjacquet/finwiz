@@ -96,6 +96,9 @@ class MarketContextExtractor:
         """
         try:
             market_regime = discovery_result.market_context
+            if market_regime is None:
+                self.logger.warning("Market context is None, cannot extract VIX indicators")
+                return None
             current_vix = market_regime.vix_level
 
             # Calculate VIX percentile based on historical ranges
@@ -134,6 +137,9 @@ class MarketContextExtractor:
         """
         try:
             market_regime = discovery_result.market_context
+            if market_regime is None:
+                self.logger.warning("Market context is None, cannot extract macro indicators")
+                return None
 
             # Extract core macro indicators
             indicators = MacroIndicators(

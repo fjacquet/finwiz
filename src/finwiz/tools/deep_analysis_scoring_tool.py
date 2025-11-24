@@ -5,8 +5,6 @@ This tool enables CrewAI agents to execute the DeepAnalysisScorer Python class
 for deterministic, testable investment scoring (AI Minimalism principle).
 """
 
-from typing import Any
-
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
@@ -125,38 +123,41 @@ class DeepAnalysisScoringTool(BaseTool):
 
             # Add asset-specific fields
             if asset_class == "stock":
-                data.update({
-                    "roe": roe,
-                    "debt_to_equity": debt_to_equity,
-                    "revenue_growth": revenue_growth,
-                    "profit_margin": profit_margin,
-                })
+                data.update(
+                    {
+                        "roe": roe,
+                        "debt_to_equity": debt_to_equity,
+                        "revenue_growth": revenue_growth,
+                        "profit_margin": profit_margin,
+                    }
+                )
             elif asset_class == "etf":
-                data.update({
-                    "expense_ratio": expense_ratio,
-                    "tracking_error": tracking_error,
-                    "aum": aum,
-                })
+                data.update(
+                    {
+                        "expense_ratio": expense_ratio,
+                        "tracking_error": tracking_error,
+                        "aum": aum,
+                    }
+                )
             elif asset_class == "crypto":
-                data.update({
-                    "market_cap": market_cap,
-                    "volume_24h": volume_24h,
-                    "age_years": age_years,
-                })
+                data.update(
+                    {
+                        "market_cap": market_cap,
+                        "volume_24h": volume_24h,
+                        "age_years": age_years,
+                    }
+                )
 
             # Remove None values
             data = {k: v for k, v in data.items() if v is not None}
 
             # Instantiate scorer and execute
             scorer = DeepAnalysisScorer()
-            result = scorer.calculate_composite_score(
-                ticker=ticker,
-                asset_class=asset_class,
-                data=data
-            )
+            result = scorer.calculate_composite_score(ticker=ticker, asset_class=asset_class, data=data)
 
             # Convert result to JSON
             import json
+
             result_dict = {
                 "ticker": result.ticker,
                 "asset_class": result.asset_class,
@@ -178,10 +179,13 @@ class DeepAnalysisScoringTool(BaseTool):
             logger.error(f"❌ Scoring failed for {ticker}: {e}")
             # Return error result
             import json
-            return json.dumps({
-                "ticker": ticker,
-                "error": str(e),
-                "grade": "F",
-                "composite_score": 0.0,
-                "recommendation": "SELL",
-            })
+
+            return json.dumps(
+                {
+                    "ticker": ticker,
+                    "error": str(e),
+                    "grade": "F",
+                    "composite_score": 0.0,
+                    "recommendation": "SELL",
+                }
+            )

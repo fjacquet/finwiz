@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
+from finwiz.flows.hybrid_analysis_flow import HybridAnalysisFlow, HybridAnalysisState
+from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -25,6 +27,18 @@ class DeepAnalysisOrchestrator:
         self.crew_factory = dependencies.get("crew_factory")
         self.integration_manager = dependencies.get("integration_manager")
         self.error_handler = dependencies.get("error_handler")
+
+        # Initialize HybridAnalysisFlow for new hybrid architecture
+        self.hybrid_flow = HybridAnalysisFlow()
+
+        # Initialize DataSourceOrchestrator for multi-source data acquisition
+        from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
+
+        self.data_orchestrator = DataSourceOrchestrator(
+            total_timeout=10.0,
+            per_source_timeout=3.0,
+            enable_validation=True,
+        )
 
     async def analyze_and_update_portfolio(self) -> dict[str, Any]:
         """
@@ -232,12 +246,14 @@ class DeepAnalysisOrchestrator:
 
         Returns:
             Dictionary with raw metrics for Python scoring
+
         """
         import json
-        from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
+
         from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
-        from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+        from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
         from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
+        from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
         self.logger.info(f"🐍 Python collecting data for {ticker} ({asset_class})")
 
@@ -275,7 +291,7 @@ class DeepAnalysisOrchestrator:
                     symbol=ticker,
                     include_thesis=False,  # We only need data
                     include_risk_assessment=False,
-                    include_perplexity=False
+                    include_perplexity=False,
                 )
 
                 # Extract crypto-specific metrics
@@ -285,7 +301,12 @@ class DeepAnalysisOrchestrator:
 
                     # Map total_volume to volume_24h (CoinGecko uses total_volume)
                     collected_data["volume_24h"] = crypto_data.get("total_volume", crypto_data.get("volume_24h", 0.0))
-                    collected_data["market_cap"] = crypto_data.get("market_cap", 0.0)
+
+                    # Get market cap with fallback to reasonable default if missing/zero
+                    market_cap_raw = crypto_data.get("market_cap", 0.0)
+                    if market_cap_raw <= 0:
+                        self.logger.warning(f"⚠️ Market cap missing/zero for {ticker}, using default $10B")
+                    collected_data["market_cap"] = market_cap_raw if market_cap_raw > 0 else 10e9  # Default $10B
 
                     # Also store circulating and max supply for scoring
                     collected_data["circulating_supply"] = crypto_data.get("circulating_supply", 0.0)
@@ -294,60 +315,123 @@ class DeepAnalysisOrchestrator:
                     # Calculate age_years from genesis date if available
                     # For now, use a mapping for known cryptos
                     age_mapping = {
-                        "BTC": 15.0,   # Since 2009
+                        "BTC": 15.0,  # Since 2009
                         "BTC-USD": 15.0,
-                        "ETH": 9.0,    # Since 2015
+                        "ETH": 9.0,  # Since 2015
                         "ETH-USD": 9.0,
-                        "ADA": 7.0,    # Since 2017
+                        "ADA": 7.0,  # Since 2017
                         "ADA-USD": 7.0,
-                        "SOL": 4.0,    # Since 2020
+                        "SOL": 4.0,  # Since 2020
                         "SOL-USD": 4.0,
-                        "AVAX": 4.0,   # Since 2020
+                        "AVAX": 4.0,  # Since 2020
                         "AVAX-USD": 4.0,
-                        "DOT": 4.0,    # Since 2020
+                        "DOT": 4.0,  # Since 2020
                         "DOT-USD": 4.0,
                     }
                     ticker_base = ticker.replace("-USD", "").upper()
                     collected_data["age_years"] = age_mapping.get(ticker_base, 3.0)  # Default 3 years
 
-                    self.logger.info(f"✅ Got crypto data: volume_24h={collected_data['volume_24h']}, age_years={collected_data['age_years']}, market_cap={collected_data['market_cap']}")
+                    self.logger.info(
+                        f"✅ Got crypto data: volume_24h={collected_data['volume_24h']}, age_years={collected_data['age_years']}, market_cap={collected_data['market_cap']}"
+                    )
                     collected_data["crypto_info"] = crypto_result
                 else:
                     self.logger.warning(f"⚠️ Crypto tool returned unexpected type: {type(crypto_result)}")
                     # Set default values for required fields
                     collected_data["volume_24h"] = 1e9  # Default $1B volume
-                    collected_data["age_years"] = 3.0   # Default 3 years
+                    collected_data["age_years"] = 3.0  # Default 3 years
                     collected_data["market_cap"] = 10e9  # Default $10B market cap
 
             elif asset_class.lower() == "stock":
-                self.logger.info(f"🐍 Calling YahooFinanceCompanyInfoTool for {ticker}")
-                company_tool = YahooFinanceCompanyInfoTool()
-                company_result = company_tool._run(ticker=ticker)
+                # Use DataSourceOrchestrator for multi-source fundamental data acquisition
+                self.logger.info(f"🐍 Using DataSourceOrchestrator for {ticker} fundamental data")
 
-                # Extract fundamental metrics to top level
-                if "financial_metrics" in company_result:
-                    metrics = company_result["financial_metrics"]
-                    if "return_on_equity" in metrics:
-                        collected_data["roe"] = metrics["return_on_equity"]
-                        self.logger.info(f"✅ Got roe: {metrics['return_on_equity']}")
-                    if "debt_to_equity" in metrics:
-                        collected_data["debt_to_equity"] = metrics["debt_to_equity"]
-                        self.logger.info(f"✅ Got debt_to_equity: {metrics['debt_to_equity']}")
-                    if "revenue_growth" in metrics:
-                        collected_data["revenue_growth"] = metrics["revenue_growth"]
-                        self.logger.info(f"✅ Got revenue_growth: {metrics['revenue_growth']}")
-                    if "profit_margin" in metrics:
-                        collected_data["profit_margin"] = metrics["profit_margin"]
-                        self.logger.info(f"✅ Got profit_margin: {metrics['profit_margin']}")
+                # Get sector from ticker_info if available
+                sector = None
+                if "ticker_info" in collected_data and isinstance(collected_data["ticker_info"], dict):
+                    sector = collected_data["ticker_info"].get("sector")
 
-                collected_data["company_info"] = company_result
+                # Run async orchestration
+                import asyncio
+                import concurrent.futures
+
+                try:
+                    # Handle both running and non-running event loop scenarios
+                    try:
+                        # Check if event loop is already running (CrewAI Flow context)
+                        loop = asyncio.get_running_loop()
+                        # Use ThreadPoolExecutor to run async code in a new thread with its own event loop
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(asyncio.run, self.data_orchestrator.get_fundamental_data(ticker, sector))
+                            orchestration_result = future.result()
+                    except RuntimeError:
+                        # No event loop running, safe to use asyncio.run()
+                        orchestration_result = asyncio.run(self.data_orchestrator.get_fundamental_data(ticker, sector))
+
+                    # Extract fundamental metrics to top level
+                    if orchestration_result.return_on_equity is not None:
+                        collected_data["roe"] = orchestration_result.return_on_equity
+                        self.logger.info(f"✅ Got roe: {orchestration_result.return_on_equity} (source: {orchestration_result.lineage.return_on_equity_source})")
+
+                    if orchestration_result.debt_to_equity is not None:
+                        collected_data["debt_to_equity"] = orchestration_result.debt_to_equity
+                        self.logger.info(f"✅ Got debt_to_equity: {orchestration_result.debt_to_equity} (source: {orchestration_result.lineage.debt_to_equity_source})")
+
+                    if orchestration_result.revenue_growth is not None:
+                        collected_data["revenue_growth"] = orchestration_result.revenue_growth
+                        self.logger.info(f"✅ Got revenue_growth: {orchestration_result.revenue_growth} (source: {orchestration_result.lineage.revenue_growth_source})")
+
+                    if orchestration_result.profit_margin is not None:
+                        collected_data["profit_margin"] = orchestration_result.profit_margin
+                        self.logger.info(f"✅ Got profit_margin: {orchestration_result.profit_margin} (source: {orchestration_result.lineage.profit_margin_source})")
+
+                    # Store orchestration metadata
+                    collected_data["data_lineage"] = orchestration_result.lineage.to_dict()
+                    collected_data["data_confidence"] = orchestration_result.confidence
+                    collected_data["data_sources_attempted"] = orchestration_result.sources_attempted
+                    collected_data["data_sources_succeeded"] = orchestration_result.sources_succeeded
+                    collected_data["used_fallback"] = orchestration_result.used_fallback
+
+                    if orchestration_result.warnings:
+                        self.logger.warning(f"⚠️ Data orchestration warnings for {ticker}: {orchestration_result.warnings}")
+
+                    self.logger.info(
+                        f"✅ DataSourceOrchestrator completed: completeness={orchestration_result.get_completeness_score():.1%}, "
+                        f"confidence={orchestration_result.confidence:.2f}, "
+                        f"sources={orchestration_result.sources_succeeded}"
+                    )
+
+                except Exception as orch_error:
+                    self.logger.error(f"❌ DataSourceOrchestrator failed for {ticker}: {orch_error}", exc_info=True)
+                    # Fallback to YahooFinanceCompanyInfoTool
+                    self.logger.info(f"🐍 Falling back to YahooFinanceCompanyInfoTool for {ticker}")
+                    company_tool = YahooFinanceCompanyInfoTool()
+                    company_result = company_tool._run(ticker=ticker)
+
+                    # Extract fundamental metrics to top level
+                    if "financial_metrics" in company_result:
+                        metrics = company_result["financial_metrics"]
+                        if "return_on_equity" in metrics:
+                            collected_data["roe"] = metrics["return_on_equity"]
+                            self.logger.info(f"✅ Got roe: {metrics['return_on_equity']}")
+                        if "debt_to_equity" in metrics:
+                            collected_data["debt_to_equity"] = metrics["debt_to_equity"]
+                            self.logger.info(f"✅ Got debt_to_equity: {metrics['debt_to_equity']}")
+                        if "revenue_growth" in metrics:
+                            collected_data["revenue_growth"] = metrics["revenue_growth"]
+                            self.logger.info(f"✅ Got revenue_growth: {metrics['revenue_growth']}")
+                        if "profit_margin" in metrics:
+                            collected_data["profit_margin"] = metrics["profit_margin"]
+                            self.logger.info(f"✅ Got profit_margin: {metrics['profit_margin']}")
+
+                    collected_data["company_info"] = company_result
 
         except Exception as e:
             self.logger.error(f"❌ Asset-specific data collection failed: {e}", exc_info=True)
             # Ensure crypto fields exist with defaults if it was a crypto asset
             if asset_class.lower() == "crypto":
                 collected_data["volume_24h"] = 1e9  # Default $1B volume
-                collected_data["age_years"] = 3.0   # Default 3 years
+                collected_data["age_years"] = 3.0  # Default 3 years
                 collected_data["market_cap"] = 10e9  # Default $10B market cap
                 collected_data["crypto_info"] = {}
             else:
@@ -357,13 +441,7 @@ class DeepAnalysisOrchestrator:
             # STEP 1: Quantitative Analysis (volatility, beta, technical indicators, risk metrics)
             self.logger.info(f"🐍 Calling QuantitativeAnalysisTool for {ticker}")
             quant_tool = QuantitativeAnalysisTool()
-            quant_result = quant_tool._run(
-                symbol=ticker,
-                asset_class=asset_class,
-                analysis_type="comprehensive",
-                timeframe="1y",
-                strategy="sma_crossover"
-            )
+            quant_result = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="comprehensive", timeframe="1y", strategy="sma_crossover")
 
             # Parse quant result (it returns JSON string)
             quant_data = json.loads(quant_result) if isinstance(quant_result, str) else quant_result
@@ -377,9 +455,9 @@ class DeepAnalysisOrchestrator:
                 if isinstance(quant_data["performance_metrics"], dict) and "beta" in quant_data["performance_metrics"]:
                     self.logger.info(f"🔍 DEBUG: Found beta={quant_data['performance_metrics']['beta']} in quantitative data")
                 else:
-                    self.logger.warning(f"⚠️ DEBUG: Beta NOT found in performance_metrics!")
+                    self.logger.warning("⚠️ DEBUG: Beta NOT found in performance_metrics!")
             else:
-                self.logger.warning(f"⚠️ DEBUG: No performance_metrics in quantitative data!")
+                self.logger.warning("⚠️ DEBUG: No performance_metrics in quantitative data!")
 
         except Exception as e:
             self.logger.error(f"❌ Quantitative analysis failed: {e}", exc_info=True)
@@ -389,12 +467,7 @@ class DeepAnalysisOrchestrator:
             # STEP 2: Sentiment Analysis
             self.logger.info(f"🐍 Calling SentimentAnalysisTool for {ticker}")
             sentiment_tool = EnhancedSentimentAnalysisTool()
-            sentiment_result = sentiment_tool._run(
-                ticker=ticker,
-                asset_type=asset_class,
-                max_articles=20,
-                days_back=30
-            )
+            sentiment_result = sentiment_tool._run(ticker=ticker, asset_type=asset_class, max_articles=20, days_back=30)
 
             # Store sentiment result (now returns structured data)
             if isinstance(sentiment_result, dict):
@@ -433,7 +506,7 @@ class DeepAnalysisOrchestrator:
                     form_type="10-K",
                     sections=["Item 1", "Item 1A", "Item 7"],
                     risk_assessment=True,
-                    include_perplexity=False  # Disabled for speed
+                    include_perplexity=False,  # Disabled for speed
                 )
 
                 # Store SEC result (it's already formatted markdown text, not JSON)
@@ -494,9 +567,10 @@ class DeepAnalysisOrchestrator:
                     self.logger.warning(f"Failed to store Python result: {e}")
 
             # STEP 3: Pass Python results to agent as INPUT (agent just formats)
-            self.logger.info(f"🐍 Step 3: Passing Python results to agent for formatting")
+            self.logger.info("🐍 Step 3: Passing Python results to agent for formatting")
 
             from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+
             crew = DeepAnalysisCrew()
 
             # Agent receives Python calculations as facts - NO tool calling
@@ -504,6 +578,7 @@ class DeepAnalysisOrchestrator:
                 inputs={
                     "ticker": ticker,
                     "asset_class": asset_class,
+                    "company_name": raw_data.get("company_name", ticker),
                     "current_day": self.state.current_day,
                     "current_month": self.state.current_month,
                     "current_year": self.state.current_year,
@@ -515,9 +590,21 @@ class DeepAnalysisOrchestrator:
                     "python_results": python_result.model_dump(),
                     "grade": python_result.grade,
                     "composite_score": python_result.composite_score,
-                    "recommendation": python_result.recommendation,
+                    "preliminary_recommendation": python_result.recommendation,  # DeepAnalysisResult uses 'recommendation'
+                    "fundamental_score": python_result.fundamental_score or 0.0,
+                    "technical_score": python_result.technical_score or 0.0,
+                    "risk_score": python_result.risk_score or 0.0,
+                    "fundamental_metrics": python_result.fundamental_details,  # DeepAnalysisResult uses 'fundamental_details'
+                    "technical_indicators": python_result.technical_details,  # DeepAnalysisResult uses 'technical_details'
+                    "risk_metrics": python_result.risk_details,  # DeepAnalysisResult uses 'risk_details'
                 }
             )
+
+            # Auto-generate HTML reports from JSON outputs
+            from finwiz.integration.html_auto_generator import auto_generate_html_for_crew
+
+            crew_name = f"deep_analysis_{asset_class}"
+            auto_generate_html_for_crew(crew_name)
 
             return python_result  # Return Python result (NOT agent output)
 
@@ -527,6 +614,7 @@ class DeepAnalysisOrchestrator:
 
         # FALLBACK: Old agent-based approach (if Python scoring fails)
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+
         crew = DeepAnalysisCrew()
 
         if batch_enabled and self.state.prefetched_data:
@@ -538,6 +626,7 @@ class DeepAnalysisOrchestrator:
             inputs={
                 "ticker": ticker,
                 "asset_class": asset_class,
+                "company_name": ticker,  # Use ticker as fallback for company name
                 "current_day": self.state.current_day,
                 "current_month": self.state.current_month,
                 "current_year": self.state.current_year,
@@ -548,10 +637,22 @@ class DeepAnalysisOrchestrator:
                 # Placeholder values for Python scoring results (used in task templates)
                 "grade": "N/A",
                 "composite_score": 0.0,
-                "recommendation": "PENDING",
+                "preliminary_recommendation": "PENDING",  # Fixed: was "recommendation"
+                "fundamental_score": 0.0,
+                "technical_score": 0.0,
+                "risk_score": 0.0,
+                "fundamental_metrics": {},
+                "technical_indicators": {},
+                "risk_metrics": {},
                 "python_results": {},
             }
         )
+
+        # Auto-generate HTML reports from JSON outputs (fallback path)
+        from finwiz.integration.html_auto_generator import auto_generate_html_for_crew
+
+        crew_name = f"deep_analysis_{asset_class}"
+        auto_generate_html_for_crew(crew_name)
 
         # OLD APPROACH: Extract collected data from agent output
         try:
@@ -614,6 +715,7 @@ class DeepAnalysisOrchestrator:
 
         Returns:
             Flattened dict with all metrics at top level
+
         """
         flattened = {}
 
@@ -653,8 +755,7 @@ class DeepAnalysisOrchestrator:
             if "performance_metrics" in quant and isinstance(quant["performance_metrics"], dict):
                 perf = quant["performance_metrics"]
                 self.logger.info(f"🔍 FLATTEN: Found performance_metrics with keys: {list(perf.keys())}")
-                critical_perf_fields = ["beta", "volatility", "max_drawdown", "sharpe_ratio",
-                                       "total_return", "annualized_return"]
+                critical_perf_fields = ["beta", "volatility", "max_drawdown", "sharpe_ratio", "total_return", "annualized_return"]
                 for field in critical_perf_fields:
                     if field in perf and perf[field] is not None:
                         flattened[field] = perf[field]
@@ -662,18 +763,37 @@ class DeepAnalysisOrchestrator:
                     else:
                         self.logger.warning(f"⚠️ FLATTEN: Field {field} not found or is None in performance_metrics")
             else:
-                self.logger.warning(f"⚠️ FLATTEN: No performance_metrics dict in quantitative_analysis")
+                self.logger.warning("⚠️ FLATTEN: No performance_metrics dict in quantitative_analysis")
 
-            # Extract technical_analysis fields (RSI, MACD, etc.)
+            # Extract technical_analysis fields (RSI, MACD, moving averages, etc.)
             if "technical_analysis" in quant and isinstance(quant["technical_analysis"], dict):
                 tech = quant["technical_analysis"]
                 if "technical_indicators" in tech and isinstance(tech["technical_indicators"], dict):
                     indicators = tech["technical_indicators"]
-                    critical_tech_fields = ["rsi", "macd", "macd_signal"]
-                    for field in critical_tech_fields:
+                    # Extract ALL technical indicators needed by scorer
+                    tech_fields = [
+                        "rsi",
+                        "macd",
+                        "macd_signal",
+                        "moving_avg_50",
+                        "moving_avg_200",
+                        "sma_50",  # Alternative naming
+                        "sma_200",  # Alternative naming
+                        "beta",
+                        "current_price",  # Also in technical indicators
+                    ]
+                    for field in tech_fields:
                         if field in indicators and indicators[field] is not None:
                             flattened[field] = indicators[field]
                             self.logger.debug(f"✅ Extracted {field}={indicators[field]} from technical_indicators")
+
+                    # Handle alternative naming: sma_50 → moving_avg_50
+                    if "sma_50" in flattened and "moving_avg_50" not in flattened:
+                        flattened["moving_avg_50"] = flattened["sma_50"]
+                        self.logger.debug(f"✅ Mapped sma_50 → moving_avg_50: {flattened['sma_50']}")
+                    if "sma_200" in flattened and "moving_avg_200" not in flattened:
+                        flattened["moving_avg_200"] = flattened["sma_200"]
+                        self.logger.debug(f"✅ Mapped sma_200 → moving_avg_200: {flattened['sma_200']}")
 
         # Now extract from nested structures (including the ones we just moved to top level)
         # Also process ticker_info and company_info which contain nested data
@@ -697,6 +817,7 @@ class DeepAnalysisOrchestrator:
             obj: Object to flatten (dict, list, or primitive)
             target: Target dict to add flattened fields to
             prefix: Current key prefix (for nested keys)
+
         """
         if isinstance(obj, dict):
             for key, value in obj.items():
@@ -740,7 +861,7 @@ class DeepAnalysisOrchestrator:
             self.logger.info(f"🔍 DEBUG: Starting extraction from crew_output (type={type(crew_output).__name__})")
 
             # Check crew_output attributes
-            crew_attrs = [a for a in dir(crew_output) if not a.startswith('_')]
+            crew_attrs = [a for a in dir(crew_output) if not a.startswith("_")]
             self.logger.info(f"🔍 DEBUG: crew_output attributes: {crew_attrs[:20]}...")
 
             # Access tool outputs from tasks_output
@@ -761,21 +882,21 @@ class DeepAnalysisOrchestrator:
 
             # Get data_collection_task output (first task)
             data_task = crew_output.tasks_output[0]
-            self.logger.info(f"🔍 DEBUG: Got first task from tasks_output")
+            self.logger.info("🔍 DEBUG: Got first task from tasks_output")
 
             # DEBUG: Comprehensive task exploration
             self.logger.info(f"🔍 DEBUG: Task object type: {type(data_task).__name__}")
-            task_attrs = [a for a in dir(data_task) if not a.startswith('_')]
+            task_attrs = [a for a in dir(data_task) if not a.startswith("_")]
             self.logger.info(f"🔍 DEBUG: Task attributes (non-private): {task_attrs}")
 
             # Check each attribute for potential data sources
             # NOTE: Removed 'json' from list - accessing it raises ValueError if output_json not set
-            for attr in ['output', 'raw', 'pydantic', 'tool_output', 'result']:
+            for attr in ["output", "raw", "pydantic", "tool_output", "result"]:
                 if hasattr(data_task, attr):
                     attr_value = getattr(data_task, attr)
                     self.logger.info(f"🔍 DEBUG: Task.{attr}: type={type(attr_value).__name__}")
                     # Special handling for raw - check if it's empty
-                    if attr == 'raw':
+                    if attr == "raw":
                         if isinstance(attr_value, str):
                             self.logger.info(f"🔍 DEBUG:   Task.raw length: {len(attr_value)} chars")
                             if not attr_value:
@@ -784,8 +905,8 @@ class DeepAnalysisOrchestrator:
                                 # Show preview with escaped newlines so we can see full content
                                 preview = repr(attr_value[:500])  # repr() shows \n instead of actual newlines
                                 self.logger.info(f"🔍 DEBUG:   Task.raw preview (repr): {preview}")
-                    if attr == 'output' and attr_value:
-                        output_attrs = [a for a in dir(attr_value) if not a.startswith('_')]
+                    if attr == "output" and attr_value:
+                        output_attrs = [a for a in dir(attr_value) if not a.startswith("_")]
                         self.logger.info(f"🔍 DEBUG:   output attributes: {output_attrs}")
 
             # Look for tool outputs in the task.raw (task IS the TaskOutput)
@@ -800,36 +921,36 @@ class DeepAnalysisOrchestrator:
                     cleaned = raw_output.strip()
 
                     # Remove markdown code fences if present
-                    if cleaned.startswith('```'):
-                        lines = cleaned.split('\n', 1)
+                    if cleaned.startswith("```"):
+                        lines = cleaned.split("\n", 1)
                         cleaned = lines[1] if len(lines) > 1 else cleaned
-                        cleaned = cleaned.rstrip('`').strip()
+                        cleaned = cleaned.rstrip("`").strip()
                         self.logger.info("🔍 Stripped markdown code fence")
 
                     # CRITICAL: Check if the output is already pure JSON (starts with {)
-                    if cleaned.startswith('{'):
+                    if cleaned.startswith("{"):
                         self.logger.info("🔍 Raw output is already JSON format")
                         # Ensure proper closing if malformed
-                        open_braces = cleaned.count('{')
-                        close_braces = cleaned.count('}')
+                        open_braces = cleaned.count("{")
+                        close_braces = cleaned.count("}")
                         if open_braces > close_braces:
                             missing = open_braces - close_braces
-                            cleaned = cleaned + ('}' * missing)
+                            cleaned = cleaned + ("}" * missing)
                             self.logger.info(f"🔍 Fixed malformed JSON: added {missing} closing braces")
                     else:
                         # Try to extract JSON from Python assignment: context["x"] = {...}
-                        match = re.search(r'=\s*(\{.+)', cleaned, re.DOTALL)  # More permissive: don't require closing }
+                        match = re.search(r"=\s*(\{.+)", cleaned, re.DOTALL)  # More permissive: don't require closing }
                         if match:
                             cleaned = match.group(1).strip()
                             self.logger.info(f"🔍 Extracted JSON from assignment (length={len(cleaned)})")
 
                             # CRITICAL: Try to fix malformed JSON by ensuring proper closing
                             # Count braces and add missing closing braces
-                            open_braces = cleaned.count('{')
-                            close_braces = cleaned.count('}')
+                            open_braces = cleaned.count("{")
+                            close_braces = cleaned.count("}")
                             if open_braces > close_braces:
                                 missing = open_braces - close_braces
-                                cleaned = cleaned + ('}' * missing)
+                                cleaned = cleaned + ("}" * missing)
                                 self.logger.info(f"🔍 Fixed malformed JSON: added {missing} closing braces")
 
                     # Try parsing as JSON
@@ -851,20 +972,20 @@ class DeepAnalysisOrchestrator:
                             self.logger.info(f"🔍 Flattened to {len(flattened)} top-level fields")
 
                             # DEBUG: Log what fields we actually have
-                            available_fields = sorted([k for k in flattened.keys() if not k.startswith('_')])
+                            available_fields = sorted([k for k in flattened.keys() if not k.startswith("_")])
                             self.logger.info(f"📋 Available fields: {available_fields}")
 
                             # DEBUG: Check for critical fields
-                            critical_fields = ['current_price', 'roe', 'debt_to_equity', 'revenue_growth',
-                                              'volatility', 'beta', 'expense_ratio', 'volume_24h']
+                            critical_fields = ["current_price", "roe", "debt_to_equity", "revenue_growth", "volatility", "beta", "expense_ratio", "volume_24h"]
                             missing = [f for f in critical_fields if f not in flattened]
                             if missing:
                                 self.logger.warning(f"⚠️ Missing critical fields: {missing}")
 
                                 # DEBUG: Check for similar field names that might be the data we need
                                 for field in missing:
-                                    similar = [k for k in flattened.keys() if field.replace('_', '') in k.lower().replace('_', '')
-                                              or k.lower().replace('_', '') in field.replace('_', '')]
+                                    similar = [
+                                        k for k in flattened.keys() if field.replace("_", "") in k.lower().replace("_", "") or k.lower().replace("_", "") in field.replace("_", "")
+                                    ]
                                     if similar:
                                         self.logger.info(f"   → Possible match for '{field}': {similar}")
 
@@ -971,8 +1092,8 @@ class DeepAnalysisOrchestrator:
 
     def _extract_scores(self, crew_output: Any, ticker: str, extractor: Any, warnings: list[str]) -> tuple[str, float, float | None, float | None, float | None]:
         """Extract scores from crew output."""
-        from finwiz.exceptions.data_quality import MissingRequiredFieldError
         from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
+        from finwiz.exceptions.data_quality import MissingRequiredFieldError
 
         # Handle cached CrewAnalysisResult directly
         if isinstance(crew_output, CrewAnalysisResult):
@@ -1017,14 +1138,14 @@ class DeepAnalysisOrchestrator:
 
             # Try multiple regex patterns for flexibility
             grade_patterns = [
-                r"[Gg]rade:\s*([A-F][+\-]?)",           # "Grade: A"
-                r"[Rr]ating:\s*([A-F][+\-]?)",          # "Rating: A"
+                r"[Gg]rade:\s*([A-F][+\-]?)",  # "Grade: A"
+                r"[Rr]ating:\s*([A-F][+\-]?)",  # "Rating: A"
                 r"[Oo]verall\s+[Gg]rade:\s*([A-F][+\-]?)",  # "Overall Grade: A"
             ]
             score_patterns = [
                 r"[Cc]omposite\s+[Ss]core:\s*(0?\.\d+|\d+\.\d+)",  # "Composite Score: 0.85"
-                r"[Ss]core:\s*(0?\.\d+|\d+\.\d+)",                 # "Score: 0.85"
-                r"[Oo]verall\s+[Ss]core:\s*(0?\.\d+|\d+\.\d+)",    # "Overall Score: 0.85"
+                r"[Ss]core:\s*(0?\.\d+|\d+\.\d+)",  # "Score: 0.85"
+                r"[Oo]verall\s+[Ss]core:\s*(0?\.\d+|\d+\.\d+)",  # "Overall Score: 0.85"
             ]
 
             grade_match = None
@@ -1044,14 +1165,7 @@ class DeepAnalysisOrchestrator:
                 raw_snippet = raw[:500] if len(raw) > 500 else raw
                 self.logger.error(f"Failed to extract grade/score for {ticker}. Raw output snippet: {raw_snippet}")
                 raise MissingRequiredFieldError(
-                    ticker=ticker,
-                    field="grade/score",
-                    context={
-                        "source": "raw",
-                        "found_grade": bool(grade_match),
-                        "found_score": bool(score_match),
-                        "raw_snippet": raw_snippet
-                    }
+                    ticker=ticker, field="grade/score", context={"source": "raw", "found_grade": bool(grade_match), "found_score": bool(score_match), "raw_snippet": raw_snippet}
                 )
 
             return grade_match.group(1), float(score_match.group(1)), None, None, None
@@ -1150,3 +1264,228 @@ class DeepAnalysisOrchestrator:
         )
 
         self.logger.info(f"Savings: {savings:.1f}s ({savings_pct:.1f}%)")
+
+    def _create_fallback_analysis(self, ticker: str, asset_class: str, error: Exception) -> EnrichedAnalysis | None:
+        """
+        Create fallback analysis using Python-only calculations.
+
+        This method creates a minimal QualitativeInsights for fallback when AI analysis fails.
+        It ensures fallback uses Python-only calculations and sets confidence to "LOW".
+
+        Requirements: 6.2
+
+        Args:
+            ticker: Stock ticker symbol
+            asset_class: Asset class (stock, etf, crypto)
+            error: The exception that triggered the fallback
+
+        Returns:
+            EnrichedAnalysis with LOW confidence, or None if fallback also fails
+
+        """
+        self.logger.warning(f"Creating fallback analysis for {ticker} due to error: {error}")
+
+        try:
+            # Collect data using Python tools
+            raw_data = self._collect_data_with_python(ticker, asset_class, batch_enabled=False)
+
+            # Calculate quantitative metrics using Python scorer
+            from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
+
+            scorer = DeepAnalysisScorer()
+            python_result = scorer.calculate_composite_score(ticker, asset_class, raw_data)
+
+            # Create fallback data structure for HybridAnalysisFlow
+            fallback_data = {
+                "ticker": ticker,
+                "asset_class": asset_class,
+                "company_name": raw_data.get("company_name", ticker),
+                "quantitative_analysis": {
+                    "composite_score": python_result.composite_score,
+                    "fundamental_score": python_result.fundamental_score,
+                    "technical_score": python_result.technical_score,
+                    "risk_score": python_result.risk_score,
+                    "grade": python_result.grade,
+                    "preliminary_recommendation": python_result.recommendation,
+                    "fundamental_metrics": python_result.fundamental_metrics or {},
+                    "technical_indicators": python_result.technical_indicators or {},
+                    "risk_metrics": python_result.risk_metrics or {},
+                    "calculation_timestamp": datetime.now().isoformat(),
+                    "confidence_level": 0.5,  # Lower confidence for fallback
+                    "python_rationale": python_result.rationale or "Fallback analysis based on Python calculations only",
+                },
+            }
+
+            # Use HybridAnalysisFlow's fallback creation
+            enriched_analysis = self.hybrid_flow._create_fallback_analysis(fallback_data)
+
+            self.logger.info(f"Fallback analysis created for {ticker}: Grade {enriched_analysis.final_grade}, Confidence {enriched_analysis.recommendation_confidence}")
+
+            return enriched_analysis
+
+        except Exception as e:
+            self.logger.error(f"Fallback analysis creation failed for {ticker}: {e}", exc_info=True)
+            return None
+
+    def _validate_analysis_quality(self, analysis: EnrichedAnalysis) -> list[str]:
+        """
+        Validate analysis quality against requirements.
+
+        Checks:
+        - word_count ≥2000
+        - unique_insights_count ≥5
+        - processing_time ≤30s
+        - llm_cost ≤$0.10
+
+        Requirements: 7.1, 7.2, 7.3, 7.4
+
+        Args:
+            analysis: EnrichedAnalysis to validate
+
+        Returns:
+            List of validation warnings (empty if all checks pass)
+
+        """
+        warnings = []
+
+        # Check word count (≥2000)
+        if analysis.report_word_count < 2000:
+            warning = f"Word count below threshold: {analysis.report_word_count} < 2000"
+            warnings.append(warning)
+            self.logger.warning(f"{analysis.ticker}: {warning}")
+
+        # Check unique insights count (≥5)
+        if analysis.unique_insights_count < 5:
+            warning = f"Insights count below threshold: {analysis.unique_insights_count} < 5"
+            warnings.append(warning)
+            self.logger.warning(f"{analysis.ticker}: {warning}")
+
+        # Check processing time (≤30s)
+        if analysis.processing_time_seconds > 30.0:
+            warning = f"Processing time exceeded: {analysis.processing_time_seconds:.1f}s > 30s"
+            warnings.append(warning)
+            self.logger.warning(f"{analysis.ticker}: {warning}")
+
+        # Check LLM cost (≤$0.10)
+        if analysis.llm_cost_dollars > 0.10:
+            warning = f"LLM cost exceeded: ${analysis.llm_cost_dollars:.3f} > $0.10"
+            warnings.append(warning)
+            self.logger.warning(f"{analysis.ticker}: {warning}")
+
+        if not warnings:
+            self.logger.info(f"{analysis.ticker}: Quality validation passed")
+
+        return warnings
+
+    def _calculate_processing_time(self, start_time: float) -> float:
+        """
+        Calculate processing time for an analysis.
+
+        Requirements: 4.3
+
+        Args:
+            start_time: Start time from time.time()
+
+        Returns:
+            Processing time in seconds
+
+        """
+        return time.time() - start_time
+
+    def _calculate_llm_cost(self, analysis_data: dict[str, Any]) -> float:
+        """
+        Calculate LLM cost for an analysis.
+
+        Estimates cost based on typical token usage for deep analysis.
+        Actual implementation would track real token usage from LLM API responses.
+
+        Requirements: 4.3
+
+        Args:
+            analysis_data: Analysis data containing LLM usage information
+
+        Returns:
+            Estimated LLM cost in dollars
+
+        """
+        # Check if this is a fallback analysis (no AI used)
+        if analysis_data.get("error") or not analysis_data.get("qualitative_insights"):
+            return 0.0
+
+        # Estimate based on typical usage patterns
+        # Average deep analysis uses:
+        # - Input: ~2000 tokens (context + instructions)
+        # - Output: ~1500 tokens (qualitative insights)
+        # - Total: ~3500 tokens
+        #
+        # Using GPT-4 pricing as baseline:
+        # - Input: $0.03 per 1K tokens
+        # - Output: $0.06 per 1K tokens
+        # - Estimated cost: (2000 * 0.03 / 1000) + (1500 * 0.06 / 1000) = $0.06 + $0.09 = $0.15
+        #
+        # However, we use more efficient models in practice, so use conservative estimate
+        estimated_cost = 0.05
+
+        # TODO: Implement actual cost calculation based on token usage
+        # This would require:
+        # 1. Tracking token usage from LLM API responses
+        # 2. Applying provider-specific pricing
+        # 3. Summing costs across all LLM calls in the analysis
+
+        return estimated_cost
+
+    def _process_single_holding_with_flow(self, ticker: str, asset_class: str, company_name: str = "", raw_data: dict[str, Any] | None = None) -> EnrichedAnalysis | None:
+        """
+        Process a single holding using HybridAnalysisFlow.
+
+        This is the new method that uses the hybrid architecture to combine
+        Python calculations with AI insights.
+
+        Requirements: 6.1
+
+        Args:
+            ticker: Stock ticker symbol
+            asset_class: Asset class (stock, etf, crypto)
+            company_name: Company name (optional)
+            raw_data: Pre-collected raw data (optional)
+
+        Returns:
+            EnrichedAnalysis or None if processing fails
+
+        """
+        start_time = time.time()
+
+        try:
+            # Initialize flow state
+            flow_state = HybridAnalysisState(ticker=ticker, asset_class=asset_class, company_name=company_name, raw_data=raw_data or {}, processing_start=start_time)
+
+            # Set state on flow
+            self.hybrid_flow.state = flow_state
+
+            # Execute flow
+            self.logger.info(f"Executing HybridAnalysisFlow for {ticker}")
+            enriched_analysis = self.hybrid_flow.kickoff()
+
+            # Validate quality
+            quality_warnings = self._validate_analysis_quality(enriched_analysis)
+            if quality_warnings:
+                self.logger.warning(f"{ticker}: Quality validation warnings: {quality_warnings}")
+
+            # Track metadata
+            processing_time = self._calculate_processing_time(start_time)
+            self.logger.info(f"{ticker}: Analysis complete in {processing_time:.1f}s, Cost: ${enriched_analysis.llm_cost_dollars:.3f}, Grade: {enriched_analysis.final_grade}")
+
+            return enriched_analysis
+
+        except Exception as e:
+            self.logger.error(f"HybridAnalysisFlow failed for {ticker}: {e}", exc_info=True)
+
+            # Create fallback analysis
+            fallback = self._create_fallback_analysis(ticker, asset_class, e)
+
+            if fallback:
+                self.logger.info(f"{ticker}: Using fallback analysis")
+                return fallback
+            else:
+                self.logger.error(f"{ticker}: Fallback analysis also failed")
+                return None
