@@ -5,6 +5,7 @@ Tests extraction of market regime, VIX indicators, macro indicators,
 and market context summaries from discovery crew outputs.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -98,8 +99,8 @@ class TestMarketContextExtractor:
         # Assert
         assert regime is not None
         assert regime.regime_type == "bull"
-        assert regime.vix_level == 12.5
-        assert regime.inflation_rate == 2.5
+        assert regime.vix_level == approx(12.5)
+        assert regime.inflation_rate == approx(2.5)
         assert regime.interest_rate_trend == "stable"
         assert regime.market_stress_level == "low"
 
@@ -111,8 +112,8 @@ class TestMarketContextExtractor:
         # Assert
         assert regime is not None
         assert regime.regime_type == "bear"
-        assert regime.vix_level == 35.0
-        assert regime.inflation_rate == 5.5
+        assert regime.vix_level == approx(35.0)
+        assert regime.inflation_rate == approx(5.5)
         assert regime.interest_rate_trend == "rising"
         assert regime.market_stress_level == "high"
 
@@ -123,7 +124,7 @@ class TestMarketContextExtractor:
 
         # Assert
         assert vix_indicators is not None
-        assert vix_indicators.current_vix == 12.5
+        assert vix_indicators.current_vix == approx(12.5)
         assert vix_indicators.volatility_regime == "low"
         assert vix_indicators.vix_trend == "falling"  # Low stress + bull market
         assert 0 <= vix_indicators.vix_percentile <= 100
@@ -135,7 +136,7 @@ class TestMarketContextExtractor:
 
         # Assert
         assert vix_indicators is not None
-        assert vix_indicators.current_vix == 35.0
+        assert vix_indicators.current_vix == approx(35.0)
         assert vix_indicators.volatility_regime == "extreme"
         assert vix_indicators.vix_trend == "rising"  # High stress
         assert vix_indicators.vix_percentile > 85.0  # High percentile
@@ -157,7 +158,7 @@ class TestMarketContextExtractor:
     def test_should_calculate_vix_percentile_correctly(self, extractor: MarketContextExtractor) -> None:
         """Test VIX percentile calculation for various levels."""
         # Very low VIX
-        assert extractor._calculate_vix_percentile(8.0) == 5.0
+        assert extractor._calculate_vix_percentile(8.0) == approx(5.0)
 
         # Low VIX
         percentile_12 = extractor._calculate_vix_percentile(12.0)
@@ -186,7 +187,7 @@ class TestMarketContextExtractor:
 
         # Assert
         assert macro is not None
-        assert macro.inflation_rate == 2.5
+        assert macro.inflation_rate == approx(2.5)
         assert macro.interest_rate_trend == "stable"
         assert macro.interest_rate > 0  # Estimated rate
         assert macro.gdp_growth is None  # Not in schema yet
@@ -199,9 +200,9 @@ class TestMarketContextExtractor:
 
         # Assert
         assert macro is not None
-        assert macro.inflation_rate == 5.5
+        assert macro.inflation_rate == approx(5.5)
         assert macro.interest_rate_trend == "rising"
-        assert macro.interest_rate == 5.5  # Higher estimate for rising trend
+        assert macro.interest_rate == approx(5.5)  # Higher estimate for rising trend
 
     def test_should_estimate_interest_rate_based_on_trend(self, extractor: MarketContextExtractor) -> None:
         """Test interest rate estimation based on trend."""
@@ -229,9 +230,9 @@ class TestMarketContextExtractor:
         )
 
         # Test estimates
-        assert extractor._estimate_interest_rate(rising_regime) == 5.5
-        assert extractor._estimate_interest_rate(falling_regime) == 4.5
-        assert extractor._estimate_interest_rate(stable_regime) == 5.0
+        assert extractor._estimate_interest_rate(rising_regime) == approx(5.5)
+        assert extractor._estimate_interest_rate(falling_regime) == approx(4.5)
+        assert extractor._estimate_interest_rate(stable_regime) == approx(5.0)
 
     def test_should_assess_favorable_risk_environment(self, extractor: MarketContextExtractor, bull_market_discovery: APlusDiscoveryResult) -> None:
         """Test risk environment assessment for favorable conditions."""
@@ -312,8 +313,8 @@ class TestMarketContextExtractor:
         assert summary is not None
         assert isinstance(summary, MarketContextSummary)
         assert summary.market_regime.regime_type == "bull"
-        assert summary.vix_indicators.current_vix == 12.5
-        assert summary.macro_indicators.inflation_rate == 2.5
+        assert summary.vix_indicators.current_vix == approx(12.5)
+        assert summary.macro_indicators.inflation_rate == approx(2.5)
         assert summary.risk_environment == "favorable"
         assert len(summary.allocation_implications) > 0
 
@@ -349,7 +350,7 @@ class TestMarketContextExtractor:
         assert summary is not None
         assert summary.risk_environment == "neutral"
         assert summary.market_regime.regime_type == "sideways"
-        assert summary.vix_indicators.current_vix == 20.0
+        assert summary.vix_indicators.current_vix == approx(20.0)
         assert any("conservative" in imp.lower() for imp in summary.allocation_implications)
 
     def test_should_handle_extraction_errors_gracefully(self, extractor: MarketContextExtractor, mocker) -> None:

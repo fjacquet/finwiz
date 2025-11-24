@@ -5,6 +5,7 @@ Tests the externalized performance validation logic to ensure correct
 validation against target metrics.
 """
 
+from pytest import approx
 import pytest
 
 from finwiz.crews.helpers.performance_validation import validate_performance_targets
@@ -27,14 +28,14 @@ class TestValidatePerformanceTargets:
         # Assert
         assert result["ticker"] == "AAPL"
         assert result["approach"] == "PURE PYTHON"
-        assert result["execution_time"] == 20.0
+        assert result["execution_time"] == approx(20.0)
         assert result["llm_calls"] == 0
-        assert result["cost_usd"] == 0.0
+        assert result["cost_usd"] == approx(0.0)
         assert result["time_target_met"] is True
         assert result["llm_target_met"] is True
         assert result["cost_target_met"] is True
         assert result["speedup_factor"] > 10  # Should be 10-20x faster
-        assert result["cost_reduction_pct"] == 100.0
+        assert result["cost_reduction_pct"] == approx(100.0)
 
     def test_should_validate_hybrid_targets_when_ai_summary_enabled(self):
         """Test validation of hybrid approach performance targets."""
@@ -50,9 +51,9 @@ class TestValidatePerformanceTargets:
         # Assert
         assert result["ticker"] == "GOOGL"
         assert result["approach"] == "HYBRID"
-        assert result["execution_time"] == 25.0
+        assert result["execution_time"] == approx(25.0)
         assert result["llm_calls"] == 1
-        assert result["cost_usd"] == 0.01
+        assert result["cost_usd"] == approx(0.01)
         assert result["time_target_met"] is True
         assert result["llm_target_met"] is True
         assert result["cost_target_met"] is True
@@ -118,7 +119,7 @@ class TestValidatePerformanceTargets:
         result = validate_performance_targets(ticker, execution_time, api_metrics, ai_summary_enabled)
 
         # Assert
-        assert result["cost_reduction_pct"] == 100.0
+        assert result["cost_reduction_pct"] == approx(100.0)
         assert result["cost_reduction_target_met"] is True
 
     def test_should_calculate_cost_reduction_correctly_for_hybrid(self):

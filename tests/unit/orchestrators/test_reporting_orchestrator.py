@@ -4,6 +4,7 @@ Unit tests for ReportingOrchestrator.
 Tests report consolidation, HTML generation, and export path management.
 """
 
+from pytest import approx
 import json
 
 import pytest
@@ -283,13 +284,13 @@ class TestReportingOrchestrator:
 
         # Assert
         aapl_holding = sample_portfolio_review.holdings[0]
-        assert aapl_holding.composite_score == 0.95
+        assert aapl_holding.composite_score == approx(0.95)
         assert aapl_holding.grade == "A+"
         assert aapl_holding.decision == "BUY"
         assert "Score composite: 0.950" in aapl_holding.rationale_bullets[0]
 
         googl_holding = sample_portfolio_review.holdings[1]
-        assert googl_holding.composite_score == 0.88
+        assert googl_holding.composite_score == approx(0.88)
         assert googl_holding.grade == "A"
         assert googl_holding.decision == "HOLD"
 
@@ -433,7 +434,7 @@ class TestReportingOrchestrator:
 
         assert len(saved_data["holdings"]) == 2
         assert saved_data["holdings"][0]["ticker"] == "AAPL"
-        assert saved_data["holdings"][0]["composite_score"] == 0.85
+        assert saved_data["holdings"][0]["composite_score"] == approx(0.85)
 
     def test_should_log_score_summary_when_saving(self, orchestrator, sample_portfolio_review, tmp_path, mocker):
         """Test that score summary is logged when saving merged portfolio."""

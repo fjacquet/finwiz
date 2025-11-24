@@ -5,6 +5,7 @@ Tests JSON parsing error handling, schema validation error handling,
 and sanitized logging functionality.
 """
 
+from pytest import approx
 import json
 import logging
 
@@ -153,7 +154,7 @@ class TestParseJSONFile:
         # Assert
         assert result == test_data
         assert result["ticker"] == "AAPL"
-        assert result["price"] == 150.0
+        assert result["price"] == approx(150.0)
 
     def test_should_raise_error_for_invalid_json(self, tmp_path):
         """Test error handling for invalid JSON syntax."""
@@ -242,7 +243,7 @@ class TestParseJSONString:
 
         # Assert
         assert result["ticker"] == "AAPL"
-        assert result["price"] == 150.0
+        assert result["price"] == approx(150.0)
 
     def test_should_raise_error_for_invalid_json_string(self):
         """Test error handling for invalid JSON string."""
@@ -310,7 +311,7 @@ class TestValidateSchema:
         # Assert
         assert isinstance(result, TestSchema)
         assert result.ticker == "AAPL"
-        assert result.price == 150.0
+        assert result.price == approx(150.0)
         assert result.volume == 1000000
         assert result.recommendation == "BUY"
 

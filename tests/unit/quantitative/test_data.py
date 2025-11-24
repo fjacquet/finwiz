@@ -9,6 +9,7 @@ Tests cover:
 - Data quality reporting and scoring
 """
 
+from pytest import approx
 import pickle
 import tempfile
 from datetime import datetime, timedelta
@@ -648,7 +649,7 @@ class TestHistoricalDataManager:
         assert isinstance(cache_info, CachedDataInfo)
         assert cache_info.symbol == symbol
         assert cache_info.data_provider == DataProvider.YFINANCE
-        assert cache_info.quality_score == 0.9
+        assert cache_info.quality_score == approx(0.9)
 
     def test_should_generate_data_quality_report(self, data_manager, sample_yfinance_data, mocker):
         """Test data quality report generation."""
@@ -736,12 +737,12 @@ class TestDataQualityReport:
         assert report.end_date == end_date
         assert report.total_rows == 252
         assert report.is_valid is True
-        assert report.quality_score == 0.85
-        assert report.completeness_score == 0.95
-        assert report.missing_data_pct == 0.05
-        assert report.consistency_score == 0.80
+        assert report.quality_score == approx(0.85)
+        assert report.completeness_score == approx(0.95)
+        assert report.missing_data_pct == approx(0.05)
+        assert report.consistency_score == approx(0.80)
         assert report.outlier_count == 5
-        assert report.accuracy_score == 0.90
+        assert report.accuracy_score == approx(0.90)
         assert report.suspicious_values_count == 2
 
 
@@ -774,7 +775,7 @@ class TestCachedDataInfo:
         assert info.data_provider == DataProvider.YFINANCE
         assert info.file_path == file_path
         assert info.file_size_bytes == 1024
-        assert info.quality_score == 0.9
+        assert info.quality_score == approx(0.9)
 
 
 class TestGetHistoricalDataManager:

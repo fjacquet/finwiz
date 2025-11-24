@@ -4,6 +4,7 @@ Unit tests for FundamentalScorer.
 Tests the fundamental scoring logic for stocks, ETFs, and cryptocurrencies.
 """
 
+from pytest import approx
 import pytest
 
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
@@ -29,10 +30,10 @@ class TestFundamentalScorer:
         score, details = scorer.calculate_fundamental_score("stock", data)
 
         assert score > 0.9  # Should be very high
-        assert details["roe_score"] == 1.0
-        assert details["debt_score"] == 1.0
-        assert details["growth_score"] == 1.0
-        assert details["margin_score"] == 1.0
+        assert details["roe_score"] == approx(1.0)
+        assert details["debt_score"] == approx(1.0)
+        assert details["growth_score"] == approx(1.0)
+        assert details["margin_score"] == approx(1.0)
 
     def test_stock_fundamental_score_poor(self, scorer):
         """Test stock scoring with poor fundamentals."""
@@ -46,10 +47,10 @@ class TestFundamentalScorer:
         score, details = scorer.calculate_fundamental_score("stock", data)
 
         assert score < 0.3  # Should be low
-        assert details["roe_score"] == 0.2
-        assert details["debt_score"] == 0.2
-        assert details["growth_score"] == 0.2  # Negative growth below acceptable threshold
-        assert details["margin_score"] == 0.2
+        assert details["roe_score"] == approx(0.2)
+        assert details["debt_score"] == approx(0.2)
+        assert details["growth_score"] == approx(0.2)  # Negative growth below acceptable threshold
+        assert details["margin_score"] == approx(0.2)
 
     def test_etf_fundamental_score_excellent(self, scorer):
         """Test ETF scoring with excellent metrics."""
@@ -63,9 +64,9 @@ class TestFundamentalScorer:
         score, details = scorer.calculate_fundamental_score("etf", data)
 
         assert score > 0.9  # Should be very high
-        assert details["expense_score"] == 1.0
-        assert details["tracking_score"] == 1.0
-        assert details["aum_score"] == 1.0
+        assert details["expense_score"] == approx(1.0)
+        assert details["tracking_score"] == approx(1.0)
+        assert details["aum_score"] == approx(1.0)
 
     def test_etf_fundamental_score_missing_tracking_error(self, scorer):
         """Test ETF scoring with missing tracking error."""
@@ -79,7 +80,7 @@ class TestFundamentalScorer:
 
         assert details["tracking_error"] is None
         assert details["tracking_error_available"] is False
-        assert details["tracking_score"] == 0.5  # Neutral score
+        assert details["tracking_score"] == approx(0.5)  # Neutral score
 
     def test_crypto_fundamental_score_excellent(self, scorer):
         """Test crypto scoring with excellent metrics."""
@@ -95,9 +96,9 @@ class TestFundamentalScorer:
 
         # Score calculation: 0.40 * 1.0 + 0.30 * 0.8 + 0.20 * 1.0 + 0.10 * 1.0 = 0.90
         assert score >= 0.89  # Should be very high (adjusted for actual weights)
-        assert details["market_cap_score"] == 1.0
-        assert details["volume_score"] == 0.8  # $2B is "high" not "very high"
-        assert details["age_score"] == 1.0
+        assert details["market_cap_score"] == approx(1.0)
+        assert details["volume_score"] == approx(0.8)  # $2B is "high" not "very high"
+        assert details["age_score"] == approx(1.0)
 
     def test_crypto_fundamental_score_poor(self, scorer):
         """Test crypto scoring with poor metrics."""
@@ -112,9 +113,9 @@ class TestFundamentalScorer:
         score, details = scorer.calculate_fundamental_score("crypto", data)
 
         assert score < 0.3  # Should be low
-        assert details["market_cap_score"] == 0.2
-        assert details["volume_score"] == 0.2
-        assert details["age_score"] == 0.2
+        assert details["market_cap_score"] == approx(0.2)
+        assert details["volume_score"] == approx(0.2)
+        assert details["age_score"] == approx(0.2)
 
     def test_unknown_asset_class(self, scorer):
         """Test handling of unknown asset class."""
@@ -122,7 +123,7 @@ class TestFundamentalScorer:
 
         score, details = scorer.calculate_fundamental_score("unknown", data)
 
-        assert score == 0.5  # Default score
+        assert score == approx(0.5)  # Default score
         assert "error" in details
 
     def test_safe_get_float_with_valid_value(self, scorer):
@@ -133,7 +134,7 @@ class TestFundamentalScorer:
         analyzer = StockAnalyzer()
         data = {"value": 123.45}
         result = analyzer._safe_get_float(data, "value", 0.0)
-        assert result == 123.45
+        assert result == approx(123.45)
 
     def test_safe_get_float_with_missing_value(self, scorer):
         """Test _safe_get_float with missing value (via analyzer)."""
@@ -142,7 +143,7 @@ class TestFundamentalScorer:
         analyzer = StockAnalyzer()
         data = {}
         result = analyzer._safe_get_float(data, "value", 99.0)
-        assert result == 99.0
+        assert result == approx(99.0)
 
     def test_safe_get_float_with_invalid_value(self, scorer):
         """Test _safe_get_float with invalid value (via analyzer)."""
@@ -151,4 +152,4 @@ class TestFundamentalScorer:
         analyzer = StockAnalyzer()
         data = {"value": "not_a_number"}
         result = analyzer._safe_get_float(data, "value", 50.0)
-        assert result == 50.0
+        assert result == approx(50.0)

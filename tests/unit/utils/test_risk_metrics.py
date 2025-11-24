@@ -12,6 +12,7 @@ Tests cover:
 - Edge cases (zero volatility, negative returns, empty data)
 """
 
+from pytest import approx
 import numpy as np
 import pandas as pd
 import pytest
@@ -68,7 +69,7 @@ class TestCalculateVolatility:
         vol = calculate_volatility(returns)
 
         # Assert
-        assert vol == 0.0
+        assert vol == approx(0.0)
 
     def test_should_return_zero_when_constant_returns(self):
         """Test volatility with constant returns (zero volatility)."""
@@ -123,7 +124,7 @@ class TestCalculateVaR:
         var = calculate_var(returns)
 
         # Assert
-        assert var == 0.0
+        assert var == approx(0.0)
 
 
 class TestCalculateCVaR:
@@ -168,7 +169,7 @@ class TestCalculateCVaR:
         cvar = calculate_cvar(returns)
 
         # Assert
-        assert cvar == 0.0
+        assert cvar == approx(0.0)
 
 
 class TestCalculateMaxDrawdown:
@@ -210,7 +211,7 @@ class TestCalculateMaxDrawdown:
         mdd = calculate_max_drawdown(prices)
 
         # Assert
-        assert mdd == 0.0
+        assert mdd == approx(0.0)
 
     def test_should_return_zero_when_single_price(self):
         """Test maximum drawdown with single price point."""
@@ -221,7 +222,7 @@ class TestCalculateMaxDrawdown:
         mdd = calculate_max_drawdown(prices)
 
         # Assert
-        assert mdd == 0.0
+        assert mdd == approx(0.0)
 
 
 class TestCalculateSharpeRatio:
@@ -279,7 +280,7 @@ class TestCalculateSharpeRatio:
         sharpe = calculate_sharpe_ratio(returns)
 
         # Assert
-        assert sharpe == 0.0
+        assert sharpe == approx(0.0)
 
     def test_should_return_negative_when_returns_below_risk_free(self):
         """Test Sharpe ratio when returns are below risk-free rate."""
@@ -360,7 +361,7 @@ class TestCalculateSortinoRatio:
         sortino = calculate_sortino_ratio(returns)
 
         # Assert
-        assert sortino == 0.0
+        assert sortino == approx(0.0)
 
 
 class TestCalculateBeta:
@@ -405,7 +406,7 @@ class TestCalculateBeta:
         beta = calculate_beta(asset_returns, market_returns)
 
         # Assert
-        assert beta == 0.0
+        assert beta == approx(0.0)
 
     def test_should_return_zero_when_zero_market_variance(self):
         """Test beta when market has zero variance."""
@@ -417,7 +418,7 @@ class TestCalculateBeta:
         beta = calculate_beta(asset_returns, market_returns)
 
         # Assert
-        assert beta == 0.0
+        assert beta == approx(0.0)
 
     def test_should_handle_misaligned_indices(self):
         """Test beta with misaligned series indices."""
@@ -480,7 +481,7 @@ class TestRiskMetricsEdgeCases:
         # Most metrics should handle single point gracefully
         vol = calculate_volatility(returns, annualize=False)
         # Single point has undefined std in pandas (returns NaN), but we handle it
-        assert vol == 0.0 or np.isnan(vol)
+        assert vol == approx(0.0) or np.isnan(vol)
 
     def test_should_handle_extreme_values(self):
         """Test metrics with extreme values."""

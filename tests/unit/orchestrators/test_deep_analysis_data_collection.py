@@ -11,6 +11,7 @@ This test suite validates:
 Created by pytest-test-architect for AI Minimalism validation.
 """
 
+from pytest import approx
 import json
 from datetime import datetime
 
@@ -156,17 +157,17 @@ class TestPythonDataCollection:
             print("Result keys:", list(result.keys()))
             print("Result contents:", json.dumps(result, indent=2, default=str))
         assert "current_price" in result
-        assert result["current_price"] == 175.43
+        assert result["current_price"] == approx(175.43)
 
         # Verify fundamental metrics extracted to top level
         assert "roe" in result
-        assert result["roe"] == 1.4717
+        assert result["roe"] == approx(1.4717)
         assert "debt_to_equity" in result
-        assert result["debt_to_equity"] == 1.95
+        assert result["debt_to_equity"] == approx(1.95)
         assert "revenue_growth" in result
-        assert result["revenue_growth"] == 0.08
+        assert result["revenue_growth"] == approx(0.08)
         assert "profit_margin" in result
-        assert result["profit_margin"] == 0.2531
+        assert result["profit_margin"] == approx(0.2531)
 
         # Verify nested data has been flattened (no longer nested)
         # Technical indicators from quantitative_analysis should be flattened
@@ -175,7 +176,7 @@ class TestPythonDataCollection:
 
         # Sentiment data should be flattened
         assert "sentiment_score" in result  # From sentiment tool output
-        assert result["sentiment_score"] == 0.72
+        assert result["sentiment_score"] == approx(0.72)
         assert "overall_sentiment" in result
         assert result["overall_sentiment"] == "POSITIVE"
 
@@ -203,7 +204,7 @@ class TestPythonDataCollection:
         # Verify basic structure exists
         assert result["ticker"] == "TSLA"
         assert result["asset_class"] == "stock"
-        assert result["current_price"] == 150.0
+        assert result["current_price"] == approx(150.0)
 
         # Failed tools should have empty data (quantitative_analysis would have been {})
         # Since company_info and quantitative_analysis failed, they won't contribute flattened fields
@@ -211,7 +212,7 @@ class TestPythonDataCollection:
         # Successful tool data should be present
         # Sentiment data should be at top level
         assert "sentiment_score" in result
-        assert result["sentiment_score"] == 0.6
+        assert result["sentiment_score"] == approx(0.6)
         assert "overall_sentiment" in result
         assert result["overall_sentiment"] == "neutral"
 
@@ -260,7 +261,7 @@ class TestPythonDataCollection:
 
         # Top-level fields preserved
         assert flattened["ticker"] == "AAPL"
-        assert flattened["current_price"] == 175.0
+        assert flattened["current_price"] == approx(175.0)
 
         # Nested fields should be flattened to top level
         # ticker_info fields should be flattened
@@ -298,7 +299,7 @@ class TestPythonDataCollection:
         # Should handle edge cases without crashing
         result = orchestrator._collect_data_with_python("PENNY", "stock", batch_enabled=False)
 
-        assert result["current_price"] == 0.0001
+        assert result["current_price"] == approx(0.0001)
         # NaN and None values should be handled gracefully in flattening
 
     def test_json_parsing_robustness(self, mocker, orchestrator):

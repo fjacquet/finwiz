@@ -5,6 +5,7 @@ Tests the enhanced DeepAnalysisResult Pydantic schema with all required fields,
 validation rules, and the extra='forbid' configuration.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -39,10 +40,10 @@ class TestDeepAnalysisResultSchemaValidation:
         assert result.ticker == "AAPL"
         assert result.asset_class == "stock"
         assert result.crew_name == "DeepAnalysisCrew"
-        assert result.composite_score == 0.85
+        assert result.composite_score == approx(0.85)
         assert result.grade == "A"
-        assert result.data_freshness_hours == 2.5
-        assert result.confidence_level == 0.9
+        assert result.data_freshness_hours == approx(2.5)
+        assert result.confidence_level == approx(0.9)
         assert isinstance(result.analysis_timestamp, str)  # ISO format string
         assert result.warnings == []  # Default empty list
         assert result.cached is False  # Default value
@@ -113,7 +114,7 @@ class TestDeepAnalysisResultSchemaValidation:
         result = DeepAnalysisResult(**valid_data)
 
         # Assert
-        assert result.composite_score == 0.5
+        assert result.composite_score == approx(0.5)
 
     def test_should_reject_composite_score_below_zero(self):
         """Test that composite_score below 0.0 is rejected."""
@@ -178,7 +179,7 @@ class TestDeepAnalysisResultSchemaValidation:
         result = DeepAnalysisResult(**valid_data)
 
         # Assert
-        assert result.confidence_level == 0.95
+        assert result.confidence_level == approx(0.95)
 
     def test_should_reject_confidence_level_below_zero(self):
         """Test that confidence_level below 0.0 is rejected."""
@@ -243,7 +244,7 @@ class TestDeepAnalysisResultSchemaValidation:
         result = DeepAnalysisResult(**valid_data)
 
         # Assert
-        assert result.data_freshness_hours == 0.0
+        assert result.data_freshness_hours == approx(0.0)
 
     def test_should_reject_negative_data_freshness_hours(self):
         """Test that negative data_freshness_hours is rejected."""
@@ -287,7 +288,7 @@ class TestDeepAnalysisResultSchemaValidation:
         result = DeepAnalysisResult(**valid_data)
 
         # Assert
-        assert result.risk_score == 2.5
+        assert result.risk_score == approx(2.5)
 
     def test_should_reject_risk_score_above_five(self):
         """Test that risk_score above 5.0 is rejected."""
@@ -410,8 +411,8 @@ class TestDeepAnalysisResultSchemaValidation:
         result = DeepAnalysisResult(**data_with_optional_scores)
 
         # Assert
-        assert result.fundamental_score == 0.9
-        assert result.technical_score == 0.8
+        assert result.fundamental_score == approx(0.9)
+        assert result.technical_score == approx(0.8)
 
     def test_should_reject_invalid_optional_score_ranges(self):
         """Test that optional scores must be in valid range (0.0-1.0)."""
@@ -558,13 +559,13 @@ class TestDeepAnalysisResultSchemaValidation:
         assert result.ticker == "AAPL"
         assert result.asset_class == "stock"
         assert result.crew_name == "DeepAnalysisCrew"
-        assert result.composite_score == 0.87
+        assert result.composite_score == approx(0.87)
         assert result.grade == "A"
-        assert result.fundamental_score == 0.9
-        assert result.technical_score == 0.85
-        assert result.risk_score == 2.3
-        assert result.data_freshness_hours == 1.5
-        assert result.confidence_level == 0.92
+        assert result.fundamental_score == approx(0.9)
+        assert result.technical_score == approx(0.85)
+        assert result.risk_score == approx(2.3)
+        assert result.data_freshness_hours == approx(1.5)
+        assert result.confidence_level == approx(0.92)
         assert len(result.warnings) == 2
         assert result.cached is False
         assert isinstance(result.analysis_timestamp, str)
@@ -593,7 +594,7 @@ class TestDeepAnalysisResultSchemaValidation:
         assert isinstance(result_dict, dict)
         assert result_dict["ticker"] == "AAPL"
         assert result_dict["asset_class"] == "stock"
-        assert result_dict["composite_score"] == 0.85
+        assert result_dict["composite_score"] == approx(0.85)
         assert result_dict["warnings"] == ["Test warning"]
 
     def test_should_serialize_to_json_correctly(self):

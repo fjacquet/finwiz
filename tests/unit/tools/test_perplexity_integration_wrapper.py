@@ -5,6 +5,7 @@ This module tests the PerplexityAnalysisIntegration wrapper class, including
 JSON response parsing, error handling, and SonarArticle model validation.
 """
 
+from pytest import approx
 import asyncio
 import json
 import os
@@ -72,7 +73,7 @@ class TestPerplexityIntegrationWrapper:
         # Assert
         assert integration.config is not None
         assert integration.config.api_key == "test-key"
-        assert integration.config.timeout_seconds == 30.0
+        assert integration.config.timeout_seconds == approx(30.0)
         assert integration.config.max_retries == 3
 
     def test_should_search_financial_news_successfully(self, mocker):
@@ -244,7 +245,7 @@ class TestPerplexityIntegrationWrapper:
         assert article.summary == "Apple reports record quarterly earnings"
         assert article.publisher == "Financial Times"
         assert article.analysis_type == "fundamental"
-        assert article.relevance_score == 1.0  # First article gets max relevance
+        assert article.relevance_score == approx(1.0)  # First article gets max relevance
 
     def test_should_skip_citation_without_url(self):
         """Test skipping citations without URLs."""
@@ -306,13 +307,13 @@ class TestPerplexityIntegrationWrapper:
 
         # Act & Assert
         article_0 = integration._create_sonar_article(citation, "sentiment", 0)
-        assert article_0.relevance_score == 1.0
+        assert article_0.relevance_score == approx(1.0)
 
         article_5 = integration._create_sonar_article(citation, "sentiment", 5)
-        assert article_5.relevance_score == 0.5
+        assert article_5.relevance_score == approx(0.5)
 
         article_10 = integration._create_sonar_article(citation, "sentiment", 10)
-        assert article_10.relevance_score == 0.1  # Minimum relevance
+        assert article_10.relevance_score == approx(0.1)  # Minimum relevance
 
     def test_should_create_enhanced_query_for_different_analysis_types(self):
         """Test enhanced query creation for different analysis types."""
@@ -499,7 +500,7 @@ class TestSonarArticleValidation:
         assert article.title == "Apple Reports Strong Earnings"
         assert str(article.url) == "https://example.com/apple-earnings"
         assert article.publisher == "Reuters"
-        assert article.relevance_score == 0.95
+        assert article.relevance_score == approx(0.95)
         assert article.content_type == "earnings"
         assert article.analysis_type == "fundamental"
 

@@ -5,6 +5,7 @@ Tests extraction of screening criteria, validation statistics, fundamental/techn
 and methodology summaries from discovery crew outputs.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -169,8 +170,8 @@ class TestDiscoveryMethodologyExtractor:
         assert statistics.candidates_found == 15
         assert statistics.passed_validation == 15
         assert statistics.failed_validation == 0
-        assert statistics.validation_rate == 1.0
-        assert statistics.screening_efficiency == 3.0
+        assert statistics.validation_rate == approx(1.0)
+        assert statistics.screening_efficiency == approx(3.0)
 
     def test_should_extract_fundamental_technical_scores(
         self,
@@ -187,11 +188,11 @@ class TestDiscoveryMethodologyExtractor:
 
         aapl_breakdown = score_breakdowns["AAPL"]
         assert aapl_breakdown.symbol == "AAPL"
-        assert aapl_breakdown.fundamental_score == 0.95
-        assert aapl_breakdown.technical_score == 0.92
-        assert aapl_breakdown.quality_score == 0.98
-        assert aapl_breakdown.risk_score == 0.88
-        assert aapl_breakdown.composite_score == 0.96
+        assert aapl_breakdown.fundamental_score == approx(0.95)
+        assert aapl_breakdown.technical_score == approx(0.92)
+        assert aapl_breakdown.quality_score == approx(0.98)
+        assert aapl_breakdown.risk_score == approx(0.88)
+        assert aapl_breakdown.composite_score == approx(0.96)
         assert aapl_breakdown.grade == "A+"
 
     def test_should_generate_methodology_summary(
@@ -508,7 +509,7 @@ class TestDiscoveryMethodologyExtractor:
         assert len(score_breakdowns) == 2
         assert "AAPL" in score_breakdowns
         assert "MSFT" in score_breakdowns
-        assert score_breakdowns["MSFT"].composite_score == 0.97
+        assert score_breakdowns["MSFT"].composite_score == approx(0.97)
 
     def test_should_return_none_when_extraction_fails(
         self,

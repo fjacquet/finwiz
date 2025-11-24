@@ -9,6 +9,7 @@ Tests portfolio repository functionality including:
 - Mock Supabase client
 """
 
+from pytest import approx
 import asyncio
 from datetime import UTC, datetime, timedelta
 
@@ -320,7 +321,7 @@ class TestPortfolioRepository:
         comparison = await portfolio_repository.compare_snapshots(snapshot1, snapshot2)
 
         # Assert
-        assert comparison["value_change"] == 5000.0  # 50000 - 45000
+        assert comparison["value_change"] == approx(5000.0)  # 50000 - 45000
         assert comparison["value_change_pct"] == pytest.approx(11.11, rel=0.01)
 
         # Check holdings changes
@@ -335,8 +336,8 @@ class TestPortfolioRepository:
         aapl_changes = comparison["holdings_modified"]["AAPL"]
         assert aapl_changes["quantity"]["old"] == 100
         assert aapl_changes["quantity"]["new"] == 120
-        assert aapl_changes["value"]["old"] == 15000.0
-        assert aapl_changes["value"]["new"] == 18000.0
+        assert aapl_changes["value"]["old"] == approx(15000.0)
+        assert aapl_changes["value"]["new"] == approx(18000.0)
         assert aapl_changes["grade"]["old"] == "A"
         assert aapl_changes["grade"]["new"] == "A+"
         assert aapl_changes["recommendation"]["old"] == "HOLD"
@@ -380,8 +381,8 @@ class TestPortfolioRepository:
         comparison = await portfolio_repository.compare_snapshots(snapshot1, snapshot2)
 
         # Assert
-        assert comparison["value_change"] == 0.0
-        assert comparison["value_change_pct"] == 0.0
+        assert comparison["value_change"] == approx(0.0)
+        assert comparison["value_change_pct"] == approx(0.0)
         assert comparison["holdings_added"] == []
         assert comparison["holdings_removed"] == []
         assert comparison["holdings_modified"] == {}
@@ -411,8 +412,8 @@ class TestPortfolioRepository:
         comparison = await portfolio_repository.compare_snapshots(snapshot1, snapshot2)
 
         # Assert
-        assert comparison["value_change"] == 10000.0
-        assert comparison["value_change_pct"] == 0.0  # Avoid division by zero
+        assert comparison["value_change"] == approx(10000.0)
+        assert comparison["value_change_pct"] == approx(0.0)  # Avoid division by zero
 
     @pytest.mark.asyncio
     async def test_should_get_snapshot_by_id(self, portfolio_repository, mock_client, mocker):
@@ -440,7 +441,7 @@ class TestPortfolioRepository:
         assert snapshot is not None
         assert isinstance(snapshot, PortfolioSnapshot)
         assert snapshot.id == snapshot_id
-        assert snapshot.total_value == 45000.0
+        assert snapshot.total_value == approx(45000.0)
 
     @pytest.mark.asyncio
     async def test_should_return_none_when_snapshot_not_found(self, portfolio_repository, mock_client, mocker):

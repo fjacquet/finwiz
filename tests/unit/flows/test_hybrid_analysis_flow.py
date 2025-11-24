@@ -5,6 +5,7 @@ Tests the flow execution sequence and state management for the hybrid
 Python/AI analysis architecture.
 """
 
+from pytest import approx
 import logging
 import time
 from datetime import datetime
@@ -228,7 +229,7 @@ class TestHybridAnalysisFlowExecutionSequence:
         # Assert - State updated after step 2
         assert flow.state.quantitative_analysis is not None
         assert "composite_score" in flow.state.quantitative_analysis
-        assert flow.state.quantitative_analysis["composite_score"] == 0.85
+        assert flow.state.quantitative_analysis["composite_score"] == approx(0.85)
 
     def test_data_passing_between_steps(self, mocker):
         """
@@ -610,10 +611,10 @@ class TestAIContextIsolation:
                 pass
 
         # Assert - Original data unchanged after multiple calls
-        assert upstream_data["quantitative_analysis"]["composite_score"] == 0.85
+        assert upstream_data["quantitative_analysis"]["composite_score"] == approx(0.85)
         assert upstream_data["quantitative_analysis"]["grade"] == "A"
         assert upstream_data["quantitative_analysis"]["preliminary_recommendation"] == "BUY"
-        assert upstream_data["quantitative_analysis"]["fundamental_metrics"]["roe"] == 0.25
+        assert upstream_data["quantitative_analysis"]["fundamental_metrics"]["roe"] == approx(0.25)
 
 
 class TestRecommendationSynthesis:
@@ -845,7 +846,7 @@ class TestFallbackCreation:
 
         # Assert - Uses Python results
         assert result.final_grade == "B+"
-        assert result.final_score == 0.75
+        assert result.final_score == approx(0.75)
         assert result.final_recommendation == "HOLD"
 
         # Assert - Qualitative insights are minimal/placeholder
@@ -903,4 +904,4 @@ class TestFallbackCreation:
         assert result.recommendation_confidence == "LOW"
 
         # Assert - LLM cost is zero (no AI used)
-        assert result.llm_cost_dollars == 0.0
+        assert result.llm_cost_dollars == approx(0.0)

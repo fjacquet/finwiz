@@ -5,6 +5,7 @@ Tests risk-based sizing, correlation analysis, concentration limits,
 sizing actions, and portfolio allocation validation.
 """
 
+from pytest import approx
 import pytest
 
 from finwiz.tools.position_sizing_tool import (
@@ -314,7 +315,7 @@ class TestPositionSizingTool:
         )
 
         # Assert
-        assert result.current_size_pct == 0.0
+        assert result.current_size_pct == approx(0.0)
         # Tool may recommend 0% for new positions or suggest a size
         assert result.recommended_size_pct >= 0.0
         assert result.sizing_action in ["add", "hold"]

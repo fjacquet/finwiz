@@ -5,6 +5,7 @@ This module tests the A+ discovery schemas to ensure proper integration
 with the existing FinWiz grading system and validation.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -46,7 +47,7 @@ class TestInvestmentCandidate:
         assert candidate.symbol == "AAPL"
         assert candidate.grade == "A+"
         assert candidate.final_score >= 0.95  # A+ candidate check
-        assert candidate.risk_assessment.score == 2.5
+        assert candidate.risk_assessment.score == approx(2.5)
         assert candidate.risk_assessment.level == "Medium"
 
     def test_should_validate_grade_enum(self):
@@ -99,7 +100,7 @@ class TestMarketRegime:
 
         # Assert
         assert regime.regime_type == "bull"
-        assert regime.vix_level == 15.5
+        assert regime.vix_level == approx(15.5)
         assert regime.market_stress_level == "low"
         assert isinstance(regime.assessment_date, datetime)
 
@@ -113,8 +114,8 @@ class TestAPlusCriteria:
         criteria = APlusCriteria()
 
         # Assert
-        assert criteria.etf_max_expense_ratio == 0.15
-        assert criteria.stock_min_roe == 20.0  # Percentage format: 20 = 20%
+        assert criteria.etf_max_expense_ratio == approx(0.15)
+        assert criteria.stock_min_roe == approx(20.0)  # Percentage format: 20 = 20%
         assert criteria.crypto_min_market_cap == 10e9
         assert not criteria.regime_adjusted
 
@@ -129,8 +130,8 @@ class TestAPlusCriteria:
         )
 
         # Assert
-        assert criteria.etf_max_expense_ratio == 0.10
-        assert criteria.stock_min_roe == 0.25
+        assert criteria.etf_max_expense_ratio == approx(0.10)
+        assert criteria.stock_min_roe == approx(0.25)
         assert criteria.regime_adjusted
         assert "bear market" in criteria.adjustment_rationale
 
@@ -178,9 +179,9 @@ class TestAPlusAnalysis:
 
         # Assert
         assert analysis.candidate.symbol == "SPY"
-        assert analysis.composite_score == 0.97
+        assert analysis.composite_score == approx(0.97)
         assert analysis.is_a_plus_candidate
-        assert analysis.confidence_level == 0.85
+        assert analysis.confidence_level == approx(0.85)
         assert len(analysis.rationale) == 3
         assert analysis.market_context.regime_type == "bull"
 
@@ -211,7 +212,7 @@ class TestPortfolioImprovement:
         assert improvement.current_grade == "B+"
         assert improvement.recommended_grade == "A+"
         assert improvement.improvement_type == "replacement"
-        assert improvement.expected_grade_improvement == 0.15
+        assert improvement.expected_grade_improvement == approx(0.15)
         assert improvement.risk_impact.level == "Low"
 
 
@@ -272,7 +273,7 @@ class TestAPlusDiscoveryResult:
         assert result.asset_type == "etf"
         assert result.total_screened == 500
         assert result.candidates_found == 12
-        assert result.a_plus_percentage == 2.4
+        assert result.a_plus_percentage == approx(2.4)
         assert len(result.a_plus_candidates) == 1
         assert result.grade_distribution["A+"] == 12
         assert result.high_confidence_count == 10
@@ -318,10 +319,10 @@ class TestOptimizationResult:
         # Assert
         assert result.current_portfolio_grade == "B+"
         assert result.optimized_portfolio_grade == "A"
-        assert result.grade_improvement == 0.12
+        assert result.grade_improvement == approx(0.12)
         assert len(result.improvements) == 1
         assert result.improvements[0].recommended_grade == "A+"
-        assert result.expected_annual_benefit == 0.08
+        assert result.expected_annual_benefit == approx(0.08)
 
 
 class TestSchemaIntegration:

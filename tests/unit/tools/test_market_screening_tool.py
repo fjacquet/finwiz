@@ -5,6 +5,7 @@ Tests the comprehensive market screening functionality for ETFs, stocks,
 and cryptocurrencies with A+ criteria filtering.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -38,7 +39,7 @@ class TestMarketScreeningTool:
         assert valid_input.asset_type == "etf"
         assert valid_input.market_region == "us"
         assert valid_input.max_candidates == 25
-        assert valid_input.min_a_plus_score == 0.9
+        assert valid_input.min_a_plus_score == approx(0.9)
 
         # Invalid asset type
         with pytest.raises(ValueError):
@@ -129,15 +130,15 @@ class TestMarketScreeningTool:
         etf_criteria = self.tool._criteria.get_default_criteria("etf")
         assert "max_expense_ratio" in etf_criteria
         assert "min_aum" in etf_criteria
-        assert etf_criteria["max_expense_ratio"] == 0.25
+        assert etf_criteria["max_expense_ratio"] == approx(0.25)
         assert etf_criteria["min_aum"] == 1e9
 
         # Stock criteria
         stock_criteria = self.tool._criteria.get_default_criteria("stock")
         assert "min_roe" in stock_criteria
         assert "min_revenue_growth" in stock_criteria
-        assert stock_criteria["min_roe"] == 0.20
-        assert stock_criteria["min_revenue_growth"] == 0.15
+        assert stock_criteria["min_roe"] == approx(0.20)
+        assert stock_criteria["min_revenue_growth"] == approx(0.15)
 
         # Crypto criteria
         crypto_criteria = self.tool._criteria.get_default_criteria("crypto")
@@ -159,7 +160,7 @@ class TestMarketScreeningTool:
         # Unknown ETF (should get defaults)
         unknown_data = self.tool._utils._get_etf_market_data("UNKNOWN")
         assert unknown_data["symbol"] == "UNKNOWN"
-        assert unknown_data["expense_ratio"] == 0.20  # Default
+        assert unknown_data["expense_ratio"] == approx(0.20)  # Default
 
     def test_should_get_stock_market_data_correctly(self):
         """Test stock market data retrieval."""
@@ -461,7 +462,7 @@ class TestMarketScreeningTool:
             screened_at=datetime.now(),
         )
         assert valid_candidate.symbol == "TEST"
-        assert valid_candidate.preliminary_score == 0.85
+        assert valid_candidate.preliminary_score == approx(0.85)
 
         # Invalid score range
         with pytest.raises(ValueError):

@@ -5,6 +5,7 @@ This test verifies that the fix for hallucinated URLs in sentiment analysis
 is working correctly and prevents fake news articles from being generated.
 """
 
+from pytest import approx
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 
 
@@ -54,7 +55,7 @@ class TestSentimentHallucinationFix:
         assert isinstance(result, dict)
         assert result["top_pos"] == []
         assert result["top_neg"] == []
-        assert result["mean_score"] == 0.0
+        assert result["mean_score"] == approx(0.0)
         assert result["counts"]["pos"] == 0
         assert result["counts"]["neg"] == 0
         assert result["counts"]["neu"] == 0

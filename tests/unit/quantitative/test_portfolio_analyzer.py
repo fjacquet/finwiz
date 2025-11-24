@@ -5,6 +5,7 @@ Tests the PortfolioAnalyzer class functionality including weighting calculations
 rebalancing need identification, portfolio metrics, and error handling.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -129,11 +130,11 @@ class TestPortfolioAnalyzer:
         googl_need = next(n for n in needs if n.symbol == "GOOGL")
 
         # AAPL should use specific tolerance (2%)
-        assert aapl_need.tolerance_band == 0.02
+        assert aapl_need.tolerance_band == approx(0.02)
         assert aapl_need.needs_rebalancing  # 7% deviation > 2% tolerance
 
         # GOOGL should use global tolerance (10%)
-        assert googl_need.tolerance_band == 0.1
+        assert googl_need.tolerance_band == approx(0.1)
         assert not googl_need.needs_rebalancing  # 2% deviation < 10% tolerance
 
     def test_should_calculate_portfolio_metrics_correctly(self):
@@ -142,7 +143,7 @@ class TestPortfolioAnalyzer:
         metrics = self.analyzer.calculate_portfolio_metrics(self.sample_holdings, self.sample_prices)
 
         # Assert
-        assert metrics.total_value == 55000.0
+        assert metrics.total_value == approx(55000.0)
         assert metrics.number_of_positions == 3
         assert metrics.largest_position_weight == pytest.approx(25000 / 55000, abs=0.001)  # GOOGL
         assert 0 <= metrics.concentration_risk_score <= 10
@@ -155,7 +156,7 @@ class TestPortfolioAnalyzer:
         analysis = self.analyzer.analyze_current_portfolio(self.sample_holdings, self.sample_price_data)
 
         # Assert
-        assert analysis.total_value == 55000.0
+        assert analysis.total_value == approx(55000.0)
         assert len(analysis.weightings) == 3
         assert len(analysis.deviations_from_target) == 0  # No targets provided
         assert len(analysis.positions_needing_rebalancing) == 0
@@ -170,7 +171,7 @@ class TestPortfolioAnalyzer:
         analysis = self.analyzer.analyze_current_portfolio(self.sample_holdings, self.sample_price_data, target_weights)
 
         # Assert
-        assert analysis.total_value == 55000.0
+        assert analysis.total_value == approx(55000.0)
         assert len(analysis.deviations_from_target) == 3
 
         # Check deviations
@@ -192,8 +193,8 @@ class TestPortfolioAnalyzer:
 
         # Check AAPL comparison
         aapl_comp = comparison["AAPL"]
-        assert aapl_comp["current_weight"] == 0.3
-        assert aapl_comp["target_weight"] == 0.33
+        assert aapl_comp["current_weight"] == approx(0.3)
+        assert aapl_comp["target_weight"] == approx(0.33)
         assert aapl_comp["absolute_deviation"] == pytest.approx(-0.03, abs=0.001)
         assert "Underweight" in aapl_comp["status"]
 
@@ -211,9 +212,9 @@ class TestPortfolioAnalyzer:
 
         # Check new position
         tsla_comp = comparison["TSLA"]
-        assert tsla_comp["current_weight"] == 0.0
-        assert tsla_comp["target_weight"] == 0.34
-        assert tsla_comp["absolute_deviation"] == -0.34
+        assert tsla_comp["current_weight"] == approx(0.0)
+        assert tsla_comp["target_weight"] == approx(0.34)
+        assert tsla_comp["absolute_deviation"] == approx(-0.34)
 
     def test_should_calculate_rebalancing_impact_correctly(self):
         """Test calculation of rebalancing impact analysis."""
@@ -289,9 +290,9 @@ class TestPortfolioAnalyzer:
         effective_positions = self.analyzer._calculate_effective_positions({})
 
         # Assert
-        assert concentration_risk == 0.0
-        assert diversification_ratio == 0.0
-        assert effective_positions == 0.0
+        assert concentration_risk == approx(0.0)
+        assert diversification_ratio == approx(0.0)
+        assert effective_positions == approx(0.0)
 
     def test_should_assess_rebalancing_complexity_correctly(self):
         """Test rebalancing complexity assessment."""
@@ -377,8 +378,8 @@ class TestPortfolioAnalyzer:
             assert isinstance(risk_metrics[metric], (int, float))
 
         # Validate specific values
-        assert risk_metrics["largest_position"] == 0.4  # AAPL
-        assert risk_metrics["top_5_concentration"] == 1.0  # All positions (only 4)
+        assert risk_metrics["largest_position"] == approx(0.4)  # AAPL
+        assert risk_metrics["top_5_concentration"] == approx(1.0)  # All positions (only 4)
 
 
 class TestPortfolioAnalyzerEdgeCases:
@@ -399,10 +400,10 @@ class TestPortfolioAnalyzerEdgeCases:
         metrics = self.analyzer.calculate_portfolio_metrics(holdings, prices)
 
         # Assert
-        assert weightings["AAPL"] == 1.0
+        assert weightings["AAPL"] == approx(1.0)
         assert metrics.number_of_positions == 1
-        assert metrics.largest_position_weight == 1.0
-        assert metrics.concentration_risk_score == 10.0  # Maximum concentration
+        assert metrics.largest_position_weight == approx(1.0)
+        assert metrics.concentration_risk_score == approx(10.0)  # Maximum concentration
 
     def test_should_handle_very_small_positions(self):
         """Test handling of very small position sizes."""
@@ -449,6 +450,6 @@ class TestPortfolioAnalyzerEdgeCases:
 
         # Assert
         googl_need = next(n for n in needs if n.symbol == "GOOGL")
-        assert googl_need.current_weight == 0.0
-        assert googl_need.target_weight == 0.5
+        assert googl_need.current_weight == approx(0.0)
+        assert googl_need.target_weight == approx(0.5)
         assert googl_need.needs_rebalancing  # 50% deviation > 5% default tolerance

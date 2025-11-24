@@ -5,6 +5,7 @@ Tests scenario analysis functionality including what-if analysis,
 sensitivity analysis, Monte Carlo simulations, and scenario comparisons.
 """
 
+from pytest import approx
 import numpy as np
 import pytest
 
@@ -111,9 +112,9 @@ class TestMonteCarloResult:
         # Assert
         assert result.num_simulations == 1000
         assert result.time_horizon_days == 252
-        assert result.annual_volatility == 0.15
-        assert result.annual_return == 0.08
-        assert result.mean_final_value == 105000.0
+        assert result.annual_volatility == approx(0.15)
+        assert result.annual_return == approx(0.08)
+        assert result.mean_final_value == approx(105000.0)
 
     def test_should_reject_invalid_probability_when_out_of_range(self):
         # Arrange & Act & Assert
@@ -157,7 +158,7 @@ class TestScenarioComparison:
         assert comparison.scenario_1_name == "High Tolerance"
         assert comparison.scenario_2_name == "Low Tolerance"
         assert comparison.recommendation == "Low Tolerance"
-        assert comparison.confidence_level == 0.85
+        assert comparison.confidence_level == approx(0.85)
 
 
 class TestScenarioAnalyzer:
@@ -400,9 +401,9 @@ class TestScenarioAnalyzer:
         # Assert
         assert isinstance(optimal_params, dict)
         assert "tolerance_band" in optimal_params
-        assert optimal_params["tolerance_band"] == 0.10  # Minimum cost is at index 2 (0.10)
+        assert optimal_params["tolerance_band"] == approx(0.10)  # Minimum cost is at index 2 (0.10)
         assert "expected_rebalancing_frequency" in optimal_params
-        assert optimal_params["expected_rebalancing_frequency"] == 4.2
+        assert optimal_params["expected_rebalancing_frequency"] == approx(4.2)
 
     def test_should_generate_risk_warnings_when_high_risk_detected(self, scenario_analyzer):
         # Arrange
@@ -526,8 +527,8 @@ class TestScenarioAnalyzer:
         # Assert
         assert isinstance(scenario, AlternativeScenario)
         assert "Analysis failed" in scenario.projected_outcome
-        assert scenario.cost_difference == 0.0
-        assert scenario.risk_difference == 0.0
+        assert scenario.cost_difference == approx(0.0)
+        assert scenario.risk_difference == approx(0.0)
 
     @pytest.mark.asyncio
     async def test_should_use_default_parameters_when_none_provided(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):

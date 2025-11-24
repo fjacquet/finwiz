@@ -5,6 +5,7 @@ Tests the extraction and processing of A+ investment opportunities from
 discovery crew markdown files with full mocking to avoid file system dependencies.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -528,7 +529,7 @@ class TestAPlusDataExtractor:
     def test_should_calculate_confidence_score_based_on_opportunity_quality(self, extractor):
         """Test confidence score calculation based on opportunities."""
         # Test with no opportunities
-        assert extractor._calculate_confidence_score([], [], []) == 0.0
+        assert extractor._calculate_confidence_score([], [], []) == approx(0.0)
 
         # Test with few opportunities
         few_opportunities = [{"grade": "A"}] * 3
@@ -877,7 +878,7 @@ class TestAPlusDataExtractor:
 
         # Assert
         assert holdings_count == 0
-        assert top_10_concentration == 0.0
+        assert top_10_concentration == approx(0.0)
         assert rationale == ["Well diversified across sectors"]
 
     def test_should_extract_diversification_info_from_dict(self, extractor):
@@ -890,7 +891,7 @@ class TestAPlusDataExtractor:
 
         # Assert
         assert holdings_count == 500
-        assert top_10_concentration == 25.5
+        assert top_10_concentration == approx(25.5)
         assert rationale == ["Holdings: 500", "Top 10 concentration: 25.5%"]
 
     def test_should_extract_diversification_info_from_empty_dict(self, extractor):
@@ -903,7 +904,7 @@ class TestAPlusDataExtractor:
 
         # Assert
         assert holdings_count == 0
-        assert top_10_concentration == 0.0
+        assert top_10_concentration == approx(0.0)
         assert rationale == ["Holdings: 0", "Top 10 concentration: 0.0%"]
 
     def test_should_extract_diversification_info_from_none(self, extractor):
@@ -916,7 +917,7 @@ class TestAPlusDataExtractor:
 
         # Assert
         assert holdings_count == 0
-        assert top_10_concentration == 0.0
+        assert top_10_concentration == approx(0.0)
         assert rationale == []
 
     def test_should_extract_diversification_info_from_invalid_type(self, extractor):
@@ -929,7 +930,7 @@ class TestAPlusDataExtractor:
 
         # Assert
         assert holdings_count == 0
-        assert top_10_concentration == 0.0
+        assert top_10_concentration == approx(0.0)
         assert rationale == []
 
     def test_should_extract_technology_info_from_string(self, extractor):

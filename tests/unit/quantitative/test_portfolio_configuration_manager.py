@@ -5,6 +5,7 @@ Tests comprehensive configuration management including saving/loading,
 versioning, validation, templates, and import/export functionality.
 """
 
+from pytest import approx
 import json
 import tempfile
 from pathlib import Path
@@ -154,8 +155,8 @@ class TestPortfolioConfigurationManager:
         # Load updated configuration
         updated_config = config_manager.load_configuration(config_id)
         assert updated_config.metadata.version == 2
-        assert updated_config.configuration.target_weights["AAPL"] == 0.5
-        assert updated_config.configuration.global_tolerance == 0.08
+        assert updated_config.configuration.target_weights["AAPL"] == approx(0.5)
+        assert updated_config.configuration.global_tolerance == approx(0.08)
         assert "Updated target weights" in updated_config.change_summary
 
     def test_should_list_configurations_when_filters_applied(self, config_manager, sample_holdings, sample_target_weights):
@@ -342,16 +343,16 @@ class TestPortfolioConfigurationManager:
         latest_config = config_manager.load_configuration(config_id)  # Should be latest
 
         assert v1_config.metadata.version == 1
-        assert v1_config.configuration.global_tolerance == 0.05  # Default
+        assert v1_config.configuration.global_tolerance == approx(0.05)  # Default
 
         assert v2_config.metadata.version == 2
-        assert v2_config.configuration.global_tolerance == 0.06
+        assert v2_config.configuration.global_tolerance == approx(0.06)
 
         assert v3_config.metadata.version == 3
-        assert v3_config.configuration.global_tolerance == 0.07
+        assert v3_config.configuration.global_tolerance == approx(0.07)
 
         assert latest_config.metadata.version == 3  # Latest version
-        assert latest_config.configuration.global_tolerance == 0.07
+        assert latest_config.configuration.global_tolerance == approx(0.07)
 
     def test_should_handle_configuration_status_changes(self, config_manager, sample_holdings, sample_target_weights):
         """Test configuration status management."""
@@ -363,7 +364,7 @@ class TestPortfolioConfigurationManager:
 
         # Assert
         loaded_config = config_manager.load_configuration(config_id)
-        assert loaded_config.configuration.global_tolerance == 0.08
+        assert loaded_config.configuration.global_tolerance == approx(0.08)
 
     def test_should_log_operations_correctly(self, mocker, config_manager, sample_holdings, sample_target_weights):
         """Test that operations are logged correctly."""

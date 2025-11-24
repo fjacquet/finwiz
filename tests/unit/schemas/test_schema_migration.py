@@ -5,6 +5,7 @@ This module tests the migration functionality that ensures backward compatibilit
 when upgrading from v1 schemas (without A+ fields) to v2 schemas (with A+ fields).
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -81,7 +82,7 @@ class TestHoldingDecisionMigration:
 
         # Check that original fields are preserved
         assert migrated["ticker"] == "SPY"
-        assert migrated["composite_score"] == 0.85
+        assert migrated["composite_score"] == approx(0.85)
         assert migrated["grade"] == "A"
 
     def test_should_handle_missing_alternatives(self):
@@ -169,7 +170,7 @@ class TestPortfolioReviewMigration:
         assert "potential_a_plus_holdings_count" in migrated
         assert migrated["potential_a_plus_holdings_count"] == 0
         assert "portfolio_grade_improvement_potential" in migrated
-        assert migrated["portfolio_grade_improvement_potential"] == 0.0
+        assert migrated["portfolio_grade_improvement_potential"] == approx(0.0)
         assert "schema_version" in migrated
         assert migrated["schema_version"] == "2.0"
         assert "has_a_plus_analysis" in migrated

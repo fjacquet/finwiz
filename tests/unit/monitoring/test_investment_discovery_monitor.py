@@ -5,6 +5,7 @@ Tests the monitoring system for investment discovery operations,
 including metrics collection, alerting, and dashboard functionality.
 """
 
+from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
@@ -76,7 +77,7 @@ class TestInvestmentDiscoveryMonitor:
 
         assert monitor.discovery_metrics.total_discoveries == 0
         assert monitor.discovery_metrics.a_plus_discoveries == 0
-        assert monitor.discovery_metrics.discovery_success_rate == 0.0
+        assert monitor.discovery_metrics.discovery_success_rate == approx(0.0)
         assert len(monitor.discovery_history) == 0
         assert len(monitor.alert_history) == 0
 
@@ -104,7 +105,7 @@ class TestInvestmentDiscoveryMonitor:
         # Check metrics updates
         assert self.monitor.discovery_metrics.total_discoveries == 1
         assert self.monitor.discovery_metrics.a_plus_discoveries == 1
-        assert self.monitor.discovery_metrics.discovery_success_rate == 1.0
+        assert self.monitor.discovery_metrics.discovery_success_rate == approx(1.0)
         assert self.monitor.discovery_metrics.avg_discovery_time == duration
         assert len(self.monitor.discovery_times) == 1
 
@@ -130,7 +131,7 @@ class TestInvestmentDiscoveryMonitor:
         # Check error tracking
         assert self.monitor.discovery_metrics.discovery_errors == 1
         assert self.monitor.discovery_metrics.total_discoveries == 1
-        assert self.monitor.discovery_metrics.discovery_success_rate == 0.0
+        assert self.monitor.discovery_metrics.discovery_success_rate == approx(0.0)
 
         # Check metrics collector call
         mock_counter.assert_called_with("discovery.failed", tags={"asset_type": "stock"})
@@ -287,8 +288,8 @@ class TestInvestmentDiscoveryMonitor:
 
         self.monitor._update_calculated_metrics()
 
-        assert self.monitor.discovery_metrics.discovery_success_rate == 0.8  # 8/10
-        assert self.monitor.discovery_metrics.avg_discovery_time == 200.0  # (100+200+300)/3
+        assert self.monitor.discovery_metrics.discovery_success_rate == approx(0.8)  # 8/10
+        assert self.monitor.discovery_metrics.avg_discovery_time == approx(200.0)  # (100+200+300)/3
 
     def test_should_update_quality_metrics(self):
         """Test updating quality metrics."""
@@ -299,7 +300,7 @@ class TestInvestmentDiscoveryMonitor:
         self.monitor._update_quality_metrics()
 
         # Should be 50% retention rate (1 out of 2 A+ stayed A+)
-        assert self.monitor.quality_metrics.grade_retention_rate == 0.5
+        assert self.monitor.quality_metrics.grade_retention_rate == approx(0.5)
 
     def test_should_store_discovery_record(self):
         """Test storing discovery records."""
@@ -364,13 +365,13 @@ class TestDiscoveryMetrics:
 
         assert metrics.total_discoveries == 0
         assert metrics.a_plus_discoveries == 0
-        assert metrics.discovery_success_rate == 0.0
-        assert metrics.avg_discovery_time == 0.0
+        assert metrics.discovery_success_rate == approx(0.0)
+        assert metrics.avg_discovery_time == approx(0.0)
         assert metrics.grade_distribution == {}
         assert metrics.asset_type_distribution == {}
         assert metrics.last_discovery_time is None
         assert metrics.discovery_errors == 0
-        assert metrics.validation_pass_rate == 0.0
+        assert metrics.validation_pass_rate == approx(0.0)
 
 
 class TestQualityMetrics:
@@ -380,9 +381,9 @@ class TestQualityMetrics:
         """Test QualityMetrics initialization with default values."""
         metrics = QualityMetrics()
 
-        assert metrics.grade_retention_rate == 0.0
-        assert metrics.recommendation_acceptance_rate == 0.0
-        assert metrics.portfolio_improvement_rate == 0.0
-        assert metrics.false_positive_rate == 0.0
-        assert metrics.discovery_precision == 0.0
-        assert metrics.discovery_recall == 0.0
+        assert metrics.grade_retention_rate == approx(0.0)
+        assert metrics.recommendation_acceptance_rate == approx(0.0)
+        assert metrics.portfolio_improvement_rate == approx(0.0)
+        assert metrics.false_positive_rate == approx(0.0)
+        assert metrics.discovery_precision == approx(0.0)
+        assert metrics.discovery_recall == approx(0.0)

@@ -4,6 +4,7 @@ Unit tests for Crew Export Pydantic schemas.
 Tests validation for all CrewExport schemas with strict validation (extra='forbid').
 """
 
+from pytest import approx
 from datetime import UTC, datetime
 
 import pytest
@@ -60,7 +61,7 @@ class TestStockCrewExport:
         # Assert
         assert export.ticker == "AAPL"
         assert export.grade == "A"
-        assert export.composite_score == 0.85
+        assert export.composite_score == approx(0.85)
 
     def test_should_reject_invalid_grade(self):
         """Test rejection of invalid grade values."""
@@ -305,7 +306,7 @@ class TestETFCrewExport:
 
         # Assert
         assert export.ticker == "SPY"
-        assert export.expense_ratio == 0.09
+        assert export.expense_ratio == approx(0.09)
 
     def test_should_reject_invalid_expense_ratio(self):
         """Test rejection of expense ratio outside valid range."""
@@ -387,7 +388,7 @@ class TestCryptoCrewExport:
 
         # Assert
         assert export.ticker == "BTC"
-        assert export.volatility_30d == 0.65
+        assert export.volatility_30d == approx(0.65)
 
     def test_should_reject_positive_max_drawdown(self):
         """Test rejection of positive max drawdown (should be negative)."""
@@ -557,7 +558,7 @@ class TestConsolidatedReportExport:
 
         # Assert
         assert export.session_id == "test-session"
-        assert export.total_execution_time == 1.234
+        assert export.total_execution_time == approx(1.234)
 
     def test_should_reject_negative_execution_time(self):
         """Test rejection of negative execution time."""

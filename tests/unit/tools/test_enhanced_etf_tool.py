@@ -5,6 +5,7 @@ Tests the enhanced ETF factsheet parsing, holdings extraction,
 tracking analysis, and standardized risk assessment capabilities.
 """
 
+from pytest import approx
 from datetime import date
 
 import pytest
@@ -111,19 +112,19 @@ class TestEnhancedETFAnalysisTool:
         expense_ratio = ETFDataFetcher.extract_expense_ratio(soup)
 
         # Assert
-        assert expense_ratio == 0.09
+        assert expense_ratio == approx(0.09)
 
     def test_should_handle_expense_ratio_edge_cases(self, tool):
         """Test expense ratio extraction edge cases."""
         # Test basis points conversion
         html_bp = "<div>Total Expense: 95 basis points</div>"
         soup_bp = BeautifulSoup(html_bp, "html.parser")
-        assert ETFDataFetcher.extract_expense_ratio(soup_bp) == 0.95
+        assert ETFDataFetcher.extract_expense_ratio(soup_bp) == approx(0.95)
 
         # Test fallback default
         html_empty = "<div>No expense info</div>"
         soup_empty = BeautifulSoup(html_empty, "html.parser")
-        assert ETFDataFetcher.extract_expense_ratio(soup_empty) == 0.20
+        assert ETFDataFetcher.extract_expense_ratio(soup_empty) == approx(0.20)
 
     def test_should_extract_tracking_difference(self, tool):
         """Test tracking difference extraction."""
@@ -131,13 +132,13 @@ class TestEnhancedETFAnalysisTool:
         html_pos = "<div>Tracking Error: 0.15%</div>"
         soup_pos = BeautifulSoup(html_pos, "html.parser")
         result_pos = ETFDataFetcher.extract_tracking_difference(soup_pos)
-        assert result_pos == 0.15
+        assert result_pos == approx(0.15)
 
         # Test negative tracking difference
         html_neg = "<div>Tracking Difference: -0.05%</div>"
         soup_neg = BeautifulSoup(html_neg, "html.parser")
         result_neg = ETFDataFetcher.extract_tracking_difference(soup_neg)
-        assert result_neg == -0.05
+        assert result_neg == approx(-0.05)
 
         # Test no tracking info
         html_none = "<div>No tracking info</div>"
@@ -278,8 +279,8 @@ class TestEnhancedETFAnalysisTool:
         # Assert
         assert factsheet["ticker"] == "TEST"
         assert factsheet["issuer"] == "Test Issuer"
-        assert factsheet["expense_ratio"] == 0.15
-        assert factsheet["tracking_diff"] == 0.05
+        assert factsheet["expense_ratio"] == approx(0.15)
+        assert factsheet["tracking_diff"] == approx(0.05)
         assert factsheet["replication_method"] == "physical"
         assert len(factsheet["top_holdings"]) == 1
         assert factsheet["risk"]["level"] == "Medium"

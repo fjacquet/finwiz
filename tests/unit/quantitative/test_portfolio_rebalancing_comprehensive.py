@@ -5,6 +5,7 @@ This module provides additional test coverage for edge cases, error scenarios,
 and performance testing to achieve 90%+ code coverage.
 """
 
+from pytest import approx
 import asyncio
 import os
 import sys
@@ -221,7 +222,7 @@ class TestPortfolioRebalancingEdgeCases:
 
         # Assert
         assert result is not None
-        assert result.current_portfolio.total_value == 0.00001
+        assert result.current_portfolio.total_value == approx(0.00001)
 
     @pytest.mark.asyncio
     async def test_should_handle_fractional_shares_correctly(self, mock_orchestrator_dependencies, mocker):
@@ -262,7 +263,7 @@ class TestPortfolioRebalancingEdgeCases:
 
         # Assert
         assert result is not None
-        assert result.current_portfolio.total_value == 15075.0
+        assert result.current_portfolio.total_value == approx(15075.0)
 
     @pytest.mark.asyncio
     async def test_should_handle_concurrent_rebalancing_requests(self, mock_orchestrator_dependencies, mocker):
@@ -572,7 +573,7 @@ class TestPortfolioRebalancingErrorScenarios:
             target_weights={"AAPL": 1.0},
             global_tolerance=0.001,  # 0.1% tolerance
         )
-        assert config.global_tolerance == 0.001
+        assert config.global_tolerance == approx(0.001)
 
     def test_should_handle_extreme_transaction_costs(self):
         """Test handling of extreme transaction cost rates."""
@@ -582,7 +583,7 @@ class TestPortfolioRebalancingErrorScenarios:
             target_weights={"AAPL": 1.0},
             transaction_cost_rate=0.1,  # 10% transaction cost
         )
-        assert config.transaction_cost_rate == 0.1
+        assert config.transaction_cost_rate == approx(0.1)
 
         # Test zero transaction costs
         config = PortfolioConfiguration(
@@ -590,7 +591,7 @@ class TestPortfolioRebalancingErrorScenarios:
             target_weights={"AAPL": 1.0},
             transaction_cost_rate=0.0,
         )
-        assert config.transaction_cost_rate == 0.0
+        assert config.transaction_cost_rate == approx(0.0)
 
     @pytest.mark.asyncio
     async def test_should_handle_corrupted_price_data(self, orchestrator_with_failing_dependencies, mocker):

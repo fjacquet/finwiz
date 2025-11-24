@@ -5,6 +5,7 @@ Tests the LineageQuery class and convenience functions for querying
 data lineage information.
 """
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -147,10 +148,10 @@ class TestLineageQuery:
         assert result["metric"] == "volatility"
         assert result["source"] is not None
         assert result["source"].field_name == "volatility"
-        assert result["source"].raw_value == 0.25
+        assert result["source"].raw_value == approx(0.25)
         assert len(result["transformations"]) == 1
         assert len(result["calculations"]) == 1
-        assert result["final_value"] == 0.25
+        assert result["final_value"] == approx(0.25)
 
     def test_should_get_metric_lineage_for_max_drawdown(self, sample_lineage):
         """Test getting lineage chain for max_drawdown metric."""
@@ -160,7 +161,7 @@ class TestLineageQuery:
 
         assert result is not None
         assert result["metric"] == "max_drawdown"
-        assert result["source"].raw_value == -0.15
+        assert result["source"].raw_value == approx(-0.15)
         assert len(result["transformations"]) == 0  # No transformations for this metric
         assert len(result["calculations"]) == 1  # Used in composite_score
 
@@ -183,7 +184,7 @@ class TestLineageQuery:
         assert result["score_type"] == "composite_score"
         assert result["calculation"] is not None
         assert result["calculation"].step_name == "composite_score"
-        assert result["output"] == 0.85
+        assert result["output"] == approx(0.85)
         assert result["formula"] == "0.4*volatility + 0.3*max_drawdown + 0.3*beta"
         assert len(result["inputs"]) == 3
         assert "volatility" in result["inputs"]
@@ -205,7 +206,7 @@ class TestLineageQuery:
         # Check volatility input lineage
         vol_lineage = result["input_lineages"]["volatility"]
         assert vol_lineage["metric"] == "volatility"
-        assert vol_lineage["source"].raw_value == 0.25
+        assert vol_lineage["source"].raw_value == approx(0.25)
 
     def test_should_return_none_for_nonexistent_score(self, sample_lineage):
         """Test getting lineage for non-existent score."""
@@ -225,10 +226,10 @@ class TestLineageQuery:
         assert result["ticker"] == "AAPL"
         assert result["calculation"] is not None
         assert result["calculation"].step_name == "grade"
-        assert result["composite_score"] == 0.85
+        assert result["composite_score"] == approx(0.85)
         assert result["grade"] == "A+"
         assert result["grading_scale"] is not None
-        assert result["grading_scale"]["A+"] == 0.80
+        assert result["grading_scale"]["A+"] == approx(0.80)
 
     def test_should_include_score_lineage_in_grade_lineage(self, sample_lineage):
         """Test that grade lineage includes composite score lineage."""
@@ -240,7 +241,7 @@ class TestLineageQuery:
         assert "score_lineage" in result
         assert result["score_lineage"] is not None
         assert result["score_lineage"]["score_type"] == "composite_score"
-        assert result["score_lineage"]["output"] == 0.85
+        assert result["score_lineage"]["output"] == approx(0.85)
 
     def test_should_get_all_sources(self, sample_lineage):
         """Test getting all data sources."""
@@ -310,8 +311,8 @@ class TestLineageQuery:
         assert summary["total_transformations"] == 1
         assert summary["total_calculations"] == 2
         assert "beta" in summary["defaulted_fields"]
-        assert summary["completeness"] == 1.0
-        assert summary["final_values"]["composite_score"] == 0.85
+        assert summary["completeness"] == approx(1.0)
+        assert summary["final_values"]["composite_score"] == approx(0.85)
         assert summary["final_values"]["grade"] == "A+"
 
 

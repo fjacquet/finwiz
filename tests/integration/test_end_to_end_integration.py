@@ -1,5 +1,6 @@
 """End-to-end integration test for complete orchestrator flow."""
 
+from pytest import approx
 from datetime import datetime
 
 import pytest
@@ -52,9 +53,9 @@ class TestEndToEndIntegration:
 
         # Verify DataSourceOrchestrator was used
         assert "roe" in result["raw_data"]
-        assert result["raw_data"]["roe"] == 0.25
+        assert result["raw_data"]["roe"] == approx(0.25)
         assert "debt_to_equity" in result["raw_data"]
-        assert result["raw_data"]["debt_to_equity"] == 0.5
+        assert result["raw_data"]["debt_to_equity"] == approx(0.5)
 
         # Verify data lineage tracking
         assert "data_lineage" in result["raw_data"]
@@ -95,7 +96,7 @@ class TestEndToEndIntegration:
 
         # Verify ETF-specific metrics
         assert "expense_ratio" in result["raw_data"]
-        assert result["raw_data"]["expense_ratio"] == 0.003
+        assert result["raw_data"]["expense_ratio"] == approx(0.003)
         assert "aum" in result["raw_data"]
         assert result["raw_data"]["aum"] == 500e9
 
@@ -137,7 +138,7 @@ class TestEndToEndIntegration:
         assert "market_cap" in result["raw_data"]
         assert result["raw_data"]["market_cap"] == 1e12
         assert "age_years" in result["raw_data"]
-        assert result["raw_data"]["age_years"] == 15.0  # BTC age
+        assert result["raw_data"]["age_years"] == approx(15.0)  # BTC age
 
     @pytest.mark.asyncio
     async def test_should_handle_mixed_portfolio_with_all_asset_classes(self, mocker):

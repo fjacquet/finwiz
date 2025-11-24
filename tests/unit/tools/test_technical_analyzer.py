@@ -5,6 +5,7 @@ Tests advanced technical analysis including Fibonacci retracements, support/resi
 identification, and confluence zone detection with mocked price data.
 """
 
+from pytest import approx
 import datetime
 
 import numpy as np
@@ -43,7 +44,7 @@ class TestPriceData:
 
         assert price_data.length == 5
         assert len(price_data.dates) == 5
-        assert price_data.closes[-1] == 103.0
+        assert price_data.closes[-1] == approx(103.0)
 
     def test_should_raise_error_for_mismatched_lengths(self):
         """Test that PriceData raises error for mismatched list lengths."""
@@ -70,7 +71,7 @@ class TestPriceData:
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 3
         assert list(df.columns) == ["date", "open", "high", "low", "close", "volume"]
-        assert df["close"].iloc[-1] == 102.5
+        assert df["close"].iloc[-1] == approx(102.5)
 
 
 class TestTechnicalAnalyzer:

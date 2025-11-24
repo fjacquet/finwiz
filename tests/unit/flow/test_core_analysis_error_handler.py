@@ -5,6 +5,7 @@ Tests the error handling and graceful degradation functionality
 for core analysis crews.
 """
 
+from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
@@ -69,7 +70,7 @@ class TestCoreAnalysisErrorHandler:
         error_context = error_handler.error_history["stock"][0]
         assert error_context.crew_name == "stock"
         assert error_context.error_message == "Test error"
-        assert error_context.execution_time == 5.0
+        assert error_context.execution_time == approx(5.0)
 
     def test_should_return_cached_data_fallback_when_cache_available(self, mocker, error_handler, mock_integration_manager):
         """Test cached data fallback strategy."""
@@ -122,7 +123,7 @@ class TestCoreAnalysisErrorHandler:
         assert response.success is True
         assert response.fallback_strategy == "default_values"
         assert response.data["ai_recommendation"] == "HOLD"
-        assert response.data["confidence_score"] == 0.1
+        assert response.data["confidence_score"] == approx(0.1)
 
     def test_should_reject_stale_cache_when_too_old(self, mocker, error_handler, mock_integration_manager):
         """Test cache rejection when data is too old."""

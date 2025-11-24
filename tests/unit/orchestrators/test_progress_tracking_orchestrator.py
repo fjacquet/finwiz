@@ -4,6 +4,7 @@ Unit tests for ProgressTrackingOrchestrator.
 Tests progress calculation, metrics file saving, and progress logging.
 """
 
+from pytest import approx
 import json
 from datetime import datetime
 
@@ -39,7 +40,7 @@ class TestProgressTrackingOrchestrator:
         assert orchestrator.state.holdings_processed == 5
         assert orchestrator.state.total_holdings == 10
         assert orchestrator.state.holdings_remaining == 5
-        assert orchestrator.state.progress_percentage == 50.0
+        assert orchestrator.state.progress_percentage == approx(50.0)
 
     def test_update_progress_zero_total(self, orchestrator):
         """Test progress update with zero total holdings."""
@@ -50,7 +51,7 @@ class TestProgressTrackingOrchestrator:
         assert orchestrator.state.holdings_processed == 0
         assert orchestrator.state.total_holdings == 0
         assert orchestrator.state.holdings_remaining == 0
-        assert orchestrator.state.progress_percentage == 0.0
+        assert orchestrator.state.progress_percentage == approx(0.0)
 
     def test_update_progress_complete(self, orchestrator):
         """Test progress update when all holdings are processed."""
@@ -61,7 +62,7 @@ class TestProgressTrackingOrchestrator:
         assert orchestrator.state.holdings_processed == 10
         assert orchestrator.state.total_holdings == 10
         assert orchestrator.state.holdings_remaining == 0
-        assert orchestrator.state.progress_percentage == 100.0
+        assert orchestrator.state.progress_percentage == approx(100.0)
 
     def test_update_progress_calculates_estimated_time(self, orchestrator):
         """Test that progress update calculates estimated time remaining."""
@@ -91,8 +92,8 @@ class TestProgressTrackingOrchestrator:
         orchestrator.update_progress(holdings_processed=5, total_holdings=10)
 
         # Assert
-        assert orchestrator.state.progress_percentage == 50.0
-        assert orchestrator.state.estimated_time_remaining == 0.0
+        assert orchestrator.state.progress_percentage == approx(50.0)
+        assert orchestrator.state.estimated_time_remaining == approx(0.0)
 
     def test_update_progress_updates_checkpoint_time(self, orchestrator):
         """Test that progress update sets last checkpoint time."""
@@ -130,7 +131,7 @@ class TestProgressTrackingOrchestrator:
         assert saved_metrics["holdings_processed"] == 10
         assert saved_metrics["success_count"] == 8
         assert saved_metrics["failed_count"] == 2
-        assert saved_metrics["execution_time_seconds"] == 120.5
+        assert saved_metrics["execution_time_seconds"] == approx(120.5)
 
     def test_save_batch_metrics_creates_directory(self, orchestrator, tmp_path):
         """Test that save_batch_metrics creates output directory if it doesn't exist."""
@@ -215,23 +216,23 @@ class TestProgressTrackingOrchestrator:
         """Test progress percentage calculation for various scenarios."""
         # Test 0%
         orchestrator.update_progress(holdings_processed=0, total_holdings=100)
-        assert orchestrator.state.progress_percentage == 0.0
+        assert orchestrator.state.progress_percentage == approx(0.0)
 
         # Test 25%
         orchestrator.update_progress(holdings_processed=25, total_holdings=100)
-        assert orchestrator.state.progress_percentage == 25.0
+        assert orchestrator.state.progress_percentage == approx(25.0)
 
         # Test 50%
         orchestrator.update_progress(holdings_processed=50, total_holdings=100)
-        assert orchestrator.state.progress_percentage == 50.0
+        assert orchestrator.state.progress_percentage == approx(50.0)
 
         # Test 75%
         orchestrator.update_progress(holdings_processed=75, total_holdings=100)
-        assert orchestrator.state.progress_percentage == 75.0
+        assert orchestrator.state.progress_percentage == approx(75.0)
 
         # Test 100%
         orchestrator.update_progress(holdings_processed=100, total_holdings=100)
-        assert orchestrator.state.progress_percentage == 100.0
+        assert orchestrator.state.progress_percentage == approx(100.0)
 
     def test_update_progress_with_datetime_object(self, orchestrator):
         """Test progress update when flow_start_time is a datetime object."""
@@ -266,7 +267,7 @@ class TestProgressTrackingOrchestrator:
         with open(output_path) as f:
             saved_metrics = json.load(f)
 
-        assert saved_metrics["ticker_execution_times"]["AAPL"] == 12.5
+        assert saved_metrics["ticker_execution_times"]["AAPL"] == approx(12.5)
         assert saved_metrics["failed_holdings"] == ["INVALID1", "INVALID2"]
         assert saved_metrics["nested"]["level1"]["level2"]["value"] == 42
 

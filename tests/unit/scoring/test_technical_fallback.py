@@ -11,6 +11,7 @@ Tests cover:
 - Price history extraction from various formats
 """
 
+from pytest import approx
 import pandas as pd
 import pytest
 from faker import Faker
@@ -112,7 +113,7 @@ class TestCalculateMissingTechnicalIndicators:
 
         # Assert
         assert "beta" in result
-        assert result["beta"] == 1.0  # Neutral beta
+        assert result["beta"] == approx(1.0)  # Neutral beta
 
     def test_should_not_overwrite_existing_indicators(self, sample_prices):
         """Test that existing indicators are not overwritten."""
@@ -128,9 +129,9 @@ class TestCalculateMissingTechnicalIndicators:
         result = calculate_missing_technical_indicators(data, sample_prices)
 
         # Assert - original values preserved
-        assert result["rsi"] == 65.0
-        assert result["macd"] == 2.5
-        assert result["moving_avg_50"] == 145.0
+        assert result["rsi"] == approx(65.0)
+        assert result["macd"] == approx(2.5)
+        assert result["moving_avg_50"] == approx(145.0)
 
     def test_should_use_current_price_fallback_without_history(self):
         """Test fallback to current price when no price history available."""
@@ -144,12 +145,12 @@ class TestCalculateMissingTechnicalIndicators:
         result = calculate_missing_technical_indicators(data, price_history=None)
 
         # Assert - uses current_price or neutral values
-        assert result["moving_avg_50"] == 150.0  # Current price
-        assert result["moving_avg_200"] == 150.0  # Current price
-        assert result["rsi"] == 50.0  # Neutral
-        assert result["macd"] == 0.0  # Neutral
-        assert result["macd_signal"] == 0.0  # Neutral
-        assert result["beta"] == 1.0  # Neutral
+        assert result["moving_avg_50"] == approx(150.0)  # Current price
+        assert result["moving_avg_200"] == approx(150.0)  # Current price
+        assert result["rsi"] == approx(50.0)  # Neutral
+        assert result["macd"] == approx(0.0)  # Neutral
+        assert result["macd_signal"] == approx(0.0)  # Neutral
+        assert result["beta"] == approx(1.0)  # Neutral
 
     def test_should_handle_insufficient_data_for_ma50(self):
         """Test graceful handling when insufficient data for 50-day MA."""
@@ -175,7 +176,7 @@ class TestCalculateMissingTechnicalIndicators:
         result = calculate_missing_technical_indicators(data, short_prices)
 
         # Assert - uses neutral RSI
-        assert result["rsi"] == 50.0
+        assert result["rsi"] == approx(50.0)
 
     def test_should_skip_when_no_current_price(self, sample_prices):
         """Test that calculation is skipped when current_price is missing."""
@@ -366,10 +367,10 @@ class TestTechnicalIndicatorAccuracy:
 
         # Assert
         # MA50 uses last 50 values which are all 110
-        assert result["moving_avg_50"] == 110.0
+        assert result["moving_avg_50"] == approx(110.0)
 
         # MA200 is not available (only 100 days), should use current_price
-        assert result["moving_avg_200"] == 110.0
+        assert result["moving_avg_200"] == approx(110.0)
 
     def test_macd_signal_relationship(self):
         """Test that MACD and signal line have correct relationship."""

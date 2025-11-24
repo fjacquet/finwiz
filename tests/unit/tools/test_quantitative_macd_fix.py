@@ -1,5 +1,6 @@
 """Unit tests for MACD signal extraction fix in quantitative analysis tool."""
 
+from pytest import approx
 import pytest
 
 
@@ -92,17 +93,17 @@ class TestMACDExtractionFix:
 
         # Assertions
         assert "macd" in tech_data, "MACD line should be extracted"
-        assert tech_data["macd"] == 0.9, f"Expected MACD=0.9, got {tech_data['macd']}"
+        assert tech_data["macd"] == approx(0.9), f"Expected MACD=0.9, got {tech_data['macd']}"
 
         assert "macd_signal" in tech_data, "MACD signal should be extracted"
         assert isinstance(tech_data["macd_signal"], float), f"MACD signal should be float, got {type(tech_data['macd_signal'])}"
-        assert tech_data["macd_signal"] == 0.8, f"Expected MACD signal=0.8, got {tech_data['macd_signal']}"
+        assert tech_data["macd_signal"] == approx(0.8), f"Expected MACD signal=0.8, got {tech_data['macd_signal']}"
 
         assert "macd_description" in tech_data, "MACD description should be preserved"
         assert tech_data["macd_description"] == "MACD bullish crossover - strong buy signal"
 
         assert "rsi" in tech_data, "RSI should be extracted"
-        assert tech_data["rsi"] == 65.0, f"Expected RSI=65.0, got {tech_data['rsi']}"
+        assert tech_data["rsi"] == approx(65.0), f"Expected RSI=65.0, got {tech_data['rsi']}"
 
     def test_should_handle_missing_macd_gracefully(self, mocker):
         """Test that missing MACD data is handled gracefully."""
@@ -175,4 +176,4 @@ class TestMACDExtractionFix:
         else:
             momentum_score = 0.4
 
-        assert momentum_score == 1.0, f"Expected momentum_score=1.0, got {momentum_score}"
+        assert momentum_score == approx(1.0), f"Expected momentum_score=1.0, got {momentum_score}"

@@ -11,6 +11,7 @@ Tests cover:
 - Edge cases (empty data, invalid inputs, zero values)
 """
 
+from pytest import approx
 import pandas as pd
 import pytest
 
@@ -38,12 +39,12 @@ class TestPriceTarget:
         )
 
         # Assert
-        assert target.target_price == 110.0
-        assert target.current_price == 100.0
-        assert target.confidence == 0.7
+        assert target.target_price == approx(110.0)
+        assert target.current_price == approx(100.0)
+        assert target.confidence == approx(0.7)
         assert target.method == "test"
         assert target.upside_pct == pytest.approx(10.0, rel=1e-6)
-        assert target.downside_pct == 0.0
+        assert target.downside_pct == approx(0.0)
 
     def test_should_create_price_target_with_downside(self):
         """Test PriceTarget creation with downside calculation."""
@@ -56,7 +57,7 @@ class TestPriceTarget:
         )
 
         # Assert
-        assert target.target_price == 90.0
+        assert target.target_price == approx(90.0)
         assert target.upside_pct == pytest.approx(-10.0, rel=1e-6)
         assert target.downside_pct == pytest.approx(10.0, rel=1e-6)
 
@@ -70,10 +71,10 @@ class TestPriceTarget:
         )
 
         # Assert
-        assert target.target_price == 110.0
+        assert target.target_price == approx(110.0)
         assert target.current_price is None
-        assert target.upside_pct == 0.0
-        assert target.downside_pct == 0.0
+        assert target.upside_pct == approx(0.0)
+        assert target.downside_pct == approx(0.0)
 
     def test_should_convert_to_dict(self):
         """Test PriceTarget to_dict conversion."""
@@ -90,10 +91,10 @@ class TestPriceTarget:
         result = target.to_dict()
 
         # Assert
-        assert result["target_price"] == 110.0
-        assert result["current_price"] == 100.0
+        assert result["target_price"] == approx(110.0)
+        assert result["current_price"] == approx(100.0)
         assert result["upside_pct"] == pytest.approx(10.0, rel=1e-6)
-        assert result["confidence"] == 0.7
+        assert result["confidence"] == approx(0.7)
         assert result["method"] == "test"
         assert result["assumptions"] == {"key": "value"}
 
@@ -164,7 +165,7 @@ class TestCalculateDCFTarget:
 
         # Assert
         assert target.target_price > 0
-        assert target.current_price == 50.0
+        assert target.current_price == approx(50.0)
         assert target.upside_pct != 0.0  # Should calculate upside
         assert target.assumptions["shares_outstanding"] == 1000
 
@@ -214,8 +215,8 @@ class TestCalculateDCFTarget:
         target = calculate_dcf_target(cash_flows, 0.10, 0.03)
 
         # Assert
-        assert target.target_price == 0.0
-        assert target.confidence == 0.0
+        assert target.target_price == approx(0.0)
+        assert target.confidence == approx(0.0)
 
     def test_should_return_zero_when_discount_rate_less_than_growth(self):
         """Test DCF when discount rate <= terminal growth."""
@@ -230,8 +231,8 @@ class TestCalculateDCFTarget:
         )
 
         # Assert
-        assert target.target_price == 0.0
-        assert target.confidence == 0.0
+        assert target.target_price == approx(0.0)
+        assert target.confidence == approx(0.0)
 
     def test_should_handle_negative_cash_flows(self):
         """Test DCF with negative cash flows."""
@@ -266,8 +267,8 @@ class TestCalculatePETarget:
         assert target.target_price == pytest.approx(110.0, rel=1e-6)
         assert target.method == "pe_multiple"
         assert target.confidence > 0.3
-        assert target.assumptions["earnings_per_share"] == 5.50
-        assert target.assumptions["target_pe_ratio"] == 20.0
+        assert target.assumptions["earnings_per_share"] == approx(5.50)
+        assert target.assumptions["target_pe_ratio"] == approx(20.0)
 
     def test_should_calculate_pe_target_with_current_price(self):
         """Test P/E target with current price for upside calculation."""
@@ -285,7 +286,7 @@ class TestCalculatePETarget:
 
         # Assert
         assert target.target_price == pytest.approx(110.0, rel=1e-6)
-        assert target.current_price == 95.0
+        assert target.current_price == approx(95.0)
         assert target.upside_pct > 0
 
     def test_should_adjust_confidence_based_on_sector_pe(self):
@@ -326,8 +327,8 @@ class TestCalculatePETarget:
         target = calculate_pe_target(eps, target_pe)
 
         # Assert
-        assert target.target_price == 0.0
-        assert target.confidence == 0.0
+        assert target.target_price == approx(0.0)
+        assert target.confidence == approx(0.0)
 
     def test_should_return_zero_when_zero_eps(self):
         """Test P/E target with zero EPS."""
@@ -339,8 +340,8 @@ class TestCalculatePETarget:
         target = calculate_pe_target(eps, target_pe)
 
         # Assert
-        assert target.target_price == 0.0
-        assert target.confidence == 0.0
+        assert target.target_price == approx(0.0)
+        assert target.confidence == approx(0.0)
 
     def test_should_return_zero_when_negative_pe_ratio(self):
         """Test P/E target with negative P/E ratio."""
@@ -352,8 +353,8 @@ class TestCalculatePETarget:
         target = calculate_pe_target(eps, target_pe)
 
         # Assert
-        assert target.target_price == 0.0
-        assert target.confidence == 0.0
+        assert target.target_price == approx(0.0)
+        assert target.confidence == approx(0.0)
 
 
 class TestCalculateTechnicalTarget:
@@ -428,7 +429,7 @@ class TestCalculateTechnicalTarget:
         target = calculate_technical_target(prices, method="fibonacci", current_price=current_price)
 
         # Assert
-        assert target.current_price == 118.0
+        assert target.current_price == approx(118.0)
 
     def test_should_return_zero_when_insufficient_data(self):
         """Test technical target with insufficient price data."""
@@ -439,8 +440,8 @@ class TestCalculateTechnicalTarget:
         target = calculate_technical_target(prices, method="fibonacci")
 
         # Assert
-        assert target.target_price == 0.0
-        assert target.confidence == 0.0
+        assert target.target_price == approx(0.0)
+        assert target.confidence == approx(0.0)
 
     def test_should_return_current_price_when_unknown_method(self):
         """Test technical target with unknown method."""
@@ -454,7 +455,7 @@ class TestCalculateTechnicalTarget:
 
         # Assert
         assert target.target_price == current_price
-        assert target.confidence == 0.0
+        assert target.confidence == approx(0.0)
 
 
 class TestCalculateSupportResistanceTargets:
@@ -524,10 +525,10 @@ class TestCalculateSupportResistanceTargets:
         targets = calculate_support_resistance_targets(prices)
 
         # Assert
-        assert targets["resistance"].target_price == 0.0
-        assert targets["support"].target_price == 0.0
-        assert targets["resistance"].confidence == 0.0
-        assert targets["support"].confidence == 0.0
+        assert targets["resistance"].target_price == approx(0.0)
+        assert targets["support"].target_price == approx(0.0)
+        assert targets["resistance"].confidence == approx(0.0)
+        assert targets["support"].confidence == approx(0.0)
 
     def test_should_have_moderate_confidence(self):
         """Test that S/R targets have moderate confidence."""
@@ -614,8 +615,8 @@ class TestCalculateConsensusTarget:
         consensus = calculate_consensus_target([zero_target1, zero_target2])
 
         # Assert
-        assert consensus.target_price == 0.0
-        assert consensus.confidence == 0.0
+        assert consensus.target_price == approx(0.0)
+        assert consensus.confidence == approx(0.0)
 
     def test_should_return_zero_when_empty_target_list(self):
         """Test consensus with empty target list."""
@@ -626,8 +627,8 @@ class TestCalculateConsensusTarget:
         consensus = calculate_consensus_target(targets)
 
         # Assert
-        assert consensus.target_price == 0.0
-        assert consensus.confidence == 0.0
+        assert consensus.target_price == approx(0.0)
+        assert consensus.confidence == approx(0.0)
 
     def test_should_calculate_weighted_average_confidence(self):
         """Test that consensus confidence is weighted average."""

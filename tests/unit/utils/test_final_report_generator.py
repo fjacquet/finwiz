@@ -5,6 +5,7 @@ Tests Python-based final report generation using Jinja2 templates (NO AI).
 Following AI Minimalism principle: Python templates, not AI agents.
 """
 
+from pytest import approx
 from datetime import datetime
 from pathlib import Path
 
@@ -217,7 +218,7 @@ class TestFinalReportGeneratorTemplateData:
         assert template_data["session_id"] == "test-session"
         assert "consolidation_date" in template_data
         assert "total_time" in template_data
-        assert template_data["total_time"] == 1.5
+        assert template_data["total_time"] == approx(1.5)
         assert "stock_analyses" in template_data
         assert "etf_analyses" in template_data
         assert "crypto_analyses" in template_data

@@ -8,6 +8,7 @@ Tests that DataQualityMetrics and DataLineage schemas properly validate
 data quality scores, timestamps, and source tracking.
 """
 
+from pytest import approx
 from datetime import UTC, datetime
 
 import pytest
@@ -196,7 +197,7 @@ def test_data_quality_metrics_boundary_values():
         accuracy_confidence=0.0,
         source_reliability=0.0,
     )
-    assert metrics_min.completeness_score == 0.0
+    assert metrics_min.completeness_score == approx(0.0)
 
     # Maximum values
     metrics_max = DataQualityMetrics(
@@ -205,7 +206,7 @@ def test_data_quality_metrics_boundary_values():
         accuracy_confidence=1.0,
         source_reliability=1.0,
     )
-    assert metrics_max.completeness_score == 1.0
+    assert metrics_max.completeness_score == approx(1.0)
 
 
 def test_data_lineage_with_empty_transformations():

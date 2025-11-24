@@ -4,6 +4,7 @@ Unit tests for ToolResult standardization.
 Tests the ToolResult dataclass for consistent error handling across tools.
 """
 
+from pytest import approx
 from finwiz.tools.tool_result import ToolResult
 
 
@@ -126,7 +127,7 @@ class TestToolResultUsagePatterns:
         # Assert
         assert result.success is True
         assert result.data == complex_data
-        assert result.data["analysis"]["fundamental"]["roe"] == 0.25
+        assert result.data["analysis"]["fundamental"]["roe"] == approx(0.25)
 
     def test_should_preserve_data_types(self):
         """Test that ToolResult preserves data types."""

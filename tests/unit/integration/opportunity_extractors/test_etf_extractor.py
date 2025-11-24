@@ -4,6 +4,7 @@ Unit tests for ETFOpportunityExtractor.
 Tests ETF-specific extraction logic using the Template Method pattern.
 """
 
+from pytest import approx
 import pytest
 
 from finwiz.integration.opportunity_extractors import ETFOpportunityExtractor
@@ -117,14 +118,14 @@ class TestETFOpportunityExtractor:
         assert opportunity["name"] == "Vanguard FTSE All-World UCITS ETF"
         assert opportunity["grade"] == "A+"
         assert opportunity["composite_score"] > 0
-        assert opportunity["confidence"] == 0.90  # A+ confidence for ETF
-        assert opportunity["risk_score"] == 3.0
+        assert opportunity["confidence"] == approx(0.90)  # A+ confidence for ETF
+        assert opportunity["risk_score"] == approx(3.0)
         assert "Holdings: 3500" in opportunity["rationale"]
         assert "Top 10 concentration: 15.5%" in opportunity["rationale"]
         assert opportunity["allocation_recommendation"] == "Global diversification"
         assert opportunity["replacement_note"] == "Core holding"
         assert "ter" in opportunity["key_metrics"]
-        assert opportunity["key_metrics"]["ter"] == 0.0022
+        assert opportunity["key_metrics"]["ter"] == approx(0.0022)
 
     def test_should_build_opportunity_with_string_diversification(self, extractor, etf_candidate_with_string_diversification):
         """Test building opportunity with diversification as string."""
@@ -136,7 +137,7 @@ class TestETFOpportunityExtractor:
         assert opportunity["symbol"] == "IWDA"
         assert opportunity["name"] == "iShares Core MSCI World UCITS ETF"
         assert opportunity["grade"] == "A"
-        assert opportunity["confidence"] == 0.80  # A confidence for ETF
+        assert opportunity["confidence"] == approx(0.80)  # A confidence for ETF
         assert "Broad developed markets exposure" in opportunity["rationale"]
         assert opportunity["allocation_recommendation"] == ""
 
@@ -194,7 +195,7 @@ class TestETFOpportunityExtractor:
         # Assert
         assert opportunity is not None
         assert opportunity["composite_score"] >= 0
-        assert opportunity["key_metrics"]["ter"] == 0.0
+        assert opportunity["key_metrics"]["ter"] == approx(0.0)
 
     def test_should_handle_missing_risk_assessment_gracefully(self, extractor, valid_etf_candidate):
         """Test handling of missing risk assessment."""
@@ -206,7 +207,7 @@ class TestETFOpportunityExtractor:
 
         # Assert
         assert opportunity is not None
-        assert opportunity["risk_score"] == 3.0  # Default for ETF
+        assert opportunity["risk_score"] == approx(3.0)  # Default for ETF
 
     def test_should_return_empty_list_for_empty_candidates(self, extractor):
         """Test extraction with empty candidates list."""

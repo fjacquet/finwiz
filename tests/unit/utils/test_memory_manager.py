@@ -4,6 +4,7 @@ Unit tests for memory management functionality.
 Tests memory monitoring, cache cleanup, and constraint validation.
 """
 
+from pytest import approx
 from finwiz.utils.memory_manager import MemoryManager, get_memory_manager
 
 
@@ -74,7 +75,7 @@ class TestMemoryManager:
 
         assert result["success"]
         assert result["files_removed"] == 0
-        assert result["disk_freed_mb"] == 0.0
+        assert result["disk_freed_mb"] == approx(0.0)
 
     def test_should_get_memory_metrics(self):
         """Test getting comprehensive memory metrics."""

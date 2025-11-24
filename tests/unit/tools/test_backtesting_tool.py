@@ -5,6 +5,7 @@ Tests the backtesting tool functionality including multi-regime analysis,
 risk-adjusted performance metrics, and validation criteria.
 """
 
+from pytest import approx
 import json
 from datetime import datetime
 
@@ -33,7 +34,7 @@ class TestBacktestingInput:
         assert input_data.strategy == "sma_crossover"
         assert input_data.backtest_period_years == 5
         assert input_data.benchmark_symbol == "SPY"
-        assert input_data.initial_capital == 100000.0
+        assert input_data.initial_capital == approx(100000.0)
         assert input_data.include_regime_analysis is True
         assert input_data.strategy_params == {}
 
@@ -55,7 +56,7 @@ class TestBacktestingInput:
         assert input_data.strategy == "momentum"
         assert input_data.backtest_period_years == 3
         assert input_data.benchmark_symbol == "QQQ"
-        assert input_data.initial_capital == 50000.0
+        assert input_data.initial_capital == approx(50000.0)
         assert input_data.include_regime_analysis is False
         assert input_data.strategy_params == {"short_period": 10, "long_period": 30}
 
@@ -112,11 +113,11 @@ class TestMarketRegime:
         assert regime.start_date == start_date
         assert regime.end_date == end_date
         assert regime.duration_days == 365
-        assert regime.market_return == 15.5
-        assert regime.strategy_return == 18.2
-        assert regime.outperformance == 2.7
-        assert regime.sharpe_ratio == 1.25
-        assert regime.max_drawdown == -8.5
+        assert regime.market_return == approx(15.5)
+        assert regime.strategy_return == approx(18.2)
+        assert regime.outperformance == approx(2.7)
+        assert regime.sharpe_ratio == approx(1.25)
+        assert regime.max_drawdown == approx(-8.5)
 
 
 class TestBacktestingResult:
@@ -155,9 +156,9 @@ class TestBacktestingResult:
         # Assert
         assert result.symbol == "AAPL"
         assert result.strategy_name == "SimpleMovingAverageStrategy"
-        assert result.total_return == 85.5
-        assert result.sharpe_ratio == 1.15
-        assert result.validation_score == 0.0  # Default value
+        assert result.total_return == approx(85.5)
+        assert result.sharpe_ratio == approx(1.15)
+        assert result.validation_score == approx(0.0)  # Default value
         assert result.validation_passed is False  # Default value
 
 
@@ -266,8 +267,8 @@ class TestBacktestingTool:
         result = json.loads(result_json)
         assert result["symbol"] == "AAPL"
         assert result["strategy_name"] == "SimpleMovingAverageStrategy"
-        assert result["total_return"] == 25.5
-        assert result["sharpe_ratio"] == 1.25
+        assert result["total_return"] == approx(25.5)
+        assert result["sharpe_ratio"] == approx(1.25)
         assert "validation_score" in result
         assert "validation_passed" in result
 

@@ -10,6 +10,7 @@ This test validates that the orchestrator correctly:
 Uses pytest-mock for all external dependencies.
 """
 
+from pytest import approx
 import json
 
 import pytest
@@ -198,10 +199,10 @@ class TestBetaExtraction:
             assert field in flattened, f"Critical field '{field}' missing after flattening"
 
         # Validate values
-        assert flattened["beta"] == 1.2
-        assert flattened["volatility"] == 0.25
-        assert flattened["rsi"] == 65.5
-        assert flattened["current_price"] == 150.0
+        assert flattened["beta"] == approx(1.2)
+        assert flattened["volatility"] == approx(0.25)
+        assert flattened["rsi"] == approx(65.5)
+        assert flattened["current_price"] == approx(150.0)
 
     def test_missing_beta_logs_warning(self, mocker, sample_ticker_result, sample_company_result):
         """

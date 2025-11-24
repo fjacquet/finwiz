@@ -5,6 +5,7 @@ Tests the DerivativesPricer class and related functionality for option pricing,
 bond pricing, and risk analytics using both Black-Scholes and QuantLib models.
 """
 
+from pytest import approx
 import math
 
 import pytest
@@ -153,8 +154,8 @@ class TestDerivativesPricer:
         result = pricer.price_option(call_option_params, PricingModel.BINOMIAL)
 
         assert isinstance(result, OptionPricingResult)
-        assert result.option_price == 5.0
-        assert result.greeks.delta == 0.6
+        assert result.option_price == approx(5.0)
+        assert result.greeks.delta == approx(0.6)
 
     def test_bond_pricing_simple(self, pricer, bond_params):
         """Test bond pricing using simple present value calculation."""

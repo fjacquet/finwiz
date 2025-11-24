@@ -8,6 +8,7 @@ Tests cover:
 - Risk-adjusted return analysis and benchmarking
 """
 
+from pytest import approx
 from datetime import datetime
 
 import numpy as np
@@ -113,7 +114,7 @@ class TestPerformanceAnalyzer:
         # Test with custom config
         custom_config = BacktestConfig(risk_free_rate=0.03)
         analyzer_custom = PerformanceAnalyzer(custom_config)
-        assert analyzer_custom.config.risk_free_rate == 0.03
+        assert analyzer_custom.config.risk_free_rate == approx(0.03)
 
     def test_calculate_performance_metrics_basic(self, performance_analyzer, sample_returns):
         """Test basic performance metrics calculation."""
@@ -404,7 +405,7 @@ class TestPerformanceAnalyzer:
         # Test with custom config
         custom_config = BacktestConfig(risk_free_rate=0.03)
         analyzer_custom = get_performance_analyzer(custom_config)
-        assert analyzer_custom.config.risk_free_rate == 0.03
+        assert analyzer_custom.config.risk_free_rate == approx(0.03)
 
 
 class TestPerformanceMetrics:
@@ -428,9 +429,9 @@ class TestPerformanceMetrics:
             kurtosis=3.2,
         )
 
-        assert metrics.total_return == 0.15
-        assert metrics.sharpe_ratio == 1.5
-        assert metrics.max_drawdown == -0.1
+        assert metrics.total_return == approx(0.15)
+        assert metrics.sharpe_ratio == approx(1.5)
+        assert metrics.max_drawdown == approx(-0.1)
         assert metrics.max_drawdown_duration == 30
 
 
@@ -448,7 +449,7 @@ class TestPortfolioOptimizationResult:
 
         assert len(result.optimal_weights) == 4
         assert sum(result.optimal_weights.values()) == pytest.approx(1.0, rel=1e-2)
-        assert result.expected_return == 0.10
+        assert result.expected_return == approx(0.10)
 
 
 class TestPerformanceReport:

@@ -4,6 +4,7 @@ Unit tests for progress tracking helper method in FinwizFlow.
 Tests the _update_progress() method that calculates and updates progress metrics.
 """
 
+from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
@@ -51,7 +52,7 @@ class TestProgressTracking:
         flow_instance._update_progress()
 
         # Assert
-        assert flow_instance.state.progress_percentage == 50.0
+        assert flow_instance.state.progress_percentage == approx(50.0)
 
     def test_should_calculate_zero_progress_when_no_holdings_processed(self, flow_instance):
         """Test that progress is 0% when no holdings processed."""
@@ -63,7 +64,7 @@ class TestProgressTracking:
         flow_instance._update_progress()
 
         # Assert
-        assert flow_instance.state.progress_percentage == 0.0
+        assert flow_instance.state.progress_percentage == approx(0.0)
 
     def test_should_calculate_full_progress_when_all_holdings_processed(self, flow_instance):
         """Test that progress is 100% when all holdings processed."""
@@ -75,7 +76,7 @@ class TestProgressTracking:
         flow_instance._update_progress()
 
         # Assert
-        assert flow_instance.state.progress_percentage == 100.0
+        assert flow_instance.state.progress_percentage == approx(100.0)
 
     def test_should_calculate_estimated_time_remaining_when_holdings_processed(self, flow_instance):
         """Test that estimated time remaining is calculated based on average time."""
@@ -102,7 +103,7 @@ class TestProgressTracking:
         flow_instance._update_progress()
 
         # Assert
-        assert flow_instance.state.estimated_time_remaining == 0.0
+        assert flow_instance.state.estimated_time_remaining == approx(0.0)
 
     def test_should_set_zero_estimated_time_when_no_holdings_processed(self, flow_instance):
         """Test that estimated time is 0 when no holdings processed yet."""
@@ -114,7 +115,7 @@ class TestProgressTracking:
         flow_instance._update_progress()
 
         # Assert
-        assert flow_instance.state.estimated_time_remaining == 0.0
+        assert flow_instance.state.estimated_time_remaining == approx(0.0)
 
     def test_should_update_last_checkpoint_time_when_called(self, flow_instance):
         """Test that last checkpoint time is updated to current time."""
@@ -147,8 +148,8 @@ class TestProgressTracking:
         flow_instance._update_progress()
 
         # Assert
-        assert flow_instance.state.progress_percentage == 0.0
-        assert flow_instance.state.estimated_time_remaining == 0.0
+        assert flow_instance.state.progress_percentage == approx(0.0)
+        assert flow_instance.state.estimated_time_remaining == approx(0.0)
         assert flow_instance.state.last_checkpoint_time is not None
 
     def test_should_update_state_fields_when_progress_updated(self, flow_instance):
@@ -165,5 +166,5 @@ class TestProgressTracking:
         # Assert - Verify state fields are updated
         assert flow_instance.state.holdings_processed == 5
         assert flow_instance.state.holdings_remaining == 5
-        assert flow_instance.state.progress_percentage == 50.0
+        assert flow_instance.state.progress_percentage == approx(50.0)
         assert flow_instance.state.total_holdings == 10

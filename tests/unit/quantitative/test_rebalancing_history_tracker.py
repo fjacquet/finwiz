@@ -5,6 +5,7 @@ Tests cover historical tracking, performance attribution analysis, trend analysi
 and analytics dashboard generation functionality.
 """
 
+from pytest import approx
 import json
 import tempfile
 from datetime import datetime, timedelta
@@ -205,7 +206,7 @@ class TestRebalancingHistoryTracker:
         assert len(history) == 1
 
         entry = history[0]
-        assert entry.total_transaction_costs == 40.0  # Sum of trade costs
+        assert entry.total_transaction_costs == approx(40.0)  # Sum of trade costs
         assert entry.positions_rebalanced == 2  # Both trades have quantity > 0
         assert entry.deviation_improvement > 0  # Should show improvement
 

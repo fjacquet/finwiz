@@ -5,6 +5,7 @@ Tests timeout enforcement, graceful fallback, successful execution,
 and logging of timeout events.
 """
 
+from pytest import approx
 import asyncio
 
 import pytest
@@ -57,7 +58,7 @@ class TestWithTimeout:
 
         # Assert
         assert result["ticker"] == "AAPL"
-        assert result["price"] == 150.0
+        assert result["price"] == approx(150.0)
 
     @pytest.mark.asyncio
     async def test_should_log_start_and_completion(self, mocker):

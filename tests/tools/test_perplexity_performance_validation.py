@@ -5,6 +5,7 @@ Tests response time monitoring, rate limiting scenarios, and failure handling
 to ensure compliance with performance requirements.
 """
 
+from pytest import approx
 import time
 
 import pytest
@@ -54,7 +55,7 @@ class TestPerplexityPerformanceMonitor:
 
         # Assert
         assert summary["total_requests"] == 5
-        assert summary["avg_response_time_ms"] == 1500.0
+        assert summary["avg_response_time_ms"] == approx(1500.0)
         assert summary["min_response_time_ms"] == 500
         assert summary["max_response_time_ms"] == 2500
         assert summary["p50_response_time_ms"] == 1500
@@ -356,8 +357,8 @@ class TestPerplexityBenchmarkResult:
         assert summary["total_requests"] == 5
         assert summary["success_count"] == 5
         assert summary["failure_count"] == 0
-        assert summary["success_rate"] == 100.0
-        assert summary["avg_response_time_ms"] == 1500.0
+        assert summary["success_rate"] == approx(100.0)
+        assert summary["avg_response_time_ms"] == approx(1500.0)
         assert summary["min_response_time_ms"] == 500
         assert summary["max_response_time_ms"] == 2500
         assert "compliance_rate" in summary
@@ -407,7 +408,7 @@ class TestPerplexityPerformanceBenchmark:
         assert benchmark_result.success_count == 4
         assert benchmark_result.failure_count == 0
         assert len(benchmark_result.response_times) == 4
-        assert summary["success_rate"] == 100.0
+        assert summary["success_rate"] == approx(100.0)
 
     @pytest.mark.anyio
     async def test_should_validate_performance_requirements_correctly(self, mock_benchmark, mocker):

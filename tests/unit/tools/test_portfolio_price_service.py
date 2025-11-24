@@ -5,6 +5,7 @@ Tests the portfolio price data service with mocked API responses,
 caching functionality, fallback mechanisms, and error handling.
 """
 
+from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
@@ -114,7 +115,7 @@ class TestPortfolioPriceService:
         # Assert
         assert result is not None
         assert result.symbol == "AAPL"
-        assert result.price == 150.0
+        assert result.price == approx(150.0)
         assert result.source == "yahoo_finance"
         mock_portfolio_cache.get_price_data.assert_called_once_with("AAPL")
 
@@ -140,7 +141,7 @@ class TestPortfolioPriceService:
 
         # Assert
         assert result is not None
-        assert result.price == 155.0  # Fresh price, not cached
+        assert result.price == approx(155.0)  # Fresh price, not cached
         mock_portfolio_cache.set_price_data.assert_called_once()
 
     @pytest.mark.asyncio
@@ -156,7 +157,7 @@ class TestPortfolioPriceService:
         # Assert
         assert result is not None
         assert result.symbol == "AAPL"
-        assert result.price == 150.0
+        assert result.price == approx(150.0)
         assert result.source == "yahoo_finance"
         assert result.currency == "USD"
 
@@ -167,7 +168,7 @@ class TestPortfolioPriceService:
         # Verify that the cached data contains expected fields
         cached_data = cache_call_args[0][1]
         assert cached_data["symbol"] == "AAPL"
-        assert cached_data["price"] == 150.0
+        assert cached_data["price"] == approx(150.0)
 
     @pytest.mark.asyncio
     async def test_should_use_crypto_tool_for_crypto_symbols(self, price_service, mock_portfolio_cache, mocker):
@@ -193,7 +194,7 @@ class TestPortfolioPriceService:
         # Assert
         assert result is not None
         assert result.symbol == "BTC-USD"
-        assert result.price == 45000.0
+        assert result.price == approx(45000.0)
         assert result.source == "crypto_tool"
         price_service.crypto_tool._run.assert_called_once_with("BTC", False, False)
 
@@ -214,7 +215,7 @@ class TestPortfolioPriceService:
 
         # Assert
         assert result is not None
-        assert result.price == 150.0
+        assert result.price == approx(150.0)
         assert result.source == "yfinance_direct"
 
     @pytest.mark.asyncio
@@ -241,7 +242,7 @@ class TestPortfolioPriceService:
 
         # Assert
         assert result is not None
-        assert result.price == 150.0  # Latest close price
+        assert result.price == approx(150.0)  # Latest close price
         assert result.source == "yfinance_history"
 
     @pytest.mark.asyncio
@@ -280,9 +281,9 @@ class TestPortfolioPriceService:
 
         # Assert
         assert len(result) == 3
-        assert result["AAPL"].price == 150.0
-        assert result["MSFT"].price == 300.0
-        assert result["GOOGL"].price == 2500.0
+        assert result["AAPL"].price == approx(150.0)
+        assert result["MSFT"].price == approx(300.0)
+        assert result["GOOGL"].price == approx(2500.0)
 
         # Verify all symbols were cached
         assert mock_portfolio_cache.set_price_data.call_count == 3
@@ -433,7 +434,7 @@ class TestPortfolioPriceService:
 
         # Assert
         assert result is not None
-        assert result.price == 150.0
+        assert result.price == approx(150.0)
         assert call_count == 2  # Verify retry occurred
 
     @pytest.mark.asyncio
@@ -460,7 +461,7 @@ class TestPortfolioPriceService:
         # Verify all symbols got prices
         for symbol in symbols:
             assert symbol in result
-            assert result[symbol].price == 150.0
+            assert result[symbol].price == approx(150.0)
 
     def test_should_validate_price_service_config(self):
         """Test PriceServiceConfig validation."""
@@ -479,7 +480,7 @@ class TestPortfolioPriceService:
         # Test valid price data
         price_data = PriceData(symbol="AAPL", price=150.0, timestamp=datetime.now(), source="yahoo_finance", currency="USD")
         assert price_data.symbol == "AAPL"
-        assert price_data.price == 150.0
+        assert price_data.price == approx(150.0)
 
         # Test invalid price (negative)
         with pytest.raises(ValidationError):
@@ -512,7 +513,7 @@ class TestPortfolioPriceService:
 
             # Assert
             assert result is not None
-            assert result.price == 45000.0
+            assert result.price == approx(45000.0)
             assert result.source == "crypto_tool"
 
     @pytest.mark.asyncio

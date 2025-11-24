@@ -4,6 +4,7 @@ Unit tests for portfolio monitoring system.
 Tests cover portfolio drift monitoring, alert generation, and health dashboard functionality.
 """
 
+from pytest import approx
 from datetime import datetime, timedelta
 
 import pytest
@@ -164,7 +165,7 @@ class TestPortfolioMonitor:
         # Assert
         assert isinstance(dashboard, PortfolioHealthDashboard)
         assert dashboard.portfolio_id == portfolio_id
-        assert dashboard.max_deviation == 0.1  # From GOOGL deviation
+        assert dashboard.max_deviation == approx(0.1)  # From GOOGL deviation
         assert dashboard.rebalancing_urgency == UrgencyLevel.LOW
         assert len(dashboard.positions_needing_attention) == 1  # Only GOOGL exceeds tolerance
 
@@ -178,7 +179,7 @@ class TestPortfolioMonitor:
         health_score = portfolio_monitor.monitoring_engine._calculate_health_score(rebalancing_needs, portfolio_config)
 
         # Assert
-        assert health_score == 10.0
+        assert health_score == approx(10.0)
 
     def test_should_calculate_correct_health_score_when_minor_deviations(self, portfolio_monitor, sample_rebalancing_needs, sample_portfolio_config):
         """Test health score calculation with minor deviations."""
@@ -424,13 +425,13 @@ class TestMonitoringRule:
         # Assert
         assert rule.rule_id == "test_rule"
         assert rule.rule_name == "Test Rule"
-        assert rule.max_deviation_threshold == 0.08
+        assert rule.max_deviation_threshold == approx(0.08)
         assert rule.min_check_interval_hours == 2
         assert rule.alert_on_deviation is True
         assert rule.alert_on_multiple_positions is True
         assert rule.min_positions_for_alert == 3
         assert rule.enable_auto_rebalancing is False
-        assert rule.auto_rebalance_threshold == 0.12
+        assert rule.auto_rebalance_threshold == approx(0.12)
         assert rule.max_auto_rebalance_frequency_days == 14
 
     def test_should_use_default_values_when_not_specified(self):
@@ -440,13 +441,13 @@ class TestMonitoringRule:
 
         # Assert
         assert rule.enabled is True
-        assert rule.max_deviation_threshold == 0.10
+        assert rule.max_deviation_threshold == approx(0.10)
         assert rule.min_check_interval_hours == 1
         assert rule.alert_on_deviation is True
         assert rule.alert_on_multiple_positions is True
         assert rule.min_positions_for_alert == 2
         assert rule.enable_auto_rebalancing is False
-        assert rule.auto_rebalance_threshold == 0.15
+        assert rule.auto_rebalance_threshold == approx(0.15)
         assert rule.max_auto_rebalance_frequency_days == 7
 
     def test_should_raise_validation_error_when_invalid_threshold_provided(self):
@@ -567,13 +568,13 @@ class TestPortfolioHealthDashboard:
 
         # Assert
         assert dashboard.portfolio_id == "test_portfolio"
-        assert dashboard.overall_health_score == 7.5
+        assert dashboard.overall_health_score == approx(7.5)
         assert dashboard.health_status == "Good - Minor deviations within acceptable range"
-        assert dashboard.max_deviation == 0.08
-        assert dashboard.avg_deviation == 0.04
+        assert dashboard.max_deviation == approx(0.08)
+        assert dashboard.avg_deviation == approx(0.04)
         assert len(dashboard.positions_needing_attention) == 1
         assert dashboard.rebalancing_urgency == UrgencyLevel.MEDIUM
-        assert dashboard.estimated_rebalancing_cost == 25.50
+        assert dashboard.estimated_rebalancing_cost == approx(25.50)
         assert dashboard.days_since_last_rebalance == 14
         assert dashboard.monitoring_status == monitoring_status
         assert dashboard.recent_alerts == []

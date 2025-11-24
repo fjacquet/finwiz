@@ -4,6 +4,7 @@ Unit tests for CryptoOpportunityExtractor.
 Tests crypto-specific extraction logic using the Template Method pattern.
 """
 
+from pytest import approx
 import pytest
 
 from finwiz.integration.opportunity_extractors import CryptoOpportunityExtractor
@@ -119,8 +120,8 @@ class TestCryptoOpportunityExtractor:
         assert opportunity["name"] == "Bitcoin"
         assert opportunity["grade"] == "A+"
         assert opportunity["composite_score"] > 0
-        assert opportunity["confidence"] == 0.85  # A+ confidence
-        assert opportunity["risk_score"] == 7.0
+        assert opportunity["confidence"] == approx(0.85)  # A+ confidence
+        assert opportunity["risk_score"] == approx(7.0)
         assert "Consensus: Proof of Work" in opportunity["rationale"]
         assert "Use case: Store of value" in opportunity["rationale"]
         assert opportunity["allocation_recommendation"] == "Network effect"
@@ -138,7 +139,7 @@ class TestCryptoOpportunityExtractor:
         assert opportunity["symbol"] == "ETH"  # Should strip -USD
         assert opportunity["name"] == "Ethereum"
         assert opportunity["grade"] == "A"
-        assert opportunity["confidence"] == 0.75  # A confidence
+        assert opportunity["confidence"] == approx(0.75)  # A confidence
         assert "Smart contract platform with proof of stake" in opportunity["rationale"]
         assert opportunity["allocation_recommendation"] == ""
 
@@ -215,7 +216,7 @@ class TestCryptoOpportunityExtractor:
 
         # Assert
         assert opportunity is not None
-        assert opportunity["risk_score"] == 6.0  # Default for crypto
+        assert opportunity["risk_score"] == approx(6.0)  # Default for crypto
 
     def test_should_return_empty_list_for_empty_candidates(self, extractor):
         """Test extraction with empty candidates list."""

@@ -3,8 +3,9 @@ Unit tests for comprehensive schema validation.
 
 Tests all FinWiz schemas with valid and invalid data, including field constraints.
 """
-
 from __future__ import annotations
+
+from pytest import approx
 
 from datetime import UTC, date, datetime
 
@@ -44,7 +45,7 @@ class TestRiskAssessmentStandardized:
             level="High",
             risk_factors=["Market volatility", "Regulatory uncertainty"],
         )
-        assert risk.score == 3.5
+        assert risk.score == approx(3.5)
         assert risk.level == "High"
         assert len(risk.risk_factors) == 2
 
@@ -288,7 +289,7 @@ class TestETFFactsheet:
             as_of=date(2024, 3, 10),
         )
         assert factsheet.ticker == "SPY"
-        assert factsheet.expense_ratio == 0.09
+        assert factsheet.expense_ratio == approx(0.09)
 
     def test_should_reject_expense_ratio_out_of_range(self) -> None:
         """Test schema rejects expense ratio outside [0, 5]."""
@@ -589,7 +590,7 @@ class TestStockRiskProfile:
             risk_summary="Overall moderate risk with strong fundamentals and solid market position",
         )
         assert risk_profile.ticker == "AAPL"
-        assert risk_profile.risk_assessment.score == 2.5
+        assert risk_profile.risk_assessment.score == approx(2.5)
 
     def test_should_reject_short_risk_summary(self) -> None:
         """Test schema rejects risk summary shorter than 50 characters."""
@@ -662,4 +663,4 @@ class TestSchemaIntegration:
             ),
         )
         assert factsheet.risk is not None
-        assert factsheet.risk.score == 2.0
+        assert factsheet.risk.score == approx(2.0)

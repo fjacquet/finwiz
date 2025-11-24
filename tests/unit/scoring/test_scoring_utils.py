@@ -4,6 +4,7 @@ Unit tests for scoring utility functions.
 Tests the threshold-based scoring utilities used across different scorers.
 """
 
+from pytest import approx
 from finwiz.scoring.scoring_utils import (
     calculate_threshold_score,
     interpolate_threshold_score,
@@ -19,7 +20,7 @@ class TestCalculateThresholdScore:
 
         score = calculate_threshold_score(0.15, thresholds)
 
-        assert score == 0.8
+        assert score == approx(0.8)
 
     def test_should_score_value_between_thresholds(self):
         """Test scoring when value is between thresholds."""
@@ -27,7 +28,7 @@ class TestCalculateThresholdScore:
 
         score = calculate_threshold_score(0.12, thresholds)
 
-        assert score == 0.6  # Should use the lower threshold's score
+        assert score == approx(0.6)  # Should use the lower threshold's score
 
     def test_should_score_value_above_all_thresholds(self):
         """Test scoring when value exceeds all thresholds."""
@@ -35,7 +36,7 @@ class TestCalculateThresholdScore:
 
         score = calculate_threshold_score(0.25, thresholds)
 
-        assert score == 1.0  # Should use the highest score
+        assert score == approx(1.0)  # Should use the highest score
 
     def test_should_score_value_below_all_thresholds(self):
         """Test scoring when value is below all thresholds."""
@@ -43,7 +44,7 @@ class TestCalculateThresholdScore:
 
         score = calculate_threshold_score(0.03, thresholds)
 
-        assert score == 0.0  # Should return 0.0 for values below first threshold
+        assert score == approx(0.0)  # Should return 0.0 for values below first threshold
 
     def test_should_handle_reverse_scoring_lower_is_better(self):
         """Test reverse scoring where lower values get higher scores."""
@@ -52,21 +53,21 @@ class TestCalculateThresholdScore:
 
         # Low debt should get high score
         score_low = calculate_threshold_score(0.15, thresholds, reverse=True)
-        assert score_low == 1.0
+        assert score_low == approx(1.0)
 
         # Medium debt should get medium score
         score_med = calculate_threshold_score(0.7, thresholds, reverse=True)
-        assert score_med == 0.8
+        assert score_med == approx(0.8)
 
         # High debt should get low score
         score_high = calculate_threshold_score(2.5, thresholds, reverse=True)
-        assert score_high == 0.4
+        assert score_high == approx(0.4)
 
     def test_should_handle_empty_thresholds(self):
         """Test handling of empty thresholds list."""
         score = calculate_threshold_score(0.5, [], reverse=False)
 
-        assert score == 0.5  # Should return neutral score
+        assert score == approx(0.5)  # Should return neutral score
 
     def test_should_handle_single_threshold(self):
         """Test handling of single threshold."""
@@ -75,34 +76,34 @@ class TestCalculateThresholdScore:
         score_below = calculate_threshold_score(0.05, thresholds)
         score_above = calculate_threshold_score(0.15, thresholds)
 
-        assert score_below == 0.0
-        assert score_above == 0.8
+        assert score_below == approx(0.0)
+        assert score_above == approx(0.8)
 
     def test_should_handle_roe_scoring_pattern(self):
         """Test ROE scoring pattern (higher is better)."""
         roe_thresholds = [(0.05, 0.4), (0.10, 0.6), (0.15, 0.8), (0.20, 1.0)]
 
         # Excellent ROE
-        assert calculate_threshold_score(0.25, roe_thresholds) == 1.0
+        assert calculate_threshold_score(0.25, roe_thresholds) == approx(1.0)
         # Good ROE
-        assert calculate_threshold_score(0.18, roe_thresholds) == 0.8
+        assert calculate_threshold_score(0.18, roe_thresholds) == approx(0.8)
         # Acceptable ROE
-        assert calculate_threshold_score(0.12, roe_thresholds) == 0.6
+        assert calculate_threshold_score(0.12, roe_thresholds) == approx(0.6)
         # Poor ROE
-        assert calculate_threshold_score(0.03, roe_thresholds) == 0.0
+        assert calculate_threshold_score(0.03, roe_thresholds) == approx(0.0)
 
     def test_should_handle_expense_ratio_scoring_pattern(self):
         """Test expense ratio scoring pattern (lower is better)."""
         expense_thresholds = [(0.001, 1.0), (0.0025, 0.8), (0.005, 0.6), (0.01, 0.4)]
 
         # Excellent (very low expense)
-        assert calculate_threshold_score(0.0005, expense_thresholds, reverse=True) == 1.0
+        assert calculate_threshold_score(0.0005, expense_thresholds, reverse=True) == approx(1.0)
         # Good
-        assert calculate_threshold_score(0.002, expense_thresholds, reverse=True) == 1.0
+        assert calculate_threshold_score(0.002, expense_thresholds, reverse=True) == approx(1.0)
         # Acceptable
-        assert calculate_threshold_score(0.004, expense_thresholds, reverse=True) == 0.8
+        assert calculate_threshold_score(0.004, expense_thresholds, reverse=True) == approx(0.8)
         # Poor (high expense)
-        assert calculate_threshold_score(0.015, expense_thresholds, reverse=True) == 0.4
+        assert calculate_threshold_score(0.015, expense_thresholds, reverse=True) == approx(0.4)
 
 
 class TestInterpolateThresholdScore:
@@ -124,8 +125,8 @@ class TestInterpolateThresholdScore:
         score_lower = interpolate_threshold_score(0.10, thresholds)
         score_upper = interpolate_threshold_score(0.20, thresholds)
 
-        assert score_lower == 0.6
-        assert score_upper == 1.0
+        assert score_lower == approx(0.6)
+        assert score_upper == approx(1.0)
 
     def test_should_return_zero_below_first_threshold(self):
         """Test that values below first threshold return 0.0."""
@@ -133,7 +134,7 @@ class TestInterpolateThresholdScore:
 
         score = interpolate_threshold_score(0.05, thresholds)
 
-        assert score == 0.0
+        assert score == approx(0.0)
 
     def test_should_return_max_score_above_last_threshold(self):
         """Test that values above last threshold return max score."""
@@ -141,7 +142,7 @@ class TestInterpolateThresholdScore:
 
         score = interpolate_threshold_score(0.25, thresholds)
 
-        assert score == 1.0
+        assert score == approx(1.0)
 
     def test_should_handle_reverse_interpolation(self):
         """Test interpolation with reverse scoring."""
@@ -173,4 +174,4 @@ class TestInterpolateThresholdScore:
         """Test handling of empty thresholds list."""
         score = interpolate_threshold_score(0.5, [])
 
-        assert score == 0.5  # Should return neutral score
+        assert score == approx(0.5)  # Should return neutral score
