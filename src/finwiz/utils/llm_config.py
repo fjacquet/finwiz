@@ -99,14 +99,17 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
     logger.info(f"Configuring LLM ({model_type}) with model: {model}")
 
     try:
+        # Get timeout from environment (check multiple env vars for compatibility)
+        timeout = int(os.getenv("LITELLM_TIMEOUT") or os.getenv("OPENAI_TIMEOUT") or "300")
+
         # Create LLM with proper configuration
+        # Note: For Gemini models, we need to ensure timeout is properly set
         llm = LLM(
             model=model,
-            timeout=int(os.getenv("OPENAI_TIMEOUT", "300")),
-            max_retries=3,
+            timeout=timeout,
         )
 
-        logger.info(f"LLM configured successfully with model: {model}")
+        logger.info(f"LLM configured successfully with model: {model} (timeout: {timeout}s)")
         return llm
 
     except Exception as e:
