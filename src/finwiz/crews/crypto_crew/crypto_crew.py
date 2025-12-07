@@ -108,6 +108,7 @@ class CryptoCrew:
             config=self.agents_config["market_analyst"],
             tools=research_tools,
             reasoning=True,  # Enable AI reasoning for market analysis decisions
+            max_reasoning_attempts=3,  # Prevent infinite loops
             verbose=True,
             llm=self._get_configured_llm(),
         )
@@ -118,6 +119,7 @@ class CryptoCrew:
             config=self.agents_config["technical_analyst"],
             tools=research_tools,
             reasoning=True,  # Enable AI reasoning for technical analysis decisions
+            max_reasoning_attempts=3,  # Prevent infinite loops
             verbose=True,
             llm=self._get_configured_llm(),
         )
@@ -129,6 +131,7 @@ class CryptoCrew:
             tools=research_tools,
             verbose=True,
             reasoning=True,  # Enable AI reasoning for risk assessment decisions
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -139,6 +142,7 @@ class CryptoCrew:
             tools=research_tools,
             verbose=True,
             reasoning=True,  # Enable AI reasoning for investment strategy decisions
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -149,6 +153,7 @@ class CryptoCrew:
             tools=[],
             verbose=True,
             reasoning=True,  # Enable AI reasoning for research consolidation decisions
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 

@@ -14,7 +14,7 @@ DEFAULT_RAG_CONFIG = {
     "llm": {
         "provider": "openai",
         "config": {
-            "model": "gpt-4.1-mini",
+            "model": "gpt-5.1",
             "temperature": 0.7,
             "max_tokens": 1000,
         },

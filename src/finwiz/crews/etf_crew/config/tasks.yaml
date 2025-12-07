@@ -359,6 +359,13 @@ generate_export_task:
     - All nested objects must conform to their schemas
     
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
+
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     A validated ETFCrewExport Pydantic object containing all analysis findings,
     factsheet data, holdings, scores, grades, and recommendations. The object will

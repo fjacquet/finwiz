@@ -12,6 +12,9 @@ Handles:
 - Extra text before/after JSON
 - Markdown code blocks
 - Python-style output mixed with JSON
+- Missing commas between elements
+- Truncated JSON (unclosed strings, brackets, braces)
+- Incomplete key-value pairs
 """
 
 import json
@@ -114,9 +117,9 @@ def _escape_newlines_in_strings(text: str) -> str:
     """
     import re
 
-    def escape_string_content(match: re.Match) -> str:
+    def escape_string_content(match: re.Match[str]) -> str:
         """Escape newlines within a single matched string."""
-        full_match = match.group(0)
+        full_match: str = match.group(0)
         # Only modify if there are actual newlines in the string
         if "\n" not in full_match and "\r" not in full_match:
             return full_match
@@ -165,7 +168,7 @@ def _remove_markdown_blocks(text: str) -> str:
 
 def _fix_unquoted_keys(text: str) -> str:
     """Add quotes around unquoted keys."""
-    return re.sub(r'(\{|,)\s*(\w+)\s*:', r'\1"\2":', text)
+    return re.sub(r"(\{|,)\s*(\w+)\s*:", r'\1"\2":', text)
 
 
 def _fix_python_repr(text: str) -> str:
@@ -191,30 +194,122 @@ def _add_missing_commas(text: str) -> str:
     # Key pattern: "something": (quote, word chars, quote, colon)
 
     # Pattern 1a: After closing quote with whitespace: "value" "key":
-    text = re.sub(r'(?<=[^,]")\s+("[\w_]+"\s*:)', r', \1', text)
+    text = re.sub(r'(?<=[^,]")\s+("[\w_]+"\s*:)', r", \1", text)
 
     # Pattern 1b: After closing quote WITHOUT whitespace: "value""key":
     # This handles cases where LLM produces "Test""nextField": directly
-    text = re.sub(r'(?<=[^,]")("[\w_]+"\s*:)', r', \1', text)
+    text = re.sub(r'(?<=[^,]")("[\w_]+"\s*:)', r", \1", text)
 
     # Pattern 2: After closing brace: } "key": or }"key":
-    text = re.sub(r'(?<=[^,]})(\s*)("[\w_]+"\s*:)', r',\1\2', text)
+    text = re.sub(r'(?<=[^,]})(\s*)("[\w_]+"\s*:)', r",\1\2", text)
 
     # Pattern 3: After closing bracket: ] "key": or ]"key":
-    text = re.sub(r'(?<=[^,]])(\s*)("[\w_]+"\s*:)', r',\1\2', text)
+    text = re.sub(r'(?<=[^,]])(\s*)("[\w_]+"\s*:)', r",\1\2", text)
 
     # Pattern 4: After number (digit at end): 123 "key": or 123"key":
-    text = re.sub(r'(\d)(\s*)("[\w_]+"\s*:)', r'\1,\2\3', text)
+    text = re.sub(r'(\d)(\s*)("[\w_]+"\s*:)', r"\1,\2\3", text)
 
     # Pattern 5: After boolean/null: true "key": or true"key":
-    text = re.sub(r'(true|false|null)(\s*)("[\w_]+"\s*:)', r'\1,\2\3', text)
+    text = re.sub(r'(true|false|null)(\s*)("[\w_]+"\s*:)', r"\1,\2\3", text)
 
     return text
 
 
 def _fix_double_commas(text: str) -> str:
     """Remove double commas that might be introduced by other repairs."""
-    return re.sub(r',\s*,', ',', text)
+    return re.sub(r",\s*,", ",", text)
+
+
+def _close_truncated_json(text: str) -> str:
+    """
+    Close truncated JSON by adding missing closing brackets/braces.
+
+    Handles cases where LLM output is cut off mid-way, leaving
+    unclosed strings, arrays, or objects. This is a last-resort
+    repair that attempts to make the JSON syntactically valid.
+    """
+    # First, handle unclosed strings (string cut off mid-way)
+    # Count quotes (excluding escaped quotes)
+    quote_count = 0
+    i = 0
+    while i < len(text):
+        if text[i] == '"' and (i == 0 or text[i - 1] != "\\"):
+            quote_count += 1
+        i += 1
+
+    # If odd number of quotes, we have an unclosed string
+    if quote_count % 2 == 1:
+        # Find the last opening quote and close the string
+        # Also remove any incomplete content after last complete value
+        text = text.rstrip()
+        # Try to find a safe truncation point (end of a complete value)
+        # Look for patterns like: ..." or ...] or ...} or a number/bool/null
+
+        # First close the string
+        text = text + '"'
+        logger.debug("Closed unclosed string in truncated JSON")
+
+    # Track bracket depth
+    stack = []
+    i = 0
+    in_string = False
+
+    while i < len(text):
+        char = text[i]
+
+        # Track string state (skip escaped quotes)
+        if char == '"' and (i == 0 or text[i - 1] != "\\"):
+            in_string = not in_string
+
+        if not in_string:
+            if char == "{":
+                stack.append("}")
+            elif char == "[":
+                stack.append("]")
+            elif char in "}]":
+                if stack and stack[-1] == char:
+                    stack.pop()
+
+        i += 1
+
+    # If we have unclosed brackets, we need to close them
+    if stack:
+        # Remove any trailing partial content that might cause issues
+        text = text.rstrip()
+
+        # Remove trailing comma if present (would be invalid before closing)
+        text = re.sub(r",\s*$", "", text)
+
+        # Close all unclosed brackets in reverse order
+        closing = "".join(reversed(stack))
+        text = text + closing
+        logger.debug(f"Closed {len(stack)} unclosed brackets in truncated JSON: {closing}")
+
+    return text
+
+
+def _fix_truncated_values(text: str) -> str:
+    """
+    Fix truncated values at the end of JSON.
+
+    Handles cases like:
+    - "key": "value that was cut  -> "key": "value that was cut"
+    - "key": [item1, item2,  -> "key": [item1, item2]
+    - "key": {nested:  -> "key": {}
+    """
+    text = text.rstrip()
+
+    # Pattern: ends with incomplete key-value (key with colon but no value)
+    # e.g., ..."some_key": or ..."some_key":
+    if re.search(r'"[\w_]+"\s*:\s*$', text):
+        # Add a placeholder empty string
+        text = text + '""'
+        logger.debug("Added placeholder for truncated value")
+
+    # Pattern: ends with comma (invalid JSON)
+    text = re.sub(r",\s*$", "", text)
+
+    return text
 
 
 # =============================================================================
@@ -237,6 +332,13 @@ BASIC_REPAIR_STEPS: list[Callable[[str], str]] = [
 AGGRESSIVE_REPAIR_STEPS: list[Callable[[str], str]] = [
     _fix_unquoted_keys,
     _fix_python_repr,
+]
+
+# Truncation repair steps (last resort - may lose data)
+TRUNCATION_REPAIR_STEPS: list[Callable[[str], str]] = [
+    _fix_truncated_values,
+    _close_truncated_json,
+    _remove_trailing_commas,  # Run again after closing
 ]
 
 
@@ -297,8 +399,20 @@ def repair_json(json_str: str) -> str:
         except json.JSONDecodeError:
             continue
 
-    # Final attempt: apply ALL basic repairs again in sequence (handles interaction effects)
-    for step in BASIC_REPAIR_STEPS:
+    # Apply truncation repair steps (last resort - may lose data)
+    logger.warning("Attempting truncation repair (JSON may be incomplete)")
+    for step in TRUNCATION_REPAIR_STEPS:
+        repaired = step(repaired)
+        try:
+            json.loads(repaired)
+            if repaired != original:
+                logger.warning(f"JSON repaired by: {step.__name__} (truncation repair - data may be incomplete)")
+            return repaired
+        except json.JSONDecodeError:
+            continue
+
+    # Final attempt: apply ALL repair steps in sequence (handles interaction effects)
+    for step in BASIC_REPAIR_STEPS + AGGRESSIVE_REPAIR_STEPS + TRUNCATION_REPAIR_STEPS:
         repaired = step(repaired)
 
     try:

@@ -94,10 +94,7 @@ def _validate_api_key_for_model(model: str) -> None:
     required_key = provider_key_map.get(provider, "OPENAI_API_KEY")
 
     if not os.getenv(required_key):
-        raise OSError(
-            f"{required_key} not found in environment variables. "
-            f"Required for model: {model}. Please set your API key in the .env file."
-        )
+        raise OSError(f"{required_key} not found in environment variables. Required for model: {model}. Please set your API key in the .env file.")
 
 
 def get_configured_llm(model_override: str | None = None, model_type: str = "standard") -> LLM:

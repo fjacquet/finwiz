@@ -138,6 +138,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=etf_discovery_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -149,6 +150,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=stock_discovery_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -160,6 +162,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=crypto_discovery_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -171,6 +174,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=portfolio_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -194,6 +198,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=validation_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -205,6 +210,7 @@ class InvestmentDiscoveryCrew:
             verbose=True,
             tools=feedback_tools + [quantitative_tool] + rag_tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 

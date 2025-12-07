@@ -118,7 +118,8 @@ class EtfCrew:
             config=self.agents_config["market_etf_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=False,  # Disable reasoning to prevent infinite planning loops (same issue as stock crew)
+            reasoning=True,  # Enable for complex ETF analysis (single-run crew)
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -128,7 +129,8 @@ class EtfCrew:
             config=self.agents_config["risk_assessor"],
             verbose=True,
             tools=tools,
-            reasoning=False,  # Disable reasoning to prevent infinite planning loops
+            reasoning=True,  # Enable for complex risk assessment (single-run crew)
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 

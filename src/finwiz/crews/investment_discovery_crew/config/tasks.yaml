@@ -39,7 +39,13 @@ etf_discovery_task:
     - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
     
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
-    
+
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     A structured ranked list of top 10 A+ grade ETF candidates conforming to the 
     APlusDiscoveryResult Pydantic schema. Include composite scores, letter grades 
@@ -115,7 +121,13 @@ stock_discovery_task:
     - crypto_min_daily_volume: Must be >= 100000 (1e5)
     
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
-    
+
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     A structured curated list of top 15 A+ grade stock candidates conforming to the 
     APlusDiscoveryResult Pydantic schema. Include fundamental analysis, competitive moat 
@@ -195,7 +207,13 @@ crypto_discovery_task:
     - crypto_min_daily_volume: Must be >= 100000 (1e5)
     
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
-    
+
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     A structured selective list of top 5 A+ grade crypto candidates conforming to the 
     APlusDiscoveryResult Pydantic schema. Include composite A+ scores, tokenomics analysis, 
@@ -232,7 +250,13 @@ validation_task:
     - The JSON must match the ValidationResult schema exactly
     
     OUTPUT: Return a structured JSON output conforming to the ValidationResult schema.
-    
+
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     A structured validation report for all A+ candidates conforming to the ValidationResult 
     Pydantic schema. Include backtesting results with risk metrics (Sharpe, Sortino, Max 
@@ -298,7 +322,13 @@ optimization_task:
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     
     OUTPUT: Return a structured JSON output conforming to the OptimizationResult schema.
-    
+
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     A structured comprehensive portfolio optimization report conforming to the 
     OptimizationResult Pydantic schema. Include executive summary, current portfolio 
@@ -451,7 +481,13 @@ feedback_learning_task:
     Use Feedback Analysis Tool for pattern identification, Criteria Optimization Tool
     for implementing learning-based adjustments, Learning Metrics Tool for effectiveness
     monitoring, and integration with A+ Monitoring Service for continuous tracking.
-    
+
+    🚨 JSON OUTPUT REQUIREMENTS 🚨
+    - Output MUST be ONLY valid JSON - no explanatory text before or after
+    - Your ENTIRE response must be a single JSON object starting with { and ending with }
+    - Do NOT include any text, comments, or explanations outside the JSON
+    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     Comprehensive feedback learning analysis and optimization report including:
     - Feedback analysis summary with acceptance rates, sentiment patterns, and insights

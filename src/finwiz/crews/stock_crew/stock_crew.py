@@ -119,7 +119,8 @@ class StockCrew:
         return Agent(
             config=self.agents_config["market_technical_analyst"],
             verbose=True,
-            reasoning=True,  # Disable reasoning to prevent infinite planning loops
+            reasoning=True,  # Enable for complex technical analysis
+            max_reasoning_attempts=3,  # Prevent infinite loops
             tools=tools,
             llm=self._get_configured_llm(),
         )
@@ -131,7 +132,8 @@ class StockCrew:
             config=self.agents_config["investment_risk_analyst"],
             verbose=True,
             tools=tools,
-            reasoning=True,  # Keep reasoning enabled - useful for risk assessment and hasn't caused issues
+            reasoning=True,  # Enable for complex risk assessment
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 

@@ -134,13 +134,15 @@ def validate_performance_targets(
         "speedup_target_met": speedup_target_met,
         "cost_reduction_target_met": cost_reduction_target_met,
         # Overall validation
-        "all_targets_met": all([
-            time_target_met,
-            llm_target_met,
-            cost_target_met,
-            speedup_target_met,
-            cost_reduction_target_met,
-        ]),
+        "all_targets_met": all(
+            [
+                time_target_met,
+                llm_target_met,
+                cost_target_met,
+                speedup_target_met,
+                cost_reduction_target_met,
+            ]
+        ),
         # Baseline comparison
         "baseline_ai_time_avg": baseline.avg_time,
         "baseline_ai_cost_avg": baseline.avg_cost,

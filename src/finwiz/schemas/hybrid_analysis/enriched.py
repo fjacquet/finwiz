@@ -56,13 +56,14 @@ class EnrichedAnalysis(BaseModel):
     asset_class: str = Field(default="stock", description="Asset class (stock, etf, crypto)")
 
     # Validators to handle None from LLM outputs (Pydantic v2 treats null as explicit None)
-    @field_validator("ticker", "company_name", "asset_class", "final_grade", 
-                     "final_recommendation", "recommendation_confidence",
-                     "executive_summary", "investment_rationale", mode="before")
+    @field_validator(
+        "ticker", "company_name", "asset_class", "final_grade", "final_recommendation", "recommendation_confidence", "executive_summary", "investment_rationale", mode="before"
+    )
     @classmethod
     def coerce_none_to_empty_string(cls, v: Any) -> str:
         """Coerce None to empty string for LLM outputs that return null."""
         return _coerce_none_to_str(v, "")
+
     analysis_date: datetime = Field(default_factory=datetime.utcnow, description="Analysis date (UTC)")
 
     # Python (deterministic)

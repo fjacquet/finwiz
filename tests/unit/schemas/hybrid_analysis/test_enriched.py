@@ -11,8 +11,6 @@ and enforces quality thresholds.
 
 from datetime import UTC, datetime
 
-import pytest
-from pydantic import ValidationError
 from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis

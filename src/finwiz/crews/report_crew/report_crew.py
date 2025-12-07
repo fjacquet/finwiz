@@ -122,6 +122,7 @@ class ReportCrew:
             config=self.agents_config["financial_integration_analyst"],
             verbose=True,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             tools=self.tools,
             llm=self._get_configured_llm(),
         )
@@ -134,6 +135,7 @@ class ReportCrew:
             verbose=True,
             tools=self.tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -145,6 +147,7 @@ class ReportCrew:
             verbose=True,
             tools=self.tools,
             reasoning=True,
+            max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
         )
 
@@ -233,7 +236,7 @@ class ReportCrew:
             respect_context_window=True,
             max_retries=10,
             max_rpm=20,
-            llm="gpt-5",
+            llm="gpt-5.1",
             manager_llm=get_manager_llm(),
         )
 
