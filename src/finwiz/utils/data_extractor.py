@@ -182,13 +182,15 @@ class CrewDataExtractor:
         else:
             data = crew_output
 
-        # Check for grade
-        if "grade" not in data or data["grade"] is None:
+        # Check for grade (AI crews may output 'final_grade' instead of 'grade')
+        grade_value = data.get("grade") or data.get("final_grade")
+        if grade_value is None:
             self.logger.error(f"Missing grade for {ticker}. Available keys: {list(data.keys())}")
             raise MissingRequiredFieldError(ticker=ticker, field="grade", context={"source": "crew_output", "available_keys": list(data.keys())})
 
-        # Check for composite_score
-        if "composite_score" not in data or data["composite_score"] is None:
+        # Check for composite_score (AI crews may output 'final_score' instead)
+        score_value = data.get("composite_score") or data.get("final_score")
+        if score_value is None:
             self.logger.error(f"Missing composite_score for {ticker}. Available keys: {list(data.keys())}")
             raise MissingRequiredFieldError(ticker=ticker, field="composite_score", context={"source": "crew_output", "available_keys": list(data.keys())})
 
@@ -197,7 +199,7 @@ class CrewDataExtractor:
 
             extraction_timestamp = datetime.now().isoformat()
 
-            result = {"grade": str(data["grade"]), "composite_score": float(data["composite_score"])}
+            result = {"grade": str(grade_value), "composite_score": float(score_value)}
 
             # Track data sources in lineage (Task 9.3)
             if self.lineage_tracker:

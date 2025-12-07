@@ -472,10 +472,7 @@ class PythonReportGenerator:
         """Generate detailed holdings analysis."""
         # Sort holdings by grade and score (handle None values gracefully)
         # None grades sort to end ("Z"), None scores treated as 0
-        sorted_holdings = sorted(
-            holdings, 
-            key=lambda h: (h.grade or "Z", -(h.composite_score or 0))
-        )
+        sorted_holdings = sorted(holdings, key=lambda h: (h.grade or "Z", -(h.composite_score or 0)))
 
         holdings_html = ""
         for holding in sorted_holdings:  # All holdings
@@ -816,12 +813,12 @@ class PythonReportGenerator:
         """Generate HTML for individual deep analysis report."""
         timestamp = datetime.now().strftime("%d %B %Y à %H:%M")
 
-        grade = result.get("grade", "N/A")
-        score = result.get("composite_score", 0)
-        recommendation = result.get("recommendation", "HOLD")
+        grade = result.get("grade") or result.get("final_grade") or "N/A"
+        score = result.get("composite_score") or result.get("final_score") or 0
+        recommendation = result.get("recommendation") or result.get("final_recommendation") or "HOLD"
         asset_class = result.get("asset_class", "unknown")
 
-        grade_class = f"grade-{grade.lower().replace('+', '-plus')}"
+        grade_class = f"grade-{str(grade).lower().replace('+', '-plus')}"
 
         return f"""<!doctype html>
 <html lang="fr">

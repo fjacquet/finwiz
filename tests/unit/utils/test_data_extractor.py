@@ -121,6 +121,50 @@ class TestExtractGradeAndScore:
         assert result["grade"] == "A+"
         assert result["composite_score"] == approx(0.92)
 
+    def test_should_fallback_to_final_grade_when_grade_missing(self):
+        """Test fallback to final_grade when grade key is missing."""
+        # Arrange
+        extractor = CrewDataExtractor()
+        crew_output = {"final_grade": "B+", "composite_score": 0.78}
+
+        # Act
+        result = extractor.extract_grade_and_score(crew_output, "AAPL")
+
+        # Assert
+        assert result["grade"] == "B+"
+        assert result["composite_score"] == approx(0.78)
+
+    def test_should_fallback_to_final_score_when_composite_score_missing(self):
+        """Test fallback to final_score when composite_score key is missing."""
+        # Arrange
+        extractor = CrewDataExtractor()
+        crew_output = {"grade": "A", "final_score": 0.88}
+
+        # Act
+        result = extractor.extract_grade_and_score(crew_output, "AAPL")
+
+        # Assert
+        assert result["grade"] == "A"
+        assert result["composite_score"] == approx(0.88)
+
+    def test_should_use_ai_crew_output_format_with_final_fields(self):
+        """Test extraction from AI crew output format using final_grade and final_score."""
+        # Arrange - This is the exact format AI crews produce
+        extractor = CrewDataExtractor()
+        crew_output = {
+            "ticker": "IQQH",
+            "final_grade": "C",
+            "final_score": 0.55,
+            "final_recommendation": "HOLD",
+        }
+
+        # Act
+        result = extractor.extract_grade_and_score(crew_output, "IQQH")
+
+        # Assert
+        assert result["grade"] == "C"
+        assert result["composite_score"] == approx(0.55)
+
     def test_should_raise_error_when_grade_missing(self):
         """Test that error is raised when grade is missing."""
         # Arrange
