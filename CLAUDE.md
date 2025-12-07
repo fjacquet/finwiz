@@ -151,6 +151,27 @@ src/finwiz/
 └── validation/                 # Validation infrastructure
 ```
 
+### Subfolder Documentation
+
+Each major directory has its own CLAUDE.md with detailed entry points and usage patterns:
+
+| Directory | Documentation | Key Topics |
+|-----------|--------------|------------|
+| `crews/` | [crews/CLAUDE.md](src/finwiz/crews/CLAUDE.md) | Crew patterns, agent configs, task definitions |
+| `flows/` | [flows/CLAUDE.md](src/finwiz/flows/CLAUDE.md) | Flow orchestration, state management |
+| `tools/` | [tools/CLAUDE.md](src/finwiz/tools/CLAUDE.md) | Tool factories, custom tools |
+| `schemas/` | [schemas/CLAUDE.md](src/finwiz/schemas/CLAUDE.md) | Pydantic models, validation |
+| `quantitative/` | [quantitative/CLAUDE.md](src/finwiz/quantitative/CLAUDE.md) | Backtrader, TA-Lib, QuantLib |
+| `orchestrators/` | [orchestrators/CLAUDE.md](src/finwiz/orchestrators/CLAUDE.md) | Business logic coordination |
+| `reporting/` | [reporting/CLAUDE.md](src/finwiz/reporting/CLAUDE.md) | Jinja2 report generation |
+| `utils/` | [utils/CLAUDE.md](src/finwiz/utils/CLAUDE.md) | Decorators, logging, caching |
+| `data/` | [data/CLAUDE.md](src/finwiz/data/CLAUDE.md) | Data adapters, source orchestration |
+| `integration/` | [integration/CLAUDE.md](src/finwiz/integration/CLAUDE.md) | Data integration, validation pipeline |
+| `scoring/` | [scoring/CLAUDE.md](src/finwiz/scoring/CLAUDE.md) | Python scoring engine |
+| `validation/` | [validation/CLAUDE.md](src/finwiz/validation/CLAUDE.md) | Validation infrastructure |
+
+**Tip**: When working in a specific subfolder, Claude will typically fetch the relevant CLAUDE.md for context.
+
 ### Flow Architecture
 
 FinWiz uses CrewAI Flow for orchestration with structured Pydantic state management:
@@ -884,6 +905,23 @@ If you see `ValidationError` with extra fields:
 - Check schema uses `extra='forbid'` (project standard)
 - Verify all fields in data match schema exactly
 - Use `model.model_dump(exclude_unset=True)` to skip None fields
+
+## Changelog Maintenance
+
+The project maintains a [CHANGELOG.md](CHANGELOG.md) following [Keep a Changelog](https://keepachangelog.com/) format.
+
+**Claude should maintain the changelog by:**
+
+1. Adding entries when implementing new features or fixing bugs
+2. Using appropriate categories: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
+3. Including brief context about what changed and why
+4. Referencing issues/PRs when applicable
+
+Example entry:
+```markdown
+### Fixed
+- Resolved JSON serialization error in crew exports by adding `default=str`
+```
 
 ## Task Master AI Instructions
 
