@@ -470,38 +470,52 @@ class PythonReportGenerator:
 
     def _generate_holdings_analysis(self, holdings: list[HoldingDecision]) -> str:
         """Generate detailed holdings analysis."""
-        # Sort holdings by grade and score
-        sorted_holdings = sorted(holdings, key=lambda h: (h.grade, -h.composite_score))
+        # Sort holdings by grade and score (handle None values gracefully)
+        # None grades sort to end ("Z"), None scores treated as 0
+        sorted_holdings = sorted(
+            holdings, 
+            key=lambda h: (h.grade or "Z", -(h.composite_score or 0))
+        )
 
         holdings_html = ""
         for holding in sorted_holdings:  # All holdings
-            grade_class = f"grade-{holding.grade.lower().replace('+', '-plus')}"
+            # Handle None grade gracefully
+            grade = holding.grade or "N/A"
+            grade_class = f"grade-{grade.lower().replace('+', '-plus')}" if grade != "N/A" else "grade-f"
 
             # Determine recommendation badge based on grade (source of truth)
             # Grade-based logic ensures consistency with scoring system
-            if holding.grade in ["A+", "A"]:
+            if grade in ["A+", "A"]:
                 rec_badge = '<span class="badge badge-buy">ACHAT</span>'
-            elif holding.grade in ["D", "F"]:
+            elif grade in ["D", "F", "N/A"]:
                 rec_badge = '<span class="badge badge-sell">VENTE</span>'
-            elif holding.grade in ["B+", "B", "C+", "C"]:
+            elif grade in ["B+", "B", "C+", "C"]:
                 rec_badge = '<span class="badge badge-hold">CONSERVER</span>'
             else:
                 # Fallback to recommended_action for edge cases
-                if "BUY" in holding.recommended_action:
+                recommended_action = holding.recommended_action or ""
+                if "BUY" in recommended_action:
                     rec_badge = '<span class="badge badge-buy">ACHAT</span>'
-                elif "SELL" in holding.recommended_action:
+                elif "SELL" in recommended_action:
                     rec_badge = '<span class="badge badge-sell">VENTE</span>'
                 else:
                     rec_badge = '<span class="badge badge-hold">CONSERVER</span>'
 
+            # Handle None values for display
+            ticker = holding.ticker or "N/A"
+            name = holding.name or "Unknown"
+            asset_class = (holding.asset_class or "unknown").upper()
+            composite_score = holding.composite_score if holding.composite_score is not None else 0.0
+            rationale = holding.rationale_bullets[0] if holding.rationale_bullets else "Analyse Python"
+
             holdings_html += f"""
         <tr>
-          <td><strong>{holding.ticker}</strong><br><small>{holding.name}</small></td>
-          <td>{holding.asset_class.upper()}</td>
-          <td class="{grade_class}"><strong>{holding.grade}</strong></td>
-          <td>{holding.composite_score:.3f}</td>
+          <td><strong>{ticker}</strong><br><small>{name}</small></td>
+          <td>{asset_class}</td>
+          <td class="{grade_class}"><strong>{grade}</strong></td>
+          <td>{composite_score:.3f}</td>
           <td>{rec_badge}</td>
-          <td><small>{holding.rationale_bullets[0] if holding.rationale_bullets else "Analyse Python"}</small></td>
+          <td><small>{rationale}</small></td>
         </tr>
             """
 

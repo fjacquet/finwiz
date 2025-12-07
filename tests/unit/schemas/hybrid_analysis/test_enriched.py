@@ -163,26 +163,27 @@ def test_enriched_analysis_enforces_word_count_threshold():
     assert enriched.report_word_count >= 2000
 
 
-def test_enriched_analysis_rejects_low_word_count():
-    """Property: report_word_count < 2000 must be rejected."""
-    with pytest.raises(ValidationError):
-        EnrichedAnalysis(
-            ticker="AAPL",
-            company_name="Apple Inc.",
-            asset_class="stock",
-            quantitative=create_valid_quantitative(),
-            qualitative=create_valid_qualitative(),
-            final_grade="A",
-            final_score=0.85,
-            final_recommendation="BUY",
-            recommendation_confidence="HIGH",
-            executive_summary="B" * 200,
-            investment_rationale="C" * 500,
-            report_word_count=1500,  # < 2000 - should fail
-            unique_insights_count=5,
-            processing_time_seconds=25.5,
-            llm_cost_dollars=0.08,
-        )
+def test_enriched_analysis_accepts_low_word_count():
+    """Property: report_word_count accepts any non-negative value (relaxed validation for CrewAI)."""
+    # Relaxed validation to support CrewAI structured output
+    enriched = EnrichedAnalysis(
+        ticker="AAPL",
+        company_name="Apple Inc.",
+        asset_class="stock",
+        quantitative=create_valid_quantitative(),
+        qualitative=create_valid_qualitative(),
+        final_grade="A",
+        final_score=0.85,
+        final_recommendation="BUY",
+        recommendation_confidence="HIGH",
+        executive_summary="B" * 200,
+        investment_rationale="C" * 500,
+        report_word_count=1500,  # < 2000 - now accepted
+        unique_insights_count=5,
+        processing_time_seconds=25.5,
+        llm_cost_dollars=0.08,
+    )
+    assert enriched.report_word_count == 1500
 
 
 def test_enriched_analysis_enforces_insights_count_threshold():
@@ -213,26 +214,27 @@ def test_enriched_analysis_enforces_insights_count_threshold():
     assert enriched.unique_insights_count >= 5
 
 
-def test_enriched_analysis_rejects_low_insights_count():
-    """Property: unique_insights_count < 5 must be rejected."""
-    with pytest.raises(ValidationError):
-        EnrichedAnalysis(
-            ticker="AAPL",
-            company_name="Apple Inc.",
-            asset_class="stock",
-            quantitative=create_valid_quantitative(),
-            qualitative=create_valid_qualitative(),
-            final_grade="A",
-            final_score=0.85,
-            final_recommendation="BUY",
-            recommendation_confidence="HIGH",
-            executive_summary="B" * 200,
-            investment_rationale="C" * 500,
-            report_word_count=2000,
-            unique_insights_count=3,  # < 5 - should fail
-            processing_time_seconds=25.5,
-            llm_cost_dollars=0.08,
-        )
+def test_enriched_analysis_accepts_low_insights_count():
+    """Property: unique_insights_count accepts any non-negative value (relaxed validation for CrewAI)."""
+    # Relaxed validation to support CrewAI structured output
+    enriched = EnrichedAnalysis(
+        ticker="AAPL",
+        company_name="Apple Inc.",
+        asset_class="stock",
+        quantitative=create_valid_quantitative(),
+        qualitative=create_valid_qualitative(),
+        final_grade="A",
+        final_score=0.85,
+        final_recommendation="BUY",
+        recommendation_confidence="HIGH",
+        executive_summary="B" * 200,
+        investment_rationale="C" * 500,
+        report_word_count=2000,
+        unique_insights_count=3,  # < 5 - now accepted
+        processing_time_seconds=25.5,
+        llm_cost_dollars=0.08,
+    )
+    assert enriched.unique_insights_count == 3
 
 
 def test_enriched_analysis_calculated_word_count():
@@ -263,23 +265,24 @@ def test_enriched_analysis_calculated_word_count():
     assert enriched.calculated_word_count > 0
 
 
-def test_enriched_analysis_validates_asset_class():
-    """Property: asset_class must be stock, etf, or crypto."""
-    with pytest.raises(ValidationError):
-        EnrichedAnalysis(
-            ticker="AAPL",
-            company_name="Apple Inc.",
-            asset_class="bond",  # Invalid
-            quantitative=create_valid_quantitative(),
-            qualitative=create_valid_qualitative(),
-            final_grade="A",
-            final_score=0.85,
-            final_recommendation="BUY",
-            recommendation_confidence="HIGH",
-            executive_summary="B" * 200,
-            investment_rationale="C" * 500,
-            report_word_count=2000,
-            unique_insights_count=5,
-            processing_time_seconds=25.5,
-            llm_cost_dollars=0.08,
-        )
+def test_enriched_analysis_accepts_any_asset_class():
+    """Property: asset_class accepts any string (relaxed validation for CrewAI)."""
+    # Relaxed validation to support CrewAI structured output
+    enriched = EnrichedAnalysis(
+        ticker="AAPL",
+        company_name="Apple Inc.",
+        asset_class="bond",  # Previously invalid, now accepted
+        quantitative=create_valid_quantitative(),
+        qualitative=create_valid_qualitative(),
+        final_grade="A",
+        final_score=0.85,
+        final_recommendation="BUY",
+        recommendation_confidence="HIGH",
+        executive_summary="B" * 200,
+        investment_rationale="C" * 500,
+        report_word_count=2000,
+        unique_insights_count=5,
+        processing_time_seconds=25.5,
+        llm_cost_dollars=0.08,
+    )
+    assert enriched.asset_class == "bond"

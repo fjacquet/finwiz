@@ -2,11 +2,31 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Reference
+
+```bash
+# Essential commands
+crewai flow kickoff           # Run full portfolio analysis
+uv sync                       # Install dependencies
+make test                     # Unit tests only (< 3 minutes)
+make check                    # All quality checks (lint + test + docs)
+
+# Single test/file
+uv run pytest tests/unit/tools/test_tool_factories.py -v           # Single file
+uv run pytest tests/unit/tools/test_tool_factories.py::test_name -v -s  # Single test with output
+
+# Code quality
+make lint && make format      # Fix linting and formatting
+make mypy                     # Type checking
+make check-unittest-mock      # Verify no unittest.mock usage
+```
+
 ## Project Overview
 
 FinWiz is a sophisticated AI-powered financial analysis platform built with CrewAI. It uses autonomous AI agents to perform comprehensive analysis of stocks, ETFs, cryptocurrencies, and portfolios. The platform emphasizes **AI Minimalism** - using Python for deterministic tasks and AI only where reasoning is required.
 
 **Key Capabilities:**
+
 - Multi-asset financial analysis (stocks, ETFs, crypto)
 - Portfolio review with keep/sell recommendations
 - Portfolio rebalancing with optimization
@@ -82,7 +102,10 @@ src/finwiz/
 │   └── deep_analysis/         # Per-holding deep analysis
 │
 ├── flows/                      # CrewAI Flow orchestration
-│   └── flow_orchestrator.py   # Main workflow coordination
+│   └── hybrid_analysis_flow.py # Main workflow coordination (Python/AI hybrid)
+│
+├── data/                       # Data acquisition layer
+│   └── data_source_orchestrator.py  # Multi-source data collection
 │
 ├── orchestrators/              # Business logic coordination
 │   ├── portfolio_review.py
@@ -161,6 +184,7 @@ class FinwizFlow(Flow[FinwizState]):
 ```
 
 **CRITICAL Flow Rules:**
+
 - ✅ Use `Flow[PydanticModel]` for type safety
 - ✅ All Flow methods return `dict[str, Any]`
 - ✅ Access state via `self.state.field_name`
@@ -254,16 +278,19 @@ tools = get_stock_crew_tools(
 ### Performance Optimization Rules
 
 **Reasoning (`reasoning=True`)**:
+
 - Enable: Complex analysis, multi-step workflows
 - Disable: Validators, reporters, high-volume (66+ executions)
 - Cost: 5-15s, 1-3 LLM calls
 
 **Planning (`planning=True`)**:
+
 - Enable: 4+ agents AND 6+ tasks AND ≤3 runs
 - Disable: High-volume, single-agent crews
 - Example: Portfolio rebalancing (single run) ✅, Deep analysis (66 runs) ❌
 
 **Delegation (`allow_delegation=True`)**:
+
 - Enable: Coordinators managing workflow
 - Disable: Specialists, reporters
 - Cost: 5-15s per delegation
@@ -273,6 +300,7 @@ tools = get_stock_crew_tools(
 For portfolio analysis with 10+ holdings, batch processing provides 10-20x speedup:
 
 **Configuration** (`.env`):
+
 ```bash
 BATCH_PREFETCH_ENABLED=true           # Enable batch mode
 DEEP_ANALYSIS_BATCH_SIZE=5            # Concurrent crews
@@ -281,6 +309,7 @@ ENABLE_ALPHA_VANTAGE=false            # Yahoo Finance sufficient
 ```
 
 **Performance**:
+
 - 66 holdings: 5.5-11 hours → 20-40 minutes
 - Data pre-fetch: 2-5 seconds (Yahoo Finance)
 - Concurrent execution: 5 crews in parallel (configurable)
@@ -307,6 +336,7 @@ result = scorer.calculate_composite_score(
 ```
 
 **When to Use**:
+
 - Deep analysis scoring
 - Portfolio screening
 - Risk assessment calculations
@@ -438,6 +468,9 @@ pytest -m unit              # Unit tests only
 pytest -m integration       # Integration tests (requires API keys)
 pytest -m slow              # Slow-running tests
 pytest -m performance       # Performance benchmarks
+pytest -m core_analysis     # Core analysis tests
+pytest -m crew              # Crew-specific tests
+pytest -m flow              # Flow orchestration tests
 ```
 
 ### unittest.mock Ban
@@ -454,7 +487,7 @@ def test_example(mocker):
     mocker.patch('module.function', return_value="result")
 ```
 
-Enforcement is in `pyproject.toml` and `make check-unittest-mock`.
+Enforcement is in `pyproject.toml`, `make check-unittest-mock`, and `tests/conftest_unittest_blocker.py`.
 
 ### Type Checking
 
@@ -464,6 +497,7 @@ uv run mypy src/finwiz/     # Type check source
 ```
 
 **Type Hint Standards** (Python 3.12+):
+
 - Use `str | None` instead of `Optional[str]`
 - Use `list[Type]` instead of `List[Type]`
 - All public functions must have type hints
@@ -473,14 +507,16 @@ uv run mypy src/finwiz/     # Type check source
 
 **Core Principle**: AI agents are tools, not the alpha and omega. Use Python for deterministic tasks.
 
-### Use AI ONLY For:
+### Use AI ONLY For
+
 ✅ Analysis requiring reasoning (interpreting complex financial data)
 ✅ Synthesis of complex information (combining multiple data sources)
 ✅ Generating insights from unstructured data (news, sentiment)
 ✅ Natural language understanding (parsing text)
 ✅ Creative content generation (writing analysis narratives)
 
-### Use Python (NOT AI) For:
+### Use Python (NOT AI) For
+
 ❌ HTML generation (use Jinja2 templates)
 ❌ Data consolidation (use Python functions)
 ❌ File I/O operations (use standard Python)
@@ -503,6 +539,7 @@ Generating 100 HTML reports:
 ### Evaluation Checklist
 
 Before creating an AI task, ask:
+
 - Is this deterministic? (same input = same output)
 - Can this be expressed as a template?
 - Is this data transformation or calculation?
@@ -528,9 +565,10 @@ The codebase has undergone significant modernization:
 - **Modular Architecture**: Clear separation of concerns
 
 **Current Status**:
-- Files >600 lines: 17 remaining (started with 27)
-- Test Pass Rate: Improving (4 critical failures fixed 2025-11-21, full suite measurement pending)
-- Phase 0 (Fix Test Suite): ✅ **Critical tests fixed** - 4/4 known failures resolved
+
+- Files >600 lines: Ongoing decomposition effort
+- Test Pass Rate: 65% coverage minimum enforced
+- Phase 0 (Fix Test Suite): ✅ **Critical tests fixed**
 - See [docs/testing/test-suite-status.md](docs/testing/test-suite-status.md) for detailed test suite status
 
 ## Refactoring Standards
@@ -538,16 +576,19 @@ The codebase has undergone significant modernization:
 ### File Organization Rules
 
 **Schema Models**:
+
 - ✅ All Pydantic models go in `src/finwiz/schemas/`
 - ✅ Domain-specific subfolders: `schemas/quantitative/`, `schemas/rebalancing/`
 - ✅ Business logic stays in domain folders: `quantitative/`, `tools/`, `orchestrators/`
 
 **File Size Limits**:
+
 - **Hard limit**: 300 lines per file
 - **Ideal target**: 150-200 lines
 - **Minimum**: 50 lines (avoid tiny files)
 
 **When to Split**:
+
 - File >300 lines → MUST split
 - File >250 lines → Should split
 - File >200 lines → Consider splitting
@@ -555,6 +596,7 @@ The codebase has undergone significant modernization:
 ### Refactoring Checklist
 
 Before splitting any large file:
+
 - [ ] Check existing patterns (especially schema location)
 - [ ] Plan structure (sketch new file organization)
 - [ ] Ensure no file will exceed 300 lines
@@ -689,22 +731,26 @@ Repeat `{ticker}` throughout to prevent reasoning loops.
 From `.kiro/LESSONS_LEARNED.md`:
 
 ### Always Check Existing Patterns First
+
 - Look at similar components in the codebase
 - Follow established conventions (e.g., Pydantic models in `schemas/`)
 - Don't create new patterns unless necessary
 
 ### Tests Are The Contract
+
 - Never leave failing tests after refactoring
 - Update test imports when moving code
 - Fix mock paths to point to actual import locations
 - Verify ALL tests pass before marking task complete
 
 ### Backward Compatibility Matters
+
 - Create re-export layer in original location
 - Existing code should work without changes
 - Gradual migration path for large codebases
 
 Example re-export pattern:
+
 ```python
 # Old location: src/finwiz/quantitative/config.py (now thin re-export)
 from finwiz.schemas.quantitative.config_models import BacktestConfig
@@ -716,6 +762,7 @@ __all__ = ["BacktestConfig", "QuantitativeConfigManager"]
 ## AI Development Standards
 
 See `.kiro/steering/` for comprehensive AI development guidance:
+
 - `crewai-standards.md`: CrewAI development patterns (CRITICAL)
 - `ai-minimalism.md`: When to use Python vs AI
 - `flow-architecture-lessons.md`: Flow design patterns
@@ -786,15 +833,59 @@ uv run python src/finwiz/main.py --rebalancing
 export CREW_VERBOSE=true
 
 # Run single test with output
-pytest tests/path/to/test.py::test_name -v -s
+uv run pytest tests/path/to/test.py::test_name -v -s
+
+# Run specific test file
+uv run pytest tests/unit/tools/test_tool_factories.py -v
+
+# Run tests matching pattern
+uv run pytest -k "test_stock" -v
+
+# Run with full traceback
+uv run pytest tests/path/to/test.py -v --tb=long
 
 # Type check specific file
 uv run mypy src/finwiz/path/to/file.py
 
 # Check for unittest.mock violations
 make check-unittest-mock
+
+# Coverage on specific module
+uv run pytest tests/unit/tools/ --cov=src/finwiz/tools --cov-report=term-missing
 ```
 
+## Common Issues & Fixes
+
+### JSON Serialization Errors
+If you see `TypeError: Object of type datetime is not JSON serializable`:
+```python
+# Fix: Always use default=str
+json.dumps(data, default=str)
+# Or use Pydantic
+model.model_dump_json(indent=2)
+```
+
+### CrewAI Agent Input Loops
+If an agent keeps asking for input or loops infinitely:
+1. Check `max_reasoning_attempts` is set (default: 3)
+2. Ensure task description repeats `{ticker}` variable explicitly
+3. Verify `reasoning=False` for high-volume executions
+
+### Mock Path Errors in Tests
+If mocking fails with `ModuleNotFoundError`:
+```python
+# Mock at the import location, not definition
+mocker.patch('finwiz.crews.stock_crew.stock_crew.some_function')  # Where it's used
+# NOT: mocker.patch('finwiz.utils.helpers.some_function')  # Where it's defined
+```
+
+### Pydantic Validation Errors
+If you see `ValidationError` with extra fields:
+- Check schema uses `extra='forbid'` (project standard)
+- Verify all fields in data match schema exactly
+- Use `model.model_dump(exclude_unset=True)` to skip None fields
+
 ## Task Master AI Instructions
+
 **Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
 @./.taskmaster/CLAUDE.md

@@ -660,11 +660,7 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
 
             # Calculate word count BEFORE creating model (Pydantic validates on creation)
             # We need to calculate it manually here since we can't create the model first
-            word_count = self._calculate_word_count_manually(
-                executive_summary,
-                qualitative.investment_synthesis.investment_thesis,
-                qualitative
-            )
+            word_count = self._calculate_word_count_manually(executive_summary, qualitative.investment_synthesis.investment_thesis, qualitative)
 
             # Create enriched analysis with calculated word count
             enriched = EnrichedAnalysis(
@@ -752,43 +748,39 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
         # Business model summary (first 200 chars)
         if qualitative.sec_insights.business_model:
             business_summary = qualitative.sec_insights.business_model[:200].strip()
-            if not business_summary.endswith('.'):
-                business_summary += '...'
+            if not business_summary.endswith("."):
+                business_summary += "..."
             summary_parts.append(f"Business Model: {business_summary}")
 
         # Key competitive advantages (top 3)
         if qualitative.sec_insights.competitive_advantages:
             advantages = qualitative.sec_insights.competitive_advantages[:3]
-            summary_parts.append(
-                f"Key Competitive Advantages: {', '.join(advantages)}."
-            )
+            summary_parts.append(f"Key Competitive Advantages: {', '.join(advantages)}.")
 
         # Industry context (first 150 chars)
         if qualitative.fundamental_context.industry_analysis:
             industry_summary = qualitative.fundamental_context.industry_analysis[:150].strip()
-            if not industry_summary.endswith('.'):
-                industry_summary += '...'
+            if not industry_summary.endswith("."):
+                industry_summary += "..."
             summary_parts.append(f"Industry Context: {industry_summary}")
 
         # Investment thesis excerpt (first 300 chars)
         if qualitative.investment_synthesis.investment_thesis:
             thesis_excerpt = qualitative.investment_synthesis.investment_thesis[:300].strip()
-            if not thesis_excerpt.endswith('.'):
-                thesis_excerpt += '...'
+            if not thesis_excerpt.endswith("."):
+                thesis_excerpt += "..."
             summary_parts.append(f"Investment Thesis: {thesis_excerpt}")
 
         # Risk highlights (top 3)
         if qualitative.sec_insights.risk_factors:
             risks = qualitative.sec_insights.risk_factors[:3]
-            summary_parts.append(
-                f"Key Risk Factors: {', '.join(risks)}."
-            )
+            summary_parts.append(f"Key Risk Factors: {', '.join(risks)}.")
 
         # Technical strategy summary
         if qualitative.technical_strategy.timing_assessment:
             timing = qualitative.technical_strategy.timing_assessment[:100].strip()
-            if not timing.endswith('.'):
-                timing += '...'
+            if not timing.endswith("."):
+                timing += "..."
             summary_parts.append(f"Technical Timing: {timing}")
 
         # Combine all parts
@@ -808,23 +800,18 @@ class HybridAnalysisFlow(Flow[HybridAnalysisState]):
 
         return summary
 
-    def _calculate_word_count_manually(
-        self,
-        executive_summary: str,
-        investment_rationale: str,
-        qualitative: QualitativeInsights
-    ) -> int:
+    def _calculate_word_count_manually(self, executive_summary: str, investment_rationale: str, qualitative: QualitativeInsights) -> int:
         """
         Calculate word count manually before model creation.
-        
+
         This duplicates the logic from EnrichedAnalysis.calculated_word_count
         but is needed because Pydantic validates on model creation.
-        
+
         Args:
             executive_summary: Executive summary text
             investment_rationale: Investment rationale text
             qualitative: Qualitative insights
-            
+
         Returns:
             Total word count
         """

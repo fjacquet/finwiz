@@ -448,7 +448,6 @@ generate_export_task:
     The object will be automatically saved to JSON at the specified report_json_path.
   agent: investment_reporter
   output_pydantic: RebalancingCrewExport
-  output_json: true
   async_execution: false
   depends_on:
     - risk_validation_task

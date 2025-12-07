@@ -108,15 +108,25 @@ deep_qualitative_analysis_task:
         operational_risks: list[str]
         stress_scenarios: list[str]
 
+    class ScenarioProbabilities:
+        bull: float (0.0-1.0)
+        base: float (0.0-1.0)
+        bear: float (0.0-1.0)
+
+    class ActionPlan:
+        immediate_actions: list[str]
+        monitoring_points: list[str]
+        exit_triggers: list[str]
+
     class InvestmentSynthesis:
         investment_thesis: str (min 200 chars)
         bull_case: str (min 100 chars)
         base_case: str (min 100 chars)
         bear_case: str (min 100 chars)
-        scenario_probabilities: dict[str, float] (keys: "bull", "base", "bear", must sum to 1.0)
+        scenario_probabilities: ScenarioProbabilities (bull + base + bear must sum to 1.0)
         final_recommendation: str (MUST be "BUY", "HOLD", or "SELL")
         recommendation_confidence: str (MUST be "LOW", "MEDIUM", or "HIGH")
-        action_plan: dict[str, list[str]] (keys: "immediate_actions", "monitoring_points", "exit_triggers")
+        action_plan: ActionPlan
 
     class QualitativeInsights (ROOT):
         sec_insights: SecAnalysisInsights

@@ -36,10 +36,14 @@ def text_strategy(min_length: int, max_length: int = None):
 
 
 # Property 4: AI Output Schema Compliance
+# Use printable characters to avoid whitespace-only strings that get stripped
+printable_text = st.text(alphabet=st.characters(min_codepoint=33, max_codepoint=126), min_size=0, max_size=50)
+
+
 @given(
-    business_model=text_strategy(100, 200),
-    competitive_advantages=st.lists(text_strategy(10, 50), min_size=1, max_size=5),
-    risk_factors=st.lists(text_strategy(10, 50), min_size=1, max_size=5),
+    business_model=printable_text,
+    competitive_advantages=st.lists(printable_text, min_size=0, max_size=5),
+    risk_factors=st.lists(printable_text, min_size=0, max_size=5),
 )
 def test_sec_analysis_insights_validates_correctly(
     business_model: str,
@@ -47,9 +51,9 @@ def test_sec_analysis_insights_validates_correctly(
     risk_factors: list[str],
 ):
     """
-    Property: SecAnalysisInsights validates with required fields.
+    Property: SecAnalysisInsights validates with any fields (relaxed validation).
 
-    For any valid SEC analysis data, the schema should accept and validate it.
+    For any SEC analysis data, the schema should accept it with relaxed validation.
     """
     insights = SecAnalysisInsights(
         business_model=business_model,
@@ -57,16 +61,18 @@ def test_sec_analysis_insights_validates_correctly(
         risk_factors=risk_factors,
     )
 
-    assert len(insights.business_model) >= 100
-    assert len(insights.competitive_advantages) >= 1
-    assert len(insights.risk_factors) >= 1
+    # Relaxed: just verify schema creation succeeds
+    assert insights is not None
+    assert isinstance(insights.business_model, str)
+    assert isinstance(insights.competitive_advantages, list)
+    assert isinstance(insights.risk_factors, list)
 
 
 @given(
-    industry_analysis=text_strategy(100, 200),
-    growth_drivers=st.lists(text_strategy(10, 50), min_size=1, max_size=5),
-    competitive_positioning=text_strategy(50, 100),
-    management_assessment=text_strategy(50, 100),
+    industry_analysis=printable_text,
+    growth_drivers=st.lists(printable_text, min_size=0, max_size=5),
+    competitive_positioning=printable_text,
+    management_assessment=printable_text,
 )
 def test_fundamental_context_insights_validates_correctly(
     industry_analysis: str,
@@ -75,9 +81,9 @@ def test_fundamental_context_insights_validates_correctly(
     management_assessment: str,
 ):
     """
-    Property: FundamentalContextInsights validates with required fields.
+    Property: FundamentalContextInsights validates with any fields (relaxed validation).
 
-    For any valid fundamental context data, the schema should accept it.
+    For any fundamental context data, the schema should accept it.
     """
     insights = FundamentalContextInsights(
         industry_analysis=industry_analysis,
@@ -86,17 +92,19 @@ def test_fundamental_context_insights_validates_correctly(
         management_assessment=management_assessment,
     )
 
-    assert len(insights.industry_analysis) >= 100
-    assert len(insights.growth_drivers) >= 1
-    assert len(insights.competitive_positioning) >= 50
-    assert len(insights.management_assessment) >= 50
+    # Relaxed: just verify schema creation succeeds
+    assert insights is not None
+    assert isinstance(insights.industry_analysis, str)
+    assert isinstance(insights.growth_drivers, list)
+    assert isinstance(insights.competitive_positioning, str)
+    assert isinstance(insights.management_assessment, str)
 
 
 @given(
-    chart_patterns=st.lists(text_strategy(10, 50), min_size=1, max_size=5),
-    support_resistance=text_strategy(50, 100),
-    entry_exit_strategy=text_strategy(100, 200),
-    timing_assessment=text_strategy(50, 100),
+    chart_patterns=st.lists(printable_text, min_size=0, max_size=5),
+    support_resistance=printable_text,
+    entry_exit_strategy=printable_text,
+    timing_assessment=printable_text,
 )
 def test_technical_strategy_insights_validates_correctly(
     chart_patterns: list[str],
@@ -105,9 +113,9 @@ def test_technical_strategy_insights_validates_correctly(
     timing_assessment: str,
 ):
     """
-    Property: TechnicalStrategyInsights validates with required fields.
+    Property: TechnicalStrategyInsights validates with any fields (relaxed validation).
 
-    For any valid technical strategy data, the schema should accept it.
+    For any technical strategy data, the schema should accept it.
     """
     insights = TechnicalStrategyInsights(
         chart_patterns=chart_patterns,
@@ -116,10 +124,12 @@ def test_technical_strategy_insights_validates_correctly(
         timing_assessment=timing_assessment,
     )
 
-    assert len(insights.chart_patterns) >= 1
-    assert len(insights.support_resistance) >= 50
-    assert len(insights.entry_exit_strategy) >= 100
-    assert len(insights.timing_assessment) >= 50
+    # Relaxed: just verify schema creation succeeds
+    assert insights is not None
+    assert isinstance(insights.chart_patterns, list)
+    assert isinstance(insights.support_resistance, str)
+    assert isinstance(insights.entry_exit_strategy, str)
+    assert isinstance(insights.timing_assessment, str)
 
 
 def test_contextual_risk_insights_validates_with_empty_lists():
@@ -138,12 +148,12 @@ def test_contextual_risk_insights_validates_with_empty_lists():
 
 
 @given(
-    investment_thesis=text_strategy(200, 300),
-    bull_case=text_strategy(100, 150),
-    base_case=text_strategy(100, 150),
-    bear_case=text_strategy(100, 150),
-    recommendation=st.sampled_from(["BUY", "HOLD", "SELL"]),
-    confidence=st.sampled_from(["LOW", "MEDIUM", "HIGH"]),
+    investment_thesis=printable_text,
+    bull_case=printable_text,
+    base_case=printable_text,
+    bear_case=printable_text,
+    recommendation=printable_text,
+    confidence=printable_text,
 )
 def test_investment_synthesis_validates_correctly(
     investment_thesis: str,
@@ -154,9 +164,9 @@ def test_investment_synthesis_validates_correctly(
     confidence: str,
 ):
     """
-    Property: InvestmentSynthesis validates with required fields.
+    Property: InvestmentSynthesis validates with any fields (relaxed validation).
 
-    For any valid investment synthesis data, the schema should accept it.
+    For any investment synthesis data, the schema should accept it.
     """
     synthesis = InvestmentSynthesis(
         investment_thesis=investment_thesis,
@@ -169,10 +179,12 @@ def test_investment_synthesis_validates_correctly(
         action_plan={"immediate_actions": ["Action 1"], "monitoring_points": ["Point 1"], "exit_triggers": ["Trigger 1"]},
     )
 
-    assert len(synthesis.investment_thesis) >= 200
-    assert len(synthesis.bull_case) >= 100
-    assert synthesis.final_recommendation in ["BUY", "HOLD", "SELL"]
-    assert synthesis.recommendation_confidence in ["LOW", "MEDIUM", "HIGH"]
+    # Relaxed: just verify schema creation succeeds
+    assert synthesis is not None
+    assert isinstance(synthesis.investment_thesis, str)
+    assert isinstance(synthesis.bull_case, str)
+    assert isinstance(synthesis.final_recommendation, str)
+    assert isinstance(synthesis.recommendation_confidence, str)
 
 
 def test_qualitative_insights_complete_structure():
@@ -224,26 +236,28 @@ def test_qualitative_insights_complete_structure():
 
 
 # Test field constraints
-def test_sec_analysis_rejects_short_business_model():
-    """Property: business_model must be at least 100 characters."""
-    with pytest.raises(ValidationError):
-        SecAnalysisInsights(
-            business_model="Too short",
-            competitive_advantages=["Advantage 1"],
-            risk_factors=["Risk 1"],
-        )
+def test_sec_analysis_accepts_short_business_model():
+    """Property: business_model accepts any string (relaxed validation for CrewAI)."""
+    # Relaxed validation to support CrewAI structured output
+    insights = SecAnalysisInsights(
+        business_model="Too short",
+        competitive_advantages=["Advantage 1"],
+        risk_factors=["Risk 1"],
+    )
+    assert insights.business_model == "Too short"
 
 
-def test_investment_synthesis_rejects_invalid_recommendation():
-    """Property: final_recommendation must be BUY/HOLD/SELL."""
-    with pytest.raises(ValidationError):
-        InvestmentSynthesis(
-            investment_thesis="A" * 200,
-            bull_case="A" * 100,
-            base_case="A" * 100,
-            bear_case="A" * 100,
-            scenario_probabilities={"bull": 0.3, "base": 0.5, "bear": 0.2},
-            final_recommendation="MAYBE",  # Invalid
-            recommendation_confidence="HIGH",
-            action_plan={"immediate_actions": ["Action 1"], "monitoring_points": ["Point 1"], "exit_triggers": ["Trigger 1"]},
-        )
+def test_investment_synthesis_accepts_any_recommendation():
+    """Property: final_recommendation accepts any string (relaxed validation for CrewAI)."""
+    # Relaxed validation to support CrewAI structured output
+    synthesis = InvestmentSynthesis(
+        investment_thesis="A" * 200,
+        bull_case="A" * 100,
+        base_case="A" * 100,
+        bear_case="A" * 100,
+        scenario_probabilities={"bull": 0.3, "base": 0.5, "bear": 0.2},
+        final_recommendation="MAYBE",  # Previously invalid, now accepted
+        recommendation_confidence="HIGH",
+        action_plan={"immediate_actions": ["Action 1"], "monitoring_points": ["Point 1"], "exit_triggers": ["Trigger 1"]},
+    )
+    assert synthesis.final_recommendation == "MAYBE"

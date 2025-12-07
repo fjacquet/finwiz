@@ -11,10 +11,12 @@ from finwiz.schemas.hybrid_analysis.metadata import (
     DataQualityMetrics,
 )
 from finwiz.schemas.hybrid_analysis.qualitative import (
+    ActionPlan,
     ContextualRiskInsights,
     FundamentalContextInsights,
     InvestmentSynthesis,
     QualitativeInsights,
+    ScenarioProbabilities,
     SecAnalysisInsights,
     TechnicalStrategyInsights,
 )
@@ -31,6 +33,8 @@ __all__ = [
     "FundamentalContextInsights",
     "TechnicalStrategyInsights",
     "ContextualRiskInsights",
+    "ScenarioProbabilities",
+    "ActionPlan",
     "InvestmentSynthesis",
     "QualitativeInsights",
     # Enriched

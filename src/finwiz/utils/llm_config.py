@@ -27,6 +27,14 @@ load_dotenv()
 logger = get_logger(__name__)
 
 
+# =============================================================================
+# LLM Instance Cache
+# =============================================================================
+
+# Cache for LLM instances to avoid repeated initialization
+_llm_cache: dict[str, LLM] = {}
+
+
 def _get_model_from_env(env_var: str, fallback: str = "openai/gpt-4o-mini") -> str:
     """
     Get model name from environment variable with fallback chain.
@@ -41,6 +49,55 @@ def _get_model_from_env(env_var: str, fallback: str = "openai/gpt-4o-mini") -> s
     """
     # Try specific env var first, then MODEL, then fallback
     return os.getenv(env_var) or os.getenv("MODEL") or fallback
+
+
+def _get_provider_from_model(model: str) -> str:
+    """
+    Extract provider name from model string.
+
+    Args:
+        model: Model string (e.g., "openai/gpt-4o-mini", "anthropic/claude-3")
+
+    Returns:
+        Provider name (e.g., "openai", "anthropic")
+
+    """
+    if "/" in model:
+        return model.split("/")[0].lower()
+    # Default to openai for models without provider prefix
+    return "openai"
+
+
+def _validate_api_key_for_model(model: str) -> None:
+    """
+    Validate that the appropriate API key exists for the model provider.
+
+    Args:
+        model: Model string to validate
+
+    Raises:
+        OSError: If required API key is missing
+
+    """
+    provider_key_map = {
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "google": "GOOGLE_API_KEY",
+        "gemini": "GOOGLE_API_KEY",
+        "mistral": "MISTRAL_API_KEY",
+        "cohere": "COHERE_API_KEY",
+        "azure": "AZURE_OPENAI_API_KEY",
+        "groq": "GROQ_API_KEY",
+    }
+
+    provider = _get_provider_from_model(model)
+    required_key = provider_key_map.get(provider, "OPENAI_API_KEY")
+
+    if not os.getenv(required_key):
+        raise OSError(
+            f"{required_key} not found in environment variables. "
+            f"Required for model: {model}. Please set your API key in the .env file."
+        )
 
 
 def get_configured_llm(model_override: str | None = None, model_type: str = "standard") -> LLM:
@@ -90,10 +147,14 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         fallback = "openai/gpt-4o" if model_type == "baseline" else "openai/gpt-4o-mini"
         model = _get_model_from_env(env_var, fallback)
 
-    # Check for API key (basic validation)
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    if not openai_api_key:
-        raise OSError("OPENAI_API_KEY not found in environment variables. Please set your OpenAI API key in the .env file.")
+    # Check cache first
+    cache_key = f"{model}:{model_type}"
+    if cache_key in _llm_cache:
+        logger.debug(f"Returning cached LLM instance for {cache_key}")
+        return _llm_cache[cache_key]
+
+    # Validate API key for the model's provider
+    _validate_api_key_for_model(model)
 
     # Log the model being used
     logger.info(f"Configuring LLM ({model_type}) with model: {model}")
@@ -103,11 +164,13 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         timeout = int(os.getenv("LITELLM_TIMEOUT") or os.getenv("OPENAI_TIMEOUT") or "300")
 
         # Create LLM with proper configuration
-        # Note: For Gemini models, we need to ensure timeout is properly set
         llm = LLM(
             model=model,
             timeout=timeout,
         )
+
+        # Cache the instance
+        _llm_cache[cache_key] = llm
 
         logger.info(f"LLM configured successfully with model: {model} (timeout: {timeout}s)")
         return llm

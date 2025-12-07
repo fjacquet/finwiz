@@ -1,20 +1,22 @@
 """
 JSON Repair Utility for FinWiz.
 
-Repairs common JSON syntax errors from LLM outputs, particularly:
+Repairs common JSON syntax errors from LLM outputs using a pipeline pattern.
+Each repair step is a separate function that can be tested independently.
+
+Handles:
 - Trailing commas in arrays and objects
 - Missing quotes around keys
 - Single quotes instead of double quotes
-- Comments in JSON
+- Comments in JSON (// and /* */)
 - Extra text before/after JSON
+- Markdown code blocks
 - Python-style output mixed with JSON
-
-This is needed because LLMs sometimes generate
-invalid JSON despite explicit instructions.
 """
 
 import json
 import re
+from collections.abc import Callable
 from typing import Any
 
 from finwiz.tools.logger import get_logger
@@ -22,39 +24,233 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
+# =============================================================================
+# Pipeline Step Functions
+# =============================================================================
+
+
 def _extract_json_from_text(text: str) -> str:
     """
-    Extract JSON object from text that may contain extra content.
+    Extract JSON object or array from text that may contain extra content.
 
-    Finds the first '{' and matching last '}' to extract the JSON object.
+    Finds the first '{' or '[' and matching closing bracket to extract JSON.
     """
-    # Find the first opening brace
-    start = text.find('{')
-    if start == -1:
-        return text
+    obj_start = text.find("{")
+    arr_start = text.find("[")
 
-    # Find the matching closing brace by counting braces
+    # Determine which comes first (object or array)
+    if obj_start == -1 and arr_start == -1:
+        return text
+    elif obj_start == -1:
+        start, open_char, close_char = arr_start, "[", "]"
+    elif arr_start == -1:
+        start, open_char, close_char = obj_start, "{", "}"
+    elif obj_start < arr_start:
+        start, open_char, close_char = obj_start, "{", "}"
+    else:
+        start, open_char, close_char = arr_start, "[", "]"
+
+    # Find the matching closing bracket by counting depth
     depth = 0
     end = start
     for i, char in enumerate(text[start:], start):
-        if char == '{':
+        if char == open_char:
             depth += 1
-        elif char == '}':
+        elif char == close_char:
             depth -= 1
             if depth == 0:
                 end = i
                 break
 
     if depth != 0:
-        # Unbalanced braces, return original
-        return text
+        return text  # Unbalanced brackets
 
-    return text[start:end + 1]
+    return text[start : end + 1]
+
+
+def _remove_trailing_commas(text: str) -> str:
+    """Remove trailing commas before closing brackets/braces."""
+    return re.sub(r",(\s*[}\]])", r"\1", text)
+
+
+def _remove_comments(text: str) -> str:
+    """Remove JavaScript-style comments (// and /* */)."""
+    # Remove single-line comments
+    text = re.sub(r"//.*?$", "", text, flags=re.MULTILINE)
+    # Remove multi-line comments
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    return text
+
+
+def _replace_single_quotes(text: str) -> str:
+    """
+    Replace single quotes used as string delimiters with double quotes.
+
+    Only replaces single quotes that appear to be string delimiters,
+    not single quotes inside strings (like apostrophes in "don't").
+    """
+    # Only replace single quotes that are string delimiters:
+    # - At start/end of keys: 'key':
+    # - At start/end of string values: : 'value'
+    # Pattern: 'text' where text doesn't contain unescaped single quotes
+    import re
+
+    # Replace 'key': with "key":
+    text = re.sub(r"'([\w_]+)'(\s*:)", r'"\1"\2', text)
+
+    # Replace :'value' with :"value" (simple values without quotes inside)
+    # This is conservative - only replaces if there are no quotes inside
+    text = re.sub(r":\s*'([^']*)'(\s*[,}\]])", r': "\1"\2', text)
+
+    return text
+
+
+def _escape_newlines_in_strings(text: str) -> str:
+    """
+    Escape literal newlines inside JSON string values.
+
+    JSON strings cannot contain literal newlines - they must be escaped as \\n.
+    Only processes strings that actually contain newlines.
+    """
+    import re
+
+    def escape_string_content(match: re.Match) -> str:
+        """Escape newlines within a single matched string."""
+        full_match = match.group(0)
+        # Only modify if there are actual newlines in the string
+        if "\n" not in full_match and "\r" not in full_match:
+            return full_match
+
+        # Extract content between quotes and escape newlines
+        content = match.group(1)
+        content = content.replace("\n", "\\n")
+        content = content.replace("\r", "\\r")
+        return f'"{content}"'
+
+    # Match complete JSON strings: "content"
+    # This regex matches a quoted string that may span multiple lines
+    # Pattern: " followed by (non-quote chars or escaped chars)* followed by "
+    # Only process strings that contain newlines
+    result = []
+    pos = 0
+    in_string = False
+    string_start = 0
+
+    for i, char in enumerate(text):
+        if char == '"' and (i == 0 or text[i - 1] != "\\"):
+            if not in_string:
+                in_string = True
+                string_start = i
+            else:
+                # End of string - check if it has newlines
+                string_content = text[string_start + 1 : i]
+                if "\n" in string_content or "\r" in string_content:
+                    escaped = string_content.replace("\n", "\\n").replace("\r", "\\r")
+                    result.append(text[pos:string_start])
+                    result.append(f'"{escaped}"')
+                    pos = i + 1
+                in_string = False
+
+    result.append(text[pos:])
+    return "".join(result)
+
+
+def _remove_markdown_blocks(text: str) -> str:
+    """Remove markdown code block markers."""
+    text = re.sub(r"^```json\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^```\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\s*```$", "", text, flags=re.MULTILINE)
+    return text
+
+
+def _fix_unquoted_keys(text: str) -> str:
+    """Add quotes around unquoted keys."""
+    return re.sub(r'(\{|,)\s*(\w+)\s*:', r'\1"\2":', text)
+
+
+def _fix_python_repr(text: str) -> str:
+    """Fix Python-style representations mixed with JSON."""
+    text = re.sub(r"=\w+\(", "={", text)
+    text = re.sub(r"\)([,}\]])", r"}\1", text)
+    return text
+
+
+def _add_missing_commas(text: str) -> str:
+    """
+    Add missing commas between JSON elements.
+
+    Handles cases where LLM forgets comma between:
+    - "value" "key":  (single or multi-line)
+    - "value""key":   (no whitespace)
+    - } "key":
+    - ] "key":
+    - number "key":
+    - true/false/null "key":
+    """
+    # Strategy: Look for patterns where a value ends and a key begins without comma
+    # Key pattern: "something": (quote, word chars, quote, colon)
+
+    # Pattern 1a: After closing quote with whitespace: "value" "key":
+    text = re.sub(r'(?<=[^,]")\s+("[\w_]+"\s*:)', r', \1', text)
+
+    # Pattern 1b: After closing quote WITHOUT whitespace: "value""key":
+    # This handles cases where LLM produces "Test""nextField": directly
+    text = re.sub(r'(?<=[^,]")("[\w_]+"\s*:)', r', \1', text)
+
+    # Pattern 2: After closing brace: } "key": or }"key":
+    text = re.sub(r'(?<=[^,]})(\s*)("[\w_]+"\s*:)', r',\1\2', text)
+
+    # Pattern 3: After closing bracket: ] "key": or ]"key":
+    text = re.sub(r'(?<=[^,]])(\s*)("[\w_]+"\s*:)', r',\1\2', text)
+
+    # Pattern 4: After number (digit at end): 123 "key": or 123"key":
+    text = re.sub(r'(\d)(\s*)("[\w_]+"\s*:)', r'\1,\2\3', text)
+
+    # Pattern 5: After boolean/null: true "key": or true"key":
+    text = re.sub(r'(true|false|null)(\s*)("[\w_]+"\s*:)', r'\1,\2\3', text)
+
+    return text
+
+
+def _fix_double_commas(text: str) -> str:
+    """Remove double commas that might be introduced by other repairs."""
+    return re.sub(r',\s*,', ',', text)
+
+
+# =============================================================================
+# Pipeline Configuration
+# =============================================================================
+
+# Basic repair steps (fast, safe)
+BASIC_REPAIR_STEPS: list[Callable[[str], str]] = [
+    _extract_json_from_text,
+    _remove_markdown_blocks,  # Moved earlier - markdown blocks are common
+    _remove_comments,
+    _escape_newlines_in_strings,  # Must escape before other processing
+    _replace_single_quotes,
+    _add_missing_commas,  # Add missing commas BEFORE removing trailing
+    _remove_trailing_commas,
+    _fix_double_commas,  # Cleanup any double commas
+]
+
+# Aggressive repair steps (slower, may alter content)
+AGGRESSIVE_REPAIR_STEPS: list[Callable[[str], str]] = [
+    _fix_unquoted_keys,
+    _fix_python_repr,
+]
+
+
+# =============================================================================
+# Main Repair Functions
+# =============================================================================
 
 
 def repair_json(json_str: str) -> str:
     """
     Repair common JSON syntax errors from LLM outputs.
+
+    Uses a pipeline pattern where each repair step is tried in sequence.
+    Returns as soon as valid JSON is produced.
 
     Args:
         json_str: Potentially invalid JSON string
@@ -72,61 +268,56 @@ def repair_json(json_str: str) -> str:
     original = json_str
     repaired = json_str
 
+    # Try direct parse first
     try:
-        # Step 0: Try direct parse first
-        try:
-            json.loads(repaired)
-            return repaired
-        except json.JSONDecodeError:
-            pass
+        json.loads(repaired)
+        return repaired
+    except json.JSONDecodeError:
+        pass
 
-        # Step 1: Extract JSON from surrounding text
-        repaired = _extract_json_from_text(repaired)
-
-        # Step 2: Remove trailing commas before closing brackets/braces
-        repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
-
-        # Step 3: Remove comments (// and /* */)
-        repaired = re.sub(r'//.*?$', '', repaired, flags=re.MULTILINE)
-        repaired = re.sub(r'/\*.*?\*/', '', repaired, flags=re.DOTALL)
-
-        # Step 4: Replace single quotes with double quotes
-        repaired = repaired.replace("'", '"')
-
-        # Step 5: Try to parse
+    # Apply basic repair steps
+    for step in BASIC_REPAIR_STEPS:
+        repaired = step(repaired)
         try:
             json.loads(repaired)
             if repaired != original:
-                logger.info("Successfully repaired JSON (extracted/cleaned)")
+                logger.info(f"JSON repaired by: {step.__name__}")
             return repaired
         except json.JSONDecodeError:
-            pass
+            continue
 
-        # Step 6: More aggressive repairs
-        # Remove markdown code blocks
-        repaired = re.sub(r'^```json\s*', '', repaired)
-        repaired = re.sub(r'^```\s*', '', repaired)
-        repaired = re.sub(r'\s*```$', '', repaired)
+    # Apply aggressive repair steps
+    for step in AGGRESSIVE_REPAIR_STEPS:
+        repaired = step(repaired)
+        try:
+            json.loads(repaired)
+            if repaired != original:
+                logger.info(f"JSON repaired by: {step.__name__} (aggressive)")
+            return repaired
+        except json.JSONDecodeError:
+            continue
 
-        # Remove Python-style representations
-        repaired = re.sub(r'=\w+\(', '={', repaired)
-        repaired = re.sub(r'\)([,}\]])', r'}\1', repaired)
+    # Final attempt: apply ALL basic repairs again in sequence (handles interaction effects)
+    for step in BASIC_REPAIR_STEPS:
+        repaired = step(repaired)
 
-        # Fix unquoted keys
-        repaired = re.sub(r'(\{|,)\s*(\w+)\s*:', r'\1"\2":', repaired)
-
-        # Try to parse again
+    try:
         json.loads(repaired)
-
-        if repaired != original:
-            logger.info("Successfully repaired JSON (aggressive cleanup)")
-
+        logger.info("JSON repaired after full pipeline re-run")
         return repaired
-
     except json.JSONDecodeError as e:
+        # Log detailed error info for debugging
         logger.error(f"JSON repair failed: {e}")
+        logger.error(f"Error position: line {e.lineno}, column {e.colno}")
         logger.debug(f"Original (first 500): {original[:500]}...")
         logger.debug(f"Repaired (first 500): {repaired[:500]}...")
+
+        # Try to show context around the error
+        if hasattr(e, "pos") and e.pos:
+            start = max(0, e.pos - 50)
+            end = min(len(repaired), e.pos + 50)
+            logger.error(f"Context around error: ...{repaired[start:end]}...")
+
         raise ValueError(f"Could not repair JSON: {e}") from e
 
 
@@ -145,16 +336,17 @@ def safe_json_loads(json_str: str) -> Any:
 
     """
     try:
-        # Try direct parse first
         return json.loads(json_str)
     except json.JSONDecodeError:
-        # Try repair
         logger.warning("JSON parse failed, attempting repair...")
         repaired = repair_json(json_str)
         return json.loads(repaired)
 
 
-def validate_and_repair_json(json_str: str, expected_keys: list[str] | None = None) -> dict[str, Any]:
+def validate_and_repair_json(
+    json_str: str,
+    expected_keys: list[str] | None = None,
+) -> dict[str, Any]:
     """
     Validate and repair JSON, optionally checking for expected keys.
 
@@ -169,14 +361,11 @@ def validate_and_repair_json(json_str: str, expected_keys: list[str] | None = No
         ValueError: If JSON is invalid or missing expected keys
 
     """
-    # Parse with repair
     data = safe_json_loads(json_str)
 
-    # Validate it's a dict
     if not isinstance(data, dict):
         raise ValueError(f"Expected JSON object (dict), got {type(data)}")
 
-    # Check expected keys
     if expected_keys:
         missing = set(expected_keys) - set(data.keys())
         if missing:

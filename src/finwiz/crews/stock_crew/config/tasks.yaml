@@ -396,7 +396,6 @@ generate_enriched_analysis_task:
   
   agent: investment_reporter
   output_pydantic: EnrichedAnalysis
-  output_json: true
   async_execution: false  # Final task must be synchronous
   depends_on:
     - investment_synthesis_task

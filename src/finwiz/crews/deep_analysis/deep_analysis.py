@@ -66,15 +66,15 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from dotenv import load_dotenv
 
+from finwiz.crews.deep_analysis.performance_validation import (
+    log_performance_validation,
+    validate_performance_targets,
+)
+from finwiz.crews.deep_analysis.tool_routing import get_tools_for_asset_class
 from finwiz.flow_state import DeepAnalysisResult
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.tools.logger import get_logger
-from finwiz.tools.robust_tool_wrapper import make_tools_robust
-from finwiz.tools.tool_factories import (
-    get_crypto_crew_tools,
-    get_etf_crew_tools,
-    get_stock_crew_tools,
-)
+from finwiz.utils.crewai_json_patch import apply_json_repair_patch
 from finwiz.utils.llm_config import get_configured_llm
 from finwiz.utils.logging_helpers import CrewLogger
 from finwiz.utils.performance_config import get_performance_config_manager
@@ -85,6 +85,9 @@ from finwiz.utils.task_decorators import async_task, sync_task
 logger = get_logger(__name__)
 
 load_dotenv()
+
+# Apply JSON repair patch for LLM outputs (handles trailing commas, etc.)
+apply_json_repair_patch()
 
 
 @CrewBase
@@ -172,12 +175,11 @@ class DeepAnalysisCrew:
         self.prefetched_data = prefetched_data
         logger.info(f"Pre-fetched data set for {len(prefetched_data)} tickers")
 
-    def get_tools_for_asset_class(self, asset_class: str, minimal: bool = False) -> list[Any]:
+    def get_tools_for_asset_class_internal(self, asset_class: str, minimal: bool = False) -> list[Any]:
         """
         Route to appropriate tool set based on asset class and optimization mode.
 
-        If pre-fetched data is available, tools will be configured to use it
-        instead of making live API calls (Requirement 17.31).
+        Delegates to the extracted tool_routing module.
 
         Args:
             asset_class: One of "stock", "etf", "crypto"
@@ -186,193 +188,14 @@ class DeepAnalysisCrew:
         Returns:
             List of tools appropriate for the asset class
 
-        Raises:
-            ValueError: If asset_class is not valid
-
         """
-        asset_class_lower = asset_class.lower()
-
-        # Check optimization mode for tool selection
         use_minimal_tools = minimal or self.perf_config.should_use_minimal_tools()
-
-        # ⚡ OPTIMIZATION: Minimal tool set for maximum speed mode
-        if use_minimal_tools:
-            return self._get_minimal_risk_tools(asset_class_lower)
-
-        if asset_class_lower == "stock":
-            raw_tools = get_stock_crew_tools(
-                include_rag=False,  # ⚡ OPTIMIZED: Disabled RAG for faster execution
-                include_quantitative=True,
-                collection_suffix="stock_deep",
-                prefetched_data=self.prefetched_data,  # Pass pre-fetched data to tools
-            )
-        elif asset_class_lower == "etf":
-            raw_tools = get_etf_crew_tools(
-                include_rag=False,  # ⚡ OPTIMIZED: Disabled RAG for faster execution
-                include_quantitative=True,
-                collection_suffix="etf_deep",
-                prefetched_data=self.prefetched_data,  # Pass pre-fetched data to tools
-            )
-        elif asset_class_lower == "crypto":
-            raw_tools = get_crypto_crew_tools(
-                include_rag=False,  # ⚡ OPTIMIZED: Disabled RAG for faster execution
-                include_quantitative=True,
-                collection_suffix="crypto_deep",
-                prefetched_data=self.prefetched_data,  # Pass pre-fetched data to tools
-            )
-        else:
-            raise ValueError(f"Invalid asset_class: {asset_class}. Must be one of: stock, etf, crypto")
-
-        # Apply robust wrapper for error handling
-        tools = make_tools_robust(raw_tools)
-
-        # Log batch mode status
-        if self.prefetched_data:
-            logger.info(f"Loaded {len(tools)} tools for asset_class: {asset_class} (BATCH MODE with pre-fetched data)")
-        else:
-            logger.info(f"Loaded {len(tools)} tools for asset_class: {asset_class} (LIVE MODE)")
-
-        return tools
-
-    def _get_minimal_risk_tools(self, asset_class: str) -> list[Any]:
-        """
-        Get minimal tool set for risk assessment only (Phase 2 optimization).
-
-        This reduces tool initialization overhead and focuses on essential tools
-        needed for risk calculation.
-
-        Args:
-            asset_class: One of "stock", "etf", "crypto"
-
-        Returns:
-            Minimal list of tools for risk assessment
-
-        """
-        from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
-        from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
-        from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
-        from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-        from finwiz.tools.ticker_validation_tool import TickerValidationTool
-
-        tools = []
-
-        # Always include quantitative analysis (core risk metrics)
-        tools.append(QuantitativeAnalysisTool(asset_class=asset_class, prefetched_data=self.prefetched_data))
-
-        # Always include ticker validation
-        tools.append(TickerValidationTool())
-
-        # Asset-specific tools (only essential ones)
-        if asset_class == "stock":
-            tools.append(EnhancedSECAnalysisTool(prefetched_data=self.prefetched_data))
-        elif asset_class == "etf":
-            tools.append(EnhancedETFAnalysisTool(prefetched_data=self.prefetched_data))
-        elif asset_class == "crypto":
-            tools.append(EnhancedCryptoAnalysisTool(prefetched_data=self.prefetched_data))
-
-        # Apply robust wrapper
-        tools = make_tools_robust(tools)
-
-        logger.info(f"⚡ PHASE 2: Loaded {len(tools)} minimal tools for risk assessment ({asset_class})")
-        return tools
-
-    def _validate_performance_targets(self, ticker: str, execution_time: float, api_metrics: dict[str, Any], ai_summary_enabled: bool = False) -> dict[str, Any]:
-        """
-        Validate performance improvements against targets.
-
-        Requirements 18.28-18.30 (Pure Python): 10-30s, 0 LLM calls, $0 cost
-        Requirements 18.31-18.36 (Hybrid): 15-40s, 1 LLM call, $0.01 cost
-
-        Args:
-            ticker: Asset ticker
-            execution_time: Total execution time in seconds
-            api_metrics: API usage metrics
-            ai_summary_enabled: Whether AI summary (hybrid approach) is enabled
-
-        Returns:
-            Dict with validation results
-
-        """
-        if ai_summary_enabled:
-            # Hybrid approach targets (Requirements 18.31-18.36)
-            TARGET_TIME_MIN = 15  # seconds
-            TARGET_TIME_MAX = 40  # seconds
-            TARGET_LLM_CALLS = 1  # Only for AI summary
-            TARGET_COST = 0.01  # USD (only for AI summary)
-            TARGET_SPEEDUP_MIN = 8  # 8x faster than AI (5-10 minutes -> 15-40 seconds)
-            TARGET_SPEEDUP_MAX = 15  # 15x faster than AI
-            TARGET_COST_REDUCTION = 80  # 80-90% cost reduction
-            approach_name = "HYBRID"
-        else:
-            # Pure Python targets (Requirements 18.28-18.30)
-            TARGET_TIME_MIN = 10  # seconds
-            TARGET_TIME_MAX = 30  # seconds
-            TARGET_LLM_CALLS = 0
-            TARGET_COST = 0.0  # USD
-            TARGET_SPEEDUP_MIN = 10  # 10x faster than AI (5-10 minutes -> 10-30 seconds)
-            TARGET_SPEEDUP_MAX = 20  # 20x faster than AI
-            TARGET_COST_REDUCTION = 100  # 100% cost reduction
-            approach_name = "PURE PYTHON"
-
-        # Baseline AI performance (estimated)
-        BASELINE_AI_TIME_MIN = 5 * 60  # 5 minutes
-        BASELINE_AI_TIME_MAX = 10 * 60  # 10 minutes
-        BASELINE_AI_COST_MIN = 0.05  # $0.05
-        BASELINE_AI_COST_MAX = 0.10  # $0.10
-
-        # Calculate metrics based on approach
-        if ai_summary_enabled:
-            llm_calls = 1  # One LLM call for AI summary
-            cost_usd = 0.01  # Estimated cost for AI summary
-        else:
-            llm_calls = 0  # Python scoring uses 0 LLM calls for calculations
-            cost_usd = 0.0  # Python scoring costs $0 for calculations
-
-        # Calculate speedup (use average baseline time)
-        baseline_avg_time = (BASELINE_AI_TIME_MIN + BASELINE_AI_TIME_MAX) / 2
-        speedup_factor = baseline_avg_time / execution_time if execution_time > 0 else 0
-
-        # Calculate cost reduction
-        baseline_avg_cost = (BASELINE_AI_COST_MIN + BASELINE_AI_COST_MAX) / 2
-        cost_reduction_pct = ((baseline_avg_cost - cost_usd) / baseline_avg_cost * 100) if baseline_avg_cost > 0 else 100
-
-        # Validate targets
-        time_target_met = TARGET_TIME_MIN <= execution_time <= TARGET_TIME_MAX
-        llm_target_met = llm_calls <= TARGET_LLM_CALLS
-        cost_target_met = cost_usd <= TARGET_COST
-        speedup_target_met = TARGET_SPEEDUP_MIN <= speedup_factor <= TARGET_SPEEDUP_MAX * 2  # Allow some flexibility
-        cost_reduction_target_met = cost_reduction_pct >= TARGET_COST_REDUCTION
-
-        return {
-            "ticker": ticker,
-            "approach": approach_name,
-            "ai_summary_enabled": ai_summary_enabled,
-            "execution_time": execution_time,
-            "llm_calls": llm_calls,
-            "cost_usd": cost_usd,
-            "speedup_factor": speedup_factor,
-            "cost_reduction_pct": cost_reduction_pct,
-            # Target validation
-            "time_target_met": time_target_met,
-            "llm_target_met": llm_target_met,
-            "cost_target_met": cost_target_met,
-            "speedup_target_met": speedup_target_met,
-            "cost_reduction_target_met": cost_reduction_target_met,
-            # Overall validation
-            "all_targets_met": all([time_target_met, llm_target_met, cost_target_met, speedup_target_met, cost_reduction_target_met]),
-            # Baseline comparison
-            "baseline_ai_time_avg": baseline_avg_time,
-            "baseline_ai_cost_avg": baseline_avg_cost,
-            # Targets for reference
-            "targets": {
-                "approach": approach_name,
-                "time_range": f"{TARGET_TIME_MIN}-{TARGET_TIME_MAX}s",
-                "llm_calls": TARGET_LLM_CALLS,
-                "cost": f"${TARGET_COST:.2f}",
-                "speedup_range": f"{TARGET_SPEEDUP_MIN}-{TARGET_SPEEDUP_MAX}x",
-                "cost_reduction": f"{TARGET_COST_REDUCTION}%",
-            },
-        }
+        return get_tools_for_asset_class(
+            asset_class=asset_class,
+            minimal=minimal,
+            prefetched_data=self.prefetched_data,
+            use_minimal_tools=use_minimal_tools,
+        )
 
     def _get_configured_llm(self) -> LLM:
         """
@@ -435,7 +258,7 @@ class DeepAnalysisCrew:
         return Task(
             config=self.tasks_config["deep_qualitative_analysis_task"],
             verbose=True,
-            output_pydantic=self.QualitativeInsights,
+            output_pydantic=self.QualitativeInsights,  # Pydantic model for structured output
         )
 
     @sync_task
@@ -451,7 +274,7 @@ class DeepAnalysisCrew:
         return Task(
             config=self.tasks_config["generate_enriched_analysis_task"],
             verbose=True,
-            output_pydantic=self.EnrichedAnalysis,
+            output_pydantic=self.EnrichedAnalysis,  # Pydantic model for structured output
         )
 
     @crew
@@ -520,20 +343,12 @@ class DeepAnalysisCrew:
         # Initialize performance monitoring
         session_id = inputs.get("session_id", "default")
         performance_monitor = get_performance_monitor(session_id)
-        ticker_metrics = performance_monitor.start_ticker_analysis(ticker, asset_class)
-
-        # Initialize API efficiency tracking
-        api_metrics = {
-            "api_calls": 0,
-            "fresh_data_count": 0,
-            "cached_data_count": 0,
-            "task_times": {},
-        }
+        performance_monitor.start_ticker_analysis(ticker, asset_class)
 
         try:
             # ⚡ PYTHON SCORING: Only asset_analyst needs tools for data collection
             # Get full tool set for asset analyst (data collection)
-            analyst_tools = self.get_tools_for_asset_class(asset_class, minimal=False)
+            analyst_tools = self.get_tools_for_asset_class_internal(asset_class, minimal=False)
 
             # Dynamically assign tools to agents by calling agent methods
             # Get agent instances
@@ -559,7 +374,6 @@ class DeepAnalysisCrew:
             )
 
             # Execute crew with performance tracking
-            data_collection_start = time.time()
             crew_instance = self.crew()
             result = crew_instance.kickoff(inputs=inputs)
 
@@ -577,23 +391,15 @@ class DeepAnalysisCrew:
             ai_summary_enabled = self.perf_config.should_use_ai_summary()
 
             # Validate performance improvements (Requirements 18.28-18.30 and 18.31-18.36)
-            performance_validation = self._validate_performance_targets(ticker, total_duration, api_metrics, ai_summary_enabled)
+            performance_validation = validate_performance_targets(
+                ticker=ticker,
+                execution_time=total_duration,
+                api_metrics={},
+                ai_summary_enabled=ai_summary_enabled,
+            )
 
             # Log performance validation results
-            targets = performance_validation["targets"]
-            logger.info(
-                f"📊 PERFORMANCE VALIDATION for {ticker} ({performance_validation['approach']}):\n"
-                f"  ✅ Execution time: {total_duration:.2f}s "
-                f"({'✅ PASS' if performance_validation['time_target_met'] else '❌ FAIL'} - target: {targets['time_range']})\n"
-                f"  ✅ LLM calls: {performance_validation['llm_calls']} "
-                f"({'✅ PASS' if performance_validation['llm_target_met'] else '❌ FAIL'} - target: {targets['llm_calls']})\n"
-                f"  ✅ Cost: ${performance_validation['cost_usd']:.4f} "
-                f"({'✅ PASS' if performance_validation['cost_target_met'] else '❌ FAIL'} - target: {targets['cost']})\n"
-                f"  🚀 Speedup achieved: {performance_validation['speedup_factor']:.1f}x "
-                f"({'✅ PASS' if performance_validation['speedup_target_met'] else '❌ FAIL'} - target: {targets['speedup_range']})\n"
-                f"  💸 Cost reduction: {performance_validation['cost_reduction_pct']:.1f}% "
-                f"({'✅ PASS' if performance_validation['cost_reduction_target_met'] else '❌ FAIL'} - target: {targets['cost_reduction']})"
-            )
+            log_performance_validation(performance_validation)
 
             # Store performance metrics in crew state for potential use
             self.performance_metrics = performance_validation
