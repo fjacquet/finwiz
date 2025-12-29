@@ -121,7 +121,7 @@ class TestFlowStateManager:
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
-            ("test-uuid-123", "run_sequential_workflow", timestamp, json.dumps(sample_state_data))
+            ("test-uuid-123", "run_sequential_workflow", timestamp, json.dumps(sample_state_data)),
         )
         conn.commit()
         conn.close()
@@ -146,12 +146,10 @@ class TestFlowStateManager:
         conn = sqlite3.connect(str(mock_db))
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
-            ("uuid-1", "run_sequential_workflow", older_time, json.dumps(state_data))
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)", ("uuid-1", "run_sequential_workflow", older_time, json.dumps(state_data))
         )
         cursor.execute(
-            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
-            ("uuid-2", "run_sequential_workflow", newer_time, json.dumps(state_data))
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)", ("uuid-2", "run_sequential_workflow", newer_time, json.dumps(state_data))
         )
         conn.commit()
         conn.close()
@@ -517,7 +515,7 @@ class TestFlowStateManager:
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
-            ("test-uuid-123", "run_sequential_workflow", timestamp, json.dumps(sample_state_data))
+            ("test-uuid-123", "run_sequential_workflow", timestamp, json.dumps(sample_state_data)),
         )
         conn.commit()
         conn.close()
@@ -587,13 +585,9 @@ class TestFlowStateManager:
 
         conn = sqlite3.connect(str(mock_db))
         cursor = conn.cursor()
+        cursor.execute("INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)", ("old-uuid", "run_sequential_workflow", old_time, state_data))
         cursor.execute(
-            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
-            ("old-uuid", "run_sequential_workflow", old_time, state_data)
-        )
-        cursor.execute(
-            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
-            ("recent-uuid", "run_sequential_workflow", recent_time, state_data)
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)", ("recent-uuid", "run_sequential_workflow", recent_time, state_data)
         )
         conn.commit()
         conn.close()

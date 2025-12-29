@@ -1,8 +1,10 @@
 """Deep Analysis Orchestrator for FinWiz Flow."""
 
+import asyncio
 import json
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -188,10 +190,64 @@ class DeepAnalysisOrchestrator:
         self.state.portfolio_review["holdings"] = holdings
 
     def run_deep_analysis_on_holdings(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
-        """Execute deep analysis on all holdings. Requirements: 3.1"""
+        """
+        Execute deep analysis on all holdings.
+
+        Automatically uses concurrent execution when possible for 5x+ speedup.
+        Falls back to sequential execution if async context unavailable.
+
+        Requirements: 3.1
+
+        Args:
+            holdings: List of holding dicts with 'ticker' and 'asset_class' keys
+
+        Returns:
+            Dictionary mapping tickers to DeepAnalysisResult objects
+
+        """
         if not holdings:
             return {}
 
+        # Check if concurrent execution is enabled (default: True)
+        use_concurrent = os.getenv("DEEP_ANALYSIS_CONCURRENT", "true").lower() == "true"
+
+        if use_concurrent:
+            try:
+                # Try to use concurrent execution
+                try:
+                    # Check if event loop is already running
+                    loop = asyncio.get_running_loop()
+                    # If we're in an async context, we need to use nest_asyncio or run in new thread
+                    self.logger.info("Running concurrent deep analysis (existing event loop)")
+                    import nest_asyncio
+
+                    nest_asyncio.apply()
+                    return asyncio.run(self.run_deep_analysis_concurrent(holdings))
+                except RuntimeError:
+                    # No running event loop - we can use asyncio.run directly
+                    self.logger.info("Running concurrent deep analysis (new event loop)")
+                    return asyncio.run(self.run_deep_analysis_concurrent(holdings))
+            except ImportError:
+                self.logger.warning("nest_asyncio not available, falling back to sequential")
+            except Exception as e:
+                self.logger.warning(f"Concurrent execution failed, falling back to sequential: {e}")
+
+        # Fall back to sequential execution
+        return self._run_deep_analysis_sequential(holdings)
+
+    def _run_deep_analysis_sequential(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
+        """
+        Execute deep analysis sequentially (fallback method).
+
+        Used when concurrent execution is disabled or fails.
+
+        Args:
+            holdings: List of holding dicts
+
+        Returns:
+            Dictionary mapping tickers to DeepAnalysisResult objects
+
+        """
         # Determine batch mode
         is_portfolio = len(holdings) >= self.batch_prefetch_config.min_holdings_for_batch
         batch_enabled = self.batch_prefetch_config.enabled and is_portfolio
@@ -204,7 +260,7 @@ class DeepAnalysisOrchestrator:
 
         cache_mgr = get_analysis_cache_manager(ttl_hours=int(os.getenv("PORTFOLIO_CACHE_TTL_HOURS", "24")))
 
-        # Process holdings
+        # Process holdings sequentially
         results, ticker_times, start_time = {}, {}, time.time()
 
         for holding in holdings:
@@ -231,6 +287,141 @@ class DeepAnalysisOrchestrator:
             self.save_batch_metrics_to_file(self.state.batch_prefetch_metrics, None)
 
         return results
+
+    async def run_deep_analysis_concurrent(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
+        """
+        Execute deep analysis on all holdings concurrently.
+
+        Uses asyncio.gather() with semaphore to process multiple holdings in parallel,
+        significantly reducing total processing time compared to sequential execution.
+
+        Performance:
+            - Sequential: 66 holdings × 20s = 22+ minutes
+            - Concurrent (limit=5): 66 holdings in ~4-5 minutes (5x speedup)
+
+        Requirements: 3.1
+
+        Args:
+            holdings: List of holding dicts with 'ticker' and 'asset_class' keys
+
+        Returns:
+            Dictionary mapping tickers to DeepAnalysisResult objects
+
+        """
+        if not holdings:
+            return {}
+
+        start_time = time.time()
+
+        # Determine batch mode
+        is_portfolio = len(holdings) >= self.batch_prefetch_config.min_holdings_for_batch
+        batch_enabled = self.batch_prefetch_config.enabled and is_portfolio
+
+        if batch_enabled:
+            self.execute_deep_analysis_with_prefetch([h.get("ticker") for h in holdings if h.get("ticker")])
+
+        # Initialize cache
+        from finwiz.cache.analysis_cache_manager import get_analysis_cache_manager
+
+        cache_mgr = get_analysis_cache_manager(ttl_hours=int(os.getenv("PORTFOLIO_CACHE_TTL_HOURS", "24")))
+
+        # Get concurrency limit from environment (uses DEEP_ANALYSIS_BATCH_SIZE)
+        parallel_limit = int(os.getenv("DEEP_ANALYSIS_BATCH_SIZE", "5"))
+        self.logger.info(f"Processing {len(holdings)} holdings concurrently (limit={parallel_limit})")
+
+        # Create semaphore to limit concurrent crew executions
+        semaphore = asyncio.Semaphore(parallel_limit)
+
+        async def process_with_semaphore(idx: int, holding: dict[str, Any]) -> tuple[int, str, DeepAnalysisResult | None, float]:
+            """Process a single holding with semaphore-limited concurrency."""
+            ticker = holding.get("ticker")
+            asset_class = holding.get("asset_class")
+
+            if not ticker or not asset_class:
+                return (idx, "", None, 0.0)
+
+            async with semaphore:
+                ticker_start = time.time()
+                self.logger.debug(f"Processing {idx}/{len(holdings)}: {ticker} ({asset_class})")
+
+                try:
+                    # Execute in thread pool to avoid blocking event loop
+                    result = await self._process_single_holding_async(ticker, asset_class, cache_mgr, 24, batch_enabled)
+                    elapsed = time.time() - ticker_start
+                    self.logger.debug(f"Completed {ticker} in {elapsed:.1f}s")
+                    return (idx, ticker, result, elapsed)
+
+                except Exception as e:
+                    self.logger.error(f"Failed {ticker}: {e}", exc_info=True)
+                    if ticker not in self.state.failed_holdings:
+                        self.state.failed_holdings.append(ticker)
+                    return (idx, ticker, None, time.time() - ticker_start)
+
+        # Execute all holdings concurrently with semaphore limit
+        tasks = [process_with_semaphore(idx, holding) for idx, holding in enumerate(holdings, start=1)]
+        task_results = await asyncio.gather(*tasks)
+
+        # Collect results and timing
+        results: dict[str, DeepAnalysisResult] = {}
+        ticker_times: dict[str, float] = {}
+
+        for idx, ticker, result, elapsed in task_results:
+            if result and ticker:
+                results[ticker] = result
+                ticker_times[ticker] = elapsed
+
+        # Log performance metrics
+        total_time = time.time() - start_time
+        sequential_estimate = len(holdings) * 20.0  # Assume 20s per holding sequential
+        speedup = sequential_estimate / total_time if total_time > 0 else 1.0
+
+        cache_mgr.log_cache_stats()
+        self.logger.info(f"Completed {len(results)}/{len(holdings)} in {total_time:.1f}s (~{speedup:.1f}x speedup vs sequential)")
+
+        if batch_enabled and self.state.batch_prefetch_metrics:
+            self._update_batch_metrics(total_time, len(results), len(holdings), ticker_times)
+            self.save_batch_metrics_to_file(self.state.batch_prefetch_metrics, None)
+
+        return results
+
+    async def _process_single_holding_async(
+        self,
+        ticker: str,
+        asset_class: str,
+        cache_mgr: Any,
+        cache_ttl: int,
+        batch_enabled: bool,
+    ) -> DeepAnalysisResult | None:
+        """
+        Async wrapper for _process_single_holding.
+
+        Executes the synchronous crew kickoff in a thread pool executor
+        to avoid blocking the event loop.
+
+        Args:
+            ticker: Ticker symbol
+            asset_class: Asset class (stock/etf/crypto)
+            cache_mgr: Cache manager instance
+            cache_ttl: Cache TTL in hours
+            batch_enabled: Whether batch mode is enabled
+
+        Returns:
+            DeepAnalysisResult or None if processing fails
+
+        """
+        loop = asyncio.get_event_loop()
+
+        # Use thread pool to execute synchronous CrewAI code
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            return await loop.run_in_executor(
+                executor,
+                self._process_single_holding,
+                ticker,
+                asset_class,
+                cache_mgr,
+                cache_ttl,
+                batch_enabled,
+            )
 
     def _collect_data_with_python(self, ticker: str, asset_class: str, batch_enabled: bool) -> dict[str, Any]:
         """

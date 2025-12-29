@@ -29,6 +29,7 @@ Usage:
 
 import json
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
@@ -47,6 +48,16 @@ from finwiz.schemas.python_analysis import PythonDeepAnalysisResult
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class HTMLReportPath:
+    """Represents a path to an individual HTML report."""
+
+    ticker: str
+    crew: str
+    path: str
+    asset_class: str = ""
 
 
 class ReportConsolidator:
@@ -74,11 +85,37 @@ class ReportConsolidator:
         """
         self.session_id = session_id
         self.output_dir = Path(output_dir)
+        self._html_report_paths: list[HTMLReportPath] = []
 
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Initialized ReportConsolidator for session {session_id}")
+
+    def get_html_report_paths(self) -> list[HTMLReportPath]:
+        """
+        Get collected HTML report paths for final report template.
+
+        Returns:
+            List of HTMLReportPath objects collected during consolidation
+
+        """
+        return self._html_report_paths
+
+    def get_html_paths_for_template(self) -> tuple[list[dict], int]:
+        """
+        Get HTML paths formatted for final report template.
+
+        Returns:
+            Tuple of (list of path dicts, count of individual reports)
+            Each dict contains: ticker, crew, path
+
+        """
+        paths_for_template = [
+            {"ticker": hp.ticker, "crew": hp.crew, "path": hp.path, "asset_class": hp.asset_class}
+            for hp in self._html_report_paths
+        ]
+        return paths_for_template, len(paths_for_template)
 
     def consolidate_reports(self, crew_export_paths: dict[str, list[str]]) -> ConsolidatedReportExport:
         """
@@ -235,6 +272,13 @@ class ReportConsolidator:
                 error_msg = f"{error['crew']}: {error['message']}"
                 consolidated.errors.append(error_msg)
                 logger.debug(f"Validation error detail: {error}")
+
+        # Collect HTML report paths and add to analyses
+        html_paths = self.collect_html_report_paths(crew_export_paths)
+        if html_paths:
+            consolidated = self.add_html_paths_to_analyses(consolidated, html_paths)
+            # Store HTML paths for final report template
+            self._html_report_paths = html_paths
 
         # Calculate total execution time
         consolidated.total_execution_time = time.time() - start_time
@@ -482,3 +526,121 @@ class ReportConsolidator:
             logger.warning(f"No valid deep analysis exports loaded from {len(file_paths)} files")
 
         return exports
+
+    def collect_html_report_paths(self, crew_export_paths: dict[str, list[str]]) -> list[HTMLReportPath]:
+        """
+        Collect paths to individual HTML reports for linking in final report.
+
+        Searches for HTML report files alongside JSON exports and in expected
+        locations. This enables the final consolidated report to link to
+        individual detailed reports.
+
+        Args:
+            crew_export_paths: Dict mapping crew names to list of export file paths
+
+        Returns:
+            List of HTMLReportPath objects for all found HTML reports
+
+        """
+        html_paths: list[HTMLReportPath] = []
+
+        # Map crew names to asset classes
+        crew_asset_classes = {
+            "stock_crew": "stock",
+            "etf_crew": "etf",
+            "crypto_crew": "crypto",
+            "deep_analysis_crew": "mixed",
+            "discovery_crew": "discovery",
+            "rebalancing_crew": "rebalancing",
+        }
+
+        for crew_name, json_paths in crew_export_paths.items():
+            asset_class = crew_asset_classes.get(crew_name, "unknown")
+
+            for json_path_str in json_paths:
+                json_path = Path(json_path_str)
+
+                # Try common HTML report naming patterns
+                possible_html_paths = [
+                    json_path.with_suffix(".html"),  # Same name with .html
+                    json_path.parent / f"{json_path.stem}_report.html",  # *_report.html
+                    json_path.parent / f"{json_path.stem.replace('_export', '_report')}.html",  # Replace _export with _report
+                ]
+
+                for html_path in possible_html_paths:
+                    if html_path.exists():
+                        # Extract ticker from filename
+                        stem = json_path.stem
+                        ticker = stem.replace("_export", "").replace("_deep", "").upper()
+
+                        # Handle special cases
+                        if crew_name == "discovery_crew":
+                            ticker = "DISCOVERY"
+                        elif crew_name == "rebalancing_crew":
+                            ticker = "REBALANCING"
+
+                        html_paths.append(
+                            HTMLReportPath(
+                                ticker=ticker,
+                                crew=crew_name.replace("_crew", ""),
+                                path=str(html_path),
+                                asset_class=asset_class,
+                            )
+                        )
+                        logger.debug(f"Found HTML report: {html_path}")
+                        break  # Found a match, no need to check other patterns
+
+        logger.info(f"Collected {len(html_paths)} HTML report paths")
+        return html_paths
+
+    def add_html_paths_to_analyses(
+        self, consolidated: ConsolidatedReportExport, html_paths: list[HTMLReportPath]
+    ) -> ConsolidatedReportExport:
+        """
+        Add HTML report paths to individual analysis objects.
+
+        This allows the final report template to include "View Full Report"
+        links for each analysis.
+
+        Args:
+            consolidated: The consolidated report export
+            html_paths: List of HTML report paths to add
+
+        Returns:
+            Updated consolidated report with HTML paths added
+
+        """
+        # Create lookup by ticker
+        path_lookup: dict[str, str] = {hp.ticker: hp.path for hp in html_paths}
+
+        # Add paths to stock analyses
+        for analysis in consolidated.stock_analyses:
+            if analysis.ticker in path_lookup:
+                analysis.report_html_path = path_lookup[analysis.ticker]
+
+        # Add paths to ETF analyses
+        for analysis in consolidated.etf_analyses:
+            if analysis.ticker in path_lookup:
+                analysis.report_html_path = path_lookup[analysis.ticker]
+
+        # Add paths to crypto analyses
+        for analysis in consolidated.crypto_analyses:
+            if analysis.ticker in path_lookup:
+                analysis.report_html_path = path_lookup[analysis.ticker]
+
+        # Add paths to deep analyses
+        for analysis in consolidated.deep_analyses:
+            ticker = getattr(analysis, "ticker", None)
+            if ticker and ticker in path_lookup:
+                if hasattr(analysis, "report_html_path"):
+                    analysis.report_html_path = path_lookup[ticker]
+
+        # Add paths to discovery and rebalancing results
+        if consolidated.discovery_results and "DISCOVERY" in path_lookup:
+            consolidated.discovery_results.report_html_path = path_lookup["DISCOVERY"]
+
+        if consolidated.rebalancing_results and "REBALANCING" in path_lookup:
+            consolidated.rebalancing_results.report_html_path = path_lookup["REBALANCING"]
+
+        logger.info("Added HTML paths to consolidated analyses")
+        return consolidated

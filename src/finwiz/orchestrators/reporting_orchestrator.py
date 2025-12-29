@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import FinwizState
+from finwiz.reporting import CREW_GENERATORS, get_generator_for_crew
 from finwiz.schemas.portfolio_review import PortfolioReview
 from finwiz.tools.logger import get_logger
 
@@ -112,15 +113,17 @@ class ReportingOrchestrator:
     def consolidate_reports(
         self,
         crew_export_paths: dict[str, list[str]],
+        generate_html: bool = True,
     ) -> dict[str, Any]:
         """
         Consolidate crew reports into single structure.
 
         Args:
             crew_export_paths: Dictionary mapping crew names to lists of export file paths
+            generate_html: If True, auto-generate HTML reports for all exports (default: True)
 
         Returns:
-            Dictionary with consolidated report data
+            Dictionary with consolidated report data and generated HTML paths
 
         """
         try:
@@ -146,9 +149,16 @@ class ReportingOrchestrator:
 
             self.logger.info(f"Consolidated {consolidated['total_reports']} reports")
 
+            # Auto-generate HTML reports (zero cost, Python-based)
+            html_reports: dict[str, list[Path]] = {}
+            if generate_html:
+                html_reports = self.generate_all_crew_html_reports(crew_export_paths)
+                consolidated["html_reports_generated"] = sum(len(v) for v in html_reports.values())
+
             return {
                 "success": True,
                 "consolidated_data": consolidated,
+                "html_report_paths": {k: [str(p) for p in v] for k, v in html_reports.items()},
             }
 
         except Exception as e:
@@ -213,10 +223,7 @@ class ReportingOrchestrator:
 
             # Setup Jinja2 environment with autoescape to prevent XSS
             template_dir = Path("src/finwiz/reporting/templates")
-            env = Environment(
-                loader=FileSystemLoader(str(template_dir)),
-                autoescape=select_autoescape(["html", "htm", "xml"])
-            )
+            env = Environment(loader=FileSystemLoader(str(template_dir)), autoescape=select_autoescape(["html", "htm", "xml"]))
 
             # Load template
             template = env.get_template(template_name)
@@ -545,3 +552,98 @@ class ReportingOrchestrator:
 
         except Exception as e:
             self.logger.error(f"Failed to save merged portfolio review: {e}", exc_info=True)
+
+    def generate_crew_html_report(
+        self,
+        crew_name: str,
+        export_path: str | Path,
+    ) -> Path | None:
+        """
+        Auto-generate HTML report for a crew's export data.
+
+        Uses the CREW_GENERATORS registry to find the appropriate generator
+        for each crew type. This is a zero-cost Python operation using Jinja2.
+
+        Args:
+            crew_name: Name of the crew (e.g., 'stock_crew', 'etf_crew')
+            export_path: Path to the JSON export file
+
+        Returns:
+            Path to generated HTML file, or None if generation failed/not supported
+
+        """
+        try:
+            export_path = Path(export_path)
+            if not export_path.exists():
+                self.logger.warning(f"Export file not found: {export_path}")
+                return None
+
+            # Get generator for this crew type
+            generator = get_generator_for_crew(crew_name)
+            if generator is None:
+                self.logger.debug(f"No HTML generator registered for {crew_name}")
+                return None
+
+            # Load export data
+            data = json.loads(export_path.read_text())
+
+            # Determine HTML output path
+            html_path = export_path.with_suffix(".html")
+
+            # Generate HTML report
+            generator.generate_report(data, str(html_path))
+
+            self.logger.info(f"✅ Generated HTML report: {html_path}")
+            return html_path
+
+        except Exception as e:
+            self.logger.error(f"Failed to generate HTML for {crew_name}: {e}")
+            return None
+
+    def generate_all_crew_html_reports(
+        self,
+        crew_export_paths: dict[str, list[str]],
+    ) -> dict[str, list[Path]]:
+        """
+        Generate HTML reports for all crew exports.
+
+        This is a batch operation that generates individual HTML reports
+        for each crew export, using the appropriate template for each crew type.
+
+        Args:
+            crew_export_paths: Dictionary mapping crew names to lists of export paths
+
+        Returns:
+            Dictionary mapping crew names to lists of generated HTML paths
+
+        """
+        generated_reports: dict[str, list[Path]] = {}
+        total_generated = 0
+        total_failed = 0
+
+        self.logger.info(f"🔄 Generating HTML reports for {len(crew_export_paths)} crews...")
+
+        for crew_name, export_paths in crew_export_paths.items():
+            generated_for_crew: list[Path] = []
+
+            for export_path in export_paths:
+                html_path = self.generate_crew_html_report(crew_name, export_path)
+                if html_path:
+                    generated_for_crew.append(html_path)
+                    total_generated += 1
+                else:
+                    total_failed += 1
+
+            if generated_for_crew:
+                generated_reports[crew_name] = generated_for_crew
+
+        self.logger.info(
+            f"✅ HTML generation complete: {total_generated} generated, "
+            f"{total_failed} skipped/failed"
+        )
+
+        # Store in state for final report access
+        if hasattr(self.state, "generated_html_reports"):
+            self.state.generated_html_reports = generated_reports
+
+        return generated_reports

@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from crewai.flow import Flow, and_, listen, start
-
 from crewai.flow.persistence import persist
+
 from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 from finwiz.config.resilience_config import get_resilience_config
 from finwiz.crew_factory import CrewFactory

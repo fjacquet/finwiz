@@ -130,6 +130,46 @@ review_path, rebalancing_result = await run_with_rebalancing(
 )
 ```
 
+### ReportingOrchestrator - HTML Auto-Generation
+
+The ReportingOrchestrator automatically generates HTML reports when consolidating crew exports:
+
+```python
+from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
+from finwiz.flow_state import FinwizState
+
+orchestrator = ReportingOrchestrator(FinwizState())
+
+# Consolidate reports with auto HTML generation (default)
+result = orchestrator.consolidate_reports(
+    crew_export_paths={
+        "stock_crew": ["output/stock/AAPL_export.json", "output/stock/GOOGL_export.json"],
+        "etf_crew": ["output/etf/SPY_export.json"],
+        "crypto_crew": ["output/crypto/BTC_export.json"],
+    },
+    generate_html=True  # Default: automatically generates HTML for each export
+)
+
+# Result contains:
+# - consolidated_data: Merged crew reports
+# - html_report_paths: {"stock_crew": ["output/stock/AAPL_export.html", ...], ...}
+# - consolidated_data["html_reports_generated"]: Count of generated HTML reports
+
+# Generate HTML for a single export
+html_path = orchestrator.generate_crew_html_report(
+    crew_name="stock_crew",
+    export_path="output/stock/AAPL_export.json"
+)
+
+# Batch generate all HTML reports
+html_paths = orchestrator.generate_all_crew_html_reports(crew_export_paths)
+```
+
+**Key methods:**
+- `consolidate_reports(paths, generate_html=True)` - Consolidates + auto-generates HTML
+- `generate_crew_html_report(crew, path)` - Single HTML report
+- `generate_all_crew_html_reports(paths)` - Batch HTML generation
+
 ## Orchestrator Pattern
 
 ```python

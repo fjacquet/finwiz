@@ -6,7 +6,13 @@ This directory contains report generation logic using Python templates (Jinja2).
 
 ```
 reporting/
-├── __init__.py
+├── __init__.py                          # Module exports + CREW_GENERATORS registry
+├── base_report_generator.py             # Abstract base class for generators
+├── stock_report_generator.py            # Stock crew reports
+├── etf_report_generator.py              # ETF crew reports
+├── crypto_report_generator.py           # Crypto crew reports
+├── discovery_report_generator.py        # A+ discovery reports
+├── rebalancing_report_generator.py      # Rebalancing recommendations
 ├── deep_analysis_report_generator.py    # Per-holding analysis reports
 ├── enriched_analysis_report_generator.py # Enriched analysis reports
 └── python_report_generator.py           # Main Python report generator
@@ -14,11 +20,18 @@ reporting/
 
 ## Major Entry Points
 
-| File | Class | Purpose |
-|------|-------|---------|
-| `python_report_generator.py` | `PythonReportGenerator` | Main report generation engine |
+| File | Class/Function | Purpose |
+|------|----------------|---------|
+| `__init__.py` | `CREW_GENERATORS` | Registry mapping crew names to generators |
+| `__init__.py` | `get_generator_for_crew()` | Get generator instance for a crew |
+| `base_report_generator.py` | `BaseReportGenerator` | Abstract base class with common logic |
+| `stock_report_generator.py` | `StockReportGenerator` | Stock analysis HTML reports |
+| `etf_report_generator.py` | `ETFReportGenerator` | ETF analysis HTML reports |
+| `crypto_report_generator.py` | `CryptoReportGenerator` | Crypto analysis HTML reports |
+| `discovery_report_generator.py` | `DiscoveryReportGenerator` | A+ discovery HTML reports |
+| `rebalancing_report_generator.py` | `RebalancingReportGenerator` | Rebalancing HTML reports |
 | `deep_analysis_report_generator.py` | `DeepAnalysisReportGenerator` | Per-holding detailed reports |
-| `enriched_analysis_report_generator.py` | `EnrichedAnalysisReportGenerator` | Enriched analysis reports |
+| `python_report_generator.py` | `PythonReportGenerator` | Main report generation engine |
 
 ## AI Minimalism Principle
 
@@ -39,7 +52,69 @@ Report generation is 100% Python - no AI involved:
 
 ## Usage
 
-### Generate Single Report
+### Using CREW_GENERATORS Registry (Recommended)
+
+```python
+from finwiz.reporting import CREW_GENERATORS, get_generator_for_crew
+
+# Get generator for a specific crew
+generator = get_generator_for_crew("stock_crew")
+if generator:
+    html = generator.generate_report(
+        data={"ticker": "AAPL", "grade": "A", "composite_score": 0.85},
+        output_path="output/stock/AAPL_report.html"
+    )
+
+# Available crew mappings:
+# "stock_crew" -> StockReportGenerator
+# "etf_crew" -> ETFReportGenerator
+# "crypto_crew" -> CryptoReportGenerator
+# "investment_discovery_crew" -> DiscoveryReportGenerator
+# "portfolio_rebalancing_crew" -> RebalancingReportGenerator
+# "deep_analysis_crew" -> DeepAnalysisReportGenerator
+```
+
+### Using Individual Generators
+
+```python
+from finwiz.reporting.stock_report_generator import StockReportGenerator
+
+generator = StockReportGenerator()
+html_path = generator.generate_report(
+    data={
+        "ticker": "AAPL",
+        "grade": "A",
+        "composite_score": 0.85,
+        "recommendation": "BUY",
+        "generation_date": "2025-12-29"
+    },
+    output_path="output/reports/stock/AAPL_report.html"
+)
+```
+
+### Auto-Generation via ReportingOrchestrator
+
+```python
+from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
+from finwiz.flow_state import FinwizState
+
+orchestrator = ReportingOrchestrator(FinwizState())
+
+# Consolidate AND auto-generate HTML reports
+result = orchestrator.consolidate_reports(
+    crew_export_paths={
+        "stock_crew": ["output/stock/AAPL_export.json"],
+        "etf_crew": ["output/etf/SPY_export.json"],
+    },
+    generate_html=True  # Default: auto-generates HTML
+)
+
+# Result includes HTML paths
+print(result["html_report_paths"])
+# {"stock_crew": ["output/stock/AAPL_export.html"], ...}
+```
+
+### Generate Single Report (Legacy)
 
 ```python
 from finwiz.reporting.python_report_generator import PythonReportGenerator

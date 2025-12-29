@@ -482,3 +482,213 @@ class TestReportingOrchestrator:
         # Should still succeed but with 0 reports
         assert result["success"] is True
         assert result["consolidated_data"]["total_reports"] == 0
+
+
+class TestHTMLAutoGeneration:
+    """Tests for HTML auto-generation functionality."""
+
+    @pytest.fixture
+    def state(self):
+        """Create a FinwizState instance for testing."""
+        return FinwizState()
+
+    @pytest.fixture
+    def orchestrator(self, state):
+        """Create a ReportingOrchestrator instance for testing."""
+        return ReportingOrchestrator(state)
+
+    def test_should_generate_crew_html_report(self, orchestrator, tmp_path, mocker):
+        """Test generating HTML report for a single crew export."""
+        # Arrange
+        export_file = tmp_path / "AAPL_export.json"
+        export_data = {"ticker": "AAPL", "grade": "A", "composite_score": 0.85}
+        export_file.write_text(json.dumps(export_data))
+
+        # Mock the generator
+        mock_generator = mocker.Mock()
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=mock_generator,
+        )
+
+        # Act
+        result = orchestrator.generate_crew_html_report("stock_crew", str(export_file))
+
+        # Assert
+        assert result is not None
+        assert result.suffix == ".html"
+        mock_generator.generate_report.assert_called_once()
+
+    def test_should_return_none_when_no_generator_for_crew(self, orchestrator, tmp_path, mocker):
+        """Test returns None when no generator is registered for crew."""
+        # Arrange
+        export_file = tmp_path / "test_export.json"
+        export_file.write_text(json.dumps({"ticker": "TEST"}))
+
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=None,
+        )
+
+        # Act
+        result = orchestrator.generate_crew_html_report("unknown_crew", str(export_file))
+
+        # Assert
+        assert result is None
+
+    def test_should_return_none_when_export_file_missing(self, orchestrator, mocker):
+        """Test returns None when export file doesn't exist."""
+        # Arrange
+        nonexistent_path = "/nonexistent/path/export.json"
+
+        # Act
+        result = orchestrator.generate_crew_html_report("stock_crew", nonexistent_path)
+
+        # Assert
+        assert result is None
+
+    def test_should_handle_generator_error_gracefully(self, orchestrator, tmp_path, mocker):
+        """Test handles generator errors gracefully."""
+        # Arrange
+        export_file = tmp_path / "AAPL_export.json"
+        export_file.write_text(json.dumps({"ticker": "AAPL"}))
+
+        mock_generator = mocker.Mock()
+        mock_generator.generate_report.side_effect = Exception("Template error")
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=mock_generator,
+        )
+
+        # Act
+        result = orchestrator.generate_crew_html_report("stock_crew", str(export_file))
+
+        # Assert
+        assert result is None
+
+    def test_should_generate_all_crew_html_reports(self, orchestrator, tmp_path, mocker):
+        """Test batch generation of HTML reports for all crews."""
+        # Arrange
+        stock_file = tmp_path / "AAPL_export.json"
+        stock_file.write_text(json.dumps({"ticker": "AAPL"}))
+
+        etf_file = tmp_path / "SPY_export.json"
+        etf_file.write_text(json.dumps({"ticker": "SPY"}))
+
+        crew_export_paths = {
+            "stock_crew": [str(stock_file)],
+            "etf_crew": [str(etf_file)],
+        }
+
+        mock_generator = mocker.Mock()
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=mock_generator,
+        )
+
+        # Act
+        result = orchestrator.generate_all_crew_html_reports(crew_export_paths)
+
+        # Assert
+        assert "stock_crew" in result
+        assert "etf_crew" in result
+        assert len(result["stock_crew"]) == 1
+        assert len(result["etf_crew"]) == 1
+        assert mock_generator.generate_report.call_count == 2
+
+    def test_should_count_generated_and_failed_reports(self, orchestrator, tmp_path, mocker):
+        """Test counting of generated vs failed reports."""
+        # Arrange
+        success_file = tmp_path / "AAPL_export.json"
+        success_file.write_text(json.dumps({"ticker": "AAPL"}))
+
+        crew_export_paths = {
+            "stock_crew": [str(success_file), "/nonexistent/file.json"],
+        }
+
+        mock_generator = mocker.Mock()
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=mock_generator,
+        )
+
+        # Act
+        result = orchestrator.generate_all_crew_html_reports(crew_export_paths)
+
+        # Assert
+        # One file should succeed, one should fail (nonexistent)
+        assert "stock_crew" in result
+        assert len(result["stock_crew"]) == 1
+
+    def test_consolidate_reports_should_auto_generate_html(self, orchestrator, tmp_path, mocker):
+        """Test that consolidate_reports auto-generates HTML when enabled."""
+        # Arrange
+        export_file = tmp_path / "AAPL_export.json"
+        export_file.write_text(json.dumps({"ticker": "AAPL", "grade": "A"}))
+
+        crew_export_paths = {"stock_crew": [str(export_file)]}
+
+        mock_generator = mocker.Mock()
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=mock_generator,
+        )
+
+        # Act
+        result = orchestrator.consolidate_reports(crew_export_paths, generate_html=True)
+
+        # Assert
+        assert result["success"] is True
+        assert "html_report_paths" in result
+        assert "stock_crew" in result["html_report_paths"]
+        mock_generator.generate_report.assert_called_once()
+
+    def test_consolidate_reports_should_skip_html_when_disabled(self, orchestrator, tmp_path, mocker):
+        """Test that consolidate_reports skips HTML generation when disabled."""
+        # Arrange
+        export_file = tmp_path / "AAPL_export.json"
+        export_file.write_text(json.dumps({"ticker": "AAPL", "grade": "A"}))
+
+        crew_export_paths = {"stock_crew": [str(export_file)]}
+
+        mock_generator = mocker.Mock()
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=mock_generator,
+        )
+
+        # Act
+        result = orchestrator.consolidate_reports(crew_export_paths, generate_html=False)
+
+        # Assert
+        assert result["success"] is True
+        assert result["html_report_paths"] == {}
+        mock_generator.generate_report.assert_not_called()
+
+    def test_consolidate_reports_should_include_html_count_in_consolidated_data(
+        self, orchestrator, tmp_path, mocker
+    ):
+        """Test that consolidate_reports includes HTML generation count."""
+        # Arrange
+        stock_file = tmp_path / "AAPL_export.json"
+        stock_file.write_text(json.dumps({"ticker": "AAPL"}))
+
+        etf_file = tmp_path / "SPY_export.json"
+        etf_file.write_text(json.dumps({"ticker": "SPY"}))
+
+        crew_export_paths = {
+            "stock_crew": [str(stock_file)],
+            "etf_crew": [str(etf_file)],
+        }
+
+        mock_generator = mocker.Mock()
+        mocker.patch(
+            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            return_value=mock_generator,
+        )
+
+        # Act
+        result = orchestrator.consolidate_reports(crew_export_paths, generate_html=True)
+
+        # Assert
+        assert result["consolidated_data"]["html_reports_generated"] == 2

@@ -50,26 +50,32 @@ class FlowStateManager:
             cursor = conn.cursor()
 
             # Get unique flow UUIDs with their most recent timestamp
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT flow_uuid, MAX(timestamp) as last_timestamp
                 FROM flow_states
                 GROUP BY flow_uuid
                 ORDER BY last_timestamp DESC
                 LIMIT ?
-            """, (limit,))
+            """,
+                (limit,),
+            )
 
             unique_flows = cursor.fetchall()
 
             for flow_uuid, last_timestamp in unique_flows:
                 try:
                     # Get the final state for this flow (run_sequential_workflow or report)
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         SELECT state_json, method_name, timestamp
                         FROM flow_states
                         WHERE flow_uuid = ?
                         ORDER BY timestamp DESC
                         LIMIT 1
-                    """, (flow_uuid,))
+                    """,
+                        (flow_uuid,),
+                    )
 
                     row = cursor.fetchone()
                     if not row:
@@ -97,17 +103,19 @@ class FlowStateManager:
                     # Determine completion status from final method
                     is_complete = method_name in ["report", "run_sequential_workflow"]
 
-                    states.append({
-                        "uuid": flow_uuid,
-                        "method": method_name,
-                        "session_id": session_id,
-                        "analysis_count": analysis_count,
-                        "current_date": current_date,
-                        "age_hours": age_hours,
-                        "last_update": last_update,
-                        "is_stale": age_hours > 24,
-                        "is_complete": is_complete,
-                    })
+                    states.append(
+                        {
+                            "uuid": flow_uuid,
+                            "method": method_name,
+                            "session_id": session_id,
+                            "analysis_count": analysis_count,
+                            "current_date": current_date,
+                            "age_hours": age_hours,
+                            "last_update": last_update,
+                            "is_stale": age_hours > 24,
+                            "is_complete": is_complete,
+                        }
+                    )
                 except Exception as e:
                     logger.warning(f"Failed to parse state {flow_uuid}: {e}")
 
@@ -265,13 +273,16 @@ class FlowStateManager:
             cursor = conn.cursor()
 
             # Query state by flow_uuid (get most recent)
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT state_json
                 FROM flow_states
                 WHERE flow_uuid = ?
                 ORDER BY timestamp DESC
                 LIMIT 1
-            """, (flow_uuid,))
+            """,
+                (flow_uuid,),
+            )
 
             row = cursor.fetchone()
             conn.close()
@@ -315,18 +326,24 @@ class FlowStateManager:
             cursor = conn.cursor()
 
             # Count rows to be deleted
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COUNT(*) FROM flow_states
                 WHERE timestamp < ?
-            """, (cutoff_str,))
+            """,
+                (cutoff_str,),
+            )
             count = cursor.fetchone()[0]
 
             if count > 0:
                 # Delete old entries
-                cursor.execute("""
+                cursor.execute(
+                    """
                     DELETE FROM flow_states
                     WHERE timestamp < ?
-                """, (cutoff_str,))
+                """,
+                    (cutoff_str,),
+                )
                 conn.commit()
                 logger.info(f"Deleted {count} old flow state entries (older than {max_age_days} days)")
 
