@@ -6,6 +6,7 @@ including state containers and state-related helper methods.
 """
 
 import os
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -83,6 +84,9 @@ class FinwizState(BaseModel):
     This replaces ALL previous usage of self.inputs dictionary with structured, type-safe fields.
     NO backward compatibility with self.inputs - complete migration.
     """
+
+    # Required for CrewAI Flow persistence (@persist decorator)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique flow state ID for persistence")
 
     # Session metadata (from create_flow_inputs)
     current_day: int = Field(default_factory=lambda: datetime.now().day)

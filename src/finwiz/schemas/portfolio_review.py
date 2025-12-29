@@ -9,7 +9,7 @@ from .common import RiskAssessmentStandardized
 
 Decision = Literal["KEEP", "SELL"]
 AssetClass = Literal["stock", "etf", "crypto"]  # Added crypto support for A+ discoveries
-Grade = Literal["A+", "A", "B+", "B", "C+", "C", "D", "F"]
+Grade = Literal["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]
 ImprovementType = Literal["replacement", "addition", "rebalancing"]
 Priority = Literal["high", "medium", "low"]
 

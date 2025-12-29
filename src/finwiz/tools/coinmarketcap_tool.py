@@ -80,6 +80,7 @@ class CoinMarketCapInfoTool(BaseTool):
             f"{CMC_BASE_URL}/cryptocurrency/quotes/latest",
             headers=headers,
             params=params,
+            timeout=30,
         )
 
         if response.status_code != 200:
@@ -178,6 +179,7 @@ class CoinMarketCapListTool(BaseTool):
                 f"{CMC_BASE_URL}/cryptocurrency/listings/latest",
                 headers=headers,
                 params=params,
+                timeout=30,
             )
 
             if response.status_code != 200:
@@ -265,7 +267,7 @@ class CoinMarketCapHistoricalTool(BaseTool):
             # For historical data, we first need to get the crypto ID
             id_params = {"symbol": symbol.upper()}
 
-            id_response = requests.get(f"{CMC_BASE_URL}/cryptocurrency/map", headers=headers, params=id_params)
+            id_response = requests.get(f"{CMC_BASE_URL}/cryptocurrency/map", headers=headers, params=id_params, timeout=30)
 
             if id_response.status_code != 200:
                 error_msg = f"CoinMarketCap API error: {id_response.status_code} - {id_response.text}"
@@ -292,6 +294,7 @@ class CoinMarketCapHistoricalTool(BaseTool):
                 f"{CMC_BASE_URL}/cryptocurrency/quotes/historical",
                 headers=headers,
                 params=history_params,
+                timeout=30,
             )
 
             if history_response.status_code != 200:
@@ -404,6 +407,7 @@ class CoinMarketCapNewsTool(BaseTool):
                     f"{CMC_BASE_URL}/cryptocurrency/map",
                     headers=headers,
                     params=id_params,
+                    timeout=30,
                 )
 
                 if id_response.status_code != 200:
@@ -419,7 +423,7 @@ class CoinMarketCapNewsTool(BaseTool):
 
                 params["cryptocurrencies"] = id_data["data"][0]["id"]
 
-            response = requests.get(f"{CMC_BASE_URL}/content/latest", headers=headers, params=params)
+            response = requests.get(f"{CMC_BASE_URL}/content/latest", headers=headers, params=params, timeout=30)
 
             if response.status_code != 200:
                 error_msg = f"CoinMarketCap API error: {response.status_code} - {response.text}"

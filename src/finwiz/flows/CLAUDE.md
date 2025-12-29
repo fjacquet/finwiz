@@ -6,64 +6,44 @@ This directory contains CrewAI Flow orchestration logic for coordinating the mul
 
 ```
 flows/
-├── flow_orchestrator.py           # Main entry point (backward compat layer)
-├── flow_orchestrator_refactored.py # Actual Flow implementation
-├── flow_orchestrator_original.py.bak  # Legacy backup
-└── hybrid_analysis_flow.py        # Hybrid Python/AI analysis flow
+├── flow_orchestrator.py      # Main Flow entry point
+└── hybrid_analysis_flow.py   # Subflow for per-holding Python/AI hybrid analysis
+```
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     FinwizFlow (Main)                       │
+│                  flow_orchestrator.py                       │
+│                                                             │
+│  Coordinates 6 phases via orchestrator delegation:          │
+│  1. Data Validation → ValidationOrchestrator                │
+│  2. Portfolio Review → ValidationOrchestrator               │
+│  3. Deep Analysis → DeepAnalysisOrchestrator                │
+│  4. Discovery (optional) → DiscoveryOrchestrator            │
+│  5. Alternative Matching → AlternativesMatchingOrchestrator │
+│  6. Reporting → ReportingOrchestrator                       │
+├─────────────────────────────────────────────────────────────┤
+│                  HybridAnalysisFlow (Subflow)               │
+│                 hybrid_analysis_flow.py                     │
+│                                                             │
+│  Used BY DeepAnalysisOrchestrator for per-holding analysis: │
+│  1. collect_data() → Python tools fetch raw data            │
+│  2. calculate_quantitative_metrics() → DeepAnalysisScorer   │
+│  3. analyze_qualitative_insights() → AI agent (read-only)   │
+│  4. synthesize_enriched_analysis() → Combine results        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Major Entry Points
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `flow_orchestrator.py` | `FinwizFlow` | Main Flow class (re-exported from refactored) |
+| `flow_orchestrator.py` | `FinwizFlow` | Main workflow orchestrator |
+| `flow_orchestrator.py` | `OrchestratorDependencies` | Dependency injection container |
 | `flow_orchestrator.py` | `plot()` | Visualize flow structure |
-| `flow_orchestrator_refactored.py` | `FinwizFlow` | Actual implementation with orchestrator delegation |
-| `flow_orchestrator_refactored.py` | `OrchestratorDependencies` | Dependency injection container |
-| `hybrid_analysis_flow.py` | `HybridAnalysisFlow` | Python/AI hybrid analysis coordination |
-
-## Flow Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     FinwizFlow                          │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ @start() initialize                              │   │
-│  └─────────────────┬───────────────────────────────┘   │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐   │
-│  │ @listen() validate_data_integration              │   │
-│  └─────────────────┬───────────────────────────────┘   │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐   │
-│  │ @listen() check_portfolio                        │   │
-│  └─────────────────┬───────────────────────────────┘   │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐   │
-│  │ @listen() Core Analysis (parallel)              │   │
-│  │  ├── check_stock                                │   │
-│  │  ├── check_etf                                  │   │
-│  │  └── check_crypto                               │   │
-│  └─────────────────┬───────────────────────────────┘   │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐   │
-│  │ @listen() Deep Analysis                         │   │
-│  │  └── analyze_holdings_deep (per-holding)        │   │
-│  └─────────────────┬───────────────────────────────┘   │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐   │
-│  │ @listen() check_portfolio_rebalancing           │   │
-│  └─────────────────┬───────────────────────────────┘   │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐   │
-│  │ @listen() check_investment_discovery            │   │
-│  └─────────────────┬───────────────────────────────┘   │
-│                    │                                    │
-│  ┌─────────────────▼───────────────────────────────┐   │
-│  │ @listen() generate_final_report                 │   │
-│  └─────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-```
+| `hybrid_analysis_flow.py` | `HybridAnalysisFlow` | Per-holding Python/AI hybrid analysis |
 
 ## Flow State Management
 
@@ -75,17 +55,18 @@ from finwiz.flow_state import FinwizState
 
 class FinwizFlow(Flow[FinwizState]):
     @start()
-    def initialize(self) -> dict[str, Any]:
-        # Update structured state
-        self.state.portfolio_review = {}
-        # Return for downstream listeners
-        return {"status": "initialized"}
+    async def run_sequential_workflow(self) -> dict[str, Any]:
+        # Phase 1: Data Validation
+        await self.validation_orch.validate_data_integration()
 
-    @listen(initialize)
-    def next_step(self, data: dict[str, Any]) -> dict[str, Any]:
-        # Access state via self.state
-        review = self.state.portfolio_review
-        return {"result": "processed"}
+        # Phase 2: Portfolio Review
+        await self.validation_orch.check_portfolio()
+
+        # Phase 3: Deep Analysis
+        await self.deep_analysis_orch.analyze_and_update_portfolio()
+
+        # ... more phases
+        return {"status": "completed"}
 ```
 
 ## Critical Flow Rules
@@ -93,41 +74,44 @@ class FinwizFlow(Flow[FinwizState]):
 1. **State Access**: Always use `self.state.field_name`, NEVER `self.inputs`
 2. **Return Types**: All Flow methods must return `dict[str, Any]`
 3. **Type Safety**: Use `Flow[PydanticModel]` for structured state
-4. **Direct Crew Instantiation**: Use `StockCrew()` not factory patterns
-5. **Atomic Operations**: Consolidate related operations into single methods
+4. **Orchestrator Delegation**: Flow methods delegate to orchestrators
+5. **Lazy Loading**: Orchestrators are lazy-loaded via properties
 
 ## Orchestrator Delegation
 
-The flow delegates to specialized orchestrators:
+The flow delegates to specialized orchestrators via lazy-loaded properties:
 
 ```python
-from finwiz.orchestrators import (
-    DeepAnalysisOrchestrator,
-    DiscoveryOrchestrator,
-    ReportingOrchestrator,
-    ValidationOrchestrator,
-)
-
 class FinwizFlow(Flow[FinwizState]):
-    def __init__(self):
-        self.deep_analysis_orch = DeepAnalysisOrchestrator()
-        self.discovery_orch = DiscoveryOrchestrator()
-        # ...
+    @property
+    def deep_analysis_orch(self):
+        if self._deep_analysis_orch is None:
+            from finwiz.orchestrators import DeepAnalysisOrchestrator
+            self._deep_analysis_orch = DeepAnalysisOrchestrator(
+                state=self.state,
+                crew_factory=self.deps.crew_factory,
+                # ... other deps
+            )
+        return self._deep_analysis_orch
 ```
 
-## Hybrid Analysis Flow
+## HybridAnalysisFlow (AI Minimalism)
 
-The `HybridAnalysisFlow` coordinates Python-based scoring with AI analysis:
+The `HybridAnalysisFlow` implements AI Minimalism for per-holding analysis:
 
 ```python
-# Python scoring (deterministic, fast, free)
-scorer = DeepAnalysisScorer()
-score_result = scorer.calculate_composite_score(ticker, asset_class, data)
+# Step 1: Python collects data (tools)
+raw_data = self._collect_raw_data(ticker, asset_class)
 
-# AI analysis (reasoning, slow, costly) - only when needed
-if needs_ai_insights:
-    crew = DeepAnalysisCrew()
-    insights = crew.crew().kickoff(inputs)
+# Step 2: Python calculates scores (DeepAnalysisScorer - $0 cost)
+score_result = self.scorer.calculate_composite_score(ticker, asset_class, raw_data)
+
+# Step 3: AI agent receives Python results as READ-ONLY input
+crew_inputs = {"quantitative_analysis": score_result}
+insights = crew.kickoff(inputs=crew_inputs)
+
+# Step 4: Combine Python quantitative + AI qualitative
+final_result = self._synthesize(score_result, insights)
 ```
 
 ## Running the Flow

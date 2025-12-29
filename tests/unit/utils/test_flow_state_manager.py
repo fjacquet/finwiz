@@ -24,14 +24,39 @@ class TestFlowStateManager:
         """Create FlowStateManager with mocked home directory."""
         # Mock Path.home() to return tmp_path
         mocker.patch("pathlib.Path.home", return_value=tmp_path)
+        # Create the state directory structure
+        state_dir = tmp_path / "Library" / "Application Support" / "finwiz"
+        state_dir.mkdir(parents=True, exist_ok=True)
         return FlowStateManager()
 
     @pytest.fixture
     def mock_state_file(self, tmp_path):
-        """Create a mock state file path."""
+        """Create a mock state file path (legacy - for metadata tests)."""
         state_dir = tmp_path / ".crewai" / "state"
         state_dir.mkdir(parents=True, exist_ok=True)
         return state_dir / "test-uuid-123.db"
+
+    @pytest.fixture
+    def mock_db(self, tmp_path):
+        """Create a mock flow_states.db database."""
+        state_dir = tmp_path / "Library" / "Application Support" / "finwiz"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        db_path = state_dir / "flow_states.db"
+
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE flow_states (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                flow_uuid TEXT NOT NULL,
+                method_name TEXT NOT NULL,
+                timestamp DATETIME NOT NULL,
+                state_json TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+        return db_path
 
     @pytest.fixture
     def sample_state_data(self):
@@ -39,6 +64,10 @@ class TestFlowStateManager:
         # Use a recent time (1 hour ago) to avoid stale state
         recent_time = datetime.now() - timedelta(hours=1)
         return {
+            "id": "test-uuid-123",
+            "session_id": "session-123",
+            "analysis_count": 10,
+            "current_date": "2025-01-15",
             "holdings_processed": 10,
             "total_holdings": 20,
             "flow_start_time": recent_time.isoformat(),
@@ -46,17 +75,35 @@ class TestFlowStateManager:
             "progress_percentage": 50.0,
         }
 
+    @pytest.fixture
+    def sample_resume_state(self):
+        """Sample state metadata for prompt_user_for_resume tests."""
+        return {
+            "uuid": "uuid-123",
+            "method": "run_sequential_workflow",
+            "session_id": "session-123",
+            "analysis_count": 10,
+            "current_date": "2025-01-15",
+            "age_hours": 2.0,
+            "last_update": datetime.now(),
+            "is_stale": False,
+            "is_complete": True,
+        }
+
     def test_should_initialize_with_state_directory(self, mocker, tmp_path):
         """Test FlowStateManager initialization creates state directory."""
         # Arrange
         mocker.patch("pathlib.Path.home", return_value=tmp_path)
+        # Create the directory since __init__ doesn't create it
+        state_dir = tmp_path / "Library" / "Application Support" / "finwiz"
+        state_dir.mkdir(parents=True, exist_ok=True)
 
         # Act
         manager = FlowStateManager()
 
         # Assert
-        assert manager.state_dir == tmp_path / ".crewai" / "state"
-        assert manager.state_dir.exists()
+        assert manager.state_dir == tmp_path / "Library" / "Application Support" / "finwiz"
+        assert manager.db_path == manager.state_dir / "flow_states.db"
 
     def test_should_discover_no_states_when_directory_empty(self, manager):
         """Test discovering states returns empty list when no .db files exist."""
@@ -66,22 +113,18 @@ class TestFlowStateManager:
         # Assert
         assert states == []
 
-    def test_should_discover_states_when_db_files_exist(self, manager, mocker, mock_state_file):
-        """Test discovering states finds .db files and extracts metadata."""
-        # Arrange
-        mock_state_file.touch()
-
-        mock_metadata = {
-            "uuid": "test-uuid-123",
-            "age_hours": 2.5,
-            "holdings_processed": 10,
-            "total_holdings": 20,
-            "progress_pct": 50.0,
-            "last_update": datetime.now(),
-            "is_stale": False,
-        }
-
-        mocker.patch.object(manager, "_extract_state_metadata", return_value=mock_metadata)
+    def test_should_discover_states_when_db_files_exist(self, manager, mock_db, sample_state_data):
+        """Test discovering states finds flow_states.db and extracts metadata."""
+        # Arrange - Insert test data
+        timestamp = datetime.now().isoformat()
+        conn = sqlite3.connect(str(mock_db))
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
+            ("test-uuid-123", "run_sequential_workflow", timestamp, json.dumps(sample_state_data))
+        )
+        conn.commit()
+        conn.close()
 
         # Act
         states = manager.discover_persisted_states()
@@ -89,39 +132,29 @@ class TestFlowStateManager:
         # Assert
         assert len(states) == 1
         assert states[0]["uuid"] == "test-uuid-123"
-        assert states[0]["holdings_processed"] == 10
+        assert states[0]["method"] == "run_sequential_workflow"
+        assert states[0]["is_complete"] is True
 
-    def test_should_sort_states_by_last_update_newest_first(self, manager, mocker, tmp_path):
+    def test_should_sort_states_by_last_update_newest_first(self, manager, mock_db):
         """Test states are sorted by last_update in descending order."""
         # Arrange
-        state_dir = tmp_path / ".crewai" / "state"
-        state_dir.mkdir(parents=True, exist_ok=True)
+        older_time = (datetime.now() - timedelta(hours=5)).isoformat()
+        newer_time = (datetime.now() - timedelta(hours=1)).isoformat()
 
-        file1 = state_dir / "uuid-1.db"
-        file2 = state_dir / "uuid-2.db"
-        file1.touch()
-        file2.touch()
+        state_data = {"id": "uuid", "session_id": "", "analysis_count": 0, "current_date": "2025-01-15"}
 
-        older_time = datetime.now() - timedelta(hours=5)
-        newer_time = datetime.now() - timedelta(hours=1)
-
-        mock_metadata_1 = {
-            "uuid": "uuid-1",
-            "last_update": older_time,
-            "age_hours": 5.0,
-        }
-        mock_metadata_2 = {
-            "uuid": "uuid-2",
-            "last_update": newer_time,
-            "age_hours": 1.0,
-        }
-
-        def mock_extract(state_file):
-            if "uuid-1" in str(state_file):
-                return mock_metadata_1
-            return mock_metadata_2
-
-        mocker.patch.object(manager, "_extract_state_metadata", side_effect=mock_extract)
+        conn = sqlite3.connect(str(mock_db))
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
+            ("uuid-1", "run_sequential_workflow", older_time, json.dumps(state_data))
+        )
+        cursor.execute(
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
+            ("uuid-2", "run_sequential_workflow", newer_time, json.dumps(state_data))
+        )
+        conn.commit()
+        conn.close()
 
         # Act
         states = manager.discover_persisted_states()
@@ -356,20 +389,10 @@ class TestFlowStateManager:
         # Assert
         assert result is None
 
-    def test_should_prompt_user_and_return_selected_uuid(self, manager, mocker):
+    def test_should_prompt_user_and_return_selected_uuid(self, manager, mocker, sample_resume_state):
         """Test user prompt returns selected UUID."""
         # Arrange
-        states = [
-            {
-                "uuid": "uuid-123",
-                "age_hours": 2.0,
-                "holdings_processed": 10,
-                "total_holdings": 20,
-                "progress_pct": 50.0,
-                "last_update": datetime.now(),
-                "is_stale": False,
-            }
-        ]
+        states = [sample_resume_state]
 
         # Mock user input to select first option
         mocker.patch("builtins.input", return_value="1")
@@ -380,20 +403,10 @@ class TestFlowStateManager:
         # Assert
         assert result == "uuid-123"
 
-    def test_should_return_none_when_user_selects_start_fresh(self, manager, mocker):
+    def test_should_return_none_when_user_selects_start_fresh(self, manager, mocker, sample_resume_state):
         """Test prompt returns None when user selects 'Start Fresh'."""
         # Arrange
-        states = [
-            {
-                "uuid": "uuid-123",
-                "age_hours": 2.0,
-                "holdings_processed": 10,
-                "total_holdings": 20,
-                "progress_pct": 50.0,
-                "last_update": datetime.now(),
-                "is_stale": False,
-            }
-        ]
+        states = [sample_resume_state]
 
         # Mock user input to select "Start Fresh" (option 2)
         mocker.patch("builtins.input", return_value="2")
@@ -410,12 +423,14 @@ class TestFlowStateManager:
         states = [
             {
                 "uuid": "uuid-stale",
+                "method": "run_sequential_workflow",
+                "session_id": "",
+                "analysis_count": 5,
+                "current_date": "2025-01-15",
                 "age_hours": 30.0,
-                "holdings_processed": 5,
-                "total_holdings": 10,
-                "progress_pct": 50.0,
                 "last_update": datetime.now() - timedelta(hours=30),
                 "is_stale": True,
+                "is_complete": True,
             }
         ]
 
@@ -434,12 +449,14 @@ class TestFlowStateManager:
         states = [
             {
                 "uuid": "uuid-stale",
+                "method": "run_sequential_workflow",
+                "session_id": "",
+                "analysis_count": 5,
+                "current_date": "2025-01-15",
                 "age_hours": 30.0,
-                "holdings_processed": 5,
-                "total_holdings": 10,
-                "progress_pct": 50.0,
                 "last_update": datetime.now() - timedelta(hours=30),
                 "is_stale": True,
+                "is_complete": True,
             }
         ]
 
@@ -452,20 +469,10 @@ class TestFlowStateManager:
         # Assert
         assert result is None  # User selected "Start Fresh" after declining stale
 
-    def test_should_handle_invalid_choice_and_retry(self, manager, mocker):
+    def test_should_handle_invalid_choice_and_retry(self, manager, mocker, sample_resume_state):
         """Test prompt handles invalid choice and retries."""
         # Arrange
-        states = [
-            {
-                "uuid": "uuid-123",
-                "age_hours": 2.0,
-                "holdings_processed": 10,
-                "total_holdings": 20,
-                "progress_pct": 50.0,
-                "last_update": datetime.now(),
-                "is_stale": False,
-            }
-        ]
+        states = [sample_resume_state]
 
         # Mock user inputs: invalid choice, then valid choice
         mocker.patch("builtins.input", side_effect=["99", "1"])
@@ -476,20 +483,10 @@ class TestFlowStateManager:
         # Assert
         assert result == "uuid-123"
 
-    def test_should_handle_non_numeric_input_and_retry(self, manager, mocker):
+    def test_should_handle_non_numeric_input_and_retry(self, manager, mocker, sample_resume_state):
         """Test prompt handles non-numeric input and retries."""
         # Arrange
-        states = [
-            {
-                "uuid": "uuid-123",
-                "age_hours": 2.0,
-                "holdings_processed": 10,
-                "total_holdings": 20,
-                "progress_pct": 50.0,
-                "last_update": datetime.now(),
-                "is_stale": False,
-            }
-        ]
+        states = [sample_resume_state]
 
         # Mock user inputs: non-numeric, then valid choice
         mocker.patch("builtins.input", side_effect=["abc", "1"])
@@ -500,20 +497,10 @@ class TestFlowStateManager:
         # Assert
         assert result == "uuid-123"
 
-    def test_should_exit_on_keyboard_interrupt(self, manager, mocker):
+    def test_should_exit_on_keyboard_interrupt(self, manager, mocker, sample_resume_state):
         """Test prompt exits gracefully on KeyboardInterrupt."""
         # Arrange
-        states = [
-            {
-                "uuid": "uuid-123",
-                "age_hours": 2.0,
-                "holdings_processed": 10,
-                "total_holdings": 20,
-                "progress_pct": 50.0,
-                "last_update": datetime.now(),
-                "is_stale": False,
-            }
-        ]
+        states = [sample_resume_state]
 
         # Mock user input to raise KeyboardInterrupt
         mocker.patch("builtins.input", side_effect=KeyboardInterrupt())
@@ -522,17 +509,18 @@ class TestFlowStateManager:
         with pytest.raises(SystemExit):
             manager.prompt_user_for_resume(states)
 
-    def test_should_load_state_by_uuid_successfully(self, manager, mocker, mock_state_file, sample_state_data):
+    def test_should_load_state_by_uuid_successfully(self, manager, mock_db, sample_state_data):
         """Test loading state data by UUID."""
-        # Arrange
-        mock_state_file.touch()
-
-        mock_conn = mocker.MagicMock()
-        mock_cursor = mocker.MagicMock()
-        mock_cursor.fetchone.return_value = (json.dumps(sample_state_data),)
-        mock_conn.cursor.return_value = mock_cursor
-
-        mocker.patch("sqlite3.connect", return_value=mock_conn)
+        # Arrange - Insert test data
+        timestamp = datetime.now().isoformat()
+        conn = sqlite3.connect(str(mock_db))
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
+            ("test-uuid-123", "run_sequential_workflow", timestamp, json.dumps(sample_state_data))
+        )
+        conn.commit()
+        conn.close()
 
         # Act
         state_data = manager.load_flow_state_by_uuid("test-uuid-123")
@@ -541,7 +529,6 @@ class TestFlowStateManager:
         assert state_data is not None
         assert state_data["holdings_processed"] == 10
         assert state_data["total_holdings"] == 20
-        mock_conn.close.assert_called_once()
 
     def test_should_return_none_when_state_file_not_found(self, manager):
         """Test load returns None when state file doesn't exist."""
@@ -581,76 +568,50 @@ class TestFlowStateManager:
         # Assert
         assert state_data is None
 
-    def test_should_return_none_when_no_state_data_during_load(self, manager, mocker, mock_state_file):
+    def test_should_return_none_when_no_state_data_during_load(self, manager, mock_db):
         """Test load returns None when query returns no rows."""
-        # Arrange
-        mock_state_file.touch()
-
-        mock_conn = mocker.MagicMock()
-        mock_cursor = mocker.MagicMock()
-        mock_cursor.fetchone.return_value = None
-        mock_conn.cursor.return_value = mock_cursor
-
-        mocker.patch("sqlite3.connect", return_value=mock_conn)
+        # Arrange - mock_db exists but has no data for the requested UUID
 
         # Act
-        state_data = manager.load_flow_state_by_uuid("test-uuid-123")
+        state_data = manager.load_flow_state_by_uuid("nonexistent-uuid")
 
         # Assert
         assert state_data is None
-        mock_conn.close.assert_called_once()
 
-    def test_should_cleanup_old_states_successfully(self, manager, mocker, tmp_path):
-        """Test cleanup deletes state files older than max_age_days."""
+    def test_should_cleanup_old_states_successfully(self, manager, mock_db):
+        """Test cleanup deletes state entries older than max_age_days from database."""
         # Arrange
-        state_dir = tmp_path / ".crewai" / "state"
-        state_dir.mkdir(parents=True, exist_ok=True)
+        old_time = (datetime.now() - timedelta(days=10)).isoformat()
+        recent_time = (datetime.now() - timedelta(days=2)).isoformat()
+        state_data = json.dumps({"id": "uuid", "session_id": ""})
 
-        old_file = state_dir / "old-uuid.db"
-        recent_file = state_dir / "recent-uuid.db"
-        old_file.touch()
-        recent_file.touch()
-
-        # Mock file modification times using os.stat
-        old_time = datetime.now() - timedelta(days=10)
-        recent_time = datetime.now() - timedelta(days=2)
-
-        import os
-
-        original_stat = os.stat
-
-        def mock_stat(path, *args, **kwargs):
-            path_str = str(path)
-            if "old-uuid" in path_str:
-                result = original_stat(path, *args, **kwargs)
-                # Create a new stat_result with modified mtime
-                import os
-
-                return os.stat_result(
-                    (
-                        result.st_mode,
-                        result.st_ino,
-                        result.st_dev,
-                        result.st_nlink,
-                        result.st_uid,
-                        result.st_gid,
-                        result.st_size,
-                        result.st_atime,
-                        old_time.timestamp(),
-                        result.st_ctime,
-                    )
-                )
-            return original_stat(path, *args, **kwargs)
-
-        mocker.patch("os.stat", side_effect=mock_stat)
+        conn = sqlite3.connect(str(mock_db))
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
+            ("old-uuid", "run_sequential_workflow", old_time, state_data)
+        )
+        cursor.execute(
+            "INSERT INTO flow_states (flow_uuid, method_name, timestamp, state_json) VALUES (?, ?, ?, ?)",
+            ("recent-uuid", "run_sequential_workflow", recent_time, state_data)
+        )
+        conn.commit()
+        conn.close()
 
         # Act
         deleted_count = manager.cleanup_old_states(max_age_days=7)
 
         # Assert
         assert deleted_count == 1
-        assert not old_file.exists()
-        assert recent_file.exists()
+
+        # Verify only old entry was deleted
+        conn = sqlite3.connect(str(mock_db))
+        cursor = conn.cursor()
+        cursor.execute("SELECT flow_uuid FROM flow_states")
+        remaining = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        assert "recent-uuid" in remaining
+        assert "old-uuid" not in remaining
 
     def test_should_return_zero_when_no_old_states_to_cleanup(self, manager):
         """Test cleanup returns 0 when no old states exist."""
@@ -660,14 +621,9 @@ class TestFlowStateManager:
         # Assert
         assert deleted_count == 0
 
-    def test_should_return_zero_when_state_directory_not_exists(self, mocker, tmp_path):
-        """Test cleanup returns 0 when state directory doesn't exist."""
-        # Arrange
-        mocker.patch("pathlib.Path.home", return_value=tmp_path)
-        manager = FlowStateManager()
-
-        # Remove the state directory
-        manager.state_dir.rmdir()
+    def test_should_return_zero_when_database_not_exists(self, manager):
+        """Test cleanup returns 0 when database file doesn't exist."""
+        # Arrange - db_path doesn't exist (manager fixture creates dir but not db)
 
         # Act
         deleted_count = manager.cleanup_old_states(max_age_days=7)

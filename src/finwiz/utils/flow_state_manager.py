@@ -23,35 +23,98 @@ class FlowStateManager:
     """Manages discovery and loading of persisted flow states."""
 
     def __init__(self) -> None:
-        """Initialize FlowStateManager with CrewAI default state directory."""
-        # CrewAI stores state in ~/.crewai/state/ by default
-        self.state_dir = Path.home() / ".crewai" / "state"
-        self.state_dir.mkdir(parents=True, exist_ok=True)
+        """Initialize FlowStateManager with CrewAI SQLite persistence location."""
+        # CrewAI's SQLiteFlowPersistence stores in ~/Library/Application Support/{app_name}/
+        self.state_dir = Path.home() / "Library" / "Application Support" / "finwiz"
+        self.db_path = self.state_dir / "flow_states.db"
 
-    def discover_persisted_states(self) -> list[dict]:
+    def discover_persisted_states(self, limit: int = 10) -> list[dict]:
         """
-        Discover all persisted flow states.
+        Discover unique persisted flow states from SQLite database.
+
+        Args:
+            limit: Maximum number of unique flow states to return (default: 10)
 
         Returns:
-            List of state metadata dicts with: uuid, age_hours, progress, last_update
+            List of state metadata dicts with: uuid, age_hours, last_update, etc.
 
         """
         states = []
 
-        if not self.state_dir.exists():
+        if not self.db_path.exists():
+            logger.info(f"No flow states database found at {self.db_path}")
             return states
 
-        # Find all .db files (CrewAI SQLite persistence)
-        for state_file in self.state_dir.glob("*.db"):
-            try:
-                metadata = self._extract_state_metadata(state_file)
-                if metadata:
-                    states.append(metadata)
-            except Exception as e:
-                logger.warning(f"Failed to read state {state_file}: {e}")
+        try:
+            conn = sqlite3.connect(str(self.db_path))
+            cursor = conn.cursor()
 
-        # Sort by last update (newest first)
-        states.sort(key=lambda x: x["last_update"], reverse=True)
+            # Get unique flow UUIDs with their most recent timestamp
+            cursor.execute("""
+                SELECT flow_uuid, MAX(timestamp) as last_timestamp
+                FROM flow_states
+                GROUP BY flow_uuid
+                ORDER BY last_timestamp DESC
+                LIMIT ?
+            """, (limit,))
+
+            unique_flows = cursor.fetchall()
+
+            for flow_uuid, last_timestamp in unique_flows:
+                try:
+                    # Get the final state for this flow (run_sequential_workflow or report)
+                    cursor.execute("""
+                        SELECT state_json, method_name, timestamp
+                        FROM flow_states
+                        WHERE flow_uuid = ?
+                        ORDER BY timestamp DESC
+                        LIMIT 1
+                    """, (flow_uuid,))
+
+                    row = cursor.fetchone()
+                    if not row:
+                        continue
+
+                    state_json, method_name, timestamp = row
+                    state_data = json.loads(state_json) if state_json else {}
+
+                    # Extract key state fields
+                    session_id = state_data.get("session_id", "")
+                    analysis_count = state_data.get("analysis_count", 0)
+                    current_date = state_data.get("current_date", "")
+
+                    # Parse timestamp for age calculation
+                    try:
+                        last_update = datetime.fromisoformat(timestamp) if timestamp else datetime.now()
+                        # Handle timezone-aware timestamps
+                        if last_update.tzinfo is not None:
+                            last_update = last_update.replace(tzinfo=None)
+                        age_hours = (datetime.now() - last_update).total_seconds() / 3600
+                    except ValueError:
+                        last_update = datetime.now()
+                        age_hours = 0
+
+                    # Determine completion status from final method
+                    is_complete = method_name in ["report", "run_sequential_workflow"]
+
+                    states.append({
+                        "uuid": flow_uuid,
+                        "method": method_name,
+                        "session_id": session_id,
+                        "analysis_count": analysis_count,
+                        "current_date": current_date,
+                        "age_hours": age_hours,
+                        "last_update": last_update,
+                        "is_stale": age_hours > 24,
+                        "is_complete": is_complete,
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to parse state {flow_uuid}: {e}")
+
+            conn.close()
+
+        except Exception as e:
+            logger.warning(f"Failed to read flow states database: {e}")
 
         return states
 
@@ -141,12 +204,12 @@ class FlowStateManager:
 
         for idx, state in enumerate(states, 1):
             age_str = f"{state['age_hours']:.1f}h ago"
-            progress_str = f"{state['holdings_processed']}/{state['total_holdings']} ({state['progress_pct']:.1f}%)"
+            status_str = "✅ Complete" if state.get("is_complete") else "⏸️ Partial"
             stale_marker = " ⚠️ STALE" if state["is_stale"] else ""
 
             print(f"\n{idx}. UUID: {state['uuid'][:8]}...{stale_marker}")
-            print(f"   Age: {age_str}")
-            print(f"   Progress: {progress_str}")
+            print(f"   Status: {status_str} (last step: {state['method']})")
+            print(f"   Date: {state.get('current_date', 'N/A')} | Age: {age_str}")
             print(f"   Last Update: {state['last_update'].strftime('%Y-%m-%d %H:%M:%S')}")
 
         print(f"\n{len(states) + 1}. Start Fresh (new UUID)")
@@ -182,79 +245,97 @@ class FlowStateManager:
                 print("\n\n❌ Cancelled by user")
                 raise SystemExit(0)
 
-    def load_flow_state_by_uuid(self, uuid: str) -> dict | None:
+    def load_flow_state_by_uuid(self, flow_uuid: str) -> dict | None:
         """
-        Load flow state data by UUID.
+        Load flow state data by UUID from the SQLite database.
 
         Args:
-            uuid: UUID of the flow state to load
+            flow_uuid: UUID of the flow state to load
 
         Returns:
             State data dict or None if not found
 
         """
-        state_file = self.state_dir / f"{uuid}.db"
-
-        if not state_file.exists():
-            logger.error(f"State file not found: {state_file}")
+        if not self.db_path.exists():
+            logger.error(f"Flow states database not found: {self.db_path}")
             return None
 
         try:
-            conn = sqlite3.connect(str(state_file))
+            conn = sqlite3.connect(str(self.db_path))
             cursor = conn.cursor()
 
+            # Query state by flow_uuid (get most recent)
             cursor.execute("""
-                SELECT state_data 
-                FROM flow_state 
-                ORDER BY created_at DESC 
+                SELECT state_json
+                FROM flow_states
+                WHERE flow_uuid = ?
+                ORDER BY timestamp DESC
                 LIMIT 1
-            """)
+            """, (flow_uuid,))
 
             row = cursor.fetchone()
-            if not row:
-                conn.close()
-                return None
-
-            state_data = json.loads(row[0])
             conn.close()
 
+            if not row:
+                logger.error(f"No state found for flow UUID: {flow_uuid}")
+                return None
+
+            state_data = json.loads(row[0]) if row[0] else {}
             return state_data
 
         except sqlite3.Error as e:
-            logger.error(f"SQLite error loading state from {state_file}: {e}")
+            logger.error(f"SQLite error loading state for {flow_uuid}: {e}")
             return None
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error loading state from {state_file}: {e}")
+            logger.error(f"JSON decode error loading state for {flow_uuid}: {e}")
             return None
         except Exception as e:
-            logger.error(f"Failed to load state from {state_file}: {e}")
+            logger.error(f"Failed to load state for {flow_uuid}: {e}")
             return None
 
     def cleanup_old_states(self, max_age_days: int = 7) -> int:
         """
-        Clean up state files older than max_age_days.
+        Clean up state entries older than max_age_days from the database.
 
         Args:
             max_age_days: Maximum age in days before deletion
 
         Returns:
-            Number of files deleted
+            Number of state entries deleted
 
         """
-        if not self.state_dir.exists():
+        if not self.db_path.exists():
             return 0
 
         cutoff = datetime.now() - timedelta(days=max_age_days)
-        deleted = 0
+        cutoff_str = cutoff.isoformat()
 
-        for state_file in self.state_dir.glob("*.db"):
-            try:
-                mtime = datetime.fromtimestamp(state_file.stat().st_mtime)
-                if mtime < cutoff:
-                    state_file.unlink()
-                    deleted += 1
-                    logger.info(f"Deleted old state: {state_file.name}")
-            except Exception as e:
-                logger.warning(f"Failed to delete {state_file}: {e}")
+        try:
+            conn = sqlite3.connect(str(self.db_path))
+            cursor = conn.cursor()
 
-        return deleted
+            # Count rows to be deleted
+            cursor.execute("""
+                SELECT COUNT(*) FROM flow_states
+                WHERE timestamp < ?
+            """, (cutoff_str,))
+            count = cursor.fetchone()[0]
+
+            if count > 0:
+                # Delete old entries
+                cursor.execute("""
+                    DELETE FROM flow_states
+                    WHERE timestamp < ?
+                """, (cutoff_str,))
+                conn.commit()
+                logger.info(f"Deleted {count} old flow state entries (older than {max_age_days} days)")
+
+            conn.close()
+            return count
+
+        except sqlite3.Error as e:
+            logger.warning(f"Failed to cleanup old states: {e}")
+            return 0
+        except Exception as e:
+            logger.warning(f"Failed to cleanup old states: {e}")
+            return 0

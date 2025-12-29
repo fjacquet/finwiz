@@ -209,11 +209,14 @@ class ReportingOrchestrator:
 
         """
         try:
-            from jinja2 import Environment, FileSystemLoader
+            from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-            # Setup Jinja2 environment
+            # Setup Jinja2 environment with autoescape to prevent XSS
             template_dir = Path("src/finwiz/reporting/templates")
-            env = Environment(loader=FileSystemLoader(str(template_dir)))
+            env = Environment(
+                loader=FileSystemLoader(str(template_dir)),
+                autoescape=select_autoescape(["html", "htm", "xml"])
+            )
 
             # Load template
             template = env.get_template(template_name)

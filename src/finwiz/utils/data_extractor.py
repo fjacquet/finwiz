@@ -208,7 +208,7 @@ class CrewDataExtractor:
                     source_type="api",
                     source_name=crew_name,
                     field_name="grade",
-                    raw_value=data["grade"],
+                    raw_value=grade_value,
                     timestamp=extraction_timestamp,
                     metadata={"crew": crew_name, "section": "crew_output"},
                 )
@@ -218,17 +218,17 @@ class CrewDataExtractor:
                     source_type="api",
                     source_name=crew_name,
                     field_name="composite_score",
-                    raw_value=data["composite_score"],
+                    raw_value=score_value,
                     timestamp=extraction_timestamp,
                     metadata={"crew": crew_name, "section": "crew_output"},
                 )
 
                 # Track type conversion for composite_score if needed
-                if not isinstance(data["composite_score"], float):
+                if not isinstance(score_value, float):
                     self.lineage_tracker.add_transformation(
                         transformation_id="convert_composite_score",
                         operation="type_conversion",
-                        input_values={"composite_score": data["composite_score"]},
+                        input_values={"composite_score": score_value},
                         output_value=result["composite_score"],
                         formula="float(composite_score)",
                     )

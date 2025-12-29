@@ -50,6 +50,8 @@ uv sync
 make test                  # Unit tests only (< 3 minutes)
 make test-all              # All tests including integration
 make coverage              # Test coverage report
+make coverage-report       # Open coverage in browser
+make test-failures         # Analyze and report test failures
 
 # Code Quality
 make lint                  # Ruff linting
@@ -92,6 +94,29 @@ make html-convert          # Convert JSON to HTML
 
 ```
 src/finwiz/
+├── main.py                     # Application entry point
+├── crew_factory.py             # Crew instantiation factory
+├── rag_config.py               # RAG configuration
+│
+├── api/                        # FastAPI REST API
+│   ├── app.py                 # FastAPI application setup
+│   ├── rebalancing.py         # Rebalancing endpoints
+│   └── monitoring.py          # Health/metrics endpoints
+│
+├── cache/                      # Caching infrastructure
+│   └── analysis_cache_manager.py  # Analysis result caching
+│
+├── cli/                        # Command-line interface
+│   └── args.py                # Argument parsing
+│
+├── config/                     # Configuration management
+│   ├── settings.py            # App settings (Pydantic)
+│   ├── batch_config.py        # Batch processing config
+│   └── resilience_config.py   # Circuit breaker config
+│
+├── core/                       # Core application logic
+│   └── app.py                 # App initialization
+│
 ├── crews/                      # CrewAI agent crews
 │   ├── stock_crew/            # Stock analysis
 │   ├── etf_crew/              # ETF analysis
@@ -99,56 +124,117 @@ src/finwiz/
 │   ├── portfolio_rebalancing_crew/
 │   ├── investment_discovery_crew/
 │   ├── report_crew/           # Final consolidation (NO tools)
-│   └── deep_analysis/         # Per-holding deep analysis
-│
-├── flows/                      # CrewAI Flow orchestration
-│   └── hybrid_analysis_flow.py # Main workflow coordination (Python/AI hybrid)
+│   ├── deep_analysis/         # Per-holding deep analysis
+│   └── helpers/               # Shared crew utilities
 │
 ├── data/                       # Data acquisition layer
-│   └── data_source_orchestrator.py  # Multi-source data collection
+│   ├── data_source_orchestrator.py  # Multi-source collection
+│   ├── adapters/              # Data source adapters
+│   │   ├── base_adapter.py   # Abstract base
+│   │   ├── yfinance_adapter.py
+│   │   ├── alpha_vantage_adapter.py
+│   │   └── [other adapters]
+│   └── exceptions.py          # Data-specific exceptions
+│
+├── exceptions/                 # Custom exception hierarchy
+│   └── base.py                # FinWizError base class
+│
+├── flows/                      # CrewAI Flow orchestration
+│   ├── hybrid_analysis_flow.py # Main workflow
+│   └── flow_orchestrator.py   # Flow coordination
+│
+├── integration/                # Data integration layer
+│   ├── data_accessor.py       # Core data access
+│   ├── data_validation.py     # Validation logic
+│   ├── data_cache.py          # Caching logic
+│   ├── data_lineage.py        # Data provenance
+│   ├── opportunity_extractors/ # A+ extraction
+│   └── [40+ integration modules]
+│
+├── monitoring/                 # Monitoring & alerting
+│   ├── investment_discovery_monitor.py
+│   └── alerting.py            # Alert management
 │
 ├── orchestrators/              # Business logic coordination
-│   ├── portfolio_review.py
-│   ├── rebalancing_*.py
-│   └── review_decisions.py
+│   ├── portfolio_review.py    # Review coordination
+│   ├── portfolio_rebalancing.py
+│   ├── deep_analysis_orchestrator.py
+│   ├── discovery_orchestrator.py
+│   └── [15+ orchestrator modules]
 │
 ├── quantitative/               # Quant analysis (modernized)
-│   ├── technical/             # Technical analysis (split from monolith)
+│   ├── technical/             # Technical analysis
+│   │   ├── engine.py         # TA engine
+│   │   ├── basic_indicators.py
+│   │   └── advanced_indicators.py
 │   ├── backtesting.py         # Backtrader integration
 │   ├── optimization.py        # Portfolio optimization
 │   ├── derivatives.py         # QuantLib derivatives
 │   ├── screening.py           # Stock screening
-│   └── portfolio_*.py         # Portfolio management
-│
-├── integration/                # Data integration (modernized)
-│   ├── data_accessor.py       # Core data access
-│   ├── data_validation.py     # Validation logic
-│   └── data_cache.py          # Caching logic
-│
-├── tools/                      # Custom financial tools
-│   ├── tool_factories.py      # Centralized tool initialization
-│   ├── quantitative_analysis_tool.py
-│   ├── enhanced_sentiment_tool.py
-│   └── scoring/               # Python scoring engines
-│
-├── schemas/                    # Pydantic data models
-│   └── crew_exports.py        # Export schemas per crew
-│
-├── scoring/                    # Deterministic scoring
-│   └── deep_analysis_scorer.py
+│   └── [30+ quantitative modules]
 │
 ├── reporting/                  # Report generation
-│   └── deep_analysis_report_generator.py
+│   ├── deep_analysis_report_generator.py
+│   ├── enriched_analysis_report_generator.py
+│   └── python_report_generator.py
+│
+├── schemas/                    # Pydantic data models
+│   ├── crew_exports.py        # Export schemas per crew
+│   ├── api/                   # API request/response
+│   ├── hybrid_analysis/       # Analysis schemas
+│   ├── quantitative/          # Quant schemas
+│   ├── rebalancing/           # Rebalancing schemas
+│   └── [20+ schema modules]
+│
+├── scoring/                    # Deterministic scoring
+│   ├── deep_analysis_scorer.py
+│   ├── asset_analyzers/       # Strategy pattern
+│   │   ├── base.py           # ABC base
+│   │   ├── stock_analyzer.py
+│   │   ├── etf_analyzer.py
+│   │   └── crypto_analyzer.py
+│   └── [scoring utilities]
+│
+├── services/                   # Business services
+│   ├── feedback/              # Feedback system
+│   │   ├── service.py
+│   │   ├── analytics.py
+│   │   └── storage.py
+│   └── a_plus_monitoring_service.py
+│
+├── supabase/                   # Database & RAG
+│   ├── client.py              # Supabase client
+│   ├── repositories/          # Data access layer
+│   ├── services/              # RAG, embedding, cache
+│   └── utils/                 # Async helpers
 │
 ├── templates/                  # Jinja2 templates
-│   └── crew_reports/
+│   └── crew_reports/          # Per-crew HTML templates
+│
+├── tools/                      # Custom financial tools
+│   ├── tool_factories.py      # Centralized initialization
+│   ├── quantitative_analysis_tool.py
+│   ├── perplexity_search_tool.py
+│   ├── analysis/              # Analysis tools
+│   ├── charts/                # Chart generation
+│   ├── rebalancing/           # Rebalancing tools
+│   ├── reporting/             # Report tools
+│   └── [30+ tool modules]
 │
 ├── utils/                      # Utilities
 │   ├── agent_validators.py    # @final_reporter decorator
 │   ├── task_decorators.py     # @async_task, @sync_task
-│   └── logging_helpers.py     # CrewLogger
+│   ├── logging_helpers.py     # CrewLogger
+│   ├── session_manager.py     # Session handling
+│   ├── json_repair.py         # LLM output repair
+│   ├── flags/                 # Feature flags
+│   └── [50+ utility modules]
 │
 └── validation/                 # Validation infrastructure
+    ├── manager.py             # Validation manager
+    ├── ai_output_validator.py
+    ├── contract_validator.py
+    └── [validation modules]
 ```
 
 ### Subfolder Documentation
@@ -157,20 +243,30 @@ Each major directory has its own CLAUDE.md with detailed entry points and usage 
 
 | Directory | Documentation | Key Topics |
 |-----------|--------------|------------|
+| `api/` | [api/CLAUDE.md](src/finwiz/api/CLAUDE.md) | FastAPI endpoints, REST API |
+| `cache/` | [cache/CLAUDE.md](src/finwiz/cache/CLAUDE.md) | Analysis caching, AnalysisCacheManager |
+| `cli/` | [cli/CLAUDE.md](src/finwiz/cli/CLAUDE.md) | Command-line argument parsing |
+| `config/` | [config/CLAUDE.md](src/finwiz/config/CLAUDE.md) | Settings, batch config, resilience |
+| `core/` | [core/CLAUDE.md](src/finwiz/core/CLAUDE.md) | App initialization, bootstrap |
 | `crews/` | [crews/CLAUDE.md](src/finwiz/crews/CLAUDE.md) | Crew patterns, agent configs, task definitions |
-| `flows/` | [flows/CLAUDE.md](src/finwiz/flows/CLAUDE.md) | Flow orchestration, state management |
-| `tools/` | [tools/CLAUDE.md](src/finwiz/tools/CLAUDE.md) | Tool factories, custom tools |
-| `schemas/` | [schemas/CLAUDE.md](src/finwiz/schemas/CLAUDE.md) | Pydantic models, validation |
-| `quantitative/` | [quantitative/CLAUDE.md](src/finwiz/quantitative/CLAUDE.md) | Backtrader, TA-Lib, QuantLib |
-| `orchestrators/` | [orchestrators/CLAUDE.md](src/finwiz/orchestrators/CLAUDE.md) | Business logic coordination |
-| `reporting/` | [reporting/CLAUDE.md](src/finwiz/reporting/CLAUDE.md) | Jinja2 report generation |
-| `utils/` | [utils/CLAUDE.md](src/finwiz/utils/CLAUDE.md) | Decorators, logging, caching |
 | `data/` | [data/CLAUDE.md](src/finwiz/data/CLAUDE.md) | Data adapters, source orchestration |
+| `exceptions/` | [exceptions/CLAUDE.md](src/finwiz/exceptions/CLAUDE.md) | Custom exception hierarchy |
+| `flows/` | [flows/CLAUDE.md](src/finwiz/flows/CLAUDE.md) | Flow orchestration, state management |
 | `integration/` | [integration/CLAUDE.md](src/finwiz/integration/CLAUDE.md) | Data integration, validation pipeline |
+| `monitoring/` | [monitoring/CLAUDE.md](src/finwiz/monitoring/CLAUDE.md) | Investment monitoring, alerting |
+| `orchestrators/` | [orchestrators/CLAUDE.md](src/finwiz/orchestrators/CLAUDE.md) | Business logic coordination |
+| `quantitative/` | [quantitative/CLAUDE.md](src/finwiz/quantitative/CLAUDE.md) | Backtrader, TA-Lib, QuantLib |
+| `reporting/` | [reporting/CLAUDE.md](src/finwiz/reporting/CLAUDE.md) | Jinja2 report generation |
+| `schemas/` | [schemas/CLAUDE.md](src/finwiz/schemas/CLAUDE.md) | Pydantic models, validation |
 | `scoring/` | [scoring/CLAUDE.md](src/finwiz/scoring/CLAUDE.md) | Python scoring engine |
+| `services/` | [services/CLAUDE.md](src/finwiz/services/CLAUDE.md) | Feedback, A+ monitoring services |
+| `supabase/` | [supabase/CLAUDE.md](src/finwiz/supabase/CLAUDE.md) | Database, RAG, vector embeddings |
+| `templates/` | [templates/CLAUDE.md](src/finwiz/templates/CLAUDE.md) | Jinja2 HTML templates |
+| `tools/` | [tools/CLAUDE.md](src/finwiz/tools/CLAUDE.md) | Tool factories, custom tools |
+| `utils/` | [utils/CLAUDE.md](src/finwiz/utils/CLAUDE.md) | Decorators, logging, caching |
 | `validation/` | [validation/CLAUDE.md](src/finwiz/validation/CLAUDE.md) | Validation infrastructure |
 
-**Tip**: When working in a specific subfolder, Claude will typically fetch the relevant CLAUDE.md for context.
+**Tip**: When working in a specific subfolder, Claude will automatically fetch the relevant CLAUDE.md for context. Reference the subfolder documentation table above to understand what each module provides before diving into implementation details.
 
 ### Flow Architecture
 
@@ -482,6 +578,13 @@ html_path = generator.generate_crew_report(
 - **Test Data**: Faker library for realistic data generation
 - **Coverage**: Minimum 65% (configured in pyproject.toml)
 
+### Test Suite Statistics
+
+- **Total Tests**: ~3,200+ tests across 190+ files
+- **Property-Based Testing**: Hypothesis for edge case discovery
+- **Coverage Targets**: 65% minimum, 80%+ for `scoring/` and `quantitative/`
+- **Detailed Status**: See [docs/testing/test-suite-status.md](docs/testing/test-suite-status.md)
+
 ### Test Markers
 
 ```bash
@@ -780,22 +883,162 @@ from finwiz.quantitative.config_manager import QuantitativeConfigManager
 __all__ = ["BacktestConfig", "QuantitativeConfigManager"]
 ```
 
-## AI Development Standards
+## Steering Documents
 
-See `.kiro/steering/` for comprehensive AI development guidance:
+The `.kiro/steering/` directory contains 29 specialized guides for deep dives:
 
-- `crewai-standards.md`: CrewAI development patterns (CRITICAL)
-- `ai-minimalism.md`: When to use Python vs AI
-- `flow-architecture-lessons.md`: Flow design patterns
-- `python-abc-strategy-pattern.md`: Strategy pattern with ABC
-- `codebase-refactoring-patterns.md`: File organization rules
-- `testing-standards.md`: Testing best practices
+### Critical (Read First)
+
+| Document | Purpose |
+|----------|---------|
+| `crewai-standards.md` | Complete CrewAI agent/task/crew patterns |
+| `ai-minimalism.md` | When to use Python vs AI decision framework |
+| `flow-architecture-lessons.md` | Flow design patterns and lessons learned |
+| `testing-standards.md` | pytest-mock patterns, coverage requirements |
+
+### Architecture & Patterns
+
+| Document | Purpose |
+|----------|---------|
+| `python-abc-strategy-pattern.md` | Strategy pattern with ABC for asset-specific logic |
+| `codebase-refactoring-patterns.md` | File organization and decomposition rules |
+| `data-lineage.md` | Data validation and error context patterns |
+| `mcp-best-practices.md` | MCP server configuration and usage |
+
+### Quantitative Libraries
+
+| Document | Purpose |
+|----------|---------|
+| `backtrader-standards.md` | Backtesting engine integration |
+| `talib-standards.md` | Technical analysis indicators |
+| `empyrical-standards.md` | Portfolio metrics calculations |
+| `financial-libraries-strategy.md` | Which library for which task |
+
+**Tip**: When working on a specific domain, check `.kiro/steering/` for relevant guides.
 
 ## Key References
 
 - **CrewAI Flow Docs**: https://docs.crewai.com/concepts/flows
 - **Pydantic v2**: https://docs.pydantic.dev/latest/
 - **pytest-mock**: https://pytest-mock.readthedocs.io/
+
+## MCP Servers
+
+The project uses two MCP servers configured in `.mcp.json`:
+
+### Context7 (Library Documentation)
+
+Provides up-to-date documentation for libraries. Use to verify API compatibility:
+
+```bash
+# Configuration in .mcp.json
+"context7": {
+  "command": "npx",
+  "args": ["-y", "@context7/mcp-server"]
+}
+```
+
+**Usage**: Resolve library IDs and fetch documentation for CrewAI, Pydantic, pytest, etc.
+
+### Task Master AI (Task Management)
+
+Agentic task management for development workflows:
+
+```bash
+# Configuration in .mcp.json
+"task-master-ai": {
+  "command": "npx",
+  "args": ["-y", "task-master-ai"],
+  "env": { "ANTHROPIC_API_KEY": "...", "PERPLEXITY_API_KEY": "..." }
+}
+```
+
+**Key Commands**:
+- `task-master next` - Get next available task
+- `task-master show <id>` - View task details
+- `task-master set-status --id=<id> --status=done` - Complete task
+
+See [.taskmaster/CLAUDE.md](.taskmaster/CLAUDE.md) for full workflow integration.
+
+## Claude Code Best Practices
+
+*Based on guidance from Patrick Ellis and Anand Tyagi (2025).*
+
+### Context is King
+
+The most important factor for agent performance. Methods to provide context:
+
+| Method | Purpose |
+|--------|---------|
+| **CLAUDE.md** | Main context file - becomes part of every prompt |
+| **Subfolder CLAUDE.md** | Hierarchical context - Claude fetches relevant ones |
+| **`/add-dir`** | Add entire directories to context |
+| **`/memory`** | Add memories to CLAUDE.md easily |
+| **Sub-agents** | Use to summarize and keep context manageable |
+| **MCPs** | Context7, GitHub, Playwright for live data |
+
+### When to Use Claude Code vs IDE Tools
+
+**Use Claude Code for:**
+- Multi-step processes and complex tasks
+- Starting new projects
+- Exploring/ramping up on codebases
+- Refactoring large files
+- Generating files requiring info from many sources
+- Generating tests with feedback loops
+
+**Use IDE tools (Cursor, etc.) for:**
+- Specific problems in specific files/lines
+- One-step tasks
+- Fine-grained control over edits
+
+### Essential Commands
+
+| Command | Use Case |
+|---------|----------|
+| `/model` | Switch between Sonnet 4 and Opus 4 |
+| `/add-dir` | Add directory context |
+| `/memory` | Add memories to CLAUDE.md |
+| `/plan` | Enter planning mode for complex tasks |
+| `/clear` | Clear context between different tasks |
+
+### Sub-agents and Planning
+
+- **Planning Mode**: Use before complex tasks to think through execution steps
+- **Sub-agents**: Spawn for specific sub-tasks; summarize large contexts
+- Keep everything in model context; use sub-agents to summarize when needed
+
+### Multi-Agent Workflows
+
+**Git Worktrees for Parallel Development:**
+```bash
+git worktree add <PATH> <BRANCH-NAME>
+git worktree list
+```
+
+This enables running multiple Claude Code instances on different branches simultaneously.
+
+### The Agent Loop
+
+```
+Get Task → Add to Task List → Do Task → Reflect on Output → Output
+```
+
+Each "Do Task" step involves tool calls: reading files, searching, executing commands, or MCP calls.
+
+### Key Principles
+
+1. **Use Claude as an independent agent** - a "super sidekick"
+2. **Plan before executing** - use plan mode or external plan files
+3. **Maximize context** - CLAUDE.md, commands, MCPs
+4. **Delegate confidently** to sub-agents
+5. **Think of prompts and specs as source code**
+
+### Resources
+
+- [Mastering Claude Code in 30 minutes](https://www.youtube.com/watch?v=6eBSHbLKuN0)
+- [Claude Code: Best practices for agentic coding](https://www.anthropic.com/engineering/claude-code-best-practices)
+- [Claude Code Commands Directory](https://claudecodecommands.directory)
 
 ## Environment Variables
 
