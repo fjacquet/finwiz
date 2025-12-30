@@ -125,6 +125,26 @@ def _get_recommendation_badge(grade: str, recommended_action: str | None) -> str
     return '<span class="badge badge-hold">HOLD</span>'
 
 
+def _get_deep_analysis_link(ticker: str, asset_class: str) -> str:
+    """Generate relative link to deep analysis report if available.
+
+    Args:
+        ticker: The ticker symbol
+        asset_class: The asset class (stock, etf, crypto)
+
+    Returns:
+        Relative path to deep analysis HTML file
+    """
+    asset_class_lower = asset_class.lower()
+    folder_map = {
+        "stock": "deep_analysis_stock",
+        "etf": "deep_analysis_etf",
+        "crypto": "deep_analysis_crypto",
+    }
+    folder = folder_map.get(asset_class_lower, "deep_analysis_stock")
+    return f"{folder}/{ticker}_deep_analysis.html"
+
+
 def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
     """Generate detailed holdings analysis."""
     sorted_holdings = sorted(
@@ -151,9 +171,13 @@ def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
             holding.rationale_bullets[0] if holding.rationale_bullets else "Python analysis"
         )
 
+        # Generate deep analysis link
+        deep_analysis_link = _get_deep_analysis_link(ticker, holding.asset_class or "stock")
+        ticker_html = f'<a href="{deep_analysis_link}" class="ticker-link" title="View detailed analysis for {ticker}">{ticker}</a>'
+
         holdings_rows.append(f"""
         <tr>
-          <td><strong>{ticker}</strong><br><small>{name}</small></td>
+          <td><strong>{ticker_html}</strong><br><small>{name}</small></td>
           <td>{asset_class}</td>
           <td class="{grade_class}"><strong>{grade}</strong></td>
           <td>{composite_score:.3f}</td>

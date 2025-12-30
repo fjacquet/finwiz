@@ -66,6 +66,21 @@ def get_report_css() -> str:
     .grade-c { color: #e67e22; font-weight: bold; }
     .grade-d { color: #e74c3c; font-weight: bold; }
     .grade-f { color: #c0392b; font-weight: bold; }
+    .ticker-link {
+      color: #3498db;
+      text-decoration: none;
+      border-bottom: 1px dashed #3498db;
+      transition: all 0.2s ease;
+    }
+    .ticker-link:hover {
+      color: #2980b9;
+      border-bottom-style: solid;
+      background-color: rgba(52, 152, 219, 0.1);
+    }
+    .ticker-link:visited {
+      color: #8e44ad;
+      border-bottom-color: #8e44ad;
+    }
     .badge {
       display: inline-block;
       padding: 4px 12px;
@@ -187,6 +202,18 @@ def get_report_css() -> str:
       footer {
         color: #999;
         border-top-color: #404040;
+      }
+      .ticker-link {
+        color: #5dade2;
+        border-bottom-color: #5dade2;
+      }
+      .ticker-link:hover {
+        color: #85c1e9;
+        background-color: rgba(93, 173, 226, 0.15);
+      }
+      .ticker-link:visited {
+        color: #bb8fce;
+        border-bottom-color: #bb8fce;
       }
     }
         """
