@@ -47,7 +47,7 @@ class DataProcessor:
     def generate_cache_key(self, symbol: str, start_date: datetime, end_date: datetime, interval: str) -> str:
         """Generate unique cache key for data request."""
         key_data = f"{symbol}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}_{interval}"
-        return hashlib.md5(key_data.encode()).hexdigest()
+        return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()
 
     def validate_inputs(self, symbol: str, start_date: datetime, end_date: datetime, interval: str) -> None:
         """Validate input parameters."""

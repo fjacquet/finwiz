@@ -6,6 +6,7 @@ with support for portfolio overview, rebalancing summaries, and trade recommenda
 """
 
 import logging
+from operator import attrgetter
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -322,5 +323,5 @@ class ReportSectionBuilder:
         logger.debug("Cleared all report sections")
 
     def get_sorted_sections(self) -> list[ReportSection]:
-        """Get sections sorted by order."""
-        return sorted(self.sections, key=lambda x: x.order)
+        """Get sections sorted by order (FP pattern: attrgetter)."""
+        return sorted(self.sections, key=attrgetter("order"))

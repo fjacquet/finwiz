@@ -158,10 +158,10 @@ class TestDeepAnalysisOrchestrator:
 
         orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
 
-        # Mock _collect_data_with_python to prevent slow flow execution (CRITICAL for fast tests)
+        # Mock collect_data on data_collector (moved there in Phase 1.1 refactoring)
         mocker.patch.object(
-            orchestrator,
-            "_collect_data_with_python",
+            orchestrator.data_collector,
+            "collect_data",
             return_value={"price": 150.0, "volume": 1000000, "market_cap": 2500000000000},
         )
 

@@ -177,7 +177,7 @@ class JSONWriter:
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, _exc_tb):
         if exc_type is None and self.data:
             self.json_path, self.html_path = save_json_with_html(self.data, self.file_path, self.template_type)
             if self.html_path:

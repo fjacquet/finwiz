@@ -122,7 +122,8 @@ class TestPythonDataCollection:
             sources_succeeded=["YFinance"],
             confidence=1.0,
         )
-        mock_data_orchestrator = mocker.patch.object(orchestrator.data_orchestrator, "get_fundamental_data", new=mocker.AsyncMock(return_value=mock_orchestration_result))
+        # Mock on data_collector.data_orchestrator since collect_data uses data_collector's instance
+        mock_data_orchestrator = mocker.patch.object(orchestrator.data_collector.data_orchestrator, "get_fundamental_data", new=mocker.AsyncMock(return_value=mock_orchestration_result))
 
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
         mock_sentiment = mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run")
@@ -135,7 +136,7 @@ class TestPythonDataCollection:
         mock_sec.return_value = mock_sec_data
 
         # Execute data collection
-        result = orchestrator._collect_data_with_python("AAPL", "stock", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("AAPL", "stock", batch_enabled=False)
 
         # Verify all tools were called
         mock_ticker.assert_called_once_with(ticker="AAPL")
@@ -199,7 +200,7 @@ class TestPythonDataCollection:
         }
 
         # Execute - should not raise exception
-        result = orchestrator._collect_data_with_python("TSLA", "stock", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("TSLA", "stock", batch_enabled=False)
 
         # Verify basic structure exists
         assert result["ticker"] == "TSLA"
@@ -234,7 +235,7 @@ class TestPythonDataCollection:
         }
 
         # Execute for ETF
-        result = orchestrator._collect_data_with_python("SPY", "etf", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("SPY", "etf", batch_enabled=False)
 
         # SEC tool should NOT be called for ETFs
         mock_sec.assert_not_called()
@@ -257,7 +258,7 @@ class TestPythonDataCollection:
             "quantitative_analysis": {"technical_indicators": {"rsi": 58.3, "macd": {"value": 2.1}}, "risk_metrics": {"volatility": 0.28, "beta": 1.25}},
         }
 
-        flattened = orchestrator._flatten_collected_data(nested_data)
+        flattened = orchestrator.data_collector.flatten_collected_data(nested_data)
 
         # Top-level fields preserved
         assert flattened["ticker"] == "AAPL"
@@ -297,7 +298,7 @@ class TestPythonDataCollection:
         mock_company.return_value = {"financial_metrics": edge_case_data["financial_metrics"]}
 
         # Should handle edge cases without crashing
-        result = orchestrator._collect_data_with_python("PENNY", "stock", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("PENNY", "stock", batch_enabled=False)
 
         assert result["current_price"] == approx(0.0001)
         # NaN and None values should be handled gracefully in flattening
@@ -323,19 +324,19 @@ class TestPythonDataCollection:
 
         # Test 1: Already parsed dict
         mock_quant.return_value = {"technical_indicators": {"rsi": 60}}
-        result = orchestrator._collect_data_with_python("TEST1", "stock", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("TEST1", "stock", batch_enabled=False)
         # After flattening, rsi should be at top level
         assert "rsi" in result
 
         # Test 2: JSON string
         mock_quant.return_value = '{"technical_indicators": {"rsi": 55}}'
-        result = orchestrator._collect_data_with_python("TEST2", "stock", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("TEST2", "stock", batch_enabled=False)
         assert "rsi" in result
         assert result["rsi"] == 55
 
         # Test 3: Malformed JSON - should be caught and handled
         mock_quant.return_value = '{"invalid": json}'
-        result = orchestrator._collect_data_with_python("TEST3", "stock", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("TEST3", "stock", batch_enabled=False)
         # With malformed JSON, quantitative_analysis will be {} and won't contribute fields
         assert "rsi" not in result  # No RSI since JSON was malformed
 
@@ -355,7 +356,7 @@ class TestPythonDataCollection:
         # Test the full flow including scorer
         from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 
-        raw_data = orchestrator._collect_data_with_python("AAPL", "stock", batch_enabled=False)
+        raw_data = orchestrator.data_collector.collect_data("AAPL", "stock", batch_enabled=False)
 
         scorer = DeepAnalysisScorer()
         scoring_result = scorer.calculate_composite_score("AAPL", "stock", raw_data)
@@ -394,11 +395,11 @@ class TestPythonDataCollection:
         mock_ticker.return_value = {"current_price": 100.0}
 
         # Test with batch_enabled=True
-        result = orchestrator._collect_data_with_python("BATCH1", "stock", batch_enabled=True)
+        result = orchestrator.data_collector.collect_data("BATCH1", "stock", batch_enabled=True)
         assert result["ticker"] == "BATCH1"
 
         # Test with batch_enabled=False
-        result = orchestrator._collect_data_with_python("BATCH2", "stock", batch_enabled=False)
+        result = orchestrator.data_collector.collect_data("BATCH2", "stock", batch_enabled=False)
         assert result["ticker"] == "BATCH2"
 
         # Both should work without issues

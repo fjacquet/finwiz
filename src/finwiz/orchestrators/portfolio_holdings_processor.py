@@ -16,6 +16,8 @@ import csv
 import logging
 import os
 import time
+from collections import Counter
+from operator import itemgetter
 from pathlib import Path
 from typing import Any
 
@@ -248,8 +250,8 @@ class PortfolioHoldingsProcessor:
         tasks = [process_with_semaphore(idx, holding) for idx, holding in enumerate(holdings, start=1)]
         results = await asyncio.gather(*tasks)
 
-        # Sort by original index to maintain order
-        results_sorted = sorted(results, key=lambda x: x[0])
+        # Sort by original index to maintain order (FP pattern: itemgetter)
+        results_sorted = sorted(results, key=itemgetter(0))
 
         # Extract decisions and processing results
         decisions = [decision for _, decision, _ in results_sorted]
@@ -391,11 +393,8 @@ class PortfolioHoldingsProcessor:
                 if not result.success:
                     excluded.append((ticker, reason))
 
-        # Count by asset class
-        by_asset_class: dict[str, int] = {}
-        for result in self.processing_results:
-            asset_class = result.holding.asset_class
-            by_asset_class[asset_class] = by_asset_class.get(asset_class, 0) + 1
+        # Count by asset class using Counter (FP pattern)
+        by_asset_class = dict(Counter(r.holding.asset_class for r in self.processing_results))
 
         logger.info(f"Processing summary: total={total}, successful={successful}, warnings={warnings}, failed={failed}")
 

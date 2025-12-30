@@ -1,0 +1,273 @@
+"""
+Flow State Pydantic Models for FinWiz Application.
+
+Contains state containers for the CrewAI flow execution.
+"""
+
+import uuid
+from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class DeepAnalysisResult(BaseModel):
+    """Result from deep crew analysis of a portfolio holding."""
+
+    ticker: str = Field(..., description="Stock/ETF/crypto ticker symbol")
+    asset_class: str = Field(..., description="Asset class (stock, etf, crypto)")
+    crew_name: str = Field(..., description="Name of crew that performed analysis")
+    analysis_timestamp: str = Field(
+        default_factory=lambda: datetime.now().isoformat(),
+        description="When analysis was performed (ISO format)",
+    )
+    composite_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Composite score (0.0-1.0)"
+    )
+    grade: str = Field(..., description="Letter grade (A+ to F)")
+
+    # Investment recommendation
+    recommendation: str = Field(
+        ..., description="Investment recommendation (BUY, HOLD, SELL)"
+    )
+    rationale: str = Field(..., description="Detailed rationale for the recommendation")
+    risk_details: dict[str, float] = Field(
+        default_factory=dict, description="Risk factor breakdown"
+    )
+
+    # Individual scores (optional)
+    fundamental_score: float | None = Field(
+        None, ge=0.0, le=1.0, description="Fundamental analysis score"
+    )
+    technical_score: float | None = Field(
+        None, ge=0.0, le=1.0, description="Technical analysis score"
+    )
+    risk_score: float | None = Field(
+        None, ge=0.0, le=5.0, description="Risk score (0-5 scale)"
+    )
+
+    # Score details
+    fundamental_details: dict[str, Any] = Field(
+        default_factory=dict, description="Fundamental analysis breakdown"
+    )
+    technical_details: dict[str, Any] = Field(
+        default_factory=dict, description="Technical analysis breakdown"
+    )
+
+    # Data quality and freshness
+    data_freshness_hours: float = Field(
+        ..., ge=0.0, description="Age of market data in hours"
+    )
+    confidence_level: float = Field(
+        ..., ge=0.0, le=1.0, description="Confidence level in analysis"
+    )
+    warnings: list[str] = Field(
+        default_factory=list, description="List of analysis warnings"
+    )
+    data_quality: dict[str, Any] | None = Field(
+        None, description="Data quality metrics tracking"
+    )
+
+    # Data lineage
+    lineage: dict[str, Any] | None = Field(
+        None, description="Complete data lineage from sources"
+    )
+
+    # Cache metadata
+    cached: bool = Field(default=False, description="Whether result came from cache")
+
+    model_config = {
+        "extra": "forbid",
+        "str_strip_whitespace": True,
+        "ser_json_timedelta": "iso8601",
+        "ser_json_bytes": "base64",
+    }
+
+    @property
+    def quality_level(self) -> str:
+        """Get quality level from data_quality metrics."""
+        if self.data_quality and "quality_level" in self.data_quality:
+            return self.data_quality["quality_level"]
+        return "unknown"
+
+    @property
+    def completeness_score(self) -> float:
+        """Get completeness score from data_quality metrics."""
+        if self.data_quality and "completeness_score" in self.data_quality:
+            return self.data_quality["completeness_score"]
+        return 0.5
+
+
+class FinwizState(BaseModel):
+    """Comprehensive structured state for the FinWiz analysis flow."""
+
+    # Required for CrewAI Flow persistence
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique flow state ID for persistence",
+    )
+
+    # Session metadata
+    current_day: int = Field(default_factory=lambda: datetime.now().day)
+    current_month: int = Field(default_factory=lambda: datetime.now().month)
+    current_year: int = Field(default_factory=lambda: datetime.now().year)
+    current_date: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y-%m-%d")
+    )
+    full_date: str = Field(
+        default_factory=lambda: datetime.now().strftime("%B %d, %Y")
+    )
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    report_language: str = Field(default="fr", description="Report language")
+
+    # Session information
+    has_existing_session: bool = Field(default=False)
+    session_id: str = Field(default="")
+    analysis_count: int = Field(default=0)
+
+    # Core analysis results
+    stock_result: str = Field(default="")
+    etf_result: str = Field(default="")
+    crypto_result: str = Field(default="")
+
+    # Stock analysis status
+    stock_analysis_success: bool = Field(default=False)
+    stock_analysis_error: str | None = None
+    stock_analysis_disabled: bool = Field(default=False)
+    stock_analysis_fallback: bool = Field(default=False)
+    stock_analysis_result: dict[str, Any] | None = None
+
+    # ETF analysis status
+    etf_analysis_success: bool = Field(default=False)
+    etf_analysis_error: str | None = None
+    etf_analysis_disabled: bool = Field(default=False)
+    etf_analysis_fallback: bool = Field(default=False)
+    etf_analysis_result: dict[str, Any] | None = None
+
+    # Crypto analysis status
+    crypto_analysis_success: bool = Field(default=False)
+    crypto_analysis_error: str | None = None
+    crypto_analysis_disabled: bool = Field(default=False)
+    crypto_analysis_fallback: bool = Field(default=False)
+    crypto_analysis_result: dict[str, Any] | None = None
+
+    # Data integration and validation
+    data_availability_report: dict[str, Any] | None = None
+    stale_data_warnings: list[str] = Field(default_factory=list)
+    refresh_recommendations: list[str] = Field(default_factory=list)
+    data_integration_error: str | None = None
+
+    # Portfolio review data
+    portfolio_review: dict[str, Any] | None = None
+    portfolio_review_json: str | None = None
+    portfolio_review_success: bool = Field(default=False)
+    portfolio_review_error: str | None = None
+    core_analysis_status: dict[str, Any] | None = None
+
+    # Portfolio rebalancing data
+    portfolio_rebalancing_available: bool = Field(default=False)
+    portfolio_rebalancing_result: dict[str, Any] | None = None
+    rebalancing_success: bool = Field(default=False)
+    rebalancing_results: dict[str, Any] | None = None
+    rebalancing_error: str | None = None
+    portfolio_rebalancing_error: str | None = None
+    portfolio_allocation_updates: dict[str, Any] | None = None
+
+    # Investment discovery data
+    investment_discovery_available: bool = Field(default=False)
+    investment_discovery_result: str | None = None
+    investment_discovery_structured: dict[str, Any] | None = None
+    investment_discovery_error: str | None = None
+
+    # Consolidated data and integration
+    consolidated_data: dict[str, Any] | None = None
+    core_analysis_summary: dict[str, Any] | None = None
+    integrated_data_available: bool = Field(default=False)
+    integrated_data_error: str | None = None
+    market_sentiment: dict[str, Any] | None = None
+    ticker_validation: dict[str, Any] | None = None
+    aplus_opportunities: dict[str, Any] | None = None
+    aplus_availability_status: dict[str, Any] | None = None
+    market_context: dict[str, Any] | None = None
+
+    # System health and error tracking
+    error_summaries: list[dict[str, Any]] = Field(default_factory=list)
+    system_health: dict[str, Any] | None = None
+    system_status_for_report: dict[str, Any] | None = None
+
+    # Reporter input validation
+    reporter_input: dict[str, Any] | None = None
+    report_generation_error: str | None = None
+
+    # Degraded functionality tracking
+    stock_degraded_functionality: list[str] = Field(default_factory=list)
+    etf_degraded_functionality: list[str] = Field(default_factory=list)
+    crypto_degraded_functionality: list[str] = Field(default_factory=list)
+    stock_fallback_strategy: str | None = None
+    etf_fallback_strategy: str | None = None
+    crypto_fallback_strategy: str | None = None
+
+    # Deep portfolio analysis results
+    deep_analysis_results: dict[str, DeepAnalysisResult] = Field(default_factory=dict)
+    deep_analysis_success: bool = Field(default=False)
+    deep_analysis_count: int = Field(default=0)
+    deep_analysis_error: str | None = None
+
+    # Alternative matching results
+    portfolio_alternatives: dict[str, list[dict[str, Any]]] = Field(
+        default_factory=dict
+    )
+    alternatives_success: bool = Field(default=False)
+    alternatives_count: int = Field(default=0)
+    alternatives_error: str | None = None
+
+    # Data availability tracking
+    data_availability_summary: dict[str, Any] | None = None
+    data_availability_summary_formatted: str | None = None
+
+    # Report aggregation fields
+    crew_export_paths: dict[str, list[str]] = Field(default_factory=dict)
+    crew_html_paths: dict[str, list[str]] = Field(default_factory=dict)
+    consolidated_json_path: str | None = None
+    final_report_path: str | None = None
+    crew_execution_status: dict[str, str] = Field(default_factory=dict)
+    crew_execution_errors: dict[str, str] = Field(default_factory=dict)
+
+    # Resilience tracking fields
+    total_holdings: int = Field(default=0)
+    holdings_processed: int = Field(default=0)
+    holdings_remaining: int = Field(default=0)
+    current_ticker: str = Field(default="")
+    progress_percentage: float = Field(default=0.0, ge=0.0, le=100.0)
+
+    # Timing fields
+    flow_start_time: str = Field(
+        default_factory=lambda: datetime.now().isoformat()
+    )
+    last_checkpoint_time: str | None = None
+    estimated_time_remaining: float = Field(default=0.0, ge=0.0)
+
+    # Error tracking
+    errors: list[str] = Field(default_factory=list)
+    failed_holdings: list[str] = Field(default_factory=list)
+    retry_counts: dict[str, int] = Field(default_factory=dict)
+    timeout_holdings: list[str] = Field(default_factory=list)
+    retryable_errors: list[Any] = Field(default_factory=list)
+    non_retryable_errors: list[Any] = Field(default_factory=list)
+
+    # Resume metadata
+    resume_from_checkpoint: bool = Field(default=False)
+    checkpoint_uuid: str | None = None
+
+    # Batch pre-fetch fields
+    batch_prefetch_enabled: bool = Field(default=False)
+    prefetched_data: dict[str, dict[str, Any]] | None = None
+    batch_prefetch_metrics: dict[str, Any] | None = None
+
+    model_config = {
+        "extra": "allow",
+        "ser_json_timedelta": "iso8601",
+        "ser_json_bytes": "base64",
+    }

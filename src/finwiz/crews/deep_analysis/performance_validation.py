@@ -78,7 +78,7 @@ class BaselineMetrics:
 def validate_performance_targets(
     ticker: str,
     execution_time: float,
-    api_metrics: dict[str, Any],
+    _api_metrics: dict[str, Any],  # Reserved for future API metrics validation
     ai_summary_enabled: bool = False,
 ) -> dict[str, Any]:
     """

@@ -149,7 +149,7 @@ class TestSupabaseClientConnectivity:
 
 
 class TestSupabaseClientMetrics:
-    """Test suite for SupabaseClient metrics tracking."""
+    """Test suite for SupabaseClient metrics tracking via ClientMetrics."""
 
     @pytest.fixture(autouse=True)
     def reset_singleton(self):
@@ -173,22 +173,22 @@ class TestSupabaseClientMetrics:
 
     def test_should_initialize_metrics_to_zero(self, client):
         """Test that metrics are initialized to zero."""
-        # Assert
-        assert client.total_operations == 0
-        assert client.successful_operations == 0
-        assert client.failed_operations == 0
-        assert client.timeout_count == 0
-        assert client.response_times == []
+        # Assert via metrics property
+        assert client.metrics.total_operations == 0
+        assert client.metrics.successful_operations == 0
+        assert client.metrics.failed_operations == 0
+        assert client.metrics.timeout_count == 0
+        assert client.metrics.response_times == []
 
     def test_should_calculate_success_rate_correctly(self, client):
         """Test success rate calculation."""
         # Arrange
-        client.total_operations = 100
-        client.successful_operations = 85
-        client.failed_operations = 15
+        client.metrics.total_operations = 100
+        client.metrics.successful_operations = 85
+        client.metrics.failed_operations = 15
 
         # Act
-        success_rate = client.get_success_rate()
+        success_rate = client.metrics.get_success_rate()
 
         # Assert
         assert success_rate == approx(0.85)
@@ -196,7 +196,7 @@ class TestSupabaseClientMetrics:
     def test_should_return_zero_success_rate_when_no_operations(self, client):
         """Test success rate is zero when no operations."""
         # Act
-        success_rate = client.get_success_rate()
+        success_rate = client.metrics.get_success_rate()
 
         # Assert
         assert success_rate == approx(0.0)
@@ -204,10 +204,10 @@ class TestSupabaseClientMetrics:
     def test_should_calculate_avg_response_time_correctly(self, client):
         """Test average response time calculation."""
         # Arrange
-        client.response_times = [100.0, 200.0, 300.0]
+        client.metrics.response_times = [100.0, 200.0, 300.0]
 
         # Act
-        avg_time = client.get_avg_response_time()
+        avg_time = client.metrics.get_avg_response_time()
 
         # Assert
         assert avg_time == approx(200.0)
@@ -215,7 +215,7 @@ class TestSupabaseClientMetrics:
     def test_should_return_zero_avg_response_time_when_no_data(self, client):
         """Test average response time is zero when no data."""
         # Act
-        avg_time = client.get_avg_response_time()
+        avg_time = client.metrics.get_avg_response_time()
 
         # Assert
         assert avg_time == approx(0.0)
@@ -223,36 +223,36 @@ class TestSupabaseClientMetrics:
     def test_should_record_response_time_correctly(self, client):
         """Test response time recording."""
         # Act
-        client._record_response_time(150.5)
-        client._record_response_time(250.3)
+        client.metrics.record_response_time(150.5)
+        client.metrics.record_response_time(250.3)
 
         # Assert
-        assert len(client.response_times) == 2
-        assert client.response_times[0] == approx(150.5)
-        assert client.response_times[1] == approx(250.3)
+        assert len(client.metrics.response_times) == 2
+        assert client.metrics.response_times[0] == approx(150.5)
+        assert client.metrics.response_times[1] == approx(250.3)
 
     def test_should_limit_response_times_to_max(self, client):
         """Test that response times are limited to max_response_times."""
         # Arrange
-        client.max_response_times = 5
+        client.metrics.max_response_times = 5
 
         # Act - Add 10 response times
         for i in range(10):
-            client._record_response_time(float(i * 100))
+            client.metrics.record_response_time(float(i * 100))
 
         # Assert - Should only keep last 5
-        assert len(client.response_times) == 5
-        assert client.response_times == [500.0, 600.0, 700.0, 800.0, 900.0]
+        assert len(client.metrics.response_times) == 5
+        assert client.metrics.response_times == [500.0, 600.0, 700.0, 800.0, 900.0]
 
     def test_should_get_health_status_correctly(self, client):
         """Test health status retrieval."""
         # Arrange
         client.is_available = True
-        client.total_operations = 100
-        client.successful_operations = 90
-        client.failed_operations = 10
-        client.timeout_count = 5
-        client.response_times = [100.0, 200.0, 300.0]
+        client.metrics.total_operations = 100
+        client.metrics.successful_operations = 90
+        client.metrics.failed_operations = 10
+        client.metrics.timeout_count = 5
+        client.metrics.response_times = [100.0, 200.0, 300.0]
 
         # Act
         health = client.get_health_status()
@@ -272,36 +272,36 @@ class TestSupabaseClientMetrics:
     def test_should_reset_metrics_correctly(self, client):
         """Test metrics reset."""
         # Arrange
-        client.total_operations = 100
-        client.successful_operations = 90
-        client.failed_operations = 10
-        client.timeout_count = 5
-        client.response_times = [100.0, 200.0]
+        client.metrics.total_operations = 100
+        client.metrics.successful_operations = 90
+        client.metrics.failed_operations = 10
+        client.metrics.timeout_count = 5
+        client.metrics.response_times = [100.0, 200.0]
 
         # Act
         client.reset_metrics()
 
         # Assert
-        assert client.total_operations == 0
-        assert client.successful_operations == 0
-        assert client.failed_operations == 0
-        assert client.timeout_count == 0
-        assert client.response_times == []
+        assert client.metrics.total_operations == 0
+        assert client.metrics.successful_operations == 0
+        assert client.metrics.failed_operations == 0
+        assert client.metrics.timeout_count == 0
+        assert client.metrics.response_times == []
 
     def test_should_log_metrics_every_100_operations(self, client):
-        """Test that should_log_metrics returns True every 100 operations."""
+        """Test that should_log returns True every 100 operations."""
         # Arrange & Act & Assert
-        client.total_operations = 0
-        assert client.should_log_metrics() is False
+        client.metrics.total_operations = 0
+        assert client.metrics.should_log() is False
 
-        client.total_operations = 50
-        assert client.should_log_metrics() is False
+        client.metrics.total_operations = 50
+        assert client.metrics.should_log() is False
 
-        client.total_operations = 100
-        assert client.should_log_metrics() is True
+        client.metrics.total_operations = 100
+        assert client.metrics.should_log() is True
 
-        client.total_operations = 200
-        assert client.should_log_metrics() is True
+        client.metrics.total_operations = 200
+        assert client.metrics.should_log() is True
 
-        client.total_operations = 150
-        assert client.should_log_metrics() is False
+        client.metrics.total_operations = 150
+        assert client.metrics.should_log() is False

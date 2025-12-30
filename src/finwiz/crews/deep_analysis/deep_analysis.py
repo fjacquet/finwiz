@@ -175,7 +175,7 @@ class DeepAnalysisCrew:
         self.prefetched_data = prefetched_data
         logger.info(f"Pre-fetched data set for {len(prefetched_data)} tickers")
 
-    def get_tools_for_asset_class_internal(self, asset_class: str, minimal: bool = False) -> list[Any]:
+    def get_tools_for_asset_class(self, asset_class: str, minimal: bool = False) -> list[Any]:
         """
         Route to appropriate tool set based on asset class and optimization mode.
 
@@ -348,7 +348,7 @@ class DeepAnalysisCrew:
         try:
             # ⚡ PYTHON SCORING: Only asset_analyst needs tools for data collection
             # Get full tool set for asset analyst (data collection)
-            analyst_tools = self.get_tools_for_asset_class_internal(asset_class, minimal=False)
+            analyst_tools = self.get_tools_for_asset_class(asset_class, minimal=False)
 
             # Dynamically assign tools to agents by calling agent methods
             # Get agent instances

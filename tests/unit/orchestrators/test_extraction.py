@@ -78,9 +78,9 @@ def test_extraction():
             self.tasks_output = [MockTaskOutput(), MockTaskOutput()]
             self.pydantic = None
 
-    # Test extraction
+    # Test extraction (method moved to result_processor in Phase 1.1 refactoring)
     crew_output = MockCrewOutput()
-    extracted = orchestrator._extract_collected_data(crew_output)
+    extracted = orchestrator.result_processor.extract_collected_data(crew_output)
 
     print("\n✅ EXTRACTION TEST RESULTS:")
     print(f"Extracted {len(extracted) if extracted else 0} fields")

@@ -10,9 +10,19 @@ from finwiz.exceptions.data_quality import (
     GradeScoreMismatchError,
     MissingRequiredFieldError,
 )
+from finwiz.exceptions.orchestrator import (
+    InsufficientPriceDataError,
+    OptimizationFailedError,
+    PortfolioRebalancingError,
+)
 
 __all__ = [
+    # Data quality exceptions
     "DataQualityError",
     "MissingRequiredFieldError",
     "GradeScoreMismatchError",
+    # Orchestrator exceptions
+    "PortfolioRebalancingError",
+    "InsufficientPriceDataError",
+    "OptimizationFailedError",
 ]

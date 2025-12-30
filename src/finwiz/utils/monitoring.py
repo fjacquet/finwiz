@@ -239,7 +239,7 @@ class OperationMonitor:
         self.end_timer = self.metrics_collector.start_timer(self.operation_name)
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, _exc_tb: Any) -> None:
         """End monitoring."""
         if self.end_timer:
             success = exc_type is None

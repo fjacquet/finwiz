@@ -73,8 +73,8 @@ class TestConcurrentExecutionMechanics:
         """Test that DEEP_ANALYSIS_CONCURRENT env var controls execution mode."""
         mocker.patch.dict("os.environ", {"DEEP_ANALYSIS_CONCURRENT": "false"})
 
-        # Mock sequential method to track if it's called
-        sequential_mock = mocker.patch.object(orchestrator, "_run_deep_analysis_sequential", return_value={})
+        # Mock sequential method on executor to track if it's called
+        sequential_mock = mocker.patch.object(orchestrator.executor, "_run_deep_analysis_sequential", return_value={})
 
         holdings = [{"ticker": "AAPL", "asset_class": "stock"}]
         orchestrator.run_deep_analysis_on_holdings(holdings)
@@ -116,9 +116,9 @@ class TestConcurrentExecutionMechanics:
         # Create a mock result
         mock_result = mocker.MagicMock(spec=DeepAnalysisResult)
 
-        # Mock the synchronous method
+        # Mock the synchronous method on executor
         mocker.patch.object(
-            orchestrator,
+            orchestrator.executor,
             "_process_single_holding",
             return_value=mock_result,
         )
@@ -126,7 +126,7 @@ class TestConcurrentExecutionMechanics:
         # Mock cache manager
         cache_mgr = mocker.MagicMock()
 
-        result = await orchestrator._process_single_holding_async(
+        result = await orchestrator.executor._process_single_holding_async(
             ticker="AAPL",
             asset_class="stock",
             cache_mgr=cache_mgr,
@@ -152,7 +152,7 @@ class TestConcurrentExecutionMechanics:
             return mock_result
 
         mocker.patch.object(
-            orchestrator,
+            orchestrator.executor,
             "_process_single_holding_async",
             side_effect=mock_async_process,
         )
@@ -182,7 +182,7 @@ class TestConcurrentExecutionMechanics:
             raise ValueError("Mock error")
 
         mocker.patch.object(
-            orchestrator,
+            orchestrator.executor,
             "_process_single_holding_async",
             side_effect=mock_async_fail,
         )
@@ -205,7 +205,7 @@ class TestConcurrentExecutionMechanics:
 
         # Mock should not be called for invalid holdings
         async_mock = mocker.patch.object(
-            orchestrator,
+            orchestrator.executor,
             "_process_single_holding_async",
             return_value=mocker.MagicMock(spec=DeepAnalysisResult),
         )
@@ -232,7 +232,7 @@ class TestSequentialFallback:
 
         mock_result = mocker.MagicMock(spec=DeepAnalysisResult)
         process_mock = mocker.patch.object(
-            orchestrator,
+            orchestrator.executor,
             "_process_single_holding",
             return_value=mock_result,
         )
@@ -242,7 +242,7 @@ class TestSequentialFallback:
             {"ticker": "GOOGL", "asset_class": "stock"},
         ]
 
-        results = orchestrator._run_deep_analysis_sequential(holdings)
+        results = orchestrator.executor._run_deep_analysis_sequential(holdings)
 
         # Should process both holdings
         assert process_mock.call_count == 2
@@ -257,7 +257,7 @@ class TestSequentialFallback:
         # First call succeeds, second fails
         mock_result = mocker.MagicMock(spec=DeepAnalysisResult)
         mocker.patch.object(
-            orchestrator,
+            orchestrator.executor,
             "_process_single_holding",
             side_effect=[mock_result, ValueError("Processing failed")],
         )
@@ -267,7 +267,7 @@ class TestSequentialFallback:
             {"ticker": "FAIL", "asset_class": "stock"},
         ]
 
-        results = orchestrator._run_deep_analysis_sequential(holdings)
+        results = orchestrator.executor._run_deep_analysis_sequential(holdings)
 
         # Should have partial results
         assert "AAPL" in results

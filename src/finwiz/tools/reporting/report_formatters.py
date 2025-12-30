@@ -7,6 +7,7 @@ with UTF-8 encoding and emoji support using BeautifulSoup4.
 
 import logging
 from datetime import datetime
+from operator import attrgetter
 from pathlib import Path
 from typing import Any
 
@@ -215,7 +216,7 @@ class HTMLReportFormatter:
         current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Sort sections by order
-        sorted_sections = sorted(sections, key=lambda x: x.order)
+        sorted_sections = sorted(sections, key=attrgetter("order"))
 
         # Create HTML using BeautifulSoup4
         soup = BeautifulSoup("", "html.parser")
@@ -384,7 +385,7 @@ class HTMLReportFormatter:
             template = Template(template_content)
 
             # Sort sections by order
-            sorted_sections = sorted(sections, key=lambda x: x.order)
+            sorted_sections = sorted(sections, key=attrgetter("order"))
 
             # Render template
             html_content = template.render(
@@ -418,7 +419,7 @@ class HTMLReportFormatter:
         """
         try:
             # Sort sections by order
-            sorted_sections = sorted(sections, key=lambda x: x.order)
+            sorted_sections = sorted(sections, key=attrgetter("order"))
 
             # Create HTML document using BeautifulSoup4
             soup = BeautifulSoup("", "html.parser")

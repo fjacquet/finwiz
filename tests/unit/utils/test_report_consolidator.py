@@ -15,6 +15,7 @@ from finwiz.schemas.crew_exports import (
     StockCrewExport,
 )
 from finwiz.utils.report_consolidator import ReportConsolidator
+from finwiz.utils.report_export_loaders import load_exports
 
 
 class TestReportConsolidator:
@@ -316,16 +317,9 @@ class TestReportConsolidator:
 
 
 class TestReportConsolidatorLoadExports:
-    """Test the _load_exports helper method."""
+    """Test the load_exports helper function."""
 
-    @pytest.fixture
-    def consolidator(self, tmp_path):
-        """Create ReportConsolidator instance."""
-        output_dir = tmp_path / "reports"
-        output_dir.mkdir()
-        return ReportConsolidator(session_id="test", output_dir=output_dir)
-
-    def test_should_load_valid_exports(self, consolidator, tmp_path):
+    def test_should_load_valid_exports(self, tmp_path):
         """Test loading valid export files."""
         # Arrange
         export_data = {
@@ -362,26 +356,34 @@ class TestReportConsolidatorLoadExports:
         file_path.write_text(json.dumps(export_data), encoding="utf-8")
 
         # Act
-        exports = consolidator._load_exports([str(file_path)], StockCrewExport, crew_name="stock_crew")
+        validation_errors: list[dict] = []
+        exports = load_exports(
+            [str(file_path)], StockCrewExport, crew_name="stock_crew",
+            session_id="test", validation_errors=validation_errors
+        )
 
         # Assert
         assert len(exports) == 1
         assert isinstance(exports[0], StockCrewExport)
         assert exports[0].ticker == "AAPL"
 
-    def test_should_return_empty_list_when_all_files_invalid(self, consolidator, tmp_path):
+    def test_should_return_empty_list_when_all_files_invalid(self, tmp_path):
         """Test that empty list is returned when all files are invalid."""
         # Arrange
         invalid_file = tmp_path / "invalid.json"
         invalid_file.write_text("{ invalid json }", encoding="utf-8")
 
         # Act
-        exports = consolidator._load_exports([str(invalid_file)], StockCrewExport, crew_name="stock_crew")
+        validation_errors: list[dict] = []
+        exports = load_exports(
+            [str(invalid_file)], StockCrewExport, crew_name="stock_crew",
+            session_id="test", validation_errors=validation_errors
+        )
 
         # Assert
         assert len(exports) == 0
 
-    def test_should_track_validation_errors(self, consolidator, tmp_path):
+    def test_should_track_validation_errors(self, tmp_path):
         """Test that validation errors are tracked."""
         # Arrange
         invalid_export = {
@@ -392,14 +394,15 @@ class TestReportConsolidatorLoadExports:
         invalid_file = tmp_path / "invalid.json"
         invalid_file.write_text(json.dumps(invalid_export), encoding="utf-8")
 
-        # Initialize validation error tracking
-        consolidator._validation_errors = []
-
         # Act
-        exports = consolidator._load_exports([str(invalid_file)], StockCrewExport, crew_name="stock_crew")
+        validation_errors: list[dict] = []
+        exports = load_exports(
+            [str(invalid_file)], StockCrewExport, crew_name="stock_crew",
+            session_id="test", validation_errors=validation_errors
+        )
 
         # Assert
         assert len(exports) == 0
-        assert len(consolidator._validation_errors) > 0
-        assert consolidator._validation_errors[0]["crew"] == "stock_crew"
-        assert consolidator._validation_errors[0]["error_type"] == "validation_error"
+        assert len(validation_errors) > 0
+        assert validation_errors[0]["crew"] == "stock_crew"
+        assert validation_errors[0]["error_type"] == "validation_error"

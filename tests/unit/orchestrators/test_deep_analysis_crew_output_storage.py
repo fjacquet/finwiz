@@ -59,10 +59,11 @@ class TestDeepAnalysisCrewOutputStorage:
 
     def _setup_fast_mocks(self, orchestrator, mocker, grade="A+", score=0.95):
         """Setup mocks to prevent slow crew/flow execution (reusable helper)."""
-        # Mock _collect_data_with_python to prevent flow execution (CRITICAL for fast tests)
+        # Mock data_collector.collect_data to prevent flow execution (CRITICAL for fast tests)
+        # Note: Method moved to data_collector in Phase 1.1 refactoring
         mocker.patch.object(
-            orchestrator,
-            "_collect_data_with_python",
+            orchestrator.data_collector,
+            "collect_data",
             return_value={"price": 150.0, "volume": 1000000, "market_cap": 2500000000000},
         )
 
@@ -117,8 +118,8 @@ class TestDeepAnalysisCrewOutputStorage:
         self._setup_fast_mocks(orchestrator, mocker, grade="A+", score=0.95)
         mocker.patch("finwiz.cache.analysis_cache_manager.get_analysis_cache_manager", return_value=mock_cache_manager)
 
-        # Act
-        result = orchestrator._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
+        # Act (method moved to executor in Phase 1.1 refactoring)
+        result = orchestrator.executor._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
 
         # Assert
         assert result is not None
@@ -154,7 +155,8 @@ class TestDeepAnalysisCrewOutputStorage:
         for ticker, asset_class, expected_crew_name in test_cases:
             mock_integration_manager.store_crew_output.reset_mock()
 
-            result = orchestrator._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
+            # Method moved to executor in Phase 1.1 refactoring
+            result = orchestrator.executor._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
 
             assert result is not None
             mock_integration_manager.store_crew_output.assert_called_once()
@@ -174,8 +176,8 @@ class TestDeepAnalysisCrewOutputStorage:
         self._setup_fast_mocks(orchestrator, mocker, grade="B", score=0.75)
         mocker.patch("finwiz.cache.analysis_cache_manager.get_analysis_cache_manager", return_value=mock_cache_manager)
 
-        # Act - should not raise exception
-        result = orchestrator._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
+        # Act - should not raise exception (method moved to executor in Phase 1.1 refactoring)
+        result = orchestrator.executor._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
 
         # Assert - analysis should still complete despite storage failure
         assert result is not None
@@ -237,8 +239,8 @@ class TestDeepAnalysisCrewOutputStorage:
 
         mock_cache_manager.get_cached_analysis = mocker.Mock(return_value=mock_cached_analysis)
 
-        # Act
-        result = orchestrator._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
+        # Act (method moved to executor in Phase 1.1 refactoring)
+        result = orchestrator.executor._process_single_holding(ticker=ticker, asset_class=asset_class, cache_mgr=mock_cache_manager, cache_ttl=24, batch_enabled=False)
 
         # Assert
         assert result is not None

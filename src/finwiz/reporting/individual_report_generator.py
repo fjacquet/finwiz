@@ -1,0 +1,223 @@
+"""
+Individual deep analysis report generation.
+
+This module handles generation of individual HTML reports for each
+holding's deep analysis, extracted from the main PythonReportGenerator.
+"""
+
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from finwiz.reporting.report_css_styles import get_report_css
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+def generate_detailed_scores_section(result: dict[str, Any]) -> str:
+    """Generate detailed score breakdown section."""
+    fundamental = result.get("fundamental_score", 0)
+    technical = result.get("technical_score", 0)
+    risk = result.get("risk_score", 0)
+
+    return f"""
+  <div class="section">
+    <h2>Decomposition des Scores</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{fundamental:.3f}</div>
+        <div>Score Fondamental</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{technical:.3f}</div>
+        <div>Score Technique</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{risk:.3f}</div>
+        <div>Score de Risque</div>
+      </div>
+    </div>
+  </div>
+        """
+
+
+def _format_metric_value(value: Any) -> str:
+    """Format metric value based on type."""
+    if isinstance(value, float):
+        return f"{value:.3f}"
+    if isinstance(value, bool):
+        return "OK" if value else "X"
+    return str(value)
+
+
+def generate_fundamental_details(result: dict[str, Any]) -> str:
+    """Generate fundamental analysis details."""
+    details = result.get("fundamental_details", {})
+    if not details:
+        return ""
+
+    metrics_html = "".join(
+        f"        <li><strong>{metric.replace('_', ' ').title()}:</strong> "
+        f"{_format_metric_value(value)}</li>\n"
+        for metric, value in details.items()
+    )
+
+    return f"""
+  <div class="section">
+    <h2>Analyse Fondamentale</h2>
+    <div class="highlight">
+      <h3>Metriques Fondamentales</h3>
+      <ul>
+{metrics_html}
+      </ul>
+    </div>
+  </div>
+        """
+
+
+def generate_technical_details(result: dict[str, Any]) -> str:
+    """Generate technical analysis details."""
+    details = result.get("technical_details", {})
+    if not details:
+        return ""
+
+    metrics_html = "".join(
+        f"        <li><strong>{metric.replace('_', ' ').title()}:</strong> "
+        f"{_format_metric_value(value)}</li>\n"
+        for metric, value in details.items()
+    )
+
+    return f"""
+  <div class="section">
+    <h2>Analyse Technique</h2>
+    <div class="highlight">
+      <h3>Indicateurs Techniques</h3>
+      <ul>
+{metrics_html}
+      </ul>
+    </div>
+  </div>
+        """
+
+
+def generate_risk_details(result: dict[str, Any]) -> str:
+    """Generate risk analysis details."""
+    details = result.get("risk_details", {})
+    if not details:
+        return ""
+
+    metrics_html = "".join(
+        f"        <li><strong>{metric.replace('_', ' ').title()}:</strong> "
+        f"{_format_metric_value(value)}</li>\n"
+        for metric, value in details.items()
+    )
+
+    return f"""
+  <div class="section">
+    <h2>Analyse de Risque</h2>
+    <div class="highlight warning">
+      <h3>Facteurs de Risque</h3>
+      <ul>
+{metrics_html}
+      </ul>
+    </div>
+  </div>
+        """
+
+
+def generate_individual_report_html(ticker: str, result: dict[str, Any]) -> str:
+    """Generate HTML for individual deep analysis report."""
+    timestamp = datetime.now().strftime("%d %B %Y at %H:%M")
+
+    grade = result.get("grade") or result.get("final_grade") or "N/A"
+    score = result.get("composite_score") or result.get("final_score") or 0
+    recommendation = result.get("recommendation") or result.get("final_recommendation") or "HOLD"
+    asset_class = result.get("asset_class", "unknown")
+
+    grade_class = f"grade-{str(grade).lower().replace('+', '-plus')}"
+
+    scores_section = generate_detailed_scores_section(result)
+    fundamental_section = generate_fundamental_details(result)
+    technical_section = generate_technical_details(result)
+    risk_section = generate_risk_details(result)
+
+    return f"""<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Deep Analysis: {ticker} - FinWiz</title>
+  <style>{get_report_css()}</style>
+</head>
+<body>
+  <header>
+    <h1>Deep Analysis: {ticker}</h1>
+    <div class="muted">Generated {timestamp} - Python deterministic analysis</div>
+  </header>
+
+  <div class="section">
+    <h2>Analysis Summary</h2>
+    <div class="highlight success">
+      <h3>Grade: <span class="{grade_class}">{grade}</span></h3>
+      <p><strong>Composite Score:</strong> {score:.3f}</p>
+      <p><strong>Recommendation:</strong> {recommendation}</p>
+      <p><strong>Asset Class:</strong> {asset_class.upper()}</p>
+    </div>
+  </div>
+
+  {scores_section}
+
+  {fundamental_section}
+
+  {technical_section}
+
+  {risk_section}
+
+  <footer>
+    <p>Report generated by FinWiz - Python deterministic analysis</p>
+    <p class="small"><a href="../../finwiz_family_financial_plan.html">Back to main report</a></p>
+  </footer>
+</body>
+</html>"""
+
+
+def generate_individual_deep_analysis_reports(
+    results_by_ticker: dict[str, Any],
+    output_dir: Path,
+) -> list[str]:
+    """
+    Generate individual HTML reports for each deep analysis.
+
+    Args:
+        results_by_ticker: Dictionary mapping tickers to analysis results
+        output_dir: Base output directory
+
+    Returns:
+        List of paths to generated reports
+    """
+    logger.info(f"Generating individual HTML reports for {len(results_by_ticker)} deep analyses...")
+    generated_paths: list[str] = []
+
+    for ticker, result in results_by_ticker.items():
+        try:
+            # Generate individual report
+            individual_html = generate_individual_report_html(ticker, result)
+
+            # Determine output path based on asset class
+            asset_class = result.get("asset_class", "unknown")
+            report_dir = output_dir / f"deep_analysis_{asset_class}"
+            report_dir.mkdir(parents=True, exist_ok=True)
+
+            report_path = report_dir / f"{ticker}_deep_analysis.html"
+
+            with open(report_path, "w", encoding="utf-8") as f:
+                f.write(individual_html)
+
+            generated_paths.append(str(report_path))
+            logger.info(f"Generated individual report for {ticker}: {report_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to generate individual report for {ticker}: {e}")
+
+    return generated_paths

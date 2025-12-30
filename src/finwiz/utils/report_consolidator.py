@@ -27,37 +27,33 @@ Usage:
     })
 """
 
+from __future__ import annotations
+
 import json
 import time
-from dataclasses import dataclass
 from pathlib import Path
-
-from pydantic import BaseModel, ValidationError
 
 from finwiz.schemas.crew_exports import (
     ConsolidatedReportExport,
     CryptoCrewExport,
-    DeepAnalysisCrewExport,
     DiscoveryCrewExport,
     ETFCrewExport,
     RebalancingCrewExport,
     StockCrewExport,
 )
-from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
-from finwiz.schemas.python_analysis import PythonDeepAnalysisResult
 from finwiz.tools.logger import get_logger
+from finwiz.utils.report_export_loaders import load_deep_analysis_exports, load_exports
+from finwiz.utils.report_html_collector import (
+    HTMLReportPath,
+    add_html_paths_to_analyses,
+    collect_html_report_paths,
+)
 
 logger = get_logger(__name__)
 
 
-@dataclass
-class HTMLReportPath:
-    """Represents a path to an individual HTML report."""
-
-    ticker: str
-    crew: str
-    path: str
-    asset_class: str = ""
+# Re-export HTMLReportPath for backward compatibility
+__all__ = ["HTMLReportPath", "ReportConsolidator"]
 
 
 class ReportConsolidator:
@@ -86,6 +82,7 @@ class ReportConsolidator:
         self.session_id = session_id
         self.output_dir = Path(output_dir)
         self._html_report_paths: list[HTMLReportPath] = []
+        self._validation_errors: list[dict] = []
 
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -125,147 +122,182 @@ class ReportConsolidator:
         respective Pydantic schemas, and creates a consolidated export object.
         The consolidation is pure Python (NO AI) and completes in milliseconds.
 
-        Enhanced error handling:
-        - Tracks validation errors in consolidated report metadata
-        - Continues consolidation with valid exports even if some fail
-        - Includes validation error details for debugging
-        - Gracefully handles missing files and invalid data
-
         Args:
             crew_export_paths: Dict mapping crew names to list of export file paths
-                Example:
-                {
-                    "stock_crew": ["path/to/AAPL_export.json", "path/to/MSFT_export.json"],
-                    "etf_crew": ["path/to/SPY_export.json"],
-                    "crypto_crew": ["path/to/BTC_export.json"],
-                    "deep_analysis_crew": ["path/to/IBM_deep_export.json"],
-                    "discovery_crew": ["path/to/discovery_export.json"],
-                    "rebalancing_crew": ["path/to/rebalancing_export.json"]
-                }
 
         Returns:
             ConsolidatedReportExport: Validated consolidated report object
-
-        Raises:
-            ValueError: If output directory doesn't exist or is not writable
-
-        Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
 
         """
         start_time = time.time()
         logger.info(f"Starting report consolidation for session {self.session_id}")
         logger.debug(f"Crew export paths: {crew_export_paths}")
 
-        # Initialize validation error tracking
-        self._validation_errors: list[dict] = []
+        # Reset validation errors
+        self._validation_errors = []
 
         # Initialize consolidated report
-        consolidated = ConsolidatedReportExport(session_id=self.session_id, crew_execution_status={}, total_execution_time=0.0, errors=[])
+        consolidated = ConsolidatedReportExport(
+            session_id=self.session_id,
+            crew_execution_status={},
+            total_execution_time=0.0,
+            errors=[],
+        )
 
-        # Consolidate stock analyses
-        if "stock_crew" in crew_export_paths:
-            logger.info(f"Consolidating {len(crew_export_paths['stock_crew'])} stock analyses")
-            consolidated.stock_analyses = self._load_exports(crew_export_paths["stock_crew"], StockCrewExport, crew_name="stock_crew")
-            status = "completed" if consolidated.stock_analyses else "failed"
-            consolidated.crew_execution_status["stock_crew"] = status
-            logger.info(f"Stock crew consolidation: {status} ({len(consolidated.stock_analyses)} exports)")
-
-        # Consolidate ETF analyses
-        if "etf_crew" in crew_export_paths:
-            logger.info(f"Consolidating {len(crew_export_paths['etf_crew'])} ETF analyses")
-            consolidated.etf_analyses = self._load_exports(crew_export_paths["etf_crew"], ETFCrewExport, crew_name="etf_crew")
-            status = "completed" if consolidated.etf_analyses else "failed"
-            consolidated.crew_execution_status["etf_crew"] = status
-            logger.info(f"ETF crew consolidation: {status} ({len(consolidated.etf_analyses)} exports)")
-
-        # Consolidate crypto analyses
-        if "crypto_crew" in crew_export_paths:
-            logger.info(f"Consolidating {len(crew_export_paths['crypto_crew'])} crypto analyses")
-            consolidated.crypto_analyses = self._load_exports(crew_export_paths["crypto_crew"], CryptoCrewExport, crew_name="crypto_crew")
-            status = "completed" if consolidated.crypto_analyses else "failed"
-            consolidated.crew_execution_status["crypto_crew"] = status
-            logger.info(f"Crypto crew consolidation: {status} ({len(consolidated.crypto_analyses)} exports)")
-
-        # Consolidate deep analyses (supports both Python and CrewAI)
-        if "deep_analysis_crew" in crew_export_paths:
-            logger.info(f"Consolidating {len(crew_export_paths['deep_analysis_crew'])} deep analyses")
-            consolidated.deep_analyses = self._load_deep_analysis_exports(crew_export_paths["deep_analysis_crew"])
-            status = "completed" if consolidated.deep_analyses else "failed"
-            consolidated.crew_execution_status["deep_analysis_crew"] = status
-            logger.info(f"Deep analysis crew consolidation: {status} ({len(consolidated.deep_analyses)} exports)")
-
-        # Consolidate discovery results (single file)
-        if "discovery_crew" in crew_export_paths:
-            logger.info("Consolidating discovery crew results")
-            discovery_exports = self._load_exports(crew_export_paths["discovery_crew"], DiscoveryCrewExport, crew_name="discovery_crew")
-            consolidated.discovery_results = discovery_exports[0] if discovery_exports else None
-            status = "completed" if consolidated.discovery_results else "failed"
-            consolidated.crew_execution_status["discovery_crew"] = status
-            logger.info(f"Discovery crew consolidation: {status}")
-
-        # Consolidate rebalancing results (single file)
-        if "rebalancing_crew" in crew_export_paths:
-            logger.info("Consolidating rebalancing crew results")
-            rebalancing_exports = self._load_exports(crew_export_paths["rebalancing_crew"], RebalancingCrewExport, crew_name="rebalancing_crew")
-            consolidated.rebalancing_results = rebalancing_exports[0] if rebalancing_exports else None
-            status = "completed" if consolidated.rebalancing_results else "failed"
-            consolidated.crew_execution_status["rebalancing_crew"] = status
-            logger.info(f"Rebalancing crew consolidation: {status}")
-
-        # CRITICAL FIX: Handle additional data files
-        # Handle portfolio data
-        if "portfolio_crew" in crew_export_paths:
-            logger.info("Consolidating portfolio review data")
-            try:
-                for file_path in crew_export_paths["portfolio_crew"]:
-                    with open(file_path, encoding="utf-8") as f:
-                        portfolio_data = json.load(f)
-                        # Store portfolio data in consolidated report
-                        if not hasattr(consolidated, "portfolio_data"):
-                            consolidated.portfolio_data = portfolio_data
-                        logger.info(f"✅ Loaded portfolio data from {file_path}")
-                consolidated.crew_execution_status["portfolio_crew"] = "completed"
-            except Exception as e:
-                logger.error(f"Failed to load portfolio data: {e}")
-                consolidated.crew_execution_status["portfolio_crew"] = "failed"
-
-        # Handle A+ opportunities
-        if "aplus_crew" in crew_export_paths:
-            logger.info("Consolidating A+ opportunities")
-            try:
-                aplus_data = {}
-                for file_path in crew_export_paths["aplus_crew"]:
-                    with open(file_path, encoding="utf-8") as f:
-                        data = json.load(f)
-                        file_name = Path(file_path).stem
-                        aplus_data[file_name] = data
-                        logger.info(f"✅ Loaded A+ data from {file_path}")
-
-                # Store A+ data in consolidated report
-                if not hasattr(consolidated, "aplus_opportunities"):
-                    consolidated.aplus_opportunities = aplus_data
-                consolidated.crew_execution_status["aplus_crew"] = "completed"
-            except Exception as e:
-                logger.error(f"Failed to load A+ opportunities: {e}")
-                consolidated.crew_execution_status["aplus_crew"] = "failed"
-
-        # Handle backtesting results
-        if "backtesting_crew" in crew_export_paths:
-            logger.info("Consolidating backtesting results")
-            try:
-                for file_path in crew_export_paths["backtesting_crew"]:
-                    with open(file_path, encoding="utf-8") as f:
-                        backtesting_data = json.load(f)
-                        # Store backtesting data in consolidated report
-                        if not hasattr(consolidated, "backtesting_data"):
-                            consolidated.backtesting_data = backtesting_data
-                        logger.info(f"✅ Loaded backtesting data from {file_path}")
-                consolidated.crew_execution_status["backtesting_crew"] = "completed"
-            except Exception as e:
-                logger.error(f"Failed to load backtesting data: {e}")
-                consolidated.crew_execution_status["backtesting_crew"] = "failed"
+        # Consolidate each crew type
+        self._consolidate_typed_crews(consolidated, crew_export_paths)
+        self._consolidate_special_crews(consolidated, crew_export_paths)
 
         # Include validation errors in consolidated report metadata
+        self._add_validation_errors_to_report(consolidated)
+
+        # Collect HTML report paths and add to analyses
+        self._collect_and_add_html_paths(consolidated, crew_export_paths)
+
+        # Finalize and save
+        consolidated.total_execution_time = time.time() - start_time
+        self._save_consolidated_report(consolidated)
+
+        return consolidated
+
+    def _consolidate_typed_crews(
+        self,
+        consolidated: ConsolidatedReportExport,
+        crew_export_paths: dict[str, list[str]],
+    ) -> None:
+        """Consolidate typed crew exports (stock, ETF, crypto, etc.)."""
+        # Crew configurations: (key, attribute, schema_class)
+        crew_configs = [
+            ("stock_crew", "stock_analyses", StockCrewExport),
+            ("etf_crew", "etf_analyses", ETFCrewExport),
+            ("crypto_crew", "crypto_analyses", CryptoCrewExport),
+        ]
+
+        for crew_key, attr_name, schema_class in crew_configs:
+            if crew_key in crew_export_paths:
+                logger.info(f"Consolidating {len(crew_export_paths[crew_key])} {crew_key} analyses")
+                exports = load_exports(
+                    crew_export_paths[crew_key],
+                    schema_class,
+                    crew_key,
+                    self.session_id,
+                    self._validation_errors,
+                )
+                setattr(consolidated, attr_name, exports)
+                status = "completed" if exports else "failed"
+                consolidated.crew_execution_status[crew_key] = status
+                logger.info(f"{crew_key} consolidation: {status} ({len(exports)} exports)")
+
+        # Handle deep analysis separately (multiple schemas)
+        if "deep_analysis_crew" in crew_export_paths:
+            logger.info(f"Consolidating {len(crew_export_paths['deep_analysis_crew'])} deep analyses")
+            consolidated.deep_analyses = load_deep_analysis_exports(
+                crew_export_paths["deep_analysis_crew"],
+                self._validation_errors,
+            )
+            status = "completed" if consolidated.deep_analyses else "failed"
+            consolidated.crew_execution_status["deep_analysis_crew"] = status
+            logger.info(f"Deep analysis consolidation: {status} ({len(consolidated.deep_analyses)} exports)")
+
+        # Handle single-result crews (discovery, rebalancing)
+        self._consolidate_single_result_crew(
+            consolidated, crew_export_paths, "discovery_crew", "discovery_results", DiscoveryCrewExport
+        )
+        self._consolidate_single_result_crew(
+            consolidated, crew_export_paths, "rebalancing_crew", "rebalancing_results", RebalancingCrewExport
+        )
+
+    def _consolidate_single_result_crew(
+        self,
+        consolidated: ConsolidatedReportExport,
+        crew_export_paths: dict[str, list[str]],
+        crew_key: str,
+        attr_name: str,
+        schema_class: type,
+    ) -> None:
+        """Consolidate a crew that produces a single result."""
+        if crew_key in crew_export_paths:
+            logger.info(f"Consolidating {crew_key} results")
+            exports = load_exports(
+                crew_export_paths[crew_key],
+                schema_class,
+                crew_key,
+                self.session_id,
+                self._validation_errors,
+            )
+            setattr(consolidated, attr_name, exports[0] if exports else None)
+            status = "completed" if getattr(consolidated, attr_name) else "failed"
+            consolidated.crew_execution_status[crew_key] = status
+            logger.info(f"{crew_key} consolidation: {status}")
+
+    def _consolidate_special_crews(
+        self,
+        consolidated: ConsolidatedReportExport,
+        crew_export_paths: dict[str, list[str]],
+    ) -> None:
+        """Consolidate special crew types (portfolio, A+, backtesting)."""
+        # Portfolio data
+        if "portfolio_crew" in crew_export_paths:
+            self._load_generic_json_data(
+                consolidated, crew_export_paths["portfolio_crew"], "portfolio_data", "portfolio_crew"
+            )
+
+        # A+ opportunities
+        if "aplus_crew" in crew_export_paths:
+            self._load_aplus_data(consolidated, crew_export_paths["aplus_crew"])
+
+        # Backtesting results
+        if "backtesting_crew" in crew_export_paths:
+            self._load_generic_json_data(
+                consolidated, crew_export_paths["backtesting_crew"], "backtesting_data", "backtesting_crew"
+            )
+
+    def _load_generic_json_data(
+        self,
+        consolidated: ConsolidatedReportExport,
+        file_paths: list[str],
+        attr_name: str,
+        crew_name: str,
+    ) -> None:
+        """Load generic JSON data for a crew."""
+        logger.info(f"Consolidating {crew_name}")
+        try:
+            for file_path in file_paths:
+                with open(file_path, encoding="utf-8") as f:
+                    data = json.load(f)
+                    if not hasattr(consolidated, attr_name):
+                        setattr(consolidated, attr_name, data)
+                    logger.info(f"Loaded {crew_name} data from {file_path}")
+            consolidated.crew_execution_status[crew_name] = "completed"
+        except Exception as e:
+            logger.error(f"Failed to load {crew_name}: {e}")
+            consolidated.crew_execution_status[crew_name] = "failed"
+
+    def _load_aplus_data(
+        self,
+        consolidated: ConsolidatedReportExport,
+        file_paths: list[str],
+    ) -> None:
+        """Load A+ opportunities data."""
+        logger.info("Consolidating A+ opportunities")
+        try:
+            aplus_data = {}
+            for file_path in file_paths:
+                with open(file_path, encoding="utf-8") as f:
+                    data = json.load(f)
+                    file_name = Path(file_path).stem
+                    aplus_data[file_name] = data
+                    logger.info(f"Loaded A+ data from {file_path}")
+
+            if not hasattr(consolidated, "aplus_opportunities"):
+                consolidated.aplus_opportunities = aplus_data
+            consolidated.crew_execution_status["aplus_crew"] = "completed"
+        except Exception as e:
+            logger.error(f"Failed to load A+ opportunities: {e}")
+            consolidated.crew_execution_status["aplus_crew"] = "failed"
+
+    def _add_validation_errors_to_report(self, consolidated: ConsolidatedReportExport) -> None:
+        """Add validation errors to the consolidated report."""
         if self._validation_errors:
             logger.warning(f"Consolidation completed with {len(self._validation_errors)} validation errors")
             for error in self._validation_errors:
@@ -273,17 +305,19 @@ class ReportConsolidator:
                 consolidated.errors.append(error_msg)
                 logger.debug(f"Validation error detail: {error}")
 
-        # Collect HTML report paths and add to analyses
-        html_paths = self.collect_html_report_paths(crew_export_paths)
+    def _collect_and_add_html_paths(
+        self,
+        consolidated: ConsolidatedReportExport,
+        crew_export_paths: dict[str, list[str]],
+    ) -> None:
+        """Collect HTML report paths and add to analyses."""
+        html_paths = collect_html_report_paths(crew_export_paths)
         if html_paths:
-            consolidated = self.add_html_paths_to_analyses(consolidated, html_paths)
-            # Store HTML paths for final report template
+            add_html_paths_to_analyses(consolidated, html_paths)
             self._html_report_paths = html_paths
 
-        # Calculate total execution time
-        consolidated.total_execution_time = time.time() - start_time
-
-        # Save consolidated export to JSON
+    def _save_consolidated_report(self, consolidated: ConsolidatedReportExport) -> None:
+        """Save consolidated report to JSON file."""
         output_path = self.output_dir / "consolidated_report.json"
         logger.info(f"Saving consolidated report to {output_path}")
 
@@ -294,353 +328,3 @@ class ReportConsolidator:
             logger.error(f"Failed to save consolidated report: {e}")
             consolidated.errors.append(f"Failed to save consolidated report: {str(e)}")
             raise
-
-        return consolidated
-
-    def _load_exports(self, file_paths: list[str], schema_class: type[BaseModel], crew_name: str = "") -> list[BaseModel]:
-        """
-        Load and validate JSON export files with enhanced error recovery.
-
-        This helper method reads JSON files from disk, validates them against
-        the specified Pydantic schema, and returns a list of validated objects.
-        It handles missing files and validation errors gracefully with detailed
-        logging and error tracking in consolidated report metadata.
-
-        Args:
-            file_paths: List of file paths to load
-            schema_class: Pydantic schema class for validation
-            crew_name: Name of crew for error tracking (optional)
-
-        Returns:
-            List of validated export objects (may be empty if all files fail)
-
-        Notes:
-            - Missing files are logged as warnings and skipped
-            - Validation errors are logged with field-level details and tracked
-            - Other errors (I/O, JSON parsing) are logged and skipped
-            - Continues consolidation with valid exports even if some fail
-            - Validation errors are included in consolidated report metadata
-            - Deterministic: same inputs always produce same outputs
-            - Fast: completes in milliseconds for typical file counts
-
-        Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
-
-        """
-        exports: list[BaseModel] = []
-        schema_name = schema_class.__name__
-
-        logger.debug(f"Loading {len(file_paths)} files for schema {schema_name}")
-
-        for path_str in file_paths:
-            path = Path(path_str)
-
-            # Check if file exists
-            if not path.exists():
-                error_msg = f"Export file not found: {path}"
-                logger.warning(error_msg)
-                # Track missing file error
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append({"crew": crew_name, "file": str(path), "error_type": "missing_file", "message": error_msg})
-                continue
-
-            try:
-                # Read and parse JSON
-                logger.debug(f"Reading {path}")
-                data = json.loads(path.read_text(encoding="utf-8"))
-
-                # Filter data to only include fields defined in the schema
-                # This handles cases where crew exports include extra fields (like raw CrewAI output)
-                schema_fields = schema_class.model_fields.keys()
-                filtered_data = {k: v for k, v in data.items() if k in schema_fields}
-
-                # Add default values for missing required fields if possible
-                if schema_name == "DiscoveryCrewExport":
-                    # Handle discovery crew exports that may be missing required fields
-                    if "session_id" not in filtered_data:
-                        filtered_data["session_id"] = self.session_id
-                    if "market_context" not in filtered_data:
-                        filtered_data["market_context"] = "Market context not available from discovery crew export"
-                    if "report_html_path" not in filtered_data:
-                        filtered_data["report_html_path"] = str(path.parent / "discovery_latest.html")
-                    if "report_json_path" not in filtered_data:
-                        filtered_data["report_json_path"] = str(path)
-
-                # Validate against Pydantic schema
-                export = schema_class.model_validate(filtered_data)
-                exports.append(export)
-                logger.debug(f"Successfully validated {path} as {schema_name}")
-
-            except ValidationError as e:
-                # Log detailed validation errors with field paths
-                logger.error(f"Validation failed for {path} against {schema_name}:")
-                validation_details = []
-                for error in e.errors():
-                    field_path = " -> ".join(str(loc) for loc in error["loc"])
-                    error_detail = f"Field '{field_path}': {error['msg']}"
-                    logger.error(f"  {error_detail}")
-                    validation_details.append(error_detail)
-
-                # Track validation error in metadata
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {
-                            "crew": crew_name,
-                            "file": str(path),
-                            "error_type": "validation_error",
-                            "schema": schema_name,
-                            "details": validation_details,
-                            "message": f"Validation failed: {len(validation_details)} field errors",
-                        }
-                    )
-
-                # Skip invalid export with warning (graceful degradation)
-                logger.warning(f"Skipping invalid export {path} - continuing with valid exports")
-
-            except json.JSONDecodeError as e:
-                # Log JSON parsing errors
-                error_msg = f"Invalid JSON in {path}: {e}"
-                logger.error(error_msg)
-                # Track JSON parsing error
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append({"crew": crew_name, "file": str(path), "error_type": "json_parse_error", "message": error_msg})
-
-            except Exception as e:
-                # Log any other unexpected errors
-                error_msg = f"Failed to load {path}: {e}"
-                logger.error(error_msg, exc_info=True)
-                # Track unexpected error
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append({"crew": crew_name, "file": str(path), "error_type": "unexpected_error", "message": error_msg})
-
-        logger.info(f"Loaded {len(exports)}/{len(file_paths)} valid {schema_name} exports")
-
-        # Log warning if no valid exports loaded
-        if len(file_paths) > 0 and len(exports) == 0:
-            logger.warning(f"No valid {schema_name} exports loaded from {len(file_paths)} files")
-
-        return exports
-
-    def _load_deep_analysis_exports(self, file_paths: list[str]) -> list[DeepAnalysisCrewExport | PythonDeepAnalysisResult | EnrichedAnalysis]:
-        """
-        Load deep analysis exports with automatic schema detection.
-
-        Supports:
-        - CrewAI deep analysis exports (legacy)
-        - Python analyzer results (legacy)
-        - EnrichedAnalysis (new hybrid analysis schema)
-
-        Automatically detects which schema to use based on the crew_name field
-        or presence of hybrid analysis fields.
-
-        Args:
-            file_paths: List of file paths to load
-
-        Returns:
-            List of validated export objects (mixed CrewAI, Python, and hybrid)
-
-        Requirements: 9.1 (Support new schema formats)
-
-        """
-        exports: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult | EnrichedAnalysis] = []
-
-        logger.debug(f"Loading {len(file_paths)} deep analysis files with auto-detection")
-
-        for path_str in file_paths:
-            path = Path(path_str)
-
-            if not path.exists():
-                error_msg = f"Export file not found: {path}"
-                logger.warning(error_msg)
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append({"crew": "deep_analysis_crew", "file": str(path), "error_type": "missing_file", "message": error_msg})
-                continue
-
-            try:
-                # Read and parse JSON
-                data = json.loads(path.read_text(encoding="utf-8"))
-
-                # Detect schema based on structure
-                crew_name = data.get("crew_name", "")
-
-                # Check for EnrichedAnalysis (new hybrid schema)
-                if "quantitative" in data and "qualitative" in data:
-                    # New hybrid analysis format
-                    export = EnrichedAnalysis.model_validate(data)
-                    logger.debug(f"✅ Validated {path} as EnrichedAnalysis (hybrid)")
-                elif crew_name == "PythonDeepAnalyzer":
-                    # Python analyzer output (legacy)
-                    export = PythonDeepAnalysisResult.model_validate(data)
-                    logger.debug(f"✅ Validated {path} as PythonDeepAnalysisResult (legacy)")
-                else:
-                    # CrewAI deep analysis output (legacy)
-                    export = DeepAnalysisCrewExport.model_validate(data)
-                    logger.debug(f"✅ Validated {path} as DeepAnalysisCrewExport (legacy)")
-
-                exports.append(export)
-
-            except ValidationError as e:
-                # Log detailed validation errors
-                if "quantitative" in data and "qualitative" in data:
-                    schema_name = "EnrichedAnalysis"
-                elif crew_name == "PythonDeepAnalyzer":
-                    schema_name = "PythonDeepAnalysisResult"
-                else:
-                    schema_name = "DeepAnalysisCrewExport"
-                logger.error(f"Validation failed for {path} against {schema_name}:")
-                validation_details = []
-                for error in e.errors():
-                    field_path = " -> ".join(str(loc) for loc in error["loc"])
-                    error_detail = f"Field '{field_path}': {error['msg']}"
-                    logger.error(f"  {error_detail}")
-                    validation_details.append(error_detail)
-
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append(
-                        {
-                            "crew": "deep_analysis_crew",
-                            "file": str(path),
-                            "error_type": "validation_error",
-                            "schema": schema_name,
-                            "details": validation_details,
-                            "message": f"Validation failed: {len(validation_details)} field errors",
-                        }
-                    )
-
-                logger.warning(f"Skipping invalid export {path}")
-
-            except json.JSONDecodeError as e:
-                error_msg = f"Invalid JSON in {path}: {e}"
-                logger.error(error_msg)
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append({"crew": "deep_analysis_crew", "file": str(path), "error_type": "json_parse_error", "message": error_msg})
-
-            except Exception as e:
-                error_msg = f"Failed to load {path}: {e}"
-                logger.error(error_msg, exc_info=True)
-                if hasattr(self, "_validation_errors"):
-                    self._validation_errors.append({"crew": "deep_analysis_crew", "file": str(path), "error_type": "unexpected_error", "message": error_msg})
-
-        logger.info(f"Loaded {len(exports)}/{len(file_paths)} valid deep analysis exports")
-
-        if len(file_paths) > 0 and len(exports) == 0:
-            logger.warning(f"No valid deep analysis exports loaded from {len(file_paths)} files")
-
-        return exports
-
-    def collect_html_report_paths(self, crew_export_paths: dict[str, list[str]]) -> list[HTMLReportPath]:
-        """
-        Collect paths to individual HTML reports for linking in final report.
-
-        Searches for HTML report files alongside JSON exports and in expected
-        locations. This enables the final consolidated report to link to
-        individual detailed reports.
-
-        Args:
-            crew_export_paths: Dict mapping crew names to list of export file paths
-
-        Returns:
-            List of HTMLReportPath objects for all found HTML reports
-
-        """
-        html_paths: list[HTMLReportPath] = []
-
-        # Map crew names to asset classes
-        crew_asset_classes = {
-            "stock_crew": "stock",
-            "etf_crew": "etf",
-            "crypto_crew": "crypto",
-            "deep_analysis_crew": "mixed",
-            "discovery_crew": "discovery",
-            "rebalancing_crew": "rebalancing",
-        }
-
-        for crew_name, json_paths in crew_export_paths.items():
-            asset_class = crew_asset_classes.get(crew_name, "unknown")
-
-            for json_path_str in json_paths:
-                json_path = Path(json_path_str)
-
-                # Try common HTML report naming patterns
-                possible_html_paths = [
-                    json_path.with_suffix(".html"),  # Same name with .html
-                    json_path.parent / f"{json_path.stem}_report.html",  # *_report.html
-                    json_path.parent / f"{json_path.stem.replace('_export', '_report')}.html",  # Replace _export with _report
-                ]
-
-                for html_path in possible_html_paths:
-                    if html_path.exists():
-                        # Extract ticker from filename
-                        stem = json_path.stem
-                        ticker = stem.replace("_export", "").replace("_deep", "").upper()
-
-                        # Handle special cases
-                        if crew_name == "discovery_crew":
-                            ticker = "DISCOVERY"
-                        elif crew_name == "rebalancing_crew":
-                            ticker = "REBALANCING"
-
-                        html_paths.append(
-                            HTMLReportPath(
-                                ticker=ticker,
-                                crew=crew_name.replace("_crew", ""),
-                                path=str(html_path),
-                                asset_class=asset_class,
-                            )
-                        )
-                        logger.debug(f"Found HTML report: {html_path}")
-                        break  # Found a match, no need to check other patterns
-
-        logger.info(f"Collected {len(html_paths)} HTML report paths")
-        return html_paths
-
-    def add_html_paths_to_analyses(
-        self, consolidated: ConsolidatedReportExport, html_paths: list[HTMLReportPath]
-    ) -> ConsolidatedReportExport:
-        """
-        Add HTML report paths to individual analysis objects.
-
-        This allows the final report template to include "View Full Report"
-        links for each analysis.
-
-        Args:
-            consolidated: The consolidated report export
-            html_paths: List of HTML report paths to add
-
-        Returns:
-            Updated consolidated report with HTML paths added
-
-        """
-        # Create lookup by ticker
-        path_lookup: dict[str, str] = {hp.ticker: hp.path for hp in html_paths}
-
-        # Add paths to stock analyses
-        for analysis in consolidated.stock_analyses:
-            if analysis.ticker in path_lookup:
-                analysis.report_html_path = path_lookup[analysis.ticker]
-
-        # Add paths to ETF analyses
-        for analysis in consolidated.etf_analyses:
-            if analysis.ticker in path_lookup:
-                analysis.report_html_path = path_lookup[analysis.ticker]
-
-        # Add paths to crypto analyses
-        for analysis in consolidated.crypto_analyses:
-            if analysis.ticker in path_lookup:
-                analysis.report_html_path = path_lookup[analysis.ticker]
-
-        # Add paths to deep analyses
-        for analysis in consolidated.deep_analyses:
-            ticker = getattr(analysis, "ticker", None)
-            if ticker and ticker in path_lookup:
-                if hasattr(analysis, "report_html_path"):
-                    analysis.report_html_path = path_lookup[ticker]
-
-        # Add paths to discovery and rebalancing results
-        if consolidated.discovery_results and "DISCOVERY" in path_lookup:
-            consolidated.discovery_results.report_html_path = path_lookup["DISCOVERY"]
-
-        if consolidated.rebalancing_results and "REBALANCING" in path_lookup:
-            consolidated.rebalancing_results.report_html_path = path_lookup["REBALANCING"]
-
-        logger.info("Added HTML paths to consolidated analyses")
-        return consolidated

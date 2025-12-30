@@ -7,18 +7,13 @@ for portfolio rebalancing operations.
 
 from typing import Any
 
+from finwiz.exceptions.orchestrator import PortfolioRebalancingError
 from finwiz.schemas.portfolio_rebalancing import RebalancingResult
 from finwiz.tools.html_report_generator import HTMLReportGenerator
 from finwiz.tools.logger import get_logger
 from finwiz.tools.rebalancing.rebalancing_html_builders import RebalancingHTMLBuilder
 
 logger = get_logger(__name__)
-
-
-class PortfolioRebalancingError(Exception):
-    """Base exception for portfolio rebalancing reporting errors."""
-
-    pass
 
 
 class RebalancingReportGenerator:

@@ -1,17 +1,18 @@
-"""Deep Analysis Orchestrator for FinWiz Flow."""
+"""Deep Analysis Orchestrator for FinWiz Flow.
 
-import asyncio
-import json
+This module coordinates deep analysis execution by delegating to specialized modules:
+- DeepAnalysisDataCollector: Raw data collection
+- DeepAnalysisExecutor: Sequential/concurrent execution
+- DeepAnalysisProcessor: Result processing and metrics
+"""
+
 import os
-import time
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
-from finwiz.flows.hybrid_analysis_flow import HybridAnalysisFlow, HybridAnalysisState
-from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
+from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
+from finwiz.orchestrators.deep_analysis_executor import DeepAnalysisExecutor
+from finwiz.orchestrators.deep_analysis_processor import DeepAnalysisProcessor
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -30,8 +31,16 @@ class DeepAnalysisOrchestrator:
         self.integration_manager = dependencies.get("integration_manager")
         self.error_handler = dependencies.get("error_handler")
 
-        # Initialize HybridAnalysisFlow for new hybrid architecture
-        self.hybrid_flow = HybridAnalysisFlow()
+        # Initialize component modules
+        self.data_collector = DeepAnalysisDataCollector(state)
+        self.result_processor = DeepAnalysisProcessor(state)
+        self.executor = DeepAnalysisExecutor(
+            state=state,
+            data_collector=self.data_collector,
+            result_processor=self.result_processor,
+            batch_prefetch_config=self.batch_prefetch_config,
+            integration_manager=self.integration_manager,
+        )
 
         # Initialize DataSourceOrchestrator for multi-source data acquisition
         from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
@@ -51,23 +60,18 @@ class DeepAnalysisOrchestrator:
         2. Match alternatives for underperforming holdings
         3. Update portfolio review with enriched data
 
-        Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4
-
         Returns:
             dict: Consolidated results with deep analysis and alternatives
-
         """
         self.logger.info("=" * 80)
         self.logger.info("Phase 3: Deep Analysis & Portfolio Update (Atomic Operation)")
         self.logger.info("=" * 80)
 
-        # Check if deep analysis is enabled
         enabled = os.getenv("DEEP_PORTFOLIO_ANALYSIS", "false").lower() == "true"
         if not enabled:
             self.logger.info("Deep analysis disabled via DEEP_PORTFOLIO_ANALYSIS")
             return {}
 
-        # Get portfolio review from state
         portfolio_review = self.state.portfolio_review
         if not portfolio_review or not portfolio_review.get("holdings"):
             self.logger.warning("No portfolio holdings available for deep analysis")
@@ -79,13 +83,9 @@ class DeepAnalysisOrchestrator:
         # Step 1: Run deep analysis on all holdings
         try:
             deep_results = self.run_deep_analysis_on_holdings(holdings)
-
-            # Update structured Flow state
             self.state.deep_analysis_results = deep_results
             self.state.deep_analysis_success = True
-
             self.logger.info(f"Deep analysis completed: {len(deep_results)}/{len(holdings)} holdings analyzed")
-
         except Exception as e:
             self.logger.error(f"Deep analysis failed: {e}", exc_info=True)
             self.state.deep_analysis_success = False
@@ -93,6 +93,49 @@ class DeepAnalysisOrchestrator:
             return {"deep_analysis_results": {}, "error": str(e)}
 
         # Step 2: Match alternatives for underperforming holdings
+        alternatives_data = self._match_alternatives(deep_results)
+
+        # Step 3: Update portfolio review with enriched data
+        self._update_portfolio_review_with_enriched_data(deep_results, alternatives_data)
+
+        self.logger.info("=" * 80)
+
+        return {
+            "deep_analysis_results": deep_results,
+            "alternatives": alternatives_data,
+            "portfolio_updated": True,
+        }
+
+    def run_deep_analysis_on_holdings(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
+        """
+        Execute deep analysis on all holdings.
+
+        Delegates to DeepAnalysisExecutor for actual execution.
+
+        Args:
+            holdings: List of holding dicts with 'ticker' and 'asset_class' keys
+
+        Returns:
+            Dictionary mapping tickers to DeepAnalysisResult objects
+        """
+        return self.executor.run_deep_analysis_on_holdings(holdings)
+
+    async def run_deep_analysis_concurrent(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
+        """
+        Execute deep analysis on all holdings concurrently.
+
+        Delegates to DeepAnalysisExecutor.
+
+        Args:
+            holdings: List of holding dicts with 'ticker' and 'asset_class' keys
+
+        Returns:
+            Dictionary mapping tickers to DeepAnalysisResult objects
+        """
+        return await self.executor.run_deep_analysis_concurrent(holdings)
+
+    def _match_alternatives(self, deep_results: dict[str, DeepAnalysisResult]) -> dict[str, list[dict[str, Any]]]:
+        """Match alternatives for underperforming holdings."""
         try:
             from finwiz.orchestrators.alternatives_matching_orchestrator import AlternativesMatchingOrchestrator
 
@@ -103,10 +146,8 @@ class DeepAnalysisOrchestrator:
                 error_handler=self.error_handler,
             )
 
-            # Convert deep results to holdings format for alternatives matching
-            holdings_with_analysis = []
-            for ticker, analysis in deep_results.items():
-                holding_dict = {
+            holdings_with_analysis = [
+                {
                     "ticker": ticker,
                     "grade": analysis.grade,
                     "composite_score": analysis.composite_score,
@@ -114,1569 +155,69 @@ class DeepAnalysisOrchestrator:
                     "name": getattr(analysis, "name", ticker),
                     "asset_class": analysis.asset_class,
                 }
-                holdings_with_analysis.append(holding_dict)
+                for ticker, analysis in deep_results.items()
+            ]
 
             alternatives_data = alternatives_orch.match_alternatives_for_holdings(
-                holdings_with_analysis,
-                {},  # Discovery results not yet available
+                holdings_with_analysis, {}
             )
 
-            # Update state with alternatives
             self.state.portfolio_alternatives = alternatives_data
             self.state.alternatives_success = True
             self.state.alternatives_count = sum(len(alts) for alts in alternatives_data.values())
 
             self.logger.info(f"Alternative matching completed: {self.state.alternatives_count} alternatives found")
+            return alternatives_data
 
         except Exception as e:
             self.logger.error(f"Alternative matching failed: {e}", exc_info=True)
             self.state.alternatives_success = False
-            alternatives_data = {}
-
-        # Step 3: Update portfolio review with enriched data
-        try:
-            self._update_portfolio_review_with_enriched_data(deep_results, alternatives_data)
-            self.logger.info("Portfolio review updated with deep analysis and alternatives")
-
-        except Exception as e:
-            self.logger.error(f"Portfolio review update failed: {e}", exc_info=True)
-
-        self.logger.info("=" * 80)
-
-        # Return consolidated results for downstream Flow methods
-        return {
-            "deep_analysis_results": deep_results,
-            "alternatives": alternatives_data,
-            "portfolio_updated": True,
-        }
+            return {}
 
     def _update_portfolio_review_with_enriched_data(
         self,
         deep_results: dict[str, DeepAnalysisResult],
         alternatives_data: dict[str, list[dict[str, Any]]],
     ) -> None:
-        """
-        Update portfolio review with deep analysis results and alternatives.
-
-        Args:
-            deep_results: Deep analysis results keyed by ticker
-            alternatives_data: Alternatives data keyed by ticker
-
-        """
-        if not self.state.portfolio_review:
-            return
-
-        holdings = self.state.portfolio_review.get("holdings", [])
-
-        for holding in holdings:
-            ticker = holding.get("ticker")
-            if not ticker:
-                continue
-
-            # Enrich with deep analysis results
-            if ticker in deep_results:
-                analysis = deep_results[ticker]
-                holding["composite_score"] = analysis.composite_score
-                holding["grade"] = analysis.grade
-                # NOTE: fundamental_score, technical_score, risk_score, confidence_level, analysis_timestamp
-                # are NOT in HoldingDecision schema and will cause Pydantic validation errors
-                # These fields exist in DeepAnalysisResult but should not be copied to holdings
-
-            # Enrich with alternatives
-            if ticker in alternatives_data:
-                holding["alternatives"] = alternatives_data[ticker]
-
-        # Update state
-        self.state.portfolio_review["holdings"] = holdings
-
-    def run_deep_analysis_on_holdings(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
-        """
-        Execute deep analysis on all holdings.
-
-        Automatically uses concurrent execution when possible for 5x+ speedup.
-        Falls back to sequential execution if async context unavailable.
-
-        Requirements: 3.1
-
-        Args:
-            holdings: List of holding dicts with 'ticker' and 'asset_class' keys
-
-        Returns:
-            Dictionary mapping tickers to DeepAnalysisResult objects
-
-        """
-        if not holdings:
-            return {}
-
-        # Check if concurrent execution is enabled (default: True)
-        use_concurrent = os.getenv("DEEP_ANALYSIS_CONCURRENT", "true").lower() == "true"
-
-        if use_concurrent:
-            try:
-                # Try to use concurrent execution
-                try:
-                    # Check if event loop is already running
-                    loop = asyncio.get_running_loop()
-                    # If we're in an async context, we need to use nest_asyncio or run in new thread
-                    self.logger.info("Running concurrent deep analysis (existing event loop)")
-                    import nest_asyncio
-
-                    nest_asyncio.apply()
-                    return asyncio.run(self.run_deep_analysis_concurrent(holdings))
-                except RuntimeError:
-                    # No running event loop - we can use asyncio.run directly
-                    self.logger.info("Running concurrent deep analysis (new event loop)")
-                    return asyncio.run(self.run_deep_analysis_concurrent(holdings))
-            except ImportError:
-                self.logger.warning("nest_asyncio not available, falling back to sequential")
-            except Exception as e:
-                self.logger.warning(f"Concurrent execution failed, falling back to sequential: {e}")
-
-        # Fall back to sequential execution
-        return self._run_deep_analysis_sequential(holdings)
-
-    def _run_deep_analysis_sequential(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
-        """
-        Execute deep analysis sequentially (fallback method).
-
-        Used when concurrent execution is disabled or fails.
-
-        Args:
-            holdings: List of holding dicts
-
-        Returns:
-            Dictionary mapping tickers to DeepAnalysisResult objects
-
-        """
-        # Determine batch mode
-        is_portfolio = len(holdings) >= self.batch_prefetch_config.min_holdings_for_batch
-        batch_enabled = self.batch_prefetch_config.enabled and is_portfolio
-
-        if batch_enabled:
-            self.execute_deep_analysis_with_prefetch([h.get("ticker") for h in holdings if h.get("ticker")])
-
-        # Initialize cache
-        from finwiz.cache.analysis_cache_manager import get_analysis_cache_manager
-
-        cache_mgr = get_analysis_cache_manager(ttl_hours=int(os.getenv("PORTFOLIO_CACHE_TTL_HOURS", "24")))
-
-        # Process holdings sequentially
-        results, ticker_times, start_time = {}, {}, time.time()
-
-        for holding in holdings:
-            ticker, asset_class = holding.get("ticker"), holding.get("asset_class")
-            if not ticker or not asset_class:
-                continue
-
-            ticker_start = time.time()
-            try:
-                result = self._process_single_holding(ticker, asset_class, cache_mgr, 24, batch_enabled)
-                if result:
-                    results[ticker] = result
-                    ticker_times[ticker] = time.time() - ticker_start
-            except Exception as e:
-                self.logger.error(f"Failed {ticker}: {e}", exc_info=True)
-                if ticker not in self.state.failed_holdings:
-                    self.state.failed_holdings.append(ticker)
-
-        cache_mgr.log_cache_stats()
-        self.logger.info(f"Completed {len(results)}/{len(holdings)} in {time.time() - start_time:.1f}s")
-
-        if batch_enabled and self.state.batch_prefetch_metrics:
-            self._update_batch_metrics(time.time() - start_time, len(results), len(holdings), ticker_times)
-            self.save_batch_metrics_to_file(self.state.batch_prefetch_metrics, None)
-
-        return results
-
-    async def run_deep_analysis_concurrent(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
-        """
-        Execute deep analysis on all holdings concurrently.
-
-        Uses asyncio.gather() with semaphore to process multiple holdings in parallel,
-        significantly reducing total processing time compared to sequential execution.
-
-        Performance:
-            - Sequential: 66 holdings × 20s = 22+ minutes
-            - Concurrent (limit=5): 66 holdings in ~4-5 minutes (5x speedup)
-
-        Requirements: 3.1
-
-        Args:
-            holdings: List of holding dicts with 'ticker' and 'asset_class' keys
-
-        Returns:
-            Dictionary mapping tickers to DeepAnalysisResult objects
-
-        """
-        if not holdings:
-            return {}
-
-        start_time = time.time()
-
-        # Determine batch mode
-        is_portfolio = len(holdings) >= self.batch_prefetch_config.min_holdings_for_batch
-        batch_enabled = self.batch_prefetch_config.enabled and is_portfolio
-
-        if batch_enabled:
-            self.execute_deep_analysis_with_prefetch([h.get("ticker") for h in holdings if h.get("ticker")])
-
-        # Initialize cache
-        from finwiz.cache.analysis_cache_manager import get_analysis_cache_manager
-
-        cache_mgr = get_analysis_cache_manager(ttl_hours=int(os.getenv("PORTFOLIO_CACHE_TTL_HOURS", "24")))
-
-        # Get concurrency limit from environment (uses DEEP_ANALYSIS_BATCH_SIZE)
-        parallel_limit = int(os.getenv("DEEP_ANALYSIS_BATCH_SIZE", "5"))
-        self.logger.info(f"Processing {len(holdings)} holdings concurrently (limit={parallel_limit})")
-
-        # Create semaphore to limit concurrent crew executions
-        semaphore = asyncio.Semaphore(parallel_limit)
-
-        async def process_with_semaphore(idx: int, holding: dict[str, Any]) -> tuple[int, str, DeepAnalysisResult | None, float]:
-            """Process a single holding with semaphore-limited concurrency."""
-            ticker = holding.get("ticker")
-            asset_class = holding.get("asset_class")
-
-            if not ticker or not asset_class:
-                return (idx, "", None, 0.0)
-
-            async with semaphore:
-                ticker_start = time.time()
-                self.logger.debug(f"Processing {idx}/{len(holdings)}: {ticker} ({asset_class})")
-
-                try:
-                    # Execute in thread pool to avoid blocking event loop
-                    result = await self._process_single_holding_async(ticker, asset_class, cache_mgr, 24, batch_enabled)
-                    elapsed = time.time() - ticker_start
-                    self.logger.debug(f"Completed {ticker} in {elapsed:.1f}s")
-                    return (idx, ticker, result, elapsed)
-
-                except Exception as e:
-                    self.logger.error(f"Failed {ticker}: {e}", exc_info=True)
-                    if ticker not in self.state.failed_holdings:
-                        self.state.failed_holdings.append(ticker)
-                    return (idx, ticker, None, time.time() - ticker_start)
-
-        # Execute all holdings concurrently with semaphore limit
-        tasks = [process_with_semaphore(idx, holding) for idx, holding in enumerate(holdings, start=1)]
-        task_results = await asyncio.gather(*tasks)
-
-        # Collect results and timing
-        results: dict[str, DeepAnalysisResult] = {}
-        ticker_times: dict[str, float] = {}
-
-        for idx, ticker, result, elapsed in task_results:
-            if result and ticker:
-                results[ticker] = result
-                ticker_times[ticker] = elapsed
-
-        # Log performance metrics
-        total_time = time.time() - start_time
-        sequential_estimate = len(holdings) * 20.0  # Assume 20s per holding sequential
-        speedup = sequential_estimate / total_time if total_time > 0 else 1.0
-
-        cache_mgr.log_cache_stats()
-        self.logger.info(f"Completed {len(results)}/{len(holdings)} in {total_time:.1f}s (~{speedup:.1f}x speedup vs sequential)")
-
-        if batch_enabled and self.state.batch_prefetch_metrics:
-            self._update_batch_metrics(total_time, len(results), len(holdings), ticker_times)
-            self.save_batch_metrics_to_file(self.state.batch_prefetch_metrics, None)
-
-        return results
-
-    async def _process_single_holding_async(
-        self,
-        ticker: str,
-        asset_class: str,
-        cache_mgr: Any,
-        cache_ttl: int,
-        batch_enabled: bool,
-    ) -> DeepAnalysisResult | None:
-        """
-        Async wrapper for _process_single_holding.
-
-        Executes the synchronous crew kickoff in a thread pool executor
-        to avoid blocking the event loop.
-
-        Args:
-            ticker: Ticker symbol
-            asset_class: Asset class (stock/etf/crypto)
-            cache_mgr: Cache manager instance
-            cache_ttl: Cache TTL in hours
-            batch_enabled: Whether batch mode is enabled
-
-        Returns:
-            DeepAnalysisResult or None if processing fails
-
-        """
-        loop = asyncio.get_event_loop()
-
-        # Use thread pool to execute synchronous CrewAI code
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            return await loop.run_in_executor(
-                executor,
-                self._process_single_holding,
-                ticker,
-                asset_class,
-                cache_mgr,
-                cache_ttl,
-                batch_enabled,
-            )
-
-    def _collect_data_with_python(self, ticker: str, asset_class: str, batch_enabled: bool) -> dict[str, Any]:
-        """
-        Python directly calls tools to collect raw financial data.
-
-        This ensures 100% reliable data collection - agents can't "forget" to run tools.
-        Python gets raw facts (current_price=150.0, roe=0.25) for scoring.
-
-        Args:
-            ticker: Ticker symbol
-            asset_class: Asset class (stock/etf/crypto)
-            batch_enabled: Whether batch mode is enabled
-
-        Returns:
-            Dictionary with raw metrics for Python scoring
-
-        """
-        import json
-
-        from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
-        from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-        from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
-        from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
-
-        self.logger.info(f"🐍 Python collecting data for {ticker} ({asset_class})")
-
-        collected_data = {
-            "ticker": ticker,
-            "asset_class": asset_class,
-            "collection_timestamp": self.state.full_date,
-        }
-
+        """Update portfolio review with deep analysis results and alternatives."""
         try:
-            # STEP 0: Yahoo Finance - Current price and basic info
-            self.logger.info(f"🐍 Calling YahooFinanceTickerInfoTool for {ticker}")
-            ticker_tool = YahooFinanceTickerInfoTool()
-            ticker_result = ticker_tool._run(ticker=ticker)
+            if not self.state.portfolio_review:
+                return
 
-            if "current_price" in ticker_result:
-                collected_data["current_price"] = ticker_result["current_price"]
-                self.logger.info(f"✅ Got current_price: {ticker_result['current_price']}")
+            holdings = self.state.portfolio_review.get("holdings", [])
 
-            collected_data["ticker_info"] = ticker_result
-
-        except Exception as e:
-            self.logger.error(f"❌ Ticker info failed: {e}", exc_info=True)
-            collected_data["ticker_info"] = {}
-
-        try:
-            # STEP 0.5: Asset-specific data collection
-            if asset_class.lower() == "crypto":
-                # Collect crypto-specific data (volume_24h, age_years, market_cap)
-                self.logger.info(f"🐍 Calling EnhancedCryptoAnalysisTool for {ticker}")
-                from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
-
-                crypto_tool = EnhancedCryptoAnalysisTool()
-                crypto_result = crypto_tool._run(
-                    symbol=ticker,
-                    include_thesis=False,  # We only need data
-                    include_risk_assessment=False,
-                    include_perplexity=False,
-                )
-
-                # Extract crypto-specific metrics
-                if isinstance(crypto_result, dict):
-                    # Check if crypto_data is nested or at top level
-                    crypto_data = crypto_result.get("crypto_data", crypto_result)
-
-                    # Map total_volume to volume_24h (CoinGecko uses total_volume)
-                    collected_data["volume_24h"] = crypto_data.get("total_volume", crypto_data.get("volume_24h", 0.0))
-
-                    # Get market cap with fallback to reasonable default if missing/zero
-                    market_cap_raw = crypto_data.get("market_cap", 0.0)
-                    if market_cap_raw <= 0:
-                        self.logger.warning(f"⚠️ Market cap missing/zero for {ticker}, using default $10B")
-                    collected_data["market_cap"] = market_cap_raw if market_cap_raw > 0 else 10e9  # Default $10B
-
-                    # Also store circulating and max supply for scoring
-                    collected_data["circulating_supply"] = crypto_data.get("circulating_supply", 0.0)
-                    collected_data["max_supply"] = crypto_data.get("max_supply", crypto_data.get("total_supply", 0.0))
-
-                    # Calculate age_years from genesis date if available
-                    # For now, use a mapping for known cryptos
-                    age_mapping = {
-                        "BTC": 15.0,  # Since 2009
-                        "BTC-USD": 15.0,
-                        "ETH": 9.0,  # Since 2015
-                        "ETH-USD": 9.0,
-                        "ADA": 7.0,  # Since 2017
-                        "ADA-USD": 7.0,
-                        "SOL": 4.0,  # Since 2020
-                        "SOL-USD": 4.0,
-                        "AVAX": 4.0,  # Since 2020
-                        "AVAX-USD": 4.0,
-                        "DOT": 4.0,  # Since 2020
-                        "DOT-USD": 4.0,
-                    }
-                    ticker_base = ticker.replace("-USD", "").upper()
-                    collected_data["age_years"] = age_mapping.get(ticker_base, 3.0)  # Default 3 years
-
-                    self.logger.info(
-                        f"✅ Got crypto data: volume_24h={collected_data['volume_24h']}, age_years={collected_data['age_years']}, market_cap={collected_data['market_cap']}"
-                    )
-                    collected_data["crypto_info"] = crypto_result
-                else:
-                    self.logger.warning(f"⚠️ Crypto tool returned unexpected type: {type(crypto_result)}")
-                    # Set default values for required fields
-                    collected_data["volume_24h"] = 1e9  # Default $1B volume
-                    collected_data["age_years"] = 3.0  # Default 3 years
-                    collected_data["market_cap"] = 10e9  # Default $10B market cap
-
-            elif asset_class.lower() == "stock":
-                # Use DataSourceOrchestrator for multi-source fundamental data acquisition
-                self.logger.info(f"🐍 Using DataSourceOrchestrator for {ticker} fundamental data")
-
-                # Get sector from ticker_info if available
-                sector = None
-                if "ticker_info" in collected_data and isinstance(collected_data["ticker_info"], dict):
-                    sector = collected_data["ticker_info"].get("sector")
-
-                # Run async orchestration
-                import asyncio
-                import concurrent.futures
-
-                try:
-                    # Handle both running and non-running event loop scenarios
-                    try:
-                        # Check if event loop is already running (CrewAI Flow context)
-                        loop = asyncio.get_running_loop()
-                        # Use ThreadPoolExecutor to run async code in a new thread with its own event loop
-                        with concurrent.futures.ThreadPoolExecutor() as executor:
-                            future = executor.submit(asyncio.run, self.data_orchestrator.get_fundamental_data(ticker, sector))
-                            orchestration_result = future.result()
-                    except RuntimeError:
-                        # No event loop running, safe to use asyncio.run()
-                        orchestration_result = asyncio.run(self.data_orchestrator.get_fundamental_data(ticker, sector))
-
-                    # Extract fundamental metrics to top level
-                    if orchestration_result.return_on_equity is not None:
-                        collected_data["roe"] = orchestration_result.return_on_equity
-                        self.logger.info(f"✅ Got roe: {orchestration_result.return_on_equity} (source: {orchestration_result.lineage.return_on_equity_source})")
-
-                    if orchestration_result.debt_to_equity is not None:
-                        collected_data["debt_to_equity"] = orchestration_result.debt_to_equity
-                        self.logger.info(f"✅ Got debt_to_equity: {orchestration_result.debt_to_equity} (source: {orchestration_result.lineage.debt_to_equity_source})")
-
-                    if orchestration_result.revenue_growth is not None:
-                        collected_data["revenue_growth"] = orchestration_result.revenue_growth
-                        self.logger.info(f"✅ Got revenue_growth: {orchestration_result.revenue_growth} (source: {orchestration_result.lineage.revenue_growth_source})")
-
-                    if orchestration_result.profit_margin is not None:
-                        collected_data["profit_margin"] = orchestration_result.profit_margin
-                        self.logger.info(f"✅ Got profit_margin: {orchestration_result.profit_margin} (source: {orchestration_result.lineage.profit_margin_source})")
-
-                    # Store orchestration metadata
-                    collected_data["data_lineage"] = orchestration_result.lineage.to_dict()
-                    collected_data["data_confidence"] = orchestration_result.confidence
-                    collected_data["data_sources_attempted"] = orchestration_result.sources_attempted
-                    collected_data["data_sources_succeeded"] = orchestration_result.sources_succeeded
-                    collected_data["used_fallback"] = orchestration_result.used_fallback
-
-                    if orchestration_result.warnings:
-                        self.logger.warning(f"⚠️ Data orchestration warnings for {ticker}: {orchestration_result.warnings}")
-
-                    self.logger.info(
-                        f"✅ DataSourceOrchestrator completed: completeness={orchestration_result.get_completeness_score():.1%}, "
-                        f"confidence={orchestration_result.confidence:.2f}, "
-                        f"sources={orchestration_result.sources_succeeded}"
-                    )
-
-                except Exception as orch_error:
-                    self.logger.error(f"❌ DataSourceOrchestrator failed for {ticker}: {orch_error}", exc_info=True)
-                    # Fallback to YahooFinanceCompanyInfoTool
-                    self.logger.info(f"🐍 Falling back to YahooFinanceCompanyInfoTool for {ticker}")
-                    company_tool = YahooFinanceCompanyInfoTool()
-                    company_result = company_tool._run(ticker=ticker)
-
-                    # Extract fundamental metrics to top level
-                    if "financial_metrics" in company_result:
-                        metrics = company_result["financial_metrics"]
-                        if "return_on_equity" in metrics:
-                            collected_data["roe"] = metrics["return_on_equity"]
-                            self.logger.info(f"✅ Got roe: {metrics['return_on_equity']}")
-                        if "debt_to_equity" in metrics:
-                            collected_data["debt_to_equity"] = metrics["debt_to_equity"]
-                            self.logger.info(f"✅ Got debt_to_equity: {metrics['debt_to_equity']}")
-                        if "revenue_growth" in metrics:
-                            collected_data["revenue_growth"] = metrics["revenue_growth"]
-                            self.logger.info(f"✅ Got revenue_growth: {metrics['revenue_growth']}")
-                        if "profit_margin" in metrics:
-                            collected_data["profit_margin"] = metrics["profit_margin"]
-                            self.logger.info(f"✅ Got profit_margin: {metrics['profit_margin']}")
-
-                    collected_data["company_info"] = company_result
-
-        except Exception as e:
-            self.logger.error(f"❌ Asset-specific data collection failed: {e}", exc_info=True)
-            # Ensure crypto fields exist with defaults if it was a crypto asset
-            if asset_class.lower() == "crypto":
-                collected_data["volume_24h"] = 1e9  # Default $1B volume
-                collected_data["age_years"] = 3.0  # Default 3 years
-                collected_data["market_cap"] = 10e9  # Default $10B market cap
-                collected_data["crypto_info"] = {}
-            else:
-                collected_data["company_info"] = {}
-
-        try:
-            # STEP 1: Quantitative Analysis (volatility, beta, technical indicators, risk metrics)
-            self.logger.info(f"🐍 Calling QuantitativeAnalysisTool for {ticker}")
-            quant_tool = QuantitativeAnalysisTool()
-            quant_result = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="comprehensive", timeframe="1y", strategy="sma_crossover")
-
-            # Parse quant result (it returns JSON string)
-            quant_data = json.loads(quant_result) if isinstance(quant_result, str) else quant_result
-            collected_data["quantitative_analysis"] = quant_data
-            self.logger.info(f"✅ Got quantitative data with keys: {list(quant_data.keys())[:5]}")
-
-            # DEBUG: Check if beta is in the data
-            if "performance_metrics" in quant_data:
-                perf_keys = list(quant_data["performance_metrics"].keys()) if isinstance(quant_data["performance_metrics"], dict) else "not a dict"
-                self.logger.info(f"🔍 DEBUG: performance_metrics keys: {perf_keys}")
-                if isinstance(quant_data["performance_metrics"], dict) and "beta" in quant_data["performance_metrics"]:
-                    self.logger.info(f"🔍 DEBUG: Found beta={quant_data['performance_metrics']['beta']} in quantitative data")
-                else:
-                    self.logger.warning("⚠️ DEBUG: Beta NOT found in performance_metrics!")
-            else:
-                self.logger.warning("⚠️ DEBUG: No performance_metrics in quantitative data!")
-
-        except Exception as e:
-            self.logger.error(f"❌ Quantitative analysis failed: {e}", exc_info=True)
-            collected_data["quantitative_analysis"] = {}
-
-        try:
-            # STEP 2: Sentiment Analysis
-            self.logger.info(f"🐍 Calling SentimentAnalysisTool for {ticker}")
-            sentiment_tool = EnhancedSentimentAnalysisTool()
-            sentiment_result = sentiment_tool._run(ticker=ticker, asset_type=asset_class, max_articles=20, days_back=30)
-
-            # Store sentiment result (now returns structured data)
-            if isinstance(sentiment_result, dict):
-                # Extract sentiment score and other key fields to top level
-                collected_data["sentiment_score"] = sentiment_result.get("sentiment_score", 0.0)
-                collected_data["overall_sentiment"] = sentiment_result.get("overall_sentiment", "neutral")
-                collected_data["sentiment_confidence"] = sentiment_result.get("confidence", 0.0)
-                collected_data["trending_topics"] = sentiment_result.get("trending_topics", [])
-                collected_data["article_count"] = sentiment_result.get("article_count", 0)
-                collected_data["news_sources"] = sentiment_result.get("news_sources", [])
-                collected_data["sentiment_breakdown"] = sentiment_result.get("sentiment_breakdown", {})
-
-                # Store full sentiment analysis for detailed reporting
-                collected_data["sentiment_analysis"] = sentiment_result
-                self.logger.info(f"✅ Got sentiment data: score={collected_data['sentiment_score']:.3f}, sentiment={collected_data['overall_sentiment']}")
-            else:
-                # Fallback for legacy string response
-                self.logger.warning(f"⚠️ Sentiment tool returned unexpected type: {type(sentiment_result)}")
-                collected_data["sentiment_analysis"] = {"error": "Unexpected response type"}
-                collected_data["sentiment_score"] = 0.0
-
-        except Exception as e:
-            self.logger.error(f"❌ Sentiment analysis failed: {e}", exc_info=True)
-            collected_data["sentiment_analysis"] = {}
-            collected_data["sentiment_score"] = 0.0  # Ensure sentiment_score exists even on error
-
-        try:
-            # STEP 3: SEC Analysis (stocks only - fundamentals like ROE, debt/equity)
-            if asset_class.lower() == "stock":
-                self.logger.info(f"🐍 Calling SEC Analysis for {ticker}")
-                from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
-
-                sec_tool = EnhancedSECAnalysisTool()
-                sec_result = sec_tool._run(
-                    ticker=ticker,
-                    form_type="10-K",
-                    sections=["Item 1", "Item 1A", "Item 7"],
-                    risk_assessment=True,
-                    include_perplexity=False,  # Disabled for speed
-                )
-
-                # Store SEC result (it's already formatted markdown text, not JSON)
-                # The SEC tool returns markdown strings, not JSON objects
-                if isinstance(sec_result, str):
-                    # Check if it's an error message
-                    if sec_result.startswith("Error:") or sec_result.startswith("No SEC filings"):
-                        self.logger.warning(f"⚠️ SEC tool returned error/warning: {sec_result[:100]}")
-                        collected_data["sec_analysis"] = {"error": sec_result}
-                    else:
-                        # Store the markdown analysis text
-                        collected_data["sec_analysis"] = {"analysis_text": sec_result}
-                        self.logger.info(f"✅ Got SEC analysis ({len(sec_result)} chars)")
-                else:
-                    # Unexpected type - store as-is
-                    collected_data["sec_analysis"] = sec_result
-                    self.logger.info(f"✅ Got SEC data with keys: {list(sec_result.keys())[:5] if isinstance(sec_result, dict) else 'N/A'}")
-
-        except Exception as e:
-            self.logger.error(f"❌ SEC analysis failed: {e}", exc_info=True)
-            collected_data["sec_analysis"] = {}
-
-        # Flatten nested structures for Python scorer
-        flattened = self._flatten_collected_data(collected_data)
-
-        self.logger.info(f"✅ Python collected {len(flattened)} fields: {list(flattened.keys())[:10]}")
-        return flattened
-
-    def _process_single_holding(self, ticker: str, asset_class: str, cache_mgr: Any, cache_ttl: int, batch_enabled: bool) -> DeepAnalysisResult | None:
-        """Process a single holding with caching."""
-        cached = cache_mgr.get_cached_analysis(ticker, asset_class)
-        if cached and cached.is_fresh(cache_ttl):
-            return self.create_deep_analysis_result_from_crew_output(cached.analysis, ticker, asset_class, cached.analysis.crew_name, True)
-
-        # STEP 1: PYTHON calls tools directly (NO agent involvement)
-        self.logger.info(f"🐍 Step 1: Python collecting data for {ticker}")
-        raw_data = self._collect_data_with_python(ticker, asset_class, batch_enabled)
-
-        # STEP 2: PYTHON calculates scores using raw data
-        self.logger.info(f"🐍 Step 2: Python calculating scores for {ticker}")
-        try:
-            from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
-
-            scorer = DeepAnalysisScorer()
-            python_result = scorer.calculate_composite_score(ticker, asset_class, raw_data)
-
-            self.logger.info(f"✅ Python scoring: {ticker} = {python_result.grade} ({python_result.composite_score:.3f})")
-
-            # Cache Python result
-            cache_mgr.cache_analysis(ticker, asset_class, python_result)
-
-            # Store to disk
-            if self.integration_manager:
-                try:
-                    crew_name = f"deep_analysis_{asset_class}"
-                    self.integration_manager.store_crew_output(crew_name, python_result)
-                except Exception as e:
-                    self.logger.warning(f"Failed to store Python result: {e}")
-
-            # STEP 3: Pass Python results to agent as INPUT (agent just formats)
-            self.logger.info("🐍 Step 3: Passing Python results to agent for formatting")
-
-            from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
-
-            crew = DeepAnalysisCrew()
-
-            # Agent receives Python calculations as facts - NO tool calling
-            result = crew.crew().kickoff(
-                inputs={
-                    "ticker": ticker,
-                    "asset_class": asset_class,
-                    "company_name": raw_data.get("company_name", ticker),
-                    "current_day": self.state.current_day,
-                    "current_month": self.state.current_month,
-                    "current_year": self.state.current_year,
-                    "current_date": self.state.current_date,
-                    "full_date": self.state.full_date,
-                    "timestamp": self.state.timestamp,
-                    "report_language": self.state.report_language,
-                    # CRITICAL: Pass Python results as input - agent just reads these facts
-                    "python_results": python_result.model_dump(),
-                    "grade": python_result.grade,
-                    "composite_score": python_result.composite_score,
-                    "preliminary_recommendation": python_result.recommendation,  # DeepAnalysisResult uses 'recommendation'
-                    "fundamental_score": python_result.fundamental_score or 0.0,
-                    "technical_score": python_result.technical_score or 0.0,
-                    "risk_score": python_result.risk_score or 0.0,
-                    "fundamental_metrics": python_result.fundamental_details,  # DeepAnalysisResult uses 'fundamental_details'
-                    "technical_indicators": python_result.technical_details,  # DeepAnalysisResult uses 'technical_details'
-                    "risk_metrics": python_result.risk_details,  # DeepAnalysisResult uses 'risk_details'
-                }
-            )
-
-            # Auto-generate HTML reports from JSON outputs
-            from finwiz.integration.html_auto_generator import auto_generate_html_for_crew
-
-            crew_name = f"deep_analysis_{asset_class}"
-            auto_generate_html_for_crew(crew_name)
-
-            return python_result  # Return Python result (NOT agent output)
-
-        except Exception as e:
-            self.logger.error(f"Python scoring failed for {ticker}: {e}", exc_info=True)
-            # Fallback: Still try agent-based approach
-
-        # FALLBACK: Old agent-based approach (if Python scoring fails)
-        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
-
-        crew = DeepAnalysisCrew()
-
-        if batch_enabled and self.state.prefetched_data:
-            crew.set_prefetched_data(self.state.prefetched_data)
-
-        # Provide placeholder values for template variables expected by tasks.yaml
-        # These will be replaced by actual values if agent-based scoring works
-        result = crew.crew().kickoff(
-            inputs={
-                "ticker": ticker,
-                "asset_class": asset_class,
-                "company_name": ticker,  # Use ticker as fallback for company name
-                "current_day": self.state.current_day,
-                "current_month": self.state.current_month,
-                "current_year": self.state.current_year,
-                "current_date": self.state.current_date,
-                "full_date": self.state.full_date,
-                "timestamp": self.state.timestamp,
-                "report_language": self.state.report_language,
-                # Placeholder values for Python scoring results (used in task templates)
-                "grade": "N/A",
-                "composite_score": 0.0,
-                "preliminary_recommendation": "PENDING",  # Fixed: was "recommendation"
-                "fundamental_score": 0.0,
-                "technical_score": 0.0,
-                "risk_score": 0.0,
-                "fundamental_metrics": {},
-                "technical_indicators": {},
-                "risk_metrics": {},
-                "python_results": {},
-            }
-        )
-
-        # Auto-generate HTML reports from JSON outputs (fallback path)
-        from finwiz.integration.html_auto_generator import auto_generate_html_for_crew
-
-        crew_name = f"deep_analysis_{asset_class}"
-        auto_generate_html_for_crew(crew_name)
-
-        # OLD APPROACH: Extract collected data from agent output
-        try:
-            from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
-
-            # Extract collected data from crew output
-            collected_data = self._extract_collected_data(result)
-
-            if collected_data:
-                # Calculate scores using Python scorer (not AI!)
-                scorer = DeepAnalysisScorer()
-                python_result = scorer.calculate_composite_score(ticker, asset_class, collected_data)
-
-                self.logger.info(f"✅ Python scoring: {ticker} = {python_result.grade} ({python_result.composite_score:.3f})")
-
-                # Cache and return Python-calculated result
-                cache_mgr.cache_analysis(ticker, asset_class, python_result)
-
-                # Store to disk for integration
-                if self.integration_manager:
-                    try:
-                        crew_name = f"deep_analysis_{asset_class}"
-                        # Store Python result instead of AI result
-                        self.integration_manager.store_crew_output(crew_name, python_result)
-                        self.logger.debug(f"Stored Python scoring output for {ticker}")
-                    except Exception as e:
-                        self.logger.warning(f"Failed to store Python scoring output: {e}")
-
-                return python_result
-            else:
-                self.logger.warning(f"No collected data found in crew output for {ticker}, falling back to AI scores")
-        except Exception as e:
-            self.logger.error(f"Python scoring failed for {ticker}: {e}, falling back to AI scores")
-
-        # Fallback: Store crew output to disk for integration system (AI scores)
-        if self.integration_manager:
-            try:
-                crew_name = f"deep_analysis_{asset_class}"
-                self.integration_manager.store_crew_output(crew_name, result)
-                self.logger.debug(f"Stored crew output for {ticker} ({asset_class}) to {crew_name}")
-            except Exception as e:
-                self.logger.warning(f"Failed to store crew output for {ticker}: {e}")
-
-        deep_result = self.create_deep_analysis_result_from_crew_output(result, ticker, asset_class, "DeepAnalysisCrew", False)
-        cache_mgr.cache_analysis(ticker, asset_class, deep_result)
-        return deep_result
-
-    def _flatten_collected_data(self, data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Flatten nested tool output structures for Python scorer.
-
-        The scorer expects flat dict with fields like: current_price, roe, volatility, beta, etc.
-        But agent outputs come nested in structures like:
-        - quantitative_analysis.prices.current_price
-        - quantitative_analysis.risk_metrics.volatility
-        - sec_analysis.fundamentals.roe
-
-        Args:
-            data: Nested dict from agent tool outputs
-
-        Returns:
-            Flattened dict with all metrics at top level
-
-        """
-        flattened = {}
-
-        # Keep ALL top-level fields (including current_price, roe, debt_to_equity, etc.)
-        # These were explicitly extracted by _collect_data_with_python
-        for key, value in data.items():
-            # Skip only the nested sections we'll process separately
-            if key not in ["ticker_info", "company_info", "quantitative_analysis", "sec_analysis", "sentiment_analysis", "ticker_validation"]:
-                if isinstance(value, (int, float, str, bool, type(None))):
-                    flattened[key] = value
-
-        # CRITICAL FIX: Sometimes agent nests sections inside ticker_validation
-        # Check if ticker_validation contains the other sections FIRST before processing
-        if "ticker_validation" in data and isinstance(data["ticker_validation"], dict):
-            ticker_val = data["ticker_validation"]
-
-            # Extract the nested sections if they're wrongly placed inside ticker_validation
-            for section in ["quantitative_analysis", "sec_analysis", "sentiment_analysis"]:
-                if section in ticker_val and isinstance(ticker_val[section], dict):
-                    self.logger.info(f"🔍 Found {section} nested inside ticker_validation, extracting...")
-                    # Move it to top level for proper processing
-                    data[section] = ticker_val[section]
-
-            # Also process ticker_validation itself for basic fields
-            if "valid" in ticker_val:
-                flattened["valid"] = ticker_val["valid"]
-            if "company_name" in ticker_val:
-                flattened["company_name"] = ticker_val["company_name"]
-
-        # CRITICAL: Explicitly extract well-known nested fields BEFORE general flattening
-        # This ensures critical fields like beta, volatility, etc. are captured correctly
-        if "quantitative_analysis" in data and isinstance(data["quantitative_analysis"], dict):
-            quant = data["quantitative_analysis"]
-            self.logger.info(f"🔍 FLATTEN: Found quantitative_analysis with keys: {list(quant.keys())[:10]}")
-
-            # Extract performance_metrics fields (beta, volatility, max_drawdown, etc.)
-            if "performance_metrics" in quant and isinstance(quant["performance_metrics"], dict):
-                perf = quant["performance_metrics"]
-                self.logger.info(f"🔍 FLATTEN: Found performance_metrics with keys: {list(perf.keys())}")
-                critical_perf_fields = ["beta", "volatility", "max_drawdown", "sharpe_ratio", "total_return", "annualized_return"]
-                for field in critical_perf_fields:
-                    if field in perf and perf[field] is not None:
-                        flattened[field] = perf[field]
-                        self.logger.info(f"✅ FLATTEN: Extracted {field}={perf[field]} from performance_metrics")
-                    else:
-                        self.logger.warning(f"⚠️ FLATTEN: Field {field} not found or is None in performance_metrics")
-            else:
-                self.logger.warning("⚠️ FLATTEN: No performance_metrics dict in quantitative_analysis")
-
-            # Extract technical_analysis fields (RSI, MACD, moving averages, etc.)
-            if "technical_analysis" in quant and isinstance(quant["technical_analysis"], dict):
-                tech = quant["technical_analysis"]
-                if "technical_indicators" in tech and isinstance(tech["technical_indicators"], dict):
-                    indicators = tech["technical_indicators"]
-                    # Extract ALL technical indicators needed by scorer
-                    tech_fields = [
-                        "rsi",
-                        "macd",
-                        "macd_signal",
-                        "moving_avg_50",
-                        "moving_avg_200",
-                        "sma_50",  # Alternative naming
-                        "sma_200",  # Alternative naming
-                        "beta",
-                        "current_price",  # Also in technical indicators
-                    ]
-                    for field in tech_fields:
-                        if field in indicators and indicators[field] is not None:
-                            flattened[field] = indicators[field]
-                            self.logger.debug(f"✅ Extracted {field}={indicators[field]} from technical_indicators")
-
-                    # Handle alternative naming: sma_50 → moving_avg_50
-                    if "sma_50" in flattened and "moving_avg_50" not in flattened:
-                        flattened["moving_avg_50"] = flattened["sma_50"]
-                        self.logger.debug(f"✅ Mapped sma_50 → moving_avg_50: {flattened['sma_50']}")
-                    if "sma_200" in flattened and "moving_avg_200" not in flattened:
-                        flattened["moving_avg_200"] = flattened["sma_200"]
-                        self.logger.debug(f"✅ Mapped sma_200 → moving_avg_200: {flattened['sma_200']}")
-
-        # Now extract from nested structures (including the ones we just moved to top level)
-        # Also process ticker_info and company_info which contain nested data
-        nested_sections = ["ticker_info", "company_info", "quantitative_analysis", "sec_analysis", "sentiment_analysis"]
-
-        for section in nested_sections:
-            if section in data and isinstance(data[section], dict):
-                self.logger.info(f"🔍 Processing section: {section}")
-                self._flatten_recursive(data[section], flattened, prefix="")
-
-        return flattened
-
-    def _flatten_recursive(self, obj: Any, target: dict[str, Any], prefix: str = "") -> None:
-        """
-        Recursively flatten nested dict structures.
-
-        Extracts numeric/string values and brings them to top level.
-        Skips deeply nested metadata structures.
-
-        Args:
-            obj: Object to flatten (dict, list, or primitive)
-            target: Target dict to add flattened fields to
-            prefix: Current key prefix (for nested keys)
-
-        """
-        if isinstance(obj, dict):
-            for key, value in obj.items():
-                # Skip metadata/structural keys
-                if key in ["meta", "metadata", "raw_data", "debug_info"]:
+            for holding in holdings:
+                ticker = holding.get("ticker")
+                if not ticker:
                     continue
 
-                # For primitives (numbers, strings, bools), add to target
-                if isinstance(value, (int, float, str, bool, type(None))):
-                    # Use simple key name (no prefix) for cleaner top-level access
-                    # IMPORTANT: Don't overwrite if already set (e.g., from performance_metrics)
-                    if key not in target:
-                        target[key] = value
-                # For nested dicts, recurse
-                elif isinstance(value, dict):
-                    self._flatten_recursive(value, target, prefix="")
-                # For lists with single dict, extract that dict
-                elif isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict):
-                    self._flatten_recursive(value[0], target, prefix="")
+                if ticker in deep_results:
+                    analysis = deep_results[ticker]
+                    holding["composite_score"] = analysis.composite_score
+                    holding["grade"] = analysis.grade
 
-        elif isinstance(obj, list):
-            # For numeric lists, take the first value or average
-            if obj and all(isinstance(x, (int, float)) for x in obj):
-                target[prefix] = obj[0] if len(obj) == 1 else sum(obj) / len(obj)
+                if ticker in alternatives_data:
+                    holding["alternatives"] = alternatives_data[ticker]
 
-    def _extract_collected_data(self, crew_output: Any) -> dict[str, Any] | None:
-        """
-        Extract RAW tool outputs from crew for Python scoring.
-
-        Bypasses AI-processed output to get actual tool results with raw metrics.
-        AI generates scores (0.90), but Python scorer needs raw values (ROE=0.25).
-
-        Args:
-            crew_output: CrewAI crew execution result
-
-        Returns:
-            Dictionary of raw metrics for Python scoring, or None if extraction fails
-
-        """
-        try:
-            self.logger.info(f"🔍 DEBUG: Starting extraction from crew_output (type={type(crew_output).__name__})")
-
-            # Check crew_output attributes
-            crew_attrs = [a for a in dir(crew_output) if not a.startswith("_")]
-            self.logger.info(f"🔍 DEBUG: crew_output attributes: {crew_attrs[:20]}...")
-
-            # Access tool outputs from tasks_output
-            if not hasattr(crew_output, "tasks_output"):
-                self.logger.error("❌ crew_output has no 'tasks_output' attribute!")
-                return None
-
-            if not crew_output.tasks_output:
-                self.logger.error("❌ crew_output.tasks_output is empty!")
-                return None
-
-            # Verify tasks_output is actually a list/tuple (not Mock or other unexpected type)
-            if not isinstance(crew_output.tasks_output, (list, tuple)):
-                self.logger.error(f"❌ crew_output.tasks_output is not a list/tuple! Got {type(crew_output.tasks_output).__name__}")
-                return None
-
-            self.logger.info(f"🔍 DEBUG: Found {len(crew_output.tasks_output)} tasks in tasks_output")
-
-            # Get data_collection_task output (first task)
-            data_task = crew_output.tasks_output[0]
-            self.logger.info("🔍 DEBUG: Got first task from tasks_output")
-
-            # DEBUG: Comprehensive task exploration
-            self.logger.info(f"🔍 DEBUG: Task object type: {type(data_task).__name__}")
-            task_attrs = [a for a in dir(data_task) if not a.startswith("_")]
-            self.logger.info(f"🔍 DEBUG: Task attributes (non-private): {task_attrs}")
-
-            # Check each attribute for potential data sources
-            # NOTE: Removed 'json' from list - accessing it raises ValueError if output_json not set
-            for attr in ["output", "raw", "pydantic", "tool_output", "result"]:
-                if hasattr(data_task, attr):
-                    attr_value = getattr(data_task, attr)
-                    self.logger.info(f"🔍 DEBUG: Task.{attr}: type={type(attr_value).__name__}")
-                    # Special handling for raw - check if it's empty
-                    if attr == "raw":
-                        if isinstance(attr_value, str):
-                            self.logger.info(f"🔍 DEBUG:   Task.raw length: {len(attr_value)} chars")
-                            if not attr_value:
-                                self.logger.warning("⚠️ Task.raw is EMPTY STRING!")
-                            else:
-                                # Show preview with escaped newlines so we can see full content
-                                preview = repr(attr_value[:500])  # repr() shows \n instead of actual newlines
-                                self.logger.info(f"🔍 DEBUG:   Task.raw preview (repr): {preview}")
-                    if attr == "output" and attr_value:
-                        output_attrs = [a for a in dir(attr_value) if not a.startswith("_")]
-                        self.logger.info(f"🔍 DEBUG:   output attributes: {output_attrs}")
-
-            # Look for tool outputs in the task.raw (task IS the TaskOutput)
-            if hasattr(data_task, "raw") and data_task.raw:
-                raw_output = data_task.raw
-                self.logger.info(f"🔍 DEBUG: Found task.raw (length={len(raw_output)} chars)")
-
-                if isinstance(raw_output, str):
-                    import json
-                    import re
-
-                    cleaned = raw_output.strip()
-
-                    # Remove markdown code fences if present
-                    if cleaned.startswith("```"):
-                        lines = cleaned.split("\n", 1)
-                        cleaned = lines[1] if len(lines) > 1 else cleaned
-                        cleaned = cleaned.rstrip("`").strip()
-                        self.logger.info("🔍 Stripped markdown code fence")
-
-                    # CRITICAL: Check if the output is already pure JSON (starts with {)
-                    if cleaned.startswith("{"):
-                        self.logger.info("🔍 Raw output is already JSON format")
-                        # Ensure proper closing if malformed
-                        open_braces = cleaned.count("{")
-                        close_braces = cleaned.count("}")
-                        if open_braces > close_braces:
-                            missing = open_braces - close_braces
-                            cleaned = cleaned + ("}" * missing)
-                            self.logger.info(f"🔍 Fixed malformed JSON: added {missing} closing braces")
-                    else:
-                        # Try to extract JSON from Python assignment: context["x"] = {...}
-                        match = re.search(r"=\s*(\{.+)", cleaned, re.DOTALL)  # More permissive: don't require closing }
-                        if match:
-                            cleaned = match.group(1).strip()
-                            self.logger.info(f"🔍 Extracted JSON from assignment (length={len(cleaned)})")
-
-                            # CRITICAL: Try to fix malformed JSON by ensuring proper closing
-                            # Count braces and add missing closing braces
-                            open_braces = cleaned.count("{")
-                            close_braces = cleaned.count("}")
-                            if open_braces > close_braces:
-                                missing = open_braces - close_braces
-                                cleaned = cleaned + ("}" * missing)
-                                self.logger.info(f"🔍 Fixed malformed JSON: added {missing} closing braces")
-
-                    # Try parsing as JSON
-                    try:
-                        parsed = json.loads(cleaned)
-                        if isinstance(parsed, dict):
-                            self.logger.info(f"✅ Parsed JSON with keys: {list(parsed.keys())[:10]}")
-
-                            # CRITICAL: Unwrap 'collected_data' if present (some agents nest it)
-                            if "collected_data" in parsed and len(parsed) == 1:
-                                self.logger.info("🔍 Unwrapping 'collected_data' wrapper")
-                                parsed = parsed["collected_data"]
-                                self.logger.info(f"🔍 After unwrap, keys: {list(parsed.keys())[:10]}")
-
-                            # CRITICAL: Flatten nested structures for Python scorer
-                            # Scorer expects flat dict with fields like: current_price, roe, volatility, etc.
-                            # But data comes nested in: quantitative_analysis.prices.current_price
-                            flattened = self._flatten_collected_data(parsed)
-                            self.logger.info(f"🔍 Flattened to {len(flattened)} top-level fields")
-
-                            # DEBUG: Log what fields we actually have
-                            available_fields = sorted([k for k in flattened.keys() if not k.startswith("_")])
-                            self.logger.info(f"📋 Available fields: {available_fields}")
-
-                            # DEBUG: Check for critical fields
-                            critical_fields = ["current_price", "roe", "debt_to_equity", "revenue_growth", "volatility", "beta", "expense_ratio", "volume_24h"]
-                            missing = [f for f in critical_fields if f not in flattened]
-                            if missing:
-                                self.logger.warning(f"⚠️ Missing critical fields: {missing}")
-
-                                # DEBUG: Check for similar field names that might be the data we need
-                                for field in missing:
-                                    similar = [
-                                        k for k in flattened.keys() if field.replace("_", "") in k.lower().replace("_", "") or k.lower().replace("_", "") in field.replace("_", "")
-                                    ]
-                                    if similar:
-                                        self.logger.info(f"   → Possible match for '{field}': {similar}")
-
-                            return flattened
-                    except json.JSONDecodeError as e:
-                        self.logger.warning(f"⚠️ JSON parse failed: {e}")
-                        self.logger.info(f"Cleaned text preview: {cleaned[:300]}")
-
-            # If pydantic output exists, try to extract raw metrics from it
-            if hasattr(crew_output, "pydantic") and crew_output.pydantic:
-                data = crew_output.pydantic
-                if hasattr(data, "model_dump"):
-                    data_dict = data.model_dump()
-                elif hasattr(data, "dict"):
-                    data_dict = data.dict()
-                else:
-                    data_dict = data if isinstance(data, dict) else None
-
-                if data_dict:
-                    self.logger.info(f"✅ Extracted pydantic data with keys: {list(data_dict.keys())[:5]}...")
-
-                    # DEBUG: Comprehensive structure mapping
-                    import json
-
-                    # Log complete structure (truncated for readability)
-                    full_json = json.dumps(data_dict, indent=2, default=str)
-                    self.logger.info(f"🔍 DEBUG: Pydantic structure ({len(full_json)} chars):\n{full_json[:2000]}...")
-
-                    # Map out all top-level keys and their types
-                    self.logger.info("🔍 DEBUG: Structure map:")
-                    for key, value in data_dict.items():
-                        value_type = type(value).__name__
-                        if isinstance(value, dict):
-                            nested_keys = list(value.keys())[:5]
-                            self.logger.info(f"🔍 DEBUG:   {key}: dict with keys {nested_keys}...")
-                        elif isinstance(value, list):
-                            self.logger.info(f"🔍 DEBUG:   {key}: list with {len(value)} items")
-                        else:
-                            self.logger.info(f"🔍 DEBUG:   {key}: {value_type} = {str(value)[:100]}")
-
-                    # Check if metrics are nested in detailed_analysis
-                    if "detailed_analysis" in data_dict:
-                        detailed = data_dict["detailed_analysis"]
-                        self.logger.info(f"🔍 DEBUG: Found detailed_analysis (type={type(detailed).__name__})")
-
-                        if isinstance(detailed, dict):
-                            self.logger.info(f"🔍 DEBUG:   detailed_analysis keys: {list(detailed.keys())}")
-
-                            # Check component_scores (likely AI-generated scores, not raw values)
-                            if "component_scores" in detailed:
-                                scores = detailed["component_scores"]
-                                self.logger.info(f"🔍 DEBUG:   component_scores type: {type(scores).__name__}")
-                                if isinstance(scores, dict):
-                                    self.logger.info(f"🔍 DEBUG:   component_scores content: {json.dumps(scores, indent=4, default=str)}")
-
-                    return data_dict
-
-            self.logger.warning("Could not extract tool outputs - no raw data found")
-            return None
+            self.state.portfolio_review["holdings"] = holdings
+            self.logger.info("Portfolio review updated with deep analysis and alternatives")
 
         except Exception as e:
-            self.logger.error(f"Failed to extract tool outputs: {e}", exc_info=True)
-            return None
+            self.logger.error(f"Portfolio review update failed: {e}", exc_info=True)
+
+    # Legacy method delegation for backward compatibility
+    def execute_deep_analysis_with_prefetch(self, tickers: list[str]) -> dict[str, Any]:
+        """Execute with batch prefetch optimization. Delegates to executor."""
+        return self.executor._execute_prefetch(tickers)
+
+    def save_batch_metrics_to_file(self, metrics: dict[str, Any], output_path: str | None = None) -> None:
+        """Save batch metrics to file. Delegates to processor."""
+        self.result_processor.save_batch_metrics_to_file(metrics, output_path)
 
     def create_deep_analysis_result_from_crew_output(
         self, crew_output: Any, ticker: str, asset_class: str, crew_name: str = "DeepAnalysisCrew", cached: bool = False
     ) -> DeepAnalysisResult:
-        """Parse crew output into structured result. Requirements: 3.2, 3.5"""
-        from finwiz.utils.data_extractor import CrewDataExtractor
-
-        extractor, warnings = CrewDataExtractor(), []
-
-        try:
-            grade, composite_score, fundamental_score, technical_score, risk_score = self._extract_scores(crew_output, ticker, extractor, warnings)
-        except Exception:
-            self.logger.error(f"Failed to extract fields for {ticker}")
-            raise
-
-        # Calculate confidence
-        confidence = 0.9 if fundamental_score and technical_score and risk_score else 0.6 if not fundamental_score and not technical_score else 0.8
-        if confidence == 0.6:
-            warnings.append("Missing fundamental and technical scores")
-        if cached:
-            warnings.append("Using cached analysis data")
-
-        return DeepAnalysisResult(
-            ticker=ticker,
-            asset_class=asset_class,
-            crew_name=crew_name,
-            analysis_timestamp=datetime.now().isoformat(),
-            composite_score=composite_score,
-            grade=grade,
-            recommendation="HOLD",
-            rationale="Analysis completed",
-            risk_details={},
-            fundamental_score=fundamental_score,
-            technical_score=technical_score,
-            risk_score=risk_score,
-            data_freshness_hours=0.0 if not cached else 1.0,
-            confidence_level=confidence,
-            warnings=warnings,
-            cached=cached,
+        """Parse crew output into structured result. Delegates to processor."""
+        return self.result_processor.create_deep_analysis_result_from_crew_output(
+            crew_output, ticker, asset_class, crew_name, cached
         )
-
-    def _extract_scores(self, crew_output: Any, ticker: str, extractor: Any, warnings: list[str]) -> tuple[str, float, float | None, float | None, float | None]:
-        """Extract scores from crew output."""
-        from finwiz.cache.analysis_cache_manager import CrewAnalysisResult
-        from finwiz.exceptions.data_quality import MissingRequiredFieldError
-
-        # Handle cached CrewAnalysisResult directly
-        if isinstance(crew_output, CrewAnalysisResult):
-            return (
-                crew_output.grade,
-                crew_output.composite_score,
-                crew_output.fundamental_score,
-                crew_output.technical_score,
-                crew_output.risk_score,
-            )
-
-        if hasattr(crew_output, "pydantic") and crew_output.pydantic:
-            pydantic_data = crew_output.pydantic
-
-            # Convert to dict
-            data_dict = (
-                pydantic_data.model_dump()
-                if hasattr(pydantic_data, "model_dump")
-                else pydantic_data.dict()
-                if hasattr(pydantic_data, "dict")
-                else {"grade": getattr(pydantic_data, "grade", None), "composite_score": getattr(pydantic_data, "composite_score", None)}
-            )
-
-            grade_score = extractor.extract_grade_and_score(data_dict, ticker)
-            grade, composite_score = grade_score["grade"], grade_score["composite_score"]
-
-            if not extractor.validate_grade_score_consistency(grade, composite_score, ticker):
-                warnings.append(f"Grade {grade} may not match score {composite_score:.3f}")
-
-            return (
-                grade,
-                composite_score,
-                getattr(pydantic_data, "fundamental_score", None),
-                getattr(pydantic_data, "technical_score", None),
-                getattr(pydantic_data, "risk_score", None),
-            )
-
-        elif hasattr(crew_output, "raw"):
-            import re
-
-            raw = str(crew_output.raw)
-
-            # Try multiple regex patterns for flexibility
-            grade_patterns = [
-                r"[Gg]rade:\s*([A-F][+\-]?)",  # "Grade: A"
-                r"[Rr]ating:\s*([A-F][+\-]?)",  # "Rating: A"
-                r"[Oo]verall\s+[Gg]rade:\s*([A-F][+\-]?)",  # "Overall Grade: A"
-            ]
-            score_patterns = [
-                r"[Cc]omposite\s+[Ss]core:\s*(0?\.\d+|\d+\.\d+)",  # "Composite Score: 0.85"
-                r"[Ss]core:\s*(0?\.\d+|\d+\.\d+)",  # "Score: 0.85"
-                r"[Oo]verall\s+[Ss]core:\s*(0?\.\d+|\d+\.\d+)",  # "Overall Score: 0.85"
-            ]
-
-            grade_match = None
-            for pattern in grade_patterns:
-                grade_match = re.search(pattern, raw)
-                if grade_match:
-                    break
-
-            score_match = None
-            for pattern in score_patterns:
-                score_match = re.search(pattern, raw)
-                if score_match:
-                    break
-
-            if not grade_match or not score_match:
-                # Log raw output for debugging (truncated to avoid log spam)
-                raw_snippet = raw[:500] if len(raw) > 500 else raw
-                self.logger.error(f"Failed to extract grade/score for {ticker}. Raw output snippet: {raw_snippet}")
-                raise MissingRequiredFieldError(
-                    ticker=ticker, field="grade/score", context={"source": "raw", "found_grade": bool(grade_match), "found_score": bool(score_match), "raw_snippet": raw_snippet}
-                )
-
-            return grade_match.group(1), float(score_match.group(1)), None, None, None
-        else:
-            raise MissingRequiredFieldError(ticker=ticker, field="grade, composite_score", context={"error": "No output"})
-
-    def execute_deep_analysis_with_prefetch(self, tickers: list[str]) -> dict[str, Any]:
-        """Execute with batch prefetch optimization. Requirements: 3.3"""
-        from finwiz.utils.batch_data_prefetcher import BatchDataPreFetcher
-
-        try:
-            prefetcher = BatchDataPreFetcher(
-                session_id=self.state.session_id or "default",
-                enable_alpha_vantage=False,
-                alpha_vantage_rate_limit=self.batch_prefetch_config.alpha_vantage_rate_limit,
-            )
-        except Exception as e:
-            self.logger.error(f"Prefetcher init failed: {e}")
-            return {}
-
-        start = time.time()
-        try:
-            data = prefetcher.prefetch_all_data(tickers)
-        except Exception as e:
-            self.logger.error(f"Prefetch failed: {e}")
-            return {}
-
-        duration = time.time() - start
-        successful = sum(1 for d in data.values() if not d.get("failed", False))
-        failure_rate = (len(tickers) - successful) / len(tickers) if tickers else 0
-
-        if failure_rate > 0.5:
-            self.logger.warning(f"Failure rate too high: {failure_rate * 100:.1f}%")
-            return {}
-
-        self.state.prefetched_data = data
-        self.state.batch_prefetch_enabled = True
-        self.logger.info(f"✓ Prefetch done in {duration:.1f}s ({successful}/{len(tickers)})")
-
-        self.state.batch_prefetch_metrics = {
-            "total_tickers": len(tickers),
-            "successful_tickers": successful,
-            "failed_tickers": len(tickers) - successful,
-            "failure_rate": failure_rate,
-            "prefetch_duration_seconds": duration,
-            "time_per_ticker_seconds": duration / len(tickers) if tickers else 0,
-            "prefetch_timestamp": datetime.now().isoformat(),
-        }
-
-        return data
-
-    def save_batch_metrics_to_file(self, metrics: dict[str, Any], output_path: str | None = None) -> None:
-        """Save batch metrics to file. Requirements: 3.4"""
-        if not metrics:
-            return
-
-        try:
-            if output_path:
-                file_path = Path(output_path)
-            else:
-                output_dir = Path(f"output/reports/{self.state.session_id}")
-                output_dir.mkdir(parents=True, exist_ok=True)
-                file_path = output_dir / "batch_prefetch_metrics.json"
-
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(metrics, f, indent=2, default=str)
-
-            self.logger.info(f"✓ Metrics saved: {file_path}")
-        except Exception as e:
-            self.logger.error(f"✗ Save failed: {e}")
-
-    def _update_batch_metrics(self, crew_duration: float, processed: int, total: int, ticker_times: dict[str, float]) -> None:
-        """Update batch metrics with crew execution data."""
-        if not self.state.batch_prefetch_metrics:
-            return
-
-        prefetch_dur = self.state.batch_prefetch_metrics.get("prefetch_duration_seconds", 0)
-        total_time = prefetch_dur + crew_duration
-        est_sequential = total * 30.0
-        savings = est_sequential - total_time
-        savings_pct = (savings / est_sequential * 100) if est_sequential > 0 else 0
-
-        self.state.batch_prefetch_metrics.update(
-            {
-                "crew_execution_duration_seconds": crew_duration,
-                "total_duration_seconds": total_time,
-                "successful_executions": processed,
-                "failed_executions": total - processed,
-                "ticker_execution_times": ticker_times,
-                "avg_time_per_ticker_seconds": crew_duration / processed if processed > 0 else 0,
-                "estimated_sequential_time_seconds": est_sequential,
-                "time_savings_seconds": savings,
-                "time_savings_percentage": savings_pct,
-                "crew_execution_timestamp": datetime.now().isoformat(),
-            }
-        )
-
-        self.logger.info(f"Savings: {savings:.1f}s ({savings_pct:.1f}%)")
-
-    def _create_fallback_analysis(self, ticker: str, asset_class: str, error: Exception) -> EnrichedAnalysis | None:
-        """
-        Create fallback analysis using Python-only calculations.
-
-        This method creates a minimal QualitativeInsights for fallback when AI analysis fails.
-        It ensures fallback uses Python-only calculations and sets confidence to "LOW".
-
-        Requirements: 6.2
-
-        Args:
-            ticker: Stock ticker symbol
-            asset_class: Asset class (stock, etf, crypto)
-            error: The exception that triggered the fallback
-
-        Returns:
-            EnrichedAnalysis with LOW confidence, or None if fallback also fails
-
-        """
-        self.logger.warning(f"Creating fallback analysis for {ticker} due to error: {error}")
-
-        try:
-            # Collect data using Python tools
-            raw_data = self._collect_data_with_python(ticker, asset_class, batch_enabled=False)
-
-            # Calculate quantitative metrics using Python scorer
-            from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
-
-            scorer = DeepAnalysisScorer()
-            python_result = scorer.calculate_composite_score(ticker, asset_class, raw_data)
-
-            # Create fallback data structure for HybridAnalysisFlow
-            fallback_data = {
-                "ticker": ticker,
-                "asset_class": asset_class,
-                "company_name": raw_data.get("company_name", ticker),
-                "quantitative_analysis": {
-                    "composite_score": python_result.composite_score,
-                    "fundamental_score": python_result.fundamental_score,
-                    "technical_score": python_result.technical_score,
-                    "risk_score": python_result.risk_score,
-                    "grade": python_result.grade,
-                    "preliminary_recommendation": python_result.recommendation,
-                    "fundamental_metrics": python_result.fundamental_metrics or {},
-                    "technical_indicators": python_result.technical_indicators or {},
-                    "risk_metrics": python_result.risk_metrics or {},
-                    "calculation_timestamp": datetime.now().isoformat(),
-                    "confidence_level": 0.5,  # Lower confidence for fallback
-                    "python_rationale": python_result.rationale or "Fallback analysis based on Python calculations only",
-                },
-            }
-
-            # Use HybridAnalysisFlow's fallback creation
-            enriched_analysis = self.hybrid_flow._create_fallback_analysis(fallback_data)
-
-            self.logger.info(f"Fallback analysis created for {ticker}: Grade {enriched_analysis.final_grade}, Confidence {enriched_analysis.recommendation_confidence}")
-
-            return enriched_analysis
-
-        except Exception as e:
-            self.logger.error(f"Fallback analysis creation failed for {ticker}: {e}", exc_info=True)
-            return None
-
-    def _validate_analysis_quality(self, analysis: EnrichedAnalysis) -> list[str]:
-        """
-        Validate analysis quality against requirements.
-
-        Checks:
-        - word_count ≥2000
-        - unique_insights_count ≥5
-        - processing_time ≤30s
-        - llm_cost ≤$0.10
-
-        Requirements: 7.1, 7.2, 7.3, 7.4
-
-        Args:
-            analysis: EnrichedAnalysis to validate
-
-        Returns:
-            List of validation warnings (empty if all checks pass)
-
-        """
-        warnings = []
-
-        # Check word count (≥2000)
-        if analysis.report_word_count < 2000:
-            warning = f"Word count below threshold: {analysis.report_word_count} < 2000"
-            warnings.append(warning)
-            self.logger.warning(f"{analysis.ticker}: {warning}")
-
-        # Check unique insights count (≥5)
-        if analysis.unique_insights_count < 5:
-            warning = f"Insights count below threshold: {analysis.unique_insights_count} < 5"
-            warnings.append(warning)
-            self.logger.warning(f"{analysis.ticker}: {warning}")
-
-        # Check processing time (≤30s)
-        if analysis.processing_time_seconds > 30.0:
-            warning = f"Processing time exceeded: {analysis.processing_time_seconds:.1f}s > 30s"
-            warnings.append(warning)
-            self.logger.warning(f"{analysis.ticker}: {warning}")
-
-        # Check LLM cost (≤$0.10)
-        if analysis.llm_cost_dollars > 0.10:
-            warning = f"LLM cost exceeded: ${analysis.llm_cost_dollars:.3f} > $0.10"
-            warnings.append(warning)
-            self.logger.warning(f"{analysis.ticker}: {warning}")
-
-        if not warnings:
-            self.logger.info(f"{analysis.ticker}: Quality validation passed")
-
-        return warnings
-
-    def _calculate_processing_time(self, start_time: float) -> float:
-        """
-        Calculate processing time for an analysis.
-
-        Requirements: 4.3
-
-        Args:
-            start_time: Start time from time.time()
-
-        Returns:
-            Processing time in seconds
-
-        """
-        return time.time() - start_time
-
-    def _calculate_llm_cost(self, analysis_data: dict[str, Any]) -> float:
-        """
-        Calculate LLM cost for an analysis.
-
-        Estimates cost based on typical token usage for deep analysis.
-        Actual implementation would track real token usage from LLM API responses.
-
-        Requirements: 4.3
-
-        Args:
-            analysis_data: Analysis data containing LLM usage information
-
-        Returns:
-            Estimated LLM cost in dollars
-
-        """
-        # Check if this is a fallback analysis (no AI used)
-        if analysis_data.get("error") or not analysis_data.get("qualitative_insights"):
-            return 0.0
-
-        # Estimate based on typical usage patterns
-        # Average deep analysis uses:
-        # - Input: ~2000 tokens (context + instructions)
-        # - Output: ~1500 tokens (qualitative insights)
-        # - Total: ~3500 tokens
-        #
-        # Using GPT-4 pricing as baseline:
-        # - Input: $0.03 per 1K tokens
-        # - Output: $0.06 per 1K tokens
-        # - Estimated cost: (2000 * 0.03 / 1000) + (1500 * 0.06 / 1000) = $0.06 + $0.09 = $0.15
-        #
-        # However, we use more efficient models in practice, so use conservative estimate
-        estimated_cost = 0.05
-
-        # TODO: Implement actual cost calculation based on token usage
-        # This would require:
-        # 1. Tracking token usage from LLM API responses
-        # 2. Applying provider-specific pricing
-        # 3. Summing costs across all LLM calls in the analysis
-
-        return estimated_cost
-
-    def _process_single_holding_with_flow(self, ticker: str, asset_class: str, company_name: str = "", raw_data: dict[str, Any] | None = None) -> EnrichedAnalysis | None:
-        """
-        Process a single holding using HybridAnalysisFlow.
-
-        This is the new method that uses the hybrid architecture to combine
-        Python calculations with AI insights.
-
-        Requirements: 6.1
-
-        Args:
-            ticker: Stock ticker symbol
-            asset_class: Asset class (stock, etf, crypto)
-            company_name: Company name (optional)
-            raw_data: Pre-collected raw data (optional)
-
-        Returns:
-            EnrichedAnalysis or None if processing fails
-
-        """
-        start_time = time.time()
-
-        try:
-            # Initialize flow state
-            flow_state = HybridAnalysisState(ticker=ticker, asset_class=asset_class, company_name=company_name, raw_data=raw_data or {}, processing_start=start_time)
-
-            # Set state on flow
-            self.hybrid_flow.state = flow_state
-
-            # Execute flow
-            self.logger.info(f"Executing HybridAnalysisFlow for {ticker}")
-            enriched_analysis = self.hybrid_flow.kickoff()
-
-            # Validate quality
-            quality_warnings = self._validate_analysis_quality(enriched_analysis)
-            if quality_warnings:
-                self.logger.warning(f"{ticker}: Quality validation warnings: {quality_warnings}")
-
-            # Track metadata
-            processing_time = self._calculate_processing_time(start_time)
-            self.logger.info(f"{ticker}: Analysis complete in {processing_time:.1f}s, Cost: ${enriched_analysis.llm_cost_dollars:.3f}, Grade: {enriched_analysis.final_grade}")
-
-            return enriched_analysis
-
-        except Exception as e:
-            self.logger.error(f"HybridAnalysisFlow failed for {ticker}: {e}", exc_info=True)
-
-            # Create fallback analysis
-            fallback = self._create_fallback_analysis(ticker, asset_class, e)
-
-            if fallback:
-                self.logger.info(f"{ticker}: Using fallback analysis")
-                return fallback
-            else:
-                self.logger.error(f"{ticker}: Fallback analysis also failed")
-                return None

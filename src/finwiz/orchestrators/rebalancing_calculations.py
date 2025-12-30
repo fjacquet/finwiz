@@ -7,16 +7,11 @@ execution summaries, and projected portfolio states.
 
 from typing import Any
 
+from finwiz.exceptions.orchestrator import PortfolioRebalancingError
 from finwiz.schemas.portfolio_rebalancing import CostAnalysis, ExecutionSummary, PortfolioConfiguration
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-class PortfolioRebalancingError(Exception):
-    """Base exception for portfolio rebalancing calculation errors."""
-
-    pass
 
 
 class RebalancingCalculator:

@@ -150,8 +150,8 @@ def test_contextual_risk_insights_validates_with_empty_lists():
     bull_case=printable_text,
     base_case=printable_text,
     bear_case=printable_text,
-    recommendation=printable_text,
-    confidence=printable_text,
+    recommendation=st.sampled_from(["BUY", "HOLD", "SELL"]),
+    confidence=st.sampled_from(["LOW", "MEDIUM", "HIGH"]),
 )
 def test_investment_synthesis_validates_correctly(
     investment_thesis: str,
@@ -162,9 +162,9 @@ def test_investment_synthesis_validates_correctly(
     confidence: str,
 ):
     """
-    Property: InvestmentSynthesis validates with any fields (relaxed validation).
+    Property: InvestmentSynthesis validates with valid Literal fields.
 
-    For any investment synthesis data, the schema should accept it.
+    For any investment synthesis data with valid recommendation/confidence, the schema should accept it.
     """
     synthesis = InvestmentSynthesis(
         investment_thesis=investment_thesis,
@@ -177,12 +177,12 @@ def test_investment_synthesis_validates_correctly(
         action_plan={"immediate_actions": ["Action 1"], "monitoring_points": ["Point 1"], "exit_triggers": ["Trigger 1"]},
     )
 
-    # Relaxed: just verify schema creation succeeds
+    # Verify schema creation succeeds with valid Literal values
     assert synthesis is not None
     assert isinstance(synthesis.investment_thesis, str)
     assert isinstance(synthesis.bull_case, str)
-    assert isinstance(synthesis.final_recommendation, str)
-    assert isinstance(synthesis.recommendation_confidence, str)
+    assert synthesis.final_recommendation in ("BUY", "HOLD", "SELL")
+    assert synthesis.recommendation_confidence in ("LOW", "MEDIUM", "HIGH")
 
 
 def test_qualitative_insights_complete_structure():
@@ -245,17 +245,20 @@ def test_sec_analysis_accepts_short_business_model():
     assert insights.business_model == "Too short"
 
 
-def test_investment_synthesis_accepts_any_recommendation():
-    """Property: final_recommendation accepts any string (relaxed validation for CrewAI)."""
-    # Relaxed validation to support CrewAI structured output
-    synthesis = InvestmentSynthesis(
-        investment_thesis="A" * 200,
-        bull_case="A" * 100,
-        base_case="A" * 100,
-        bear_case="A" * 100,
-        scenario_probabilities={"bull": 0.3, "base": 0.5, "bear": 0.2},
-        final_recommendation="MAYBE",  # Previously invalid, now accepted
-        recommendation_confidence="HIGH",
-        action_plan={"immediate_actions": ["Action 1"], "monitoring_points": ["Point 1"], "exit_triggers": ["Trigger 1"]},
-    )
-    assert synthesis.final_recommendation == "MAYBE"
+def test_investment_synthesis_rejects_invalid_recommendation():
+    """Property: final_recommendation rejects invalid values (strict validation)."""
+    import pytest
+    from pydantic import ValidationError
+
+    # Invalid recommendation should raise ValidationError
+    with pytest.raises(ValidationError):
+        InvestmentSynthesis(
+            investment_thesis="A" * 200,
+            bull_case="A" * 100,
+            base_case="A" * 100,
+            bear_case="A" * 100,
+            scenario_probabilities={"bull": 0.3, "base": 0.5, "bear": 0.2},
+            final_recommendation="MAYBE",  # Invalid - must be BUY/HOLD/SELL
+            recommendation_confidence="HIGH",
+            action_plan={"immediate_actions": ["Action 1"], "monitoring_points": ["Point 1"], "exit_triggers": ["Trigger 1"]},
+        )

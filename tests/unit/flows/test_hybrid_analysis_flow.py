@@ -87,11 +87,11 @@ class TestHybridAnalysisFlowExecutionSequence:
         execution_order = []
 
         # Mock the data collection to track execution
-        def mock_collect(t, ac):
+        def mock_collect(ticker, asset_class, existing_data=None):
             execution_order.append("collect_data")
             return {"mock": "data"}
 
-        flow._collect_raw_data = mock_collect
+        flow.data_collector.collect_raw_data = mock_collect
 
         # Act - Execute collect_data
         result = flow.collect_data()
@@ -191,7 +191,7 @@ class TestHybridAnalysisFlowExecutionSequence:
         flow.state.company_name = "Apple Inc"
 
         # Mock data collection
-        flow._collect_raw_data = mocker.Mock(return_value={"price": 150.0})
+        flow.data_collector.collect_raw_data = mocker.Mock(return_value={"price": 150.0})
 
         # Act - Step 1: collect_data
         result1 = flow.collect_data()
@@ -245,7 +245,7 @@ class TestHybridAnalysisFlowExecutionSequence:
         flow.state.company_name = "Microsoft"
 
         # Mock data collection
-        flow._collect_raw_data = mocker.Mock(return_value={"volume": 1000000})
+        flow.data_collector.collect_raw_data = mocker.Mock(return_value={"volume": 1000000})
 
         # Act - Step 1
         step1_output = flow.collect_data()
@@ -601,7 +601,14 @@ class TestAIContextIsolation:
             return mock_crew_instance
 
         flow._get_analysis_crew = mock_get_crew
-        flow._convert_to_qualitative_insights = mocker.Mock(return_value=mocker.Mock(model_dump=mocker.Mock(return_value={})))
+        flow._extract_raw_output = mocker.Mock(return_value={})
+
+        # Mock validate_ai_output_with_retry to return a mock QualitativeInsights
+        mock_insights = mocker.Mock(model_dump=mocker.Mock(return_value={}))
+        mocker.patch(
+            "finwiz.validation.ai_output_validator.validate_ai_output_with_retry",
+            return_value=mock_insights
+        )
 
         # Act - Call multiple times
         for _ in range(3):
@@ -650,7 +657,7 @@ class TestRecommendationSynthesis:
 
         # Act
         with caplog.at_level(logging.WARNING):
-            result = flow._synthesize_recommendation(quant, qual)
+            result = flow.synthesizer._synthesize_recommendation(quant, qual)
 
         # Assert - Recommendation matches
         assert result == recommendation
@@ -687,7 +694,7 @@ class TestRecommendationSynthesis:
 
         # Act
         with caplog.at_level(logging.WARNING):
-            result = flow._synthesize_recommendation(quant, qual)
+            result = flow.synthesizer._synthesize_recommendation(quant, qual)
 
         # Assert - Python recommendation is used
         assert result == python_rec
@@ -728,7 +735,7 @@ class TestRecommendationSynthesis:
         qual.investment_synthesis.confidence_rationale = confidence_rationale
 
         # Act
-        result = flow._synthesize_recommendation(quant, qual)
+        result = flow.synthesizer._synthesize_recommendation(quant, qual)
 
         # Assert - Python recommendation always wins on disagreement
         assert result == python_rec
@@ -790,7 +797,7 @@ class TestFallbackCreation:
         flow.state.processing_start = time.time()
 
         # Act
-        result = flow._create_fallback_analysis(data)
+        result = flow.synthesizer.create_fallback_analysis(data, flow.state)
 
         # Assert - Fallback analysis created
         assert result is not None
@@ -842,7 +849,7 @@ class TestFallbackCreation:
         flow.state.processing_start = time.time()
 
         # Act
-        result = flow._create_fallback_analysis(data)
+        result = flow.synthesizer.create_fallback_analysis(data, flow.state)
 
         # Assert - Uses Python results
         assert result.final_grade == "B+"
@@ -898,7 +905,7 @@ class TestFallbackCreation:
         flow.state.processing_start = time.time()
 
         # Act
-        result = flow._create_fallback_analysis(data)
+        result = flow.synthesizer.create_fallback_analysis(data, flow.state)
 
         # Assert - Confidence is LOW
         assert result.recommendation_confidence == "LOW"

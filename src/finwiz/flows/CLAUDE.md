@@ -6,8 +6,10 @@ This directory contains CrewAI Flow orchestration logic for coordinating the mul
 
 ```
 flows/
-├── flow_orchestrator.py      # Main Flow entry point
-└── hybrid_analysis_flow.py   # Subflow for per-holding Python/AI hybrid analysis
+├── flow_orchestrator.py          # Main Flow entry point
+├── hybrid_analysis_flow.py       # Subflow for per-holding Python/AI hybrid analysis
+├── hybrid_data_collector.py      # Multi-source data collection
+└── hybrid_analysis_synthesizer.py # Result synthesis
 ```
 
 ## Architecture Overview

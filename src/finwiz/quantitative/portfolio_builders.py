@@ -372,7 +372,7 @@ class PortfolioOptimizer:
         """Initialize portfolio optimizer."""
         self.logger = logger
 
-    def optimize_weights_for_risk_target(self, holdings: list[Holding], target_risk: float, risk_data: dict[str, float] | None = None) -> dict[str, float]:
+    def optimize_weights_for_risk_target(self, holdings: list[Holding], _target_risk: float, risk_data: dict[str, float] | None = None) -> dict[str, float]:
         """
         Optimize portfolio weights to achieve a target risk level.
 

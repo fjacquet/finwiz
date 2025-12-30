@@ -150,7 +150,7 @@ class TestRawOutputExtraction:
         mock_result = "invalid string result"
 
         # Act & Assert
-        with pytest.raises(AIOutputError, match="Cannot extract raw output"):
+        with pytest.raises(AIOutputError, match="Raw output extraction failed"):
             flow._extract_raw_output(mock_result)
 
 

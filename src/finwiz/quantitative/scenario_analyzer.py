@@ -41,8 +41,8 @@ class ScenarioAnalyzer:
         self,
         base_config: PortfolioConfiguration,
         parameters: dict | None = None,
-        include_monte_carlo: bool = True,
-        include_sensitivity: bool = True,
+        _include_monte_carlo: bool = True,  # Reserved for future Monte Carlo integration
+        _include_sensitivity: bool = True,  # Reserved for future sensitivity analysis
     ) -> dict[str, Any]:
         """
         Perform comprehensive scenario analysis.

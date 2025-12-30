@@ -20,12 +20,6 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
-class PortfolioRebalancingError(Exception):
-    """Base exception for portfolio rebalancing constraint errors."""
-
-    pass
-
-
 class RebalancingConstraintManager:
     """Handles constraint validation and risk assessment for portfolio rebalancing."""
 

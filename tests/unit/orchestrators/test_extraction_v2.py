@@ -44,9 +44,9 @@ def test_extraction_actual():
             self.tasks_output = [MockTaskOutput(task1_raw), MockTaskOutput(task2_raw)]
             self.pydantic = None
 
-    # Test extraction from task 1
+    # Test extraction from task 1 (method moved to result_processor in Phase 1.1 refactoring)
     crew_output = MockCrewOutput()
-    extracted = orchestrator._extract_collected_data(crew_output)
+    extracted = orchestrator.result_processor.extract_collected_data(crew_output)
 
     print("\n✅ EXTRACTION TEST RESULTS (ACTUAL STRUCTURE):")
     print(f"Extracted {len(extracted) if extracted else 0} fields from Task 1")

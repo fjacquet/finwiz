@@ -196,7 +196,7 @@ class APICallContext:
 
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, _exc_tb: Any) -> None:
         """Exit the context and log call completion."""
         if self.start_time and self.log_calls:
             import time

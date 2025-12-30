@@ -7,27 +7,13 @@ including price data retrieval, portfolio analysis, and rebalancing needs identi
 
 from typing import Any
 
+from finwiz.exceptions.orchestrator import InsufficientPriceDataError, PortfolioRebalancingError
 from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError, PortfolioAnalyzer
 from finwiz.schemas.portfolio_rebalancing import PortfolioConfiguration
 from finwiz.tools.logger import get_logger
 from finwiz.tools.portfolio_price_service import PortfolioPriceService, PriceDataUnavailableError
 
 logger = get_logger(__name__)
-
-
-class PortfolioRebalancingError(Exception):
-    """Base exception for portfolio rebalancing utility errors."""
-
-    pass
-
-
-class InsufficientPriceDataError(PortfolioRebalancingError):
-    """Raised when insufficient price data is available for rebalancing."""
-
-    def __init__(self, missing_symbols: list[str]) -> None:
-        """Initialize with list of missing symbols."""
-        super().__init__(f"Insufficient price data for symbols: {', '.join(missing_symbols)}")
-        self.missing_symbols = missing_symbols
 
 
 class RebalancingUtils:
