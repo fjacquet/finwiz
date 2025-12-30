@@ -7,7 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Major Refactoring**: Split 13 large files (600-1682 lines) into 40+ focused modules
+  - `deep_analysis_orchestrator.py` (1,682 → 4 modules): data_collector, executor, processor
+  - `deep_analysis_scorer.py` (1,178 → 3 modules): score_result_builder, crew_export_generator
+  - `hybrid_analysis_flow.py` (1,042 → 3 modules): data_collector, synthesizer
+  - `quantitative_analysis_tool.py` (649 → 5 modules): technical, backtesting, performance analyzers
+  - `report_consolidator.py` (646 → 3 modules): export_loaders, html_collector
+  - `schemas/quantitative/models.py` (643 → 7 domain files): backtesting, data, enums, portfolio, risk, screening, technical
+  - `supabase/client.py` (641 → 6 modules): config, health, metrics, operations, pool
+  - `registry_manager.py` (624 → 5 modules): models, data_retrieval, execution, storage
+  - `flow_state.py` (620 → 4 modules): models, analysis, utils
+- Applied functional programming patterns (list comprehensions, itertools, operator module)
+- Centralized exception hierarchy in `exceptions/` module
+
 ### Fixed
+- Dead code cleanup: Prefixed 8 unused parameters with underscore (vulture 100% confidence)
+- Security: Fixed MD5 hash usage with `usedforsecurity=False` (bandit high-severity)
+- Lint: Fixed 10 ruff issues (unused imports, unsorted imports)
+- Tests: Fixed 6 test failures from method path changes after refactoring
 - `data_extractor.py`: Added fallback to `final_grade`/`final_score` when AI crews output these instead of `grade`/`composite_score`
 - `python_report_generator.py`: Handle None grade gracefully to prevent `'NoneType' has no attribute 'lower'` error
 - Added 3 new tests to verify AI crew output format compatibility
