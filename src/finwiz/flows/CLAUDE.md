@@ -7,9 +7,7 @@ This directory contains CrewAI Flow orchestration logic for coordinating the mul
 ```
 flows/
 ├── flow_orchestrator.py          # Main Flow entry point
-├── hybrid_analysis_flow.py       # Subflow for per-holding Python/AI hybrid analysis
-├── hybrid_data_collector.py      # Multi-source data collection
-└── hybrid_analysis_synthesizer.py # Result synthesis
+└── hybrid_analysis_synthesizer.py # Result synthesis utilities
 ```
 
 ## Architecture Overview
@@ -27,14 +25,14 @@ flows/
 │  5. Alternative Matching → AlternativesMatchingOrchestrator │
 │  6. Reporting → ReportingOrchestrator                       │
 ├─────────────────────────────────────────────────────────────┤
-│                  HybridAnalysisFlow (Subflow)               │
-│                 hybrid_analysis_flow.py                     │
+│                Functional Analysis Pipeline                 │
+│               finwiz.analysis.deep_analysis_pipeline        │
 │                                                             │
-│  Used BY DeepAnalysisOrchestrator for per-holding analysis: │
-│  1. collect_data() → Python tools fetch raw data            │
-│  2. calculate_quantitative_metrics() → DeepAnalysisScorer   │
-│  3. analyze_qualitative_insights() → AI agent (read-only)   │
-│  4. synthesize_enriched_analysis() → Combine results        │
+│  Pure functions with composition (used by orchestrator):    │
+│  1. collect_raw_data(ctx) → Python tools fetch raw data     │
+│  2. calculate_quantitative(ctx, raw) → Python scorer ($0)   │
+│  3. generate_qualitative(ctx, quant) → AI crew call         │
+│  4. synthesize(ctx, quant, qual) → Combine results          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -45,7 +43,7 @@ flows/
 | `flow_orchestrator.py` | `FinwizFlow` | Main workflow orchestrator |
 | `flow_orchestrator.py` | `OrchestratorDependencies` | Dependency injection container |
 | `flow_orchestrator.py` | `plot()` | Visualize flow structure |
-| `hybrid_analysis_flow.py` | `HybridAnalysisFlow` | Per-holding Python/AI hybrid analysis |
+| `hybrid_analysis_synthesizer.py` | `HybridAnalysisSynthesizer` | Synthesis utilities |
 
 ## Flow State Management
 
@@ -97,24 +95,29 @@ class FinwizFlow(Flow[FinwizState]):
         return self._deep_analysis_orch
 ```
 
-## HybridAnalysisFlow (AI Minimalism)
+## Functional Analysis Pipeline (AI Minimalism)
 
-The `HybridAnalysisFlow` implements AI Minimalism for per-holding analysis:
+The per-holding analysis uses a functional pipeline in `finwiz.analysis`:
 
 ```python
-# Step 1: Python collects data (tools)
-raw_data = self._collect_raw_data(ticker, asset_class)
+from finwiz.analysis import analyze_holding
 
-# Step 2: Python calculates scores (DeepAnalysisScorer - $0 cost)
-score_result = self.scorer.calculate_composite_score(ticker, asset_class, raw_data)
+# Single function composes the entire pipeline
+result, enriched = analyze_holding(
+    ticker="AAPL",
+    asset_class="stock",
+    company_name="Apple Inc."
+)
 
-# Step 3: AI agent receives Python results as READ-ONLY input
-crew_inputs = {"quantitative_analysis": score_result}
-insights = crew.kickoff(inputs=crew_inputs)
-
-# Step 4: Combine Python quantitative + AI qualitative
-final_result = self._synthesize(score_result, insights)
+# result: DeepAnalysisResult (grade, score, recommendation)
+# enriched: EnrichedAnalysis (full quant + qual for HTML)
 ```
+
+**Pipeline composition:**
+1. `collect_raw_data()` - Python tools ($0)
+2. `calculate_quantitative()` - Python scoring ($0)
+3. `generate_qualitative()` - AI crew (captures output!)
+4. `synthesize_enriched_analysis()` - Combine both ($0)
 
 ## Running the Flow
 
@@ -134,11 +137,15 @@ uv run pytest tests/unit/flows/ -v
 
 # Test with specific state
 uv run pytest tests/unit/test_flow_state.py -v
+
+# Test functional pipeline
+uv run pytest tests/unit/analysis/ -v
 ```
 
 ## Related Modules
 
 - `finwiz.flow_state` - State management classes
+- `finwiz.analysis` - Functional analysis pipeline
 - `finwiz.crew_factory` - Crew execution with error handling
 - `finwiz.orchestrators` - Specialized orchestration logic
 - `finwiz.config.resilience_config` - Retry and resilience configuration

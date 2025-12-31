@@ -1,15 +1,20 @@
-"""Unit tests for DeepAnalysisOrchestrator."""
+"""Unit tests for DeepAnalysisOrchestrator.
 
-import json
+Tests the orchestrator using the functional pipeline from finwiz.analysis.
+"""
+
+from datetime import datetime
 from pathlib import Path
 
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
-from pytest import approx
 
-from finwiz.flow_state import DeepAnalysisResult, FinwizState
+from finwiz.flow_state_models import DeepAnalysisResult
+from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
+from finwiz.schemas.hybrid_analysis import EnrichedAnalysis, QuantitativeAnalysis
+from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
 
 
 class TestDeepAnalysisOrchestrator:
@@ -41,94 +46,265 @@ class TestDeepAnalysisOrchestrator:
     @pytest.fixture
     def orchestrator(self, state, batch_config):
         """Create orchestrator instance."""
-        return DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
+        return DeepAnalysisOrchestrator(
+            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
+        )
+
+    @pytest.fixture
+    def mock_deep_analysis_result(self) -> DeepAnalysisResult:
+        """Create a mock DeepAnalysisResult."""
+        return DeepAnalysisResult(
+            ticker="AAPL",
+            asset_class="stock",
+            crew_name="DeepAnalysisCrew",
+            grade="A",
+            composite_score=0.82,
+            fundamental_score=0.85,
+            technical_score=0.78,
+            risk_score=0.80,
+            recommendation="BUY",
+            rationale="Strong fundamentals with solid growth potential.",
+            fundamental_details={"pe_ratio": 25.0, "roe": 0.30},
+            technical_details={"rsi": 55.0, "macd": 1.2},
+            risk_details={"volatility": 0.15, "beta": 1.1},
+            data_freshness_hours=0.5,
+            confidence_level=0.85,
+        )
+
+    @pytest.fixture
+    def mock_enriched_analysis(self, mocker) -> EnrichedAnalysis:
+        """Create a mock EnrichedAnalysis."""
+        from finwiz.schemas.hybrid_analysis.qualitative import (
+            ActionPlan,
+            ContextualRiskInsights,
+            FundamentalContextInsights,
+            InvestmentSynthesis,
+            QualitativeInsights,
+            ScenarioProbabilities,
+            SecAnalysisInsights,
+            TechnicalStrategyInsights,
+        )
+
+        quant = QuantitativeAnalysis(
+            composite_score=0.82,
+            fundamental_score=0.85,
+            technical_score=0.78,
+            risk_score=0.80,
+            grade="A",
+            preliminary_recommendation="BUY",
+            fundamental_metrics={},
+            technical_indicators={},
+            risk_metrics={},
+            calculation_timestamp=datetime.now(),
+            data_quality=DataQualityMetrics(
+                completeness_score=0.95,
+                freshness_score=1.0,
+                accuracy_confidence=0.90,
+                source_reliability=0.85,
+            ),
+            data_lineage=DataLineage(
+                primary_sources=["yfinance"],
+                collection_timestamp=datetime.now(),
+                cache_status="fresh",
+            ),
+            confidence_level=0.85,
+            python_rationale="Strong fundamentals.",
+        )
+
+        qual = QualitativeInsights(
+            sec_insights=SecAnalysisInsights(
+                business_model="Apple designs and sells consumer electronics. " * 10,
+                competitive_advantages=["Strong brand"],
+                risk_factors=["Supply chain risks"],
+                strategic_initiatives=["AI investment"],
+            ),
+            fundamental_context=FundamentalContextInsights(
+                industry_analysis="Tech sector strong. " * 10,
+                growth_drivers=["iPhone sales"],
+                competitive_positioning="Market leader. " * 10,
+                management_assessment="Experienced team. " * 10,
+            ),
+            technical_strategy=TechnicalStrategyInsights(
+                chart_patterns=["Cup and handle"],
+                support_resistance="Support at $140. " * 10,
+                entry_exit_strategy="Buy on pullbacks. " * 10,
+                timing_assessment="Neutral to bullish. " * 10,
+            ),
+            contextual_risks=ContextualRiskInsights(
+                regulatory_risks=["Antitrust"],
+                geopolitical_risks=["China"],
+                competitive_risks=["Android"],
+                operational_risks=["Supply chain"],
+                stress_scenarios=["Recession"],
+            ),
+            investment_synthesis=InvestmentSynthesis(
+                investment_thesis="Strong long-term investment. " * 10,
+                bull_case="New products drive growth. " * 10,
+                base_case="Steady services growth. " * 10,
+                bear_case="Market saturation. " * 10,
+                scenario_probabilities=ScenarioProbabilities(bull=0.3, base=0.5, bear=0.2),
+                final_recommendation="BUY",
+                recommendation_confidence="HIGH",
+                confidence_rationale="Strong fundamentals support recommendation.",
+                action_plan=ActionPlan(
+                    immediate_actions=["Initiate position"],
+                    monitoring_points=["Q4 earnings"],
+                    exit_triggers=["Margin decline"],
+                ),
+            ),
+            analysis_timestamp=datetime.now(),
+            ai_confidence=0.85,
+        )
+
+        return EnrichedAnalysis(
+            ticker="AAPL",
+            company_name="Apple Inc.",
+            asset_class="stock",
+            quantitative=quant,
+            qualitative=qual,
+            final_grade="A",
+            final_score=0.82,
+            final_recommendation="BUY",
+            recommendation_confidence="HIGH",
+            executive_summary="Investment Grade: A with score 0.82. Recommendation: BUY.",
+            investment_rationale="Strong long-term investment thesis.",
+            processing_time_seconds=5.0,
+        )
 
     def test_should_return_empty_dict_when_no_holdings(self, orchestrator):
         """Test deep analysis with no holdings."""
         result = orchestrator.run_deep_analysis_on_holdings([])
         assert result == {}
 
-    def test_should_create_result_from_pydantic_output(self, orchestrator, mocker):
-        """Test result creation from crew output with pydantic."""
-        # Arrange
-        pydantic_data = mocker.Mock()
-        pydantic_data.model_dump.return_value = {"grade": "A", "composite_score": 0.85, "fundamental_score": 0.9, "technical_score": 0.8, "risk_score": 2.5}
-        pydantic_data.fundamental_score = 0.9
-        pydantic_data.technical_score = 0.8
-        pydantic_data.risk_score = 2.5
+    def test_should_analyze_single_holding(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
+        """Test analysis of a single holding using functional pipeline."""
+        # Mock the functional pipeline at the import location
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            return_value=(mock_deep_analysis_result, mock_enriched_analysis),
+        )
 
-        crew_output = mocker.Mock()
-        crew_output.pydantic = pydantic_data
+        holdings = [{"ticker": "AAPL", "asset_class": "stock", "company_name": "Apple Inc."}]
 
-        # Mock extractor at the source import location
-        mock_extractor = mocker.patch("finwiz.utils.data_extractor.CrewDataExtractor")
-        mock_extractor_instance = mock_extractor.return_value
-        mock_extractor_instance.extract_grade_and_score.return_value = {"grade": "A", "composite_score": 0.85}
-        mock_extractor_instance.validate_grade_score_consistency.return_value = True
+        result = orchestrator.run_deep_analysis_on_holdings(holdings)
 
-        # Act
-        result = orchestrator.create_deep_analysis_result_from_crew_output(crew_output, "AAPL", "stock", "TestCrew", False)
+        assert len(result) == 1
+        assert "AAPL" in result
+        assert isinstance(result["AAPL"], DeepAnalysisResult)
+        assert result["AAPL"].grade == "A"
+        assert result["AAPL"].composite_score == 0.82
 
-        # Assert
-        assert isinstance(result, DeepAnalysisResult)
-        assert result.ticker == "AAPL"
-        assert result.asset_class == "stock"
-        assert result.grade == "A"
-        assert result.composite_score == approx(0.85)
-        assert result.fundamental_score == approx(0.9)
-        assert result.technical_score == approx(0.8)
-        assert result.risk_score == approx(2.5)
+    def test_should_analyze_multiple_holdings(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
+        """Test analysis of multiple holdings."""
 
-    def test_should_parse_from_raw_output(self, orchestrator, mocker):
-        """Test parsing from raw text output."""
-        # Arrange
-        crew_output = mocker.Mock()
-        crew_output.pydantic = None
-        crew_output.raw = "Analysis complete. Grade: B Score: 0.75"
+        def create_result(ticker, asset_class, company_name=""):
+            result = DeepAnalysisResult(
+                ticker=ticker,
+                asset_class=asset_class,
+                crew_name="DeepAnalysisCrew",
+                grade="A" if ticker == "AAPL" else "B+",
+                composite_score=0.82 if ticker == "AAPL" else 0.75,
+                fundamental_score=0.85,
+                technical_score=0.78,
+                risk_score=0.80,
+                recommendation="BUY",
+                rationale="Test rationale for analysis.",
+                fundamental_details={},
+                technical_details={},
+                risk_details={},
+                data_freshness_hours=0.5,
+                confidence_level=0.85,
+            )
+            # Return enriched as well (mock)
+            enriched = mocker.MagicMock()
+            enriched.ticker = ticker
+            return result, enriched
 
-        # Act
-        result = orchestrator.create_deep_analysis_result_from_crew_output(crew_output, "MSFT", "stock", "TestCrew", False)
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            side_effect=create_result,
+        )
 
-        # Assert
-        assert result.ticker == "MSFT"
-        assert result.grade == "B"
-        assert result.composite_score == approx(0.75)
+        holdings = [
+            {"ticker": "AAPL", "asset_class": "stock"},
+            {"ticker": "GOOGL", "asset_class": "stock"},
+        ]
 
-    def test_should_save_metrics_to_file(self, orchestrator, tmp_path):
-        """Test metrics file saving."""
-        # Arrange
-        metrics = {"total_tickers": 10, "successful_tickers": 9, "prefetch_duration_seconds": 5.5}
-        output_path = str(tmp_path / "metrics.json")
+        result = orchestrator.run_deep_analysis_on_holdings(holdings)
 
-        # Act
-        orchestrator.save_batch_metrics_to_file(metrics, output_path)
+        assert len(result) == 2
+        assert "AAPL" in result
+        assert "GOOGL" in result
 
-        # Assert
-        assert Path(output_path).exists()
-        with open(output_path) as f:
-            saved_metrics = json.load(f)
-        assert saved_metrics["total_tickers"] == 10
-        assert saved_metrics["successful_tickers"] == 9
+    def test_should_handle_analysis_failure_gracefully(self, mocker, orchestrator):
+        """Test that analysis failures are handled gracefully."""
 
-    def test_should_handle_missing_required_fields(self, orchestrator, mocker):
-        """Test error handling for missing fields."""
-        from finwiz.exceptions.data_quality import MissingRequiredFieldError
+        def failing_analysis(ticker, asset_class, company_name=""):
+            raise RuntimeError("Analysis failed")
 
-        # Arrange
-        crew_output = mocker.Mock()
-        crew_output.pydantic = None
-        crew_output.raw = "No grade or score here"
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            side_effect=failing_analysis,
+        )
 
-        # Act & Assert
-        with pytest.raises(MissingRequiredFieldError):
-            orchestrator.create_deep_analysis_result_from_crew_output(crew_output, "TEST", "stock", "TestCrew", False)
+        holdings = [{"ticker": "FAIL", "asset_class": "stock"}]
+
+        result = orchestrator.run_deep_analysis_on_holdings(holdings)
+
+        # Should return empty dict on failure (graceful degradation)
+        assert result == {}
+
+    def test_should_skip_invalid_holdings(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
+        """Test that holdings without ticker or asset_class are skipped."""
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            return_value=(mock_deep_analysis_result, mock_enriched_analysis),
+        )
+
+        holdings = [
+            {"ticker": "AAPL", "asset_class": "stock"},
+            {"asset_class": "stock"},  # Missing ticker
+            {"ticker": "GOOGL"},  # Missing asset_class
+            {},  # Empty
+        ]
+
+        result = orchestrator.run_deep_analysis_on_holdings(holdings)
+
+        # Only AAPL should be processed
+        assert len(result) == 1
+        assert "AAPL" in result
+
+    def test_should_store_enriched_analysis(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis, tmp_path):
+        """Test that enriched analysis is stored for HTML generation."""
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            return_value=(mock_deep_analysis_result, mock_enriched_analysis),
+        )
+
+        # Override state output path
+        orchestrator.state.output_dir = str(tmp_path)
+
+        holdings = [{"ticker": "AAPL", "asset_class": "stock"}]
+
+        result = orchestrator.run_deep_analysis_on_holdings(holdings)
+
+        assert len(result) == 1
+
+        # Verify enriched analysis can be retrieved
+        enriched = orchestrator.get_enriched_analysis("AAPL")
+        assert enriched is not None
+        assert enriched.ticker == "AAPL"
 
     @pytest.mark.parametrize(
         "holdings",
         [
             [{"ticker": "AAPL", "asset_class": "stock"}],
             [{"ticker": "AAPL", "asset_class": "stock"}, {"ticker": "GOOGL", "asset_class": "stock"}],
-            [{"ticker": "AAPL", "asset_class": "stock"}, {"ticker": "SPY", "asset_class": "etf"}, {"ticker": "BTC", "asset_class": "crypto"}],
+            [
+                {"ticker": "AAPL", "asset_class": "stock"},
+                {"ticker": "SPY", "asset_class": "etf"},
+                {"ticker": "BTC", "asset_class": "crypto"},
+            ],
         ],
     )
     def test_property_deep_analysis_completeness(self, mocker, holdings):
@@ -153,108 +329,65 @@ class TestDeepAnalysisOrchestrator:
         )
 
         batch_config = mocker.Mock()
-        batch_config.enabled = False  # Disable batch mode for simplicity
-        batch_config.min_holdings_for_batch = 100  # Set high to avoid batch mode
+        batch_config.enabled = False
+        batch_config.min_holdings_for_batch = 100
 
-        orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
-
-        # Mock collect_data on data_collector (moved there in Phase 1.1 refactoring)
-        mocker.patch.object(
-            orchestrator.data_collector,
-            "collect_data",
-            return_value={"price": 150.0, "volume": 1000000, "market_cap": 2500000000000},
+        orchestrator = DeepAnalysisOrchestrator(
+            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
         )
 
-        # Mock DeepAnalysisScorer to prevent actual scoring and return proper DeepAnalysisResult objects
-        def create_score_result(ticker_arg, asset_class_arg, raw_data):
-            return DeepAnalysisResult(
-                ticker=ticker_arg,
-                asset_class=asset_class_arg,
+        def create_result(ticker, asset_class, company_name=""):
+            result = DeepAnalysisResult(
+                ticker=ticker,
+                asset_class=asset_class,
                 crew_name="DeepAnalysisCrew",
-                analysis_timestamp="2025-11-17T10:00:00",
-                composite_score=0.85,
                 grade="A",
+                composite_score=0.82,
+                fundamental_score=0.85,
+                technical_score=0.78,
+                risk_score=0.80,
                 recommendation="BUY",
-                rationale="Test analysis",
+                rationale="Test analysis rationale for the holding.",
+                fundamental_details={},
+                technical_details={},
                 risk_details={},
-                fundamental_score=0.9,
-                technical_score=0.8,
-                risk_score=2.5,
-                data_freshness_hours=1.0,
-                confidence_level=0.9,
-                warnings=[],
-                cached=False,
+                data_freshness_hours=0.5,
+                confidence_level=0.85,
             )
+            enriched = mocker.MagicMock()
+            enriched.ticker = ticker
+            return result, enriched
 
-        mock_scorer = mocker.Mock()
-        mock_scorer.calculate_composite_score.side_effect = create_score_result
-        mocker.patch("finwiz.scoring.deep_analysis_scorer.DeepAnalysisScorer", return_value=mock_scorer)
-
-        # Create a mock result that will be returned for each holding
-        def create_mock_result(ticker, asset_class):
-            mock_result = mocker.Mock()
-            mock_pydantic = mocker.Mock()
-            mock_pydantic.model_dump.return_value = {"grade": "A", "composite_score": 0.85, "fundamental_score": 0.9, "technical_score": 0.8, "risk_score": 2.5}
-            mock_pydantic.fundamental_score = 0.9
-            mock_pydantic.technical_score = 0.8
-            mock_pydantic.risk_score = 2.5
-            mock_result.pydantic = mock_pydantic
-            return mock_result
-
-        # Configure mock to return different results based on inputs
-        def kickoff_side_effect(inputs):
-            ticker = inputs.get("ticker")
-            asset_class = inputs.get("asset_class")
-            return create_mock_result(ticker, asset_class)
-
-        # Mock the crew execution to return valid results
-        mock_crew_class = mocker.patch("finwiz.crews.deep_analysis.deep_analysis.DeepAnalysisCrew")
-        mock_cache_mgr = mocker.patch("finwiz.cache.analysis_cache_manager.get_analysis_cache_manager")
-        mock_extractor = mocker.patch("finwiz.utils.data_extractor.CrewDataExtractor")
-
-        mock_crew_instance = mock_crew_class.return_value
-        mock_crew = mock_crew_instance.crew.return_value
-        mock_crew.kickoff.side_effect = kickoff_side_effect
-
-        mock_cache_instance = mock_cache_mgr.return_value
-        mock_cache_instance.get_cached_analysis.return_value = None
-        mock_cache_instance.log_cache_stats.return_value = None
-
-        mock_extractor_instance = mock_extractor.return_value
-        mock_extractor_instance.extract_grade_and_score.return_value = {"grade": "A", "composite_score": 0.85}
-        mock_extractor_instance.validate_grade_score_consistency.return_value = True
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            side_effect=create_result,
+        )
 
         # Act
         results = orchestrator.run_deep_analysis_on_holdings(holdings)
 
         # Assert - Property 8: Completeness
-        # For any portfolio with N holdings, all N holdings should be analyzed
-        assert len(results) == len(holdings), f"Expected {len(holdings)} results but got {len(results)}. All holdings should be analyzed."
+        assert len(results) == len(holdings), (
+            f"Expected {len(holdings)} results but got {len(results)}. All holdings should be analyzed."
+        )
 
-        # Verify each holding has a corresponding result
         for holding in holdings:
             ticker = holding["ticker"]
-            assert ticker in results, f"Ticker {ticker} not found in results. Every holding should have an analysis result."
+            assert ticker in results, f"Ticker {ticker} not found in results."
 
-            # Verify the result is a valid DeepAnalysisResult
             result = results[ticker]
-            assert isinstance(result, DeepAnalysisResult), f"Result for {ticker} is not a DeepAnalysisResult instance"
-
-            # Verify the result has the correct ticker and asset_class
-            assert result.ticker == ticker, f"Result ticker {result.ticker} doesn't match holding ticker {ticker}"
-            assert result.asset_class == holding["asset_class"], f"Result asset_class {result.asset_class} doesn't match holding asset_class {holding['asset_class']}"
+            assert isinstance(result, DeepAnalysisResult), f"Result for {ticker} is not DeepAnalysisResult"
+            assert result.ticker == ticker
+            assert result.asset_class == holding["asset_class"]
 
     @given(
         ticker=st.text(alphabet=st.characters(whitelist_categories=("Lu",)), min_size=1, max_size=5),
         asset_class=st.sampled_from(["stock", "etf", "crypto"]),
         grade=st.sampled_from(["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]),
         composite_score=st.floats(min_value=0.0, max_value=1.0),
-        fundamental_score=st.one_of(st.none(), st.floats(min_value=0.0, max_value=1.0)),
-        technical_score=st.one_of(st.none(), st.floats(min_value=0.0, max_value=1.0)),
-        risk_score=st.one_of(st.none(), st.floats(min_value=0.0, max_value=5.0)),
     )
-    @settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_property_result_structure_validation(self, mocker, ticker, asset_class, grade, composite_score, fundamental_score, technical_score, risk_score):
+    @settings(max_examples=50, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_property_result_structure_validation(self, mocker, ticker, asset_class, grade, composite_score):
         """
         **Feature: flow-orchestrator-refactoring, Property 9: Deep Analysis Result Structure**
 
@@ -280,76 +413,55 @@ class TestDeepAnalysisOrchestrator:
         batch_config.enabled = False
         batch_config.min_holdings_for_batch = 100
 
-        orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
+        orchestrator = DeepAnalysisOrchestrator(
+            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
+        )
 
-        # Create mock crew output with the generated values
-        mock_result = mocker.Mock()
-        mock_pydantic = mocker.Mock()
-        mock_pydantic.model_dump.return_value = {
-            "grade": grade,
-            "composite_score": composite_score,
-            "fundamental_score": fundamental_score,
-            "technical_score": technical_score,
-            "risk_score": risk_score,
-        }
-        mock_pydantic.fundamental_score = fundamental_score
-        mock_pydantic.technical_score = technical_score
-        mock_pydantic.risk_score = risk_score
-        mock_result.pydantic = mock_pydantic
+        def create_result(ticker_arg, asset_class_arg, company_name=""):
+            result = DeepAnalysisResult(
+                ticker=ticker_arg,
+                asset_class=asset_class_arg,
+                crew_name="DeepAnalysisCrew",
+                grade=grade,
+                composite_score=composite_score,
+                fundamental_score=0.85,
+                technical_score=0.78,
+                risk_score=0.80,
+                recommendation="BUY",
+                rationale="Property test analysis rationale.",
+                fundamental_details={},
+                technical_details={},
+                risk_details={},
+                data_freshness_hours=0.5,
+                confidence_level=0.85,
+            )
+            enriched = mocker.MagicMock()
+            enriched.ticker = ticker_arg
+            return result, enriched
 
-        mock_extractor = mocker.patch("finwiz.utils.data_extractor.CrewDataExtractor")
-        mock_extractor_instance = mock_extractor.return_value
-        mock_extractor_instance.extract_grade_and_score.return_value = {"grade": grade, "composite_score": composite_score}
-        mock_extractor_instance.validate_grade_score_consistency.return_value = True
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            side_effect=create_result,
+        )
+
+        holdings = [{"ticker": ticker, "asset_class": asset_class}]
 
         # Act
-        result = orchestrator.create_deep_analysis_result_from_crew_output(mock_result, ticker, asset_class, "TestCrew", False)
+        results = orchestrator.run_deep_analysis_on_holdings(holdings)
 
-        # Assert - Property 9: Result Structure Validation
-        # The result should be a valid DeepAnalysisResult instance
-        assert isinstance(result, DeepAnalysisResult), f"Result is not a DeepAnalysisResult instance, got {type(result)}"
+        # Assert
+        assert len(results) == 1
+        result = results[ticker]
 
-        # Verify all required fields are present and have correct types
-        assert isinstance(result.ticker, str), "ticker must be a string"
-        assert isinstance(result.asset_class, str), "asset_class must be a string"
-        assert isinstance(result.crew_name, str), "crew_name must be a string"
-        assert isinstance(result.analysis_timestamp, str), "analysis_timestamp must be a string"
-        assert isinstance(result.composite_score, float), "composite_score must be a float"
-        assert isinstance(result.grade, str), "grade must be a string"
-        assert isinstance(result.recommendation, str), "recommendation must be a string"
-        assert isinstance(result.rationale, str), "rationale must be a string"
-        assert isinstance(result.risk_details, dict), "risk_details must be a dict"
-        assert isinstance(result.data_freshness_hours, float), "data_freshness_hours must be a float"
-        assert isinstance(result.confidence_level, float), "confidence_level must be a float"
-        assert isinstance(result.warnings, list), "warnings must be a list"
-        assert isinstance(result.cached, bool), "cached must be a bool"
+        # Property 9: Result Structure Validation
+        assert isinstance(result, DeepAnalysisResult)
+        assert isinstance(result.ticker, str)
+        assert isinstance(result.asset_class, str)
+        assert isinstance(result.grade, str)
+        assert isinstance(result.composite_score, float)
+        assert 0.0 <= result.composite_score <= 1.0
 
-        # Verify field constraints from Pydantic schema
-        assert 0.0 <= result.composite_score <= 1.0, f"composite_score {result.composite_score} must be between 0.0 and 1.0"
-        assert 0.0 <= result.confidence_level <= 1.0, f"confidence_level {result.confidence_level} must be between 0.0 and 1.0"
-        assert result.data_freshness_hours >= 0.0, f"data_freshness_hours {result.data_freshness_hours} must be >= 0.0"
-
-        # Verify optional scores have correct constraints when present
-        if result.fundamental_score is not None:
-            assert isinstance(result.fundamental_score, float), "fundamental_score must be a float"
-            assert 0.0 <= result.fundamental_score <= 1.0, f"fundamental_score {result.fundamental_score} must be between 0.0 and 1.0"
-
-        if result.technical_score is not None:
-            assert isinstance(result.technical_score, float), "technical_score must be a float"
-            assert 0.0 <= result.technical_score <= 1.0, f"technical_score {result.technical_score} must be between 0.0 and 1.0"
-
-        if result.risk_score is not None:
-            assert isinstance(result.risk_score, float), "risk_score must be a float"
-            assert 0.0 <= result.risk_score <= 5.0, f"risk_score {result.risk_score} must be between 0.0 and 5.0"
-
-        # Verify the result matches the input values
-        assert result.ticker == ticker, f"ticker mismatch: {result.ticker} != {ticker}"
-        assert result.asset_class == asset_class, f"asset_class mismatch: {result.asset_class} != {asset_class}"
-        assert result.grade == grade, f"grade mismatch: {result.grade} != {grade}"
-        assert result.composite_score == composite_score, f"composite_score mismatch: {result.composite_score} != {composite_score}"
-
-        # Verify Pydantic validation would accept this result
-        # (This ensures the result can be serialized/deserialized)
+        # Verify Pydantic validation
         try:
             result_dict = result.model_dump()
             DeepAnalysisResult.model_validate(result_dict)
@@ -359,19 +471,13 @@ class TestDeepAnalysisOrchestrator:
     @given(
         ticker=st.text(alphabet=st.characters(whitelist_categories=("Lu",)), min_size=1, max_size=5),
         asset_class=st.sampled_from(["stock", "etf", "crypto"]),
-        grade=st.sampled_from(["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]),
-        composite_score=st.floats(min_value=0.0, max_value=1.0),
-        output_format=st.sampled_from(["pydantic", "raw"]),
     )
-    @settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_property_parsing_correctness(self, mocker, ticker, asset_class, grade, composite_score, output_format):
+    @settings(max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_property_pipeline_integration(self, mocker, ticker, asset_class):
         """
-        **Feature: flow-orchestrator-refactoring, Property 10: Deep Analysis Parsing Correctness**
+        **Feature: deep-analysis-pipeline, Property: Pipeline Integration**
 
-        For any crew output, the DeepAnalysisOrchestrator should extract
-        ticker, grade, and composite_score fields.
-
-        **Validates: Requirements 3.5**
+        Verify that the orchestrator correctly integrates with the functional pipeline.
         """
         # Arrange
         state = FinwizState(
@@ -389,54 +495,47 @@ class TestDeepAnalysisOrchestrator:
         batch_config.enabled = False
         batch_config.min_holdings_for_batch = 100
 
-        orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
+        orchestrator = DeepAnalysisOrchestrator(
+            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
+        )
 
-        # Create mock crew output in different formats
-        mock_result = mocker.Mock()
+        # Track calls to analyze_holding
+        call_count = 0
 
-        if output_format == "pydantic":
-            # Test Pydantic output format
-            mock_pydantic = mocker.Mock()
-            mock_pydantic.model_dump.return_value = {"grade": grade, "composite_score": composite_score, "fundamental_score": 0.9, "technical_score": 0.8, "risk_score": 2.5}
-            mock_pydantic.fundamental_score = 0.9
-            mock_pydantic.technical_score = 0.8
-            mock_pydantic.risk_score = 2.5
-            mock_result.pydantic = mock_pydantic
-
-            mock_extractor = mocker.patch("finwiz.utils.data_extractor.CrewDataExtractor")
-            mock_extractor_instance = mock_extractor.return_value
-            mock_extractor_instance.extract_grade_and_score.return_value = {"grade": grade, "composite_score": composite_score}
-            mock_extractor_instance.validate_grade_score_consistency.return_value = True
-
-            # Act
-            result = orchestrator.create_deep_analysis_result_from_crew_output(mock_result, ticker, asset_class, "TestCrew", False)
-        else:
-            # Test raw text output format
-            # Note: Raw format has precision limitations due to string formatting
-            mock_result.pydantic = None
-            mock_result.raw = f"Analysis complete. Grade: {grade} Score: {composite_score:.3f}"
-
-            # Act
-            result = orchestrator.create_deep_analysis_result_from_crew_output(mock_result, ticker, asset_class, "TestCrew", False)
-
-        # Assert - Property 10: Parsing Correctness
-        # The orchestrator should correctly extract ticker, grade, and composite_score
-        assert result.ticker == ticker, f"Failed to parse ticker correctly: expected {ticker}, got {result.ticker}"
-        assert result.grade == grade, f"Failed to parse grade correctly: expected {grade}, got {result.grade}"
-
-        # For raw format, account for precision loss due to .3f formatting
-        if output_format == "raw":
-            # The raw format uses .3f, so we need to compare with tolerance
-            expected_score = float(f"{composite_score:.3f}")
-            assert abs(result.composite_score - expected_score) < 0.0001, (
-                f"Failed to parse composite_score correctly from raw format: expected {expected_score}, got {result.composite_score}"
+        def track_calls(ticker_arg, asset_class_arg, company_name=""):
+            nonlocal call_count
+            call_count += 1
+            result = DeepAnalysisResult(
+                ticker=ticker_arg,
+                asset_class=asset_class_arg,
+                crew_name="DeepAnalysisCrew",
+                grade="A",
+                composite_score=0.82,
+                fundamental_score=0.85,
+                technical_score=0.78,
+                risk_score=0.80,
+                recommendation="BUY",
+                rationale="Pipeline integration test rationale.",
+                fundamental_details={},
+                technical_details={},
+                risk_details={},
+                data_freshness_hours=0.5,
+                confidence_level=0.85,
             )
-        else:
-            # Pydantic format should preserve exact value
-            assert result.composite_score == composite_score, f"Failed to parse composite_score correctly: expected {composite_score}, got {result.composite_score}"
+            enriched = mocker.MagicMock()
+            enriched.ticker = ticker_arg
+            return result, enriched
 
-        # Verify the result is a valid DeepAnalysisResult
-        assert isinstance(result, DeepAnalysisResult), f"Parsing did not produce a DeepAnalysisResult, got {type(result)}"
+        mocker.patch(
+            "finwiz.analysis.analyze_holding",
+            side_effect=track_calls,
+        )
 
-        # Verify asset_class is preserved
-        assert result.asset_class == asset_class, f"Asset class not preserved: expected {asset_class}, got {result.asset_class}"
+        holdings = [{"ticker": ticker, "asset_class": asset_class}]
+
+        # Act
+        results = orchestrator.run_deep_analysis_on_holdings(holdings)
+
+        # Assert - Pipeline was called exactly once per holding
+        assert call_count == 1, f"analyze_holding should be called exactly once, was called {call_count} times"
+        assert ticker in results

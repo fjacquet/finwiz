@@ -103,6 +103,10 @@ src/finwiz/
 │   ├── rebalancing.py         # Rebalancing endpoints
 │   └── monitoring.py          # Health/metrics endpoints
 │
+├── analysis/                   # Functional analysis pipeline
+│   ├── __init__.py            # Module exports
+│   └── deep_analysis_pipeline.py  # Pure function composition
+│
 ├── cache/                      # Caching infrastructure
 │   └── analysis_cache_manager.py  # Analysis result caching
 │
@@ -243,6 +247,7 @@ Each major directory has its own CLAUDE.md with detailed entry points and usage 
 
 | Directory | Documentation | Key Topics |
 |-----------|--------------|------------|
+| `analysis/` | [analysis/CLAUDE.md](src/finwiz/analysis/CLAUDE.md) | Functional pipeline, AI Minimalism |
 | `api/` | [api/CLAUDE.md](src/finwiz/api/CLAUDE.md) | FastAPI endpoints, REST API |
 | `cache/` | [cache/CLAUDE.md](src/finwiz/cache/CLAUDE.md) | Analysis caching, AnalysisCacheManager |
 | `cli/` | [cli/CLAUDE.md](src/finwiz/cli/CLAUDE.md) | Command-line argument parsing |

@@ -1,18 +1,22 @@
 """Deep Analysis Orchestrator for FinWiz Flow.
 
-This module coordinates deep analysis execution by delegating to specialized modules:
-- DeepAnalysisDataCollector: Raw data collection
-- DeepAnalysisExecutor: Sequential/concurrent execution
-- DeepAnalysisProcessor: Result processing and metrics
+This module coordinates deep analysis execution using functional pipeline composition:
+- analyze_holding(): Main pipeline function (collect -> quantitative -> qualitative -> synthesize)
+- DeepAnalysisDataCollector: Raw data collection (used by pipeline)
+
+Architecture (Clean Functional Pipeline):
+    1. collect_raw_data(ctx) -> RawData         [Python tools]
+    2. calculate_quantitative(ctx, raw) -> Quant   [$0 Python]
+    3. generate_qualitative(ctx, quant) -> Qual    [AI crew]
+    4. synthesize(ctx, quant, qual) -> Enriched    [Python]
 """
 
 import os
+from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
 from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
-from finwiz.orchestrators.deep_analysis_executor import DeepAnalysisExecutor
-from finwiz.orchestrators.deep_analysis_processor import DeepAnalysisProcessor
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -31,16 +35,11 @@ class DeepAnalysisOrchestrator:
         self.integration_manager = dependencies.get("integration_manager")
         self.error_handler = dependencies.get("error_handler")
 
-        # Initialize component modules
+        # Data collector for raw data acquisition
         self.data_collector = DeepAnalysisDataCollector(state)
-        self.result_processor = DeepAnalysisProcessor(state)
-        self.executor = DeepAnalysisExecutor(
-            state=state,
-            data_collector=self.data_collector,
-            result_processor=self.result_processor,
-            batch_prefetch_config=self.batch_prefetch_config,
-            integration_manager=self.integration_manager,
-        )
+
+        # Enriched analysis storage (populated during analysis)
+        self._enriched_analyses: dict[str, Any] = {}
 
         # Initialize DataSourceOrchestrator for multi-source data acquisition
         from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
@@ -108,9 +107,13 @@ class DeepAnalysisOrchestrator:
 
     def run_deep_analysis_on_holdings(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
         """
-        Execute deep analysis on all holdings.
+        Execute deep analysis on all holdings using functional pipeline.
 
-        Delegates to DeepAnalysisExecutor for actual execution.
+        Pipeline composition:
+        1. collect_raw_data (Python tools)
+        2. calculate_quantitative (Python scorer - $0)
+        3. generate_qualitative (AI crew)
+        4. synthesize_enriched_analysis (Python)
 
         Args:
             holdings: List of holding dicts with 'ticker' and 'asset_class' keys
@@ -118,13 +121,68 @@ class DeepAnalysisOrchestrator:
         Returns:
             Dictionary mapping tickers to DeepAnalysisResult objects
         """
-        return self.executor.run_deep_analysis_on_holdings(holdings)
+        from finwiz.analysis import analyze_holding
+
+        results: dict[str, DeepAnalysisResult] = {}
+        self._enriched_analyses = {}
+
+        for holding in holdings:
+            ticker = holding.get("ticker")
+            asset_class = holding.get("asset_class")
+            company_name = holding.get("name", "")
+
+            if not ticker or not asset_class:
+                self.logger.warning(f"Skipping holding with missing ticker or asset_class: {holding}")
+                continue
+
+            try:
+                # Functional pipeline - returns BOTH DeepAnalysisResult AND EnrichedAnalysis
+                result, enriched = analyze_holding(ticker, asset_class, company_name)
+                results[ticker] = result
+
+                # Store enriched analysis for HTML generation
+                self._enriched_analyses[ticker] = enriched
+                self._store_enriched_analysis(ticker, enriched)
+
+                self.logger.info(f"Analysis complete: {ticker} grade={result.grade} score={result.composite_score:.2f}")
+
+            except Exception as e:
+                self.logger.error(f"Analysis failed for {ticker}: {e}", exc_info=True)
+                # Continue with other holdings
+
+        self.logger.info(f"Deep analysis completed: {len(results)}/{len(holdings)} holdings analyzed")
+        return results
+
+    def _store_enriched_analysis(self, ticker: str, enriched: Any) -> None:
+        """Store enriched analysis JSON for HTML rendering."""
+        try:
+            from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
+
+            if not isinstance(enriched, EnrichedAnalysis):
+                self.logger.warning(f"Expected EnrichedAnalysis, got {type(enriched)}")
+                return
+
+            # Store in session output directory
+            session_id = getattr(self.state, "session_id", "default")
+            output_dir = Path(f"output/enriched/{session_id}/{enriched.asset_class}")
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            output_path = output_dir / f"{ticker}_enriched.json"
+            output_path.write_text(enriched.model_dump_json(indent=2))
+            self.logger.info(f"Stored enriched analysis: {output_path}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}")
+
+    def get_enriched_analysis(self, ticker: str) -> Any | None:
+        """Get stored enriched analysis for a ticker."""
+        return self._enriched_analyses.get(ticker)
 
     async def run_deep_analysis_concurrent(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
         """
         Execute deep analysis on all holdings concurrently.
 
-        Delegates to DeepAnalysisExecutor.
+        Uses asyncio to run the functional pipeline concurrently for better performance.
 
         Args:
             holdings: List of holding dicts with 'ticker' and 'asset_class' keys
@@ -132,7 +190,48 @@ class DeepAnalysisOrchestrator:
         Returns:
             Dictionary mapping tickers to DeepAnalysisResult objects
         """
-        return await self.executor.run_deep_analysis_concurrent(holdings)
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        from finwiz.analysis import analyze_holding
+
+        results: dict[str, DeepAnalysisResult] = {}
+        self._enriched_analyses = {}
+
+        async def analyze_single(holding: dict[str, Any]) -> tuple[str, DeepAnalysisResult | None, Any | None]:
+            ticker = holding.get("ticker")
+            asset_class = holding.get("asset_class")
+            company_name = holding.get("name", "")
+
+            if not ticker or not asset_class:
+                return (ticker or "unknown", None, None)
+
+            try:
+                # Run in thread pool to avoid blocking
+                loop = asyncio.get_event_loop()
+                with ThreadPoolExecutor() as executor:
+                    result, enriched = await loop.run_in_executor(
+                        executor,
+                        lambda: analyze_holding(ticker, asset_class, company_name)
+                    )
+                return (ticker, result, enriched)
+            except Exception as e:
+                self.logger.error(f"Concurrent analysis failed for {ticker}: {e}")
+                return (ticker, None, None)
+
+        # Run all analyses concurrently
+        tasks = [analyze_single(h) for h in holdings]
+        completed = await asyncio.gather(*tasks)
+
+        for ticker, result, enriched in completed:
+            if result:
+                results[ticker] = result
+                if enriched:
+                    self._enriched_analyses[ticker] = enriched
+                    self._store_enriched_analysis(ticker, enriched)
+                self.logger.info(f"Analysis complete: {ticker} grade={result.grade}")
+
+        self.logger.info(f"Concurrent analysis completed: {len(results)}/{len(holdings)} holdings")
+        return results
 
     def _match_alternatives(self, deep_results: dict[str, DeepAnalysisResult]) -> dict[str, list[dict[str, Any]]]:
         """Match alternatives for underperforming holdings."""
@@ -205,19 +304,3 @@ class DeepAnalysisOrchestrator:
         except Exception as e:
             self.logger.error(f"Portfolio review update failed: {e}", exc_info=True)
 
-    # Legacy method delegation for backward compatibility
-    def execute_deep_analysis_with_prefetch(self, tickers: list[str]) -> dict[str, Any]:
-        """Execute with batch prefetch optimization. Delegates to executor."""
-        return self.executor._execute_prefetch(tickers)
-
-    def save_batch_metrics_to_file(self, metrics: dict[str, Any], output_path: str | None = None) -> None:
-        """Save batch metrics to file. Delegates to processor."""
-        self.result_processor.save_batch_metrics_to_file(metrics, output_path)
-
-    def create_deep_analysis_result_from_crew_output(
-        self, crew_output: Any, ticker: str, asset_class: str, crew_name: str = "DeepAnalysisCrew", cached: bool = False
-    ) -> DeepAnalysisResult:
-        """Parse crew output into structured result. Delegates to processor."""
-        return self.result_processor.create_deep_analysis_result_from_crew_output(
-            crew_output, ticker, asset_class, crew_name, cached
-        )

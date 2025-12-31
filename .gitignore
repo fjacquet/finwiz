@@ -130,9 +130,9 @@ site/
 .cache/
 docs/.cache/
 
-# Documentation archives and temporary files
-analysis/
-reports/
+# Documentation archives and temporary files (output directories only)
+/analysis/
+/reports/
 
 
 # =============================================================================
