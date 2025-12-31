@@ -207,6 +207,7 @@ class ConfigurationManager:
         # Basic validation rules for different APIs
         validation_rules = {
             "OPENAI_API_KEY": lambda k: k.startswith("sk-") and len(k) > 20,
+            "OPENROUTER_API_KEY": lambda k: k.startswith("sk-or-") and len(k) > 30,
             "SERPER_API_KEY": lambda k: len(k) >= 32,
             "FIRECRAWL_API_KEY": lambda k: len(k) >= 20,
             "ALPHA_VANTAGE_API_KEY": lambda k: len(k) >= 16,
@@ -247,6 +248,7 @@ class ConfigurationManager:
                 "",
                 "Example .env file:",
                 "OPENAI_API_KEY=sk-your-openai-key-here",
+                "OPENROUTER_API_KEY=sk-or-your-openrouter-key-here",
                 "SERPER_API_KEY=your-serper-key-here",
                 "FIRECRAWL_API_KEY=your-firecrawl-key-here",
                 "ALPHA_VANTAGE_API_KEY=your-alpha-vantage-key-here",

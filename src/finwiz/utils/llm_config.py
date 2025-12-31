@@ -88,6 +88,7 @@ def _validate_api_key_for_model(model: str) -> None:
         "cohere": "COHERE_API_KEY",
         "azure": "AZURE_OPENAI_API_KEY",
         "groq": "GROQ_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
     }
 
     provider = _get_provider_from_model(model)
@@ -259,12 +260,28 @@ def validate_llm_config() -> bool:
 
     """
     try:
-        # Check required environment variables
-        required_vars = ["OPENAI_API_KEY"]
+        # Determine the required API key based on the configured provider
+        model = _get_model_from_env("LLM_MODEL_STANDARD")
+        provider = _get_provider_from_model(model)
+
+        provider_key_map = {
+            "openai": "OPENAI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "google": "GOOGLE_API_KEY",
+            "gemini": "GOOGLE_API_KEY",
+            "mistral": "MISTRAL_API_KEY",
+            "cohere": "COHERE_API_KEY",
+            "azure": "AZURE_OPENAI_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+        }
+
+        required_key = provider_key_map.get(provider, "OPENAI_API_KEY")
+        required_vars = [required_key]
         missing_vars = [var for var in required_vars if not os.getenv(var)]
 
         if missing_vars:
-            logger.error(f"Missing required environment variables: {missing_vars}")
+            logger.error(f"Missing required environment variables for provider '{provider}': {missing_vars}")
             return False
 
         # Try to create an LLM instance
@@ -273,7 +290,7 @@ def validate_llm_config() -> bool:
             logger.error("Failed to create LLM instance")
             return False
 
-        logger.info("LLM configuration validation passed")
+        logger.info(f"LLM configuration validation passed (provider: {provider})")
         return True
 
     except Exception as e:
