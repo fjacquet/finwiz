@@ -262,8 +262,25 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> dic
     }
 
 
+def _filter_numeric_values(data: dict[str, Any] | None) -> dict[str, float]:
+    """Filter dictionary to only include numeric values (int/float)."""
+    if not data:
+        return {}
+    return {
+        k: float(v)
+        for k, v in data.items()
+        if isinstance(v, (int, float)) and not isinstance(v, bool)
+    }
+
+
 def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
     """Convert DeepAnalysisResult to QuantitativeAnalysis schema."""
+    # Filter dicts to only include numeric values
+    # (the schema expects dict[str, float], not dict[str, Any])
+    fundamental_metrics = _filter_numeric_values(result.fundamental_details)
+    technical_indicators = _filter_numeric_values(result.technical_details)
+    risk_metrics = _filter_numeric_values(result.risk_details)
+
     return QuantitativeAnalysis(
         composite_score=result.composite_score,
         fundamental_score=result.fundamental_score or 0.0,
@@ -271,9 +288,9 @@ def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
         risk_score=result.risk_score or 0.0,
         grade=result.grade,
         preliminary_recommendation=result.recommendation,
-        fundamental_metrics=result.fundamental_details,
-        technical_indicators=result.technical_details,
-        risk_metrics=result.risk_details,
+        fundamental_metrics=fundamental_metrics,
+        technical_indicators=technical_indicators,
+        risk_metrics=risk_metrics,
         calculation_timestamp=datetime.now(),
         data_quality=DataQualityMetrics(
             completeness_score=result.confidence_level,
