@@ -161,16 +161,26 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         # Get timeout from environment (check multiple env vars for compatibility)
         timeout = int(os.getenv("LITELLM_TIMEOUT") or os.getenv("OPENAI_TIMEOUT") or "300")
 
+        # Check if parallel tool calls should be disabled
+        # Some providers (OpenRouter/Novita) + Instructor don't support parallel tool calls
+        disable_parallel = os.getenv("DISABLE_PARALLEL_TOOL_CALLS", "true").lower() == "true"
+
         # Create LLM with proper configuration
         llm = LLM(
             model=model,
             timeout=timeout,
+            # Disable parallel tool calls to avoid Instructor compatibility issues
+            # See: https://github.com/BerriAI/litellm/issues/4235
+            parallel_tool_calls=False if disable_parallel else None,
+            # Drop unsupported params for models that don't recognize parallel_tool_calls
+            drop_params=True,
         )
 
         # Cache the instance
         _llm_cache[cache_key] = llm
 
-        logger.info(f"LLM configured successfully with model: {model} (timeout: {timeout}s)")
+        parallel_status = "disabled" if disable_parallel else "enabled"
+        logger.info(f"LLM configured: {model} (timeout: {timeout}s, parallel_tool_calls: {parallel_status})")
         return llm
 
     except Exception as e:
