@@ -23,7 +23,7 @@ def mock_data_collection(mocker):
         "market_cap": 2500000000000,
     }
     return mocker.patch(
-        "finwiz.flows.hybrid_analysis_flow.HybridAnalysisFlow._collect_raw_data",
+        "finwiz.flows.hybrid_data_collector.HybridDataCollector.collect_raw_data",
         return_value=mock_data,
     )
 
@@ -68,10 +68,12 @@ def mock_crew_execution(mocker):
     from datetime import datetime
 
     from finwiz.schemas.hybrid_analysis.qualitative import (
+        ActionPlan,
         ContextualRiskInsights,
         FundamentalContextInsights,
         InvestmentSynthesis,
         QualitativeInsights,
+        ScenarioProbabilities,
         SecAnalysisInsights,
         TechnicalStrategyInsights,
     )
@@ -266,23 +268,23 @@ def mock_crew_execution(mocker):
             bull_case=bull_case,
             base_case=base_case,
             bear_case=bear_case,
-            scenario_probabilities={"bull": 0.25, "base": 0.50, "bear": 0.25},
+            scenario_probabilities=ScenarioProbabilities(bull=0.25, base=0.50, bear=0.25),
             final_recommendation="BUY",
             recommendation_confidence="HIGH",
-            action_plan={
-                "immediate_actions": [
+            action_plan=ActionPlan(
+                immediate_actions=[
                     "Initiate position at current levels",
                     "Set price alerts at key technical levels",
                 ],
-                "monitoring_points": [
+                monitoring_points=[
                     "Quarterly earnings reports and guidance",
                     "Product launch announcements and reception",
                 ],
-                "exit_triggers": [
+                exit_triggers=[
                     "Break below $140 support on high volume",
                     "Negative guidance or margin compression",
                 ],
-            },
+            ),
         ),
         analysis_timestamp=datetime.now(),
         ai_confidence=0.85,
@@ -505,13 +507,14 @@ class TestActionPlan:
         # Assert
         action_plan = result.qualitative.investment_synthesis.action_plan
 
-        assert "immediate_actions" in action_plan
-        assert "monitoring_points" in action_plan
-        assert "exit_triggers" in action_plan
+        # ActionPlan is a Pydantic model - use attribute access
+        assert hasattr(action_plan, "immediate_actions")
+        assert hasattr(action_plan, "monitoring_points")
+        assert hasattr(action_plan, "exit_triggers")
 
-        assert len(action_plan["immediate_actions"]) > 0
-        assert len(action_plan["monitoring_points"]) > 0
-        assert len(action_plan["exit_triggers"]) > 0
+        assert len(action_plan.immediate_actions) > 0
+        assert len(action_plan.monitoring_points) > 0
+        assert len(action_plan.exit_triggers) > 0
 
     def test_should_provide_actionable_guidance(self, mock_data_collection, mock_scorer, mock_crew_execution):
         """
@@ -532,15 +535,16 @@ class TestActionPlan:
         # Assert
         action_plan = result.qualitative.investment_synthesis.action_plan
 
+        # ActionPlan is a Pydantic model - use attribute access
         # Each action should be non-empty string
-        for action in action_plan["immediate_actions"]:
+        for action in action_plan.immediate_actions:
             assert isinstance(action, str)
             assert len(action) > 0
 
-        for point in action_plan["monitoring_points"]:
+        for point in action_plan.monitoring_points:
             assert isinstance(point, str)
             assert len(point) > 0
 
-        for trigger in action_plan["exit_triggers"]:
+        for trigger in action_plan.exit_triggers:
             assert isinstance(trigger, str)
             assert len(trigger) > 0

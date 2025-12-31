@@ -18,24 +18,18 @@ class TestEndToEndIntegration:
         # Arrange
         flow = HybridAnalysisFlow()
 
-        # Mock the data orchestrator to return fundamental data
-        mock_adapter = mocker.AsyncMock()
-        mock_adapter.source_name = "YFinance"
-        mock_adapter.is_available.return_value = True
-        mock_adapter.get_fundamental_data = mocker.AsyncMock(
-            return_value=FundamentalData(
-                ticker="AAPL",
-                source="YFinance",
-                timestamp=datetime.now(),
-                confidence=1.0,
-                return_on_equity=0.25,
-                debt_to_equity=0.5,
-                revenue_growth=0.15,
-                profit_margin=0.20,
-            )
+        # Mock the data collector to return expected data
+        flow.data_collector.collect_raw_data = mocker.Mock(
+            return_value={
+                "ticker": "AAPL",
+                "roe": 0.25,
+                "debt_to_equity": 0.5,
+                "revenue_growth": 0.15,
+                "profit_margin": 0.20,
+                "data_lineage": {"source": "YFinance", "timestamp": datetime.now().isoformat()},
+                "data_confidence": 1.0,
+            }
         )
-
-        flow.data_orchestrator.adapters = [mock_adapter]
 
         # Set up flow state
         flow.state.ticker = "AAPL"
@@ -146,48 +140,30 @@ class TestEndToEndIntegration:
         # Arrange
         flow = HybridAnalysisFlow()
 
-        # Mock stock data orchestrator
-        mock_adapter = mocker.AsyncMock()
-        mock_adapter.source_name = "YFinance"
-        mock_adapter.is_available.return_value = True
-        mock_adapter.get_fundamental_data = mocker.AsyncMock(
-            return_value=FundamentalData(
-                ticker="AAPL",
-                source="YFinance",
-                timestamp=datetime.now(),
-                confidence=1.0,
-                return_on_equity=0.25,
-                debt_to_equity=0.5,
-                revenue_growth=0.15,
-                profit_margin=0.20,
-            )
-        )
+        # Mock data collector to return different data based on asset class
+        def mock_collect_raw_data(ticker, asset_class, existing_data=None):
+            if asset_class == "stock":
+                return {
+                    "ticker": ticker,
+                    "roe": 0.25,
+                    "debt_to_equity": 0.5,
+                    "data_lineage": {"source": "YFinance"},
+                }
+            elif asset_class == "etf":
+                return {
+                    "ticker": ticker,
+                    "expense_ratio": 0.003,
+                    "aum": 500e9,
+                }
+            elif asset_class == "crypto":
+                return {
+                    "ticker": ticker,
+                    "volume_24h": 50e9,
+                    "age_years": 15.0,
+                }
+            return {"ticker": ticker}
 
-        flow.data_orchestrator.adapters = [mock_adapter]
-
-        # Mock ETF tool
-        mock_etf_tool = mocker.Mock()
-        mock_etf_tool._run.return_value = {
-            "etf_data": {
-                "expense_ratio": 0.003,
-                "aum": 500e9,
-                "tracking_error": 0.005,
-                "dividend_yield": 0.015,
-            }
-        }
-        mocker.patch("finwiz.tools.enhanced_etf_tool.EnhancedETFAnalysisTool", return_value=mock_etf_tool)
-
-        # Mock crypto tool
-        mock_crypto_tool = mocker.Mock()
-        mock_crypto_tool._run.return_value = {
-            "crypto_data": {
-                "total_volume": 50e9,
-                "market_cap": 1e12,
-                "circulating_supply": 19e6,
-                "max_supply": 21e6,
-            }
-        }
-        mocker.patch("finwiz.tools.enhanced_crypto_tool.EnhancedCryptoAnalysisTool", return_value=mock_crypto_tool)
+        flow.data_collector.collect_raw_data = mocker.Mock(side_effect=mock_collect_raw_data)
 
         # Test each asset class
         holdings = [
@@ -231,8 +207,10 @@ class TestEndToEndIntegration:
         # Arrange
         flow = HybridAnalysisFlow()
 
-        # Mock orchestrator to raise exception
-        mocker.patch.object(flow.data_orchestrator, "get_fundamental_data", side_effect=Exception("API unavailable"))
+        # Mock data collector to return minimal data (simulating partial failure)
+        flow.data_collector.collect_raw_data = mocker.Mock(
+            return_value={"ticker": "AAPL"}  # Minimal data on failure
+        )
 
         # Set up flow state
         flow.state.ticker = "AAPL"

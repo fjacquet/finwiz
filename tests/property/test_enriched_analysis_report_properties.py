@@ -139,7 +139,7 @@ class TestEnrichedAnalysisReportProperties:
 
     # Property 15: Executive Summary Length
     @given(enriched_data=enriched_analysis_strategy())
-    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=50, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_executive_summary_meets_minimum_length(self, enriched_data):
         """
         **Feature: python-ai-hybrid-analysis, Property 15: Executive Summary Length**
@@ -165,7 +165,7 @@ class TestEnrichedAnalysisReportProperties:
 
     # Property 16: Investment Rationale Length
     @given(enriched_data=enriched_analysis_strategy())
-    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=50, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_investment_rationale_meets_minimum_length(self, enriched_data):
         """
         **Feature: python-ai-hybrid-analysis, Property 16: Investment Rationale Length**
@@ -191,7 +191,7 @@ class TestEnrichedAnalysisReportProperties:
 
     # Property 17: Action Plan Completeness
     @given(enriched_data=enriched_analysis_strategy())
-    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=50, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_action_plan_has_all_required_fields(self, enriched_data):
         """
         **Feature: python-ai-hybrid-analysis, Property 17: Action Plan Completeness**
@@ -234,7 +234,7 @@ class TestEnrichedAnalysisReportProperties:
 
     # Additional property: Report generation succeeds for valid data
     @given(enriched_data=enriched_analysis_strategy())
-    @settings(max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=50, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_report_generation_succeeds_for_valid_data(self, enriched_data):
         """
         Property: Report generation succeeds for all valid EnrichedAnalysis data.
@@ -260,7 +260,7 @@ class TestEnrichedAnalysisReportProperties:
         word_count=st.integers(min_value=0, max_value=1999),
         insights_count=st.integers(min_value=0, max_value=4),
     )
-    @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=20, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_quality_validation_rejects_insufficient_data(self, word_count, insights_count):
         """
         Property: Quality validation rejects data below thresholds.

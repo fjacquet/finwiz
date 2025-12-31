@@ -25,7 +25,7 @@ def mock_data_collection(mocker):
         "market_cap": 2500000000000,
     }
     return mocker.patch(
-        "finwiz.flows.hybrid_analysis_flow.HybridAnalysisFlow._collect_raw_data",
+        "finwiz.flows.hybrid_data_collector.HybridDataCollector.collect_raw_data",
         return_value=mock_data,
     )
 
@@ -376,7 +376,7 @@ class TestErrorRecovery:
             }
 
         mocker.patch(
-            "finwiz.flows.hybrid_analysis_flow.HybridAnalysisFlow._collect_raw_data",
+            "finwiz.flows.hybrid_data_collector.HybridDataCollector.collect_raw_data",
             side_effect=mock_data_with_retry,
         )
 

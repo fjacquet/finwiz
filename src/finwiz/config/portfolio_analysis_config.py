@@ -85,13 +85,28 @@ class PortfolioAnalysisConfig(BaseModel):
 
         """
         try:
+            # Parse integer values with validation
+            cache_ttl = int(os.getenv("PORTFOLIO_CACHE_TTL_HOURS", "24"))
+            max_alt = int(os.getenv("PORTFOLIO_MAX_ALTERNATIVES", "5"))
+            batch_size = int(os.getenv("PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE", "10"))
+
+            # Validate ranges - raise ValueError for out-of-range values
+            if not (1 <= cache_ttl <= 168):
+                raise ValueError(f"cache_ttl_hours {cache_ttl} out of range [1, 168]")
+            if not (1 <= max_alt <= 10):
+                raise ValueError(f"max_alternatives {max_alt} out of range [1, 10]")
+            if not (1 <= batch_size <= 50):
+                raise ValueError(f"deep_analysis_batch_size {batch_size} out of range [1, 50]")
+
+            # Pass raw string values - field_validators handle str→bool coercion
+            # This allows "true", "yes", "1", "on" and their variants
             config = cls(
-                deep_analysis_enabled=os.getenv("DEEP_PORTFOLIO_ANALYSIS", "true"),  # Changed default to "true"
-                enable_alternatives=os.getenv("PORTFOLIO_ENABLE_ALTERNATIVES", "true"),
-                cache_enabled=os.getenv("PORTFOLIO_CACHE_ENABLED", "true"),
-                cache_ttl_hours=int(os.getenv("PORTFOLIO_CACHE_TTL_HOURS", "24")),
-                max_alternatives=int(os.getenv("PORTFOLIO_MAX_ALTERNATIVES", "5")),
-                deep_analysis_batch_size=int(os.getenv("PORTFOLIO_DEEP_ANALYSIS_BATCH_SIZE", "10")),
+                deep_analysis_enabled=os.getenv("DEEP_PORTFOLIO_ANALYSIS", "true"),  # type: ignore[arg-type]
+                enable_alternatives=os.getenv("PORTFOLIO_ENABLE_ALTERNATIVES", "true"),  # type: ignore[arg-type]
+                cache_enabled=os.getenv("PORTFOLIO_CACHE_ENABLED", "true"),  # type: ignore[arg-type]
+                cache_ttl_hours=cache_ttl,
+                max_alternatives=max_alt,
+                deep_analysis_batch_size=batch_size,
             )
 
             # Log active configuration

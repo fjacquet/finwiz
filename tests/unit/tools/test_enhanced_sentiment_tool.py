@@ -1,6 +1,7 @@
 """Tests for Enhanced Sentiment Analysis Tool."""
 
 import datetime
+import json
 
 import pytest
 from pytest import approx
@@ -134,10 +135,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("AAPL", "stock", 7, 10)
 
-        # Result is a dict with 'formatted_analysis' key
-        assert isinstance(result, dict)
-        assert "formatted_analysis" in result
-        formatted = result["formatted_analysis"]
+        # Result is a JSON string - parse it
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+        assert "formatted_analysis" in parsed
+        formatted = parsed["formatted_analysis"]
         assert "Enhanced Sentiment Analysis for AAPL (STOCK)" in formatted
         assert "📊 Sentiment Overview" in formatted
         assert "🔍 Market Outlook" in formatted
@@ -239,10 +242,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("VTI", "etf", 7, 10)
 
-        # Result is a dict with 'formatted_analysis' key
-        assert isinstance(result, dict)
-        assert "formatted_analysis" in result
-        formatted = result["formatted_analysis"]
+        # Result is a JSON string - parse it
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+        assert "formatted_analysis" in parsed
+        formatted = parsed["formatted_analysis"]
         assert "Enhanced Sentiment Analysis for VTI (ETF)" in formatted
         assert "📊 Sentiment Overview" in formatted
 
@@ -342,10 +347,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("BTC-USD", "crypto", 7, 10)
 
-        # Result is a dict with 'formatted_analysis' key
-        assert isinstance(result, dict)
-        assert "formatted_analysis" in result
-        formatted = result["formatted_analysis"]
+        # Result is a JSON string - parse it
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+        assert "formatted_analysis" in parsed
+        formatted = parsed["formatted_analysis"]
         assert "Enhanced Sentiment Analysis for BTC-USD (CRYPTO)" in formatted
         assert "📊 Sentiment Overview" in formatted
 
@@ -365,10 +372,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("UNKNOWN", "stock", 7, 10)
 
-        # Result is a dict with 'formatted_analysis' key
-        assert isinstance(result, dict)
-        assert "formatted_analysis" in result
-        formatted = result["formatted_analysis"]
+        # Result is a JSON string - parse it
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+        assert "formatted_analysis" in parsed
+        formatted = parsed["formatted_analysis"]
         assert "⚠️ No Data Available" in formatted
         assert "no recent news articles were found" in formatted
 
@@ -404,10 +413,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("AAPL", "stock", 7, 10)
 
-        # Result is a dict with 'formatted_analysis' key
-        assert isinstance(result, dict)
-        assert "formatted_analysis" in result
-        formatted = result["formatted_analysis"]
+        # Result is a JSON string - parse it
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+        assert "formatted_analysis" in parsed
+        formatted = parsed["formatted_analysis"]
         assert "⚠️ No Recent News Found" in formatted
         assert "within the last 7 days" in formatted
 
@@ -574,10 +585,12 @@ class TestEnhancedSentimentAnalysisTool:
 
         result = self.tool._run("INVALID", "stock", 7, 10)
 
-        # Result is a dict with 'formatted_analysis' key
-        assert isinstance(result, dict)
-        assert "formatted_analysis" in result
-        formatted = result["formatted_analysis"]
+        # Result is a JSON string - parse it
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+        assert "formatted_analysis" in parsed
+        formatted = parsed["formatted_analysis"]
         assert "❌ Analysis Failed" in formatted
         assert "INVALID" in formatted
         assert "API Error" in formatted
