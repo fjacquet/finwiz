@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analyse Enrichie {{ ticker }} - FinWiz</title>
     <style>
+        /* Light mode (default) */
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
@@ -14,7 +15,50 @@
             --background-color: #f5f5f5;
             --card-background: #ffffff;
             --text-color: #333333;
+            --text-muted: #666666;
             --border-color: #ddd;
+            --header-info-bg: #f8f9fa;
+            --insight-box-bg: #e7f3ff;
+            --table-bg: #ffffff;
+            --table-hover-bg: #f8f9fa;
+            --tooltip-hover-bg: rgba(52, 152, 219, 0.1);
+            --buy-bg: #d4edda;
+            --hold-bg: #fff3cd;
+            --sell-bg: #f8d7da;
+            --bull-bg: #d4edda;
+            --base-bg: #d1ecf1;
+            --bear-bg: #f8d7da;
+            --info-color: #17a2b8;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #ecf0f1;
+                --secondary-color: #5dade2;
+                --success-color: #58d68d;
+                --warning-color: #f5b041;
+                --danger-color: #ec7063;
+                --background-color: #1a1a2e;
+                --card-background: #16213e;
+                --text-color: #ecf0f1;
+                --text-muted: #aab7c4;
+                --border-color: #3d5a80;
+                --header-info-bg: #1f3460;
+                --insight-box-bg: #1a3a5c;
+                --table-bg: #1f3460;
+                --table-hover-bg: #2a4a7a;
+                --tooltip-hover-bg: rgba(93, 173, 226, 0.2);
+                --buy-bg: #1e5631;
+                --hold-bg: #5c4a1f;
+                --sell-bg: #5c1f1f;
+                --bull-bg: #1e5631;
+                --base-bg: #1a3a5c;
+                --bear-bg: #5c1f1f;
+                --info-color: #5dade2;
+                --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            }
         }
 
         * {
@@ -29,6 +73,7 @@
             color: var(--text-color);
             background-color: var(--background-color);
             padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -37,7 +82,7 @@
             background-color: var(--card-background);
             padding: 40px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--box-shadow);
         }
 
         h1 {
@@ -70,7 +115,7 @@
             gap: 15px;
             margin-bottom: 30px;
             padding: 20px;
-            background-color: #f8f9fa;
+            background-color: var(--header-info-bg);
             border-radius: 8px;
         }
 
@@ -105,19 +150,19 @@
         }
 
         .recommendation-box.buy {
-            background-color: #d4edda;
+            background-color: var(--buy-bg);
             border: 2px solid var(--success-color);
             color: var(--success-color);
         }
 
         .recommendation-box.hold {
-            background-color: #fff3cd;
+            background-color: var(--hold-bg);
             border: 2px solid var(--warning-color);
             color: var(--warning-color);
         }
 
         .recommendation-box.sell {
-            background-color: #f8d7da;
+            background-color: var(--sell-bg);
             border: 2px solid var(--danger-color);
             color: var(--danger-color);
         }
@@ -130,7 +175,7 @@
         }
 
         .metric-card {
-            background-color: #f8f9fa;
+            background-color: var(--header-info-bg);
             padding: 20px;
             border-radius: 8px;
             border-left: 4px solid var(--secondary-color);
@@ -168,17 +213,17 @@
         }
 
         .scenario-card.bull {
-            background-color: #d4edda;
+            background-color: var(--bull-bg);
             border-color: var(--success-color);
         }
 
         .scenario-card.base {
-            background-color: #d1ecf1;
-            border-color: #17a2b8;
+            background-color: var(--base-bg);
+            border-color: var(--info-color);
         }
 
         .scenario-card.bear {
-            background-color: #f8d7da;
+            background-color: var(--bear-bg);
             border-color: var(--danger-color);
         }
 
@@ -201,7 +246,7 @@
         .action-list li {
             padding: 10px;
             margin: 5px 0;
-            background-color: #f8f9fa;
+            background-color: var(--header-info-bg);
             border-left: 3px solid var(--secondary-color);
             border-radius: 4px;
         }
@@ -221,7 +266,7 @@
         .risk-list li {
             padding: 10px;
             margin: 5px 0;
-            background-color: #fff3cd;
+            background-color: var(--hold-bg);
             border-left: 3px solid var(--warning-color);
             border-radius: 4px;
         }
@@ -234,7 +279,7 @@
         }
 
         .insight-box {
-            background-color: #e7f3ff;
+            background-color: var(--insight-box-bg);
             border-left: 4px solid var(--secondary-color);
             padding: 20px;
             margin: 20px 0;
@@ -246,7 +291,7 @@
             padding-top: 20px;
             border-top: 2px solid var(--border-color);
             text-align: center;
-            color: #666;
+            color: var(--text-muted);
             font-size: 0.9rem;
         }
 
@@ -254,7 +299,7 @@
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            background-color: white;
+            background-color: var(--table-bg);
         }
 
         th {
@@ -271,7 +316,7 @@
         }
 
         tr:hover {
-            background-color: #f8f9fa;
+            background-color: var(--table-hover-bg);
         }
 
         @media (max-width: 768px) {
@@ -295,11 +340,11 @@
         }
 
         td[title]:hover {
-            background-color: rgba(52, 152, 219, 0.1);
+            background-color: var(--tooltip-hover-bg);
         }
 
         .metric-name {
-            border-bottom: 1px dotted #888;
+            border-bottom: 1px dotted var(--text-muted);
         }
 
         .metric-value-formatted {
@@ -308,7 +353,7 @@
 
         .metric-unit {
             font-size: 0.85em;
-            color: #666;
+            color: var(--text-muted);
             margin-left: 2px;
         }
     </style>

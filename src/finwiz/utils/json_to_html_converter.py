@@ -288,6 +288,7 @@ class JsonToHtmlConverter:
         Parse raw_output string from deep analysis to extract fields.
 
         The raw_output is a string representation of a Pydantic model with key=value pairs.
+        Handles nested dictionaries, lists, and complex Python literals using ast.literal_eval.
 
         Args:
             raw_output: String containing key=value pairs
@@ -297,35 +298,129 @@ class JsonToHtmlConverter:
             Updated context dictionary
 
         """
+        import ast
         import re
 
-        # Extract simple key=value pairs (for strings, numbers, booleans)
-        simple_pattern = r"(\w+)=(['\"]?)([^'\"=\s{}[\]]+)\2(?=\s+\w+=|\s*$)"
-        for match in re.finditer(simple_pattern, raw_output):
-            key, _, value = match.groups()
-            # Try to convert to appropriate type
-            if value.lower() in ("true", "false"):
-                context[key] = value.lower() == "true"
-            elif value.replace(".", "", 1).replace("-", "", 1).isdigit():
-                context[key] = float(value) if "." in value else int(value)
-            else:
-                context[key] = value
+        def find_balanced_end(s: str, start: int, open_char: str, close_char: str) -> int:
+            """Find the position of the matching closing bracket/brace."""
+            depth = 0
+            in_string = False
+            string_char = None
+            i = start
 
-        # Extract dict values (e.g., risk_details={...})
-        dict_pattern = r"(\w+)=\{([^}]+)\}"
-        for match in re.finditer(dict_pattern, raw_output):
-            key, dict_content = match.groups()
-            # Parse the dict content
-            dict_data = {}
-            for item_match in re.finditer(r"'(\w+)':\s*([^,}]+)", dict_content):
-                item_key, item_value = item_match.groups()
-                item_value = item_value.strip()
-                # Convert to appropriate type
-                if item_value.replace(".", "", 1).replace("-", "", 1).isdigit():
-                    dict_data[item_key] = float(item_value) if "." in item_value else int(item_value)
+            while i < len(s):
+                char = s[i]
+
+                # Handle string literals (both ' and ")
+                if char in ('"', "'") and (i == 0 or s[i - 1] != "\\"):
+                    if not in_string:
+                        in_string = True
+                        string_char = char
+                    elif char == string_char:
+                        in_string = False
+                        string_char = None
+                elif not in_string:
+                    if char == open_char:
+                        depth += 1
+                    elif char == close_char:
+                        depth -= 1
+                        if depth == 0:
+                            return i
+                i += 1
+            return -1  # No matching close found
+
+        def parse_value(value_str: str) -> Any:
+            """Parse a value string using ast.literal_eval with fallbacks."""
+            value_str = value_str.strip()
+
+            # Handle boolean values (Python style)
+            if value_str == "True":
+                return True
+            elif value_str == "False":
+                return False
+            elif value_str == "None":
+                return None
+
+            # Try ast.literal_eval for complex structures
+            try:
+                return ast.literal_eval(value_str)
+            except (ValueError, SyntaxError):
+                pass
+
+            # Handle quoted strings
+            if (value_str.startswith("'") and value_str.endswith("'")) or (value_str.startswith('"') and value_str.endswith('"')):
+                return value_str[1:-1]
+
+            # Try numeric conversion
+            try:
+                if "." in value_str:
+                    return float(value_str)
+                return int(value_str)
+            except ValueError:
+                pass
+
+            # Return as string
+            return value_str
+
+        # Parse the Pydantic-style repr format: key=value key2=value2 ...
+        i = 0
+        while i < len(raw_output):
+            # Find key= pattern
+            key_match = re.match(r"(\w+)=", raw_output[i:])
+            if not key_match:
+                i += 1
+                continue
+
+            key = key_match.group(1)
+            value_start = i + key_match.end()
+
+            if value_start >= len(raw_output):
+                break
+
+            char = raw_output[value_start]
+
+            # Handle dict value
+            if char == "{":
+                end = find_balanced_end(raw_output, value_start, "{", "}")
+                if end != -1:
+                    value_str = raw_output[value_start : end + 1]
+                    context[key] = parse_value(value_str)
+                    i = end + 1
                 else:
-                    dict_data[item_key] = item_value.strip("'\"")
-            context[key] = dict_data
+                    i = value_start + 1
+
+            # Handle list value
+            elif char == "[":
+                end = find_balanced_end(raw_output, value_start, "[", "]")
+                if end != -1:
+                    value_str = raw_output[value_start : end + 1]
+                    context[key] = parse_value(value_str)
+                    i = end + 1
+                else:
+                    i = value_start + 1
+
+            # Handle quoted string value
+            elif char in ('"', "'"):
+                quote_char = char
+                j = value_start + 1
+                while j < len(raw_output):
+                    if raw_output[j] == quote_char and raw_output[j - 1] != "\\":
+                        break
+                    j += 1
+                value_str = raw_output[value_start : j + 1]
+                context[key] = parse_value(value_str)
+                i = j + 1
+
+            # Handle simple value (number, boolean, unquoted string)
+            else:
+                # Find the end of the value (next space followed by key= or end of string)
+                end_match = re.search(r"\s+\w+=", raw_output[value_start:])
+                if end_match:
+                    value_str = raw_output[value_start : value_start + end_match.start()]
+                else:
+                    value_str = raw_output[value_start:]
+                context[key] = parse_value(value_str)
+                i = value_start + len(value_str)
 
         return context
 
