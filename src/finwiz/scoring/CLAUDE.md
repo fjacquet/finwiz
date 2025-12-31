@@ -22,6 +22,8 @@ scoring/
 ├── scoring_thresholds.py      # Score thresholds
 ├── scoring_utils.py           # Scoring utilities
 ├── portfolio_deep_analyzer.py # Portfolio-level analysis
+├── crew_export_generator.py   # Generate crew export objects
+├── score_result_builder.py    # Build scoring results with grades
 │
 ├── # Legacy (to be migrated)
 ├── stock_analyzer.py          # Legacy stock analyzer
@@ -37,6 +39,8 @@ scoring/
 |------|-------|---------|
 | `deep_analysis_scorer.py` | `DeepAnalysisScorer` | Main composite scoring engine |
 | `portfolio_deep_analyzer.py` | `PortfolioDeepAnalyzer` | Portfolio-level scoring |
+| `crew_export_generator.py` | `CrewExportGenerator` | Generate crew export objects |
+| `score_result_builder.py` | `ScoreResultBuilder` | Build scoring results with grades |
 
 ### Component Scorers
 

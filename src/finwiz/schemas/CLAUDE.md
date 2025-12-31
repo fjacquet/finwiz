@@ -6,35 +6,57 @@ This directory contains all Pydantic data models for the FinWiz platform. Every 
 
 ```
 schemas/
-├── api/                   # API request/response models
+├── api/                       # API request/response models
 │   └── models.py
-├── hybrid_analysis/       # Hybrid Python/AI analysis schemas
-│   ├── enriched.py        # Enriched analysis results
-│   ├── metadata.py        # Analysis metadata
-│   ├── qualitative.py     # AI-generated insights
-│   └── quantitative.py    # Python-calculated metrics
-├── integration/           # Data integration schemas
+├── hybrid_analysis/           # Hybrid Python/AI analysis schemas
+│   ├── enriched.py            # Enriched analysis results
+│   ├── metadata.py            # Analysis metadata
+│   ├── qualitative.py         # AI-generated insights
+│   └── quantitative.py        # Python-calculated metrics
+├── integration/               # Data integration schemas
 │   └── models.py
-├── quantitative/          # Quantitative analysis schemas
-│   ├── config_models.py   # Backtest, optimization configs
-│   └── models.py          # Metrics, results
-├── rebalancing/           # Portfolio rebalancing schemas
-│   ├── analysis.py        # Analysis results
-│   ├── core.py            # Core data structures
-│   ├── enums.py           # Status enums
-│   ├── results.py         # Rebalancing results
-│   └── trades.py          # Trade recommendations
-├── tools/                 # Tool input/output schemas
+├── quantitative/              # Quantitative analysis schemas
+│   ├── backtesting.py         # Backtest result schemas
+│   ├── config_models.py       # Backtest, optimization configs
+│   ├── data.py                # Data loading schemas
+│   ├── enums.py               # Quantitative enums
+│   ├── models.py              # Metrics, results
+│   ├── portfolio.py           # Portfolio optimization schemas
+│   ├── risk.py                # Risk calculation schemas
+│   ├── screening.py           # Screening result schemas
+│   └── technical.py           # Technical analysis schemas
+├── rebalancing/               # Portfolio rebalancing schemas
+│   ├── analysis.py            # Analysis results
+│   ├── core.py                # Core data structures
+│   ├── enums.py               # Status enums
+│   ├── results.py             # Rebalancing results
+│   └── trades.py              # Trade recommendations
+├── tools/                     # Tool input/output schemas
 │   └── inputs.py
-├── common.py              # Shared schemas (RiskAssessment, etc.)
-├── crew_exports.py        # MAIN: Export schemas per crew
-├── crypto.py              # Cryptocurrency schemas
-├── etf.py                 # ETF schemas
-├── stock.py               # Stock schemas
-├── portfolio_review.py    # Portfolio review schemas
-├── investment_discovery.py # A+ discovery schemas
-├── report.py              # Report generation schemas
-└── validation.py          # Validation utilities
+│
+├── # Root-level schemas
+├── common.py                  # Shared schemas (RiskAssessment, etc.)
+├── crew_exports.py            # MAIN: Export schemas per crew
+├── crypto.py                  # Cryptocurrency schemas
+├── data_lineage.py            # Data provenance tracking
+├── etf.py                     # ETF schemas
+├── export.py                  # Export configuration schemas
+├── feedback.py                # User feedback schemas
+├── integration_models.py      # Integration data models
+├── investment_discovery.py    # A+ discovery schemas
+├── legacy_compat.py           # Backward compatibility schemas
+├── migration.py               # Schema migration utilities
+├── perplexity.py              # Perplexity API schemas
+├── portfolio_processing.py    # Portfolio processing schemas
+├── portfolio_rebalancing.py   # Portfolio rebalancing schemas
+├── portfolio_review.py        # Portfolio review schemas
+├── python_analysis.py         # Python analysis result schemas
+├── quantitative_crew.py       # Quantitative crew output schemas
+├── report.py                  # Report generation schemas
+├── session.py                 # Session management schemas
+├── stock.py                   # Stock schemas
+├── validate.py                # Validation helper functions
+└── validation.py              # Validation utilities
 ```
 
 ## Major Entry Points
@@ -88,6 +110,25 @@ schemas/
 | `rebalancing/core.py` | `AllocationTarget` | Target allocations |
 | `rebalancing/trades.py` | `TradeRecommendation` | Trade recommendations |
 | `rebalancing/results.py` | `RebalancingResult` | Complete rebalancing output |
+
+### Session & Data Management
+
+| File | Class | Purpose |
+|------|-------|---------|
+| `session.py` | `SessionMetadata` | Session tracking metadata |
+| `session.py` | `AnalysisRecord` | Analysis record storage |
+| `data_lineage.py` | `DataLineage` | Data provenance tracking |
+| `data_lineage.py` | `DataSource` | Data source metadata |
+| `migration.py` | `migrate_portfolio_review_if_needed()` | Schema migration utility |
+
+### Integration & API Schemas
+
+| File | Class | Purpose |
+|------|-------|---------|
+| `perplexity.py` | `PerplexitySearchRequest` | Perplexity API request |
+| `perplexity.py` | `PerplexitySearchResponse` | Perplexity API response |
+| `integration_models.py` | Data integration models | Integration data structures |
+| `export.py` | Export configuration | Export settings |
 
 ## Schema Design Rules
 

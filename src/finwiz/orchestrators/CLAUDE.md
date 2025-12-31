@@ -10,6 +10,9 @@ orchestrators/
 │
 ├── # Core Orchestrators
 ├── deep_analysis_orchestrator.py   # Per-holding deep analysis
+├── deep_analysis_data_collector.py # Data collection for deep analysis
+├── deep_analysis_executor.py       # Concurrent deep analysis execution
+├── deep_analysis_processor.py      # Process and validate analysis results
 ├── discovery_orchestrator.py       # A+ investment discovery
 ├── validation_orchestrator.py      # Data validation workflows
 ├── reporting_orchestrator.py       # Report generation
@@ -56,6 +59,9 @@ These are used by `FinwizFlow` for delegating complex operations:
 | File | Class | Purpose |
 |------|-------|---------|
 | `deep_analysis_orchestrator.py` | `DeepAnalysisOrchestrator` | Per-holding deep analysis |
+| `deep_analysis_data_collector.py` | `DeepAnalysisDataCollector` | Data collection for analysis |
+| `deep_analysis_executor.py` | `DeepAnalysisExecutor` | Concurrent analysis execution |
+| `deep_analysis_processor.py` | `DeepAnalysisProcessor` | Result processing & validation |
 | `discovery_orchestrator.py` | `DiscoveryOrchestrator` | A+ investment discovery |
 | `alternatives_matching_orchestrator.py` | `AlternativesMatchingOrchestrator` | Match A+ alternatives |
 | `validation_orchestrator.py` | `ValidationOrchestrator` | Data validation |

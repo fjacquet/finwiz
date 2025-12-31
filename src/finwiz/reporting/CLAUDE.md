@@ -15,7 +15,10 @@ reporting/
 ├── rebalancing_report_generator.py      # Rebalancing recommendations
 ├── deep_analysis_report_generator.py    # Per-holding analysis reports
 ├── enriched_analysis_report_generator.py # Enriched analysis reports
-└── python_report_generator.py           # Main Python report generator
+├── individual_report_generator.py       # Individual holding report generation
+├── python_report_generator.py           # Main Python report generator
+├── report_css_styles.py                 # CSS styles for HTML reports
+└── report_section_generators.py         # HTML section generation functions
 ```
 
 ## Major Entry Points
@@ -31,7 +34,13 @@ reporting/
 | `discovery_report_generator.py` | `DiscoveryReportGenerator` | A+ discovery HTML reports |
 | `rebalancing_report_generator.py` | `RebalancingReportGenerator` | Rebalancing HTML reports |
 | `deep_analysis_report_generator.py` | `DeepAnalysisReportGenerator` | Per-holding detailed reports |
+| `individual_report_generator.py` | `generate_individual_report_html()` | Individual holding HTML report |
+| `individual_report_generator.py` | `generate_individual_deep_analysis_reports()` | Batch individual reports |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report generation engine |
+| `report_css_styles.py` | `get_report_css()` | CSS styles for HTML reports |
+| `report_section_generators.py` | `generate_executive_summary()` | Executive summary HTML |
+| `report_section_generators.py` | `generate_holdings_analysis()` | Holdings analysis HTML |
+| `report_section_generators.py` | `generate_recommendations()` | Recommendations section HTML |
 
 ## AI Minimalism Principle
 
