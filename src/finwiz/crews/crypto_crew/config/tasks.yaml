@@ -4,6 +4,12 @@
 # For single-ticker deep analysis, use DeepAnalysisCrew instead
 # Runs AFTER portfolio analysis to find NEW opportunities
 # ============================================================================
+#
+# AVAILABLE CONTEXT VARIABLES:
+# - {ticker}: Cryptocurrency symbol (e.g., "BTC-USD", "ETH-USD")
+# - {full_date}: Current date for analysis context (e.g., "2024-01-15")
+# - {asset_class}: Asset type - always "crypto" for this crew
+# ============================================================================
 
 market_analysis_task:
   description: >

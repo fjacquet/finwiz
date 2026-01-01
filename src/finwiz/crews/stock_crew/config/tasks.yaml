@@ -6,6 +6,21 @@
 # - AI agents provide ONLY qualitative insights and contextual analysis
 # - NO financial recalculations by AI - Python metrics are READ-ONLY context
 # ============================================================================
+#
+# AVAILABLE CONTEXT VARIABLES:
+# - {ticker}: Stock symbol (e.g., "AAPL", "MSFT")
+# - {company_name}: Full company name (e.g., "Apple Inc.")
+# - {asset_class}: Asset type - always "stock" for this crew
+# - {grade}: Python-calculated grade (A+, A, B, C, D, F)
+# - {composite_score}: Python-calculated overall score (0.0-1.0)
+# - {preliminary_recommendation}: Python recommendation (BUY/HOLD/SELL)
+# - {fundamental_score}: Python fundamental analysis score (0.0-1.0)
+# - {fundamental_metrics}: Dict with ROE, debt_to_equity, revenue_growth, etc.
+# - {technical_score}: Python technical analysis score (0.0-1.0)
+# - {technical_indicators}: Dict with RSI, MACD, SMA, momentum, etc.
+# - {risk_score}: Python risk assessment score (0.0-1.0)
+# - {risk_metrics}: Dict with volatility, beta, max_drawdown, etc.
+# ============================================================================
 
 sec_analysis_task:
   description: >

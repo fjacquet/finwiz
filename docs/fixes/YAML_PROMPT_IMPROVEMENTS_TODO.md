@@ -1,8 +1,8 @@
 # YAML Prompt Quality Improvements - Implementation TODO
 
 > Generated: 2026-01-01
-> Status: Phase 1 Complete, Phase 2-3 Pending
-> Priority: High
+> Status: Phase 1-2 Complete, Phase 3 Pending
+> Priority: Low (Backlog)
 
 ## Overview
 
@@ -12,15 +12,15 @@ This document captures actionable improvements for all CrewAI YAML configuration
 
 ## Current Quality Assessment
 
-| Crew | Score | Key Issue |
-|------|-------|-----------|
-| deep_analysis | **A** | Reference implementation |
-| report_crew | **A** | Best anti-hallucination |
-| investment_discovery | **B+** | Verbose, needs anchors |
-| portfolio_rebalancing | **B+** | Goal/backstory imbalance |
-| stock_crew | **B** | Needs French + anti-hallucination |
-| etf_crew | **B** | Needs French + anti-hallucination |
-| crypto_crew | **B** | Needs French + anti-hallucination |
+| Crew                  | Score  | Key Issue                         |
+| --------------------- | ------ | --------------------------------- |
+| deep_analysis         | **A**  | Reference implementation          |
+| report_crew           | **A**  | Best anti-hallucination           |
+| investment_discovery  | **B+** | Verbose, needs anchors            |
+| portfolio_rebalancing | **B+** | Goal/backstory imbalance          |
+| stock_crew            | **B**  | Needs French + anti-hallucination |
+| etf_crew              | **B**  | Needs French + anti-hallucination |
+| crypto_crew           | **B**  | Needs French + anti-hallucination |
 
 ---
 
@@ -29,29 +29,33 @@ This document captures actionable improvements for all CrewAI YAML configuration
 ### Task 1.1: Add Anti-Hallucination Rules ✅ COMPLETE
 
 **Files:**
+
 - [x] `src/finwiz/crews/stock_crew/config/tasks.yaml`
 - [x] `src/finwiz/crews/etf_crew/config/tasks.yaml`
 - [x] `src/finwiz/crews/crypto_crew/config/tasks.yaml`
 - [x] `src/finwiz/crews/portfolio_rebalancing_crew/config/tasks.yaml`
 
 **Template to insert:**
+
 ```yaml
 ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
-- NEVER invent or guess URLs, ISINs, or company names
-- NEVER fabricate financial metrics or prices
-- If data is missing, explicitly state "Données non disponibles"
-- All URLs must come from verified data sources
-- Cross-reference data points before including in output
+  - NEVER invent or guess URLs, ISINs, or company names
+  - NEVER fabricate financial metrics or prices
+  - If data is missing, explicitly state "Données non disponibles"
+  - All URLs must come from verified data sources
+  - Cross-reference data points before including in output
 ```
 
 ### Task 1.2: Add French Language Directive ✅ COMPLETE
 
 **Files:**
+
 - [x] `src/finwiz/crews/stock_crew/config/agents.yaml`
 - [x] `src/finwiz/crews/etf_crew/config/agents.yaml`
 - [x] `src/finwiz/crews/crypto_crew/config/agents.yaml`
 
 **Template to insert (reporter agents):**
+
 ```yaml
 OUTPUT LANGUAGE: French (Français)
 All analysis text, recommendations, and explanations must be in French.
@@ -67,15 +71,17 @@ Technical terms (ticker symbols, financial ratios) remain in English.
 
 ---
 
-## Phase 2: Medium Priority
+## Phase 2: Medium Priority ✅ COMPLETE (2026-01-01)
 
-### Task 2.1: Refactor Goal vs Backstory
+### Task 2.1: Refactor Goal vs Backstory ✅ COMPLETE
 
 **Files:**
-- [ ] `src/finwiz/crews/portfolio_rebalancing_crew/config/agents.yaml`
-- [ ] `src/finwiz/crews/investment_discovery_crew/config/agents.yaml`
 
-**Target pattern:**
+- [x] `src/finwiz/crews/portfolio_rebalancing_crew/config/agents.yaml` - Refactored 6 agents
+- [x] `src/finwiz/crews/investment_discovery_crew/config/agents.yaml` - Already well-structured
+
+**Applied pattern:**
+
 ```yaml
 agent_name:
   role: "[1 line job title]"
@@ -84,31 +90,31 @@ agent_name:
     [Experience + Constraints + KB instructions + Output Language]
 ```
 
-### Task 2.2: Implement YAML Anchors
+### Task 2.2: Implement YAML Anchors ⏸️ DEFERRED
+
+**Reason:** CrewAI's YAML parser may not properly handle YAML anchors. Risk of breaking crew execution outweighs DRY benefits. Each task has context-specific variations that make anchors less valuable.
+
+**Decision:** Skip this task; repeated blocks are acceptable for reliability.
+
+### Task 2.3: Add Context Variable Documentation ✅ COMPLETE
 
 **Files:**
-- [ ] `src/finwiz/crews/investment_discovery_crew/config/tasks.yaml`
-- [ ] `src/finwiz/crews/report_crew/config/tasks.yaml`
 
-**Anchors to create:**
-- `&anti_hallucination` - Anti-hallucination rules block
-- `&json_output` - JSON output requirements block
-- `&risk_format` - Risk assessment format block
+- [x] `src/finwiz/crews/stock_crew/config/tasks.yaml`
+- [x] `src/finwiz/crews/etf_crew/config/tasks.yaml`
+- [x] `src/finwiz/crews/crypto_crew/config/tasks.yaml`
+- [x] `src/finwiz/crews/deep_analysis/config/tasks.yaml`
 
-### Task 2.3: Add Context Variable Documentation
+**Added documentation block:**
 
-**Files:**
-- [ ] `src/finwiz/crews/stock_crew/config/tasks.yaml`
-- [ ] `src/finwiz/crews/etf_crew/config/tasks.yaml`
-- [ ] `src/finwiz/crews/crypto_crew/config/tasks.yaml`
-- [ ] `src/finwiz/crews/deep_analysis/config/tasks.yaml`
-
-**Template:**
 ```yaml
-Available Context Variables:
-- {ticker}: Asset symbol (e.g., "AAPL", "BTC-USD")
-- {asset_class}: "stock", "etf", or "crypto"
-- {company_name}: Full entity name
+# AVAILABLE CONTEXT VARIABLES:
+# - {ticker}: Asset symbol (e.g., "AAPL", "BTC-USD")
+# - {asset_class}: "stock", "etf", or "crypto"
+# - {company_name}: Full entity name
+# - {grade}: Python-calculated grade (A+, A, B, C, D, F)
+# - {composite_score}: Python-calculated overall score (0.0-1.0)
+# ... (full list per crew type)
 ```
 
 ---
@@ -116,13 +122,16 @@ Available Context Variables:
 ## Phase 3: Low Priority (Backlog)
 
 ### Task 3.1: Condense KB Instructions
+
 - [ ] Reduce from 15-20 lines to 3-4 lines across all agents
 
 ### Task 3.2: Add Expected Output Examples
+
 - [ ] Add examples to DeepAnalysisExport tasks
 - [ ] Add examples to PortfolioRebalancingExport tasks
 
 ### Task 3.3: Create Shared Context File
+
 - [ ] Create `src/finwiz/crews/shared/common_instructions.yaml`
 - [ ] Refactor crews to import shared instructions
 
@@ -131,23 +140,27 @@ Available Context Variables:
 ## Validation
 
 After each phase, run:
+
 ```bash
 make test                    # Ensure tests pass
 crewai flow kickoff          # Verify crews execute
 ```
 
 **Final checklist:**
-- [ ] All crews have anti-hallucination rules
-- [ ] All crews specify French output
-- [ ] No commented-out code remains
-- [ ] Goals are 1-3 sentences max
-- [ ] YAML anchors eliminate duplication
+
+- [x] All crews have anti-hallucination rules
+- [x] All crews specify French output
+- [x] No commented-out code remains
+- [x] Goals are 1-3 sentences max (portfolio_rebalancing_crew refactored)
+- [x] Context variables documented in all tasks.yaml files
+- [ ] YAML anchors (deferred - not recommended for CrewAI)
 
 ---
 
 ## Reference Templates
 
 ### Agent Template
+
 ```yaml
 agent_name:
   role: >
@@ -165,6 +178,7 @@ agent_name:
 ```
 
 ### Task Template
+
 ```yaml
 task_name:
   description: >

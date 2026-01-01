@@ -4,6 +4,13 @@
 # For single-ticker deep analysis, use DeepAnalysisCrew instead
 # Runs AFTER portfolio analysis to find NEW opportunities
 # ============================================================================
+#
+# AVAILABLE CONTEXT VARIABLES:
+# - {ticker}: ETF symbol (e.g., "VOO", "SPY", "QQQ")
+# - {full_date}: Current date for analysis context (e.g., "2024-01-15")
+# - {company_name}: ETF name (e.g., "Vanguard S&P 500 ETF")
+# - {asset_class}: Asset type - always "etf" for this crew
+# ============================================================================
 
 # ETF Market Analysis Tasks
 etf_market_trends_task:
