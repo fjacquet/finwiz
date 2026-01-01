@@ -29,8 +29,10 @@ from pathlib import Path
 from typing import Any
 
 import aiohttp
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
+from aiohttp import ClientTimeout
 
+from finwiz.config.yfinance_config import configure_yfinance
 from finwiz.tools.logger import get_logger
 from finwiz.utils.memory_manager import get_memory_manager
 from finwiz.utils.rate_limiter import APIProvider, get_rate_limiter
@@ -95,6 +97,9 @@ class BatchDataPreFetcher:
         self.alpha_vantage_rate_limit = alpha_vantage_rate_limit
         self.alpha_vantage_key = os.getenv("ALPHA_VANTAGE_API_KEY") if enable_alpha_vantage else None
         self.rate_limiter = get_rate_limiter() if enable_alpha_vantage else None
+
+        # Configure yfinance with centralized settings (retry mechanism, etc.)
+        configure_yfinance()
 
         # Initialize memory manager (Requirement 17.70)
         self.memory_manager = get_memory_manager(session_id)
@@ -429,7 +434,7 @@ class BatchDataPreFetcher:
 
                     url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={self.alpha_vantage_key}"
 
-                    async with session.get(url, timeout=15) as response:
+                    async with session.get(url, timeout=ClientTimeout(total=15)) as response:
                         data = await response.json()
 
                         if "Symbol" in data:
@@ -514,7 +519,7 @@ class BatchDataPreFetcher:
             return {}
 
         try:
-            data = json.loads(cache_file.read_text(encoding="utf-8"))
+            data: dict[str, dict[str, Any]] = json.loads(cache_file.read_text(encoding="utf-8"))
             logger.info(f"✓ Loaded batch data from cache: {cache_file}")
             logger.info(f"  Cached tickers: {len(data)}")
             return data

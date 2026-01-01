@@ -15,6 +15,41 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class YFinanceSettings(BaseModel):
+    """
+    Configuration for yfinance library (v1.0+).
+
+    These settings configure the yfinance global settings including
+    network retry mechanism and debug options.
+
+    Reference: https://ranaroussi.github.io/yfinance/advanced/config.html
+    """
+
+    # Network settings
+    retries: int = Field(
+        default=2,
+        ge=0,
+        le=10,
+        description="Number of retry attempts for transient network errors (exponential backoff: 1s, 2s, 4s...)",
+    )
+
+    proxy: str | None = Field(
+        default=None,
+        description="Proxy server URL for all yfinance requests (e.g., 'http://proxy:8080')",
+    )
+
+    # Debug settings
+    hide_exceptions: bool = Field(
+        default=True,
+        description="Whether to hide exceptions in yfinance (default: True)",
+    )
+
+    logging: bool = Field(
+        default=False,
+        description="Enable verbose yfinance debug logging (default: False)",
+    )
+
+
 class HybridAnalysisSettings(BaseModel):
     """
     Configuration for Python/AI hybrid analysis.
@@ -136,6 +171,12 @@ class FinWizSettings(BaseSettings):
         extra="ignore",
     )
 
+    # YFinance Configuration (v1.0+)
+    yfinance: YFinanceSettings = Field(
+        default_factory=YFinanceSettings,
+        description="YFinance library configuration with retry mechanism",
+    )
+
     # Hybrid Analysis Configuration
     hybrid_analysis: HybridAnalysisSettings = Field(
         default_factory=HybridAnalysisSettings,
@@ -222,3 +263,19 @@ def get_hybrid_analysis_settings() -> HybridAnalysisSettings:
 
     """
     return get_settings().hybrid_analysis
+
+
+# Convenience function for yfinance settings
+def get_yfinance_settings() -> YFinanceSettings:
+    """
+    Get yfinance settings.
+
+    Returns:
+        YFinanceSettings instance
+
+    Example:
+        >>> settings = get_yfinance_settings()
+        >>> print(f"Retries: {settings.retries}")
+
+    """
+    return get_settings().yfinance
