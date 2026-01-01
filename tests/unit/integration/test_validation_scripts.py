@@ -817,7 +817,7 @@ class TestPerformanceValidator:
         assert len(results["recommendations"]) > 0
         assert any("Fix reliability issues" in rec for rec in results["recommendations"])
 
-    def test_run_with_resource_issues(self, validator, mock_health_checker):
+    def test_run_with_resource_issues(self, validator, mock_health_checker, mocker):
         """Test run() identifies resource issues."""
         component = mocker.MagicMock()
         component.component = "system_resources"

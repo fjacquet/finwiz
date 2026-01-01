@@ -602,7 +602,7 @@ class TestCreateCrewInputsForPortfolioRebalancing:
 class TestCreateCrewInputsForInvestmentDiscovery:
     """Tests for create_crew_inputs_for_investment_discovery method."""
 
-    def test_should_create_complete_inputs(self, crew_factory):
+    def test_should_create_complete_inputs(self, crew_factory, mocker):
         """Test input creation with all data."""
         base_inputs = {
             "portfolio_review": {"holdings": []},
