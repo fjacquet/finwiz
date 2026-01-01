@@ -48,28 +48,33 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
     technical_indicators = result.get("technical_details") or result.get("technical_indicators", {})
     risk_metrics = result.get("risk_details") or result.get("risk_metrics", {})
 
-    # Build SEC insights structure
-    sec_insights = result.get("sec_insights", {})
+    # Extract qualitative container (data may be nested under "qualitative" key)
+    qualitative_container = result.get("qualitative", {})
+    if not isinstance(qualitative_container, dict):
+        qualitative_container = {}
+
+    # Build SEC insights structure - check top-level first, then qualitative container
+    sec_insights = result.get("sec_insights") or qualitative_container.get("sec_insights", {})
     if not isinstance(sec_insights, dict):
         sec_insights = {}
 
     # Build fundamental context structure
-    fundamental_context = result.get("fundamental_context", {})
+    fundamental_context = result.get("fundamental_context") or qualitative_container.get("fundamental_context", {})
     if not isinstance(fundamental_context, dict):
         fundamental_context = {}
 
     # Build technical strategy structure
-    technical_strategy = result.get("technical_strategy", {})
+    technical_strategy = result.get("technical_strategy") or qualitative_container.get("technical_strategy", {})
     if not isinstance(technical_strategy, dict):
         technical_strategy = {}
 
     # Build contextual risks structure
-    contextual_risks = result.get("contextual_risks", {})
+    contextual_risks = result.get("contextual_risks") or qualitative_container.get("contextual_risks", {})
     if not isinstance(contextual_risks, dict):
         contextual_risks = {}
 
     # Build investment synthesis structure
-    investment_synthesis = result.get("investment_synthesis", {})
+    investment_synthesis = result.get("investment_synthesis") or qualitative_container.get("investment_synthesis", {})
     if not isinstance(investment_synthesis, dict):
         investment_synthesis = {}
 
@@ -87,12 +92,19 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
             "exit_triggers": [],
         }
 
-    # Build qualitative metrics with required ai_confidence
-    qualitative = result.get("qualitative", {})
-    if not isinstance(qualitative, dict):
-        qualitative = {}
-    if "ai_confidence" not in qualitative:
-        qualitative["ai_confidence"] = 0.85
+    # Build qualitative metrics with required ai_confidence (reuse qualitative_container)
+    if "ai_confidence" not in qualitative_container:
+        qualitative_container["ai_confidence"] = 0.85
+
+    # Parse analysis_date to datetime if it's a string
+    analysis_date = result.get("analysis_date")
+    if isinstance(analysis_date, str):
+        try:
+            analysis_date = datetime.fromisoformat(analysis_date.replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            analysis_date = datetime.now()
+    elif analysis_date is None:
+        analysis_date = datetime.now()
 
     # Return complete context
     return {
@@ -100,7 +112,7 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
         "ticker": ticker,
         "company_name": result.get("company_name", ticker),
         "asset_class": result.get("asset_class", "stock"),
-        "analysis_date": result.get("analysis_date") or datetime.now(),
+        "analysis_date": analysis_date,
         "processing_time_seconds": result.get("processing_time_seconds", 0),
         "llm_cost_dollars": result.get("llm_cost_dollars", 0),
         # Executive summary
@@ -169,7 +181,7 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
         # Quality metrics
         "report_word_count": result.get("report_word_count", 0),
         "unique_insights_count": result.get("unique_insights_count", 0),
-        "qualitative": qualitative,
+        "qualitative": qualitative_container,
         # Footer
         "generation_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
