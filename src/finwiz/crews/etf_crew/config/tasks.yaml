@@ -79,9 +79,16 @@ etf_screening_task:
     - Synthesize quantitative and qualitative factors
     - Provide actionable insights
 
-    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your analysis 
+    IMPORTANT: Use only real, existing ETFs with accurate ticker symbols. Ensure your analysis
     is current as of {full_date}.
-    
+
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+    - NEVER invent or guess URLs, ISINs, or company names
+    - NEVER fabricate financial metrics or prices
+    - If data is missing, explicitly state "Données non disponibles"
+    - All URLs must come from verified data sources
+    - Cross-reference data points before including in output
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the ETFScreeningResult object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "etfs", etc.
@@ -359,6 +366,13 @@ generate_export_task:
     - All nested objects must conform to their schemas
     
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
+
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+    - NEVER invent or guess URLs, ISINs, or company names
+    - NEVER fabricate financial metrics or prices
+    - If data is missing, explicitly state "Données non disponibles"
+    - All URLs must come from verified data sources
+    - Cross-reference data points before including in output
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after

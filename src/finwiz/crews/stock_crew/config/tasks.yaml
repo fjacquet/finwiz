@@ -39,6 +39,14 @@ sec_analysis_task:
     
     DO NOT recalculate any financial metrics - focus on qualitative business insights.
     Use the Enhanced SEC Analysis Tool to fetch filing data, then interpret qualitatively.
+
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+    - NEVER invent or guess URLs, ISINs, or company names
+    - NEVER fabricate financial metrics or prices
+    - If data is missing, explicitly state "Données non disponibles"
+    - All URLs must come from verified data sources
+    - Cross-reference data points before including in output
+
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
     - Your ENTIRE response must be a single JSON object starting with { and ending with }
@@ -250,7 +258,14 @@ investment_synthesis_task:
        - Exit triggers and stop-loss levels
     
     DO NOT recalculate scores or grades - synthesize Python metrics with AI insights.
-    
+
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+    - NEVER invent or guess URLs, ISINs, or company names
+    - NEVER fabricate financial metrics or prices
+    - If data is missing, explicitly state "Données non disponibles"
+    - All URLs must come from verified data sources
+    - Cross-reference data points before including in output
+
     OUTPUT FORMAT SPECIFICATION (Requirement 12.7):
     Return a valid JSON object matching the InvestmentSynthesis schema exactly.
     
@@ -380,6 +395,14 @@ generate_enriched_analysis_task:
     - Ensure unique_insights_count >= 5
     - Validate all required fields are present
     - Ensure schema compliance
+
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+    - NEVER invent or guess URLs, ISINs, or company names
+    - NEVER fabricate financial metrics or prices
+    - If data is missing, explicitly state "Données non disponibles"
+    - All URLs must come from verified data sources
+    - Cross-reference data points before including in output
+
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
     - Your ENTIRE response must be a single JSON object starting with { and ending with }

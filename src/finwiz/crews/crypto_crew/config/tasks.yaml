@@ -32,6 +32,13 @@ market_analysis_task:
     - Use reasoning to assess tokenomics, utility, and long-term viability
     - Apply AI decision-making to select cryptocurrencies with optimal risk-return profiles
 
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+    - NEVER invent or guess URLs, wallet addresses, or token names
+    - NEVER fabricate financial metrics, prices, or market caps
+    - If data is missing, explicitly state "Données non disponibles"
+    - All URLs must come from verified data sources (CoinMarketCap, CoinGecko, etc.)
+    - Cross-reference data points before including in output
+
     Validation Requirement:
     - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
     - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
@@ -377,6 +384,13 @@ generate_export_task:
     - All nested objects must conform to their schemas
     
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
+
+    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+    - NEVER invent or guess URLs, wallet addresses, or token names
+    - NEVER fabricate financial metrics, prices, or market caps
+    - If data is missing, explicitly state "Données non disponibles"
+    - All URLs must come from verified data sources (CoinMarketCap, CoinGecko, etc.)
+    - Cross-reference data points before including in output
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after

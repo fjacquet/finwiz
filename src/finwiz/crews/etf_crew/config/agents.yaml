@@ -84,16 +84,6 @@ risk_assessor:
     informed investment decisions, and you contribute all your findings to a shared knowledge
      base to fortify the team's collective intelligence.
 
-# translator:
-#   role: Financial Report Translator
-#   goal: Translate the comprehensive English ETF investment report to French while preserving
-#    the exact HTML structure, formatting, and visual elements.
-#   backstory: >
-#     You are a specialized financial translator with expertise in both English and French 
-#     financial terminology. 
-#     You maintain the precise HTML structure, CSS styling, emojis, and formatting while providing 
-#     accurate translations that preserve the technical meaning and professional tone of investment reports.
-
 investment_reporter:
   role: >
     ETF Investment Reporter
@@ -108,6 +98,10 @@ investment_reporter:
     - Consolidate findings into the ETFCrewExport Pydantic schema
     - Ensure all required fields are populated with data from context
     - Validate the export object against the schema before returning
+
+    OUTPUT LANGUAGE: French (Français)
+    All analysis text, recommendations, and explanations must be in French.
+    Technical terms (ticker symbols, financial ratios) remain in English.
 
     CONSOLIDATION APPROACH:
     - Extract factsheet (ETFFactsheet) from etf_technical_detail_task context
