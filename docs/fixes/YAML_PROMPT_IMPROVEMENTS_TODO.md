@@ -10,17 +10,17 @@ This document captures actionable improvements for all CrewAI YAML configuration
 
 ---
 
-## Current Quality Assessment
+## Current Quality Assessment (Updated 2026-01-01)
 
-| Crew                  | Score  | Key Issue                         |
+| Crew                  | Score  | Status                            |
 | --------------------- | ------ | --------------------------------- |
 | deep_analysis         | **A**  | Reference implementation          |
 | report_crew           | **A**  | Best anti-hallucination           |
-| investment_discovery  | **B+** | Verbose, needs anchors            |
-| portfolio_rebalancing | **B+** | Goal/backstory imbalance          |
-| stock_crew            | **B**  | Needs French + anti-hallucination |
-| etf_crew              | **B**  | Needs French + anti-hallucination |
-| crypto_crew           | **B**  | Needs French + anti-hallucination |
+| investment_discovery  | **A-** | Goals condensed, French added     |
+| portfolio_rebalancing | **A-** | French directive added            |
+| stock_crew            | **A-** | French + anti-hallucination done  |
+| etf_crew              | **A-** | French + anti-hallucination done  |
+| crypto_crew           | **A-** | French + anti-hallucination done  |
 
 ---
 
@@ -77,8 +77,8 @@ Technical terms (ticker symbols, financial ratios) remain in English.
 
 **Files:**
 
-- [x] `src/finwiz/crews/portfolio_rebalancing_crew/config/agents.yaml` - Refactored 6 agents
-- [x] `src/finwiz/crews/investment_discovery_crew/config/agents.yaml` - Already well-structured
+- [x] `src/finwiz/crews/investment_discovery_crew/config/agents.yaml` - Condensed 6 verbose goals to 1 sentence each (etf_discovery_agent, stock_discovery_agent, crypto_discovery_agent, portfolio_optimization_agent, validation_agent, feedback_learning_agent) + Added French directive to investment_reporter
+- [x] `src/finwiz/crews/portfolio_rebalancing_crew/config/agents.yaml` - Added French directive to investment_reporter (goals already appropriately sized)
 
 **Applied pattern:**
 
@@ -90,11 +90,13 @@ agent_name:
     [Experience + Constraints + KB instructions + Output Language]
 ```
 
-### Task 2.2: Implement YAML Anchors ⏸️ DEFERRED
+### Task 2.2: Implement YAML Anchors ⏸️ NOT APPLICABLE
 
-**Reason:** CrewAI's YAML parser may not properly handle YAML anchors. Risk of breaking crew execution outweighs DRY benefits. Each task has context-specific variations that make anchors less valuable.
+**Reason:** YAML anchors cannot be used inside multiline strings (`description: >`). The repeated blocks (anti-hallucination rules, JSON output requirements) are embedded within task description strings, where YAML anchor syntax is treated as literal text, not as anchor references.
 
-**Decision:** Skip this task; repeated blocks are acceptable for reliability.
+**Technical limitation:** YAML anchors work at the document structure level, not within scalar values.
+
+**Decision:** Current approach with repeated inline blocks is the correct pattern for CrewAI task descriptions.
 
 ### Task 2.3: Add Context Variable Documentation ✅ COMPLETE
 
