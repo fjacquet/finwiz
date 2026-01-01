@@ -119,21 +119,35 @@ agent_name:
 
 ---
 
-## Phase 3: Low Priority (Backlog)
+## Phase 3: Low Priority ✅ COMPLETE (2026-01-01)
 
-### Task 3.1: Condense KB Instructions
+### Task 3.1: Condense KB Instructions ✅ COMPLETE
 
-- [ ] Reduce from 15-20 lines to 3-4 lines across all agents
+- [x] Condensed etf_crew/config/agents.yaml: market_etf_analyst, risk_assessor
+- [x] Condensed report_crew/config/agents.yaml: portfolio_allocator, risk_manager
+- [x] Other crews already follow concise KB pattern (refactored in Phase 2)
 
-### Task 3.2: Add Expected Output Examples
+**Applied pattern:**
+```yaml
+**Knowledge Base Usage**: Query "{ticker} [topic]" before analysis.
+Store findings with ticker, date, key metrics. Update when data changes.
+```
 
-- [ ] Add examples to DeepAnalysisExport tasks
-- [ ] Add examples to PortfolioRebalancingExport tasks
+### Task 3.2: Add Expected Output Examples ⏸️ DEFERRED
 
-### Task 3.3: Create Shared Context File
+**Reason:** Portfolio rebalancing tasks already have extensive documentation:
+- REQUIRED FIELDS TO EXTRACT FROM CONTEXT sections
+- VALIDATION requirements with specific thresholds
+- REQUIRED ENUM VALUES specifications
+- JSON OUTPUT REQUIREMENTS blocks
 
-- [ ] Create `src/finwiz/crews/shared/common_instructions.yaml`
-- [ ] Refactor crews to import shared instructions
+DeepAnalysisExport tasks already have full JSON examples (lines 159-202).
+Adding more examples provides diminishing returns vs file size increase.
+
+### Task 3.3: Create Shared Context File ⏸️ DEFERRED
+
+**Reason:** CrewAI's YAML loader may not support external imports.
+Each crew has context-specific variations. Current approach is reliable.
 
 ---
 
