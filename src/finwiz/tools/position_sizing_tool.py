@@ -9,10 +9,15 @@ This module calculates position sizes by:
 - Ensuring portfolio allocations sum to 100%
 """
 
+from typing import Literal, cast
+
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.portfolio_review import AssetClass, PositionSizeRecommendation
 from finwiz.tools.logger import get_logger
+
+# Type alias for sizing action
+SizingAction = Literal["add", "trim", "hold", "exit"]
 
 logger = get_logger(__name__)
 
@@ -137,7 +142,7 @@ class PositionSizingTool:
         return PositionSizeRecommendation(
             current_size_pct=holding.current_allocation_pct,
             recommended_size_pct=recommended_size,
-            sizing_action=sizing_action,
+            sizing_action=cast(SizingAction, sizing_action),
             sizing_rationale=rationale,
             risk_contribution=risk_contribution,
             correlation_with_portfolio=correlation,

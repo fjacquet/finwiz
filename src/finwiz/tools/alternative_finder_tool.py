@@ -11,12 +11,15 @@ This module finds alternatives by:
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.portfolio_review import Alternative, AssetClass, Grade
 from finwiz.tools.logger import get_logger
+
+# Type alias for swap timing
+SwapTiming = Literal["immediate", "gradual", "tax_optimized"]
 
 logger = get_logger(__name__)
 
@@ -247,7 +250,7 @@ class AlternativeFinder:
                 raise MissingRequiredFieldError(ticker=ticker, field="grade", context={"source": "aplus_discovery", "item_keys": list(item.keys())})
 
             composite_score = float(item["composite_score"])
-            grade = str(item["grade"])
+            grade = cast(Grade, str(item["grade"]))
 
             # Calculate expected improvement
             current_grade_value = self.grade_values.get(holding.grade, 5)
@@ -255,6 +258,7 @@ class AlternativeFinder:
             grade_improvement = alternative_grade_value - current_grade_value
 
             # Determine swap timing based on grade difference
+            swap_timing: SwapTiming
             if grade_improvement >= 4:  # e.g., D to A+
                 swap_timing = "immediate"
             elif grade_improvement >= 2:  # e.g., C to A
