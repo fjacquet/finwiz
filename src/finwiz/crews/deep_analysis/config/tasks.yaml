@@ -14,6 +14,10 @@ deep_qualitative_analysis_task:
   description: >
     Perform comprehensive qualitative analysis for portfolio holding {ticker}.
 
+    🇫🇷 LANGUE DE SORTIE: Toutes les analyses textuelles doivent être rédigées en FRANÇAIS.
+    Les noms de champs JSON restent en anglais (business_model, etc.) mais leur CONTENU
+    doit être en français. Exemple: "business_model": "Apple exploite un modèle d'affaires..."
+
     CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
     - Python has calculated ALL financial metrics, scores, and grades
     - Python grade: {grade}, composite score: {composite_score}
@@ -137,45 +141,45 @@ deep_qualitative_analysis_task:
         analysis_timestamp: str (ISO 8601)
         ai_confidence: float (0.0-1.0)
 
-    EXAMPLE OUTPUT (Requirement 12.7):
+    EXAMPLE OUTPUT (Requirement 12.7) - CONTENU EN FRANÇAIS:
     {{
       "sec_insights": {{
-        "business_model": "Comprehensive analysis of how the company generates revenue... (minimum 100 words)",
-        "competitive_advantages": ["Brand loyalty and ecosystem lock-in", "Vertical integration", "Premium pricing power"],
-        "risk_factors": ["Regulatory scrutiny in EU markets", "Supply chain concentration", "Market saturation"],
-        "strategic_initiatives": ["Services expansion", "Geographic diversification", "AI integration"]
+        "business_model": "L'entreprise exploite un modèle d'affaires hautement intégré axé sur la conception, la fabrication et la vente d'électronique grand public... (minimum 100 mots EN FRANÇAIS)",
+        "competitive_advantages": ["Fidélité à la marque et verrouillage de l'écosystème", "Intégration verticale", "Pouvoir de fixation des prix premium"],
+        "risk_factors": ["Surveillance réglementaire sur les marchés européens", "Concentration de la chaîne d'approvisionnement", "Saturation du marché"],
+        "strategic_initiatives": ["Expansion des services", "Diversification géographique", "Intégration de l'IA"]
       }},
       "fundamental_context": {{
-        "industry_analysis": "Industry trends and competitive dynamics... (minimum 100 words)",
-        "growth_drivers": ["Emerging market penetration", "Product innovation", "Market share gains"],
-        "competitive_positioning": "Market leader with 50%+ profit share in premium segment... (minimum 50 words)",
-        "management_assessment": "Strong track record of capital allocation and innovation... (minimum 50 words)"
+        "industry_analysis": "L'industrie technologique traverse une phase de maturation avec des taux de croissance ralentissant... (minimum 100 mots EN FRANÇAIS)",
+        "growth_drivers": ["Pénétration des marchés émergents", "Innovation produit", "Gains de parts de marché"],
+        "competitive_positioning": "Leader du marché avec plus de 50% des profits du segment premium... (minimum 50 mots EN FRANÇAIS)",
+        "management_assessment": "Excellente allocation de capital et innovation démontrées par la direction... (minimum 50 mots EN FRANÇAIS)"
       }},
       "technical_strategy": {{
-        "chart_patterns": ["Ascending triangle", "Golden cross on 50/200 MA"],
-        "support_resistance": "Key support at $170, $165, $160. Resistance at $185, $190, $200... (minimum 50 words)",
-        "entry_exit_strategy": "Enter on pullback to $172-175 range with volume confirmation. Take profits at $190, trailing stop at 8%... (minimum 100 words)",
-        "timing_assessment": "Momentum indicators suggest favorable entry timing... (minimum 50 words)"
+        "chart_patterns": ["Triangle ascendant", "Croisement doré des MM 50/200"],
+        "support_resistance": "Supports clés à 170$, 165$, 160$. Résistances à 185$, 190$, 200$... (minimum 50 mots EN FRANÇAIS)",
+        "entry_exit_strategy": "Entrée sur repli vers 172-175$ avec confirmation des volumes. Prise de profits à 190$, stop suiveur à 8%... (minimum 100 mots EN FRANÇAIS)",
+        "timing_assessment": "Les indicateurs de momentum suggèrent un timing d'entrée favorable... (minimum 50 mots EN FRANÇAIS)"
       }},
       "contextual_risks": {{
-        "regulatory_risks": ["EU DMA compliance", "US antitrust investigations"],
-        "geopolitical_risks": ["China-US tensions", "Taiwan supply chain risk"],
-        "competitive_risks": ["Android competition", "Market share erosion"],
-        "operational_risks": ["Supplier concentration", "Product launch delays"],
-        "stress_scenarios": ["Regulatory fines impact margins", "China sales decline 30%"]
+        "regulatory_risks": ["Conformité au DMA européen", "Enquêtes antitrust américaines"],
+        "geopolitical_risks": ["Tensions Chine-États-Unis", "Risque chaîne d'approvisionnement Taiwan"],
+        "competitive_risks": ["Concurrence Android", "Érosion des parts de marché"],
+        "operational_risks": ["Concentration des fournisseurs", "Retards de lancement produit"],
+        "stress_scenarios": ["Amendes réglementaires impactant les marges", "Baisse des ventes Chine de 30%"]
       }},
       "investment_synthesis": {{
-        "investment_thesis": "Comprehensive investment thesis combining all analysis... (minimum 200 words)",
-        "bull_case": "Services accelerate to 30% of revenue, Vision Pro succeeds... (minimum 100 words)",
-        "base_case": "Steady iPhone replacement cycle, services grow 15% annually... (minimum 100 words)",
-        "bear_case": "iPhone demand weakens, regulatory fines impact margins... (minimum 100 words)",
+        "investment_thesis": "Cette thèse d'investissement complète combine l'analyse fondamentale et technique... (minimum 200 mots EN FRANÇAIS)",
+        "bull_case": "Les services accélèrent à 30% du chiffre d'affaires, le Vision Pro réussit... (minimum 100 mots EN FRANÇAIS)",
+        "base_case": "Cycle de remplacement iPhone stable, services en croissance de 15% par an... (minimum 100 mots EN FRANÇAIS)",
+        "bear_case": "Demande iPhone faiblit, amendes réglementaires impactent les marges... (minimum 100 mots EN FRANÇAIS)",
         "scenario_probabilities": {{"bull": 0.25, "base": 0.50, "bear": 0.25}},
         "final_recommendation": "BUY",
         "recommendation_confidence": "HIGH",
         "action_plan": {{
-          "immediate_actions": ["Accumulate on dips to $172-175", "Set initial stop at $168"],
-          "monitoring_points": ["Q1 earnings for services growth", "Regulatory developments"],
-          "exit_triggers": ["Break below $165", "Fundamental deterioration"]
+          "immediate_actions": ["Accumuler sur les replis vers 172-175$", "Placer un stop initial à 168$"],
+          "monitoring_points": ["Résultats Q1 pour la croissance des services", "Évolutions réglementaires"],
+          "exit_triggers": ["Cassure sous 165$", "Détérioration fondamentale"]
         }}
       }},
       "analysis_timestamp": "2025-01-22T10:30:00Z",
