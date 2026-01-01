@@ -176,7 +176,6 @@ nav:
       - Configure API Keys: how-to/configure_api_keys.md
       - Performance Optimization: how-to/PERFORMANCE_OPTIMIZATION_GUIDE.md
       - Memory Management: how-to/MEMORY_MANAGEMENT.md
-      - Performance Monitoring: how-to/PERFORMANCE_MONITORING.md
       - Deployment Guide: how-to/DEPLOYMENT_QUICK_REFERENCE.md
       - Deep Analysis Troubleshooting: how-to/deep_analysis_troubleshooting.md
       - Batch Processing: how-to/BATCH_PROCESSING.md
@@ -188,8 +187,6 @@ nav:
       - CLI Options: reference/cli_options.md
       - Environment Variables: reference/environment_variables.md
       - Configuration: reference/configuration.md
-      - Data Sources: reference/data_sources.md
-      - Errors: reference/errors.md
       - Performance: reference/performance.md
       - Rate Limits: reference/rate_limits.md
       - API:
@@ -202,16 +199,9 @@ nav:
 
   - Explanations:
       - explanations/index.md
-      - AI Architecture: explanations/ai_architecture.md
       - Architecture Overview: explanations/ARCHITECTURE.md
-      - AI vs Rules: explanations/ai_vs_rules.md
-      - CrewAI Integration: explanations/crewai_integration.md
-      - Data Flow: explanations/data_flow.md
-      - Data Pipeline: explanations/data_pipeline.md
       - Deep Analysis: explanations/deep_analysis.md
-      - Flow Architecture: explanations/flow_architecture.md
       - Design Principles: explanations/design_principles.md
-      - Testing Strategy: explanations/testing_strategy.md
 
   - Investment Discovery:
       - investment_discovery/index.md
