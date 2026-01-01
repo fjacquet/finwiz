@@ -665,9 +665,7 @@ class TestHTMLAutoGeneration:
         assert result["html_report_paths"] == {}
         mock_generator.generate_report.assert_not_called()
 
-    def test_consolidate_reports_should_include_html_count_in_consolidated_data(
-        self, orchestrator, tmp_path, mocker
-    ):
+    def test_consolidate_reports_should_include_html_count_in_consolidated_data(self, orchestrator, tmp_path, mocker):
         """Test that consolidate_reports includes HTML generation count."""
         # Arrange
         stock_file = tmp_path / "AAPL_export.json"

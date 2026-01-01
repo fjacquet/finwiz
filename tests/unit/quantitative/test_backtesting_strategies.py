@@ -12,6 +12,7 @@ Tests cover:
 """
 
 from datetime import datetime
+
 import pytest
 from faker import Faker
 
@@ -783,15 +784,16 @@ class TestSimpleMovingAverageSignalGeneration:
 
         assert signals == []
 
-    @pytest.mark.parametrize("crossover_value,expected_signal", [
-        (1, "BUY"),
-        (-1, "SELL"),
-        (0, None),
-        (2, "BUY"),  # Any value > 0 generates BUY signal
-    ])
-    def test_generate_signals_parametrized(
-        self, sma_strategy_with_mocked_broker, crossover_value, expected_signal, mocker
-    ):
+    @pytest.mark.parametrize(
+        "crossover_value,expected_signal",
+        [
+            (1, "BUY"),
+            (-1, "SELL"),
+            (0, None),
+            (2, "BUY"),  # Any value > 0 generates BUY signal
+        ],
+    )
+    def test_generate_signals_parametrized(self, sma_strategy_with_mocked_broker, crossover_value, expected_signal, mocker):
         """Test signal generation with various crossover values."""
         strategy = sma_strategy_with_mocked_broker
         strategy.crossover.__getitem__ = mocker.MagicMock(return_value=crossover_value)
@@ -1019,13 +1021,16 @@ class TestMeanReversionSignalGeneration:
 
         assert signals == []
 
-    @pytest.mark.parametrize("price,lower_band,upper_band,expected_signal", [
-        (135.0, 140.0, 160.0, "BUY"),   # Oversold
-        (165.0, 140.0, 160.0, "SELL"),  # Overbought
-        (150.0, 140.0, 160.0, None),    # Middle
-        (140.0, 140.0, 160.0, "BUY"),   # At lower
-        (160.0, 140.0, 160.0, "SELL"),  # At upper
-    ])
+    @pytest.mark.parametrize(
+        "price,lower_band,upper_band,expected_signal",
+        [
+            (135.0, 140.0, 160.0, "BUY"),  # Oversold
+            (165.0, 140.0, 160.0, "SELL"),  # Overbought
+            (150.0, 140.0, 160.0, None),  # Middle
+            (140.0, 140.0, 160.0, "BUY"),  # At lower
+            (160.0, 140.0, 160.0, "SELL"),  # At upper
+        ],
+    )
     def test_generate_signals_parametrized(
         self,
         mean_reversion_strategy_with_mocked_broker,

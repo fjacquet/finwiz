@@ -8,7 +8,6 @@ including side-by-side comparisons and visualizations.
 from datetime import datetime
 
 import pytest
-from pytest import approx
 
 from finwiz.quantitative.scenario_analysis import (
     ScenarioAnalysisReport,

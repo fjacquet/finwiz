@@ -1,7 +1,6 @@
 """Tests for contract_validator module."""
 
 
-
 class TestContractValidator:
     """Tests for ContractValidator class."""
 
@@ -292,9 +291,7 @@ class TestContractValidator:
         validator = ContractValidator()
         result = ValidationResult(is_valid=True)
 
-        validator._validate_key_type(
-            [{"item": 1}], "test_key", "list[TestItem]", result
-        )
+        validator._validate_key_type([{"item": 1}], "test_key", "list[TestItem]", result)
 
         assert result.is_valid is True
         assert len(result.errors) == 0

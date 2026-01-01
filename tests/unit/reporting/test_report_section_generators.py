@@ -254,7 +254,7 @@ class TestGenerateHoldingsAnalysis:
         html = generate_holdings_analysis(holdings)
         # A+ should appear before A, which should appear before F
         a_plus_pos = html.find("A+")
-        a_pos = html.find("grade-a\">")
+        a_pos = html.find('grade-a">')
         f_pos = html.find("grade-f")
         assert a_plus_pos < f_pos
 
@@ -495,11 +495,7 @@ class TestGenerateDiscoverySection:
 
     def test_should_display_usage_instructions(self):
         """Test display of how to use opportunities."""
-        results = {
-            "opportunities": [
-                {"ticker": "TEST", "grade": "A+", "composite_score": 0.9}
-            ]
-        }
+        results = {"opportunities": [{"ticker": "TEST", "grade": "A+", "composite_score": 0.9}]}
         html = generate_discovery_section(results)
         assert "How to Use These Opportunities" in html
         assert "Replacement" in html

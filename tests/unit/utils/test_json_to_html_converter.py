@@ -131,10 +131,7 @@ class TestParseRawOutput:
     def test_should_parse_nested_dict_with_multiple_levels(self, converter):
         """Test parsing deeply nested dictionaries (main bug fix)."""
         # Arrange - Real-world data_quality structure with nested field_tracking
-        raw_output = (
-            "ticker='CVLT' data_quality={'quality_score': 0.95, "
-            "'field_tracking': {'calculated': 12, 'fetched': 5, 'missing': 2}}"
-        )
+        raw_output = "ticker='CVLT' data_quality={'quality_score': 0.95, 'field_tracking': {'calculated': 12, 'fetched': 5, 'missing': 2}}"
         context = {}
 
         # Act
@@ -173,11 +170,7 @@ class TestParseRawOutput:
     def test_should_parse_fundamental_details_with_all_fields(self, converter):
         """Test parsing fundamental_details dictionary."""
         # Arrange
-        raw_output = (
-            "fundamental_details={'roe': 0.18, 'roe_score': 0.7, "
-            "'revenue_growth': 0.15, 'revenue_growth_score': 0.6, "
-            "'debt_to_equity': 0.5, 'debt_to_equity_score': 0.8}"
-        )
+        raw_output = "fundamental_details={'roe': 0.18, 'roe_score': 0.7, 'revenue_growth': 0.15, 'revenue_growth_score': 0.6, 'debt_to_equity': 0.5, 'debt_to_equity_score': 0.8}"
         context = {}
 
         # Act
@@ -193,10 +186,7 @@ class TestParseRawOutput:
     def test_should_parse_technical_details_with_all_fields(self, converter):
         """Test parsing technical_details dictionary."""
         # Arrange
-        raw_output = (
-            "technical_details={'rsi': 66.15, 'rsi_score': 0.5, "
-            "'macd': 0.25, 'macd_score': 0.6, 'trend': 'bullish'}"
-        )
+        raw_output = "technical_details={'rsi': 66.15, 'rsi_score': 0.5, 'macd': 0.25, 'macd_score': 0.6, 'trend': 'bullish'}"
         context = {}
 
         # Act

@@ -1,6 +1,5 @@
 """Tests for template_validator module."""
 
-
 import yaml
 
 
@@ -285,9 +284,7 @@ class TestValidateTemplateVariablesAtStartup:
             validate_template_variables_at_startup,
         )
 
-        mock_validator = mocker.patch(
-            "finwiz.validation.template_validator.TemplateVariableValidator"
-        )
+        mock_validator = mocker.patch("finwiz.validation.template_validator.TemplateVariableValidator")
 
         validate_template_variables_at_startup()
 

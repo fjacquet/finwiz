@@ -75,9 +75,7 @@ class TestGetObjectiveFunction:
     @pytest.fixture
     def sample_cov_matrix(self):
         """Sample positive definite covariance matrix."""
-        return np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        return np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
 
     @pytest.fixture
     def sample_weights(self):
@@ -86,44 +84,32 @@ class TestGetObjectiveFunction:
 
     def test_max_sharpe_objective_returns_callable(self, calculator, sample_returns, sample_cov_matrix):
         """Test that MAX_SHARPE objective returns a callable."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, sample_returns, sample_cov_matrix, risk_free_rate=0.02
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, sample_returns, sample_cov_matrix, risk_free_rate=0.02)
         assert callable(obj_func)
 
     def test_min_volatility_objective_returns_callable(self, calculator, sample_cov_matrix):
         """Test that MIN_VOLATILITY objective returns a callable."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, np.array([0.10, 0.12, 0.08]), sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, np.array([0.10, 0.12, 0.08]), sample_cov_matrix)
         assert callable(obj_func)
 
     def test_max_return_objective_returns_callable(self, calculator, sample_returns, sample_cov_matrix):
         """Test that MAX_RETURN objective returns a callable."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix)
         assert callable(obj_func)
 
     def test_risk_parity_objective_returns_callable(self, calculator, sample_cov_matrix, sample_returns):
         """Test that RISK_PARITY objective returns a callable."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, sample_returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, sample_returns, sample_cov_matrix)
         assert callable(obj_func)
 
     def test_max_diversification_objective_returns_callable(self, calculator, sample_cov_matrix, sample_returns):
         """Test that MAX_DIVERSIFICATION objective returns a callable."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, sample_returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, sample_returns, sample_cov_matrix)
         assert callable(obj_func)
 
     def test_min_cvar_objective_returns_callable(self, calculator, sample_returns, sample_cov_matrix):
         """Test that MIN_CVAR objective returns a callable."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_CVAR, sample_returns, sample_cov_matrix, confidence_level=0.05
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_CVAR, sample_returns, sample_cov_matrix, confidence_level=0.05)
         assert callable(obj_func)
 
     def test_invalid_objective_raises_error(self, calculator, sample_returns, sample_cov_matrix):
@@ -144,17 +130,13 @@ class TestMaxSharpeObjective:
     def sample_data(self):
         """Create sample portfolio data."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         return returns, cov_matrix
 
     def test_max_sharpe_equal_weights(self, calculator, sample_data):
         """Test Sharpe ratio with equal weights."""
         returns, cov_matrix = sample_data
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02)
         weights = np.array([1 / 3, 1 / 3, 1 / 3])
         result = obj_func(weights)
         assert isinstance(result, (float, np.floating))
@@ -163,9 +145,7 @@ class TestMaxSharpeObjective:
     def test_max_sharpe_single_asset(self, calculator, sample_data):
         """Test Sharpe ratio with single asset portfolio."""
         returns, cov_matrix = sample_data
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02)
         weights = np.array([1.0, 0.0, 0.0])
         result = obj_func(weights)
         assert isinstance(result, (float, np.floating))
@@ -175,9 +155,7 @@ class TestMaxSharpeObjective:
         returns = np.array([0.10, 0.10])
         # Zero covariance matrix (zero volatility)
         cov_matrix = np.array([[0.0, 0.0], [0.0, 0.0]])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02)
         weights = np.array([0.5, 0.5])
         result = obj_func(weights)
         assert result == -np.inf
@@ -187,9 +165,7 @@ class TestMaxSharpeObjective:
         # Asset with 20% return and 5% volatility (excellent risk-adjusted return)
         returns = np.array([0.20, 0.05])
         cov_matrix = np.array([[0.0025, 0.0], [0.0, 0.0004]])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.02)
         weights = np.array([1.0, 0.0])
         result = obj_func(weights)
         # Should be negative (minimizing negative Sharpe)
@@ -200,12 +176,8 @@ class TestMaxSharpeObjective:
         returns, cov_matrix = sample_data
         weights = np.array([0.3, 0.5, 0.2])
 
-        obj_func_low = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.01
-        )
-        obj_func_high = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.05
-        )
+        obj_func_low = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.01)
+        obj_func_high = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=0.05)
 
         result_low = obj_func_low(weights)
         result_high = obj_func_high(weights)
@@ -226,16 +198,12 @@ class TestMinVolatilityObjective:
     @pytest.fixture
     def sample_cov_matrix(self):
         """Sample positive definite covariance matrix."""
-        return np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        return np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
 
     def test_min_volatility_returns_positive(self, calculator, sample_cov_matrix):
         """Test that volatility is always positive."""
         returns = np.array([0.10, 0.12, 0.08])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, sample_cov_matrix)
         weights = np.array([0.3, 0.5, 0.2])
         result = obj_func(weights)
         assert result >= 0
@@ -243,9 +211,7 @@ class TestMinVolatilityObjective:
     def test_min_volatility_zero_weights(self, calculator, sample_cov_matrix):
         """Test volatility with zero weights."""
         returns = np.array([0.10, 0.12, 0.08])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, sample_cov_matrix)
         weights = np.array([0.0, 0.0, 0.0])
         result = obj_func(weights)
         assert result == 0
@@ -253,9 +219,7 @@ class TestMinVolatilityObjective:
     def test_min_volatility_single_asset(self, calculator, sample_cov_matrix):
         """Test volatility with single asset."""
         returns = np.array([0.10, 0.12, 0.08])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, sample_cov_matrix)
         # Only first asset (std = sqrt(0.04) = 0.2)
         weights = np.array([1.0, 0.0, 0.0])
         result = obj_func(weights)
@@ -266,9 +230,7 @@ class TestMinVolatilityObjective:
         returns = np.array([0.10, 0.10])
         # Two uncorrelated assets with same std = 0.1
         cov_matrix = np.array([[0.01, 0.0], [0.0, 0.01]])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
 
         # Equal weight portfolio
         weights = np.array([0.5, 0.5])
@@ -298,15 +260,11 @@ class TestMaxReturnObjective:
     @pytest.fixture
     def sample_cov_matrix(self):
         """Sample covariance matrix."""
-        return np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        return np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
 
     def test_max_return_negative_for_minimization(self, calculator, sample_returns, sample_cov_matrix):
         """Test that return is negated for minimization."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix)
         weights = np.array([0.3, 0.5, 0.2])
         result = obj_func(weights)
         expected_return = np.dot(weights, sample_returns)
@@ -314,18 +272,14 @@ class TestMaxReturnObjective:
 
     def test_max_return_zero_weights(self, calculator, sample_returns, sample_cov_matrix):
         """Test max return with zero weights."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix)
         weights = np.array([0.0, 0.0, 0.0])
         result = obj_func(weights)
         assert result == 0
 
     def test_max_return_all_in_highest_return_asset(self, calculator, sample_returns, sample_cov_matrix):
         """Test that allocating all to highest return asset maximizes return."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix)
         # All in second asset (0.15 return)
         weights = np.array([0.0, 1.0, 0.0])
         result_best = obj_func(weights)
@@ -339,9 +293,7 @@ class TestMaxReturnObjective:
 
     def test_max_return_linear_in_weights(self, calculator, sample_returns, sample_cov_matrix):
         """Test that return objective is linear in weights."""
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_RETURN, sample_returns, sample_cov_matrix)
         weights = np.array([0.2, 0.3, 0.5])
         result = obj_func(weights)
         expected = -np.dot(weights, sample_returns)
@@ -364,9 +316,7 @@ class TestRiskParityObjective:
     def test_risk_parity_returns_non_negative(self, calculator, simple_cov_matrix):
         """Test that risk parity objective returns non-negative values."""
         returns = np.array([0.10, 0.10])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix)
         weights = np.array([0.3, 0.7])
         result = obj_func(weights)
         assert result >= 0
@@ -374,9 +324,7 @@ class TestRiskParityObjective:
     def test_risk_parity_equal_weights_zero(self, calculator, simple_cov_matrix):
         """Test that equal weights minimize risk parity objective."""
         returns = np.array([0.10, 0.10])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix)
         weights = np.array([0.5, 0.5])
         result = obj_func(weights)
         # For symmetric matrix, equal weights should give zero or near-zero
@@ -385,9 +333,7 @@ class TestRiskParityObjective:
     def test_risk_parity_handles_small_weights(self, calculator, simple_cov_matrix):
         """Test that risk parity handles very small weights."""
         returns = np.array([0.10, 0.10])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix)
         weights = np.array([1e-10, 1.0])
         result = obj_func(weights)
         assert np.isfinite(result)
@@ -395,9 +341,7 @@ class TestRiskParityObjective:
     def test_risk_parity_unequal_weights_worse(self, calculator, simple_cov_matrix):
         """Test that unequal weights have worse (higher) risk parity objective."""
         returns = np.array([0.10, 0.10])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, returns, simple_cov_matrix)
         weights_equal = np.array([0.5, 0.5])
         weights_unequal = np.array([0.8, 0.2])
 
@@ -410,9 +354,7 @@ class TestRiskParityObjective:
         """Test that zero portfolio volatility returns infinity."""
         returns = np.array([0.10, 0.10])
         cov_matrix = np.array([[0.0, 0.0], [0.0, 0.0]])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, returns, cov_matrix)
         weights = np.array([0.5, 0.5])
         result = obj_func(weights)
         assert result == np.inf
@@ -420,12 +362,8 @@ class TestRiskParityObjective:
     def test_risk_parity_three_assets(self, calculator):
         """Test risk parity with three assets of equal volatility."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.0, 0.0], [0.0, 0.04, 0.0], [0.0, 0.0, 0.04]]
-        )
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, returns, cov_matrix
-        )
+        cov_matrix = np.array([[0.04, 0.0, 0.0], [0.0, 0.04, 0.0], [0.0, 0.0, 0.04]])
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, returns, cov_matrix)
         # Equal weights should be optimal
         weights = np.array([1 / 3, 1 / 3, 1 / 3])
         result = obj_func(weights)
@@ -443,16 +381,12 @@ class TestMaxDiversificationObjective:
     @pytest.fixture
     def sample_cov_matrix(self):
         """Sample covariance matrix."""
-        return np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        return np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
 
     def test_max_diversification_returns_negative(self, calculator, sample_cov_matrix):
         """Test that diversification returns negative (for minimization)."""
         returns = np.array([0.10, 0.12, 0.08])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, returns, sample_cov_matrix)
         weights = np.array([0.3, 0.5, 0.2])
         result = obj_func(weights)
         assert result < 0
@@ -460,9 +394,7 @@ class TestMaxDiversificationObjective:
     def test_max_diversification_single_asset(self, calculator, sample_cov_matrix):
         """Test diversification with single asset."""
         returns = np.array([0.10, 0.12, 0.08])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, returns, sample_cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, returns, sample_cov_matrix)
         weights = np.array([1.0, 0.0, 0.0])
         result = obj_func(weights)
         # Single asset: weighted_avg_vol / portfolio_vol = vol / vol = 1
@@ -474,9 +406,7 @@ class TestMaxDiversificationObjective:
         returns = np.array([0.10, 0.10])
         # Two uncorrelated assets with same volatility
         cov_matrix = np.array([[0.01, 0.0], [0.0, 0.01]])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_matrix)
         weights = np.array([0.5, 0.5])
         result = obj_func(weights)
         # Diversification ratio > 1 for equal weight (benefit from diversification)
@@ -487,9 +417,7 @@ class TestMaxDiversificationObjective:
         """Test that zero portfolio volatility returns negative infinity."""
         returns = np.array([0.10, 0.10])
         cov_matrix = np.array([[0.0, 0.0], [0.0, 0.0]])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_matrix)
         weights = np.array([0.5, 0.5])
         result = obj_func(weights)
         assert result == -np.inf
@@ -501,15 +429,11 @@ class TestMaxDiversificationObjective:
 
         # Low correlation
         cov_low = np.array([[vol**2, 0.0], [0.0, vol**2]])
-        obj_func_low = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_low
-        )
+        obj_func_low = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_low)
 
         # High correlation
         cov_high = np.array([[vol**2, 0.99 * vol**2], [0.99 * vol**2, vol**2]])
-        obj_func_high = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_high
-        )
+        obj_func_high = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_high)
 
         weights = np.array([0.5, 0.5])
         result_low = obj_func_low(weights)
@@ -531,25 +455,19 @@ class TestMinCVaRObjective:
     def sample_data(self):
         """Create sample data for CVaR tests."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         return returns, cov_matrix
 
     def test_min_cvar_returns_callable(self, calculator, sample_data):
         """Test that CVaR objective returns a callable."""
         returns, cov_matrix = sample_data
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05)
         assert callable(obj_func)
 
     def test_min_cvar_with_custom_confidence(self, calculator, sample_data):
         """Test CVaR with custom confidence level."""
         returns, cov_matrix = sample_data
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.10
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.10)
         weights = np.array([0.3, 0.5, 0.2])
         result = obj_func(weights)
         assert isinstance(result, (float, np.floating))
@@ -558,9 +476,7 @@ class TestMinCVaRObjective:
         """Test that zero volatility returns infinity."""
         returns = np.array([0.10, 0.10])
         cov_matrix = np.array([[0.0, 0.0], [0.0, 0.0]])
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05)
         weights = np.array([0.5, 0.5])
         result = obj_func(weights)
         assert result == np.inf
@@ -570,12 +486,8 @@ class TestMinCVaRObjective:
         returns, cov_matrix = sample_data
         weights = np.array([0.3, 0.5, 0.2])
 
-        obj_func_5 = calculator.get_objective_function(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05
-        )
-        obj_func_10 = calculator.get_objective_function(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.10
-        )
+        obj_func_5 = calculator.get_objective_function(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05)
+        obj_func_10 = calculator.get_objective_function(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.10)
 
         result_5 = obj_func_5(weights)
         result_10 = obj_func_10(weights)
@@ -597,63 +509,49 @@ class TestCalculateObjectiveValue:
     def sample_data(self):
         """Create sample data."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([0.3, 0.5, 0.2])
         return weights, returns, cov_matrix
 
     def test_calculate_sharpe_ratio_value(self, calculator, sample_data):
         """Test Sharpe ratio value calculation."""
         weights, returns, cov_matrix = sample_data
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_SHARPE
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_SHARPE)
         assert isinstance(result, (float, np.floating))
         assert result >= 0  # Sharpe value should be non-negative
 
     def test_calculate_volatility_value(self, calculator, sample_data):
         """Test volatility value calculation."""
         weights, returns, cov_matrix = sample_data
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MIN_VOLATILITY
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MIN_VOLATILITY)
         assert isinstance(result, (float, np.floating))
         assert result >= 0
 
     def test_calculate_return_value(self, calculator, sample_data):
         """Test return value calculation."""
         weights, returns, cov_matrix = sample_data
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_RETURN
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_RETURN)
         expected = np.dot(weights, returns)
         assert abs(result - expected) < 1e-10
 
     def test_calculate_risk_parity_value(self, calculator, sample_data):
         """Test risk parity value calculation."""
         weights, returns, cov_matrix = sample_data
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.RISK_PARITY
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.RISK_PARITY)
         assert isinstance(result, (float, np.floating))
         assert result >= 0
 
     def test_calculate_diversification_value(self, calculator, sample_data):
         """Test diversification value calculation."""
         weights, returns, cov_matrix = sample_data
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_DIVERSIFICATION
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_DIVERSIFICATION)
         assert isinstance(result, (float, np.floating))
         assert result >= 1  # Diversification ratio >= 1
 
     def test_calculate_cvar_value(self, calculator, sample_data):
         """Test CVaR value calculation."""
         weights, returns, cov_matrix = sample_data
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MIN_CVAR, confidence_level=0.05
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MIN_CVAR, confidence_level=0.05)
         assert isinstance(result, (float, np.floating))
 
     def test_calculate_zero_volatility_sharpe(self, calculator):
@@ -661,18 +559,14 @@ class TestCalculateObjectiveValue:
         weights = np.array([0.5, 0.5])
         returns = np.array([0.10, 0.10])
         cov_matrix = np.array([[0.0, 0.0], [0.0, 0.0]])
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_SHARPE
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_SHARPE)
         assert result == 0
 
     def test_calculate_unknown_objective_returns_zero(self, calculator, sample_data):
         """Test that unknown objective returns 0."""
         weights, returns, cov_matrix = sample_data
         # Use invalid enum value by directly calling with unknown objective
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, "unknown_objective"
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, "unknown_objective")
         assert result == 0.0
 
 
@@ -688,51 +582,39 @@ class TestGetGradientFunction:
     def sample_data(self):
         """Create sample data."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         return returns, cov_matrix
 
     def test_min_volatility_gradient_returns_callable(self, calculator, sample_data):
         """Test that MIN_VOLATILITY gradient returns a callable."""
         returns, cov_matrix = sample_data
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         assert grad_func is not None
         assert callable(grad_func)
 
     def test_max_return_gradient_returns_callable(self, calculator, sample_data):
         """Test that MAX_RETURN gradient returns a callable."""
         returns, cov_matrix = sample_data
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.MAX_RETURN, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.MAX_RETURN, returns, cov_matrix)
         assert grad_func is not None
         assert callable(grad_func)
 
     def test_max_sharpe_gradient_returns_none(self, calculator, sample_data):
         """Test that MAX_SHARPE gradient returns None (not available)."""
         returns, cov_matrix = sample_data
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         assert grad_func is None
 
     def test_risk_parity_gradient_returns_none(self, calculator, sample_data):
         """Test that RISK_PARITY gradient returns None."""
         returns, cov_matrix = sample_data
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.RISK_PARITY, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.RISK_PARITY, returns, cov_matrix)
         assert grad_func is None
 
     def test_min_volatility_gradient_shape(self, calculator, sample_data):
         """Test that gradient has correct shape."""
         returns, cov_matrix = sample_data
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         weights = np.array([0.3, 0.5, 0.2])
         gradient = grad_func(weights)
         assert gradient.shape == weights.shape
@@ -741,9 +623,7 @@ class TestGetGradientFunction:
         """Test gradient with zero volatility."""
         returns = np.array([0.10, 0.10])
         cov_matrix = np.array([[0.0, 0.0], [0.0, 0.0]])
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         weights = np.array([0.5, 0.5])
         gradient = grad_func(weights)
         assert np.allclose(gradient, np.zeros_like(weights))
@@ -751,9 +631,7 @@ class TestGetGradientFunction:
     def test_max_return_gradient_constant(self, calculator, sample_data):
         """Test that max return gradient is constant (-returns)."""
         returns, cov_matrix = sample_data
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.MAX_RETURN, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.MAX_RETURN, returns, cov_matrix)
         weights = np.array([0.3, 0.5, 0.2])
         gradient = grad_func(weights)
         expected = -returns
@@ -763,9 +641,7 @@ class TestGetGradientFunction:
         """Test mathematical correctness of volatility gradient."""
         returns = np.array([0.10, 0.10])
         cov_matrix = np.array([[0.04, 0.01], [0.01, 0.09]])
-        grad_func = calculator.get_gradient_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        grad_func = calculator.get_gradient_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
 
         weights = np.array([0.6, 0.4])
 
@@ -789,29 +665,21 @@ class TestValidateObjectiveParameters:
     def valid_data(self):
         """Create valid test data."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         return returns, cov_matrix
 
     def test_valid_parameters(self, calculator, valid_data):
         """Test validation with valid parameters."""
         returns, cov_matrix = valid_data
-        is_valid, errors = calculator.validate_objective_parameters(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        is_valid, errors = calculator.validate_objective_parameters(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         assert is_valid is True
         assert len(errors) == 0
 
     def test_mismatched_dimensions(self, calculator):
         """Test validation with mismatched dimensions."""
         returns = np.array([0.10, 0.12])  # 2 assets
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )  # 3x3
-        is_valid, errors = calculator.validate_objective_parameters(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])  # 3x3
+        is_valid, errors = calculator.validate_objective_parameters(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         assert is_valid is False
         assert len(errors) > 0
         assert any("match covariance" in err for err in errors)
@@ -820,9 +688,7 @@ class TestValidateObjectiveParameters:
         """Test validation with non-symmetric covariance matrix."""
         returns = np.array([0.10, 0.12])
         cov_matrix = np.array([[0.04, 0.02], [0.01, 0.09]])  # Non-symmetric
-        is_valid, errors = calculator.validate_objective_parameters(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        is_valid, errors = calculator.validate_objective_parameters(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         assert is_valid is False
         assert any("symmetric" in err for err in errors)
 
@@ -832,18 +698,14 @@ class TestValidateObjectiveParameters:
         # Create matrix with zero eigenvalue (not positive definite)
         # [[1, 1], [1, 1]] has eigenvalues [2, 0]
         cov_matrix = np.array([[1.0, 1.0], [1.0, 1.0]])
-        is_valid, errors = calculator.validate_objective_parameters(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        is_valid, errors = calculator.validate_objective_parameters(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         assert is_valid is False
         assert any("positive definite" in err for err in errors)
 
     def test_invalid_confidence_level_too_low(self, calculator, valid_data):
         """Test validation with confidence level too low."""
         returns, cov_matrix = valid_data
-        is_valid, errors = calculator.validate_objective_parameters(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.0
-        )
+        is_valid, errors = calculator.validate_objective_parameters(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.0)
         assert is_valid is False
         assert len(errors) > 0
         assert any("confidence" in err.lower() for err in errors)
@@ -851,9 +713,7 @@ class TestValidateObjectiveParameters:
     def test_invalid_confidence_level_too_high(self, calculator, valid_data):
         """Test validation with confidence level too high."""
         returns, cov_matrix = valid_data
-        is_valid, errors = calculator.validate_objective_parameters(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=1.0
-        )
+        is_valid, errors = calculator.validate_objective_parameters(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=1.0)
         assert is_valid is False
         assert len(errors) > 0
         assert any("confidence" in err.lower() for err in errors)
@@ -861,9 +721,7 @@ class TestValidateObjectiveParameters:
     def test_valid_confidence_level(self, calculator, valid_data):
         """Test validation with valid confidence level."""
         returns, cov_matrix = valid_data
-        is_valid, errors = calculator.validate_objective_parameters(
-            ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05
-        )
+        is_valid, errors = calculator.validate_objective_parameters(ObjectiveFunction.MIN_CVAR, returns, cov_matrix, confidence_level=0.05)
         assert is_valid is True
         assert len(errors) == 0
 
@@ -882,9 +740,7 @@ class TestEdgeCases:
         cov_matrix = np.array([[0.04]])
         weights = np.array([1.0])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         result = obj_func(weights)
         assert isinstance(result, (float, np.floating))
 
@@ -897,37 +753,27 @@ class TestEdgeCases:
         cov_matrix = np.dot(cov_base, cov_base.T) + np.eye(n_assets) * 0.1
         weights = np.ones(n_assets) / n_assets
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         result = obj_func(weights)
         assert np.isfinite(result)
 
     def test_very_small_weights(self, calculator):
         """Test with very small portfolio weights."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([1e-15, 1e-15, 1.0])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.RISK_PARITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.RISK_PARITY, returns, cov_matrix)
         result = obj_func(weights)
         assert np.isfinite(result)
 
     def test_negative_returns(self, calculator):
         """Test with negative expected returns."""
         returns = np.array([-0.10, -0.05, -0.02])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([0.3, 0.5, 0.2])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         result = obj_func(weights)
         assert isinstance(result, (float, np.floating))
 
@@ -938,9 +784,7 @@ class TestEdgeCases:
         weights = np.array([0.5, 0.5])
         risk_free_rate = 0.05
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=risk_free_rate
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=risk_free_rate)
         result = obj_func(weights)
         # Sharpe ratio should be negative (bad return-risk tradeoff)
         assert result > 0  # Negated for minimization, so positive (negative Sharpe)
@@ -949,15 +793,11 @@ class TestEdgeCases:
         """Test with highly correlated assets."""
         returns = np.array([0.10, 0.12, 0.08])
         # Highly correlated
-        correlation = np.array(
-            [[1.0, 0.95, 0.90], [0.95, 1.0, 0.92], [0.90, 0.92, 1.0]]
-        )
+        correlation = np.array([[1.0, 0.95, 0.90], [0.95, 1.0, 0.92], [0.90, 0.92, 1.0]])
         volatilities = [0.2, 0.25, 0.18]
         cov_matrix = np.outer(volatilities, volatilities) * correlation
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_DIVERSIFICATION, returns, cov_matrix)
         weights = np.array([0.3, 0.5, 0.2])
         result = obj_func(weights)
         assert np.isfinite(result)
@@ -965,14 +805,10 @@ class TestEdgeCases:
     def test_zero_expected_returns(self, calculator):
         """Test with zero expected returns."""
         returns = np.array([0.0, 0.0, 0.0])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([0.3, 0.5, 0.2])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix)
         result = obj_func(weights)
         assert isinstance(result, (float, np.floating))
 
@@ -991,9 +827,7 @@ class TestNumericalStability:
         cov_matrix = np.array([[1e-10, 0.0], [0.0, 1e-10]])
         weights = np.array([0.5, 0.5])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         result = obj_func(weights)
         assert np.isfinite(result)
         assert result >= 0
@@ -1004,9 +838,7 @@ class TestNumericalStability:
         cov_matrix = np.array([[1e4, 0.0], [0.0, 1e4]])
         weights = np.array([0.5, 0.5])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         result = obj_func(weights)
         assert np.isfinite(result)
         assert result >= 0
@@ -1017,9 +849,7 @@ class TestNumericalStability:
         cov_matrix = np.array([[1e-4, 0.0], [0.0, 1e4]])
         weights = np.array([0.5, 0.5])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         result = obj_func(weights)
         assert np.isfinite(result)
 
@@ -1035,20 +865,14 @@ class TestConsistency:
     def test_objective_function_vs_calculate_value_max_sharpe(self, calculator):
         """Test consistency between objective function and calculate_objective_value."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([0.3, 0.5, 0.2])
         risk_free_rate = 0.02
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=risk_free_rate
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_SHARPE, returns, cov_matrix, risk_free_rate=risk_free_rate)
         obj_value = obj_func(weights)
 
-        calculated = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, risk_free_rate, ObjectiveFunction.MAX_SHARPE
-        )
+        calculated = calculator.calculate_objective_value(weights, returns, cov_matrix, risk_free_rate, ObjectiveFunction.MAX_SHARPE)
 
         # Objective function returns negated Sharpe for minimization
         # calculate_objective_value returns positive Sharpe
@@ -1057,38 +881,26 @@ class TestConsistency:
     def test_objective_function_vs_calculate_value_volatility(self, calculator):
         """Test consistency for volatility objective."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([0.3, 0.5, 0.2])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MIN_VOLATILITY, returns, cov_matrix)
         obj_value = obj_func(weights)
 
-        calculated = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MIN_VOLATILITY
-        )
+        calculated = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MIN_VOLATILITY)
 
         assert abs(obj_value - calculated) < 1e-10
 
     def test_objective_function_vs_calculate_value_return(self, calculator):
         """Test consistency for return objective."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([0.3, 0.5, 0.2])
 
-        obj_func = calculator.get_objective_function(
-            ObjectiveFunction.MAX_RETURN, returns, cov_matrix
-        )
+        obj_func = calculator.get_objective_function(ObjectiveFunction.MAX_RETURN, returns, cov_matrix)
         obj_value = obj_func(weights)
 
-        calculated = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_RETURN
-        )
+        calculated = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, ObjectiveFunction.MAX_RETURN)
 
         # Objective function returns negated return for minimization
         assert abs(obj_value - (-calculated)) < 1e-10
@@ -1117,51 +929,39 @@ class TestAllObjectivesFunctional:
     def sample_data(self):
         """Create sample data."""
         returns = np.array([0.10, 0.12, 0.08])
-        cov_matrix = np.array(
-            [[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]]
-        )
+        cov_matrix = np.array([[0.04, 0.01, 0.005], [0.01, 0.09, 0.015], [0.005, 0.015, 0.06]])
         weights = np.array([0.3, 0.5, 0.2])
         return weights, returns, cov_matrix
 
     def test_get_objective_function_works(self, objective, calculator, sample_data):
         """Test that all objectives can be retrieved."""
         weights, returns, cov_matrix = sample_data
-        obj_func = calculator.get_objective_function(
-            objective, returns, cov_matrix, confidence_level=0.05
-        )
+        obj_func = calculator.get_objective_function(objective, returns, cov_matrix, confidence_level=0.05)
         assert callable(obj_func)
 
     def test_objective_function_returns_float(self, objective, calculator, sample_data):
         """Test that all objectives return float values."""
         weights, returns, cov_matrix = sample_data
-        obj_func = calculator.get_objective_function(
-            objective, returns, cov_matrix, confidence_level=0.05
-        )
+        obj_func = calculator.get_objective_function(objective, returns, cov_matrix, confidence_level=0.05)
         result = obj_func(weights)
         assert isinstance(result, (float, np.floating))
 
     def test_objective_is_finite(self, objective, calculator, sample_data):
         """Test that objective values are finite."""
         weights, returns, cov_matrix = sample_data
-        obj_func = calculator.get_objective_function(
-            objective, returns, cov_matrix, confidence_level=0.05
-        )
+        obj_func = calculator.get_objective_function(objective, returns, cov_matrix, confidence_level=0.05)
         result = obj_func(weights)
         assert np.isfinite(result) or result in [np.inf, -np.inf]
 
     def test_calculate_objective_value_works(self, objective, calculator, sample_data):
         """Test that calculate_objective_value works for all objectives."""
         weights, returns, cov_matrix = sample_data
-        result = calculator.calculate_objective_value(
-            weights, returns, cov_matrix, 0.02, objective, confidence_level=0.05
-        )
+        result = calculator.calculate_objective_value(weights, returns, cov_matrix, 0.02, objective, confidence_level=0.05)
         assert isinstance(result, (float, np.floating))
 
     def test_validate_parameters_works(self, objective, calculator, sample_data):
         """Test that validate_objective_parameters works for all objectives."""
         weights, returns, cov_matrix = sample_data
-        is_valid, errors = calculator.validate_objective_parameters(
-            objective, returns, cov_matrix, confidence_level=0.05
-        )
+        is_valid, errors = calculator.validate_objective_parameters(objective, returns, cov_matrix, confidence_level=0.05)
         assert isinstance(is_valid, bool)
         assert isinstance(errors, list)

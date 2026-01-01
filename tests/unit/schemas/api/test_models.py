@@ -121,10 +121,6 @@ def sample_aplus_analysis(sample_investment_candidate):
     )
 
 
-
-
-
-
 # ===========================
 # Base API Models Tests
 # ===========================
@@ -480,9 +476,7 @@ class TestPortfolioAnalysisResponse:
         assert response.attribution_analysis == {}
         assert response.recommendations == []
 
-    def test_portfolio_analysis_response_with_metrics(
-        self, sample_timestamp, sample_risk_assessment
-    ):
+    def test_portfolio_analysis_response_with_metrics(self, sample_timestamp, sample_risk_assessment):
         """Test PortfolioAnalysisResponse with metrics and risk assessment."""
         metrics = {
             "total_return": 0.15,

@@ -53,12 +53,16 @@ def crew_factory(mock_integration_manager, mock_error_handler, mocker):
         return_value=True,
     )
     # Mock environment variables for cache
-    mocker.patch.dict("os.environ", {
-        "CREW_CACHE_ENABLED": "true",
-        "CREW_CACHE_MAX_AGE_HOURS": "24",
-    })
+    mocker.patch.dict(
+        "os.environ",
+        {
+            "CREW_CACHE_ENABLED": "true",
+            "CREW_CACHE_MAX_AGE_HOURS": "24",
+        },
+    )
 
     from finwiz.crew_factory import CrewFactory
+
     return CrewFactory(
         integration_manager=mock_integration_manager,
         error_handler=mock_error_handler,
@@ -70,10 +74,13 @@ class TestCrewFactoryInitialization:
 
     def test_should_initialize_with_caching_enabled(self, mocker, mock_integration_manager, mock_error_handler):
         """Test initialization with caching enabled."""
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "12",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "12",
+            },
+        )
         mock_cache = mocker.MagicMock()
         mocker.patch(
             "finwiz.crew_factory.get_crew_output_cache",
@@ -81,6 +88,7 @@ class TestCrewFactoryInitialization:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         assert factory.cache_enabled is True
@@ -88,12 +96,16 @@ class TestCrewFactoryInitialization:
 
     def test_should_initialize_with_caching_disabled(self, mocker, mock_integration_manager, mock_error_handler):
         """Test initialization with caching disabled."""
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "false",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "false",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         assert factory.cache_enabled is False
@@ -112,6 +124,7 @@ class TestExecuteCryptoCrew:
         mocker.patch.dict("os.environ", {"CREW_CACHE_ENABLED": "false"})
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_crypto_crew({"ticker": "BTC"})
@@ -136,12 +149,16 @@ class TestExecuteCryptoCrew:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_crypto_crew({"ticker": "BTC"})
@@ -163,10 +180,13 @@ class TestExecuteCryptoCrew:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         # Mock CryptoCrew
         mock_crew_instance = mocker.MagicMock()
@@ -182,6 +202,7 @@ class TestExecuteCryptoCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_crypto_crew({"ticker": "BTC"})
@@ -203,10 +224,13 @@ class TestExecuteCryptoCrew:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         # Mock CryptoCrew to raise exception
         mocker.patch(
@@ -215,6 +239,7 @@ class TestExecuteCryptoCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_crypto_crew({"ticker": "BTC"})
@@ -236,6 +261,7 @@ class TestExecuteStockCrew:
         mocker.patch.dict("os.environ", {"CREW_CACHE_ENABLED": "false"})
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_stock_crew({"ticker": "AAPL"})
@@ -255,10 +281,13 @@ class TestExecuteStockCrew:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         # Mock StockCrew
         mock_crew_instance = mocker.MagicMock()
@@ -274,6 +303,7 @@ class TestExecuteStockCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_stock_crew({"ticker": "AAPL"})
@@ -294,6 +324,7 @@ class TestExecuteEtfCrew:
         mocker.patch.dict("os.environ", {"CREW_CACHE_ENABLED": "false"})
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_etf_crew({"ticker": "SPY"})
@@ -313,10 +344,13 @@ class TestExecuteEtfCrew:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         # Mock EtfCrew
         mock_crew_instance = mocker.MagicMock()
@@ -332,6 +366,7 @@ class TestExecuteEtfCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_etf_crew({"ticker": "SPY"})
@@ -351,6 +386,7 @@ class TestExecutePortfolioRebalancingCrew:
         mocker.patch.dict("os.environ", {"CREW_CACHE_ENABLED": "false"})
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_portfolio_rebalancing_crew({})
@@ -379,6 +415,7 @@ class TestExecutePortfolioRebalancingCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_portfolio_rebalancing_crew({})
@@ -400,6 +437,7 @@ class TestExecutePortfolioRebalancingCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_portfolio_rebalancing_crew({})
@@ -420,6 +458,7 @@ class TestExecuteInvestmentDiscoveryCrew:
         mocker.patch.dict("os.environ", {"CREW_CACHE_ENABLED": "false"})
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_investment_discovery_crew({})
@@ -448,6 +487,7 @@ class TestExecuteInvestmentDiscoveryCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_investment_discovery_crew({})
@@ -469,11 +509,13 @@ class TestExecuteReportCrew:
         mock_crew.kickoff = mocker.MagicMock()
         mock_crew_instance.crew = mocker.MagicMock(return_value=mock_crew)
         mock_context_manager = mocker.MagicMock()
-        mock_context_manager.prepare_crew_context = mocker.MagicMock(return_value={
-            "ticker_count": 5,
-            "insufficient_tickers": False,
-            "portfolio_review": {},
-        })
+        mock_context_manager.prepare_crew_context = mocker.MagicMock(
+            return_value={
+                "ticker_count": 5,
+                "insufficient_tickers": False,
+                "portfolio_review": {},
+            }
+        )
         mock_crew_instance.context_manager = mock_context_manager
 
         mocker.patch(
@@ -482,6 +524,7 @@ class TestExecuteReportCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_report_crew({"portfolio_review": {}})
@@ -496,9 +539,7 @@ class TestExecuteReportCrew:
         # NOTE: The code calls report_crew.context_manager.prepare_crew_context()
         mock_crew_instance = mocker.MagicMock()
         mock_context_manager = mocker.MagicMock()
-        mock_context_manager.prepare_crew_context = mocker.MagicMock(
-            side_effect=Exception("Context preparation failed")
-        )
+        mock_context_manager.prepare_crew_context = mocker.MagicMock(side_effect=Exception("Context preparation failed"))
         mock_crew_instance.context_manager = mock_context_manager
 
         mocker.patch(
@@ -507,6 +548,7 @@ class TestExecuteReportCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_report_crew({})
@@ -534,6 +576,7 @@ class TestExecuteReportCrew:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_report_crew({})
@@ -564,9 +607,7 @@ class TestCreateCrewInputsForPortfolioRebalancing:
             "crypto_available": True,
         }
 
-        result = crew_factory.create_crew_inputs_for_portfolio_rebalancing(
-            base_inputs, core_analysis_status
-        )
+        result = crew_factory.create_crew_inputs_for_portfolio_rebalancing(base_inputs, core_analysis_status)
 
         assert "full_date" in result
         assert result["portfolio_data"] == {"holdings": []}
@@ -591,9 +632,7 @@ class TestCreateCrewInputsForPortfolioRebalancing:
             "crypto_available": False,
         }
 
-        result = crew_factory.create_crew_inputs_for_portfolio_rebalancing(
-            base_inputs, core_analysis_status
-        )
+        result = crew_factory.create_crew_inputs_for_portfolio_rebalancing(base_inputs, core_analysis_status)
 
         assert result["degraded_mode"] is True
         assert result["available_capital"] == 5000.0
@@ -630,9 +669,7 @@ class TestCreateCrewInputsForInvestmentDiscovery:
             "stock_data": {"ticker": "AAPL"},
         }
 
-        result = crew_factory.create_crew_inputs_for_investment_discovery(
-            base_inputs, core_analysis_status, upstream_data, core_analysis_data
-        )
+        result = crew_factory.create_crew_inputs_for_investment_discovery(base_inputs, core_analysis_status, upstream_data, core_analysis_data)
 
         assert "full_date" in result
         assert result["session_id"] == "test-session"
@@ -751,9 +788,12 @@ class TestCacheIntegration:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "false",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "false",
+            },
+        )
 
         # Mock successful crew execution
         mock_crew_instance = mocker.MagicMock()
@@ -769,6 +809,7 @@ class TestCacheIntegration:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_crypto_crew({"ticker": "BTC"})
@@ -792,10 +833,13 @@ class TestFallbackBehavior:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         # Mock crew to fail
         mocker.patch(
@@ -804,6 +848,7 @@ class TestFallbackBehavior:
         )
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_stock_crew({"ticker": "AAPL"})
@@ -828,10 +873,13 @@ class TestFallbackBehavior:
             "finwiz.crew_factory.is_feature_enabled",
             return_value=True,
         )
-        mocker.patch.dict("os.environ", {
-            "CREW_CACHE_ENABLED": "true",
-            "CREW_CACHE_MAX_AGE_HOURS": "24",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "CREW_CACHE_ENABLED": "true",
+                "CREW_CACHE_MAX_AGE_HOURS": "24",
+            },
+        )
 
         # Mock crew to fail
         mocker.patch(
@@ -849,6 +897,7 @@ class TestFallbackBehavior:
         mock_error_handler.handle_crew_failure = mocker.MagicMock(return_value=fallback_response)
 
         from finwiz.crew_factory import CrewFactory
+
         factory = CrewFactory(mock_integration_manager, mock_error_handler)
 
         result = factory.execute_etf_crew({"ticker": "SPY"})

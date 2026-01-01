@@ -5,7 +5,6 @@ Tests scenario analysis functionality including what-if analysis,
 sensitivity analysis, Monte Carlo simulations, and scenario comparisons.
 """
 
-import numpy as np
 import pytest
 from pytest import approx
 

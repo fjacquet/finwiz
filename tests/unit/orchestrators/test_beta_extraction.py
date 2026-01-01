@@ -114,7 +114,9 @@ class TestBetaExtraction:
             confidence=1.0,
         )
         # Mock on data_collector.data_orchestrator since collect_data uses data_collector's instance
-        mock_data_orchestrator = mocker.patch.object(orchestrator.data_collector.data_orchestrator, "get_fundamental_data", new=mocker.AsyncMock(return_value=mock_orchestration_result))
+        mock_data_orchestrator = mocker.patch.object(
+            orchestrator.data_collector.data_orchestrator, "get_fundamental_data", new=mocker.AsyncMock(return_value=mock_orchestration_result)
+        )
 
         # Quantitative tool returns JSON string
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(sample_quantitative_result))

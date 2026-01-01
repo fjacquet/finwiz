@@ -25,8 +25,8 @@ from finwiz.analysis.deep_analysis_pipeline import (
 )
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.schemas.hybrid_analysis import (
-    QuantitativeAnalysis,
     QualitativeInsights,
+    QuantitativeAnalysis,
 )
 from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
 
@@ -101,9 +101,7 @@ def mock_data_lineage() -> DataLineage:
 
 
 @pytest.fixture
-def mock_quantitative_analysis(
-    mock_data_quality: DataQualityMetrics, mock_data_lineage: DataLineage
-) -> QuantitativeAnalysis:
+def mock_quantitative_analysis(mock_data_quality: DataQualityMetrics, mock_data_lineage: DataLineage) -> QuantitativeAnalysis:
     """Create a mock QuantitativeAnalysis."""
     return QuantitativeAnalysis(
         composite_score=0.82,
@@ -224,9 +222,7 @@ class TestCollectRawData:
 
         result = collect_raw_data(analysis_context)
 
-        mock_collector.collect_data.assert_called_once_with(
-            "AAPL", "stock", batch_enabled=False
-        )
+        mock_collector.collect_data.assert_called_once_with("AAPL", "stock", batch_enabled=False)
         assert result == mock_raw_data
 
     def test_collect_raw_data_with_etf(self, mocker):
@@ -248,9 +244,7 @@ class TestCollectRawData:
 class TestCalculateQuantitative:
     """Tests for calculate_quantitative function."""
 
-    def test_calculate_quantitative_returns_result_and_quant(
-        self, mocker, analysis_context, mock_raw_data, mock_deep_analysis_result
-    ):
+    def test_calculate_quantitative_returns_result_and_quant(self, mocker, analysis_context, mock_raw_data, mock_deep_analysis_result):
         """Test that calculate_quantitative returns both result and quant."""
         mock_scorer = mocker.MagicMock()
         mock_scorer.calculate_composite_score.return_value = mock_deep_analysis_result
@@ -267,9 +261,7 @@ class TestCalculateQuantitative:
         assert quant.composite_score == 0.82
         assert quant.grade == "A"
 
-    def test_calculate_quantitative_converts_to_quantitative_analysis(
-        self, mocker, analysis_context, mock_raw_data
-    ):
+    def test_calculate_quantitative_converts_to_quantitative_analysis(self, mocker, analysis_context, mock_raw_data):
         """Test conversion to QuantitativeAnalysis schema."""
         result = DeepAnalysisResult(
             ticker="AAPL",
@@ -307,9 +299,7 @@ class TestCalculateQuantitative:
 class TestGenerateQualitative:
     """Tests for generate_qualitative function."""
 
-    def test_generate_qualitative_calls_crew(
-        self, mocker, analysis_context, mock_quantitative_analysis, mock_qualitative_insights
-    ):
+    def test_generate_qualitative_calls_crew(self, mocker, analysis_context, mock_quantitative_analysis, mock_qualitative_insights):
         """Test that generate_qualitative calls the appropriate crew."""
         mock_crew_instance = mocker.MagicMock()
         mock_crew_result = mocker.MagicMock()
@@ -326,9 +316,7 @@ class TestGenerateQualitative:
         mock_crew_instance.crew.return_value.kickoff.assert_called_once()
         assert result == mock_qualitative_insights
 
-    def test_generate_qualitative_passes_correct_inputs(
-        self, mocker, analysis_context, mock_quantitative_analysis
-    ):
+    def test_generate_qualitative_passes_correct_inputs(self, mocker, analysis_context, mock_quantitative_analysis):
         """Test that correct inputs are passed to crew."""
         mock_crew_instance = mocker.MagicMock()
         mock_crew_result = mocker.MagicMock()
@@ -361,9 +349,7 @@ class TestGenerateQualitative:
 class TestSynthesizeEnrichedAnalysis:
     """Tests for synthesize_enriched_analysis function."""
 
-    def test_synthesize_creates_enriched_analysis(
-        self, analysis_context, mock_quantitative_analysis, mock_qualitative_insights
-    ):
+    def test_synthesize_creates_enriched_analysis(self, analysis_context, mock_quantitative_analysis, mock_qualitative_insights):
         """Test that synthesis creates EnrichedAnalysis with correct fields."""
         enriched = synthesize_enriched_analysis(
             analysis_context,
@@ -379,9 +365,7 @@ class TestSynthesizeEnrichedAnalysis:
         assert enriched.final_recommendation == "BUY"
         assert enriched.processing_time_seconds == 5.0
 
-    def test_synthesize_python_wins_on_recommendation_conflict(
-        self, analysis_context, mock_quantitative_analysis, mock_qualitative_insights
-    ):
+    def test_synthesize_python_wins_on_recommendation_conflict(self, analysis_context, mock_quantitative_analysis, mock_qualitative_insights):
         """Test that Python recommendation wins when AI disagrees."""
         # Modify quant to have different recommendation
         mock_quantitative_analysis.preliminary_recommendation = "HOLD"
@@ -396,9 +380,7 @@ class TestSynthesizeEnrichedAnalysis:
         # Python wins
         assert enriched.final_recommendation == "HOLD"
 
-    def test_synthesize_generates_executive_summary(
-        self, analysis_context, mock_quantitative_analysis, mock_qualitative_insights
-    ):
+    def test_synthesize_generates_executive_summary(self, analysis_context, mock_quantitative_analysis, mock_qualitative_insights):
         """Test that executive summary is generated."""
         enriched = synthesize_enriched_analysis(
             analysis_context,
@@ -414,9 +396,7 @@ class TestSynthesizeEnrichedAnalysis:
 class TestAnalyzeHolding:
     """Tests for the main analyze_holding function."""
 
-    def test_analyze_holding_composes_pipeline(
-        self, mocker, mock_raw_data, mock_deep_analysis_result, mock_qualitative_insights
-    ):
+    def test_analyze_holding_composes_pipeline(self, mocker, mock_raw_data, mock_deep_analysis_result, mock_qualitative_insights):
         """Test that analyze_holding composes all pipeline steps."""
         mock_quant = QuantitativeAnalysis(
             composite_score=0.82,

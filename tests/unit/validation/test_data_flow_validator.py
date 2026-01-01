@@ -314,11 +314,14 @@ class TestValidateEndToEndFlow:
         validator = DataFlowValidator()
 
         # Reporter with full input but makes external call
-        validator.validate_crew_input("report_crew", {
-            "ten_k_insights": {},
-            "market_sentiment": {},
-            "risk_score_standardized": 0.3,
-        })
+        validator.validate_crew_input(
+            "report_crew",
+            {
+                "ten_k_insights": {},
+                "market_sentiment": {},
+                "risk_score_standardized": 0.3,
+            },
+        )
         # Manually add external call to trace
         validator.flow_traces[-1].external_calls_made = ["yfinance_api"]
 
@@ -502,11 +505,14 @@ class TestIntegration:
 
         # Step 1: Stock crew
         validator.validate_crew_input("stock_crew", {"ticker": "AAPL", "analysis_type": "deep"})
-        validator.validate_crew_output("stock_crew", {
-            "ten_k_insights": {"summary": "Strong fundamentals"},
-            "stock_analysis": {"score": 0.85},
-            "risk_score_standardized": 0.25,
-        })
+        validator.validate_crew_output(
+            "stock_crew",
+            {
+                "ten_k_insights": {"summary": "Strong fundamentals"},
+                "stock_analysis": {"score": 0.85},
+                "risk_score_standardized": 0.25,
+            },
+        )
         validator.validate_reporter_isolation("stock_crew", ["yfinance", "sec"])
 
         # Step 2: Report crew

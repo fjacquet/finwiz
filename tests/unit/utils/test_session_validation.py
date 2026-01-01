@@ -133,9 +133,7 @@ class TestSessionValidator:
         mock_plan.last_updated = datetime(2025, 1, 2)
         mock_plan.analysis_history = [{}]
         mock_plan.model_dump.return_value = {}
-        mock_plan.model_validate.side_effect = ValidationError.from_exception_data(
-            "TestModel", []
-        )
+        mock_plan.model_validate.side_effect = ValidationError.from_exception_data("TestModel", [])
         mock_plan.client_profile = mocker.MagicMock()
         mock_plan.client_profile.age = None
         mock_plan.client_profile.investment_horizon = None

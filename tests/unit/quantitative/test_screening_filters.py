@@ -229,9 +229,7 @@ class TestStockFilterApplyFilters:
         )
 
         # Mock CriteriaEvaluator at its source module
-        mock_evaluator = mocker.patch(
-            "finwiz.quantitative.screening_criteria.CriteriaEvaluator"
-        )
+        mock_evaluator = mocker.patch("finwiz.quantitative.screening_criteria.CriteriaEvaluator")
         # First stock passes (pe_ratio=25 < 30), second fails (pe_ratio=35 >= 30)
         mock_evaluator.passes_filter.side_effect = [True, False]
 
@@ -256,9 +254,7 @@ class TestStockFilterApplyFilters:
             max_value=10,
         )
 
-        mock_evaluator = mocker.patch(
-            "finwiz.quantitative.screening_criteria.CriteriaEvaluator"
-        )
+        mock_evaluator = mocker.patch("finwiz.quantitative.screening_criteria.CriteriaEvaluator")
         mock_evaluator.passes_filter.return_value = False
 
         result = StockFilter.apply_filters(stocks, [filter1])
@@ -289,9 +285,7 @@ class TestStockFilterApplyFilters:
             min_value=1e12,
         )
 
-        mock_evaluator = mocker.patch(
-            "finwiz.quantitative.screening_criteria.CriteriaEvaluator"
-        )
+        mock_evaluator = mocker.patch("finwiz.quantitative.screening_criteria.CriteriaEvaluator")
         mock_evaluator.passes_filter.return_value = True
 
         result = StockFilter.apply_filters(stocks, [filter1])

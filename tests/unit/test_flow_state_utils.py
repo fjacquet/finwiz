@@ -64,9 +64,7 @@ class TestCheckCoreAnalysisAvailability:
     def test_should_fallback_to_state_flags_on_error(self, mocker, logger):
         """Test fallback to state flags when integration manager fails."""
         mock_manager = mocker.MagicMock()
-        mock_manager.get_crew_data_with_freshness_check.side_effect = Exception(
-            "Connection error"
-        )
+        mock_manager.get_crew_data_with_freshness_check.side_effect = Exception("Connection error")
         mocker.patch(
             "finwiz.integration.manager.CrewDataIntegrationManager",
             return_value=mock_manager,
@@ -223,20 +221,14 @@ class TestExtractMarketContextFromCoreAnalysis:
 
     def test_should_extract_sector_analysis(self, logger):
         """Test extracting sector analysis from stock data."""
-        core_data = {
-            "stock_analysis": {
-                "sector_analysis": {"tech": "bullish", "finance": "neutral"}
-            }
-        }
+        core_data = {"stock_analysis": {"sector_analysis": {"tech": "bullish", "finance": "neutral"}}}
         result = extract_market_context_from_core_analysis(core_data, logger)
 
         assert result["sector_analysis"] == {"tech": "bullish", "finance": "neutral"}
 
     def test_should_extract_etf_trends(self, logger):
         """Test extracting sector trends from ETF data."""
-        core_data = {
-            "etf_analysis": {"sector_trends": ["tech growth", "bond decline"]}
-        }
+        core_data = {"etf_analysis": {"sector_trends": ["tech growth", "bond decline"]}}
         result = extract_market_context_from_core_analysis(core_data, logger)
 
         assert "tech growth" in result["market_trends"]
@@ -298,9 +290,7 @@ class TestGetDegradedFunctionalitySummary:
 
     def test_should_track_stock_degraded_functionality(self):
         """Test tracking stock degraded functionality."""
-        state = FinwizState(
-            stock_degraded_functionality=["real_time_quotes", "options_data"]
-        )
+        state = FinwizState(stock_degraded_functionality=["real_time_quotes", "options_data"])
         result = get_degraded_functionality_summary(state)
 
         assert result["has_degraded_functionality"] is True
@@ -480,9 +470,7 @@ class TestExtractOpportunities:
 
     def test_should_extract_stock_opportunities(self):
         """Test extracting stock opportunities."""
-        crew_data = {
-            "pydantic": {"opportunities": ["AAPL", "MSFT", "GOOG", "NVDA"]}
-        }
+        crew_data = {"pydantic": {"opportunities": ["AAPL", "MSFT", "GOOG", "NVDA"]}}
         summary = {"investment_opportunities": {"stocks": [], "etfs": [], "cryptos": []}}
 
         _extract_opportunities(crew_data, "stock", summary)
@@ -531,11 +519,7 @@ class TestDetermineMarketSentiment:
 
     def test_should_determine_positive_sentiment(self):
         """Test determining positive market sentiment."""
-        consolidated_data = {
-            "market_sentiment": {
-                "aggregated_scores": {"positive": 0.6, "negative": 0.3}
-            }
-        }
+        consolidated_data = {"market_sentiment": {"aggregated_scores": {"positive": 0.6, "negative": 0.3}}}
         summary = {"overall_market_sentiment": "neutral"}
 
         _determine_market_sentiment(consolidated_data, summary)
@@ -544,11 +528,7 @@ class TestDetermineMarketSentiment:
 
     def test_should_determine_negative_sentiment(self):
         """Test determining negative market sentiment."""
-        consolidated_data = {
-            "market_sentiment": {
-                "aggregated_scores": {"positive": 0.2, "negative": 0.7}
-            }
-        }
+        consolidated_data = {"market_sentiment": {"aggregated_scores": {"positive": 0.2, "negative": 0.7}}}
         summary = {"overall_market_sentiment": "neutral"}
 
         _determine_market_sentiment(consolidated_data, summary)
@@ -557,11 +537,7 @@ class TestDetermineMarketSentiment:
 
     def test_should_remain_neutral_when_close(self):
         """Test neutral sentiment when scores are close."""
-        consolidated_data = {
-            "market_sentiment": {
-                "aggregated_scores": {"positive": 0.45, "negative": 0.45}
-            }
-        }
+        consolidated_data = {"market_sentiment": {"aggregated_scores": {"positive": 0.45, "negative": 0.45}}}
         summary = {"overall_market_sentiment": "neutral"}
 
         _determine_market_sentiment(consolidated_data, summary)
@@ -583,9 +559,7 @@ class TestExtractRiskFactors:
 
     def test_should_extract_risk_keywords(self):
         """Test extracting risk-related keywords."""
-        consolidated_data = {
-            "stock": {"raw_output": "High risk due to volatility and uncertainty"}
-        }
+        consolidated_data = {"stock": {"raw_output": "High risk due to volatility and uncertainty"}}
         summary = {"risk_assessment": {"major_risk_factors": []}}
 
         _extract_risk_factors(consolidated_data, summary)
@@ -606,9 +580,7 @@ class TestExtractRiskFactors:
 
     def test_should_handle_no_risk_keywords(self):
         """Test handling when no risk keywords found."""
-        consolidated_data = {
-            "stock": {"raw_output": "All clear, positive outlook"}
-        }
+        consolidated_data = {"stock": {"raw_output": "All clear, positive outlook"}}
         summary = {"risk_assessment": {"major_risk_factors": []}}
 
         _extract_risk_factors(consolidated_data, summary)
@@ -741,9 +713,7 @@ class TestIntegration:
             "consolidated_crew_data": {
                 "stock": {
                     "raw_output": "Buy AAPL with high risk. Market shows volatility.",
-                    "tasks_output": [
-                        {"raw": "A" * 150}
-                    ],
+                    "tasks_output": [{"raw": "A" * 150}],
                     "pydantic": {"opportunities": ["AAPL", "MSFT"]},
                 },
                 "etf": {
@@ -751,9 +721,7 @@ class TestIntegration:
                     "pydantic": {"opportunities": ["VTI"]},
                 },
             },
-            "market_sentiment": {
-                "aggregated_scores": {"positive": 0.6, "negative": 0.2}
-            },
+            "market_sentiment": {"aggregated_scores": {"positive": 0.6, "negative": 0.2}},
         }
 
         summary = prepare_core_analysis_summary(consolidated_data, logger)

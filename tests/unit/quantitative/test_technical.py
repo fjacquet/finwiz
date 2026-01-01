@@ -444,8 +444,8 @@ class TestTechnicalAnalysisEngine:
         ]
 
     @pytest.fixture
-    def sample_data(self) -> pd.DataFrame:
-        """Create sample data for testing."""
+    def simple_ohlcv_data(self) -> pd.DataFrame:
+        """Create simple OHLCV data for convenience function testing."""
         return pd.DataFrame(
             {
                 "Open": [100 + i for i in range(50)],
@@ -456,18 +456,18 @@ class TestTechnicalAnalysisEngine:
             }
         )
 
-    def test_calculate_technical_indicators_function(self, sample_data):
+    def test_calculate_technical_indicators_function(self, simple_ohlcv_data):
         """Test calculate_technical_indicators convenience function."""
-        result = calculate_technical_indicators(sample_data, "AAPL", "1d")
+        result = calculate_technical_indicators(simple_ohlcv_data, "AAPL", "1d")
 
         assert isinstance(result, TechnicalAnalysisResult)
         assert result.symbol == "AAPL"
         assert result.timeframe == "1d"
         assert len(result.indicator_results) > 0  # Should have default indicators
 
-    def test_get_confluence_signals_function(self, sample_data):
+    def test_get_confluence_signals_function(self, simple_ohlcv_data):
         """Test get_confluence_signals convenience function."""
-        confluence_zones = get_confluence_signals(sample_data, "AAPL", min_confluence=2)
+        confluence_zones = get_confluence_signals(simple_ohlcv_data, "AAPL", min_confluence=2)
 
         assert isinstance(confluence_zones, list)
         # All returned zones should have at least min_confluence signals

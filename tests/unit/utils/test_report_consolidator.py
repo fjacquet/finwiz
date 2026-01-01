@@ -357,10 +357,7 @@ class TestReportConsolidatorLoadExports:
 
         # Act
         validation_errors: list[dict] = []
-        exports = load_exports(
-            [str(file_path)], StockCrewExport, crew_name="stock_crew",
-            session_id="test", validation_errors=validation_errors
-        )
+        exports = load_exports([str(file_path)], StockCrewExport, crew_name="stock_crew", session_id="test", validation_errors=validation_errors)
 
         # Assert
         assert len(exports) == 1
@@ -375,10 +372,7 @@ class TestReportConsolidatorLoadExports:
 
         # Act
         validation_errors: list[dict] = []
-        exports = load_exports(
-            [str(invalid_file)], StockCrewExport, crew_name="stock_crew",
-            session_id="test", validation_errors=validation_errors
-        )
+        exports = load_exports([str(invalid_file)], StockCrewExport, crew_name="stock_crew", session_id="test", validation_errors=validation_errors)
 
         # Assert
         assert len(exports) == 0
@@ -396,10 +390,7 @@ class TestReportConsolidatorLoadExports:
 
         # Act
         validation_errors: list[dict] = []
-        exports = load_exports(
-            [str(invalid_file)], StockCrewExport, crew_name="stock_crew",
-            session_id="test", validation_errors=validation_errors
-        )
+        exports = load_exports([str(invalid_file)], StockCrewExport, crew_name="stock_crew", session_id="test", validation_errors=validation_errors)
 
         # Assert
         assert len(exports) == 0

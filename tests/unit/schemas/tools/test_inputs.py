@@ -495,9 +495,7 @@ class TestTwelveDataIndicatorInput:
     def test_optional_parameters_values(self, fake):
         """Test optional parameters with values."""
         length = fake.random_int(min=5, max=50)
-        model = TwelveDataIndicatorInput(
-            symbol="AAPL", indicator="rsi", length=length
-        )
+        model = TwelveDataIndicatorInput(symbol="AAPL", indicator="rsi", length=length)
 
         assert model.length == length
 
@@ -602,9 +600,7 @@ class TestEnhancedSentimentInput:
         days_back = fake.random_int(min=1, max=30)
         max_articles = fake.random_int(min=5, max=50)
 
-        model = EnhancedSentimentInput(
-            ticker="AAPL", days_back=days_back, max_articles=max_articles
-        )
+        model = EnhancedSentimentInput(ticker="AAPL", days_back=days_back, max_articles=max_articles)
 
         assert model.days_back == days_back
         assert model.max_articles == max_articles
@@ -633,57 +629,41 @@ class TestStandardizedSentimentInput:
     def test_max_articles_constraint(self):
         """Test max_articles ge/le constraints (10-100)."""
         # Valid: 10
-        model_min = StandardizedSentimentInput(
-            symbol="AAPL", asset_class="stock", max_articles=10
-        )
+        model_min = StandardizedSentimentInput(symbol="AAPL", asset_class="stock", max_articles=10)
         assert model_min.max_articles == 10
 
         # Valid: 100
-        model_max = StandardizedSentimentInput(
-            symbol="AAPL", asset_class="stock", max_articles=100
-        )
+        model_max = StandardizedSentimentInput(symbol="AAPL", asset_class="stock", max_articles=100)
         assert model_max.max_articles == 100
 
         # Invalid: below 10
         with pytest.raises(ValidationError) as exc_info:
-            StandardizedSentimentInput(
-                symbol="AAPL", asset_class="stock", max_articles=5
-            )
+            StandardizedSentimentInput(symbol="AAPL", asset_class="stock", max_articles=5)
         assert "max_articles" in str(exc_info.value)
 
         # Invalid: above 100
         with pytest.raises(ValidationError) as exc_info:
-            StandardizedSentimentInput(
-                symbol="AAPL", asset_class="stock", max_articles=150
-            )
+            StandardizedSentimentInput(symbol="AAPL", asset_class="stock", max_articles=150)
         assert "max_articles" in str(exc_info.value)
 
     def test_days_back_constraint(self):
         """Test days_back ge/le constraints (7-90)."""
         # Valid: 7
-        model_min = StandardizedSentimentInput(
-            symbol="AAPL", asset_class="stock", days_back=7
-        )
+        model_min = StandardizedSentimentInput(symbol="AAPL", asset_class="stock", days_back=7)
         assert model_min.days_back == 7
 
         # Valid: 90
-        model_max = StandardizedSentimentInput(
-            symbol="AAPL", asset_class="stock", days_back=90
-        )
+        model_max = StandardizedSentimentInput(symbol="AAPL", asset_class="stock", days_back=90)
         assert model_max.days_back == 90
 
         # Invalid: below 7
         with pytest.raises(ValidationError) as exc_info:
-            StandardizedSentimentInput(
-                symbol="AAPL", asset_class="stock", days_back=3
-            )
+            StandardizedSentimentInput(symbol="AAPL", asset_class="stock", days_back=3)
         assert "days_back" in str(exc_info.value)
 
         # Invalid: above 90
         with pytest.raises(ValidationError) as exc_info:
-            StandardizedSentimentInput(
-                symbol="AAPL", asset_class="stock", days_back=100
-            )
+            StandardizedSentimentInput(symbol="AAPL", asset_class="stock", days_back=100)
         assert "days_back" in str(exc_info.value)
 
     def test_asset_class_literal(self):
@@ -699,14 +679,10 @@ class TestStandardizedSentimentInput:
 
     def test_include_trending_boolean(self):
         """Test include_trending boolean field."""
-        model_true = StandardizedSentimentInput(
-            symbol="AAPL", asset_class="stock", include_trending=True
-        )
+        model_true = StandardizedSentimentInput(symbol="AAPL", asset_class="stock", include_trending=True)
         assert model_true.include_trending is True
 
-        model_false = StandardizedSentimentInput(
-            symbol="AAPL", asset_class="stock", include_trending=False
-        )
+        model_false = StandardizedSentimentInput(symbol="AAPL", asset_class="stock", include_trending=False)
         assert model_false.include_trending is False
 
     def test_missing_required_symbol(self):
@@ -729,18 +705,14 @@ class TestCrossAssetSentimentComparatorInput:
         """Test instantiation with required fields."""
         symbols = ["AAPL", "GOOGL", "MSFT"]
         asset_classes = ["stock", "stock", "stock"]
-        model = CrossAssetSentimentComparatorInput(
-            symbols=symbols, asset_classes=asset_classes
-        )
+        model = CrossAssetSentimentComparatorInput(symbols=symbols, asset_classes=asset_classes)
 
         assert model.symbols == symbols
         assert model.asset_classes == asset_classes
 
     def test_single_asset(self):
         """Test with single asset."""
-        model = CrossAssetSentimentComparatorInput(
-            symbols=["AAPL"], asset_classes=["stock"]
-        )
+        model = CrossAssetSentimentComparatorInput(symbols=["AAPL"], asset_classes=["stock"])
 
         assert len(model.symbols) == 1
         assert len(model.asset_classes) == 1
@@ -749,9 +721,7 @@ class TestCrossAssetSentimentComparatorInput:
         """Test with multiple asset types."""
         symbols = ["AAPL", "VTI", "BTC"]
         asset_classes = ["stock", "etf", "crypto"]
-        model = CrossAssetSentimentComparatorInput(
-            symbols=symbols, asset_classes=asset_classes
-        )
+        model = CrossAssetSentimentComparatorInput(symbols=symbols, asset_classes=asset_classes)
 
         assert model.symbols == symbols
         assert model.asset_classes == asset_classes
@@ -1029,9 +999,7 @@ class TestStandardizedRiskScoringInput:
     def test_custom_risk_factors(self):
         """Test custom risk_factors."""
         risk_factors = ["market_risk", "liquidity_risk", "regulatory_risk"]
-        model = StandardizedRiskScoringInput(
-            symbol="AAPL", asset_class="stock", risk_factors=risk_factors
-        )
+        model = StandardizedRiskScoringInput(symbol="AAPL", asset_class="stock", risk_factors=risk_factors)
 
         assert model.risk_factors == risk_factors
 
@@ -1278,9 +1246,7 @@ class TestKnowledgeBaseInput:
 
     def test_all_optional_none(self):
         """Test all optional fields as None."""
-        model = KnowledgeBaseInput(
-            query="test query", similarity_threshold=None, limit=None
-        )
+        model = KnowledgeBaseInput(query="test query", similarity_threshold=None, limit=None)
 
         assert model.query == "test query"
         assert model.similarity_threshold is None
@@ -1406,16 +1372,12 @@ class TestQuantitativeAnalysisInput:
         """Test custom analysis_type."""
         types = ["technical", "backtest", "performance", "comprehensive"]
         for analysis_type in types:
-            model = QuantitativeAnalysisInput(
-                symbol="AAPL", asset_class="stock", analysis_type=analysis_type
-            )
+            model = QuantitativeAnalysisInput(symbol="AAPL", asset_class="stock", analysis_type=analysis_type)
             assert model.analysis_type == analysis_type
 
     def test_custom_strategy(self):
         """Test custom strategy."""
-        model = QuantitativeAnalysisInput(
-            symbol="AAPL", asset_class="stock", strategy="momentum"
-        )
+        model = QuantitativeAnalysisInput(symbol="AAPL", asset_class="stock", strategy="momentum")
 
         assert model.strategy == "momentum"
 
@@ -1453,33 +1415,25 @@ class TestSECFilingSearchInput:
 
     def test_default_top_k(self):
         """Test default top_k value."""
-        model = SECFilingSearchInput(
-            ticker="AAPL", form_type="10-K", question="What are the risks?"
-        )
+        model = SECFilingSearchInput(ticker="AAPL", form_type="10-K", question="What are the risks?")
 
         assert model.top_k == 4
 
     def test_custom_top_k(self, fake):
         """Test custom top_k value."""
         top_k = fake.random_int(min=1, max=20)
-        model = SECFilingSearchInput(
-            ticker="AAPL", form_type="10-K", question="What are the risks?", top_k=top_k
-        )
+        model = SECFilingSearchInput(ticker="AAPL", form_type="10-K", question="What are the risks?", top_k=top_k)
 
         assert model.top_k == top_k
 
     def test_form_type_literal(self):
         """Test form_type literal constraint."""
         # Valid: 10-K
-        model_10k = SECFilingSearchInput(
-            ticker="AAPL", form_type="10-K", question="What?"
-        )
+        model_10k = SECFilingSearchInput(ticker="AAPL", form_type="10-K", question="What?")
         assert model_10k.form_type == "10-K"
 
         # Valid: 10-Q
-        model_10q = SECFilingSearchInput(
-            ticker="AAPL", form_type="10-Q", question="What?"
-        )
+        model_10q = SECFilingSearchInput(ticker="AAPL", form_type="10-Q", question="What?")
         assert model_10q.form_type == "10-Q"
 
         # Invalid
@@ -1965,16 +1919,12 @@ class TestOptimizationInput:
     def test_weight_constraints(self):
         """Test max_weight and min_weight constraints (0.0-1.0)."""
         # Valid: min_weight < max_weight
-        model = OptimizationInput(
-            assets=["AAPL"], min_weight=0.1, max_weight=0.5
-        )
+        model = OptimizationInput(assets=["AAPL"], min_weight=0.1, max_weight=0.5)
         assert model.min_weight == 0.1
         assert model.max_weight == 0.5
 
         # Valid: boundary values
-        model_boundary = OptimizationInput(
-            assets=["AAPL"], min_weight=0.0, max_weight=1.0
-        )
+        model_boundary = OptimizationInput(assets=["AAPL"], min_weight=0.0, max_weight=1.0)
         assert model_boundary.min_weight == 0.0
         assert model_boundary.max_weight == 1.0
 
@@ -2034,9 +1984,7 @@ class TestPortfolioRebalancingInput:
         holdings = [{"symbol": "AAPL", "shares": 100}]
         target_weights = {"AAPL": 1.0}
         bands = {"AAPL": 0.05}
-        model = PortfolioRebalancingInput(
-            holdings=holdings, target_weights=target_weights, tolerance_bands=bands
-        )
+        model = PortfolioRebalancingInput(holdings=holdings, target_weights=target_weights, tolerance_bands=bands)
 
         assert model.tolerance_bands == bands
 
@@ -2044,9 +1992,7 @@ class TestPortfolioRebalancingInput:
         """Test optional tolerance_bands as None."""
         holdings = [{"symbol": "AAPL", "shares": 100}]
         target_weights = {"AAPL": 1.0}
-        model = PortfolioRebalancingInput(
-            holdings=holdings, target_weights=target_weights, tolerance_bands=None
-        )
+        model = PortfolioRebalancingInput(holdings=holdings, target_weights=target_weights, tolerance_bands=None)
 
         assert model.tolerance_bands is None
 
@@ -2276,9 +2222,7 @@ class TestScoringCriteria:
 
     def test_stock_metrics_constraints(self):
         """Test stock metrics constraints."""
-        model_valid = ScoringCriteria(
-            stock_min_roe=0.30, stock_max_debt_to_equity=0.5
-        )
+        model_valid = ScoringCriteria(stock_min_roe=0.30, stock_max_debt_to_equity=0.5)
         assert model_valid.stock_min_roe == 0.30
         assert model_valid.stock_max_debt_to_equity == 0.5
 
@@ -2611,9 +2555,7 @@ class TestCriteriaOptimizationInput:
         """Test custom analysis_period_days."""
         period = fake.random_int(min=1, max=365)
         criteria = {"min_roe": 0.20}
-        model = CriteriaOptimizationInput(
-            current_criteria=criteria, analysis_period_days=period
-        )
+        model = CriteriaOptimizationInput(current_criteria=criteria, analysis_period_days=period)
 
         assert model.analysis_period_days == period
 
@@ -2621,14 +2563,10 @@ class TestCriteriaOptimizationInput:
         """Test force_adjustment boolean field."""
         criteria = {"min_roe": 0.20}
 
-        model_true = CriteriaOptimizationInput(
-            current_criteria=criteria, force_adjustment=True
-        )
+        model_true = CriteriaOptimizationInput(current_criteria=criteria, force_adjustment=True)
         assert model_true.force_adjustment is True
 
-        model_false = CriteriaOptimizationInput(
-            current_criteria=criteria, force_adjustment=False
-        )
+        model_false = CriteriaOptimizationInput(current_criteria=criteria, force_adjustment=False)
         assert model_false.force_adjustment is False
 
     def test_missing_required_current_criteria(self):
@@ -2662,9 +2600,7 @@ class TestToolInputsIntegration:
     def test_validation_error_messages(self):
         """Test that validation errors have informative messages."""
         with pytest.raises(ValidationError) as exc_info:
-            StandardizedSentimentInput(
-                symbol="AAPL", asset_class="stock", max_articles=200
-            )
+            StandardizedSentimentInput(symbol="AAPL", asset_class="stock", max_articles=200)
         error_msg = str(exc_info.value)
         assert "max_articles" in error_msg
 

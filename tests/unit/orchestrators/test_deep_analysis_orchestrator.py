@@ -4,14 +4,13 @@ Tests the orchestrator using the functional pipeline from finwiz.analysis.
 """
 
 from datetime import datetime
-from pathlib import Path
 
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.flow_state import FinwizState
+from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis, QuantitativeAnalysis
 from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
@@ -46,9 +45,7 @@ class TestDeepAnalysisOrchestrator:
     @pytest.fixture
     def orchestrator(self, state, batch_config):
         """Create orchestrator instance."""
-        return DeepAnalysisOrchestrator(
-            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
-        )
+        return DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
 
     @pytest.fixture
     def mock_deep_analysis_result(self) -> DeepAnalysisResult:
@@ -332,9 +329,7 @@ class TestDeepAnalysisOrchestrator:
         batch_config.enabled = False
         batch_config.min_holdings_for_batch = 100
 
-        orchestrator = DeepAnalysisOrchestrator(
-            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
-        )
+        orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
 
         def create_result(ticker, asset_class, company_name=""):
             result = DeepAnalysisResult(
@@ -367,9 +362,7 @@ class TestDeepAnalysisOrchestrator:
         results = orchestrator.run_deep_analysis_on_holdings(holdings)
 
         # Assert - Property 8: Completeness
-        assert len(results) == len(holdings), (
-            f"Expected {len(holdings)} results but got {len(results)}. All holdings should be analyzed."
-        )
+        assert len(results) == len(holdings), f"Expected {len(holdings)} results but got {len(results)}. All holdings should be analyzed."
 
         for holding in holdings:
             ticker = holding["ticker"]
@@ -413,9 +406,7 @@ class TestDeepAnalysisOrchestrator:
         batch_config.enabled = False
         batch_config.min_holdings_for_batch = 100
 
-        orchestrator = DeepAnalysisOrchestrator(
-            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
-        )
+        orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
 
         def create_result(ticker_arg, asset_class_arg, company_name=""):
             result = DeepAnalysisResult(
@@ -495,9 +486,7 @@ class TestDeepAnalysisOrchestrator:
         batch_config.enabled = False
         batch_config.min_holdings_for_batch = 100
 
-        orchestrator = DeepAnalysisOrchestrator(
-            state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False
-        )
+        orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
 
         # Track calls to analyze_holding
         call_count = 0

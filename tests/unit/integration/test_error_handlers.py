@@ -210,6 +210,7 @@ class TestAnalyzeValidationError:
 
     def test_should_analyze_missing_field_error(self, handlers):
         """Test analysis of a missing field error."""
+
         # Create a model that requires a field
         class TestModel(BaseModel):
             required_field: str
@@ -224,6 +225,7 @@ class TestAnalyzeValidationError:
 
     def test_should_analyze_type_mismatch_error(self, handlers):
         """Test analysis of a type mismatch error."""
+
         class TestModel(BaseModel):
             number: int
 
@@ -236,6 +238,7 @@ class TestAnalyzeValidationError:
 
     def test_should_analyze_constraint_error(self, handlers):
         """Test analysis of a constraint error."""
+
         class TestModel(BaseModel):
             score: float = Field(ge=0.0, le=1.0)
 
@@ -253,6 +256,7 @@ class TestAnalyzeValidationError:
         error_handlers patterns expect "extra fields not permitted", so
         the error is categorized as unknown_error with current patterns.
         """
+
         class TestModel(BaseModel):
             model_config = {"extra": "forbid"}
             allowed_field: str
@@ -268,6 +272,7 @@ class TestAnalyzeValidationError:
 
     def test_should_include_context(self, handlers):
         """Test that analysis includes context."""
+
         class TestModel(BaseModel):
             field: str
 
@@ -290,6 +295,7 @@ class TestGenerateErrorReport:
 
     def test_should_generate_report_with_single_error(self, handlers):
         """Test report generation with a single error."""
+
         class TestModel(BaseModel):
             field: str
 
@@ -305,6 +311,7 @@ class TestGenerateErrorReport:
 
     def test_should_generate_report_with_multiple_errors(self, handlers):
         """Test report generation with multiple errors."""
+
         class TestModel1(BaseModel):
             field1: str
 
@@ -328,6 +335,7 @@ class TestGenerateErrorReport:
 
     def test_should_count_repairable_errors(self, handlers):
         """Test that repairable errors are counted correctly."""
+
         class TestModel(BaseModel):
             field: str
 
@@ -343,6 +351,7 @@ class TestGenerateErrorReport:
 
     def test_should_count_critical_errors(self, handlers):
         """Test that critical errors are counted correctly."""
+
         class TestModel(BaseModel):
             metadata: str
 
@@ -358,6 +367,7 @@ class TestGenerateErrorReport:
 
     def test_should_determine_overall_repairability(self, handlers):
         """Test overall repairability determination."""
+
         class TestModel(BaseModel):
             field: str
 
@@ -494,6 +504,7 @@ class TestIntegrationScenarios:
 
     def test_should_handle_nested_field_errors(self, handlers):
         """Test handling of errors in nested fields."""
+
         class InnerModel(BaseModel):
             value: int
 
@@ -508,6 +519,7 @@ class TestIntegrationScenarios:
 
     def test_should_handle_list_field_errors(self, handlers):
         """Test handling of errors in list fields."""
+
         class TestModel(BaseModel):
             items: list[int]
 
@@ -519,6 +531,7 @@ class TestIntegrationScenarios:
 
     def test_should_generate_comprehensive_report(self, handlers):
         """Test generation of comprehensive report with various error types."""
+
         class ComplexModel(BaseModel):
             model_config = {"extra": "forbid"}
             required: str

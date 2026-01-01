@@ -101,6 +101,7 @@ class TestSerializeDatetimeObjects:
 
     def test_should_serialize_pydantic_v2_model(self):
         """Test that Pydantic v2 models are serialized via model_dump."""
+
         class SampleModel(BaseModel):
             name: str
             value: int
@@ -119,6 +120,7 @@ class TestSerializeDatetimeObjects:
 
     def test_should_serialize_object_with_dict(self):
         """Test that objects with __dict__ are serialized."""
+
         class SimpleObject:
             def __init__(self):
                 self.name = "test"
@@ -131,6 +133,7 @@ class TestSerializeDatetimeObjects:
 
     def test_should_return_string_for_special_classes(self):
         """Test that special class instances return string representation."""
+
         class CrewDataAccessor:
             pass
 
@@ -140,6 +143,7 @@ class TestSerializeDatetimeObjects:
 
     def test_should_convert_unknown_types_to_string(self):
         """Test that unknown types are converted to string."""
+
         class UnknownType:
             __slots__ = ()  # No __dict__
 
@@ -265,27 +269,13 @@ class TestConsolidateMarketSentimentData:
 
     def test_should_assess_data_quality_high(self):
         """Test HIGH data quality assessment."""
-        crew_data = {
-            "stock": {
-                "market_sentiments": [
-                    {"positive": 0.5, "neutral": 0.3, "negative": 0.2, "confidence": 0.5}
-                    for _ in range(5)
-                ]
-            }
-        }
+        crew_data = {"stock": {"market_sentiments": [{"positive": 0.5, "neutral": 0.3, "negative": 0.2, "confidence": 0.5} for _ in range(5)]}}
         result = consolidate_market_sentiment_data(crew_data)
         assert result["data_quality"] == "HIGH"
 
     def test_should_assess_data_quality_medium(self):
         """Test MEDIUM data quality assessment."""
-        crew_data = {
-            "stock": {
-                "market_sentiments": [
-                    {"positive": 0.5, "neutral": 0.3, "negative": 0.2, "confidence": 0.5}
-                    for _ in range(3)
-                ]
-            }
-        }
+        crew_data = {"stock": {"market_sentiments": [{"positive": 0.5, "neutral": 0.3, "negative": 0.2, "confidence": 0.5} for _ in range(3)]}}
         result = consolidate_market_sentiment_data(crew_data)
         assert result["data_quality"] == "MEDIUM"
 

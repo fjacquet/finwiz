@@ -21,6 +21,7 @@ from pathlib import Path
 @dataclass
 class MypyError:
     """A single mypy error with context."""
+
     file: str
     line: int
     column: int
@@ -33,11 +34,7 @@ class MypyError:
 
 def run_mypy() -> str:
     """Run mypy and capture output."""
-    result = subprocess.run(
-        ['uv', 'run', 'mypy', 'src/finwiz', '--ignore-missing-imports', '--show-column-numbers'],
-        capture_output=True,
-        text=True
-    )
+    result = subprocess.run(["uv", "run", "mypy", "src/finwiz", "--ignore-missing-imports", "--show-column-numbers"], capture_output=True, text=True)
     return result.stdout + result.stderr
 
 
@@ -46,18 +43,20 @@ def parse_mypy_output(output: str) -> list[dict]:
     errors = []
     # Pattern: file.py:line: error: message [error-code]
     # Also handles optional column: file.py:line:col: error: message [error-code]
-    pattern = r'^(.+?):(\d+)(?::(\d+))?: error: (.+?) \[([^\]]+)\]$'
+    pattern = r"^(.+?):(\d+)(?::(\d+))?: error: (.+?) \[([^\]]+)\]$"
 
-    for line in output.split('\n'):
+    for line in output.split("\n"):
         match = re.match(pattern, line)
         if match:
-            errors.append({
-                'file': match.group(1),
-                'line': int(match.group(2)),
-                'column': int(match.group(3)) if match.group(3) else 0,
-                'message': match.group(4),
-                'error_code': match.group(5),
-            })
+            errors.append(
+                {
+                    "file": match.group(1),
+                    "line": int(match.group(2)),
+                    "column": int(match.group(3)) if match.group(3) else 0,
+                    "message": match.group(4),
+                    "error_code": match.group(5),
+                }
+            )
 
     return errors
 
@@ -65,22 +64,22 @@ def parse_mypy_output(output: str) -> list[dict]:
 def extract_context(file_path: str, line_num: int, context_lines: int = 3) -> dict:
     """Extract lines around an error."""
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         start = max(0, line_num - context_lines - 1)
         end = min(len(lines), line_num + context_lines)
 
         return {
-            'context_before': [l.rstrip() for l in lines[start:line_num-1]],
-            'error_line': lines[line_num-1].rstrip() if line_num <= len(lines) else '',
-            'context_after': [l.rstrip() for l in lines[line_num:end]],
+            "context_before": [line.rstrip() for line in lines[start : line_num - 1]],
+            "error_line": lines[line_num - 1].rstrip() if line_num <= len(lines) else "",
+            "context_after": [line.rstrip() for line in lines[line_num:end]],
         }
     except Exception as e:
         return {
-            'context_before': [],
-            'error_line': f'<could not read: {e}>',
-            'context_after': [],
+            "context_before": [],
+            "error_line": f"<could not read: {e}>",
+            "context_after": [],
         }
 
 
@@ -122,7 +121,7 @@ def create_batches(errors: list[dict], batch_size: int) -> list[list[dict]]:
     # Group by file first
     by_file = defaultdict(list)
     for err in errors:
-        by_file[err['file']].append(err)
+        by_file[err["file"]].append(err)
 
     batches = []
     current_batch = []
@@ -146,7 +145,7 @@ def create_batches(errors: list[dict], batch_size: int) -> list[list[dict]]:
                 current_size = 0
 
             for i in range(0, len(file_errors), batch_size):
-                batches.append(file_errors[i:i + batch_size])
+                batches.append(file_errors[i : i + batch_size])
 
     if current_batch:
         batches.append(current_batch)
@@ -155,15 +154,11 @@ def create_batches(errors: list[dict], batch_size: int) -> list[list[dict]]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Extract mypy errors with context')
-    parser.add_argument('--batch-size', type=int, default=20,
-                        help='Number of errors per batch (default: 20)')
-    parser.add_argument('--output-dir', type=Path, default=Path('scripts/mypy_batches'),
-                        help='Output directory for batches')
-    parser.add_argument('--context-lines', type=int, default=3,
-                        help='Lines of context around each error')
-    parser.add_argument('--error-types', nargs='+', default=None,
-                        help='Only include specific error types (e.g., arg-type call-arg)')
+    parser = argparse.ArgumentParser(description="Extract mypy errors with context")
+    parser.add_argument("--batch-size", type=int, default=20, help="Number of errors per batch (default: 20)")
+    parser.add_argument("--output-dir", type=Path, default=Path("scripts/mypy_batches"), help="Output directory for batches")
+    parser.add_argument("--context-lines", type=int, default=3, help="Lines of context around each error")
+    parser.add_argument("--error-types", nargs="+", default=None, help="Only include specific error types (e.g., arg-type call-arg)")
     args = parser.parse_args()
 
     print("Running mypy...")
@@ -175,13 +170,13 @@ def main():
 
     # Filter by error type if specified
     if args.error_types:
-        errors = [e for e in errors if e['error_code'] in args.error_types]
+        errors = [e for e in errors if e["error_code"] in args.error_types]
         print(f"Filtered to {len(errors)} errors of types: {args.error_types}")
 
     # Add context to each error
     print("Extracting context...")
     for err in errors:
-        context = extract_context(err['file'], err['line'], args.context_lines)
+        context = extract_context(err["file"], err["line"], args.context_lines)
         err.update(context)
 
     # Create batches
@@ -192,50 +187,48 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     # Summary file
-    summary = {
-        'total_errors': len(errors),
-        'num_batches': len(batches),
-        'batch_size': args.batch_size,
-        'error_types': args.error_types,
-        'batches': []
-    }
+    summary = {"total_errors": len(errors), "num_batches": len(batches), "batch_size": args.batch_size, "error_types": args.error_types, "batches": []}
 
     for i, batch in enumerate(batches):
-        batch_file = args.output_dir / f'batch_{i:03d}.json'
-        prompt_file = args.output_dir / f'batch_{i:03d}_prompt.md'
+        batch_file = args.output_dir / f"batch_{i:03d}.json"
+        prompt_file = args.output_dir / f"batch_{i:03d}_prompt.md"
 
         # Group by file for the prompt
         by_file = defaultdict(list)
         for err in batch:
-            by_file[err['file']].append(MypyError(
-                file=err['file'],
-                line=err['line'],
-                column=err['column'],
-                error_code=err['error_code'],
-                message=err['message'],
-                context_before=err['context_before'],
-                error_line=err['error_line'],
-                context_after=err['context_after'],
-            ))
+            by_file[err["file"]].append(
+                MypyError(
+                    file=err["file"],
+                    line=err["line"],
+                    column=err["column"],
+                    error_code=err["error_code"],
+                    message=err["message"],
+                    context_before=err["context_before"],
+                    error_line=err["error_line"],
+                    context_after=err["context_after"],
+                )
+            )
 
         # Write batch JSON
-        with open(batch_file, 'w') as f:
+        with open(batch_file, "w") as f:
             json.dump(batch, f, indent=2)
 
         # Write prompt file
-        with open(prompt_file, 'w') as f:
+        with open(prompt_file, "w") as f:
             for file_path, file_errors in by_file.items():
                 f.write(create_fix_prompt(file_errors, file_path))
-                f.write("\n\n" + "="*60 + "\n\n")
+                f.write("\n\n" + "=" * 60 + "\n\n")
 
-        summary['batches'].append({
-            'batch_id': i,
-            'num_errors': len(batch),
-            'files': list(set(e['file'] for e in batch)),
-        })
+        summary["batches"].append(
+            {
+                "batch_id": i,
+                "num_errors": len(batch),
+                "files": list(set(e["file"] for e in batch)),
+            }
+        )
 
     # Write summary
-    with open(args.output_dir / 'summary.json', 'w') as f:
+    with open(args.output_dir / "summary.json", "w") as f:
         json.dump(summary, f, indent=2)
 
     print(f"\nOutput written to {args.output_dir}/")
@@ -245,11 +238,11 @@ def main():
 
     # Print batch distribution
     print("\nBatch distribution:")
-    for i, batch_info in enumerate(summary['batches'][:10]):
+    for i, batch_info in enumerate(summary["batches"][:10]):
         print(f"  Batch {i}: {batch_info['num_errors']} errors in {len(batch_info['files'])} files")
     if len(batches) > 10:
         print(f"  ... and {len(batches) - 10} more batches")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

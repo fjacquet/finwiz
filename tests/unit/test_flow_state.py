@@ -1,6 +1,5 @@
 """Tests for flow_state.py module."""
 
-
 import pytest
 
 from finwiz.flow_state import (

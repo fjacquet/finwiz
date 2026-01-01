@@ -10,30 +10,22 @@ class TestCalculateRiskImprovement:
 
     def test_should_calculate_positive_improvement(self):
         """Test risk improvement when risk decreases."""
-        result = RebalancingCalculations.calculate_risk_improvement(
-            current_risk=0.8, projected_risk=0.5
-        )
+        result = RebalancingCalculations.calculate_risk_improvement(current_risk=0.8, projected_risk=0.5)
         assert result == pytest.approx(0.3)
 
     def test_should_calculate_negative_improvement(self):
         """Test risk improvement when risk increases."""
-        result = RebalancingCalculations.calculate_risk_improvement(
-            current_risk=0.5, projected_risk=0.8
-        )
+        result = RebalancingCalculations.calculate_risk_improvement(current_risk=0.5, projected_risk=0.8)
         assert result == pytest.approx(-0.3)
 
     def test_should_return_zero_for_no_change(self):
         """Test risk improvement when no change."""
-        result = RebalancingCalculations.calculate_risk_improvement(
-            current_risk=0.5, projected_risk=0.5
-        )
+        result = RebalancingCalculations.calculate_risk_improvement(current_risk=0.5, projected_risk=0.5)
         assert result == pytest.approx(0.0)
 
     def test_should_handle_zero_values(self):
         """Test with zero risk values."""
-        result = RebalancingCalculations.calculate_risk_improvement(
-            current_risk=0.0, projected_risk=0.0
-        )
+        result = RebalancingCalculations.calculate_risk_improvement(current_risk=0.0, projected_risk=0.0)
         assert result == pytest.approx(0.0)
 
 

@@ -4,7 +4,7 @@ Feedback Analytics Module.
 Handles all statistical calculations and metrics for feedback analysis.
 """
 
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -25,7 +25,7 @@ class FeedbackAnalytics:
         df = pd.DataFrame([{"asset_type": f.asset_type, "accepted": f.outcome == RecommendationOutcome.ACCEPTED} for f in feedback])
 
         # Use pandas groupby for efficient aggregation
-        return df.groupby("asset_type")["accepted"].mean().to_dict()
+        return cast(dict[str, float], df.groupby("asset_type")["accepted"].mean().to_dict())
 
     @staticmethod
     def calculate_acceptance_by_grade(feedback: list[UserFeedback]) -> dict[Grade, float]:
@@ -37,7 +37,7 @@ class FeedbackAnalytics:
         df = pd.DataFrame([{"grade": f.recommended_grade, "accepted": f.outcome == RecommendationOutcome.ACCEPTED} for f in feedback])
 
         # Use pandas groupby for efficient aggregation
-        return df.groupby("grade")["accepted"].mean().to_dict()
+        return cast(dict[Grade, float], df.groupby("grade")["accepted"].mean().to_dict())
 
     @staticmethod
     def calculate_acceptance_trends(feedback: list[UserFeedback]) -> dict[str, float]:

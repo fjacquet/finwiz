@@ -57,9 +57,7 @@ class TestReportValidationResult:
 
     def test_should_create_invalid_result_with_issues(self):
         """Test creating an invalid result with issues."""
-        issue = ValidationIssue(
-            severity="ERROR", category="TEST", message="Error"
-        )
+        issue = ValidationIssue(severity="ERROR", category="TEST", message="Error")
         result = ReportValidationResult(
             is_valid=False,
             issues=[issue],

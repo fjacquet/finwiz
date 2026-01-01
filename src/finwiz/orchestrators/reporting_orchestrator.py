@@ -324,7 +324,12 @@ class ReportingOrchestrator:
                     asset_dir = Path(base_dir)
                     if asset_dir.exists():
                         # Match files with various patterns: session_id, timestamp, enriched, or date patterns
-                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob("*_enriched.json")) + list(asset_dir.glob("*_output_*.json")) + list(asset_dir.glob("*_20*.json")):
+                        for json_file in (
+                            list(asset_dir.glob(f"*_{session_id}.json"))
+                            + list(asset_dir.glob("*_enriched.json"))
+                            + list(asset_dir.glob("*_output_*.json"))
+                            + list(asset_dir.glob("*_20*.json"))
+                        ):
                             try:
                                 data = self._read_json_file(str(json_file))
 
@@ -723,8 +728,6 @@ class ReportingOrchestrator:
             if generated_for_asset:
                 generated_reports[asset_class] = generated_for_asset
 
-        self.logger.info(
-            f"📊 HTML report generation complete: {total_generated} generated, {total_failed} failed"
-        )
+        self.logger.info(f"📊 HTML report generation complete: {total_generated} generated, {total_failed} failed")
 
         return generated_reports

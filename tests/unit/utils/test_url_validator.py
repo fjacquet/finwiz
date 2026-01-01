@@ -1,7 +1,6 @@
 """Tests for url_validator module."""
 
 
-
 class TestURLValidator:
     """Tests for URLValidator class."""
 
@@ -114,9 +113,7 @@ class TestURLValidator:
         from finwiz.utils.url_validator import URLValidator
 
         validator = URLValidator()
-        result = validator.is_valid_url(
-            "https://finance.yahoo.com", context="SEC filing"
-        )
+        result = validator.is_valid_url("https://finance.yahoo.com", context="SEC filing")
         assert result is True
 
     def test_validate_and_sanitize_valid_url(self):
@@ -135,9 +132,7 @@ class TestURLValidator:
 
         validator = URLValidator()
 
-        result = validator.validate_and_sanitize(
-            "https://api.example-real.com/data?param=value"
-        )
+        result = validator.validate_and_sanitize("https://api.example-real.com/data?param=value")
         assert "?param=value" in result
 
     def test_validate_and_sanitize_with_fragment(self):
@@ -146,9 +141,7 @@ class TestURLValidator:
 
         validator = URLValidator()
 
-        result = validator.validate_and_sanitize(
-            "https://docs.example-real.com/page#section"
-        )
+        result = validator.validate_and_sanitize("https://docs.example-real.com/page#section")
         assert "#section" in result
 
     def test_validate_and_sanitize_invalid_url(self):

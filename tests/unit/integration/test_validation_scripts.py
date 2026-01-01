@@ -13,6 +13,7 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+
 import pytest
 from faker import Faker
 
@@ -101,9 +102,7 @@ def mock_health_checker(mocker):
     """Mock health checker."""
     checker = mocker.MagicMock()
     health_report = mocker.MagicMock()
-    health_report.components = [
-        mocker.MagicMock(component="system_resources", details={"cpu": 45.2, "memory": 62.1})
-    ]
+    health_report.components = [mocker.MagicMock(component="system_resources", details={"cpu": 45.2, "memory": 62.1})]
     checker.perform_comprehensive_health_check.return_value = health_report
     mocker.patch(
         "finwiz.integration.validation_scripts.get_health_checker",
@@ -126,9 +125,7 @@ class TestValidationScript:
         assert validator.crew_config is not None
         assert validator.logger is not None
 
-    def test_initialization_with_custom_output_dir(
-        self, mock_integration_config, tmp_output_dir
-    ):
+    def test_initialization_with_custom_output_dir(self, mock_integration_config, tmp_output_dir):
         """Test ValidationScript initialization with custom output directory."""
         validator = ValidationScript(output_dir=tmp_output_dir)
 
@@ -327,9 +324,7 @@ class TestDataIntegrityValidator:
         assert "timestamp_consistency" in result
         assert "inconsistencies" in result
 
-    def test_check_data_consistency_with_tickers(
-        self, validator, tmp_output_dir
-    ):
+    def test_check_data_consistency_with_tickers(self, validator, tmp_output_dir):
         """Test _check_data_consistency extracts tickers correctly."""
         # Create stock data with tickers
         stock_data = {
@@ -372,9 +367,7 @@ class TestDataIntegrityValidator:
         assert "BTC" in result["ticker_consistency"]["crypto"]
         assert "ETH" in result["ticker_consistency"]["crypto"]
 
-    def test_check_data_consistency_timestamp_divergence(
-        self, validator, tmp_output_dir
-    ):
+    def test_check_data_consistency_timestamp_divergence(self, validator, tmp_output_dir):
         """Test _check_data_consistency detects timestamp divergence."""
         now = datetime.now()
         old_time = (now - timedelta(hours=8)).isoformat()
@@ -412,9 +405,7 @@ class TestDataIntegrityValidator:
 
     def test_extract_tickers_from_data_etf(self, validator):
         """Test _extract_tickers_from_data for ETF data."""
-        data = {
-            "validated_etfs": [{"symbol": "SPY"}, {"symbol": "QQQ"}]
-        }
+        data = {"validated_etfs": [{"symbol": "SPY"}, {"symbol": "QQQ"}]}
 
         result = validator._extract_tickers_from_data(data, "etf")
 
@@ -422,9 +413,7 @@ class TestDataIntegrityValidator:
 
     def test_extract_tickers_from_data_crypto(self, validator):
         """Test _extract_tickers_from_data for crypto data."""
-        data = {
-            "validated_symbols": [{"symbol": "BTC"}, {"symbol": "ETH"}]
-        }
+        data = {"validated_symbols": [{"symbol": "BTC"}, {"symbol": "ETH"}]}
 
         result = validator._extract_tickers_from_data(data, "crypto")
 
@@ -450,9 +439,7 @@ class TestDataIntegrityValidator:
     def test_extract_timestamp_from_data_valid(self, validator):
         """Test _extract_timestamp_from_data with valid metadata."""
         timestamp = datetime.now().isoformat()
-        data = {
-            "metadata": {"execution_timestamp": timestamp}
-        }
+        data = {"metadata": {"execution_timestamp": timestamp}}
 
         result = validator._extract_timestamp_from_data(data)
 
@@ -579,9 +566,7 @@ class TestDependencyValidator:
         assert "stock" in result["missing_dependencies"]
         assert len(result["satisfied_dependencies"]) == 0
 
-    def test_validate_crew_dependencies_satisfied(
-        self, validator, tmp_output_dir
-    ):
+    def test_validate_crew_dependencies_satisfied(self, validator, tmp_output_dir):
         """Test _validate_crew_dependencies with satisfied dependencies."""
         # Create dependency data
         stock_data = {"metadata": {"execution_timestamp": datetime.now().isoformat()}}
@@ -593,9 +578,7 @@ class TestDependencyValidator:
         assert "stock" in result["satisfied_dependencies"]
         assert len(result["missing_dependencies"]) == 0
 
-    def test_validate_crew_dependencies_stale(
-        self, validator, tmp_output_dir, mock_integration_config, mocker
-    ):
+    def test_validate_crew_dependencies_stale(self, validator, tmp_output_dir, mock_integration_config, mocker):
         """Test _validate_crew_dependencies with stale dependencies."""
         # Create dependency data
         stock_data = {"metadata": {"execution_timestamp": datetime.now().isoformat()}}
@@ -628,9 +611,7 @@ class TestDependencyValidator:
         assert isinstance(execution_order, list)
         assert len(execution_order) > 0
 
-    def test_calculate_execution_order_linear_dependencies(
-        self, validator, mock_crew_config
-    ):
+    def test_calculate_execution_order_linear_dependencies(self, validator, mock_crew_config):
         """Test _calculate_execution_order with linear dependency chain."""
         # Set linear dependency: stock -> etf -> crypto
         mock_crew_config.crew_dependencies = {
@@ -646,9 +627,7 @@ class TestDependencyValidator:
         # etf should come before crypto
         assert execution_order.index("etf") < execution_order.index("crypto")
 
-    def test_calculate_execution_order_multiple_dependencies(
-        self, validator, mock_crew_config
-    ):
+    def test_calculate_execution_order_multiple_dependencies(self, validator, mock_crew_config):
         """Test _calculate_execution_order with multiple dependencies."""
         # crypto depends on both stock and etf
         mock_crew_config.crew_dependencies = {
@@ -684,9 +663,7 @@ class TestDependencyValidator:
 
         assert len(cycles) > 0
 
-    def test_detect_circular_dependencies_two_crew_cycle(
-        self, validator, mock_crew_config
-    ):
+    def test_detect_circular_dependencies_two_crew_cycle(self, validator, mock_crew_config):
         """Test _detect_circular_dependencies with two-crew cycle."""
         mock_crew_config.crew_dependencies = {
             "stock": ["etf"],
@@ -697,9 +674,7 @@ class TestDependencyValidator:
 
         assert len(cycles) > 0
 
-    def test_detect_circular_dependencies_three_crew_cycle(
-        self, validator, mock_crew_config
-    ):
+    def test_detect_circular_dependencies_three_crew_cycle(self, validator, mock_crew_config):
         """Test _detect_circular_dependencies with three-crew cycle."""
         mock_crew_config.crew_dependencies = {
             "stock": ["etf"],
