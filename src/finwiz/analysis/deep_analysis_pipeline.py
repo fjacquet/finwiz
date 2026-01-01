@@ -310,12 +310,56 @@ def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
     )
 
 
+def _has_qualitative_content(qual: QualitativeInsights | None) -> bool:
+    """Check if QualitativeInsights has actual content (not just defaults)."""
+    if qual is None:
+        return False
+    # Check if any of the main sections have content
+    has_sec = qual.sec_insights is not None
+    has_fundamental = qual.fundamental_context is not None
+    has_technical = qual.technical_strategy is not None
+    has_risks = qual.contextual_risks is not None
+    has_synthesis = qual.investment_synthesis is not None
+    # Also check ai_confidence - 0.5 is the default (no AI analysis)
+    has_confidence = qual.ai_confidence != 0.5
+    return any([has_sec, has_fundamental, has_technical, has_risks, has_synthesis, has_confidence])
+
+
 def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -> QualitativeInsights:
     """Extract QualitativeInsights from crew result."""
     # Try to get pydantic model directly
     if hasattr(crew_result, "pydantic") and crew_result.pydantic:
+        # Case 1: Direct QualitativeInsights
         if isinstance(crew_result.pydantic, QualitativeInsights):
-            return crew_result.pydantic
+            qual = crew_result.pydantic
+            if _has_qualitative_content(qual):
+                return qual
+            logger.warning("QualitativeInsights from pydantic has no content, trying fallback")
+
+        # Case 2: EnrichedAnalysis containing QualitativeInsights
+        if isinstance(crew_result.pydantic, EnrichedAnalysis):
+            enriched_qual = crew_result.pydantic.qualitative
+            if enriched_qual is not None and _has_qualitative_content(enriched_qual):
+                logger.info("Extracted QualitativeInsights from EnrichedAnalysis.qualitative")
+                return enriched_qual
+            logger.warning("EnrichedAnalysis.qualitative has no content, trying fallback")
+
+    # Try tasks_output first (more reliable than raw parsing)
+    if hasattr(crew_result, "tasks_output") and crew_result.tasks_output:
+        for task_output in crew_result.tasks_output:
+            if hasattr(task_output, "pydantic"):
+                # Check for direct QualitativeInsights
+                if isinstance(task_output.pydantic, QualitativeInsights):
+                    qual = task_output.pydantic
+                    if _has_qualitative_content(qual):
+                        logger.info("Extracted QualitativeInsights from tasks_output")
+                        return qual
+                # Check for EnrichedAnalysis containing qualitative
+                if isinstance(task_output.pydantic, EnrichedAnalysis) and task_output.pydantic.qualitative:
+                    qual = task_output.pydantic.qualitative
+                    if _has_qualitative_content(qual):
+                        logger.info("Extracted QualitativeInsights from tasks_output EnrichedAnalysis")
+                        return qual
 
     # Try to parse from raw output
     if hasattr(crew_result, "raw") and crew_result.raw:
@@ -323,19 +367,24 @@ def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -
             import json
 
             data = json.loads(crew_result.raw)
-            return QualitativeInsights(**data)
-        except (json.JSONDecodeError, ValueError) as e:
+            # Try to extract qualitative from EnrichedAnalysis-shaped JSON
+            if "qualitative" in data and isinstance(data["qualitative"], dict):
+                qual = QualitativeInsights(**data["qualitative"])
+                if _has_qualitative_content(qual):
+                    logger.info("Extracted QualitativeInsights from raw JSON qualitative field")
+                    return qual
+            # Try direct QualitativeInsights parse
+            qual = QualitativeInsights(**data)
+            if _has_qualitative_content(qual):
+                return qual
+            logger.warning("Parsed QualitativeInsights has no content, using fallback")
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
             logger.warning(f"Failed to parse crew output as JSON: {e}")
-
-    # Try tasks_output
-    if hasattr(crew_result, "tasks_output") and crew_result.tasks_output:
-        for task_output in crew_result.tasks_output:
-            if hasattr(task_output, "pydantic") and isinstance(task_output.pydantic, QualitativeInsights):
-                return task_output.pydantic
 
     # Fallback: Use validation with retry
     from finwiz.validation.ai_output_validator import validate_ai_output_with_retry
 
+    logger.warning("All extraction methods failed, falling back to validation with retry")
     raw_output = crew_result.raw if hasattr(crew_result, "raw") else str(crew_result)
     return validate_ai_output_with_retry(raw_output, quant, max_retries=2)
 
