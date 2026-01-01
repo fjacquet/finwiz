@@ -79,9 +79,10 @@ class DeepAnalysisOrchestrator:
         holdings = portfolio_review.get("holdings", [])
         self.logger.info(f"Starting deep analysis for {len(holdings)} holdings")
 
-        # Step 1: Run deep analysis on all holdings
+        # Step 1: Run deep analysis on all holdings CONCURRENTLY
         try:
-            deep_results = self.run_deep_analysis_on_holdings(holdings)
+            # Use concurrent execution for better performance
+            deep_results = await self.run_deep_analysis_concurrent(holdings)
             self.state.deep_analysis_results = deep_results
             self.state.deep_analysis_success = True
             self.logger.info(f"Deep analysis completed: {len(deep_results)}/{len(holdings)} holdings analyzed")
@@ -178,26 +179,40 @@ class DeepAnalysisOrchestrator:
         """Get stored enriched analysis for a ticker."""
         return self._enriched_analyses.get(ticker)
 
-    async def run_deep_analysis_concurrent(self, holdings: list[dict[str, Any]]) -> dict[str, DeepAnalysisResult]:
+    async def run_deep_analysis_concurrent(
+        self, holdings: list[dict[str, Any]], max_workers: int | None = None
+    ) -> dict[str, DeepAnalysisResult]:
         """
         Execute deep analysis on all holdings concurrently.
 
-        Uses asyncio to run the functional pipeline concurrently for better performance.
+        Uses a shared ThreadPoolExecutor with configurable max_workers for efficient
+        parallel processing. The number of concurrent analyses is controlled by
+        DEEP_ANALYSIS_BATCH_SIZE environment variable (default: 5).
 
         Args:
             holdings: List of holding dicts with 'ticker' and 'asset_class' keys
+            max_workers: Max concurrent analyses (default: from DEEP_ANALYSIS_BATCH_SIZE)
 
         Returns:
             Dictionary mapping tickers to DeepAnalysisResult objects
         """
         import asyncio
         from concurrent.futures import ThreadPoolExecutor
+
         from finwiz.analysis import analyze_holding
+        from finwiz.utils.performance_config import get_batch_size
+
+        # Get max_workers from config if not specified
+        if max_workers is None:
+            max_workers = get_batch_size()
+
+        self.logger.info(f"Starting concurrent deep analysis: {len(holdings)} holdings, max_workers={max_workers}")
 
         results: dict[str, DeepAnalysisResult] = {}
         self._enriched_analyses = {}
 
-        async def analyze_single(holding: dict[str, Any]) -> tuple[str, DeepAnalysisResult | None, Any | None]:
+        def analyze_single_sync(holding: dict[str, Any]) -> tuple[str, DeepAnalysisResult | None, Any | None]:
+            """Synchronous wrapper for analyze_holding (runs in thread pool)."""
             ticker = holding.get("ticker")
             asset_class = holding.get("asset_class")
             company_name = holding.get("name", "")
@@ -206,21 +221,22 @@ class DeepAnalysisOrchestrator:
                 return (ticker or "unknown", None, None)
 
             try:
-                # Run in thread pool to avoid blocking
-                loop = asyncio.get_event_loop()
-                with ThreadPoolExecutor() as executor:
-                    result, enriched = await loop.run_in_executor(
-                        executor,
-                        lambda: analyze_holding(ticker, asset_class, company_name)
-                    )
+                result, enriched = analyze_holding(ticker, asset_class, company_name)
                 return (ticker, result, enriched)
             except Exception as e:
                 self.logger.error(f"Concurrent analysis failed for {ticker}: {e}")
                 return (ticker, None, None)
 
-        # Run all analyses concurrently
-        tasks = [analyze_single(h) for h in holdings]
-        completed = await asyncio.gather(*tasks)
+        # Use a SHARED ThreadPoolExecutor for all holdings
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all holdings to the shared pool
+            futures = [
+                loop.run_in_executor(executor, analyze_single_sync, holding)
+                for holding in holdings
+            ]
+            # Wait for all to complete
+            completed = await asyncio.gather(*futures)
 
         for ticker, result, enriched in completed:
             if result:
