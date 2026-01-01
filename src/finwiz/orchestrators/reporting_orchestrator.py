@@ -81,6 +81,12 @@ class ReportingOrchestrator:
             # Generate Python-based report
             report_path = self._generate_python_report(portfolio_review, deep_analysis_results)
 
+            # Generate individual HTML reports from enriched JSON files
+            enriched_html_paths = self.generate_enriched_html_reports()
+            enriched_count = sum(len(paths) for paths in enriched_html_paths.values())
+            if enriched_count > 0:
+                self.logger.info(f"✅ Generated {enriched_count} individual HTML reports from enriched data")
+
             # Update state with success
             self.state.report_generation_success = True
             self.state.report_path = report_path
@@ -311,21 +317,22 @@ class ReportingOrchestrator:
             session_id = self.state.session_id or "default"
 
             # Read JSON files from disk for each asset class
-            # Deep analysis saves to cache/portfolio_analysis/{asset_class}/ and output/deep_analysis_{asset_class}/ directories
+            # Deep analysis saves to output/enriched/{asset_class}/, cache/portfolio_analysis/{asset_class}/, and output/deep_analysis_{asset_class}/ directories
             for asset_class in ["stock", "etf", "crypto"]:
-                # Try multiple directory structures (cache first for Python scorer results, then output directories)
-                for base_dir in [f"cache/portfolio_analysis/{asset_class}", f"output/deep_analysis_{asset_class}", f"output/{asset_class}"]:
+                # Try multiple directory structures (enriched first, then cache, then legacy output directories)
+                for base_dir in [f"output/enriched/{asset_class}", f"cache/portfolio_analysis/{asset_class}", f"output/deep_analysis_{asset_class}", f"output/{asset_class}"]:
                     asset_dir = Path(base_dir)
                     if asset_dir.exists():
-                        # Match files with either session_id or timestamp pattern (cache uses YYYY-MM-DD pattern)
-                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob("*_output_*.json")) + list(asset_dir.glob("*_20*.json")):
+                        # Match files with various patterns: session_id, timestamp, enriched, or date patterns
+                        for json_file in list(asset_dir.glob(f"*_{session_id}.json")) + list(asset_dir.glob("*_enriched.json")) + list(asset_dir.glob("*_output_*.json")) + list(asset_dir.glob("*_20*.json")):
                             try:
                                 data = self._read_json_file(str(json_file))
 
                                 # Handle different data structures:
                                 # 1. Cache format: {"ticker": "X", "analysis": {...}}
                                 # 2. CrewAI format: {"pydantic": {...}}
-                                # 3. Direct format: {"ticker": "X", "composite_score": ...}
+                                # 3. Enriched format: {"ticker": "X", "final_score": ..., "quantitative": {...}}
+                                # 4. Direct format: {"ticker": "X", "composite_score": ...}
                                 if "analysis" in data and isinstance(data["analysis"], dict):
                                     # Cache format - extract analysis data
                                     analysis_data = data["analysis"]
@@ -336,8 +343,23 @@ class ReportingOrchestrator:
                                     # CrewAI format
                                     analysis_data = data["pydantic"]
                                 else:
-                                    # Direct format
+                                    # Direct or enriched format
                                     analysis_data = data
+
+                                # Normalize field names for enriched format
+                                # Map final_score -> composite_score, final_grade -> grade
+                                if "final_score" in analysis_data and "composite_score" not in analysis_data:
+                                    analysis_data["composite_score"] = analysis_data["final_score"]
+                                if "final_grade" in analysis_data and "grade" not in analysis_data:
+                                    analysis_data["grade"] = analysis_data["final_grade"]
+
+                                # Extract from nested quantitative if needed
+                                if "quantitative" in analysis_data and isinstance(analysis_data["quantitative"], dict):
+                                    quant = analysis_data["quantitative"]
+                                    if "composite_score" not in analysis_data and "composite_score" in quant:
+                                        analysis_data["composite_score"] = quant["composite_score"]
+                                    if "grade" not in analysis_data and "grade" in quant:
+                                        analysis_data["grade"] = quant["grade"]
 
                                 ticker = analysis_data.get("ticker")
                                 if ticker and ticker not in raw_deep_analysis:  # Avoid duplicates
@@ -644,5 +666,65 @@ class ReportingOrchestrator:
         # Store in state for final report access
         if hasattr(self.state, "generated_html_reports"):
             self.state.generated_html_reports = generated_reports
+
+        return generated_reports
+
+    def generate_enriched_html_reports(self) -> dict[str, list[Path]]:
+        """
+        Generate HTML reports from all enriched JSON files.
+
+        Scans output/enriched/{asset_class}/ directories for *_enriched.json files
+        and generates corresponding HTML reports using EnrichedAnalysisReportGenerator.
+
+        Returns:
+            Dictionary mapping asset classes to lists of generated HTML paths
+
+        """
+        from finwiz.reporting.enriched_analysis_report_generator import EnrichedAnalysisReportGenerator
+
+        generated_reports: dict[str, list[Path]] = {}
+        total_generated = 0
+        total_failed = 0
+
+        generator = EnrichedAnalysisReportGenerator()
+        self.logger.info("🔄 Generating HTML reports from enriched JSON files...")
+
+        # Scan enriched directories for each asset class
+        for asset_class in ["stock", "etf", "crypto"]:
+            generated_for_asset: list[Path] = []
+
+            # Check both session-specific and direct asset class directories
+            session_id = self.state.session_id or "default"
+            for base_dir in [f"output/enriched/{session_id}/{asset_class}", f"output/enriched/{asset_class}"]:
+                enriched_dir = Path(base_dir)
+                if not enriched_dir.exists():
+                    continue
+
+                for json_file in enriched_dir.glob("*_enriched.json"):
+                    try:
+                        # Load enriched data
+                        data = json.loads(json_file.read_text())
+                        ticker = data.get("ticker", json_file.stem.replace("_enriched", ""))
+
+                        # Generate HTML path
+                        html_path = json_file.with_suffix(".html")
+
+                        # Generate HTML report
+                        generator.generate_and_save_report(data, str(html_path))
+
+                        generated_for_asset.append(html_path)
+                        total_generated += 1
+                        self.logger.debug(f"✅ Generated HTML: {html_path}")
+
+                    except Exception as e:
+                        total_failed += 1
+                        self.logger.warning(f"Failed to generate HTML for {json_file}: {e}")
+
+            if generated_for_asset:
+                generated_reports[asset_class] = generated_for_asset
+
+        self.logger.info(
+            f"📊 HTML report generation complete: {total_generated} generated, {total_failed} failed"
+        )
 
         return generated_reports
