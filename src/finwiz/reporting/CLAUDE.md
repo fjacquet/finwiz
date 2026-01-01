@@ -42,6 +42,18 @@ reporting/
 | `report_section_generators.py` | `generate_holdings_analysis()` | Holdings analysis HTML |
 | `report_section_generators.py` | `generate_recommendations()` | Recommendations section HTML |
 
+## Data Format Handling
+
+The `individual_report_generator.py` handles two JSON formats:
+
+1. **Nested format** (enriched JSON): Qualitative sections under `result["qualitative"]`
+2. **Flat format** (legacy): Qualitative sections at top-level
+
+The generator automatically checks both locations using fallback pattern:
+```python
+sec_insights = result.get("sec_insights") or qualitative_container.get("sec_insights", {})
+```
+
 ## AI Minimalism Principle
 
 Report generation is 100% Python - no AI involved:
