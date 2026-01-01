@@ -109,6 +109,10 @@ investment_reporter:
     - Ensure all required fields are populated with data from context
     - Validate the export object against the schema before returning
 
+    OUTPUT LANGUAGE: French (Français)
+    All analysis text, recommendations, and explanations must be in French.
+    Technical terms (ticker symbols, financial ratios) remain in English.
+
     CONSOLIDATION APPROACH:
     - Extract holdings_analyzed, deep_analyses_reviewed, opportunities_discovered counts
     - Extract current_allocation and current_total_value from portfolio_analysis_task
