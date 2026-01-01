@@ -41,66 +41,6 @@ class TestFlowCacheIntegration:
         # Assert
         assert hasattr(flow_instance.deps, "cache_service")
 
-    @pytest.mark.skip(reason="_initialize_cache method not yet implemented in refactored flow")
-    @pytest.mark.asyncio
-    async def test_should_set_cache_enabled_when_connectivity_succeeds(self, flow_instance, mocker):
-        """Test cache_enabled is set to True when connectivity test passes."""
-        # Arrange
-        mock_cache_service = mocker.MagicMock()
-        mock_cache_service.initialize = mocker.AsyncMock(return_value=True)
-        flow_instance.deps.cache_service = mock_cache_service
-
-        # Act
-        await flow_instance._initialize_cache()
-
-        # Assert
-        assert flow_instance.deps.cache_enabled is True
-        mock_cache_service.initialize.assert_called_once()
-
-    @pytest.mark.skip(reason="_initialize_cache method not yet implemented in refactored flow")
-    @pytest.mark.asyncio
-    async def test_should_set_cache_disabled_when_connectivity_fails(self, flow_instance, mocker):
-        """Test cache_enabled is set to False when connectivity test fails."""
-        # Arrange
-        mock_cache_service = mocker.MagicMock()
-        mock_cache_service.initialize = mocker.AsyncMock(return_value=False)
-        flow_instance.deps.cache_service = mock_cache_service
-
-        # Act
-        await flow_instance._initialize_cache()
-
-        # Assert
-        assert flow_instance.deps.cache_enabled is False
-        mock_cache_service.initialize.assert_called_once()
-
-    @pytest.mark.skip(reason="_initialize_cache method not yet implemented in refactored flow")
-    @pytest.mark.asyncio
-    async def test_should_handle_cache_initialization_error_gracefully(self, flow_instance, mocker):
-        """Test cache initialization handles errors gracefully."""
-        # Arrange
-        mock_cache_service = mocker.MagicMock()
-        mock_cache_service.initialize = mocker.AsyncMock(side_effect=Exception("Connection failed"))
-        flow_instance.deps.cache_service = mock_cache_service
-
-        # Act
-        await flow_instance._initialize_cache()
-
-        # Assert
-        assert flow_instance.deps.cache_enabled is False
-
-    @pytest.mark.skip(reason="_initialize_cache method not yet implemented in refactored flow")
-    @pytest.mark.asyncio
-    async def test_should_set_cache_disabled_when_no_cache_service(self, flow_instance):
-        """Test cache_enabled is False when cache_service is None."""
-        # Arrange
-        flow_instance.deps.cache_service = None
-
-        # Act
-        await flow_instance._initialize_cache()
-
-        # Assert
-        assert flow_instance.deps.cache_enabled is False
-
     def test_should_skip_cache_when_cache_not_enabled(self, flow_instance, mocker):
         """Test cache operations are skipped when cache_enabled is False."""
         # Arrange

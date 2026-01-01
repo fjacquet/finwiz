@@ -135,21 +135,6 @@ class TestCriticalFieldsValidation:
         # Implementation adds " (missing)" suffix to field names
         assert any("market_cap" in field for field in exc_info.value.missing_fields)
 
-    @pytest.mark.skip(reason="Data quality tracking feature not fully implemented - tracked in separate issue")
-    def test_should_track_defaulted_optional_fields_in_data_quality(self, scorer, complete_stock_data):
-        """Test that defaulted optional fields are tracked in data quality metrics."""
-        # Arrange - Remove optional field
-        data_without_optional = complete_stock_data.copy()
-        del data_without_optional["profit_margin"]  # Optional
-
-        # Act
-        result = scorer.calculate_composite_score("AAPL", "stock", data_without_optional)
-
-        # Assert - Check data quality tracking
-        data_quality = result.data_quality
-        assert "defaulted_fields" in data_quality["field_tracking"]
-        assert "profit_margin" in data_quality["field_tracking"]["defaulted_fields"]
-
     def test_should_include_critical_field_error_in_lineage(self, scorer):
         """Test that critical field errors are tracked in lineage."""
         # Arrange - Missing critical field

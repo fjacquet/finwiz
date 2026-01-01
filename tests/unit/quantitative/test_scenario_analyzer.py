@@ -226,144 +226,6 @@ class TestScenarioAnalyzer:
         # monte_carlo_result can be None in simplified implementation
         assert result.monte_carlo_result is None or isinstance(result.monte_carlo_result, MonteCarloResult)
 
-    @pytest.mark.skip(reason="Testing private method _run_what_if_analysis - implementation detail")
-    @pytest.mark.asyncio
-    async def test_should_run_what_if_analysis_when_called_directly(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
-        # Arrange
-        scenario_params = ScenarioParameters(
-            capital_amounts=[0, 20000],  # 20000 is different from base 10000
-            tolerance_levels=[0.05],  # Same as base to test skipping
-            transaction_cost_rates=[0.001],  # Same as base to test skipping
-            rebalancing_methods=[RebalancingMethod.MINIMIZE_TRADES],  # Same as base to test skipping
-        )
-
-        # Act
-        scenarios = await scenario_analyzer._run_what_if_analysis(sample_portfolio_config, scenario_params, mock_rebalancing_engine)
-
-        # Assert
-        assert len(scenarios) == 2  # Both capital scenarios should be included
-        scenario_names = [s.scenario_name for s in scenarios]
-        assert "Capital: $0" in scenario_names
-        assert "Capital: $20,000" in scenario_names
-        assert all("available_capital" in s.modified_parameters for s in scenarios)
-
-    @pytest.mark.skip(reason="Testing private method _analyze_single_scenario - implementation detail")
-    @pytest.mark.asyncio
-    async def test_should_analyze_single_scenario_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
-        # Arrange
-        modified_config = sample_portfolio_config.model_copy()
-        modified_config.available_capital = 20000.0
-
-        # Act
-        scenario = await scenario_analyzer._analyze_single_scenario(
-            "Test Scenario", {"available_capital": 20000.0}, modified_config, sample_portfolio_config, mock_rebalancing_engine
-        )
-
-        # Assert
-        assert isinstance(scenario, AlternativeScenario)
-        assert scenario.scenario_name == "Test Scenario"
-        assert scenario.modified_parameters == {"available_capital": 20000.0}
-        assert isinstance(scenario.cost_difference, float)
-        assert isinstance(scenario.risk_difference, float)
-
-    @pytest.mark.skip(reason="Testing private method _run_sensitivity_analysis - implementation detail")
-    @pytest.mark.asyncio
-    async def test_should_run_sensitivity_analysis_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
-        # Arrange
-        scenario_params = ScenarioParameters(tolerance_levels=[0.01, 0.05, 0.10], transaction_cost_rates=[0.0005, 0.001, 0.002], capital_amounts=[0, 5000, 10000])
-
-        # Act
-        results = await scenario_analyzer._run_sensitivity_analysis(sample_portfolio_config, scenario_params, mock_rebalancing_engine)
-
-        # Assert
-        assert len(results) == 3  # tolerance, transaction_cost, capital
-        assert all(isinstance(r, SensitivityResult) for r in results)
-
-        parameter_names = [r.parameter_name for r in results]
-        assert "tolerance_band" in parameter_names
-        assert "transaction_cost_rate" in parameter_names
-        assert "available_capital" in parameter_names
-
-    @pytest.mark.skip(reason="Testing private method _analyze_parameter_sensitivity - implementation detail")
-    @pytest.mark.asyncio
-    async def test_should_analyze_parameter_sensitivity_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
-        # Arrange
-        parameter_values = [0.01, 0.05, 0.10]
-
-        def config_modifier(config, value):
-            config.global_tolerance = value
-
-        # Act
-        result = await scenario_analyzer._analyze_parameter_sensitivity("tolerance_band", parameter_values, sample_portfolio_config, config_modifier, mock_rebalancing_engine)
-
-        # Assert
-        assert isinstance(result, SensitivityResult)
-        assert result.parameter_name == "tolerance_band"
-        assert result.parameter_values == parameter_values
-        assert len(result.outcome_values) == len(parameter_values)
-        assert isinstance(result.sensitivity_score, float)
-        assert result.optimal_value in parameter_values
-
-    @pytest.mark.skip(reason="Testing private method _run_monte_carlo_simulation - implementation detail")
-    @pytest.mark.asyncio
-    async def test_should_run_monte_carlo_simulation_when_called(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):
-        # Act
-        result = await scenario_analyzer._run_monte_carlo_simulation(sample_portfolio_config, mock_rebalancing_engine, num_simulations=100, time_horizon_days=50)
-
-        # Assert
-        assert isinstance(result, MonteCarloResult)
-        assert result.num_simulations == 100
-        assert result.time_horizon_days == 50
-        assert result.mean_portfolio_value > 0
-        assert 0 <= result.probability_of_loss <= 1
-        assert result.mean_rebalancing_frequency >= 0
-        assert len(result.percentiles) == 6  # 5, 10, 25, 75, 90, 95
-
-    @pytest.mark.skip(reason="Testing private method _simulate_rebalancing_events - implementation detail")
-    def test_should_simulate_rebalancing_events_when_called(self, scenario_analyzer):
-        # Arrange
-        np.random.seed(42)
-        price_path = np.array([100, 102, 98, 105, 95, 110, 90, 115])
-        tolerance = 0.05
-
-        # Act
-        events = scenario_analyzer._simulate_rebalancing_events(price_path, tolerance)
-
-        # Assert
-        assert isinstance(events, list)
-        assert all(isinstance(day, int) for day in events)
-        assert all(0 <= day < len(price_path) for day in events)
-
-    @pytest.mark.skip(reason="Testing private method _generate_scenario_comparisons - implementation detail")
-    def test_should_generate_scenario_comparisons_when_called(self, scenario_analyzer):
-        # Arrange
-        scenarios = [
-            AlternativeScenario(
-                scenario_name="High Cost",
-                modified_parameters={"cost": "high"},
-                projected_outcome="Higher costs",
-                cost_difference=100.0,
-                risk_difference=0.1,
-            ),
-            AlternativeScenario(
-                scenario_name="Low Cost",
-                modified_parameters={"cost": "low"},
-                projected_outcome="Lower costs",
-                cost_difference=-50.0,
-                risk_difference=-0.05,
-            ),
-        ]
-
-        # Act
-        comparisons = scenario_analyzer._generate_scenario_comparisons(scenarios)
-
-        # Assert
-        assert len(comparisons) >= 0
-        if comparisons:
-            assert all(isinstance(c, ScenarioComparison) for c in comparisons)
-            comparison = comparisons[0]
-            assert comparison.preferred_scenario in [s.scenario_name for s in scenarios]
-
     def test_should_determine_optimal_parameters_when_called(self, scenario_analyzer):
         # Arrange
         sensitivity_results = [
@@ -445,34 +307,6 @@ class TestScenarioAnalyzer:
         assert any("var" in warning.lower() or "downside risk" in warning.lower() for warning in warnings)
         assert any("sensitivity" in warning.lower() for warning in warnings)
 
-    @pytest.mark.skip(reason="Testing private method _generate_implementation_notes - implementation detail")
-    def test_should_generate_implementation_notes_when_called(self, scenario_analyzer):
-        # Arrange
-        optimal_parameters = {"tolerance_band": 0.05, "transaction_cost_rate": 0.001, "recommended_rebalancing_frequency": 4.0}
-
-        scenario_comparisons = [
-            ScenarioComparison(
-                base_scenario="Base",
-                alternative_scenario="Alternative",
-                return_difference=0.01,
-                risk_difference=-0.1,
-                cost_difference=-50.0,
-                risk_adjusted_return_difference=0.015,
-                efficiency_score=8.0,
-                preferred_scenario="Alternative",
-                rationale="Better risk-return profile",
-            )
-        ]
-
-        # Act
-        notes = scenario_analyzer._generate_implementation_notes(optimal_parameters, scenario_comparisons)
-
-        # Assert
-        assert len(notes) > 0
-        assert any("tolerance" in note.lower() for note in notes)
-        assert any("transaction cost" in note.lower() for note in notes)
-        assert any("rebalance" in note.lower() for note in notes)
-
     def test_should_create_executive_summary_when_called(self, scenario_analyzer):
         # Arrange
         optimal_parameters = {"tolerance_band": 0.05}
@@ -507,28 +341,6 @@ class TestScenarioAnalyzer:
         assert len(summary) >= 100
         assert "SCENARIO ANALYSIS" in summary or "scenario" in summary.lower()
         assert "transaction costs" in summary.lower() or "costs" in summary.lower()
-
-    @pytest.mark.skip(reason="Testing private method _analyze_single_scenario - implementation detail")
-    @pytest.mark.asyncio
-    async def test_should_handle_analysis_failure_gracefully_when_error_occurs(self, scenario_analyzer, sample_portfolio_config, mocker):
-        # Arrange
-        failing_engine = mocker.AsyncMock()
-        failing_engine.optimize_rebalancing_trades.side_effect = Exception("API Error")
-
-        # Act
-        scenario = await scenario_analyzer._analyze_single_scenario(
-            "Failing Scenario",
-            {"test": "failure"},  # This triggers the exception in the code
-            sample_portfolio_config,
-            sample_portfolio_config,
-            failing_engine,
-        )
-
-        # Assert
-        assert isinstance(scenario, AlternativeScenario)
-        assert "Analysis failed" in scenario.projected_outcome
-        assert scenario.cost_difference == approx(0.0)
-        assert scenario.risk_difference == approx(0.0)
 
     @pytest.mark.asyncio
     async def test_should_use_default_parameters_when_none_provided(self, scenario_analyzer, sample_portfolio_config, mock_rebalancing_engine):

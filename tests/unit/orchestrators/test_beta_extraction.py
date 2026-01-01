@@ -205,57 +205,6 @@ class TestBetaExtraction:
         assert flattened["rsi"] == approx(65.5)
         assert flattened["current_price"] == approx(150.0)
 
-    @pytest.mark.skip(reason="Logging path changed in Phase 1.1 refactoring - internal behavior test")
-    def test_missing_beta_logs_warning(self, mocker, sample_ticker_result, sample_company_result):
-        """
-        Test that missing beta field is properly logged.
-
-        When quantitative tool returns data without beta in performance_metrics,
-        the orchestrator should log a warning to help debugging.
-        """
-        # Mock flow state
-        mock_state = mocker.Mock()
-        mock_state.full_date = "2025-01-20"
-        mock_state.portfolio_review = {"holdings": []}
-
-        orchestrator = DeepAnalysisOrchestrator(state=mock_state)
-
-        # Mock tools (patch _run method directly on tool classes)
-        mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run", return_value=sample_ticker_result)
-
-        mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run", return_value=sample_company_result)
-
-        # Quantitative tool returns data WITHOUT beta
-        quant_result_no_beta = {
-            "performance_metrics": {
-                "volatility": 0.25,
-                # beta is missing!
-            }
-        }
-        mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(quant_result_no_beta))
-
-        # Mock sentiment and SEC
-        mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run", return_value="# Sentiment\n\nPositive")
-
-        mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run", return_value="# SEC Analysis\n\nNo filings")
-
-        # Spy on logger to verify warning (logger is now on data_collector)
-        mock_logger = mocker.patch.object(orchestrator.data_collector, "logger")
-
-        # Call data collection (method moved to data_collector in Phase 1.1 refactoring)
-        result = orchestrator.data_collector.collect_data(ticker="AAPL", asset_class="stock", batch_enabled=False)
-
-        # Verify beta is missing
-        assert "beta" not in result or result.get("beta") is None
-
-        # Verify warning was logged
-        warning_calls = [call for call in mock_logger.warning.call_args_list if "beta" in str(call).lower()]
-        assert len(warning_calls) > 0, "Should log warning about missing beta field"
-
-
-class TestCriticalFieldValidation:
-    """Test validation of all critical fields for each asset class."""
-
     @pytest.mark.parametrize(
         "asset_class,required_fields",
         [

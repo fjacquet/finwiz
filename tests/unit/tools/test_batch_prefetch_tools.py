@@ -237,48 +237,6 @@ class TestQuantitativeAnalysisToolWithPrefetch:
             index=dates,
         )
 
-    @pytest.mark.skip(reason="Requires refactoring - backtesting API has changed")
-    def test_should_use_prefetched_data_for_analysis(self, tool, prefetched_data, mocker):
-        """Test that quantitative analysis uses pre-fetched data."""
-        # Arrange
-        # Mock the backtesting to avoid complex setup
-        mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
-
-        # Act
-        result = tool._run(symbol="AAPL", period="1y", strategy="sma_crossover", prefetched_data=prefetched_data)
-
-        # Assert
-        assert "AAPL" in result
-        # Should use pre-fetched data (no API call)
-
-    @pytest.mark.skip(reason="Requires refactoring - backtesting API has changed")
-    def test_should_fallback_to_api_for_quantitative_analysis(self, tool, mocker):
-        """Test fallback to API for quantitative analysis."""
-        # Arrange
-        mock_hist_data = pd.DataFrame(
-            {
-                "Close": [150.0 + i * 0.5 for i in range(100)],
-                "Volume": [1000000 + i * 10000 for i in range(100)],
-                "High": [151.0 + i * 0.5 for i in range(100)],
-                "Low": [149.0 + i * 0.5 for i in range(100)],
-            },
-            index=pd.date_range("2024-01-01", periods=100, freq="D"),
-        )
-        mock_ticker = mocker.Mock()
-        mock_ticker.history.return_value = mock_hist_data
-        mocker.patch("yfinance.Ticker", return_value=mock_ticker)
-        mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
-
-        # Act
-        result = tool._run(symbol="MSFT", period="1y", strategy="sma_crossover", prefetched_data=None)
-
-        # Assert
-        assert "MSFT" in result
-
-
-class TestToolFactoriesWithPrefetch:
-    """Test tool factories with pre-fetched data support."""
-
     def test_should_pass_prefetched_data_to_stock_tools(self, mocker):
         """Test that tool factories pass pre-fetched data to tools."""
         # Arrange
