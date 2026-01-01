@@ -9,16 +9,13 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any, Literal, cast
 
 from finwiz.schemas.hybrid_analysis import (
     EnrichedAnalysis,
     QualitativeInsights,
     QuantitativeAnalysis,
 )
-
-if TYPE_CHECKING:
-    from finwiz.flows.hybrid_analysis_flow import HybridAnalysisState
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +30,14 @@ class HybridAnalysisSynthesizer:
     def synthesize(
         self,
         data: dict[str, Any],
-        state: HybridAnalysisState,
+        processing_start: float = 0.0,
     ) -> EnrichedAnalysis:
         """
         Synthesize quantitative and qualitative into final analysis.
 
         Args:
             data: Flow data containing both analyses
-            state: Flow state for timing information
+            processing_start: Start time for processing duration calculation
 
         Returns:
             EnrichedAnalysis Pydantic model
@@ -58,7 +55,7 @@ class HybridAnalysisSynthesizer:
             final_recommendation = self._synthesize_recommendation(quantitative, qualitative)
             executive_summary = self._generate_executive_summary(quantitative, qualitative)
             unique_insights_count = self._count_unique_insights(qualitative)
-            processing_time = self._calculate_processing_time(state)
+            processing_time = self._calculate_processing_time(processing_start)
             llm_cost = self._calculate_llm_cost(data)
 
             word_count = self._calculate_word_count_manually(
@@ -90,7 +87,7 @@ class HybridAnalysisSynthesizer:
 
         except Exception as e:
             self.logger.error(f"Synthesis failed for {ticker}: {e}")
-            return self.create_fallback_analysis(data, state)
+            return self.create_fallback_analysis(data, processing_start)
 
     def _synthesize_recommendation(
         self,
@@ -114,8 +111,7 @@ class HybridAnalysisSynthesizer:
             return python_rec
 
         self.logger.warning(
-            f"Recommendation discrepancy: Python={python_rec}, AI={ai_rec}. "
-            f"Using Python recommendation. Reasoning: {qualitative.investment_synthesis.confidence_rationale}"
+            f"Recommendation discrepancy: Python={python_rec}, AI={ai_rec}. Using Python recommendation. Reasoning: {qualitative.investment_synthesis.confidence_rationale}"
         )
         return python_rec
 
@@ -262,10 +258,10 @@ class HybridAnalysisSynthesizer:
         ]
         return len(set(insights))
 
-    def _calculate_processing_time(self, state: HybridAnalysisState) -> float:
+    def _calculate_processing_time(self, processing_start: float) -> float:
         """Calculate total processing time."""
-        if state.processing_start > 0:
-            return time.time() - state.processing_start
+        if processing_start > 0:
+            return time.time() - processing_start
         return 0.0
 
     def _calculate_llm_cost(self, data: dict[str, Any]) -> float:
@@ -276,22 +272,24 @@ class HybridAnalysisSynthesizer:
     def create_fallback_analysis(
         self,
         data: dict[str, Any],
-        state: HybridAnalysisState,
+        processing_start: float = 0.0,
     ) -> EnrichedAnalysis:
         """
         Create fallback analysis using Python-only results.
 
         Args:
             data: Flow data containing at least quantitative_analysis
-            state: Flow state for timing
+            processing_start: Start time for processing duration calculation
 
         Returns:
             EnrichedAnalysis with LOW confidence
         """
         from finwiz.schemas.hybrid_analysis.qualitative import (
+            ActionPlan,
             ContextualRiskInsights,
             FundamentalContextInsights,
             InvestmentSynthesis,
+            ScenarioProbabilities,
             SecAnalysisInsights,
             TechnicalStrategyInsights,
         )
@@ -331,20 +329,19 @@ class HybridAnalysisSynthesizer:
                     "Fallback analysis based on Python calculations only. "
                     "AI analysis failed, so this analysis relies solely on quantitative metrics. "
                     "This is a degraded analysis mode that provides basic recommendations "
-                    "without the contextual insights normally provided by AI analysis. "
-                    + quantitative.python_rationale
+                    "without the contextual insights normally provided by AI analysis. " + quantitative.python_rationale
                 ),
                 bull_case="Unavailable due to AI failure. " * 10,
                 base_case="Unavailable due to AI failure. " * 10,
                 bear_case="Unavailable due to AI failure. " * 10,
-                scenario_probabilities={"bull": 0.0, "base": 1.0, "bear": 0.0},
-                final_recommendation=quantitative.preliminary_recommendation,
+                scenario_probabilities=ScenarioProbabilities(bull=0.0, base=1.0, bear=0.0),
+                final_recommendation=cast(Literal["BUY", "HOLD", "SELL"], quantitative.preliminary_recommendation),
                 recommendation_confidence="LOW",
-                action_plan={
-                    "immediate_actions": [],
-                    "monitoring_points": [],
-                    "exit_triggers": [],
-                },
+                action_plan=ActionPlan(
+                    immediate_actions=[],
+                    monitoring_points=[],
+                    exit_triggers=[],
+                ),
             ),
             analysis_timestamp=datetime.now(),
             ai_confidence=0.0,
@@ -361,9 +358,7 @@ class HybridAnalysisSynthesizer:
             executive_summary += " Analysis based on quantitative metrics only."
 
         investment_rationale = (
-            fallback_prefix
-            + "This fallback analysis provides basic investment recommendations based on quantitative scoring only. "
-            + quantitative.python_rationale
+            fallback_prefix + "This fallback analysis provides basic investment recommendations based on quantitative scoring only. " + quantitative.python_rationale
         )
         while len(investment_rationale) < 500:
             investment_rationale += f" Quantitative analysis indicates {quantitative.preliminary_recommendation} recommendation. "
@@ -382,6 +377,6 @@ class HybridAnalysisSynthesizer:
             investment_rationale=investment_rationale,
             report_word_count=2000,  # Minimum required
             unique_insights_count=5,  # Minimum required
-            processing_time_seconds=self._calculate_processing_time(state),
+            processing_time_seconds=self._calculate_processing_time(processing_start),
             llm_cost_dollars=0.0,
         )

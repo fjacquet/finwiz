@@ -48,9 +48,9 @@ class VolatilityThresholds(BaseModel):
 class RiskManagerConfig(BaseModel):
     """Risk manager configuration."""
 
-    concentration_limits: ConcentrationLimits = Field(default_factory=ConcentrationLimits)
-    turnover_limits: TurnoverLimits = Field(default_factory=TurnoverLimits)
-    volatility_thresholds: VolatilityThresholds = Field(default_factory=VolatilityThresholds)
+    concentration_limits: ConcentrationLimits = Field(default_factory=lambda: ConcentrationLimits())
+    turnover_limits: TurnoverLimits = Field(default_factory=lambda: TurnoverLimits())
+    volatility_thresholds: VolatilityThresholds = Field(default_factory=lambda: VolatilityThresholds())
 
     # Global settings
     enable_risk_monitoring: bool = Field(True, description="Enable risk monitoring")

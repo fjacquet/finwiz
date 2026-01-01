@@ -8,9 +8,11 @@ with fresh financial data and prune outdated information.
 
 import datetime
 import logging
+from typing import cast
 
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 from crewai_tools import RagTool
+from crewai_tools.tools.rag.types import RagToolConfig
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
 from finwiz.tools.save_to_rag_tool import SaveToRagTool
@@ -35,7 +37,7 @@ def update_market_data(tickers: list[str], collection_suffix: str | None = None)
         config["vectordb"]["config"] = config["vectordb"]["config"].copy()
         config["vectordb"]["config"]["collection_name"] = f"finwiz-{collection_suffix}"
 
-    rag_tool = RagTool(config=config, summarize=True)
+    rag_tool = RagTool(config=cast(RagToolConfig, config), summarize=True)
     save_tool = SaveToRagTool(rag_tool=rag_tool)
 
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")

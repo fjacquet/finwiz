@@ -7,6 +7,9 @@ Part of Phase 2A refactoring using Strategy Pattern.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import ClassVar
+
 from finwiz.scoring.asset_analyzers.base import AssetAnalyzer
 from finwiz.scoring.asset_analyzers.crypto_analyzer import CryptoAnalyzer
 from finwiz.scoring.asset_analyzers.etf_analyzer import ETFAnalyzer
@@ -22,7 +25,8 @@ class AnalyzerFactory:
     """
 
     # Registry of available analyzers
-    _ANALYZERS = {
+    # Type annotation uses Callable to avoid mypy error about instantiating abstract class
+    _ANALYZERS: ClassVar[dict[str, Callable[[], AssetAnalyzer]]] = {
         "stock": StockAnalyzer,
         "etf": ETFAnalyzer,
         "crypto": CryptoAnalyzer,

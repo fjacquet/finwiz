@@ -173,7 +173,7 @@ class CoinMarketCapListTool(BaseTool):
                 "Accept": "application/json",
             }
 
-            params = {"limit": limit, "sort": sort_by, "convert": "USD"}
+            params: dict[str, str] = {"limit": str(limit), "sort": sort_by, "convert": "USD"}
 
             response = requests.get(
                 f"{CMC_BASE_URL}/cryptocurrency/listings/latest",

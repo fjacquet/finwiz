@@ -5,7 +5,7 @@ This module contains custom exception classes and error management utilities
 for handling various types of failures in Perplexity API interactions.
 """
 
-from typing import Any
+from typing import Any, Literal, cast
 
 from finwiz.schemas.perplexity import SonarSearchResult
 
@@ -55,8 +55,8 @@ class PerplexityFallbackManager:
         return SonarSearchResult(
             query=query,
             ticker=ticker,
-            asset_type=asset_type,
-            analysis_type=analysis_type,
+            asset_type=cast(Literal["stock", "etf", "crypto"], asset_type),
+            analysis_type=cast(Literal["sentiment", "technical", "fundamental", "general"], analysis_type),
             results=[],
             total_results=0,
             search_time_ms=0,
@@ -100,13 +100,13 @@ class PerplexityFallbackManager:
         # Add jitter (±25% of delay)
         jitter = delay * 0.25 * (2 * random.random() - 1)
 
-        return max(0.1, delay + jitter)
+        return float(max(0.1, delay + jitter))
 
     @staticmethod
     def extract_rate_limit_info(error: Exception) -> dict[str, Any]:
         """Extract rate limit information from error."""
         error_str = str(error)
-        info = {"is_rate_limit": False}
+        info: dict[str, Any] = {"is_rate_limit": False}
 
         if "rate limit" in error_str.lower() or "429" in error_str:
             info["is_rate_limit"] = True

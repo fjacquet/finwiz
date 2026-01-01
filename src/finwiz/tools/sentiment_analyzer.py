@@ -15,7 +15,7 @@ import re
 from typing import Any
 
 import aiohttp
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.schemas.stock import MarketSentiment, SentimentItem
@@ -173,11 +173,11 @@ class SentimentAnalyzer:
         source_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Process results and handle exceptions
-        valid_sources = []
-        all_articles = []
+        valid_sources: list[dict[str, Any]] = []
+        all_articles: list[dict[str, Any]] = []
 
         for i, result in enumerate(source_results):
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 logger.warning(f"Source {i} failed: {result}")
                 continue
             if result:
@@ -222,11 +222,11 @@ class SentimentAnalyzer:
             end_time = datetime.datetime.now()
             start_time = end_time - datetime.timedelta(days=days_back)
 
-            params = {
+            params: dict[str, str] = {
                 "function": "NEWS_SENTIMENT",
                 "tickers": ticker,
                 "sort": "LATEST",
-                "limit": max_articles,
+                "limit": str(max_articles),
                 "time_from": start_time.strftime("%Y%m%dT%H%M"),
                 "time_to": end_time.strftime("%Y%m%dT%H%M"),
                 "apikey": self.alpha_vantage_api_key,

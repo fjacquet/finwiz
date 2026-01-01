@@ -12,7 +12,7 @@ from typing import Any
 from finwiz.schemas.quantitative.config_models import BacktestConfig, QuantConfig, ScreenerConfig
 
 
-class QuantitativeConfigManager:
+class QuantitativeConfigManager:  # noqa: PLR0904
     """
     Manager class for quantitative analysis configuration.
 
@@ -49,21 +49,21 @@ class QuantitativeConfigManager:
 
         logger = get_logger(__name__)
 
-        config_data = {}
+        config_data: dict[str, Any] = {}
 
         # Load from environment variables
-        if os.getenv("QUANT_PRIMARY_DATA_PROVIDER"):
-            config_data["primary_data_provider"] = os.getenv("QUANT_PRIMARY_DATA_PROVIDER")
+        if provider := os.getenv("QUANT_PRIMARY_DATA_PROVIDER"):
+            config_data["primary_data_provider"] = provider
 
-        if os.getenv("QUANT_LOOKBACK_DAYS"):
+        if lookback_str := os.getenv("QUANT_LOOKBACK_DAYS"):
             try:
-                config_data["default_lookback_days"] = int(os.getenv("QUANT_LOOKBACK_DAYS"))
+                config_data["default_lookback_days"] = int(lookback_str)
             except ValueError:
                 logger.warning("Invalid QUANT_LOOKBACK_DAYS value, using default")
 
-        if os.getenv("QUANT_RISK_FREE_RATE"):
+        if rate_str := os.getenv("QUANT_RISK_FREE_RATE"):
             try:
-                config_data["risk_free_rate"] = float(os.getenv("QUANT_RISK_FREE_RATE"))
+                config_data["risk_free_rate"] = float(rate_str)
             except ValueError:
                 logger.warning("Invalid QUANT_RISK_FREE_RATE value, using default")
 
@@ -79,23 +79,23 @@ class QuantitativeConfigManager:
 
         logger = get_logger(__name__)
 
-        config_data = {}
+        config_data: dict[str, Any] = {}
 
         # Load from environment variables
-        if os.getenv("BACKTEST_INITIAL_CAPITAL"):
+        if capital_str := os.getenv("BACKTEST_INITIAL_CAPITAL"):
             try:
-                config_data["initial_capital"] = float(os.getenv("BACKTEST_INITIAL_CAPITAL"))
+                config_data["initial_capital"] = float(capital_str)
             except ValueError:
                 logger.warning("Invalid BACKTEST_INITIAL_CAPITAL value, using default")
 
-        if os.getenv("BACKTEST_COMMISSION_PCT"):
+        if commission_str := os.getenv("BACKTEST_COMMISSION_PCT"):
             try:
-                config_data["commission_pct"] = float(os.getenv("BACKTEST_COMMISSION_PCT"))
+                config_data["commission_pct"] = float(commission_str)
             except ValueError:
                 logger.warning("Invalid BACKTEST_COMMISSION_PCT value, using default")
 
-        if os.getenv("BACKTEST_FRAMEWORK"):
-            config_data["framework"] = os.getenv("BACKTEST_FRAMEWORK")
+        if framework := os.getenv("BACKTEST_FRAMEWORK"):
+            config_data["framework"] = framework
 
         return BacktestConfig(**config_data)
 
@@ -105,18 +105,18 @@ class QuantitativeConfigManager:
 
         logger = get_logger(__name__)
 
-        config_data = {}
+        config_data: dict[str, Any] = {}
 
         # Load from environment variables
-        if os.getenv("SCREENER_MIN_MARKET_CAP"):
+        if market_cap_str := os.getenv("SCREENER_MIN_MARKET_CAP"):
             try:
-                config_data["min_market_cap"] = float(os.getenv("SCREENER_MIN_MARKET_CAP"))
+                config_data["min_market_cap"] = float(market_cap_str)
             except ValueError:
                 logger.warning("Invalid SCREENER_MIN_MARKET_CAP value, using default")
 
-        if os.getenv("SCREENER_MAX_RESULTS"):
+        if max_results_str := os.getenv("SCREENER_MAX_RESULTS"):
             try:
-                config_data["max_results"] = int(os.getenv("SCREENER_MAX_RESULTS"))
+                config_data["max_results"] = int(max_results_str)
             except ValueError:
                 logger.warning("Invalid SCREENER_MAX_RESULTS value, using default")
 

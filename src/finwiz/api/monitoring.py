@@ -8,7 +8,7 @@ health status, and alert information for the Investment Discovery system.
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query  # type: ignore[import-not-found]  # fastapi may not be installed
+from fastapi import APIRouter, HTTPException, Query  # fastapi may not be installed
 from pydantic import BaseModel, Field
 
 from finwiz.monitoring.alerting import AlertSeverity, get_alert_manager
@@ -353,28 +353,60 @@ async def test_discovery_monitoring() -> dict[str, Any]:
         monitor.record_discovery_start(test_id, "test")
 
         # Simulate completion
-        from finwiz.schemas.investment_discovery import APlusDiscoveryResult, InvestmentCandidate
+        from finwiz.schemas.investment_discovery import (
+            APlusAnalysis,
+            APlusCriteria,
+            APlusDiscoveryResult,
+            InvestmentCandidate,
+            MarketRegime,
+        )
+
+        # Create a valid InvestmentCandidate with all required fields
+        test_candidate = InvestmentCandidate(
+            symbol="TEST",
+            name="Test Investment",
+            asset_type="stock",
+            current_price=100.0,
+            market_cap=1000000000.0,
+            preliminary_score=0.95,
+            final_score=0.95,
+            grade="A+",
+            grade_description="Test investment for monitoring",
+            recommended_action="BUY",
+            data_source="test",
+            risk_assessment=None,  # Optional field
+        )
+
+        # Wrap in APlusAnalysis as required by a_plus_candidates
+        test_analysis = APlusAnalysis(
+            candidate=test_candidate,
+            fundamental_score=0.95,
+            technical_score=0.90,
+            quality_score=0.92,
+            risk_score=0.88,
+            composite_score=0.95,
+            confidence_level=0.90,
+            is_a_plus_candidate=True,
+            rationale=["Test investment for monitoring"],
+            market_context=None,  # Optional field
+            criteria_used=None,  # Optional field
+        )
 
         test_result = APlusDiscoveryResult(
-            asset_type="test",
-            candidates=[
-                InvestmentCandidate(
-                    symbol="TEST",
-                    name="Test Investment",
-                    asset_type="test",
-                    current_price=100.0,
-                    market_cap=1000000000.0,
-                    preliminary_score=0.95,
-                    final_grade="A+",
-                    confidence_level=0.9,
-                    rationale=["Test investment for monitoring"],
-                )
-            ],
+            asset_type="stock",
+            a_plus_candidates=[test_analysis],
             discovery_timestamp=datetime.now(),
-            total_candidates_screened=1,
-            a_plus_candidates_found=1,
-            screening_criteria={"test": True},
-            market_context={"test_mode": True},
+            total_screened=1,
+            candidates_found=1,
+            discovery_criteria=APlusCriteria(),
+            market_context=MarketRegime(
+                regime_type="sideways",
+                vix_level=20.0,
+                inflation_rate=3.0,
+                interest_rate_trend="stable",
+                market_stress_level="low",
+            ),
+            ucits_compliant_count=None,  # Optional field
         )
 
         monitor.record_discovery_completion(test_id, test_result, 5.0, True)

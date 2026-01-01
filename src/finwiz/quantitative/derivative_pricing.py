@@ -228,7 +228,7 @@ class QuantLibPricer:
             raise RuntimeError("QuantLib not available for advanced pricing models")
 
         try:
-            import QuantLib as ql  # type: ignore[import-untyped]  # QuantLib has no official type stubs
+            import QuantLib as ql  # QuantLib has no official type stubs
 
             # Set up QuantLib calculation date
             ql.Settings.instance().evaluationDate = ql.Date.todaysDate()
@@ -305,7 +305,7 @@ class QuantLibPricer:
             raise RuntimeError("QuantLib not available for bond pricing")
 
         try:
-            import QuantLib as ql  # type: ignore[import-untyped]  # QuantLib has no official type stubs
+            import QuantLib as ql  # QuantLib has no official type stubs
 
             # Set calculation date
             ql.Settings.instance().evaluationDate = ql.Date.todaysDate()
@@ -419,7 +419,7 @@ class SimpleBondPricer:
         # Modified duration
         modified_duration = macaulay_duration / (1 + ytm / frequency)
 
-        return modified_duration
+        return float(modified_duration)
 
     @staticmethod
     def _calculate_convexity(params: BondParameters) -> float:

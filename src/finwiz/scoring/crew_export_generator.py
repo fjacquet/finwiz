@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from finwiz.flow_state import DeepAnalysisResult
+from finwiz.schemas.common import RiskLevel
 from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
 
 logger = logging.getLogger(__name__)
@@ -44,9 +45,11 @@ class CrewExportGenerator:
         from finwiz.schemas.common import RiskAssessmentStandardized
 
         # Create risk assessment from result data
+        # Handle None risk_score with default of 0.5 (mid-range risk)
+        risk_score = result.risk_score if result.risk_score is not None else 0.5
         risk_assessment = RiskAssessmentStandardized(
-            score=float((1.0 - result.risk_score) * 5),
-            level=self._map_risk_level(result.risk_score),
+            score=float((1.0 - risk_score) * 5),
+            level=cast(RiskLevel, self._map_risk_level(risk_score)),
             risk_factors=self._extract_risk_factors(result.risk_details),
         )
 
@@ -243,29 +246,35 @@ class CrewExportGenerator:
 
         # Add asset-specific fundamental data
         if asset_class == "stock":
-            base_data.update({
-                "sec_filings": data.get("sec_filings", {}),
-                "financial_statements": data.get("financial_statements", {}),
-                "business_description": data.get("business_description", ""),
-                "risk_factors": data.get("risk_factors", []),
-                "competitive_advantages": data.get("competitive_advantages", []),
-            })
+            base_data.update(
+                {
+                    "sec_filings": data.get("sec_filings", {}),
+                    "financial_statements": data.get("financial_statements", {}),
+                    "business_description": data.get("business_description", ""),
+                    "risk_factors": data.get("risk_factors", []),
+                    "competitive_advantages": data.get("competitive_advantages", []),
+                }
+            )
         elif asset_class == "etf":
-            base_data.update({
-                "fund_objective": data.get("fund_objective", ""),
-                "benchmark_index": data.get("benchmark_index", ""),
-                "fund_family": data.get("fund_family", ""),
-                "inception_date": data.get("inception_date", ""),
-                "holdings_count": data.get("holdings_count", 0),
-            })
+            base_data.update(
+                {
+                    "fund_objective": data.get("fund_objective", ""),
+                    "benchmark_index": data.get("benchmark_index", ""),
+                    "fund_family": data.get("fund_family", ""),
+                    "inception_date": data.get("inception_date", ""),
+                    "holdings_count": data.get("holdings_count", 0),
+                }
+            )
         elif asset_class == "crypto":
-            base_data.update({
-                "whitepaper_url": data.get("whitepaper_url", ""),
-                "consensus_mechanism": data.get("consensus_mechanism", ""),
-                "use_cases": data.get("use_cases", []),
-                "development_activity": data.get("development_activity", {}),
-                "community_metrics": data.get("community_metrics", {}),
-            })
+            base_data.update(
+                {
+                    "whitepaper_url": data.get("whitepaper_url", ""),
+                    "consensus_mechanism": data.get("consensus_mechanism", ""),
+                    "use_cases": data.get("use_cases", []),
+                    "development_activity": data.get("development_activity", {}),
+                    "community_metrics": data.get("community_metrics", {}),
+                }
+            )
 
         return base_data
 

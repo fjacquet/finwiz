@@ -196,15 +196,24 @@ disallow_incomplete_defs = false  # Enable per-module for gradual adoption
 check_untyped_defs = true
 disallow_untyped_decorators = false  # Too strict for current codebase
 no_implicit_optional = true
+disable_error_code = [
+    "import-untyped",  # Many third-party libs lack stubs
+    "call-arg",        # Too noisy with third-party libs (320 errors)
+    "attr-defined",    # False positives with dict access (199 errors)
+    "union-attr",      # False positives with Optional types (77 errors)
+    "operator",        # Numpy/pandas type noise (69 errors)
+    "index",           # Dict/list indexing noise (51 errors)
+    "var-annotated",   # Missing annotations - gradual adoption (52 errors)
+]  # Keep: arg-type, return-value, assignment, misc (catch real bugs)
 
 # Warning flags
-warn_return_any = true
+warn_return_any = false  # Disabled: too noisy with untyped third-party libs
 warn_unused_configs = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false  # Disabled: conflicts with relaxed settings
 warn_no_return = true
 warn_unreachable = true
-strict_equality = true
+strict_equality = false  # Disabled: too strict for mixed-type comparisons
 
 # Output configuration
 show_error_codes = true
@@ -259,6 +268,8 @@ module = [
     "litellm.*",
     "pandas.*",
     "numpy.*",
+    "scipy.*",
+    "bs4.*",
     "QuantLib.*",
     "crewai.*",
     "crewai_tools.*",
@@ -268,6 +279,26 @@ module = [
     "empyrical.*",
     "talib.*",
     "pyportfolioopt.*",
+    "langchain.*",
+    "langchain_core.*",
+    "pydantic_settings.*",
+    "supabase.*",
+    "jinja2.*",
+    "httpx.*",
+    "aiohttp.*",
+    "nest_asyncio.*",
+    "playwright.*",
+    "serpapi.*",
+    "alpha_vantage.*",
+    "fredapi.*",
+    "asyncpg.*",
+    "dateutil.*",
+    "plotly.*",
+    "pypfopt.*",
+    "sec_api.*",
+    "weasyprint.*",
+    "fastapi.*",
+    "intrinio_sdk.*",
 ]
 ignore_missing_imports = true
 

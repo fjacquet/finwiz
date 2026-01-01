@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
@@ -42,7 +42,7 @@ class YahooFinanceHistoryTool(BaseTool):
         # Check for pre-fetched data first
         if prefetched_data is not None and ticker in prefetched_data:
             logger.debug(f"Using pre-fetched historical data for {ticker} (source: batch)")
-            cached_history = prefetched_data[ticker]
+            cached_history: dict[str, Any] = prefetched_data[ticker]
 
             # Add source indicator for debugging
             cached_history["data_source"] = "prefetched"

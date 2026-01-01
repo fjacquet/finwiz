@@ -1,9 +1,6 @@
 """Tests for session_validation module."""
 
 from datetime import datetime
-from pathlib import Path
-
-import pytest
 
 
 class TestSessionValidator:

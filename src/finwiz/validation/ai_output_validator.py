@@ -13,12 +13,22 @@ Key Features:
 """
 
 import logging
+from collections.abc import Callable
 from datetime import UTC
-from typing import Any
+from typing import Any, Literal, cast
 
 from pydantic import ValidationError
 
-from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
+from finwiz.schemas.hybrid_analysis.qualitative import (
+    ActionPlan,
+    ContextualRiskInsights,
+    FundamentalContextInsights,
+    InvestmentSynthesis,
+    QualitativeInsights,
+    ScenarioProbabilities,
+    SecAnalysisInsights,
+    TechnicalStrategyInsights,
+)
 from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
 
 logger = logging.getLogger(__name__)
@@ -274,51 +284,51 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
 
     # Create minimal qualitative insights from quantitative data
     return QualitativeInsights(
-        sec_insights={
-            "business_model": (
+        sec_insights=SecAnalysisInsights(
+            business_model=(
                 "AI analysis unavailable. Using quantitative metrics only. "
                 "Business model analysis requires AI crew execution which failed "
                 "after retry attempts. Recommendation based on quantitative grade "
                 f"and composite score of {quantitative.composite_score:.2f}. "
                 "This fallback provides minimal context based on Python calculations."
             ),
-            "competitive_advantages": ["Quantitative analysis indicates positive metrics"],
-            "risk_factors": ["AI qualitative analysis unavailable"],
-            "strategic_initiatives": [],
-        },
-        fundamental_context={
-            "industry_analysis": (
+            competitive_advantages=["Quantitative analysis indicates positive metrics"],
+            risk_factors=["AI qualitative analysis unavailable"],
+            strategic_initiatives=[],
+        ),
+        fundamental_context=FundamentalContextInsights(
+            industry_analysis=(
                 "Industry context analysis unavailable. AI crew execution failed. "
                 "Quantitative fundamental score available: "
                 f"{quantitative.fundamental_score:.2f}. "
                 "For detailed industry analysis, AI crew must execute successfully. "
                 "This fallback provides only quantitative metrics without industry context."
             ),
-            "growth_drivers": ["Based on quantitative fundamental metrics only"],
-            "competitive_positioning": ("Not assessed - AI analysis unavailable. Competitive positioning requires qualitative analysis which failed after retry attempts."),
-            "management_assessment": ("Not assessed - AI analysis unavailable. Management quality assessment requires qualitative analysis which failed after retry attempts."),
-        },
-        technical_strategy={
-            "chart_patterns": ["Technical analysis based on quantitative indicators only"],
-            "support_resistance": ("Not assessed - AI analysis unavailable. Support and resistance levels require qualitative chart analysis which failed after retry attempts."),
-            "entry_exit_strategy": (
+            growth_drivers=["Based on quantitative fundamental metrics only"],
+            competitive_positioning="Not assessed - AI analysis unavailable. Competitive positioning requires qualitative analysis which failed after retry attempts.",
+            management_assessment="Not assessed - AI analysis unavailable. Management quality assessment requires qualitative analysis which failed after retry attempts.",
+        ),
+        technical_strategy=TechnicalStrategyInsights(
+            chart_patterns=["Technical analysis based on quantitative indicators only"],
+            support_resistance="Not assessed - AI analysis unavailable. Support and resistance levels require qualitative chart analysis which failed after retry attempts.",
+            entry_exit_strategy=(
                 f"Based on quantitative analysis only. Grade: {quantitative.grade}. "
                 f"Technical score: {quantitative.technical_score:.2f}. "
                 f"Recommendation: {quantitative.preliminary_recommendation}. "
                 "For detailed entry/exit strategy, AI crew must execute successfully. "
                 "This fallback provides only basic quantitative guidance."
             ),
-            "timing_assessment": ("Not assessed - AI analysis unavailable. Market timing assessment requires qualitative analysis which failed after retry attempts."),
-        },
-        contextual_risks={
-            "regulatory_risks": [],
-            "geopolitical_risks": [],
-            "competitive_risks": [],
-            "operational_risks": [],
-            "stress_scenarios": [],
-        },
-        investment_synthesis={
-            "investment_thesis": (
+            timing_assessment="Not assessed - AI analysis unavailable. Market timing assessment requires qualitative analysis which failed after retry attempts.",
+        ),
+        contextual_risks=ContextualRiskInsights(
+            regulatory_risks=[],
+            geopolitical_risks=[],
+            competitive_risks=[],
+            operational_risks=[],
+            stress_scenarios=[],
+        ),
+        investment_synthesis=InvestmentSynthesis(
+            investment_thesis=(
                 f"Python-only analysis. "
                 f"Quantitative Grade: {quantitative.grade}. "
                 f"Composite Score: {quantitative.composite_score:.2f}. "
@@ -334,33 +344,33 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
                 "deterministic scoring algorithms applied to fundamental, technical, "
                 "and risk metrics."
             ),
-            "bull_case": (
+            bull_case=(
                 "Quantitative metrics improve beyond current levels. "
                 "Fundamental score increases above current baseline. "
                 "Technical indicators show strengthening momentum. "
                 "Risk metrics remain within acceptable ranges."
             ),
-            "base_case": (
+            base_case=(
                 "Quantitative metrics remain stable at current levels. "
                 "Fundamental score maintains current baseline. "
                 "Technical indicators show neutral momentum. "
                 "Risk metrics stay within normal ranges."
             ),
-            "bear_case": (
+            bear_case=(
                 "Quantitative metrics deteriorate from current levels. "
                 "Fundamental score decreases below current baseline. "
                 "Technical indicators show weakening momentum. "
                 "Risk metrics exceed acceptable thresholds."
             ),
-            "scenario_probabilities": {"bull": 0.33, "base": 0.34, "bear": 0.33},
-            "final_recommendation": quantitative.preliminary_recommendation,
-            "recommendation_confidence": "LOW",  # Low confidence without AI analysis
-            "action_plan": {
-                "immediate_actions": [f"Follow quantitative recommendation: {quantitative.preliminary_recommendation}"],
-                "monitoring_points": ["Monitor quantitative metrics for changes"],
-                "exit_triggers": ["Significant deterioration in quantitative scores"],
-            },
-        },
+            scenario_probabilities=ScenarioProbabilities(bull=0.33, base=0.34, bear=0.33),
+            final_recommendation=cast(Literal["BUY", "HOLD", "SELL"], quantitative.preliminary_recommendation),
+            recommendation_confidence="LOW",  # Low confidence without AI analysis
+            action_plan=ActionPlan(
+                immediate_actions=[f"Follow quantitative recommendation: {quantitative.preliminary_recommendation}"],
+                monitoring_points=["Monitor quantitative metrics for changes"],
+                exit_triggers=["Significant deterioration in quantitative scores"],
+            ),
+        ),
         analysis_timestamp=datetime.now(UTC),
         ai_confidence=0.0,  # Zero confidence - no AI analysis performed
     )
@@ -374,7 +384,7 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
 def validate_ai_output_with_retry(
     result: Any,
     quantitative: QuantitativeAnalysis,
-    retry_callback: callable = None,
+    retry_callback: Callable[..., Any] | None = None,
     max_retries: int = 2,
 ) -> QualitativeInsights:
     """

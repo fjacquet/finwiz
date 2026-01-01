@@ -218,7 +218,6 @@ class CryptoCrew:
         return Task(
             config=self.tasks_config["generate_export_task"],
             output_pydantic=CryptoCrewExport,
-            verbose=True,
         )
 
     # @sync_task

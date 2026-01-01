@@ -7,7 +7,7 @@ and implements efficient filtering algorithms for discovering A+ investment oppo
 """
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel
@@ -53,7 +53,7 @@ class MarketScreeningTool(BaseTool):
     def _run(
         self,
         asset_type: Literal["etf", "stock", "crypto"],
-        screening_criteria: dict[str, Any] = None,
+        screening_criteria: dict[str, Any] | None = None,
         market_region: str = "global",
         max_candidates: int = 50,
         min_a_plus_score: float = 0.85,
@@ -130,7 +130,7 @@ class MarketScreeningTool(BaseTool):
             filtered_candidates = []
 
             # Get default criteria for asset type
-            default_criteria = self._criteria.get_default_criteria(asset_type)
+            default_criteria = self._criteria.get_default_criteria(cast(Literal["etf", "stock", "crypto"], asset_type))
 
             # Merge with custom criteria
             final_criteria = {**default_criteria, **criteria}

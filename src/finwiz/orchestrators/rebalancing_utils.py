@@ -201,7 +201,7 @@ class RebalancingUtils:
 
         """
         try:
-            summary = {
+            summary: dict[str, Any] = {
                 "total_value": analysis.total_value,
                 "position_count": len(analysis.weightings),
                 "positions_needing_rebalancing": len(analysis.positions_needing_rebalancing),
@@ -246,7 +246,7 @@ class RebalancingUtils:
 
         """
         try:
-            summary = {
+            summary: dict[str, Any] = {
                 "total_positions": len(needs),
                 "positions_needing_action": sum(1 for need in needs if need.needs_rebalancing),
                 "positions_within_tolerance": sum(1 for need in needs if not need.needs_rebalancing),

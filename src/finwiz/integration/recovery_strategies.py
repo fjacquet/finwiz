@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import BaseModel, Field
 
@@ -88,7 +88,7 @@ class RecoveryStrategies:
             return False, 0.0
 
         strategy = self.repair_strategies[error_type]
-        base_confidence = strategy["confidence"]
+        base_confidence = cast(float, strategy["confidence"])
 
         # Adjust confidence based on specific error details
         if error_type == "missing_field":
@@ -141,7 +141,7 @@ class RecoveryStrategies:
         if error_type == "enum_error":
             return f"Change value of field '{field_path}' to valid enumeration member"
 
-        return strategy["description"]
+        return str(strategy["description"])
 
     def _extract_expected_type(self, error_message: str) -> str:
         """Extract expected type from error message."""
@@ -227,7 +227,7 @@ class RecoveryStrategies:
             return data
 
         keys = field_path.split(".")
-        current = data
+        current: Any = data
 
         try:
             for key in keys:

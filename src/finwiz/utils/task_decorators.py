@@ -39,7 +39,7 @@ def async_task(func: Callable) -> Callable:
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Task:
-        task = func(*args, **kwargs)
+        task: Task = func(*args, **kwargs)
         task.async_execution = True
         logger.debug(f"Task '{task.description[:50] if task.description else 'unnamed'}...' configured for async execution")
         return task
@@ -70,7 +70,7 @@ def sync_task(func: Callable) -> Callable:
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Task:
-        task = func(*args, **kwargs)
+        task: Task = func(*args, **kwargs)
         task.async_execution = False
         logger.debug(f"Task '{task.description[:50] if task.description else 'unnamed'}...' configured for sync execution")
         return task

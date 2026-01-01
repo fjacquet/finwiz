@@ -59,9 +59,7 @@ def store_crew_output(
         _create_latest_symlink(output_file, latest_file)
 
         # Validate the stored output
-        validation_result = validation_manager.validate_crew_output(
-            crew_name, output_data
-        )
+        validation_result = validation_manager.validate_crew_output(crew_name, output_data)
 
         if validation_result.is_valid:
             logger.info(
@@ -98,23 +96,11 @@ def _convert_crew_output_to_dict(
         # CrewAI CrewOutput object
         return {
             "raw_output": str(crew_output.raw),
-            "json_dict": (
-                crew_output.json_dict if hasattr(crew_output, "json_dict") else {}
-            ),
-            "pydantic": (
-                crew_output.pydantic.model_dump()
-                if hasattr(crew_output, "pydantic") and crew_output.pydantic
-                else {}
-            ),
+            "json_dict": (crew_output.json_dict if hasattr(crew_output, "json_dict") else {}),
+            "pydantic": (crew_output.pydantic.model_dump() if hasattr(crew_output, "pydantic") and crew_output.pydantic else {}),
             "tasks_output": _extract_tasks_output(crew_output),
-            "token_usage": (
-                crew_output.token_usage if hasattr(crew_output, "token_usage") else {}
-            ),
-            "usage_metrics": (
-                schema_manager.serialize_usage_metrics(crew_output.usage_metrics)
-                if hasattr(crew_output, "usage_metrics")
-                else {}
-            ),
+            "token_usage": (crew_output.token_usage if hasattr(crew_output, "token_usage") else {}),
+            "usage_metrics": (schema_manager.serialize_usage_metrics(crew_output.usage_metrics) if hasattr(crew_output, "usage_metrics") else {}),
         }
     elif isinstance(crew_output, dict):
         return crew_output
@@ -129,17 +115,11 @@ def _extract_tasks_output(crew_output: Any) -> list[dict[str, Any]]:
 
     return [
         {
-            "description": (
-                task.description if hasattr(task, "description") else str(task)
-            ),
+            "description": (task.description if hasattr(task, "description") else str(task)),
             "summary": task.summary if hasattr(task, "summary") else "",
             "raw": str(task.raw) if hasattr(task, "raw") else str(task),
             "json_dict": task.json_dict if hasattr(task, "json_dict") else {},
-            "pydantic": (
-                task.pydantic.model_dump()
-                if hasattr(task, "pydantic") and task.pydantic
-                else {}
-            ),
+            "pydantic": (task.pydantic.model_dump() if hasattr(task, "pydantic") and task.pydantic else {}),
         }
         for task in crew_output.tasks_output
     ]

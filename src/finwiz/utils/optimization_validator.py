@@ -42,7 +42,7 @@ class AccuracyValidationResult:
 
     # Overall validation
     accuracy_validated: bool = False
-    validation_notes: list[str] = None
+    validation_notes: list[str] | None = None
 
     def __post_init__(self):
         if self.validation_notes is None:
@@ -76,7 +76,7 @@ class PerformanceValidationResult:
 
     # Overall validation
     performance_validated: bool = False
-    validation_notes: list[str] = None
+    validation_notes: list[str] | None = None
 
     def __post_init__(self):
         if self.validation_notes is None:
@@ -256,7 +256,7 @@ class OptimizationValidator:
             Dict with regression test results
 
         """
-        regression_results = {
+        regression_results: dict[str, Any] = {
             "mode": self.mode.value,
             "total_tickers": len(test_tickers),
             "passed_tickers": 0,
@@ -308,7 +308,7 @@ class OptimizationValidator:
     def generate_validation_report(
         self,
         portfolio_metrics: PortfolioMetrics,
-        accuracy_validations: list[AccuracyValidationResult] = None,
+        accuracy_validations: list[AccuracyValidationResult] | None = None,
         session_id: str = "default",
     ) -> dict[str, Any]:
         """
@@ -382,7 +382,7 @@ class OptimizationValidator:
 
         return validation_report
 
-    def _generate_recommendations(self, performance_validation: PerformanceValidationResult, accuracy_validations: list[AccuracyValidationResult] = None) -> list[str]:
+    def _generate_recommendations(self, performance_validation: PerformanceValidationResult, accuracy_validations: list[AccuracyValidationResult] | None = None) -> list[str]:
         """Generate recommendations based on validation results."""
         recommendations = []
 

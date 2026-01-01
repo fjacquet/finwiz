@@ -272,7 +272,7 @@ class RebalancingCalculator:
                 "error": str(e),
             }
 
-    def estimate_market_impact(self, trades: list[Any], market_conditions: dict[str, Any] | None = None) -> dict[str, float]:
+    def estimate_market_impact(self, trades: list[Any], market_conditions: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Estimate market impact of trades.
 

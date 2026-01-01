@@ -166,7 +166,7 @@ class FallbackHandlers:
             Sanitized data section
 
         """
-        sanitized = {}
+        sanitized: dict[str, Any] = {}
 
         for key, value in data_section.items():
             try:

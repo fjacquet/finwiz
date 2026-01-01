@@ -174,7 +174,7 @@ class SessionManager:
             self.logger.error(f"Session recovery failed completely: {str(e)}")
             raise SessionParsingError(f"Recovery failed: {str(e)}") from e
 
-    def get_session_status(self) -> dict[str, any]:
+    def get_session_status(self) -> dict[str, Any]:
         """
         Get current session status information.
 

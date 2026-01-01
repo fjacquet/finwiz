@@ -117,7 +117,7 @@ class PerplexityFeatureFlagTracker:
         self.consecutive_failures = 0
         self.consecutive_successes = 0
         self.feature_enabled = True
-        self.last_failure_time = None
+        self.last_failure_time: float | None = None
         self.total_requests = 0
         self.total_failures = 0
 

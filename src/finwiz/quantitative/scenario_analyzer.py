@@ -9,11 +9,15 @@ scenario comparison reports for portfolio rebalancing decisions.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING
 
 from finwiz.schemas.portfolio_rebalancing import (
     PortfolioConfiguration,
 )
+
+if TYPE_CHECKING:
+    from finwiz.quantitative.scenario_analysis import ScenarioAnalysisReport
+    from finwiz.quantitative.scenario_generators import ScenarioParameters
 
 logger = logging.getLogger(__name__)
 
@@ -40,18 +44,18 @@ class ScenarioAnalyzer:
     async def analyze_scenarios(
         self,
         base_config: PortfolioConfiguration,
-        parameters: dict | None = None,
+        parameters: ScenarioParameters | None = None,
         _include_monte_carlo: bool = True,  # Reserved for future Monte Carlo integration
         _include_sensitivity: bool = True,  # Reserved for future sensitivity analysis
-    ) -> dict[str, Any]:
+    ) -> ScenarioAnalysisReport:
         """
         Perform comprehensive scenario analysis.
 
         Args:
             base_config: Base portfolio configuration
             parameters: Scenario parameters (uses defaults if None)
-            include_monte_carlo: Whether to run Monte Carlo simulation
-            include_sensitivity: Whether to run sensitivity analysis
+            _include_monte_carlo: Whether to run Monte Carlo simulation (reserved)
+            _include_sensitivity: Whether to run sensitivity analysis (reserved)
 
         Returns:
             ScenarioAnalysisReport with comprehensive analysis results

@@ -10,6 +10,7 @@ import asyncio
 import json
 import os
 from datetime import UTC, datetime
+from typing import Literal, cast
 
 import requests
 from crewai.tools import BaseTool
@@ -149,12 +150,13 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             return json.dumps(data, indent=2)
 
         # Use caching with 30-minute TTL for company overview data
-        return await cached(
+        result: str = await cached(
             cache_key_str,
             fetch_from_api,
             ttl=1800,  # 30 minutes
             tags={"alpha_vantage", "company_overview", ticker.upper()},
         )
+        return result
 
     async def _get_perplexity_fundamental_insights(self, ticker: str) -> list[SonarArticle]:
         """Get fundamental analysis insights from Perplexity Sonar."""
@@ -166,7 +168,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             # Determine asset type (simplified logic for stocks)
             asset_type = "stock"
 
-            sonar_result = await perplexity_integration.search_fundamental_analysis(ticker=ticker, asset_type=asset_type, max_results=5)
+            sonar_result = await perplexity_integration.search_fundamental_analysis(ticker=ticker, asset_type=cast(Literal["stock", "etf", "crypto"], asset_type), max_results=5)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity fundamental insights for {ticker}")

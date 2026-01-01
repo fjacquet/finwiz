@@ -1,6 +1,5 @@
 """Tests for contract_validator module."""
 
-import pytest
 
 
 class TestContractValidator:

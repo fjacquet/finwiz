@@ -262,8 +262,12 @@ class DataFlowValidator:
 
         # Convert sets to lists for JSON serialization
         for crew_name in crew_summary:
-            crew_summary[crew_name]["total_inputs"] = list(crew_summary[crew_name]["total_inputs"])
-            crew_summary[crew_name]["total_outputs"] = list(crew_summary[crew_name]["total_outputs"])
+            total_inputs = crew_summary[crew_name]["total_inputs"]
+            total_outputs = crew_summary[crew_name]["total_outputs"]
+            if isinstance(total_inputs, set):
+                crew_summary[crew_name]["total_inputs"] = list(total_inputs)
+            if isinstance(total_outputs, set):
+                crew_summary[crew_name]["total_outputs"] = list(total_outputs)
 
         return {
             "total_traces": len(self.flow_traces),

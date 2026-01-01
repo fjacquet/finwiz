@@ -1,7 +1,8 @@
 """Holding analysis processing and data extraction utilities."""
 
 from datetime import datetime
-from typing import Any, Literal
+from pathlib import Path
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
 
@@ -85,7 +86,7 @@ class HoldingProcessor:
             technical_analysis=technical_analysis,
             sec_citations=sec_citations,
             analysis_date=datetime.now(),
-            data_freshness=freshness,
+            data_freshness=cast(Literal["fresh", "recent", "stale"], freshness),
             crew_analysis_used=f"{asset_class}_crew",
             composite_score=composite_score,
             confidence_level=0.8 if freshness == "fresh" else 0.6,
@@ -219,7 +220,7 @@ class HoldingProcessor:
     @staticmethod
     def load_cached_analysis(
         ticker: str,
-        output_dir: "Path",
+        output_dir: Path,
         asset_class: str,
         max_age_days: int = 7,
     ) -> dict | None:
@@ -245,7 +246,7 @@ class HoldingProcessor:
 
         try:
             with open(latest_file) as f:
-                data = json.load(f)
+                data: dict[Any, Any] = json.load(f)
 
             # Check if this analysis is for our ticker
             if not HoldingProcessor.contains_ticker_analysis(data, ticker):

@@ -178,9 +178,9 @@ def create_error_decision(
         name=holding.name,
         ticker=holding.ticker,
         currency=holding.currency or base_currency,
-        decision="SELL",  # type: ignore[arg-type]
+        decision="SELL",
         composite_score=0.0,
-        grade=grade_info.grade,  # type: ignore[arg-type]
+        grade=grade_info.grade,
         grade_description="Processing Error",
         recommended_action="Review manually",
         risk=RiskAssessmentStandardized(
@@ -195,5 +195,5 @@ def create_error_decision(
         ],
         citations=[],
         alternatives=[],
-        data_freshness="stale",  # type: ignore[arg-type]
+        data_freshness="stale",
     )

@@ -6,15 +6,18 @@ process, enabling continuous improvement of A+ criteria based on user feedback
 and performance outcomes.
 """
 
-from typing import Any
+from typing import Any, Literal, cast
 
 from finwiz.schemas.feedback import (
+    FeedbackSentiment,
+    FeedbackType,
     PerformanceFeedback,
     PerformanceOutcome,
     RecommendationOutcome,
     UserFeedback,
 )
 from finwiz.schemas.investment_discovery import APlusCriteria
+from finwiz.schemas.portfolio_review import Grade
 from finwiz.schemas.tools import (
     CriteriaOptimizationInput,
     FeedbackCollectionInput,
@@ -45,20 +48,25 @@ class FeedbackCollectionTool(AsyncFeedbackTool):
             feedback_service = get_feedback_service()
 
             # Create feedback record
+            # Cast string values to appropriate Literal/Enum types
+            asset_type_literal = cast(Literal["etf", "stock", "crypto"], input_data.asset_type)
+            sentiment_enum = FeedbackSentiment(input_data.sentiment)
+            feedback_type_enum = FeedbackType.RECOMMENDATION_ACCEPTANCE
+
             feedback = UserFeedback(
                 feedback_id="",  # Will be generated
                 user_id=input_data.user_id,
                 recommendation_id=input_data.recommendation_id,
                 symbol=input_data.symbol,
-                asset_type=input_data.asset_type,
+                asset_type=asset_type_literal,
                 recommended_grade="A+",  # Assuming A+ recommendations
                 recommended_score=0.95,  # Default A+ score
                 outcome=RecommendationOutcome(input_data.outcome),
-                sentiment=input_data.sentiment,
+                sentiment=sentiment_enum,
                 confidence_rating=input_data.confidence_rating,
                 reasons=input_data.reasons,
                 user_comments=input_data.user_comments,
-                feedback_type="recommendation_acceptance",
+                feedback_type=feedback_type_enum,
             )
 
             # Collect feedback
@@ -112,6 +120,9 @@ class PerformanceTrackingTool(AsyncFeedbackTool):
                 performance_outcome = PerformanceOutcome.SIGNIFICANT_LOSS
 
             # Create performance record
+            # Cast string grade to Grade Literal type
+            current_grade_literal = cast(Grade, input_data.current_grade)
+
             performance = PerformanceFeedback(
                 feedback_id="",  # Will be generated
                 original_recommendation_id=input_data.recommendation_id,
@@ -120,7 +131,7 @@ class PerformanceTrackingTool(AsyncFeedbackTool):
                 absolute_return=input_data.absolute_return,
                 benchmark_return=input_data.benchmark_return,
                 alpha=alpha,
-                current_grade=input_data.current_grade,
+                current_grade=current_grade_literal,
                 grade_maintained=input_data.grade_maintained,
                 performance_outcome=performance_outcome,
                 met_expectations=performance_outcome in [PerformanceOutcome.OUTPERFORMED, PerformanceOutcome.MET_EXPECTATIONS],
@@ -211,9 +222,10 @@ class FeedbackAnalysisTool(AsyncFeedbackTool):
     the system is performing and what adjustments might be needed.
     """
 
-    async def _arun(self, days_back: int = 90) -> dict[str, Any]:
+    async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Analyze feedback patterns and generate insights."""
         try:
+            days_back: int = kwargs.get("days_back", 90)
             feedback_service = get_feedback_service()
 
             # Get feedback analysis
@@ -273,9 +285,10 @@ class LearningMetricsTool(AsyncFeedbackTool):
     over time. Use this tool to monitor the effectiveness of the feedback loop.
     """
 
-    async def _arun(self, days_back: int = 30) -> dict[str, Any]:
+    async def _arun(self, **kwargs: Any) -> dict[str, Any]:
         """Get comprehensive learning system metrics."""
         try:
+            days_back: int = kwargs.get("days_back", 30)
             feedback_service = get_feedback_service()
 
             # Get learning metrics

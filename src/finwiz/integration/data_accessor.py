@@ -61,7 +61,8 @@ class CrewDataAccessor:
             Crew data dictionary, or None if unavailable
 
         """
-        return getattr(self.cache, f"get_{crew_name}_data")(max_age_hours)
+        result: dict[str, Any] | None = getattr(self.cache, f"get_{crew_name}_data")(max_age_hours)
+        return result
 
     # Convenience methods for backward compatibility
     def get_stock_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:

@@ -199,7 +199,7 @@ def _build_monte_carlo_section(soup: BeautifulSoup, template_data: dict[str, Any
         mc_section.append(h3)
 
         for k, v in mc_summary[section_key].items():
-            metric_div = soup.new_tag("div", **{"class": "metric"})
+            metric_div = soup.new_tag("div", attrs={"class": "metric"})
             metric_strong = soup.new_tag("strong")
             metric_strong.string = f"{k}:"
             metric_div.append(metric_strong)
@@ -211,7 +211,7 @@ def _build_monte_carlo_section(soup: BeautifulSoup, template_data: dict[str, Any
 
 def _build_sensitivity_section(soup: BeautifulSoup, template_data: dict[str, Any]) -> Any:
     """Build sensitivity analysis section."""
-    sens_section = soup.new_tag("div", **{"class": "section"})
+    sens_section = soup.new_tag("div", attrs={"class": "section"})
     sens_h2 = soup.new_tag("h2")
     sens_h2.string = "Sensitivity Analysis"
     sens_section.append(sens_h2)
@@ -244,7 +244,7 @@ def _build_sensitivity_section(soup: BeautifulSoup, template_data: dict[str, Any
 
 def _build_recommendations_section(soup: BeautifulSoup, template_data: dict[str, Any]) -> Any:
     """Build recommendations section."""
-    rec_section = soup.new_tag("div", **{"class": "section"})
+    rec_section = soup.new_tag("div", attrs={"class": "section"})
     rec_h2 = soup.new_tag("h2")
     rec_h2.string = "Recommendations"
     rec_section.append(rec_h2)
@@ -255,7 +255,7 @@ def _build_recommendations_section(soup: BeautifulSoup, template_data: dict[str,
     rec_section.append(opt_h3)
 
     for k, v in template_data["recommendations"]["optimal_parameters"].items():
-        metric_div = soup.new_tag("div", **{"class": "metric"})
+        metric_div = soup.new_tag("div", attrs={"class": "metric"})
         metric_strong = soup.new_tag("strong")
         metric_strong.string = f"{k}:"
         metric_div.append(metric_strong)
@@ -268,7 +268,7 @@ def _build_recommendations_section(soup: BeautifulSoup, template_data: dict[str,
     rec_section.append(actions_h3)
 
     for action in template_data["recommendations"]["priority_actions"]:
-        action_div = soup.new_tag("div", **{"class": "recommendation"})
+        action_div = soup.new_tag("div", attrs={"class": "recommendation"})
         action_div.string = action
         rec_section.append(action_div)
 
@@ -278,7 +278,7 @@ def _build_recommendations_section(soup: BeautifulSoup, template_data: dict[str,
     rec_section.append(impl_h3)
 
     for note in template_data["recommendations"]["implementation_notes"]:
-        note_div = soup.new_tag("div", **{"class": "recommendation"})
+        note_div = soup.new_tag("div", attrs={"class": "recommendation"})
         note_div.string = note
         rec_section.append(note_div)
 
@@ -289,7 +289,7 @@ def _build_recommendations_section(soup: BeautifulSoup, template_data: dict[str,
         rec_section.append(warnings_h3)
 
         for warning in template_data["recommendations"]["risk_warnings"]:
-            warning_div = soup.new_tag("div", **{"class": "warning"})
+            warning_div = soup.new_tag("div", attrs={"class": "warning"})
             warning_div.string = warning
             rec_section.append(warning_div)
 
@@ -298,7 +298,7 @@ def _build_recommendations_section(soup: BeautifulSoup, template_data: dict[str,
 
 def _build_comparisons_section(soup: BeautifulSoup, template_data: dict[str, Any]) -> Any:
     """Build scenario comparisons section."""
-    comp_section = soup.new_tag("div", **{"class": "section"})
+    comp_section = soup.new_tag("div", attrs={"class": "section"})
     comp_h2 = soup.new_tag("h2")
     comp_h2.string = "Scenario Comparisons"
     comp_section.append(comp_h2)

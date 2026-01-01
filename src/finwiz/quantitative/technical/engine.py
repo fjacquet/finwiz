@@ -97,14 +97,14 @@ class TechnicalAnalysisEngine:
             indicators = self.default_indicators
 
         # Calculate individual indicators
-        indicator_results = {}
-        all_signals = []
+        indicator_results: dict[str, TechnicalIndicatorResult] = {}
+        all_signals: list[TechnicalSignal] = []
 
         for indicator in indicators:
             try:
-                result = self._calculate_indicator(data, indicator, symbol)
-                indicator_results[indicator.value] = result
-                all_signals.extend(result.signals)
+                indicator_result = self._calculate_indicator(data, indicator, symbol)
+                indicator_results[indicator.value] = indicator_result
+                all_signals.extend(indicator_result.signals)
             except Exception as e:
                 self.logger.error(f"Failed to calculate {indicator.value} for {symbol}: {str(e)}")
 

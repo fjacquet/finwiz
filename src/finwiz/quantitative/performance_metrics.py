@@ -126,23 +126,23 @@ class MetricsCalculator:
                 profit_factor = total_wins / total_losses if total_losses > 0 else float("inf")
 
         return PerformanceMetrics(
-            total_return=total_return,
-            annualized_return=annualized_return,
-            volatility=volatility,
-            sharpe_ratio=sharpe_ratio,
-            sortino_ratio=sortino_ratio,
-            max_drawdown=max_drawdown,
+            total_return=float(total_return),  # type: ignore[arg-type]
+            annualized_return=float(annualized_return),  # type: ignore[arg-type]
+            volatility=float(volatility),
+            sharpe_ratio=float(sharpe_ratio),
+            sortino_ratio=float(sortino_ratio),  # type: ignore[arg-type]
+            max_drawdown=float(max_drawdown),
             max_drawdown_duration=max_drawdown_duration,
             downside_deviation=downside_deviation,
-            var_95=var_95,
-            cvar_95=cvar_95,
+            var_95=float(var_95),
+            cvar_95=float(cvar_95),
             win_rate=win_rate,
             profit_factor=profit_factor,
             avg_win=avg_win,
             avg_loss=avg_loss,
-            skewness=skewness,
-            kurtosis=kurtosis,
-            calmar_ratio=calmar_ratio,
+            skewness=float(skewness),  # type: ignore[arg-type]
+            kurtosis=float(kurtosis),  # type: ignore[arg-type]
+            calmar_ratio=float(calmar_ratio),  # type: ignore[arg-type]
         )
 
     def calculate_max_drawdown(self, returns: pd.Series) -> tuple[float, int]:
@@ -199,7 +199,7 @@ class MetricsCalculator:
         downside_returns = returns[returns < target_return]
         if len(downside_returns) == 0:
             return 0.0
-        return np.sqrt(((downside_returns - target_return) ** 2).mean()) * np.sqrt(252)
+        return float(np.sqrt(((downside_returns - target_return) ** 2).mean()) * np.sqrt(252))
 
     def calculate_relative_performance(self, strategy_metrics: PerformanceMetrics, benchmark_metrics: PerformanceMetrics) -> dict[str, float]:
         """

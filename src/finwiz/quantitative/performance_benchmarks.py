@@ -14,16 +14,16 @@ from pydantic import BaseModel, Field
 
 # Portfolio optimization imports
 try:
-    from pypfopt import (  # type: ignore[import-untyped]  # pypfopt has no official type stubs
+    from pypfopt import (  # pypfopt has no official type stubs
         EfficientFrontier,
         expected_returns,
         risk_models,
     )
-    from pypfopt.discrete_allocation import (  # type: ignore[import-untyped]  # pypfopt has no official type stubs
+    from pypfopt.discrete_allocation import (  # pypfopt has no official type stubs
         DiscreteAllocation,
         get_latest_prices,
     )
-    from pypfopt.objective_functions import L2_reg  # type: ignore[import-untyped]  # pypfopt has no official type stubs
+    from pypfopt.objective_functions import L2_reg  # pypfopt has no official type stubs
 
     PYPFOPT_AVAILABLE = True
 except ImportError:
@@ -32,8 +32,8 @@ except ImportError:
 
 # Optional visualization imports
 try:
-    import plotly.graph_objects as go  # type: ignore[import-untyped]  # plotly has no official type stubs
-    from plotly.subplots import make_subplots  # type: ignore[import-untyped]  # plotly has no official type stubs
+    import plotly.graph_objects as go  # plotly has no official type stubs
+    from plotly.subplots import make_subplots  # plotly has no official type stubs
 
     PLOTLY_AVAILABLE = True
 except ImportError:

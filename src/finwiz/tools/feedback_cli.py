@@ -9,11 +9,13 @@ import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Literal, cast
 
 import click
 
 from finwiz.schemas.feedback import (
     FeedbackSentiment,
+    FeedbackType,
     LearningConfiguration,
     RecommendationOutcome,
     UserFeedback,
@@ -68,7 +70,7 @@ def collect_feedback(
                 user_id=user_id,
                 recommendation_id=recommendation_id,
                 symbol=symbol,
-                asset_type=asset_type,
+                asset_type=cast(Literal["etf", "stock", "crypto"], asset_type),
                 recommended_grade="A+",
                 recommended_score=0.95,
                 outcome=RecommendationOutcome(outcome),
@@ -76,7 +78,7 @@ def collect_feedback(
                 confidence_rating=confidence or 3,
                 reasons=list(reasons),
                 user_comments=comments or "",
-                feedback_type="recommendation_acceptance",
+                feedback_type=FeedbackType.RECOMMENDATION_ACCEPTANCE,
             )
 
             feedback_id = await feedback_service.collect_user_feedback(feedback)

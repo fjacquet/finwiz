@@ -6,6 +6,7 @@ providing comprehensive sentiment analysis across stocks, ETFs, and crypto asset
 """
 
 import asyncio
+import json
 from typing import Any
 
 from crewai.tools import BaseTool
@@ -78,22 +79,25 @@ class EnhancedSentimentAnalysisTool(BaseTool):
 
             if combined_count == 0:
                 # Return structured no-data response
-                return {
-                    "formatted_analysis": self.formatter.format_no_data_response(ticker, asset_type),
-                    "sentiment_score": 0.0,
-                    "overall_sentiment": "neutral",
-                    "confidence": 0.0,
-                    "positive_ratio": 0.0,
-                    "negative_ratio": 0.0,
-                    "neutral_ratio": 0.0,
-                    "total_articles": 0,
-                    "sentiment_distribution": {},
-                    "trending_topics": [],
-                    "article_count": 0,
-                    "news_sources": [],
-                    "sentiment_breakdown": {},
-                    "no_data": True,
-                }
+                return json.dumps(
+                    {
+                        "formatted_analysis": self.formatter.format_no_data_response(ticker, asset_type),
+                        "sentiment_score": 0.0,
+                        "overall_sentiment": "neutral",
+                        "confidence": 0.0,
+                        "positive_ratio": 0.0,
+                        "negative_ratio": 0.0,
+                        "neutral_ratio": 0.0,
+                        "total_articles": 0,
+                        "sentiment_distribution": {},
+                        "trending_topics": [],
+                        "article_count": 0,
+                        "news_sources": [],
+                        "sentiment_breakdown": {},
+                        "no_data": True,
+                    },
+                    default=str,
+                )
 
             # Filter news by date range
             filtered_yahoo = self.data_sources.filter_news_by_date(yahoo_articles, days_back)
@@ -101,22 +105,25 @@ class EnhancedSentimentAnalysisTool(BaseTool):
 
             if not filtered_yahoo and not filtered_sonar:
                 # Return structured no-recent-news response
-                return {
-                    "formatted_analysis": self.formatter.format_no_recent_news_response(ticker, asset_type, days_back),
-                    "sentiment_score": 0.0,
-                    "overall_sentiment": "neutral",
-                    "confidence": 0.0,
-                    "positive_ratio": 0.0,
-                    "negative_ratio": 0.0,
-                    "neutral_ratio": 0.0,
-                    "total_articles": 0,
-                    "sentiment_distribution": {},
-                    "trending_topics": [],
-                    "article_count": 0,
-                    "news_sources": [],
-                    "sentiment_breakdown": {},
-                    "no_recent_news": True,
-                }
+                return json.dumps(
+                    {
+                        "formatted_analysis": self.formatter.format_no_recent_news_response(ticker, asset_type, days_back),
+                        "sentiment_score": 0.0,
+                        "overall_sentiment": "neutral",
+                        "confidence": 0.0,
+                        "positive_ratio": 0.0,
+                        "negative_ratio": 0.0,
+                        "neutral_ratio": 0.0,
+                        "total_articles": 0,
+                        "sentiment_distribution": {},
+                        "trending_topics": [],
+                        "article_count": 0,
+                        "news_sources": [],
+                        "sentiment_breakdown": {},
+                        "no_recent_news": True,
+                    },
+                    default=str,
+                )
 
             # Combine filtered articles for analysis
             combined_articles = self.data_sources.combine_article_sources(filtered_yahoo, filtered_sonar)
@@ -149,41 +156,47 @@ class EnhancedSentimentAnalysisTool(BaseTool):
 
             # Return both structured data AND formatted text for compatibility
             # The orchestrator can extract the structured data it needs
-            return {
-                "formatted_analysis": formatted_response,
-                "sentiment_score": sentiment_analysis.get("sentiment_score", 0.0),
-                "overall_sentiment": sentiment_analysis.get("overall_sentiment", "neutral"),
-                "confidence": sentiment_analysis.get("confidence", 0.0),
-                "positive_ratio": sentiment_analysis.get("positive_ratio", 0.0),
-                "negative_ratio": sentiment_analysis.get("negative_ratio", 0.0),
-                "neutral_ratio": sentiment_analysis.get("neutral_ratio", 0.0),
-                "total_articles": sentiment_analysis.get("total_articles", 0),
-                "sentiment_distribution": sentiment_analysis.get("sentiment_distribution", {}),
-                "trending_topics": trending_topics,
-                "article_count": len(combined_articles),
-                "news_sources": self.data_sources.get_data_sources_list(filtered_yahoo, filtered_sonar),
-                "sentiment_breakdown": sentiment_analysis.get("sentiment_distribution", {}),
-            }
+            return json.dumps(
+                {
+                    "formatted_analysis": formatted_response,
+                    "sentiment_score": sentiment_analysis.get("sentiment_score", 0.0),
+                    "overall_sentiment": sentiment_analysis.get("overall_sentiment", "neutral"),
+                    "confidence": sentiment_analysis.get("confidence", 0.0),
+                    "positive_ratio": sentiment_analysis.get("positive_ratio", 0.0),
+                    "negative_ratio": sentiment_analysis.get("negative_ratio", 0.0),
+                    "neutral_ratio": sentiment_analysis.get("neutral_ratio", 0.0),
+                    "total_articles": sentiment_analysis.get("total_articles", 0),
+                    "sentiment_distribution": sentiment_analysis.get("sentiment_distribution", {}),
+                    "trending_topics": trending_topics,
+                    "article_count": len(combined_articles),
+                    "news_sources": self.data_sources.get_data_sources_list(filtered_yahoo, filtered_sonar),
+                    "sentiment_breakdown": sentiment_analysis.get("sentiment_distribution", {}),
+                },
+                default=str,
+            )
 
         except Exception as e:
             logger.error(f"Error in enhanced sentiment analysis for {ticker}: {str(e)}")
             # Return structured error data for consistency
-            return {
-                "formatted_analysis": self.formatter.format_error_response(ticker, asset_type, str(e)),
-                "sentiment_score": 0.0,
-                "overall_sentiment": "neutral",
-                "confidence": 0.0,
-                "positive_ratio": 0.0,
-                "negative_ratio": 0.0,
-                "neutral_ratio": 0.0,
-                "total_articles": 0,
-                "sentiment_distribution": {},
-                "trending_topics": [],
-                "article_count": 0,
-                "news_sources": [],
-                "sentiment_breakdown": {},
-                "error": str(e),
-            }
+            return json.dumps(
+                {
+                    "formatted_analysis": self.formatter.format_error_response(ticker, asset_type, str(e)),
+                    "sentiment_score": 0.0,
+                    "overall_sentiment": "neutral",
+                    "confidence": 0.0,
+                    "positive_ratio": 0.0,
+                    "negative_ratio": 0.0,
+                    "neutral_ratio": 0.0,
+                    "total_articles": 0,
+                    "sentiment_distribution": {},
+                    "trending_topics": [],
+                    "article_count": 0,
+                    "news_sources": [],
+                    "sentiment_breakdown": {},
+                    "error": str(e),
+                },
+                default=str,
+            )
 
 
 logger = get_logger(__name__)

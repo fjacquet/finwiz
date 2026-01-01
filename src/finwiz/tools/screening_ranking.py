@@ -6,7 +6,7 @@ and rank investment candidates during market screening operations.
 """
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
 
@@ -48,7 +48,7 @@ class ScreeningRanking:
                     # Use full A+ scoring tool
                     score_result = self._a_plus_scorer._run(
                         symbol=symbol,
-                        asset_type=asset_type,
+                        asset_type=cast(Literal["etf", "stock", "crypto"], asset_type),
                         fundamental_data=market_data,
                         market_context={},
                     )
@@ -73,7 +73,7 @@ class ScreeningRanking:
                 screening_candidate = ScreeningCandidate(
                     symbol=symbol,
                     name=market_data.get("name", symbol),
-                    asset_type=asset_type,
+                    asset_type=cast(Literal["etf", "stock", "crypto"], asset_type),
                     preliminary_score=preliminary_score,
                     meets_a_plus_criteria=meets_a_plus,
                     key_metrics=key_metrics,

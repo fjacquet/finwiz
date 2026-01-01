@@ -33,7 +33,7 @@ class BasicIndicators:
             Technical indicator result with SMA values and signals
 
         """
-        close_prices = data["Close"].values.astype(np.float64)
+        close_prices = np.asarray(data["Close"].values, dtype=np.float64)
         sma_values = {}
         signals = []
 
@@ -94,7 +94,7 @@ class BasicIndicators:
             Technical indicator result with EMA values and signals
 
         """
-        close_prices = data["Close"].values.astype(np.float64)
+        close_prices = np.asarray(data["Close"].values, dtype=np.float64)
         ema_values = {}
         signals = []
 
@@ -157,7 +157,7 @@ class BasicIndicators:
             Technical indicator result with RSI values and signals
 
         """
-        close_prices = data["Close"].values.astype(np.float64)
+        close_prices = np.asarray(data["Close"].values, dtype=np.float64)
 
         if len(close_prices) < period + 1:
             raise ValueError(f"Insufficient data for RSI({period}): need {period + 1}, have {len(close_prices)}")

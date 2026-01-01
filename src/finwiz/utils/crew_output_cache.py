@@ -64,7 +64,7 @@ class CrewOutputCache:
         # Load and return the cached data
         try:
             with open(recent_file, encoding="utf-8") as f:
-                data = json.load(f)
+                data: dict[str, Any] = json.load(f)
 
             age_hours = self._get_file_age_hours(recent_file)
             self.logger.info(f"✅ Using cached {crew_name} output from {recent_file.name} (age: {age_hours:.1f}h)")

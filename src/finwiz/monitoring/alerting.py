@@ -138,7 +138,7 @@ class AlertManager:
         self.config.webhook_enabled = os.getenv("ALERT_WEBHOOK_ENABLED", "true").lower() == "true"
         self.config.escalation_enabled = os.getenv("ALERT_ESCALATION_ENABLED", "true").lower() == "true"
 
-    async def create_alert(self, alert_type: AlertType, severity: AlertSeverity, title: str, message: str, metadata: dict[str, Any] | None = None) -> Alert:
+    async def create_alert(self, alert_type: AlertType, severity: AlertSeverity, title: str, message: str, metadata: dict[str, Any] | None = None) -> Alert | None:
         """Create and process a new alert."""
         # Generate unique alert ID
         alert_id = f"{alert_type.value}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"

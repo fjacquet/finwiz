@@ -48,6 +48,7 @@ class IntegrationLogHandler:
             file_handler = logging.FileHandler(self.log_dir / "integration.log", encoding="utf-8")
 
             # Use structured formatter if enabled
+            file_formatter: logging.Formatter
             if self.config.enable_structured_logging:
                 file_formatter = StructuredFormatter(self.config.log_format)
             else:

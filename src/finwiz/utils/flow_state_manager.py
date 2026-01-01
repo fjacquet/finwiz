@@ -238,7 +238,7 @@ class FlowStateManager:
                             continue
 
                     print(f"\n✅ Resuming from UUID: {selected['uuid']}")
-                    return selected["uuid"]
+                    return str(selected["uuid"]) if selected["uuid"] else None
 
                 elif choice_num == len(states) + 1:
                     print("\n✅ Starting fresh with new UUID")
@@ -348,7 +348,7 @@ class FlowStateManager:
                 logger.info(f"Deleted {count} old flow state entries (older than {max_age_days} days)")
 
             conn.close()
-            return count
+            return int(count) if count else 0
 
         except sqlite3.Error as e:
             logger.warning(f"Failed to cleanup old states: {e}")

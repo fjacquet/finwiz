@@ -212,7 +212,7 @@ class EncryptionService:
 
     def _encrypt_dict(self, data: dict[str, Any]) -> dict[str, Any]:
         """Recursively encrypt sensitive fields in nested dictionary."""
-        encrypted = {}
+        encrypted: dict[str, Any] = {}
         for key, value in data.items():
             if key in self.SENSITIVE_FIELDS and value is not None:
                 if isinstance(value, dict):
@@ -227,7 +227,7 @@ class EncryptionService:
 
     def _decrypt_dict(self, data: dict[str, Any]) -> dict[str, Any]:
         """Recursively decrypt sensitive fields in nested dictionary."""
-        decrypted = {}
+        decrypted: dict[str, Any] = {}
         for key, value in data.items():
             if key in self.SENSITIVE_FIELDS and value is not None:
                 if isinstance(value, dict):
@@ -245,7 +245,7 @@ class EncryptionService:
 
     def _encrypt_list(self, data: list[Any]) -> list[Any]:
         """Encrypt items in a list."""
-        encrypted = []
+        encrypted: list[Any] = []
         for item in data:
             if isinstance(item, dict):
                 encrypted.append(self._encrypt_dict(item))
@@ -257,7 +257,7 @@ class EncryptionService:
 
     def _decrypt_list(self, data: list[Any]) -> list[Any]:
         """Decrypt items in a list."""
-        decrypted = []
+        decrypted: list[Any] = []
         for item in data:
             if isinstance(item, dict):
                 decrypted.append(self._decrypt_dict(item))

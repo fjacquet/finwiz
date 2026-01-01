@@ -63,7 +63,7 @@ class TwelveDataTool:
         self.timeout = 30
         self.cache_ttl = 300
 
-    async def get_rsi(self, symbol: str, interval: str = "1day", time_period: int = 14, outputsize: int = None) -> RSIData:
+    async def get_rsi(self, symbol: str, interval: str = "1day", time_period: int = 14, outputsize: int | None = None) -> RSIData:
         """
         Get RSI (Relative Strength Index) data for a symbol.
 
@@ -105,7 +105,7 @@ class TwelveDataTool:
         fast_period: int = 12,
         slow_period: int = 26,
         signal_period: int = 9,
-        outputsize: int = None,
+        outputsize: int | None = None,
     ) -> MACDData:
         """
         Get MACD (Moving Average Convergence Divergence) data for a symbol.
@@ -151,7 +151,7 @@ class TwelveDataTool:
         interval: str = "1day",
         time_period: int = 20,
         std_dev: int = 2,
-        outputsize: int = None,
+        outputsize: int | None = None,
     ) -> BollingerBandsData:
         """
         Get Bollinger Bands data for a symbol.
@@ -196,7 +196,7 @@ class TwelveDataTool:
         fastkperiod: int = 14,
         slowkperiod: int = 3,
         slowdperiod: int = 3,
-        outputsize: int = None,
+        outputsize: int | None = None,
     ) -> StochasticData:
         """
         Get Stochastic oscillator data for a symbol.
@@ -276,14 +276,14 @@ class TwelveDataTool:
             results = await asyncio.gather(rsi_task, macd_task, bb_task, stoch_task, return_exceptions=True)
 
             # Extract results, handling any exceptions
-            rsi_data = results[0] if not isinstance(results[0], Exception) else None
-            macd_data = results[1] if not isinstance(results[1], Exception) else None
-            bollinger_data = results[2] if not isinstance(results[2], Exception) else None
-            stochastic_data = results[3] if not isinstance(results[3], Exception) else None
+            rsi_data = results[0] if not isinstance(results[0], BaseException) else None
+            macd_data = results[1] if not isinstance(results[1], BaseException) else None
+            bollinger_data = results[2] if not isinstance(results[2], BaseException) else None
+            stochastic_data = results[3] if not isinstance(results[3], BaseException) else None
 
             # Log any exceptions
             for i, result in enumerate(results):
-                if isinstance(result, Exception):
+                if isinstance(result, BaseException):
                     indicator_names = ["RSI", "MACD", "Bollinger Bands", "Stochastic"]
                     logger.warning(f"Failed to fetch {indicator_names[i]} for {symbol}: {result}")
 

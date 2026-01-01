@@ -5,7 +5,9 @@ This module provides REST API endpoints for portfolio rebalancing functionality,
 including analysis, recommendations, and monitoring capabilities.
 """
 
-from fastapi import APIRouter, HTTPException, Query, status  # type: ignore[import-not-found]  # fastapi may not be installed
+from datetime import datetime
+
+from fastapi import APIRouter, HTTPException, Query, status  # fastapi may not be installed
 from pydantic import BaseModel, Field
 
 from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
@@ -47,15 +49,25 @@ async def analyze_portfolio_rebalancing(request: RebalancingRequest) -> Rebalanc
         orchestrator = PortfolioRebalancingOrchestrator()
 
         # Perform rebalancing analysis
-        result = await orchestrator.rebalance_portfolio(portfolio_config=request.portfolio_config, available_capital=request.available_capital)
+        result = await orchestrator.rebalance_portfolio(portfolio_config=request.portfolio_config)
 
         logger.info("Portfolio rebalancing analysis completed successfully")
 
-        return RebalancingResponse(success=True, result=result)
+        return RebalancingResponse(
+            success=True,
+            message="Portfolio rebalancing analysis completed successfully",
+            timestamp=datetime.now().isoformat(),
+            result=result,
+        )
 
     except Exception as e:
         logger.error(f"Portfolio rebalancing analysis failed: {e}", exc_info=True)
-        return RebalancingResponse(success=False, error=str(e))
+        return RebalancingResponse(
+            success=False,
+            message=str(e),
+            timestamp=datetime.now().isoformat(),
+            result=None,
+        )
 
 
 @router.get("/portfolio/{portfolio_id}/analysis", response_model=PortfolioAnalysisResponse)

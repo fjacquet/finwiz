@@ -479,7 +479,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             # Create crypto-specific search query
             query = f"{symbol} cryptocurrency regulatory updates adoption news blockchain technology"
 
-            sonar_result = await perplexity_integration.search_financial_news(query=query, ticker=symbol, asset_type="crypto", analysis_type="crypto", max_results=6)
+            sonar_result = await perplexity_integration.search_financial_news(query=query, ticker=symbol, asset_type="crypto", analysis_type="general", max_results=6)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity crypto insights for {symbol}")

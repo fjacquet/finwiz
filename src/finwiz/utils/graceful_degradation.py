@@ -10,7 +10,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 from finwiz.tools.logger import get_logger
 from finwiz.utils.cache_manager import get_cache_manager
@@ -287,7 +287,7 @@ class GracefulDegradationManager:
             "coinmarketcap": {"data": {}, "status": "unavailable", "message": "Cryptocurrency data temporarily unavailable"},
         }
 
-        return default_data.get(service_name, {"status": "unavailable", "data": None})
+        return cast(dict[str, Any], default_data.get(service_name, {"status": "unavailable", "data": None}))
 
     async def _record_success(self, service_name: str, response_time: float) -> None:
         """Record successful service call."""

@@ -28,7 +28,7 @@ def create_summary_sections(report: "ScenarioAnalysisReport", extract_key_findin
 def create_comparison_tables(report: "ScenarioAnalysisReport") -> dict[str, Any]:
     """Create comparison tables for scenarios."""
     # What-if scenarios table
-    what_if_table = {
+    what_if_table: dict[str, Any] = {
         "headers": ["Scenario", "Modified Parameters", "Cost Impact", "Risk Impact", "Projected Outcome"],
         "rows": [],
     }
@@ -41,7 +41,7 @@ def create_comparison_tables(report: "ScenarioAnalysisReport") -> dict[str, Any]
         what_if_table["rows"].append([scenario.scenario_name, param_str, cost_impact, risk_impact, scenario.projected_outcome])
 
     # Scenario comparisons table
-    comparison_table = {
+    comparison_table: dict[str, Any] = {
         "headers": ["Scenario 1", "Scenario 2", "Return Diff", "Risk Diff", "Cost Diff", "Recommendation"],
         "rows": [],
     }

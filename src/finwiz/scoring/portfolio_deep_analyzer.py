@@ -8,9 +8,10 @@ Implements the spec requirements for 10-20x speed improvement and 100% cost redu
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from finwiz.schemas.portfolio_review import HoldingDecision
+from finwiz.schemas.common import RiskLevel
+from finwiz.schemas.portfolio_review import Grade, HoldingDecision
 from finwiz.scoring.deep_analysis_scorer import DeepAnalysisResult, DeepAnalysisScorer
 from finwiz.tools.logger import get_logger
 
@@ -121,7 +122,7 @@ class PortfolioDeepAnalyzer:
                     results["failed_analyses"] += 1
 
         # Task 0.20.3: Validate score uniqueness
-        self._validate_score_uniqueness(results["deep_analysis_results"])
+        self._validate_score_uniqueness(cast(dict[str, DeepAnalysisResult], results["deep_analysis_results"]))
 
         # Calculate performance metrics
         end_time = time.time()
@@ -138,7 +139,7 @@ class PortfolioDeepAnalyzer:
         }
 
         # Log summary of skipped holdings
-        skipped_holdings = results.get("skipped_holdings", [])
+        skipped_holdings = cast(list[dict[str, Any]], results.get("skipped_holdings", []))
         if skipped_holdings:
             self.logger.warning(
                 f"\n⚠️  SKIPPED HOLDINGS SUMMARY:\n"
@@ -147,14 +148,14 @@ class PortfolioDeepAnalyzer:
             )
 
         # Export JSON files (Requirements 0.8-0.12)
-        export_info = self._export_json_files(results["json_exports"], session_id)
+        export_info = self._export_json_files(cast(dict[str, Any], results["json_exports"]), session_id)
         results["export_info"] = export_info
 
         self.logger.info(f"🚀 Deep analysis completed in {total_time:.2f}s ({results['successful_analyses']}/{len(holdings)} successful)")
 
         return results
 
-    def _extract_holding_data(self, holding: HoldingDecision) -> dict[str, Any]:
+    def _extract_holding_data(self, holding: HoldingDecision) -> dict[str, Any] | None:
         """
         Extract real market data from holding for scoring.
 
@@ -179,19 +180,24 @@ class PortfolioDeepAnalyzer:
             # Parse the quantitative data
             import json
 
+            perf_dict: dict[str, Any] = {}
+            tech_dict: dict[str, Any] = {}
+
             if isinstance(perf_data, str):
                 try:
-                    perf_data = json.loads(perf_data)
+                    perf_dict = json.loads(perf_data)
                 except json.JSONDecodeError:
                     self.logger.warning(f"Failed to parse performance data for {ticker}, using defaults")
-                    perf_data = {}
+            elif isinstance(perf_data, dict):
+                perf_dict = perf_data
 
             if isinstance(tech_data, str):
                 try:
-                    tech_data = json.loads(tech_data)
+                    tech_dict = json.loads(tech_data)
                 except json.JSONDecodeError:
                     self.logger.warning(f"Failed to parse technical data for {ticker}, using defaults")
-                    tech_data = {}
+            elif isinstance(tech_data, dict):
+                tech_dict = tech_data
 
             # Extract real values from quantitative analysis
             # Combine performance and technical data
@@ -199,26 +205,26 @@ class PortfolioDeepAnalyzer:
                 "ticker": ticker,
                 "asset_class": asset_class,
                 # From performance analysis
-                "current_price": perf_data.get("current_price", 100.0),
-                "volatility": perf_data.get("volatility", 0.20),
-                "max_drawdown": perf_data.get("max_drawdown", -0.15),
-                "beta": perf_data.get("beta", 1.0),
+                "current_price": perf_dict.get("current_price", 100.0),
+                "volatility": perf_dict.get("volatility", 0.20),
+                "max_drawdown": perf_dict.get("max_drawdown", -0.15),
+                "beta": perf_dict.get("beta", 1.0),
                 # From technical analysis
-                "rsi": tech_data.get("rsi", 50.0),
-                "moving_avg_50": tech_data.get("sma_50", tech_data.get("current_price", 100.0) * 0.95),
-                "moving_avg_200": tech_data.get("sma_200", tech_data.get("current_price", 100.0) * 0.90),
-                "macd": tech_data.get("macd", 0.0),
-                "macd_signal": tech_data.get("macd_signal", 0.0),
+                "rsi": tech_dict.get("rsi", 50.0),
+                "moving_avg_50": tech_dict.get("sma_50", tech_dict.get("current_price", 100.0) * 0.95),
+                "moving_avg_200": tech_dict.get("sma_200", tech_dict.get("current_price", 100.0) * 0.90),
+                "macd": tech_dict.get("macd", 0.0),
+                "macd_signal": tech_dict.get("macd_signal", 0.0),
             }
 
             # Add asset-specific data from performance analysis
             if asset_class == "stock":
                 data.update(
                     {
-                        "roe": perf_data.get("roe", 0.15),
-                        "debt_to_equity": perf_data.get("debt_to_equity", 0.5),
-                        "revenue_growth": perf_data.get("revenue_growth", 0.10),
-                        "profit_margin": perf_data.get("profit_margin", 0.15),
+                        "roe": perf_dict.get("roe", 0.15),
+                        "debt_to_equity": perf_dict.get("debt_to_equity", 0.5),
+                        "revenue_growth": perf_dict.get("revenue_growth", 0.10),
+                        "profit_margin": perf_dict.get("profit_margin", 0.15),
                     }
                 )
             elif asset_class == "etf":
@@ -226,17 +232,17 @@ class PortfolioDeepAnalyzer:
                 # These are critical fields that must come from real data
                 data.update(
                     {
-                        "expense_ratio": perf_data.get("expense_ratio"),  # No default - will trigger CriticalFieldError if missing
-                        "tracking_error": perf_data.get("tracking_error"),  # No default - will trigger CriticalFieldError if missing
-                        "aum": perf_data.get("aum", 5e9),  # AUM can have default (not critical for scoring)
+                        "expense_ratio": perf_dict.get("expense_ratio"),  # No default - will trigger CriticalFieldError if missing
+                        "tracking_error": perf_dict.get("tracking_error"),  # No default - will trigger CriticalFieldError if missing
+                        "aum": perf_dict.get("aum", 5e9),  # AUM can have default (not critical for scoring)
                     }
                 )
             elif asset_class == "crypto":
                 data.update(
                     {
-                        "market_cap": perf_data.get("market_cap", 100e9),
-                        "volume_24h": perf_data.get("volume_24h", 1e9),
-                        "age_years": perf_data.get("age_years", 5),
+                        "market_cap": perf_dict.get("market_cap", 100e9),
+                        "volume_24h": perf_dict.get("volume_24h", 1e9),
+                        "age_years": perf_dict.get("age_years", 5),
                     }
                 )
 
@@ -293,12 +299,12 @@ class PortfolioDeepAnalyzer:
     def _update_holding_with_analysis(self, holding: HoldingDecision, analysis_result: DeepAnalysisResult) -> None:
         """Update holding decision with deep analysis results."""
         holding.composite_score = analysis_result.composite_score
-        holding.grade = analysis_result.grade
+        holding.grade = cast(Grade, analysis_result.grade)
         holding.recommended_action = f"{analysis_result.recommendation} - {analysis_result.rationale[:50]}..."
 
         # Update risk assessment
         holding.risk.score = 5.0 - (analysis_result.risk_score * 5.0)  # Convert to 0-5 scale
-        holding.risk.level = self._risk_score_to_level(holding.risk.score)
+        holding.risk.level = cast(RiskLevel, self._risk_score_to_level(holding.risk.score))
         holding.risk.risk_factors = list(analysis_result.risk_details.keys())[:5]
 
         # Add analysis details to rationale
@@ -435,13 +441,13 @@ class PortfolioDeepAnalyzer:
 
         # Extract composite scores
         composite_scores = [result.composite_score for result in analysis_results.values()]
-        risk_scores = [result.risk_score for result in analysis_results.values()]
+        risk_scores = [result.risk_score for result in analysis_results.values() if result.risk_score is not None]
 
         # Calculate standard deviation
         import statistics
 
-        composite_std = statistics.stdev(composite_scores) if len(composite_scores) > 1 else 0
-        risk_std = statistics.stdev(risk_scores) if len(risk_scores) > 1 else 0
+        composite_std = statistics.stdev(composite_scores) if len(composite_scores) > 1 else 0.0
+        risk_std = statistics.stdev(risk_scores) if len(risk_scores) > 1 else 0.0
 
         self.logger.info(f"📊 Score distribution: composite_std={composite_std:.4f}, risk_std={risk_std:.4f}")
 

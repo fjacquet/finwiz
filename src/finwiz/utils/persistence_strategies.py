@@ -89,7 +89,8 @@ class RecoveryStrategy:
             try:
                 self.logger.info(f"Trying to load backup: {backup_file}")
                 html_content = backup_file.read_text(encoding="utf-8")
-                return parse_html_report_func(html_content)
+                parsed_result: FinancialPlan | None = parse_html_report_func(html_content)
+                return parsed_result
             except Exception as e:
                 self.logger.warning(f"Backup {backup_file} is also corrupted: {str(e)}")
                 continue

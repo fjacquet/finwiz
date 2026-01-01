@@ -442,7 +442,8 @@ class CrewOutputStorage:
                 },
             }
 
-            return lineage_data
+            result: dict[str, Any] = lineage_data
+            return result
 
         except Exception as e:
             error_msg = f"Failed to get data lineage: {str(e)}"

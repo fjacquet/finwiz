@@ -1,6 +1,5 @@
 """Tests for url_validator module."""
 
-import pytest
 
 
 class TestURLValidator:

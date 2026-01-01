@@ -84,7 +84,8 @@ def parse_json_file(file_path: str | Path) -> dict[str, Any]:
 
     try:
         with open(file_path, encoding="utf-8") as f:
-            return json.load(f)
+            result: dict[str, Any] = json.load(f)
+            return result
     except json.JSONDecodeError as e:
         # Log sanitized error (no file contents)
         logger.error(
@@ -129,7 +130,8 @@ def parse_json_string(json_str: str, source_name: str = "string") -> dict[str, A
 
     """
     try:
-        return json.loads(json_str)
+        result: dict[str, Any] = json.loads(json_str)
+        return result
     except json.JSONDecodeError as e:
         # Log sanitized error (no JSON contents)
         logger.error(
@@ -170,8 +172,8 @@ def validate_schema(data: dict[str, Any], schema_class: type, schema_name: str |
     try:
         return schema_class.model_validate(data)
     except ValidationError as e:
-        # Extract field-level errors
-        errors = e.errors()
+        # Extract field-level errors and convert ErrorDetails to dict
+        errors: list[dict[str, Any]] = [dict(err) for err in e.errors()]
 
         # Log sanitized error (no data values)
         logger.error(

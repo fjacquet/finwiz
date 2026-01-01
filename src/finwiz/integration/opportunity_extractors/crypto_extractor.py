@@ -42,7 +42,7 @@ class CryptoOpportunityExtractor(OpportunityExtractor):
         # Try market_cap_usd first, then market_cap (for test data compatibility)
         market_cap = candidate.get("market_cap_usd", candidate.get("market_cap", 0))
 
-        return market_cap >= 10_000_000_000  # $10B minimum
+        return bool(market_cap >= 10_000_000_000)  # $10B minimum
 
     def _build_opportunity(self, candidate: dict[str, Any], idx: int) -> dict[str, Any] | None:
         """

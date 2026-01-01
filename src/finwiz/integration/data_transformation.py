@@ -6,7 +6,7 @@ for compatibility with CrewAI and other systems.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 
 def serialize_datetime_objects(obj: Any, _seen: set[int] | None = None) -> Any:
@@ -165,7 +165,7 @@ def consolidate_market_sentiment_data(crew_data_map: dict[str, dict[str, Any]]) 
             }
 
             all_sources.append(source_info)
-            crew_sentiment_summary["sources"].append(source_info)
+            cast(list, crew_sentiment_summary["sources"]).append(source_info)
 
         # Average the crew sentiment scores
         if crew_sentiment_summary["source_count"] > 0:
@@ -271,7 +271,7 @@ def consolidate_ticker_validation_data(crew_data_map: dict[str, dict[str, Any]])
             }
 
             # Add to appropriate category
-            consolidated_validation[target_key].append(standardized_validation)
+            cast(list, consolidated_validation[target_key]).append(standardized_validation)
 
             if standardized_validation["is_valid"]:
                 valid_symbols += 1
@@ -292,7 +292,7 @@ def consolidate_ticker_validation_data(crew_data_map: dict[str, dict[str, Any]])
                 if standardized_validation["alternative_suggestions"]:
                     failed_validation["recovery_suggestions"].append(f"Try alternatives: {', '.join(standardized_validation['alternative_suggestions'][:3])}")
 
-                consolidated_validation["failed_validations"].append(failed_validation)
+                cast(list, consolidated_validation["failed_validations"]).append(failed_validation)
 
     # Calculate validation summary
     consolidated_validation["validation_summary"] = {
@@ -346,15 +346,16 @@ def generate_core_analysis_summary(consolidated_data: dict[str, Any], max_age_ho
 
         # Extract key insights
         insights = _extract_key_insights(crew_name, crew_data)
-        summary["key_insights"].extend(insights)
+        cast(list, summary["key_insights"]).extend(insights)
 
     # Calculate overall data quality indicators
+    analysis_coverage = cast(dict[str, Any], summary["analysis_coverage"])
     summary["data_quality_indicators"] = {
-        "overall_completeness": sum(c["data_completeness"] for c in summary["analysis_coverage"].values()) / max(len(summary["analysis_coverage"]), 1),
-        "crews_with_analysis": sum(1 for c in summary["analysis_coverage"].values() if c["has_analysis"]),
-        "crews_with_recommendations": sum(1 for c in summary["analysis_coverage"].values() if c["has_recommendations"]),
-        "crews_with_risk_assessment": sum(1 for c in summary["analysis_coverage"].values() if c["has_risk_assessment"]),
-        "total_data_points": sum(c["data_points"] for c in summary["analysis_coverage"].values()),
+        "overall_completeness": sum(c["data_completeness"] for c in analysis_coverage.values()) / max(len(analysis_coverage), 1),
+        "crews_with_analysis": sum(1 for c in analysis_coverage.values() if c["has_analysis"]),
+        "crews_with_recommendations": sum(1 for c in analysis_coverage.values() if c["has_recommendations"]),
+        "crews_with_risk_assessment": sum(1 for c in analysis_coverage.values() if c["has_risk_assessment"]),
+        "total_data_points": sum(c["data_points"] for c in analysis_coverage.values()),
     }
 
     # Identify cross-crew correlations
@@ -415,10 +416,11 @@ def _identify_cross_crew_correlations(consolidated_data: dict[str, Any]) -> dict
         all_symbols.update(symbols)
 
     # Find symbols that appear in multiple crews
+    common_symbols = cast(list, correlations["common_symbols"])
     for symbol in all_symbols:
         crews_with_symbol = [crew for crew, symbols in crew_symbols.items() if symbol in symbols]
         if len(crews_with_symbol) > 1:
-            correlations["common_symbols"].append({"symbol": symbol, "crews": crews_with_symbol, "coverage": len(crews_with_symbol)})
+            common_symbols.append({"symbol": symbol, "crews": crews_with_symbol, "coverage": len(crews_with_symbol)})
 
     return correlations
 

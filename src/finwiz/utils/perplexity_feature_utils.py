@@ -7,7 +7,7 @@ logging, and error handling across all Perplexity-integrated tools.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from finwiz.tools.logger import get_logger
 from finwiz.utils.feature_flags import get_feature_flags
@@ -99,7 +99,7 @@ def record_perplexity_failure(tool_name: str, ticker: str, error_message: str) -
     logger.warning(f"Perplexity search failed for {ticker} in {tool_name}: {error_message}")
 
 
-def get_feature_status_summary() -> dict[str, any]:
+def get_feature_status_summary() -> dict[str, Any]:
     """
     Get comprehensive status summary of Perplexity feature flag.
 

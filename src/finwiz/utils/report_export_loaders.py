@@ -193,12 +193,14 @@ def _handle_missing_file(path: Path, crew_name: str, validation_errors: list[dic
     """Handle missing file error."""
     error_msg = f"Export file not found: {path}"
     logger.warning(error_msg)
-    validation_errors.append({
-        "crew": crew_name,
-        "file": str(path),
-        "error_type": "missing_file",
-        "message": error_msg,
-    })
+    validation_errors.append(
+        {
+            "crew": crew_name,
+            "file": str(path),
+            "error_type": "missing_file",
+            "message": error_msg,
+        }
+    )
 
 
 def _handle_validation_error(
@@ -217,14 +219,16 @@ def _handle_validation_error(
         logger.error(f"  {error_detail}")
         validation_details.append(error_detail)
 
-    validation_errors.append({
-        "crew": crew_name,
-        "file": str(path),
-        "error_type": "validation_error",
-        "schema": schema_name,
-        "details": validation_details,
-        "message": f"Validation failed: {len(validation_details)} field errors",
-    })
+    validation_errors.append(
+        {
+            "crew": crew_name,
+            "file": str(path),
+            "error_type": "validation_error",
+            "schema": schema_name,
+            "details": validation_details,
+            "message": f"Validation failed: {len(validation_details)} field errors",
+        }
+    )
     logger.warning(f"Skipping invalid export {path} - continuing with valid exports")
 
 
@@ -232,21 +236,25 @@ def _handle_json_error(path: Path, crew_name: str, error: json.JSONDecodeError, 
     """Handle JSON parsing error."""
     error_msg = f"Invalid JSON in {path}: {error}"
     logger.error(error_msg)
-    validation_errors.append({
-        "crew": crew_name,
-        "file": str(path),
-        "error_type": "json_parse_error",
-        "message": error_msg,
-    })
+    validation_errors.append(
+        {
+            "crew": crew_name,
+            "file": str(path),
+            "error_type": "json_parse_error",
+            "message": error_msg,
+        }
+    )
 
 
 def _handle_unexpected_error(path: Path, crew_name: str, error: Exception, validation_errors: list[dict]) -> None:
     """Handle unexpected error."""
     error_msg = f"Failed to load {path}: {error}"
     logger.error(error_msg, exc_info=True)
-    validation_errors.append({
-        "crew": crew_name,
-        "file": str(path),
-        "error_type": "unexpected_error",
-        "message": error_msg,
-    })
+    validation_errors.append(
+        {
+            "crew": crew_name,
+            "file": str(path),
+            "error_type": "unexpected_error",
+            "message": error_msg,
+        }
+    )

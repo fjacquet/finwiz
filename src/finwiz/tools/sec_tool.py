@@ -42,7 +42,7 @@ class SECFilingSearchTool(BaseTool):
                     "form_type": form_type,
                 }
 
-            html = self._download_html(filing["filing_url"])  # type: ignore[index]
+            html = self._download_html(filing["filing_url"])
             docs = self._split_into_documents(html)
             excerpts = self._retrieve_excerpts(docs, question, top_k)
 
@@ -73,15 +73,15 @@ class SECFilingSearchTool(BaseTool):
             raise KeyError("SEC_API_API_KEY")
 
         # Lazy import to allow tests to patch QueryApi and to avoid hard dependency at import time
-        global QueryApi  # type: ignore[global-variable-not-assigned]
+        global QueryApi
         if QueryApi is None:
             try:
-                from sec_api import QueryApi as _QueryApi  # type: ignore
+                from sec_api import QueryApi as _QueryApi
             except Exception as e:  # pragma: no cover - surfaced to _run
                 raise e
-            QueryApi = _QueryApi  # type: ignore
+            QueryApi = _QueryApi
 
-        query_api = QueryApi(api_key=api_key)  # type: ignore[operator]
+        query_api = QueryApi(api_key=api_key)
         query = {
             "query": {"query_string": {"query": f'ticker:{ticker} AND formType:"{form_type}"'}},
             "from": "0",
@@ -121,7 +121,7 @@ class SECFilingSearchTool(BaseTool):
 
 
 try:  # defer optional dependency
-    from unstructured.partition.html import partition_html  # type: ignore
+    from unstructured.partition.html import partition_html
 except Exception:  # pragma: no cover - provide a minimal fallback
 
     def partition_html(text: str) -> list[Any]:  # type: ignore

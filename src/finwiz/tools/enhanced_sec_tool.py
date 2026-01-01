@@ -9,7 +9,7 @@ Enhanced with optional Perplexity Sonar integration for recent earnings and SEC 
 import asyncio
 import os
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 import requests
 from crewai.tools import BaseTool
@@ -88,9 +88,9 @@ class EnhancedSECAnalysisTool(BaseTool):
 
     def _run(
         self,
-        ticker: str = None,
+        ticker: str | None = None,
         form_type: str = "10-K",
-        sections: list[str] = None,
+        sections: list[str] | None = None,
         risk_assessment: bool = True,
         include_perplexity: bool = True,
         **kwargs: Any,
@@ -213,7 +213,7 @@ class EnhancedSECAnalysisTool(BaseTool):
             global QueryApi
             if QueryApi is None:
                 try:
-                    from sec_api import QueryApi as _QueryApi  # type: ignore[import-not-found]
+                    from sec_api import QueryApi as _QueryApi
                 except Exception:
                     logger.debug("sec_api package not available, skipping filing date lookup")
                     return None
@@ -229,7 +229,7 @@ class EnhancedSECAnalysisTool(BaseTool):
 
             filings = query_api.get_filings(query).get("filings", [])
             if filings:
-                filed_at = filings[0].get("filedAt", "")
+                filed_at: str | None = filings[0].get("filedAt", "")
                 logger.debug(f"Retrieved filing date from SEC API: {filed_at}")
                 return filed_at
 
@@ -406,7 +406,7 @@ class EnhancedSECAnalysisTool(BaseTool):
 
         try:
             # Determine asset type (simplified logic for stocks)
-            asset_type = "stock"
+            asset_type: Literal["stock", "etf", "crypto"] = "stock"
 
             sonar_result = await perplexity_integration.search_fundamental_analysis(ticker=ticker, asset_type=asset_type, max_results=6)
 
@@ -549,7 +549,7 @@ class StandardizedRiskScoringTool(BaseTool):
     description: str = "Calculate standardized risk scores (0-5 scale) with consistent methodology across different asset classes and analysis contexts."
     args_schema: type[BaseModel] = StandardizedRiskScoringInput
 
-    def _run(self, symbol: str, asset_class: str, risk_factors: list[str] = None, **kwargs: Any) -> dict[str, Any]:
+    def _run(self, symbol: str, asset_class: str, risk_factors: list[str] | None = None, **kwargs: Any) -> dict[str, Any]:
         """Calculate standardized risk score based on provided factors."""
         if risk_factors is None:
             risk_factors = []
@@ -572,9 +572,11 @@ try:
     from unstructured.partition.html import partition_html
 except Exception:
 
-    def partition_html(text: str) -> list[Any]:
+    def _partition_html_fallback(text: str) -> list[Any]:
         """Fallback partitioner: return the raw HTML as a single chunk."""
         return [text]
+
+    partition_html = _partition_html_fallback  # type: ignore[assignment]
 
 
 # Defer importing QueryApi to runtime

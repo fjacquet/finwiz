@@ -35,7 +35,7 @@ class AdvancedIndicators:
             Technical indicator result with MACD values and signals
 
         """
-        close_prices = data["Close"].values.astype(np.float64)
+        close_prices = np.asarray(data["Close"].values, dtype=np.float64)
 
         if len(close_prices) < slow + signal:
             raise ValueError(f"Insufficient data for MACD: need {slow + signal}, have {len(close_prices)}")
@@ -122,7 +122,7 @@ class AdvancedIndicators:
             Technical indicator result with Bollinger Bands values and signals
 
         """
-        close_prices = data["Close"].values.astype(np.float64)
+        close_prices = np.asarray(data["Close"].values, dtype=np.float64)
 
         if len(close_prices) < period:
             raise ValueError(f"Insufficient data for Bollinger Bands: need {period}, have {len(close_prices)}")

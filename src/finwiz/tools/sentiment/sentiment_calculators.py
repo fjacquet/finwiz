@@ -105,4 +105,4 @@ class SentimentCalculators:
         # Weight by individual source confidences
         avg_source_confidence = sum(s["confidence"] for s in sources) / len(sources)
 
-        return source_confidence * 0.3 + article_confidence * 0.3 + avg_source_confidence * 0.4
+        return float(source_confidence * 0.3 + article_confidence * 0.3 + avg_source_confidence * 0.4)

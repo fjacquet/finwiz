@@ -44,7 +44,7 @@ class ETFOpportunityExtractor(OpportunityExtractor):
         key_metrics = candidate.get("key_metrics", {})
         ter = cost_metrics.get("ter", key_metrics.get("ter", 1.0))
 
-        return ter <= 0.15
+        return bool(ter <= 0.15)
 
     def _build_opportunity(self, candidate: dict[str, Any], idx: int) -> dict[str, Any] | None:
         """

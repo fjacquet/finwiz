@@ -380,7 +380,7 @@ async def run_with_rebalancing(
             logger.warning(f"Rebalancing analysis failed: {e}")
             rebalancing_result = None
 
-    return out, rebalancing_result
+    return out, rebalancing_result.model_dump() if rebalancing_result else None
 
 
 async def run(flow_state: Any | None = None) -> Path:

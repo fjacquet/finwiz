@@ -12,9 +12,13 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from finwiz.flow_state import DeepAnalysisResult
+
+if TYPE_CHECKING:
+    from finwiz.schemas.data_lineage import DataLineage
+    from finwiz.utils.data_quality_metrics import DataQualityMetrics
 from finwiz.scoring.crew_export_generator import CrewExportGenerator
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
 from finwiz.scoring.risk_scorer import RiskScorer
@@ -49,9 +53,9 @@ class DeepAnalysisScorer:
             thresholds: Optional custom thresholds (defaults to DEFAULT_THRESHOLDS)
         """
         self.logger = logger
-        self._data_quality_metrics = None
-        self._current_ticker = None
-        self._lineage_tracker = None
+        self._data_quality_metrics: DataQualityMetrics | None = None
+        self._current_ticker: str | None = None
+        self._lineage_tracker: DataLineage | None = None
 
         # Scoring thresholds
         self.thresholds = thresholds or get_thresholds()
@@ -96,6 +100,9 @@ class DeepAnalysisScorer:
             composite_score = self._compute_weighted_score(scores)
 
             # Step 5: Build final result (delegate to ScoreResultBuilder)
+            # After _initialize_tracking, these are guaranteed to be set
+            assert self._lineage_tracker is not None
+            assert self._data_quality_metrics is not None
             return self.result_builder.build_result(
                 ticker=ticker,
                 asset_class=asset_class,
@@ -143,9 +150,7 @@ class DeepAnalysisScorer:
             result = self.calculate_composite_score(ticker, asset_class, collected_data)
 
             # Step 2: Create comprehensive detailed analysis (delegate)
-            detailed_analysis = self.export_generator.create_detailed_analysis(
-                ticker, asset_class, collected_data, result
-            )
+            detailed_analysis = self.export_generator.create_detailed_analysis(ticker, asset_class, collected_data, result)
 
             # Step 3: Create crew export dict (delegate)
             crew_export_dict = self.export_generator.create_crew_export(result, detailed_analysis, session_id)
@@ -206,7 +211,8 @@ class DeepAnalysisScorer:
         )
 
         try:
-            validate_critical_fields(ticker, asset_class, data)
+            asset_class_literal = cast(Literal["stock", "etf", "crypto"], asset_class)
+            validate_critical_fields(ticker, asset_class_literal, data)
             self.logger.info(f"✅ All critical fields present for {ticker}")
         except CriticalFieldError as e:
             self.logger.error(
@@ -259,11 +265,7 @@ class DeepAnalysisScorer:
             weight_risk = self.thresholds.weight_risk
 
         # Calculate weighted composite score
-        composite_score = (
-            weight_fundamental * scores["fundamental_score"]
-            + weight_technical * scores["technical_score"]
-            + weight_risk * scores["risk_score"]
-        )
+        composite_score = weight_fundamental * scores["fundamental_score"] + weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]
 
         # Store adaptive weights in scores for transparency
         scores["weights_used"] = {
@@ -296,7 +298,7 @@ class DeepAnalysisScorer:
             },
         )
 
-        return composite_score
+        return float(composite_score)
 
     def calculate_fundamental_score(self, asset_class: str, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         """
@@ -304,7 +306,9 @@ class DeepAnalysisScorer:
 
         Delegates to FundamentalScorer component.
         """
-        self.fundamental_scorer.set_context(self._current_ticker, self._data_quality_metrics)
+        # Use empty string as fallback when ticker not set (should not happen in normal flow)
+        ticker = self._current_ticker or ""
+        self.fundamental_scorer.set_context(ticker, self._data_quality_metrics)
         return self.fundamental_scorer.calculate_fundamental_score(asset_class, data)
 
     def calculate_technical_score(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
@@ -359,10 +363,7 @@ class DeepAnalysisScorer:
         risk_details: dict[str, Any],
     ) -> str:
         """Generate template-based rationale. Delegates to ScoreResultBuilder."""
-        return self.result_builder.generate_rationale(
-            ticker, asset_class, composite_score, grade,
-            fundamental_details, technical_details, risk_details
-        )
+        return self.result_builder.generate_rationale(ticker, asset_class, composite_score, grade, fundamental_details, technical_details, risk_details)
 
     def create_detailed_analysis(
         self,

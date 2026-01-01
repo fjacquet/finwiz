@@ -7,6 +7,7 @@ optimization for financial data.
 """
 
 import asyncio
+from collections.abc import Callable
 from typing import Any
 
 from finwiz.tools.logger import get_logger
@@ -45,7 +46,8 @@ class PortfolioCacheService:
 
         """
         cache_key = ["price_data", symbol]
-        return await self.cache_manager.get(cache_key)
+        result: dict[str, Any] | None = await self.cache_manager.get(cache_key)
+        return result
 
     async def set_price_data(self, symbol: str, price_data: dict[str, Any]) -> None:
         """
@@ -72,7 +74,8 @@ class PortfolioCacheService:
 
         """
         cache_key = ["portfolio_analysis", portfolio_hash]
-        return await self.cache_manager.get(cache_key)
+        result: dict[str, Any] | None = await self.cache_manager.get(cache_key)
+        return result
 
     async def set_portfolio_analysis(self, portfolio_hash: str, analysis_result: dict[str, Any]) -> None:
         """
@@ -100,7 +103,8 @@ class PortfolioCacheService:
 
         """
         cache_key = ["rebalancing_analysis", portfolio_hash, target_weights_hash]
-        return await self.cache_manager.get(cache_key)
+        result: dict[str, Any] | None = await self.cache_manager.get(cache_key)
+        return result
 
     async def set_rebalancing_analysis(self, portfolio_hash: str, target_weights_hash: str, rebalancing_result: dict[str, Any]) -> None:
         """
@@ -129,7 +133,8 @@ class PortfolioCacheService:
 
         """
         cache_key = ["ticker_validation", symbol, asset_class]
-        return await self.cache_manager.get(cache_key)
+        result: dict[str, Any] | None = await self.cache_manager.get(cache_key)
+        return result
 
     async def set_ticker_validation(self, symbol: str, asset_class: str, validation_result: dict[str, Any]) -> None:
         """
@@ -276,7 +281,7 @@ def get_portfolio_cache_service() -> PortfolioCacheService:
     return _portfolio_cache_service
 
 
-async def with_portfolio_cache(cache_key: str | list[Any], compute_func: callable, ttl: int | None = None, *args: Any, **kwargs: Any) -> Any:
+async def with_portfolio_cache(cache_key: str | list[Any], compute_func: Callable[..., Any], ttl: int | None = None, *args: Any, **kwargs: Any) -> Any:
     """
     Execute function with portfolio-specific caching.
 

@@ -30,9 +30,7 @@ def prepare_core_analysis_summary(
     }
 
     try:
-        crew_data_dict = consolidated_data.get(
-            "consolidated_crew_data", consolidated_data
-        )
+        crew_data_dict = consolidated_data.get("consolidated_crew_data", consolidated_data)
 
         for crew_type in ["stock", "etf", "crypto"]:
             if crew_type in crew_data_dict:
@@ -61,9 +59,7 @@ def prepare_core_analysis_summary(
         # Determine overall risk level
         _determine_risk_level(summary)
 
-        logger.debug(
-            f"Prepared core analysis summary with {len(summary['available_analyses'])} analyses"
-        )
+        logger.debug(f"Prepared core analysis summary with {len(summary['available_analyses'])} analyses")
         return summary
 
     except Exception as e:
@@ -81,15 +77,13 @@ def _extract_insights_from_tasks(
         if isinstance(task, dict) and "raw" in task:
             task_content = str(task["raw"])
             if len(task_content) > 100:
-                insight = (
-                    task_content[:200] + "..."
-                    if len(task_content) > 200
-                    else task_content
+                insight = task_content[:200] + "..." if len(task_content) > 200 else task_content
+                summary["key_insights"].append(
+                    {
+                        "source": crew_type,
+                        "insight": insight,
+                    }
                 )
-                summary["key_insights"].append({
-                    "source": crew_type,
-                    "insight": insight,
-                })
 
 
 def _extract_opportunities(
@@ -103,9 +97,7 @@ def _extract_opportunities(
         if "pydantic" in crew_data and crew_data["pydantic"]:
             pydantic_data = crew_data["pydantic"]
             if "opportunities" in pydantic_data:
-                summary["investment_opportunities"][opportunities_key].extend(
-                    pydantic_data["opportunities"][:3]
-                )
+                summary["investment_opportunities"][opportunities_key].extend(pydantic_data["opportunities"][:3])
 
 
 def _determine_market_sentiment(
@@ -130,9 +122,7 @@ def _extract_risk_factors(
     summary: dict[str, Any],
 ) -> None:
     """Extract major risk factors from consolidated data."""
-    crew_data_dict = consolidated_data.get(
-        "consolidated_crew_data", consolidated_data
-    )
+    crew_data_dict = consolidated_data.get("consolidated_crew_data", consolidated_data)
     for crew_type in ["stock", "etf", "crypto"]:
         if crew_type in crew_data_dict:
             crew_data = crew_data_dict[crew_type]
@@ -147,9 +137,7 @@ def _extract_risk_factors(
                 ]
                 for keyword in risk_keywords:
                     if keyword in raw_output:
-                        summary["risk_assessment"]["major_risk_factors"].append(
-                            f"{crew_type}: {keyword}"
-                        )
+                        summary["risk_assessment"]["major_risk_factors"].append(f"{crew_type}: {keyword}")
 
 
 def _determine_risk_level(summary: dict[str, Any]) -> None:

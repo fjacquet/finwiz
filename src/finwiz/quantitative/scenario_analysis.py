@@ -9,6 +9,7 @@ analysis reporting for portfolio rebalancing decisions.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
@@ -181,7 +182,7 @@ class ScenarioAnalysisEngine:
         parameter_name: str,
         parameter_values: list[float],
         base_config: PortfolioConfiguration,
-        setter_func: callable,
+        setter_func: Callable[..., Any],
     ) -> SensitivityResult:
         """
         Analyze sensitivity for a single parameter.
@@ -285,7 +286,7 @@ class ScenarioAnalysisEngine:
             Dictionary with optimal parameter recommendations
 
         """
-        optimal_params = {}
+        optimal_params: dict[str, Any] = {}
 
         # Analyze each parameter's sensitivity
         for result in sensitivity_results:

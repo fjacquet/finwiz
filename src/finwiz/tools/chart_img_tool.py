@@ -52,12 +52,12 @@ class ChartImgTool(BaseTool):
         base_url = os.getenv("CHART_IMG_BASE_URL", "https://api.chart-img.com/v1/stock")
 
         headers = {"x-api-key": api_key}
-        params = {
+        params: dict[str, str] = {
             "symbol": symbol,
             "interval": interval,
             "range": range,
-            "width": width,
-            "height": height,
+            "width": str(width),
+            "height": str(height),
             "theme": theme,
         }
 

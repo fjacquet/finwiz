@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Any
+from typing import Any, Literal
 
 import requests
 from crewai.tools import BaseTool
@@ -154,7 +154,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
         if not api_key:
             return {"error": "TWELVE_DATA_API_KEY environment variable not set"}
 
-        results = {}
+        results: dict[str, str | dict[str, str]] = {}
 
         # Fetch RSI
         if "rsi" in indicators:
@@ -253,7 +253,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
             feature_flags.record_failure("perplexity_research")
             return []
 
-    def _determine_asset_type(self, symbol: str) -> str:
+    def _determine_asset_type(self, symbol: str) -> Literal["stock", "etf", "crypto"]:
         """Determine asset type from symbol."""
         symbol_upper = symbol.upper()
 

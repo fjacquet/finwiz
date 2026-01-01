@@ -28,7 +28,7 @@ class ScenarioParameters(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     # Capital scenarios
-    capital_amounts: list[float] = Field(default_factory=lambda: [-10000, -5000, 0, 5000, 10000, 25000], description="Different capital amounts to test")
+    capital_amounts: list[float] = Field(default_factory=lambda: [-10000.0, -5000.0, 0.0, 5000.0, 10000.0, 25000.0], description="Different capital amounts to test")
 
     # Tolerance scenarios
     tolerance_levels: list[float] = Field(default_factory=lambda: [0.01, 0.025, 0.05, 0.075, 0.10], description="Different tolerance band levels to test")
@@ -236,39 +236,39 @@ class ScenarioGenerator:
             transaction_costs.append(total_cost)
             final_values.append(final_value)
 
-        # Calculate statistics
-        rebalancing_frequencies = np.array(rebalancing_frequencies)
-        transaction_costs = np.array(transaction_costs)
-        final_values = np.array(final_values)
+        # Calculate statistics - convert to numpy arrays with new variable names
+        rebalancing_freq_arr = np.array(rebalancing_frequencies)
+        transaction_cost_arr = np.array(transaction_costs)
+        final_val_arr = np.array(final_values)
 
         # Calculate percentiles
         rebalancing_percentiles = {
-            "5th": float(np.percentile(rebalancing_frequencies, 5)),
-            "25th": float(np.percentile(rebalancing_frequencies, 25)),
-            "50th": float(np.percentile(rebalancing_frequencies, 50)),
-            "75th": float(np.percentile(rebalancing_frequencies, 75)),
-            "95th": float(np.percentile(rebalancing_frequencies, 95)),
+            "5th": float(np.percentile(rebalancing_freq_arr, 5)),
+            "25th": float(np.percentile(rebalancing_freq_arr, 25)),
+            "50th": float(np.percentile(rebalancing_freq_arr, 50)),
+            "75th": float(np.percentile(rebalancing_freq_arr, 75)),
+            "95th": float(np.percentile(rebalancing_freq_arr, 95)),
         }
 
         cost_percentiles = {
-            "5th": float(np.percentile(transaction_costs, 5)),
-            "25th": float(np.percentile(transaction_costs, 25)),
-            "50th": float(np.percentile(transaction_costs, 50)),
-            "75th": float(np.percentile(transaction_costs, 75)),
-            "95th": float(np.percentile(transaction_costs, 95)),
+            "5th": float(np.percentile(transaction_cost_arr, 5)),
+            "25th": float(np.percentile(transaction_cost_arr, 25)),
+            "50th": float(np.percentile(transaction_cost_arr, 50)),
+            "75th": float(np.percentile(transaction_cost_arr, 75)),
+            "95th": float(np.percentile(transaction_cost_arr, 95)),
         }
 
         value_percentiles = {
-            "5th": float(np.percentile(final_values, 5)),
-            "25th": float(np.percentile(final_values, 25)),
-            "50th": float(np.percentile(final_values, 50)),
-            "75th": float(np.percentile(final_values, 75)),
-            "95th": float(np.percentile(final_values, 95)),
+            "5th": float(np.percentile(final_val_arr, 5)),
+            "25th": float(np.percentile(final_val_arr, 25)),
+            "50th": float(np.percentile(final_val_arr, 50)),
+            "75th": float(np.percentile(final_val_arr, 75)),
+            "95th": float(np.percentile(final_val_arr, 95)),
         }
 
         # Calculate risk metrics
         initial_value = 10000  # Simplified initial value
-        returns = (final_values - initial_value) / initial_value
+        returns = (final_val_arr - initial_value) / initial_value
         probability_of_loss = float(np.mean(returns < 0))
         value_at_risk_95 = float(np.percentile(returns, 5))
         expected_shortfall_95 = float(np.mean(returns[returns <= value_at_risk_95]))
@@ -278,12 +278,12 @@ class ScenarioGenerator:
             time_horizon_days=parameters.time_horizon_days,
             annual_volatility=parameters.annual_volatility,
             annual_return=parameters.annual_return,
-            mean_rebalancing_frequency=float(np.mean(rebalancing_frequencies)),
-            std_rebalancing_frequency=float(np.std(rebalancing_frequencies)),
-            mean_transaction_costs=float(np.mean(transaction_costs)),
-            std_transaction_costs=float(np.std(transaction_costs)),
-            mean_final_value=float(np.mean(final_values)),
-            std_final_value=float(np.std(final_values)),
+            mean_rebalancing_frequency=float(np.mean(rebalancing_freq_arr)),
+            std_rebalancing_frequency=float(np.std(rebalancing_freq_arr)),
+            mean_transaction_costs=float(np.mean(transaction_cost_arr)),
+            std_transaction_costs=float(np.std(transaction_cost_arr)),
+            mean_final_value=float(np.mean(final_val_arr)),
+            std_final_value=float(np.std(final_val_arr)),
             rebalancing_frequency_percentiles=rebalancing_percentiles,
             transaction_cost_percentiles=cost_percentiles,
             final_value_percentiles=value_percentiles,

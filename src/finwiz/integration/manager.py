@@ -6,33 +6,13 @@ Handles data flow between crews and ensures proper data accessibility.
 """
 
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .freshness_checker import DataFreshnessChecker
+from .freshness_checker import DataFreshnessChecker, FreshnessReport
 from .registry_manager import CrewConfig, ExecutionResult, RegistryManager, UpstreamDataCollection
 from .schema_manager import SchemaManager
 from .validation_manager import ValidationManager, ValidationResult
-
-
-class FreshnessReport:
-    """Report on data freshness across crews."""
-
-    def __init__(
-        self,
-        fresh_data: list[str] | None = None,
-        stale_data: list[str] | None = None,
-        missing_data: list[str] | None = None,
-        overall_status: str = "UNKNOWN",
-        check_timestamp: datetime | None = None,
-    ) -> None:
-        """Initialize freshness report."""
-        self.fresh_data = fresh_data or []
-        self.stale_data = stale_data or []
-        self.missing_data = missing_data or []
-        self.overall_status = overall_status
-        self.check_timestamp = check_timestamp
 
 
 class CrewDataIntegrationManager:
@@ -220,7 +200,7 @@ class CrewDataIntegrationManager:
         """
         return self.registry_manager.get_refresh_recommendations(max_age_hours)
 
-    def check_data_freshness(self, max_age_hours: int = 24) -> list[dict[str, Any]]:
+    def check_data_freshness(self, max_age_hours: int = 24) -> FreshnessReport:
         """
         Check freshness of all crew data using the DataFreshnessChecker.
 
@@ -244,4 +224,5 @@ class CrewDataIntegrationManager:
 
     def _sort_crews_by_dependencies(self, crews: list[CrewConfig]) -> list[CrewConfig]:
         """Sort crews by their dependencies (backward compatibility)."""
-        return self.registry_manager._sort_crews_by_dependencies(crews)
+        result: list[CrewConfig] = self.registry_manager._sort_crews_by_dependencies(crews)
+        return result

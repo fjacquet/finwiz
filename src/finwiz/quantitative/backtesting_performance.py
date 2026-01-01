@@ -8,7 +8,7 @@ and risk analysis functions for backtesting results.
 from datetime import datetime
 from typing import Any
 
-import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no official type stubs
+import backtrader as bt  # backtrader has no official type stubs
 import numpy as np
 
 from finwiz.quantitative.data import HistoricalDataManager
@@ -180,7 +180,7 @@ class BacktestingPerformanceAnalyzer:
         daily_vol = np.std(returns)
         annualized_vol = daily_vol * np.sqrt(252)  # Assuming 252 trading days
 
-        return annualized_vol * 100  # Convert to percentage
+        return float(annualized_vol * 100)  # Convert to percentage
 
     def calculate_var(self, portfolio_values: list[tuple[str, float]], confidence: float) -> float | None:
         """Calculate Value at Risk."""
@@ -193,7 +193,7 @@ class BacktestingPerformanceAnalyzer:
         if len(returns) == 0:
             return None
 
-        return np.percentile(returns, (1 - confidence) * 100) * 100
+        return float(np.percentile(returns, (1 - confidence) * 100) * 100)
 
     def calculate_cvar(self, portfolio_values: list[tuple[str, float]], confidence: float) -> float | None:
         """Calculate Conditional Value at Risk."""
@@ -211,7 +211,7 @@ class BacktestingPerformanceAnalyzer:
         if len(tail_returns) == 0:
             return var
 
-        return np.mean(tail_returns) * 100
+        return float(np.mean(tail_returns) * 100)
 
     def calculate_benchmark_metrics(self, portfolio_values: dict[str, float], benchmark_symbol: str, start_date: datetime, end_date: datetime) -> tuple[float, float, float]:
         """Calculate benchmark comparison metrics."""
@@ -258,17 +258,17 @@ class BacktestingPerformanceAnalyzer:
 
         if len(portfolio_returns) > 1 and len(benchmark_returns) > 1:
             # Calculate beta using covariance
-            portfolio_returns = np.array(portfolio_returns)
-            benchmark_returns = np.array(benchmark_returns)
+            portfolio_returns_arr = np.array(portfolio_returns)
+            benchmark_returns_arr = np.array(benchmark_returns)
 
-            covariance = np.cov(portfolio_returns, benchmark_returns)[0, 1]
-            benchmark_variance = np.var(benchmark_returns)
+            covariance = np.cov(portfolio_returns_arr, benchmark_returns_arr)[0, 1]
+            benchmark_variance = np.var(benchmark_returns_arr)
 
             beta = covariance / benchmark_variance if benchmark_variance != 0 else 1.0
 
             # Calculate alpha
-            portfolio_mean_return = np.mean(portfolio_returns)
-            benchmark_mean_return = np.mean(benchmark_returns)
+            portfolio_mean_return = np.mean(portfolio_returns_arr)
+            benchmark_mean_return = np.mean(benchmark_returns_arr)
             risk_free_daily = self.config.risk_free_rate / 252  # Daily risk-free rate
 
             alpha = (portfolio_mean_return - risk_free_daily) - beta * (benchmark_mean_return - risk_free_daily)
@@ -284,17 +284,17 @@ class BacktestingPerformanceAnalyzer:
         if len(portfolio_returns) != len(benchmark_returns) or len(portfolio_returns) < 2:
             return 0.0
 
-        portfolio_returns = np.array(portfolio_returns)
-        benchmark_returns = np.array(benchmark_returns)
+        portfolio_returns_arr = np.array(portfolio_returns)
+        benchmark_returns_arr = np.array(benchmark_returns)
 
-        active_returns = portfolio_returns - benchmark_returns
+        active_returns = portfolio_returns_arr - benchmark_returns_arr
         active_return = np.mean(active_returns)
         tracking_error = np.std(active_returns)
 
         if tracking_error == 0:
             return 0.0
 
-        return (active_return / tracking_error) * np.sqrt(252)  # Annualized
+        return float((active_return / tracking_error) * np.sqrt(252))  # Annualized
 
     def calculate_sortino_ratio(self, portfolio_values: list[tuple[str, float]], risk_free_rate: float = 0.02) -> float:
         """Calculate Sortino Ratio (return / downside deviation)."""
@@ -322,7 +322,7 @@ class BacktestingPerformanceAnalyzer:
 
         # Annualized Sortino ratio
         mean_excess_return = np.mean(excess_returns)
-        return (mean_excess_return / downside_deviation) * np.sqrt(252)
+        return float((mean_excess_return / downside_deviation) * np.sqrt(252))
 
     def calculate_maximum_drawdown_duration(self, portfolio_values: list[tuple[str, float]]) -> int:
         """Calculate the maximum drawdown duration in days."""

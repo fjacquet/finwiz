@@ -14,6 +14,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 from finwiz.supabase.client import SupabaseClient
 from finwiz.supabase.services.migration_service import MigrationService
@@ -59,7 +60,7 @@ def print_progress_bar(
     )
 
 
-def print_summary(result: any) -> None:
+def print_summary(result: Any) -> None:
     """
     Print migration summary report.
 

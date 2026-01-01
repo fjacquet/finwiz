@@ -50,7 +50,7 @@ class HTMLGenerator:
 
         return None
 
-    def generate_html(self, json_path: Path, data: dict[str, Any] = None) -> Path | None:
+    def generate_html(self, json_path: Path, data: dict[str, Any] | None = None) -> Path | None:
         """Generate HTML file from JSON path and optional data."""
         if not self.enabled:
             return None
@@ -170,9 +170,9 @@ class JSONWriter:
     def __init__(self, file_path: str | Path, template_type: str | None = None):
         self.file_path = Path(file_path)
         self.template_type = template_type
-        self.data = {}
-        self.json_path = None
-        self.html_path = None
+        self.data: dict[str, Any] = {}
+        self.json_path: Path | None = None
+        self.html_path: Path | None = None
 
     def __enter__(self):
         return self

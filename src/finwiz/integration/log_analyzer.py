@@ -15,7 +15,7 @@ from .data_lineage import DataLineageTracker
 class LogAnalyzer:
     """Utility class for analyzing integration logs and debugging issues."""
 
-    def __init__(self, log_dir: Path = None, lineage_tracker: DataLineageTracker = None) -> None:
+    def __init__(self, log_dir: Path | None = None, lineage_tracker: DataLineageTracker | None = None) -> None:
         """
         Initialize the log analyzer.
 
@@ -45,9 +45,9 @@ class LogAnalyzer:
             recent_executions = [exec for exec in executions if datetime.fromisoformat(exec["execution_timestamp"]) > cutoff_time]
 
             # Analyze patterns
-            execution_frequency = {}
-            success_rates = {}
-            average_durations = {}
+            execution_frequency: dict[str, int] = {}
+            success_rates: dict[str, dict[str, Any]] = {}
+            average_durations: dict[str, Any] = {}
 
             for execution in recent_executions:
                 crew_name = execution["crew_name"]
@@ -149,7 +149,7 @@ class LogAnalyzer:
             self.logger.log_integration_error(error_type="BOTTLENECK_ANALYSIS_ERROR", crew_name="system", error_message=str(e))
             return {}
 
-    def generate_debug_report(self, crew_name: str = None) -> dict[str, Any]:
+    def generate_debug_report(self, crew_name: str | None = None) -> dict[str, Any]:
         """Generate a comprehensive debug report for integration issues."""
         try:
             report = {
@@ -176,7 +176,7 @@ class LogAnalyzer:
             self.logger.log_integration_error(error_type="DEBUG_REPORT_ERROR", crew_name=crew_name or "system", error_message=str(e))
             return {"error": str(e)}
 
-    def export_debug_report(self, output_file: Path = None, crew_name: str = None) -> Path:
+    def export_debug_report(self, output_file: Path | None = None, crew_name: str | None = None) -> Path:
         """Export debug report to a JSON file."""
         try:
             report = self.generate_debug_report(crew_name)

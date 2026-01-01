@@ -149,10 +149,7 @@ def log_health_check_result(
     max_size = stats["max_size"]
     utilization = (size - free_size) / max_size if max_size > 0 else 0.0
 
-    logger.info(
-        f"🏥 Pool Health Check: size={size}/{max_size}, "
-        f"free={free_size}, utilization={utilization:.1%}"
-    )
+    logger.info(f"🏥 Pool Health Check: size={size}/{max_size}, free={free_size}, utilization={utilization:.1%}")
 
     if utilization >= 0.95:
         logger.error(f"🚨 CRITICAL: Pool utilization very high: {utilization:.1%}")
@@ -172,15 +169,8 @@ def log_connectivity_success(
         health_status: Current health status
 
     """
-    logger.info(
-        f"✅ Supabase connectivity test passed "
-        f"(timeout: {connectivity_test_timeout}s)"
-    )
-    logger.info(
-        f"📊 Supabase Health Status: "
-        f"Available={health_status.is_available}, "
-        f"Circuit Breaker={'OPEN' if health_status.circuit_breaker_open else 'CLOSED'}"
-    )
+    logger.info(f"✅ Supabase connectivity test passed (timeout: {connectivity_test_timeout}s)")
+    logger.info(f"📊 Supabase Health Status: Available={health_status.is_available}, Circuit Breaker={'OPEN' if health_status.circuit_breaker_open else 'CLOSED'}")
 
 
 def log_connectivity_failure(

@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 from pydantic import BaseModel, Field
 
 from finwiz.quantitative.config import DataProvider, QuantConfig, get_quant_config
@@ -233,7 +233,7 @@ class HistoricalDataManager:
 
         try:
             with open(cache_file, "rb") as f:
-                data = pickle.load(f)
+                data: pd.DataFrame = pickle.load(f)
 
             self.logger.debug(f"Loaded cached data for {symbol}: {len(data)} rows")
             return data
@@ -297,7 +297,8 @@ class HistoricalDataManager:
         if missing_columns:
             raise RuntimeError(f"Missing required columns from yfinance: {missing_columns}")
 
-        return data
+        result: pd.DataFrame = data
+        return result
 
     def _cache_data(self, symbol: str, start_date: datetime, end_date: datetime, interval: str, data: pd.DataFrame, quality_score: float) -> None:
         """Cache data to disk with metadata."""

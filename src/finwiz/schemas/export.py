@@ -23,7 +23,7 @@ def _models() -> Iterable[type[BaseModel]]:
     yield ReporterInput
     yield TenKInsight
     yield MarketSentiment
-    yield RiskAssessmentStandardized  # type: ignore[misc]
+    yield RiskAssessmentStandardized
     yield ETFFactsheet
     yield ETFTopHolding
     yield CryptoThesis

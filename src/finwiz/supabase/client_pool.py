@@ -49,10 +49,7 @@ async def create_connection_pool(
             command_timeout=5.0,
             ssl="require",
         )
-        logger.info(
-            f"✅ Connection pool initialized: min={pool_min_size}, "
-            f"max={pool_max_size}, idle_timeout={pool_idle_timeout}s"
-        )
+        logger.info(f"✅ Connection pool initialized: min={pool_min_size}, max={pool_max_size}, idle_timeout={pool_idle_timeout}s")
         circuit_breaker.record_success()
         return pool
     except Exception as e:

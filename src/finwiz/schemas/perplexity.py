@@ -89,7 +89,7 @@ class SonarSearchResult(BaseModel):
 class PerplexitySearchRequest(BaseModel):
     """Request schema for Perplexity search operations."""
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, str_upper=False)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     query: str = Field(..., min_length=1, max_length=500, description="Search query")
     ticker: str = Field(..., pattern=r"^[A-Z0-9.-]{1,10}$", description="Asset ticker symbol")

@@ -8,7 +8,7 @@ implementations for use with the backtesting engine.
 from datetime import datetime
 from typing import Any
 
-import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no official type stubs
+import backtrader as bt  # backtrader has no official type stubs
 
 from finwiz.tools.logger import get_logger
 
@@ -29,7 +29,7 @@ class StrategyFramework(bt.Strategy):
     - Signal generation interface
     """
 
-    params = (
+    params: tuple[tuple[str, float], ...] = (
         ("stop_loss_pct", 0.05),  # 5% stop loss
         ("take_profit_pct", 0.15),  # 15% take profit
         ("position_size_pct", 0.1),  # 10% of portfolio per position
@@ -38,13 +38,13 @@ class StrategyFramework(bt.Strategy):
 
     def __init__(self) -> None:
         """Initialize strategy framework."""
-        self.trades_executed = []
-        self.signals = []
-        self.portfolio_values = []
+        self.trades_executed: list[Any] = []
+        self.signals: list[Any] = []
+        self.portfolio_values: list[Any] = []
 
         # Risk management
-        self.stop_loss_orders = {}
-        self.take_profit_orders = {}
+        self.stop_loss_orders: dict[str, Any] = {}
+        self.take_profit_orders: dict[str, Any] = {}
 
         # Performance tracking
         self.start_value = self.broker.getvalue()

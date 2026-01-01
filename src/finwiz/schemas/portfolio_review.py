@@ -183,7 +183,9 @@ class PortfolioReview(BaseModel):
     holdings: list[HoldingDecision] = Field(default_factory=list)
 
     # A+ opportunities integration
-    a_plus_opportunities: APlusOpportunitySection = Field(default_factory=APlusOpportunitySection, description="A+ investment opportunities identified for this portfolio")
+    a_plus_opportunities: APlusOpportunitySection = Field(
+        default_factory=lambda: APlusOpportunitySection(), description="A+ investment opportunities identified for this portfolio"
+    )
 
     # Portfolio-level A+ metrics
     current_a_plus_holdings_count: int = Field(default=0, description="Number of current A+ holdings")

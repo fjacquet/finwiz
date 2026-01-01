@@ -349,10 +349,10 @@ class PerformanceMetricsAggregator:
         """Aggregate regime performances into PerformanceMetrics."""
         count = len(regime_perfs)
 
-        avg_return = sum(p.annualized_return for p in regime_perfs) / count
-        avg_sharpe = sum(p.sharpe_ratio for p in regime_perfs) / count
-        avg_drawdown = sum(p.max_drawdown for p in regime_perfs) / count
-        avg_win_rate = sum(p.win_rate for p in regime_perfs) / count
+        avg_return = sum(p.annualized_return or 0.0 for p in regime_perfs) / count
+        avg_sharpe = sum(p.sharpe_ratio or 0.0 for p in regime_perfs) / count
+        avg_drawdown = sum(p.max_drawdown or 0.0 for p in regime_perfs) / count
+        avg_win_rate = sum(p.win_rate or 0.0 for p in regime_perfs) / count
 
         # For regime aggregation, we don't track individual performers
         return PerformanceMetrics(

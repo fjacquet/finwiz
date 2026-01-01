@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Any, Never
 
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 try:
     from scipy import optimize
@@ -42,8 +42,8 @@ except ImportError:
             """Mock pdf method."""
             raise ImportError("SciPy not available")
 
-    optimize = MockOptimize()
-    norm = MockNorm()
+    optimize = MockOptimize()  # type: ignore[assignment]
+    norm = MockNorm()  # type: ignore[assignment,misc]
 
 from finwiz.quantitative.config import OptimizationMethod, get_quant_config
 from finwiz.quantitative.constraint_handlers import ConstraintHandler, OptimizationConstraint
@@ -61,7 +61,7 @@ if SCIPY_AVAILABLE:
 class PortfolioInputs(BaseModel):
     """Inputs for portfolio optimization."""
 
-    symbols: list[str] = Field(..., min_items=2, description="Asset symbols")
+    symbols: list[str] = Field(..., min_length=2, description="Asset symbols")
     expected_returns: list[float] = Field(..., description="Expected returns for each asset")
     covariance_matrix: list[list[float]] = Field(..., description="Covariance matrix")
     risk_free_rate: float = Field(default=0.02, ge=0, description="Risk-free rate")
@@ -72,27 +72,30 @@ class PortfolioInputs(BaseModel):
 
         extra = "forbid"
 
-    @validator("expected_returns")
-    def validate_returns_length(cls, v: list[float], values: dict[str, Any]) -> list[float]:
+    @field_validator("expected_returns")
+    @classmethod
+    def validate_returns_length(cls, v: list[float], info: Any) -> list[float]:
         """Validate expected returns length matches symbols."""
-        if "symbols" in values and len(v) != len(values["symbols"]):
+        if info.data and "symbols" in info.data and len(v) != len(info.data["symbols"]):
             raise ValueError("Expected returns length must match symbols length")
         return v
 
-    @validator("covariance_matrix")
-    def validate_covariance_matrix(cls, v: list[list[float]], values: dict[str, Any]) -> list[list[float]]:
+    @field_validator("covariance_matrix")
+    @classmethod
+    def validate_covariance_matrix(cls, v: list[list[float]], info: Any) -> list[list[float]]:
         """Validate covariance matrix dimensions."""
-        if "symbols" in values:
-            n = len(values["symbols"])
+        if info.data and "symbols" in info.data:
+            n = len(info.data["symbols"])
             if len(v) != n or any(len(row) != n for row in v):
                 raise ValueError(f"Covariance matrix must be {n}x{n}")
         return v
 
-    @validator("current_weights")
-    def validate_current_weights(cls, v: list[float] | None, values: dict[str, Any]) -> list[float] | None:
+    @field_validator("current_weights")
+    @classmethod
+    def validate_current_weights(cls, v: list[float] | None, info: Any) -> list[float] | None:
         """Validate current weights if provided."""
-        if v is not None and "symbols" in values:
-            if len(v) != len(values["symbols"]):
+        if v is not None and info.data and "symbols" in info.data:
+            if len(v) != len(info.data["symbols"]):
                 raise ValueError("Current weights length must match symbols length")
             if abs(sum(v) - 1.0) > 1e-6:
                 raise ValueError("Current weights must sum to 1.0")
@@ -156,8 +159,8 @@ class EfficientFrontier(BaseModel):
 
     points: list[EfficientFrontierPoint] = Field(..., description="Frontier points")
     symbols: list[str] = Field(..., description="Asset symbols")
-    max_sharpe_portfolio: EfficientFrontierPoint = Field(..., description="Maximum Sharpe ratio portfolio")
-    min_volatility_portfolio: EfficientFrontierPoint = Field(..., description="Minimum volatility portfolio")
+    max_sharpe_portfolio: EfficientFrontierPoint | None = Field(None, description="Maximum Sharpe ratio portfolio")
+    min_volatility_portfolio: EfficientFrontierPoint | None = Field(None, description="Minimum volatility portfolio")
 
     class Config:
         """Pydantic configuration."""

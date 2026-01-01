@@ -363,13 +363,13 @@ class CrewIntegrationMiddleware:
         """Validate crew output using the validation pipeline."""
         try:
             # Use the validation pipeline for comprehensive validation
-            validation_result = await self.validation_pipeline.validate_crew_output(crew_name, crew_output)
+            validation_result = self.validation_pipeline.validate_crew_output(crew_name, crew_output)
 
             return ValidationStatus(
                 is_valid=validation_result.is_valid,
                 validation_timestamp=datetime.now(),
-                validation_errors=validation_result.errors,
-                validation_warnings=validation_result.warnings,
+                validation_errors=[e.message for e in validation_result.errors],
+                validation_warnings=[w.message for w in validation_result.warnings],
                 schema_version=1,
             )
 

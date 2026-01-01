@@ -178,6 +178,11 @@ class MarketContextExtractor:
                 self.logger.warning("Incomplete market context data, using conservative assumptions")
                 return self._create_conservative_summary()
 
+            # Type narrowing assertions (guaranteed by the check above)
+            assert market_regime is not None
+            assert vix_indicators is not None
+            assert macro_indicators is not None
+
             # Assess risk environment
             risk_environment = self._assess_risk_environment(market_regime, vix_indicators, macro_indicators)
 

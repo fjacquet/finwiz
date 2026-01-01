@@ -144,7 +144,7 @@ class ConstraintHandler:
                             active_weights = x - benchmark_weights
                             tracking_variance = np.dot(active_weights.T, np.dot(covariance_matrix, active_weights))
                             tracking_error = np.sqrt(tracking_variance)
-                            return max_te - tracking_error
+                            return float(max_te - tracking_error)
 
                         constraints_list.append({"type": "ineq", "fun": tracking_error_constraint})
 

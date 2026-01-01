@@ -21,57 +21,31 @@ class DeepAnalysisResult(BaseModel):
         default_factory=lambda: datetime.now().isoformat(),
         description="When analysis was performed (ISO format)",
     )
-    composite_score: float = Field(
-        ..., ge=0.0, le=1.0, description="Composite score (0.0-1.0)"
-    )
+    composite_score: float = Field(..., ge=0.0, le=1.0, description="Composite score (0.0-1.0)")
     grade: str = Field(..., description="Letter grade (A+ to F)")
 
     # Investment recommendation
-    recommendation: str = Field(
-        ..., description="Investment recommendation (BUY, HOLD, SELL)"
-    )
+    recommendation: str = Field(..., description="Investment recommendation (BUY, HOLD, SELL)")
     rationale: str = Field(..., description="Detailed rationale for the recommendation")
-    risk_details: dict[str, float] = Field(
-        default_factory=dict, description="Risk factor breakdown"
-    )
+    risk_details: dict[str, float] = Field(default_factory=dict, description="Risk factor breakdown")
 
     # Individual scores (optional)
-    fundamental_score: float | None = Field(
-        None, ge=0.0, le=1.0, description="Fundamental analysis score"
-    )
-    technical_score: float | None = Field(
-        None, ge=0.0, le=1.0, description="Technical analysis score"
-    )
-    risk_score: float | None = Field(
-        None, ge=0.0, le=5.0, description="Risk score (0-5 scale)"
-    )
+    fundamental_score: float | None = Field(None, ge=0.0, le=1.0, description="Fundamental analysis score")
+    technical_score: float | None = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
+    risk_score: float | None = Field(None, ge=0.0, le=5.0, description="Risk score (0-5 scale)")
 
     # Score details
-    fundamental_details: dict[str, Any] = Field(
-        default_factory=dict, description="Fundamental analysis breakdown"
-    )
-    technical_details: dict[str, Any] = Field(
-        default_factory=dict, description="Technical analysis breakdown"
-    )
+    fundamental_details: dict[str, Any] = Field(default_factory=dict, description="Fundamental analysis breakdown")
+    technical_details: dict[str, Any] = Field(default_factory=dict, description="Technical analysis breakdown")
 
     # Data quality and freshness
-    data_freshness_hours: float = Field(
-        ..., ge=0.0, description="Age of market data in hours"
-    )
-    confidence_level: float = Field(
-        ..., ge=0.0, le=1.0, description="Confidence level in analysis"
-    )
-    warnings: list[str] = Field(
-        default_factory=list, description="List of analysis warnings"
-    )
-    data_quality: dict[str, Any] | None = Field(
-        None, description="Data quality metrics tracking"
-    )
+    data_freshness_hours: float = Field(..., ge=0.0, description="Age of market data in hours")
+    confidence_level: float = Field(..., ge=0.0, le=1.0, description="Confidence level in analysis")
+    warnings: list[str] = Field(default_factory=list, description="List of analysis warnings")
+    data_quality: dict[str, Any] | None = Field(None, description="Data quality metrics tracking")
 
     # Data lineage
-    lineage: dict[str, Any] | None = Field(
-        None, description="Complete data lineage from sources"
-    )
+    lineage: dict[str, Any] | None = Field(None, description="Complete data lineage from sources")
 
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")
@@ -87,14 +61,14 @@ class DeepAnalysisResult(BaseModel):
     def quality_level(self) -> str:
         """Get quality level from data_quality metrics."""
         if self.data_quality and "quality_level" in self.data_quality:
-            return self.data_quality["quality_level"]
+            return str(self.data_quality["quality_level"])
         return "unknown"
 
     @property
     def completeness_score(self) -> float:
         """Get completeness score from data_quality metrics."""
         if self.data_quality and "completeness_score" in self.data_quality:
-            return self.data_quality["completeness_score"]
+            return float(self.data_quality["completeness_score"])
         return 0.5
 
 
@@ -111,15 +85,9 @@ class FinwizState(BaseModel):
     current_day: int = Field(default_factory=lambda: datetime.now().day)
     current_month: int = Field(default_factory=lambda: datetime.now().month)
     current_year: int = Field(default_factory=lambda: datetime.now().year)
-    current_date: str = Field(
-        default_factory=lambda: datetime.now().strftime("%Y-%m-%d")
-    )
-    full_date: str = Field(
-        default_factory=lambda: datetime.now().strftime("%B %d, %Y")
-    )
-    timestamp: str = Field(
-        default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    )
+    current_date: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
+    full_date: str = Field(default_factory=lambda: datetime.now().strftime("%B %d, %Y"))
+    timestamp: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     report_language: str = Field(default="fr", description="Report language")
 
     # Session information
@@ -216,9 +184,7 @@ class FinwizState(BaseModel):
     deep_analysis_error: str | None = None
 
     # Alternative matching results
-    portfolio_alternatives: dict[str, list[dict[str, Any]]] = Field(
-        default_factory=dict
-    )
+    portfolio_alternatives: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
     alternatives_success: bool = Field(default=False)
     alternatives_count: int = Field(default=0)
     alternatives_error: str | None = None
@@ -243,9 +209,7 @@ class FinwizState(BaseModel):
     progress_percentage: float = Field(default=0.0, ge=0.0, le=100.0)
 
     # Timing fields
-    flow_start_time: str = Field(
-        default_factory=lambda: datetime.now().isoformat()
-    )
+    flow_start_time: str = Field(default_factory=lambda: datetime.now().isoformat())
     last_checkpoint_time: str | None = None
     estimated_time_remaining: float = Field(default=0.0, ge=0.0)
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -535,7 +536,7 @@ class MissingDataHandler:
             recommendations=recommendations,
         )
 
-    def get_missing_data_summary(self) -> dict[str, any]:
+    def get_missing_data_summary(self) -> dict[str, Any]:
         """
         Get a summary of missing data across all crews.
 

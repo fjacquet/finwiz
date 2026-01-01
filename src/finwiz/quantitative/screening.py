@@ -53,8 +53,8 @@ class StockScreener:
     def __init__(self) -> None:
         """Initialize the stock screener."""
         self.config = get_screener_config()
-        self._data_cache = {}
-        self._universe_cache = {}
+        self._data_cache: dict[str, Any] = {}
+        self._universe_cache: dict[str, Any] = {}
 
         # Stock universe mappings
         self.universe_symbols = {
@@ -170,7 +170,7 @@ class StockScreener:
         scored_stocks = []
 
         for stock_data in stock_data_list:
-            criteria_scores = {}
+            criteria_scores: dict[str, float] = {}
             total_score = 0.0
             total_weight = 0.0
 

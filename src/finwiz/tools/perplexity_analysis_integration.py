@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from typing import Any
+from typing import Any, Literal, cast
 
 from finwiz.schemas.perplexity import (
     PerplexityConfig,
@@ -33,6 +33,11 @@ from finwiz.tools.perplexity_performance import PerplexityPerformanceMonitor
 from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
 
 logger = get_logger(__name__)
+
+# Type aliases for Literal types
+AssetType = Literal["stock", "etf", "crypto"]
+AnalysisType = Literal["sentiment", "technical", "fundamental", "general"]
+ContentType = Literal["news", "filing", "analysis", "earnings", "regulatory"]
 
 
 class PerplexityAnalysisIntegration:
@@ -67,7 +72,7 @@ class PerplexityAnalysisIntegration:
         """Check if Perplexity integration is available."""
         return self._api_available
 
-    async def search_financial_news(self, query: str, ticker: str, asset_type: str, analysis_type: str = "general", max_results: int = 10) -> SonarSearchResult:
+    async def search_financial_news(self, query: str, ticker: str, asset_type: AssetType, analysis_type: AnalysisType = "general", max_results: int = 10) -> SonarSearchResult:
         """
         Search for financial news using Perplexity Sonar.
 
@@ -147,7 +152,7 @@ class PerplexityAnalysisIntegration:
             # Create fallback result with graceful degradation
             return PerplexityFallbackManager.create_fallback_result(query, ticker, asset_type, analysis_type, str(e))
 
-    def _create_enhanced_query(self, base_query: str, ticker: str, asset_type: str, analysis_type: str) -> str:
+    def _create_enhanced_query(self, base_query: str, ticker: str, asset_type: AssetType, analysis_type: AnalysisType) -> str:
         """Create enhanced search query based on analysis type."""
         # Base query with ticker
         enhanced_query = f"{ticker} {base_query}"
@@ -170,7 +175,7 @@ class PerplexityAnalysisIntegration:
 
         return enhanced_query
 
-    def _get_search_filters(self, analysis_type: str) -> dict[str, str]:
+    def _get_search_filters(self, analysis_type: AnalysisType) -> dict[str, str]:
         """Get search filters based on analysis type."""
         if analysis_type == "fundamental":
             return self.config.sec_filing_filters.copy()
@@ -213,9 +218,10 @@ class PerplexityAnalysisIntegration:
                 }
 
                 # Use the /search endpoint for structured results
+                top_k = cast(int, search_params.get("top_k", 10))
                 payload = {
                     "query": search_params["query"],
-                    "max_results": min(search_params.get("top_k", 10), 20),  # API max is 20
+                    "max_results": min(top_k, 20),  # API max is 20
                     "max_tokens_per_page": 1024,
                 }
 
@@ -373,7 +379,7 @@ class PerplexityAnalysisIntegration:
 
         return None
 
-    def _parse_perplexity_response(self, raw_response: str, analysis_type: str, ticker: str | None = None) -> list[SonarArticle]:
+    def _parse_perplexity_response(self, raw_response: str, analysis_type: AnalysisType, ticker: str | None = None) -> list[SonarArticle]:
         """
         Parse raw Perplexity response into structured SonarArticle objects.
 
@@ -430,7 +436,7 @@ class PerplexityAnalysisIntegration:
 
         return articles
 
-    def _create_sonar_article(self, citation: dict[str, Any], analysis_type: str, index: int) -> SonarArticle | None:
+    def _create_sonar_article(self, citation: dict[str, Any], analysis_type: AnalysisType, index: int) -> SonarArticle | None:
         """Create SonarArticle from citation data."""
         try:
             # Extract basic fields
@@ -530,7 +536,7 @@ class PerplexityAnalysisIntegration:
 
         return None
 
-    def _determine_content_type(self, url: str, title: str) -> str:
+    def _determine_content_type(self, url: str, title: str) -> ContentType:
         """Determine content type based on URL and title."""
         url_lower = url.lower()
         title_lower = title.lower()
@@ -546,7 +552,7 @@ class PerplexityAnalysisIntegration:
         else:
             return "news"
 
-    def _extract_articles_from_content(self, response_data: dict[str, Any], analysis_type: str) -> list[SonarArticle]:
+    def _extract_articles_from_content(self, response_data: dict[str, Any], analysis_type: AnalysisType) -> list[SonarArticle]:
         """Extract articles from response content when citations are not available."""
         articles = []
 
@@ -595,17 +601,17 @@ class PerplexityAnalysisIntegration:
 
     # Convenience methods for specific analysis types
 
-    async def search_sentiment_news(self, ticker: str, asset_type: str, max_results: int = 10) -> SonarSearchResult:
+    async def search_sentiment_news(self, ticker: str, asset_type: AssetType, max_results: int = 10) -> SonarSearchResult:
         """Search for sentiment-focused financial news."""
         query = f"{ticker} market sentiment investor reaction news"
         return await self.search_financial_news(query, ticker, asset_type, "sentiment", max_results)
 
-    async def search_technical_analysis(self, ticker: str, asset_type: str, max_results: int = 10) -> SonarSearchResult:
+    async def search_technical_analysis(self, ticker: str, asset_type: AssetType, max_results: int = 10) -> SonarSearchResult:
         """Search for technical analysis and price targets."""
         query = f"{ticker} technical analysis price target analyst rating"
         return await self.search_financial_news(query, ticker, asset_type, "technical", max_results)
 
-    async def search_fundamental_analysis(self, ticker: str, asset_type: str, max_results: int = 10) -> SonarSearchResult:
+    async def search_fundamental_analysis(self, ticker: str, asset_type: AssetType, max_results: int = 10) -> SonarSearchResult:
         """Search for fundamental analysis and earnings data."""
         query = f"{ticker} earnings financial results SEC filing fundamental"
         return await self.search_financial_news(query, ticker, asset_type, "fundamental", max_results)

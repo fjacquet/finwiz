@@ -8,8 +8,11 @@ CRITICAL: This component fixes the data consumption gap where expensive crew
 analysis is generated but not consumed, resulting in fallback Grade D values.
 """
 
+from typing import cast
+
 from finwiz.flow_state import DeepAnalysisResult
-from finwiz.schemas.portfolio_review import HoldingDecision
+from finwiz.schemas.common import RiskLevel
+from finwiz.schemas.portfolio_review import Grade, HoldingDecision
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -104,8 +107,9 @@ class DeepAnalysisDataMerger:
                 self.logger.info(f"✅ Merged {ticker}: Grade {analysis.grade}, Score {analysis.composite_score:.2f}")
 
         # CRITICAL: Fail if any holdings couldn't be merged
-        if merge_stats["missing_analysis"]:
-            raise DataMergeError(f"Failed to merge {len(merge_stats['missing_analysis'])} holdings: {merge_stats['missing_analysis']}")
+        missing_analysis = merge_stats["missing_analysis"]
+        if isinstance(missing_analysis, list) and missing_analysis:
+            raise DataMergeError(f"Failed to merge {len(missing_analysis)} holdings: {missing_analysis}")
 
         self.logger.info(
             f"Deep analysis merge complete: {merge_stats['merged']}/{merge_stats['total']} "
@@ -161,7 +165,7 @@ class DeepAnalysisDataMerger:
         merged = holding.model_copy(deep=True)
 
         # CRITICAL: Replace fallback data with actual analysis
-        merged.grade = analysis.grade
+        merged.grade = cast(Grade, analysis.grade)
         merged.composite_score = analysis.composite_score
 
         # Update grade description and recommended action based on new grade
@@ -277,7 +281,7 @@ class DeepAnalysisDataMerger:
         else:  # D, F
             return "SELL - Replace with better alternative"
 
-    def _risk_score_to_level(self, score: float) -> str:
+    def _risk_score_to_level(self, score: float) -> RiskLevel:
         """
         Convert risk score (0-5) to risk level.
 

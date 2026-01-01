@@ -5,10 +5,11 @@ Exposes `SaveToRagTool`, a thin wrapper around `crewai_tools.RagTool` that
 stores text for later retrieval by other agents.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from crewai.tools import BaseTool
 from crewai_tools import RagTool
+from crewai_tools.tools.rag.types import RagToolConfig
 from pydantic import BaseModel
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
@@ -28,7 +29,7 @@ class SaveToRagTool(BaseTool):
     def __init__(self, rag_tool: RagTool | None = None) -> None:
         """Initialize the tool with a provided or default-configured RagTool."""
         super().__init__()
-        self._rag_tool = rag_tool or RagTool(config=DEFAULT_RAG_CONFIG, summarize=True)
+        self._rag_tool = rag_tool or RagTool(config=cast(RagToolConfig, DEFAULT_RAG_CONFIG), summarize=True)
 
     def _run(self, text: str) -> str:
         self._rag_tool.add(source=text, data_type="text")

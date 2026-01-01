@@ -1,8 +1,6 @@
 """Tests for template_validator module."""
 
-from pathlib import Path
 
-import pytest
 import yaml
 
 

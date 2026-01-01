@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import statistics
 import time
-from typing import Any
+from typing import Any, Literal, cast
 
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import (
@@ -186,7 +186,13 @@ class PerplexityPerformanceBenchmark:
         start_time = PerplexityPerformanceMonitor.start_operation_timer()
 
         try:
-            search_result = await self.integration.search_financial_news(query=query, ticker=ticker, asset_type=asset_type, analysis_type=analysis_type, max_results=5)
+            search_result = await self.integration.search_financial_news(
+                query=query,
+                ticker=ticker,
+                asset_type=cast(Literal["stock", "etf", "crypto"], asset_type),
+                analysis_type=cast(Literal["sentiment", "technical", "fundamental", "general"], analysis_type),
+                max_results=5,
+            )
 
             response_time_ms = PerplexityPerformanceMonitor.calculate_operation_time(start_time)
             success = search_result.success

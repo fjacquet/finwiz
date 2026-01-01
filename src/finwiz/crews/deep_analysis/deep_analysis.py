@@ -257,7 +257,6 @@ class DeepAnalysisCrew:
         """
         return Task(
             config=self.tasks_config["deep_qualitative_analysis_task"],
-            verbose=True,
             output_pydantic=self.QualitativeInsights,  # Pydantic model for structured output
         )
 
@@ -273,7 +272,6 @@ class DeepAnalysisCrew:
         """
         return Task(
             config=self.tasks_config["generate_enriched_analysis_task"],
-            verbose=True,
             output_pydantic=self.EnrichedAnalysis,  # Pydantic model for structured output
         )
 
@@ -360,7 +358,7 @@ class DeepAnalysisCrew:
             # investment_reporter has DeepAnalysisScoringTool (set in agent definition)
             logger.info(
                 f"⚡ PYTHON SCORING TOOL: asset_analyst has {len(analyst_tools)} data collection tools. "
-                f"investment_reporter has {len(investment_reporter_agent.tools)} Python scoring tool."
+                f"investment_reporter has {(len(investment_reporter_agent.tools) if investment_reporter_agent.tools is not None else 0)} Python scoring tool."
             )
 
             # Log performance targets

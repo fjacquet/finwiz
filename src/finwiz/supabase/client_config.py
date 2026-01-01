@@ -52,11 +52,7 @@ def load_config() -> SupabaseConfig:
         pool_idle_timeout=int(os.getenv("SUPABASE_POOL_IDLE_TIMEOUT", "300")),
         read_timeout=float(os.getenv("DATABASE_READ_TIMEOUT", "2.0")),
         write_timeout=float(os.getenv("DATABASE_WRITE_TIMEOUT", "5.0")),
-        connectivity_test_timeout=float(
-            os.getenv("SUPABASE_CONNECTIVITY_TEST_TIMEOUT", "5.0")
-        ),
+        connectivity_test_timeout=float(os.getenv("SUPABASE_CONNECTIVITY_TEST_TIMEOUT", "5.0")),
         max_retries=int(os.getenv("SUPABASE_MAX_RETRIES", "1")),
-        max_concurrent_operations=int(
-            os.getenv("SUPABASE_MAX_CONCURRENT_OPERATIONS", "10")
-        ),
+        max_concurrent_operations=int(os.getenv("SUPABASE_MAX_CONCURRENT_OPERATIONS", "10")),
     )

@@ -126,18 +126,13 @@ def generate_performance_summary(
     active_investments = [inv for inv in monitored_investments.values() if inv.is_active]
 
     # Count A+ investments
-    a_plus_count = sum(
-        1
-        for inv in active_investments
-        if (inv.current_grade.value if hasattr(inv.current_grade, "value") else str(inv.current_grade)) == "A+"
-    )
+    a_plus_count = sum((inv.current_grade.value if hasattr(inv.current_grade, "value") else str(inv.current_grade)) == "A+" for inv in active_investments)
 
     # Count degraded investments (grade lower than initial)
     degraded_count = sum(
-        1
-        for inv in active_investments
-        if (inv.current_grade.value if hasattr(inv.current_grade, "value") else str(inv.current_grade))
+        (inv.current_grade.value if hasattr(inv.current_grade, "value") else str(inv.current_grade))
         != (inv.initial_grade.value if hasattr(inv.initial_grade, "value") else str(inv.initial_grade))
+        for inv in active_investments
     )
 
     # Calculate A+ percentage

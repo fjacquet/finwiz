@@ -49,11 +49,13 @@ def log_crew_execution_start(
         if "executions" not in execution_log:
             execution_log["executions"] = []
 
-        execution_log["executions"].append({
-            "crew_name": crew_name,
-            "start_time": datetime.now().isoformat(),
-            "status": "STARTED",
-        })
+        execution_log["executions"].append(
+            {
+                "crew_name": crew_name,
+                "start_time": datetime.now().isoformat(),
+                "status": "STARTED",
+            }
+        )
 
         schema_manager.save_json_file(execution_log_path, execution_log)
 

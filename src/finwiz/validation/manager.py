@@ -193,13 +193,13 @@ class ValidationManager:
 
             elif self._mode == ValidationMode.WARN:
                 # In warn mode, log warnings but continue
-                for error in result.errors:
-                    logger.warning(f"Validation warning: {error.message} at {error.field_path}")
+                for validation_error in result.errors:
+                    logger.warning(f"Validation warning: {validation_error.message} at {validation_error.field_path}")
                     result.add_warning(
-                        field_path=error.field_path,
-                        message=f"Validation issue: {error.message}",
-                        input_value=error.input_value,
-                        context=error.context,
+                        field_path=validation_error.field_path,
+                        message=f"Validation issue: {validation_error.message}",
+                        input_value=validation_error.input_value,
+                        context=validation_error.context,
                     )
 
                 # Clear errors and allow processing to continue

@@ -69,7 +69,8 @@ class TwelveDataClient:
             cache_entry = self._cache[cache_key]
             if time.time() - cache_entry["timestamp"] < self.cache_ttl:
                 logger.debug(f"Using cached data for {endpoint}")
-                return cache_entry["data"]
+                cached_data: dict[str, Any] = cache_entry["data"]
+                return cached_data
 
         url = f"{self.base_url}/{endpoint}"
 
@@ -90,11 +91,13 @@ class TwelveDataClient:
                     # Cache successful response
                     self._cache[cache_key] = {"data": data, "timestamp": time.time()}
 
-                    return data
+                    result: dict[str, Any] = data
+                    return result
 
         # Use centralized rate limiting
         try:
-            return await with_rate_limit(APIProvider.TWELVE_DATA, make_request, endpoint=endpoint)
+            result: dict[str, Any] = await with_rate_limit(APIProvider.TWELVE_DATA, make_request, endpoint=endpoint)
+            return result
         except Exception as e:
             logger.error(f"Error fetching {endpoint} data: {e}")
             raise

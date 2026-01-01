@@ -101,7 +101,7 @@ class BaseReportGenerator(ABC):
             try:
                 value = datetime.fromisoformat(value.replace("Z", "+00:00"))
             except ValueError:
-                return value
+                return str(value)
         return value.strftime(fmt)
 
     @staticmethod

@@ -134,7 +134,7 @@ class FeedbackInsights:
             if len(acceptance_rates) > 1:
                 rate_values = list(acceptance_rates.values())
                 consistency = 1.0 - (np.std(rate_values) / np.mean(rate_values)) if np.mean(rate_values) > 0 else 0.0
-                confidence_factors.append(max(0.0, consistency) * 0.3)
+                confidence_factors.append(float(max(0.0, consistency) * 0.3))
             else:
                 confidence_factors.append(0.3)
 

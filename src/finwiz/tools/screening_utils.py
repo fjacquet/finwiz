@@ -15,7 +15,7 @@ class ScreeningUtils:
 
     def __init__(self) -> None:
         """Initialize screening utilities."""
-        self._screening_cache = {}
+        self._screening_cache: dict[str, Any] = {}
 
     def get_screening_universe(self, asset_type: str, market_region: str) -> dict[str, Any]:
         """Get the universe of symbols to screen."""
@@ -315,7 +315,7 @@ class ScreeningUtils:
             cache_key_str = cache_key("market_screening", asset_type, symbol)
 
             # Try to get from cache first
-            cached_data = self._screening_cache.get(cache_key_str)
+            cached_data: dict[str, Any] | None = self._screening_cache.get(cache_key_str)
             if cached_data:
                 return cached_data
 

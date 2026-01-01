@@ -66,15 +66,13 @@ def configure_yfinance(settings: "YFinanceSettings | None" = None) -> bool:
 
     # Check for yfinance 1.0+ config attribute
     if not hasattr(yf, "config"):
-        logger.warning(
-            "yfinance.config not available (requires yfinance>=1.0). "
-            "Retry mechanism not applied. Consider upgrading: pip install yfinance>=1.0"
-        )
+        logger.warning("yfinance.config not available (requires yfinance>=1.0). Retry mechanism not applied. Consider upgrading: pip install yfinance>=1.0")
         return False
 
     # Load settings if not provided
     if settings is None:
         from finwiz.config.settings import get_yfinance_settings
+
         settings = get_yfinance_settings()
 
     # Apply network settings
@@ -88,11 +86,7 @@ def configure_yfinance(settings: "YFinanceSettings | None" = None) -> bool:
 
     _configured = True
 
-    logger.info(
-        f"yfinance configured: retries={settings.retries}, "
-        f"proxy={settings.proxy or 'None'}, "
-        f"logging={settings.logging}"
-    )
+    logger.info(f"yfinance configured: retries={settings.retries}, proxy={settings.proxy or 'None'}, logging={settings.logging}")
 
     return True
 

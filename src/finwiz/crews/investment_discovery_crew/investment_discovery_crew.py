@@ -231,7 +231,6 @@ class InvestmentDiscoveryCrew:
         """Task for discovering A+ grade ETFs."""
         return Task(
             config=self.tasks_config["etf_discovery_task"],
-            verbose=True,
         )
 
     @async_task
@@ -240,7 +239,6 @@ class InvestmentDiscoveryCrew:
         """Task for discovering A+ grade stocks."""
         return Task(
             config=self.tasks_config["stock_discovery_task"],
-            verbose=True,
         )
 
     @async_task
@@ -249,7 +247,6 @@ class InvestmentDiscoveryCrew:
         """Task for discovering A+ grade cryptocurrencies."""
         return Task(
             config=self.tasks_config["crypto_discovery_task"],
-            verbose=True,
         )
 
     @async_task
@@ -258,7 +255,6 @@ class InvestmentDiscoveryCrew:
         """Task for validating A+ candidates through backtesting."""
         return Task(
             config=self.tasks_config["validation_task"],
-            verbose=True,
         )
 
     @async_task
@@ -267,7 +263,6 @@ class InvestmentDiscoveryCrew:
         """Task for optimizing portfolio with A+ discoveries."""
         return Task(
             config=self.tasks_config["optimization_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -276,7 +271,6 @@ class InvestmentDiscoveryCrew:
         """Task for generating comprehensive discovery report."""
         return Task(
             config=self.tasks_config["report_generation_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -285,7 +279,6 @@ class InvestmentDiscoveryCrew:
         """Task for analyzing feedback and improving A+ criteria."""
         return Task(
             config=self.tasks_config["feedback_learning_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -295,7 +288,6 @@ class InvestmentDiscoveryCrew:
         return Task(
             config=self.tasks_config["generate_export_task"],
             output_pydantic=DiscoveryCrewExport,
-            verbose=True,
         )
 
     @crew

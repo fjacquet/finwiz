@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError
+from pydantic_core import ErrorDetails
 
 
 class ValidationErrorAnalysis(BaseModel):
@@ -112,7 +113,9 @@ class ErrorHandlers:
             Detailed analysis of the validation error
 
         """
-        error_info = error.errors()[0] if error.errors() else {}
+        # Get first error details and convert TypedDict to regular dict for compatibility
+        error_details: ErrorDetails | None = error.errors()[0] if error.errors() else None
+        error_info: dict[str, Any] = dict(error_details) if error_details else {}
         error_message = str(error_info.get("msg", str(error)))
         field_path = ".".join(str(loc) for loc in error_info.get("loc", []))
 

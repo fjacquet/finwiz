@@ -251,12 +251,12 @@ class HTMLReportFormatter:
             if section.title in self.FRENCH_SECTIONS.values():
                 section_class += " french-section"
 
-            section_div = soup.new_tag("div", **{"class": section_class})
+            section_div = soup.new_tag("div", attrs={"class": section_class})
 
             # Create section header
             h2 = soup.new_tag("h2")
             if section.emoji:
-                emoji_span = soup.new_tag("span", **{"class": "emoji"})
+                emoji_span = soup.new_tag("span", attrs={"class": "emoji"})
                 emoji_span.string = section.emoji
                 h2.append(emoji_span)
                 h2.append(f" {section.title}")  # Add space and title as text
@@ -282,7 +282,7 @@ class HTMLReportFormatter:
             "Veuillez consulter un conseiller financier qualifié avant de prendre des décisions d'investissement."
         )
 
-        disclaimer_div = soup.new_tag("div", **{"class": "disclaimer"})
+        disclaimer_div = soup.new_tag("div", attrs={"class": "disclaimer"})
         disclaimer_p = soup.new_tag("p")
         disclaimer_strong = soup.new_tag("strong")
         disclaimer_strong.string = "Disclaimer" if language == "en" else "Avertissement"
@@ -432,7 +432,7 @@ class HTMLReportFormatter:
 
             # Meta tags
             charset_meta = soup.new_tag("meta", charset="UTF-8")
-            viewport_meta = soup.new_tag("meta", name="viewport", content="width=device-width, initial-scale=1.0")
+            viewport_meta = soup.new_tag("meta", attrs={"name": "viewport", "content": "width=device-width, initial-scale=1.0"})
             title_tag = soup.new_tag("title")
             title_tag.string = title
 
@@ -476,15 +476,15 @@ class HTMLReportFormatter:
 
             # Add sections
             for section in sorted_sections:
-                section_div = soup.new_tag("div", **{"class": "section"})
+                section_div = soup.new_tag("div", attrs={"class": "section"})
 
                 # Section title
-                section_h2 = soup.new_tag("h2", **{"class": "section-title"})
+                section_h2 = soup.new_tag("h2", attrs={"class": "section-title"})
                 section_title_text = f"{section.emoji + ' ' if section.emoji else ''}{section.title}"
                 section_h2.string = section_title_text
 
                 # Section content
-                content_div = soup.new_tag("div", **{"class": "section-content"})
+                content_div = soup.new_tag("div", attrs={"class": "section-content"})
                 # Parse existing HTML content and append
                 content_soup = BeautifulSoup(section.content, "html.parser")
                 for element in content_soup:

@@ -7,7 +7,7 @@ feed creation, and other backtesting utilities.
 
 from typing import Any
 
-import backtrader as bt  # type: ignore[import-untyped]  # backtrader has no official type stubs
+import backtrader as bt  # backtrader has no official type stubs
 import pandas as pd
 
 

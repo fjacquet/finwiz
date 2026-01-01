@@ -53,9 +53,7 @@ def generate_executive_summary(portfolio_stats: dict[str, Any]) -> str:
         """
 
 
-def generate_portfolio_overview(
-    portfolio_review: PortfolioReview, portfolio_stats: dict[str, Any]
-) -> str:
+def generate_portfolio_overview(portfolio_review: PortfolioReview, portfolio_stats: dict[str, Any]) -> str:
     """Generate portfolio overview section."""
     total = portfolio_stats["total_holdings"]
 
@@ -147,29 +145,19 @@ def _get_deep_analysis_link(ticker: str, asset_class: str) -> str:
 
 def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
     """Generate detailed holdings analysis."""
-    sorted_holdings = sorted(
-        holdings, key=lambda h: (h.grade or "Z", -(h.composite_score or 0))
-    )
+    sorted_holdings = sorted(holdings, key=lambda h: (h.grade or "Z", -(h.composite_score or 0)))
 
     holdings_rows = []
     for holding in sorted_holdings:
         grade = holding.grade or "N/A"
-        grade_class = (
-            f"grade-{grade.lower().replace('+', '-plus')}"
-            if grade != "N/A"
-            else "grade-f"
-        )
+        grade_class = f"grade-{grade.lower().replace('+', '-plus')}" if grade != "N/A" else "grade-f"
         rec_badge = _get_recommendation_badge(grade, holding.recommended_action)
 
         ticker = holding.ticker or "N/A"
         name = holding.name or "Unknown"
         asset_class = (holding.asset_class or "unknown").upper()
-        composite_score = (
-            holding.composite_score if holding.composite_score is not None else 0.0
-        )
-        rationale = (
-            holding.rationale_bullets[0] if holding.rationale_bullets else "Python analysis"
-        )
+        composite_score = holding.composite_score if holding.composite_score is not None else 0.0
+        rationale = holding.rationale_bullets[0] if holding.rationale_bullets else "Python analysis"
 
         # Generate deep analysis link
         deep_analysis_link = _get_deep_analysis_link(ticker, holding.asset_class or "stock")
@@ -212,15 +200,12 @@ def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
         """
 
 
-def generate_recommendations(
-    portfolio_stats: dict[str, Any], discovery_results: dict[str, Any] | None = None
-) -> str:
+def generate_recommendations(portfolio_stats: dict[str, Any], discovery_results: dict[str, Any] | None = None) -> str:
     """Generate recommendations section."""
     a_plus_list = ""
     if portfolio_stats.get("a_plus_holdings"):
         a_plus_items = [
-            f"<strong>{getattr(h, 'ticker', 'N/A')}</strong> "
-            f"(Grade: {getattr(h, 'grade', 'N/A')}, Score: {getattr(h, 'composite_score', 0):.3f})"
+            f"<strong>{getattr(h, 'ticker', 'N/A')}</strong> (Grade: {getattr(h, 'grade', 'N/A')}, Score: {getattr(h, 'composite_score', 0):.3f})"
             for h in portfolio_stats["a_plus_holdings"]
         ]
         a_plus_list = f"""
@@ -229,11 +214,7 @@ def generate_recommendations(
         {"".join(f"<li>{item}</li>" for item in a_plus_items)}
       </ul>"""
 
-    discovery_count = (
-        len(discovery_results["opportunities"])
-        if discovery_results and "opportunities" in discovery_results
-        else 0
-    )
+    discovery_count = len(discovery_results["opportunities"]) if discovery_results and "opportunities" in discovery_results else 0
 
     return f"""
   <div class="section">
@@ -295,9 +276,7 @@ def generate_deep_analysis_section(deep_analysis_results: dict[str, Any] | None)
         if successful > 0
         else "All your positions have satisfactory grades (>=B). Deep analysis only runs on positions needing attention."
     )
-    status_title = (
-        "Deep Analysis Completed" if successful > 0 else "No Deep Analysis Needed"
-    )
+    status_title = "Deep Analysis Completed" if successful > 0 else "No Deep Analysis Needed"
 
     return f"""
   <div class="section">
@@ -416,11 +395,7 @@ def generate_discovery_section(discovery_results: dict[str, Any] | None) -> str:
         rationale = opp.get("rationale", "Promising opportunity identified by Python analysis")
 
         grade_class = f"grade-{grade.lower().replace('+', '-plus')}"
-        rec_badge = (
-            '<span class="badge badge-buy">BUY</span>'
-            if "BUY" in recommendation
-            else '<span class="badge badge-hold">WATCH</span>'
-        )
+        rec_badge = '<span class="badge badge-buy">BUY</span>' if "BUY" in recommendation else '<span class="badge badge-hold">WATCH</span>'
 
         opps_rows.append(f"""
         <tr>

@@ -16,6 +16,7 @@ from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 
 if TYPE_CHECKING:
     from finwiz.flows.flow_orchestrator import FinwizFlow
+    from finwiz.schemas.session import FinancialPlan
 from finwiz.tools.logger import get_logger
 from finwiz.utils.configuration_manager import ConfigurationError, get_configuration_manager
 from finwiz.utils.flow_state_manager import FlowStateManager
@@ -54,7 +55,7 @@ def initialize_configuration() -> None:
         raise SystemExit(1) from e
 
 
-def initialize_session_management() -> object:
+def initialize_session_management() -> "FinancialPlan | None":
     """Initialize session management and return financial plan."""
     logger.info("Initializing session management")
     session_manager = SessionManager()
@@ -110,7 +111,7 @@ def initialize_environment() -> None:
     logger.debug("Environment variables loaded")
 
 
-def setup_session_environment(financial_plan: object) -> None:
+def setup_session_environment(financial_plan: "FinancialPlan | None") -> None:
     """Set up session data in environment variables for crew access."""
     if financial_plan:
         # Store session data in environment variables for crew access

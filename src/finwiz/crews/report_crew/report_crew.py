@@ -14,7 +14,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from crewai import Agent, Crew, Process, Task
+import yaml
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
@@ -51,11 +52,20 @@ class ReportCrew:
     asset classes while maintaining rigorous risk management protocols.
     """
 
-    agents_config = "config/agents.yaml"
-    tasks_config = "config/tasks.yaml"
+    agents_config: dict[str, Any]
+    tasks_config: dict[str, Any]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize report crew with data integration."""
+        # Load configuration files before calling super().__init__()
+        current_dir = Path(__file__).parent
+
+        with open(current_dir / "config" / "agents.yaml") as f:
+            self.agents_config = yaml.safe_load(f)
+
+        with open(current_dir / "config" / "tasks.yaml") as f:
+            self.tasks_config = yaml.safe_load(f)
+
         super().__init__(*args, **kwargs)
 
         # Initialize tools
@@ -105,7 +115,7 @@ class ReportCrew:
             availability_tracker=availability_tracker,
         )
 
-    def _get_configured_llm(self) -> Agent:
+    def _get_configured_llm(self) -> LLM:
         """
         Get configured LLM instance for this crew.
 
@@ -168,7 +178,6 @@ class ReportCrew:
         """Integrate Stock/ETF/Crypto analyses into a unified narrative."""
         return Task(
             config=self.tasks_config["comprehensive_financial_integration_task"],
-            verbose=True,
         )
 
     @async_task
@@ -177,7 +186,6 @@ class ReportCrew:
         """Derive optimal asset allocation based on goals and constraints."""
         return Task(
             config=self.tasks_config["optimal_portfolio_allocation_task"],
-            verbose=True,
         )
 
     @async_task
@@ -186,7 +194,6 @@ class ReportCrew:
         """Assess key risks and propose mitigation strategies."""
         return Task(
             config=self.tasks_config["risk_assessment_mitigation_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -195,7 +202,6 @@ class ReportCrew:
         """Compile the comprehensive HTML investment report."""
         return Task(
             config=self.tasks_config["comprehensive_investment_report_task"],
-            verbose=True,
         )
 
     @crew

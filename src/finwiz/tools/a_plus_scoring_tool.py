@@ -61,9 +61,9 @@ class APlusScoringTool(BaseTool):
         self,
         symbol: str,
         asset_type: Literal["etf", "stock", "crypto"],
-        fundamental_data: dict[str, Any] = None,
-        market_context: dict[str, Any] = None,
-        custom_criteria: dict[str, float] = None,
+        fundamental_data: dict[str, Any] | None = None,
+        market_context: dict[str, Any] | None = None,
+        custom_criteria: dict[str, float] | None = None,
     ) -> dict[str, Any]:
         """Execute A+ scoring analysis."""
         try:

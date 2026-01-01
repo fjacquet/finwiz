@@ -371,9 +371,7 @@ class BacktestingDataExtractor:
             self.logger.debug("No validation details available for average return calculation")
             return None
 
-        returns = [
-            detail.get("annualized_return") for detail in validation_result.validation_details if "annualized_return" in detail and detail.get("annualized_return") is not None
-        ]
+        returns: list[float] = [float(val) for detail in validation_result.validation_details if (val := detail.get("annualized_return")) is not None]
 
         if not returns:
             self.logger.debug("No annualized return values found in validation details")
@@ -387,7 +385,7 @@ class BacktestingDataExtractor:
             self.logger.debug("No validation details available for win rate calculation")
             return None
 
-        win_rates = [detail.get("win_rate") for detail in validation_result.validation_details if "win_rate" in detail and detail.get("win_rate") is not None]
+        win_rates: list[float] = [float(val) for detail in validation_result.validation_details if (val := detail.get("win_rate")) is not None]
 
         if not win_rates:
             self.logger.debug("No win rate values found in validation details")
@@ -425,7 +423,8 @@ class BacktestingDataExtractor:
         for detail in validation_result.validation_details:
             regime_data = detail.get("regime_performance", {})
             if regime in regime_data:
-                return regime_data[regime]
+                result: dict[str, Any] = regime_data[regime]
+                return result
 
         return None
 
@@ -437,27 +436,27 @@ class BacktestingDataExtractor:
 
         # Simple consistency metric: average of normalized win rate and Sharpe
         normalized_sharpe = min(sharpe / 2.0, 1.0) if sharpe > 0 else 0.0
-        return (win_rate + normalized_sharpe) / 2.0
+        return float((win_rate + normalized_sharpe) / 2.0)
 
     def _extract_information_ratio(self, validation_result: ValidationResult) -> float | None:
         """Extract information ratio from validation details."""
         for detail in validation_result.validation_details:
             if "information_ratio" in detail:
-                return detail["information_ratio"]
+                return float(detail["information_ratio"])
         return None
 
     def _extract_alpha(self, validation_result: ValidationResult) -> float | None:
         """Extract alpha from validation details."""
         for detail in validation_result.validation_details:
             if "alpha" in detail:
-                return detail["alpha"]
+                return float(detail["alpha"])
         return None
 
     def _extract_beta(self, validation_result: ValidationResult) -> float | None:
         """Extract beta from validation details."""
         for detail in validation_result.validation_details:
             if "beta" in detail:
-                return detail["beta"]
+                return float(detail["beta"])
         return None
 
     def _aggregate_metrics(self, validation_results: list[ValidationResult]) -> BacktestingMetrics:
@@ -479,19 +478,20 @@ class BacktestingDataExtractor:
             )
 
         # Weighted average based on number of candidates, handling None values
-        returns = [(self._calculate_average_return(vr), vr.total_candidates) for vr in validation_results if self._calculate_average_return(vr) is not None]
+        # Use walrus operator to compute value once and enable proper type narrowing
+        returns: list[tuple[float, int]] = [(ret, vr.total_candidates) for vr in validation_results if (ret := self._calculate_average_return(vr)) is not None]
         avg_return = sum(r * c for r, c in returns) / sum(c for _, c in returns) if returns else None
 
-        sharpes = [(vr.average_sharpe_ratio, vr.total_candidates) for vr in validation_results if vr.average_sharpe_ratio is not None]
+        sharpes: list[tuple[float, int]] = [(s, vr.total_candidates) for vr in validation_results if (s := vr.average_sharpe_ratio) is not None]
         avg_sharpe = sum(s * c for s, c in sharpes) / sum(c for _, c in sharpes) if sharpes else None
 
-        drawdowns = [(vr.average_max_drawdown, vr.total_candidates) for vr in validation_results if vr.average_max_drawdown is not None]
+        drawdowns: list[tuple[float, int]] = [(d, vr.total_candidates) for vr in validation_results if (d := vr.average_max_drawdown) is not None]
         avg_drawdown = sum(d * c for d, c in drawdowns) / sum(c for _, c in drawdowns) if drawdowns else None
 
-        sortinos = [(vr.average_sortino_ratio, vr.total_candidates) for vr in validation_results if vr.average_sortino_ratio is not None]
+        sortinos: list[tuple[float, int]] = [(s, vr.total_candidates) for vr in validation_results if (s := vr.average_sortino_ratio) is not None]
         avg_sortino = sum(s * c for s, c in sortinos) / sum(c for _, c in sortinos) if sortinos else None
 
-        win_rates = [(self._calculate_win_rate(vr), vr.total_candidates) for vr in validation_results if self._calculate_win_rate(vr) is not None]
+        win_rates: list[tuple[float, int]] = [(w, vr.total_candidates) for vr in validation_results if (w := self._calculate_win_rate(vr)) is not None]
         avg_win_rate = sum(w * c for w, c in win_rates) / sum(c for _, c in win_rates) if win_rates else None
 
         # Calculate Calmar ratio if we have both return and drawdown

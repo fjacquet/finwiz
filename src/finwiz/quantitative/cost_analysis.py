@@ -8,6 +8,7 @@ cost-benefit analysis to support rebalancing decisions.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -35,7 +36,7 @@ class CostBenefitAnalysis:
 
 def calculate_total_commission_costs(
     trade_recommendations: list[TradeRecommendation],
-    calculate_commission_fn: callable,
+    calculate_commission_fn: Callable[..., Any],
 ) -> float:
     """
     Calculate total commission costs for all trades.
@@ -58,7 +59,7 @@ def calculate_total_commission_costs(
 
 def calculate_total_spread_costs(
     trade_recommendations: list[TradeRecommendation],
-    estimate_spread_fn: callable,
+    estimate_spread_fn: Callable[..., Any],
     market_data: dict[str, Any] | None,
 ) -> float:
     """
@@ -84,7 +85,7 @@ def calculate_total_spread_costs(
 def calculate_total_market_impact_costs(
     trade_recommendations: list[TradeRecommendation],
     portfolio: PortfolioAnalysis,
-    estimate_impact_fn: callable,
+    estimate_impact_fn: Callable[..., Any],
     market_data: dict[str, Any] | None,
 ) -> float:
     """

@@ -70,7 +70,7 @@ def get_fallback_expense_ratio(ticker: str) -> float | None:
         if expense_ratio is not None:
             source = data.get("source", "manual config")
             logger.info(f"📋 Using fallback expense ratio for {ticker}: {expense_ratio:.4f} ({expense_ratio * 100:.2f}%) from {source}")
-            return expense_ratio
+            return float(expense_ratio)
 
     return None
 

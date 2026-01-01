@@ -13,9 +13,10 @@ is split across:
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 from uuid import uuid4
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from finwiz.schemas.session import AnalysisRecord, ClientProfile, FinancialPlan
 from finwiz.tools.logger import get_logger
@@ -159,8 +160,8 @@ class SessionPersistence:
         """Extract or generate plan ID from HTML."""
         # Try to find existing plan ID in meta tags or comments
         meta_tag = soup.find("meta", {"name": "plan-id"})
-        if meta_tag and meta_tag.get("content"):
-            return meta_tag["content"]
+        if meta_tag and isinstance(meta_tag, Tag) and meta_tag.get("content"):
+            return cast(str, meta_tag["content"])
 
         # Look for plan ID in comments
         for comment in soup.find_all(string=lambda text: isinstance(text, str) and "plan-id:" in text):
@@ -184,15 +185,15 @@ class SessionPersistence:
         created_at = now
         last_updated = now
 
-        if created_meta and created_meta.get("content"):
+        if created_meta and isinstance(created_meta, Tag) and created_meta.get("content"):
             try:
-                created_at = datetime.fromisoformat(created_meta["content"])
+                created_at = datetime.fromisoformat(cast(str, created_meta["content"]))
             except ValueError:
                 self.logger.warning("Invalid created-at timestamp in meta tag")
 
-        if updated_meta and updated_meta.get("content"):
+        if updated_meta and isinstance(updated_meta, Tag) and updated_meta.get("content"):
             try:
-                last_updated = datetime.fromisoformat(updated_meta["content"])
+                last_updated = datetime.fromisoformat(cast(str, updated_meta["content"]))
             except ValueError:
                 self.logger.warning("Invalid last-updated timestamp in meta tag")
 
@@ -255,9 +256,9 @@ class SessionPersistence:
 
         return profile
 
-    def _extract_portfolio_data(self, soup: BeautifulSoup) -> dict:
+    def _extract_portfolio_data(self, soup: BeautifulSoup) -> dict[str, Any]:
         """Extract portfolio data from HTML tables and sections."""
-        portfolio_data = {}
+        portfolio_data: dict[str, Any] = {}
 
         # Find portfolio data section
         portfolio_section = None
@@ -299,14 +300,13 @@ class SessionPersistence:
                     # This is a simple way to detect portfolio data in paragraph form
                     portfolio_data["holdings_info"] = text.strip()
 
-        # Extract allocation data
-        allocation_section = soup.find("section", string=lambda text: text and "Allocation de Portefeuille" in text)
-        if not allocation_section:
-            h2_elements = soup.find_all("h2")
-            for h2 in h2_elements:
-                if "Allocation de Portefeuille" in h2.get_text():
-                    allocation_section = h2.find_parent("section")
-                    break
+        # Extract allocation data by finding h2 headers
+        allocation_section: Tag | None = None
+        h2_elements = soup.find_all("h2")
+        for h2 in h2_elements:
+            if isinstance(h2, Tag) and "Allocation de Portefeuille" in h2.get_text():
+                allocation_section = h2.find_parent("section")
+                break
 
         if allocation_section:
             allocation_table = allocation_section.find("table")

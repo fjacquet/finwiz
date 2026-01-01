@@ -123,7 +123,8 @@ class DataProcessor:
 
         try:
             with open(cache_metadata_file) as f:
-                return json.load(f)
+                result: dict[str, Any] = json.load(f)
+                return result
         except Exception as e:
             self.logger.warning(f"Error loading cache metadata: {e}")
             return {}

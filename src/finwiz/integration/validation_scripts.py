@@ -20,7 +20,7 @@ from .logging_utils import integration_logger, log_analyzer
 class ValidationScript:
     """Base class for validation scripts."""
 
-    def __init__(self, output_dir: Path = None) -> None:
+    def __init__(self, output_dir: Path | None = None) -> None:
         """Initialize validation script."""
         self.config = get_integration_config()
         self.crew_config = get_crew_dependency_config()
@@ -212,7 +212,8 @@ class DataIntegrityValidator(ValidationScript):
         """Extract timestamp from crew data."""
         try:
             if "metadata" in data and "execution_timestamp" in data["metadata"]:
-                return data["metadata"]["execution_timestamp"]
+                timestamp: str | None = data["metadata"]["execution_timestamp"]
+                return timestamp
         except Exception:
             pass
 
@@ -458,13 +459,13 @@ class PerformanceValidator(ValidationScript):
         return recommendations
 
 
-def run_all_validations(output_dir: Path = None) -> dict[str, Any]:
+def run_all_validations(output_dir: Path | None = None) -> dict[str, Any]:
     """Run all validation scripts and return combined results."""
     print("Running comprehensive integration system validation...")
 
     validators = [DataIntegrityValidator(output_dir), DependencyValidator(output_dir), PerformanceValidator(output_dir)]
 
-    all_results = {
+    all_results: dict[str, Any] = {
         "validation_suite_timestamp": datetime.now().isoformat(),
         "validators_run": [],
         "overall_status": "healthy",
@@ -534,17 +535,17 @@ def main() -> None:
         command = sys.argv[1].lower()
 
         if command == "integrity":
-            validator = DataIntegrityValidator()
-            results = validator.run()
-            validator.print_results(results)
+            integrity_validator = DataIntegrityValidator()
+            results = integrity_validator.run()
+            integrity_validator.print_results(results)
         elif command == "dependencies":
-            validator = DependencyValidator()
-            results = validator.run()
-            validator.print_results(results)
+            dep_validator = DependencyValidator()
+            results = dep_validator.run()
+            dep_validator.print_results(results)
         elif command == "performance":
-            validator = PerformanceValidator()
-            results = validator.run()
-            validator.print_results(results)
+            perf_validator = PerformanceValidator()
+            results = perf_validator.run()
+            perf_validator.print_results(results)
         elif command == "all":
             run_all_validations()
         else:

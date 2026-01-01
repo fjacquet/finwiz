@@ -95,7 +95,7 @@ class EnrichedAnalysis(BaseModel):
         "validate_default": True,
     }
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def calculated_word_count(self) -> int:
         """

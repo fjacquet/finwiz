@@ -8,6 +8,8 @@ to make them testable and reusable.
 
 from typing import Any
 
+from crewai.tools import BaseTool
+
 from finwiz.tools.logger import get_logger
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import (
@@ -113,7 +115,7 @@ def get_minimal_risk_tools(
     from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
     from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 
-    tools = []
+    tools: list[BaseTool] = []
 
     # Always include quantitative analysis (core risk metrics)
     tools.append(QuantitativeAnalysisTool(asset_class=asset_class, prefetched_data=prefetched_data))

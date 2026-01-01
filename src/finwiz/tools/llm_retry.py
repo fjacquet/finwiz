@@ -9,7 +9,10 @@ might cause "Invalid response from LLM call - None or empty" errors.
 import asyncio
 from typing import Any
 
-from langchain_core.callbacks import CallbackManagerForLLMRun
+from langchain_core.callbacks import (
+    AsyncCallbackManagerForLLMRun,
+    CallbackManagerForLLMRun,
+)
 from langchain_core.language_models.llms import BaseLLM
 from langchain_core.outputs import LLMResult
 from tenacity import (
@@ -90,7 +93,6 @@ class RetryLLMWrapper(BaseLLM):
             RetryError: When all retry attempts fail
 
         """
-        attempt = 0
         last_exception = None
 
         # Create a retryer with exponential backoff
@@ -140,7 +142,7 @@ class RetryLLMWrapper(BaseLLM):
         self,
         prompts: list[str],
         stop: list[str] | None = None,
-        run_manager: CallbackManagerForLLMRun | None = None,
+        run_manager: AsyncCallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> LLMResult:
         """

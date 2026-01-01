@@ -117,32 +117,32 @@ class ReportSectionBuilder:
         soup = BeautifulSoup("", "html.parser")
 
         # Main container
-        overview_div = soup.new_tag("div", **{"class": "portfolio-overview"})
-        metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+        overview_div = soup.new_tag("div", attrs={"class": "portfolio-overview"})
+        metrics_grid = soup.new_tag("div", attrs={"class": "metrics-grid"})
 
         # Total Portfolio Value card
-        value_card = soup.new_tag("div", **{"class": "metric-card"})
+        value_card = soup.new_tag("div", attrs={"class": "metric-card"})
         value_h4 = soup.new_tag("h4")
         value_h4.string = "💰 Total Portfolio Value"
-        value_p = soup.new_tag("p", **{"class": "metric-value"})
+        value_p = soup.new_tag("p", attrs={"class": "metric-value"})
         value_p.string = f"${total_value:,.2f}"
         value_card.append(value_h4)
         value_card.append(value_p)
 
         # Number of Positions card
-        positions_card = soup.new_tag("div", **{"class": "metric-card"})
+        positions_card = soup.new_tag("div", attrs={"class": "metric-card"})
         positions_h4 = soup.new_tag("h4")
         positions_h4.string = "📊 Number of Positions"
-        positions_p = soup.new_tag("p", **{"class": "metric-value"})
+        positions_p = soup.new_tag("p", attrs={"class": "metric-value"})
         positions_p.string = str(positions_count)
         positions_card.append(positions_h4)
         positions_card.append(positions_p)
 
         # Risk Score card
-        risk_card = soup.new_tag("div", **{"class": "metric-card"})
+        risk_card = soup.new_tag("div", attrs={"class": "metric-card"})
         risk_h4 = soup.new_tag("h4")
         risk_h4.string = "⚠️ Risk Score"
-        risk_p = soup.new_tag("p", **{"class": "metric-value"})
+        risk_p = soup.new_tag("p", attrs={"class": "metric-value"})
         risk_p.string = f"{risk_score:.1f}/10"
         risk_card.append(risk_h4)
         risk_card.append(risk_p)
@@ -177,40 +177,40 @@ class ReportSectionBuilder:
         soup = BeautifulSoup("", "html.parser")
 
         # Main container
-        summary_div = soup.new_tag("div", **{"class": "rebalancing-summary"})
+        summary_div = soup.new_tag("div", attrs={"class": "rebalancing-summary"})
 
         # Recommendation banner
-        banner_div = soup.new_tag("div", **{"class": f"recommendation-banner {rec_class}"})
+        banner_div = soup.new_tag("div", attrs={"class": f"recommendation-banner {rec_class}"})
         banner_h3 = soup.new_tag("h3")
         banner_h3.string = f"{rec_emoji} Recommendation: {recommendation.replace('_', ' ').title()}"
         banner_div.append(banner_h3)
 
         # Metrics grid
-        metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+        metrics_grid = soup.new_tag("div", attrs={"class": "metrics-grid"})
 
         # Trades Required card
-        trades_card = soup.new_tag("div", **{"class": "metric-card"})
+        trades_card = soup.new_tag("div", attrs={"class": "metric-card"})
         trades_h4 = soup.new_tag("h4")
         trades_h4.string = "🔄 Trades Required"
-        trades_p = soup.new_tag("p", **{"class": "metric-value"})
+        trades_p = soup.new_tag("p", attrs={"class": "metric-value"})
         trades_p.string = str(execution_summary.get("total_trades_required", 0))
         trades_card.append(trades_h4)
         trades_card.append(trades_p)
 
         # Transaction Costs card
-        costs_card = soup.new_tag("div", **{"class": "metric-card"})
+        costs_card = soup.new_tag("div", attrs={"class": "metric-card"})
         costs_h4 = soup.new_tag("h4")
         costs_h4.string = "💸 Transaction Costs"
-        costs_p = soup.new_tag("p", **{"class": "metric-value"})
+        costs_p = soup.new_tag("p", attrs={"class": "metric-value"})
         costs_p.string = f"${cost_analysis.get('total_transaction_costs', 0):.2f}"
         costs_card.append(costs_h4)
         costs_card.append(costs_p)
 
         # Execution Time card
-        time_card = soup.new_tag("div", **{"class": "metric-card"})
+        time_card = soup.new_tag("div", attrs={"class": "metric-card"})
         time_h4 = soup.new_tag("h4")
         time_h4.string = "⏱️ Execution Time"
-        time_p = soup.new_tag("p", **{"class": "metric-value"})
+        time_p = soup.new_tag("p", attrs={"class": "metric-value"})
         time_p.string = execution_summary.get("estimated_execution_time", "N/A")
         time_card.append(time_h4)
         time_card.append(time_p)
@@ -247,8 +247,8 @@ class ReportSectionBuilder:
             sorted_trades = sorted(trades, key=lambda x: x.get("priority", 10))
 
             # Create trades container
-            container_div = soup.new_tag("div", **{"class": "trades-container"})
-            table = soup.new_tag("table", **{"class": "trades-table"})
+            container_div = soup.new_tag("div", attrs={"class": "trades-container"})
+            table = soup.new_tag("table", attrs={"class": "trades-table"})
 
             # Create table header
             thead = soup.new_tag("thead")
@@ -272,7 +272,7 @@ class ReportSectionBuilder:
                 action_class = action.lower()
 
                 # Create row
-                tr = soup.new_tag("tr", **{"class": f"trade-row {action_class}"})
+                tr = soup.new_tag("tr", attrs={"class": f"trade-row {action_class}"})
 
                 # Symbol cell
                 symbol_td = soup.new_tag("td")
@@ -280,32 +280,32 @@ class ReportSectionBuilder:
                 tr.append(symbol_td)
 
                 # Action cell
-                action_td = soup.new_tag("td", **{"class": "action-cell"})
+                action_td = soup.new_tag("td", attrs={"class": "action-cell"})
                 action_td.string = action
                 tr.append(action_td)
 
                 # Quantity cell
-                quantity_td = soup.new_tag("td", **{"class": "number-cell"})
+                quantity_td = soup.new_tag("td", attrs={"class": "number-cell"})
                 quantity_td.string = f"{trade.get('quantity', 0):.2f}"
                 tr.append(quantity_td)
 
                 # Price cell
-                price_td = soup.new_tag("td", **{"class": "currency-cell"})
+                price_td = soup.new_tag("td", attrs={"class": "currency-cell"})
                 price_td.string = f"${trade.get('current_price', 0):.2f}"
                 tr.append(price_td)
 
                 # Trade Value cell
-                value_td = soup.new_tag("td", **{"class": "currency-cell"})
+                value_td = soup.new_tag("td", attrs={"class": "currency-cell"})
                 value_td.string = f"${trade.get('trade_value', 0):,.2f}"
                 tr.append(value_td)
 
                 # Est. Cost cell
-                cost_td = soup.new_tag("td", **{"class": "currency-cell"})
+                cost_td = soup.new_tag("td", attrs={"class": "currency-cell"})
                 cost_td.string = f"${trade.get('total_estimated_cost', 0):.2f}"
                 tr.append(cost_td)
 
                 # Priority cell
-                priority_td = soup.new_tag("td", **{"class": "priority-cell"})
+                priority_td = soup.new_tag("td", attrs={"class": "priority-cell"})
                 priority_td.string = str(trade.get("priority", "N/A"))
                 tr.append(priority_td)
 

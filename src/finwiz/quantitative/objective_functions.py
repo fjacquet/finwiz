@@ -30,7 +30,7 @@ except ImportError:
             """Mock pdf method."""
             raise ImportError("SciPy not available")
 
-    norm = MockNorm()
+    norm = MockNorm()  # type: ignore[misc, assignment]
 
 from finwiz.tools.logger import get_logger
 
@@ -114,7 +114,7 @@ class ObjectiveFunctionCalculator:
                 return -np.inf
 
             # Return negative Sharpe ratio for minimization
-            return -(portfolio_return - risk_free_rate) / portfolio_vol
+            return float(-(portfolio_return - risk_free_rate) / portfolio_vol)
 
         return objective_func
 
@@ -122,7 +122,7 @@ class ObjectiveFunctionCalculator:
         """Create minimum volatility objective function."""
 
         def objective_func(weights: np.ndarray) -> float:
-            return np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+            return float(np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))))
 
         return objective_func
 
@@ -131,7 +131,7 @@ class ObjectiveFunctionCalculator:
 
         def objective_func(weights: np.ndarray) -> float:
             # Return negative return for minimization
-            return -np.dot(weights, returns)
+            return float(-np.dot(weights, returns))
 
         return objective_func
 
@@ -155,7 +155,7 @@ class ObjectiveFunctionCalculator:
 
             # Target equal risk contribution
             target_contrib = portfolio_vol / n_assets
-            return np.sum((contrib - target_contrib) ** 2)
+            return float(np.sum((contrib - target_contrib) ** 2))
 
         return objective_func
 
@@ -173,7 +173,7 @@ class ObjectiveFunctionCalculator:
             diversification_ratio = weighted_avg_vol / portfolio_vol
 
             # Return negative for minimization (we want to maximize diversification)
-            return -diversification_ratio
+            return float(-diversification_ratio)
 
         return objective_func
 
@@ -200,7 +200,7 @@ class ObjectiveFunctionCalculator:
             cvar = portfolio_return - portfolio_vol * norm.pdf(norm.ppf(confidence_level)) / confidence_level
 
             # Return CVaR (already negative for losses, so minimize directly)
-            return -cvar  # Minimize negative CVaR (maximize CVaR)
+            return float(-cvar)  # Minimize negative CVaR (maximize CVaR)
 
         return objective_func
 
@@ -232,11 +232,11 @@ class ObjectiveFunctionCalculator:
         portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
 
         if objective == ObjectiveFunction.MAX_SHARPE:
-            return (portfolio_return - risk_free_rate) / portfolio_vol if portfolio_vol > 0 else 0
+            return float((portfolio_return - risk_free_rate) / portfolio_vol) if portfolio_vol > 0 else 0.0
         elif objective == ObjectiveFunction.MIN_VOLATILITY:
-            return portfolio_vol
+            return float(portfolio_vol)
         elif objective == ObjectiveFunction.MAX_RETURN:
-            return portfolio_return
+            return float(portfolio_return)
         elif objective == ObjectiveFunction.RISK_PARITY:
             # Calculate risk parity score (lower is better)
             n_assets = len(weights)
@@ -249,19 +249,19 @@ class ObjectiveFunctionCalculator:
             contrib = weights * marginal_contrib
             target_contrib = portfolio_vol / n_assets
 
-            return np.sum((contrib - target_contrib) ** 2)
+            return float(np.sum((contrib - target_contrib) ** 2))
         elif objective == ObjectiveFunction.MAX_DIVERSIFICATION:
             # Calculate diversification ratio
             weighted_avg_vol = np.dot(weights, np.sqrt(np.diag(cov_matrix)))
-            return weighted_avg_vol / portfolio_vol if portfolio_vol > 0 else 1
+            return float(weighted_avg_vol / portfolio_vol) if portfolio_vol > 0 else 1.0
         elif objective == ObjectiveFunction.MIN_CVAR:
             if not SCIPY_AVAILABLE:
-                return portfolio_vol
+                return float(portfolio_vol)
 
             confidence_level = kwargs.get("confidence_level", 0.05)
             var_quantile = norm.ppf(confidence_level, portfolio_return, portfolio_vol)
             cvar = portfolio_return - portfolio_vol * norm.pdf(norm.ppf(confidence_level)) / confidence_level
-            return -cvar  # Return positive CVaR value
+            return float(-cvar)  # Return positive CVaR value
         else:
             return 0.0
 
@@ -302,7 +302,8 @@ class ObjectiveFunctionCalculator:
             if portfolio_vol == 0:
                 return np.zeros_like(weights)
 
-            return np.dot(cov_matrix, weights) / portfolio_vol
+            result: np.ndarray[Any, Any] = np.dot(cov_matrix, weights) / portfolio_vol
+            return result
 
         return gradient_func
 

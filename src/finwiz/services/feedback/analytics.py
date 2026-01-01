@@ -90,8 +90,9 @@ class FeedbackAnalytics:
         df = pd.DataFrame(data)
 
         # Use pandas groupby for efficient aggregation
-        result = {}
-        for asset_type, group in df.groupby("asset_type"):
+        result: dict[str, dict[str, float]] = {}
+        for asset_type_key, group in df.groupby("asset_type"):
+            asset_type = str(asset_type_key)
             result[asset_type] = {
                 "avg_return": group["absolute_return"].mean(),
                 "avg_alpha": group["alpha"].mean(),

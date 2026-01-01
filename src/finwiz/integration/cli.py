@@ -69,17 +69,17 @@ def cmd_validate(args: Any) -> None:
     if args.type == "all":
         run_all_validations()
     elif args.type == "integrity":
-        validator = DataIntegrityValidator()
-        results = validator.run()
-        validator.print_results(results)
+        integrity_validator = DataIntegrityValidator()
+        results = integrity_validator.run()
+        integrity_validator.print_results(results)
     elif args.type == "dependencies":
-        validator = DependencyValidator()
-        results = validator.run()
-        validator.print_results(results)
+        dep_validator = DependencyValidator()
+        results = dep_validator.run()
+        dep_validator.print_results(results)
     elif args.type == "performance":
-        validator = PerformanceValidator()
-        results = validator.run()
-        validator.print_results(results)
+        perf_validator = PerformanceValidator()
+        results = perf_validator.run()
+        perf_validator.print_results(results)
 
 
 def cmd_status(args: Any) -> None:

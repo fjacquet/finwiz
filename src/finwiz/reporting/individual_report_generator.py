@@ -41,17 +41,11 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
 
     # Extract grade and recommendation
     grade = result.get("grade") or result.get("final_grade") or "N/A"
-    recommendation = (
-        result.get("recommendation") or result.get("final_recommendation") or "HOLD"
-    )
+    recommendation = result.get("recommendation") or result.get("final_recommendation") or "HOLD"
 
     # Extract details dicts (these become the metric tables)
-    fundamental_metrics = result.get("fundamental_details") or result.get(
-        "fundamental_metrics", {}
-    )
-    technical_indicators = result.get("technical_details") or result.get(
-        "technical_indicators", {}
-    )
+    fundamental_metrics = result.get("fundamental_details") or result.get("fundamental_metrics", {})
+    technical_indicators = result.get("technical_details") or result.get("technical_indicators", {})
     risk_metrics = result.get("risk_details") or result.get("risk_metrics", {})
 
     # Build SEC insights structure
@@ -138,37 +132,23 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
         ),
         # SEC insights
         "sec_insights": {
-            "business_model": sec_insights.get(
-                "business_model", "Information non disponible dans les données actuelles."
-            ),
+            "business_model": sec_insights.get("business_model", "Information non disponible dans les données actuelles."),
             "competitive_advantages": sec_insights.get("competitive_advantages", []),
             "strategic_initiatives": sec_insights.get("strategic_initiatives", []),
         },
         # Fundamental context
         "fundamental_context": {
-            "industry_analysis": fundamental_context.get(
-                "industry_analysis", "Analyse sectorielle non disponible."
-            ),
+            "industry_analysis": fundamental_context.get("industry_analysis", "Analyse sectorielle non disponible."),
             "growth_drivers": fundamental_context.get("growth_drivers", []),
-            "competitive_positioning": fundamental_context.get(
-                "competitive_positioning", "Information non disponible."
-            ),
-            "management_assessment": fundamental_context.get(
-                "management_assessment", "Évaluation non disponible."
-            ),
+            "competitive_positioning": fundamental_context.get("competitive_positioning", "Information non disponible."),
+            "management_assessment": fundamental_context.get("management_assessment", "Évaluation non disponible."),
         },
         # Technical strategy
         "technical_strategy": {
             "chart_patterns": technical_strategy.get("chart_patterns", []),
-            "support_resistance": technical_strategy.get(
-                "support_resistance", "Niveaux non calculés."
-            ),
-            "entry_exit_strategy": technical_strategy.get(
-                "entry_exit_strategy", "Stratégie non définie."
-            ),
-            "timing_assessment": technical_strategy.get(
-                "timing_assessment", "Évaluation du timing non disponible."
-            ),
+            "support_resistance": technical_strategy.get("support_resistance", "Niveaux non calculés."),
+            "entry_exit_strategy": technical_strategy.get("entry_exit_strategy", "Stratégie non définie."),
+            "timing_assessment": technical_strategy.get("timing_assessment", "Évaluation du timing non disponible."),
         },
         # Contextual risks
         "contextual_risks": {
@@ -181,15 +161,9 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
         # Investment synthesis
         "investment_synthesis": {
             "scenario_probabilities": investment_synthesis["scenario_probabilities"],
-            "bull_case": investment_synthesis.get(
-                "bull_case", "Scénario haussier non défini."
-            ),
-            "base_case": investment_synthesis.get(
-                "base_case", "Scénario de base non défini."
-            ),
-            "bear_case": investment_synthesis.get(
-                "bear_case", "Scénario baissier non défini."
-            ),
+            "bull_case": investment_synthesis.get("bull_case", "Scénario haussier non défini."),
+            "base_case": investment_synthesis.get("base_case", "Scénario de base non défini."),
+            "bear_case": investment_synthesis.get("bear_case", "Scénario baissier non défini."),
             "action_plan": investment_synthesis["action_plan"],
         },
         # Quality metrics
@@ -245,9 +219,7 @@ def generate_individual_deep_analysis_reports(
     Returns:
         List of paths to generated reports
     """
-    logger.info(
-        f"Generating individual HTML reports for {len(results_by_ticker)} deep analyses..."
-    )
+    logger.info(f"Generating individual HTML reports for {len(results_by_ticker)} deep analyses...")
     generated_paths: list[str] = []
 
     for ticker, result in results_by_ticker.items():

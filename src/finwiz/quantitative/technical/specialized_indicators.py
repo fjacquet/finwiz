@@ -125,9 +125,9 @@ class SpecializedIndicators:
             Technical indicator result with ATR values and signals
 
         """
-        high_prices = data["High"].values.astype(np.float64)
-        low_prices = data["Low"].values.astype(np.float64)
-        close_prices = data["Close"].values.astype(np.float64)
+        high_prices = np.asarray(data["High"].values, dtype=np.float64)
+        low_prices = np.asarray(data["Low"].values, dtype=np.float64)
+        close_prices = np.asarray(data["Close"].values, dtype=np.float64)
 
         if len(close_prices) < period + 1:
             raise ValueError(f"Insufficient data for ATR: need {period + 1}, have {len(close_prices)}")

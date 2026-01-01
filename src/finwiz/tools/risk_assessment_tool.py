@@ -7,7 +7,7 @@ assets and portfolios, including various risk metrics and scenario analysis.
 
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from crewai.tools import BaseTool
@@ -280,7 +280,7 @@ class RiskAssessmentTool(BaseTool):
                     correlation_pairs.append({"asset1": assets[i], "asset2": assets[j], "correlation": float(correlations[i, j])})
 
             # Sort by correlation
-            correlation_pairs.sort(key=lambda x: x["correlation"], reverse=True)
+            correlation_pairs.sort(key=lambda x: cast(float, x["correlation"]), reverse=True)
 
             avg_correlation = float(np.mean(correlations[np.triu_indices(n_assets, k=1)]))
 
@@ -361,10 +361,10 @@ class RiskAssessmentTool(BaseTool):
                 },
             }
 
-            stress_results = {}
+            stress_results: dict[str, dict[str, object]] = {}
             for scenario_name, scenario in scenarios.items():
                 # Simplified stress test calculation
-                portfolio_impact = scenario["market_impact"]
+                portfolio_impact: float = cast(float, scenario["market_impact"])
 
                 # Adjust for portfolio characteristics
                 if input_data.portfolio_weights:
@@ -373,19 +373,19 @@ class RiskAssessmentTool(BaseTool):
 
                 stress_results[scenario_name] = {
                     "description": scenario["description"],
-                    "estimated_portfolio_impact": float(portfolio_impact),
+                    "estimated_portfolio_impact": portfolio_impact,
                     "probability": "Low" if abs(portfolio_impact) > 0.25 else "Moderate",
                     "recovery_time_estimate": "6-12 months" if abs(portfolio_impact) > 0.20 else "3-6 months",
                 }
 
             return {
                 "stress_scenarios": stress_results,
-                "worst_case_scenario": min(stress_results.items(), key=lambda x: x[1]["estimated_portfolio_impact"]),
+                "worst_case_scenario": min(stress_results.items(), key=lambda x: cast(float, x[1]["estimated_portfolio_impact"])),
                 "overall_stress_resilience": (
                     "High"
-                    if all(abs(s["estimated_portfolio_impact"]) < 0.15 for s in stress_results.values())
+                    if all(abs(cast(float, s["estimated_portfolio_impact"])) < 0.15 for s in stress_results.values())
                     else "Moderate"
-                    if all(abs(s["estimated_portfolio_impact"]) < 0.25 for s in stress_results.values())
+                    if all(abs(cast(float, s["estimated_portfolio_impact"])) < 0.25 for s in stress_results.values())
                     else "Low"
                 ),
             }

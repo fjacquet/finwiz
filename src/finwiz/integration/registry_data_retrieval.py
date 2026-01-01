@@ -70,24 +70,15 @@ def get_upstream_data(
                 output_files = list(crew_output_dir.glob("*.json"))
                 if output_files:
                     max(output_files, key=lambda f: f.stat().st_mtime)
-                    freshness_result = freshness_checker.check_data_freshness_for_crew(
-                        crew_dir, max_age_hours
-                    )
+                    freshness_result = freshness_checker.check_data_freshness_for_crew(crew_dir, max_age_hours)
 
                     if freshness_result and freshness_result.freshness_status.is_fresh:
                         available_data[crew_dir] = [str(f) for f in output_files]
                     else:
                         stale_data.append(crew_dir)
                         available_data[crew_dir] = [str(f) for f in output_files]
-                        age_hours = (
-                            freshness_result.freshness_status.age_hours
-                            if freshness_result
-                            else float("inf")
-                        )
-                        logger.warning(
-                            f"Stale data detected for {crew_dir} crew "
-                            f"(age: {age_hours:.1f}h > {max_age_hours}h)"
-                        )
+                        age_hours = freshness_result.freshness_status.age_hours if freshness_result else float("inf")
+                        logger.warning(f"Stale data detected for {crew_dir} crew (age: {age_hours:.1f}h > {max_age_hours}h)")
                 else:
                     missing_data.append(crew_dir)
             else:
@@ -114,9 +105,7 @@ def get_upstream_data(
             f"Failed to get upstream data for {requesting_crew}: {str(e)}",
             exc_info=True,
         )
-        return UpstreamDataCollection(
-            available_data={}, missing_data=crew_dirs, stale_data=[]
-        )
+        return UpstreamDataCollection(available_data={}, missing_data=crew_dirs, stale_data=[])
 
 
 def consolidate_crew_ticker_files(
@@ -181,10 +170,7 @@ def consolidate_crew_ticker_files(
             avg = total_score / valid_analyses
             consolidated_data["summary_statistics"]["average_composite_score"] = avg
 
-        logger.info(
-            f"Consolidated {crew_name} crew data: {valid_analyses} ticker analyses, "
-            f"avg score: {consolidated_data['summary_statistics']['average_composite_score']:.3f}"
-        )
+        logger.info(f"Consolidated {crew_name} crew data: {valid_analyses} ticker analyses, avg score: {consolidated_data['summary_statistics']['average_composite_score']:.3f}")
         return consolidated_data
 
     except Exception as e:
@@ -228,9 +214,7 @@ def get_crew_data_with_freshness_check(
             return None
 
         # Check freshness
-        freshness_result = freshness_checker.check_data_freshness_for_crew(
-            crew_name, max_age_hours
-        )
+        freshness_result = freshness_checker.check_data_freshness_for_crew(crew_name, max_age_hours)
 
         if freshness_result:
             status = freshness_result.freshness_status
@@ -268,26 +252,17 @@ def get_crew_data_with_freshness_check(
         with open(newest_file, encoding="utf-8") as f:
             content = f.read().strip()
             if not content:
-                logger.warning(
-                    f"Cache file for {crew_name} crew has no content: {newest_file}"
-                )
+                logger.warning(f"Cache file for {crew_name} crew has no content: {newest_file}")
                 return None
 
             try:
-                data = json.loads(content)
-                logger.debug(
-                    f"Successfully loaded data for {crew_name} crew from {newest_file}"
-                )
+                data: dict[Any, Any] = json.loads(content)
+                logger.debug(f"Successfully loaded data for {crew_name} crew from {newest_file}")
                 return data
             except json.JSONDecodeError as e:
-                logger.error(
-                    f"Invalid JSON in cache file for {crew_name} crew: "
-                    f"{newest_file} - {e}"
-                )
+                logger.error(f"Invalid JSON in cache file for {crew_name} crew: {newest_file} - {e}")
                 return None
 
     except Exception as e:
-        logger.error(
-            f"Failed to get data for {crew_name} crew: {str(e)}", exc_info=True
-        )
+        logger.error(f"Failed to get data for {crew_name} crew: {str(e)}", exc_info=True)
         return None

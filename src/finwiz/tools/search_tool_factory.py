@@ -39,7 +39,7 @@ class PerplexitySearchWrapper(BaseTool):
         self._search_type = search_type
         self._max_results = max_results
 
-    def _run(self, query: str = None, search_query: str = None) -> str:
+    def _run(self, query: str | None = None, search_query: str | None = None) -> str:
         """Run the search query through Perplexity."""
         # Handle both parameter names for compatibility
         search_term = query or search_query
@@ -135,8 +135,8 @@ class SearchToolFactory:
     def __init__(self) -> None:
         """Initialize the search tool factory."""
         self.feature_flags = get_feature_flags()
-        self._perplexity_integration = None
-        self._serper_tools = {}
+        self._perplexity_integration: PerplexityAnalysisIntegration | None = None
+        self._serper_tools: dict[str, Any] = {}
 
     def get_primary_search_tool(self, search_type: str = "search", n_results: int = 10) -> Any:
         """

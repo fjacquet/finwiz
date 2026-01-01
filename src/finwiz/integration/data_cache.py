@@ -37,7 +37,8 @@ class DataCache:
             Stock crew data dictionary, or None if unavailable
 
         """
-        return self.integration_manager.get_crew_data_with_freshness_check("stock", max_age_hours, warn_on_stale=True)
+        result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("stock", max_age_hours, warn_on_stale=True)
+        return result
 
     def get_etf_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
         """
@@ -50,7 +51,8 @@ class DataCache:
             ETF crew data dictionary, or None if unavailable
 
         """
-        return self.integration_manager.get_crew_data_with_freshness_check("etf", max_age_hours, warn_on_stale=True)
+        result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("etf", max_age_hours, warn_on_stale=True)
+        return result
 
     def get_crypto_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
         """
@@ -63,7 +65,8 @@ class DataCache:
             Crypto crew data dictionary, or None if unavailable
 
         """
-        return self.integration_manager.get_crew_data_with_freshness_check("crypto", max_age_hours, warn_on_stale=True)
+        result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("crypto", max_age_hours, warn_on_stale=True)
+        return result
 
     def get_discovery_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
         """
@@ -76,7 +79,8 @@ class DataCache:
             Discovery crew data dictionary, or None if unavailable
 
         """
-        return self.integration_manager.get_crew_data_with_freshness_check("discovery", max_age_hours, warn_on_stale=True)
+        result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("discovery", max_age_hours, warn_on_stale=True)
+        return result
 
     def get_consolidated_data(self, max_age_hours: int = 24) -> dict[str, Any]:
         """
@@ -122,7 +126,7 @@ class DataCache:
             self.logger.info(f"Consolidated data from {len(consolidated)} crews", extra={"crews": list(consolidated.keys())})
 
             # Serialize datetime objects for CrewAI compatibility
-            serialized_consolidated = serialize_datetime_objects(consolidated)
+            serialized_consolidated: dict[str, Any] = serialize_datetime_objects(consolidated)
 
             return serialized_consolidated
 
@@ -227,7 +231,7 @@ class DataCache:
             }
 
             # Serialize for CrewAI compatibility
-            serialized_input = serialize_datetime_objects(reporter_input)
+            serialized_input: dict[str, Any] = serialize_datetime_objects(reporter_input)
 
             self.logger.info(
                 "Reporter input generated successfully",

@@ -45,10 +45,10 @@ class RebalancingSections:
 
         # Create soup and main container
         soup = BeautifulSoup("", "html.parser")
-        main_div = soup.new_tag("div", **{"class": "executive-summary"})
+        main_div = soup.new_tag("div", attrs={"class": "executive-summary"})
 
         # Status indicator
-        status_div = soup.new_tag("div", **{"class": f"status-indicator {result.overall_recommendation.value.lower()}"})
+        status_div = soup.new_tag("div", attrs={"class": f"status-indicator {result.overall_recommendation.value.lower()}"})
 
         status_h3 = soup.new_tag("h3")
         status_h3.string = f"{status_emoji} {status_text}"
@@ -64,7 +64,7 @@ class RebalancingSections:
         main_div.append(status_div)
 
         # Summary metrics
-        metrics_div = soup.new_tag("div", **{"class": "summary-metrics"})
+        metrics_div = soup.new_tag("div", attrs={"class": "summary-metrics"})
 
         # Create metric cards
         metrics_data = [
@@ -75,13 +75,13 @@ class RebalancingSections:
         ]
 
         for i, (label, value) in enumerate(metrics_data):
-            card_div = soup.new_tag("div", **{"class": "metric-card"})
+            card_div = soup.new_tag("div", attrs={"class": "metric-card"})
 
             card_h4 = soup.new_tag("h4")
             card_h4.string = label
             card_div.append(card_h4)
 
-            card_span = soup.new_tag("span", **{"class": "metric-value"})
+            card_span = soup.new_tag("span", attrs={"class": "metric-value"})
             if i == 3:  # Risk improvement - add positive/negative class
                 card_span["class"] = f"metric-value {'positive' if result.risk_improvement > 0 else 'negative'}"
             card_span.string = value
@@ -101,10 +101,10 @@ class RebalancingSections:
 
         # Create soup and main container
         soup = BeautifulSoup("", "html.parser")
-        main_div = soup.new_tag("div", **{"class": "portfolio-overview"})
+        main_div = soup.new_tag("div", attrs={"class": "portfolio-overview"})
 
         # Portfolio stats
-        stats_div = soup.new_tag("div", **{"class": "portfolio-stats"})
+        stats_div = soup.new_tag("div", attrs={"class": "portfolio-stats"})
 
         stats_data = [
             ("Valeur Totale" if is_french else "Total Value", f"${current.total_value:,.2f}"),
@@ -135,8 +135,9 @@ class RebalancingSections:
 
         # Parse the table HTML and append to main div
         table_soup = BeautifulSoup(holdings_table_html, "html.parser")
-        if table_soup.find():
-            main_div.append(table_soup.find())
+        table_tag = table_soup.find()
+        if table_tag is not None:
+            main_div.append(table_tag)
 
         soup.append(main_div)
         return str(soup)
@@ -149,14 +150,14 @@ class RebalancingSections:
         soup = BeautifulSoup("", "html.parser")
 
         if not result.trade_recommendations:
-            no_trades_div = soup.new_tag("div", **{"class": "no-trades"})
+            no_trades_div = soup.new_tag("div", attrs={"class": "no-trades"})
             p = soup.new_tag("p")
             message = "Aucune transaction requise. Votre portefeuille est bien équilibré." if is_french else "No trades required. Your portfolio is well balanced."
             p.string = f"✅ {message}"
             no_trades_div.append(p)
             soup.append(no_trades_div)
         else:
-            trades_div = soup.new_tag("div", **{"class": "trade-recommendations"})
+            trades_div = soup.new_tag("div", attrs={"class": "trade-recommendations"})
 
             # Add summary paragraph
             p = soup.new_tag("p")
@@ -171,8 +172,9 @@ class RebalancingSections:
 
             # Parse the table HTML and append to trades div
             table_soup = BeautifulSoup(trades_table_html, "html.parser")
-            if table_soup.find():
-                trades_div.append(table_soup.find())
+            table_tag = table_soup.find()
+            if table_tag is not None:
+                trades_div.append(table_tag)
 
             soup.append(trades_div)
 
@@ -206,10 +208,10 @@ class RebalancingSections:
 
         # Create soup and main container
         soup = BeautifulSoup("", "html.parser")
-        main_div = soup.new_tag("div", **{"class": "cost-analysis"})
+        main_div = soup.new_tag("div", attrs={"class": "cost-analysis"})
 
         # Cost breakdown section
-        breakdown_div = soup.new_tag("div", **{"class": "cost-breakdown"})
+        breakdown_div = soup.new_tag("div", attrs={"class": "cost-breakdown"})
 
         cost_items = [
             ("Commissions" if is_french else "Commissions", cost.commission_costs, False),
@@ -219,10 +221,10 @@ class RebalancingSections:
         ]
 
         for label, amount, is_total in cost_items:
-            item_div = soup.new_tag("div", **{"class": "cost-item total" if is_total else "cost-item"})
+            item_div = soup.new_tag("div", attrs={"class": "cost-item total" if is_total else "cost-item"})
 
             # Label span
-            label_span = soup.new_tag("span", **{"class": "cost-label"})
+            label_span = soup.new_tag("span", attrs={"class": "cost-label"})
             if is_total:
                 strong = soup.new_tag("strong")
                 strong.string = f"{label}:"
@@ -232,7 +234,7 @@ class RebalancingSections:
             item_div.append(label_span)
 
             # Value span
-            value_span = soup.new_tag("span", **{"class": "cost-value"})
+            value_span = soup.new_tag("span", attrs={"class": "cost-value"})
             value_text = f"${amount:,.2f}"
             if is_total:
                 strong = soup.new_tag("strong")
@@ -247,7 +249,7 @@ class RebalancingSections:
         main_div.append(breakdown_div)
 
         # Cost metrics section
-        metrics_div = soup.new_tag("div", **{"class": "cost-metrics"})
+        metrics_div = soup.new_tag("div", attrs={"class": "cost-metrics"})
 
         # Percentage paragraph
         p1 = soup.new_tag("p")
@@ -307,7 +309,7 @@ class RebalancingSections:
 
         # Create soup and main container
         soup = BeautifulSoup("", "html.parser")
-        main_div = soup.new_tag("div", **{"class": "alternative-scenarios"})
+        main_div = soup.new_tag("div", attrs={"class": "alternative-scenarios"})
 
         # Add intro paragraph
         intro_p = soup.new_tag("p")
@@ -320,7 +322,7 @@ class RebalancingSections:
 
         # Generate scenario cards
         for i, scenario in enumerate(result.alternative_scenarios, 1):
-            scenario_div = soup.new_tag("div", **{"class": "scenario-card"})
+            scenario_div = soup.new_tag("div", attrs={"class": "scenario-card"})
 
             # Scenario title
             title = soup.new_tag("h4")
@@ -354,26 +356,26 @@ class RebalancingSections:
             scenario_div.append(outcome_p)
 
             # Metrics div
-            metrics_div = soup.new_tag("div", **{"class": "scenario-metrics"})
+            metrics_div = soup.new_tag("div", attrs={"class": "scenario-metrics"})
 
             # Cost difference metric
-            cost_span = soup.new_tag("span", **{"class": "metric"})
+            cost_span = soup.new_tag("span", attrs={"class": "metric"})
             cost_label = "Différence de Coût" if is_french else "Cost Difference"
             cost_span.append(f"{cost_label}: ")
 
             cost_value_class = "positive" if scenario.cost_difference < 0 else "negative"
-            cost_value_span = soup.new_tag("span", **{"class": cost_value_class})
+            cost_value_span = soup.new_tag("span", attrs={"class": cost_value_class})
             cost_value_span.string = f"${scenario.cost_difference:+,.2f}"
             cost_span.append(cost_value_span)
             metrics_div.append(cost_span)
 
             # Risk difference metric
-            risk_span = soup.new_tag("span", **{"class": "metric"})
+            risk_span = soup.new_tag("span", attrs={"class": "metric"})
             risk_label = "Différence de Risque" if is_french else "Risk Difference"
             risk_span.append(f"{risk_label}: ")
 
             risk_value_class = "positive" if scenario.risk_difference < 0 else "negative"
-            risk_value_span = soup.new_tag("span", **{"class": risk_value_class})
+            risk_value_span = soup.new_tag("span", attrs={"class": risk_value_class})
             risk_value_span.string = f"{scenario.risk_difference:+.2f}"
             risk_span.append(risk_value_span)
             metrics_div.append(risk_span)
@@ -390,40 +392,40 @@ class RebalancingSections:
 
         # Create soup and main container
         soup = BeautifulSoup("", "html.parser")
-        main_div = soup.new_tag("div", **{"class": "execution-summary"})
+        main_div = soup.new_tag("div", attrs={"class": "execution-summary"})
 
         # Execution stats section
-        stats_div = soup.new_tag("div", **{"class": "execution-stats"})
+        stats_div = soup.new_tag("div", attrs={"class": "execution-stats"})
 
         # Total trades stat
-        trades_div = soup.new_tag("div", **{"class": "stat-item"})
-        trades_label = soup.new_tag("span", **{"class": "stat-label"})
+        trades_div = soup.new_tag("div", attrs={"class": "stat-item"})
+        trades_label = soup.new_tag("span", attrs={"class": "stat-label"})
         trades_label_text = "Transactions Totales" if is_french else "Total Trades"
         trades_label.string = f"{trades_label_text}:"
-        trades_value = soup.new_tag("span", **{"class": "stat-value"})
+        trades_value = soup.new_tag("span", attrs={"class": "stat-value"})
         trades_value.string = str(execution.total_trades_required)
         trades_div.append(trades_label)
         trades_div.append(trades_value)
         stats_div.append(trades_div)
 
         # Execution time stat
-        time_div = soup.new_tag("div", **{"class": "stat-item"})
-        time_label = soup.new_tag("span", **{"class": "stat-label"})
+        time_div = soup.new_tag("div", attrs={"class": "stat-item"})
+        time_label = soup.new_tag("span", attrs={"class": "stat-label"})
         time_label_text = "Temps d'Exécution Estimé" if is_french else "Estimated Execution Time"
         time_label.string = f"{time_label_text}:"
-        time_value = soup.new_tag("span", **{"class": "stat-value"})
+        time_value = soup.new_tag("span", attrs={"class": "stat-value"})
         time_value.string = execution.estimated_execution_time
         time_div.append(time_label)
         time_div.append(time_value)
         stats_div.append(time_div)
 
         # Capital required stat
-        capital_div = soup.new_tag("div", **{"class": "stat-item"})
-        capital_label = soup.new_tag("span", **{"class": "stat-label"})
+        capital_div = soup.new_tag("div", attrs={"class": "stat-item"})
+        capital_label = soup.new_tag("span", attrs={"class": "stat-label"})
         capital_label_text = "Capital Requis" if is_french else "Capital Required"
         capital_label.string = f"{capital_label_text}:"
         capital_value_class = "positive" if execution.capital_required < 0 else "negative"
-        capital_value = soup.new_tag("span", **{"class": f"stat-value {capital_value_class}"})
+        capital_value = soup.new_tag("span", attrs={"class": f"stat-value {capital_value_class}"})
         capital_value.string = f"${execution.capital_required:+,.2f}"
         capital_div.append(capital_label)
         capital_div.append(capital_value)
@@ -432,7 +434,7 @@ class RebalancingSections:
         main_div.append(stats_div)
 
         # Next steps section
-        steps_div = soup.new_tag("div", **{"class": "next-steps"})
+        steps_div = soup.new_tag("div", attrs={"class": "next-steps"})
 
         # Steps title
         steps_title = soup.new_tag("h4")

@@ -35,7 +35,7 @@ class IntegrationLogger:
         self.formatter = IntegrationLogFormatter()
 
         # Initialize operation tracking
-        self.operation_start_times = {}
+        self.operation_start_times: dict[str, Any] = {}
 
     def log_crew_execution_start(self, crew_name: str, dependencies: list[Any] | None = None) -> None:
         """Log the start of crew execution."""
@@ -87,7 +87,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_performance_metrics(self, operation: str, duration: float, data_size: int = None, memory_usage: float = None) -> None:
+    def log_performance_metrics(self, operation: str, duration: float, data_size: int | None = None, memory_usage: float | None = None) -> None:
         """Log performance metrics for integration operations."""
         extra_data = self.formatter.format_performance_metrics(operation, duration, data_size, memory_usage)
         self.logger.info(
@@ -95,7 +95,7 @@ class IntegrationLogger:
             extra=extra_data if self.config.enable_structured_logging else {},
         )
 
-    def log_data_access_operation(self, operation: str, crew_name: str, success: bool, file_paths: list[Any] | None = None, error_message: str = None) -> None:
+    def log_data_access_operation(self, operation: str, crew_name: str, success: bool, file_paths: list[Any] | None = None, error_message: str | None = None) -> None:
         """Log data access operations for debugging integration issues."""
         extra_data = self.formatter.format_data_access_operation(operation, crew_name, success, file_paths, error_message)
 
@@ -110,7 +110,7 @@ class IntegrationLogger:
                 extra=extra_data if self.config.enable_structured_logging else {},
             )
 
-    def log_data_transformation(self, crew_name: str, transformation_type: str, input_schema: str, output_schema: str, record_count: int = None) -> None:
+    def log_data_transformation(self, crew_name: str, transformation_type: str, input_schema: str, output_schema: str, record_count: int | None = None) -> None:
         """Log data transformation operations."""
         extra_data = self.formatter.format_data_transformation(crew_name, transformation_type, input_schema, output_schema, record_count)
         self.logger.info(
@@ -149,7 +149,7 @@ class IntegrationLogger:
                 extra=extra_data if self.config.enable_structured_logging else {},
             )
 
-    def log_data_consolidation(self, source_crews: list, target_file: str, success: bool, record_counts: dict[str, Any] | None = None, error_message: str = None) -> None:
+    def log_data_consolidation(self, source_crews: list, target_file: str, success: bool, record_counts: dict[str, Any] | None = None, error_message: str | None = None) -> None:
         """Log data consolidation operations."""
         extra_data = self.formatter.format_data_consolidation(source_crews, target_file, success, record_counts, error_message)
 
@@ -187,7 +187,7 @@ class IntegrationLogger:
             memory_usage=metrics.get("memory_usage"),
         )
 
-        return duration
+        return float(duration)
 
     def log_system_health_check(self, component: str, status: str, details: dict[str, Any] | None = None) -> None:
         """Log system health check results."""

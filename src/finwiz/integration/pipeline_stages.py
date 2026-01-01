@@ -441,7 +441,7 @@ class PipelineStages:
 
             # Load and return the data
             with open(newest_file, encoding="utf-8") as f:
-                data = json.load(f)
+                data: dict[str, Any] = json.load(f)
 
             self.logger.debug(f"Successfully loaded data for {crew_name} crew from {newest_file}")
             return data

@@ -225,7 +225,7 @@ class EmailNotificationProvider(NotificationProvider):
         body = soup.new_tag("body")
 
         # Create header section
-        header_div = soup.new_tag("div", **{"class": "header"})
+        header_div = soup.new_tag("div", attrs={"class": "header"})
         header_h2 = soup.new_tag("h2")
         header_h2.string = f"FinWiz Portfolio Alert - {alert.severity.value}"
         header_div.append(header_h2)
@@ -235,7 +235,7 @@ class EmailNotificationProvider(NotificationProvider):
         header_div.append(header_p)
 
         # Create content section
-        content_div = soup.new_tag("div", **{"class": "content"})
+        content_div = soup.new_tag("div", attrs={"class": "content"})
 
         # Portfolio info
         portfolio_p = soup.new_tag("p")
@@ -273,7 +273,7 @@ class EmailNotificationProvider(NotificationProvider):
             content_div.extend(actions_soup.contents)
 
         # Create footer
-        footer_div = soup.new_tag("div", **{"class": "footer"})
+        footer_div = soup.new_tag("div", attrs={"class": "footer"})
         footer_p1 = soup.new_tag("p")
         footer_p1.string = "This is an automated notification from FinWiz Portfolio Monitoring System."
         footer_div.append(footer_p1)
@@ -322,7 +322,7 @@ Please do not reply to this email.
             return ""
 
         soup = BeautifulSoup("", "html.parser")
-        positions_div = soup.new_tag("div", **{"class": "positions"})
+        positions_div = soup.new_tag("div", attrs={"class": "positions"})
 
         # Create header
         h4 = soup.new_tag("h4")
@@ -352,7 +352,7 @@ Please do not reply to this email.
             return ""
 
         soup = BeautifulSoup("", "html.parser")
-        actions_div = soup.new_tag("div", **{"class": "actions"})
+        actions_div = soup.new_tag("div", attrs={"class": "actions"})
 
         # Create header
         h4 = soup.new_tag("h4")

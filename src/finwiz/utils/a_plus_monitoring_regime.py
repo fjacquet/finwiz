@@ -35,9 +35,7 @@ async def assess_regime_impact(
     impact_level = "medium"
 
     # High impact transitions (compare regime_type strings)
-    if (previous_regime.regime_type == "bull" and new_regime.regime_type == "bear") or (
-        previous_regime.market_stress_level == "low" and new_regime.market_stress_level == "high"
-    ):
+    if (previous_regime.regime_type == "bull" and new_regime.regime_type == "bear") or (previous_regime.market_stress_level == "low" and new_regime.market_stress_level == "high"):
         impact_level = "high"
 
     return {

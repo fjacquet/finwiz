@@ -8,9 +8,9 @@ search for recent analyst opinions, price targets, and technical commentary.
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Any, Literal, cast
 
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
@@ -136,7 +136,8 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             return []
 
         try:
-            sonar_result = await perplexity_integration.search_technical_analysis(ticker=ticker, asset_type=asset_type, max_results=8)
+            asset_type_literal = cast(Literal["stock", "etf", "crypto"], asset_type)
+            sonar_result = await perplexity_integration.search_technical_analysis(ticker=ticker, asset_type=asset_type_literal, max_results=8)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity technical insights for {ticker}")

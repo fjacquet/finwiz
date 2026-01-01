@@ -41,8 +41,8 @@ class FundamentalScorer:
 
         """
         self.logger = logger
-        self._data_quality_metrics = None
-        self._current_ticker = None
+        self._data_quality_metrics: Any = None
+        self._current_ticker: str | None = None
         self.thresholds = thresholds or get_thresholds()
 
     def calculate_fundamental_score(self, asset_class: str, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:

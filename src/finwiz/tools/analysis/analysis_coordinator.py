@@ -9,7 +9,7 @@ from finwiz.schemas.portfolio_review import AssetClass
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
 from finwiz.tools.logger import get_logger
 from finwiz.utils.cache_manager import CacheConfig, CacheManager, cache_key
-from finwiz.utils.rate_limiter import get_rate_limiter
+from finwiz.utils.rate_limiter import RateLimiter, get_rate_limiter
 
 logger = get_logger(__name__)
 
@@ -45,6 +45,7 @@ class HoldingAnalyzerOrchestrator:
         self.parallel_batch_size = parallel_batch_size
 
         # Initialize cache manager with custom config for portfolio analysis
+        self.cache_manager: CacheManager | None = None
         if self.enable_caching:
             self.cache_manager = CacheManager(
                 config=CacheConfig(
@@ -56,15 +57,12 @@ class HoldingAnalyzerOrchestrator:
                 )
             )
             logger.info("Cache manager initialized for portfolio analysis")
-        else:
-            self.cache_manager = None
 
         # Initialize rate limiter
+        self.rate_limiter: RateLimiter | None = None
         if self.enable_rate_limiting:
             self.rate_limiter = get_rate_limiter()
             logger.info("Rate limiter initialized")
-        else:
-            self.rate_limiter = None
 
     async def analyze_holdings_parallel(
         self,
@@ -109,20 +107,23 @@ class HoldingAnalyzerOrchestrator:
 
             # Handle results and exceptions
             for holding, result in zip(batch, batch_results):
-                if isinstance(result, Exception):
+                analysis: HoldingAnalysis
+                if isinstance(result, BaseException):
                     logger.error(
                         f"Error analyzing {holding.get('ticker')}: {result}",
                         extra={"ticker": holding.get("ticker"), "error": str(result)},
                     )
                     # Create baseline analysis for failed holdings
-                    result = HoldingProcessor.create_baseline_analysis(
+                    analysis = HoldingProcessor.create_baseline_analysis(
                         ticker=holding.get("ticker", ""),
                         asset_class=holding.get("asset_class", "stock"),
                         currency=holding.get("currency", "USD"),
                         name=holding.get("name", ""),
                     )
+                else:
+                    analysis = result
 
-                results.append(result)
+                results.append(analysis)
 
             # Small delay between batches to respect rate limits
             if batch_idx + self.parallel_batch_size < len(holdings):
@@ -179,7 +180,8 @@ class HoldingAnalyzerOrchestrator:
                     "Cache hit for holding analysis",
                     extra={"ticker": ticker, "asset_class": asset_class},
                 )
-                return cached_result
+                result: HoldingAnalysis = cached_result
+                return result
 
         # Check for crew output files
         cached_analysis = self.get_cached_analysis(ticker, asset_class, max_age_days=7)

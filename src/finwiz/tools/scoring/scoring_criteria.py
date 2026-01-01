@@ -6,7 +6,7 @@ criteria, analyzing strengths/weaknesses, and generating scoring rationales.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, cast
 
 from finwiz.schemas.tools import MarketRegime, ScoringCriteria
 
@@ -20,7 +20,8 @@ def assess_market_regime(
         # Use cached regime if recent (within 1 hour)
         if cache and cache.get("regime") and cache.get("timestamp"):
             if (datetime.now() - cache["timestamp"]).seconds < 3600:
-                return cache["regime"]
+                regime: MarketRegime = cache["regime"]
+                return regime
 
         # Extract market indicators from context
         vix_level = market_context.get("vix", 20.0)
@@ -54,11 +55,11 @@ def assess_market_regime(
             stress_level = "low"
 
         regime = MarketRegime(
-            regime_type=regime_type,
+            regime_type=cast(Literal["bull", "bear", "sideways", "volatile"], regime_type),
             vix_level=vix_level,
             inflation_rate=inflation_rate,
-            interest_rate_trend=interest_rate_trend,
-            market_stress_level=stress_level,
+            interest_rate_trend=cast(Literal["rising", "falling", "stable"], interest_rate_trend),
+            market_stress_level=cast(Literal["low", "medium", "high"], stress_level),
         )
 
         # Update cache if provided

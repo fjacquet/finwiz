@@ -150,7 +150,6 @@ class EtfCrew:
     def etf_market_trends_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_market_trends_task"],
-            verbose=True,
             reasoning=False,
         )
 
@@ -159,7 +158,6 @@ class EtfCrew:
     def etf_screening_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_screening_task"],
-            verbose=True,
             reasoning=False,  # Disable reasoning to prevent infinite loops
         )
 
@@ -168,7 +166,6 @@ class EtfCrew:
     def etf_technical_detail_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_technical_detail_task"],
-            verbose=True,
             output_pydantic=ETFFactsheet,
             reasoning=False,  # Disable reasoning to prevent infinite loops
         )
@@ -178,7 +175,6 @@ class EtfCrew:
     def etf_risk_assessment_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_risk_assessment_task"],
-            verbose=True,
             output_pydantic=RiskAssessmentStandardized,
             reasoning=False,  # Disable reasoning to prevent infinite loops
         )
@@ -188,7 +184,6 @@ class EtfCrew:
     def etf_investment_strategy_task(self) -> Task:
         return Task(
             config=self.tasks_config["etf_investment_strategy_task"],
-            verbose=True,
             reasoning=False,  # Disable reasoning to prevent infinite loops
         )
 
@@ -199,7 +194,6 @@ class EtfCrew:
         return Task(
             config=self.tasks_config["generate_export_task"],
             output_pydantic=ETFCrewExport,
-            verbose=True,
         )
 
     # @sync_task

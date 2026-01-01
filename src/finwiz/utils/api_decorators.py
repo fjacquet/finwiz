@@ -8,7 +8,7 @@ and error handling to existing API tools without modifying their core logic.
 import asyncio
 import functools
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from finwiz.tools.logger import get_logger
 from finwiz.utils.rate_limiter import APIProvider, with_rate_limit
@@ -50,9 +50,9 @@ def rate_limited(provider: APIProvider, endpoint: str = "", timeout: float = 30.
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
-            return async_wrapper
+            return cast(F, async_wrapper)
         else:
-            return sync_wrapper
+            return cast(F, sync_wrapper)
 
     return decorator
 
@@ -100,9 +100,9 @@ def api_error_handler(default_return: Any = None, log_errors: bool = True, rerai
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
-            return async_wrapper
+            return cast(F, async_wrapper)
         else:
-            return sync_wrapper
+            return cast(F, sync_wrapper)
 
     return decorator
 
@@ -136,9 +136,9 @@ def timeout_handler(timeout_seconds: float = 30.0) -> Callable[[F], F]:
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
-            return async_wrapper
+            return cast(F, async_wrapper)
         else:
-            return sync_wrapper
+            return cast(F, sync_wrapper)
 
     return decorator
 
@@ -196,7 +196,7 @@ class APICallContext:
 
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, _exc_tb: Any) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, _exc_tb: Any) -> bool | None:
         """Exit the context and log call completion."""
         if self.start_time and self.log_calls:
             import time

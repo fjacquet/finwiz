@@ -95,7 +95,7 @@ class PortfolioAnalysisTool(BaseTool):
                 "performance_analysis": performance_analysis,
                 "risk_analysis": risk_analysis,
                 "diversification_analysis": diversification_analysis,
-                "summary": self._generate_summary(composition_analysis, performance_analysis, risk_analysis),
+                "summary": self._generate_summary(composition_analysis, performance_analysis, risk_analysis or {}),
             }
 
             logger.info("Portfolio analysis completed successfully")

@@ -357,22 +357,26 @@ class TALibWrappers:
 # Convenience functions for direct access
 def calculate_sma(data: pd.DataFrame, period: int) -> pd.Series:
     """Calculate Simple Moving Average from DataFrame."""
-    return pd.Series(TALibWrappers.sma(data["Close"].values, period), index=data.index)
+    close_arr = np.asarray(data["Close"].values)
+    return pd.Series(TALibWrappers.sma(close_arr, period), index=data.index)
 
 
 def calculate_ema(data: pd.DataFrame, period: int) -> pd.Series:
     """Calculate Exponential Moving Average from DataFrame."""
-    return pd.Series(TALibWrappers.ema(data["Close"].values, period), index=data.index)
+    close_arr = np.asarray(data["Close"].values)
+    return pd.Series(TALibWrappers.ema(close_arr, period), index=data.index)
 
 
 def calculate_rsi(data: pd.DataFrame, period: int = 14) -> pd.Series:
     """Calculate RSI from DataFrame."""
-    return pd.Series(TALibWrappers.rsi(data["Close"].values, period), index=data.index)
+    close_arr = np.asarray(data["Close"].values)
+    return pd.Series(TALibWrappers.rsi(close_arr, period), index=data.index)
 
 
 def calculate_macd(data: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9) -> dict[str, pd.Series]:
     """Calculate MACD from DataFrame."""
-    macd_line, signal_line, histogram = TALibWrappers.macd(data["Close"].values, fast, slow, signal)
+    close_arr = np.asarray(data["Close"].values)
+    macd_line, signal_line, histogram = TALibWrappers.macd(close_arr, fast, slow, signal)
     return {
         "MACD": pd.Series(macd_line, index=data.index),
         "Signal": pd.Series(signal_line, index=data.index),
@@ -382,7 +386,8 @@ def calculate_macd(data: pd.DataFrame, fast: int = 12, slow: int = 26, signal: i
 
 def calculate_bollinger_bands(data: pd.DataFrame, period: int = 20, std_dev: float = 2.0) -> dict[str, pd.Series]:
     """Calculate Bollinger Bands from DataFrame."""
-    upper, middle, lower = TALibWrappers.bollinger_bands(data["Close"].values, period, std_dev)
+    close_arr = np.asarray(data["Close"].values)
+    upper, middle, lower = TALibWrappers.bollinger_bands(close_arr, period, std_dev)
     return {
         "Upper": pd.Series(upper, index=data.index),
         "Middle": pd.Series(middle, index=data.index),
@@ -392,5 +397,8 @@ def calculate_bollinger_bands(data: pd.DataFrame, period: int = 20, std_dev: flo
 
 def calculate_atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
     """Calculate ATR from DataFrame."""
-    atr = TALibWrappers.atr(data["High"].values, data["Low"].values, data["Close"].values, period)
+    high_arr = np.asarray(data["High"].values)
+    low_arr = np.asarray(data["Low"].values)
+    close_arr = np.asarray(data["Close"].values)
+    atr = TALibWrappers.atr(high_arr, low_arr, close_arr, period)
     return pd.Series(atr, index=data.index)

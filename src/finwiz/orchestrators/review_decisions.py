@@ -39,7 +39,7 @@ def add_portfolio_review_sections(generator: Any, review_data: dict[str, Any]) -
 
     # Create portfolio overview using bs4
     soup = BeautifulSoup("", "html.parser")
-    overview_div = soup.new_tag("div", **{"class": "portfolio-overview"})
+    overview_div = soup.new_tag("div", attrs={"class": "portfolio-overview"})
 
     # Title
     title = soup.new_tag("h3")
@@ -47,33 +47,33 @@ def add_portfolio_review_sections(generator: Any, review_data: dict[str, Any]) -
     overview_div.append(title)
 
     # Metrics grid
-    metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+    metrics_grid = soup.new_tag("div", attrs={"class": "metrics-grid"})
 
     # Total holdings metric
-    total_metric = soup.new_tag("div", **{"class": "metric"})
-    total_label = soup.new_tag("span", **{"class": "metric-label"})
+    total_metric = soup.new_tag("div", attrs={"class": "metric"})
+    total_label = soup.new_tag("span", attrs={"class": "metric-label"})
     total_label.string = "Total Holdings:"
-    total_value = soup.new_tag("span", **{"class": "metric-value"})
+    total_value = soup.new_tag("span", attrs={"class": "metric-value"})
     total_value.string = str(len(holdings))
     total_metric.append(total_label)
     total_metric.append(total_value)
     metrics_grid.append(total_metric)
 
     # Keep recommendations metric
-    keep_metric = soup.new_tag("div", **{"class": "metric"})
-    keep_label = soup.new_tag("span", **{"class": "metric-label"})
+    keep_metric = soup.new_tag("div", attrs={"class": "metric"})
+    keep_label = soup.new_tag("span", attrs={"class": "metric-label"})
     keep_label.string = "Keep Recommendations:"
-    keep_value = soup.new_tag("span", **{"class": "metric-value keep"})
+    keep_value = soup.new_tag("span", attrs={"class": "metric-value keep"})
     keep_value.string = str(keep_count)
     keep_metric.append(keep_label)
     keep_metric.append(keep_value)
     metrics_grid.append(keep_metric)
 
     # Sell recommendations metric
-    sell_metric = soup.new_tag("div", **{"class": "metric"})
-    sell_label = soup.new_tag("span", **{"class": "metric-label"})
+    sell_metric = soup.new_tag("div", attrs={"class": "metric"})
+    sell_label = soup.new_tag("span", attrs={"class": "metric-label"})
     sell_label.string = "Sell Recommendations:"
-    sell_value = soup.new_tag("span", **{"class": "metric-value sell"})
+    sell_value = soup.new_tag("span", attrs={"class": "metric-value sell"})
     sell_value.string = str(sell_count)
     sell_metric.append(sell_label)
     sell_metric.append(sell_value)
@@ -84,7 +84,7 @@ def add_portfolio_review_sections(generator: Any, review_data: dict[str, Any]) -
 
     # Add processing summary if available
     if processing_summary:
-        summary_div = soup.new_tag("div", **{"class": "processing-summary"})
+        summary_div = soup.new_tag("div", attrs={"class": "processing-summary"})
 
         summary_title = soup.new_tag("h4")
         summary_title.string = "Processing Summary"
@@ -160,7 +160,7 @@ def add_rebalancing_sections(generator: Any, rebalancing_data: dict[str, Any]) -
 
     # Create rebalancing summary using bs4
     soup = BeautifulSoup("", "html.parser")
-    summary_div = soup.new_tag("div", **{"class": "rebalancing-summary"})
+    summary_div = soup.new_tag("div", attrs={"class": "rebalancing-summary"})
 
     # Title
     title = soup.new_tag("h3")
@@ -168,33 +168,33 @@ def add_rebalancing_sections(generator: Any, rebalancing_data: dict[str, Any]) -
     summary_div.append(title)
 
     # Metrics grid
-    metrics_grid = soup.new_tag("div", **{"class": "metrics-grid"})
+    metrics_grid = soup.new_tag("div", attrs={"class": "metrics-grid"})
 
     # Trades required metric
-    trades_metric = soup.new_tag("div", **{"class": "metric"})
-    trades_label = soup.new_tag("span", **{"class": "metric-label"})
+    trades_metric = soup.new_tag("div", attrs={"class": "metric"})
+    trades_label = soup.new_tag("span", attrs={"class": "metric-label"})
     trades_label.string = "Trades Required:"
-    trades_value = soup.new_tag("span", **{"class": "metric-value"})
+    trades_value = soup.new_tag("span", attrs={"class": "metric-value"})
     trades_value.string = str(execution_summary.get("total_trades_required", 0))
     trades_metric.append(trades_label)
     trades_metric.append(trades_value)
     metrics_grid.append(trades_metric)
 
     # Total cost metric
-    cost_metric = soup.new_tag("div", **{"class": "metric"})
-    cost_label = soup.new_tag("span", **{"class": "metric-label"})
+    cost_metric = soup.new_tag("div", attrs={"class": "metric"})
+    cost_label = soup.new_tag("span", attrs={"class": "metric-label"})
     cost_label.string = "Total Cost:"
-    cost_value = soup.new_tag("span", **{"class": "metric-value"})
+    cost_value = soup.new_tag("span", attrs={"class": "metric-value"})
     cost_value.string = f"${cost_analysis.get('total_transaction_costs', 0):.2f}"
     cost_metric.append(cost_label)
     cost_metric.append(cost_value)
     metrics_grid.append(cost_metric)
 
     # Recommendation metric
-    rec_metric = soup.new_tag("div", **{"class": "metric"})
-    rec_label = soup.new_tag("span", **{"class": "metric-label"})
+    rec_metric = soup.new_tag("div", attrs={"class": "metric"})
+    rec_label = soup.new_tag("span", attrs={"class": "metric-label"})
     rec_label.string = "Recommendation:"
-    rec_value = soup.new_tag("span", **{"class": "metric-value"})
+    rec_value = soup.new_tag("span", attrs={"class": "metric-value"})
     rec_value.string = rebalancing_data.get("overall_recommendation", "N/A")
     rec_metric.append(rec_label)
     rec_metric.append(rec_value)

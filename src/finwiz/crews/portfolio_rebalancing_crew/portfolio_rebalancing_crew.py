@@ -234,7 +234,6 @@ class PortfolioRebalancingCrew:
         """Analyze individual holding using appropriate crew."""
         return Task(
             config=self.tasks_config["analyze_holding_task"],
-            verbose=True,
         )
 
     @async_task
@@ -243,7 +242,6 @@ class PortfolioRebalancingCrew:
         """Calculate actionable buy/sell price targets."""
         return Task(
             config=self.tasks_config["calculate_price_targets_task"],
-            verbose=True,
         )
 
     @async_task
@@ -252,7 +250,6 @@ class PortfolioRebalancingCrew:
         """Find better alternatives for underperforming holdings."""
         return Task(
             config=self.tasks_config["find_alternatives_task"],
-            verbose=True,
         )
 
     @async_task
@@ -261,7 +258,6 @@ class PortfolioRebalancingCrew:
         """Analyze current portfolio composition and calculate weightings."""
         return Task(
             config=self.tasks_config["portfolio_analysis_task"],
-            verbose=True,
         )
 
     @async_task
@@ -270,7 +266,6 @@ class PortfolioRebalancingCrew:
         """Generate optimal rebalancing trade recommendations."""
         return Task(
             config=self.tasks_config["rebalancing_optimization_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -279,7 +274,6 @@ class PortfolioRebalancingCrew:
         """Validate rebalancing recommendations against risk constraints."""
         return Task(
             config=self.tasks_config["risk_validation_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -289,7 +283,6 @@ class PortfolioRebalancingCrew:
         return Task(
             config=self.tasks_config["generate_export_task"],
             output_pydantic=RebalancingCrewExport,
-            verbose=True,
         )
 
     # @sync_task
@@ -387,12 +380,15 @@ class PortfolioRebalancingCrew:
                 },
             )
 
+        # Filter out any BaseException objects from asyncio.gather results
+        valid_results: list[dict] = [r for r in results if isinstance(r, dict)]
+
         logger.info(
             "Completed parallel holding analysis",
-            extra={"total_analyzed": len(results)},
+            extra={"total_analyzed": len(valid_results)},
         )
 
-        return results
+        return valid_results
 
     async def _analyze_single_holding_async(self, holding: dict[str, Any]) -> dict[str, Any]:
         """

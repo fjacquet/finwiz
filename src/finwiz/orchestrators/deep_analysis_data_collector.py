@@ -135,9 +135,18 @@ class DeepAnalysisDataCollector:
 
             # Age mapping for known cryptos
             age_mapping = {
-                "BTC": 15.0, "BTC-USD": 15.0, "ETH": 9.0, "ETH-USD": 9.0,
-                "ADA": 7.0, "ADA-USD": 7.0, "SOL": 4.0, "SOL-USD": 4.0,
-                "AVAX": 4.0, "AVAX-USD": 4.0, "DOT": 4.0, "DOT-USD": 4.0,
+                "BTC": 15.0,
+                "BTC-USD": 15.0,
+                "ETH": 9.0,
+                "ETH-USD": 9.0,
+                "ADA": 7.0,
+                "ADA-USD": 7.0,
+                "SOL": 4.0,
+                "SOL-USD": 4.0,
+                "AVAX": 4.0,
+                "AVAX-USD": 4.0,
+                "DOT": 4.0,
+                "DOT-USD": 4.0,
             }
             ticker_base = ticker.replace("-USD", "").upper()
             collected_data["age_years"] = age_mapping.get(ticker_base, 3.0)
@@ -195,8 +204,7 @@ class DeepAnalysisDataCollector:
 
             if "financial_metrics" in company_result:
                 metrics = company_result["financial_metrics"]
-                for field, key in [("roe", "return_on_equity"), ("debt_to_equity", "debt_to_equity"),
-                                   ("revenue_growth", "revenue_growth"), ("profit_margin", "profit_margin")]:
+                for field, key in [("roe", "return_on_equity"), ("debt_to_equity", "debt_to_equity"), ("revenue_growth", "revenue_growth"), ("profit_margin", "profit_margin")]:
                     if key in metrics:
                         collected_data[field] = metrics[key]
 
@@ -211,10 +219,7 @@ class DeepAnalysisDataCollector:
         try:
             self.logger.info(f"🐍 Calling QuantitativeAnalysisTool for {ticker}")
             quant_tool = QuantitativeAnalysisTool()
-            quant_result = quant_tool._run(
-                symbol=ticker, asset_class=asset_class,
-                analysis_type="comprehensive", timeframe="1y", strategy="sma_crossover"
-            )
+            quant_result = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="comprehensive", timeframe="1y", strategy="sma_crossover")
 
             quant_data = json.loads(quant_result) if isinstance(quant_result, str) else quant_result
             collected_data["quantitative_analysis"] = quant_data
@@ -259,9 +264,11 @@ class DeepAnalysisDataCollector:
             self.logger.info(f"🐍 Calling SEC Analysis for {ticker}")
             sec_tool = EnhancedSECAnalysisTool()
             sec_result = sec_tool._run(
-                ticker=ticker, form_type="10-K",
+                ticker=ticker,
+                form_type="10-K",
                 sections=["Item 1", "Item 1A", "Item 7"],
-                risk_assessment=True, include_perplexity=False,
+                risk_assessment=True,
+                include_perplexity=False,
             )
 
             if isinstance(sec_result, str):

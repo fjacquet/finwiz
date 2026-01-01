@@ -43,12 +43,12 @@ class ChartGenerator:
 
         """
         headers = {"x-api-key": self.api_key}
-        params = {
+        params: dict[str, str] = {
             "symbol": symbol,
             "interval": interval,
             "range": timeframe,
-            "width": width,
-            "height": height,
+            "width": str(width),
+            "height": str(height),
             "theme": self.default_theme,
         }
 

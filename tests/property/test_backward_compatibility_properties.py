@@ -7,6 +7,10 @@ using property-based testing with Hypothesis.
 **Feature: flow-orchestrator-refactoring**
 - Property 3: Import Backward Compatibility (Validates: Requirements 1.4, 10.1)
 - Property 27: API Compatibility (Validates: Requirements 10.5)
+
+Note: After refactoring, some classes moved to new locations:
+- DeepAnalysisResult -> finwiz.flow_state_models (re-exported from finwiz.flow_state)
+- Orchestrator classes -> finwiz.orchestrators (lazy-loaded in flow_orchestrator)
 """
 
 import inspect
@@ -30,19 +34,11 @@ class TestImportBackwardCompatibility:
                 # Main Flow class
                 "FinwizFlow",
                 "OrchestratorDependencies",
-                # State classes
+                # State classes (from flow_state module)
                 "FinwizState",
-                "DeepAnalysisResult",
                 "FlowStateManager",
-                # Orchestrators
-                "ErrorHandlingOrchestrator",
-                "ProgressTrackingOrchestrator",
-                "UtilityOrchestrator",
-                "DeepAnalysisOrchestrator",
-                "AlternativesMatchingOrchestrator",
-                "DiscoveryOrchestrator",
-                "ValidationOrchestrator",
-                "ReportingOrchestrator",
+                # Note: DeepAnalysisResult moved to finwiz.flow_state_models
+                # Note: Orchestrators moved to finwiz.orchestrators (lazy-loaded)
                 # Dependencies
                 "CrewFactory",
                 "CrewDataIntegrationManager",
@@ -80,15 +76,11 @@ class TestImportBackwardCompatibility:
         assert imported_object is not None, f"Imported {import_name} is None"
 
         # Property: Imported object should be the correct type
-        if import_name.endswith("Orchestrator"):
-            # Should be a class
-            assert inspect.isclass(imported_object), f"{import_name} should be a class"
-        elif import_name in ["FinwizFlow", "OrchestratorDependencies"]:
+        if import_name in ["FinwizFlow", "OrchestratorDependencies"]:
             # Should be a class
             assert inspect.isclass(imported_object), f"{import_name} should be a class"
         elif import_name in [
             "FinwizState",
-            "DeepAnalysisResult",
             "FlowStateManager",
         ]:
             # Should be a class
@@ -110,10 +102,10 @@ class TestImportBackwardCompatibility:
             st.sampled_from(
                 [
                     "FinwizFlow",
-                    "ErrorHandlingOrchestrator",
-                    "DeepAnalysisOrchestrator",
-                    "ReportingOrchestrator",
                     "FinwizState",
+                    "FlowStateManager",
+                    "CrewFactory",
+                    "plot",
                 ]
             ),
             min_size=2,
@@ -158,8 +150,8 @@ class TestImportBackwardCompatibility:
         import_style=st.sampled_from(
             [
                 ("from", "FinwizFlow"),
-                ("from", "ErrorHandlingOrchestrator"),
                 ("from", "FinwizState"),
+                ("from", "FlowStateManager"),
                 ("import", "flow_orchestrator"),
             ]
         )
@@ -191,6 +183,64 @@ class TestImportBackwardCompatibility:
                 assert flow_module is not None, "import flow_orchestrator failed"
             except (ImportError, AttributeError) as e:
                 pytest.fail(f"import flow_orchestrator failed: {e}")
+
+
+class TestOrchestratorImportFromNewLocation:
+    """Test that orchestrators can be imported from their new locations."""
+
+    @settings(
+        max_examples=50,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=None,
+    )
+    @given(
+        orchestrator_name=st.sampled_from(
+            [
+                "ErrorHandlingOrchestrator",
+                "ProgressTrackingOrchestrator",
+                "UtilityOrchestrator",
+                "DeepAnalysisOrchestrator",
+                "AlternativesMatchingOrchestrator",
+                "DiscoveryOrchestrator",
+                "ValidationOrchestrator",
+                "ReportingOrchestrator",
+            ]
+        )
+    )
+    def test_property_orchestrators_available_from_new_location(self, orchestrator_name):
+        """
+        **Feature: flow-orchestrator-refactoring, Property 3: Import Backward Compatibility**
+
+        Orchestrators should be importable from finwiz.orchestrators module.
+
+        After refactoring, orchestrators moved to their own module.
+        """
+        try:
+            module = __import__("finwiz.orchestrators", fromlist=[orchestrator_name])
+            imported_object = getattr(module, orchestrator_name)
+        except (ImportError, AttributeError) as e:
+            pytest.fail(f"Failed to import {orchestrator_name} from finwiz.orchestrators: {e}")
+
+        assert imported_object is not None, f"Imported {orchestrator_name} is None"
+        assert inspect.isclass(imported_object), f"{orchestrator_name} should be a class"
+
+    def test_deep_analysis_result_available_from_flow_state(self):
+        """
+        **Feature: flow-orchestrator-refactoring, Property 3: Import Backward Compatibility**
+
+        DeepAnalysisResult should be importable from finwiz.flow_state module.
+
+        After refactoring, DeepAnalysisResult moved to flow_state_models and is
+        re-exported from flow_state.
+        """
+        try:
+            module = __import__("finwiz.flow_state", fromlist=["DeepAnalysisResult"])
+            imported_object = getattr(module, "DeepAnalysisResult")
+        except (ImportError, AttributeError) as e:
+            pytest.fail(f"Failed to import DeepAnalysisResult from finwiz.flow_state: {e}")
+
+        assert imported_object is not None, "Imported DeepAnalysisResult is None"
+        assert inspect.isclass(imported_object), "DeepAnalysisResult should be a class"
 
 
 class TestAPIBackwardCompatibility:

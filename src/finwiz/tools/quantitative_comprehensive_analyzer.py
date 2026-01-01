@@ -78,16 +78,12 @@ def perform_comprehensive_analysis(
 
         # Performance analysis
         returns = data["Close"].pct_change().dropna()
-        perf_report = performance_analyzer.analyze_performance(
-            returns, strategy_name=f"{input_data.symbol}_analysis"
-        )
+        perf_report = performance_analyzer.analyze_performance(returns, strategy_name=f"{input_data.symbol}_analysis")
         metrics = perf_report.strategy_metrics
         quant_perf = _create_performance_result(input_data.symbol, metrics, len(returns))
 
         # Generate recommendation
-        recommendation = generate_recommendation(
-            input_data.symbol, tech_result, backtest_result, metrics
-        )
+        recommendation = generate_recommendation(input_data.symbol, tech_result, backtest_result, metrics)
 
         # Add ETF-specific metrics if applicable
         etf_specific_data = {}
@@ -95,9 +91,7 @@ def perform_comprehensive_analysis(
             etf_specific_data = _fetch_etf_specific_data(input_data.symbol, logger)
 
         # Create comprehensive result based on asset class
-        result = _create_asset_specific_result(
-            input_data, quant_tech, quant_backtest, quant_perf, recommendation
-        )
+        result = _create_asset_specific_result(input_data, quant_tech, quant_backtest, quant_perf, recommendation)
 
         # Merge ETF-specific data into result dict
         result_dict = json.loads(result.model_dump_json())
@@ -145,9 +139,7 @@ def _create_backtest_result(symbol: str, backtest_result) -> QuantitativeBacktes
     )
 
 
-def _create_performance_result(
-    symbol: str, metrics, total_days: int
-) -> QuantitativePerformanceMetrics:
+def _create_performance_result(symbol: str, metrics, total_days: int) -> QuantitativePerformanceMetrics:
     """Create performance metrics result from analyzer output."""
     return QuantitativePerformanceMetrics(
         symbol=symbol,
@@ -185,10 +177,7 @@ def _fetch_etf_specific_data(symbol: str, logger) -> dict:
         if expense_ratio is not None:
             expense_ratio_decimal = float(expense_ratio) / 100.0
             etf_specific_data["expense_ratio"] = expense_ratio_decimal
-            logger.info(
-                f"✅ Fetched expense_ratio for {symbol}: "
-                f"{expense_ratio}% → {expense_ratio_decimal:.6f}"
-            )
+            logger.info(f"✅ Fetched expense_ratio for {symbol}: {expense_ratio}% → {expense_ratio_decimal:.6f}")
         else:
             # Try fallback configuration file
             from finwiz.utils.etf_expense_fallback import get_fallback_expense_ratio
@@ -248,9 +237,7 @@ def _create_asset_specific_result(
         )
 
 
-def generate_recommendation(
-    symbol: str, tech_result: Any, backtest_result: Any, perf_metrics: Any
-) -> QuantitativeRecommendation:
+def generate_recommendation(symbol: str, tech_result: Any, backtest_result: Any, perf_metrics: Any) -> QuantitativeRecommendation:
     """
     Generate investment recommendation based on quantitative analysis.
 

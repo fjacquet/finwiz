@@ -227,7 +227,7 @@ class SessionValidator:
             if not isinstance(allocations, list):
                 issues.append("Target allocations should be a list")
             else:
-                total_percentage = 0
+                total_percentage = 0.0
                 for i, allocation in enumerate(allocations):
                     if not isinstance(allocation, dict):
                         issues.append(f"Allocation {i} should be a dictionary")

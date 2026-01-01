@@ -45,7 +45,7 @@ class RebalancingFormatters:
 
         # Create soup and table
         soup = BeautifulSoup("", "html.parser")
-        table = soup.new_tag("table", **{"class": table_class})
+        table = soup.new_tag("table", attrs={"class": table_class})
 
         # Headers
         headers = []
@@ -147,7 +147,7 @@ class RebalancingFormatters:
 
         # Create soup and table
         soup = BeautifulSoup("", "html.parser")
-        table = soup.new_tag("table", **{"class": "trades-table"})
+        table = soup.new_tag("table", attrs={"class": "trades-table"})
 
         # Headers
         if is_french:
@@ -233,7 +233,7 @@ class RebalancingFormatters:
             # Interactive execute button
             if include_interactive:
                 td_execute = soup.new_tag("td")
-                button = soup.new_tag("button", **{"class": "execute-btn"})
+                button = soup.new_tag("button", attrs={"class": "execute-btn"})
                 button["onclick"] = f"executeTrade('{trade.symbol}', '{trade.action}', {trade.quantity})"
                 button_text = "Exécuter" if is_french else "Execute"
                 button.string = f"⚡ {button_text}"
@@ -271,7 +271,7 @@ class RebalancingFormatters:
 
         # Create soup and table
         soup = BeautifulSoup("", "html.parser")
-        table = soup.new_tag("table", **{"class": "before-after-table"})
+        table = soup.new_tag("table", attrs={"class": "before-after-table"})
 
         # Headers
         if is_french:

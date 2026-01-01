@@ -17,7 +17,7 @@ class RebalancingHTMLBuilder:
     def build_executive_summary(result: RebalancingResult) -> str:
         """Build executive summary HTML section."""
         soup = BeautifulSoup("", "html.parser")
-        div = soup.new_tag("div", **{"class": "executive-summary"})
+        div = soup.new_tag("div", attrs={"class": "executive-summary"})
 
         h3 = soup.new_tag("h3")
         h3.string = "Portfolio Rebalancing Summary"
@@ -79,7 +79,7 @@ class RebalancingHTMLBuilder:
         soup = BeautifulSoup("", "html.parser")
 
         # Weightings section
-        weightings_div = soup.new_tag("div", **{"class": "portfolio-weightings"})
+        weightings_div = soup.new_tag("div", attrs={"class": "portfolio-weightings"})
         h4 = soup.new_tag("h4")
         h4.string = "Current Allocations"
         weightings_div.append(h4)
@@ -89,18 +89,18 @@ class RebalancingHTMLBuilder:
             deviation = result.current_portfolio.deviations_from_target.get(symbol, 0.0)
             deviation_class = "over-weight" if deviation > 0 else "under-weight" if deviation < 0 else "on-target"
 
-            li = soup.new_tag("li", **{"class": deviation_class})
-            symbol_span = soup.new_tag("span", **{"class": "symbol"})
+            li = soup.new_tag("li", attrs={"class": deviation_class})
+            symbol_span = soup.new_tag("span", attrs={"class": "symbol"})
             symbol_span.string = symbol
             li.append(symbol_span)
             li.append(": ")
 
-            weight_span = soup.new_tag("span", **{"class": "weight"})
+            weight_span = soup.new_tag("span", attrs={"class": "weight"})
             weight_span.string = f"{weight:.1%}"
             li.append(weight_span)
             li.append(" ")
 
-            deviation_span = soup.new_tag("span", **{"class": "deviation"})
+            deviation_span = soup.new_tag("span", attrs={"class": "deviation"})
             deviation_span.string = f"({deviation:+.1%})"
             li.append(deviation_span)
             ul.append(li)
@@ -108,7 +108,7 @@ class RebalancingHTMLBuilder:
         weightings_div.append(ul)
 
         # Portfolio metrics section
-        metrics_div = soup.new_tag("div", **{"class": "portfolio-metrics"})
+        metrics_div = soup.new_tag("div", attrs={"class": "portfolio-metrics"})
         h4 = soup.new_tag("h4")
         h4.string = "Portfolio Metrics"
         metrics_div.append(h4)
@@ -142,7 +142,7 @@ class RebalancingHTMLBuilder:
         soup = BeautifulSoup("", "html.parser")
 
         if not result.trade_recommendations:
-            div = soup.new_tag("div", **{"class": "no-trades"})
+            div = soup.new_tag("div", attrs={"class": "no-trades"})
             p = soup.new_tag("p")
             p.append("✅ ")
             strong = soup.new_tag("strong")
@@ -156,8 +156,8 @@ class RebalancingHTMLBuilder:
             div.append(p)
             return str(div)
 
-        div = soup.new_tag("div", **{"class": "trade-recommendations"})
-        table = soup.new_tag("table", **{"class": "trades-table"})
+        div = soup.new_tag("div", attrs={"class": "trade-recommendations"})
+        table = soup.new_tag("table", attrs={"class": "trades-table"})
 
         # Table header
         thead = soup.new_tag("thead")
@@ -173,33 +173,33 @@ class RebalancingHTMLBuilder:
         tbody = soup.new_tag("tbody")
         for trade in result.trade_recommendations:
             action_class = trade.action.value.lower()
-            tr = soup.new_tag("tr", **{"class": f"trade-{action_class}"})
+            tr = soup.new_tag("tr", attrs={"class": f"trade-{action_class}"})
 
-            td = soup.new_tag("td", **{"class": "symbol"})
+            td = soup.new_tag("td", attrs={"class": "symbol"})
             td.string = trade.symbol
             tr.append(td)
 
-            td = soup.new_tag("td", **{"class": f"action {action_class}"})
+            td = soup.new_tag("td", attrs={"class": f"action {action_class}"})
             td.string = trade.action.value
             tr.append(td)
 
-            td = soup.new_tag("td", **{"class": "shares"})
+            td = soup.new_tag("td", attrs={"class": "shares"})
             td.string = f"{trade.shares:,}"
             tr.append(td)
 
-            td = soup.new_tag("td", **{"class": "trade-value"})
+            td = soup.new_tag("td", attrs={"class": "trade-value"})
             td.string = f"${trade.trade_value:,.2f}"
             tr.append(td)
 
-            td = soup.new_tag("td", **{"class": "current-weight"})
+            td = soup.new_tag("td", attrs={"class": "current-weight"})
             td.string = f"{getattr(trade, 'current_weight', 0):.1%}"
             tr.append(td)
 
-            td = soup.new_tag("td", **{"class": "target-weight"})
+            td = soup.new_tag("td", attrs={"class": "target-weight"})
             td.string = f"{getattr(trade, 'target_weight', 0):.1%}"
             tr.append(td)
 
-            td = soup.new_tag("td", **{"class": "projected-weight"})
+            td = soup.new_tag("td", attrs={"class": "projected-weight"})
             td.string = f"{getattr(trade, 'projected_weight_after_trade', 0):.1%}"
             tr.append(td)
 
@@ -213,60 +213,60 @@ class RebalancingHTMLBuilder:
     def build_cost_analysis(result: RebalancingResult) -> str:
         """Build cost analysis HTML section."""
         soup = BeautifulSoup("", "html.parser")
-        div = soup.new_tag("div", **{"class": "cost-analysis"})
+        div = soup.new_tag("div", attrs={"class": "cost-analysis"})
 
         h4 = soup.new_tag("h4")
         h4.string = "Transaction Cost Breakdown"
         div.append(h4)
 
-        metrics_div = soup.new_tag("div", **{"class": "cost-metrics"})
+        metrics_div = soup.new_tag("div", attrs={"class": "cost-metrics"})
 
         # Commission Costs
-        item_div = soup.new_tag("div", **{"class": "cost-item"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": "cost-item"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Commission Costs:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value"})
+        value_span = soup.new_tag("span", attrs={"class": "value"})
         value_span.string = f"${result.cost_analysis.commission_costs:.2f}"
         item_div.append(value_span)
         metrics_div.append(item_div)
 
         # Spread Costs
-        item_div = soup.new_tag("div", **{"class": "cost-item"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": "cost-item"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Spread Costs:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value"})
+        value_span = soup.new_tag("span", attrs={"class": "value"})
         value_span.string = f"${result.cost_analysis.spread_costs:.2f}"
         item_div.append(value_span)
         metrics_div.append(item_div)
 
         # Total Transaction Costs
-        item_div = soup.new_tag("div", **{"class": "cost-item total"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": "cost-item total"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Total Transaction Costs:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value"})
+        value_span = soup.new_tag("span", attrs={"class": "value"})
         value_span.string = f"${result.cost_analysis.total_transaction_costs:.2f}"
         item_div.append(value_span)
         metrics_div.append(item_div)
 
         # Cost as % of Portfolio
-        item_div = soup.new_tag("div", **{"class": "cost-item"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": "cost-item"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Cost as % of Portfolio:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value"})
+        value_span = soup.new_tag("span", attrs={"class": "value"})
         value_span.string = f"{result.cost_analysis.cost_as_percentage:.3f}%"
         item_div.append(value_span)
         metrics_div.append(item_div)
 
         # Break-even Days
-        item_div = soup.new_tag("div", **{"class": "cost-item"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": "cost-item"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Break-even Days:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value"})
+        value_span = soup.new_tag("span", attrs={"class": "value"})
         value_span.string = str(result.cost_analysis.break_even_days or "N/A")
         item_div.append(value_span)
         metrics_div.append(item_div)
@@ -280,39 +280,39 @@ class RebalancingHTMLBuilder:
         soup = BeautifulSoup("", "html.parser")
         risk_improvement_class = "improvement" if result.risk_improvement > 0 else "degradation" if result.risk_improvement < 0 else "neutral"
 
-        div = soup.new_tag("div", **{"class": "risk-analysis"})
+        div = soup.new_tag("div", attrs={"class": "risk-analysis"})
         h4 = soup.new_tag("h4")
         h4.string = "Risk Assessment"
         div.append(h4)
 
-        metrics_div = soup.new_tag("div", **{"class": "risk-metrics"})
+        metrics_div = soup.new_tag("div", attrs={"class": "risk-metrics"})
 
         # Current Risk Score
-        item_div = soup.new_tag("div", **{"class": "risk-item"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": "risk-item"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Current Risk Score:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value risk-score"})
+        value_span = soup.new_tag("span", attrs={"class": "value risk-score"})
         value_span.string = f"{result.current_risk_score:.1f}/10"
         item_div.append(value_span)
         metrics_div.append(item_div)
 
         # Projected Risk Score
-        item_div = soup.new_tag("div", **{"class": "risk-item"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": "risk-item"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Projected Risk Score:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value risk-score"})
+        value_span = soup.new_tag("span", attrs={"class": "value risk-score"})
         value_span.string = f"{result.projected_risk_score:.1f}/10"
         item_div.append(value_span)
         metrics_div.append(item_div)
 
         # Risk Change
-        item_div = soup.new_tag("div", **{"class": f"risk-item {risk_improvement_class}"})
-        label_span = soup.new_tag("span", **{"class": "label"})
+        item_div = soup.new_tag("div", attrs={"class": f"risk-item {risk_improvement_class}"})
+        label_span = soup.new_tag("span", attrs={"class": "label"})
         label_span.string = "Risk Change:"
         item_div.append(label_span)
-        value_span = soup.new_tag("span", **{"class": "value"})
+        value_span = soup.new_tag("span", attrs={"class": "value"})
         value_span.string = f"{result.risk_improvement:+.1f}"
         item_div.append(value_span)
         metrics_div.append(item_div)
@@ -320,7 +320,7 @@ class RebalancingHTMLBuilder:
         div.append(metrics_div)
 
         # Risk Interpretation
-        interp_div = soup.new_tag("div", **{"class": "risk-interpretation"})
+        interp_div = soup.new_tag("div", attrs={"class": "risk-interpretation"})
         h5 = soup.new_tag("h5")
         h5.string = "Risk Interpretation"
         interp_div.append(h5)
@@ -359,30 +359,30 @@ class RebalancingHTMLBuilder:
     def build_projected_portfolio(result: RebalancingResult) -> str:
         """Build projected portfolio HTML section."""
         soup = BeautifulSoup("", "html.parser")
-        div = soup.new_tag("div", **{"class": "projected-portfolio"})
+        div = soup.new_tag("div", attrs={"class": "projected-portfolio"})
 
         h4 = soup.new_tag("h4")
         h4.string = "Projected Allocations After Rebalancing"
         div.append(h4)
 
-        ul = soup.new_tag("ul", **{"class": "projected-weightings"})
+        ul = soup.new_tag("ul", attrs={"class": "projected-weightings"})
         for symbol, weight in result.projected_portfolio.weightings.items():
             target_weight = result.current_portfolio.weightings.get(symbol, 0.0)
             deviation = weight - target_weight
             deviation_class = "on-target" if abs(deviation) < 0.01 else "close-to-target"
 
-            li = soup.new_tag("li", **{"class": deviation_class})
-            symbol_span = soup.new_tag("span", **{"class": "symbol"})
+            li = soup.new_tag("li", attrs={"class": deviation_class})
+            symbol_span = soup.new_tag("span", attrs={"class": "symbol"})
             symbol_span.string = symbol
             li.append(symbol_span)
             li.append(": ")
 
-            weight_span = soup.new_tag("span", **{"class": "weight"})
+            weight_span = soup.new_tag("span", attrs={"class": "weight"})
             weight_span.string = f"{weight:.1%}"
             li.append(weight_span)
             li.append(" ")
 
-            deviation_span = soup.new_tag("span", **{"class": "deviation"})
+            deviation_span = soup.new_tag("span", attrs={"class": "deviation"})
             deviation_span.string = f"({deviation:+.1%} from current)"
             li.append(deviation_span)
             ul.append(li)
@@ -390,7 +390,7 @@ class RebalancingHTMLBuilder:
         div.append(ul)
 
         # Projected metrics
-        metrics_div = soup.new_tag("div", **{"class": "projected-metrics"})
+        metrics_div = soup.new_tag("div", attrs={"class": "projected-metrics"})
         p = soup.new_tag("p")
         strong = soup.new_tag("strong")
         strong.string = "Projected Positions Within Tolerance:"
@@ -412,13 +412,13 @@ class RebalancingHTMLBuilder:
     def build_french_sections(result: RebalancingResult) -> str:
         """Build French summary sections."""
         soup = BeautifulSoup("", "html.parser")
-        div = soup.new_tag("div", **{"class": "synthese-10k"})
+        div = soup.new_tag("div", attrs={"class": "synthese-10k"})
 
         h3 = soup.new_tag("h3")
         h3.string = "Synthèse du Rééquilibrage de Portefeuille"
         div.append(h3)
 
-        content_div = soup.new_tag("div", **{"class": "synthese-content"})
+        content_div = soup.new_tag("div", attrs={"class": "synthese-content"})
 
         # Date d'analyse
         p = soup.new_tag("p")
@@ -477,7 +477,7 @@ class RebalancingHTMLBuilder:
         div.append(content_div)
 
         # Recommandations Principales
-        rec_div = soup.new_tag("div", **{"class": "recommandations-francais"})
+        rec_div = soup.new_tag("div", attrs={"class": "recommandations-francais"})
         h4 = soup.new_tag("h4")
         h4.string = "Recommandations Principales"
         rec_div.append(h4)

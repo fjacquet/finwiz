@@ -72,7 +72,7 @@ class BacktestingEngine:
 
         # Initialize Backtrader cerebro
         self.cerebro = None
-        self.results = []
+        self.results: list[Any] = []
 
     def run_strategy_backtest(
         self,

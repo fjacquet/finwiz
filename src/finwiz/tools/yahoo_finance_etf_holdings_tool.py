@@ -2,7 +2,7 @@
 
 from typing import Any
 
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 

@@ -78,7 +78,7 @@ class ErrorHandlingOrchestrator:
 
             # Track error in state
             self.state.errors.append(f"{crew_name}: {error_info['message']}")
-            self.state.crew_execution_errors[crew_name] = error_info["message"]
+            self.state.crew_execution_errors[crew_name] = str(error_info["message"])
             self.state.crew_execution_status[crew_name] = "failed"
 
             return {"success": False, "data": None, "error": error_info}

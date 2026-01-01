@@ -188,11 +188,12 @@ class DiscoveryMethodologyExtractor:
             validation_statistics = self.extract_validation_statistics(discovery_result)
             score_breakdowns = self.extract_fundamental_technical_scores(discovery_result)
 
-            if not all([screening_criteria, validation_statistics]):
+            # Type narrowing: mypy recognizes explicit None checks
+            if screening_criteria is None or validation_statistics is None:
                 self.logger.warning("Incomplete methodology data")
                 return None
 
-            # Generate methodology notes
+            # Generate methodology notes (both values guaranteed non-None after check)
             methodology_notes = self._generate_methodology_notes(discovery_result, screening_criteria, validation_statistics)
 
             # Extract data sources

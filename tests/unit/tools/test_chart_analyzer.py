@@ -490,8 +490,8 @@ class TestChartAnalyzer:
         assert params["symbol"] == "MSFT"
         assert params["range"] == "1y"
         assert params["interval"] == "1h"
-        assert params["width"] == 1600
-        assert params["height"] == 1000
+        assert params["width"] == "1600"
+        assert params["height"] == "1000"
 
         # Verify result
         assert result.ticker == "MSFT"

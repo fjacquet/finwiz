@@ -84,7 +84,7 @@ def load_json_with_validation(  # noqa: UP047
         else:
             logger.warning("Continuing with unvalidated data due to strict=False")
             # Return unvalidated data wrapped in model (best effort)
-            return model.model_construct(**data)  # type: ignore
+            return model.model_construct(**data)
 
 
 def load_json_string_with_validation(  # noqa: UP047
@@ -137,7 +137,7 @@ def load_json_string_with_validation(  # noqa: UP047
         else:
             logger.warning("Continuing with unvalidated data due to strict=False")
             # Return unvalidated data wrapped in model (best effort)
-            return model.model_construct(**data)  # type: ignore
+            return model.model_construct(**data)
 
 
 def load_json_dict_with_validation(  # noqa: UP047
@@ -185,7 +185,7 @@ def load_json_dict_with_validation(  # noqa: UP047
         else:
             logger.warning("Continuing with unvalidated data due to strict=False")
             # Return unvalidated data wrapped in model (best effort)
-            return model.model_construct(**data)  # type: ignore
+            return model.model_construct(**data)
 
 
 def save_json_with_validation(

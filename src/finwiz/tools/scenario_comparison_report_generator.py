@@ -41,9 +41,7 @@ class ScenarioComparisonReportGenerator(HTMLReportGenerator):
         super().__init__()
         self.logger = logging.getLogger(__name__)
 
-    def generate_scenario_comparison_report(
-        self, scenario_report: ScenarioAnalysisReport, title: str = "Portfolio Rebalancing Scenario Analysis"
-    ) -> str:
+    def generate_scenario_comparison_report(self, scenario_report: ScenarioAnalysisReport, title: str = "Portfolio Rebalancing Scenario Analysis") -> str:
         """
         Generate comprehensive scenario comparison HTML report.
 
@@ -67,9 +65,7 @@ class ScenarioComparisonReportGenerator(HTMLReportGenerator):
             "comparison_tables": create_comparison_tables(scenario_report),
             "sensitivity_charts": create_sensitivity_charts(scenario_report),
             "monte_carlo_summary": create_monte_carlo_summary(scenario_report),
-            "recommendations": create_recommendations_section(
-                scenario_report, format_optimal_parameters, extract_priority_actions
-            ),
+            "recommendations": create_recommendations_section(scenario_report, format_optimal_parameters, extract_priority_actions),
         }
 
         # Generate HTML content using dedicated renderer

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Any
+from typing import Any, Literal, cast
 
 import requests
 from crewai.tools import BaseTool
@@ -152,7 +152,7 @@ class TwelveDataIndicatorTool(BaseTool):
             asset_type = self._determine_asset_type(symbol)
 
             # Search for technical analysis insights
-            sonar_result = await perplexity_integration.search_technical_analysis(ticker=symbol, asset_type=asset_type, max_results=5)
+            sonar_result = await perplexity_integration.search_technical_analysis(ticker=symbol, asset_type=cast(Literal["stock", "etf", "crypto"], asset_type), max_results=5)
 
             if sonar_result.success:
                 feature_flags = get_feature_flags()

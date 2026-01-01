@@ -69,7 +69,8 @@ class EnhancedPortfolioReviewOrchestrator:
         if enable_caching:
             cached_result = await self.cache_manager.get(cache_key)
             if cached_result is not None:
-                return cached_result
+                result: dict[str, Any] = cached_result
+                return result
 
         # Run portfolio review
         review_path, rebalancing_result = await run_with_rebalancing(

@@ -125,6 +125,7 @@ class CriteriaEvaluator:
 
         elif criteria in [ScreeningCriteria.PE_RATIO, ScreeningCriteria.PB_RATIO, ScreeningCriteria.DEBT_TO_EQUITY]:
             # Lower is better (within reason)
+            optimal_range: tuple[float, float]
             if criteria == ScreeningCriteria.PE_RATIO:
                 optimal_range = (10, 20)
             elif criteria == ScreeningCriteria.PB_RATIO:
@@ -141,11 +142,11 @@ class CriteriaEvaluator:
 
         elif criteria == ScreeningCriteria.MARKET_CAP:
             # Logarithmic scale for market cap
-            return min(np.log10(value / 1e9) * 20, 100)
+            return float(min(np.log10(value / 1e9) * 20, 100))
 
         else:
             # Default scoring
-            return min(max(value * 50, 0), 100)
+            return float(min(max(value * 50, 0), 100))
 
 
 # Import StockData for type hints

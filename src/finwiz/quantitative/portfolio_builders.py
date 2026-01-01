@@ -137,7 +137,7 @@ class PortfolioBuilder:
             return {}
 
         # Calculate total market cap
-        total_market_cap = sum(getattr(holding, "market_cap", holding.current_value) for holding in holdings)
+        total_market_cap = sum(float(getattr(holding, "market_cap", 1.0)) for holding in holdings)
 
         if total_market_cap <= 0:
             # Fallback to equal weights if no market cap data
@@ -146,7 +146,7 @@ class PortfolioBuilder:
         # Calculate weights based on market cap
         weights = {}
         for holding in holdings:
-            market_cap = getattr(holding, "market_cap", holding.current_value)
+            market_cap = float(getattr(holding, "market_cap", 1.0))
             weights[holding.symbol] = market_cap / total_market_cap
 
         return weights

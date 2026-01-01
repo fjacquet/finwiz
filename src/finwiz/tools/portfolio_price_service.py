@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.portfolio_rebalancing import PriceData
@@ -103,12 +103,12 @@ class PortfolioPriceService:
             # Execute all price requests concurrently
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            # Process results
-            price_data = {}
-            failed_symbols = []
+            # Process results - explicitly typed since we filter out exceptions below
+            price_data: dict[str, PriceData] = {}
+            failed_symbols: list[str] = []
 
             for symbol, result in zip(symbols, results):
-                if isinstance(result, Exception):
+                if isinstance(result, BaseException):
                     logger.warning(f"Failed to get price for {symbol}: {result}")
                     failed_symbols.append(symbol)
                 elif result is not None:

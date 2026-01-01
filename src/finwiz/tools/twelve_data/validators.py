@@ -214,7 +214,7 @@ class SignalAnalyzer:
         bullish_signals = 0
         bearish_signals = 0
         total_indicators = 0
-        total_strength = 0
+        total_strength = 0.0
 
         # Analyze RSI
         if rsi_data:

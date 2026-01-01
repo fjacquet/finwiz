@@ -164,7 +164,6 @@ class StockCrew:
         """Execute technical analysis for short-listed tickers."""
         return Task(
             config=self.tasks_config["market_technical_analysis_task"],
-            verbose=True,
         )
 
     @async_task
@@ -173,7 +172,6 @@ class StockCrew:
         """Screen stocks based on predefined quantitative filters."""
         return Task(
             config=self.tasks_config["stock_screening_task"],
-            verbose=True,
         )
 
     @async_task
@@ -182,7 +180,6 @@ class StockCrew:
         """Deep dive into technical indicators and patterns for candidates."""
         return Task(
             config=self.tasks_config["technical_detail_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -191,7 +188,6 @@ class StockCrew:
         """Assess key risks for recommended tickers and mitigation actions."""
         return Task(
             config=self.tasks_config["stock_risk_assessment_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -201,7 +197,6 @@ class StockCrew:
         return Task(
             config=self.tasks_config["generate_export_task"],
             output_pydantic=StockCrewExport,
-            verbose=True,
         )
 
     # @sync_task

@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .freshness_checker import DataFreshnessChecker
+from .freshness_checker import DataFreshnessChecker, FreshnessReport
 from .registry_data_retrieval import (
     get_cached_crew_output,
     get_crew_data_with_freshness_check,
@@ -46,9 +46,7 @@ class RegistryManager:
         self.execution_log_path = self.metadata_dir / "crew_execution_log.json"
         self.data_lineage_path = self.metadata_dir / "data_lineage.json"
 
-    async def coordinate_crew_execution(
-        self, crews: list[CrewConfig]
-    ) -> ExecutionResult:
+    async def coordinate_crew_execution(self, crews: list[CrewConfig]) -> ExecutionResult:
         """Coordinate execution of multiple crews based on dependencies."""
         return await coordinate_crew_execution(
             crews=crews,
@@ -75,9 +73,7 @@ class RegistryManager:
             logger=self.logger,
         )
 
-    def get_upstream_data(
-        self, requesting_crew: str, max_age_hours: int = 24
-    ) -> UpstreamDataCollection:
+    def get_upstream_data(self, requesting_crew: str, max_age_hours: int = 24) -> UpstreamDataCollection:
         """Get available upstream data for a requesting crew."""
         return get_upstream_data(
             output_dir=self.output_dir,
@@ -108,12 +104,10 @@ class RegistryManager:
         try:
             return self.freshness_checker.recommend_refresh_order(max_age_hours)
         except Exception as e:
-            self.logger.error(
-                f"Failed to get refresh recommendations: {str(e)}", exc_info=True
-            )
+            self.logger.error(f"Failed to get refresh recommendations: {str(e)}", exc_info=True)
             return []
 
-    def check_data_freshness(self, max_age_hours: int = 24) -> list[dict[str, Any]]:
+    def check_data_freshness(self, max_age_hours: int = 24) -> FreshnessReport:
         """Check freshness of all crew data using the DataFreshnessChecker."""
         self.logger.info(f"Checking data freshness with max age: {max_age_hours} hours")
 
@@ -121,9 +115,6 @@ class RegistryManager:
             return self.freshness_checker.generate_freshness_report(max_age_hours)
         except Exception as e:
             self.logger.error(f"Data freshness check failed: {str(e)}", exc_info=True)
-
-            from .freshness_checker import FreshnessReport
-
             return FreshnessReport(
                 fresh_data=[],
                 stale_data=[],

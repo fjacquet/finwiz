@@ -179,9 +179,7 @@ class DeepAnalysisOrchestrator:
         """Get stored enriched analysis for a ticker."""
         return self._enriched_analyses.get(ticker)
 
-    async def run_deep_analysis_concurrent(
-        self, holdings: list[dict[str, Any]], max_workers: int | None = None
-    ) -> dict[str, DeepAnalysisResult]:
+    async def run_deep_analysis_concurrent(self, holdings: list[dict[str, Any]], max_workers: int | None = None) -> dict[str, DeepAnalysisResult]:
         """
         Execute deep analysis on all holdings concurrently.
 
@@ -231,10 +229,7 @@ class DeepAnalysisOrchestrator:
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all holdings to the shared pool
-            futures = [
-                loop.run_in_executor(executor, analyze_single_sync, holding)
-                for holding in holdings
-            ]
+            futures = [loop.run_in_executor(executor, analyze_single_sync, holding) for holding in holdings]
             # Wait for all to complete
             completed = await asyncio.gather(*futures)
 
@@ -273,9 +268,7 @@ class DeepAnalysisOrchestrator:
                 for ticker, analysis in deep_results.items()
             ]
 
-            alternatives_data = alternatives_orch.match_alternatives_for_holdings(
-                holdings_with_analysis, {}
-            )
+            alternatives_data = alternatives_orch.match_alternatives_for_holdings(holdings_with_analysis, {})
 
             self.state.portfolio_alternatives = alternatives_data
             self.state.alternatives_success = True
@@ -319,4 +312,3 @@ class DeepAnalysisOrchestrator:
 
         except Exception as e:
             self.logger.error(f"Portfolio review update failed: {e}", exc_info=True)
-

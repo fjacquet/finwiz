@@ -166,5 +166,5 @@ class BacktestResult(BaseModel):
         # If win_rate is the default value (0.0), calculate it
         if v == 0.0 and "total_trades" in values and values["total_trades"] > 0:
             winning_trades = values.get("winning_trades", 0)
-            return winning_trades / values["total_trades"]
+            return float(winning_trades) / float(values["total_trades"])
         return v

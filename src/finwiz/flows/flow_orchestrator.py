@@ -6,8 +6,20 @@ This module contains the FinwizFlow class that coordinates the complete
 portfolio analysis workflow by delegating to focused orchestrator modules.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from finwiz.orchestrators.alternatives_matching_orchestrator import AlternativesMatchingOrchestrator
+    from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
+    from finwiz.orchestrators.discovery_orchestrator import DiscoveryOrchestrator
+    from finwiz.orchestrators.error_handling_orchestrator import ErrorHandlingOrchestrator
+    from finwiz.orchestrators.progress_tracking_orchestrator import ProgressTrackingOrchestrator
+    from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
+    from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
+    from finwiz.orchestrators.validation_orchestrator import ValidationOrchestrator
 
 from crewai.flow import Flow, and_, listen, start
 from crewai.flow.persistence import persist
@@ -96,20 +108,20 @@ class FinwizFlow(Flow[FinwizState]):
         logger.info("Orchestrator dependencies initialized")
 
         # Initialize orchestrators (lazy loading via properties) BEFORE super().__init__()
-        self._error_handler_orch = None
-        self._progress_orch = None
-        self._utility_orch = None
-        self._deep_analysis_orch = None
-        self._alternatives_orch = None
-        self._discovery_orch = None
-        self._validation_orch = None
-        self._reporting_orch = None
+        self._error_handler_orch: ErrorHandlingOrchestrator | None = None
+        self._progress_orch: ProgressTrackingOrchestrator | None = None
+        self._utility_orch: UtilityOrchestrator | None = None
+        self._deep_analysis_orch: DeepAnalysisOrchestrator | None = None
+        self._alternatives_orch: AlternativesMatchingOrchestrator | None = None
+        self._discovery_orch: DiscoveryOrchestrator | None = None
+        self._validation_orch: ValidationOrchestrator | None = None
+        self._reporting_orch: ReportingOrchestrator | None = None
 
         super().__init__(*args, **kwargs)
 
         # Initialize structured state
         if not hasattr(self, "state") or self.state is None:
-            self.state = self.deps.state_manager.create_initial_state()
+            self.state = self.deps.state_manager.create_initial_state()  # type: ignore[misc]
             logger.info("Flow state initialized with session metadata")
         else:
             logger.info("Flow state already initialized by Flow framework")
@@ -444,7 +456,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Consolidated analysis results with alternatives
 
         """
-        return await self.deep_analysis_orch.analyze_and_update_portfolio()
+        result: dict[str, Any] = await self.deep_analysis_orch.analyze_and_update_portfolio()
+        return result
 
     @listen("analyze_and_update_portfolio")
     async def check_portfolio(self) -> dict[str, Any]:
@@ -457,7 +470,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Portfolio review results with decisions
 
         """
-        return await self.validation_orch.check_portfolio()
+        result: dict[str, Any] = await self.validation_orch.check_portfolio()
+        return result
 
     @listen("check_portfolio")
     def check_crypto(self) -> dict[str, Any]:
@@ -470,7 +484,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Crypto discovery results
 
         """
-        return self.discovery_orch.check_crypto()
+        result: dict[str, Any] = self.discovery_orch.check_crypto()
+        return result
 
     @listen("check_portfolio")
     def check_stock(self) -> dict[str, Any]:
@@ -483,7 +498,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Stock discovery results
 
         """
-        return self.discovery_orch.check_stock()
+        result: dict[str, Any] = self.discovery_orch.check_stock()
+        return result
 
     @listen("check_portfolio")
     def check_etf(self) -> dict[str, Any]:
@@ -496,7 +512,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: ETF discovery results
 
         """
-        return self.discovery_orch.check_etf()
+        result: dict[str, Any] = self.discovery_orch.check_etf()
+        return result
 
     @listen(and_("check_crypto", "check_stock", "check_etf"))
     def check_investment_discovery(self) -> dict[str, Any]:
@@ -509,7 +526,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Consolidated discovery results
 
         """
-        return self.discovery_orch.check_investment_discovery()
+        result: dict[str, Any] = self.discovery_orch.check_investment_discovery()
+        return result
 
     @listen("check_investment_discovery")
     def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
@@ -525,7 +543,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Alternative matching results
 
         """
-        return self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
+        result: dict[str, Any] = self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
+        return result
 
     @listen("match_alternatives_after_discovery")
     def check_portfolio_rebalancing(self) -> dict[str, Any]:
@@ -538,7 +557,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Rebalancing analysis results
 
         """
-        return self.validation_orch.check_portfolio_rebalancing()
+        result: dict[str, Any] = self.validation_orch.check_portfolio_rebalancing()
+        return result
 
     @listen("check_portfolio_rebalancing")
     def pre_validate_reporter_input(self) -> dict[str, Any]:
@@ -551,7 +571,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Validation results with consolidated data
 
         """
-        return self.validation_orch.pre_validate_reporter_input()
+        result: dict[str, Any] = self.validation_orch.pre_validate_reporter_input()
+        return result
 
     @listen("pre_validate_reporter_input")
     def report(self) -> dict[str, Any]:
@@ -564,7 +585,8 @@ class FinwizFlow(Flow[FinwizState]):
             dict: Final report path and generation status
 
         """
-        return self.reporting_orch.report()
+        result: dict[str, Any] = self.reporting_orch.report()
+        return result
 
 
 def plot() -> None:

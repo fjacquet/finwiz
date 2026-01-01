@@ -48,7 +48,7 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
     soup.append(style)
 
     # Generate grade summary using BeautifulSoup
-    grade_div = soup.new_tag("div", **{"class": "grade-summary"})
+    grade_div = soup.new_tag("div", attrs={"class": "grade-summary"})
 
     # Title
     title = soup.new_tag("h4")
@@ -97,7 +97,7 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
     soup.append(grade_div)
 
     # Create holdings table
-    table = soup.new_tag("table", **{"class": "holdings-table"})
+    table = soup.new_tag("table", attrs={"class": "holdings-table"})
 
     # Count deep vs shallow analysis
     deep_count = sum(1 for h in holdings if h.get("crew_analysis_used"))
@@ -105,7 +105,7 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
 
     # Add analysis depth summary
     if deep_count > 0:
-        analysis_summary = soup.new_tag("div", **{"class": "analysis-summary"})
+        analysis_summary = soup.new_tag("div", attrs={"class": "analysis-summary"})
         summary_title = soup.new_tag("h4")
         summary_title.string = "📊 Profondeur d'Analyse"
         analysis_summary.append(summary_title)
@@ -173,7 +173,7 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
         # Analysis depth indicator cell
         td_analysis = soup.new_tag("td")
         if is_deep_analysis:
-            analysis_span = soup.new_tag("span", **{"class": "analysis-deep"})
+            analysis_span = soup.new_tag("span", attrs={"class": "analysis-deep"})
             analysis_span.string = "🔍 Deep"
             td_analysis.append(analysis_span)
             # Add crew name as tooltip
@@ -182,19 +182,19 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
                 crew_small.string = f" ({crew_analysis_used})"
                 td_analysis.append(crew_small)
         else:
-            analysis_span = soup.new_tag("span", **{"class": "analysis-quick"})
+            analysis_span = soup.new_tag("span", attrs={"class": "analysis-quick"})
             analysis_span.string = "⚡ Quick"
             td_analysis.append(analysis_span)
         tr.append(td_analysis)
 
         # Decision cell
-        td_decision = soup.new_tag("td", **{"class": decision_class})
+        td_decision = soup.new_tag("td", attrs={"class": decision_class})
         td_decision.string = holding.get("decision", "N/A")
         tr.append(td_decision)
 
         # Grade cell with badge
         td_grade = soup.new_tag("td")
-        grade_span = soup.new_tag("span", **{"class": f"grade-badge {grade_info.css_class}"})
+        grade_span = soup.new_tag("span", attrs={"class": f"grade-badge {grade_info.css_class}"})
         grade_span.string = f"{grade_info.emoji} {grade_info.grade}"
         td_grade.append(grade_span)
         tr.append(td_grade)
@@ -204,7 +204,7 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
         if is_deep_analysis:
             # Extract scores from rationale bullets
             rationale_bullets = holding.get("rationale_bullets", [])
-            scores_list = soup.new_tag("ul", **{"class": "scores-list"})
+            scores_list = soup.new_tag("ul", attrs={"class": "scores-list"})
             for bullet in rationale_bullets:
                 if "Score" in bullet or "score" in bullet:
                     score_li = soup.new_tag("li")
@@ -228,12 +228,12 @@ def generate_holdings_table(holdings: list[dict[str, Any]]) -> str:
         alternatives = holding.get("alternatives", [])
         if alternatives:
             alt_count = len(alternatives)
-            alt_span = soup.new_tag("span", **{"class": "alternatives-available"})
+            alt_span = soup.new_tag("span", attrs={"class": "alternatives-available"})
             alt_span.string = f"💎 {alt_count} A+ disponible{'s' if alt_count > 1 else ''}"
             td_alternatives.append(alt_span)
 
             # Add alternatives list
-            alt_list = soup.new_tag("ul", **{"class": "alternatives-list"})
+            alt_list = soup.new_tag("ul", attrs={"class": "alternatives-list"})
             for alt in alternatives[:3]:  # Show top 3
                 alt_li = soup.new_tag("li")
                 alt_ticker = alt.get("ticker", "N/A")
@@ -277,7 +277,7 @@ def generate_trades_table(trades: list[dict[str, Any]]) -> str:
     soup = BeautifulSoup("", "html.parser")
 
     # Create trades table
-    table = soup.new_tag("table", **{"class": "trades-table"})
+    table = soup.new_tag("table", attrs={"class": "trades-table"})
 
     # Table header
     thead = soup.new_tag("thead")
@@ -304,7 +304,7 @@ def generate_trades_table(trades: list[dict[str, Any]]) -> str:
         tr.append(td_symbol)
 
         # Action cell
-        td_action = soup.new_tag("td", **{"class": action_class})
+        td_action = soup.new_tag("td", attrs={"class": action_class})
         td_action.string = trade.get("action", "N/A")
         tr.append(td_action)
 

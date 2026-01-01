@@ -44,9 +44,7 @@ def perform_performance_analysis(
         returns = data["Close"].pct_change().dropna()
 
         # Run performance analysis
-        perf_report = performance_analyzer.analyze_performance(
-            returns, strategy_name=f"{input_data.symbol}_analysis"
-        )
+        perf_report = performance_analyzer.analyze_performance(returns, strategy_name=f"{input_data.symbol}_analysis")
 
         # Convert to simplified schema
         metrics = perf_report.strategy_metrics
@@ -108,10 +106,7 @@ def add_etf_metrics(perf_dict: dict, symbol: str, logger) -> dict:
         if expense_ratio is not None:
             expense_ratio_decimal = float(expense_ratio) / 100.0
             perf_dict["expense_ratio"] = expense_ratio_decimal
-            logger.info(
-                f"✅ Fetched expense_ratio for {symbol}: "
-                f"{expense_ratio}% → {expense_ratio_decimal:.6f} (as decimal)"
-            )
+            logger.info(f"✅ Fetched expense_ratio for {symbol}: {expense_ratio}% → {expense_ratio_decimal:.6f} (as decimal)")
         else:
             perf_dict = _add_fallback_expense_ratio(perf_dict, symbol, logger)
 
@@ -167,10 +162,7 @@ def _add_tracking_error(perf_dict: dict, ticker, info: dict, symbol: str, logger
         }
 
         benchmark_symbol = benchmark_map.get(category, "SPY")
-        logger.info(
-            f"Calculating tracking error for {symbol} vs {benchmark_symbol} "
-            f"(category: {category or 'unknown'})"
-        )
+        logger.info(f"Calculating tracking error for {symbol} vs {benchmark_symbol} (category: {category or 'unknown'})")
 
         # Fetch benchmark data
         benchmark = yf.Ticker(benchmark_symbol)
@@ -195,15 +187,9 @@ def _add_tracking_error(perf_dict: dict, ticker, info: dict, symbol: str, logger
                 tracking_error = tracking_diff.std() * (252**0.5)
 
                 perf_dict["tracking_error"] = float(tracking_error)
-                logger.info(
-                    f"✅ Calculated tracking_error for {symbol}: "
-                    f"{tracking_error:.4f} ({tracking_error * 100:.2f}%)"
-                )
+                logger.info(f"✅ Calculated tracking_error for {symbol}: {tracking_error:.4f} ({tracking_error * 100:.2f}%)")
             else:
-                logger.warning(
-                    f"⚠️ Insufficient aligned data for tracking error calculation: "
-                    f"{len(aligned_etf)} days"
-                )
+                logger.warning(f"⚠️ Insufficient aligned data for tracking error calculation: {len(aligned_etf)} days")
         else:
             logger.warning("⚠️ No historical data available for tracking error calculation")
 

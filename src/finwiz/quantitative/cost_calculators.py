@@ -355,7 +355,7 @@ def is_large_cap(symbol: str, market_data: dict[str, Any] | None) -> bool:
     """Check if symbol is large cap."""
     if market_data and symbol in market_data:
         market_cap = market_data[symbol].get("market_cap", 0)
-        return market_cap > 10_000_000_000  # > $10B
+        return bool(market_cap > 10_000_000_000)  # > $10B
 
     # Fallback heuristics
     large_cap_symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "BRK"]
@@ -366,7 +366,7 @@ def is_mid_cap(symbol: str, market_data: dict[str, Any] | None) -> bool:
     """Check if symbol is mid cap."""
     if market_data and symbol in market_data:
         market_cap = market_data[symbol].get("market_cap", 0)
-        return 2_000_000_000 <= market_cap <= 10_000_000_000  # $2B - $10B
+        return bool(2_000_000_000 <= market_cap <= 10_000_000_000)  # $2B - $10B
 
     # Default to mid cap if not clearly large or small
     return not is_large_cap(symbol, market_data) and not is_small_cap(symbol, market_data)
@@ -376,7 +376,7 @@ def is_small_cap(symbol: str, market_data: dict[str, Any] | None) -> bool:
     """Check if symbol is small cap."""
     if market_data and symbol in market_data:
         market_cap = market_data[symbol].get("market_cap", 0)
-        return market_cap < 2_000_000_000  # < $2B
+        return bool(market_cap < 2_000_000_000)  # < $2B
 
     # Fallback - assume small cap for longer symbols
     return len(symbol) > 4
@@ -387,7 +387,7 @@ def estimate_avg_daily_volume_value(symbol: str, market_data: dict[str, Any] | N
     if market_data and symbol in market_data:
         volume = market_data[symbol].get("avg_daily_volume", 0)
         price = market_data[symbol].get("price", 0)
-        return volume * price
+        return float(volume * price)
 
     # Fallback estimates based on symbol characteristics
     if is_large_cap(symbol, market_data):

@@ -28,7 +28,6 @@ class ReportCrewTasks:
         """Integrate Stock/ETF/Crypto analyses into a unified narrative."""
         return Task(
             config=self.tasks_config["comprehensive_financial_integration_task"],
-            verbose=True,
         )
 
     @async_task
@@ -37,7 +36,6 @@ class ReportCrewTasks:
         """Derive optimal asset allocation based on goals and constraints."""
         return Task(
             config=self.tasks_config["optimal_portfolio_allocation_task"],
-            verbose=True,
         )
 
     @async_task
@@ -46,7 +44,6 @@ class ReportCrewTasks:
         """Assess key risks and propose mitigation strategies."""
         return Task(
             config=self.tasks_config["risk_assessment_mitigation_task"],
-            verbose=True,
         )
 
     @sync_task
@@ -55,7 +52,6 @@ class ReportCrewTasks:
         """Compile the comprehensive HTML investment report."""
         return Task(
             config=self.tasks_config["comprehensive_investment_report_task"],
-            verbose=True,
         )
 
     def get_all_tasks(self) -> list[Task]:

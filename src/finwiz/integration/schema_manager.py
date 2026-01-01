@@ -51,7 +51,8 @@ class SchemaManager:
 
             # Try to convert Pydantic model to dict
             if hasattr(usage_metrics, "model_dump"):
-                return usage_metrics.model_dump()
+                result: dict[str, Any] = usage_metrics.model_dump()
+                return result
 
             # Try to convert using dict() for dataclasses or similar
             if hasattr(usage_metrics, "__dict__"):
@@ -67,14 +68,16 @@ class SchemaManager:
     def save_json_file(self, file_path: Path, data: dict[str, Any]) -> None:
         """Save data to JSON file with custom serialization for datetime and Pydantic models."""
 
-        def json_serializer(obj: Any) -> str:
+        def json_serializer(obj: Any) -> Any:
             """Serialize datetime and Pydantic objects to JSON."""
             if isinstance(obj, datetime):
                 return obj.isoformat()
             if isinstance(obj, BaseModel):
-                return obj.model_dump()
+                model_dict: dict[str, Any] = obj.model_dump()
+                return model_dict
             if hasattr(obj, "__dict__"):
-                return obj.__dict__
+                obj_dict: dict[str, Any] = obj.__dict__
+                return obj_dict
             return str(obj)
 
         with open(file_path, "w", encoding="utf-8") as f:
@@ -85,7 +88,8 @@ class SchemaManager:
         try:
             if file_path.exists():
                 with open(file_path, encoding="utf-8") as f:
-                    return json.load(f)
+                    loaded_data: dict[str, Any] = json.load(f)
+                    return loaded_data
         except Exception as e:
             self.logger.warning(f"Failed to load JSON file {file_path}: {str(e)}")
 

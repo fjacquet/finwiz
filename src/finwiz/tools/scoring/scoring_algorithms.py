@@ -175,7 +175,7 @@ def calculate_technical_score(symbol: str, asset_type: str, data: dict[str, Any]
             # Standard weighting
             technical_score = momentum * 0.4 + trend_strength * 0.4 + volatility_score * 0.2
 
-        return min(max(technical_score, 0.0), 1.0)
+        return float(min(max(technical_score, 0.0), 1.0))
 
     except Exception:
         return 0.5
@@ -206,7 +206,7 @@ def calculate_quality_score(symbol: str, asset_type: str, data: dict[str, Any], 
         else:
             quality_score = 0.5
 
-        return min(max(quality_score, 0.0), 1.0)
+        return float(min(max(quality_score, 0.0), 1.0))
 
     except Exception:
         return 0.5
@@ -235,7 +235,7 @@ def calculate_risk_score(symbol: str, asset_type: str, data: dict[str, Any], reg
         # Convert penalty to score (1 - penalty)
         risk_score = max(1.0 - risk_penalty, 0.0)
 
-        return risk_score
+        return float(risk_score)
 
     except Exception:
         return 0.5

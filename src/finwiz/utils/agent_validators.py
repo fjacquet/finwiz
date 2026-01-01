@@ -93,6 +93,7 @@ def final_reporter(func: Callable) -> Callable:
             extra={"agent_role": agent_role, "tool_count": 0},
         )
 
-        return agent
+        validated_agent: Agent = agent
+        return validated_agent
 
     return wrapper

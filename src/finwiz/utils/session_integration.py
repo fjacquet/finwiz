@@ -127,7 +127,7 @@ def get_session_summary(plan: FinancialPlan) -> dict[str, Any]:
 
 
 # Example usage in main.py integration
-def integrate_with_main_flow() -> None:
+def integrate_with_main_flow() -> FinancialPlan:
     """
     Integrate session management with the main FinWiz flow.
 

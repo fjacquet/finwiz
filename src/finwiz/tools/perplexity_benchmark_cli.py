@@ -176,7 +176,7 @@ async def main() -> None:
             logger.info(f"Running quick test for {args.ticker}")
 
             start_time = asyncio.get_event_loop().time()
-            result = await integration.search_financial_news(
+            search_result = await integration.search_financial_news(
                 query=f"{args.ticker} financial news",
                 ticker=args.ticker,
                 asset_type="stock",
@@ -188,13 +188,13 @@ async def main() -> None:
             response_time_ms = int((end_time - start_time) * 1000)
 
             print(f"Quick test results for {args.ticker}:")
-            print(f"  Success: {result.success}")
+            print(f"  Success: {search_result.success}")
             print(f"  Response time: {response_time_ms}ms")
-            print(f"  Results count: {len(result.results)}")
+            print(f"  Results count: {len(search_result.results)}")
             print(f"  Meets 2x baseline: {response_time_ms <= 2000}")
 
-            if result.success and result.results:
-                print(f"  Sample result: {result.results[0].title[:100]}...")
+            if search_result.success and search_result.results:
+                print(f"  Sample result: {search_result.results[0].title[:100]}...")
 
     except KeyboardInterrupt:
         logger.info("Benchmark interrupted by user")

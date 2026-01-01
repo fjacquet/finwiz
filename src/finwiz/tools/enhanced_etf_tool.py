@@ -160,7 +160,7 @@ class EnhancedETFAnalysisTool(BaseTool):
             # Create ETF-specific search query
             query = f"{ticker} ETF fund performance holdings changes expense ratio tracking error"
 
-            sonar_result = await perplexity_integration.search_financial_news(query=query, ticker=ticker, asset_type="etf", analysis_type="etf", max_results=6)
+            sonar_result = await perplexity_integration.search_financial_news(query=query, ticker=ticker, asset_type="etf", analysis_type="general", max_results=6)
 
             if sonar_result.success:
                 logger.info(f"Retrieved {len(sonar_result.results)} Perplexity ETF insights for {ticker}")

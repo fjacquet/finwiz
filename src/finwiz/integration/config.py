@@ -174,7 +174,7 @@ def load_data_quality_config(config_path: Path | None = None) -> DataQualityConf
 
 def _get_env_overrides() -> dict[str, Any]:
     """Get configuration overrides from environment variables."""
-    env_overrides = {}
+    env_overrides: dict[str, Any] = {}
 
     # Output directory
     if output_dir := os.getenv("FINWIZ_INTEGRATION_OUTPUT_DIR"):

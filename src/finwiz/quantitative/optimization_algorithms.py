@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Any, cast
 
 from finwiz.schemas.portfolio_rebalancing import (
     PortfolioAnalysis,
@@ -225,7 +226,7 @@ class MinimizeCostsStrategy(OptimizationStrategy):
         logger.info("Optimizing trades using minimize-costs strategy")
 
         # Calculate cost-efficiency ratio for each potential trade
-        trade_candidates = []
+        trade_candidates: list[dict[str, Any]] = []
 
         for need in rebalancing_needs:
             if not need.needs_rebalancing:
@@ -265,7 +266,7 @@ class MinimizeCostsStrategy(OptimizationStrategy):
             )
 
         # Sort by efficiency (highest first)
-        trade_candidates.sort(key=lambda x: x["efficiency"], reverse=True)
+        trade_candidates.sort(key=lambda x: float(x["efficiency"]), reverse=True)
 
         # Execute trades in order of efficiency
         trades = []
@@ -276,10 +277,11 @@ class MinimizeCostsStrategy(OptimizationStrategy):
         min_trade_size = next((c.value for c in constraints if c.constraint_type == "min_trade_size"), config.min_trade_size)
 
         for candidate in trade_candidates:
-            need = candidate["need"]
-            symbol = candidate["symbol"]
-            current_price = candidate["current_price"]
-            trade_value = candidate["trade_value"]
+            need = cast(RebalancingNeed, candidate["need"])
+            symbol = cast(str, candidate["symbol"])
+            current_price = cast(float, candidate["current_price"])
+            trade_value = cast(float, candidate["trade_value"])
+            efficiency = cast(float, candidate["efficiency"])
 
             if trade_value < min_trade_size:
                 continue
@@ -320,7 +322,7 @@ class MinimizeCostsStrategy(OptimizationStrategy):
                 projected_weight_after_trade=need.target_weight,
                 priority=len(trades) + 1,
                 urgency=self._calculate_urgency(need.urgency_score),
-                rationale=f"Cost-efficient rebalancing of {symbol} (efficiency: {candidate['efficiency']:.2f})",
+                rationale=f"Cost-efficient rebalancing of {symbol} (efficiency: {efficiency:.2f})",
             )
 
             trades.append(trade)
@@ -367,7 +369,7 @@ class RiskAwareStrategy(OptimizationStrategy):
         logger.info("Optimizing trades using risk-aware strategy")
 
         # Calculate risk-adjusted priority for each trade
-        risk_adjusted_needs = []
+        risk_adjusted_needs: list[dict[str, Any]] = []
 
         for need in rebalancing_needs:
             if not need.needs_rebalancing:
@@ -396,7 +398,7 @@ class RiskAwareStrategy(OptimizationStrategy):
             )
 
         # Sort by risk-adjusted urgency
-        risk_adjusted_needs.sort(key=lambda x: x["adjusted_urgency"], reverse=True)
+        risk_adjusted_needs.sort(key=lambda x: float(x["adjusted_urgency"]), reverse=True)
 
         trades = []
         capital_used = 0.0
@@ -407,7 +409,8 @@ class RiskAwareStrategy(OptimizationStrategy):
         max_position_weight = next((c.value for c in constraints if c.constraint_type == "max_position"), 0.25)
 
         for item in risk_adjusted_needs:
-            need = item["need"]
+            need = cast(RebalancingNeed, item["need"])
+            adjusted_urgency = cast(float, item["adjusted_urgency"])
             symbol = need.symbol
             current_price = prices.get(symbol, 0.0)
 
@@ -458,8 +461,8 @@ class RiskAwareStrategy(OptimizationStrategy):
                 weight_deviation=need.deviation,
                 projected_weight_after_trade=need.target_weight,
                 priority=len(trades) + 1,
-                urgency=self._calculate_urgency(item["adjusted_urgency"]),
-                rationale=f"Risk-aware rebalancing of {symbol} (risk-adjusted urgency: {item['adjusted_urgency']:.2f})",
+                urgency=self._calculate_urgency(adjusted_urgency),
+                rationale=f"Risk-aware rebalancing of {symbol} (risk-adjusted urgency: {adjusted_urgency:.2f})",
             )
 
             trades.append(trade)

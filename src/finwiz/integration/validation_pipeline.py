@@ -8,7 +8,9 @@ including schema validation, cross-crew consistency checking, and error reportin
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
+
+from pydantic import BaseModel
 
 from finwiz.schemas.integration import CryptoCrewOutput, DiscoveryCrewOutput, ETFCrewOutput, StockCrewOutput
 from finwiz.validation.enums import ValidationMode
@@ -58,7 +60,7 @@ class ValidationPipeline:
         }
 
         # Initialize pipeline stages and validation rules
-        self.pipeline_stages = PipelineStages(output_dir=self.output_dir, crew_schema_mapping=self.crew_schema_mapping, logger=self.logger)
+        self.pipeline_stages = PipelineStages(output_dir=self.output_dir, crew_schema_mapping=cast(dict[str, type[BaseModel]], self.crew_schema_mapping), logger=self.logger)
         self.validation_rules = ValidationRules(logger=self.logger)
 
         self.logger.info(
@@ -158,7 +160,7 @@ class ValidationPipeline:
                 return result
 
             # Validate using the schema
-            result = self.validation_rules.validate_with_pydantic_schema(output_data, schema_class)
+            result = self.validation_rules.validate_with_pydantic_schema(output_data, cast(type[BaseModel], schema_class))
 
             # Additional metadata validation if requested
             if validate_metadata and result.is_valid and result.sanitized_data:

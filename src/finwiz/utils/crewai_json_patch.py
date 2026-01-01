@@ -43,7 +43,8 @@ def _patched_model_validate_json(cls: type[BaseModel], json_data: str | bytes, *
     """
     try:
         # Try original validation first
-        return _original_model_validate_json(cls, json_data, **kwargs)
+        result: BaseModel = _original_model_validate_json(cls, json_data, **kwargs)
+        return result
     except (ValidationError, json.JSONDecodeError) as e:
         # If validation fails, try repairing the JSON
         logger.warning(f"Pydantic validation failed for {cls.__name__}, attempting JSON repair...")
@@ -60,9 +61,9 @@ def _patched_model_validate_json(cls: type[BaseModel], json_data: str | bytes, *
             repaired_json = repair_json(json_str)
 
             # Try validation again with repaired JSON
-            result = _original_model_validate_json(cls, repaired_json, **kwargs)
+            repaired_result: BaseModel = _original_model_validate_json(cls, repaired_json, **kwargs)
             logger.info(f"✅ Successfully validated {cls.__name__} after JSON repair")
-            return result
+            return repaired_result
 
         except (ValidationError, json.JSONDecodeError, ValueError) as repair_error:
             logger.error(f"❌ JSON repair failed for {cls.__name__}: {repair_error}")
@@ -85,7 +86,7 @@ def apply_json_repair_patch() -> None:
             return
 
         logger.info("Applying JSON repair patch to Pydantic model_validate_json")
-        BaseModel.model_validate_json = classmethod(_patched_model_validate_json)
+        BaseModel.model_validate_json = classmethod(_patched_model_validate_json)  # type: ignore[method-assign, assignment]
         _patch_applied = True
         logger.info("✅ JSON repair patch applied successfully")
 
@@ -105,7 +106,7 @@ def remove_json_repair_patch() -> None:
             return
 
         logger.info("Removing JSON repair patch from Pydantic")
-        BaseModel.model_validate_json = classmethod(_original_model_validate_json)
+        BaseModel.model_validate_json = classmethod(_original_model_validate_json)  # type: ignore[method-assign, assignment]
         _patch_applied = False
         logger.info("✅ JSON repair patch removed")
 

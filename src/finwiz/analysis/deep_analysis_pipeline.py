@@ -186,10 +186,7 @@ def synthesize_enriched_analysis(
         llm_cost_dollars=0.05,  # Estimate
     )
 
-    logger.info(
-        f"Synthesis complete: {ctx.ticker} grade={enriched.final_grade} "
-        f"rec={enriched.final_recommendation} words={enriched.report_word_count}"
-    )
+    logger.info(f"Synthesis complete: {ctx.ticker} grade={enriched.final_grade} rec={enriched.final_recommendation} words={enriched.report_word_count}")
     return enriched
 
 
@@ -266,11 +263,7 @@ def _filter_numeric_values(data: dict[str, Any] | None) -> dict[str, float]:
     """Filter dictionary to only include numeric values (int/float)."""
     if not data:
         return {}
-    return {
-        k: float(v)
-        for k, v in data.items()
-        if isinstance(v, (int, float)) and not isinstance(v, bool)
-    }
+    return {k: float(v) for k, v in data.items() if isinstance(v, (int, float)) and not isinstance(v, bool)}
 
 
 def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:

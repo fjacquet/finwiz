@@ -6,7 +6,7 @@ including mean-variance optimization, risk parity, Black-Litterman, and
 Hierarchical Risk Parity (HRP).
 """
 
-from typing import Any, Never
+from typing import Any
 
 import numpy as np
 
@@ -16,17 +16,7 @@ try:
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
-
-    class MockOptimize:
-        """Mock optimize class when SciPy is not available."""
-
-        OptimizeWarning = Warning
-
-        def minimize(self, *args: Any, **kwargs: Any) -> Never:
-            """Mock minimize method."""
-            raise ImportError("SciPy not available")
-
-    optimize = MockOptimize()
+    optimize = None  # type: ignore[assignment]
 
 from finwiz.quantitative.config import OptimizationMethod
 from finwiz.quantitative.constraint_handlers import ConstraintHandler, OptimizationConstraint
@@ -71,8 +61,11 @@ class PortfolioOptimizationAlgorithms:
             Optimal portfolio weights
 
         """
-        if not SCIPY_AVAILABLE:
+        if not SCIPY_AVAILABLE or optimize is None:
             raise ImportError("SciPy is required for mean-variance optimization")
+
+        # Assign to Any-typed variable for type checking
+        scipy_opt: Any = optimize
 
         n_assets = len(returns)
 
@@ -100,12 +93,13 @@ class PortfolioOptimizationAlgorithms:
         x0 = np.array([1.0 / n_assets] * n_assets)
 
         # Optimize
-        result = optimize.minimize(objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9})
+        result = scipy_opt.minimize(objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9})
 
         if not result.success:
             logger.warning(f"Mean-variance optimization did not converge: {result.message}")
 
-        return result.x
+        weights: np.ndarray = result.x
+        return weights
 
     def optimize_risk_parity(
         self,
@@ -125,8 +119,11 @@ class PortfolioOptimizationAlgorithms:
             Optimal portfolio weights
 
         """
-        if not SCIPY_AVAILABLE:
+        if not SCIPY_AVAILABLE or optimize is None:
             raise ImportError("SciPy is required for risk parity optimization")
+
+        # Assign to Any-typed variable for type checking
+        scipy_opt: Any = optimize
 
         n_assets = len(returns)
 
@@ -137,18 +134,18 @@ class PortfolioOptimizationAlgorithms:
         constraints_list = self.constraint_handler.build_scipy_constraints(n_assets, constraints)
 
         # Bounds (long-only with small lower bound to avoid division by zero)
-        bounds = [(0.001, 1) for _ in range(n_assets)]
+        bounds: list[tuple[float, float]] = [(0.001, 1.0) for _ in range(n_assets)]
 
         # Override with custom bounds if provided
         if constraints:
-            custom_bounds = self.constraint_handler.build_weight_bounds(n_assets, constraints, default_bounds=(0.001, 1))
+            custom_bounds = self.constraint_handler.build_weight_bounds(n_assets, constraints, default_bounds=(0.001, 1.0))
             bounds = custom_bounds
 
         # Initial guess
         x0 = np.array([1.0 / n_assets] * n_assets)
 
         # Optimize
-        result = optimize.minimize(
+        result = scipy_opt.minimize(
             objective_func,
             x0,
             method="SLSQP",
@@ -160,7 +157,8 @@ class PortfolioOptimizationAlgorithms:
         if not result.success:
             logger.warning(f"Risk parity optimization did not converge: {result.message}")
 
-        return result.x
+        weights: np.ndarray = result.x
+        return weights
 
     def optimize_black_litterman(
         self,
@@ -251,9 +249,11 @@ class PortfolioOptimizationAlgorithms:
             if not is_valid:
                 logger.warning(f"HRP weights violate constraints: {violations}")
                 # Fall back to equal weights
-                return np.array([1.0 / n_assets] * n_assets)
+                fallback_weights: np.ndarray = np.array([1.0 / n_assets] * n_assets)
+                return fallback_weights
 
-        return inv_vol_weights
+        result_weights: np.ndarray = inv_vol_weights
+        return result_weights
 
     def optimize_for_target_return(
         self,
@@ -275,8 +275,11 @@ class PortfolioOptimizationAlgorithms:
             Optimal weights or None if optimization fails
 
         """
-        if not SCIPY_AVAILABLE:
+        if not SCIPY_AVAILABLE or optimize is None:
             raise ImportError("SciPy is required for target return optimization")
+
+        # Assign to Any-typed variable for type checking
+        scipy_opt: Any = optimize
 
         n_assets = len(returns)
 
@@ -293,7 +296,7 @@ class PortfolioOptimizationAlgorithms:
         x0 = np.array([1.0 / n_assets] * n_assets)
 
         # Optimize
-        result = optimize.minimize(objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9})
+        result = scipy_opt.minimize(objective_func, x0, method="SLSQP", bounds=bounds, constraints=constraints_list, options={"maxiter": 1000, "ftol": 1e-9})
 
         return result.x if result.success else None
 
@@ -381,6 +384,8 @@ class PortfolioOptimizationAlgorithms:
             logger.warning("Covariance matrix is not positive definite, adding regularization")
             # Add small regularization to diagonal
             regularization_matrix = regularization * np.eye(cov_matrix.shape[0])
-            return cov_matrix + regularization_matrix
+            regularized: np.ndarray = cov_matrix + regularization_matrix
+            return regularized
 
-        return cov_matrix
+        result: np.ndarray = cov_matrix
+        return result

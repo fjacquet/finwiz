@@ -6,7 +6,7 @@ addressing the "Invalid response from LLM call - None or empty" error without
 changing model configurations.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import BaseLLM
@@ -75,7 +75,7 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
             # Check if it's a langchain LLM that we can wrap
             if isinstance(llm, BaseLLM | BaseChatModel):
                 logger.info(f"Adding retry wrapper to LLM: {type(llm).__name__}")
-                return get_llm_with_retries(llm, max_retries=max_retries, verbose=verbose)
+                return get_llm_with_retries(cast(BaseLLM, llm), max_retries=max_retries, verbose=verbose)
             return llm
 
         # Patch OpenAI adapter if applicable
@@ -89,7 +89,7 @@ def patch_crewai_llm_initialization(max_retries: int = 5, verbose: bool = True) 
                 # Check if it's a langchain LLM that we can wrap
                 if isinstance(model, BaseLLM | BaseChatModel):
                     logger.info(f"Adding retry wrapper to OpenAI model: {type(model).__name__}")
-                    return get_llm_with_retries(model, max_retries=max_retries, verbose=verbose)
+                    return get_llm_with_retries(cast(BaseLLM, model), max_retries=max_retries, verbose=verbose)
                 return model
 
             # Apply the patch to OpenAI adapter

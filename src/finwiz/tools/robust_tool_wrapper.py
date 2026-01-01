@@ -119,7 +119,7 @@ class RobustToolWrapper:
                 logger.error(f"Tool {tool.name} failed: {str(e)}")
                 return f"Error: {tool.name} failed - {str(e)}"
 
-        tool._run = robust_run
+        tool._run = robust_run  # type: ignore[method-assign]
         return tool
 
 

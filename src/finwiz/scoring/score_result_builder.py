@@ -308,7 +308,7 @@ class ScoreResultBuilder:
         data_quality -= missing_fields * 0.1
 
         # Combined confidence
-        return min(1.0, max(0.3, consistency_confidence * data_quality))
+        return float(min(1.0, max(0.3, consistency_confidence * data_quality)))
 
     def is_quality_company(self, fundamental_score: float, fundamental_details: dict[str, Any]) -> bool:
         """
@@ -343,7 +343,7 @@ class ScoreResultBuilder:
 
         # Need at least 2 out of 3 quality indicators
         quality_indicators = sum([has_high_roe, has_low_debt, has_strong_margins])
-        return quality_indicators >= 2
+        return bool(quality_indicators >= 2)
 
     def create_error_result(self, ticker: str, asset_class: str, error_msg: str) -> DeepAnalysisResult:
         """Create a default result for error cases."""

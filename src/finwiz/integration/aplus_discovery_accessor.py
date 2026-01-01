@@ -10,7 +10,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 class APlusDiscoveryAccessor:
@@ -89,7 +89,7 @@ class APlusDiscoveryAccessor:
                 self.logger.warning("No discovery results available to load")
                 return None
 
-            results = {
+            results: dict[str, Any] = {
                 "stocks": self._load_stock_results(),
                 "etfs": self._load_etf_results(),
                 "crypto": self._load_crypto_results(),
@@ -97,18 +97,19 @@ class APlusDiscoveryAccessor:
             }
 
             # Count total opportunities
-            total_opportunities = (
-                len(results["stocks"].get("a_plus_candidates", [])) + len(results["etfs"].get("a_plus_candidates", [])) + len(results["crypto"].get("a_plus_candidates", []))
-            )
+            stocks_data = cast(dict[str, Any], results["stocks"])
+            etfs_data = cast(dict[str, Any], results["etfs"])
+            crypto_data = cast(dict[str, Any], results["crypto"])
+            total_opportunities = len(stocks_data.get("a_plus_candidates", [])) + len(etfs_data.get("a_plus_candidates", [])) + len(crypto_data.get("a_plus_candidates", []))
 
             results["total_opportunities"] = total_opportunities
 
             self.logger.info(
                 "Discovery results loaded successfully",
                 extra={
-                    "stock_count": len(results["stocks"].get("a_plus_candidates", [])),
-                    "etf_count": len(results["etfs"].get("a_plus_candidates", [])),
-                    "crypto_count": len(results["crypto"].get("a_plus_candidates", [])),
+                    "stock_count": len(stocks_data.get("a_plus_candidates", [])),
+                    "etf_count": len(etfs_data.get("a_plus_candidates", [])),
+                    "crypto_count": len(crypto_data.get("a_plus_candidates", [])),
                     "total_opportunities": total_opportunities,
                 },
             )
@@ -179,7 +180,7 @@ class APlusDiscoveryAccessor:
 
         try:
             content = stock_file.read_text(encoding="utf-8")
-            data = json.loads(content)
+            data: dict[str, Any] = json.loads(content)
             self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} stock candidates")
             return data
         except Exception as e:
@@ -196,7 +197,7 @@ class APlusDiscoveryAccessor:
 
         try:
             content = etf_file.read_text(encoding="utf-8")
-            data = json.loads(content)
+            data: dict[str, Any] = json.loads(content)
             self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} ETF candidates")
             return data
         except Exception as e:
@@ -213,7 +214,7 @@ class APlusDiscoveryAccessor:
 
         try:
             content = crypto_file.read_text(encoding="utf-8")
-            data = json.loads(content)
+            data: dict[str, Any] = json.loads(content)
             self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} crypto candidates")
             return data
         except Exception as e:

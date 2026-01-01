@@ -19,7 +19,7 @@ import time
 from collections import Counter
 from operator import itemgetter
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from finwiz.orchestrators.portfolio_decision_builders import (
     assess_risk,
@@ -316,7 +316,7 @@ class PortfolioHoldingsProcessor:
             currency=holding.currency or base_currency,
             decision=decision,  # type: ignore[arg-type]
             composite_score=score,
-            grade=grade_info.grade,  # type: ignore[arg-type]
+            grade=grade_info.grade,
             grade_description=grade_info.description,
             recommended_action=grade_info.action,
             risk=risk,
@@ -394,7 +394,8 @@ class PortfolioHoldingsProcessor:
                     excluded.append((ticker, reason))
 
         # Count by asset class using Counter (FP pattern)
-        by_asset_class = dict(Counter(r.holding.asset_class for r in self.processing_results))
+        # Cast Literal keys to str for ProcessingSummary compatibility
+        by_asset_class = cast(dict[str, int], dict(Counter(r.holding.asset_class for r in self.processing_results)))
 
         logger.info(f"Processing summary: total={total}, successful={successful}, warnings={warnings}, failed={failed}")
 

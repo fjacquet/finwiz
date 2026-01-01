@@ -209,7 +209,7 @@ def calculate_expense_impact(returns: pd.Series, expense_ratio: float, years: in
         return {"annual_drag": 0.0, "cumulative_cost": 0.0, "return_reduction_pct": 0.0}
 
 
-def calculate_liquidity_score(avg_daily_volume: float, bid_ask_spread_pct: float, market_cap: float) -> dict[str, float]:
+def calculate_liquidity_score(avg_daily_volume: float, bid_ask_spread_pct: float, market_cap: float) -> dict[str, float | str]:
     """
     Calculate liquidity score for an ETF based on multiple factors.
 
@@ -295,7 +295,7 @@ def calculate_liquidity_score(avg_daily_volume: float, bid_ask_spread_pct: float
         else:
             liquidity_rating = "Poor"
 
-        result = {
+        result: dict[str, float | str] = {
             "liquidity_score": liquidity_score,
             "volume_score": volume_score,
             "spread_score": spread_score,
@@ -318,7 +318,7 @@ def calculate_liquidity_score(avg_daily_volume: float, bid_ask_spread_pct: float
         }
 
 
-def calculate_concentration_risk(holdings: list[dict[str, float]], top_n: int = 10) -> dict[str, float]:
+def calculate_concentration_risk(holdings: list[dict[str, float]], top_n: int = 10) -> dict[str, float | str | int]:
     """
     Calculate concentration risk from ETF top holdings.
 
@@ -427,7 +427,7 @@ def calculate_concentration_risk(holdings: list[dict[str, float]], top_n: int = 
         }
 
 
-def calculate_etf_efficiency_score(tracking_error: float, expense_ratio: float, liquidity_score: float) -> dict[str, float]:
+def calculate_etf_efficiency_score(tracking_error: float, expense_ratio: float, liquidity_score: float) -> dict[str, float | str]:
     """
     Calculate overall ETF efficiency score combining multiple factors.
 
@@ -499,7 +499,7 @@ def calculate_etf_efficiency_score(tracking_error: float, expense_ratio: float, 
         else:
             efficiency_rating = "Poor"
 
-        result = {
+        result: dict[str, float | str] = {
             "efficiency_score": efficiency_score,
             "tracking_score": tracking_score,
             "cost_score": cost_score,

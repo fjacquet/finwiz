@@ -62,11 +62,7 @@ def record_timeout(
         circuit_breaker: CircuitBreaker for failure tracking
 
     """
-    logger.warning(
-        f"⚠️ Database operation timed out after {timeout}s "
-        f"[Total timeouts: {metrics.timeout_count + 1}, "
-        f"Success rate: {metrics.get_success_rate():.1%}]"
-    )
+    logger.warning(f"⚠️ Database operation timed out after {timeout}s [Total timeouts: {metrics.timeout_count + 1}, Success rate: {metrics.get_success_rate():.1%}]")
     metrics.record_timeout()
     circuit_breaker.record_failure()
 
@@ -85,11 +81,7 @@ def record_error(
         circuit_breaker: CircuitBreaker for failure tracking
 
     """
-    logger.error(
-        f"❌ Database operation failed: {error} "
-        f"[Total failures: {metrics.failed_operations + 1}, "
-        f"Success rate: {metrics.get_success_rate():.1%}]"
-    )
+    logger.error(f"❌ Database operation failed: {error} [Total failures: {metrics.failed_operations + 1}, Success rate: {metrics.get_success_rate():.1%}]")
     metrics.record_failure()
     circuit_breaker.record_failure()
 

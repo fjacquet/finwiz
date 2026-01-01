@@ -373,7 +373,8 @@ class ValidationOrchestrator:
         """Retrieve consolidated data from data accessor."""
         try:
             if self.data_accessor:
-                return self.data_accessor.get_consolidated_reporter_input()
+                result: dict[str, Any] = self.data_accessor.get_consolidated_reporter_input()
+                return result
             self.logger.warning("No data_accessor available")
             return {}
         except Exception as e:

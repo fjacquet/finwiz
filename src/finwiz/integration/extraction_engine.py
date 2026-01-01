@@ -176,7 +176,7 @@ class ExtractionEngine:
             data = json.loads(content)
 
             # Extract market context if available
-            market_context = data.get("market_context", {})
+            market_context: dict[str, Any] = data.get("market_context", {})
             if market_context:
                 self.logger.info("Market context extracted from discovery results")
                 return market_context

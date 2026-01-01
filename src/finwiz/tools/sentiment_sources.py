@@ -6,9 +6,9 @@ Yahoo Finance, Perplexity Sonar, and other news providers.
 """
 
 import datetime
-from typing import Any
+from typing import Any, Literal, cast
 
-import yfinance as yf  # type: ignore[import-untyped]  # yfinance has no official type stubs
+import yfinance as yf  # yfinance has no official type stubs
 
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.tools.logger import get_logger
@@ -410,7 +410,9 @@ class SentimentDataSources:
 
         if perplexity_integration:
             try:
-                sonar_result = await perplexity_integration.search_sentiment_news(ticker=ticker, asset_type=asset_type, max_results=max_articles // 2)
+                sonar_result = await perplexity_integration.search_sentiment_news(
+                    ticker=ticker, asset_type=cast(Literal["stock", "etf", "crypto"], asset_type), max_results=max_articles // 2
+                )
 
                 if sonar_result.success:
                     sonar_data = sonar_result.results

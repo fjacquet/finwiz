@@ -115,12 +115,13 @@ class DataParser:
                 raise
 
             # Handle different data structures
+            candidates: list[Any]
             # Case 1: data is already a list of candidates
             if isinstance(data, list):
                 candidates = data
             # Case 2: data is a dict with "candidates" or "a_plus_candidates" key
             elif isinstance(data, dict):
-                candidates = data.get("candidates", data.get("a_plus_candidates", []))
+                candidates = data.get("candidates") or data.get("a_plus_candidates") or []
             else:
                 self.logger.error(f"Unexpected data type in {file_path.name}: {type(data)}")
                 return []

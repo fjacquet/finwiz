@@ -32,15 +32,20 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from typing import cast
+
+from pydantic import BaseModel
 
 from finwiz.schemas.crew_exports import (
     ConsolidatedReportExport,
     CryptoCrewExport,
+    DeepAnalysisCrewExport,
     DiscoveryCrewExport,
     ETFCrewExport,
     RebalancingCrewExport,
     StockCrewExport,
 )
+from finwiz.schemas.python_analysis import PythonDeepAnalysisResult
 from finwiz.tools.logger import get_logger
 from finwiz.utils.report_export_loaders import load_deep_analysis_exports, load_exports
 from finwiz.utils.report_html_collector import (
@@ -108,10 +113,7 @@ class ReportConsolidator:
             Each dict contains: ticker, crew, path
 
         """
-        paths_for_template = [
-            {"ticker": hp.ticker, "crew": hp.crew, "path": hp.path, "asset_class": hp.asset_class}
-            for hp in self._html_report_paths
-        ]
+        paths_for_template = [{"ticker": hp.ticker, "crew": hp.crew, "path": hp.path, "asset_class": hp.asset_class} for hp in self._html_report_paths]
         return paths_for_template, len(paths_for_template)
 
     def consolidate_reports(self, crew_export_paths: dict[str, list[str]]) -> ConsolidatedReportExport:
@@ -178,7 +180,7 @@ class ReportConsolidator:
                 logger.info(f"Consolidating {len(crew_export_paths[crew_key])} {crew_key} analyses")
                 exports = load_exports(
                     crew_export_paths[crew_key],
-                    schema_class,
+                    cast(type[BaseModel], schema_class),
                     crew_key,
                     self.session_id,
                     self._validation_errors,
@@ -191,21 +193,21 @@ class ReportConsolidator:
         # Handle deep analysis separately (multiple schemas)
         if "deep_analysis_crew" in crew_export_paths:
             logger.info(f"Consolidating {len(crew_export_paths['deep_analysis_crew'])} deep analyses")
-            consolidated.deep_analyses = load_deep_analysis_exports(
-                crew_export_paths["deep_analysis_crew"],
-                self._validation_errors,
+            deep_analysis_results: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult] = cast(
+                list[DeepAnalysisCrewExport | PythonDeepAnalysisResult],
+                load_deep_analysis_exports(
+                    crew_export_paths["deep_analysis_crew"],
+                    self._validation_errors,
+                ),
             )
+            consolidated.deep_analyses = deep_analysis_results
             status = "completed" if consolidated.deep_analyses else "failed"
             consolidated.crew_execution_status["deep_analysis_crew"] = status
             logger.info(f"Deep analysis consolidation: {status} ({len(consolidated.deep_analyses)} exports)")
 
         # Handle single-result crews (discovery, rebalancing)
-        self._consolidate_single_result_crew(
-            consolidated, crew_export_paths, "discovery_crew", "discovery_results", DiscoveryCrewExport
-        )
-        self._consolidate_single_result_crew(
-            consolidated, crew_export_paths, "rebalancing_crew", "rebalancing_results", RebalancingCrewExport
-        )
+        self._consolidate_single_result_crew(consolidated, crew_export_paths, "discovery_crew", "discovery_results", DiscoveryCrewExport)
+        self._consolidate_single_result_crew(consolidated, crew_export_paths, "rebalancing_crew", "rebalancing_results", RebalancingCrewExport)
 
     def _consolidate_single_result_crew(
         self,
@@ -238,9 +240,7 @@ class ReportConsolidator:
         """Consolidate special crew types (portfolio, A+, backtesting)."""
         # Portfolio data
         if "portfolio_crew" in crew_export_paths:
-            self._load_generic_json_data(
-                consolidated, crew_export_paths["portfolio_crew"], "portfolio_data", "portfolio_crew"
-            )
+            self._load_generic_json_data(consolidated, crew_export_paths["portfolio_crew"], "portfolio_data", "portfolio_crew")
 
         # A+ opportunities
         if "aplus_crew" in crew_export_paths:
@@ -248,9 +248,7 @@ class ReportConsolidator:
 
         # Backtesting results
         if "backtesting_crew" in crew_export_paths:
-            self._load_generic_json_data(
-                consolidated, crew_export_paths["backtesting_crew"], "backtesting_data", "backtesting_crew"
-            )
+            self._load_generic_json_data(consolidated, crew_export_paths["backtesting_crew"], "backtesting_data", "backtesting_crew")
 
     def _load_generic_json_data(
         self,

@@ -17,7 +17,7 @@ class DataLineageTracker:
     Enhanced with comprehensive data flow tracking and analysis.
     """
 
-    def __init__(self, lineage_file: Path = None) -> None:
+    def __init__(self, lineage_file: Path | None = None) -> None:
         """
         Initialize the lineage tracker.
 
@@ -33,9 +33,9 @@ class DataLineageTracker:
         self.logger = IntegrationLogger("finwiz.integration.lineage")
 
         # Track active operations
-        self.active_operations = {}
+        self.active_operations: dict[str, Any] = {}
 
-    def track_crew_execution(self, crew_name: str, input_data: dict[str, Any], output_files: list, metadata: dict[str, Any] = None) -> None:
+    def track_crew_execution(self, crew_name: str, input_data: dict[str, Any], output_files: list, metadata: dict[str, Any] | None = None) -> None:
         """
         Track a crew execution in the lineage.
 
@@ -85,7 +85,7 @@ class DataLineageTracker:
         except Exception:
             return []
 
-    def track_data_dependency(self, dependent_crew: str, source_crew: str, dependency_type: str, file_path: str = None) -> None:
+    def track_data_dependency(self, dependent_crew: str, source_crew: str, dependency_type: str, file_path: str | None = None) -> None:
         """Track data dependencies between crews."""
         try:
             dependency_entry = {
@@ -120,7 +120,7 @@ class DataLineageTracker:
         except Exception as e:
             self.logger.log_integration_error(error_type="DEPENDENCY_TRACKING_ERROR", crew_name=dependent_crew, error_message=str(e))
 
-    def track_data_flow(self, from_crew: str, to_crew: str, data_type: str, transformation: str = None, validation_status: str = None) -> None:
+    def track_data_flow(self, from_crew: str, to_crew: str, data_type: str, transformation: str | None = None, validation_status: str | None = None) -> None:
         """Track data flow between crews."""
         try:
             flow_entry = {
@@ -221,7 +221,8 @@ class DataLineageTracker:
         try:
             if self.lineage_file.exists():
                 with open(self.lineage_file, encoding="utf-8") as f:
-                    return json.load(f)
+                    result: dict[str, Any] = json.load(f)
+                    return result
         except Exception:
             pass
 

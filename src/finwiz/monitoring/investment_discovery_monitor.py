@@ -84,7 +84,7 @@ class InvestmentDiscoveryMonitor:
 
         # Performance tracking
         self.discovery_times: list[float] = []
-        self.grade_changes: dict[str, list[str]] = defaultdict(list)
+        self.grade_changes: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
         logger.info("Investment Discovery Monitor initialized")
 

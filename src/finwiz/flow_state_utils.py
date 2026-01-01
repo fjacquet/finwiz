@@ -37,34 +37,20 @@ def check_core_analysis_availability(
     crypto_available = False
 
     try:
-        stock_data = integration_manager.get_crew_data_with_freshness_check(
-            "stock", max_age_hours=24, warn_on_stale=False
-        )
+        stock_data = integration_manager.get_crew_data_with_freshness_check("stock", max_age_hours=24, warn_on_stale=False)
         stock_available = stock_data is not None
 
-        etf_data = integration_manager.get_crew_data_with_freshness_check(
-            "etf", max_age_hours=24, warn_on_stale=False
-        )
+        etf_data = integration_manager.get_crew_data_with_freshness_check("etf", max_age_hours=24, warn_on_stale=False)
         etf_available = etf_data is not None
 
-        crypto_data = integration_manager.get_crew_data_with_freshness_check(
-            "crypto", max_age_hours=24, warn_on_stale=False
-        )
+        crypto_data = integration_manager.get_crew_data_with_freshness_check("crypto", max_age_hours=24, warn_on_stale=False)
         crypto_available = crypto_data is not None
 
     except Exception as e:
-        logger.warning(
-            f"Failed to check actual data availability, falling back to state flags: {e}"
-        )
-        stock_available = state.stock_analysis_success or (
-            state.stock_analysis_fallback and state.stock_analysis_result is not None
-        )
-        etf_available = state.etf_analysis_success or (
-            state.etf_analysis_fallback and state.etf_analysis_result is not None
-        )
-        crypto_available = state.crypto_analysis_success or (
-            state.crypto_analysis_fallback and state.crypto_analysis_result is not None
-        )
+        logger.warning(f"Failed to check actual data availability, falling back to state flags: {e}")
+        stock_available = state.stock_analysis_success or (state.stock_analysis_fallback and state.stock_analysis_result is not None)
+        etf_available = state.etf_analysis_success or (state.etf_analysis_fallback and state.etf_analysis_result is not None)
+        crypto_available = state.crypto_analysis_success or (state.crypto_analysis_fallback and state.crypto_analysis_result is not None)
 
     available_crews = []
     if stock_available:
@@ -147,9 +133,7 @@ def extract_market_context_from_core_analysis(
         # Extract common risk factors and opportunities
         _extract_common_factors(core_analysis_data, market_context)
 
-        logger.debug(
-            f"Extracted market context from {len(core_analysis_data)} analyses"
-        )
+        logger.debug(f"Extracted market context from {len(core_analysis_data)} analyses")
         return market_context
 
     except Exception as e:
@@ -165,16 +149,8 @@ def _extract_stock_context(
     if "market_sentiments" in stock_data:
         sentiments = stock_data["market_sentiments"]
         if sentiments and len(sentiments) > 0:
-            positive_count = sum(
-                1
-                for s in sentiments
-                if s.get("sentiment", "").lower() in ["positive", "bullish"]
-            )
-            negative_count = sum(
-                1
-                for s in sentiments
-                if s.get("sentiment", "").lower() in ["negative", "bearish"]
-            )
+            positive_count = sum(1 for s in sentiments if s.get("sentiment", "").lower() in ["positive", "bullish"])
+            negative_count = sum(1 for s in sentiments if s.get("sentiment", "").lower() in ["negative", "bearish"])
 
             if positive_count > negative_count:
                 market_context["overall_sentiment"] = "positive"
@@ -200,9 +176,7 @@ def _extract_crypto_context(
 ) -> None:
     """Extract context from crypto analysis data."""
     if "market_dynamics" in crypto_data:
-        market_context["market_trends"].append(
-            f"Crypto: {crypto_data['market_dynamics']}"
-        )
+        market_context["market_trends"].append(f"Crypto: {crypto_data['market_dynamics']}")
 
 
 def _extract_common_factors(
@@ -253,9 +227,7 @@ def get_degraded_functionality_summary(state: "FinwizState") -> dict[str, Any]:
 
     for crew_name, fallback_strategy in fallback_strategies.items():
         if fallback_strategy:
-            degraded_summary["fallback_strategies_used"].append(
-                f"{crew_name}: {fallback_strategy}"
-            )
+            degraded_summary["fallback_strategies_used"].append(f"{crew_name}: {fallback_strategy}")
 
     if state.stale_data_warnings:
         degraded_summary["data_quality_issues"].append("stale_data")

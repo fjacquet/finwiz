@@ -119,8 +119,8 @@ class TechnicalPatterns:
                 contributing_indicators = [level["source"] for level in group]
 
                 # Find Fibonacci and S/R levels in this zone
-                fib_level = next((level["price"] for level in group if level["type"] == "fibonacci"), None)
-                sr_level = next((level["price"] for level in group if level["type"] == "support_resistance"), None)
+                fib_price: float | None = next((level["price"] for level in group if level["type"] == "fibonacci"), None)
+                sr_price: float | None = next((level["price"] for level in group if level["type"] == "support_resistance"), None)
 
                 confluence_zones.append(
                     ConfluenceZone(
@@ -128,8 +128,8 @@ class TechnicalPatterns:
                         zone_type=zone_type,
                         confluence_score=confluence_score,
                         contributing_indicators=contributing_indicators,
-                        fibonacci_level=fib_level,
-                        support_resistance_level=sr_level,
+                        fibonacci_level=fib_price,
+                        support_resistance_level=sr_price,
                         signal_strength=confluence_score,
                     )
                 )
@@ -147,9 +147,9 @@ class TechnicalPatterns:
         confluence_zones: list[ConfluenceZone],
     ) -> tuple[str, float]:
         """Determine overall trading signal and confidence."""
-        buy_signals = 0
-        sell_signals = 0
-        total_strength = 0
+        buy_signals: float = 0.0
+        sell_signals: float = 0.0
+        total_strength: float = 0.0
 
         # Weight indicator signals
         for signal in indicator_signals:
@@ -342,4 +342,4 @@ class TechnicalPatterns:
 
         bonus = 0.2 if has_fib and has_sr else 0.0
 
-        return min(1.0, base_score * avg_strength + bonus)
+        return float(min(1.0, base_score * avg_strength + bonus))

@@ -80,9 +80,7 @@ class FlowStateManager:
         """
         return extract_market_conditions(state)
 
-    def extract_market_context_from_core_analysis(
-        self, core_analysis_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def extract_market_context_from_core_analysis(self, core_analysis_data: dict[str, Any]) -> dict[str, Any]:
         """Extract market context information from core analysis results.
 
         Args:
@@ -95,9 +93,7 @@ class FlowStateManager:
         """
         return extract_market_context_from_core_analysis(core_analysis_data, self.logger)
 
-    def prepare_core_analysis_summary(
-        self, consolidated_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def prepare_core_analysis_summary(self, consolidated_data: dict[str, Any]) -> dict[str, Any]:
         """Prepare a summary of core analysis results for the reporter.
 
         Args:

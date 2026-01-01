@@ -46,7 +46,7 @@ class IntegrationHealthChecker:
     for single-user workflow debugging and monitoring.
     """
 
-    def __init__(self, output_dir: Path = None) -> None:
+    def __init__(self, output_dir: Path | None = None) -> None:
         """
         Initialize the health checker.
 
@@ -346,7 +346,7 @@ class IntegrationHealthChecker:
                 "check_timestamp": datetime.now().isoformat(),
             }
 
-    def export_health_report(self, output_file: Path = None) -> Path:
+    def export_health_report(self, output_file: Path | None = None) -> Path:
         """Export comprehensive health report to JSON file."""
         try:
             report = self.perform_comprehensive_health_check()

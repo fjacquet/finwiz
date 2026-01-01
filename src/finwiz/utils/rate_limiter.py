@@ -285,7 +285,7 @@ class RateLimiter:
 
             delay *= 0.5 + random.random() * 0.5  # Add 0-50% jitter
 
-        return delay
+        return float(delay)
 
     def should_retry(self, provider: APIProvider, attempt: int, error: Exception) -> bool:
         """Determine if a request should be retried based on error and attempt count."""

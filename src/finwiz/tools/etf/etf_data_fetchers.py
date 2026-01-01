@@ -94,7 +94,7 @@ class ETFDataFetcher:
             for selector in issuer_selectors:
                 element = soup.select_one(selector)
                 if element and element.text:
-                    text = element.text.strip()
+                    text: str = element.text.strip()
                     if any(word in text.lower() for word in ["vanguard", "ishares", "spdr", "invesco"]):
                         return text
 

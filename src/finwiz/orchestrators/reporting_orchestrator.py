@@ -484,7 +484,8 @@ class ReportingOrchestrator:
     def _read_json_file(self, file_path: str) -> dict[str, Any]:
         """Read and parse JSON file."""
         with open(file_path, encoding="utf-8") as f:
-            return json.load(f)
+            result: dict[str, Any] = json.load(f)
+            return result
 
     def _extract_portfolio_review(
         self,
@@ -506,7 +507,8 @@ class ReportingOrchestrator:
         """Extract deep analysis results from consolidated data."""
         # Check if deep analysis is in consolidated data
         if "deep_analysis" in consolidated_data:
-            return consolidated_data["deep_analysis"]
+            result: dict[str, Any] | None = consolidated_data["deep_analysis"]
+            return result
 
         # Otherwise read from files
         return self._read_deep_analysis_from_files()
@@ -637,10 +639,7 @@ class ReportingOrchestrator:
             if generated_for_crew:
                 generated_reports[crew_name] = generated_for_crew
 
-        self.logger.info(
-            f"✅ HTML generation complete: {total_generated} generated, "
-            f"{total_failed} skipped/failed"
-        )
+        self.logger.info(f"✅ HTML generation complete: {total_generated} generated, {total_failed} skipped/failed")
 
         # Store in state for final report access
         if hasattr(self.state, "generated_html_reports"):

@@ -36,7 +36,7 @@ class RegulatoryComplianceTool(BaseTool):
     def _run(
         self,
         symbol: str,
-        jurisdictions: list[str] = None,
+        jurisdictions: list[str] | None = None,
         include_risk_assessment: bool = True,
         include_compliance_status: bool = True,
     ) -> dict[str, Any]:

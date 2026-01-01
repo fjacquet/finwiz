@@ -62,7 +62,7 @@ class FinancialPlan(BaseModel):
     last_updated: datetime
 
     # Client information
-    client_profile: ClientProfile = Field(default_factory=ClientProfile)
+    client_profile: ClientProfile = Field(default_factory=lambda: ClientProfile())
 
     # Analysis history
     analysis_history: list[AnalysisRecord] = Field(default_factory=list)

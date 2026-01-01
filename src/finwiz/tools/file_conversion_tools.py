@@ -9,7 +9,7 @@ import logging
 import os
 
 from crewai.tools import BaseTool
-from weasyprint import HTML  # type: ignore[import-untyped]  # weasyprint has no official type stubs
+from weasyprint import HTML  # weasyprint has no official type stubs
 
 logger = logging.getLogger(__name__)
 

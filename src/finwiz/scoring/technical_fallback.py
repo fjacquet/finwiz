@@ -180,14 +180,27 @@ def get_price_history_from_data(data: dict[str, Any]) -> pd.Series | None:
                 return prices["Close"]
             elif "close" in prices.columns:
                 return prices["close"]
-            elif len(prices.columns) == 1:
+            elif len(prices.columns) >= 1:
+                # Fallback: use first column
                 return prices.iloc[:, 0]
+            # Empty DataFrame
+            return None
+        # prices is already a Series
         return prices
 
     if "historical_prices" in data and isinstance(data["historical_prices"], (pd.Series, pd.DataFrame)):
         prices = data["historical_prices"]
-        if isinstance(prices, pd.DataFrame) and "Close" in prices.columns:
-            return prices["Close"]
+        if isinstance(prices, pd.DataFrame):
+            if "Close" in prices.columns:
+                return prices["Close"]
+            elif "close" in prices.columns:
+                return prices["close"]
+            elif len(prices.columns) >= 1:
+                # Fallback: use first column
+                return prices.iloc[:, 0]
+            # Empty DataFrame
+            return None
+        # prices is already a Series
         return prices
 
     # Fallback: Try to fetch price history if ticker is available

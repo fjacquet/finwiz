@@ -5,10 +5,11 @@ This module provides tools for Retrieval Augmented Generation (RAG)
 to enable crews to store and retrieve knowledge across sessions.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from crewai.tools import BaseTool as Tool
 from crewai_tools import RagTool
+from crewai_tools.tools.rag.types import RagToolConfig
 from pydantic import BaseModel
 
 from finwiz.rag_config import DEFAULT_RAG_CONFIG
@@ -76,7 +77,7 @@ def get_rag_tools(collection_suffix: str | None = None) -> list[Tool]:
 
     # Create the underlying RAG tool for retrieval
     underlying_rag_tool = RagTool(
-        config=config,
+        config=cast(RagToolConfig, config),
         summarize=True,
     )
 

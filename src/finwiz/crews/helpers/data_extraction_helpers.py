@@ -18,7 +18,7 @@ class DeepAnalysisExtractor:
     """Extracts information from deep analysis HTML files."""
 
     @staticmethod
-    def load_deep_analysis_html_files() -> dict[str, str]:
+    def load_deep_analysis_html_files() -> dict[str, dict[str, Any]]:
         """
         Load deep analysis HTML files for all holdings.
 

@@ -363,7 +363,7 @@ class CrewFactory:
             # CRITICAL: Prepare crew context with validated tickers
             # This extracts tickers from upstream crew data and prevents hallucination
             try:
-                prepared_context = report_crew.prepare_crew_context(max_age_hours=24, inputs=inputs)
+                prepared_context = report_crew.context_manager.prepare_crew_context(max_age_hours=24, inputs=inputs)
                 ticker_count = prepared_context.get("ticker_count", 0)
 
                 # Check for insufficient tickers warning
@@ -506,7 +506,7 @@ class CrewFactory:
     def _extract_market_context_from_core_analysis(self, core_analysis_data: dict[str, Any]) -> dict[str, Any]:
         """Extract market context from core analysis data."""
         # This is a simplified version - the full implementation is in FlowStateManager
-        market_context = {
+        market_context: dict[str, Any] = {
             "overall_sentiment": "neutral",
             "market_trends": [],
             "risk_factors": [],

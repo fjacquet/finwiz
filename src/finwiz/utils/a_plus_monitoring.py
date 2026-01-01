@@ -139,9 +139,7 @@ class APlusMonitoringSystem:
 
             self.monitored_investments[symbol] = monitored_investment
             self.investment_analyses[symbol] = initial_analysis
-            self.metrics_calculator.track_performance_event(
-                monitored_investment, "initial_recommendation", initial_analysis.composite_score
-            )
+            self.metrics_calculator.track_performance_event(monitored_investment, "initial_recommendation", initial_analysis.composite_score)
 
             logger.info(f"Added {symbol} to A+ monitoring system")
 
@@ -172,9 +170,7 @@ class APlusMonitoringSystem:
         from finwiz.utils.a_plus_monitoring_evaluation import evaluate_single_investment
 
         monitored_inv = self.monitored_investments[symbol]
-        new_analysis = await evaluate_single_investment(
-            symbol, monitored_inv, self.scoring_tool, self.reevaluation_interval_hours, force_evaluation
-        )
+        new_analysis = await evaluate_single_investment(symbol, monitored_inv, self.scoring_tool, self.reevaluation_interval_hours, force_evaluation)
 
         if new_analysis:
             new_grade = new_analysis.candidate.grade
@@ -198,13 +194,12 @@ class APlusMonitoringSystem:
                     results[symbol] = analysis
         return results
 
-    def _determine_alert_severity(
-        self, previous_grade: str, current_grade: str, previous_score: float, current_score: float
-    ) -> "AlertSeverity":
+    def _determine_alert_severity(self, previous_grade: str, current_grade: str, previous_score: float, current_score: float) -> "AlertSeverity":
         """Determine the severity of a grade degradation alert (delegates to module)."""
         from finwiz.utils.a_plus_monitoring_evaluation import determine_alert_severity
 
-        return determine_alert_severity(previous_grade, current_grade, previous_score, current_score)
+        result: AlertSeverity = determine_alert_severity(previous_grade, current_grade, previous_score, current_score)
+        return result
 
     async def check_investment_grade(self, symbol: str) -> Grade | None:
         """Check current grade for a monitored investment."""
@@ -253,11 +248,11 @@ class APlusMonitoringSystem:
                 impact_assessment = await self._assess_regime_impact(previous_regime, new_regime)
                 await self.alert_manager.generate_market_regime_alert(previous_regime, new_regime, impact_assessment)
 
-            for callback in self.regime_change_callbacks:
-                try:
-                    callback(previous_regime, new_regime)
-                except Exception as e:
-                    logger.error(f"Error in regime change callback: {e}")
+                for callback in self.regime_change_callbacks:
+                    try:
+                        callback(previous_regime, new_regime)
+                    except Exception as e:
+                        logger.error(f"Error in regime change callback: {e}")
 
             logger.info(f"Market regime updated: {previous_regime} -> {new_regime}")
 
@@ -272,10 +267,7 @@ class APlusMonitoringSystem:
                     await asyncio.sleep(1)
 
                 metrics = await self.get_performance_metrics()
-                logger.debug(
-                    f"Performance metrics: {metrics.total_recommendations} recommendations, "
-                    f"{metrics.success_rate:.1f}% success rate"
-                )
+                logger.debug(f"Performance metrics: {metrics.total_recommendations} recommendations, {metrics.success_rate:.1f}% success rate")
 
                 await asyncio.sleep(self.reevaluation_interval_hours * 3600)
 
@@ -300,9 +292,7 @@ class APlusMonitoringSystem:
         grade_values = {"A+": 4, "A": 3, "B+": 2, "B": 1, "C+": 0.5, "C": 0, "D": -1, "F": -2}
 
         if grade_values.get(new_grade, 0) < grade_values.get(previous_grade, 0):
-            severity = self._determine_alert_severity(
-                previous_grade, new_grade, monitored_inv.current_score, analysis.composite_score
-            )
+            severity = self._determine_alert_severity(previous_grade, new_grade, monitored_inv.current_score, analysis.composite_score)
 
             alert = GradeDegradationAlert(
                 symbol=monitored_inv.symbol,
@@ -325,9 +315,7 @@ class APlusMonitoringSystem:
         self.metrics_calculator.track_performance_event(monitored_inv, "grade_change", score_change)
         logger.info(f"Grade change for {monitored_inv.symbol}: {previous_grade} -> {new_grade}")
 
-    async def _assess_regime_impact(
-        self, previous_regime: MarketRegime, new_regime: MarketRegime
-    ) -> dict[str, Any]:
+    async def _assess_regime_impact(self, previous_regime: MarketRegime, new_regime: MarketRegime) -> dict[str, Any]:
         """Assess the impact of market regime change (delegates to module)."""
         from finwiz.utils.a_plus_monitoring_regime import assess_regime_impact
 
@@ -358,33 +346,25 @@ class APlusMonitoringSystem:
         """Alias for generate_performance_summary for backward compatibility."""
         return self.generate_performance_summary()
 
-    def _analyze_degradation_factors(
-        self, symbol: str, previous_score: float, current_score: float
-    ) -> list[str]:
+    def _analyze_degradation_factors(self, symbol: str, previous_score: float, current_score: float) -> list[str]:
         """Analyze factors contributing to grade degradation (delegates to module)."""
         from finwiz.utils.a_plus_monitoring_recommendations import analyze_degradation_factors
 
         return analyze_degradation_factors(symbol, previous_score, current_score)
 
-    def _generate_recommended_actions(
-        self, symbol: str, grade: str, degradation_factors: list[str]
-    ) -> list[str]:
+    def _generate_recommended_actions(self, symbol: str, grade: str, degradation_factors: list[str]) -> list[str]:
         """Generate recommended actions (delegates to module)."""
         from finwiz.utils.a_plus_monitoring_recommendations import generate_recommended_actions
 
         return generate_recommended_actions(symbol, grade, degradation_factors)
 
-    def _detect_significant_regime_change(
-        self, old_regime: MarketRegime, new_regime: MarketRegime
-    ) -> bool:
+    def _detect_significant_regime_change(self, old_regime: MarketRegime, new_regime: MarketRegime) -> bool:
         """Detect if a market regime change is significant (delegates to module)."""
         from finwiz.utils.a_plus_monitoring_regime import detect_significant_regime_change
 
         return detect_significant_regime_change(old_regime, new_regime)
 
-    def _is_significant_regime_change(
-        self, old_regime: MarketRegime, new_regime: MarketRegime
-    ) -> bool:
+    def _is_significant_regime_change(self, old_regime: MarketRegime, new_regime: MarketRegime) -> bool:
         """Alias for _detect_significant_regime_change for backward compatibility."""
         return self._detect_significant_regime_change(old_regime, new_regime)
 
