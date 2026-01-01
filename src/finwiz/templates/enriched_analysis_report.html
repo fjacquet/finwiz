@@ -333,18 +333,66 @@
             }
         }
 
-        /* Hover tooltip styling for metric explanations */
-        td[title], th[title] {
-            cursor: help;
+        /* Custom tooltip styling - much more visible than native browser tooltips */
+        .tooltip-container {
             position: relative;
+            cursor: help;
         }
 
-        td[title]:hover {
+        .tooltip-container .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: normal;
+            line-height: 1.5;
+            width: 320px;
+            max-width: 90vw;
+            text-align: left;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .tooltip-container .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: var(--primary-color) transparent transparent transparent;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-container:hover {
             background-color: var(--tooltip-hover-bg);
         }
 
         .metric-name {
             border-bottom: 1px dotted var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .metric-name::after {
+            content: "ⓘ";
+            font-size: 0.8em;
+            color: var(--secondary-color);
+            opacity: 0.7;
         }
 
         .metric-value-formatted {
@@ -356,47 +404,256 @@
             color: var(--text-muted);
             margin-left: 2px;
         }
+
+        .tooltip-title {
+            font-weight: bold;
+            color: var(--warning-color);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .tooltip-interpretation {
+            font-style: italic;
+            color: #adb5bd;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Dark mode tooltip adjustments */
+        @media (prefers-color-scheme: dark) {
+            .tooltip-container .tooltip-text {
+                background-color: #2c3e50;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            }
+            .tooltip-container .tooltip-text::after {
+                border-color: #2c3e50 transparent transparent transparent;
+            }
+        }
     </style>
 </head>
-<!-- Glossary definitions for hover tooltips -->
+<!-- Glossary definitions for hover tooltips - Complete French explanations with interpretations -->
 {% set METRIC_GLOSSARY = {
-    'roe': 'Rendement des capitaux propres - Pourcentage de profit par rapport aux fonds propres. Plus élevé est meilleur (>15% est bon)',
-    'return_on_equity': 'Rendement des capitaux propres - Pourcentage de profit par rapport aux fonds propres. Plus élevé est meilleur (>15% est bon)',
-    'revenue_growth': 'Croissance du chiffre d\'affaires en glissement annuel (en pourcentage)',
-    'profit_margin': 'Marge nette - Bénéfice net en pourcentage du chiffre d\'affaires',
-    'net_margin': 'Marge nette - Bénéfice net en pourcentage du chiffre d\'affaires',
-    'volatility': 'Volatilité annualisée - Mesure du risque. Plus bas = plus stable',
-    'max_drawdown': 'Baisse maximale - Déclin maximum du pic au creux (en pourcentage)',
-    'debt_to_equity': 'Ratio dette/fonds propres - Plus bas indique moins d\'endettement',
-    'pe_ratio': 'Ratio cours/bénéfices (P/E) - Plus bas peut indiquer une sous-évaluation',
-    'p_e_ratio': 'Ratio cours/bénéfices (P/E) - Plus bas peut indiquer une sous-évaluation',
-    'beta': 'Volatilité par rapport au marché (1.0 = marché). >1 plus volatile, <1 moins volatile',
-    'rsi': 'Indice de Force Relative (0-100). >70 suracheté, <30 survendu',
-    'macd': 'Convergence/Divergence des Moyennes Mobiles - Indicateur de momentum',
-    'macd_signal': 'Signal MACD - Ligne de signal pour confirmation des tendances',
-    'moving_average': 'Moyenne mobile - Prix moyen sur une période donnée',
-    'sma_50': 'Moyenne mobile simple 50 jours',
-    'sma_200': 'Moyenne mobile simple 200 jours',
-    'ema_12': 'Moyenne mobile exponentielle 12 jours',
-    'ema_26': 'Moyenne mobile exponentielle 26 jours',
-    'trend_direction': 'Direction de la tendance - Haussière, Baissière ou Neutre',
-    'sharpe_ratio': 'Ratio de Sharpe - Rendement ajusté au risque. Plus élevé est meilleur (>1 est bon)',
-    'sortino_ratio': 'Ratio de Sortino - Rendement ajusté au risque baissier. Plus élevé est meilleur',
-    'current_price': 'Prix actuel de l\'action',
-    'price': 'Prix actuel',
-    'market_cap': 'Capitalisation boursière - Valeur totale de l\'entreprise',
-    'dividend_yield': 'Rendement du dividende - Dividende annuel en pourcentage du prix',
-    'eps': 'Bénéfice par action (Earnings Per Share)',
-    'book_value': 'Valeur comptable par action',
-    'price_to_book': 'Ratio cours/valeur comptable',
-    'free_cash_flow': 'Flux de trésorerie libre',
-    'operating_margin': 'Marge opérationnelle - Bénéfice d\'exploitation en pourcentage du CA',
-    'gross_margin': 'Marge brute - Bénéfice brut en pourcentage du CA',
-    'current_ratio': 'Ratio de liquidité générale - Capacité à payer les dettes court terme',
-    'quick_ratio': 'Ratio de liquidité immédiate - Liquidité sans les stocks',
-    'var_95': 'Value at Risk 95% - Perte maximale estimée avec 95% de confiance',
-    'cvar_95': 'CVaR 95% - Perte moyenne au-delà de la VaR',
-    'information_ratio': 'Ratio d\'information - Performance relative au benchmark'
+    'roe': {
+        'name': 'ROE (Rendement des Capitaux Propres)',
+        'definition': 'Mesure la rentabilité générée par les fonds propres des actionnaires. Calculé comme: Bénéfice Net / Capitaux Propres.',
+        'interpretation': '🟢 >15% = Excellent | 🟡 10-15% = Bon | 🔴 <10% = Faible'
+    },
+    'roe_score': {
+        'name': 'Score ROE',
+        'definition': 'Score normalisé (0-1) basé sur le ROE. Évalue la qualité du rendement des capitaux propres par rapport aux standards du marché.',
+        'interpretation': '🟢 >0.7 = Excellent | 🟡 0.4-0.7 = Acceptable | 🔴 <0.4 = À surveiller'
+    },
+    'return_on_equity': {
+        'name': 'Rendement des Capitaux Propres',
+        'definition': 'Mesure la rentabilité générée par les fonds propres des actionnaires.',
+        'interpretation': '🟢 >15% = Excellent | 🟡 10-15% = Bon | 🔴 <10% = Faible'
+    },
+    'debt_to_equity': {
+        'name': 'Ratio Dette/Fonds Propres',
+        'definition': 'Compare l\'endettement total aux capitaux propres. Indique le niveau de levier financier de l\'entreprise.',
+        'interpretation': '🟢 <0.5 = Conservateur | 🟡 0.5-1.5 = Modéré | 🔴 >1.5 = Risqué'
+    },
+    'debt_score': {
+        'name': 'Score d\'Endettement',
+        'definition': 'Score normalisé (0-1) évaluant la santé de l\'endettement. Un score élevé indique un endettement sain.',
+        'interpretation': '🟢 >0.7 = Faible risque | 🟡 0.4-0.7 = Modéré | 🔴 <0.4 = Élevé'
+    },
+    'revenue_growth': {
+        'name': 'Croissance du CA',
+        'definition': 'Taux de croissance annuel du chiffre d\'affaires. Mesure la dynamique commerciale de l\'entreprise.',
+        'interpretation': '🟢 >15% = Forte croissance | 🟡 5-15% = Croissance | 🔴 <5% = Stagnation'
+    },
+    'growth_score': {
+        'name': 'Score de Croissance',
+        'definition': 'Score normalisé (0-1) évaluant le potentiel de croissance basé sur les revenus et bénéfices.',
+        'interpretation': '🟢 >0.7 = Croissance forte | 🟡 0.4-0.7 = Modérée | 🔴 <0.4 = Faible'
+    },
+    'profit_margin': {
+        'name': 'Marge Nette',
+        'definition': 'Pourcentage du chiffre d\'affaires conservé comme bénéfice après toutes les charges. Bénéfice Net / CA.',
+        'interpretation': '🟢 >15% = Excellente | 🟡 5-15% = Correcte | 🔴 <5% = Faible'
+    },
+    'margin_score': {
+        'name': 'Score de Marge',
+        'definition': 'Score normalisé (0-1) évaluant la qualité des marges par rapport au secteur.',
+        'interpretation': '🟢 >0.7 = Marges solides | 🟡 0.4-0.7 = Moyennes | 🔴 <0.4 = Sous pression'
+    },
+    'fundamental_score': {
+        'name': 'Score Fondamental Global',
+        'definition': 'Score composite (0-1) combinant ROE, endettement, croissance et marges. Reflète la santé financière globale.',
+        'interpretation': '🟢 >0.7 = Fondamentaux solides | 🟡 0.4-0.7 = Acceptables | 🔴 <0.4 = Fragiles'
+    },
+    'rsi': {
+        'name': 'RSI (Relative Strength Index)',
+        'definition': 'Oscillateur de momentum mesurant la vitesse et l\'amplitude des mouvements de prix sur 14 jours.',
+        'interpretation': '🔴 >70 = Suracheté (vendre?) | 🟡 30-70 = Neutre | 🟢 <30 = Survendu (acheter?)'
+    },
+    'rsi_score': {
+        'name': 'Score RSI',
+        'definition': 'Score normalisé (0-1) basé sur le RSI. Évalue si le titre est en zone d\'opportunité d\'achat.',
+        'interpretation': '🟢 >0.7 = Zone d\'achat | 🟡 0.3-0.7 = Neutre | 🔴 <0.3 = Zone de vente'
+    },
+    'current_price': {
+        'name': 'Prix Actuel',
+        'definition': 'Dernier cours de clôture du titre sur le marché.',
+        'interpretation': 'À comparer aux moyennes mobiles pour évaluer la tendance'
+    },
+    'moving_avg_50': {
+        'name': 'Moyenne Mobile 50 jours',
+        'definition': 'Prix moyen sur les 50 derniers jours. Indicateur de tendance court/moyen terme.',
+        'interpretation': '🟢 Prix > MM50 = Tendance haussière | 🔴 Prix < MM50 = Tendance baissière'
+    },
+    'moving_avg_200': {
+        'name': 'Moyenne Mobile 200 jours',
+        'definition': 'Prix moyen sur les 200 derniers jours. Indicateur de tendance long terme.',
+        'interpretation': '🟢 Prix > MM200 = Marché haussier | 🔴 Prix < MM200 = Marché baissier'
+    },
+    'trend_score': {
+        'name': 'Score de Tendance',
+        'definition': 'Score normalisé (0-1) évaluant la force et la direction de la tendance actuelle.',
+        'interpretation': '🟢 >0.7 = Tendance forte | 🟡 0.4-0.7 = Tendance modérée | 🔴 <0.4 = Pas de tendance'
+    },
+    'macd': {
+        'name': 'MACD',
+        'definition': 'Moving Average Convergence Divergence. Différence entre moyennes mobiles exponentielles 12 et 26 jours.',
+        'interpretation': '🟢 MACD > 0 = Momentum haussier | 🔴 MACD < 0 = Momentum baissier'
+    },
+    'macd_signal': {
+        'name': 'Signal MACD',
+        'definition': 'Moyenne mobile exponentielle 9 jours du MACD. Sert à confirmer les signaux d\'achat/vente.',
+        'interpretation': '🟢 MACD > Signal = Achat | 🔴 MACD < Signal = Vente'
+    },
+    'macd_diff': {
+        'name': 'Histogramme MACD',
+        'definition': 'Différence entre MACD et sa ligne de signal. Mesure la force du momentum.',
+        'interpretation': '🟢 Positif croissant = Momentum fort | 🔴 Négatif décroissant = Momentum faible'
+    },
+    'momentum_score': {
+        'name': 'Score de Momentum',
+        'definition': 'Score normalisé (0-1) combinant MACD, RSI et autres indicateurs de momentum.',
+        'interpretation': '🟢 >0.7 = Momentum fort | 🟡 0.4-0.7 = Neutre | 🔴 <0.4 = Momentum faible'
+    },
+    'technical_score': {
+        'name': 'Score Technique Global',
+        'definition': 'Score composite (0-1) combinant tendance, momentum et signaux techniques.',
+        'interpretation': '🟢 >0.7 = Signal d\'achat | 🟡 0.4-0.7 = Neutre | 🔴 <0.4 = Signal de vente'
+    },
+    'volatility': {
+        'name': 'Volatilité Annualisée',
+        'definition': 'Écart-type des rendements annualisé. Mesure l\'amplitude des variations de prix.',
+        'interpretation': '🟢 <20% = Stable | 🟡 20-40% = Modérée | 🔴 >40% = Très volatile'
+    },
+    'volatility_score': {
+        'name': 'Score de Volatilité',
+        'definition': 'Score normalisé (0-1) où un score élevé indique une faible volatilité (moins de risque).',
+        'interpretation': '🟢 >0.7 = Risque faible | 🟡 0.4-0.7 = Risque modéré | 🔴 <0.4 = Risque élevé'
+    },
+    'max_drawdown': {
+        'name': 'Drawdown Maximum',
+        'definition': 'Perte maximale du pic au creux sur la période analysée. Mesure le pire scénario historique.',
+        'interpretation': '🟢 >-15% = Résilient | 🟡 -15% à -30% = Normal | 🔴 <-30% = Risqué'
+    },
+    'drawdown_score': {
+        'name': 'Score de Drawdown',
+        'definition': 'Score normalisé (0-1) évaluant la résistance aux baisses. Score élevé = meilleure protection.',
+        'interpretation': '🟢 >0.7 = Bien protégé | 🟡 0.4-0.7 = Protection moyenne | 🔴 <0.4 = Vulnérable'
+    },
+    'beta': {
+        'name': 'Bêta',
+        'definition': 'Sensibilité du titre par rapport au marché (S&P 500). Bêta 1 = volatilité du marché.',
+        'interpretation': '🟢 0.8-1.2 = Comme le marché | 🟡 <0.8 = Défensif | 🔴 >1.2 = Agressif'
+    },
+    'beta_deviation': {
+        'name': 'Déviation du Bêta',
+        'definition': 'Écart du bêta par rapport à 1 (marché). Mesure combien le titre diffère du comportement du marché.',
+        'interpretation': 'Plus proche de 0 = Plus corrélé au marché'
+    },
+    'beta_score': {
+        'name': 'Score Bêta',
+        'definition': 'Score normalisé (0-1) pénalisant les bêtas extrêmes (trop hauts ou trop bas).',
+        'interpretation': '🟢 >0.7 = Bêta équilibré | 🟡 0.4-0.7 = Acceptable | 🔴 <0.4 = Extrême'
+    },
+    'risk_score': {
+        'name': 'Score de Risque Global',
+        'definition': 'Score composite (0-1) combinant volatilité, drawdown et bêta. Score élevé = moins de risque.',
+        'interpretation': '🟢 >0.7 = Risque maîtrisé | 🟡 0.4-0.7 = Risque moyen | 🔴 <0.4 = Risque élevé'
+    },
+    'sharpe_ratio': {
+        'name': 'Ratio de Sharpe',
+        'definition': 'Rendement excédentaire par unité de risque. (Rendement - Taux sans risque) / Volatilité.',
+        'interpretation': '🟢 >1 = Excellent | 🟡 0.5-1 = Bon | 🔴 <0.5 = Faible'
+    },
+    'sortino_ratio': {
+        'name': 'Ratio de Sortino',
+        'definition': 'Comme Sharpe mais ne pénalise que la volatilité baissière. Plus pertinent pour les investisseurs.',
+        'interpretation': '🟢 >1.5 = Excellent | 🟡 0.5-1.5 = Bon | 🔴 <0.5 = Faible'
+    },
+    'pe_ratio': {
+        'name': 'Ratio P/E (Price/Earnings)',
+        'definition': 'Prix de l\'action divisé par le bénéfice par action. Mesure la valorisation.',
+        'interpretation': '🟢 <15 = Sous-évalué | 🟡 15-25 = Juste valeur | 🔴 >25 = Sur-évalué'
+    },
+    'market_cap': {
+        'name': 'Capitalisation Boursière',
+        'definition': 'Valeur totale de l\'entreprise en bourse = Prix × Nombre d\'actions.',
+        'interpretation': 'Large cap >10B$ | Mid cap 2-10B$ | Small cap <2B$'
+    },
+    'dividend_yield': {
+        'name': 'Rendement du Dividende',
+        'definition': 'Dividende annuel en pourcentage du prix de l\'action. Revenu passif pour l\'investisseur.',
+        'interpretation': '🟢 >3% = Bon rendement | 🟡 1-3% = Modéré | ⚪ 0% = Pas de dividende'
+    },
+    'eps': {
+        'name': 'BPA (Bénéfice Par Action)',
+        'definition': 'Bénéfice net divisé par le nombre d\'actions. Mesure la profitabilité par action.',
+        'interpretation': 'Plus élevé est meilleur. À comparer au secteur.'
+    },
+    'price_to_book': {
+        'name': 'Ratio Prix/Valeur Comptable',
+        'definition': 'Prix de l\'action divisé par la valeur comptable par action. Mesure la prime de marché.',
+        'interpretation': '🟢 <1 = Décote | 🟡 1-3 = Normal | 🔴 >3 = Prime élevée'
+    },
+    'operating_margin': {
+        'name': 'Marge Opérationnelle',
+        'definition': 'Bénéfice d\'exploitation en pourcentage du CA. Mesure l\'efficacité opérationnelle.',
+        'interpretation': '🟢 >20% = Excellente | 🟡 10-20% = Bonne | 🔴 <10% = Faible'
+    },
+    'gross_margin': {
+        'name': 'Marge Brute',
+        'definition': 'Bénéfice brut en pourcentage du CA. (CA - Coût des ventes) / CA.',
+        'interpretation': '🟢 >40% = Excellente | 🟡 20-40% = Correcte | 🔴 <20% = Faible'
+    },
+    'current_ratio': {
+        'name': 'Ratio de Liquidité Générale',
+        'definition': 'Actifs courants / Passifs courants. Capacité à payer les dettes court terme.',
+        'interpretation': '🟢 >1.5 = Solide | 🟡 1-1.5 = Correct | 🔴 <1 = Risqué'
+    },
+    'quick_ratio': {
+        'name': 'Ratio de Liquidité Immédiate',
+        'definition': '(Actifs courants - Stocks) / Passifs courants. Liquidité sans les stocks.',
+        'interpretation': '🟢 >1 = Solide | 🟡 0.5-1 = Correct | 🔴 <0.5 = Risqué'
+    },
+    'var_95': {
+        'name': 'VaR 95%',
+        'definition': 'Value at Risk: Perte maximale avec 95% de confiance sur 1 jour.',
+        'interpretation': 'Exemple: VaR 95% = -2% signifie 5% de chances de perdre plus de 2%'
+    },
+    'cvar_95': {
+        'name': 'CVaR 95% (Expected Shortfall)',
+        'definition': 'Perte moyenne dans les 5% pires cas. Plus conservateur que la VaR.',
+        'interpretation': 'Mesure le risque de queue. Toujours pire que la VaR.'
+    },
+    'information_ratio': {
+        'name': 'Ratio d\'Information',
+        'definition': 'Rendement excédentaire par rapport au benchmark divisé par le tracking error.',
+        'interpretation': '🟢 >0.5 = Surperformance consistante | 🔴 <0 = Sous-performance'
+    },
+    'net_margin': {
+        'name': 'Marge Nette',
+        'definition': 'Bénéfice net en pourcentage du chiffre d\'affaires.',
+        'interpretation': '🟢 >15% = Excellente | 🟡 5-15% = Correcte | 🔴 <5% = Faible'
+    }
 } %}
 
 <!-- Metric categories for formatting -->
@@ -487,14 +744,26 @@
                 </thead>
                 <tbody>
                     {% for key, value in fundamental_metrics.items() %}
+                    {% set metric_info = METRIC_GLOSSARY.get(key.lower(), {'name': key|replace('_', ' ')|title, 'definition': 'Métrique financière fondamentale', 'interpretation': ''}) %}
                     <tr>
-                        <td class="metric-name" title="{{ METRIC_GLOSSARY.get(key.lower(), 'Métrique financière fondamentale') }}">{{ key|replace('_', ' ')|title }}</td>
+                        <td class="tooltip-container">
+                            <span class="metric-name">{{ metric_info.name if metric_info is mapping else key|replace('_', ' ')|title }}</span>
+                            <span class="tooltip-text">
+                                <span class="tooltip-title">{{ metric_info.name if metric_info is mapping else key|replace('_', ' ')|title }}</span>
+                                {{ metric_info.definition if metric_info is mapping else metric_info }}
+                                {% if metric_info is mapping and metric_info.interpretation %}
+                                <span class="tooltip-interpretation">{{ metric_info.interpretation }}</span>
+                                {% endif %}
+                            </span>
+                        </td>
                         <td class="metric-value-formatted">
                             {% if value is number %}
                                 {% if key.lower() in PERCENTAGE_METRICS %}
                                     {{ "%.1f"|format(value * 100) }}<span class="metric-unit">%</span>
                                 {% elif key.lower() in RATIO_METRICS %}
                                     {{ "%.2f"|format(value) }}<span class="metric-unit">x</span>
+                                {% elif key.lower().endswith('_score') %}
+                                    {{ "%.0f"|format(value * 100) }}<span class="metric-unit">%</span>
                                 {% else %}
                                     {{ "%.2f"|format(value) }}
                                 {% endif %}
@@ -517,14 +786,28 @@
                 </thead>
                 <tbody>
                     {% for key, value in technical_indicators.items() %}
+                    {% set metric_info = METRIC_GLOSSARY.get(key.lower(), {'name': key|replace('_', ' ')|title, 'definition': 'Indicateur d\'analyse technique', 'interpretation': ''}) %}
                     <tr>
-                        <td class="metric-name" title="{{ METRIC_GLOSSARY.get(key.lower(), 'Indicateur technique') }}">{{ key|replace('_', ' ')|title }}</td>
+                        <td class="tooltip-container">
+                            <span class="metric-name">{{ metric_info.name if metric_info is mapping else key|replace('_', ' ')|title }}</span>
+                            <span class="tooltip-text">
+                                <span class="tooltip-title">{{ metric_info.name if metric_info is mapping else key|replace('_', ' ')|title }}</span>
+                                {{ metric_info.definition if metric_info is mapping else metric_info }}
+                                {% if metric_info is mapping and metric_info.interpretation %}
+                                <span class="tooltip-interpretation">{{ metric_info.interpretation }}</span>
+                                {% endif %}
+                            </span>
+                        </td>
                         <td class="metric-value-formatted">
                             {% if value is number %}
                                 {% if key.lower() in SCALE_0_100 %}
                                     {{ "%.0f"|format(value) }}<span class="metric-unit"> (0-100)</span>
                                 {% elif key.lower() in PERCENTAGE_METRICS %}
                                     {{ "%.1f"|format(value * 100) }}<span class="metric-unit">%</span>
+                                {% elif key.lower().endswith('_score') %}
+                                    {{ "%.0f"|format(value * 100) }}<span class="metric-unit">%</span>
+                                {% elif 'price' in key.lower() or 'avg' in key.lower() %}
+                                    ${{ "%.2f"|format(value) }}
                                 {% else %}
                                     {{ "%.2f"|format(value) }}
                                 {% endif %}
@@ -547,14 +830,26 @@
                 </thead>
                 <tbody>
                     {% for key, value in risk_metrics.items() %}
+                    {% set metric_info = METRIC_GLOSSARY.get(key.lower(), {'name': key|replace('_', ' ')|title, 'definition': 'Métrique d\'évaluation du risque', 'interpretation': ''}) %}
                     <tr>
-                        <td class="metric-name" title="{{ METRIC_GLOSSARY.get(key.lower(), 'Métrique de risque') }}">{{ key|replace('_', ' ')|title }}</td>
+                        <td class="tooltip-container">
+                            <span class="metric-name">{{ metric_info.name if metric_info is mapping else key|replace('_', ' ')|title }}</span>
+                            <span class="tooltip-text">
+                                <span class="tooltip-title">{{ metric_info.name if metric_info is mapping else key|replace('_', ' ')|title }}</span>
+                                {{ metric_info.definition if metric_info is mapping else metric_info }}
+                                {% if metric_info is mapping and metric_info.interpretation %}
+                                <span class="tooltip-interpretation">{{ metric_info.interpretation }}</span>
+                                {% endif %}
+                            </span>
+                        </td>
                         <td class="metric-value-formatted">
                             {% if value is number %}
                                 {% if key.lower() in PERCENTAGE_METRICS %}
                                     {{ "%.1f"|format(value * 100) }}<span class="metric-unit">%</span>
                                 {% elif key.lower() in RATIO_METRICS %}
                                     {{ "%.2f"|format(value) }}<span class="metric-unit">x</span>
+                                {% elif key.lower().endswith('_score') %}
+                                    {{ "%.0f"|format(value * 100) }}<span class="metric-unit">%</span>
                                 {% else %}
                                     {{ "%.2f"|format(value) }}
                                 {% endif %}
