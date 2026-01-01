@@ -83,8 +83,8 @@ def strategy_with_mocked_broker(mocker):
     strategy.position.size = 0
 
     # Add mock order methods
-    strategy.buy = mocker.MagicMock(return_value=MagicMock())
-    strategy.sell = mocker.MagicMock(return_value=MagicMock())
+    strategy.buy = mocker.MagicMock(return_value=mocker.MagicMock())
+    strategy.sell = mocker.MagicMock(return_value=mocker.MagicMock())
 
     # Add params
     strategy.params = mocker.MagicMock()
@@ -161,8 +161,8 @@ def sma_strategy_with_mocked_broker(mocker):
     strategy.crossover.__getitem__ = mocker.MagicMock(return_value=0)
 
     # Add order methods
-    strategy.buy = mocker.MagicMock(return_value=MagicMock())
-    strategy.sell = mocker.MagicMock(return_value=MagicMock())
+    strategy.buy = mocker.MagicMock(return_value=mocker.MagicMock())
+    strategy.sell = mocker.MagicMock(return_value=mocker.MagicMock())
 
     return strategy
 
@@ -230,8 +230,8 @@ def mean_reversion_strategy_with_mocked_broker(mocker):
     strategy.bollinger.lines.top = [160.0]
 
     # Add order methods
-    strategy.buy = mocker.MagicMock(return_value=MagicMock())
-    strategy.sell = mocker.MagicMock(return_value=MagicMock())
+    strategy.buy = mocker.MagicMock(return_value=mocker.MagicMock())
+    strategy.sell = mocker.MagicMock(return_value=mocker.MagicMock())
 
     return strategy
 
@@ -304,7 +304,7 @@ class TestStrategyFrameworkLogging:
 class TestStrategyFrameworkNotifications:
     """Test order and trade notifications."""
 
-    def test_notify_order_submitted(self, strategy_with_mocked_broker):
+    def test_notify_order_submitted(self, strategy_with_mocked_broker, mocker):
         """Test notify_order with submitted status."""
         strategy = strategy_with_mocked_broker
 
@@ -314,7 +314,7 @@ class TestStrategyFrameworkNotifications:
         # Should return without logging
         strategy.notify_order(order)
 
-    def test_notify_order_accepted(self, strategy_with_mocked_broker):
+    def test_notify_order_accepted(self, strategy_with_mocked_broker, mocker):
         """Test notify_order with accepted status."""
         strategy = strategy_with_mocked_broker
 
@@ -369,7 +369,7 @@ class TestStrategyFrameworkNotifications:
 
         mock_logger.debug.assert_called()
 
-    def test_notify_trade_open_position(self, strategy_with_mocked_broker):
+    def test_notify_trade_open_position(self, strategy_with_mocked_broker, mocker):
         """Test notify_trade with open position (should return early)."""
         strategy = strategy_with_mocked_broker
 
@@ -383,7 +383,7 @@ class TestStrategyFrameworkNotifications:
         # Should return early without processing
         assert len(strategy.trades_executed) == initial_trades
 
-    def test_notify_trade_zero_size(self, strategy_with_mocked_broker):
+    def test_notify_trade_zero_size(self, strategy_with_mocked_broker, mocker):
         """Test notify_trade with zero size (should skip)."""
         strategy = strategy_with_mocked_broker
 
@@ -444,7 +444,7 @@ class TestStrategyFrameworkNotifications:
 class TestStrategyFrameworkPositionSizing:
     """Test position sizing calculations."""
 
-    def test_calculate_position_size_normal(self, strategy_with_mocked_broker):
+    def test_calculate_position_size_normal(self, strategy_with_mocked_broker, mocker):
         """Test normal position size calculation."""
         strategy = strategy_with_mocked_broker
         strategy.broker.getvalue = mocker.MagicMock(return_value=100000.0)
@@ -472,7 +472,7 @@ class TestStrategyFrameworkPositionSizing:
 
         assert size == 0
 
-    def test_calculate_position_size_rounds_down(self, strategy_with_mocked_broker):
+    def test_calculate_position_size_rounds_down(self, strategy_with_mocked_broker, mocker):
         """Test position size rounds down to integer."""
         strategy = strategy_with_mocked_broker
         strategy.broker.getvalue = mocker.MagicMock(return_value=100000.0)
@@ -483,7 +483,7 @@ class TestStrategyFrameworkPositionSizing:
         assert size == 30
         assert isinstance(size, int)
 
-    def test_calculate_position_size_high_price(self, strategy_with_mocked_broker):
+    def test_calculate_position_size_high_price(self, strategy_with_mocked_broker, mocker):
         """Test position size with very high price."""
         strategy = strategy_with_mocked_broker
         strategy.broker.getvalue = mocker.MagicMock(return_value=100000.0)
@@ -493,7 +493,7 @@ class TestStrategyFrameworkPositionSizing:
 
         assert size == 0
 
-    def test_calculate_position_size_small_portfolio(self, strategy_with_mocked_broker):
+    def test_calculate_position_size_small_portfolio(self, strategy_with_mocked_broker, mocker):
         """Test position size with small portfolio value."""
         strategy = strategy_with_mocked_broker
         strategy.broker.getvalue = mocker.MagicMock(return_value=1000.0)
@@ -617,7 +617,7 @@ class TestStrategyFrameworkRiskManagement:
 class TestStrategyFrameworkPerformanceTracking:
     """Test performance tracking and drawdown calculation."""
 
-    def test_update_drawdown_new_peak(self, strategy_with_mocked_broker):
+    def test_update_drawdown_new_peak(self, strategy_with_mocked_broker, mocker):
         """Test drawdown update with new peak."""
         strategy = strategy_with_mocked_broker
         strategy.broker.getvalue = mocker.MagicMock(return_value=110000.0)
@@ -627,7 +627,7 @@ class TestStrategyFrameworkPerformanceTracking:
         assert strategy.peak_value == 110000.0
         assert strategy.max_drawdown == 0.0
 
-    def test_update_drawdown_decline(self, strategy_with_mocked_broker):
+    def test_update_drawdown_decline(self, strategy_with_mocked_broker, mocker):
         """Test drawdown update with portfolio decline."""
         strategy = strategy_with_mocked_broker
         strategy.peak_value = 110000.0
@@ -639,7 +639,7 @@ class TestStrategyFrameworkPerformanceTracking:
         expected_dd = (110000 - 100000) / 110000
         assert strategy.max_drawdown == pytest.approx(expected_dd, abs=0.001)
 
-    def test_update_drawdown_multiple_declines(self, strategy_with_mocked_broker):
+    def test_update_drawdown_multiple_declines(self, strategy_with_mocked_broker, mocker):
         """Test drawdown tracks maximum drawdown."""
         strategy = strategy_with_mocked_broker
         strategy.peak_value = 110000.0
@@ -651,7 +651,7 @@ class TestStrategyFrameworkPerformanceTracking:
         expected_dd = (110000 - 100000) / 110000
         assert strategy.max_drawdown == pytest.approx(expected_dd, abs=0.001)
 
-    def test_update_drawdown_recovery(self, strategy_with_mocked_broker):
+    def test_update_drawdown_recovery(self, strategy_with_mocked_broker, mocker):
         """Test drawdown doesn't update on recovery if not new peak."""
         strategy = strategy_with_mocked_broker
         strategy.peak_value = 110000.0
@@ -679,7 +679,7 @@ class TestStrategyFrameworkGenerateSignals:
 class TestStrategyFrameworkNext:
     """Test next() method."""
 
-    def test_next_updates_drawdown(self, strategy_with_mocked_broker):
+    def test_next_updates_drawdown(self, strategy_with_mocked_broker, mocker):
         """Test next() updates drawdown."""
         strategy = strategy_with_mocked_broker
         initial_max_drawdown = strategy.max_drawdown
@@ -691,7 +691,7 @@ class TestStrategyFrameworkNext:
         # Verify drawdown tracking was updated (next() calls update_drawdown())
         assert strategy.max_drawdown >= initial_max_drawdown
 
-    def test_next_records_portfolio_value(self, strategy_with_mocked_broker):
+    def test_next_records_portfolio_value(self, strategy_with_mocked_broker, mocker):
         """Test next() records portfolio value."""
         strategy = strategy_with_mocked_broker
         strategy.broker.getvalue = mocker.MagicMock(return_value=105000.0)
@@ -734,7 +734,7 @@ class TestSimpleMovingAverageStrategyInitialization:
 class TestSimpleMovingAverageSignalGeneration:
     """Test SMA strategy signal generation."""
 
-    def test_generate_signals_insufficient_data(self, sma_strategy_with_mocked_broker):
+    def test_generate_signals_insufficient_data(self, sma_strategy_with_mocked_broker, mocker):
         """Test generate_signals with insufficient data."""
         strategy = sma_strategy_with_mocked_broker
         strategy.data.__len__ = mocker.MagicMock(return_value=30)  # Less than long_period (50)
@@ -743,7 +743,7 @@ class TestSimpleMovingAverageSignalGeneration:
 
         assert signals == []
 
-    def test_generate_signals_bullish_crossover(self, sma_strategy_with_mocked_broker):
+    def test_generate_signals_bullish_crossover(self, sma_strategy_with_mocked_broker, mocker):
         """Test generate_signals with bullish crossover."""
         strategy = sma_strategy_with_mocked_broker
         strategy.crossover.__getitem__ = mocker.MagicMock(return_value=1)  # Bullish
@@ -758,7 +758,7 @@ class TestSimpleMovingAverageSignalGeneration:
         assert signal["strength"] == 0.7
         assert "Short MA" in signal["reason"]
 
-    def test_generate_signals_bearish_crossover(self, sma_strategy_with_mocked_broker):
+    def test_generate_signals_bearish_crossover(self, sma_strategy_with_mocked_broker, mocker):
         """Test generate_signals with bearish crossover."""
         strategy = sma_strategy_with_mocked_broker
         strategy.crossover.__getitem__ = mocker.MagicMock(return_value=-1)  # Bearish
@@ -773,7 +773,7 @@ class TestSimpleMovingAverageSignalGeneration:
         assert signal["strength"] == 0.7
         assert "Short MA" in signal["reason"]
 
-    def test_generate_signals_no_crossover(self, sma_strategy_with_mocked_broker):
+    def test_generate_signals_no_crossover(self, sma_strategy_with_mocked_broker, mocker):
         """Test generate_signals with no crossover."""
         strategy = sma_strategy_with_mocked_broker
         strategy.crossover.__getitem__ = mocker.MagicMock(return_value=0)  # No crossover
@@ -790,7 +790,7 @@ class TestSimpleMovingAverageSignalGeneration:
         (2, "BUY"),  # Any value > 0 generates BUY signal
     ])
     def test_generate_signals_parametrized(
-        self, sma_strategy_with_mocked_broker, crossover_value, expected_signal
+        self, sma_strategy_with_mocked_broker, crossover_value, expected_signal, mocker
     ):
         """Test signal generation with various crossover values."""
         strategy = sma_strategy_with_mocked_broker
@@ -809,7 +809,7 @@ class TestSimpleMovingAverageSignalGeneration:
 class TestSimpleMovingAverageStrategyExecution:
     """Test SMA strategy execution logic."""
 
-    def test_next_insufficient_data(self, sma_strategy_with_mocked_broker):
+    def test_next_insufficient_data(self, sma_strategy_with_mocked_broker, mocker):
         """Test next() with insufficient data."""
         strategy = sma_strategy_with_mocked_broker
         strategy.data.__len__ = mocker.MagicMock(return_value=30)
@@ -819,7 +819,7 @@ class TestSimpleMovingAverageStrategyExecution:
         strategy.buy.assert_not_called()
         strategy.sell.assert_not_called()
 
-    def test_next_bullish_crossover_no_position(self, sma_strategy_with_mocked_broker):
+    def test_next_bullish_crossover_no_position(self, sma_strategy_with_mocked_broker, mocker):
         """Test next() executes buy on bullish crossover with no position."""
         strategy = sma_strategy_with_mocked_broker
         strategy.position = None  # No position
@@ -832,7 +832,7 @@ class TestSimpleMovingAverageStrategyExecution:
 
         strategy.buy.assert_called_once()
 
-    def test_next_bullish_crossover_has_position(self, sma_strategy_with_mocked_broker):
+    def test_next_bullish_crossover_has_position(self, sma_strategy_with_mocked_broker, mocker):
         """Test next() ignores buy signal when already in position."""
         strategy = sma_strategy_with_mocked_broker
         strategy.position.size = 10  # Already in position
@@ -843,7 +843,7 @@ class TestSimpleMovingAverageStrategyExecution:
 
         strategy.buy.assert_not_called()
 
-    def test_next_bearish_crossover_has_position(self, sma_strategy_with_mocked_broker):
+    def test_next_bearish_crossover_has_position(self, sma_strategy_with_mocked_broker, mocker):
         """Test next() executes sell on bearish crossover with position."""
         strategy = sma_strategy_with_mocked_broker
         strategy.position.size = 10  # In position
@@ -854,7 +854,7 @@ class TestSimpleMovingAverageStrategyExecution:
 
         strategy.sell.assert_called_once()
 
-    def test_next_bearish_crossover_no_position(self, sma_strategy_with_mocked_broker):
+    def test_next_bearish_crossover_no_position(self, sma_strategy_with_mocked_broker, mocker):
         """Test next() ignores sell signal when no position."""
         strategy = sma_strategy_with_mocked_broker
         strategy.position = None  # No position
@@ -865,7 +865,7 @@ class TestSimpleMovingAverageStrategyExecution:
 
         strategy.sell.assert_not_called()
 
-    def test_next_records_signals(self, sma_strategy_with_mocked_broker):
+    def test_next_records_signals(self, sma_strategy_with_mocked_broker, mocker):
         """Test next() adds generated signals to signals list."""
         strategy = sma_strategy_with_mocked_broker
         strategy.crossover.__getitem__ = mocker.MagicMock(return_value=1)
@@ -880,7 +880,7 @@ class TestSimpleMovingAverageStrategyExecution:
 class TestSimpleMovingAverageEdgeCases:
     """Test SMA strategy edge cases."""
 
-    def test_zero_position_size(self, sma_strategy_with_mocked_broker):
+    def test_zero_position_size(self, sma_strategy_with_mocked_broker, mocker):
         """Test SMA doesn't buy when position size is zero."""
         strategy = sma_strategy_with_mocked_broker
         strategy.position.size = 0
@@ -893,7 +893,7 @@ class TestSimpleMovingAverageEdgeCases:
 
         strategy.buy.assert_not_called()
 
-    def test_multiple_signals_in_sequence(self, sma_strategy_with_mocked_broker):
+    def test_multiple_signals_in_sequence(self, sma_strategy_with_mocked_broker, mocker):
         """Test SMA can generate multiple signal types."""
         strategy = sma_strategy_with_mocked_broker
         strategy.data.__len__ = mocker.MagicMock(return_value=100)
@@ -938,7 +938,7 @@ class TestMeanReversionStrategyInitialization:
 class TestMeanReversionSignalGeneration:
     """Test mean reversion strategy signal generation."""
 
-    def test_generate_signals_insufficient_data(self, mean_reversion_strategy_with_mocked_broker):
+    def test_generate_signals_insufficient_data(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test generate_signals with insufficient data."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.__len__ = mocker.MagicMock(return_value=10)  # Less than period (20)
@@ -947,7 +947,7 @@ class TestMeanReversionSignalGeneration:
 
         assert signals == []
 
-    def test_generate_signals_oversold(self, mean_reversion_strategy_with_mocked_broker):
+    def test_generate_signals_oversold(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test generate_signals detects oversold condition."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [135.0]  # Below lower band (140.0)
@@ -963,7 +963,7 @@ class TestMeanReversionSignalGeneration:
         assert signal["strength"] == 0.6
         assert "lower Bollinger Band" in signal["reason"]
 
-    def test_generate_signals_overbought(self, mean_reversion_strategy_with_mocked_broker):
+    def test_generate_signals_overbought(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test generate_signals detects overbought condition."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [165.0]  # Above upper band (160.0)
@@ -979,7 +979,7 @@ class TestMeanReversionSignalGeneration:
         assert signal["strength"] == 0.6
         assert "upper Bollinger Band" in signal["reason"]
 
-    def test_generate_signals_at_lower_band(self, mean_reversion_strategy_with_mocked_broker):
+    def test_generate_signals_at_lower_band(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test signal when price exactly at lower band."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [140.0]  # Exactly at lower band
@@ -993,7 +993,7 @@ class TestMeanReversionSignalGeneration:
         assert len(signals) == 1
         assert signals[0]["signal"] == "BUY"
 
-    def test_generate_signals_at_upper_band(self, mean_reversion_strategy_with_mocked_broker):
+    def test_generate_signals_at_upper_band(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test signal when price exactly at upper band."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [160.0]  # Exactly at upper band
@@ -1007,7 +1007,7 @@ class TestMeanReversionSignalGeneration:
         assert len(signals) == 1
         assert signals[0]["signal"] == "SELL"
 
-    def test_generate_signals_between_bands(self, mean_reversion_strategy_with_mocked_broker):
+    def test_generate_signals_between_bands(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test no signal when price is between bands."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [150.0]  # Between 140 and 160
@@ -1033,6 +1033,7 @@ class TestMeanReversionSignalGeneration:
         lower_band,
         upper_band,
         expected_signal,
+        mocker,
     ):
         """Test signal generation with various price/band combinations."""
         strategy = mean_reversion_strategy_with_mocked_broker
@@ -1053,7 +1054,7 @@ class TestMeanReversionSignalGeneration:
 class TestMeanReversionStrategyExecution:
     """Test mean reversion strategy execution logic."""
 
-    def test_next_insufficient_data(self, mean_reversion_strategy_with_mocked_broker):
+    def test_next_insufficient_data(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test next() with insufficient data."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.__len__ = mocker.MagicMock(return_value=10)
@@ -1063,7 +1064,7 @@ class TestMeanReversionStrategyExecution:
         strategy.buy.assert_not_called()
         strategy.sell.assert_not_called()
 
-    def test_next_oversold_no_position(self, mean_reversion_strategy_with_mocked_broker):
+    def test_next_oversold_no_position(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test next() buys on oversold with no position."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.position = None  # No position
@@ -1077,7 +1078,7 @@ class TestMeanReversionStrategyExecution:
 
         strategy.buy.assert_called_once()
 
-    def test_next_oversold_has_position(self, mean_reversion_strategy_with_mocked_broker):
+    def test_next_oversold_has_position(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test next() ignores buy signal when already in position."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.position.size = 10
@@ -1089,7 +1090,7 @@ class TestMeanReversionStrategyExecution:
 
         strategy.buy.assert_not_called()
 
-    def test_next_overbought_has_position(self, mean_reversion_strategy_with_mocked_broker):
+    def test_next_overbought_has_position(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test next() sells on overbought with position."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.position.size = 10
@@ -1102,7 +1103,7 @@ class TestMeanReversionStrategyExecution:
 
         strategy.sell.assert_called_once()
 
-    def test_next_records_signals(self, mean_reversion_strategy_with_mocked_broker):
+    def test_next_records_signals(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test next() adds generated signals to signals list."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [135.0]
@@ -1118,7 +1119,7 @@ class TestMeanReversionStrategyExecution:
 class TestMeanReversionEdgeCases:
     """Test mean reversion strategy edge cases."""
 
-    def test_zero_position_size(self, mean_reversion_strategy_with_mocked_broker):
+    def test_zero_position_size(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test strategy doesn't buy when position size is zero."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.position.size = 0
@@ -1134,7 +1135,7 @@ class TestMeanReversionEdgeCases:
         # Actually, let's check if calculate_position_size is called
         # Since we can't directly intercept, we just verify logic
 
-    def test_narrow_bollinger_bands(self, mean_reversion_strategy_with_mocked_broker):
+    def test_narrow_bollinger_bands(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test with very narrow Bollinger Bands."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [150.0]
@@ -1147,7 +1148,7 @@ class TestMeanReversionEdgeCases:
         # Should generate no signals (price between bands)
         assert signals == []
 
-    def test_wide_bollinger_bands(self, mean_reversion_strategy_with_mocked_broker):
+    def test_wide_bollinger_bands(self, mean_reversion_strategy_with_mocked_broker, mocker):
         """Test with very wide Bollinger Bands."""
         strategy = mean_reversion_strategy_with_mocked_broker
         strategy.data.close = [150.0]
