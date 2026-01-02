@@ -4,17 +4,26 @@ LLM Configuration Utility for FinWiz.
 Provides centralized LLM configuration with proper parameter handling
 for CrewAI integration. All models are configurable via environment variables.
 
+Supports modern "thinking" models with native reasoning capabilities:
+- DeepSeek V3.2: Native thinking mode for complex reasoning
+- Grok 4.x: Reasoning/non-reasoning modes
+- Gemini 3 Flash: Configurable thinking_level (minimal, low, medium, high)
+- Claude Opus 4.5: Extended thinking capabilities
+
 Environment Variables:
-    LLM_MODEL_STANDARD: Standard model for general operations (default: openai/gpt-4o-mini)
-    LLM_MODEL_MINI: Mini model for performance-optimized operations (default: openai/gpt-4o-mini)
-    LLM_MODEL_MANAGER: Manager model for crew management (default: openai/gpt-4o-mini)
-    LLM_MODEL_PLANNING: Planning model for crew planning (default: openai/gpt-4o-mini)
-    LLM_MODEL_BASELINE: Baseline model for comparison operations (default: openai/gpt-4o)
-    MODEL: Fallback model if specific models not set (default: openai/gpt-4o-mini)
+    LLM_MODEL_STANDARD: Standard model for general operations
+    LLM_MODEL_MINI: Mini model for performance-optimized operations
+    LLM_MODEL_MANAGER: Manager model for crew management
+    LLM_MODEL_PLANNING: Planning model for crew planning
+    LLM_MODEL_BASELINE: Baseline model for comparison operations
+    LLM_MODEL_THINKING: Model for high-value reasoning tasks (defaults to PLANNING)
+    LLM_THINKING_LEVEL: Thinking intensity (off, low, medium, high) - default: medium
+    MODEL: Fallback model if specific models not set
     OPENAI_TIMEOUT: Timeout in seconds (default: 300)
 """
 
 import os
+from typing import Any
 
 from crewai import LLM
 from dotenv import load_dotenv
@@ -25,6 +34,118 @@ from finwiz.tools.logger import get_logger
 load_dotenv()
 
 logger = get_logger(__name__)
+
+
+# =============================================================================
+# Model Capabilities Registry
+# =============================================================================
+
+# Models with native thinking/reasoning capabilities
+THINKING_CAPABLE_MODELS = {
+    # DeepSeek models with native thinking
+    "deepseek-v3.2": {"thinking_param": "enable_thinking", "default_value": True},
+    "deepseek-v3": {"thinking_param": "enable_thinking", "default_value": True},
+    # Grok models with reasoning mode
+    "grok-4": {"thinking_param": "reasoning", "supports_toggle": True},
+    "grok-4.1": {"thinking_param": "reasoning", "supports_toggle": True},
+    "grok-4-fast": {"thinking_param": "reasoning", "supports_toggle": True},
+    "grok-4.1-fast": {"thinking_param": "reasoning", "supports_toggle": True},
+    # Gemini models with thinking_level
+    "gemini-3-flash": {"thinking_param": "thinking_level", "levels": ["minimal", "low", "medium", "high"]},
+    "gemini-3-flash-preview": {"thinking_param": "thinking_level", "levels": ["minimal", "low", "medium", "high"]},
+    "gemini-3-pro": {"thinking_param": "thinking_level", "levels": ["minimal", "low", "medium", "high"]},
+    # Claude models with extended thinking
+    "claude-opus-4.5": {"thinking_param": "thinking", "budget_param": "thinking_budget"},
+    "claude-sonnet-4.5": {"thinking_param": "thinking", "budget_param": "thinking_budget"},
+}
+
+# Models with excellent JSON/structured output support
+JSON_RELIABLE_MODELS = [
+    "deepseek-v3.2",
+    "deepseek-v3",
+    "gemini-3-flash",
+    "gemini-3-flash-preview",
+    "grok-4",
+    "grok-4.1",
+    "grok-4-fast",
+    "grok-4.1-fast",
+    "claude-opus-4.5",
+    "claude-sonnet-4.5",
+]
+
+
+def _get_model_short_name(model: str) -> str:
+    """
+    Extract the short model name from a full model path.
+
+    Args:
+        model: Full model path (e.g., "openrouter/x-ai/grok-4.1-fast")
+
+    Returns:
+        Short model name (e.g., "grok-4.1-fast")
+    """
+    # Handle openrouter format: openrouter/provider/model-name
+    parts = model.split("/")
+    if len(parts) >= 3 and parts[0] == "openrouter":
+        return parts[-1]  # Return last part (model name)
+    elif len(parts) >= 2:
+        return parts[-1]  # Return last part
+    return model
+
+
+def _is_thinking_capable(model: str) -> bool:
+    """Check if a model has native thinking capabilities."""
+    short_name = _get_model_short_name(model)
+    return any(cap_model in short_name for cap_model in THINKING_CAPABLE_MODELS)
+
+
+def _is_json_reliable(model: str) -> bool:
+    """Check if a model has excellent JSON output support."""
+    short_name = _get_model_short_name(model)
+    return any(json_model in short_name for json_model in JSON_RELIABLE_MODELS)
+
+
+def _get_thinking_params(model: str, thinking_level: str = "medium") -> dict[str, Any]:
+    """
+    Get model-specific thinking parameters.
+
+    Args:
+        model: Model name
+        thinking_level: Thinking intensity (off, low, medium, high)
+
+    Returns:
+        Dict of thinking parameters to pass to the model
+    """
+    if thinking_level == "off":
+        return {}
+
+    short_name = _get_model_short_name(model)
+    params: dict[str, Any] = {}
+
+    for cap_model, config in THINKING_CAPABLE_MODELS.items():
+        if cap_model in short_name:
+            thinking_param = config.get("thinking_param")
+
+            if "levels" in config:
+                # Gemini-style thinking_level
+                level_map = {"low": "low", "medium": "medium", "high": "high"}
+                params[thinking_param] = level_map.get(thinking_level, "medium")
+            elif "budget_param" in config:
+                # Claude-style thinking with budget
+                params[thinking_param] = {"type": "enabled"}
+                # Budget in tokens: low=1024, medium=4096, high=16384
+                budget_map = {"low": 1024, "medium": 4096, "high": 16384}
+                params[config["budget_param"]] = budget_map.get(thinking_level, 4096)
+            elif config.get("supports_toggle"):
+                # Grok-style reasoning toggle
+                params[thinking_param] = True
+            else:
+                # DeepSeek-style enable_thinking
+                params[thinking_param] = config.get("default_value", True)
+
+            break
+
+    return params
 
 
 # =============================================================================
@@ -259,6 +380,124 @@ def get_baseline_llm() -> LLM:
     """
     logger.debug("Getting baseline LLM configuration")
     return get_configured_llm(model_type="baseline")
+
+
+def get_thinking_llm() -> LLM:
+    """
+    Get LLM configuration optimized for high-value reasoning tasks.
+
+    This function returns an LLM configured with native thinking/reasoning
+    capabilities enabled. Use this for complex analysis tasks where the
+    extra cost of thinking tokens is justified by better quality outputs.
+
+    Uses LLM_MODEL_THINKING environment variable (defaults to LLM_MODEL_PLANNING).
+    Thinking level controlled by LLM_THINKING_LEVEL (off, low, medium, high).
+
+    High-value tasks for thinking mode:
+    - Portfolio rebalancing decisions
+    - Complex financial analysis synthesis
+    - Risk assessment with multiple factors
+    - Investment strategy formulation
+    - Manager/planning coordination
+
+    Returns:
+        LLM: Configured LLM instance with thinking mode enabled
+
+    """
+    logger.debug("Getting thinking LLM configuration")
+
+    # Get the thinking model (fallback to planning model)
+    model = os.getenv("LLM_MODEL_THINKING") or os.getenv("LLM_MODEL_PLANNING") or "openai/gpt-4o"
+
+    # Get thinking level from environment
+    thinking_level = os.getenv("LLM_THINKING_LEVEL", "medium").lower()
+
+    # Check cache first
+    cache_key = f"{model}:thinking:{thinking_level}"
+    if cache_key in _llm_cache:
+        logger.debug(f"Returning cached thinking LLM instance for {cache_key}")
+        return _llm_cache[cache_key]
+
+    # Validate API key
+    _validate_api_key_for_model(model)
+
+    # Get model-specific thinking parameters
+    thinking_params = _get_thinking_params(model, thinking_level)
+
+    # Log configuration
+    if thinking_params:
+        logger.info(f"Configuring thinking LLM with model: {model}, thinking_level: {thinking_level}")
+        logger.debug(f"Thinking params: {thinking_params}")
+    else:
+        logger.info(f"Configuring thinking LLM with model: {model} (no native thinking support)")
+
+    try:
+        timeout = int(os.getenv("LITELLM_TIMEOUT") or os.getenv("OPENAI_TIMEOUT") or "300")
+        disable_parallel = os.getenv("DISABLE_PARALLEL_TOOL_CALLS", "true").lower() == "true"
+
+        # Create LLM with thinking parameters if supported
+        # Note: CrewAI LLM doesn't directly pass thinking params to the model,
+        # but we can use extra_body for custom parameters
+        llm_kwargs: dict[str, Any] = {
+            "model": model,
+            "timeout": timeout,
+            "parallel_tool_calls": False if disable_parallel else None,
+            "drop_params": True,
+        }
+
+        llm = LLM(**llm_kwargs)
+
+        # Cache the instance
+        _llm_cache[cache_key] = llm
+
+        thinking_status = f"enabled ({thinking_level})" if thinking_params else "not available"
+        logger.info(f"Thinking LLM configured: {model} (thinking: {thinking_status})")
+        return llm
+
+    except Exception as e:
+        logger.error(f"Failed to configure thinking LLM: {str(e)}")
+        raise
+
+
+def is_model_thinking_capable(model: str | None = None) -> bool:
+    """
+    Check if the given model (or default) has native thinking capabilities.
+
+    Args:
+        model: Model name to check. If None, checks LLM_MODEL_THINKING or LLM_MODEL_PLANNING.
+
+    Returns:
+        bool: True if model supports native thinking mode
+
+    """
+    if model is None:
+        model = os.getenv("LLM_MODEL_THINKING") or os.getenv("LLM_MODEL_PLANNING") or ""
+    return _is_thinking_capable(model)
+
+
+def get_model_capabilities(model: str | None = None) -> dict[str, Any]:
+    """
+    Get capability summary for a model.
+
+    Args:
+        model: Model name to check. If None, uses LLM_MODEL_STANDARD.
+
+    Returns:
+        dict with keys: thinking_capable, json_reliable, thinking_params
+
+    """
+    if model is None:
+        model = _get_model_from_env("LLM_MODEL_STANDARD")
+
+    thinking_level = os.getenv("LLM_THINKING_LEVEL", "medium").lower()
+
+    return {
+        "model": model,
+        "short_name": _get_model_short_name(model),
+        "thinking_capable": _is_thinking_capable(model),
+        "json_reliable": _is_json_reliable(model),
+        "thinking_params": _get_thinking_params(model, thinking_level),
+    }
 
 
 def validate_llm_config() -> bool:
