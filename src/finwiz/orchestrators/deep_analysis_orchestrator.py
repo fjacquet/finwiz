@@ -226,12 +226,22 @@ class DeepAnalysisOrchestrator:
                 return (ticker, None, None)
 
         # Use a SHARED ThreadPoolExecutor for all holdings
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all holdings to the shared pool
             futures = [loop.run_in_executor(executor, analyze_single_sync, holding) for holding in holdings]
-            # Wait for all to complete
-            completed = await asyncio.gather(*futures)
+            # Wait for all to complete with timeout
+            try:
+                # 30 minutes timeout for all holdings (allow ~15s per holding for 125 holdings)
+                completed = await asyncio.wait_for(asyncio.gather(*futures), timeout=1800)
+            except asyncio.TimeoutError:
+                self.logger.error("Deep analysis timed out after 30 minutes")
+                # Cancel remaining futures
+                for f in futures:
+                    f.cancel()
+                completed = []
+
+        self.logger.info(f"asyncio.gather completed with {len(completed)} results")
 
         for ticker, result, enriched in completed:
             if result:

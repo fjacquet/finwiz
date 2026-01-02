@@ -163,7 +163,6 @@ class DeepAnalysisDataCollector:
     def _collect_stock_data(self, ticker: str, collected_data: dict[str, Any]) -> dict[str, Any]:
         """Collect stock-specific fundamental data using DataSourceOrchestrator."""
         import asyncio
-        import concurrent.futures
 
         from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
 
@@ -174,14 +173,9 @@ class DeepAnalysisDataCollector:
             sector = collected_data["ticker_info"].get("sector")
 
         try:
-            # Handle event loop scenarios
-            try:
-                loop = asyncio.get_running_loop()
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self.data_orchestrator.get_fundamental_data(ticker, sector))
-                    orchestration_result = future.result()
-            except RuntimeError:
-                orchestration_result = asyncio.run(self.data_orchestrator.get_fundamental_data(ticker, sector))
+            # Always use asyncio.run() when called from sync context (thread pool)
+            # The caller (analyze_single_sync) runs in ThreadPoolExecutor, so no event loop exists
+            orchestration_result = asyncio.run(self.data_orchestrator.get_fundamental_data(ticker, sector))
 
             # Extract metrics
             if orchestration_result.return_on_equity is not None:
@@ -221,9 +215,24 @@ class DeepAnalysisDataCollector:
             quant_tool = QuantitativeAnalysisTool()
             quant_result = quant_tool._run(symbol=ticker, asset_class=asset_class, analysis_type="comprehensive", timeframe="1y", strategy="sma_crossover")
 
-            quant_data = json.loads(quant_result) if isinstance(quant_result, str) else quant_result
+            # Handle different response types
+            if isinstance(quant_result, dict):
+                quant_data = quant_result
+            elif isinstance(quant_result, str):
+                # Check if it's valid JSON (starts with { or [)
+                stripped = quant_result.strip()
+                if stripped and (stripped.startswith("{") or stripped.startswith("[")):
+                    quant_data = json.loads(stripped)
+                else:
+                    # Plain text error message from tool
+                    self.logger.warning(f"⚠️ Quantitative tool returned non-JSON: {quant_result[:100]}")
+                    quant_data = {"error": quant_result, "symbol": ticker}
+            else:
+                quant_data = {}
+
             collected_data["quantitative_analysis"] = quant_data
-            self.logger.info(f"✅ Got quantitative data with keys: {list(quant_data.keys())[:5]}")
+            if "error" not in quant_data:
+                self.logger.info(f"✅ Got quantitative data with keys: {list(quant_data.keys())[:5]}")
 
         except Exception as e:
             self.logger.error(f"❌ Quantitative analysis failed: {e}", exc_info=True)
