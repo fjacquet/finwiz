@@ -33,20 +33,47 @@ def _prepare_enriched_context(ticker: str, result: dict[str, Any]) -> dict[str, 
 
     Maps the result dict to the template's expected variables with defaults.
     """
-    # Extract scores (support multiple key formats)
-    composite_score = result.get("composite_score") or result.get("final_score") or 0
-    fundamental_score = result.get("fundamental_score", 0)
-    technical_score = result.get("technical_score", 0)
-    risk_score = result.get("risk_score", 0)
+    # Extract quantitative container (data may be nested under "quantitative" key)
+    quantitative_container = result.get("quantitative", {})
+    if not isinstance(quantitative_container, dict):
+        quantitative_container = {}
+
+    # Extract scores (support multiple key formats - check nested quantitative first)
+    composite_score = (
+        result.get("composite_score")
+        or result.get("final_score")
+        or quantitative_container.get("composite_score")
+        or 0
+    )
+    fundamental_score = result.get("fundamental_score") or quantitative_container.get("fundamental_score", 0)
+    technical_score = result.get("technical_score") or quantitative_container.get("technical_score", 0)
+    risk_score = result.get("risk_score") or quantitative_container.get("risk_score", 0)
 
     # Extract grade and recommendation
-    grade = result.get("grade") or result.get("final_grade") or "N/A"
-    recommendation = result.get("recommendation") or result.get("final_recommendation") or "HOLD"
+    grade = result.get("grade") or result.get("final_grade") or quantitative_container.get("grade") or "N/A"
+    recommendation = (
+        result.get("recommendation")
+        or result.get("final_recommendation")
+        or quantitative_container.get("preliminary_recommendation")
+        or "HOLD"
+    )
 
-    # Extract details dicts (these become the metric tables)
-    fundamental_metrics = result.get("fundamental_details") or result.get("fundamental_metrics", {})
-    technical_indicators = result.get("technical_details") or result.get("technical_indicators", {})
-    risk_metrics = result.get("risk_details") or result.get("risk_metrics", {})
+    # Extract details dicts (these become the metric tables - check nested quantitative first)
+    fundamental_metrics = (
+        result.get("fundamental_details")
+        or result.get("fundamental_metrics")
+        or quantitative_container.get("fundamental_metrics", {})
+    )
+    technical_indicators = (
+        result.get("technical_details")
+        or result.get("technical_indicators")
+        or quantitative_container.get("technical_indicators", {})
+    )
+    risk_metrics = (
+        result.get("risk_details")
+        or result.get("risk_metrics")
+        or quantitative_container.get("risk_metrics", {})
+    )
 
     # Extract qualitative container (data may be nested under "qualitative" key)
     qualitative_container = result.get("qualitative", {})
