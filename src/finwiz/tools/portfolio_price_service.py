@@ -18,7 +18,7 @@ from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.logger import get_logger
 from finwiz.tools.portfolio_cache_service import get_portfolio_cache_service
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
-from finwiz.utils.cache_manager import CacheManager, get_cache_manager
+from finwiz.infrastructure.caching.manager import CacheManager, get_cache_manager
 
 logger = get_logger(__name__)
 

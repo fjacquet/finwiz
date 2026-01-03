@@ -82,7 +82,7 @@ class TestInitializeFlowWithResume:
         """Create mock FinwizFlow class."""
         mock_flow_class = mocker.Mock()
         # Patch where it's imported in the function
-        mocker.patch("finwiz.flows.flow_orchestrator.FinwizFlow", mock_flow_class)
+        mocker.patch("finwiz.flows.orchestrator.FinwizFlow", mock_flow_class)
         return mock_flow_class
 
     @pytest.fixture

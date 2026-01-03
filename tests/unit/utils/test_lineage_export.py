@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from finwiz.schemas.data_lineage import DataLineage
-from finwiz.utils.lineage_export import LineageExporter, export_lineage_json, export_lineage_python, export_lineage_r
+from finwiz.reporting.data_lineage.lineage_export import LineageExporter, export_lineage_json, export_lineage_python, export_lineage_r
 
 
 @pytest.fixture

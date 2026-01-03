@@ -7,7 +7,7 @@ and other helper operations used in market screening.
 
 from typing import Any
 
-from finwiz.utils.cache_manager import cache_key
+from finwiz.infrastructure.caching.manager import cache_key
 
 
 class ScreeningUtils:

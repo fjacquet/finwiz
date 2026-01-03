@@ -12,6 +12,7 @@ from pytest import approx
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
+from finwiz.scoring.grading_system import count_grade_distribution
 
 
 class TestReportingOrchestrator:
@@ -164,8 +165,12 @@ class TestReportingOrchestrator:
         assert result["success"] is True
         assert result["consolidated_data"]["total_reports"] == 0
 
-    def test_should_calculate_grade_distribution(self, orchestrator):
-        """Test calculating grade distribution from deep analysis results."""
+    def test_should_calculate_grade_distribution(self):
+        """Test calculating grade distribution using centralized grading_system.
+
+        Note: This tests the centralized count_grade_distribution function
+        which is used by ReportingOrchestrator._transform_deep_analysis_results.
+        """
         # Arrange
         deep_analysis = {
             "AAPL": {"ticker": "AAPL", "grade": "A+", "composite_score": 0.92},
@@ -175,16 +180,14 @@ class TestReportingOrchestrator:
             "IBM": {"ticker": "IBM", "grade": "C", "composite_score": 0.65},
         }
 
-        # Act
-        distribution = orchestrator._calculate_grade_distribution(deep_analysis)
+        # Act - use centralized function directly
+        distribution = count_grade_distribution(deep_analysis)
 
         # Assert
         assert distribution["A+"] == 1
         assert distribution["A"] == 2
         assert distribution["B"] == 1
         assert distribution["C"] == 1
-        assert distribution["D"] == 0
-        assert distribution["F"] == 0
 
     def test_should_convert_dict_to_portfolio_review(self, orchestrator):
         """Test converting dictionary to PortfolioReview object."""

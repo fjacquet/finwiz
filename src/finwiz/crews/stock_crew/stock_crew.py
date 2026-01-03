@@ -36,10 +36,10 @@ from finwiz.schemas.stock import (
 from finwiz.tools.logger import get_logger
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.llm_config import get_configured_llm
-from finwiz.utils.logging_helpers import CrewLogger
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.config.llm.llm_config import get_configured_llm
+from finwiz.infrastructure.logging.helpers import CrewLogger
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -215,7 +215,7 @@ class StockCrew:
         Uses a sequential workflow for analysis with validation steps to ensure
         high-quality, consistent output formats for both HTML and JSON data.
         """
-        from finwiz.utils.llm_config import get_manager_llm
+        from finwiz.config.llm.llm_config import get_manager_llm
 
         return Crew(
             agents=self.agents,

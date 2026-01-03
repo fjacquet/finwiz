@@ -13,7 +13,7 @@ import pytest
 from pydantic import ValidationError
 
 from finwiz.schemas.session import AnalysisRecord, ClientProfile, FinancialPlan, SessionMetadata
-from finwiz.utils.session_manager import SessionManager, SessionParsingError
+from finwiz.sessions.manager import SessionManager, SessionParsingError
 
 
 class TestSessionManager:

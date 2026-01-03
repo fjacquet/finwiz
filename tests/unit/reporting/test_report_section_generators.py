@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from finwiz.reporting.report_section_generators import (
+from finwiz.reporting.section_generators import (
     _get_recommendation_badge,
     generate_deep_analysis_section,
     generate_discovery_section,

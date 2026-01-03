@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from finwiz.tools.logger import get_logger
 
 if TYPE_CHECKING:
-    from finwiz.utils.a_plus_monitoring import MonitoredInvestment
+    from finwiz.monitoring.a_plus import MonitoredInvestment
 
 logger = get_logger(__name__)
 

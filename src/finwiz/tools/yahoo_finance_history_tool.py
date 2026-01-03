@@ -97,7 +97,7 @@ class YahooFinanceHistoryTool(BaseTool):
             if history_list:
                 latest_date = history_list[-1]["date"]
                 try:
-                    from finwiz.utils.datetime_utils import ensure_utc_aware
+                    from finwiz.infrastructure.time.datetime_utils import ensure_utc_aware
 
                     # Convert date string back to datetime for better timestamp
                     data_date = datetime.strptime(latest_date, "%Y-%m-%d")

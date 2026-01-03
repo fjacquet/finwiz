@@ -15,12 +15,12 @@ from dotenv import load_dotenv
 from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 
 if TYPE_CHECKING:
-    from finwiz.flows.flow_orchestrator import FinwizFlow
+    from finwiz.flows.orchestrator import FinwizFlow
     from finwiz.schemas.session import FinancialPlan
 from finwiz.tools.logger import get_logger
-from finwiz.utils.configuration_manager import ConfigurationError, get_configuration_manager
-from finwiz.utils.flow_state_manager import FlowStateManager
-from finwiz.utils.session_manager import SessionManager, SessionParsingError
+from finwiz.config.manager import ConfigurationError, get_configuration_manager
+from finwiz.flows.state_manager import FlowStateManager
+from finwiz.sessions.manager import SessionManager, SessionParsingError
 
 logger = get_logger(__name__)
 
@@ -208,7 +208,7 @@ def initialize_flow_with_resume(args: argparse.Namespace | None = None) -> "Finw
 
     """
     from finwiz.flow_state import FinwizState
-    from finwiz.flows.flow_orchestrator import FinwizFlow
+    from finwiz.flows.orchestrator import FinwizFlow
 
     # Parse arguments if not provided
     if args is None:

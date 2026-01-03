@@ -13,7 +13,7 @@ Key Features:
 - Concentration risk from top holdings
 
 Usage:
-    from finwiz.utils.etf_metrics import (
+    from finwiz.quantitative.etf.etf_metrics import (
         calculate_tracking_error,
         calculate_correlation,
         calculate_expense_impact

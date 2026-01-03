@@ -14,7 +14,7 @@ from typing import Any
 import aiohttp
 
 from finwiz.tools.logger import get_logger
-from finwiz.utils.rate_limiter import APIProvider, with_rate_limit
+from finwiz.infrastructure.resilience.rate_limiter import APIProvider, with_rate_limit
 
 logger = get_logger(__name__)
 

@@ -10,11 +10,11 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from finwiz.flow_state import DeepAnalysisResult
-from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
+from finwiz.scoring.thresholds import ScoringThresholds, get_thresholds
 
 if TYPE_CHECKING:
     from finwiz.schemas.data_lineage import DataLineage
-    from finwiz.utils.data_quality_metrics import DataQualityMetrics
+    from finwiz.validation.quality_metrics import DataQualityMetrics
 
 logger = logging.getLogger(__name__)
 

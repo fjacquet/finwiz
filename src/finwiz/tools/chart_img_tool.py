@@ -20,8 +20,8 @@ from pydantic import BaseModel
 
 # Import schema from centralized location
 from finwiz.schemas.tools import ChartImgInput
-from finwiz.utils.api_decorators import api_tool
-from finwiz.utils.rate_limiter import APIProvider
+from finwiz.infrastructure.decorators.api_decorators import api_tool
+from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 
 
 class ChartImgTool(BaseTool):

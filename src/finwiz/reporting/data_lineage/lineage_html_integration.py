@@ -8,7 +8,7 @@ import logging
 from typing import Any
 
 from finwiz.schemas.data_lineage import DataLineage
-from finwiz.utils.lineage_visualizer import LineageVisualizer
+from finwiz.reporting.data_lineage.lineage_visualizer import LineageVisualizer
 
 logger = logging.getLogger(__name__)
 

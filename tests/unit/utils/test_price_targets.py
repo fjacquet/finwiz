@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 from pytest import approx
 
-from finwiz.utils.price_targets import (
+from finwiz.quantitative.price_targets import (
     PriceTarget,
     calculate_consensus_target,
     calculate_dcf_target,

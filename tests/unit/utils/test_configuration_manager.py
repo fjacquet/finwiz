@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from finwiz.utils.configuration_manager import (
+from finwiz.config.manager import (
     APIKeyConfig,
     ConfigurationError,
     ConfigurationManager,

@@ -12,7 +12,7 @@ import pytest
 from pytest import approx
 
 from finwiz.schemas.crew_exports import ConsolidatedReportExport
-from finwiz.utils.final_report_generator import FinalReportGenerator
+from finwiz.reporting.final_report_generator import FinalReportGenerator
 
 
 class TestFinalReportGenerator:

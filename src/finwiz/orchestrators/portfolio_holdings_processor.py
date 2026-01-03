@@ -21,7 +21,7 @@ from operator import itemgetter
 from pathlib import Path
 from typing import Any, cast
 
-from finwiz.orchestrators.portfolio_decision_builders import (
+from finwiz.orchestrators.portfolio_review.decisions import (
     assess_risk,
     build_citations,
     build_rationale,
@@ -36,7 +36,7 @@ from finwiz.schemas.portfolio_processing import (
 )
 from finwiz.schemas.portfolio_review import HoldingDecision
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
-from finwiz.utils.grading_system import score_to_grade
+from finwiz.scoring.grading_system import score_to_grade
 
 logger = logging.getLogger(__name__)
 

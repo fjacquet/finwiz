@@ -1,6 +1,6 @@
 """CSS styles for rebalancing reports."""
 
-from finwiz.tools.rebalancing.css_elements import (
+from finwiz.reporting.css.css_elements import (
     get_action_styles,
     get_base_styles,
     get_cost_styles,
@@ -8,7 +8,7 @@ from finwiz.tools.rebalancing.css_elements import (
     get_table_styles,
     get_trade_styles,
 )
-from finwiz.tools.rebalancing.css_layouts import (
+from finwiz.reporting.css.css_layouts import (
     get_execution_styles,
     get_interactive_styles,
     get_responsive_styles,

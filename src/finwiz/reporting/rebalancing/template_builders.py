@@ -6,8 +6,8 @@ This module delegates to CSS and JavaScript builders for template generation.
 
 import logging
 
-from finwiz.tools.rebalancing.css_styles import get_rebalancing_css
-from finwiz.tools.rebalancing.javascript_code import get_rebalancing_javascript
+from finwiz.reporting.css.css_styles import get_rebalancing_css
+from finwiz.reporting.js.javascript_code import get_rebalancing_javascript
 
 logger = logging.getLogger(__name__)
 

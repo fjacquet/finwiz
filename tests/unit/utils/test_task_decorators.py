@@ -2,7 +2,7 @@
 
 from crewai import Task
 
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 
 class TestAsyncTaskDecorator:

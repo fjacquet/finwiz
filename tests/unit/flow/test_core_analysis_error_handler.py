@@ -11,7 +11,7 @@ import pytest
 from pytest import approx
 
 from finwiz.integration.manager import CrewDataIntegrationManager
-from finwiz.utils.core_analysis_error_handler import CoreAnalysisErrorHandler, CrewErrorContext, CrewFailureType
+from finwiz.orchestrators.error_handling.core_analysis_error_handler import CoreAnalysisErrorHandler, CrewErrorContext, CrewFailureType
 
 
 class TestCoreAnalysisErrorHandler:

@@ -21,14 +21,14 @@ from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
 from finwiz.crews.helpers.context_preparation import ContextPreparationManager
-from finwiz.integration.aplus_discovery_accessor import APlusDiscoveryAccessor
-from finwiz.integration.backtesting_extractor import BacktestingDataExtractor
-from finwiz.integration.data_accessor import CrewDataAccessor
-from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
+from finwiz.orchestrators.discovery.aplus_discovery_accessor import APlusDiscoveryAccessor
+from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor
+from finwiz.integration.accessor import CrewDataAccessor
+from finwiz.integration.availability import DataAvailabilityTracker
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 load_dotenv()
 
@@ -121,7 +121,7 @@ class ReportCrew:
 
         Uses LLM_MODEL_STANDARD environment variable.
         """
-        from finwiz.utils.llm_config import get_configured_llm
+        from finwiz.config.llm.llm_config import get_configured_llm
 
         return get_configured_llm(model_type="standard")
 
@@ -230,7 +230,7 @@ class ReportCrew:
         ]
 
         # Create crew with integrated data context
-        from finwiz.utils.llm_config import get_manager_llm
+        from finwiz.config.llm.llm_config import get_manager_llm
 
         crew = Crew(
             agents=agents,

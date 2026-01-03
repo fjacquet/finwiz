@@ -74,12 +74,12 @@ from finwiz.crews.deep_analysis.tool_routing import get_tools_for_asset_class
 from finwiz.flow_state import DeepAnalysisResult
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.tools.logger import get_logger
-from finwiz.utils.crewai_json_patch import apply_json_repair_patch
-from finwiz.utils.llm_config import get_configured_llm
-from finwiz.utils.logging_helpers import CrewLogger
-from finwiz.utils.performance_config import get_performance_config_manager
-from finwiz.utils.performance_monitor import get_performance_monitor
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch
+from finwiz.config.llm.llm_config import get_configured_llm
+from finwiz.infrastructure.logging.helpers import CrewLogger
+from finwiz.config.performance.performance_config import get_performance_config_manager
+from finwiz.infrastructure.monitoring.performance import get_performance_monitor
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -205,7 +205,7 @@ class DeepAnalysisCrew:
             - LLM_MODEL_MINI for performance-optimized operations
             - LLM_MODEL_STANDARD for standard operations
         """
-        from finwiz.utils.llm_config import get_mini_llm
+        from finwiz.config.llm.llm_config import get_mini_llm
 
         # Use mini model for maximum speed and balanced modes
         if self.perf_config.should_use_mini_model():
@@ -294,7 +294,7 @@ class DeepAnalysisCrew:
         ]
         logger.info("🔬 HYBRID MODE: Python metrics + AI qualitative analysis")
 
-        from finwiz.utils.llm_config import get_manager_llm
+        from finwiz.config.llm.llm_config import get_manager_llm
 
         return Crew(
             agents=self.agents,

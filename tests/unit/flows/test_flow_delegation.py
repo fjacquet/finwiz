@@ -9,7 +9,7 @@ Validates Requirements 10.2: Flow listeners delegate to appropriate orchestrator
 
 import pytest
 
-from finwiz.flows.flow_orchestrator import FinwizFlow
+from finwiz.flows.orchestrator import FinwizFlow
 
 
 class TestFlowDelegation:
@@ -19,14 +19,14 @@ class TestFlowDelegation:
     def flow_instance(self, mocker):
         """Create a FinwizFlow instance with mocked dependencies."""
         # Mock all external dependencies
-        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataIntegrationManager")
-        mocker.patch("finwiz.flows.flow_orchestrator.CrewDataAccessor")
-        mocker.patch("finwiz.flows.flow_orchestrator.CoreAnalysisErrorHandler")
-        mocker.patch("finwiz.flows.flow_orchestrator.FlowStateManager")
-        mocker.patch("finwiz.flows.flow_orchestrator.CrewFactory")
-        mocker.patch("finwiz.flows.flow_orchestrator.DataAvailabilityTracker")
-        mocker.patch("finwiz.flows.flow_orchestrator.get_resilience_config")
-        mocker.patch("finwiz.flows.flow_orchestrator.create_retry_decorator")
+        mocker.patch("finwiz.flows.orchestrator.CrewDataIntegrationManager")
+        mocker.patch("finwiz.flows.orchestrator.CrewDataAccessor")
+        mocker.patch("finwiz.flows.orchestrator.CoreAnalysisErrorHandler")
+        mocker.patch("finwiz.flows.orchestrator.FlowStateManager")
+        mocker.patch("finwiz.flows.orchestrator.CrewFactory")
+        mocker.patch("finwiz.flows.orchestrator.DataAvailabilityTracker")
+        mocker.patch("finwiz.flows.orchestrator.get_resilience_config")
+        mocker.patch("finwiz.flows.orchestrator.create_retry_decorator")
 
         # Create flow instance
         flow = FinwizFlow()

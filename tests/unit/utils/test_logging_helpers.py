@@ -7,7 +7,7 @@ events with structured fields for start, completion, and error scenarios.
 
 from pytest import approx
 
-from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.infrastructure.logging.helpers import CrewLogger
 
 
 class TestCrewLogger:

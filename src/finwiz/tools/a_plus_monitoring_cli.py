@@ -16,7 +16,7 @@ import click
 
 from finwiz.services.a_plus_monitoring_service import get_monitoring_service
 from finwiz.tools.logger import get_logger
-from finwiz.utils.a_plus_monitoring import get_monitoring_system
+from finwiz.monitoring.a_plus import get_monitoring_system
 
 logger = get_logger(__name__)
 

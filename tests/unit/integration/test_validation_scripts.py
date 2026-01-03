@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 from faker import Faker
 
-from finwiz.integration.validation_scripts import (
+from finwiz.validation.scripts import (
     DataIntegrityValidator,
     DependencyValidator,
     PerformanceValidator,

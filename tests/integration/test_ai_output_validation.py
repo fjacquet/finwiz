@@ -16,7 +16,7 @@ import pytest
 
 from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
 from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
-from finwiz.validation.ai_output_validator import (
+from finwiz.validation.ai_output import (
     create_python_only_qualitative,
     validate_ai_output_with_retry,
 )
@@ -735,7 +735,7 @@ class TestRealCrewExecutionWithValidation:
         from datetime import datetime
 
         from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
-        from finwiz.validation.ai_output_validator import ToolCallInsteadOfAnalysisError, validate_ai_output_structure
+        from finwiz.validation.ai_output import ToolCallInsteadOfAnalysisError, validate_ai_output_structure
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,
@@ -793,7 +793,7 @@ class TestRealCrewExecutionWithValidation:
         from datetime import datetime
 
         from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
-        from finwiz.validation.ai_output_validator import get_explicit_format_example
+        from finwiz.validation.ai_output import get_explicit_format_example
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,

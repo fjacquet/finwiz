@@ -47,7 +47,7 @@ class BackgroundTask:
 
     def __post_init__(self) -> None:
         """Ensure created_at uses UTC timezone."""
-        from finwiz.utils.datetime_utils import ensure_utc_aware
+        from finwiz.infrastructure.time.datetime_utils import ensure_utc_aware
 
         object.__setattr__(self, "created_at", ensure_utc_aware(self.created_at))
 

@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from finwiz.scoring.scoring_thresholds import ScoringThresholds
+    from finwiz.scoring.thresholds import ScoringThresholds
 
 
 class AssetAnalyzer(ABC):

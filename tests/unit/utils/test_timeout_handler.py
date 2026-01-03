@@ -10,7 +10,7 @@ import asyncio
 import pytest
 from pytest import approx
 
-from finwiz.utils.timeout_handler import with_timeout, with_timeout_graceful
+from finwiz.infrastructure.resilience.timeout import with_timeout, with_timeout_graceful
 
 
 class TestWithTimeout:

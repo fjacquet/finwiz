@@ -7,7 +7,7 @@ with fully mocked file system operations.
 
 import pytest
 
-from finwiz.integration.missing_data_handler import (
+from finwiz.orchestrators.error_handling.missing_data import (
     FallbackDataProvider,
     MissingDataHandler,
     MissingDataScenario,

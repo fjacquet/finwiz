@@ -6,7 +6,7 @@ Tests the centralized scoring thresholds configuration introduced in Phase 2A.3.
 
 from pytest import approx
 
-from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
+from finwiz.scoring.thresholds import ScoringThresholds, get_thresholds
 
 
 class TestScoringThresholds:

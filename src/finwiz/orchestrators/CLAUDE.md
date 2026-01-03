@@ -1,36 +1,29 @@
 # Orchestrators Module
 
-This directory contains business logic orchestration for coordinating complex multi-step operations. Orchestrators manage workflows that involve multiple crews, services, or processing steps.
+This directory contains business logic orchestration (Application/Service Layer) for coordinating complex multi-step operations. Orchestrators manage workflows that involve multiple crews, services, or processing steps.
+
+**Architecture Note**: Following layered architecture principles, orchestrators contain business logic ONLY. HTML presentation is delegated to the `reporting/` layer.
 
 ## Directory Structure
 
 ```
 orchestrators/
-├── __init__.py                    # Module exports
+├── __init__.py                       # Module exports
 │
 ├── # Core Orchestrators
-├── deep_analysis_orchestrator.py   # Per-holding deep analysis (uses finwiz.analysis pipeline)
-├── deep_analysis_data_collector.py # Data collection for deep analysis
-├── discovery_orchestrator.py       # A+ investment discovery
-├── validation_orchestrator.py      # Data validation workflows
-├── reporting_orchestrator.py       # Report generation
-├── error_handling_orchestrator.py  # Error handling & recovery
+├── deep_analysis_orchestrator.py     # Per-holding deep analysis (uses finwiz.analysis pipeline)
+├── deep_analysis_data_collector.py   # Data collection for deep analysis
+├── discovery_orchestrator.py         # A+ investment discovery
+├── validation_orchestrator.py        # Data validation workflows
+├── reporting_orchestrator.py         # Report generation
+├── error_handling_orchestrator.py    # Error handling & recovery
 ├── progress_tracking_orchestrator.py # Progress tracking
-├── utility_orchestrator.py         # Shared utilities
+├── utility_orchestrator.py           # Shared utilities
 │
-├── # Portfolio Orchestrators
-├── portfolio_review.py             # Portfolio review coordination
-├── portfolio_csv_loader.py         # CSV portfolio loading
-├── portfolio_holdings_processor.py # Holdings processing
-├── portfolio_decision_builders.py  # Decision building
-│
-├── # Rebalancing Orchestrators
-├── portfolio_rebalancing.py        # Main rebalancing coordination
-├── rebalancing_calculations.py     # Rebalancing math
-├── rebalancing_constraints.py      # Constraint handling
-├── rebalancing_optimization.py     # Optimization logic
-├── rebalancing_reporting.py        # Rebalancing reports
-├── rebalancing_utils.py            # Utilities
+├── # Portfolio Orchestrators (Consolidated)
+├── portfolio_review.py               # Review: thresholds, decisions, execution
+├── portfolio_rebalancing.py          # Rebalancing: calculations, constraints, optimization
+├── portfolio_holdings_processor.py   # Holdings processing
 │
 ├── # Alternative Matching
 ├── alternatives_matching_orchestrator.py  # A+ alternatives matching
@@ -38,15 +31,12 @@ orchestrators/
 ├── # Monitoring
 ├── a_plus_monitoring_orchestrator.py     # A+ monitoring
 │
-├── # Review Engine
-├── review_engine.py                # Core review logic
-├── review_decisions.py             # Keep/sell decisions
-├── review_html_tables.py           # HTML table generation
-│
 └── # Validation
-    ├── validation_helpers.py       # Validation utilities
-    └── validation_orchestrator.py  # Validation coordination
+    ├── validation_helpers.py         # Validation utilities
+    └── validation_orchestrator.py    # Validation coordination
 ```
+
+**Note**: HTML generation (BeautifulSoup) has been moved to `reporting/portfolio_review_html.py` following layered architecture.
 
 ## Major Entry Points
 
@@ -73,25 +63,32 @@ These are used by `FinwizFlow` for delegating complex operations:
 | `portfolio_review.py` | `EnhancedPortfolioReviewOrchestrator` | Comprehensive review |
 | `portfolio_review.py` | `run()` | Run portfolio review |
 | `portfolio_review.py` | `run_with_rebalancing()` | Review + rebalancing |
-| `review_engine.py` | `build_portfolio_review()` | Build review data |
-| `review_decisions.py` | `add_portfolio_review_sections()` | Add decision sections |
+| `portfolio_review.py` | `build_portfolio_review()` | Build review data |
+| `portfolio_review.py` | `calculate_score()` | Score calculation |
+| `portfolio_review.py` | `assess_risk()` | Risk assessment |
 
-### Rebalancing
+**HTML Generation**: Moved to `reporting/portfolio_review_html.py`:
+- `generate_holdings_table()` - Holdings table with grades
+- `generate_trades_table()` - Trade recommendations
+- `add_portfolio_review_sections()` - Portfolio sections
+- `add_rebalancing_sections()` - Rebalancing sections
+
+### Rebalancing (Consolidated)
 
 | File | Function/Class | Purpose |
 |------|---------------|---------|
 | `portfolio_rebalancing.py` | `run_rebalancing()` | Execute rebalancing |
-| `rebalancing_calculations.py` | `calculate_trades()` | Calculate trades |
-| `rebalancing_optimization.py` | `optimize_allocations()` | Optimize weights |
-| `rebalancing_constraints.py` | `apply_constraints()` | Apply constraints |
+| `portfolio_rebalancing.py` | `calculate_trades()` | Calculate trades |
+| `portfolio_rebalancing.py` | `optimize_allocations()` | Optimize weights |
+| `portfolio_rebalancing.py` | `apply_constraints()` | Apply constraints |
+| `portfolio_rebalancing.py` | `calculate_rebalancing()` | Main calculation |
 
-### CSV Loading
+### Holdings Processing
 
 | File | Function | Purpose |
 |------|----------|---------|
-| `portfolio_csv_loader.py` | `load_portfolio_csv()` | Load portfolio CSV |
-| `portfolio_csv_loader.py` | `validate_csv_format()` | Validate CSV format |
-| `portfolio_holdings_processor.py` | `process_holdings()` | Process holdings |
+| `portfolio_holdings_processor.py` | `PortfolioHoldingsProcessor` | Process holdings |
+| `portfolio_holdings_processor.py` | `process_holdings()` | Load and process |
 
 ## Usage Pattern
 

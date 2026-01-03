@@ -10,7 +10,7 @@ from datetime import datetime
 import pytest
 from pytest import approx
 
-from finwiz.integration.discovery_methodology_extractor import (
+from finwiz.orchestrators.extraction.discovery_methodology import (
     DiscoveryMethodologyExtractor,
     MethodologySummary,
 )

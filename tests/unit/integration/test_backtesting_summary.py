@@ -10,7 +10,7 @@ import logging
 
 import pytest
 
-from finwiz.integration.backtesting_extractor import (
+from finwiz.orchestrators.extraction.backtesting import (
     BacktestingDataExtractor,
     BacktestingMetrics,
     BacktestingSummary,

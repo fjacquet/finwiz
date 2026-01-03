@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 from pydantic import BaseModel, Field, ValidationError
 
-from finwiz.integration.error_handlers import (
+from finwiz.orchestrators.error_handling.handlers import (
     ErrorHandlers,
     ValidationErrorAnalysis,
     ValidationErrorReport,

@@ -11,7 +11,7 @@ import httpx
 from pydantic import BaseModel, Field
 
 from finwiz.tools.logger import get_logger
-from finwiz.utils.url_validator import get_url_validator
+from finwiz.validation.url import get_url_validator
 
 logger = get_logger(__name__)
 

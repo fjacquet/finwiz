@@ -12,7 +12,7 @@ import logging
 from typing import Any
 
 from finwiz.scoring.asset_analyzers.base import AssetAnalyzer
-from finwiz.scoring.scoring_thresholds import get_thresholds
+from finwiz.scoring.thresholds import get_thresholds
 
 logger = logging.getLogger(__name__)
 

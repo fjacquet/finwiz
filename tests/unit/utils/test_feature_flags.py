@@ -10,7 +10,7 @@ import time
 
 from pytest import approx
 
-from finwiz.utils.feature_flags import (
+from finwiz.config.features.flags import (
     FallbackStrategy,
     FeatureFlagConfig,
     FeatureFlags,
@@ -186,7 +186,7 @@ class TestFeatureFlags:
         )
 
         # Initialize circuit breaker state for test flag
-        from finwiz.utils.flags import CircuitBreakerState
+        from finwiz.config.features.definitions import CircuitBreakerState
 
         flags.circuit_breakers["test_flag"] = CircuitBreakerState()
 
@@ -472,7 +472,7 @@ class TestFeatureFlagIntegration:
     def test_should_handle_circuit_breaker_recovery_scenario(self):
         """Test complete circuit breaker recovery scenario."""
         # Arrange
-        from finwiz.utils.flags import CircuitBreakerState
+        from finwiz.config.features.definitions import CircuitBreakerState
 
         flags = FeatureFlags()
         flags.flags["test_service"] = FeatureFlagConfig(

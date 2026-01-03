@@ -20,7 +20,7 @@ from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.tools.technical_analyzer import TechnicalAnalyzer
 from finwiz.tools.technical_models import PriceData
-from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.config.features.flags import get_feature_flags
 
 logger = get_logger(__name__)
 

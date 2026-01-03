@@ -14,14 +14,14 @@ from pytest import approx
 from finwiz.schemas.investment_discovery import APlusAnalysis, InvestmentCandidate, MarketRegime
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.notification_service import NotificationService
-from finwiz.utils.a_plus_monitoring import (
+from finwiz.monitoring.a_plus import (
     APlusMonitoringSystem,
 )
-from finwiz.utils.monitoring_alerts import (
+from finwiz.infrastructure.monitoring.alerts import (
     AlertSeverity,
     GradeDegradationAlert,
 )
-from finwiz.utils.monitoring_metrics import PerformanceMetrics
+from finwiz.infrastructure.monitoring.metrics import PerformanceMetrics
 
 # Configure pytest for async tests
 pytestmark = pytest.mark.anyio

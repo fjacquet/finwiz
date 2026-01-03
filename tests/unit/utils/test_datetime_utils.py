@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime, timedelta, timezone
 
-from finwiz.utils.datetime_utils import ensure_utc_aware, normalize_to_naive
+from finwiz.infrastructure.time.datetime_utils import ensure_utc_aware, normalize_to_naive
 
 
 class TestNormalizeToNaive:

@@ -9,10 +9,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from .freshness_checker import DataFreshnessChecker, FreshnessReport
-from .registry_manager import CrewConfig, ExecutionResult, RegistryManager, UpstreamDataCollection
-from .schema_manager import SchemaManager
-from .validation_manager import ValidationManager, ValidationResult
+from finwiz.infrastructure.monitoring.freshness_checker import DataFreshnessChecker, FreshnessReport
+from finwiz.orchestrators.registry.registry_manager import CrewConfig, ExecutionResult, RegistryManager, UpstreamDataCollection
+from .schema import SchemaManager
+from finwiz.validation.int_manager import ValidationManager, ValidationResult
 
 
 class CrewDataIntegrationManager:

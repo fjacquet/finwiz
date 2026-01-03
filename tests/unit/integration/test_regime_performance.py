@@ -10,7 +10,7 @@ import logging
 import pytest
 from pytest import approx
 
-from finwiz.integration.backtesting_extractor import BacktestingDataExtractor, RegimePerformance
+from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor, RegimePerformance
 from finwiz.schemas.investment_discovery import ValidationResult
 
 

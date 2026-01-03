@@ -17,9 +17,9 @@ from finwiz.crews.helpers.data_integration_helpers import (
     ContextMerger,
     DiscoveryStatusHelper,
 )
-from finwiz.integration.backtesting_extractor import BacktestingDataExtractor
-from finwiz.integration.data_accessor import CrewDataAccessor
-from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
+from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor
+from finwiz.integration.accessor import CrewDataAccessor
+from finwiz.integration.availability import DataAvailabilityTracker
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -327,7 +327,7 @@ class ContextPreparationManager:
                     }
 
                     # Create BacktestingMetrics from the extracted data
-                    from finwiz.integration.backtesting_extractor import BacktestingMetrics
+                    from finwiz.orchestrators.extraction.backtesting import BacktestingMetrics
 
                     metrics = BacktestingMetrics(**metrics_dict)
 

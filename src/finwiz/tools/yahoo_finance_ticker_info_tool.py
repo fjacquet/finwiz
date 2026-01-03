@@ -65,9 +65,20 @@ class YahooFinanceTickerInfoTool(BaseTool):
                 "52wk_high": info.get("fiftyTwoWeekHigh", "N/A"),
                 "52wk_low": info.get("fiftyTwoWeekLow", "N/A"),
                 "pe_ratio": info.get("trailingPE", "N/A"),
+                "forward_pe": info.get("forwardPE", "N/A"),
                 "dividend_yield": info.get("dividendYield", "N/A"),
                 "sector": info.get("sector", "N/A"),
                 "industry": info.get("industry", "N/A"),
+                # Risk and fundamental metrics
+                "beta": info.get("beta", info.get("beta3Year", "N/A")),
+                "return_on_equity": info.get("returnOnEquity", "N/A"),
+                "debt_to_equity": info.get("debtToEquity", "N/A"),
+                "revenue_growth": info.get("revenueGrowth", "N/A"),
+                "profit_margins": info.get("profitMargins", "N/A"),
+                # ETF-specific fields
+                "total_assets": info.get("totalAssets", "N/A"),
+                "nav_price": info.get("navPrice", "N/A"),
+                "expense_ratio": info.get("annualReportExpenseRatio", "N/A"),
             }
 
             # Add timestamp for freshness validation

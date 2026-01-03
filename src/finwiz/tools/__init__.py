@@ -9,9 +9,9 @@ specific data retrieval, analysis, or other specialized tasks.
 # Removed quantitative_analysis_tool import to avoid circular dependency
 # Import directly from the module when needed
 
-from .a_plus_scoring_tool import APlusScoringTool
+# Lazy imports to avoid circular dependencies
+# Import directly from the modules when needed
 
-# BacktestingTool imported lazily to avoid circular imports
 from .optimization_tool import OptimizationTool
 from .portfolio_analysis_tool import PortfolioAnalysisTool
 from .risk_assessment_tool import RiskAssessmentTool
@@ -20,9 +20,13 @@ __all__ = ["APlusScoringTool", "BacktestingTool", "OptimizationTool", "Portfolio
 
 
 def __getattr__(name: str) -> type:
-    """Lazy import for BacktestingTool to avoid circular imports."""
+    """Lazy import for tools to avoid circular imports."""
     if name == "BacktestingTool":
         from .backtesting_tool import BacktestingTool
 
         return BacktestingTool
+    if name == "APlusScoringTool":
+        from .a_plus_scoring_tool import APlusScoringTool
+
+        return APlusScoringTool
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

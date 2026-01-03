@@ -170,6 +170,42 @@ def get_portfolio_grade_summary(scores: list[float]) -> dict[str, Any]:
     }
 
 
+def count_grade_distribution(
+    results: dict[str, dict[str, Any]],
+    grade_key: str = "grade",
+    default_grade: str = "F",
+) -> dict[str, int]:
+    """
+    Count grade distribution from analysis results.
+
+    Args:
+        results: Dict mapping ticker to result dict containing grade
+        grade_key: Key to extract grade from each result
+        default_grade: Default grade if key missing
+
+    Returns:
+        Dict mapping grade to count (e.g., {"A+": 2, "A": 5, ...})
+
+    """
+    grade_counts: dict[str, int] = {
+        "A+": 0,
+        "A": 0,
+        "B+": 0,
+        "B": 0,
+        "C+": 0,
+        "C": 0,
+        "D": 0,
+        "F": 0,
+    }
+
+    for result in results.values():
+        grade = result.get(grade_key, default_grade)
+        if grade in grade_counts:
+            grade_counts[grade] += 1
+
+    return grade_counts
+
+
 def get_grade_css_styles() -> str:
     """
     Return CSS styles for grade display.

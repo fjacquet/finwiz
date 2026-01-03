@@ -595,7 +595,7 @@ class FinwizFlow(Flow[FinwizState]):
     @listen(analyze_portfolio)
     def generate_alternatives(self, data: dict[str, Any]) -> dict[str, Any]:
         """Generate alternatives for SELL recommendations."""
-        from finwiz.orchestrators.review_decisions import generate_alternatives
+        from finwiz.orchestrators.portfolio_review import generate_alternatives
         
         sell_holdings = [
             h for h in self.state.portfolio_review["holdings"]

@@ -203,25 +203,25 @@ class PythonReportGenerator:
 
     def _get_css_styles(self) -> str:
         """Get CSS styles for the report (delegates to module)."""
-        from finwiz.reporting.report_css_styles import get_report_css
+        from finwiz.reporting.css_styles import get_report_css
 
         return get_report_css()
 
     def _generate_executive_summary(self, portfolio_stats: dict[str, Any]) -> str:
         """Generate executive summary section (delegates to module)."""
-        from finwiz.reporting.report_section_generators import generate_executive_summary
+        from finwiz.reporting.section_generators import generate_executive_summary
 
         return generate_executive_summary(portfolio_stats)
 
     def _generate_portfolio_overview(self, portfolio_review: PortfolioReview, portfolio_stats: dict[str, Any]) -> str:
         """Generate portfolio overview section (delegates to module)."""
-        from finwiz.reporting.report_section_generators import generate_portfolio_overview
+        from finwiz.reporting.section_generators import generate_portfolio_overview
 
         return generate_portfolio_overview(portfolio_review, portfolio_stats)
 
     def _generate_holdings_analysis(self, holdings: list[HoldingDecision]) -> str:
         """Generate detailed holdings analysis (delegates to module)."""
-        from finwiz.reporting.report_section_generators import generate_holdings_analysis
+        from finwiz.reporting.section_generators import generate_holdings_analysis
 
         return generate_holdings_analysis(holdings)
 
@@ -231,13 +231,13 @@ class PythonReportGenerator:
         discovery_results: dict[str, Any] | None = None,
     ) -> str:
         """Generate recommendations section (delegates to module)."""
-        from finwiz.reporting.report_section_generators import generate_recommendations
+        from finwiz.reporting.section_generators import generate_recommendations
 
         return generate_recommendations(portfolio_stats, discovery_results)
 
     def _generate_deep_analysis_section(self, deep_analysis_results: dict[str, Any] | None) -> str:
         """Generate deep analysis section (delegates to module)."""
-        from finwiz.reporting.report_section_generators import (
+        from finwiz.reporting.section_generators import (
             generate_deep_analysis_section,
         )
 
@@ -245,7 +245,7 @@ class PythonReportGenerator:
 
     def _generate_performance_metrics(self, deep_analysis_results: dict[str, Any] | None) -> str:
         """Generate performance metrics section (delegates to module)."""
-        from finwiz.reporting.report_section_generators import (
+        from finwiz.reporting.section_generators import (
             generate_performance_metrics,
         )
 
@@ -253,7 +253,7 @@ class PythonReportGenerator:
 
     def _generate_discovery_section(self, discovery_results: dict[str, Any] | None) -> str:
         """Generate A+ discovery opportunities section (delegates to module)."""
-        from finwiz.reporting.report_section_generators import (
+        from finwiz.reporting.section_generators import (
             generate_discovery_section,
         )
 

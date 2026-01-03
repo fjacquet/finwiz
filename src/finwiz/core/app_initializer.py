@@ -18,7 +18,7 @@ from finwiz.cli.argument_parser import (
     setup_session_environment,
 )
 from finwiz.flow_state import FinwizState
-from finwiz.flows.flow_orchestrator import FinwizFlow
+from finwiz.flows.orchestrator import FinwizFlow
 from finwiz.tools.logger import get_logger, setup_logging
 
 # Setup logging configuration

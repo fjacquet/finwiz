@@ -11,7 +11,7 @@ from collections.abc import Callable
 from typing import Any
 
 from finwiz.tools.logger import get_logger
-from finwiz.utils.cache_manager import CacheManager, get_cache_manager
+from finwiz.infrastructure.caching.manager import CacheManager, get_cache_manager
 
 logger = get_logger(__name__)
 

@@ -19,7 +19,7 @@ class PerplexityFeatureFlagTracker:
     @staticmethod
     def record_operation_success(ticker: str, analysis_type: str, result_count: int) -> None:
         """Record successful Perplexity operation for feature flag tracking."""
-        from finwiz.utils.feature_flags import get_feature_flags
+        from finwiz.config.features.flags import get_feature_flags
 
         feature_flags = get_feature_flags()
         feature_flags.record_success("perplexity_research")
@@ -38,7 +38,7 @@ class PerplexityFeatureFlagTracker:
     @staticmethod
     def record_operation_failure(ticker: str, analysis_type: str, error_type: str, circuit_breaker_triggered: bool = False) -> None:
         """Record failed Perplexity operation for feature flag tracking."""
-        from finwiz.utils.feature_flags import get_feature_flags
+        from finwiz.config.features.flags import get_feature_flags
 
         feature_flags = get_feature_flags()
         feature_flags.record_failure("perplexity_research")
@@ -58,7 +58,7 @@ class PerplexityFeatureFlagTracker:
     @staticmethod
     def check_circuit_breaker_status() -> dict[str, Any]:
         """Check current circuit breaker status for Perplexity feature flag."""
-        from finwiz.utils.feature_flags import get_feature_flags
+        from finwiz.config.features.flags import get_feature_flags
 
         feature_flags = get_feature_flags()
         flag_status = feature_flags.get_flag_status("perplexity_research")

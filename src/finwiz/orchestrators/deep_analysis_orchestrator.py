@@ -198,7 +198,7 @@ class DeepAnalysisOrchestrator:
         from concurrent.futures import ThreadPoolExecutor
 
         from finwiz.analysis import analyze_holding
-        from finwiz.utils.performance_config import get_batch_size
+        from finwiz.config.performance.performance_config import get_batch_size
 
         # Get max_workers from config if not specified
         if max_workers is None:

@@ -8,8 +8,8 @@ to make them testable and reusable.
 
 from crewai import LLM
 
-from finwiz.utils.llm_config import get_configured_llm, get_mini_llm
-from finwiz.utils.performance_config import get_performance_config_manager
+from finwiz.config.llm.llm_config import get_configured_llm, get_mini_llm
+from finwiz.config.performance.performance_config import get_performance_config_manager
 
 
 def get_crew_llm() -> LLM:

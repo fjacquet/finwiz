@@ -13,8 +13,8 @@ import yfinance as yf  # yfinance has no official type stubs
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-from finwiz.utils.feature_flags import get_feature_flags
-from finwiz.utils.url_validator import get_url_validator
+from finwiz.config.features.flags import get_feature_flags
+from finwiz.validation.url import get_url_validator
 
 logger = get_logger(__name__)
 

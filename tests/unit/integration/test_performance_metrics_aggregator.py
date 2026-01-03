@@ -10,8 +10,8 @@ from datetime import datetime
 import pytest
 from pytest import approx
 
-from finwiz.integration.backtesting_extractor import BacktestingDataExtractor, RegimePerformance
-from finwiz.integration.performance_metrics_aggregator import (
+from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor, RegimePerformance
+from finwiz.infrastructure.monitoring.performance_metrics_aggregator import (
     PerformanceMetricsAggregator,
     PortfolioImpactMetrics,
 )

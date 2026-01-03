@@ -28,7 +28,7 @@ class QuantitativeConfigManager:  # noqa: PLR0904
             config_file: Optional path to configuration file
 
         """
-        from finwiz.utils.feature_flags import get_feature_flags
+        from finwiz.config.features.flags import get_feature_flags
 
         self.config_file = config_file
         self.feature_flags = get_feature_flags()

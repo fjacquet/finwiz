@@ -13,7 +13,7 @@ Key Features:
 - Upside/downside percentage calculations
 
 Usage:
-    from finwiz.utils.price_targets import (
+    from finwiz.quantitative.price_targets import (
         calculate_dcf_target,
         calculate_pe_target,
         calculate_technical_target

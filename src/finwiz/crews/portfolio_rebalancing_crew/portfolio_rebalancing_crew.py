@@ -21,7 +21,7 @@ from finwiz.schemas.rebalancing.analysis import PortfolioAnalysis
 from finwiz.schemas.rebalancing.enums import RebalancingRecommendation
 from finwiz.tools.alternative_finder_tool import AlternativeFinder
 from finwiz.tools.enhanced_sec_tool import StandardizedRiskScoringTool
-from finwiz.tools.holding_analyzer_orchestrator import HoldingAnalyzerOrchestrator
+from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
 from finwiz.tools.logger import get_logger
 from finwiz.tools.portfolio_price_service import PortfolioPriceService
 from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_tool
@@ -31,8 +31,8 @@ from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_to
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -132,7 +132,7 @@ class PortfolioRebalancingCrew:
 
         Uses LLM_MODEL_STANDARD environment variable.
         """
-        from finwiz.utils.llm_config import get_configured_llm
+        from finwiz.config.llm.llm_config import get_configured_llm
 
         return get_configured_llm(model_type="standard")
 
@@ -305,7 +305,7 @@ class PortfolioRebalancingCrew:
         find_alternatives_task) can be executed in parallel using asyncio for improved performance.
         The portfolio_analysis_task depends on these and will wait for all to complete.
         """
-        from finwiz.utils.llm_config import get_manager_llm
+        from finwiz.config.llm.llm_config import get_manager_llm
 
         return Crew(
             agents=self.agents,

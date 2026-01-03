@@ -10,7 +10,7 @@ from typing import Any
 from crewai import Agent
 from crewai.project import agent
 
-from finwiz.utils.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
 
 logger = logging.getLogger(__name__)
 

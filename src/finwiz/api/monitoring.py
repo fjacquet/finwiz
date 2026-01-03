@@ -12,9 +12,9 @@ from fastapi import APIRouter, HTTPException, Query  # fastapi may not be instal
 from pydantic import BaseModel, Field
 
 from finwiz.monitoring.alerting import AlertSeverity, get_alert_manager
-from finwiz.monitoring.investment_discovery_monitor import get_discovery_monitor
+from finwiz.monitoring.investment_discovery import get_discovery_monitor
 from finwiz.tools.logger import get_logger
-from finwiz.utils.feature_flags import is_feature_enabled
+from finwiz.config.features.flags import is_feature_enabled
 
 logger = get_logger(__name__)
 

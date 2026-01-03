@@ -8,7 +8,7 @@ that final reporter agents have no tools.
 import pytest
 from crewai import Agent
 
-from finwiz.utils.agent_validators import FinalReporterError, final_reporter
+from finwiz.infrastructure.decorators.agent_validators import FinalReporterError, final_reporter
 
 
 class TestFinalReporterDecorator:

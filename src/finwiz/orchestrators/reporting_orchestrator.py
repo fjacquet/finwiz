@@ -17,6 +17,7 @@ from finwiz.flow_state import FinwizState
 from finwiz.reporting import get_generator_for_crew
 from finwiz.schemas.portfolio_review import PortfolioReview
 from finwiz.tools.logger import get_logger
+from finwiz.scoring.grading_system import count_grade_distribution
 
 
 class ReportingOrchestrator:
@@ -407,7 +408,7 @@ class ReportingOrchestrator:
             "total_holdings": total_holdings,
             "performance_metrics": {
                 "average_composite_score": avg_score,
-                "grade_distribution": self._calculate_grade_distribution(raw_deep_analysis),
+                "grade_distribution": count_grade_distribution(raw_deep_analysis),
                 "analysis_method": "python_scorer",
             },
             "results_by_ticker": {
@@ -428,27 +429,6 @@ class ReportingOrchestrator:
                 for ticker, result in raw_deep_analysis.items()
             },
         }
-
-    def _calculate_grade_distribution(
-        self,
-        deep_analysis_results: dict[str, dict[str, Any]],
-    ) -> dict[str, int]:
-        """Calculate grade distribution from deep analysis results."""
-        grade_counts: dict[str, int] = {
-            "A+": 0,
-            "A": 0,
-            "B": 0,
-            "C": 0,
-            "D": 0,
-            "F": 0,
-        }
-
-        for result in deep_analysis_results.values():
-            grade = result.get("grade", "F")
-            if grade in grade_counts:
-                grade_counts[grade] += 1
-
-        return grade_counts
 
     def _merge_deep_analysis_into_portfolio(
         self,

@@ -15,8 +15,8 @@ from fastapi.responses import JSONResponse  # fastapi may not be installed
 
 from finwiz.api.rebalancing import router as rebalancing_router
 from finwiz.tools.logger import get_logger
-from finwiz.utils.configuration_manager import ConfigurationError, get_configuration_manager
-from finwiz.utils.feature_flags import is_feature_enabled
+from finwiz.config.manager import ConfigurationError, get_configuration_manager
+from finwiz.config.features.flags import is_feature_enabled
 
 logger = get_logger(__name__)
 

@@ -12,7 +12,7 @@ import pytest
 from pydantic import BaseModel, Field
 from pytest import approx
 
-from finwiz.utils.json_error_handlers import (
+from finwiz.infrastructure.json.error_handlers import (
     JSONParsingError,
     SchemaValidationError,
     format_validation_summary,

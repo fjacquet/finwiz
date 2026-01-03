@@ -32,10 +32,10 @@ from finwiz.schemas.crypto import (
 )
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_crypto_crew_tools
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.llm_config import get_configured_llm
-from finwiz.utils.logging_helpers import CrewLogger
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.config.llm.llm_config import get_configured_llm
+from finwiz.infrastructure.logging.helpers import CrewLogger
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 # Get the absolute path of the current script
 current_script_path = Path(__file__).resolve()
@@ -231,7 +231,7 @@ class CryptoCrew:
     @crew
     def crew(self) -> Crew:
         """Create the crypto analysis crew."""
-        from finwiz.utils.llm_config import get_manager_llm
+        from finwiz.config.llm.llm_config import get_manager_llm
 
         return Crew(
             agents=self.agents,

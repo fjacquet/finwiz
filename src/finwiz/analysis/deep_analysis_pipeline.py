@@ -375,7 +375,7 @@ def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -
             logger.warning(f"Failed to parse crew output as JSON: {e}")
 
     # Fallback: Use validation with retry
-    from finwiz.validation.ai_output_validator import validate_ai_output_with_retry
+    from finwiz.validation.ai_output import validate_ai_output_with_retry
 
     logger.warning("All extraction methods failed, falling back to validation with retry")
     raw_output = crew_result.raw if hasattr(crew_result, "raw") else str(crew_result)

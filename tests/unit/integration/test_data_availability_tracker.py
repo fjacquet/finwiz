@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import pytest
 from pytest import approx
 
-from finwiz.integration.data_availability_tracker import (
+from finwiz.integration.availability import (
     DataAvailabilitySummary,
     DataAvailabilityTracker,
 )

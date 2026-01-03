@@ -3,7 +3,7 @@ Valuation Tool - CrewAI tool wrapper for price target calculations.
 
 This tool provides AI agents with access to multiple valuation methodologies
 including DCF, P/E multiples, and technical analysis-based targets. It wraps
-the utility functions from finwiz.utils.price_targets for use in CrewAI crews.
+the utility functions from finwiz.quantitative.price_targets for use in CrewAI crews.
 
 Usage in crews:
     from finwiz.tools.valuation_tool import ValuationTool
@@ -26,7 +26,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
 from finwiz.tools.logger import get_logger
-from finwiz.utils.price_targets import (
+from finwiz.quantitative.price_targets import (
     PriceTarget,
     calculate_consensus_target,
     calculate_dcf_target,

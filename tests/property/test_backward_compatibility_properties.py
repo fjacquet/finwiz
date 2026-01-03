@@ -67,7 +67,7 @@ class TestImportBackwardCompatibility:
         """
         # Property: Import should succeed
         try:
-            module = __import__("finwiz.flows.flow_orchestrator", fromlist=[import_name])
+            module = __import__("finwiz.flows.orchestrator", fromlist=[import_name])
             imported_object = getattr(module, import_name)
         except (ImportError, AttributeError) as e:
             pytest.fail(f"Failed to import {import_name} from flow_orchestrator: {e}")
@@ -124,7 +124,7 @@ class TestImportBackwardCompatibility:
         """
         # Property: All imports should succeed
         try:
-            module = __import__("finwiz.flows.flow_orchestrator", fromlist=import_pairs)
+            module = __import__("finwiz.flows.orchestrator", fromlist=import_pairs)
             imported_objects = {name: getattr(module, name) for name in import_pairs}
         except (ImportError, AttributeError) as e:
             pytest.fail(f"Failed to import {import_pairs} from flow_orchestrator: {e}")
@@ -167,17 +167,17 @@ class TestImportBackwardCompatibility:
         style, name = import_style
 
         if style == "from":
-            # Test: from finwiz.flows.flow_orchestrator import Name
+            # Test: from finwiz.flows.orchestrator import Name
             try:
-                module = __import__("finwiz.flows.flow_orchestrator", fromlist=[name])
+                module = __import__("finwiz.flows.orchestrator", fromlist=[name])
                 imported_object = getattr(module, name)
                 assert imported_object is not None, f"from import failed for {name}"
             except (ImportError, AttributeError) as e:
                 pytest.fail(f"from import failed for {name}: {e}")
         else:
-            # Test: import finwiz.flows.flow_orchestrator
+            # Test: import finwiz.flows.orchestrator
             try:
-                module = __import__("finwiz.flows.flow_orchestrator")
+                module = __import__("finwiz.flows.orchestrator")
                 # Navigate to the actual module
                 flow_module = module.flows.flow_orchestrator
                 assert flow_module is not None, "import flow_orchestrator failed"
@@ -249,7 +249,7 @@ class TestAPIBackwardCompatibility:
     @pytest.fixture
     def flow_class(self):
         """Get the FinwizFlow class."""
-        from finwiz.flows.flow_orchestrator import FinwizFlow
+        from finwiz.flows.orchestrator import FinwizFlow
 
         return FinwizFlow
 

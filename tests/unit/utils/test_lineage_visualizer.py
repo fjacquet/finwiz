@@ -9,7 +9,7 @@ from datetime import datetime
 import pytest
 
 from finwiz.schemas.data_lineage import DataLineage
-from finwiz.utils.lineage_visualizer import (
+from finwiz.reporting.data_lineage.lineage_visualizer import (
     LineageVisualizer,
     generate_html_diagram,
     generate_mermaid_flowchart,

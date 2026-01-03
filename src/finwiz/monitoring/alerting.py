@@ -20,7 +20,7 @@ from typing import Any
 import httpx
 
 from finwiz.tools.logger import get_logger
-from finwiz.utils.configuration_manager import get_configuration_manager
+from finwiz.config.manager import get_configuration_manager
 
 logger = get_logger(__name__)
 

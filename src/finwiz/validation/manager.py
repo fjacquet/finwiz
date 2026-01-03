@@ -9,7 +9,7 @@ from typing import Any
 from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
 
-from .contract_validator import ContractValidator
+from .contract import ContractValidator
 from .enums import ValidationMode
 from .registry import SchemaRegistry, get_registry
 from .result import ValidationResult

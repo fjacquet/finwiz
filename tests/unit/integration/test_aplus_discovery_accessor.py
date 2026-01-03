@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from finwiz.integration.aplus_discovery_accessor import APlusDiscoveryAccessor
+from finwiz.orchestrators.discovery.aplus_discovery_accessor import APlusDiscoveryAccessor
 
 
 class TestAPlusDiscoveryAccessor:

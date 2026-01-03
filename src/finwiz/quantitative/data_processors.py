@@ -51,7 +51,7 @@ class DataProcessor:
 
     def validate_inputs(self, symbol: str, start_date: datetime, end_date: datetime, interval: str) -> None:
         """Validate input parameters."""
-        from finwiz.utils.datetime_utils import normalize_to_naive
+        from finwiz.infrastructure.time.datetime_utils import normalize_to_naive
 
         if not symbol or not symbol.strip():
             raise ValueError("Symbol cannot be empty")

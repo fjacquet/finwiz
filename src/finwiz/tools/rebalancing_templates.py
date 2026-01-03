@@ -9,8 +9,8 @@ The actual implementation has been split into:
 
 import logging
 
-from finwiz.tools.rebalancing.template_builders import TemplateBuilder
-from finwiz.tools.rebalancing.template_renderers import TemplateRenderer
+from finwiz.reporting.rebalancing.template_builders import TemplateBuilder
+from finwiz.reporting.rebalancing.template_renderers import TemplateRenderer
 
 logger = logging.getLogger(__name__)
 

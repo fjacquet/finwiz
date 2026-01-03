@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import pytest
 from pytest import approx
 
-from finwiz.monitoring.investment_discovery_monitor import (
+from finwiz.monitoring.investment_discovery import (
     DiscoveryMetrics,
     InvestmentDiscoveryMonitor,
     QualityMetrics,

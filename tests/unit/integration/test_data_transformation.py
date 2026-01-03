@@ -5,7 +5,7 @@ from types import MappingProxyType
 
 from pydantic import BaseModel
 
-from finwiz.integration.data_transformation import (
+from finwiz.integration.transformation import (
     _calculate_data_completeness,
     _extract_key_insights,
     _identify_cross_crew_correlations,

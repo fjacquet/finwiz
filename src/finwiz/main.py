@@ -19,11 +19,11 @@ from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import P
 from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
 from finwiz.flow_state import FinwizState
-from finwiz.flows.flow_orchestrator import FinwizFlow, plot
-from finwiz.integration.data_accessor import CrewDataAccessor
+from finwiz.flows.orchestrator import FinwizFlow, plot
+from finwiz.integration.accessor import CrewDataAccessor
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.tools.logger import get_logger
-from finwiz.utils.feature_flags import is_feature_enabled
+from finwiz.config.features.flags import is_feature_enabled
 
 # Re-export for backward compatibility
 __all__ = [

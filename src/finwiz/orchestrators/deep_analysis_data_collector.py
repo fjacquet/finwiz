@@ -308,15 +308,33 @@ class DeepAnalysisDataCollector:
                 if isinstance(value, (int, float, str, bool, type(None))):
                     flattened[key] = value
 
+        # First, extract fundamental beta from ticker_info (yfinance source)
+        yfinance_beta = None
+        if "ticker_info" in data and isinstance(data["ticker_info"], dict):
+            yfinance_beta = data["ticker_info"].get("beta")
+            if yfinance_beta is not None and yfinance_beta != "N/A":
+                flattened["beta"] = yfinance_beta
+                self.logger.debug(f"Using yfinance fundamental beta: {yfinance_beta}")
+
         # Extract from quantitative_analysis
         if "quantitative_analysis" in data and isinstance(data["quantitative_analysis"], dict):
             quant = data["quantitative_analysis"]
 
             if "performance_metrics" in quant and isinstance(quant["performance_metrics"], dict):
                 perf = quant["performance_metrics"]
-                for field in ["beta", "volatility", "max_drawdown", "sharpe_ratio", "total_return"]:
+                for field in ["volatility", "max_drawdown", "sharpe_ratio", "total_return"]:
                     if field in perf and perf[field] is not None:
                         flattened[field] = perf[field]
+
+                # Use calculated beta ONLY if yfinance beta was not available
+                # AND calculated beta is not the default value (1.0)
+                calc_beta = perf.get("beta")
+                if calc_beta is not None and "beta" not in flattened:
+                    if calc_beta != 1.0:
+                        flattened["beta"] = calc_beta
+                        self.logger.debug(f"Using calculated beta: {calc_beta}")
+                    else:
+                        self.logger.debug("Skipping default calculated beta (1.0)")
 
             if "technical_analysis" in quant and isinstance(quant["technical_analysis"], dict):
                 tech = quant["technical_analysis"]

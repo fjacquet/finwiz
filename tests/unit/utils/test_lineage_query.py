@@ -11,7 +11,7 @@ import pytest
 from pytest import approx
 
 from finwiz.schemas.data_lineage import CalculationStep, DataLineage, DataSource
-from finwiz.utils.lineage_query import (
+from finwiz.reporting.data_lineage.lineage_query import (
     LineageQuery,
     get_grade_lineage,
     get_metric_lineage,

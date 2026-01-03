@@ -129,7 +129,7 @@ def add_etf_metrics(perf_dict: dict, symbol: str, logger) -> dict:
 
 def _add_fallback_expense_ratio(perf_dict: dict, symbol: str, logger) -> dict:
     """Add fallback expense ratio if Yahoo Finance doesn't have it."""
-    from finwiz.utils.etf_expense_fallback import get_fallback_expense_ratio
+    from finwiz.quantitative.etf.etf_expense_fallback import get_fallback_expense_ratio
 
     fallback_ratio = get_fallback_expense_ratio(symbol)
     if fallback_ratio is not None:

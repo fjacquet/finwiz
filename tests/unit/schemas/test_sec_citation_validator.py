@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from finwiz.integration.sec_citation_validator import (
+from finwiz.validation.sec_citation import (
     ConsolidatedSECCitations,
     SECCitationValidationResult,
     SECCitationValidator,

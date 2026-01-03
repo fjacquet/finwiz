@@ -14,8 +14,8 @@ from finwiz.schemas.crew_exports import (
     ConsolidatedReportExport,
     StockCrewExport,
 )
-from finwiz.utils.report_consolidator import ReportConsolidator
-from finwiz.utils.report_export_loaders import load_exports
+from finwiz.reporting.consolidator import ReportConsolidator
+from finwiz.reporting.export_loaders import load_exports
 
 
 class TestReportConsolidator:

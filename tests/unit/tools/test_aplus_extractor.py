@@ -10,7 +10,7 @@ from datetime import datetime
 import pytest
 from pytest import approx
 
-from finwiz.integration.aplus_extractor import APlusDataExtractor
+from finwiz.orchestrators.extraction.aplus import APlusDataExtractor
 from finwiz.schemas.integration import APlusOpportunityCollection
 
 

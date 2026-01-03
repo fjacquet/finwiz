@@ -13,7 +13,7 @@ Key Features:
 - Type-safe: Pydantic validation for all data
 
 Usage:
-    from finwiz.utils.report_consolidator import ReportConsolidator
+    from finwiz.reporting.consolidator import ReportConsolidator
 
     consolidator = ReportConsolidator(
         session_id="abc-123",
@@ -47,8 +47,8 @@ from finwiz.schemas.crew_exports import (
 )
 from finwiz.schemas.python_analysis import PythonDeepAnalysisResult
 from finwiz.tools.logger import get_logger
-from finwiz.utils.report_export_loaders import load_deep_analysis_exports, load_exports
-from finwiz.utils.report_html_collector import (
+from finwiz.reporting.export_loaders import load_deep_analysis_exports, load_exports
+from finwiz.reporting.html_collector import (
     HTMLReportPath,
     add_html_paths_to_analyses,
     collect_html_report_paths,

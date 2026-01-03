@@ -10,7 +10,7 @@ import pytest
 from pytest import approx
 
 from finwiz.schemas.data_lineage import DataLineage
-from finwiz.utils.lineage_html_integration import (
+from finwiz.reporting.data_lineage.lineage_html_integration import (
     add_lineage_to_report_data,
     generate_lineage_section_html,
     get_lineage_quality_badge,

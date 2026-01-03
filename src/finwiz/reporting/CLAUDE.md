@@ -17,6 +17,7 @@ reporting/
 ├── enriched_analysis_report_generator.py # Enriched analysis reports
 ├── individual_report_generator.py       # Individual holding report generation
 ├── python_report_generator.py           # Main Python report generator
+├── portfolio_review_html.py             # Portfolio review HTML tables & sections
 ├── report_css_styles.py                 # CSS styles for HTML reports
 └── report_section_generators.py         # HTML section generation functions
 ```
@@ -41,6 +42,10 @@ reporting/
 | `report_section_generators.py` | `generate_executive_summary()` | Executive summary HTML |
 | `report_section_generators.py` | `generate_holdings_analysis()` | Holdings analysis HTML |
 | `report_section_generators.py` | `generate_recommendations()` | Recommendations section HTML |
+| `portfolio_review_html.py` | `generate_holdings_table()` | Holdings table with grades |
+| `portfolio_review_html.py` | `generate_trades_table()` | Trade recommendations table |
+| `portfolio_review_html.py` | `add_portfolio_review_sections()` | Portfolio overview sections |
+| `portfolio_review_html.py` | `add_rebalancing_sections()` | Rebalancing summary sections |
 
 ## Data Format Handling
 

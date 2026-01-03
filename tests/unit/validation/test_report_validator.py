@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from finwiz.validation.report_validator import (
+from finwiz.validation.report import (
     ReportValidationResult,
     ReportValidator,
     ValidationIssue,

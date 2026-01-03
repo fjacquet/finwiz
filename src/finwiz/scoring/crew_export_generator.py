@@ -12,7 +12,7 @@ from typing import Any, cast
 
 from finwiz.flow_state import DeepAnalysisResult
 from finwiz.schemas.common import RiskLevel
-from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
+from finwiz.scoring.thresholds import ScoringThresholds, get_thresholds
 
 logger = logging.getLogger(__name__)
 

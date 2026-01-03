@@ -12,7 +12,7 @@ from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,
     RawHolding,
 )
-from finwiz.utils.grading_system import score_to_grade
+from finwiz.scoring.grading_system import score_to_grade
 
 
 class TestPortfolioHoldingsGrading:

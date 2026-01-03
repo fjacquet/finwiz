@@ -17,7 +17,7 @@ import pandas as pd
 import pytest
 from pytest import approx
 
-from finwiz.utils.risk_metrics import (
+from finwiz.quantitative.risk.risk_metrics import (
     calculate_beta,
     calculate_cvar,
     calculate_max_drawdown,

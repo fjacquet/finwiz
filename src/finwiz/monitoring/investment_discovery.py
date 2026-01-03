@@ -15,7 +15,7 @@ from typing import Any
 
 from finwiz.schemas.investment_discovery import APlusDiscoveryResult
 from finwiz.tools.logger import get_logger
-from finwiz.utils.monitoring import get_metrics_collector
+from finwiz.infrastructure.monitoring.core import get_metrics_collector
 
 logger = get_logger(__name__)
 

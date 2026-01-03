@@ -8,7 +8,7 @@ class TestSessionValidator:
 
     def test_init(self, tmp_path):
         """Test SessionValidator initialization."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "report.html"
         validator = SessionValidator(report_path)
@@ -18,7 +18,7 @@ class TestSessionValidator:
 
     def test_validate_session_integrity_valid(self, tmp_path, mocker):
         """Test validating a valid session."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         # Mock FinancialPlan
         mock_plan = mocker.MagicMock()
@@ -51,7 +51,7 @@ class TestSessionValidator:
 
     def test_validate_session_integrity_missing_plan_id(self, tmp_path, mocker):
         """Test validating session with missing plan_id."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_plan = mocker.MagicMock()
         mock_plan.plan_id = None
@@ -75,7 +75,7 @@ class TestSessionValidator:
 
     def test_validate_session_integrity_timestamp_order(self, tmp_path, mocker):
         """Test validating session with invalid timestamp order."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_plan = mocker.MagicMock()
         mock_plan.plan_id = "test"
@@ -99,7 +99,7 @@ class TestSessionValidator:
 
     def test_validate_session_integrity_no_history(self, tmp_path, mocker):
         """Test validating session with no analysis history."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_plan = mocker.MagicMock()
         mock_plan.plan_id = "test"
@@ -125,7 +125,7 @@ class TestSessionValidator:
         """Test validating session with Pydantic validation error."""
         from pydantic import ValidationError
 
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_plan = mocker.MagicMock()
         mock_plan.plan_id = "test"
@@ -149,7 +149,7 @@ class TestSessionValidator:
 
     def test_get_session_metadata_valid_file(self, tmp_path):
         """Test getting metadata for valid HTML file."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "report.html"
         report_path.write_text("<!DOCTYPE html><html><head></head><body></body></html>")
@@ -164,7 +164,7 @@ class TestSessionValidator:
 
     def test_get_session_metadata_empty_file(self, tmp_path):
         """Test getting metadata for empty file."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "report.html"
         report_path.write_text("")
@@ -177,7 +177,7 @@ class TestSessionValidator:
 
     def test_get_session_metadata_not_html(self, tmp_path):
         """Test getting metadata for non-HTML file."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "report.html"
         report_path.write_text("This is plain text, not HTML")
@@ -190,7 +190,7 @@ class TestSessionValidator:
 
     def test_get_session_metadata_nonexistent_file(self, tmp_path):
         """Test getting metadata for nonexistent file."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "nonexistent.html"
 
@@ -202,7 +202,7 @@ class TestSessionValidator:
 
     def test_get_session_metadata_unicode_error(self, tmp_path):
         """Test getting metadata for file with encoding issues."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "report.html"
         # Write binary content that's not valid UTF-8
@@ -216,7 +216,7 @@ class TestSessionValidator:
 
     def test_validate_html_content_valid(self, tmp_path):
         """Test validating valid HTML content."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         html_content = """<!DOCTYPE html>
         <html>
@@ -237,7 +237,7 @@ class TestSessionValidator:
 
     def test_validate_html_content_empty(self, tmp_path):
         """Test validating empty HTML content."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         validator = SessionValidator(tmp_path / "report.html")
         is_valid, issues = validator.validate_html_content("")
@@ -247,7 +247,7 @@ class TestSessionValidator:
 
     def test_validate_html_content_not_html(self, tmp_path):
         """Test validating non-HTML content."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         validator = SessionValidator(tmp_path / "report.html")
         is_valid, issues = validator.validate_html_content("Just plain text")
@@ -257,7 +257,7 @@ class TestSessionValidator:
 
     def test_validate_html_content_missing_meta_tags(self, tmp_path):
         """Test validating HTML with missing meta tags."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         html_content = """<!DOCTYPE html>
         <html>
@@ -273,7 +273,7 @@ class TestSessionValidator:
 
     def test_validate_html_content_missing_elements(self, tmp_path):
         """Test validating HTML with missing required elements."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         html_content = "<html><div>No head or body</div></html>"
 
@@ -285,7 +285,7 @@ class TestSessionValidator:
 
     def test_validate_client_profile_valid(self, tmp_path, mocker):
         """Test validating valid client profile."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_profile = mocker.MagicMock()
         mock_profile.age = 35
@@ -299,7 +299,7 @@ class TestSessionValidator:
 
     def test_validate_client_profile_invalid_age(self, tmp_path, mocker):
         """Test validating client profile with invalid age."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_profile = mocker.MagicMock()
         mock_profile.age = 150  # Too old
@@ -313,7 +313,7 @@ class TestSessionValidator:
 
     def test_validate_client_profile_too_young(self, tmp_path, mocker):
         """Test validating client profile with too young age."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_profile = mocker.MagicMock()
         mock_profile.age = 10  # Too young
@@ -327,7 +327,7 @@ class TestSessionValidator:
 
     def test_validate_client_profile_invalid_currency(self, tmp_path, mocker):
         """Test validating client profile with invalid currency."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         mock_profile = mocker.MagicMock()
         mock_profile.age = None
@@ -341,7 +341,7 @@ class TestSessionValidator:
 
     def test_validate_portfolio_data_empty(self, tmp_path):
         """Test validating empty portfolio data."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         validator = SessionValidator(tmp_path / "report.html")
         issues = validator._validate_portfolio_data({})
@@ -350,7 +350,7 @@ class TestSessionValidator:
 
     def test_validate_portfolio_data_valid_holdings(self, tmp_path):
         """Test validating valid portfolio holdings."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         portfolio_data = {
             "holdings": [
@@ -366,7 +366,7 @@ class TestSessionValidator:
 
     def test_validate_portfolio_data_invalid_holdings_type(self, tmp_path):
         """Test validating portfolio with invalid holdings type."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         portfolio_data = {"holdings": "not a list"}
 
@@ -377,7 +377,7 @@ class TestSessionValidator:
 
     def test_validate_portfolio_data_missing_required_fields(self, tmp_path):
         """Test validating portfolio holdings with missing fields."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         portfolio_data = {
             "holdings": [
@@ -395,7 +395,7 @@ class TestSessionValidator:
 
     def test_validate_portfolio_data_invalid_holding_type(self, tmp_path):
         """Test validating portfolio with invalid holding type."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         portfolio_data = {"holdings": ["not a dict", "also not a dict"]}
 
@@ -406,7 +406,7 @@ class TestSessionValidator:
 
     def test_validate_portfolio_data_allocations(self, tmp_path):
         """Test validating target allocations."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         portfolio_data = {
             "target_allocations": [
@@ -422,7 +422,7 @@ class TestSessionValidator:
 
     def test_validate_portfolio_data_unreasonable_allocations(self, tmp_path):
         """Test validating unreasonable total allocations."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         portfolio_data = {
             "target_allocations": [
@@ -437,7 +437,7 @@ class TestSessionValidator:
 
     def test_validate_recommendations_empty(self, tmp_path):
         """Test validating empty recommendations."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         validator = SessionValidator(tmp_path / "report.html")
         issues = validator._validate_recommendations({})
@@ -446,7 +446,7 @@ class TestSessionValidator:
 
     def test_validate_recommendations_valid(self, tmp_path):
         """Test validating valid recommendations."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         recommendations = {
             "buy": ["AAPL", "MSFT"],
@@ -461,7 +461,7 @@ class TestSessionValidator:
 
     def test_validate_recommendations_not_list(self, tmp_path):
         """Test validating recommendations with non-list category."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         recommendations = {"buy": "AAPL"}  # Should be list
 
@@ -472,7 +472,7 @@ class TestSessionValidator:
 
     def test_validate_recommendations_empty_category(self, tmp_path):
         """Test validating recommendations with empty category."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         recommendations = {"buy": []}
 
@@ -483,7 +483,7 @@ class TestSessionValidator:
 
     def test_validate_recommendations_non_string_items(self, tmp_path):
         """Test validating recommendations with non-string items."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         recommendations = {"buy": [123, {"ticker": "AAPL"}]}
 
@@ -494,7 +494,7 @@ class TestSessionValidator:
 
     def test_validate_recommendations_empty_string_items(self, tmp_path):
         """Test validating recommendations with empty string items."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         recommendations = {"buy": ["AAPL", "", "  "]}
 
@@ -505,7 +505,7 @@ class TestSessionValidator:
 
     def test_check_file_corruption_not_corrupted(self, tmp_path):
         """Test check_file_corruption for valid file."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "report.html"
         report_path.write_text("<!DOCTYPE html><html><head></head><body></body></html>")
@@ -518,7 +518,7 @@ class TestSessionValidator:
 
     def test_check_file_corruption_corrupted(self, tmp_path):
         """Test check_file_corruption for corrupted file."""
-        from finwiz.utils.session_validation import SessionValidator
+        from finwiz.sessions.validation import SessionValidator
 
         report_path = tmp_path / "report.html"
         report_path.write_text("")  # Empty file is corrupted

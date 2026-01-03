@@ -7,7 +7,7 @@ the generation of portfolio-wide grade summaries.
 
 from pytest import approx
 
-from finwiz.utils.grading_system import (
+from finwiz.scoring.grading_system import (
     format_grade_display,
     get_portfolio_grade_summary,
     score_to_grade,

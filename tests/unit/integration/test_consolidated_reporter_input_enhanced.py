@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from finwiz.integration.data_accessor import CrewDataAccessor
+from finwiz.integration.accessor import CrewDataAccessor
 from finwiz.integration.manager import CrewDataIntegrationManager
 
 

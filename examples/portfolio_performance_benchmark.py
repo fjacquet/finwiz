@@ -9,7 +9,7 @@ import asyncio
 import time
 from datetime import datetime
 
-from finwiz.tools.holding_analyzer_orchestrator import HoldingAnalyzerOrchestrator
+from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrator
 
 
 async def benchmark_parallel_processing() -> None:

@@ -10,7 +10,7 @@ from typing import Any
 from crewai import Task
 from crewai.project import task
 
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 logger = logging.getLogger(__name__)
 

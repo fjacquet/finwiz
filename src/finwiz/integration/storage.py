@@ -14,7 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from finwiz.integration.html_auto_generator import auto_generate_html
+from finwiz.reporting.html_auto_generator import auto_generate_html
 from finwiz.schemas.integration import CrewOutputMetadata
 
 

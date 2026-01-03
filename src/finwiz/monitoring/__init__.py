@@ -5,7 +5,7 @@ This package provides comprehensive monitoring capabilities for FinWiz
 including investment discovery monitoring, performance tracking, and alerting.
 """
 
-from finwiz.monitoring.investment_discovery_monitor import (
+from finwiz.monitoring.investment_discovery import (
     InvestmentDiscoveryMonitor,
     get_discovery_monitor,
     monitor_discovery_health,

@@ -34,7 +34,7 @@ def connect_backtesting_to_discovery_results(session_id: str) -> dict[str, Any]:
 
     try:
         # First, try to get A+ candidates from the A+ discovery integrator
-        from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
+        from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
         try:
             discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id)

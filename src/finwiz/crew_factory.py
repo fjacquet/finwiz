@@ -17,9 +17,9 @@ from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import P
 from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
 from finwiz.tools.logger import get_logger
-from finwiz.utils.core_analysis_error_handler import CoreAnalysisErrorHandler
-from finwiz.utils.crew_output_cache import get_crew_output_cache
-from finwiz.utils.feature_flags import is_feature_enabled
+from finwiz.orchestrators.error_handling.core_analysis_error_handler import CoreAnalysisErrorHandler
+from finwiz.infrastructure.caching.crew_output_cache import get_crew_output_cache
+from finwiz.config.features.flags import is_feature_enabled
 
 logger = get_logger(__name__)
 

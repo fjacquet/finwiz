@@ -12,7 +12,7 @@ from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
 from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
-from finwiz.validation.ai_output_validator import (
+from finwiz.validation.ai_output import (
     MissingRequiredFieldError,
     OutputParsingError,
     ToolCallInsteadOfAnalysisError,

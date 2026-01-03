@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING, Any
 
 from finwiz.schemas.investment_discovery import APlusAnalysis, InvestmentCandidate
 from finwiz.tools.logger import get_logger
-from finwiz.utils.grading_system import score_to_grade
+from finwiz.scoring.grading_system import score_to_grade
 
 if TYPE_CHECKING:
     from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
-    from finwiz.utils.a_plus_monitoring import MonitoredInvestment
+    from finwiz.monitoring.a_plus import MonitoredInvestment
 
 logger = get_logger(__name__)
 
@@ -132,7 +132,7 @@ def determine_alert_severity(
     Returns:
         AlertSeverity level
     """
-    from finwiz.utils.monitoring_alerts import AlertSeverity
+    from finwiz.infrastructure.monitoring.alerts import AlertSeverity
 
     # Grade value mapping
     grade_values = {"A+": 4, "A": 3, "B+": 2, "B": 1, "C+": 0.5, "C": 0, "D": -1, "F": -2}

@@ -18,12 +18,12 @@ from finwiz.flow_state import DeepAnalysisResult
 
 if TYPE_CHECKING:
     from finwiz.schemas.data_lineage import DataLineage
-    from finwiz.utils.data_quality_metrics import DataQualityMetrics
+    from finwiz.validation.quality_metrics import DataQualityMetrics
 from finwiz.scoring.crew_export_generator import CrewExportGenerator
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
 from finwiz.scoring.risk_scorer import RiskScorer
 from finwiz.scoring.score_result_builder import ScoreResultBuilder
-from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
+from finwiz.scoring.thresholds import ScoringThresholds, get_thresholds
 from finwiz.scoring.technical_fallback import (
     calculate_missing_technical_indicators,
     get_price_history_from_data,
@@ -187,7 +187,7 @@ class DeepAnalysisScorer:
     def _initialize_tracking(self, ticker: str, asset_class: str, data: dict[str, Any]) -> None:
         """Initialize data quality and lineage tracking systems."""
         from finwiz.schemas.data_lineage import DataLineage
-        from finwiz.utils.data_quality_metrics import DataQualityMetrics
+        from finwiz.validation.quality_metrics import DataQualityMetrics
 
         self._data_quality_metrics = DataQualityMetrics()
         self._current_ticker = ticker

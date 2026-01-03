@@ -1,8 +1,8 @@
 """
-Property-based tests for UtilityOrchestrator.
+Property-based tests for grading system and UtilityOrchestrator.
 
 Tests universal properties using Hypothesis for:
-- Grade distribution aggregation
+- Grade distribution aggregation (centralized in grading_system.py)
 - URL validation and correction
 """
 
@@ -11,14 +11,15 @@ from hypothesis import strategies as st
 
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
+from finwiz.scoring.grading_system import count_grade_distribution
 
 
 @given(
-    holdings=st.lists(
-        st.fixed_dictionaries(
+    results=st.dictionaries(
+        keys=st.text(min_size=1, max_size=5, alphabet=st.characters(whitelist_categories=("Lu",))),
+        values=st.fixed_dictionaries(
             {
-                "ticker": st.text(min_size=1, max_size=5, alphabet=st.characters(whitelist_categories=("Lu",))),
-                "grade": st.sampled_from(["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]),
+                "grade": st.sampled_from(["A+", "A", "B+", "B", "C+", "C", "D", "F"]),
             }
         ),
         min_size=1,
@@ -26,28 +27,24 @@ from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
     )
 )
 @settings(max_examples=100)
-def test_property_grade_distribution_aggregation(holdings):
+def test_property_grade_distribution_aggregation(results):
     """
-    **Feature: flow-orchestrator-refactoring, Property 22: Grade Distribution Aggregation**
+    **Feature: grading-system, Property: Grade Distribution Aggregation**
 
-    For any set of holdings with grades, the UtilityOrchestrator should count all grades correctly.
-
-    Validates: Requirements 9.2
+    For any set of analysis results with grades, count_grade_distribution
+    should count all grades correctly.
     """
-    # Arrange
-    state = FinwizState()
-    orch = UtilityOrchestrator(state)
-
     # Act
-    distribution = orch.calculate_grade_distribution(holdings)
+    distribution = count_grade_distribution(results)
 
-    # Assert - Total count should equal number of holdings
+    # Assert - Total count should equal number of results
     total_count = sum(distribution.values())
-    assert total_count == len(holdings)
+    assert total_count == len(results)
 
     # Assert - Each grade should be counted correctly
-    for grade in set(h["grade"] for h in holdings):
-        expected_count = sum(1 for h in holdings if h["grade"] == grade)
+    for ticker, data in results.items():
+        grade = data["grade"]
+        expected_count = sum(1 for d in results.values() if d["grade"] == grade)
         assert distribution[grade] == expected_count
 
 

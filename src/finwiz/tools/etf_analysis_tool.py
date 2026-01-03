@@ -3,7 +3,7 @@ ETF Analysis Tool - CrewAI tool wrapper for ETF-specific metrics.
 
 This tool provides AI agents with access to ETF-specific calculations including
 tracking error, correlation, expense impact, liquidity scoring, and concentration
-risk. It wraps the utility functions from finwiz.utils.etf_metrics for use in
+risk. It wraps the utility functions from finwiz.quantitative.etf.etf_metrics for use in
 CrewAI crews.
 
 Usage in crews:
@@ -27,7 +27,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
 from finwiz.tools.logger import get_logger
-from finwiz.utils.etf_metrics import (
+from finwiz.quantitative.etf.etf_metrics import (
     calculate_concentration_risk,
     calculate_correlation,
     calculate_etf_efficiency_score,

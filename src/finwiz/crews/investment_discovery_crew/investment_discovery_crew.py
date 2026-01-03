@@ -31,8 +31,8 @@ from finwiz.tools.portfolio_analysis_tool import get_portfolio_analysis_tool
 from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_tool
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.risk_assessment_tool import get_risk_assessment_tool
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 load_dotenv()
 
@@ -126,7 +126,7 @@ class InvestmentDiscoveryCrew:
 
         Uses LLM_MODEL_STANDARD environment variable.
         """
-        from finwiz.utils.llm_config import get_configured_llm
+        from finwiz.config.llm.llm_config import get_configured_llm
 
         return get_configured_llm(model_type="standard")
 
@@ -293,7 +293,7 @@ class InvestmentDiscoveryCrew:
     @crew
     def crew(self) -> Crew:
         """Create the Investment Discovery Crew with sequential workflow."""
-        from finwiz.utils.llm_config import get_manager_llm
+        from finwiz.config.llm.llm_config import get_manager_llm
 
         return Crew(
             agents=self.agents,

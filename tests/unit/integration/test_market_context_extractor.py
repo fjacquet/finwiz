@@ -21,7 +21,7 @@ import pytest
 from faker import Faker
 from pytest import approx
 
-from finwiz.integration.market_context_extractor import (
+from finwiz.orchestrators.extraction.market_context import (
     MacroIndicators,
     MarketContextExtractor,
     MarketContextSummary,

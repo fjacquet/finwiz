@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from pytest import approx
 
-from finwiz.utils.data_freshness_validator import DataFreshnessValidator, FreshnessResult, MarketCalendar
+from finwiz.validation.freshness import DataFreshnessValidator, FreshnessResult, MarketCalendar
 
 
 class TestMarketCalendar:

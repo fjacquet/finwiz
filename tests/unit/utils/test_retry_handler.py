@@ -8,7 +8,7 @@ and retry decorator configuration.
 import pytest
 
 from finwiz.config.resilience_config import ResilienceConfig
-from finwiz.utils.retry_handler import (
+from finwiz.infrastructure.resilience.retry import (
     RETRYABLE_EXCEPTIONS,
     classify_error,
     create_retry_decorator,

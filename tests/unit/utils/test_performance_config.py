@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from finwiz.utils.performance_config import (
+from finwiz.config.performance.performance_config import (
     OptimizationMode,
     PerformanceConfigManager,
     get_batch_size,

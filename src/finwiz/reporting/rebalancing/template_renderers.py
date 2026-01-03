@@ -6,7 +6,7 @@ This module handles rendering and exporting of rebalancing report templates.
 
 import logging
 
-from finwiz.tools.rebalancing.template_builders import TemplateBuilder
+from finwiz.reporting.rebalancing.template_builders import TemplateBuilder
 
 logger = logging.getLogger(__name__)
 

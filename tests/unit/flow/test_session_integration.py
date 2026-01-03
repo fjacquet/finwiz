@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 
 from finwiz.schemas.session import FinancialPlan
-from finwiz.utils.session_integration import (
+from finwiz.sessions.integration import (
     get_session_summary,
     initialize_session,
     save_session_with_analysis_results,
 )
-from finwiz.utils.session_manager import SessionParsingError
+from finwiz.sessions.manager import SessionParsingError
 
 
 class TestSessionIntegration:

@@ -7,7 +7,7 @@ Tests crypto-specific extraction logic using the Template Method pattern.
 import pytest
 from pytest import approx
 
-from finwiz.integration.opportunity_extractors import CryptoOpportunityExtractor
+from finwiz.orchestrators.discovery.extractors import CryptoOpportunityExtractor
 
 
 class TestCryptoOpportunityExtractor:

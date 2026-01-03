@@ -6,7 +6,7 @@ Tests memory monitoring, cache cleanup, and constraint validation.
 
 from pytest import approx
 
-from finwiz.utils.memory_manager import MemoryManager, get_memory_manager
+from finwiz.infrastructure.monitoring.memory_manager import MemoryManager, get_memory_manager
 
 
 class TestMemoryManager:

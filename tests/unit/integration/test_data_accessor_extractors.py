@@ -10,12 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from finwiz.integration.backtesting_extractor import BacktestingDataExtractor
-from finwiz.integration.data_accessor import CrewDataAccessor
-from finwiz.integration.discovery_methodology_extractor import DiscoveryMethodologyExtractor
+from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor
+from finwiz.integration.accessor import CrewDataAccessor
+from finwiz.orchestrators.extraction.discovery_methodology import DiscoveryMethodologyExtractor
 from finwiz.integration.manager import CrewDataIntegrationManager
-from finwiz.integration.market_context_extractor import MarketContextExtractor
-from finwiz.integration.performance_metrics_aggregator import PerformanceMetricsAggregator
+from finwiz.orchestrators.extraction.market_context import MarketContextExtractor
+from finwiz.infrastructure.monitoring.performance_metrics_aggregator import PerformanceMetricsAggregator
 
 
 class TestCrewDataAccessorExtractorInitialization:

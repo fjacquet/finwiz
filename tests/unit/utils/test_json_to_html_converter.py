@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from pytest import approx
 
-from finwiz.utils.json_to_html_converter import JsonToHtmlConverter
+from finwiz.infrastructure.json.to_html_converter import JsonToHtmlConverter
 
 
 class TestJsonToHtmlConverter:

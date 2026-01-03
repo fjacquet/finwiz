@@ -18,7 +18,7 @@ from finwiz.schemas.tools import (
     StandardizedSentimentInput,
 )
 from finwiz.tools.logger import get_logger
-from finwiz.utils.url_validator import get_url_validator
+from finwiz.validation.url import get_url_validator
 
 logger = get_logger(__name__)
 
@@ -138,7 +138,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             import asyncio
 
             from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-            from finwiz.utils.feature_flags import FeatureFlags
+            from finwiz.config.features.flags import FeatureFlags
 
             flags = FeatureFlags()
             if flags.is_enabled("perplexity_research"):
@@ -221,7 +221,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             import asyncio
 
             from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-            from finwiz.utils.feature_flags import FeatureFlags
+            from finwiz.config.features.flags import FeatureFlags
 
             flags = FeatureFlags()
             if flags.is_enabled("perplexity_research"):
@@ -276,7 +276,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             import asyncio
 
             from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-            from finwiz.utils.feature_flags import FeatureFlags
+            from finwiz.config.features.flags import FeatureFlags
 
             flags = FeatureFlags()
             if flags.is_enabled("perplexity_research"):

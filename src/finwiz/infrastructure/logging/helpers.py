@@ -5,7 +5,7 @@ This module provides standardized logging helpers for crew execution tracking,
 including start, completion, and error logging with structured extra fields.
 
 Usage:
-    from finwiz.utils.logging_helpers import CrewLogger
+    from finwiz.infrastructure.logging.helpers import CrewLogger
 
     class MyCrew:
         def __init__(self) -> None:

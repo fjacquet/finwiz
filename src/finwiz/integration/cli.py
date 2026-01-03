@@ -12,9 +12,9 @@ import json
 import sys
 from typing import Any
 
-from .health_checker import get_health_checker, perform_quick_health_check
-from .logging_utils import lineage_tracker, log_analyzer
-from .validation_scripts import DataIntegrityValidator, DependencyValidator, PerformanceValidator, run_all_validations
+from finwiz.infrastructure.health.checker import get_health_checker, perform_quick_health_check
+from finwiz.infrastructure.logging.utils import lineage_tracker, log_analyzer
+from finwiz.validation.scripts import DataIntegrityValidator, DependencyValidator, PerformanceValidator, run_all_validations
 
 
 def cmd_health(args: Any) -> None:

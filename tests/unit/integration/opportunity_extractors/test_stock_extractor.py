@@ -7,7 +7,7 @@ Tests stock-specific extraction logic using the Template Method pattern.
 import pytest
 from pytest import approx
 
-from finwiz.integration.opportunity_extractors import StockOpportunityExtractor
+from finwiz.orchestrators.discovery.extractors import StockOpportunityExtractor
 
 
 class TestStockOpportunityExtractor:

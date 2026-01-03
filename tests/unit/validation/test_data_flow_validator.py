@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from finwiz.validation.data_flow_validator import (
+from finwiz.validation.flow import (
     CrewDataContract,
     DataFlowTrace,
     DataFlowValidator,

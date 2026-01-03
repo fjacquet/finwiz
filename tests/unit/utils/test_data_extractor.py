@@ -10,7 +10,7 @@ import pytest
 from pytest import approx
 
 from finwiz.exceptions.data_quality import MissingRequiredFieldError
-from finwiz.utils.data_extractor import CrewDataExtractor
+from finwiz.integration.extractor import CrewDataExtractor
 
 
 class TestExtractQuantitativeMetrics:

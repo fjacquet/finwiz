@@ -26,7 +26,7 @@ from finwiz.tools.scoring import (
     get_dynamic_criteria,
     get_scoring_weights,
 )
-from finwiz.utils.grading_system import score_to_grade
+from finwiz.scoring.grading_system import score_to_grade
 
 
 class APlusScoringTool(BaseTool):

@@ -18,8 +18,8 @@ from finwiz.schemas.tools import (
     CryptocurrencyNewsInput,
 )
 from finwiz.tools.logger import get_logger
-from finwiz.utils.api_decorators import api_tool
-from finwiz.utils.rate_limiter import APIProvider
+from finwiz.infrastructure.decorators.api_decorators import api_tool
+from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 
 logger = get_logger(__name__)
 

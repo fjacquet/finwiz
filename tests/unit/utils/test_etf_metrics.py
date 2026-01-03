@@ -16,7 +16,7 @@ import pandas as pd
 import pytest
 from pytest import approx
 
-from finwiz.utils.etf_metrics import (
+from finwiz.quantitative.etf.etf_metrics import (
     calculate_concentration_risk,
     calculate_correlation,
     calculate_etf_efficiency_score,

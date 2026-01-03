@@ -21,10 +21,10 @@ from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import CompanyOverviewInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-from finwiz.utils.api_decorators import api_tool
-from finwiz.utils.cache_manager import cache_key, cached
-from finwiz.utils.feature_flags import get_feature_flags
-from finwiz.utils.rate_limiter import APIProvider
+from finwiz.infrastructure.decorators.api_decorators import api_tool
+from finwiz.infrastructure.caching.manager import cache_key, cached
+from finwiz.config.features.flags import get_feature_flags
+from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 
 logger = get_logger(__name__)
 

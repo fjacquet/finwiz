@@ -180,7 +180,7 @@ def _fetch_etf_specific_data(symbol: str, logger) -> dict:
             logger.info(f"✅ Fetched expense_ratio for {symbol}: {expense_ratio}% → {expense_ratio_decimal:.6f}")
         else:
             # Try fallback configuration file
-            from finwiz.utils.etf_expense_fallback import get_fallback_expense_ratio
+            from finwiz.quantitative.etf.etf_expense_fallback import get_fallback_expense_ratio
 
             fallback_ratio = get_fallback_expense_ratio(symbol)
             if fallback_ratio is not None:

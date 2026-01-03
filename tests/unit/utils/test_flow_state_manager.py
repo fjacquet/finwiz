@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 from pytest import approx
 
-from finwiz.utils.flow_state_manager import FlowStateManager
+from finwiz.flows.state_manager import FlowStateManager
 
 
 class TestFlowStateManager:

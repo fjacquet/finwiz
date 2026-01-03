@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from finwiz.scoring.scoring_thresholds import ScoringThresholds, get_thresholds
+from finwiz.scoring.thresholds import ScoringThresholds, get_thresholds
 
 logger = logging.getLogger(__name__)
 

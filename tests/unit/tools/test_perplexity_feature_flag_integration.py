@@ -14,7 +14,7 @@ from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,
 )
 from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker
-from finwiz.utils.feature_flags import FeatureFlags, FeatureFlagStrategy
+from finwiz.config.features.flags import FeatureFlags, FeatureFlagStrategy
 
 
 class TestPerplexityFeatureFlagIntegration:
