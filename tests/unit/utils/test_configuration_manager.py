@@ -147,7 +147,7 @@ class TestConfigurationManager:
         # Arrange
         mock_feature_flags = mocker.MagicMock()
         mock_feature_flags.is_enabled.return_value = False  # Disable optional features
-        mocker.patch("finwiz.utils.configuration_manager.get_feature_flags", return_value=mock_feature_flags)
+        mocker.patch("finwiz.config.manager.get_feature_flags", return_value=mock_feature_flags)
 
         config_manager = ConfigurationManager()
         chart_config = next(k for k in config_manager.REQUIRED_API_KEYS if k.env_var == "CHART_IMG_API_KEY")
@@ -255,7 +255,7 @@ class TestConfigurationManager:
         # Arrange
         mock_feature_flags = mocker.MagicMock()
         mock_feature_flags.is_enabled.return_value = True  # Enable features
-        mocker.patch("finwiz.utils.configuration_manager.get_feature_flags", return_value=mock_feature_flags)
+        mocker.patch("finwiz.config.manager.get_feature_flags", return_value=mock_feature_flags)
 
         config_manager = ConfigurationManager()
 
@@ -445,7 +445,7 @@ class TestConfigurationManagerIntegration:
         mock_feature_flags = mocker.MagicMock()
         # Enable chart analysis feature
         mock_feature_flags.is_enabled.side_effect = lambda flag: flag == "chart_analysis"
-        mocker.patch("finwiz.utils.configuration_manager.get_feature_flags", return_value=mock_feature_flags)
+        mocker.patch("finwiz.config.manager.get_feature_flags", return_value=mock_feature_flags)
 
         mocker.patch.dict(
             os.environ,

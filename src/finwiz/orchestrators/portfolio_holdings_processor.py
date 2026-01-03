@@ -35,8 +35,8 @@ from finwiz.schemas.portfolio_processing import (
     RawHolding,
 )
 from finwiz.schemas.portfolio_review import HoldingDecision
-from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.scoring.grading_system import score_to_grade
+from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +233,12 @@ class PortfolioHoldingsProcessor:
                     )
 
                     # Create a minimal decision for failed processing
-                    decision = create_error_decision(holding, base_currency, str(e))
+                    decision = create_error_decision(
+                        ticker=holding.ticker,
+                        name=holding.name,
+                        asset_class=holding.asset_class,
+                        error_message=str(e),
+                    )
 
                     # Record failed processing
                     result = ProcessingResult(
@@ -298,7 +303,7 @@ class PortfolioHoldingsProcessor:
         risk = assess_risk(is_valid, validation_result)
 
         # Build rationale
-        rationale = build_rationale(is_valid, validation_result, holding)
+        rationale = build_rationale(is_valid, validation_result, holding.asset_class)
 
         # Build citations
         citations = build_citations(validation_result)
@@ -320,7 +325,7 @@ class PortfolioHoldingsProcessor:
             grade_description=grade_info.description,
             recommended_action=grade_info.action,
             risk=risk,
-            rationale_bullets=rationale,
+            rationale_bullets=[rationale],
             citations=citations,
             alternatives=[],
             data_freshness=data_freshness,  # type: ignore[arg-type]

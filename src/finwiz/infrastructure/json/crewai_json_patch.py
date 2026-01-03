@@ -15,8 +15,8 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from finwiz.tools.logger import get_logger
 from finwiz.infrastructure.json.repair import repair_json
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

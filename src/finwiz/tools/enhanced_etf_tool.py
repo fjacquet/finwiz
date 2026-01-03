@@ -13,6 +13,7 @@ from typing import Any
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import (
     EnhancedETFAnalysisInput,
@@ -22,7 +23,6 @@ from finwiz.tools.etf.etf_analyzers import ETFAnalyzer
 from finwiz.tools.etf.etf_data_fetchers import ETFDataFetcher
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-from finwiz.config.features.flags import get_feature_flags
 
 logger = get_logger(__name__)
 

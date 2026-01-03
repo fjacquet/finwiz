@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from finwiz.tools.logger import get_logger
 from finwiz.config.features.flags import get_feature_flags
+from finwiz.tools.logger import get_logger
 
 if TYPE_CHECKING:
     from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration

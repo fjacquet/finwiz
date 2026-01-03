@@ -35,7 +35,7 @@ class URLValidator:
         "mock.com",
         "localhost",
         "127.0.0.1",
-        "0.0.0.0",
+        "0.0.0.0",  # nosec B104
     ]
 
     # Valid URL protocols

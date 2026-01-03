@@ -27,6 +27,10 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from dotenv import load_dotenv
 
+from finwiz.config.llm.llm_config import get_configured_llm
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
+from finwiz.infrastructure.logging.helpers import CrewLogger
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.crew_exports import ETFCrewExport
 from finwiz.schemas.etf import (
@@ -38,10 +42,6 @@ from finwiz.schemas.etf import (
 )
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import get_etf_crew_tools
-from finwiz.infrastructure.decorators.agent_validators import final_reporter
-from finwiz.config.llm.llm_config import get_configured_llm
-from finwiz.infrastructure.logging.helpers import CrewLogger
-from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 load_dotenv()
 

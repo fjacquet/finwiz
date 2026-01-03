@@ -7,8 +7,8 @@ Provides functions to integrate data lineage into HTML reports.
 import logging
 from typing import Any
 
-from finwiz.schemas.data_lineage import DataLineage
 from finwiz.reporting.data_lineage.lineage_visualizer import LineageVisualizer
+from finwiz.schemas.data_lineage import DataLineage
 
 logger = logging.getLogger(__name__)
 

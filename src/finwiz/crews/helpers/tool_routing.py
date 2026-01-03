@@ -10,6 +10,7 @@ from typing import Any
 
 from crewai.tools import BaseTool
 
+from finwiz.config.performance.performance_config import get_performance_config_manager
 from finwiz.tools.logger import get_logger
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
 from finwiz.tools.tool_factories import (
@@ -17,7 +18,6 @@ from finwiz.tools.tool_factories import (
     get_etf_crew_tools,
     get_stock_crew_tools,
 )
-from finwiz.config.performance.performance_config import get_performance_config_manager
 
 logger = get_logger(__name__)
 

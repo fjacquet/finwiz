@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.integration.config import get_integration_config
+
 from .formatters import IntegrationLogFormatter
 from .handlers import IntegrationLogHandler
 
@@ -225,6 +226,7 @@ class IntegrationLogger:
 def _create_global_instances() -> tuple:
     """Create global instances to avoid circular imports."""
     from finwiz.integration.lineage import DataLineageTracker
+
     from .analyzer import LogAnalyzer
 
     integration_logger = IntegrationLogger()

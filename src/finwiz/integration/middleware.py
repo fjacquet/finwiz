@@ -15,10 +15,10 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.integration import ValidationStatus
+from finwiz.validation.int_pipeline import ValidationPipeline
 
 from .accessor import CrewDataAccessor
 from .manager import CrewConfig, CrewDataIntegrationManager, ExecutionResult
-from .validation_pipeline import ValidationPipeline
 
 
 class PreExecutionResult(BaseModel):

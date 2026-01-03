@@ -8,8 +8,8 @@ into the main FinWiz workflow for persistent financial planning.
 from typing import Any
 
 from finwiz.schemas.session import FinancialPlan
-from finwiz.tools.logger import get_logger
 from finwiz.sessions.manager import SessionManager, SessionParsingError
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -291,7 +291,7 @@ confidence_level = (
 
 - [Deep Analysis Scoring System](deep_analysis.md) - How scores are calculated
 - [Investment Methodology](investment_methodology.md) - Overall philosophy
-- [Risk Framework](risk_framework.md) - Risk assessment details
+- [Risk Framework](deep_analysis.md) - Risk assessment details
 - [Data Quality](../reference/data_quality.md) - Data validation standards
 
 ## References

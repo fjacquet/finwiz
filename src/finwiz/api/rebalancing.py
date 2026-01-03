@@ -10,10 +10,10 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query, status  # fastapi may not be installed
 from pydantic import BaseModel, Field
 
+from finwiz.config.features.flags import is_feature_enabled
 from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
 from finwiz.schemas.api import RebalancingRequest, RebalancingResponse
 from finwiz.tools.logger import get_logger
-from finwiz.config.features.flags import is_feature_enabled
 
 logger = get_logger(__name__)
 

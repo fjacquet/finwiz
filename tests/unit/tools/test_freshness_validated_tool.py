@@ -135,7 +135,7 @@ class TestFreshnessValidatedTool:
 
         wrapper = FreshnessValidatedTool(mock_tool, max_age_hours=24)
 
-        mock_logger = mocker.patch("finwiz.utils.freshness_validated_tool.logger")
+        mock_logger = mocker.patch("finwiz.integration.freshness_validated_tool.logger")
         result = wrapper._run(ticker="AAPL")
 
         # Should log warning about stale data

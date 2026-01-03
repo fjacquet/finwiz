@@ -10,9 +10,9 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from finwiz.config.features.flags import FallbackStrategy, get_feature_flags
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.tools.logger import get_logger
-from finwiz.config.features.flags import FallbackStrategy, get_feature_flags
 
 
 class CrewFailureType(str):

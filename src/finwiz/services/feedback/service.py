@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from finwiz.infrastructure.monitoring.core import monitor_performance
 from finwiz.schemas.feedback import (
     CriteriaAdjustment,
     FeedbackSummary,
@@ -25,7 +26,6 @@ from finwiz.services.feedback.criteria import CriteriaAdjustment as CriteriaAdju
 from finwiz.services.feedback.insights import FeedbackInsights
 from finwiz.services.feedback.storage import FeedbackStorage
 from finwiz.tools.logger import get_logger
-from finwiz.infrastructure.monitoring.core import monitor_performance
 
 logger = get_logger(__name__)
 

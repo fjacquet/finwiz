@@ -11,7 +11,6 @@ This module provides a comprehensive feature flag system that allows for:
 from collections.abc import Callable
 from typing import Any
 
-from finwiz.tools.logger import get_logger
 from finwiz.config.features.definitions import (
     CircuitBreakerState,
     FallbackStrategy,
@@ -25,6 +24,7 @@ from finwiz.config.features.evaluators import (
     record_failure,
     record_success,
 )
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

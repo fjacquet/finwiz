@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.infrastructure.monitoring.freshness_checker import DataFreshnessChecker, FreshnessReport
+
 from .registry_data_retrieval import (
     get_cached_crew_output,
     get_crew_data_with_freshness_check,

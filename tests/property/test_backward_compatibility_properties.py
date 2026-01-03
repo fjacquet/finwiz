@@ -152,7 +152,7 @@ class TestImportBackwardCompatibility:
                 ("from", "FinwizFlow"),
                 ("from", "FinwizState"),
                 ("from", "FlowStateManager"),
-                ("import", "flow_orchestrator"),
+                ("import", "orchestrator"),
             ]
         )
     )
@@ -179,10 +179,10 @@ class TestImportBackwardCompatibility:
             try:
                 module = __import__("finwiz.flows.orchestrator")
                 # Navigate to the actual module
-                flow_module = module.flows.flow_orchestrator
-                assert flow_module is not None, "import flow_orchestrator failed"
+                flow_module = module.flows.orchestrator
+                assert flow_module is not None, "import orchestrator failed"
             except (ImportError, AttributeError) as e:
-                pytest.fail(f"import flow_orchestrator failed: {e}")
+                pytest.fail(f"import orchestrator failed: {e}")
 
 
 class TestOrchestratorImportFromNewLocation:

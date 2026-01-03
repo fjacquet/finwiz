@@ -14,7 +14,7 @@ class TestAsyncTaskDecorator:
         mock_task = mocker.Mock(spec=Task)
         mock_task.description = "Test async task"
         mock_task.async_execution = None
-        mock_logger = mocker.patch("finwiz.utils.task_decorators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.task_decorators.logger")
 
         @async_task
         def create_task():
@@ -47,7 +47,7 @@ class TestAsyncTaskDecorator:
         mock_task = mocker.Mock(spec=Task)
         mock_task.description = None
         mock_task.async_execution = None
-        mock_logger = mocker.patch("finwiz.utils.task_decorators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.task_decorators.logger")
 
         @async_task
         def create_task():
@@ -71,7 +71,7 @@ class TestSyncTaskDecorator:
         mock_task = mocker.Mock(spec=Task)
         mock_task.description = "Test sync task"
         mock_task.async_execution = None
-        mock_logger = mocker.patch("finwiz.utils.task_decorators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.task_decorators.logger")
 
         @sync_task
         def create_task():
@@ -104,7 +104,7 @@ class TestSyncTaskDecorator:
         mock_task = mocker.Mock(spec=Task)
         mock_task.description = None
         mock_task.async_execution = None
-        mock_logger = mocker.patch("finwiz.utils.task_decorators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.task_decorators.logger")
 
         @sync_task
         def create_task():
@@ -128,7 +128,7 @@ class TestDecoratorIntegration:
         mock_task = mocker.Mock(spec=Task)
         mock_task.description = "Test task"
         mock_task.async_execution = None
-        mocker.patch("finwiz.utils.task_decorators.logger")
+        mocker.patch("finwiz.infrastructure.decorators.task_decorators.logger")
 
         @async_task
         def create_task(self, config):
@@ -146,7 +146,7 @@ class TestDecoratorIntegration:
         mock_task = mocker.Mock(spec=Task)
         mock_task.description = "Test task"
         mock_task.async_execution = None
-        mocker.patch("finwiz.utils.task_decorators.logger")
+        mocker.patch("finwiz.infrastructure.decorators.task_decorators.logger")
 
         @sync_task
         def create_task(self, config=None):

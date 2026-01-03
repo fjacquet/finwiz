@@ -10,8 +10,8 @@ import asyncio
 from collections.abc import Callable
 from typing import Any
 
-from finwiz.tools.logger import get_logger
 from finwiz.infrastructure.caching.manager import CacheManager, get_cache_manager
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

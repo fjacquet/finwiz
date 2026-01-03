@@ -41,7 +41,7 @@ def log_crew_execution_start(
 ) -> None:
     """Log the start of crew execution."""
     try:
-        from .schema_manager import SchemaManager
+        from finwiz.integration.schema import SchemaManager
 
         schema_manager = SchemaManager(logger)
         execution_log = schema_manager.load_json_file(execution_log_path, {})

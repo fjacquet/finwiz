@@ -115,9 +115,9 @@ class TestPerformanceConfig:
 
         mocker.patch.dict(os.environ, env_vars, clear=True)
         # Clear global instance to force reload
-        import finwiz.utils.performance_config
+        import finwiz.config.performance.performance_config
 
-        finwiz.utils.performance_config._performance_config_manager = None
+        finwiz.config.performance.performance_config._performance_config_manager = None
 
         assert is_maximum_speed_mode() is True
         assert is_balanced_mode() is False

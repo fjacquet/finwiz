@@ -234,7 +234,7 @@ class DeepAnalysisOrchestrator:
             try:
                 # 30 minutes timeout for all holdings (allow ~15s per holding for 125 holdings)
                 completed = await asyncio.wait_for(asyncio.gather(*futures), timeout=1800)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.logger.error("Deep analysis timed out after 30 minutes")
                 # Cancel remaining futures
                 for f in futures:

@@ -54,6 +54,8 @@ dependencies = [
     "intrinio>=0.2.1",
     "eod>=0.2.1",
     "langchain-openai>=1.0.3",
+    "fastapi>=0.128.0",
+    "cryptography>=46.0.3",
 ]
 
 [project.scripts]

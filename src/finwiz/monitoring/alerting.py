@@ -19,8 +19,8 @@ from typing import Any
 
 import httpx
 
-from finwiz.tools.logger import get_logger
 from finwiz.config.manager import get_configuration_manager
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

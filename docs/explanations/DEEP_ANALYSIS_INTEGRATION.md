@@ -662,6 +662,6 @@ This integration serves as a model for other financial analysis systems seeking 
 **Related Documentation**:
 
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
-- [Jinja2 Templates Documentation](JINJA2_TEMPLATES.md)
-- [Performance Configuration Guide](PERFORMANCE_CONFIGURATION.md)
+- [Jinja2 Templates Documentation](REPORT_FILE_STRUCTURE.md)
+- [Performance Configuration Guide](../how-to/PERFORMANCE_CONFIGURATION.md)
 - [AI Minimalism Architecture](REPORT_AGGREGATION_DEVELOPER_GUIDE.md)

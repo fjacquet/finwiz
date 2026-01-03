@@ -154,6 +154,6 @@ graph TB
 
 - [Python Scoring Engine](PYTHON_SCORING_ENGINE.md) - Detailed scoring methodology
 - [Report Aggregation](REPORT_AGGREGATION_DEVELOPER_GUIDE.md) - Integration patterns
-- [Data Flow](data_flow.md) - Understand how data moves through the system
-- [Performance Configuration](PERFORMANCE_CONFIGURATION.md) - Optimization settings
+- [Data Flow](DATA_QUALITY_AND_FLOW_GUIDE.md) - Understand how data moves through the system
+- [Performance Configuration](../how-to/PERFORMANCE_CONFIGURATION.md) - Optimization settings
 - AI Minimalism - Decision framework for AI vs Python

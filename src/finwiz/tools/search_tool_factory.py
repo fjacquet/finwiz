@@ -12,10 +12,10 @@ from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
+from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.tools import PerplexitySearchWrapperInput as PerplexitySearchInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-from finwiz.config.features.flags import get_feature_flags
 
 
 class PerplexitySearchWrapper(BaseTool):

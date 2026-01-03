@@ -20,8 +20,8 @@ def store_crew_output(
 ) -> bool:
     """Store crew output to the integration system."""
     try:
-        from .schema_manager import SchemaManager
-        from .validation_manager import ValidationManager
+        from finwiz.integration.schema import SchemaManager
+        from finwiz.validation.int_manager import ValidationManager
 
         schema_manager = SchemaManager(logger)
         validation_manager = ValidationManager(metadata_dir, logger)

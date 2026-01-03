@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from finwiz.infrastructure.caching.manager import get_cache_manager
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,
     ProcessingSummary,
@@ -33,7 +34,6 @@ from finwiz.schemas.portfolio_review import (
     HoldingDecision,
     PortfolioReview,
 )
-from finwiz.infrastructure.caching.manager import get_cache_manager
 from finwiz.scoring.grading_system import score_to_grade
 
 logger = logging.getLogger(__name__)

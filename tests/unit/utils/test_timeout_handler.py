@@ -64,7 +64,7 @@ class TestWithTimeout:
     async def test_should_log_start_and_completion(self, mocker):
         """Test that start and completion are logged."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.timeout_handler.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.resilience.timeout.logger")
 
         async def simple_operation() -> str:
             await asyncio.sleep(0.01)
@@ -88,7 +88,7 @@ class TestWithTimeout:
     async def test_should_log_timeout_error(self, mocker):
         """Test that timeout errors are logged."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.timeout_handler.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.resilience.timeout.logger")
 
         async def slow_operation() -> str:
             await asyncio.sleep(2)
@@ -234,7 +234,7 @@ class TestWithTimeoutGraceful:
     async def test_should_log_warning_on_timeout(self, mocker):
         """Test that warning is logged when timeout occurs."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.timeout_handler.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.resilience.timeout.logger")
 
         async def slow_operation() -> str:
             await asyncio.sleep(2)
@@ -269,7 +269,7 @@ class TestWithTimeoutGraceful:
     async def test_should_use_with_timeout_internally(self, mocker):
         """Test that with_timeout_graceful uses with_timeout internally."""
         # Arrange
-        mock_with_timeout = mocker.patch("finwiz.utils.timeout_handler.with_timeout", side_effect=TimeoutError())
+        mock_with_timeout = mocker.patch("finwiz.infrastructure.resilience.timeout.with_timeout", side_effect=TimeoutError())
 
         async def test_operation() -> str:
             return "test"
@@ -523,7 +523,7 @@ class TestTimeoutHandlerEdgeCases:
     async def test_should_handle_operation_name_with_special_chars(self, mocker):
         """Test logging with operation names containing special characters."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.timeout_handler.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.resilience.timeout.logger")
 
         async def operation() -> str:
             await asyncio.sleep(0.01)

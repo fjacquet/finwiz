@@ -17,10 +17,10 @@ from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 if TYPE_CHECKING:
     from finwiz.flows.orchestrator import FinwizFlow
     from finwiz.schemas.session import FinancialPlan
-from finwiz.tools.logger import get_logger
 from finwiz.config.manager import ConfigurationError, get_configuration_manager
 from finwiz.flows.state_manager import FlowStateManager
 from finwiz.sessions.manager import SessionManager, SessionParsingError
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

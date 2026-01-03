@@ -21,6 +21,7 @@ from finwiz.quantitative.optimization_algorithms import OptimizedTrades
 from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError, PortfolioAnalyzer
 from finwiz.quantitative.rebalancing_engine import OptimizationConstraint, RebalancingEngine
 from finwiz.quantitative.risk_manager import RiskLevel, RiskManager
+from finwiz.reporting.rebalancing.rebalancing_html_builders import RebalancingHTMLBuilder
 from finwiz.schemas.portfolio_rebalancing import (
     CostAnalysis,
     ExecutionSummary,
@@ -31,7 +32,6 @@ from finwiz.schemas.portfolio_rebalancing import (
 from finwiz.tools.html_report_generator import HTMLReportGenerator
 from finwiz.tools.logger import get_logger
 from finwiz.tools.portfolio_price_service import PortfolioPriceService, PriceDataUnavailableError
-from finwiz.reporting.rebalancing.rebalancing_html_builders import RebalancingHTMLBuilder
 
 logger = get_logger(__name__)
 

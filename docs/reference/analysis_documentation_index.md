@@ -85,7 +85,7 @@ The integration followed these principles:
 - [Architecture Overview](../explanations/ARCHITECTURE.md)
 - [Design Principles](../explanations/design_principles.md)
 - [Test Structure Evolution](../explanations/test_structure_evolution.md)
-- [Testing Strategy](../explanations/testing_strategy.md)
+- [Testing Strategy](../DEVELOPER_GUIDE.md#testing)
 
 ### Development Standards
 

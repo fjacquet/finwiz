@@ -705,6 +705,6 @@ This engine enables high-frequency portfolio analysis at scale while maintaining
 **Last Updated**: 2025-01-25
 **Related Documentation**:
 
-- [Jinja2 Template Documentation](JINJA2_TEMPLATES.md)
+- [Jinja2 Template Documentation](../explanations/REPORT_FILE_STRUCTURE.md)
 - [Performance Configuration Guide](PERFORMANCE_CONFIGURATION.md)
 - [Deep Analysis Integration Guide](DEEP_ANALYSIS_INTEGRATION.md)

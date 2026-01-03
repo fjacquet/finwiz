@@ -742,4 +742,4 @@ This system enables FinWiz to scale from single-ticker analysis to large portfol
 
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
 - [Batch Processing Guide](BATCH_PROCESSING.md)
-- [Performance Monitoring Guide](PERFORMANCE_MONITORING.md)
+- [Performance Monitoring Guide](PERFORMANCE_CONFIGURATION.md)

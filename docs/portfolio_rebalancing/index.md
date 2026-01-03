@@ -333,8 +333,8 @@ Monitor the costs and benefits of rebalancing:
 ### Documentation
 
 - **[Optimization Theory](../explanations/optimization_theory.md)** - Mathematical foundations
-- **[Risk Management](../explanations/risk_management.md)** - Risk management concepts
-- **[Performance Attribution](../explanations/performance_attribution.md)** - Understanding returns
+- **[Risk Management](../explanations/deep_analysis.md)** - Risk management concepts
+- **[Performance Attribution](../explanations/optimization_theory.md)** - Understanding returns
 
 ### Support
 

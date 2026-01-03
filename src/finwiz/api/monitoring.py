@@ -11,10 +11,10 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query  # fastapi may not be installed
 from pydantic import BaseModel, Field
 
+from finwiz.config.features.flags import is_feature_enabled
 from finwiz.monitoring.alerting import AlertSeverity, get_alert_manager
 from finwiz.monitoring.investment_discovery import get_discovery_monitor
 from finwiz.tools.logger import get_logger
-from finwiz.config.features.flags import is_feature_enabled
 
 logger = get_logger(__name__)
 

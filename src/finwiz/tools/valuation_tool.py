@@ -25,7 +25,6 @@ import pandas as pd
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from finwiz.tools.logger import get_logger
 from finwiz.quantitative.price_targets import (
     PriceTarget,
     calculate_consensus_target,
@@ -34,6 +33,7 @@ from finwiz.quantitative.price_targets import (
     calculate_support_resistance_targets,
     calculate_technical_target,
 )
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

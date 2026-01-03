@@ -519,7 +519,7 @@ result = OutputSchema.model_validate(crew_output)
 - **[Tools Reference](tools.md)** - Available analysis tools
 - **[Schemas Reference](schemas.md)** - Output data models
 - **[Configuration Reference](configuration.md)** - Configuration options
-- **[Flow Architecture](../../explanations/flow_architecture.md)** - Flow integration patterns
+- **[Flow Architecture](../../explanations/ARCHITECTURE.md)** - Flow integration patterns
 
 ---
 

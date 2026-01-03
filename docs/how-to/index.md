@@ -27,7 +27,7 @@ How-to guides are **problem-oriented** recipes that show you how to accomplish s
 - **[Batch Processing](BATCH_PROCESSING.md)** - High-performance portfolio analysis
 - **[Python Scoring Engine](PYTHON_SCORING_ENGINE.md)** - Deterministic scoring for speed
 - **[Performance Configuration](PERFORMANCE_CONFIGURATION.md)** - Advanced configuration
-- **[Performance Monitoring](PERFORMANCE_MONITORING.md)** - Monitor and track performance
+- **[Performance Monitoring](PERFORMANCE_CONFIGURATION.md)** - Monitor and track performance
 - **[Memory Management](MEMORY_MANAGEMENT.md)** - Optimize memory usage
 
 ### Analysis and Reporting
@@ -54,7 +54,7 @@ How-to guides are **problem-oriented** recipes that show you how to accomplish s
 - **[Custom Crews](custom_crews.md)** - Create custom analysis crews
 - **[Custom Workflows](custom_workflows.md)** - Build custom analysis workflows
 - **[Plugin Development](plugin_development.md)** - Develop FinWiz plugins
-- **[Testing](testing.md)** - Test FinWiz components
+- **[Testing](../DEVELOPER_GUIDE.md#testing)** - Test FinWiz components
 - **[Schema Customization](schema_customization.md)** - Customize Pydantic schemas
 
 ### Troubleshooting
@@ -90,7 +90,7 @@ Development-focused guides:
 
 1. [Custom Crews](custom_crews.md)
 2. [Custom Workflows](custom_workflows.md)
-3. [Testing](testing.md)
+3. [Testing](../DEVELOPER_GUIDE.md#testing)
 4. [Plugin Development](plugin_development.md)
 
 ### By Task
@@ -150,7 +150,7 @@ Each guide follows this structure:
 
 - [Architecture](../explanations/ARCHITECTURE.md) - System design
 - [Design Principles](../explanations/design_principles.md) - Core philosophy
-- [AI Architecture](../explanations/ai_architecture.md) - AI agent framework
+- [AI Architecture](../explanations/ARCHITECTURE.md) - AI agent framework
 
 ## Need Help?
 

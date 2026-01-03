@@ -26,7 +26,6 @@ import pandas as pd
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from finwiz.tools.logger import get_logger
 from finwiz.quantitative.etf.etf_metrics import (
     calculate_concentration_risk,
     calculate_correlation,
@@ -35,6 +34,7 @@ from finwiz.quantitative.etf.etf_metrics import (
     calculate_liquidity_score,
     calculate_tracking_error,
 )
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

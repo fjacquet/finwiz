@@ -33,9 +33,9 @@ import yfinance as yf  # yfinance has no official type stubs
 from aiohttp import ClientTimeout
 
 from finwiz.config.yfinance_config import configure_yfinance
-from finwiz.tools.logger import get_logger
 from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider, get_rate_limiter
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

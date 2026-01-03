@@ -11,6 +11,7 @@ Functions:
 """
 
 # Import and re-export for backward compatibility
+from finwiz.config.features.flags import is_feature_enabled
 from finwiz.core.app_initializer import kickoff
 from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
 from finwiz.crews.etf_crew.etf_crew import EtfCrew
@@ -23,7 +24,6 @@ from finwiz.flows.orchestrator import FinwizFlow, plot
 from finwiz.integration.accessor import CrewDataAccessor
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.tools.logger import get_logger
-from finwiz.config.features.flags import is_feature_enabled
 
 # Re-export for backward compatibility
 __all__ = [

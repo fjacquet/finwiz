@@ -10,9 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from finwiz.tools.logger import get_logger
 from finwiz.config.performance.performance_config import OptimizationMode, get_performance_config_manager
 from finwiz.infrastructure.monitoring.performance import PortfolioMetrics
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

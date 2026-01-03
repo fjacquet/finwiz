@@ -1863,7 +1863,7 @@ jobs:
 - [User Guide](USER_GUIDE.md) - Complete user documentation
 - [API Reference](reference/API_REFERENCE.md) - API documentation
 - [Architecture Overview](explanations/ARCHITECTURE.md) - System design
-- [Testing Guide](explanations/testing_strategy.md) - Testing best practices
+- [Testing Guide](DEVELOPER_GUIDE.md#testing) - Testing best practices
 
 ## Support
 

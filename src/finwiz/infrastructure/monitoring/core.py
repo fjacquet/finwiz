@@ -14,8 +14,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
-from finwiz.tools.logger import get_logger
 from finwiz.config.features.flags import is_feature_enabled
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

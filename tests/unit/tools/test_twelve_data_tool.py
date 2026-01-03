@@ -15,7 +15,7 @@ def mock_rate_limit_decorator(mocker):
         return func(*args, **filtered_kwargs)
 
     # Mock the decorator
-    mocker.patch("finwiz.utils.api_decorators.with_rate_limit", side_effect=mock_with_rate_limit)
+    mocker.patch("finwiz.infrastructure.decorators.api_decorators.with_rate_limit", side_effect=mock_with_rate_limit)
 
 
 class TestTwelveDataIndicatorTool:

@@ -655,10 +655,10 @@ Validate that hybrid architecture achieves all success criteria without regressi
 
 ### Related Documents
 
-1. **PRD**: [.taskmaster/docs/python-ai-hybrid-architecture-prd.md](.taskmaster/docs/python-ai-hybrid-architecture-prd.md)
-2. **Architecture Analysis**: [docs/architecture/python-ai-analysis-architecture.md](docs/architecture/python-ai-analysis-architecture.md)
+1. **PRD**: .taskmaster/docs/python-ai-hybrid-architecture-prd.md
+2. **Architecture Analysis**: python-ai-analysis-architecture.md
 3. **CLAUDE.md**: Project-wide development guidelines
-4. **CrewAI Standards**: [.kiro/steering/crewai-standards.md](../.kiro/steering/crewai-standards.md)
+4. **CrewAI Standards**: .kiro/steering/crewai-standards.md (project root)
 
 ### Task Master Commands
 

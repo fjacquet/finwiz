@@ -122,7 +122,7 @@ class ValidationOrchestrator:
         self.logger.info("=" * 80)
 
         # Import here to avoid circular dependencies
-        from finwiz.orchestrators.portfolio_review import run
+        from finwiz.orchestrators.portfolio_review_orchestrator import run
 
         try:
             # Run portfolio review (loads CSV, builds decisions) - MUST await async function

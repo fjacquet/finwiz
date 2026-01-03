@@ -22,9 +22,9 @@ class TestMultiToolIntegrationScenarios:
     def setup_method(self):
         """Set up test environment."""
         # Clear any existing feature flags instance
-        import finwiz.utils.feature_flags
+        import finwiz.config.features.flags
 
-        finwiz.utils.feature_flags._feature_flags = None
+        finwiz.config.features.flags._feature_flags = None
 
     def test_should_combine_yahoo_and_sonar_data_sources(self, mocker):
         """Test data combination logic for different analysis tools and data sources."""

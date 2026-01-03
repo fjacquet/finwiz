@@ -18,10 +18,11 @@ import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
-# Import schema from centralized location
-from finwiz.schemas.tools import ChartImgInput
 from finwiz.infrastructure.decorators.api_decorators import api_tool
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider
+
+# Import schema from centralized location
+from finwiz.schemas.tools import ChartImgInput
 
 
 class ChartImgTool(BaseTool):

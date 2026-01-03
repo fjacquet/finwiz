@@ -23,9 +23,9 @@ class TestPerplexityFeatureFlagIntegration:
     def setup_method(self):
         """Set up test environment."""
         # Clear any existing feature flags instance
-        import finwiz.utils.feature_flags
+        import finwiz.config.features.flags
 
-        finwiz.utils.feature_flags._feature_flags = None
+        finwiz.config.features.flags._feature_flags = None
 
     def test_should_enable_perplexity_when_flag_enabled(self, mocker):
         """Test tool behavior with PERPLEXITY_RESEARCH flag enabled."""
@@ -154,7 +154,7 @@ class TestPerplexityFeatureFlagIntegration:
         """Test feature flag success recording for successful Perplexity calls."""
         # Arrange
         mock_feature_flags = mocker.Mock(spec=FeatureFlags)
-        mocker.patch("finwiz.utils.feature_flags.get_feature_flags", return_value=mock_feature_flags)
+        mocker.patch("finwiz.config.features.flags.get_feature_flags", return_value=mock_feature_flags)
 
         # Act
         PerplexityFeatureFlagTracker.record_operation_success("AAPL", "sentiment", 5)
@@ -166,7 +166,7 @@ class TestPerplexityFeatureFlagIntegration:
         """Test feature flag failure recording for API errors and timeouts."""
         # Arrange
         mock_feature_flags = mocker.Mock(spec=FeatureFlags)
-        mocker.patch("finwiz.utils.feature_flags.get_feature_flags", return_value=mock_feature_flags)
+        mocker.patch("finwiz.config.features.flags.get_feature_flags", return_value=mock_feature_flags)
 
         # Act
         PerplexityFeatureFlagTracker.record_operation_failure("AAPL", "sentiment", "timeout_error", False)
@@ -183,7 +183,7 @@ class TestPerplexityFeatureFlagIntegration:
             "circuit_breaker": {"is_open": False, "failure_count": 2},
             "fallback_strategy": "cached_only",
         }
-        mocker.patch("finwiz.utils.feature_flags.get_feature_flags", return_value=mock_feature_flags)
+        mocker.patch("finwiz.config.features.flags.get_feature_flags", return_value=mock_feature_flags)
 
         # Act
         status = PerplexityFeatureFlagTracker.check_circuit_breaker_status()

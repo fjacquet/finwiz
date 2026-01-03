@@ -16,6 +16,7 @@ from crewai.tools import BaseTool
 from langchain_text_splitters import CharacterTextSplitter
 from pydantic import BaseModel
 
+from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.common import RiskLevel
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import (
@@ -25,7 +26,6 @@ from finwiz.schemas.tools import (
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
-from finwiz.config.features.flags import get_feature_flags
 from finwiz.validation.url import get_url_validator
 
 

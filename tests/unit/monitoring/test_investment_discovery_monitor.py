@@ -343,7 +343,7 @@ class TestGlobalMonitorFunctions:
             "discovery_metrics": {"total_discoveries": 5},
             "quality_metrics": {"grade_retention_rate": 0.8},
         }
-        mock_get_monitor = mocker.patch("finwiz.monitoring.investment_discovery_monitor.get_discovery_monitor", return_value=mock_monitor)
+        mock_get_monitor = mocker.patch("finwiz.monitoring.investment_discovery.get_discovery_monitor", return_value=mock_monitor)
 
         health_data = await monitor_discovery_health()
 

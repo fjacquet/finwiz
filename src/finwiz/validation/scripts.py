@@ -12,9 +12,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from finwiz.integration.config import get_crew_dependency_config, get_integration_config
 from finwiz.infrastructure.health.checker import get_health_checker
 from finwiz.infrastructure.logging.utils import integration_logger, log_analyzer
+from finwiz.integration.config import get_crew_dependency_config, get_integration_config
 
 
 class ValidationScript:

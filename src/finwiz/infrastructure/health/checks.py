@@ -13,8 +13,8 @@ from typing import Any
 import psutil
 from pydantic import BaseModel, Field
 
-from finwiz.infrastructure.monitoring.freshness_checker import DataFreshnessChecker
 from finwiz.infrastructure.logging.utils import IntegrationLogger
+from finwiz.infrastructure.monitoring.freshness_checker import DataFreshnessChecker
 
 
 class HealthStatus(BaseModel):

@@ -383,14 +383,14 @@ This provides:
 
 - [Report Aggregation Architecture](REPORT_AGGREGATION_DEVELOPER_GUIDE.md) - Integration patterns
 - AI Minimalism - Decision framework for AI vs Python
-- [Performance Configuration](PERFORMANCE_CONFIGURATION.md) - Optimization settings
+- [Performance Configuration](../how-to/PERFORMANCE_CONFIGURATION.md) - Optimization settings
 - Testing Standards - Unit testing approaches
 
 ## Further Reading
 
 - Implementation Tasks - Detailed implementation plan
-- [Flow Architecture](flow_architecture.md) - CrewAI Flow integration patterns
-- [Validation Framework](validation_framework.md) - Data quality assurance
+- [Flow Architecture](ARCHITECTURE.md) - CrewAI Flow integration patterns
+- [Validation Framework](design_principles.md) - Data quality assurance
 
 ---
 

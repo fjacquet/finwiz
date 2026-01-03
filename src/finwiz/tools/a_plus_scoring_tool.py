@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 # Import schemas from centralized location
 from finwiz.schemas.tools import APlusScore, APlusScoringInput
+from finwiz.scoring.grading_system import score_to_grade
 from finwiz.tools.scoring import (
     analyze_strengths_weaknesses,
     assess_market_regime,
@@ -26,7 +27,6 @@ from finwiz.tools.scoring import (
     get_dynamic_criteria,
     get_scoring_weights,
 )
-from finwiz.scoring.grading_system import score_to_grade
 
 
 class APlusScoringTool(BaseTool):

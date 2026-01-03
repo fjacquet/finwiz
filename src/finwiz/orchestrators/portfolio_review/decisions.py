@@ -20,7 +20,6 @@ from finwiz.schemas.portfolio_processing import AssetClass
 from finwiz.schemas.portfolio_review import HoldingDecision
 from finwiz.scoring.grading_system import score_to_grade
 
-
 # =============================================================================
 # Score Calculation
 # =============================================================================
@@ -44,10 +43,10 @@ def calculate_score(is_valid: bool, asset_class: AssetClass) -> float:
 
     # Base scores by asset class (will be refined in deep analysis)
     base_scores = {
-        AssetClass.STOCK: 0.6,
-        AssetClass.ETF: 0.65,
-        AssetClass.CRYPTO: 0.5,
-        AssetClass.UNKNOWN: 0.4,
+        "stock": 0.6,
+        "etf": 0.65,
+        "crypto": 0.5,
+        "unknown": 0.4,
     }
     return base_scores.get(asset_class, 0.5)
 
@@ -69,15 +68,15 @@ def assess_risk(is_valid: bool, validation_result: dict[str, Any]) -> RiskAssess
     """
     if not is_valid:
         return RiskAssessmentStandardized(
-            score=8.0,
-            level="high",
-            factors=["validation_failed", "data_quality_concerns"],
+            score=4.5,
+            level="High",
+            risk_factors=["validation_failed", "data_quality_concerns"],
         )
 
     return RiskAssessmentStandardized(
-        score=5.0,
-        level="medium",
-        factors=["pending_deep_analysis"],
+        score=2.5,
+        level="Medium",
+        risk_factors=["pending_deep_analysis"],
     )
 
 
@@ -102,9 +101,9 @@ def build_rationale(
         Human-readable rationale string
     """
     if not is_valid:
-        return f"Unable to validate {asset_class.value}. May be delisted or invalid ticker."
+        return f"Unable to validate {asset_class}. May be delisted or invalid ticker."
 
-    return f"Validated {asset_class.value}. Pending deep analysis for detailed recommendation."
+    return f"Validated {asset_class}. Pending deep analysis for detailed recommendation."
 
 
 # =============================================================================
@@ -151,21 +150,26 @@ def create_error_decision(
     Returns:
         HoldingDecision with error status
     """
+    grade_info = score_to_grade(0.0)
     return HoldingDecision(
         ticker=ticker,
         name=name,
-        asset_class=asset_class.value,
+        asset_class=asset_class,
+        currency="USD",
         decision="HOLD",
-        rationale=f"Error during processing: {error_message}",
         composite_score=0.0,
-        grade=score_to_grade(0.0).grade,
+        grade=grade_info.grade,
+        grade_description=grade_info.description,
+        recommended_action="Review manually",
         risk=RiskAssessmentStandardized(
-            score=10.0,
-            level="critical",
-            factors=["processing_error", error_message],
+            score=5.0,
+            level="Very High",
+            risk_factors=["processing_error", error_message],
         ),
+        rationale_bullets=[f"Error during processing: {error_message}"],
         citations=[],
         alternatives=[],
+        data_freshness="error",
     )
 
 

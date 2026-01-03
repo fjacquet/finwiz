@@ -11,8 +11,9 @@ from typing import Any
 
 from finwiz.infrastructure.monitoring.freshness_checker import DataFreshnessChecker, FreshnessReport
 from finwiz.orchestrators.registry.registry_manager import CrewConfig, ExecutionResult, RegistryManager, UpstreamDataCollection
-from .schema import SchemaManager
 from finwiz.validation.int_manager import ValidationManager, ValidationResult
+
+from .schema import SchemaManager
 
 
 class CrewDataIntegrationManager:

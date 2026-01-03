@@ -8,12 +8,12 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from finwiz.schemas.investment_discovery import APlusAnalysis, InvestmentCandidate
-from finwiz.tools.logger import get_logger
 from finwiz.scoring.grading_system import score_to_grade
+from finwiz.tools.logger import get_logger
 
 if TYPE_CHECKING:
-    from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
     from finwiz.monitoring.a_plus import MonitoredInvestment
+    from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 
 logger = get_logger(__name__)
 

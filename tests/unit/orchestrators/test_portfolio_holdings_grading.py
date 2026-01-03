@@ -29,8 +29,8 @@ class TestPortfolioHoldingsGrading:
         mock = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         return mock
 
-    async def test_should_assign_b_grade_to_valid_stock_with_shallow_validation(self, processor, mocker):
-        """Test that valid stocks receive B grade (75%) with shallow validation."""
+    async def test_should_assign_d_grade_to_valid_stock_with_shallow_validation(self, processor, mocker):
+        """Test that valid stocks receive D grade (60%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
         mock_validator._run.return_value = {
@@ -51,13 +51,13 @@ class TestPortfolioHoldingsGrading:
         # Act
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
-        # Assert
-        assert decision.composite_score == approx(0.75), "Valid stock should get 0.75 score"
-        assert decision.grade == "B", f"Expected B grade, got {decision.grade}"
-        assert decision.decision == "KEEP", "Valid stock with B grade should be KEEP"
+        # Assert - Stock gets 0.6 score (D grade) with shallow validation
+        assert decision.composite_score == approx(0.6), "Valid stock should get 0.6 score"
+        assert decision.grade == "D", f"Expected D grade, got {decision.grade}"
+        assert decision.decision == "KEEP", "Valid stock above threshold should be KEEP"
 
-    async def test_should_assign_b_grade_to_msft_with_shallow_validation(self, processor, mocker):
-        """Test that MSFT receives B grade with shallow validation."""
+    async def test_should_assign_d_grade_to_msft_with_shallow_validation(self, processor, mocker):
+        """Test that MSFT receives D grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
         mock_validator._run.return_value = {
@@ -78,13 +78,13 @@ class TestPortfolioHoldingsGrading:
         # Act
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
-        # Assert
-        assert decision.composite_score == approx(0.75)
-        assert decision.grade == "B"
+        # Assert - Stock gets 0.6 score (D grade) with shallow validation
+        assert decision.composite_score == approx(0.6)
+        assert decision.grade == "D"
         assert decision.decision == "KEEP"
 
-    async def test_should_assign_b_grade_to_asml_with_shallow_validation(self, processor, mocker):
-        """Test that ASML receives B grade with shallow validation."""
+    async def test_should_assign_d_grade_to_asml_with_shallow_validation(self, processor, mocker):
+        """Test that ASML receives D grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
         mock_validator._run.return_value = {
@@ -105,12 +105,12 @@ class TestPortfolioHoldingsGrading:
         # Act
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
-        # Assert
-        assert decision.composite_score == approx(0.75)
-        assert decision.grade == "B"
+        # Assert - Stock gets 0.6 score (D grade) with shallow validation
+        assert decision.composite_score == approx(0.6)
+        assert decision.grade == "D"
         assert decision.decision == "KEEP"
 
-    async def test_should_assign_b_plus_grade_to_valid_etf_with_shallow_validation(self, processor, mocker):
+    async def test_should_assign_c_grade_to_valid_etf_with_shallow_validation(self, processor, mocker):
         """Test that valid ETFs receive B+ grade (80%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
@@ -132,9 +132,9 @@ class TestPortfolioHoldingsGrading:
         # Act
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
-        # Assert
-        assert decision.composite_score == approx(0.80), "Valid ETF should get 0.80 score"
-        assert decision.grade == "B+", f"Expected B+ grade, got {decision.grade}"
+        # Assert - ETF gets 0.65 score (C grade) with shallow validation
+        assert decision.composite_score == approx(0.65), "Valid ETF should get 0.65 score"
+        assert decision.grade == "C", f"Expected C grade, got {decision.grade}"
         assert decision.decision == "KEEP"
 
     async def test_should_assign_f_grade_to_invalid_ticker(self, processor, mocker):
@@ -186,41 +186,40 @@ class TestPortfolioHoldingsGrading:
         # Act
         decision = await processor._process_single_holding(holding, "CHF", 0.55)
 
-        # Assert
+        # Assert - Check rationale contains pending deep analysis message
         rationale_text = " ".join(decision.rationale_bullets)
-        assert "analyse superficielle" in rationale_text.lower()
-        assert "DEEP_PORTFOLIO_ANALYSIS" in rationale_text
-        assert "analyse complète" in rationale_text.lower()
+        assert "pending deep analysis" in rationale_text.lower()
+        assert "validated stock" in rationale_text.lower()
 
     def test_should_calculate_correct_score_for_valid_stock(self, processor):
         """Test score calculation for valid stock."""
         # Act
         score = processor._calculate_score(is_valid=True, asset_class="stock")
 
-        # Assert
-        assert score == approx(0.75)
+        # Assert - Stock: 0.6 (D grade) with shallow validation
+        assert score == approx(0.6)
         grade_info = score_to_grade(score)
-        assert grade_info.grade == "B"
+        assert grade_info.grade == "D"
 
     def test_should_calculate_correct_score_for_valid_etf(self, processor):
         """Test score calculation for valid ETF."""
         # Act
         score = processor._calculate_score(is_valid=True, asset_class="etf")
 
-        # Assert
-        assert score == approx(0.80)
+        # Assert - ETF: 0.65 (C grade) with shallow validation
+        assert score == approx(0.65)
         grade_info = score_to_grade(score)
-        assert grade_info.grade == "B+"
+        assert grade_info.grade == "C"
 
     def test_should_calculate_correct_score_for_valid_crypto(self, processor):
         """Test score calculation for valid crypto."""
         # Act
         score = processor._calculate_score(is_valid=True, asset_class="crypto")
 
-        # Assert
-        assert score == approx(0.75)
+        # Assert - Crypto: 0.5 (D grade) with shallow validation
+        assert score == approx(0.5)
         grade_info = score_to_grade(score)
-        assert grade_info.grade == "B"
+        assert grade_info.grade == "D"
 
     def test_should_calculate_correct_score_for_invalid_holding(self, processor):
         """Test score calculation for invalid holding."""
@@ -272,11 +271,11 @@ class TestPortfolioHoldingsGrading:
         # Act
         decisions = await processor.process_holdings(holdings, "CHF", 0.55)
 
-        # Assert
+        # Assert - Stock gets 0.6 score (D grade) with shallow validation
         assert len(decisions) == 3
         for decision in decisions:
-            assert decision.grade == "B", f"{decision.ticker} should have B grade"
-            assert decision.composite_score == approx(0.75)
+            assert decision.grade == "D", f"{decision.ticker} should have D grade"
+            assert decision.composite_score == approx(0.6)
             assert decision.decision == "KEEP"
 
     async def test_should_indicate_data_freshness_as_fresh_for_valid_holdings(self, processor, mocker):

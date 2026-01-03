@@ -9,12 +9,12 @@ import random
 import time
 from typing import Any
 
-from finwiz.tools.logger import get_logger
 from finwiz.config.features.definitions import (
     CircuitBreakerState,
     FeatureFlagConfig,
     FeatureFlagStrategy,
 )
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -17,8 +17,8 @@ from pydantic import BaseModel, Field
 from finwiz.schemas.integration import IntegrationError, IntegrationErrorType
 from finwiz.validation.result import ValidationResult as BaseValidationResult
 
-from .sec_citation_validator import SECCitationValidator
-from .validation_rules import ValidationRules
+from .rules import ValidationRules
+from .sec_citation import SECCitationValidator
 
 
 class CrossCrewValidationResult(BaseModel):

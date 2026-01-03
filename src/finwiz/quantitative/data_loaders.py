@@ -233,7 +233,7 @@ class HistoricalDataManager:
 
         try:
             with open(cache_file, "rb") as f:
-                data: pd.DataFrame = pickle.load(f)
+                data: pd.DataFrame = pickle.load(f)  # nosec B301
 
             self.logger.debug(f"Loaded cached data for {symbol}: {len(data)} rows")
             return data

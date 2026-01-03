@@ -11,6 +11,8 @@ import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+from finwiz.infrastructure.decorators.api_decorators import api_tool
+from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.tools import (
     CoinInfoInput,
     CryptocurrencyHistoricalInput,
@@ -18,8 +20,6 @@ from finwiz.schemas.tools import (
     CryptocurrencyNewsInput,
 )
 from finwiz.tools.logger import get_logger
-from finwiz.infrastructure.decorators.api_decorators import api_tool
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 
 logger = get_logger(__name__)
 

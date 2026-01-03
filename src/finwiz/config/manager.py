@@ -13,8 +13,8 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from finwiz.tools.logger import get_logger
 from finwiz.config.features.flags import get_feature_flags
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

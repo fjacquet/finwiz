@@ -9,11 +9,11 @@ providing monitoring status in portfolio reports.
 from datetime import datetime
 from typing import Any
 
+from finwiz.infrastructure.monitoring.core import monitor_performance
 from finwiz.schemas.investment_discovery import APlusDiscoveryResult
 from finwiz.schemas.portfolio_review import PortfolioReview
 from finwiz.services.a_plus_monitoring_service import get_monitoring_service
 from finwiz.tools.logger import get_logger
-from finwiz.infrastructure.monitoring.core import monitor_performance
 
 logger = get_logger(__name__)
 

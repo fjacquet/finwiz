@@ -5,6 +5,7 @@ This module provides centralized data integration and coordination between crews
 After migration, this module only contains core data access functionality.
 """
 
+from .accessor import CrewDataAccessor
 from .config import (
     CrewDependencyConfig,
     DataQualityConfig,
@@ -13,7 +14,6 @@ from .config import (
     get_data_quality_config,
     get_integration_config,
 )
-from .accessor import CrewDataAccessor
 from .manager import CrewDataIntegrationManager
 
 __all__ = [

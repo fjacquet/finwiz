@@ -23,7 +23,7 @@ def get_cached_crew_output(
 ) -> dict[str, Any] | None:
     """Get cached crew output if available."""
     try:
-        from .schema_manager import SchemaManager
+        from finwiz.integration.schema import SchemaManager
 
         schema_manager = SchemaManager(logger)
         crew_output_dir = output_dir / crew_name

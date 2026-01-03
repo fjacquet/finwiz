@@ -16,7 +16,7 @@ class TestCrewLogger:
     def test_should_initialize_with_crew_name(self, mocker):
         """Test CrewLogger initialization with crew name."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -31,7 +31,7 @@ class TestCrewLogger:
     def test_should_log_start_with_structured_fields(self, mocker):
         """Test log_start includes correct structured fields (crew, input_keys, event)."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -57,7 +57,7 @@ class TestCrewLogger:
     def test_should_log_start_with_empty_inputs(self, mocker):
         """Test log_start handles empty inputs correctly."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -78,7 +78,7 @@ class TestCrewLogger:
     def test_should_log_start_with_none_inputs(self, mocker):
         """Test log_start handles None inputs correctly."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -99,7 +99,7 @@ class TestCrewLogger:
     def test_should_log_complete_with_duration_and_event(self, mocker):
         """Test log_complete includes duration and event type."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -125,7 +125,7 @@ class TestCrewLogger:
     def test_should_log_complete_with_short_duration(self, mocker):
         """Test log_complete formats short durations correctly."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -149,7 +149,7 @@ class TestCrewLogger:
     def test_should_log_error_with_exception_info(self, mocker):
         """Test log_error includes error type and exception info."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -178,7 +178,7 @@ class TestCrewLogger:
     def test_should_log_error_with_custom_exception(self, mocker):
         """Test log_error handles custom exception types."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -208,7 +208,7 @@ class TestCrewLogger:
     def test_should_log_error_with_runtime_error(self, mocker):
         """Test log_error handles RuntimeError correctly."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -231,7 +231,7 @@ class TestCrewLogger:
     def test_should_use_correct_logger_name_format(self, mocker):
         """Test CrewLogger uses correct logger name format."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
 
         # Act
         CrewLogger("InvestmentDiscoveryCrew")
@@ -242,7 +242,7 @@ class TestCrewLogger:
     def test_should_handle_multiple_log_calls(self, mocker):
         """Test CrewLogger handles multiple sequential log calls."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -268,7 +268,7 @@ class TestCrewLogger:
     def test_should_preserve_input_keys_order(self, mocker):
         """Test log_start preserves input keys in list format."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -292,7 +292,7 @@ class TestCrewLogger:
     def test_should_log_with_different_crew_names(self, mocker):
         """Test CrewLogger works correctly with different crew names."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -318,7 +318,7 @@ class TestCrewLogger:
     def test_should_include_exc_info_in_error_logging(self, mocker):
         """Test log_error includes exc_info for full traceback."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 
@@ -338,7 +338,7 @@ class TestCrewLogger:
     def test_should_format_duration_consistently(self, mocker):
         """Test log_complete formats duration to 2 decimal places consistently."""
         # Arrange
-        mock_get_logger = mocker.patch("finwiz.utils.logging_helpers.get_logger")
+        mock_get_logger = mocker.patch("finwiz.infrastructure.logging.helpers.get_logger")
         mock_logger = mocker.Mock()
         mock_get_logger.return_value = mock_logger
 

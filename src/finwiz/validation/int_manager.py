@@ -99,7 +99,7 @@ class ValidationManager:
     def _store_validation_result(self, crew_name: str, result: ValidationResult) -> None:
         """Store validation result to metadata."""
         try:
-            from .schema_manager import SchemaManager
+            from finwiz.integration.schema import SchemaManager
 
             schema_manager = SchemaManager(self.logger)
             validation_status = schema_manager.load_json_file(self.validation_status_path, {})

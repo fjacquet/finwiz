@@ -79,9 +79,9 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 
 - [Architecture](explanations/ARCHITECTURE.md) - System design overview
 - [Design Principles](explanations/design_principles.md) - Core philosophy
-- [AI Architecture](explanations/ai_architecture.md) - AI agent framework
-- [Flow Architecture](explanations/flow_architecture.md) - CrewAI Flow orchestration
-- [Testing Strategy](explanations/testing_strategy.md) - Testing approach
+- [Orchestrator Interactions](explanations/ORCHESTRATOR_INTERACTIONS.md) - Orchestrator framework
+- [Python Scoring Engine](explanations/PYTHON_SCORING_ENGINE.md) - Scoring architecture
+- [Deep Analysis](explanations/deep_analysis.md) - Deep analysis system
 
 ## Key Features
 
@@ -216,7 +216,7 @@ Professional-grade quantitative analysis framework:
 
 - **[Troubleshooting Guide](how-to/troubleshooting.md)** - Common issues and solutions
 - **[Performance Guide](how-to/performance_optimization.md)** - Optimization tips
-- **[Testing Guide](how-to/testing.md)** - Testing strategies
+- **[Developer Guide](DEVELOPER_GUIDE.md#testing)** - Testing strategies
 
 ### Community
 
@@ -244,7 +244,7 @@ Professional-grade quantitative analysis framework:
 
 ### Key Features
 
-- [AI Minimalism](explanations/ai_vs_rules.md)
+- [AI Minimalism](explanations/design_principles.md)
 - [Python Scoring Engine](how-to/PYTHON_SCORING_ENGINE.md)
 - [Batch Processing](how-to/BATCH_PROCESSING.md)
 - [Portfolio Rebalancing](how-to/risk_management.md)

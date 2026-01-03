@@ -19,9 +19,9 @@ from uuid import uuid4
 from bs4 import BeautifulSoup, Tag
 
 from finwiz.schemas.session import AnalysisRecord, ClientProfile, FinancialPlan
-from finwiz.tools.logger import get_logger
 from finwiz.sessions.persistence_strategies import BackupStrategy, RecoveryStrategy, SessionParsingError
 from finwiz.sessions.storage import SessionStorage
+from finwiz.tools.logger import get_logger
 
 # Re-export for backward compatibility
 __all__ = ["SessionParsingError", "SessionPersistence"]

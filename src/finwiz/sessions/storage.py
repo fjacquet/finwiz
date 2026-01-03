@@ -11,8 +11,8 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 from finwiz.schemas.session import FinancialPlan
-from finwiz.tools.logger import get_logger
 from finwiz.sessions.persistence_strategies import SessionParsingError
+from finwiz.tools.logger import get_logger
 
 
 class SessionStorage:

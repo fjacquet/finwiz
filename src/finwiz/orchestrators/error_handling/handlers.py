@@ -126,7 +126,7 @@ class ErrorHandlers:
         severity = self._determine_error_severity(error_type, field_path, error_message)
 
         # Import here to avoid circular imports
-        from .recovery_strategies import RecoveryStrategies
+        from .recovery import RecoveryStrategies
 
         recovery_strategies = RecoveryStrategies()
 
@@ -209,7 +209,7 @@ class ErrorHandlers:
             error_analyses.append(analysis)
 
         # Import here to avoid circular imports
-        from .recovery_strategies import RecoveryStrategies
+        from .recovery import RecoveryStrategies
 
         recovery_strategies = RecoveryStrategies()
 

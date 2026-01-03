@@ -10,13 +10,13 @@ from __future__ import annotations
 import inspect
 from typing import Any
 
+from finwiz.config.features.flags import get_feature_flags
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
 from finwiz.tools.enhanced_technical_analyzer_tool import EnhancedTechnicalAnalyzerTool
 from finwiz.tools.logger import get_logger
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
-from finwiz.config.features.flags import get_feature_flags
 
 logger = get_logger(__name__)
 

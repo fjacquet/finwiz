@@ -14,13 +14,13 @@ import yfinance as yf  # yfinance has no official type stubs
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import EnhancedTechnicalAnalysisInput
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.tools.technical_analyzer import TechnicalAnalyzer
 from finwiz.tools.technical_models import PriceData
-from finwiz.config.features.flags import get_feature_flags
 
 logger = get_logger(__name__)
 

@@ -137,8 +137,8 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             # Try to use Perplexity Sonar integration for real news
             import asyncio
 
-            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
             from finwiz.config.features.flags import FeatureFlags
+            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
             flags = FeatureFlags()
             if flags.is_enabled("perplexity_research"):
@@ -220,8 +220,8 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             # Try to use Perplexity Sonar integration for crypto news
             import asyncio
 
-            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
             from finwiz.config.features.flags import FeatureFlags
+            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
             flags = FeatureFlags()
             if flags.is_enabled("perplexity_research"):
@@ -275,8 +275,8 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             # Try to use Perplexity Sonar integration for general news
             import asyncio
 
-            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
             from finwiz.config.features.flags import FeatureFlags
+            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
             flags = FeatureFlags()
             if flags.is_enabled("perplexity_research"):

@@ -66,20 +66,20 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from dotenv import load_dotenv
 
+from finwiz.config.llm.llm_config import get_configured_llm
+from finwiz.config.performance.performance_config import get_performance_config_manager
 from finwiz.crews.deep_analysis.performance_validation import (
     log_performance_validation,
     validate_performance_targets,
 )
 from finwiz.crews.deep_analysis.tool_routing import get_tools_for_asset_class
 from finwiz.flow_state import DeepAnalysisResult
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
+from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch
+from finwiz.infrastructure.logging.helpers import CrewLogger
+from finwiz.infrastructure.monitoring.performance import get_performance_monitor
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.tools.logger import get_logger
-from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch
-from finwiz.config.llm.llm_config import get_configured_llm
-from finwiz.infrastructure.logging.helpers import CrewLogger
-from finwiz.config.performance.performance_config import get_performance_config_manager
-from finwiz.infrastructure.monitoring.performance import get_performance_monitor
-from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 # Get logger for this module
 logger = get_logger(__name__)

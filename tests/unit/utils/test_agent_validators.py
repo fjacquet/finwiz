@@ -17,7 +17,7 @@ class TestFinalReporterDecorator:
     def test_should_allow_agent_when_no_tools(self, mocker):
         """Test decorator allows agents with no tools."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.agent_validators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.agent_validators.logger")
 
         @final_reporter
         def create_reporter():
@@ -42,7 +42,7 @@ class TestFinalReporterDecorator:
     def test_should_reject_agent_when_tools_present(self, mocker):
         """Test decorator rejects agents with tools (raises FinalReporterError)."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.agent_validators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.agent_validators.logger")
 
         # Create a mock BaseTool that will pass Pydantic validation
         from crewai.tools import BaseTool
@@ -83,7 +83,7 @@ class TestFinalReporterDecorator:
     def test_should_include_agent_role_in_error_message(self, mocker):
         """Test error message includes agent role and tool count."""
         # Arrange
-        mocker.patch("finwiz.utils.agent_validators.logger")
+        mocker.patch("finwiz.infrastructure.decorators.agent_validators.logger")
 
         from crewai.tools import BaseTool
 
@@ -133,7 +133,7 @@ class TestFinalReporterDecorator:
     def test_should_log_validation_success_with_agent_role(self, mocker):
         """Test decorator logs successful validation with agent role."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.agent_validators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.agent_validators.logger")
 
         @final_reporter
         def create_translator():
@@ -162,7 +162,7 @@ class TestFinalReporterDecorator:
     def test_should_log_validation_failure_with_details(self, mocker):
         """Test decorator logs validation failure with agent role and tool count."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.agent_validators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.agent_validators.logger")
 
         from crewai.tools import BaseTool
 
@@ -197,7 +197,7 @@ class TestFinalReporterDecorator:
     def test_should_handle_agent_without_role_attribute(self, mocker):
         """Test decorator handles agents without explicit role attribute gracefully."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.agent_validators.logger")
+        mock_logger = mocker.patch("finwiz.infrastructure.decorators.agent_validators.logger")
 
         from crewai.tools import BaseTool
 

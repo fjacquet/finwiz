@@ -21,14 +21,14 @@ from finwiz.schemas.investment_discovery import APlusAnalysis, MarketRegime
 
 if TYPE_CHECKING:
     from finwiz.infrastructure.monitoring.alerts import AlertSeverity
+from finwiz.infrastructure.monitoring.alerts import AlertManager
+from finwiz.infrastructure.monitoring.core import get_metrics_collector
+from finwiz.infrastructure.monitoring.metrics import MetricsCalculator, PerformanceMetrics
 from finwiz.schemas.portfolio_review import Grade
+from finwiz.scoring.grading_system import score_to_grade
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.logger import get_logger
 from finwiz.tools.notification_service import NotificationService
-from finwiz.scoring.grading_system import score_to_grade
-from finwiz.infrastructure.monitoring.core import get_metrics_collector
-from finwiz.infrastructure.monitoring.alerts import AlertManager
-from finwiz.infrastructure.monitoring.metrics import MetricsCalculator, PerformanceMetrics
 
 logger = get_logger(__name__)
 
@@ -167,7 +167,7 @@ class APlusMonitoringSystem:
             logger.warning(f"Investment {symbol} not found in monitoring system")
             return None
 
-        from finwiz.monitoring.a_plus_evaluation import evaluate_single_investment
+        from finwiz.monitoring.evaluation import evaluate_single_investment
 
         monitored_inv = self.monitored_investments[symbol]
         new_analysis = await evaluate_single_investment(symbol, monitored_inv, self.scoring_tool, self.reevaluation_interval_hours, force_evaluation)
@@ -196,7 +196,7 @@ class APlusMonitoringSystem:
 
     def _determine_alert_severity(self, previous_grade: str, current_grade: str, previous_score: float, current_score: float) -> "AlertSeverity":
         """Determine the severity of a grade degradation alert (delegates to module)."""
-        from finwiz.monitoring.a_plus_evaluation import determine_alert_severity
+        from finwiz.monitoring.evaluation import determine_alert_severity
 
         result: AlertSeverity = determine_alert_severity(previous_grade, current_grade, previous_score, current_score)
         return result
@@ -207,7 +207,7 @@ class APlusMonitoringSystem:
             logger.warning(f"Investment {symbol} not found in monitoring system")
             return None
 
-        from finwiz.monitoring.a_plus_evaluation import check_grade_for_investment
+        from finwiz.monitoring.evaluation import check_grade_for_investment
 
         monitored_inv = self.monitored_investments[symbol]
         new_grade, new_analysis = await check_grade_for_investment(symbol, monitored_inv, self.scoring_tool)
@@ -317,13 +317,13 @@ class APlusMonitoringSystem:
 
     async def _assess_regime_impact(self, previous_regime: MarketRegime, new_regime: MarketRegime) -> dict[str, Any]:
         """Assess the impact of market regime change (delegates to module)."""
-        from finwiz.monitoring.a_plus_regime import assess_regime_impact
+        from finwiz.monitoring.regime import assess_regime_impact
 
         return await assess_regime_impact(previous_regime, new_regime, len(self.monitored_investments))
 
     async def _find_replacement_candidates(self, degraded_symbol: str, asset_type: str) -> list[str]:
         """Find replacement candidates for a degraded investment (delegates to module)."""
-        from finwiz.monitoring.a_plus_recommendations import find_replacement_candidates
+        from finwiz.monitoring.recommendations import find_replacement_candidates
 
         return await find_replacement_candidates(degraded_symbol, asset_type)
 
@@ -338,7 +338,7 @@ class APlusMonitoringSystem:
 
     def generate_performance_summary(self) -> dict[str, Any]:
         """Generate a performance summary (delegates to module)."""
-        from finwiz.monitoring.a_plus_recommendations import generate_performance_summary
+        from finwiz.monitoring.recommendations import generate_performance_summary
 
         return generate_performance_summary(self.monitored_investments)
 
@@ -348,19 +348,19 @@ class APlusMonitoringSystem:
 
     def _analyze_degradation_factors(self, symbol: str, previous_score: float, current_score: float) -> list[str]:
         """Analyze factors contributing to grade degradation (delegates to module)."""
-        from finwiz.monitoring.a_plus_recommendations import analyze_degradation_factors
+        from finwiz.monitoring.recommendations import analyze_degradation_factors
 
         return analyze_degradation_factors(symbol, previous_score, current_score)
 
     def _generate_recommended_actions(self, symbol: str, grade: str, degradation_factors: list[str]) -> list[str]:
         """Generate recommended actions (delegates to module)."""
-        from finwiz.monitoring.a_plus_recommendations import generate_recommended_actions
+        from finwiz.monitoring.recommendations import generate_recommended_actions
 
         return generate_recommended_actions(symbol, grade, degradation_factors)
 
     def _detect_significant_regime_change(self, old_regime: MarketRegime, new_regime: MarketRegime) -> bool:
         """Detect if a market regime change is significant (delegates to module)."""
-        from finwiz.monitoring.a_plus_regime import detect_significant_regime_change
+        from finwiz.monitoring.regime import detect_significant_regime_change
 
         return detect_significant_regime_change(old_regime, new_regime)
 

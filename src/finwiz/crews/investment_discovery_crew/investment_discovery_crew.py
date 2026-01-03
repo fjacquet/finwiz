@@ -13,6 +13,8 @@ from crewai.project import CrewBase, agent, crew, output_pydantic, task
 from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 from finwiz.schemas.crew_exports import DiscoveryCrewExport
 from finwiz.schemas.investment_discovery import (
     APlusDiscoveryResult,
@@ -31,8 +33,6 @@ from finwiz.tools.portfolio_analysis_tool import get_portfolio_analysis_tool
 from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_tool
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.risk_assessment_tool import get_risk_assessment_tool
-from finwiz.infrastructure.decorators.agent_validators import final_reporter
-from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 load_dotenv()
 

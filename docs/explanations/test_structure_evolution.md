@@ -304,7 +304,7 @@ The new structure is designed for easy extension:
 - Testing Standards
 - CrewAI Standards
 - Development Standards
-- [How to: Testing](../how-to/testing.md)
+- [How to: Testing](../DEVELOPER_GUIDE.md#testing)
 
 ---
 

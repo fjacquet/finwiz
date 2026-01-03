@@ -12,9 +12,9 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from .error_handlers import ErrorHandlers, ValidationErrorAnalysis, ValidationErrorReport
-from .fallback_handlers import FallbackHandlers
-from .recovery_strategies import DataRepairSuggestion, RecoveryStrategies
+from .fallback import FallbackHandlers
+from .handlers import ErrorHandlers, ValidationErrorAnalysis, ValidationErrorReport
+from .recovery import DataRepairSuggestion, RecoveryStrategies
 
 logger = logging.getLogger(__name__)
 

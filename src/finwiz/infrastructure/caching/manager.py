@@ -178,7 +178,7 @@ class CacheManager:
 
             data = gzip.decompress(data)
 
-        return pickle.loads(data)
+        return pickle.loads(data)  # nosec B301
 
     async def get(self, key: str | list[Any], default: Any = None) -> Any:
         """

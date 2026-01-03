@@ -14,9 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware  # fastapi may not be install
 from fastapi.responses import JSONResponse  # fastapi may not be installed
 
 from finwiz.api.rebalancing import router as rebalancing_router
-from finwiz.tools.logger import get_logger
-from finwiz.config.manager import ConfigurationError, get_configuration_manager
 from finwiz.config.features.flags import is_feature_enabled
+from finwiz.config.manager import ConfigurationError, get_configuration_manager
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 

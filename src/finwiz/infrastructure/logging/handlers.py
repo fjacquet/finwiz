@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 
 from finwiz.integration.config import get_integration_config
+
 from .formatters import StructuredFormatter
 
 

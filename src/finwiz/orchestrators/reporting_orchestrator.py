@@ -16,8 +16,8 @@ from typing import Any
 from finwiz.flow_state import FinwizState
 from finwiz.reporting import get_generator_for_crew
 from finwiz.schemas.portfolio_review import PortfolioReview
-from finwiz.tools.logger import get_logger
 from finwiz.scoring.grading_system import count_grade_distribution
+from finwiz.tools.logger import get_logger
 
 
 class ReportingOrchestrator:

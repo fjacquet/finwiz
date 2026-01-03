@@ -11,9 +11,9 @@ from typing import Any
 from uuid import uuid4
 
 from finwiz.schemas.session import ClientProfile, FinancialPlan
-from finwiz.tools.logger import get_logger
 from finwiz.sessions.persistence import SessionParsingError, SessionPersistence
 from finwiz.sessions.validation import SessionValidator
+from finwiz.tools.logger import get_logger
 
 
 class SessionManager:

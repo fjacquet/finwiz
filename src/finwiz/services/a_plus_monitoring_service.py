@@ -9,11 +9,11 @@ capabilities for the investment discovery crew results.
 from datetime import datetime, timedelta
 from typing import Any
 
+from finwiz.infrastructure.monitoring.core import monitor_performance
+from finwiz.monitoring.a_plus import get_monitoring_system
 from finwiz.schemas.investment_discovery import APlusDiscoveryResult
 from finwiz.schemas.portfolio_review import PortfolioReview
 from finwiz.tools.logger import get_logger
-from finwiz.monitoring.a_plus import get_monitoring_system
-from finwiz.infrastructure.monitoring.core import monitor_performance
 
 logger = get_logger(__name__)
 

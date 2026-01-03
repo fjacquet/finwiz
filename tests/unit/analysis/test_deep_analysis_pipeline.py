@@ -636,7 +636,7 @@ class TestExtractQualitative:
         crew_result.tasks_output = []  # Empty tasks output
 
         mock_validate = mocker.patch(
-            "finwiz.validation.ai_output_validator.validate_ai_output_with_retry",
+            "finwiz.validation.ai_output.validate_ai_output_with_retry",
             return_value=mock_qualitative_insights,
         )
 

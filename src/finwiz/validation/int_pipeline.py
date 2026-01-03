@@ -18,7 +18,7 @@ from finwiz.validation.manager import ValidationManager, get_validation_manager
 from finwiz.validation.result import ValidationResult as BaseValidationResult
 
 from .pipeline_stages import PipelineStages, ValidationPipelineResult
-from .validation_rules import ValidationRules
+from .rules import ValidationRules
 
 
 class ValidationPipeline:

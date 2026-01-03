@@ -135,7 +135,7 @@ class TestSessionIntegration:
     def test_should_log_session_initialization_events(self, mocker):
         """Test that session initialization events are properly logged."""
         # Arrange
-        mock_logger = mocker.patch("finwiz.utils.session_integration.logger")
+        mock_logger = mocker.patch("finwiz.sessions.integration.logger")
 
         # Act
         initialize_session(self.test_report_path)

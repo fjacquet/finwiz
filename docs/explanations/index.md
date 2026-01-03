@@ -18,40 +18,37 @@ Explanations are **understanding-oriented** discussions that provide context and
 ### Core Architecture
 
 - **[Architecture Overview](ARCHITECTURE.md)** - Complete system architecture
-- **[AI Architecture](ai_architecture.md)** - AI agent framework and patterns
-- **[Flow Architecture](flow_architecture.md)** - CrewAI Flow orchestration
-- **[Data Flow](data_flow.md)** - Data processing architecture
+- **[Orchestrator Interactions](ORCHESTRATOR_INTERACTIONS.md)** - How orchestrators work together
+- **[Python Scoring Engine](PYTHON_SCORING_ENGINE.md)** - Scoring engine architecture
 
 ### Design Philosophy
 
 - **[Design Principles](design_principles.md)** - Core design philosophy
-- **[AI vs Rules](ai_vs_rules.md)** - When to use AI vs Python
+- **[Optimization Theory](optimization_theory.md)** - Optimization approaches
 - **AI Minimalism (see CLAUDE.md)** - AI Minimalism philosophy
-- **[FinWiz vs Traditional Analysis](vs_traditional_analysis.md)** - Comparison with traditional tools
 
 ### Technical Concepts
 
 - **[Deep Analysis](deep_analysis.md)** - Deep analysis system explained
-- **[Testing Strategy](testing_strategy.md)** - Testing approach and philosophy
-- **[Error Handling](error_handling.md)** - Error handling patterns
 - **[Data Quality](DATA_QUALITY_AND_FLOW_GUIDE.md)** - Data quality principles
-
-### Domain Knowledge
-
-- **[Performance Attribution](performance_attribution.md)** - Performance analysis explained
-- **[Deployment Considerations](deployment_considerations.md)** - Deployment architecture
-- **[Open Source Landscape](open_source_landscape.md)** - FinWiz in the ecosystem
+- **[Investment Methodology](investment_methodology.md)** - Investment analysis approach
+- **[Recommendation Engine](recommendation_engine.md)** - How recommendations work
 
 ### Integration Patterns
 
 - **[Deep Analysis Integration](DEEP_ANALYSIS_INTEGRATION.md)** - Deep analysis integration
-- **[Jinja2 Templates](JINJA2_TEMPLATES.md)** - Template system explained
 - **[Python Pipeline](python_pipeline/overview.md)** - Pure Python analysis pipeline
+- **[Notification Service](NOTIFICATION_SERVICE_ARCHITECTURE.md)** - Notification system
+
+### Reporting
+
+- **[Report Aggregation Guide](REPORT_AGGREGATION_DEVELOPER_GUIDE.md)** - Report aggregation
+- **[Report File Structure](REPORT_FILE_STRUCTURE.md)** - Report file organization
 
 ### Evolution and History
 
 - **[Test Structure Evolution](test_structure_evolution.md)** - Testing evolution
-- **Architecture Decisions (see CLAUDE.md)** - Key design decisions
+- **[LLM Model Analysis 2025](llm_model_analysis_2025.md)** - LLM model comparison
 
 ## Explanation Categories
 
@@ -63,25 +60,24 @@ Start with these to understand FinWiz's design:
 
 1. [Architecture Overview](ARCHITECTURE.md) - How everything fits together
 2. [Design Principles](design_principles.md) - Core philosophy
-3. [AI Architecture](ai_architecture.md) - AI agent framework
-4. [Flow Architecture](flow_architecture.md) - Workflow orchestration
+3. [Orchestrator Interactions](ORCHESTRATOR_INTERACTIONS.md) - Orchestrator framework
+4. [Python Scoring Engine](PYTHON_SCORING_ENGINE.md) - Scoring system
 
 #### Design Decisions
 
 Understand *why* FinWiz works this way:
 
-1. [AI vs Rules](ai_vs_rules.md) - When to use AI vs Python
-2. AI Minimalism (see CLAUDE.md) - Minimize AI, maximize Python
-3. [Data Quality](DATA_QUALITY_AND_FLOW_GUIDE.md) - Data quality principles
-4. [Error Handling](error_handling.md) - Error handling patterns
+1. AI Minimalism (see CLAUDE.md) - Minimize AI, maximize Python
+2. [Data Quality](DATA_QUALITY_AND_FLOW_GUIDE.md) - Data quality principles
+3. [Optimization Theory](optimization_theory.md) - Optimization approaches
 
 #### Technical Deep-Dives
 
 Detailed explanations of complex topics:
 
 1. [Deep Analysis](deep_analysis.md) - Deep analysis system
-2. [Performance Attribution](performance_attribution.md) - Performance analysis
-3. [Testing Strategy](testing_strategy.md) - Testing approach
+2. [Investment Methodology](investment_methodology.md) - Investment analysis
+3. [Recommendation Engine](recommendation_engine.md) - Recommendations
 4. [Python Pipeline](python_pipeline/overview.md) - Pure Python analysis
 
 ### By User Type
@@ -90,7 +86,7 @@ Detailed explanations of complex topics:
 
 Understand how FinWiz benefits you:
 
-1. [FinWiz vs Traditional Analysis](vs_traditional_analysis.md)
+1. [Investment Methodology](investment_methodology.md)
 2. AI Minimalism (see CLAUDE.md)
 3. [Data Quality](DATA_QUALITY_AND_FLOW_GUIDE.md)
 4. [Deep Analysis](deep_analysis.md)
@@ -100,18 +96,17 @@ Understand how FinWiz benefits you:
 Understand FinWiz's technical architecture:
 
 1. [Architecture Overview](ARCHITECTURE.md)
-2. [AI Architecture](ai_architecture.md)
-3. [Flow Architecture](flow_architecture.md)
-4. [Testing Strategy](testing_strategy.md)
+2. [Orchestrator Interactions](ORCHESTRATOR_INTERACTIONS.md)
+3. [Python Scoring Engine](PYTHON_SCORING_ENGINE.md)
+4. [Test Structure Evolution](test_structure_evolution.md)
 
 #### For Architects
 
 Understand design decisions and trade-offs:
 
 1. [Design Principles](design_principles.md)
-2. [AI vs Rules](ai_vs_rules.md)
-3. [Deployment Considerations](deployment_considerations.md)
-4. [Error Handling](error_handling.md)
+2. [Optimization Theory](optimization_theory.md)
+3. [Notification Service](NOTIFICATION_SERVICE_ARCHITECTURE.md)
 
 ## Key Concepts
 
@@ -152,7 +147,7 @@ Understand design decisions and trade-offs:
 - **Performance**: Reduces memory usage
 - **Debugging**: Easy to inspect intermediate results
 
-**Learn More**: [Flow Architecture](flow_architecture.md)
+**Learn More**: [Architecture Overview](ARCHITECTURE.md)
 
 ### Concurrent Execution
 
@@ -220,7 +215,7 @@ Portfolio CSV → Data Accessor → Validation → Cache
                                           HTML Reports
 ```
 
-**Learn More**: [Data Flow](data_flow.md)
+**Learn More**: [Data Quality Guide](DATA_QUALITY_AND_FLOW_GUIDE.md)
 
 ## Design Trade-offs
 
@@ -235,7 +230,7 @@ Portfolio CSV → Data Accessor → Validation → Cache
 | Testing | Difficult | Easy |
 | Use Cases | Complex analysis | Calculations |
 
-**Learn More**: [AI vs Rules](ai_vs_rules.md)
+**Learn More**: [Design Principles](design_principles.md)
 
 ### Batch vs Sequential
 

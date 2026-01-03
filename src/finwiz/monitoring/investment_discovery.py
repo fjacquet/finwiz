@@ -13,9 +13,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from finwiz.infrastructure.monitoring.core import get_metrics_collector
 from finwiz.schemas.investment_discovery import APlusDiscoveryResult
 from finwiz.tools.logger import get_logger
-from finwiz.infrastructure.monitoring.core import get_metrics_collector
 
 logger = get_logger(__name__)
 

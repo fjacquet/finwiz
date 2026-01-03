@@ -13,6 +13,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from finwiz.integration.config import get_integration_config
+
 from .checks import (
     HealthStatus,
     check_data_availability,

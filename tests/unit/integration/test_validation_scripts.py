@@ -51,7 +51,7 @@ def mock_integration_config(mocker):
     config.output_dir = Path("/tmp/test_output")
     config.default_max_age_hours = 24
     mocker.patch(
-        "finwiz.integration.validation_scripts.get_integration_config",
+        "finwiz.validation.scripts.get_integration_config",
         return_value=config,
     )
     return config
@@ -67,7 +67,7 @@ def mock_crew_config(mocker):
         "crypto": [],
     }
     mocker.patch(
-        "finwiz.integration.validation_scripts.get_crew_dependency_config",
+        "finwiz.validation.scripts.get_crew_dependency_config",
         return_value=crew_config,
     )
     return crew_config
@@ -77,7 +77,7 @@ def mock_crew_config(mocker):
 def mock_logger(mocker):
     """Mock integration logger."""
     logger = mocker.MagicMock()
-    mocker.patch("finwiz.integration.validation_scripts.integration_logger", logger)
+    mocker.patch("finwiz.validation.scripts.integration_logger", logger)
     return logger
 
 
@@ -93,7 +93,7 @@ def mock_log_analyzer(mocker):
         "slow_crews": [],
         "frequent_failure_crews": [],
     }
-    mocker.patch("finwiz.integration.validation_scripts.log_analyzer", analyzer)
+    mocker.patch("finwiz.validation.scripts.log_analyzer", analyzer)
     return analyzer
 
 
@@ -105,7 +105,7 @@ def mock_health_checker(mocker):
     health_report.components = [mocker.MagicMock(component="system_resources", details={"cpu": 45.2, "memory": 62.1})]
     checker.perform_comprehensive_health_check.return_value = health_report
     mocker.patch(
-        "finwiz.integration.validation_scripts.get_health_checker",
+        "finwiz.validation.scripts.get_health_checker",
         return_value=checker,
     )
     return checker
@@ -828,7 +828,7 @@ class TestPerformanceValidator:
     def test_run_handles_exception(self, validator, mocker):
         """Test run() handles exceptions gracefully."""
         mocker.patch(
-            "finwiz.integration.validation_scripts.get_health_checker",
+            "finwiz.validation.scripts.get_health_checker",
             side_effect=Exception("Test error"),
         )
 
@@ -1071,14 +1071,14 @@ class TestMain:
     ):
         """Test main() with 'all' command."""
         mocker.patch.object(sys, "argv", ["validation_scripts.py", "all"])
-        mocker.patch("finwiz.integration.validation_scripts.run_all_validations")
+        mocker.patch("finwiz.validation.scripts.run_all_validations")
 
         main()
 
         # Should call run_all_validations
-        import finwiz.integration.validation_scripts
+        import finwiz.validation.scripts
 
-        finwiz.integration.validation_scripts.run_all_validations.assert_called()
+        finwiz.validation.scripts.run_all_validations.assert_called()
 
     def test_main_with_no_args_runs_all(
         self,
@@ -1090,14 +1090,14 @@ class TestMain:
     ):
         """Test main() with no arguments runs all validations."""
         mocker.patch.object(sys, "argv", ["validation_scripts.py"])
-        mocker.patch("finwiz.integration.validation_scripts.run_all_validations")
+        mocker.patch("finwiz.validation.scripts.run_all_validations")
 
         main()
 
         # Should call run_all_validations by default
-        import finwiz.integration.validation_scripts
+        import finwiz.validation.scripts
 
-        finwiz.integration.validation_scripts.run_all_validations.assert_called()
+        finwiz.validation.scripts.run_all_validations.assert_called()
 
     def test_main_with_invalid_command(
         self,

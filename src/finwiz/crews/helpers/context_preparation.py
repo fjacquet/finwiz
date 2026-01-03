@@ -17,9 +17,9 @@ from finwiz.crews.helpers.data_integration_helpers import (
     ContextMerger,
     DiscoveryStatusHelper,
 )
-from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor
 from finwiz.integration.accessor import CrewDataAccessor
 from finwiz.integration.availability import DataAvailabilityTracker
+from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)

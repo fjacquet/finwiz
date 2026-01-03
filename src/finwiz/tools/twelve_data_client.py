@@ -13,8 +13,8 @@ from typing import Any
 
 import aiohttp
 
-from finwiz.tools.logger import get_logger
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider, with_rate_limit
+from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
