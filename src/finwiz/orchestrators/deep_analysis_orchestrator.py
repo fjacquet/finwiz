@@ -155,8 +155,15 @@ class DeepAnalysisOrchestrator:
         return results
 
     def _store_enriched_analysis(self, ticker: str, enriched: Any) -> None:
-        """Store enriched analysis JSON for HTML rendering."""
+        """Store enriched analysis JSON AND generate HTML immediately.
+        
+        AI Minimalism: HTML generation is pure Python, no need to wait.
+        Generate outputs as soon as data is available.
+        """
         try:
+            from finwiz.reporting.enriched_analysis_report_generator import (
+                generate_enriched_analysis_report,
+            )
             from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
 
             if not isinstance(enriched, EnrichedAnalysis):
@@ -168,9 +175,16 @@ class DeepAnalysisOrchestrator:
             output_dir = Path(f"output/enriched/{session_id}/{enriched.asset_class}")
             output_dir.mkdir(parents=True, exist_ok=True)
 
-            output_path = output_dir / f"{ticker}_enriched.json"
-            output_path.write_text(enriched.model_dump_json(indent=2))
-            self.logger.info(f"Stored enriched analysis: {output_path}")
+            # 1. Store JSON immediately
+            json_path = output_dir / f"{ticker}_enriched.json"
+            json_path.write_text(enriched.model_dump_json(indent=2))
+            self.logger.info(f"✅ Stored JSON: {json_path}")
+
+            # 2. Generate HTML immediately (pure Python, no AI cost)
+            html_content = generate_enriched_analysis_report(enriched)
+            html_path = output_dir / f"{ticker}_report.html"
+            html_path.write_text(html_content)
+            self.logger.info(f"✅ Generated HTML: {html_path}")
 
         except Exception as e:
             self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}")
