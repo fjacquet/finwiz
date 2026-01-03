@@ -33,25 +33,20 @@ class ValidationOrchestrator:
             **dependencies: Additional dependencies including:
                 - integration_manager: CrewDataIntegrationManager for data access
                 - data_accessor: For consolidated data retrieval
-                - cache_service: Optional cache service for Supabase integration
 
         """
         self.state = state
         self.logger = get_logger(self.__class__.__name__)
         self.integration_manager = dependencies.get("integration_manager")
         self.data_accessor = dependencies.get("data_accessor")
-        self.cache_service = dependencies.get("cache_service")
 
     async def validate_data_integration(self) -> dict[str, Any]:
         """
         Validate data integration system before crew execution.
 
         Phase 1: Data Validation
-        - Test Supabase connectivity (if enabled)
         - Validate integration manager
         - Initialize session metadata
-
-        Requirements: 7.1
 
         Returns:
             dict: Validation results
@@ -64,33 +59,7 @@ class ValidationOrchestrator:
         validation_results = {
             "integration_manager_available": self.integration_manager is not None,
             "data_accessor_available": self.data_accessor is not None,
-            "cache_service_available": self.cache_service is not None,
-            "cache_enabled": False,
         }
-
-        # Initialize and test Supabase connectivity if cache service is available
-        if self.cache_service:
-            try:
-                self.logger.info("Initializing Supabase cache service...")
-                # Initialize cache service (performs connectivity test and sets is_enabled flag)
-                cache_enabled = await self.cache_service.initialize()
-
-                if cache_enabled:
-                    self.logger.info("✓ Supabase connection successful")
-                    validation_results["cache_enabled"] = True
-                    self.state.cache_enabled = True
-                else:
-                    self.logger.warning("✗ Supabase connectivity test failed - continuing without cache")
-                    validation_results["cache_enabled"] = False
-                    self.state.cache_enabled = False
-
-            except Exception as e:
-                self.logger.warning(f"✗ Supabase initialization failed: {e}")
-                self.logger.info("Continuing without Supabase caching (graceful degradation)")
-                validation_results["cache_enabled"] = False
-                self.state.cache_enabled = False
-        else:
-            self.logger.info("Supabase cache service not configured - continuing without cache")
 
         # Validate integration manager
         if self.integration_manager:

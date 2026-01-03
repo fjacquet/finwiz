@@ -29,8 +29,6 @@ class DeepAnalysisOrchestrator:
         self.state = state
         self.logger = get_logger(self.__class__.__name__)
         self.batch_prefetch_config = dependencies.get("batch_prefetch_config")
-        self.cache_service = dependencies.get("cache_service")
-        self.cache_enabled = dependencies.get("cache_enabled", False)
         self.crew_factory = dependencies.get("crew_factory")
         self.integration_manager = dependencies.get("integration_manager")
         self.error_handler = dependencies.get("error_handler")

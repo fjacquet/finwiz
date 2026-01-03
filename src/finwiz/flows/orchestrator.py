@@ -51,8 +51,6 @@ class OrchestratorDependencies:
     data_accessor: CrewDataAccessor
     availability_tracker: DataAvailabilityTracker
     retry_decorator: Any
-    cache_service: Any = None
-    cache_enabled: bool = False
 
 
 @persist()
@@ -170,25 +168,6 @@ class FinwizFlow(Flow[FinwizState]):
         batch_prefetch_config = get_batch_prefetch_config(log_config=True)
         logger.info("Batch prefetch configuration loaded and validated")
 
-        # Initialize Supabase cache service
-        cache_service = None
-        cache_enabled = False
-        try:
-            from finwiz.supabase.client import SupabaseClient
-            from finwiz.supabase.repositories.analysis_repository import AnalysisRepository
-            from finwiz.supabase.services.cache_service import CacheService
-
-            supabase_client = SupabaseClient(
-                failure_threshold=3,
-                recovery_timeout=300,  # 5 minutes
-            )
-            analysis_repository = AnalysisRepository(supabase_client)
-            cache_service = CacheService(analysis_repository, supabase_client)
-            logger.info("Supabase cache service created (connectivity test pending)")
-        except Exception as e:
-            logger.warning(f"Supabase cache service initialization failed: {e}")
-            logger.info("Continuing without Supabase caching (graceful degradation)")
-
         return OrchestratorDependencies(
             crew_factory=crew_factory,
             integration_manager=integration_manager,
@@ -199,8 +178,6 @@ class FinwizFlow(Flow[FinwizState]):
             data_accessor=data_accessor,
             availability_tracker=availability_tracker,
             retry_decorator=retry_decorator,
-            cache_service=cache_service,
-            cache_enabled=cache_enabled,
         )
 
     # Lazy loading properties for orchestrators
@@ -253,8 +230,6 @@ class FinwizFlow(Flow[FinwizState]):
                 integration_manager=self.deps.integration_manager,
                 error_handler=self.deps.error_handler,
                 batch_prefetch_config=self.deps.batch_prefetch_config,
-                cache_service=self.deps.cache_service,
-                cache_enabled=self.deps.cache_enabled,
             )
         return self._deep_analysis_orch
 
@@ -294,7 +269,6 @@ class FinwizFlow(Flow[FinwizState]):
                 state=self.state,
                 data_accessor=self.deps.data_accessor,
                 integration_manager=self.deps.integration_manager,
-                cache_service=self.deps.cache_service,
             )
         return self._validation_orch
 
@@ -311,16 +285,6 @@ class FinwizFlow(Flow[FinwizState]):
         return self._reporting_orch
 
     # Convenience properties for direct access to dependencies
-
-    @property
-    def cache_enabled(self) -> bool:
-        """Access cache_enabled from deps."""
-        return self.deps.cache_enabled
-
-    @property
-    def cache_service(self):
-        """Access cache_service from deps."""
-        return self.deps.cache_service
 
     @property
     def integration_manager(self):

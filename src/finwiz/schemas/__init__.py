@@ -154,10 +154,6 @@ from .stock import (  # noqa: F401
 # Validation schemas
 from .validation import ValidatedTicker  # noqa: F401
 
-# Supabase models (not in schemas directory but imported for convenience)
-# Note: This is imported from finwiz.supabase.models, not from schemas
-# from finwiz.supabase.models import SupabaseHealthStatus  # noqa: F401
-
 # Explicit exports for better IDE support and documentation
 __all__ = [
     # Common schemas
