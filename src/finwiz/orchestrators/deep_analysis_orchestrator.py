@@ -227,18 +227,34 @@ class DeepAnalysisOrchestrator:
 
         # Use a SHARED ThreadPoolExecutor for all holdings
         loop = asyncio.get_running_loop()
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit all holdings to the shared pool
-            futures = [loop.run_in_executor(executor, analyze_single_sync, holding) for holding in holdings]
-            # Wait for all to complete with timeout
+        completed: list[tuple[str, DeepAnalysisResult | None, Any | None]] = []
+
+        # Per-holding timeout (5 minutes each) - prevents one stuck ticker blocking all
+        PER_HOLDING_TIMEOUT = 300  # 5 minutes per holding
+
+        async def analyze_with_timeout(holding: dict[str, Any]) -> tuple[str, DeepAnalysisResult | None, Any | None]:
+            """Wrap analysis with per-holding timeout."""
+            ticker = holding.get("ticker", "unknown")
             try:
-                # 30 minutes timeout for all holdings (allow ~15s per holding for 125 holdings)
-                completed = await asyncio.wait_for(asyncio.gather(*futures), timeout=1800)
+                return await asyncio.wait_for(
+                    loop.run_in_executor(executor, analyze_single_sync, holding),
+                    timeout=PER_HOLDING_TIMEOUT,
+                )
             except TimeoutError:
-                self.logger.error("Deep analysis timed out after 30 minutes")
-                # Cancel remaining futures
-                for f in futures:
-                    f.cancel()
+                self.logger.error(f"Analysis timed out for {ticker} after {PER_HOLDING_TIMEOUT}s")
+                return (ticker, None, None)
+            except Exception as e:
+                self.logger.error(f"Analysis failed for {ticker}: {e}")
+                return (ticker, None, None)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all holdings with per-holding timeout
+            futures = [analyze_with_timeout(holding) for holding in holdings]
+            # Wait for all to complete - each has its own timeout so no global timeout needed
+            try:
+                completed = await asyncio.gather(*futures, return_exceptions=False)
+            except Exception as e:
+                self.logger.error(f"Deep analysis gather failed: {e}")
                 completed = []
 
         self.logger.info(f"asyncio.gather completed with {len(completed)} results")
