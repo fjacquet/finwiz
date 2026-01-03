@@ -425,6 +425,12 @@ class ReportingOrchestrator:
                     "fundamental_details": result.get("fundamental_details", {}),
                     "technical_details": result.get("technical_details", {}),
                     "risk_details": result.get("risk_details", {}),
+                    # Include nested containers for qualitative data (SEC insights, AI analysis)
+                    "quantitative": result.get("quantitative", {}),
+                    "qualitative": result.get("qualitative", {}),
+                    # Include other enriched fields for individual reports
+                    "company_name": result.get("company_name", result.get("ticker")),
+                    "analysis_date": result.get("analysis_date"),
                 }
                 for ticker, result in raw_deep_analysis.items()
             },
