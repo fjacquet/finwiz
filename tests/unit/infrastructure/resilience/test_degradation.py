@@ -518,11 +518,13 @@ class TestGracefulDegradationManagerAsync:
         mock_dependencies["cache_manager"].set.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_should_use_cached_fallback(self, manager, mock_dependencies):
+    async def test_should_use_cached_fallback(self, manager, mock_dependencies, mocker):
         """Test cached data is used as fallback."""
-        mock_dependencies["cache_manager"].get = mocker.AsyncMock(
-            return_value={"cached": "data"}
-        )
+        # Create async mock for get method that returns cached data
+        async def mock_get(*args, **kwargs):
+            return {"cached": "data"}
+
+        mock_dependencies["cache_manager"].get = mock_get
 
         async def failing_func():
             raise ValueError("error")
