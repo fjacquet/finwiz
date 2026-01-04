@@ -257,32 +257,39 @@ class DeepAnalysisOrchestrator:
                 self.logger.error(f"Concurrent analysis failed for {ticker}: {e}")
                 return (ticker, None, None)
 
-        # Use a SHARED ThreadPoolExecutor for all holdings
+        # Use a semaphore to limit concurrency - this ensures timeout starts when work begins
+        # NOT when it's queued (which was the bug causing all timeouts at same second)
         loop = asyncio.get_running_loop()
         completed: list[tuple[str, DeepAnalysisResult | None, Any | None]] = []
+        semaphore = asyncio.Semaphore(max_workers)
 
         # Per-holding timeout - prevents one stuck ticker blocking all
         PER_HOLDING_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
 
-        async def analyze_with_timeout(holding: dict[str, Any]) -> tuple[str, DeepAnalysisResult | None, Any | None]:
-            """Wrap analysis with per-holding timeout."""
+        async def analyze_with_timeout(holding: dict[str, Any], executor: Any) -> tuple[str, DeepAnalysisResult | None, Any | None]:
+            """Wrap analysis with per-holding timeout that starts when work begins."""
             ticker = holding.get("ticker", "unknown")
-            try:
-                return await asyncio.wait_for(
-                    loop.run_in_executor(executor, analyze_single_sync, holding),
-                    timeout=PER_HOLDING_TIMEOUT,
-                )
-            except TimeoutError:
-                self.logger.error(f"Analysis timed out for {ticker} after {PER_HOLDING_TIMEOUT}s")
-                return (ticker, None, None)
-            except Exception as e:
-                self.logger.error(f"Analysis failed for {ticker}: {e}")
-                return (ticker, None, None)
+            # Acquire semaphore BEFORE starting timeout - this ensures timeout
+            # only counts time spent actually working, not time spent in queue
+            async with semaphore:
+                self.logger.debug(f"Starting analysis for {ticker} (timeout={PER_HOLDING_TIMEOUT}s)")
+                try:
+                    return await asyncio.wait_for(
+                        loop.run_in_executor(executor, analyze_single_sync, holding),
+                        timeout=PER_HOLDING_TIMEOUT,
+                    )
+                except TimeoutError:
+                    self.logger.error(f"Analysis timed out for {ticker} after {PER_HOLDING_TIMEOUT}s")
+                    return (ticker, None, None)
+                except Exception as e:
+                    self.logger.error(f"Analysis failed for {ticker}: {e}")
+                    return (ticker, None, None)
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit all holdings with per-holding timeout
-            futures = [analyze_with_timeout(holding) for holding in holdings]
-            # Wait for all to complete - each has its own timeout so no global timeout needed
+        # Use ThreadPoolExecutor with more workers since semaphore controls concurrency
+        with ThreadPoolExecutor(max_workers=max_workers * 2) as executor:
+            # Submit all holdings - semaphore ensures only max_workers run at a time
+            # and timeout starts when semaphore is acquired (work begins)
+            futures = [analyze_with_timeout(holding, executor) for holding in holdings]
             try:
                 completed = await asyncio.gather(*futures, return_exceptions=False)
             except Exception as e:
