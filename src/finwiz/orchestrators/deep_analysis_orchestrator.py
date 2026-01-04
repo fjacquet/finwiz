@@ -154,7 +154,7 @@ class DeepAnalysisOrchestrator:
 
     def _store_enriched_analysis(self, ticker: str, enriched: Any) -> None:
         """Store enriched analysis JSON AND generate HTML immediately.
-        
+
         AI Minimalism: HTML generation is pure Python, no need to wait.
         Generate outputs as soon as data is available.
         """
