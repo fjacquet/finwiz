@@ -251,17 +251,26 @@ def _get_analysis_crew(asset_class: str) -> Any:
     return DeepAnalysisCrew()
 
 
-def _summarize_metrics(metrics: dict[str, float], max_items: int = 10) -> str:
+def _summarize_metrics(metrics: dict[str, float] | None, max_items: int = 10) -> str:
     """Summarize metrics dict to a compact string for AI context.
 
     Instead of passing the full dict (which can be 100K+ tokens),
     we pass a formatted summary of the top metrics.
+
+    NOTE: Filters out None values to prevent format string errors like
+    "unsupported format string passed to NoneType.__format__".
     """
     if not metrics:
         return "No data available"
 
+    # Filter out None values BEFORE formatting to prevent format string errors
+    valid_metrics = {k: v for k, v in metrics.items() if v is not None}
+
+    if not valid_metrics:
+        return "No data available"
+
     # Sort by absolute value (most significant metrics first)
-    sorted_items = sorted(metrics.items(), key=lambda x: abs(x[1]) if x[1] else 0, reverse=True)
+    sorted_items = sorted(valid_metrics.items(), key=lambda x: abs(x[1]), reverse=True)
 
     # Take top N items and format compactly
     top_items = sorted_items[:max_items]
