@@ -138,7 +138,8 @@ def generate_qualitative(
     crew_inputs = _build_crew_inputs(ctx, quant)
 
     try:
-        crew_result = crew.crew().kickoff(inputs=crew_inputs)
+        # Use wrapper's kickoff() to enable debug logging and performance monitoring
+        crew_result = crew.kickoff(inputs=crew_inputs)
         qual = _extract_qualitative(crew_result, quant)
         logger.info(f"Qualitative insights generated for {ctx.ticker}")
         return qual
