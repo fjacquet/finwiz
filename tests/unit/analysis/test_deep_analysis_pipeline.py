@@ -310,7 +310,8 @@ class TestGenerateQualitative:
         mock_crew_instance = mocker.MagicMock()
         mock_crew_result = mocker.MagicMock()
         mock_crew_result.pydantic = mock_qualitative_insights
-        mock_crew_instance.crew.return_value.kickoff.return_value = mock_crew_result
+        # The pipeline calls crew.kickoff() directly (wrapper's kickoff method)
+        mock_crew_instance.kickoff.return_value = mock_crew_result
 
         mocker.patch(
             "finwiz.analysis.deep_analysis_pipeline._get_analysis_crew",
@@ -319,7 +320,7 @@ class TestGenerateQualitative:
 
         result = generate_qualitative(analysis_context, mock_quantitative_analysis)
 
-        mock_crew_instance.crew.return_value.kickoff.assert_called_once()
+        mock_crew_instance.kickoff.assert_called_once()
         assert result == mock_qualitative_insights
 
     def test_generate_qualitative_passes_correct_inputs(self, mocker, analysis_context, mock_quantitative_analysis):
@@ -335,7 +336,8 @@ class TestGenerateQualitative:
         mock_crew_result.pydantic = None
         mock_crew_result.raw = "{}"
 
-        mock_crew_instance.crew.return_value.kickoff.return_value = mock_crew_result
+        # The pipeline calls crew.kickoff() directly (wrapper's kickoff method)
+        mock_crew_instance.kickoff.return_value = mock_crew_result
 
         mocker.patch(
             "finwiz.analysis.deep_analysis_pipeline._get_analysis_crew",
@@ -348,7 +350,7 @@ class TestGenerateQualitative:
 
         generate_qualitative(analysis_context, mock_quantitative_analysis)
 
-        call_args = mock_crew_instance.crew.return_value.kickoff.call_args
+        call_args = mock_crew_instance.kickoff.call_args
         inputs = call_args.kwargs["inputs"]
 
         assert inputs["ticker"] == "AAPL"
@@ -374,7 +376,7 @@ class TestGenerateQualitative:
         result = generate_qualitative(analysis_context, mock_quantitative_analysis)
 
         # Crew should NOT be called in MAXIMUM_SPEED mode
-        mock_crew_instance.crew.return_value.kickoff.assert_not_called()
+        mock_crew_instance.kickoff.assert_not_called()
 
         # Should return a valid QualitativeInsights object
         from finwiz.schemas.hybrid_analysis import QualitativeInsights

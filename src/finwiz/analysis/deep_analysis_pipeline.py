@@ -270,29 +270,58 @@ def _summarize_metrics(metrics: dict[str, float], max_items: int = 10) -> str:
     return ", ".join(parts)
 
 
+def _truncate_text(text: str | None, max_chars: int = 500) -> str:
+    """Truncate text to max_chars, preserving word boundaries.
+
+    Prevents token overflow from large text fields like python_rationale.
+    """
+    if not text:
+        return "Analysis based on available data."
+    if len(text) <= max_chars:
+        return text
+    # Truncate at word boundary
+    truncated = text[:max_chars].rsplit(" ", 1)[0]
+    return truncated + "..."
+
+
 def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> dict[str, Any]:
     """Build inputs dict for crew kickoff.
 
     IMPORTANT: We pass SUMMARIZED metrics, not full dictionaries.
     Full dicts can be 100K+ tokens, causing context overflow errors.
     The AI only needs key metrics for qualitative insights.
+
+    NOTE: All values have None-safe defaults to prevent format string errors
+    like "unsupported format string passed to NoneType.__format__".
     """
-    return {
-        "ticker": ctx.ticker,
-        "asset_class": ctx.asset_class,
-        "company_name": ctx.company_name,
-        "grade": quant.grade,
-        "composite_score": quant.composite_score,
-        "preliminary_recommendation": quant.preliminary_recommendation,
-        "fundamental_score": quant.fundamental_score,
-        "technical_score": quant.technical_score,
-        "risk_score": quant.risk_score,
+    # Build inputs with None-safe defaults and size limits
+    inputs = {
+        "ticker": ctx.ticker or "UNKNOWN",
+        "asset_class": ctx.asset_class or "stock",
+        "company_name": ctx.company_name or ctx.ticker or "Unknown",
+        # Numeric defaults prevent "unsupported format string passed to NoneType"
+        "grade": quant.grade or "C",
+        "composite_score": quant.composite_score if quant.composite_score is not None else 0.5,
+        "preliminary_recommendation": quant.preliminary_recommendation or "HOLD",
+        "fundamental_score": quant.fundamental_score if quant.fundamental_score is not None else 0.5,
+        "technical_score": quant.technical_score if quant.technical_score is not None else 0.5,
+        "risk_score": quant.risk_score if quant.risk_score is not None else 0.5,
         # Pass SUMMARIES instead of full dicts to avoid token overflow
-        "fundamental_metrics": _summarize_metrics(quant.fundamental_metrics, max_items=12),
-        "technical_indicators": _summarize_metrics(quant.technical_indicators, max_items=10),
-        "risk_metrics": _summarize_metrics(quant.risk_metrics, max_items=8),
-        "python_rationale": quant.python_rationale,
+        "fundamental_metrics": _summarize_metrics(quant.fundamental_metrics, max_items=12) or "N/A",
+        "technical_indicators": _summarize_metrics(quant.technical_indicators, max_items=10) or "N/A",
+        "risk_metrics": _summarize_metrics(quant.risk_metrics, max_items=8) or "N/A",
+        # Truncate rationale to prevent large text fields causing overflow
+        "python_rationale": _truncate_text(quant.python_rationale, max_chars=500),
     }
+
+    # ⚡ DIAGNOSTIC: Log sizes of each input field for debugging
+    total_chars = sum(len(str(v)) for v in inputs.values() if v is not None)
+    estimated_tokens = total_chars // 4
+    logger.info(
+        f"⚡ Crew inputs for {ctx.ticker}: {total_chars:,} chars (~{estimated_tokens:,} tokens)"
+    )
+
+    return inputs
 
 
 def _filter_numeric_values(data: dict[str, Any] | None) -> dict[str, float]:
