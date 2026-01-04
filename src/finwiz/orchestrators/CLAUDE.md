@@ -46,7 +46,7 @@ These are used by `FinwizFlow` for delegating complex operations:
 
 | File | Class | Purpose |
 |------|-------|---------|
-| `deep_analysis_orchestrator.py` | `DeepAnalysisOrchestrator` | Per-holding deep analysis (uses `finwiz.analysis` pipeline) |
+| `deep_analysis_orchestrator.py` | `DeepAnalysisOrchestrator` | Per-holding deep analysis + on-the-fly HTML generation |
 | `deep_analysis_data_collector.py` | `DeepAnalysisDataCollector` | Data collection for analysis |
 | `discovery_orchestrator.py` | `DiscoveryOrchestrator` | A+ investment discovery |
 | `alternatives_matching_orchestrator.py` | `AlternativesMatchingOrchestrator` | Match A+ alternatives |
@@ -89,6 +89,27 @@ These are used by `FinwizFlow` for delegating complex operations:
 |------|----------|---------|
 | `portfolio_holdings_processor.py` | `PortfolioHoldingsProcessor` | Process holdings |
 | `portfolio_holdings_processor.py` | `process_holdings()` | Load and process |
+
+### Deep Analysis - On-the-fly HTML Generation
+
+`DeepAnalysisOrchestrator._store_enriched_analysis()` generates HTML reports immediately after each holding analysis completes. This eliminates the need for end-of-flow batch generation.
+
+**Output structure:**
+```
+output/
+├── stock/
+│   ├── AAPL_enriched.json   # Enriched analysis data
+│   └── AAPL_report.html     # Individual HTML report
+├── etf/
+│   └── (same structure)
+└── crypto/
+    └── (same structure)
+```
+
+**Key methods:**
+- `_store_enriched_analysis(ticker, enriched)` - Stores JSON + generates HTML immediately
+- `run_deep_analysis_concurrent()` - Concurrent analysis with per-holding timeout
+- `get_enriched_analysis(ticker)` - Retrieve stored enriched analysis
 
 ## Usage Pattern
 

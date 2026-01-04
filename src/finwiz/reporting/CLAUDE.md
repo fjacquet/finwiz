@@ -36,7 +36,6 @@ reporting/
 | `rebalancing_report_generator.py` | `RebalancingReportGenerator` | Rebalancing HTML reports |
 | `deep_analysis_report_generator.py` | `DeepAnalysisReportGenerator` | Per-holding detailed reports |
 | `individual_report_generator.py` | `generate_individual_report_html()` | Individual holding HTML report |
-| `individual_report_generator.py` | `generate_individual_deep_analysis_reports()` | Batch individual reports |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report generation engine |
 | `report_css_styles.py` | `get_report_css()` | CSS styles for HTML reports |
 | `report_section_generators.py` | `generate_executive_summary()` | Executive summary HTML |
@@ -75,6 +74,26 @@ Report generation is 100% Python - no AI involved:
 └─────────────────┘     └─────────────────┘     └─────────────────┘
       $$$                     Free                    Free
 ```
+
+## Output Structure
+
+Reports are generated to a unified output directory structure:
+
+```
+output/
+├── stock/
+│   ├── AAPL_enriched.json      # Enriched analysis data
+│   ├── AAPL_report.html        # Individual detailed report
+│   └── discovery_output*.json  # A+ discovery results
+├── etf/
+│   └── (same structure)
+├── crypto/
+│   └── (same structure)
+└── portfolio/
+    └── portfolio_review.html   # Consolidated portfolio report
+```
+
+**On-the-fly Generation**: Individual reports (`{ticker}_report.html`) are generated immediately after each holding analysis by `DeepAnalysisOrchestrator._store_enriched_analysis()`. This eliminates duplicate generation and reduces processing time.
 
 ## Usage
 
