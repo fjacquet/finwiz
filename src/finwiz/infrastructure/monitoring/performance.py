@@ -291,6 +291,10 @@ class PerformanceMonitor:
 
         gains = metrics.calculate_performance_gains()
 
+        # Handle None values safely for format strings
+        score_str = f"{metrics.composite_score:.3f}" if metrics.composite_score is not None else "N/A"
+        grade_str = metrics.grade or "N/A"
+
         logger.info(
             f"📊 PERFORMANCE RESULTS for {metrics.ticker}:\n"
             f"  ✅ Mode: {metrics.mode.value}\n"
@@ -302,7 +306,7 @@ class PerformanceMonitor:
             f"(baseline: ${metrics.baseline_cost_estimate:.4f})\n"
             f"  🚀 Speedup: {gains.get('speedup_factor', 0):.1f}x\n"
             f"  💸 Cost savings: {gains.get('cost_savings_pct', 0):.1f}%\n"
-            f"  📈 Grade: {metrics.grade} (score: {metrics.composite_score:.3f})"
+            f"  📈 Grade: {grade_str} (score: {score_str})"
         )
 
     def _log_portfolio_performance(self) -> None:
