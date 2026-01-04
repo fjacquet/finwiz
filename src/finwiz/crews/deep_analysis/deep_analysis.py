@@ -77,6 +77,7 @@ from finwiz.flow_state import DeepAnalysisResult
 from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch
 from finwiz.infrastructure.logging.helpers import CrewLogger
+from finwiz.infrastructure.monitoring.litellm_callback import enable_token_monitoring
 from finwiz.infrastructure.monitoring.performance import get_performance_monitor
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.tools.logger import get_logger
@@ -105,6 +106,9 @@ class DeepAnalysisCrew:
 
     def __init__(self) -> None:
         """Initialize deep analysis crew with configuration files."""
+        # Enable token monitoring to diagnose overflow issues
+        enable_token_monitoring()
+
         # Set configuration paths before calling super().__init__()
         from pathlib import Path
 
@@ -353,10 +357,7 @@ class DeepAnalysisCrew:
             # Python provides ALL data via summarized inputs (_summarize_metrics in pipeline)
             # Tool outputs were causing 288K-381K token context overflow (262K limit)
             # Agent definitions have tools=[] - we must NOT override this
-            logger.info(
-                f"⚡ ZERO-TOOL MODE: Agents receive data from Python via summarized inputs. "
-                f"No tool calls = no tool output accumulation = no context overflow."
-            )
+            logger.info("⚡ ZERO-TOOL MODE: Agents receive data from Python via summarized inputs. No tool calls = no tool output accumulation = no context overflow.")
 
             # Log performance targets
             logger.info(
