@@ -52,9 +52,9 @@ class PythonReportGenerator:
         # Analyze portfolio data
         portfolio_stats = self._analyze_portfolio_stats(portfolio_review)
 
-        # Generate individual HTML reports for each deep analysis
-        if deep_analysis_results and "results_by_ticker" in deep_analysis_results:
-            self._generate_individual_deep_analysis_reports(deep_analysis_results["results_by_ticker"])
+        # NOTE: Individual HTML reports are generated on-the-fly by
+        # DeepAnalysisOrchestrator._store_enriched_analysis() immediately after each analysis.
+        # No need to regenerate them here at the end.
 
         # Generate HTML content
         html_content = self._generate_html_report(
@@ -259,11 +259,9 @@ class PythonReportGenerator:
 
         return generate_discovery_section(discovery_results)
 
-    def _generate_individual_deep_analysis_reports(self, results_by_ticker: dict[str, Any]) -> None:
-        """Generate individual HTML reports for each deep analysis (delegates to module)."""
-        from finwiz.reporting.individual_report_generator import generate_individual_deep_analysis_reports
-
-        generate_individual_deep_analysis_reports(results_by_ticker, self.output_dir)
+    # NOTE: _generate_individual_deep_analysis_reports() removed - DEAD CODE
+    # Individual reports are now generated on-the-fly by
+    # DeepAnalysisOrchestrator._store_enriched_analysis()
 
     def _generate_individual_report_html(self, ticker: str, result: dict[str, Any]) -> str:
         """Generate HTML for individual deep analysis report (delegates to module)."""

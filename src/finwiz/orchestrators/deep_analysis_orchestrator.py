@@ -168,9 +168,9 @@ class DeepAnalysisOrchestrator:
                 self.logger.warning(f"Expected EnrichedAnalysis, got {type(enriched)}")
                 return
 
-            # Store in session output directory
-            session_id = getattr(self.state, "session_id", "default")
-            output_dir = Path(f"output/enriched/{session_id}/{enriched.asset_class}")
+            # Store in simplified output directory: output/{asset_class}/
+            # All deep analysis reports go directly to output/stock/, output/etf/, output/crypto/
+            output_dir = Path(f"output/{enriched.asset_class}")
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # 1. Store JSON immediately

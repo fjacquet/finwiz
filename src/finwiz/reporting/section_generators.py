@@ -132,15 +132,14 @@ def _get_deep_analysis_link(ticker: str, asset_class: str) -> str:
 
     Returns:
         Relative path to deep analysis HTML file
+
+    Note:
+        Reports are now stored in unified structure: output/{asset_class}/{ticker}_report.html
+        Generated on-the-fly by DeepAnalysisOrchestrator._store_enriched_analysis()
     """
     asset_class_lower = asset_class.lower()
-    folder_map = {
-        "stock": "deep_analysis_stock",
-        "etf": "deep_analysis_etf",
-        "crypto": "deep_analysis_crypto",
-    }
-    folder = folder_map.get(asset_class_lower, "deep_analysis_stock")
-    return f"{folder}/{ticker}_deep_analysis.html"
+    # Unified output structure: output/stock/, output/etf/, output/crypto/
+    return f"{asset_class_lower}/{ticker}_report.html"
 
 
 def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:

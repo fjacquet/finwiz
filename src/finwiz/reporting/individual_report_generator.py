@@ -244,42 +244,9 @@ def generate_individual_report_html(ticker: str, result: dict[str, Any]) -> str:
     return template.render(**context)
 
 
-def generate_individual_deep_analysis_reports(
-    results_by_ticker: dict[str, Any],
-    output_dir: Path,
-) -> list[str]:
-    """
-    Generate individual HTML reports for each deep analysis.
-
-    Args:
-        results_by_ticker: Dictionary mapping tickers to analysis results
-        output_dir: Base output directory
-
-    Returns:
-        List of paths to generated reports
-    """
-    logger.info(f"Generating individual HTML reports for {len(results_by_ticker)} deep analyses...")
-    generated_paths: list[str] = []
-
-    for ticker, result in results_by_ticker.items():
-        try:
-            # Generate individual report using Jinja2 template
-            individual_html = generate_individual_report_html(ticker, result)
-
-            # Determine output path based on asset class
-            asset_class = result.get("asset_class", "unknown")
-            report_dir = output_dir / f"deep_analysis_{asset_class}"
-            report_dir.mkdir(parents=True, exist_ok=True)
-
-            report_path = report_dir / f"{ticker}_deep_analysis.html"
-
-            with open(report_path, "w", encoding="utf-8") as f:
-                f.write(individual_html)
-
-            generated_paths.append(str(report_path))
-            logger.info(f"Generated individual report for {ticker}: {report_path}")
-
-        except Exception as e:
-            logger.error(f"Failed to generate individual report for {ticker}: {e}")
-
-    return generated_paths
+# NOTE: generate_individual_deep_analysis_reports() REMOVED - DEAD CODE
+# This function was generating duplicate HTML reports at the end of the flow.
+# Individual reports are now generated on-the-fly by
+# DeepAnalysisOrchestrator._store_enriched_analysis() immediately after each analysis.
+# Output location changed from: output/deep_analysis_{asset_class}/{ticker}_deep_analysis.html
+# To: output/{asset_class}/{ticker}_report.html
