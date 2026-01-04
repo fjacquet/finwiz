@@ -154,7 +154,7 @@ class DataCache:
                 return None
 
             # Extract A+ opportunities using the extractor
-            from .aplus_extractor import APlusDataExtractor
+            from finwiz.orchestrators.extraction.aplus import APlusDataExtractor
 
             aplus_extractor = APlusDataExtractor(self.integration_manager.output_dir)
             opportunities = aplus_extractor.extract_aplus_opportunities()
