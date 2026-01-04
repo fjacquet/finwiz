@@ -345,21 +345,13 @@ class DeepAnalysisCrew:
         performance_monitor.start_ticker_analysis(ticker, asset_class)
 
         try:
-            # ⚡ PYTHON SCORING: Only asset_analyst needs tools for data collection
-            # Get full tool set for asset analyst (data collection)
-            analyst_tools = self.get_tools_for_asset_class(asset_class, minimal=False)
-
-            # Dynamically assign tools to agents by calling agent methods
-            # Get agent instances
-            asset_analyst_agent = self.asset_analyst()
-            investment_reporter_agent = self.investment_reporter()
-
-            # Assign tools to agents
-            asset_analyst_agent.tools = analyst_tools
-            # investment_reporter has DeepAnalysisScoringTool (set in agent definition)
+            # ⚡ TOKEN OVERFLOW FIX: NO TOOLS for agents
+            # Python provides ALL data via summarized inputs (_summarize_metrics in pipeline)
+            # Tool outputs were causing 288K-381K token context overflow (262K limit)
+            # Agent definitions have tools=[] - we must NOT override this
             logger.info(
-                f"⚡ PYTHON SCORING TOOL: asset_analyst has {len(analyst_tools)} data collection tools. "
-                f"investment_reporter has {(len(investment_reporter_agent.tools) if investment_reporter_agent.tools is not None else 0)} Python scoring tool."
+                f"⚡ ZERO-TOOL MODE: Agents receive data from Python via summarized inputs. "
+                f"No tool calls = no tool output accumulation = no context overflow."
             )
 
             # Log performance targets
