@@ -39,23 +39,22 @@ deep_qualitative_analysis_task:
 
 generate_enriched_analysis_task:
   description: >
-    Consolidate Python metrics + AI insights for {ticker} into EnrichedAnalysis.
+    Consolidate for {ticker} into EnrichedAnalysis.
 
-    NO TOOLS - use context from previous tasks only.
+    NO TOOLS - use ONLY context from deep_qualitative_analysis_task.
+    DO NOT re-read metrics - they are already in the qualitative output.
 
-    COMBINE:
-    - quantitative: Python-calculated (grade, scores, metrics)
-    - qualitative: From deep_qualitative_analysis_task
+    OUTPUT REQUIREMENTS:
     - final_grade: {grade}
     - final_score: {composite_score}
-    - final_recommendation: From AI synthesis
-    - executive_summary: 200+ words
-    - investment_rationale: 500+ words
-    - report_word_count: >= 2000
-    - unique_insights_count: >= 5
+    - executive_summary: 200+ words (FRENCH)
+    - investment_rationale: 500+ words (FRENCH)
+
+    OUTPUT: Valid JSON matching EnrichedAnalysis schema.
+    NO trailing commas. NO text outside JSON.
 
   expected_output: >
-    EnrichedAnalysis JSON combining quantitative + qualitative analysis.
+    EnrichedAnalysis JSON with executive_summary and investment_rationale.
 
   agent: investment_reporter
   async_execution: false

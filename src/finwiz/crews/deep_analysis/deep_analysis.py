@@ -294,19 +294,17 @@ class DeepAnalysisCrew:
         ]
         logger.info("🔬 HYBRID MODE: Python metrics + AI qualitative analysis")
 
-        from finwiz.config.llm.llm_config import get_manager_llm
-
         return Crew(
             agents=self.agents,
             tasks=crew_tasks,  # Dynamic task list based on configuration
             process=Process.sequential,
             verbose=True,
-            max_iter=15,  # ⚡ OPTIMIZED: Reduced from 25 to 15 (sufficient for straightforward tasks)
+            max_iter=5,  # ⚡ OPTIMIZED: Reduced to 5 (fail fast, prevent context bloat from retries)
             respect_context_window=True,
             allow_delegation=False,
             max_rpm=20,
             max_retries=3,  # ⚡ OPTIMIZED: Reduced from 10 to 3 (reduce retry overhead)
-            manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
+            # manager_llm removed: only used for hierarchical process, not sequential
             memory=False,  # ⚡ DISABLED: Prevents token overflow from accumulated memory (968KB+)
         )
 
