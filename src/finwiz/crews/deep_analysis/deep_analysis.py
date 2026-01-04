@@ -280,19 +280,25 @@ class DeepAnalysisCrew:
         """
         Create a unified deep analysis crew with hybrid Python/AI architecture.
 
-        Uses a sequential workflow:
+        Uses a SINGLE TASK workflow:
         1. deep_qualitative_analysis_task - AI provides qualitative insights
-        2. generate_enriched_analysis_task - Consolidates Python metrics + AI insights
+
+        ⚡ TOKEN OVERFLOW FIX: Removed generate_enriched_analysis_task
+        Python's synthesize_enriched_analysis() handles consolidation, not AI.
+        This eliminates task-to-task context propagation that caused 200K-335K token overflow.
 
         Python metrics are calculated by orchestrator BEFORE crew execution.
         AI agent receives Python metrics as READ-ONLY context.
         """
-        # Hybrid architecture: Python metrics + AI qualitative analysis
+        # ⚡ SINGLE TASK: Only AI qualitative analysis
+        # Python handles synthesis - no need for second AI task
         crew_tasks = [
             self.deep_qualitative_analysis_task(),
-            self.generate_enriched_analysis_task(),
+            # generate_enriched_analysis_task REMOVED:
+            # - Was causing 200K-335K token overflow from context propagation
+            # - Python's synthesize_enriched_analysis() does the same work for $0
         ]
-        logger.info("🔬 HYBRID MODE: Python metrics + AI qualitative analysis")
+        logger.info("🔬 SINGLE-TASK MODE: AI qualitative only, Python handles synthesis")
 
         return Crew(
             agents=self.agents,

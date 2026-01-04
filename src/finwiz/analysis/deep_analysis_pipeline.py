@@ -144,7 +144,8 @@ def generate_qualitative(
         logger.info(f"Qualitative insights generated for {ctx.ticker}")
         return qual
     except Exception as e:
-        logger.error(f"AI analysis failed for {ctx.ticker}: {e}")
+        import traceback
+        logger.error(f"AI analysis failed for {ctx.ticker}: {e}\nTraceback:\n{traceback.format_exc()}")
         return _create_fallback_qualitative(ctx, quant, str(e))
 
 
