@@ -58,5 +58,5 @@ generate_enriched_analysis_task:
 
   agent: investment_reporter
   async_execution: false
-  depends_on:
+  context:
     - deep_qualitative_analysis_task

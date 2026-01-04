@@ -178,7 +178,7 @@ etf_technical_detail_task:
   output_pydantic: ETFTechnicalAnalysis
   output_file: "output/etf/etf_technical_details.json"
   async_execution: true
-  depends_on:
+  context:
     - etf_screening_task
 
 # Risk Analysis Tasks
@@ -229,7 +229,7 @@ etf_risk_assessment_task:
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.json"
   async_execution: false
-  depends_on:
+  context:
     - etf_technical_detail_task
 
 # Investment Strategy Tasks
@@ -253,7 +253,7 @@ etf_investment_strategy_task:
   agent: risk_assessor
   output_file: "output/etf/etf_investment_strategies_en.html"
   async_execution: false
-  depends_on:
+  context:
     - etf_risk_assessment_task
 
 # translation_task:
@@ -271,7 +271,7 @@ etf_investment_strategy_task:
 #   agent: translator
 #   output_file: "output/etf/etf_investment_strategies_fr.html"
 #   async_execution: false
-#   depends_on:
+#   context:
 #     - etf_investment_strategy_task
 
 
@@ -394,5 +394,5 @@ generate_export_task:
   agent: investment_reporter
   output_pydantic: ETFCrewExport
   async_execution: false
-  depends_on:
+  context:
     - etf_investment_strategy_task

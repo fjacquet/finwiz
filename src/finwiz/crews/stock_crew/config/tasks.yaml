@@ -125,7 +125,7 @@ fundamental_context_task:
   agent: fundamental_analyst
   output_pydantic: FundamentalContextInsights
   async_execution: true
-  depends_on:
+  context:
     - sec_analysis_task
 
 technical_strategy_task:
@@ -175,7 +175,7 @@ technical_strategy_task:
   agent: technical_analyst
   output_pydantic: TechnicalStrategyInsights
   async_execution: true
-  depends_on:
+  context:
     - fundamental_context_task
 
 contextual_risk_task:
@@ -231,7 +231,7 @@ contextual_risk_task:
   agent: risk_analyst
   output_pydantic: ContextualRiskInsights
   async_execution: true
-  depends_on:
+  context:
     - technical_strategy_task
 
 investment_synthesis_task:
@@ -362,7 +362,7 @@ investment_synthesis_task:
   agent: investment_strategist
   output_pydantic: InvestmentSynthesis
   async_execution: true
-  depends_on:
+  context:
     - contextual_risk_task
 
 generate_enriched_analysis_task:
@@ -435,5 +435,5 @@ generate_enriched_analysis_task:
   agent: investment_reporter
   output_pydantic: EnrichedAnalysis
   async_execution: false  # Final task must be synchronous
-  depends_on:
+  context:
     - investment_synthesis_task

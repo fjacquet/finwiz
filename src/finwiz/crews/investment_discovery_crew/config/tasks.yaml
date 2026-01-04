@@ -139,7 +139,7 @@ stock_discovery_task:
   agent: stock_discovery_agent
   output_file: "output/discovery/a_plus_stocks.json"
   async_execution: true
-  depends_on:
+  context:
     - etf_discovery_task
 
 crypto_discovery_task:
@@ -225,7 +225,7 @@ crypto_discovery_task:
   agent: crypto_discovery_agent
   output_file: "output/discovery/a_plus_crypto.json"
   async_execution: true
-  depends_on:
+  context:
     - stock_discovery_task
 
 validation_task:
@@ -268,7 +268,7 @@ validation_task:
   agent: validation_agent
   output_file: "output/discovery/validation_report.json"
   async_execution: true
-  depends_on:
+  context:
     - crypto_discovery_task
 
 optimization_task:
@@ -342,7 +342,7 @@ optimization_task:
   agent: portfolio_optimization_agent
   output_file: "output/discovery/optimization_report.json"
   async_execution: true
-  depends_on:
+  context:
     - validation_task
 
 report_generation_task:
@@ -419,7 +419,7 @@ report_generation_task:
   agent: portfolio_optimization_agent
   output_file: "output/discovery/rapport_opportunites_a_plus.html"
   async_execution: false
-  depends_on:
+  context:
     - optimization_task
 
 feedback_learning_task:
@@ -514,7 +514,7 @@ feedback_learning_task:
   agent: feedback_learning_agent
   output_file: "output/discovery/feedback_learning_report.json"
   async_execution: false
-  depends_on:
+  context:
     - report_generation_task
 
 # Export Generation Task
@@ -602,5 +602,5 @@ generate_export_task:
     report_json_path.
   agent: investment_reporter
   async_execution: false
-  depends_on:
+  context:
     - feedback_learning_task

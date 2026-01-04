@@ -100,8 +100,6 @@ class StockCrew:
         self.TenKInsight = output_pydantic(TenKInsight)
         self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
 
-        super().__init__()
-
         # Initialize structured logger
         self.crew_logger = CrewLogger("StockCrew")
 

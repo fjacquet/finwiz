@@ -44,6 +44,11 @@ def async_task(func: Callable) -> Callable:
         logger.debug(f"Task '{task.description[:50] if task.description else 'unnamed'}...' configured for async execution")
         return task
 
+    # Copy CrewAI attributes from wrapped function to wrapper
+    # This is essential for CrewAI's task discovery to work correctly
+    if hasattr(func, "is_task"):
+        wrapper.is_task = func.is_task  # type: ignore[attr-defined]
+
     return wrapper
 
 
@@ -74,5 +79,10 @@ def sync_task(func: Callable) -> Callable:
         task.async_execution = False
         logger.debug(f"Task '{task.description[:50] if task.description else 'unnamed'}...' configured for sync execution")
         return task
+
+    # Copy CrewAI attributes from wrapped function to wrapper
+    # This is essential for CrewAI's task discovery to work correctly
+    if hasattr(func, "is_task"):
+        wrapper.is_task = func.is_task  # type: ignore[attr-defined]
 
     return wrapper

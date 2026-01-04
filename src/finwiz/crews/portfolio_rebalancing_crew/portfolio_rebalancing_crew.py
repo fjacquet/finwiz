@@ -124,7 +124,7 @@ class PortfolioRebalancingCrew:
         self.PortfolioAnalysis = output_pydantic(PortfolioAnalysis)
         self.RebalancingRecommendation = output_pydantic(RebalancingRecommendation)
 
-        super().__init__()
+        # CrewBase does not support super().__init__() - config loading is sufficient
 
     def _get_configured_llm(self) -> LLM:
         """

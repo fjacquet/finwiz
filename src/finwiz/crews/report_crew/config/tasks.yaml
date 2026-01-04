@@ -303,7 +303,7 @@ optimal_portfolio_allocation_task:
   output_pydantic: PortfolioConfiguration
   output_file: "output/report/optimal_portfolio_allocation.json"
   async_execution: true
-  depends_on:
+  context:
     - comprehensive_financial_integration_task
 
 # Task 3: Risk Assessment and Mitigation Strategy
@@ -403,7 +403,7 @@ risk_assessment_mitigation_task:
   output_pydantic: RiskAssessmentStandardized
   output_file: "output/report/risk_assessment_and_mitigation.json"
   async_execution: true
-  depends_on:
+  context:
     - optimal_portfolio_allocation_task
 
 # Task 4: Comprehensive Investment Report and Implementation Plan
@@ -943,7 +943,7 @@ comprehensive_investment_report_task:
   agent: investment_reporter
   output_file: "output/finwiz_family_financial_plan.html"
   async_execution: false
-  depends_on:
+  context:
     - risk_assessment_mitigation_task
 
 # Task 5: PDF Generation from HTML Report
@@ -976,5 +976,5 @@ comprehensive_investment_report_task:
 #   agent: translator
 #   output_file: "output/finwiz_family_financial_plan_fr.html"
 #   async_execution: false
-#   depends_on:
+#   context:
 #     - comprehensive_investment_report_task

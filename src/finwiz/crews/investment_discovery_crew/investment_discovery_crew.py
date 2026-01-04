@@ -118,7 +118,7 @@ class InvestmentDiscoveryCrew:
         self.ValidationResult = output_pydantic(ValidationResult)
         self.OptimizationResult = output_pydantic(OptimizationResult)
 
-        super().__init__()
+        # CrewBase does not support super().__init__() - config loading is sufficient
 
     def _get_configured_llm(self) -> LLM:
         """

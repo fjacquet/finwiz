@@ -128,7 +128,7 @@ technical_analysis_task:
   output_pydantic: CryptoTechnicalAnalysis
   output_file: "output/crypto/crypto_technical_analysis.json"
   async_execution: true
-  depends_on:
+  context:
     - market_analysis_task
 
 risk_assessment_task:
@@ -182,7 +182,7 @@ risk_assessment_task:
   output_pydantic: CryptoRiskProfile
   output_file: "output/crypto/crypto_risk_assessment.json"
   async_execution: true
-  depends_on:
+  context:
     - technical_analysis_task
 
 investment_strategy_task:
@@ -248,7 +248,7 @@ investment_strategy_task:
   output_pydantic: CryptoInvestmentStrategy
   output_file: "output/crypto/crypto_investment_strategy.json"
   async_execution: true
-  depends_on:
+  context:
     - risk_assessment_task
 
 final_report_task:
@@ -270,7 +270,7 @@ final_report_task:
   agent: research_director
   output_file: "output/crypto/crypto_final_report_en.html"
   async_execution: false
-  depends_on:
+  context:
     - investment_strategy_task
 
 # translation_task:
@@ -288,7 +288,7 @@ final_report_task:
 #   agent: translator
 #   output_file: "output/crypto/crypto_final_report_fr.html"
 #   async_execution: false
-#   depends_on:
+#   context:
 #     - final_report_task
 
 # Export Generation Task
@@ -411,5 +411,5 @@ generate_export_task:
   agent: investment_reporter
   output_pydantic: CryptoCrewExport
   async_execution: false
-  depends_on:
+  context:
     - final_report_task

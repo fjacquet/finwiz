@@ -89,7 +89,7 @@ class CryptoCrew:
         self.CryptoInvestmentStrategy = output_pydantic(CryptoInvestmentStrategy)
         self.RiskAssessmentStandardized = output_pydantic(RiskAssessmentStandardized)
 
-        super().__init__()
+        # CrewBase does not support super().__init__() - config loading is sufficient
 
         # Initialize structured logger
         self.crew_logger = CrewLogger("CryptoCrew")
