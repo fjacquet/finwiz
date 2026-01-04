@@ -261,8 +261,8 @@ class DeepAnalysisOrchestrator:
         loop = asyncio.get_running_loop()
         completed: list[tuple[str, DeepAnalysisResult | None, Any | None]] = []
 
-        # Per-holding timeout (5 minutes each) - prevents one stuck ticker blocking all
-        PER_HOLDING_TIMEOUT = 300  # 5 minutes per holding
+        # Per-holding timeout - prevents one stuck ticker blocking all
+        PER_HOLDING_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
 
         async def analyze_with_timeout(holding: dict[str, Any]) -> tuple[str, DeepAnalysisResult | None, Any | None]:
             """Wrap analysis with per-holding timeout."""
