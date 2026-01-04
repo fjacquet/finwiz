@@ -240,8 +240,32 @@ def _get_analysis_crew(asset_class: str) -> Any:
     return DeepAnalysisCrew()
 
 
+def _summarize_metrics(metrics: dict[str, float], max_items: int = 10) -> str:
+    """Summarize metrics dict to a compact string for AI context.
+
+    Instead of passing the full dict (which can be 100K+ tokens),
+    we pass a formatted summary of the top metrics.
+    """
+    if not metrics:
+        return "No data available"
+
+    # Sort by absolute value (most significant metrics first)
+    sorted_items = sorted(metrics.items(), key=lambda x: abs(x[1]) if x[1] else 0, reverse=True)
+
+    # Take top N items and format compactly
+    top_items = sorted_items[:max_items]
+    parts = [f"{k}={v:.3f}" if isinstance(v, float) else f"{k}={v}" for k, v in top_items]
+
+    return ", ".join(parts)
+
+
 def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> dict[str, Any]:
-    """Build inputs dict for crew kickoff."""
+    """Build inputs dict for crew kickoff.
+
+    IMPORTANT: We pass SUMMARIZED metrics, not full dictionaries.
+    Full dicts can be 100K+ tokens, causing context overflow errors.
+    The AI only needs key metrics for qualitative insights.
+    """
     return {
         "ticker": ctx.ticker,
         "asset_class": ctx.asset_class,
@@ -252,9 +276,10 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> dic
         "fundamental_score": quant.fundamental_score,
         "technical_score": quant.technical_score,
         "risk_score": quant.risk_score,
-        "fundamental_metrics": quant.fundamental_metrics,
-        "technical_indicators": quant.technical_indicators,
-        "risk_metrics": quant.risk_metrics,
+        # Pass SUMMARIES instead of full dicts to avoid token overflow
+        "fundamental_metrics": _summarize_metrics(quant.fundamental_metrics, max_items=12),
+        "technical_indicators": _summarize_metrics(quant.technical_indicators, max_items=10),
+        "risk_metrics": _summarize_metrics(quant.risk_metrics, max_items=8),
         "python_rationale": quant.python_rationale,
     }
 
