@@ -244,6 +244,7 @@ class CryptoCrew:
             max_rpm=20,
             max_retries=10,
             manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
+            memory=False,  # ⚡ DISABLED: Prevents token overflow from accumulated memory
         )
 
     def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:

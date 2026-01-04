@@ -301,6 +301,12 @@ class TestGenerateQualitative:
 
     def test_generate_qualitative_calls_crew(self, mocker, analysis_context, mock_quantitative_analysis, mock_qualitative_insights):
         """Test that generate_qualitative calls the appropriate crew."""
+        # Disable MAXIMUM_SPEED mode to test AI crew path
+        mocker.patch(
+            "finwiz.config.performance.performance_config.is_maximum_speed_mode",
+            return_value=False,
+        )
+
         mock_crew_instance = mocker.MagicMock()
         mock_crew_result = mocker.MagicMock()
         mock_crew_result.pydantic = mock_qualitative_insights
@@ -318,6 +324,12 @@ class TestGenerateQualitative:
 
     def test_generate_qualitative_passes_correct_inputs(self, mocker, analysis_context, mock_quantitative_analysis):
         """Test that correct inputs are passed to crew."""
+        # Disable MAXIMUM_SPEED mode to test AI crew path
+        mocker.patch(
+            "finwiz.config.performance.performance_config.is_maximum_speed_mode",
+            return_value=False,
+        )
+
         mock_crew_instance = mocker.MagicMock()
         mock_crew_result = mocker.MagicMock()
         mock_crew_result.pydantic = None
@@ -329,7 +341,7 @@ class TestGenerateQualitative:
             "finwiz.analysis.deep_analysis_pipeline._get_analysis_crew",
             return_value=mock_crew_instance,
         )
-        mock_validate = mocker.patch(
+        mocker.patch(
             "finwiz.analysis.deep_analysis_pipeline._extract_qualitative",
             return_value=mocker.MagicMock(),
         )
@@ -344,6 +356,32 @@ class TestGenerateQualitative:
         assert inputs["company_name"] == "Apple Inc."
         assert inputs["grade"] == "A"
         assert inputs["composite_score"] == 0.82
+
+    def test_generate_qualitative_maximum_speed_mode_skips_crew(self, mocker, analysis_context, mock_quantitative_analysis):
+        """Test that MAXIMUM_SPEED mode skips AI crew and uses Python qualitative."""
+        # Enable MAXIMUM_SPEED mode
+        mocker.patch(
+            "finwiz.config.performance.performance_config.is_maximum_speed_mode",
+            return_value=True,
+        )
+
+        mock_crew_instance = mocker.MagicMock()
+        mocker.patch(
+            "finwiz.analysis.deep_analysis_pipeline._get_analysis_crew",
+            return_value=mock_crew_instance,
+        )
+
+        result = generate_qualitative(analysis_context, mock_quantitative_analysis)
+
+        # Crew should NOT be called in MAXIMUM_SPEED mode
+        mock_crew_instance.crew.return_value.kickoff.assert_not_called()
+
+        # Should return a valid QualitativeInsights object
+        from finwiz.schemas.hybrid_analysis import QualitativeInsights
+        assert isinstance(result, QualitativeInsights)
+        # Verify it contains Python-generated content (not empty)
+        assert result.sec_insights is not None
+        assert result.investment_synthesis is not None
 
 
 class TestSynthesizeEnrichedAnalysis:

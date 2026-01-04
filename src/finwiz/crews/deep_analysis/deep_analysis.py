@@ -307,6 +307,7 @@ class DeepAnalysisCrew:
             max_rpm=20,
             max_retries=3,  # ⚡ OPTIMIZED: Reduced from 10 to 3 (reduce retry overhead)
             manager_llm=get_manager_llm(),  # Use configured LLM to avoid 'stop' parameter errors
+            memory=False,  # ⚡ DISABLED: Prevents token overflow from accumulated memory (968KB+)
         )
 
     def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:

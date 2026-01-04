@@ -27,8 +27,9 @@ def get_tools_for_asset_class(
     """
     Route to appropriate tool set based on asset class and optimization mode.
 
-    If pre-fetched data is available, tools will be configured to use it
-    instead of making live API calls.
+    For deep analysis crew, we use a LEAN tool set that excludes file/directory
+    reading tools to prevent context overflow. The AI receives summarized metrics
+    as input and only needs web search/research tools for qualitative analysis.
 
     Args:
         asset_class: One of "stock", "etf", "crypto"
@@ -49,39 +50,78 @@ def get_tools_for_asset_class(
     if minimal or use_minimal_tools:
         return _get_minimal_risk_tools(asset_class_lower, prefetched_data)
 
-    if asset_class_lower == "stock":
-        raw_tools = get_stock_crew_tools(
-            include_rag=False,  # Disabled RAG for faster execution
-            include_quantitative=True,
-            collection_suffix="stock_deep",
-            prefetched_data=prefetched_data,
-        )
-    elif asset_class_lower == "etf":
-        raw_tools = get_etf_crew_tools(
-            include_rag=False,  # Disabled RAG for faster execution
-            include_quantitative=True,
-            collection_suffix="etf_deep",
-            prefetched_data=prefetched_data,
-        )
-    elif asset_class_lower == "crypto":
-        raw_tools = get_crypto_crew_tools(
-            include_rag=False,  # Disabled RAG for faster execution
-            include_quantitative=True,
-            collection_suffix="crypto_deep",
-            prefetched_data=prefetched_data,
-        )
-    else:
-        raise ValueError(f"Invalid asset_class: {asset_class}. Must be one of: stock, etf, crypto")
+    # Get LEAN tools for deep analysis (excludes DirectoryReadTool/FileReadTool)
+    # to prevent context overflow from reading large files
+    raw_tools = _get_lean_analysis_tools(asset_class_lower, prefetched_data)
 
     # Apply robust wrapper for error handling
     tools = make_tools_robust(raw_tools)
 
     # Log batch mode status
     if prefetched_data:
-        logger.info(f"Loaded {len(tools)} tools for asset_class: {asset_class} (BATCH MODE)")
+        logger.info(f"Loaded {len(tools)} LEAN tools for asset_class: {asset_class} (BATCH MODE)")
     else:
-        logger.info(f"Loaded {len(tools)} tools for asset_class: {asset_class} (LIVE MODE)")
+        logger.info(f"Loaded {len(tools)} LEAN tools for asset_class: {asset_class} (LIVE MODE)")
 
+    return tools
+
+
+def _get_lean_analysis_tools(
+    asset_class: str,
+    prefetched_data: dict[str, dict[str, Any]] | None = None,
+) -> list[Any]:
+    """
+    Get LEAN tool set for deep qualitative analysis.
+
+    This function provides essential research tools while EXCLUDING
+    DirectoryReadTool and FileReadTool to prevent context overflow.
+    The AI receives summarized Python metrics as input and only needs
+    research tools for qualitative insights.
+
+    CRITICAL: This prevents the 300K+ token overflow error by excluding
+    tools that could read arbitrary large files.
+
+    Args:
+        asset_class: One of "stock", "etf", "crypto"
+        prefetched_data: Pre-fetched data for batch mode
+
+    Returns:
+        Lean list of tools for qualitative analysis
+
+    """
+    from finwiz.tools.finance_tools import (
+        get_crypto_research_tools,
+        get_etf_research_tools,
+        get_stock_research_tools,
+    )
+    from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
+    from finwiz.tools.valuation_tool import get_valuation_tool
+
+    tools: list[Any] = []
+
+    # Core research tools (NO file/directory reading)
+    if asset_class == "stock":
+        tools.extend(get_stock_research_tools())
+    elif asset_class == "etf":
+        tools.extend(get_etf_research_tools())
+    elif asset_class == "crypto":
+        tools.extend(get_crypto_research_tools())
+    else:
+        raise ValueError(f"Invalid asset_class: {asset_class}. Must be one of: stock, etf, crypto")
+
+    # Include quantitative and valuation tools
+    tools.append(get_quantitative_analysis_tool())
+    tools.append(get_valuation_tool())
+
+    # EXCLUDED to prevent context overflow:
+    # - DirectoryReadTool (can read entire directories)
+    # - FileReadTool (can read arbitrary files)
+    # - RAG tools (disabled by design)
+
+    logger.info(
+        f"⚡ LEAN TOOLS: Loaded {len(tools)} tools for {asset_class} qualitative analysis "
+        f"(DirectoryReadTool/FileReadTool EXCLUDED to prevent context overflow)"
+    )
     return tools
 
 
