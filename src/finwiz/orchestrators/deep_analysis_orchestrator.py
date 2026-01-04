@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
+from finwiz.integration.lineage import DataLineageTracker
 from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
 from finwiz.tools.logger import get_logger
 
@@ -38,6 +39,9 @@ class DeepAnalysisOrchestrator:
 
         # Enriched analysis storage (populated during analysis)
         self._enriched_analyses: dict[str, Any] = {}
+
+        # Initialize lineage tracker for data flow auditing
+        self.lineage_tracker = DataLineageTracker()
 
         # Initialize DataSourceOrchestrator for multi-source data acquisition
         from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
@@ -183,6 +187,22 @@ class DeepAnalysisOrchestrator:
             html_path = output_dir / f"{ticker}_report.html"
             html_path.write_text(html_content)
             self.logger.info(f"✅ Generated HTML: {html_path}")
+
+            # 3. Track lineage for auditing
+            self.lineage_tracker.track_crew_execution(
+                crew_name="deep_analysis",
+                input_data={
+                    "ticker": ticker,
+                    "asset_class": enriched.asset_class,
+                    "data_sources": ["yfinance", "sec_filings", "market_data"],
+                },
+                output_files=[str(json_path), str(html_path)],
+                metadata={
+                    "final_grade": enriched.final_grade,
+                    "final_score": enriched.final_score,
+                    "recommendation": enriched.final_recommendation,
+                },
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}")

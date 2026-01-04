@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import FinwizState
+from finwiz.integration.lineage import DataLineageTracker
 from finwiz.reporting import get_generator_for_crew
 from finwiz.schemas.portfolio_review import PortfolioReview
 from finwiz.scoring.grading_system import count_grade_distribution
@@ -38,6 +39,9 @@ class ReportingOrchestrator:
         self.logger = get_logger(self.__class__.__name__)
         self.integration_manager = dependencies.get("integration_manager")
         self.data_accessor = dependencies.get("data_accessor")
+
+        # Initialize lineage tracker for data flow auditing
+        self.lineage_tracker = DataLineageTracker()
 
     def report(self) -> dict[str, Any]:
         """
@@ -99,6 +103,22 @@ class ReportingOrchestrator:
             print(f"\n{'=' * 80}")
             print(f"✅ REPORT GENERATED: {report_path}")
             print(f"{'=' * 80}\n")
+
+            # Track report generation for lineage auditing
+            self.lineage_tracker.track_crew_execution(
+                crew_name="reporting",
+                input_data={
+                    "portfolio_review": bool(portfolio_review_data),
+                    "deep_analysis_count": len(deep_analysis_results.get("results_by_ticker", {})) if deep_analysis_results else 0,
+                    "enriched_reports_count": enriched_count,
+                },
+                output_files=[str(report_path)],
+                metadata={
+                    "report_type": "python_templates",
+                    "holdings_count": len(portfolio_review.holdings) if portfolio_review else 0,
+                    "generation_method": "python_templates",
+                },
+            )
 
             return {
                 "report_generation_complete": True,
@@ -353,11 +373,13 @@ class ReportingOrchestrator:
                                     analysis_data = data
 
                                 # Normalize field names for enriched format
-                                # Map final_score -> composite_score, final_grade -> grade
+                                # Map final_score -> composite_score, final_grade -> grade, final_recommendation -> recommendation
                                 if "final_score" in analysis_data and "composite_score" not in analysis_data:
                                     analysis_data["composite_score"] = analysis_data["final_score"]
                                 if "final_grade" in analysis_data and "grade" not in analysis_data:
                                     analysis_data["grade"] = analysis_data["final_grade"]
+                                if "final_recommendation" in analysis_data and "recommendation" not in analysis_data:
+                                    analysis_data["recommendation"] = analysis_data["final_recommendation"]
 
                                 # Extract from nested quantitative if needed
                                 if "quantitative" in analysis_data and isinstance(analysis_data["quantitative"], dict):
@@ -366,6 +388,8 @@ class ReportingOrchestrator:
                                         analysis_data["composite_score"] = quant["composite_score"]
                                     if "grade" not in analysis_data and "grade" in quant:
                                         analysis_data["grade"] = quant["grade"]
+                                    if "recommendation" not in analysis_data and "preliminary_recommendation" in quant:
+                                        analysis_data["recommendation"] = quant["preliminary_recommendation"]
 
                                 ticker = analysis_data.get("ticker")
                                 if ticker and ticker not in raw_deep_analysis:  # Avoid duplicates
@@ -381,6 +405,15 @@ class ReportingOrchestrator:
                 return None
 
             self.logger.info(f"Loaded {len(raw_deep_analysis)} deep analysis results")
+
+            # Track data dependency for lineage auditing
+            for ticker in raw_deep_analysis:
+                self.lineage_tracker.track_data_dependency(
+                    dependent_crew="reporting",
+                    source_crew="deep_analysis",
+                    dependency_type="deep_analysis_results",
+                    file_path=f"output/{{asset_class}}/{ticker}_enriched.json",
+                )
 
             # Transform to expected format
             return self._transform_deep_analysis_results(raw_deep_analysis)
@@ -471,6 +504,16 @@ class ReportingOrchestrator:
                 merged_count += 1
 
         self.logger.info(f"Merged {merged_count} deep analysis results into portfolio review")
+
+        # Track data flow for lineage auditing
+        if merged_count > 0:
+            self.lineage_tracker.track_data_flow(
+                from_crew="deep_analysis",
+                to_crew="reporting",
+                data_type="portfolio_enrichment",
+                transformation="merge_deep_analysis_into_holdings",
+                validation_status="success" if merged_count > 0 else "no_data",
+            )
 
     def _generate_python_report(
         self,

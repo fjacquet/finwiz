@@ -70,10 +70,10 @@ class DataLineageTracker:
             # Save updated lineage
             self._save_lineage(lineage_data)
 
-            self.logger.log_data_lineage(crew_name=crew_name, input_sources=list(input_data.keys()), output_files=output_files)
+            self.logger.info(f"Tracked crew execution: {crew_name}, inputs={list(input_data.keys())}, outputs={len(output_files)} files")
 
         except Exception as e:
-            self.logger.log_integration_error(error_type="LINEAGE_TRACKING_ERROR", crew_name=crew_name, error_message=str(e))
+            self.logger.error(f"Lineage tracking error for {crew_name}: {e}")
 
     def get_crew_lineage(self, crew_name: str) -> list[Any]:
         """Get lineage history for a specific crew."""
@@ -108,16 +108,11 @@ class DataLineageTracker:
 
             self._save_lineage(lineage_data)
 
-            self.logger.log_dependency_check(
-                crew_name=dependent_crew,
-                dependencies=[source_crew],
-                satisfied=[source_crew] if file_path else [],
-                missing=[] if file_path else [source_crew],
-                stale=[],
-            )
+            status = "satisfied" if file_path else "missing"
+            self.logger.debug(f"Tracked dependency: {dependent_crew} <- {source_crew} ({dependency_type}) [{status}]")
 
         except Exception as e:
-            self.logger.log_integration_error(error_type="DEPENDENCY_TRACKING_ERROR", crew_name=dependent_crew, error_message=str(e))
+            self.logger.error(f"Dependency tracking error for {dependent_crew}: {e}")
 
     def track_data_flow(self, from_crew: str, to_crew: str, data_type: str, transformation: str | None = None, validation_status: str | None = None) -> None:
         """Track data flow between crews."""
@@ -144,15 +139,11 @@ class DataLineageTracker:
 
             self._save_lineage(lineage_data)
 
-            self.logger.log_data_transformation(
-                crew_name=to_crew,
-                transformation_type=transformation or "direct_flow",
-                input_schema=f"{from_crew}_{data_type}",
-                output_schema=f"{to_crew}_{data_type}",
-            )
+            transform_str = f" via {transformation}" if transformation else ""
+            self.logger.debug(f"Tracked data flow: {from_crew} -> {to_crew} ({data_type}){transform_str}")
 
         except Exception as e:
-            self.logger.log_integration_error(error_type="DATA_FLOW_TRACKING_ERROR", crew_name=to_crew, error_message=str(e))
+            self.logger.error(f"Data flow tracking error for {to_crew}: {e}")
 
     def get_data_flow_graph(self) -> dict[str, Any]:
         """Get a graph representation of data flows between crews."""
@@ -181,7 +172,7 @@ class DataLineageTracker:
             return graph
 
         except Exception as e:
-            self.logger.log_integration_error(error_type="GRAPH_GENERATION_ERROR", crew_name="system", error_message=str(e))
+            self.logger.error(f"Graph generation error: {e}")
             return {}
 
     def get_lineage_summary(self) -> dict[str, Any]:
@@ -212,7 +203,7 @@ class DataLineageTracker:
             }
 
         except Exception as e:
-            self.logger.log_integration_error(error_type="LINEAGE_SUMMARY_ERROR", crew_name="system", error_message=str(e))
+            self.logger.error(f"Lineage summary error: {e}")
             return {}
 
     def _load_lineage(self) -> dict[str, Any]:
