@@ -4,7 +4,7 @@ Template management for rebalancing reports.
 This module provides backward compatibility for template management.
 The actual implementation has been split into:
 - template_builders.py: CSS and JavaScript builders
-- template_renderers.py: HTML rendering and PDF export
+- template_renderers.py: HTML rendering
 """
 
 import logging
@@ -46,17 +46,6 @@ class RebalancingTemplates:
         return TemplateBuilder.get_rebalancing_javascript()
 
     @staticmethod
-    def get_pdf_export_note() -> str:
-        """
-        Get PDF export note for HTML reports.
-
-        Returns:
-            HTML comment with PDF export instructions
-
-        """
-        return TemplateRenderer.get_pdf_export_note()
-
-    @staticmethod
     def add_interactive_elements(html_content: str) -> str:
         """
         Add interactive CSS and JavaScript to HTML content.
@@ -69,17 +58,3 @@ class RebalancingTemplates:
 
         """
         return TemplateRenderer.add_interactive_elements(html_content)
-
-    @staticmethod
-    def prepare_pdf_export(html_content: str) -> str:
-        """
-        Prepare HTML content for PDF export.
-
-        Args:
-            html_content: Original HTML content
-
-        Returns:
-            HTML content prepared for PDF conversion
-
-        """
-        return TemplateRenderer.prepare_pdf_export(html_content)

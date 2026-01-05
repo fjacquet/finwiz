@@ -55,20 +55,6 @@ from .etf import (  # noqa: F401
     ETFTopHolding,
 )
 
-# Feedback schemas
-from .feedback import (  # noqa: F401
-    CriteriaAdjustment,
-    FeedbackSentiment,
-    FeedbackSummary,
-    FeedbackType,
-    LearningConfiguration,
-    LearningMetrics,
-    PerformanceFeedback,
-    PerformanceOutcome,
-    RecommendationOutcome,
-    UserFeedback,
-)
-
 # Investment discovery crew schemas
 from .investment_discovery import (  # noqa: F401
     APlusAnalysis,
@@ -217,17 +203,6 @@ __all__ = [
     "PositionSizeRecommendation",
     "PriceTargets",
     "Priority",
-    # Feedback schemas
-    "CriteriaAdjustment",
-    "FeedbackSentiment",
-    "FeedbackSummary",
-    "FeedbackType",
-    "LearningConfiguration",
-    "LearningMetrics",
-    "PerformanceFeedback",
-    "PerformanceOutcome",
-    "RecommendationOutcome",
-    "UserFeedback",
     # Quantitative analysis schemas
     "BacktestResult",
     "PerformanceMetrics",

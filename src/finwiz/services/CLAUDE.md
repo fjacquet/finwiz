@@ -6,45 +6,22 @@ This directory contains business service classes that coordinate complex operati
 
 ```
 services/
-├── feedback/                    # Feedback system components
-│   ├── analytics.py            # Feedback analytics
-│   ├── criteria.py             # Feedback criteria definitions
-│   ├── insights.py             # Insight generation from feedback
-│   ├── service.py              # Main feedback service
-│   └── storage.py              # Feedback persistence
-├── feedback_service.py          # Legacy feedback service (re-export)
 └── __init__.py
 ```
 
-## Major Entry Points
+## Purpose
 
-| File | Class/Function | Purpose |
-|------|---------------|---------|
-| `feedback/service.py` | `FeedbackService` | Collect and process user feedback |
-| `feedback/analytics.py` | `FeedbackAnalytics` | Analyze feedback patterns |
-| `feedback/insights.py` | `FeedbackInsights` | Generate actionable insights |
+This module is reserved for business service classes that coordinate operations across multiple domain components. Services should orchestrate complex workflows but delegate business logic to domain modules.
 
-## Feedback System
+## Service Design Principles
 
-```python
-from finwiz.services.feedback.service import FeedbackService
-
-service = FeedbackService()
-
-# Collect feedback
-service.submit_feedback(
-    ticker="AAPL",
-    recommendation="BUY",
-    user_action="FOLLOWED",
-    outcome="POSITIVE"
-)
-
-# Analyze patterns
-analytics = service.get_analytics()
-accuracy = analytics.recommendation_accuracy
-```
+1. **Thin Orchestration**: Services coordinate, don't contain business logic
+2. **Dependency Injection**: Accept dependencies via constructor
+3. **Stateless**: Services should be stateless where possible
+4. **Interface-Based**: Define clear interfaces for external dependencies
 
 ## Related Modules
 
-- `finwiz.schemas.feedback` - Feedback schemas
-- `finwiz.tools.feedback_integration_tool` - CrewAI tool integration
+- `finwiz.orchestrators` - Flow orchestration
+- `finwiz.flows` - CrewAI flow definitions
+- `finwiz.crews` - AI agent crews

@@ -11,11 +11,8 @@ import os
 import warnings
 
 from finwiz.cli.argument_parser import (
-    cleanup_session_environment,
     initialize_configuration,
     initialize_environment,
-    initialize_session_management,
-    setup_session_environment,
 )
 from finwiz.flow_state import FinwizState
 from finwiz.flows.orchestrator import FinwizFlow
@@ -46,21 +43,14 @@ def kickoff() -> None:
         # Step 2: Initialize and validate configuration
         initialize_configuration()
 
-        # Step 3: Initialize session management
-        financial_plan = initialize_session_management()
-
-        # Step 4: Initialize environment and retry mechanism
+        # Step 3: Initialize environment and retry mechanism
         initialize_environment()
 
-        # Step 5: Create and start the flow with session data
-        logger.info("Creating FinWiz flow with session integration")
+        # Step 4: Create and start the flow
+        logger.info("Creating FinWiz flow")
 
-        # Create flow state and prepare session data for flow inputs
+        # Create flow state
         flow_state = FinwizState()
-
-        # Store session data globally for potential crew access
-        # This is safer than modifying flow inputs after creation
-        setup_session_environment(financial_plan)
 
         # Create the flow instance
         finwiz_flow = FinwizFlow(state=flow_state)
@@ -70,9 +60,6 @@ def kickoff() -> None:
         logger.info("🚀 Starting FinWiz analysis execution")
         finwiz_flow.kickoff()
         logger.info("✅ FinWiz analysis workflow completed successfully")
-
-        # Clean up session environment variables
-        cleanup_session_environment()
 
     except SystemExit:
         # Re-raise SystemExit to allow proper application termination

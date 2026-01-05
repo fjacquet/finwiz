@@ -422,101 +422,6 @@ report_generation_task:
   context:
     - optimization_task
 
-feedback_learning_task:
-  description: >
-    Analyze collected user feedback and performance outcomes to continuously
-    improve A+ discovery criteria. Implement machine learning approaches to
-    optimize recommendation quality and ensure the feedback loop drives
-    measurable improvements in discovery effectiveness.
-    
-    Feedback Collection and Analysis (Requirements 7.4):
-    - Collect and analyze user feedback on A+ recommendations (acceptance/rejection)
-    - Track performance outcomes for accepted recommendations over time
-    - Monitor grade maintenance rates for A+ investments (target: 80%+)
-    - Analyze user confidence ratings and sentiment patterns
-    - Identify success and failure patterns across asset types (ETFs, stocks, crypto)
-    - Calculate acceptance rates by asset type and grade level
-    - Assess data quality and statistical significance of feedback samples
-    
-    Performance Outcome Tracking (Success Metrics):
-    - Monitor portfolio grade improvements from A+ implementations (target: 10%+)
-    - Track discovery rate effectiveness (target: 5+ A+ opportunities monthly)
-    - Measure recommendation precision (target: 80% maintain A+ grade over 6 months)
-    - Analyze user adoption rates (target: 70% acceptance rate)
-    - Calculate relative performance vs benchmarks (target: 2%+ annual outperformance)
-    - Monitor user satisfaction through confidence ratings and sentiment analysis
-    
-    Criteria Optimization and Learning (Requirements 7.4):
-    - Implement adaptive learning algorithms to adjust A+ criteria based on feedback
-    - Optimize screening thresholds for ETFs (expense ratios, AUM, tracking error)
-    - Refine stock selection criteria (ROE, growth rates, debt ratios) based on outcomes
-    - Adjust crypto evaluation parameters (market cap, volume, adoption metrics)
-    - Apply market regime adjustments to criteria during different economic conditions
-    - Validate criteria changes through backtesting before implementation
-    - Implement rollback mechanisms for underperforming criteria adjustments
-    
-    Learning System Implementation:
-    - Use Feedback Analysis Tool to identify patterns and insights
-    - Apply Criteria Optimization Tool to implement learning-based adjustments
-    - Utilize Learning Metrics Tool to monitor system effectiveness
-    - Implement statistical significance testing for criteria changes
-    - Create A/B testing framework for validating improvements
-    - Maintain comprehensive audit trail of all criteria adjustments
-    
-    Success Metrics Monitoring:
-    - Track all five key success metrics defined in requirements
-    - Generate monthly learning effectiveness reports
-    - Monitor trends in acceptance rates, performance outcomes, and user satisfaction
-    - Identify opportunities for further system improvements
-    - Provide recommendations for manual criteria adjustments when needed
-    - Alert on significant performance degradation requiring immediate attention
-    
-    Integration with Monitoring System:
-    - Coordinate with A+ Monitoring Service for continuous grade tracking
-    - Integrate feedback collection with portfolio review workflows
-    - Ensure seamless data flow between discovery, monitoring, and learning systems
-    - Maintain consistency with existing grading system and criteria
-    - Support both automated and manual feedback collection mechanisms
-    
-    Use Feedback Analysis Tool for pattern identification, Criteria Optimization Tool
-    for implementing learning-based adjustments, Learning Metrics Tool for effectiveness
-    monitoring, and integration with A+ Monitoring Service for continuous tracking.
-
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
-
-  expected_output: >
-    Comprehensive feedback learning analysis and optimization report including:
-    - Feedback analysis summary with acceptance rates, sentiment patterns, and insights
-    - Performance outcome tracking with grade maintenance and relative performance metrics
-    - Success metrics dashboard showing progress against all five key targets:
-      * Portfolio grade improvement rates (target: 10%+ minimum)
-      * Discovery rate effectiveness (target: 5+ A+ opportunities monthly)
-      * Recommendation precision (target: 80% maintain A+ grade over 6 months)
-      * User adoption rates (target: 70% acceptance rate)
-      * Relative performance vs benchmarks (target: 2%+ annual outperformance)
-    - Criteria optimization recommendations based on learning analysis
-    - Asset-specific learning insights for ETFs, stocks, and cryptocurrencies
-    - Market regime adjustments and adaptive criteria modifications
-    - Learning system effectiveness metrics and improvement trends
-    - Statistical significance analysis for all proposed criteria changes
-    - Backtesting validation results for criteria adjustments
-    - Implementation plan for approved criteria optimizations
-    - Rollback recommendations for underperforming previous adjustments
-    - Integration status with A+ monitoring and portfolio review systems
-    - Monthly learning effectiveness summary with trend analysis
-    - Recommendations for manual intervention when automated learning is insufficient
-    - Quality assurance metrics for feedback data and learning algorithm performance
-    
-  agent: feedback_learning_agent
-  output_file: "output/discovery/feedback_learning_report.json"
-  async_execution: false
-  context:
-    - report_generation_task
-
 # Export Generation Task
 generate_export_task:
   description: >
@@ -603,4 +508,4 @@ generate_export_task:
   agent: investment_reporter
   async_execution: false
   context:
-    - feedback_learning_task
+    - report_generation_task

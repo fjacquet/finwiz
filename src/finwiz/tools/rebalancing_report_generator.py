@@ -153,32 +153,3 @@ class RebalancingReportGenerator(HTMLReportGenerator):
         title = "Résumé d'Exécution" if is_french else "Execution Summary"
         content = self.section_generator.generate_execution_summary_content(result, language)
         self.add_section(title, content, "execution", order=8)
-
-    def export_to_pdf(self, html_content: str, output_path: str) -> None:
-        """
-        Export HTML report to PDF format.
-
-        Args:
-            html_content: HTML content to convert
-            output_path: Path where to save the PDF file
-
-        Note:
-            This delegates to the templates module for PDF preparation.
-
-        """
-        try:
-            # Use templates module to prepare for PDF export
-            html_with_note = self.templates.prepare_pdf_export(html_content)
-
-            # Save HTML file that can be converted to PDF
-            html_path = output_path.replace(".pdf", ".html") if output_path.endswith(".pdf") else f"{output_path}.html"
-
-            output_file = Path(html_path)
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            output_file.write_text(html_with_note, encoding="utf-8")
-
-            logger.info(f"HTML report saved to {html_path} (ready for PDF conversion)")
-
-        except Exception as e:
-            logger.error(f"Error exporting to PDF: {e}")
-            raise

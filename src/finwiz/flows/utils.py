@@ -9,8 +9,6 @@ import logging
 import os
 from typing import Any
 
-from weasyprint import HTML  # weasyprint has no official type stubs
-
 # Set up logging
 logger = logging.getLogger(__name__)
 
@@ -82,15 +80,7 @@ def run_crew_with_caching(
         os.makedirs(output_dir, exist_ok=True)
         with open(json_file, "w") as f:
             f.write(result_raw)
-        logger.debug(f"Saved {state_key} HTML results to {json_file}")
-
-        # Generate PDF from HTML
-        try:
-            pdf_filename = os.path.splitext(json_file)[0] + ".pdf"
-            HTML(filename=json_file).write_pdf(pdf_filename)
-            logger.info(f"Successfully generated PDF report: {pdf_filename}")
-        except Exception as e:
-            logger.error(f"Failed to generate PDF report from {json_file}: {e}", exc_info=True)
+        logger.debug(f"Saved {state_key} results to {json_file}")
     except Exception as e:
         logger.error(f"Error in {state_key} analysis: {e}", exc_info=True)
         raise

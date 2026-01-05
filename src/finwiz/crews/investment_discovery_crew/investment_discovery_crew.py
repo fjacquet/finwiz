@@ -21,7 +21,6 @@ from finwiz.schemas.investment_discovery import (
     OptimizationResult,
     ValidationResult,
 )
-from finwiz.tools.feedback_integration_tool import get_feedback_tools
 from finwiz.tools.finance_tools import (
     get_crypto_research_tools,
     get_etf_research_tools,
@@ -39,7 +38,6 @@ load_dotenv()
 # Get specialized tools
 investment_discovery_tools = get_investment_discovery_tools()
 quantitative_tool = get_quantitative_analysis_tool()
-feedback_tools = get_feedback_tools()
 
 # Get asset-specific research tools
 etf_tools = get_etf_research_tools()
@@ -50,7 +48,6 @@ crypto_tools = get_crypto_research_tools()
 common_tools = [
     *investment_discovery_tools,
     quantitative_tool,
-    *feedback_tools,  # Add feedback tools to all agents
     # Schema and documentation access
     DirectoryReadTool(directory="output/discovery"),
     DirectoryReadTool(directory="docs/schemas"),
@@ -198,18 +195,6 @@ class InvestmentDiscoveryCrew:
             llm=self._get_configured_llm(),
         )
 
-    @agent
-    def feedback_learning_agent(self) -> Agent:
-        """Feedback Learning Agent for continuous improvement of A+ criteria."""
-        return Agent(
-            config=self.agents_config["feedback_learning_agent"],
-            verbose=True,
-            tools=feedback_tools + [quantitative_tool],
-            reasoning=True,
-            max_reasoning_attempts=3,  # Prevent infinite loops
-            llm=self._get_configured_llm(),
-        )
-
     @final_reporter
     @agent
     def investment_reporter(self) -> Agent:
@@ -267,14 +252,6 @@ class InvestmentDiscoveryCrew:
         """Task for generating comprehensive discovery report."""
         return Task(
             config=self.tasks_config["report_generation_task"],
-        )
-
-    @sync_task
-    @task
-    def feedback_learning_task(self) -> Task:
-        """Task for analyzing feedback and improving A+ criteria."""
-        return Task(
-            config=self.tasks_config["feedback_learning_task"],
         )
 
     @sync_task

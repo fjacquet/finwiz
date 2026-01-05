@@ -13,7 +13,6 @@ dependencies = [
     "serpapi>=0.1.5",
     "yfinance>=0.2.62",
     "tavily-python>=0.7.5",
-    "weasyprint>=65.1",
     "dotenv>=0.9.9",
     "pydantic>=2.11.7",
     "unstructured>=0.18.11",
@@ -298,7 +297,6 @@ module = [
     "plotly.*",
     "pypfopt.*",
     "sec_api.*",
-    "weasyprint.*",
     "fastapi.*",
     "intrinio_sdk.*",
 ]
