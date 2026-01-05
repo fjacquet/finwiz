@@ -6,7 +6,6 @@ centralizing crew initialization logic and providing consistent error handling.
 """
 
 import json
-import os
 from datetime import datetime
 from typing import Any
 
@@ -17,7 +16,6 @@ from finwiz.crews.investment_discovery_crew.investment_discovery_crew import Inv
 from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import PortfolioRebalancingCrew
 from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
-from finwiz.infrastructure.caching.crew_output_cache import get_crew_output_cache
 from finwiz.orchestrators.error_handling.core_analysis_error_handler import CoreAnalysisErrorHandler
 from finwiz.tools.logger import get_logger
 
@@ -40,42 +38,16 @@ class CrewFactory:
         self.error_handler = error_handler
         self.logger = get_logger(__name__)
 
-        # Initialize crew output cache
-        cache_enabled = os.getenv("CREW_CACHE_ENABLED", "true").lower() == "true"
-        cache_max_age_hours = int(os.getenv("CREW_CACHE_MAX_AGE_HOURS", "24"))
-
-        self.cache_enabled = cache_enabled
-        self.output_cache = get_crew_output_cache(max_age_hours=cache_max_age_hours) if cache_enabled else None
-
-        if cache_enabled:
-            self.logger.info(f"Crew output caching enabled (max age: {cache_max_age_hours}h)")
-        else:
-            self.logger.info("Crew output caching disabled")
+        # NOTE: Crew output caching removed per storage cleanup
+        self.cache_enabled = False
+        self.output_cache = None
+        self.logger.info("CrewFactory initialized (storage disabled per cleanup)")
 
     def execute_crypto_crew(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute cryptocurrency analysis crew with error handling."""
         if not is_feature_enabled("crypto_analysis"):
             self.logger.info("Crypto analysis disabled via feature flag")
             return {"crypto_analysis_disabled": True}
-
-        # Check for cached output first
-        if self.cache_enabled and self.output_cache:
-            cached_data = self.output_cache.get_cached_crew_output("crypto")
-            if cached_data:
-                # Wrap cached data in expected structure before storing
-                wrapped_cached_data = self._wrap_cached_data_for_storage(cached_data, "crypto")
-
-                # Store wrapped cached data in integration system
-                self.integration_manager.store_crew_output("crypto", wrapped_cached_data)
-
-                # Return success response with cached data
-                return {
-                    "crypto_analysis_result": json.dumps(cached_data),
-                    "core_analysis_completed": True,
-                    "crypto_analysis_success": True,
-                    "crypto_analysis_cached": True,
-                    "cache_age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
-                }
 
         start_time = datetime.now()
 
@@ -84,15 +56,11 @@ class CrewFactory:
             crypto_crew = CryptoCrew()
             result = crypto_crew.crew().kickoff(inputs=inputs)
 
-            # Store crew result in integration system
-            self.integration_manager.store_crew_output("crypto", result)
-
             # Prepare success response
             result_data = {
                 "crypto_analysis_result": str(result.raw) if hasattr(result, "raw") else str(result),
                 "core_analysis_completed": True,
                 "crypto_analysis_success": True,
-                "crypto_analysis_cached": False,
             }
 
             self.logger.info("Cryptocurrency analysis crew completed successfully")
@@ -115,12 +83,9 @@ class CrewFactory:
             }
 
             if fallback_response.success and fallback_response.data:
-                # Use fallback data
                 result_data["crypto_analysis_result"] = json.dumps(fallback_response.data)
-                self.integration_manager.store_crew_output("crypto", fallback_response.data)
                 self.logger.info(f"Using fallback data for crypto analysis: {fallback_response.message}")
             else:
-                # Complete failure - continue without crypto analysis
                 result_data["crypto_analysis_result"] = None
                 self.logger.warning(f"Crypto analysis completely failed: {fallback_response.message}")
 
@@ -132,25 +97,6 @@ class CrewFactory:
             self.logger.info("Stock analysis disabled via feature flag")
             return {"stock_analysis_disabled": True}
 
-        # Check for cached output first
-        if self.cache_enabled and self.output_cache:
-            cached_data = self.output_cache.get_cached_crew_output("stock")
-            if cached_data:
-                # Wrap cached data in expected structure before storing
-                wrapped_cached_data = self._wrap_cached_data_for_storage(cached_data, "stock")
-
-                # Store wrapped cached data in integration system
-                self.integration_manager.store_crew_output("stock", wrapped_cached_data)
-
-                # Return success response with cached data
-                return {
-                    "stock_analysis_result": json.dumps(cached_data),
-                    "core_analysis_completed": True,
-                    "stock_analysis_success": True,
-                    "stock_analysis_cached": True,
-                    "cache_age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
-                }
-
         start_time = datetime.now()
 
         try:
@@ -158,15 +104,11 @@ class CrewFactory:
             stock_crew = StockCrew()
             result = stock_crew.crew().kickoff(inputs=inputs)
 
-            # Store crew result in integration system
-            self.integration_manager.store_crew_output("stock", result)
-
             # Prepare success response
             result_data = {
                 "stock_analysis_result": str(result.raw) if hasattr(result, "raw") else str(result),
                 "core_analysis_completed": True,
                 "stock_analysis_success": True,
-                "stock_analysis_cached": False,
             }
 
             self.logger.info("Stock analysis crew completed successfully")
@@ -189,12 +131,9 @@ class CrewFactory:
             }
 
             if fallback_response.success and fallback_response.data:
-                # Use fallback data
                 result_data["stock_analysis_result"] = json.dumps(fallback_response.data)
-                self.integration_manager.store_crew_output("stock", fallback_response.data)
                 self.logger.info(f"Using fallback data for stock analysis: {fallback_response.message}")
             else:
-                # Complete failure - continue without stock analysis
                 result_data["stock_analysis_result"] = None
                 self.logger.warning(f"Stock analysis completely failed: {fallback_response.message}")
 
@@ -206,34 +145,12 @@ class CrewFactory:
             self.logger.info("ETF analysis disabled via feature flag")
             return {"etf_analysis_disabled": True}
 
-        # Check for cached output first
-        if self.cache_enabled and self.output_cache:
-            cached_data = self.output_cache.get_cached_crew_output("etf")
-            if cached_data:
-                # Wrap cached data in expected structure before storing
-                wrapped_cached_data = self._wrap_cached_data_for_storage(cached_data, "etf")
-
-                # Store wrapped cached data in integration system
-                self.integration_manager.store_crew_output("etf", wrapped_cached_data)
-
-                # Return success response with cached data
-                return {
-                    "etf_analysis_result": json.dumps(cached_data),
-                    "core_analysis_completed": True,
-                    "etf_analysis_success": True,
-                    "etf_analysis_cached": True,
-                    "cache_age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
-                }
-
         start_time = datetime.now()
 
         try:
             self.logger.info("Starting ETF analysis crew (Phase 2: Core Analysis)")
             etf_crew = EtfCrew()
             result = etf_crew.crew().kickoff(inputs=inputs)
-
-            # Store crew result in integration system
-            self.integration_manager.store_crew_output("etf", result)
 
             # Prepare success response
             result_data = {
@@ -262,12 +179,9 @@ class CrewFactory:
             }
 
             if fallback_response.success and fallback_response.data:
-                # Use fallback data
                 result_data["etf_analysis_result"] = json.dumps(fallback_response.data)
-                self.integration_manager.store_crew_output("etf", fallback_response.data)
                 self.logger.info(f"Using fallback data for ETF analysis: {fallback_response.message}")
             else:
-                # Complete failure - continue without ETF analysis
                 result_data["etf_analysis_result"] = None
                 self.logger.warning(f"ETF analysis completely failed: {fallback_response.message}")
 
@@ -321,9 +235,6 @@ class CrewFactory:
 
             # Execute the investment discovery crew
             result = investment_discovery_crew.crew().kickoff(inputs=inputs)
-
-            # Store crew result in integration system
-            self.integration_manager.store_crew_output("discovery", result)
 
             # Prepare success response
             result_data = {
@@ -527,35 +438,3 @@ class CrewFactory:
             self.logger.warning(f"Failed to extract market context from core analysis: {e}")
             return market_context
 
-    def _wrap_cached_data_for_storage(self, cached_data: dict[str, Any], crew_name: str) -> dict[str, Any]:
-        """
-        Wrap cached crew data in the expected storage structure.
-
-        This ensures cached data has the same structure as fresh crew outputs,
-        preventing validation errors in the data consolidation validator.
-
-        Args:
-            cached_data: Raw cached data (Pydantic model output)
-            crew_name: Name of the crew
-
-        Returns:
-            Wrapped data with expected structure (raw_output, json_dict, pydantic, tasks_output)
-
-        """
-        return {
-            "raw_output": json.dumps(cached_data, indent=2, default=str),
-            "json_dict": cached_data,
-            "pydantic": cached_data,  # Already in dict form from cache
-            "tasks_output": [],  # Cached data doesn't have task-level details
-            "metadata": {
-                "crew_name": crew_name,
-                "storage_timestamp": datetime.now().isoformat(),
-                "integration_version": "1.0",
-                "data_source": "cache",
-                "data_freshness": {
-                    "stored_at": datetime.now().isoformat(),
-                    "is_fresh": True,
-                    "age_hours": cached_data.get("_cache_metadata", {}).get("cache_age_hours", 0),
-                },
-            },
-        }

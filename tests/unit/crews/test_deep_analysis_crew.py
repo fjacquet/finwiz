@@ -24,8 +24,8 @@ class TestDeepAnalysisCrew:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Verify all required agents are present (updated for current implementation)
-        required_agents = ["asset_analyst", "investment_reporter"]
+        # Verify all required agents are present (single agent design - Python handles consolidation)
+        required_agents = ["asset_analyst"]
         for agent_name in required_agents:
             assert agent_name in config, f"Missing agent configuration: {agent_name}"
             assert "role" in config[agent_name]
@@ -41,10 +41,9 @@ class TestDeepAnalysisCrew:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Verify all required tasks are present (matches tasks.yaml config)
+        # Verify all required tasks are present (single task - Python handles consolidation)
         required_tasks = [
-            "deep_qualitative_analysis_task",  # AI qualitative analysis
-            "generate_enriched_analysis_task",  # Final report consolidation
+            "deep_qualitative_analysis_task",  # AI qualitative analysis only
         ]
 
         for task_name in required_tasks:
@@ -86,15 +85,15 @@ class TestDeepAnalysisCrew:
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
         assert hasattr(DeepAnalysisCrew, "asset_analyst")
-        assert hasattr(DeepAnalysisCrew, "investment_reporter")
+        # investment_reporter removed - Python handles consolidation
 
     def test_should_have_task_methods(self):
         """Test that DeepAnalysisCrew has all required task methods."""
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
-        # Hybrid architecture tasks (Python metrics + AI qualitative analysis)
+        # Single task - Python handles consolidation
         assert hasattr(DeepAnalysisCrew, "deep_qualitative_analysis_task")
-        assert hasattr(DeepAnalysisCrew, "generate_enriched_analysis_task")
+        # generate_enriched_analysis_task removed - Python handles consolidation
 
     def test_should_have_crew_method(self):
         """Test that DeepAnalysisCrew has the crew method."""
@@ -129,27 +128,27 @@ class TestDeepAnalysisCrew:
         assert hasattr(crew, "agents_config")
         assert hasattr(crew, "tasks_config")
 
-    def test_should_have_exactly_two_agents(self):
+    def test_should_have_exactly_one_agent(self):
         """
-        Test that the crew contains exactly 2 agents.
+        Test that the crew contains exactly 1 agent.
 
-        Verifies that only asset_analyst and investment_reporter are present,
-        confirming the risk_assessor has been removed.
+        Verifies that only asset_analyst is present.
+        Python handles consolidation via synthesize_enriched_analysis().
 
-        Requirements: 2.2
+        Requirements: Token overflow fix
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
         crew = DeepAnalysisCrew()
 
-        # Check agents_config has exactly 2 agents
-        assert len(crew.agents_config) == 2, f"Expected 2 agents, found {len(crew.agents_config)}"
+        # Check agents_config has exactly 1 agent
+        assert len(crew.agents_config) == 1, f"Expected 1 agent, found {len(crew.agents_config)}"
 
-        # Verify the correct agents are present
+        # Verify the correct agent is present
         assert "asset_analyst" in crew.agents_config
-        assert "investment_reporter" in crew.agents_config
 
-        # Verify risk_assessor is NOT present
+        # Verify removed agents are NOT present
+        assert "investment_reporter" not in crew.agents_config
         assert "risk_assessor" not in crew.agents_config
 
     def test_should_not_reference_risk_assessor_in_code(self):

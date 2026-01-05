@@ -229,7 +229,7 @@ def create_complete_enriched_analysis(
     from datetime import datetime
 
     from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
-    from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+    from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
     from finwiz.schemas.hybrid_analysis.qualitative import (
         ContextualRiskInsights,
         FundamentalContextInsights,
@@ -260,12 +260,6 @@ def create_complete_enriched_analysis(
             accuracy_confidence=0.90,
             source_reliability=0.85,
             missing_fields=[],
-        ),
-        data_lineage=DataLineage(
-            primary_sources=["yfinance"],
-            collection_timestamp=datetime.now(),
-            transformation_steps=["normalize"],
-            cache_status="fresh",
         ),
         confidence_level=0.90,
         python_rationale="Strong fundamentals with consistent revenue growth and robust profit margins",
@@ -492,7 +486,7 @@ def mock_scorer(mocker):
     from datetime import datetime
 
     from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
-    from finwiz.schemas.integration.models import DataLineage, DataQualityMetrics
+    from finwiz.schemas.integration.models import DataQualityMetrics
 
     mock_result = QuantitativeAnalysis(
         ticker="AAPL",
@@ -513,12 +507,6 @@ def mock_scorer(mocker):
             accuracy_confidence=0.90,
             source_reliability=0.85,
             missing_fields=[],
-        ),
-        data_lineage=DataLineage(
-            primary_sources=["yfinance"],
-            collection_timestamp=datetime.now(),
-            transformation_steps=["normalize"],
-            cache_status="fresh",
         ),
         confidence_level=0.90,
         python_rationale="Mock scoring result for testing",

@@ -84,7 +84,9 @@ class CrewIntegrationMiddleware:
 
         """
         self.output_dir = Path(output_dir)
-        self.integration_dir = self.output_dir / "integration"
+
+        # NOTE: integration_dir removed per storage cleanup
+        # self.integration_dir = self.output_dir / "integration"
 
         # Initialize components
         self.integration_manager = integration_manager or CrewDataIntegrationManager(output_dir)
@@ -100,7 +102,7 @@ class CrewIntegrationMiddleware:
 
         self.logger.info(
             "CrewIntegrationMiddleware initialized",
-            extra={"output_dir": str(self.output_dir), "integration_dir": str(self.integration_dir)},
+            extra={"output_dir": str(self.output_dir)},
         )
 
     def _setup_logging(self) -> logging.Logger:
@@ -377,40 +379,15 @@ class CrewIntegrationMiddleware:
             )
 
     async def _store_crew_output(self, context: CrewExecutionContext, crew_output: dict[str, Any], execution_duration: float | None) -> dict[str, Any]:
-        """Store crew output in the integration directory."""
-        try:
-            # Create crew-specific output directory
-            crew_output_dir = self.integration_dir / context.crew_name
-            crew_output_dir.mkdir(parents=True, exist_ok=True)
+        """
+        Store crew output in the integration directory.
 
-            # Generate output filename with timestamp
-            timestamp = context.start_time.strftime("%Y%m%d_%H%M%S")
-            output_file = crew_output_dir / f"{context.crew_name}_output_{timestamp}.json"
-
-            # Add execution metadata to output
-            enhanced_output = {
-                "execution_id": context.execution_id,
-                "crew_name": context.crew_name,
-                "execution_timestamp": context.start_time.isoformat(),
-                "execution_duration_seconds": execution_duration,
-                "data": crew_output,
-            }
-
-            # Save to file
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(enhanced_output, f, indent=2, ensure_ascii=False, default=str)
-
-            self.logger.info(
-                "Stored crew output",
-                extra={"crew_name": context.crew_name, "execution_id": context.execution_id, "output_file": str(output_file)},
-            )
-
-            return {"success": True, "errors": []}
-
-        except Exception as e:
-            error_msg = f"Failed to store crew output: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
-            return {"success": False, "errors": [error_msg]}
+        NOTE: Filesystem storage has been removed per cleanup.
+        This method is now a no-op that returns success.
+        """
+        # No-op: Storage removed per cleanup
+        self.logger.debug(f"_store_crew_output called for {context.crew_name} (no-op, storage disabled)")
+        return {"success": True, "errors": []}
 
     async def _store_execution_metadata(
         self,
@@ -419,38 +396,15 @@ class CrewIntegrationMiddleware:
         validation_result: ValidationStatus,
         execution_duration: float | None,
     ) -> dict[str, Any]:
-        """Store execution metadata."""
-        try:
-            metadata_file = self.integration_dir / "metadata" / f"{context.execution_id}_metadata.json"
-            metadata_file.parent.mkdir(parents=True, exist_ok=True)
+        """
+        Store execution metadata.
 
-            metadata = {
-                "execution_id": context.execution_id,
-                "crew_name": context.crew_name,
-                "execution_timestamp": context.start_time.isoformat(),
-                "execution_duration_seconds": execution_duration,
-                "dependencies": context.dependencies,
-                "max_age_hours": context.max_age_hours,
-                "validation_status": {
-                    "is_valid": validation_result.is_valid,
-                    "validation_timestamp": validation_result.validation_timestamp.isoformat(),
-                    "validation_errors": validation_result.validation_errors,
-                    "validation_warnings": validation_result.validation_warnings,
-                    "schema_version": validation_result.schema_version,
-                },
-                "upstream_data_sources": list(context.upstream_data.keys()),
-                "output_size_bytes": len(json.dumps(crew_output, default=str)),
-            }
-
-            with open(metadata_file, "w", encoding="utf-8") as f:
-                json.dump(metadata, f, indent=2, ensure_ascii=False)
-
-            return {"success": True, "errors": []}
-
-        except Exception as e:
-            error_msg = f"Failed to store metadata: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
-            return {"success": False, "errors": [error_msg]}
+        NOTE: Filesystem storage has been removed per cleanup.
+        This method is now a no-op that returns success.
+        """
+        # No-op: Storage removed per cleanup
+        self.logger.debug(f"_store_execution_metadata called for {context.execution_id} (no-op, storage disabled)")
+        return {"success": True, "errors": []}
 
     async def _execute_hooks(self, hook_type: str, context: CrewExecutionContext) -> None:
         """Execute registered hooks of the specified type."""

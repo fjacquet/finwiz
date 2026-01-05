@@ -80,7 +80,7 @@ class TestAIOutputValidationIntegration:
             "ai_confidence": 0.85,
         }
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,
@@ -99,12 +99,6 @@ class TestAIOutputValidationIntegration:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals",
@@ -135,7 +129,7 @@ class TestAIOutputValidationIntegration:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,
@@ -154,12 +148,6 @@ class TestAIOutputValidationIntegration:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals",
@@ -204,7 +192,7 @@ class TestAIOutputValidationIntegration:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,
@@ -223,12 +211,6 @@ class TestAIOutputValidationIntegration:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals",
@@ -268,7 +250,7 @@ class TestAIOutputValidationIntegration:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,
@@ -287,12 +269,6 @@ class TestAIOutputValidationIntegration:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals with moderate technical signals",
@@ -328,7 +304,7 @@ class TestAIOutputValidationIntegration:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,
@@ -347,12 +323,6 @@ class TestAIOutputValidationIntegration:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals",
@@ -442,7 +412,7 @@ class TestRealCrewExecutionWithValidation:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         # Try to import and initialize crew - skip if there are issues
         try:
@@ -469,12 +439,6 @@ class TestRealCrewExecutionWithValidation:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals with moderate technical signals",
@@ -550,7 +514,7 @@ class TestRealCrewExecutionWithValidation:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.85,
@@ -569,12 +533,6 @@ class TestRealCrewExecutionWithValidation:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals",
@@ -661,7 +619,7 @@ class TestRealCrewExecutionWithValidation:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
         quantitative = QuantitativeAnalysis(
             composite_score=0.72,
@@ -685,12 +643,6 @@ class TestRealCrewExecutionWithValidation:
                 accuracy_confidence=0.85,
                 source_reliability=0.80,
                 missing_fields=["pe_ratio"],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance", "alpha_vantage"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize", "validate"],
-                cache_status="fresh",
             ),
             confidence_level=0.85,
             python_rationale="Moderate fundamentals with weak technical signals and elevated risk",
@@ -734,7 +686,7 @@ class TestRealCrewExecutionWithValidation:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
         from finwiz.validation.ai_output import ToolCallInsteadOfAnalysisError, validate_ai_output_structure
 
         quantitative = QuantitativeAnalysis(
@@ -754,12 +706,6 @@ class TestRealCrewExecutionWithValidation:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals",
@@ -792,7 +738,7 @@ class TestRealCrewExecutionWithValidation:
         # Arrange
         from datetime import datetime
 
-        from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+        from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
         from finwiz.validation.ai_output import get_explicit_format_example
 
         quantitative = QuantitativeAnalysis(
@@ -812,12 +758,6 @@ class TestRealCrewExecutionWithValidation:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
                 missing_fields=[],
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                transformation_steps=["normalize"],
-                cache_status="fresh",
             ),
             confidence_level=0.90,
             python_rationale="Strong fundamentals",

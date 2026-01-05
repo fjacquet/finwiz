@@ -74,7 +74,7 @@ from finwiz.crews.deep_analysis.performance_validation import (
 )
 from finwiz.crews.deep_analysis.tool_routing import get_tools_for_asset_class
 from finwiz.flow_state import DeepAnalysisResult
-from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.task_decorators import async_task
 from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch
 from finwiz.infrastructure.logging.helpers import CrewLogger
 from finwiz.infrastructure.monitoring.performance import get_performance_monitor
@@ -122,12 +122,10 @@ class DeepAnalysisCrew:
             self.tasks_config = yaml.safe_load(f)
 
         # Import Pydantic models for Task output_pydantic (use raw classes)
-        from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
         from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
 
         # Store raw Pydantic classes for Task.output_pydantic
         self.QualitativeInsights = QualitativeInsights
-        self.EnrichedAnalysis = EnrichedAnalysis
 
         # Make Pydantic models available for CrewAI resolution (wrapped versions)
         self.DeepAnalysisResult = output_pydantic(DeepAnalysisResult)
@@ -230,22 +228,6 @@ class DeepAnalysisCrew:
             llm=self._get_configured_llm(),
         )
 
-    @agent
-    def investment_reporter(self) -> Agent:
-        """
-        Agent that formats Python calculation results into reports.
-
-        CRITICAL: NO TOOLS - Python orchestrator already calculated all scores.
-        This agent only READS the Python results from input and creates formatted reports.
-        """
-        return Agent(
-            config=self.agents_config["investment_reporter"],
-            verbose=True,
-            reasoning=False,  # No reasoning needed - just format Python results
-            tools=[],  # NO TOOLS - Python already did all calculations
-            llm=self._get_configured_llm(),
-        )
-
     @async_task
     @task
     def deep_qualitative_analysis_task(self) -> Task:
@@ -259,21 +241,6 @@ class DeepAnalysisCrew:
         return Task(
             config=self.tasks_config["deep_qualitative_analysis_task"],
             output_pydantic=self.QualitativeInsights,  # Pydantic model for structured output
-        )
-
-    @sync_task
-    @task
-    def generate_enriched_analysis_task(self) -> Task:
-        """
-        Final reporter consolidates Python metrics + AI insights.
-
-        This is a FINAL REPORTER task with NO TOOLS.
-        Consolidates QuantitativeAnalysis (Python) + QualitativeInsights (AI)
-        into EnrichedAnalysis output.
-        """
-        return Task(
-            config=self.tasks_config["generate_enriched_analysis_task"],
-            output_pydantic=self.EnrichedAnalysis,  # Pydantic model for structured output
         )
 
     @crew
@@ -302,7 +269,9 @@ class DeepAnalysisCrew:
         logger.info("🔬 SINGLE-TASK MODE: AI qualitative only, Python handles synthesis")
 
         return Crew(
-            agents=self.agents,
+            # ⚡ SINGLE AGENT: Only asset_analyst for qualitative analysis
+            # investment_reporter was REMOVED - Python handles consolidation
+            agents=[self.asset_analyst()],
             tasks=crew_tasks,  # Dynamic task list based on configuration
             process=Process.sequential,
             verbose=True,
@@ -387,7 +356,7 @@ class DeepAnalysisCrew:
             performance_validation = validate_performance_targets(
                 ticker=ticker,
                 execution_time=total_duration,
-                api_metrics={},
+                _api_metrics={},
                 ai_summary_enabled=ai_summary_enabled,
             )
 

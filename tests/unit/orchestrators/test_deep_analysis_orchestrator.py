@@ -13,7 +13,7 @@ from finwiz.flow_state import FinwizState
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis, QuantitativeAnalysis
-from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
 
 class TestDeepAnalysisOrchestrator:
@@ -98,11 +98,6 @@ class TestDeepAnalysisOrchestrator:
                 freshness_score=1.0,
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                cache_status="fresh",
             ),
             confidence_level=0.85,
             python_rationale="Strong fundamentals.",

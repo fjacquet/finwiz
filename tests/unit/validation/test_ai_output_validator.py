@@ -79,7 +79,7 @@ def valid_qualitative_dict():
 @pytest.fixture
 def sample_quantitative():
     """Sample QuantitativeAnalysis for fallback testing."""
-    from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+    from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
     return QuantitativeAnalysis(
         composite_score=0.85,
@@ -98,12 +98,6 @@ def sample_quantitative():
             accuracy_confidence=0.90,
             source_reliability=0.85,
             missing_fields=[],
-        ),
-        data_lineage=DataLineage(
-            primary_sources=["yfinance"],
-            collection_timestamp=datetime.now(UTC),
-            transformation_steps=["normalize", "calculate_metrics"],
-            cache_status="fresh",
         ),
         confidence_level=1.0,
         python_rationale="Strong fundamentals with moderate technical signals",

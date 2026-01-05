@@ -55,12 +55,10 @@ from finwiz.schemas.tools.inputs import (
     GetTickerHistoryInput,
     GetTickerInfoInput,
     GetTickerNewsInput,
-    # RAG Tools
-    KnowledgeBaseInput,
+    # Market Regime
     MarketRegime,
     # Market Screening
     MarketScreeningInput,
-    MarketScreeningResult,
     # Custom Tool
     MyCustomToolInput,
     # Optimization
@@ -78,7 +76,7 @@ from finwiz.schemas.tools.inputs import (
     RegulatoryComplianceInput,
     # Risk Assessment
     RiskAssessmentInput,
-    SaveToRagInput,
+    # Scoring
     ScoringCriteria,
     # SEC Tools
     SECFilingSearchInput,
@@ -1208,86 +1206,6 @@ class TestPortfolioAnalysisInput:
 # ============================================================================
 
 
-class TestKnowledgeBaseInput:
-    """Tests for KnowledgeBaseInput model."""
-
-    def test_required_query(self, fake):
-        """Test instantiation with required query."""
-        query = "what is the best ETF to buy"
-        model = KnowledgeBaseInput(query=query)
-
-        assert model.query == query
-
-    def test_optional_similarity_threshold_none(self):
-        """Test similarity_threshold can be None."""
-        model = KnowledgeBaseInput(query="test query", similarity_threshold=None)
-
-        assert model.similarity_threshold is None
-
-    def test_optional_similarity_threshold_value(self, fake):
-        """Test similarity_threshold with float value."""
-        threshold = fake.pyfloat(min_value=0.0, max_value=1.0)
-        model = KnowledgeBaseInput(query="test query", similarity_threshold=threshold)
-
-        assert model.similarity_threshold == threshold
-
-    def test_optional_limit_none(self):
-        """Test limit can be None."""
-        model = KnowledgeBaseInput(query="test query", limit=None)
-
-        assert model.limit is None
-
-    def test_optional_limit_value(self, fake):
-        """Test limit with integer value."""
-        limit = fake.random_int(min=1, max=100)
-        model = KnowledgeBaseInput(query="test query", limit=limit)
-
-        assert model.limit == limit
-
-    def test_all_optional_none(self):
-        """Test all optional fields as None."""
-        model = KnowledgeBaseInput(query="test query", similarity_threshold=None, limit=None)
-
-        assert model.query == "test query"
-        assert model.similarity_threshold is None
-        assert model.limit is None
-
-    def test_missing_required_query(self):
-        """Test ValidationError when query is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            KnowledgeBaseInput()
-        assert "query" in str(exc_info.value)
-
-
-class TestSaveToRagInput:
-    """Tests for SaveToRagInput model."""
-
-    def test_required_text(self, fake):
-        """Test instantiation with required text."""
-        text = fake.sentence(nb_words=20)
-        model = SaveToRagInput(text=text)
-
-        assert model.text == text
-
-    def test_long_text(self, fake):
-        """Test with long text content."""
-        text = fake.text(max_nb_chars=1000)
-        model = SaveToRagInput(text=text)
-
-        assert model.text == text
-
-    def test_missing_required_text(self):
-        """Test ValidationError when text is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            SaveToRagInput()
-        assert "text" in str(exc_info.value)
-
-
-# ============================================================================
-# Risk Assessment Tool Tests
-# ============================================================================
-
-
 class TestRiskAssessmentInput:
     """Tests for RiskAssessmentInput model."""
 
@@ -1836,39 +1754,6 @@ class TestMarketScreeningInput:
         assert "asset_type" in str(exc_info.value)
 
 
-class TestMarketScreeningResult:
-    """Tests for MarketScreeningResult model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        result = MarketScreeningResult(
-            asset_type="stock",
-            screening_criteria={},
-            market_region="global",
-            total_screened=100,
-            candidates_found=25,
-            a_plus_candidates=10,
-            candidates=[],
-        )
-
-        assert result.asset_type == "stock"
-        assert result.total_screened == 100
-
-    def test_asset_type_literal(self):
-        """Test asset_type literal constraint."""
-        result = MarketScreeningResult(
-            asset_type="etf",
-            screening_criteria={},
-            market_region="global",
-            total_screened=50,
-            candidates_found=10,
-            a_plus_candidates=5,
-            candidates=[],
-        )
-
-        assert result.asset_type == "etf"
-
-
 # ============================================================================
 # Optimization Tool Tests
 # ============================================================================
@@ -2090,153 +1975,6 @@ class TestAPlusScoringInput:
         with pytest.raises(ValidationError) as exc_info:
             APlusScoringInput(symbol="AAPL")
         assert "asset_type" in str(exc_info.value)
-
-
-class TestMarketRegime:
-    """Tests for MarketRegime model."""
-
-    def test_default_values(self):
-        """Test default values."""
-        model = MarketRegime()
-
-        assert model.regime_type == "sideways"
-        assert model.vix_level == 20.0
-        assert model.inflation_rate == 3.0
-        assert model.interest_rate_trend == "stable"
-        assert model.market_stress_level == "medium"
-
-    def test_regime_type_literal(self):
-        """Test regime_type literal constraint."""
-        types = ["bull", "bear", "sideways", "volatile"]
-        for regime_type in types:
-            model = MarketRegime(regime_type=regime_type)
-            assert model.regime_type == regime_type
-
-        with pytest.raises(ValidationError) as exc_info:
-            MarketRegime(regime_type="unknown")
-        assert "regime_type" in str(exc_info.value)
-
-    def test_vix_level_constraint(self):
-        """Test vix_level ge/le constraints (0.0-100.0)."""
-        # Valid: 0.0
-        model_min = MarketRegime(vix_level=0.0)
-        assert model_min.vix_level == 0.0
-
-        # Valid: 100.0
-        model_max = MarketRegime(vix_level=100.0)
-        assert model_max.vix_level == 100.0
-
-        # Invalid: below 0.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketRegime(vix_level=-1.0)
-        assert "vix_level" in str(exc_info.value)
-
-        # Invalid: above 100.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketRegime(vix_level=101.0)
-        assert "vix_level" in str(exc_info.value)
-
-    def test_inflation_rate_constraint(self):
-        """Test inflation_rate ge/le constraints (-5.0-20.0)."""
-        # Valid: -5.0
-        model_min = MarketRegime(inflation_rate=-5.0)
-        assert model_min.inflation_rate == -5.0
-
-        # Valid: 20.0
-        model_max = MarketRegime(inflation_rate=20.0)
-        assert model_max.inflation_rate == 20.0
-
-        # Invalid: below -5.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketRegime(inflation_rate=-6.0)
-        assert "inflation_rate" in str(exc_info.value)
-
-        # Invalid: above 20.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketRegime(inflation_rate=21.0)
-        assert "inflation_rate" in str(exc_info.value)
-
-    def test_interest_rate_trend_literal(self):
-        """Test interest_rate_trend literal constraint."""
-        trends = ["rising", "falling", "stable"]
-        for trend in trends:
-            model = MarketRegime(interest_rate_trend=trend)
-            assert model.interest_rate_trend == trend
-
-        with pytest.raises(ValidationError) as exc_info:
-            MarketRegime(interest_rate_trend="unknown")
-        assert "interest_rate_trend" in str(exc_info.value)
-
-    def test_market_stress_level_literal(self):
-        """Test market_stress_level literal constraint."""
-        levels = ["low", "medium", "high"]
-        for level in levels:
-            model = MarketRegime(market_stress_level=level)
-            assert model.market_stress_level == level
-
-        with pytest.raises(ValidationError) as exc_info:
-            MarketRegime(market_stress_level="critical")
-        assert "market_stress_level" in str(exc_info.value)
-
-
-class TestScoringCriteria:
-    """Tests for ScoringCriteria model."""
-
-    def test_default_etf_values(self):
-        """Test default ETF criteria values."""
-        model = ScoringCriteria()
-
-        assert model.etf_max_expense_ratio == 0.15
-        assert model.etf_min_aum == 1e9
-        assert model.etf_max_tracking_error == 0.002
-        assert model.etf_min_history_years == 3
-
-    def test_default_stock_values(self):
-        """Test default stock criteria values."""
-        model = ScoringCriteria()
-
-        assert model.stock_min_roe == 0.20
-        assert model.stock_min_revenue_growth == 0.15
-        assert model.stock_max_debt_to_equity == 0.3
-        assert model.stock_min_market_cap == 1e9
-
-    def test_default_crypto_values(self):
-        """Test default crypto criteria values."""
-        model = ScoringCriteria()
-
-        assert model.crypto_min_market_cap == 10e9
-        assert model.crypto_min_daily_volume == 500e6
-        assert model.crypto_min_age_months == 36
-
-    def test_etf_expense_ratio_constraint(self):
-        """Test ETF expense ratio constraints (0.0-2.0)."""
-        model_min = ScoringCriteria(etf_max_expense_ratio=0.0)
-        assert model_min.etf_max_expense_ratio == 0.0
-
-        model_max = ScoringCriteria(etf_max_expense_ratio=2.0)
-        assert model_max.etf_max_expense_ratio == 2.0
-
-        with pytest.raises(ValidationError) as exc_info:
-            ScoringCriteria(etf_max_expense_ratio=-0.1)
-        assert "etf_max_expense_ratio" in str(exc_info.value)
-
-    def test_stock_metrics_constraints(self):
-        """Test stock metrics constraints."""
-        model_valid = ScoringCriteria(stock_min_roe=0.30, stock_max_debt_to_equity=0.5)
-        assert model_valid.stock_min_roe == 0.30
-        assert model_valid.stock_max_debt_to_equity == 0.5
-
-    def test_custom_all_criteria(self):
-        """Test setting all custom criteria."""
-        model = ScoringCriteria(
-            etf_max_expense_ratio=0.10,
-            stock_min_roe=0.25,
-            crypto_min_market_cap=5e9,
-        )
-
-        assert model.etf_max_expense_ratio == 0.10
-        assert model.stock_min_roe == 0.25
-        assert model.crypto_min_market_cap == 5e9
 
 
 class TestAPlusScore:

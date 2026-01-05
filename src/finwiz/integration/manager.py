@@ -44,6 +44,8 @@ class CrewDataIntegrationManager:
         else:
             self.output_dir = Path(output_dir)
 
+        # NOTE: integration_dir and subdirectories removed per storage cleanup
+        # These are kept as attributes but directories are NOT created
         self.integration_dir = self.output_dir / self.config.integration_dir_name
         self.metadata_dir = self.integration_dir / self.config.metadata_dir_name
         self.contracts_dir = self.integration_dir / self.config.contracts_dir_name
@@ -52,8 +54,8 @@ class CrewDataIntegrationManager:
         # Set up logging
         self.logger = self._setup_logging()
 
-        # Ensure directories exist
-        self._ensure_directories()
+        # NOTE: Directory creation removed per storage cleanup
+        # self._ensure_directories()
 
         # Initialize freshness checker
         self.freshness_checker = DataFreshnessChecker(output_dir=self.output_dir, logger=self.logger)
@@ -71,9 +73,9 @@ class CrewDataIntegrationManager:
             "CrewDataIntegrationManager initialized",
             extra={
                 "output_dir": str(self.output_dir),
-                "integration_dir": str(self.integration_dir),
                 "config_loaded": config_path is not None,
                 "strict_validation": self.config.strict_validation,
+                "storage_disabled": True,  # Storage cleanup
             },
         )
 

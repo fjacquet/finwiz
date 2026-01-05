@@ -286,6 +286,15 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         # Some providers (OpenRouter/Novita) + Instructor don't support parallel tool calls
         disable_parallel = os.getenv("DISABLE_PARALLEL_TOOL_CALLS", "true").lower() == "true"
 
+        # Build extra body params
+        extra_body: dict[str, Any] = {}
+
+        # Add OpenRouter middle-out transform for automatic context compression
+        # This prevents token overflow errors (e.g., 302K tokens vs 131K limit)
+        if model.startswith("openrouter/"):
+            extra_body["transforms"] = ["middle-out"]
+            logger.info("OpenRouter middle-out transform enabled for automatic context compression")
+
         # Create LLM with proper configuration
         llm = LLM(
             model=model,
@@ -295,6 +304,8 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
             parallel_tool_calls=False if disable_parallel else None,
             # Drop unsupported params for models that don't recognize parallel_tool_calls
             drop_params=True,
+            # Extra params for provider-specific features
+            extra_body=extra_body if extra_body else None,
         )
 
         # Cache the instance

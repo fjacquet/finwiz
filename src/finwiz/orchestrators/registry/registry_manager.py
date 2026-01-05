@@ -58,49 +58,24 @@ class RegistryManager:
         )
 
     def store_crew_output(self, crew_name: str, crew_output: Any) -> bool:
-        """Store crew output to the integration system."""
-        try:
-            # Create output directory if needed
-            crew_output_dir = self.output_dir / crew_name
-            crew_output_dir.mkdir(parents=True, exist_ok=True)
+        """
+        Store crew output to the integration system.
 
-            # Determine output file path
-            output_file = crew_output_dir / f"{crew_name}_output.json"
-
-            # Convert crew output to serializable format
-            if hasattr(crew_output, "model_dump"):
-                data = crew_output.model_dump()
-            elif hasattr(crew_output, "dict"):
-                data = crew_output.dict()
-            elif isinstance(crew_output, dict):
-                data = crew_output
-            else:
-                data = {"raw_output": str(crew_output)}
-
-            # Add metadata
-            data["_metadata"] = {
-                "crew_name": crew_name,
-                "stored_at": datetime.now().isoformat(),
-            }
-
-            # Write to file
-            with open(output_file, "w") as f:
-                json.dump(data, f, indent=2, default=str)
-
-            self.logger.info(f"Stored {crew_name} output to {output_file}")
-            return True
-
-        except Exception as e:
-            self.logger.error(f"Failed to store {crew_name} output: {e}")
-            return False
+        NOTE: Filesystem storage has been removed per cleanup.
+        This method is now a no-op that returns True for backward compatibility.
+        """
+        # No-op: Storage removed per cleanup
+        self.logger.debug(f"store_crew_output called for {crew_name} (no-op, storage disabled)")
+        return True
 
     def get_cached_crew_output(self, crew_name: str) -> dict[str, Any] | None:
-        """Get cached crew output if available."""
-        return get_cached_crew_output(
-            output_dir=self.output_dir,
-            crew_name=crew_name,
-            logger=self.logger,
-        )
+        """
+        Get cached crew output if available.
+
+        NOTE: Filesystem storage has been removed per cleanup.
+        This method now returns None (no cache).
+        """
+        return None
 
     def get_upstream_data(self, requesting_crew: str, max_age_hours: int = 24) -> UpstreamDataCollection:
         """Get available upstream data for a requesting crew."""

@@ -16,10 +16,7 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 from pytest import approx
 
-from finwiz.schemas.hybrid_analysis.metadata import (
-    DataLineage,
-    DataQualityMetrics,
-)
+from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
 
 
@@ -36,22 +33,6 @@ def data_quality_metrics_strategy(draw):
     )
 
 
-# Helper strategy for creating valid DataLineage
-@st.composite
-def data_lineage_strategy(draw):
-    """Generate valid DataLineage instances."""
-    timestamp = draw(st.datetimes(min_value=datetime(2020, 1, 1), max_value=datetime(2030, 12, 31)))
-    if timestamp.tzinfo is None:
-        timestamp = timestamp.replace(tzinfo=UTC)
-
-    return DataLineage(
-        primary_sources=draw(st.lists(st.text(min_size=1, max_size=20, alphabet=st.characters(min_codepoint=32, max_codepoint=126)), min_size=1, max_size=5)),
-        collection_timestamp=timestamp,
-        transformation_steps=draw(st.lists(st.text(min_size=1, max_size=20, alphabet=st.characters(min_codepoint=32, max_codepoint=126)), max_size=5)),
-        cache_status=draw(st.sampled_from(["fresh", "cached", "stale"])),
-    )
-
-
 # Property 1: Python Quantitative Output Structure
 @given(
     composite_score=st.floats(min_value=0.0, max_value=1.0),
@@ -62,7 +43,6 @@ def data_lineage_strategy(draw):
     recommendation=st.sampled_from(["BUY", "HOLD", "SELL"]),
     confidence=st.floats(min_value=0.0, max_value=1.0),
     data_quality=data_quality_metrics_strategy(),
-    data_lineage=data_lineage_strategy(),
 )
 def test_quantitative_analysis_valid_structure(
     composite_score: float,
@@ -73,7 +53,6 @@ def test_quantitative_analysis_valid_structure(
     recommendation: str,
     confidence: float,
     data_quality: DataQualityMetrics,
-    data_lineage: DataLineage,
 ):
     """
     Property: QuantitativeAnalysis accepts valid scores, grades, and recommendations.
@@ -93,7 +72,6 @@ def test_quantitative_analysis_valid_structure(
         risk_metrics={"volatility": 0.15, "max_drawdown": 0.10},
         calculation_timestamp=datetime.now(UTC),
         data_quality=data_quality,
-        data_lineage=data_lineage,
         confidence_level=confidence,
         python_rationale="Test rationale",
     )
@@ -148,11 +126,6 @@ def test_quantitative_analysis_rejects_invalid_composite_score(score: float):
                 accuracy_confidence=0.9,
                 source_reliability=0.9,
             ),
-            data_lineage=DataLineage(
-                primary_sources=["test"],
-                collection_timestamp=datetime.now(UTC),
-                cache_status="fresh",
-            ),
             confidence_level=0.9,
             python_rationale="Test",
         )
@@ -183,11 +156,6 @@ def test_quantitative_analysis_rejects_invalid_grade(invalid_grade: str):
                 freshness_score=0.9,
                 accuracy_confidence=0.9,
                 source_reliability=0.9,
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["test"],
-                collection_timestamp=datetime.now(UTC),
-                cache_status="fresh",
             ),
             confidence_level=0.9,
             python_rationale="Test",
@@ -220,11 +188,6 @@ def test_quantitative_analysis_rejects_invalid_recommendation(invalid_recommenda
                 accuracy_confidence=0.9,
                 source_reliability=0.9,
             ),
-            data_lineage=DataLineage(
-                primary_sources=["test"],
-                collection_timestamp=datetime.now(UTC),
-                cache_status="fresh",
-            ),
             confidence_level=0.9,
             python_rationale="Test",
         )
@@ -251,11 +214,6 @@ def test_quantitative_analysis_boundary_values():
             accuracy_confidence=0.0,
             source_reliability=0.0,
         ),
-        data_lineage=DataLineage(
-            primary_sources=["test"],
-            collection_timestamp=datetime.now(UTC),
-            cache_status="fresh",
-        ),
         confidence_level=0.0,
         python_rationale="Minimum values",
     )
@@ -279,11 +237,6 @@ def test_quantitative_analysis_boundary_values():
             freshness_score=1.0,
             accuracy_confidence=1.0,
             source_reliability=1.0,
-        ),
-        data_lineage=DataLineage(
-            primary_sources=["test"],
-            collection_timestamp=datetime.now(UTC),
-            cache_status="fresh",
         ),
         confidence_level=1.0,
         python_rationale="Maximum values",

@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pytest import approx
 
 from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
-from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 from finwiz.schemas.hybrid_analysis.qualitative import (
     ContextualRiskInsights,
     FundamentalContextInsights,
@@ -44,11 +44,6 @@ def create_valid_quantitative() -> QuantitativeAnalysis:
             freshness_score=0.9,
             accuracy_confidence=0.9,
             source_reliability=0.9,
-        ),
-        data_lineage=DataLineage(
-            primary_sources=["test"],
-            collection_timestamp=datetime.now(UTC),
-            cache_status="fresh",
         ),
         confidence_level=0.9,
         python_rationale="Test rationale",

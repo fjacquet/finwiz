@@ -28,7 +28,7 @@ from finwiz.schemas.hybrid_analysis import (
     QualitativeInsights,
     QuantitativeAnalysis,
 )
-from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
 fake = Faker()
 
@@ -90,18 +90,7 @@ def mock_data_quality() -> DataQualityMetrics:
 
 
 @pytest.fixture
-def mock_data_lineage() -> DataLineage:
-    """Create mock DataLineage."""
-    return DataLineage(
-        primary_sources=["yfinance", "alpha_vantage"],
-        collection_timestamp=datetime.now(),
-        transformation_steps=["normalize", "calculate_metrics"],
-        cache_status="fresh",
-    )
-
-
-@pytest.fixture
-def mock_quantitative_analysis(mock_data_quality: DataQualityMetrics, mock_data_lineage: DataLineage) -> QuantitativeAnalysis:
+def mock_quantitative_analysis(mock_data_quality: DataQualityMetrics) -> QuantitativeAnalysis:
     """Create a mock QuantitativeAnalysis."""
     return QuantitativeAnalysis(
         composite_score=0.82,
@@ -115,7 +104,6 @@ def mock_quantitative_analysis(mock_data_quality: DataQualityMetrics, mock_data_
         risk_metrics={"volatility": 0.15, "beta": 1.1},
         calculation_timestamp=datetime.now(),
         data_quality=mock_data_quality,
-        data_lineage=mock_data_lineage,
         confidence_level=0.85,
         python_rationale="Strong fundamentals with solid growth potential.",
     )
@@ -456,11 +444,6 @@ class TestAnalyzeHolding:
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
             ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                cache_status="fresh",
-            ),
             confidence_level=0.85,
             python_rationale="Strong fundamentals.",
         )
@@ -520,11 +503,6 @@ class TestAnalyzeHolding:
                 freshness_score=1.0,
                 accuracy_confidence=0.90,
                 source_reliability=0.85,
-            ),
-            data_lineage=DataLineage(
-                primary_sources=["yfinance"],
-                collection_timestamp=datetime.now(),
-                cache_status="fresh",
             ),
             confidence_level=0.85,
             python_rationale="Solid performer.",

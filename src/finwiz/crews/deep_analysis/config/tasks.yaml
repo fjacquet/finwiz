@@ -37,26 +37,6 @@ deep_qualitative_analysis_task:
   agent: asset_analyst
   async_execution: true
 
-generate_enriched_analysis_task:
-  description: >
-    Consolidate for {ticker} into EnrichedAnalysis.
-
-    NO TOOLS - use ONLY context from deep_qualitative_analysis_task.
-    DO NOT re-read metrics - they are already in the qualitative output.
-
-    OUTPUT REQUIREMENTS:
-    - final_grade: {grade}
-    - final_score: {composite_score}
-    - executive_summary: 200+ words (FRENCH)
-    - investment_rationale: 500+ words (FRENCH)
-
-    OUTPUT: Valid JSON matching EnrichedAnalysis schema.
-    NO trailing commas. NO text outside JSON.
-
-  expected_output: >
-    EnrichedAnalysis JSON with executive_summary and investment_rationale.
-
-  agent: investment_reporter
-  async_execution: false
-  context:
-    - deep_qualitative_analysis_task
+# NOTE: generate_enriched_analysis_task was REMOVED
+# Python's synthesize_enriched_analysis() handles consolidation for $0
+# This eliminates task-to-task context propagation that caused token overflow
