@@ -13,7 +13,7 @@ import sys
 from typing import Any
 
 from finwiz.infrastructure.health.checker import get_health_checker, perform_quick_health_check
-from finwiz.infrastructure.logging.utils import lineage_tracker, log_analyzer
+from finwiz.infrastructure.logging.utils import log_analyzer
 from finwiz.validation.scripts import DataIntegrityValidator, DependencyValidator, PerformanceValidator, run_all_validations
 
 
@@ -90,19 +90,6 @@ def cmd_status(args: Any) -> None:
     # Quick health check
     health_result = perform_quick_health_check()
     print(f"Health Status: {health_result['overall_status'].upper()}")
-
-    # Lineage summary
-    try:
-        lineage_summary = lineage_tracker.get_lineage_summary()
-        print(f"Total Executions: {lineage_summary.get('total_executions', 0)}")
-        print(f"Recent Executions (24h): {lineage_summary.get('recent_executions_24h', 0)}")
-        print(f"Active Crews: {len(lineage_summary.get('active_crews', []))}")
-
-        if lineage_summary.get("active_crews"):
-            print(f"Crews: {', '.join(lineage_summary['active_crews'])}")
-
-    except Exception as e:
-        print(f"Could not load lineage data: {e}")
 
     # Show recent issues if any
     if health_result.get("issues"):
@@ -183,52 +170,6 @@ def cmd_analyze(args: Any) -> None:
         print(f"Analysis failed: {e}")
 
 
-def cmd_lineage(args: Any) -> None:
-    """Show data lineage command."""
-    print("Data Lineage Information")
-    print("=" * 50)
-
-    try:
-        if args.crew:
-            # Show lineage for specific crew
-            lineage = lineage_tracker.get_crew_lineage(args.crew)
-            print(f"\nLineage for {args.crew} crew:")
-
-            if not lineage:
-                print("No lineage data found")
-            else:
-                for i, execution in enumerate(lineage[-5:], 1):  # Show last 5
-                    print(f"\n{i}. Execution at {execution['execution_timestamp']}")
-                    print(f"   Input sources: {len(execution.get('input_data', {}))}")
-                    print(f"   Output files: {len(execution.get('output_files', []))}")
-
-        else:
-            # Show overall lineage summary
-            summary = lineage_tracker.get_lineage_summary()
-
-            print(f"Total Executions: {summary.get('total_executions', 0)}")
-            print(f"Recent Executions (24h): {summary.get('recent_executions_24h', 0)}")
-            print(f"Total Dependencies: {summary.get('total_dependencies', 0)}")
-            print(f"Total Data Flows: {summary.get('total_data_flows', 0)}")
-
-            # Show crew execution counts
-            execution_counts = summary.get("crew_execution_counts", {})
-            if execution_counts:
-                print("\nCrew Execution Counts:")
-                for crew, count in execution_counts.items():
-                    print(f"  {crew}: {count}")
-
-            # Show data flow graph
-            if args.flows:
-                flow_graph = lineage_tracker.get_data_flow_graph()
-                if flow_graph:
-                    print("\nData Flow Graph:")
-                    for source, flows in flow_graph.items():
-                        targets = [flow["target"] for flow in flows]
-                        print(f"  {source} -> {', '.join(set(targets))}")
-
-    except Exception as e:
-        print(f"Could not load lineage data: {e}")
 
 
 def main() -> int | None:
@@ -245,7 +186,6 @@ Examples:
   %(prog)s status                           # Show system status
   %(prog)s analyze execution --hours 48     # Analyze last 48 hours
   %(prog)s analyze bottlenecks              # Find performance bottlenecks
-  %(prog)s lineage --crew stock             # Show lineage for stock crew
         """,
     )
 
@@ -283,12 +223,6 @@ Examples:
     debug_parser.add_argument("--export", action="store_true", help="Export to file")
 
     analyze_parser.set_defaults(func=cmd_analyze)
-
-    # Lineage command
-    lineage_parser = subparsers.add_parser("lineage", help="Show data lineage")
-    lineage_parser.add_argument("--crew", help="Show lineage for specific crew")
-    lineage_parser.add_argument("--flows", action="store_true", help="Show data flow graph")
-    lineage_parser.set_defaults(func=cmd_lineage)
 
     # Parse arguments
     args = parser.parse_args()

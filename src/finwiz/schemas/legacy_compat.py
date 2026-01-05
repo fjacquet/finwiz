@@ -21,7 +21,6 @@ from typing import Any
 
 from finwiz.schemas.hybrid_analysis import (
     ContextualRiskInsights,
-    DataLineage,
     DataQualityMetrics,
     EnrichedAnalysis,
     FundamentalContextInsights,
@@ -91,5 +90,4 @@ __all__ = [
     "ContextualRiskInsights",
     "InvestmentSynthesis",
     "DataQualityMetrics",
-    "DataLineage",
 ]

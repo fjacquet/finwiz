@@ -508,9 +508,7 @@ class TestPortfolioRebalancingErrorScenarios:
         )
 
         # Mock optimization failure using mocker.patch.object
-        mocker.patch.object(
-            orchestrator_with_failing_dependencies.rebalancing_engine, "generate_enhanced_trade_recommendations", side_effect=Exception("Optimization failed")
-        )
+        mocker.patch.object(orchestrator_with_failing_dependencies.rebalancing_engine, "generate_enhanced_trade_recommendations", side_effect=Exception("Optimization failed"))
 
         # Act & Assert - Exception is wrapped in OptimizationFailedError
         with pytest.raises(OptimizationFailedError):

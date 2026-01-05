@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from finwiz.orchestrators.validation_orchestrator import ValidationOrchestrator
 
 from crewai.flow import Flow, and_, listen, start
-from crewai.flow.persistence import persist
 
 from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 from finwiz.config.resilience_config import get_resilience_config
@@ -33,6 +32,7 @@ from finwiz.integration.accessor import CrewDataAccessor
 from finwiz.integration.availability import DataAvailabilityTracker
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.orchestrators.error_handling.core_analysis_error_handler import CoreAnalysisErrorHandler
+from finwiz.infrastructure.monitoring.litellm_callback import enable_token_monitoring
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -53,7 +53,6 @@ class OrchestratorDependencies:
     retry_decorator: Any
 
 
-@persist()
 class FinwizFlow(Flow[FinwizState]):
     """
     Main orchestrator for the financial analysis workflow.
@@ -98,6 +97,9 @@ class FinwizFlow(Flow[FinwizState]):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the FinwizFlow instance with orchestrators."""
+        # Enable token monitoring for all LLM calls (prevents token overflow issues)
+        enable_token_monitoring()
+        logger.info("Token monitoring enabled for all LLM calls")
         logger.info("Initializing FinwizFlow with orchestrator delegation")
 
         # Initialize dependencies FIRST (before super().__init__())

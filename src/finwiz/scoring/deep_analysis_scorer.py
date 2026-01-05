@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 from finwiz.flow_state import DeepAnalysisResult
 
 if TYPE_CHECKING:
-    from finwiz.schemas.data_lineage import DataLineage
     from finwiz.validation.quality_metrics import DataQualityMetrics
 from finwiz.scoring.crew_export_generator import CrewExportGenerator
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
@@ -55,7 +54,6 @@ class DeepAnalysisScorer:
         self.logger = logger
         self._data_quality_metrics: DataQualityMetrics | None = None
         self._current_ticker: str | None = None
-        self._lineage_tracker: DataLineage | None = None
 
         # Scoring thresholds
         self.thresholds = thresholds or get_thresholds()
@@ -100,8 +98,7 @@ class DeepAnalysisScorer:
             composite_score = self._compute_weighted_score(scores)
 
             # Step 5: Build final result (delegate to ScoreResultBuilder)
-            # After _initialize_tracking, these are guaranteed to be set
-            assert self._lineage_tracker is not None
+            # After _initialize_tracking, data quality metrics is guaranteed to be set
             assert self._data_quality_metrics is not None
             return self.result_builder.build_result(
                 ticker=ticker,
@@ -109,7 +106,6 @@ class DeepAnalysisScorer:
                 composite_score=composite_score,
                 scores=scores,
                 data=data,
-                lineage_tracker=self._lineage_tracker,
                 data_quality_metrics=self._data_quality_metrics,
             )
 
@@ -185,19 +181,11 @@ class DeepAnalysisScorer:
             return error_result, error_export
 
     def _initialize_tracking(self, ticker: str, asset_class: str, data: dict[str, Any]) -> None:
-        """Initialize data quality and lineage tracking systems."""
-        from finwiz.schemas.data_lineage import DataLineage
+        """Initialize data quality tracking systems."""
         from finwiz.validation.quality_metrics import DataQualityMetrics
 
         self._data_quality_metrics = DataQualityMetrics()
         self._current_ticker = ticker
-
-        self._lineage_tracker = DataLineage(
-            ticker=ticker,
-            asset_class=asset_class,
-            scorer_version="1.0.0",
-            formula_version="1.0.0",
-        )
 
         expected_fields = self._get_expected_fields(asset_class)
         self._data_quality_metrics.set_expected_fields(expected_fields)
@@ -274,29 +262,6 @@ class DeepAnalysisScorer:
             "risk": weight_risk,
             "is_quality_company": is_quality_company,
         }
-
-        # Track composite score calculation in lineage
-        self._lineage_tracker.add_calculation(
-            step_id="composite_score",
-            step_name="composite_score",
-            inputs={
-                "fundamental_score": scores["fundamental_score"],
-                "technical_score": scores["technical_score"],
-                "risk_score": scores["risk_score"],
-            },
-            calculation="Weighted average of component scores (adaptive weights for quality companies)",
-            formula=f"{weight_fundamental} * fundamental + {weight_technical} * technical + {weight_risk} * risk",
-            output=composite_score,
-            metadata={
-                "weights": {
-                    "fundamental": weight_fundamental,
-                    "technical": weight_technical,
-                    "risk": weight_risk,
-                },
-                "is_quality_company": is_quality_company,
-                "weight_type": "adaptive_quality" if is_quality_company else "standard",
-            },
-        )
 
         return float(composite_score)
 

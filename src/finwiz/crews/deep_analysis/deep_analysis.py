@@ -77,7 +77,6 @@ from finwiz.flow_state import DeepAnalysisResult
 from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch
 from finwiz.infrastructure.logging.helpers import CrewLogger
-from finwiz.infrastructure.monitoring.litellm_callback import enable_token_monitoring
 from finwiz.infrastructure.monitoring.performance import get_performance_monitor
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.tools.logger import get_logger
@@ -106,9 +105,7 @@ class DeepAnalysisCrew:
 
     def __init__(self) -> None:
         """Initialize deep analysis crew with configuration files."""
-        # Enable token monitoring to diagnose overflow issues
-        enable_token_monitoring()
-
+        # Token monitoring is enabled at flow level (flows/orchestrator.py)
         # Set configuration paths before calling super().__init__()
         from pathlib import Path
 

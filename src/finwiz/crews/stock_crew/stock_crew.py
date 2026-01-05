@@ -47,11 +47,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 # Get standardized tool set for stock crew and make them robust
-raw_tools = get_stock_crew_tools(
-    include_rag=False,  # Disabled - qdrant-client conflict
-    include_quantitative=True,
-    collection_suffix="stock",
-)
+raw_tools = get_stock_crew_tools(include_quantitative=True)
 tools = make_tools_robust(raw_tools)
 
 

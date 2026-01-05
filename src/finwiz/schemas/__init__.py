@@ -14,7 +14,6 @@ Modules:
 - investment_discovery: A+ investment discovery schemas
 - portfolio_rebalancing: portfolio rebalancing and optimization schemas
 - perplexity: Perplexity API integration schemas
-- session: session management and financial planning schemas
 - validation: ticker validation schemas
 """
 
@@ -134,9 +133,6 @@ from .quantitative import (  # noqa: F401
 # Report crew schemas
 from .report import ReporterInput  # noqa: F401
 
-# Session management schemas
-from .session import AnalysisRecord, ClientProfile, FinancialPlan, SessionMetadata  # noqa: F401
-
 # Stock crew schemas
 from .stock import (  # noqa: F401
     MarketSentiment,
@@ -238,11 +234,6 @@ __all__ = [
     "TechnicalAnalysisResult",
     # Report crew schemas
     "ReporterInput",
-    # Session management schemas
-    "AnalysisRecord",
-    "ClientProfile",
-    "FinancialPlan",
-    "SessionMetadata",
     # Stock crew schemas
     "MarketSentiment",
     "MarketTrend",

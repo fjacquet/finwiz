@@ -50,10 +50,6 @@ standardized_risk_tool = StandardizedRiskScoringTool()
 # Get quantitative analysis tool for portfolio optimization
 quantitative_tool = get_quantitative_analysis_tool()
 
-# Get RAG tools for knowledge retrieval and storage
-# rag_tools = get_rag_tools(collection_suffix="portfolio_rebalancing")  # DISABLED - qdrant conflict
-rag_tools = []  # Empty list
-
 # Initialize new portfolio holdings analysis tools
 holding_analyzer_orchestrator = HoldingAnalyzerOrchestrator()
 price_target_calculator = PriceTargetCalculator()
@@ -66,7 +62,6 @@ tools = [
     quantitative_tool,  # Add quantitative analysis tool for optimization
     ticker_validation_tool,  # Add ticker validation for portfolio holdings
     standardized_risk_tool,  # Add standardized risk scoring for consistency
-    *rag_tools,  # Add RAG tools for knowledge retrieval and storage
     yahoo_ticker_tool,  # Price data retrieval
     yahoo_history_tool,  # Historical data for analysis
     # Contract-aware reading of outputs and schemas

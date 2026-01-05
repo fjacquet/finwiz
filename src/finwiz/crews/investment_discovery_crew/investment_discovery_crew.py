@@ -39,8 +39,6 @@ load_dotenv()
 # Get specialized tools
 investment_discovery_tools = get_investment_discovery_tools()
 quantitative_tool = get_quantitative_analysis_tool()
-# rag_tools = get_rag_tools(collection_suffix="investment_discovery")  # DISABLED - qdrant conflict
-rag_tools = []  # Empty list instead
 feedback_tools = get_feedback_tools()
 
 # Get asset-specific research tools
@@ -52,7 +50,6 @@ crypto_tools = get_crypto_research_tools()
 common_tools = [
     *investment_discovery_tools,
     quantitative_tool,
-    *rag_tools,
     *feedback_tools,  # Add feedback tools to all agents
     # Schema and documentation access
     DirectoryReadTool(directory="output/discovery"),
@@ -190,7 +187,6 @@ class InvestmentDiscoveryCrew:
             get_risk_assessment_tool(),
             StandardizedRiskScoringTool(),
             quantitative_tool,
-            *rag_tools,
         ]
 
         return Agent(
@@ -208,7 +204,7 @@ class InvestmentDiscoveryCrew:
         return Agent(
             config=self.agents_config["feedback_learning_agent"],
             verbose=True,
-            tools=feedback_tools + [quantitative_tool] + rag_tools,
+            tools=feedback_tools + [quantitative_tool],
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),

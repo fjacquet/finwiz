@@ -25,7 +25,7 @@ from finwiz.schemas.hybrid_analysis import (
     QualitativeInsights,
     QuantitativeAnalysis,
 )
-from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 from finwiz.schemas.hybrid_analysis.qualitative import (
     ActionPlan,
     ContextualRiskInsights,
@@ -145,6 +145,7 @@ def generate_qualitative(
         return qual
     except Exception as e:
         import traceback
+
         logger.error(f"AI analysis failed for {ctx.ticker}: {e}\nTraceback:\n{traceback.format_exc()}")
         return _create_fallback_qualitative(ctx, quant, str(e))
 
@@ -327,9 +328,7 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> dic
     # ⚡ DIAGNOSTIC: Log sizes of each input field for debugging
     total_chars = sum(len(str(v)) for v in inputs.values() if v is not None)
     estimated_tokens = total_chars // 4
-    logger.info(
-        f"⚡ Crew inputs for {ctx.ticker}: {total_chars:,} chars (~{estimated_tokens:,} tokens)"
-    )
+    logger.info(f"⚡ Crew inputs for {ctx.ticker}: {total_chars:,} chars (~{estimated_tokens:,} tokens)")
 
     return inputs
 
@@ -366,12 +365,6 @@ def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
             accuracy_confidence=result.confidence_level,
             source_reliability=0.85,
             missing_fields=result.warnings if hasattr(result, "warnings") else [],
-        ),
-        data_lineage=DataLineage(
-            primary_sources=["yfinance", "alpha_vantage"],
-            collection_timestamp=datetime.now(),
-            transformation_steps=["normalize", "calculate_metrics"],
-            cache_status="fresh",
         ),
         confidence_level=result.confidence_level,
         python_rationale=result.rationale,

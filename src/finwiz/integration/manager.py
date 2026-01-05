@@ -65,7 +65,6 @@ class CrewDataIntegrationManager:
 
         # Expose paths for backward compatibility with tests
         self.execution_log_path = self.metadata_dir / "crew_execution_log.json"
-        self.data_lineage_path = self.metadata_dir / "data_lineage.json"
         self.validation_status_path = self.metadata_dir / "validation_status.json"
 
         self.logger.info(

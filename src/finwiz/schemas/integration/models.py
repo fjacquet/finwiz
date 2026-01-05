@@ -69,7 +69,6 @@ class PostExecutionResult(BaseModel):
     storage_success: bool = Field(description="Whether data was stored successfully")
     validation_success: bool = Field(description="Whether validation passed")
     metadata_stored: bool = Field(description="Whether metadata was persisted")
-    lineage_updated: bool = Field(description="Whether data lineage was updated")
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
@@ -285,7 +284,6 @@ class IntegrationConfig(BaseModel):
     # Logging and debugging
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(default="INFO", description="Logging level")
     enable_performance_logging: bool = Field(default=True, description="Enable performance logging")
-    enable_data_lineage: bool = Field(default=True, description="Enable data lineage tracking")
 
 
 class CrewDependencyConfig(BaseModel):

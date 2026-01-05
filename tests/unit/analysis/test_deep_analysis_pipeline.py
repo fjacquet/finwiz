@@ -380,6 +380,7 @@ class TestGenerateQualitative:
 
         # Should return a valid QualitativeInsights object
         from finwiz.schemas.hybrid_analysis import QualitativeInsights
+
         assert isinstance(result, QualitativeInsights)
         # Verify it contains Python-generated content (not empty)
         assert result.sec_insights is not None

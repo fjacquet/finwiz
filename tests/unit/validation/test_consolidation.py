@@ -81,31 +81,23 @@ class TestValidateCrewDataRetrieval:
             "rationale": fake.sentence(),
         }
 
-    def test_should_retrieve_all_crew_data(
-        self, validator, mock_registry_manager, valid_crew_data
-    ):
+    def test_should_retrieve_all_crew_data(self, validator, mock_registry_manager, valid_crew_data):
         """Test successful retrieval of all crew data."""
-        mock_registry_manager.get_crew_data_with_freshness_check.return_value = (
-            valid_crew_data
-        )
+        mock_registry_manager.get_crew_data_with_freshness_check.return_value = valid_crew_data
 
         result = validator.validate_crew_data_retrieval(["stock"])
 
         assert "stock" in result
         assert result["stock"] == valid_crew_data
 
-    def test_should_raise_for_missing_crew_data(
-        self, validator, mock_registry_manager
-    ):
+    def test_should_raise_for_missing_crew_data(self, validator, mock_registry_manager):
         """Test raises error when crew data is missing."""
         mock_registry_manager.get_crew_data_with_freshness_check.return_value = None
 
         with pytest.raises(DataRetrievalError, match="Missing data for crews"):
             validator.validate_crew_data_retrieval(["stock"])
 
-    def test_should_raise_for_corrupted_crew_data(
-        self, validator, mock_registry_manager
-    ):
+    def test_should_raise_for_corrupted_crew_data(self, validator, mock_registry_manager):
         """Test raises error when crew data is corrupted."""
         # Data missing required fields
         mock_registry_manager.get_crew_data_with_freshness_check.return_value = {
@@ -116,9 +108,7 @@ class TestValidateCrewDataRetrieval:
         with pytest.raises(DataRetrievalError, match="Corrupted data for crews"):
             validator.validate_crew_data_retrieval(["stock"])
 
-    def test_should_handle_multiple_crews(
-        self, validator, mock_registry_manager, valid_crew_data, fake
-    ):
+    def test_should_handle_multiple_crews(self, validator, mock_registry_manager, valid_crew_data, fake):
         """Test retrieval of multiple crews."""
         etf_data = {
             "crew_name": "etf",
@@ -142,9 +132,7 @@ class TestValidateCrewDataRetrieval:
         assert "stock" in result
         assert "etf" in result
 
-    def test_should_collect_all_missing_crews(
-        self, validator, mock_registry_manager
-    ):
+    def test_should_collect_all_missing_crews(self, validator, mock_registry_manager):
         """Test collects all missing crews in error message."""
         mock_registry_manager.get_crew_data_with_freshness_check.return_value = None
 
@@ -228,9 +216,7 @@ class TestValidateCrewDataStructure:
 
         assert result is False
 
-    def test_should_return_false_for_invalid_ticker_analyses_type(
-        self, validator, fake
-    ):
+    def test_should_return_false_for_invalid_ticker_analyses_type(self, validator, fake):
         """Test returns False when ticker_analyses is not a dict."""
         data = {
             "crew_name": "stock",
@@ -245,9 +231,7 @@ class TestValidateCrewDataStructure:
 
         assert result is False
 
-    def test_should_return_false_for_invalid_summary_statistics_type(
-        self, validator, fake
-    ):
+    def test_should_return_false_for_invalid_summary_statistics_type(self, validator, fake):
         """Test returns False when summary_statistics is not a dict."""
         data = {
             "crew_name": "stock",

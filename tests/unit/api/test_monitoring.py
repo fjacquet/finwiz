@@ -8,7 +8,6 @@ alerts, and dashboard functionality.
 from datetime import datetime
 
 import pytest
-from faker import Faker
 
 # Check if FastAPI is available
 try:
@@ -383,9 +382,11 @@ class TestResolveAlertEndpoint:
         )
 
         mock_alert_manager = mocker.MagicMock()
+
         # Create async mock for resolve_alert
         async def mock_resolve(*args, **kwargs):
             return True
+
         mock_alert_manager.resolve_alert = mock_resolve
 
         mocker.patch(
@@ -408,9 +409,11 @@ class TestResolveAlertEndpoint:
         )
 
         mock_alert_manager = mocker.MagicMock()
+
         # Create async mock for resolve_alert that returns False
         async def mock_resolve(*args, **kwargs):
             return False
+
         mock_alert_manager.resolve_alert = mock_resolve
 
         mocker.patch(

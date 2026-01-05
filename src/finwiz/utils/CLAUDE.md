@@ -105,9 +105,6 @@ utils/
 ├── # CrewAI Patches
 ├── crewai_json_patch.py        # CrewAI JSON patching
 │
-├── # A+ Monitoring
-├── a_plus_monitoring.py        # A+ monitoring
-│
 ├── # Perplexity Integration
 ├── perplexity_feature_utils.py # Perplexity utilities
 │

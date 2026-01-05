@@ -6,10 +6,7 @@ where Python performs deterministic calculations and AI provides contextual insi
 """
 
 from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
-from finwiz.schemas.hybrid_analysis.metadata import (
-    DataLineage,
-    DataQualityMetrics,
-)
+from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 from finwiz.schemas.hybrid_analysis.qualitative import (
     ActionPlan,
     ContextualRiskInsights,
@@ -25,7 +22,6 @@ from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
 __all__ = [
     # Metadata
     "DataQualityMetrics",
-    "DataLineage",
     # Quantitative
     "QuantitativeAnalysis",
     # Qualitative

@@ -6,7 +6,6 @@ simulation, and status functionality.
 """
 
 import pytest
-from datetime import datetime
 
 # Check if FastAPI is available
 try:
@@ -23,8 +22,8 @@ if FASTAPI_AVAILABLE:
         PortfolioAnalysisResponse,
         analyze_portfolio_rebalancing,
         get_portfolio_analysis,
-        simulate_rebalancing_scenario,
         get_rebalancing_status,
+        simulate_rebalancing_scenario,
     )
 
 

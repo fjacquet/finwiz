@@ -10,12 +10,12 @@ from datetime import UTC, datetime
 
 import pytest
 
+from finwiz.reporting.consolidator import ReportConsolidator
+from finwiz.reporting.export_loaders import load_exports
 from finwiz.schemas.crew_exports import (
     ConsolidatedReportExport,
     StockCrewExport,
 )
-from finwiz.reporting.consolidator import ReportConsolidator
-from finwiz.reporting.export_loaders import load_exports
 
 
 class TestReportConsolidator:

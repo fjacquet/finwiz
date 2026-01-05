@@ -28,16 +28,10 @@ from finwiz.integration.availability import DataAvailabilityTracker
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.orchestrators.discovery.aplus_discovery_accessor import APlusDiscoveryAccessor
 from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor
-from finwiz.tools.robust_tool_wrapper import make_tools_robust
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
-# Get RAG tools for knowledge retrieval and storage and make them robust
-# raw_rag_tools = get_rag_tools(collection_suffix="report")  # DISABLED - qdrant conflict
-raw_rag_tools = []  # Empty list
-rag_tools = make_tools_robust(raw_rag_tools)
 
 
 @CrewBase
@@ -77,7 +71,6 @@ class ReportCrew:
     def _get_tools(self) -> list[Any]:
         """Get all tools for the crew."""
         return [
-            *rag_tools,  # RAG tools for knowledge retrieval
             # ALWAYS load ALL output directories
             DirectoryReadTool(directory="output/stock"),
             DirectoryReadTool(directory="output/etf"),

@@ -14,7 +14,6 @@ from finwiz.config.features.definitions import (
     FeatureFlagStrategy,
 )
 
-
 # Note: FeatureFlagStrategy uses BOOLEAN, not ALWAYS_ON
 # FeatureFlagConfig and CircuitBreakerState are @dataclass, not Pydantic
 

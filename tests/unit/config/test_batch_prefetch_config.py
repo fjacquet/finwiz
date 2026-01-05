@@ -9,11 +9,11 @@ from faker import Faker
 
 from finwiz.config.batch_prefetch_config import (
     BatchPrefetchConfig,
-    load_batch_prefetch_config,
-    should_use_alpha_vantage,
     get_batch_prefetch_config,
     get_cached_batch_prefetch_config,
+    load_batch_prefetch_config,
     reset_config_cache,
+    should_use_alpha_vantage,
 )
 
 

@@ -72,9 +72,7 @@ class PortfolioRebalancingOrchestrator:
     # Main Workflow
     # =========================================================================
 
-    async def rebalance_portfolio(
-        self, portfolio_config: PortfolioConfiguration, portfolio_id: str | None = None
-    ) -> RebalancingResult:
+    async def rebalance_portfolio(self, portfolio_config: PortfolioConfiguration, portfolio_id: str | None = None) -> RebalancingResult:
         """Execute complete portfolio rebalancing workflow."""
         logger.info(f"Starting rebalancing for {len(portfolio_config.holdings)} holdings")
 
@@ -90,18 +88,14 @@ class PortfolioRebalancingOrchestrator:
             rebalancing_needs = self._identify_rebalancing_needs(portfolio_config, current_analysis)
 
             # Step 4: Generate trade recommendations
-            recommendations, validation_errors = await self._generate_recommendations(
-                portfolio_config, current_analysis, rebalancing_needs, price_data
-            )
+            recommendations, validation_errors = await self._generate_recommendations(portfolio_config, current_analysis, rebalancing_needs, price_data)
             if validation_errors:
                 logger.warning(f"Trade validation errors: {validation_errors}")
 
             optimized_trades = self._create_optimized_trades(recommendations)
 
             # Step 5: Calculate projections
-            projected_analysis = self._calculate_projected_portfolio(
-                portfolio_config, current_analysis, optimized_trades.trades, price_data
-            )
+            projected_analysis = self._calculate_projected_portfolio(portfolio_config, current_analysis, optimized_trades.trades, price_data)
 
             # Step 6: Cost analysis
             cost_analysis = self._calculate_cost_analysis(optimized_trades, current_analysis.total_value)
@@ -128,21 +122,15 @@ class PortfolioRebalancingOrchestrator:
                 next_review_date=datetime.now() + timedelta(days=30),
             )
 
-            risk_assessment = self.risk_manager.assess_rebalancing_risks(
-                portfolio_config, preliminary_result
-            )
-            is_safe, blocking_issues = self.risk_manager.validate_rebalancing_safety(
-                portfolio_config, preliminary_result
-            )
+            risk_assessment = self.risk_manager.assess_rebalancing_risks(portfolio_config, preliminary_result)
+            is_safe, blocking_issues = self.risk_manager.validate_rebalancing_safety(portfolio_config, preliminary_result)
 
             if not is_safe:
                 logger.warning(f"Rebalancing blocked: {blocking_issues}")
                 recommendation = RebalancingRecommendation.MONITOR
                 next_review = datetime.now() + timedelta(days=7)
             else:
-                recommendation, next_review = self._determine_recommendation(
-                    rebalancing_needs, cost_analysis, current_risk, risk_assessment
-                )
+                recommendation, next_review = self._determine_recommendation(rebalancing_needs, cost_analysis, current_risk, risk_assessment)
 
             return RebalancingResult(
                 analysis_timestamp=datetime.now(),
@@ -196,20 +184,14 @@ class PortfolioRebalancingOrchestrator:
     # Portfolio Analysis (uses PortfolioAnalyzer directly)
     # =========================================================================
 
-    async def _analyze_portfolio(
-        self, config: PortfolioConfiguration, price_data: dict[str, Any]
-    ) -> Any:
+    async def _analyze_portfolio(self, config: PortfolioConfiguration, price_data: dict[str, Any]) -> Any:
         """Analyze current portfolio composition."""
         try:
-            return self.portfolio_analyzer.analyze_current_portfolio(
-                holdings=config.holdings, prices=price_data, target_weights=config.target_weights
-            )
+            return self.portfolio_analyzer.analyze_current_portfolio(holdings=config.holdings, prices=price_data, target_weights=config.target_weights)
         except PortfolioAnalysisError as e:
             raise PortfolioRebalancingError(f"Portfolio analysis failed: {e}") from e
 
-    def _identify_rebalancing_needs(
-        self, config: PortfolioConfiguration, current_analysis: Any
-    ) -> list[Any]:
+    def _identify_rebalancing_needs(self, config: PortfolioConfiguration, current_analysis: Any) -> list[Any]:
         """Identify positions requiring rebalancing."""
         try:
             needs = self.portfolio_analyzer.identify_rebalancing_needs(
@@ -237,10 +219,7 @@ class PortfolioRebalancingOrchestrator:
     ) -> tuple[list[Any], list[str]]:
         """Generate trade recommendations using RebalancingEngine."""
         try:
-            price_dict = {
-                s: (p.price if hasattr(p, "price") else float(p))
-                for s, p in price_data.items()
-            }
+            price_dict = {s: (p.price if hasattr(p, "price") else float(p)) for s, p in price_data.items()}
 
             recommendations, errors = self.rebalancing_engine.generate_enhanced_trade_recommendations(
                 rebalancing_needs=rebalancing_needs,
@@ -257,9 +236,7 @@ class PortfolioRebalancingOrchestrator:
 
     def _create_optimized_trades(self, recommendations: list[Any]) -> OptimizedTrades:
         """Create OptimizedTrades from recommendations."""
-        capital_used = sum(
-            abs(r.trade_value) for r in recommendations if hasattr(r, "trade_value")
-        )
+        capital_used = sum(abs(r.trade_value) for r in recommendations if hasattr(r, "trade_value"))
         return OptimizedTrades(
             trades=recommendations,
             total_cost=0.0,
@@ -320,21 +297,13 @@ class PortfolioRebalancingOrchestrator:
                 if trade.symbol in config.target_weights:
                     projected.weightings[trade.symbol] = trade.projected_weight_after_trade
 
-            projected.deviations_from_target = {
-                s: projected.weightings.get(s, 0.0) - config.target_weights.get(s, 0.0)
-                for s in config.target_weights
-            }
-            projected.positions_needing_rebalancing = [
-                s for s, d in projected.deviations_from_target.items()
-                if abs(d) > config.tolerance_bands.get(s, config.global_tolerance)
-            ]
+            projected.deviations_from_target = {s: projected.weightings.get(s, 0.0) - config.target_weights.get(s, 0.0) for s in config.target_weights}
+            projected.positions_needing_rebalancing = [s for s, d in projected.deviations_from_target.items() if abs(d) > config.tolerance_bands.get(s, config.global_tolerance)]
             return projected
         except Exception as e:
             raise PortfolioRebalancingError(f"Projection failed: {e}") from e
 
-    def _calculate_cost_analysis(
-        self, optimized_trades: OptimizedTrades, portfolio_value: float
-    ) -> CostAnalysis:
+    def _calculate_cost_analysis(self, optimized_trades: OptimizedTrades, portfolio_value: float) -> CostAnalysis:
         """Calculate comprehensive cost analysis."""
         try:
             commission = sum(t.estimated_commission for t in optimized_trades.trades)
@@ -355,9 +324,7 @@ class PortfolioRebalancingOrchestrator:
         except Exception as e:
             raise PortfolioRebalancingError(f"Cost analysis failed: {e}") from e
 
-    def _calculate_risk_scores(
-        self, current: Any, projected: Any
-    ) -> tuple[float, float]:
+    def _calculate_risk_scores(self, current: Any, projected: Any) -> tuple[float, float]:
         """Calculate risk scores (0-10 scale)."""
         try:
             current_risk = current.risk_metrics.get("concentration_risk", 5.0)
@@ -369,9 +336,7 @@ class PortfolioRebalancingOrchestrator:
         except Exception:
             return 5.0, 5.0
 
-    def _generate_execution_summary(
-        self, optimized_trades: OptimizedTrades, config: PortfolioConfiguration
-    ) -> ExecutionSummary:
+    def _generate_execution_summary(self, optimized_trades: OptimizedTrades, config: PortfolioConfiguration) -> ExecutionSummary:
         """Generate execution summary."""
         try:
             trades = [t for t in optimized_trades.trades if t.action.value != "HOLD"]
@@ -416,10 +381,7 @@ class PortfolioRebalancingOrchestrator:
 
             high_risk_warnings = 0
             if risk_assessment:
-                high_risk_warnings = len([
-                    w for w in risk_assessment.warnings
-                    if w.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]
-                ])
+                high_risk_warnings = len([w for w in risk_assessment.warnings if w.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]])
 
             if action_count == 0:
                 return RebalancingRecommendation.NO_ACTION, datetime.now() + timedelta(days=30)
@@ -440,51 +402,21 @@ class PortfolioRebalancingOrchestrator:
     # Reports (uses HTMLReportGenerator directly)
     # =========================================================================
 
-    async def generate_rebalancing_report(
-        self, result: RebalancingResult, language: str = "en"
-    ) -> str:
+    async def generate_rebalancing_report(self, result: RebalancingResult, language: str = "en") -> str:
         """Generate comprehensive HTML rebalancing report."""
         logger.info("Generating rebalancing report")
         try:
             self.report_generator.clear_sections()
 
-            self.report_generator.add_section(
-                "Executive Summary",
-                RebalancingHTMLBuilder.build_executive_summary(result),
-                "summary", order=1
-            )
-            self.report_generator.add_section(
-                "Current Portfolio",
-                RebalancingHTMLBuilder.build_current_portfolio(result),
-                "portfolio", order=2
-            )
-            self.report_generator.add_section(
-                "Trade Recommendations",
-                RebalancingHTMLBuilder.build_trade_recommendations(result),
-                "data", order=3
-            )
-            self.report_generator.add_section(
-                "Cost Analysis",
-                RebalancingHTMLBuilder.build_cost_analysis(result),
-                "financial", order=4
-            )
-            self.report_generator.add_section(
-                "Risk Analysis",
-                RebalancingHTMLBuilder.build_risk_analysis(result),
-                "risk", order=5
-            )
-            self.report_generator.add_section(
-                "Projected Portfolio",
-                RebalancingHTMLBuilder.build_projected_portfolio(result),
-                "growth", order=6
-            )
+            self.report_generator.add_section("Executive Summary", RebalancingHTMLBuilder.build_executive_summary(result), "summary", order=1)
+            self.report_generator.add_section("Current Portfolio", RebalancingHTMLBuilder.build_current_portfolio(result), "portfolio", order=2)
+            self.report_generator.add_section("Trade Recommendations", RebalancingHTMLBuilder.build_trade_recommendations(result), "data", order=3)
+            self.report_generator.add_section("Cost Analysis", RebalancingHTMLBuilder.build_cost_analysis(result), "financial", order=4)
+            self.report_generator.add_section("Risk Analysis", RebalancingHTMLBuilder.build_risk_analysis(result), "risk", order=5)
+            self.report_generator.add_section("Projected Portfolio", RebalancingHTMLBuilder.build_projected_portfolio(result), "growth", order=6)
 
             if language == "fr":
-                self.report_generator.add_section(
-                    "Synthese 10-K",
-                    RebalancingHTMLBuilder.build_french_sections(result),
-                    "summary", order=7
-                )
+                self.report_generator.add_section("Synthese 10-K", RebalancingHTMLBuilder.build_french_sections(result), "summary", order=7)
 
             title = f"Portfolio Rebalancing - {result.analysis_timestamp.strftime('%Y-%m-%d')}"
             if hasattr(self.report_generator, "generate_unified_html"):
@@ -521,9 +453,7 @@ class PortfolioRebalancingOrchestrator:
                 "portfolio_metrics": {
                     "total_value": result.current_portfolio.total_value,
                     "positions_count": len(result.current_portfolio.weightings),
-                    "positions_needing_rebalancing": len(
-                        result.current_portfolio.positions_needing_rebalancing
-                    ),
+                    "positions_needing_rebalancing": len(result.current_portfolio.positions_needing_rebalancing),
                 },
             }
         except Exception as e:
@@ -553,9 +483,7 @@ class PortfolioRebalancingOrchestrator:
         market_volatility: float | None = None,
     ) -> Any:
         """Assess rebalancing risks."""
-        return self.risk_manager.assess_rebalancing_risks(
-            portfolio_config, rebalancing_result, market_volatility
-        )
+        return self.risk_manager.assess_rebalancing_risks(portfolio_config, rebalancing_result, market_volatility)
 
     async def validate_rebalancing_safety(
         self,
@@ -564,9 +492,7 @@ class PortfolioRebalancingOrchestrator:
         market_volatility: float | None = None,
     ) -> tuple[bool, list[str]]:
         """Validate if rebalancing is safe to proceed."""
-        return self.risk_manager.validate_rebalancing_safety(
-            portfolio_config, rebalancing_result, market_volatility
-        )
+        return self.risk_manager.validate_rebalancing_safety(portfolio_config, rebalancing_result, market_volatility)
 
 
 # Re-exports for backward compatibility

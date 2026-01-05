@@ -5,6 +5,7 @@ Tests for the evaluate_flag, circuit breaker, and related functions.
 """
 
 import time
+
 import pytest
 from faker import Faker
 
@@ -12,14 +13,13 @@ from finwiz.config.features.definitions import (
     CircuitBreakerState,
     FeatureFlagConfig,
     FeatureFlagStrategy,
-    FallbackStrategy,
 )
 from finwiz.config.features.evaluators import (
-    evaluate_flag,
     evaluate_circuit_breaker,
-    record_success,
-    record_failure,
+    evaluate_flag,
     get_default_values,
+    record_failure,
+    record_success,
 )
 
 

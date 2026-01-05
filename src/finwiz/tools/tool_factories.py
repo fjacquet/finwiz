@@ -16,25 +16,20 @@ from finwiz.tools.finance_tools import (
     get_stock_research_tools,
 )
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-from finwiz.tools.rag_tools import get_rag_tools
 from finwiz.tools.valuation_tool import get_valuation_tool
 
 
 def get_stock_crew_tools(
-    include_rag: bool = True,
     include_quantitative: bool = True,
     include_valuation: bool = True,
-    collection_suffix: str = "stock",
     prefetched_data: dict | None = None,
 ) -> list[BaseTool]:
     """
     Get standardized tool set for Stock Crew.
 
     Args:
-        include_rag: Whether to include RAG tools for knowledge retrieval
         include_quantitative: Whether to include quantitative analysis tool
         include_valuation: Whether to include valuation tool (DCF, P/E, technical targets)
-        collection_suffix: Suffix for RAG collection name
         prefetched_data: Optional pre-fetched data for batch mode (Requirements 17.48, 17.49, 17.50)
             When None, tools use live API calls (single-ticker mode)
             When provided, tools use pre-fetched data (batch mode)
@@ -56,10 +51,6 @@ def get_stock_crew_tools(
     if include_valuation:
         tools.append(get_valuation_tool())
 
-    # Optional RAG tools for knowledge retrieval and storage
-    if include_rag:
-        tools.extend(get_rag_tools(collection_suffix=collection_suffix))
-
     # Schema and contract reading tools
     tools.extend(
         [
@@ -77,18 +68,14 @@ def get_stock_crew_tools(
 
 
 def get_crypto_crew_tools(
-    include_rag: bool = True,
     include_quantitative: bool = True,
-    collection_suffix: str = "crypto",
     prefetched_data: dict | None = None,
 ) -> list[BaseTool]:
     """
     Get standardized tool set for Crypto Crew.
 
     Args:
-        include_rag: Whether to include RAG tools for knowledge retrieval
         include_quantitative: Whether to include quantitative analysis tool
-        collection_suffix: Suffix for RAG collection name
         prefetched_data: Optional pre-fetched data for batch mode (Requirements 17.48, 17.49, 17.50)
             When None, tools use live API calls (single-ticker mode)
             When provided, tools use pre-fetched data (batch mode)
@@ -106,10 +93,6 @@ def get_crypto_crew_tools(
     if include_quantitative:
         tools.append(get_quantitative_analysis_tool())
 
-    # Optional RAG tools for knowledge retrieval and storage
-    if include_rag:
-        tools.extend(get_rag_tools(collection_suffix=collection_suffix))
-
     # Schema and contract reading tools
     tools.extend(
         [
@@ -126,20 +109,16 @@ def get_crypto_crew_tools(
 
 
 def get_etf_crew_tools(
-    include_rag: bool = True,
     include_quantitative: bool = True,
     include_etf_analysis: bool = True,
-    collection_suffix: str = "etf",
     prefetched_data: dict | None = None,
 ) -> list[BaseTool]:
     """
     Get standardized tool set for ETF Crew.
 
     Args:
-        include_rag: Whether to include RAG tools for knowledge retrieval
         include_quantitative: Whether to include quantitative analysis tool
         include_etf_analysis: Whether to include ETF-specific analysis tool (tracking error, liquidity, etc.)
-        collection_suffix: Suffix for RAG collection name
         prefetched_data: Optional pre-fetched data for batch mode (Requirements 17.48, 17.49, 17.50)
             When None, tools use live API calls (single-ticker mode)
             When provided, tools use pre-fetched data (batch mode)
@@ -160,10 +139,6 @@ def get_etf_crew_tools(
     # Optional ETF-specific analysis tool
     if include_etf_analysis:
         tools.append(get_etf_analysis_tool())
-
-    # Optional RAG tools for knowledge retrieval and storage
-    if include_rag:
-        tools.extend(get_rag_tools(collection_suffix=collection_suffix))
 
     # Schema and contract reading tools
     tools.extend(

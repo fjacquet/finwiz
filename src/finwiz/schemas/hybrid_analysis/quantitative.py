@@ -9,7 +9,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from finwiz.schemas.hybrid_analysis.metadata import DataLineage, DataQualityMetrics
+from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 
 
 class QuantitativeAnalysis(BaseModel):
@@ -33,7 +33,6 @@ class QuantitativeAnalysis(BaseModel):
         ...     risk_metrics={"volatility": 0.15, "max_drawdown": 0.10},
         ...     calculation_timestamp=datetime.now(),
         ...     data_quality=DataQualityMetrics(...),
-        ...     data_lineage=DataLineage(...),
         ...     confidence_level=0.90,
         ...     python_rationale="Strong fundamentals with moderate technical signals",
         ... )
@@ -58,7 +57,6 @@ class QuantitativeAnalysis(BaseModel):
     # Metadata
     calculation_timestamp: datetime = Field(..., description="When calculations were performed (UTC)")
     data_quality: DataQualityMetrics = Field(..., description="Quality assessment of input data")
-    data_lineage: DataLineage = Field(..., description="Data source tracking")
     confidence_level: float = Field(..., ge=0.0, le=1.0, description="Overall confidence in calculations (0.0-1.0)")
 
     # Template-based rationale (to be enhanced by AI)
@@ -81,12 +79,6 @@ class QuantitativeAnalysis(BaseModel):
                     "risk_metrics": {"volatility": 0.15, "max_drawdown": 0.10, "beta": 1.1, "sharpe_ratio": 1.5},
                     "calculation_timestamp": "2025-11-21T10:30:00Z",
                     "data_quality": {"completeness_score": 0.95, "freshness_score": 1.0, "accuracy_confidence": 0.90, "source_reliability": 0.85, "missing_fields": []},
-                    "data_lineage": {
-                        "primary_sources": ["yfinance", "alpha_vantage"],
-                        "collection_timestamp": "2025-11-21T10:25:00Z",
-                        "transformation_steps": ["normalize", "calculate_metrics"],
-                        "cache_status": "fresh",
-                    },
                     "confidence_level": 0.90,
                     "python_rationale": "Strong fundamentals with moderate technical signals",
                 }

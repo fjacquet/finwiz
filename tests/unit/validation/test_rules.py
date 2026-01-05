@@ -6,7 +6,7 @@ Tests for ValidationRules class and related validation logic.
 
 import pytest
 from faker import Faker
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from finwiz.validation.rules import ValidationRules
 

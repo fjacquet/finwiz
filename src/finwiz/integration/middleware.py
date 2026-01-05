@@ -39,7 +39,6 @@ class PostExecutionResult(BaseModel):
     storage_success: bool = Field(description="Whether data was stored successfully")
     validation_success: bool = Field(description="Whether validation passed")
     metadata_stored: bool = Field(description="Whether metadata was persisted")
-    lineage_updated: bool = Field(description="Whether data lineage was updated")
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
@@ -234,7 +233,7 @@ class CrewIntegrationMiddleware:
                 raise ValueError(f"No execution context found for ID: {execution_id}")
 
             # Initialize result
-            result = PostExecutionResult(storage_success=False, validation_success=False, metadata_stored=False, lineage_updated=False)
+            result = PostExecutionResult(storage_success=False, validation_success=False, metadata_stored=False)
 
             # Validate crew output
             validation_result = await self._validate_crew_output(context.crew_name, crew_output)
@@ -258,13 +257,6 @@ class CrewIntegrationMiddleware:
             if not metadata_result["success"]:
                 result.errors.extend(metadata_result["errors"])
 
-            # Update data lineage
-            lineage_result = await self._update_data_lineage(context, crew_output)
-            result.lineage_updated = lineage_result["success"]
-
-            if not lineage_result["success"]:
-                result.errors.extend(lineage_result["errors"])
-
             # Execute custom post-execution hooks
             await self._execute_hooks("post_execution", context)
 
@@ -280,7 +272,6 @@ class CrewIntegrationMiddleware:
                     "storage_success": result.storage_success,
                     "validation_success": result.validation_success,
                     "metadata_stored": result.metadata_stored,
-                    "lineage_updated": result.lineage_updated,
                 },
             )
 
@@ -297,7 +288,7 @@ class CrewIntegrationMiddleware:
                 except Exception as hook_error:
                     self.logger.error(f"Error hook failed: {str(hook_error)}")
 
-            return PostExecutionResult(storage_success=False, validation_success=False, metadata_stored=False, lineage_updated=False, errors=[error_msg])
+            return PostExecutionResult(storage_success=False, validation_success=False, metadata_stored=False, errors=[error_msg])
 
     async def coordinate_crew_execution(self, crew_configs: list[CrewConfig]) -> ExecutionResult:
         """
@@ -458,48 +449,6 @@ class CrewIntegrationMiddleware:
 
         except Exception as e:
             error_msg = f"Failed to store metadata: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
-            return {"success": False, "errors": [error_msg]}
-
-    async def _update_data_lineage(self, context: CrewExecutionContext, crew_output: dict[str, Any]) -> dict[str, Any]:
-        """Update data lineage tracking."""
-        try:
-            lineage_file = self.integration_dir / "metadata" / "data_lineage.json"
-            lineage_file.parent.mkdir(parents=True, exist_ok=True)
-
-            # Load existing lineage
-            lineage_data = {}
-            if lineage_file.exists():
-                with open(lineage_file, encoding="utf-8") as f:
-                    lineage_data = json.load(f)
-
-            # Add new lineage entry
-            if "executions" not in lineage_data:
-                lineage_data["executions"] = []
-
-            lineage_entry = {
-                "execution_id": context.execution_id,
-                "crew_name": context.crew_name,
-                "timestamp": context.start_time.isoformat(),
-                "dependencies": context.dependencies,
-                "upstream_sources": list(context.upstream_data.keys()),
-                "output_keys": list(crew_output.keys()) if isinstance(crew_output, dict) else [],
-            }
-
-            lineage_data["executions"].append(lineage_entry)
-
-            # Keep only last 1000 entries to prevent file from growing too large
-            if len(lineage_data["executions"]) > 1000:
-                lineage_data["executions"] = lineage_data["executions"][-1000:]
-
-            # Save updated lineage
-            with open(lineage_file, "w", encoding="utf-8") as f:
-                json.dump(lineage_data, f, indent=2, ensure_ascii=False)
-
-            return {"success": True, "errors": []}
-
-        except Exception as e:
-            error_msg = f"Failed to update data lineage: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return {"success": False, "errors": [error_msg]}
 

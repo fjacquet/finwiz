@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 from pytest import approx
 
-from finwiz.schemas.crew_exports import ConsolidatedReportExport
 from finwiz.reporting.final_report_generator import FinalReportGenerator
+from finwiz.schemas.crew_exports import ConsolidatedReportExport
 
 
 class TestFinalReportGenerator:

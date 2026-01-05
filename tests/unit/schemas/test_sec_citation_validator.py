@@ -9,13 +9,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
+from finwiz.schemas.integration import SECCitation, ValidationStatus
 from finwiz.validation.sec_citation import (
     ConsolidatedSECCitations,
     SECCitationValidationResult,
     SECCitationValidator,
     SECFilingInfo,
 )
-from finwiz.schemas.integration import SECCitation, ValidationStatus
 
 
 class TestSECCitationValidator:

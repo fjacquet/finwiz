@@ -107,11 +107,9 @@ class TestGetToolsForAssetClass:
         # Act
         get_tools_for_asset_class("stock", prefetched_data=prefetched_data)
 
-        # Assert
+        # Assert - RAG params removed, only include_quantitative and prefetched_data remain
         mock_stock_tools.assert_called_once_with(
-            include_rag=False,
             include_quantitative=True,
-            collection_suffix="stock_deep",
             prefetched_data=prefetched_data,
         )
 

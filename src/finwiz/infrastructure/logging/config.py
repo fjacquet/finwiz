@@ -225,15 +225,12 @@ class IntegrationLogger:
 # Note: These imports are at the bottom to avoid circular import issues
 def _create_global_instances() -> tuple:
     """Create global instances to avoid circular imports."""
-    from finwiz.integration.lineage import DataLineageTracker
-
     from .analyzer import LogAnalyzer
 
     integration_logger = IntegrationLogger()
-    lineage_tracker = DataLineageTracker()
-    log_analyzer = LogAnalyzer(lineage_tracker=lineage_tracker)
+    log_analyzer = LogAnalyzer()
 
-    return integration_logger, lineage_tracker, log_analyzer
+    return integration_logger, log_analyzer
 
 
-integration_logger, lineage_tracker, log_analyzer = _create_global_instances()
+integration_logger, log_analyzer = _create_global_instances()

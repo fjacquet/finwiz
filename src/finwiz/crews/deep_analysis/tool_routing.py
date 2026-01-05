@@ -9,11 +9,6 @@ from typing import Any
 
 from finwiz.tools.logger import get_logger
 from finwiz.tools.robust_tool_wrapper import make_tools_robust
-from finwiz.tools.tool_factories import (
-    get_crypto_crew_tools,
-    get_etf_crew_tools,
-    get_stock_crew_tools,
-)
 
 logger = get_logger(__name__)
 
@@ -118,10 +113,7 @@ def _get_lean_analysis_tools(
     # - FileReadTool (can read arbitrary files)
     # - RAG tools (disabled by design)
 
-    logger.info(
-        f"⚡ LEAN TOOLS: Loaded {len(tools)} tools for {asset_class} qualitative analysis "
-        f"(DirectoryReadTool/FileReadTool EXCLUDED to prevent context overflow)"
-    )
+    logger.info(f"⚡ LEAN TOOLS: Loaded {len(tools)} tools for {asset_class} qualitative analysis (DirectoryReadTool/FileReadTool EXCLUDED to prevent context overflow)")
     return tools
 
 

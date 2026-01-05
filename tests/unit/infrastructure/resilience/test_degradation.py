@@ -398,6 +398,7 @@ class TestGracefulDegradationManagerAsync:
     @pytest.mark.asyncio
     async def test_should_execute_primary_function(self, manager):
         """Test execute_with_degradation executes primary function."""
+
         async def primary_func():
             return "success"
 
@@ -411,6 +412,7 @@ class TestGracefulDegradationManagerAsync:
     @pytest.mark.asyncio
     async def test_should_execute_sync_function(self, manager):
         """Test execute_with_degradation handles sync functions."""
+
         def sync_func():
             return "sync_success"
 
@@ -448,6 +450,7 @@ class TestGracefulDegradationManagerAsync:
     @pytest.mark.asyncio
     async def test_should_use_default_fallback(self, manager):
         """Test default fallback is used when no custom fallback."""
+
         async def failing_func():
             raise ValueError("test error")
 
@@ -464,18 +467,18 @@ class TestGracefulDegradationManagerAsync:
     @pytest.mark.asyncio
     async def test_should_record_success(self, manager, mock_dependencies):
         """Test success is recorded after successful call."""
+
         async def success_func():
             return "ok"
 
         await manager.execute_with_degradation("openai", success_func)
 
-        mock_dependencies["feature_flags"].record_success.assert_called_with(
-            "openai_integration"
-        )
+        mock_dependencies["feature_flags"].record_success.assert_called_with("openai_integration")
 
     @pytest.mark.asyncio
     async def test_should_record_error(self, manager, mock_dependencies):
         """Test error is recorded after failed call."""
+
         async def failing_func():
             raise ValueError("error")
 
@@ -483,13 +486,12 @@ class TestGracefulDegradationManagerAsync:
 
         await manager.execute_with_degradation("openai", failing_func)
 
-        mock_dependencies["feature_flags"].record_failure.assert_called_with(
-            "openai_integration"
-        )
+        mock_dependencies["feature_flags"].record_failure.assert_called_with("openai_integration")
 
     @pytest.mark.asyncio
     async def test_should_handle_timeout(self, manager):
         """Test timeout handling."""
+
         async def slow_func():
             await asyncio.sleep(10)
             return "too_slow"
@@ -506,6 +508,7 @@ class TestGracefulDegradationManagerAsync:
     @pytest.mark.asyncio
     async def test_should_cache_successful_result(self, manager, mock_dependencies):
         """Test successful result is cached."""
+
         async def success_func():
             return {"data": "value"}
 
@@ -520,6 +523,7 @@ class TestGracefulDegradationManagerAsync:
     @pytest.mark.asyncio
     async def test_should_use_cached_fallback(self, manager, mock_dependencies, mocker):
         """Test cached data is used as fallback."""
+
         # Create async mock for get method that returns cached data
         async def mock_get(*args, **kwargs):
             return {"cached": "data"}
@@ -561,6 +565,7 @@ class TestGracefulDegradationManagerAsync:
     @pytest.mark.asyncio
     async def test_should_handle_unknown_service(self, manager):
         """Test execute_with_degradation handles unknown service."""
+
         async def func():
             return "result"
 
@@ -789,6 +794,7 @@ class TestExecuteWithDegradationFunction:
     @pytest.mark.asyncio
     async def test_should_delegate_to_manager(self):
         """Test module function delegates to manager."""
+
         async def test_func():
             return "result"
 

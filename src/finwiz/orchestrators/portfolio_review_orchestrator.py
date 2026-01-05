@@ -268,10 +268,7 @@ def _merge_deep_analysis_from_flow_state(
                     holdings_with_alternatives += 1
                     logger.debug(f"Added {len(alternatives)} alternatives for {ticker}")
 
-        logger.info(
-            f"Deep analysis merge complete: {holdings_with_deep_analysis} with deep analysis, "
-            f"{holdings_with_alternatives} with alternatives"
-        )
+        logger.info(f"Deep analysis merge complete: {holdings_with_deep_analysis} with deep analysis, {holdings_with_alternatives} with alternatives")
 
         return decisions
 
@@ -331,10 +328,7 @@ async def build_portfolio_review(
 
     summary = processor.get_processing_summary()
 
-    logger.info(
-        f"Processing complete: {summary.processed_successfully} successful, "
-        f"{summary.processed_with_warnings} with warnings, {summary.failed_to_process} failed"
-    )
+    logger.info(f"Processing complete: {summary.processed_successfully} successful, {summary.processed_with_warnings} with warnings, {summary.failed_to_process} failed")
 
     if summary.validation_failures:
         logger.warning(f"Validation failures: {len(summary.validation_failures)}")

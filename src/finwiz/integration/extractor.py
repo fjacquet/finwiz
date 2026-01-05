@@ -24,16 +24,9 @@ class CrewDataExtractor:
     and error handling.
     """
 
-    def __init__(self, lineage_tracker: Any = None) -> None:
-        """
-        Initialize the CrewDataExtractor.
-
-        Args:
-            lineage_tracker: Optional DataLineage object to track data sources (Task 9.3)
-
-        """
+    def __init__(self) -> None:
+        """Initialize the CrewDataExtractor."""
         self.logger = logger
-        self.lineage_tracker = lineage_tracker
 
     def extract_quantitative_metrics(self, crew_output: str | dict, ticker: str, crew_name: str = "unknown_crew") -> dict[str, Any]:
         """
@@ -104,10 +97,6 @@ class CrewDataExtractor:
 
         # Extract metrics with type conversion
         try:
-            from datetime import datetime
-
-            extraction_timestamp = datetime.now().isoformat()
-
             extracted_metrics = {
                 "volatility": float(perf_metrics["volatility"]),
                 "max_drawdown": float(perf_metrics["max_drawdown"]),
@@ -115,31 +104,6 @@ class CrewDataExtractor:
                 "sharpe_ratio": (float(perf_metrics["sharpe_ratio"]) if "sharpe_ratio" in perf_metrics and perf_metrics["sharpe_ratio"] is not None else None),
                 "sortino_ratio": (float(perf_metrics["sortino_ratio"]) if "sortino_ratio" in perf_metrics and perf_metrics["sortino_ratio"] is not None else None),
             }
-
-            # Track data sources in lineage (Task 9.3)
-            if self.lineage_tracker:
-                for field_name, value in extracted_metrics.items():
-                    if value is not None:
-                        self.lineage_tracker.add_source(
-                            source_id=f"{crew_name}_{field_name}",
-                            source_type="api",  # From crew which calls APIs
-                            source_name=crew_name,
-                            field_name=field_name,
-                            raw_value=perf_metrics.get(field_name),
-                            timestamp=extraction_timestamp,
-                            metadata={"crew": crew_name, "section": "performance_metrics"},
-                        )
-
-                        # Track type conversion transformation if needed
-                        raw_value = perf_metrics.get(field_name)
-                        if raw_value is not None and type(raw_value) is not type(value):
-                            self.lineage_tracker.add_transformation(
-                                transformation_id=f"convert_{field_name}",
-                                operation="type_conversion",
-                                input_values={field_name: raw_value},
-                                output_value=value,
-                                formula=f"float({field_name})",
-                            )
 
             self.logger.info(
                 f"Successfully extracted quantitative metrics for {ticker}: volatility={extracted_metrics['volatility']:.3f}, max_drawdown={extracted_metrics['max_drawdown']:.3f}"
@@ -195,43 +159,7 @@ class CrewDataExtractor:
             raise MissingRequiredFieldError(ticker=ticker, field="composite_score", context={"source": "crew_output", "available_keys": list(data.keys())})
 
         try:
-            from datetime import datetime
-
-            extraction_timestamp = datetime.now().isoformat()
-
             result = {"grade": str(grade_value), "composite_score": float(score_value)}
-
-            # Track data sources in lineage (Task 9.3)
-            if self.lineage_tracker:
-                self.lineage_tracker.add_source(
-                    source_id=f"{crew_name}_grade",
-                    source_type="api",
-                    source_name=crew_name,
-                    field_name="grade",
-                    raw_value=grade_value,
-                    timestamp=extraction_timestamp,
-                    metadata={"crew": crew_name, "section": "crew_output"},
-                )
-
-                self.lineage_tracker.add_source(
-                    source_id=f"{crew_name}_composite_score",
-                    source_type="api",
-                    source_name=crew_name,
-                    field_name="composite_score",
-                    raw_value=score_value,
-                    timestamp=extraction_timestamp,
-                    metadata={"crew": crew_name, "section": "crew_output"},
-                )
-
-                # Track type conversion for composite_score if needed
-                if not isinstance(score_value, float):
-                    self.lineage_tracker.add_transformation(
-                        transformation_id="convert_composite_score",
-                        operation="type_conversion",
-                        input_values={"composite_score": score_value},
-                        output_value=result["composite_score"],
-                        formula="float(composite_score)",
-                    )
 
             self.logger.info(f"Successfully extracted grade and score for {ticker}: grade={result['grade']}, score={result['composite_score']:.3f}")
 

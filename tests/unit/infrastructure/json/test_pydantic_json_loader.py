@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 from faker import Faker
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from finwiz.infrastructure.json.pydantic_json_loader import (
     PydanticValidationError,

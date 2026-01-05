@@ -8,13 +8,13 @@ analysis tools, ensuring proper fallback behavior and success/failure tracking.
 import asyncio
 import os
 
+from finwiz.config.features.flags import FeatureFlags, FeatureFlagStrategy
 from finwiz.schemas.perplexity import SonarArticle, SonarSearchResult
 from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
 from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,
 )
 from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker
-from finwiz.config.features.flags import FeatureFlags, FeatureFlagStrategy
 
 
 class TestPerplexityFeatureFlagIntegration:

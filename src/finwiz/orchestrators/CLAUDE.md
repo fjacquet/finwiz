@@ -28,9 +28,6 @@ orchestrators/
 ├── # Alternative Matching
 ├── alternatives_matching_orchestrator.py  # A+ alternatives matching
 │
-├── # Monitoring
-├── a_plus_monitoring_orchestrator.py     # A+ monitoring
-│
 └── # Validation
     ├── validation_helpers.py         # Validation utilities
     └── validation_orchestrator.py    # Validation coordination

@@ -10,8 +10,8 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from pytest import approx
 
-from finwiz.validation.freshness import DataFreshnessValidator
 from finwiz.integration.freshness_validated_tool import FreshnessValidatedTool, RefreshResult, add_freshness_validation
+from finwiz.validation.freshness import DataFreshnessValidator
 
 
 class MockToolInput(BaseModel):

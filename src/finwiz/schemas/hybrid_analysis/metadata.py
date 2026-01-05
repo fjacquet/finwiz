@@ -1,13 +1,11 @@
 """
-Metadata schemas for hybrid analysis data quality and lineage tracking.
+Metadata schemas for hybrid analysis data quality tracking.
 
-This module provides Pydantic models for tracking data quality metrics and
-data lineage throughout the hybrid Python/AI analysis pipeline.
+This module provides Pydantic models for tracking data quality metrics
+throughout the hybrid Python/AI analysis pipeline.
 """
 
-from datetime import datetime
-
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class DataQualityMetrics(BaseModel):
@@ -36,46 +34,3 @@ class DataQualityMetrics(BaseModel):
             "examples": [{"completeness_score": 0.95, "freshness_score": 1.0, "accuracy_confidence": 0.90, "source_reliability": 0.85, "missing_fields": ["beta"]}]
         },
     }
-
-
-class DataLineage(BaseModel):
-    """
-    Track data sources and transformations for audit trail.
-
-    Maintains complete lineage of data from source through transformations
-    to ensure reproducibility and debugging capability.
-
-    Examples:
-        >>> lineage = DataLineage(
-        ...     primary_sources=["yfinance", "alpha_vantage"], collection_timestamp=datetime.now(), transformation_steps=["normalize", "calculate_metrics"], cache_status="fresh"
-        ... )
-        >>> assert len(lineage.primary_sources) > 0
-
-    """
-
-    primary_sources: list[str] = Field(..., min_length=1, description="Primary data sources (e.g., 'yfinance', 'sec_api')")
-    collection_timestamp: datetime = Field(..., description="When data was collected (UTC)")
-    transformation_steps: list[str] = Field(default_factory=list, description="Data transformation steps applied")
-    cache_status: str = Field(..., description="Whether data was cached or fresh")
-
-    model_config = {
-        "str_strip_whitespace": True,
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "primary_sources": ["yfinance", "alpha_vantage"],
-                    "collection_timestamp": "2025-11-21T10:30:00Z",
-                    "transformation_steps": ["normalize", "calculate_metrics"],
-                    "cache_status": "fresh",
-                }
-            ]
-        },
-    }
-
-    @field_validator("primary_sources")
-    @classmethod
-    def validate_primary_sources(cls, v: list[str]) -> list[str]:
-        """Ensure primary_sources is non-empty."""
-        if not v:
-            raise ValueError("primary_sources must contain at least one source")
-        return v

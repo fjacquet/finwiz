@@ -18,7 +18,8 @@ except ImportError:
 pytestmark = pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI not installed")
 
 if FASTAPI_AVAILABLE:
-    from fastapi import FastAPI, Request
+    from fastapi import FastAPI
+
     from finwiz.api.app import create_app, lifespan
     from finwiz.config.manager import ConfigurationError
 
@@ -61,13 +62,8 @@ class TestLifespan:
 
         # Verify startup and shutdown logs
         assert mock_logger.info.call_count >= 2
-        startup_logged = any(
-            "Starting FinWiz API" in str(call)
-            for call in mock_logger.info.call_args_list
-        )
-        shutdown_logged = any(
-            "Shutting down" in str(call) for call in mock_logger.info.call_args_list
-        )
+        startup_logged = any("Starting FinWiz API" in str(call) for call in mock_logger.info.call_args_list)
+        shutdown_logged = any("Shutting down" in str(call) for call in mock_logger.info.call_args_list)
         assert startup_logged
         assert shutdown_logged
 
@@ -75,9 +71,7 @@ class TestLifespan:
     async def test_should_raise_configuration_error(self, mocker):
         """Test that ConfigurationError is re-raised."""
         mock_config_manager = mocker.MagicMock()
-        mock_config_manager.validate_startup_configuration.side_effect = (
-            ConfigurationError("Invalid config", "Fix this")
-        )
+        mock_config_manager.validate_startup_configuration.side_effect = ConfigurationError("Invalid config", "Fix this")
         mocker.patch(
             "finwiz.api.app.get_configuration_manager",
             return_value=mock_config_manager,
@@ -97,9 +91,7 @@ class TestLifespan:
     async def test_should_raise_generic_exception(self, mocker):
         """Test that generic exceptions are re-raised."""
         mock_config_manager = mocker.MagicMock()
-        mock_config_manager.validate_startup_configuration.side_effect = ValueError(
-            "Bad value"
-        )
+        mock_config_manager.validate_startup_configuration.side_effect = ValueError("Bad value")
         mocker.patch(
             "finwiz.api.app.get_configuration_manager",
             return_value=mock_config_manager,

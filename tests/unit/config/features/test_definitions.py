@@ -4,18 +4,15 @@ Unit tests for feature flag definitions.
 Tests for environment variable helpers and default flag creation.
 """
 
-import pytest
-from faker import Faker
-
 from finwiz.config.features.definitions import (
     CircuitBreakerState,
     FallbackStrategy,
     FeatureFlagConfig,
     FeatureFlagStrategy,
+    create_default_flags,
     get_env_bool,
     get_env_float,
     get_env_int,
-    create_default_flags,
 )
 
 
@@ -176,10 +173,13 @@ class TestCreateDefaultFlags:
 
     def test_should_configure_flags_from_environment(self, mocker):
         """Test configures flags from environment variables."""
-        mocker.patch.dict("os.environ", {
-            "FF_ENHANCED_SENTIMENT": "false",
-            "FF_ENHANCED_SENTIMENT_ROLLOUT": "50.0",
-        })
+        mocker.patch.dict(
+            "os.environ",
+            {
+                "FF_ENHANCED_SENTIMENT": "false",
+                "FF_ENHANCED_SENTIMENT_ROLLOUT": "50.0",
+            },
+        )
 
         flags = create_default_flags()
 

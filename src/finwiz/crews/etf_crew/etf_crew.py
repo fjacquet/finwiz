@@ -46,11 +46,7 @@ from finwiz.tools.tool_factories import get_etf_crew_tools
 load_dotenv()
 
 # Get standardized tool set for ETF crew and make them robust
-raw_tools = get_etf_crew_tools(
-    include_rag=False,  # Disabled - qdrant-client conflict
-    include_quantitative=True,
-    collection_suffix="etf",
-)
+raw_tools = get_etf_crew_tools(include_quantitative=True)
 tools = make_tools_robust(raw_tools)
 
 

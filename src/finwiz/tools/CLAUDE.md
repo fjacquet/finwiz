@@ -34,7 +34,6 @@ tools/
 ├── tool_factories.py      # MAIN: Centralized tool initialization
 ├── finance_tools.py       # Core financial data tools
 ├── quantitative_analysis_tool.py  # Quantitative metrics
-├── rag_tools.py           # RAG knowledge tools
 ├── valuation_tool.py      # DCF, P/E valuation
 └── [many more specialized tools]
 ```
@@ -79,12 +78,10 @@ tools/
 | `coinmarketcap_tool.py` | `CoinMarketCapTool` | Crypto market data |
 | `kraken_api_tool.py` | `KrakenAPITool` | Crypto trading data |
 
-### RAG and Knowledge Tools
+### Research Tools
 
-| File | Function | Purpose |
-|------|----------|---------|
-| `rag_tools.py` | `get_rag_tools()` | RAG query and save tools |
-| `save_to_rag_tool.py` | `SaveToRagTool` | Save to vector DB |
+| File | Class | Purpose |
+|------|-------|---------|
 | `perplexity_search_tool.py` | `PerplexitySearchTool` | AI-powered research |
 
 ## Tool Factory Pattern
@@ -96,10 +93,8 @@ from finwiz.tools.tool_factories import get_stock_crew_tools
 
 # Get standardized tool set
 tools = get_stock_crew_tools(
-    include_rag=True,
     include_quantitative=True,
     include_valuation=True,
-    collection_suffix="stock",
     prefetched_data=None  # or dict for batch mode
 )
 ```

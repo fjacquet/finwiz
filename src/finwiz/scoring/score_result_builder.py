@@ -13,7 +13,6 @@ from finwiz.flow_state import DeepAnalysisResult
 from finwiz.scoring.thresholds import ScoringThresholds, get_thresholds
 
 if TYPE_CHECKING:
-    from finwiz.schemas.data_lineage import DataLineage
     from finwiz.validation.quality_metrics import DataQualityMetrics
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,6 @@ class ScoreResultBuilder:
         composite_score: float,
         scores: dict[str, Any],
         data: dict[str, Any],
-        lineage_tracker: DataLineage,
         data_quality_metrics: DataQualityMetrics,
     ) -> DeepAnalysisResult:
         """
@@ -46,7 +44,6 @@ class ScoreResultBuilder:
             composite_score: Weighted composite score
             scores: Dictionary with component scores and details
             data: Dictionary containing all analysis data
-            lineage_tracker: Data lineage tracker
             data_quality_metrics: Data quality metrics tracker
 
         Returns:
@@ -54,27 +51,6 @@ class ScoreResultBuilder:
         """
         # Assign grade and recommendation
         grade = self.assign_grade(composite_score)
-
-        # Track grade assignment in lineage
-        lineage_tracker.add_calculation(
-            step_id="grade_assignment",
-            step_name="grade",
-            inputs={"composite_score": composite_score},
-            calculation="Grade assignment based on composite score",
-            formula=f"grading_scale[{composite_score:.3f}]",
-            output=grade,
-            metadata={
-                "grading_scale": {
-                    self.thresholds.grade_a_plus: "A+",
-                    self.thresholds.grade_a: "A",
-                    self.thresholds.grade_b: "B",
-                    self.thresholds.grade_c: "C",
-                    self.thresholds.grade_d: "D",
-                    0.0: "F",
-                }
-            },
-        )
-
         recommendation = self.generate_recommendation(composite_score, grade)
         confidence = self._calculate_confidence(
             scores["fundamental_score"],
@@ -110,16 +86,6 @@ class ScoreResultBuilder:
                 f"⚠️ Low data quality for {ticker}: completeness={data_quality_summary['completeness_score']:.1%}, quality={data_quality_summary['quality_score']:.1%}"
             )
 
-        # Finalize lineage with final values
-        lineage_tracker.final_values = {
-            "composite_score": composite_score,
-            "grade": grade,
-            "recommendation": recommendation,
-            "fundamental_score": scores["fundamental_score"],
-            "technical_score": scores["technical_score"],
-            "risk_score": scores["risk_score"],
-        }
-
         result = DeepAnalysisResult(
             ticker=ticker,
             asset_class=asset_class,
@@ -139,7 +105,6 @@ class ScoreResultBuilder:
             warnings=[],
             cached=False,
             data_quality=data_quality_summary,
-            lineage=lineage_tracker.model_dump(),
         )
 
         # Log successful scoring with data quality info

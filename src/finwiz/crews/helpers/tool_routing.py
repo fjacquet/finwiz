@@ -57,23 +57,17 @@ def get_tools_for_asset_class(
 
     if asset_class_lower == "stock":
         raw_tools = get_stock_crew_tools(
-            include_rag=False,  # ⚡ OPTIMIZED: Disabled RAG for faster execution
             include_quantitative=True,
-            collection_suffix="stock_deep",
             prefetched_data=prefetched_data,
         )
     elif asset_class_lower == "etf":
         raw_tools = get_etf_crew_tools(
-            include_rag=False,  # ⚡ OPTIMIZED: Disabled RAG for faster execution
             include_quantitative=True,
-            collection_suffix="etf_deep",
             prefetched_data=prefetched_data,
         )
     elif asset_class_lower == "crypto":
         raw_tools = get_crypto_crew_tools(
-            include_rag=False,  # ⚡ OPTIMIZED: Disabled RAG for faster execution
             include_quantitative=True,
-            collection_suffix="crypto_deep",
             prefetched_data=prefetched_data,
         )
     else:

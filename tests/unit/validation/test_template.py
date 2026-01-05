@@ -4,9 +4,6 @@ Unit tests for template variable validator.
 Tests for the TemplateVariableValidator class and related functions.
 """
 
-import tempfile
-from pathlib import Path
-
 import pytest
 import yaml
 from faker import Faker
@@ -81,11 +78,7 @@ class TestScanTaskConfigs:
     def test_should_extract_single_variable(self, validator, tmp_path):
         """Test extracting single template variable."""
         tasks_file = tmp_path / "tasks.yaml"
-        tasks_config = {
-            "task1": {
-                "description": "Analyze {ticker} stock"
-            }
-        }
+        tasks_config = {"task1": {"description": "Analyze {ticker} stock"}}
         with open(tasks_file, "w") as f:
             yaml.dump(tasks_config, f)
 
@@ -96,11 +89,7 @@ class TestScanTaskConfigs:
     def test_should_extract_multiple_variables(self, validator, tmp_path):
         """Test extracting multiple template variables."""
         tasks_file = tmp_path / "tasks.yaml"
-        tasks_config = {
-            "task1": {
-                "description": "Analyze {ticker} of type {asset_class}"
-            }
-        }
+        tasks_config = {"task1": {"description": "Analyze {ticker} of type {asset_class}"}}
         with open(tasks_file, "w") as f:
             yaml.dump(tasks_config, f)
 
@@ -112,16 +101,7 @@ class TestScanTaskConfigs:
     def test_should_extract_from_nested_structures(self, validator, tmp_path):
         """Test extracting variables from nested YAML."""
         tasks_file = tmp_path / "tasks.yaml"
-        tasks_config = {
-            "task1": {
-                "description": "Analyze {ticker}",
-                "nested": {
-                    "deep": {
-                        "value": "Process {data_type}"
-                    }
-                }
-            }
-        }
+        tasks_config = {"task1": {"description": "Analyze {ticker}", "nested": {"deep": {"value": "Process {data_type}"}}}}
         with open(tasks_file, "w") as f:
             yaml.dump(tasks_config, f)
 
@@ -133,14 +113,7 @@ class TestScanTaskConfigs:
     def test_should_extract_from_lists(self, validator, tmp_path):
         """Test extracting variables from list items."""
         tasks_file = tmp_path / "tasks.yaml"
-        tasks_config = {
-            "task1": {
-                "items": [
-                    "Process {item1}",
-                    "Handle {item2}"
-                ]
-            }
-        }
+        tasks_config = {"task1": {"items": ["Process {item1}", "Handle {item2}"]}}
         with open(tasks_file, "w") as f:
             yaml.dump(tasks_config, f)
 
@@ -152,11 +125,7 @@ class TestScanTaskConfigs:
     def test_should_return_empty_for_no_variables(self, validator, tmp_path):
         """Test returns empty set when no variables found."""
         tasks_file = tmp_path / "tasks.yaml"
-        tasks_config = {
-            "task1": {
-                "description": "No template variables here"
-            }
-        }
+        tasks_config = {"task1": {"description": "No template variables here"}}
         with open(tasks_file, "w") as f:
             yaml.dump(tasks_config, f)
 
@@ -204,11 +173,7 @@ class TestDocumentCrew:
         config_dir = crew_dir / "config"
         config_dir.mkdir()
 
-        tasks_config = {
-            "analysis_task": {
-                "description": "Analyze {ticker} stock"
-            }
-        }
+        tasks_config = {"analysis_task": {"description": "Analyze {ticker} stock"}}
         tasks_file = config_dir / "tasks.yaml"
         with open(tasks_file, "w") as f:
             yaml.dump(tasks_config, f)
@@ -235,11 +200,7 @@ class TestDocumentCrew:
         config_dir = crew_dir / "config"
         config_dir.mkdir()
 
-        tasks_config = {
-            "task": {
-                "description": "Static task with no variables"
-            }
-        }
+        tasks_config = {"task": {"description": "Static task with no variables"}}
         tasks_file = config_dir / "tasks.yaml"
         with open(tasks_file, "w") as f:
             yaml.dump(tasks_config, f)
@@ -273,11 +234,7 @@ class TestDocumentAllCrews:
             config_dir = crew_dir / "config"
             config_dir.mkdir()
 
-            tasks_config = {
-                "task": {
-                    "description": f"Process {{ticker}} for {crew_name}"
-                }
-            }
+            tasks_config = {"task": {"description": f"Process {{ticker}} for {crew_name}"}}
             tasks_file = config_dir / "tasks.yaml"
             with open(tasks_file, "w") as f:
                 yaml.dump(tasks_config, f)
@@ -321,9 +278,7 @@ class TestDocumentAllCrews:
 
     def test_should_handle_nonexistent_directory(self, tmp_path):
         """Test handles nonexistent crews directory."""
-        validator = TemplateVariableValidator(
-            crews_dir=tmp_path / "nonexistent"
-        )
+        validator = TemplateVariableValidator(crews_dir=tmp_path / "nonexistent")
 
         success, info = validator.document_all_crews()
 

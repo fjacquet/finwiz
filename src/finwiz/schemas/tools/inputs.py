@@ -248,27 +248,6 @@ class PortfolioAnalysisInput(BaseModel):
     include_diversification: bool = Field(default=True, description="Include diversification analysis")
 
 
-# RAG Tool Inputs
-class KnowledgeBaseInput(BaseModel):
-    """Input schema for Knowledge Base tool with optional parameters."""
-
-    query: str = Field(..., description="Search query for the knowledge base")
-    similarity_threshold: float | None = Field(
-        default=None,
-        description="Minimum similarity score for results (0.0 to 1.0)",
-    )
-    limit: int | None = Field(
-        default=None,
-        description="Maximum number of results to return",
-    )
-
-
-class SaveToRagInput(BaseModel):
-    """Input schema for SaveToRagTool."""
-
-    text: str = Field(..., description="Text to store in the vector database")
-
-
 # Risk Assessment Tool Inputs
 class RiskAssessmentInput(BaseModel):
     """Input model for risk assessment tool."""

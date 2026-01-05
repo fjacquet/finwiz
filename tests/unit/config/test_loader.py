@@ -4,9 +4,11 @@ Unit tests for YAML configuration loader.
 Tests for loading and injecting guidelines into YAML configurations.
 """
 
-import pytest
 from pathlib import Path
-from finwiz.config.loader import load_yaml_config, load_config_with_guidelines, _get_config_path
+
+import pytest
+
+from finwiz.config.loader import _get_config_path, load_config_with_guidelines, load_yaml_config
 
 
 class TestGetConfigPath:
