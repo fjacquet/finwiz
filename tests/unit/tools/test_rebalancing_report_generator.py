@@ -364,27 +364,6 @@ class TestRebalancingReportGenerator:
         assert "execute-btn" in enhanced_html
         assert "scenario-card" in enhanced_html
 
-    def test_should_export_to_pdf_placeholder(self, mocker, sample_rebalancing_result):
-        """Test PDF export placeholder functionality."""
-        # Arrange
-        mock_write_text = mocker.patch("pathlib.Path.write_text")
-        mock_mkdir = mocker.patch("pathlib.Path.mkdir")
-        generator = RebalancingReportGenerator()
-        html_content = "<html><head></head><body>Test Report</body></html>"
-        output_path = "test_report.pdf"
-
-        # Act
-        generator.export_to_pdf(html_content, output_path)
-
-        # Assert
-        mock_mkdir.assert_called_once()
-        mock_write_text.assert_called_once()
-
-        # Check that HTML file was written with PDF conversion note
-        written_content = mock_write_text.call_args[0][0]
-        assert "PDF Export Note" in written_content
-        assert "weasyprint" in written_content
-
     def test_should_handle_empty_trade_recommendations(self):
         """Test handling of empty trade recommendations list."""
         # Arrange

@@ -4,7 +4,6 @@ Registry management for crew data integration.
 Handles crew coordination, data storage, retrieval, and dependency management.
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -13,13 +12,11 @@ from typing import Any
 from finwiz.infrastructure.monitoring.freshness_checker import DataFreshnessChecker, FreshnessReport
 
 from .registry_data_retrieval import (
-    get_cached_crew_output,
     get_crew_data_with_freshness_check,
     get_upstream_data,
 )
 from .registry_execution import coordinate_crew_execution
 from .registry_models import CrewConfig, ExecutionResult, UpstreamDataCollection
-
 
 # Re-export models for backward compatibility
 __all__ = [

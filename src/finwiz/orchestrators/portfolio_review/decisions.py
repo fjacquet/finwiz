@@ -156,11 +156,11 @@ def create_error_decision(
         name=name,
         asset_class=asset_class,
         currency="USD",
-        decision="HOLD",
+        decision="KEEP",  # Conservative: keep until properly analyzed
         composite_score=0.0,
         grade=grade_info.grade,
         grade_description=grade_info.description,
-        recommended_action="Review manually",
+        recommended_action="Review manually - processing error occurred",
         risk=RiskAssessmentStandardized(
             score=5.0,
             level="Very High",
@@ -169,7 +169,7 @@ def create_error_decision(
         rationale_bullets=[f"Error during processing: {error_message}"],
         citations=[],
         alternatives=[],
-        data_freshness="error",
+        data_freshness="stale",  # Mark as stale when error occurred
     )
 
 

@@ -193,15 +193,24 @@ class TestPerplexityFeatureFlagIntegration:
         assert status["circuit_breaker_info"]["is_open"] is False
         assert status["fallback_strategy"] == "cached_only"
 
-    def test_should_use_circuit_breaker_strategy_for_perplexity_flag(self):
+    def test_should_use_circuit_breaker_strategy_for_perplexity_flag(self, mocker):
         """Test that perplexity_research flag uses circuit breaker strategy."""
-        # Arrange & Act
+        # Arrange - mock env vars to ensure default values
+        mocker.patch.dict(
+            os.environ,
+            {
+                "FF_PERPLEXITY_BREAKER_THRESHOLD": "5",
+                "FF_PERPLEXITY_BREAKER_TIMEOUT": "300",
+            },
+        )
+
+        # Act
         flags = FeatureFlags()
 
         # Assert
         config = flags.flags["perplexity_research"]
         assert config.strategy == FeatureFlagStrategy.CIRCUIT_BREAKER
-        assert config.circuit_breaker_threshold > 0  # Should have a threshold configured
+        assert config.circuit_breaker_threshold == 5
         assert config.circuit_breaker_timeout == 300
 
     def test_should_fallback_gracefully_when_perplexity_fails(self, mocker):

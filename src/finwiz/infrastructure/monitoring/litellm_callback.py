@@ -5,7 +5,6 @@ This module provides a callback that logs the size of prompts being sent to LLMs
 helping diagnose token overflow issues.
 """
 
-import json
 from typing import Any
 
 import litellm
@@ -62,24 +61,16 @@ class TokenMonitorCallback(CustomLogger):
                 first_msg = str(messages[0].get("content", ""))[:500]
                 logger.error(f"   First message preview: {first_msg}...")
         elif estimated_tokens > 50000:
-            logger.warning(
-                f"⚠️ HIGH TOKEN COUNT: LLM call #{self.call_count} to {model}: "
-                f"{total_chars:,} chars (~{estimated_tokens:,} tokens)"
-            )
+            logger.warning(f"⚠️ HIGH TOKEN COUNT: LLM call #{self.call_count} to {model}: {total_chars:,} chars (~{estimated_tokens:,} tokens)")
         else:
-            logger.debug(
-                f"LLM call #{self.call_count} to {model}: "
-                f"{total_chars:,} chars (~{estimated_tokens:,} tokens)"
-            )
+            logger.debug(f"LLM call #{self.call_count} to {model}: {total_chars:,} chars (~{estimated_tokens:,} tokens)")
 
     def log_success_event(self, kwargs: dict, response_obj: Any, start_time: float, end_time: float) -> None:
         """Called after successful LLM call."""
         usage = getattr(response_obj, "usage", None)
         if usage:
             logger.info(
-                f"✅ LLM call #{self.call_count} completed: "
-                f"prompt_tokens={getattr(usage, 'prompt_tokens', 'N/A')}, "
-                f"completion_tokens={getattr(usage, 'completion_tokens', 'N/A')}"
+                f"✅ LLM call #{self.call_count} completed: prompt_tokens={getattr(usage, 'prompt_tokens', 'N/A')}, completion_tokens={getattr(usage, 'completion_tokens', 'N/A')}"
             )
 
     def log_failure_event(self, kwargs: dict, response_obj: Any, start_time: float, end_time: float) -> None:

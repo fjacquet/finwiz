@@ -437,4 +437,3 @@ class CrewFactory:
         except Exception as e:
             self.logger.warning(f"Failed to extract market context from core analysis: {e}")
             return market_context
-

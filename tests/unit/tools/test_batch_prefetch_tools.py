@@ -245,7 +245,7 @@ class TestQuantitativeAnalysisToolWithPrefetch:
         prefetched_data = {"AAPL": {"symbol": "AAPL", "price": 150.0}}
 
         # Act
-        tools = get_stock_crew_tools(include_rag=False, include_quantitative=False, prefetched_data=prefetched_data)
+        tools = get_stock_crew_tools(include_quantitative=False, include_valuation=False, prefetched_data=prefetched_data)
 
         # Assert
         assert len(tools) > 0
@@ -259,7 +259,7 @@ class TestQuantitativeAnalysisToolWithPrefetch:
         prefetched_data = {"BTC-USD": {"symbol": "BTC-USD", "price": 50000.0}}
 
         # Act
-        tools = get_crypto_crew_tools(include_rag=False, include_quantitative=False, prefetched_data=prefetched_data)
+        tools = get_crypto_crew_tools(include_quantitative=False, prefetched_data=prefetched_data)
 
         # Assert
         assert len(tools) > 0
@@ -272,7 +272,7 @@ class TestQuantitativeAnalysisToolWithPrefetch:
         prefetched_data = {"SPY": {"symbol": "SPY", "price": 450.0}}
 
         # Act
-        tools = get_etf_crew_tools(include_rag=False, include_etf_analysis=False, prefetched_data=prefetched_data)
+        tools = get_etf_crew_tools(include_quantitative=False, include_etf_analysis=False, prefetched_data=prefetched_data)
 
         # Assert
         assert len(tools) > 0

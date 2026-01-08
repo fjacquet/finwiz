@@ -170,8 +170,6 @@ def cmd_analyze(args: Any) -> None:
         print(f"Analysis failed: {e}")
 
 
-
-
 def main() -> int | None:
     """Run the main CLI interface."""
     parser = argparse.ArgumentParser(

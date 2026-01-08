@@ -6,7 +6,6 @@ rebalancing analysis reports with interactive elements and PDF export functional
 """
 
 import logging
-from pathlib import Path
 
 from finwiz.schemas.portfolio_rebalancing import RebalancingResult
 from finwiz.tools.html_report_generator import HTMLReportGenerator

@@ -26,8 +26,14 @@ class TestStockCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = [mocker.Mock(spec=BaseTool)]
+        mock_valuation_tool = mocker.patch("finwiz.tools.tool_factories.get_valuation_tool")
+        mock_valuation_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_stock_crew_tools()
@@ -46,8 +52,14 @@ class TestStockCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_valuation_tool = mocker.patch("finwiz.tools.tool_factories.get_valuation_tool")
+        mock_valuation_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_stock_crew_tools(include_quantitative=True)
@@ -64,8 +76,14 @@ class TestStockCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_valuation_tool = mocker.patch("finwiz.tools.tool_factories.get_valuation_tool")
+        mock_valuation_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_stock_crew_tools(include_quantitative=False)
@@ -73,8 +91,8 @@ class TestStockCrewToolFactory:
         # Assert
         mock_quant_tool.assert_not_called()
 
-    def test_should_include_rag_tools_when_flag_is_true(self, mocker):
-        """Test that RAG tools are included when flag is True."""
+    def test_should_include_valuation_tool_when_flag_is_true(self, mocker):
+        """Test that valuation tool is included when flag is True."""
         # Arrange
         mock_stock_tools = mocker.patch("finwiz.tools.tool_factories.get_stock_research_tools")
         mock_stock_tools.return_value = []
@@ -82,17 +100,23 @@ class TestStockCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = [mocker.Mock(spec=BaseTool)]
+        mock_valuation_tool = mocker.patch("finwiz.tools.tool_factories.get_valuation_tool")
+        mock_valuation_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
-        tools = get_stock_crew_tools(include_rag=True)
+        tools = get_stock_crew_tools(include_valuation=True)
 
         # Assert
-        mock_rag_tools.assert_called_once_with(collection_suffix="stock")
+        mock_valuation_tool.assert_called_once()
 
-    def test_should_exclude_rag_tools_when_flag_is_false(self, mocker):
-        """Test that RAG tools are excluded when flag is False."""
+    def test_should_exclude_valuation_tool_when_flag_is_false(self, mocker):
+        """Test that valuation tool is excluded when flag is False."""
         # Arrange
         mock_stock_tools = mocker.patch("finwiz.tools.tool_factories.get_stock_research_tools")
         mock_stock_tools.return_value = []
@@ -100,32 +124,20 @@ class TestStockCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_valuation_tool = mocker.patch("finwiz.tools.tool_factories.get_valuation_tool")
+        mock_valuation_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
-        tools = get_stock_crew_tools(include_rag=False)
+        tools = get_stock_crew_tools(include_valuation=False)
 
         # Assert
-        mock_rag_tools.assert_not_called()
-
-    def test_should_pass_collection_suffix_to_rag_tools(self, mocker):
-        """Test that collection_suffix parameter is passed to RAG tools."""
-        # Arrange
-        mock_stock_tools = mocker.patch("finwiz.tools.tool_factories.get_stock_research_tools")
-        mock_stock_tools.return_value = []
-
-        mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
-        mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
-
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
-
-        # Act
-        tools = get_stock_crew_tools(collection_suffix="custom_stock")
-
-        # Assert
-        mock_rag_tools.assert_called_once_with(collection_suffix="custom_stock")
+        mock_valuation_tool.assert_not_called()
 
 
 class TestCryptoCrewToolFactory:
@@ -140,8 +152,11 @@ class TestCryptoCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = [mocker.Mock(spec=BaseTool)]
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_crypto_crew_tools()
@@ -160,8 +175,11 @@ class TestCryptoCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_crypto_crew_tools(include_quantitative=True)
@@ -178,32 +196,17 @@ class TestCryptoCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_crypto_crew_tools(include_quantitative=False)
 
         # Assert
         mock_quant_tool.assert_not_called()
-
-    def test_should_pass_collection_suffix_to_rag_tools(self, mocker):
-        """Test that collection_suffix parameter is passed to RAG tools."""
-        # Arrange
-        mock_crypto_tools = mocker.patch("finwiz.tools.tool_factories.get_crypto_research_tools")
-        mock_crypto_tools.return_value = []
-
-        mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
-        mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
-
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
-
-        # Act
-        tools = get_crypto_crew_tools(collection_suffix="custom_crypto")
-
-        # Assert
-        mock_rag_tools.assert_called_once_with(collection_suffix="custom_crypto")
 
 
 class TestETFCrewToolFactory:
@@ -218,8 +221,14 @@ class TestETFCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = [mocker.Mock(spec=BaseTool)]
+        mock_etf_analysis_tool = mocker.patch("finwiz.tools.tool_factories.get_etf_analysis_tool")
+        mock_etf_analysis_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_etf_crew_tools()
@@ -238,8 +247,14 @@ class TestETFCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_etf_analysis_tool = mocker.patch("finwiz.tools.tool_factories.get_etf_analysis_tool")
+        mock_etf_analysis_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_etf_crew_tools(include_quantitative=True)
@@ -256,8 +271,14 @@ class TestETFCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_etf_analysis_tool = mocker.patch("finwiz.tools.tool_factories.get_etf_analysis_tool")
+        mock_etf_analysis_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
         tools = get_etf_crew_tools(include_quantitative=False)
@@ -265,8 +286,8 @@ class TestETFCrewToolFactory:
         # Assert
         mock_quant_tool.assert_not_called()
 
-    def test_should_pass_collection_suffix_to_rag_tools(self, mocker):
-        """Test that collection_suffix parameter is passed to RAG tools."""
+    def test_should_include_etf_analysis_tool_when_flag_is_true(self, mocker):
+        """Test that ETF analysis tool is included when flag is True."""
         # Arrange
         mock_etf_tools = mocker.patch("finwiz.tools.tool_factories.get_etf_research_tools")
         mock_etf_tools.return_value = []
@@ -274,11 +295,41 @@ class TestETFCrewToolFactory:
         mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
         mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
 
-        mock_rag_tools = mocker.patch("finwiz.tools.tool_factories.get_rag_tools")
-        mock_rag_tools.return_value = []
+        mock_etf_analysis_tool = mocker.patch("finwiz.tools.tool_factories.get_etf_analysis_tool")
+        mock_etf_analysis_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
 
         # Act
-        tools = get_etf_crew_tools(collection_suffix="custom_etf")
+        tools = get_etf_crew_tools(include_etf_analysis=True)
 
         # Assert
-        mock_rag_tools.assert_called_once_with(collection_suffix="custom_etf")
+        mock_etf_analysis_tool.assert_called_once()
+
+    def test_should_exclude_etf_analysis_tool_when_flag_is_false(self, mocker):
+        """Test that ETF analysis tool is excluded when flag is False."""
+        # Arrange
+        mock_etf_tools = mocker.patch("finwiz.tools.tool_factories.get_etf_research_tools")
+        mock_etf_tools.return_value = []
+
+        mock_quant_tool = mocker.patch("finwiz.tools.tool_factories.get_quantitative_analysis_tool")
+        mock_quant_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_etf_analysis_tool = mocker.patch("finwiz.tools.tool_factories.get_etf_analysis_tool")
+        mock_etf_analysis_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_dir_tool = mocker.patch("finwiz.tools.tool_factories.DirectoryReadTool")
+        mock_dir_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        mock_file_tool = mocker.patch("finwiz.tools.tool_factories.FileReadTool")
+        mock_file_tool.return_value = mocker.Mock(spec=BaseTool)
+
+        # Act
+        tools = get_etf_crew_tools(include_etf_analysis=False)
+
+        # Assert
+        mock_etf_analysis_tool.assert_not_called()
