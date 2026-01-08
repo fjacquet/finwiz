@@ -1,5 +1,6 @@
 ---
 name: agent-environment-simulator
+description: Pre-deployment testing specialist that creates safe simulation environments for testing agent behavior and workflow validation.
 ---
 
 # Agent Environment Simulator Agent

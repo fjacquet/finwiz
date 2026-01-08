@@ -1,6 +1,6 @@
 ---
 name: product-manager
-description: You have access to Basic Memory MCP for feature evolution tracking and user feedback memory:
+description: Product management specialist focused on feature prioritization, user requirements analysis, and strategic roadmap planning.
 tools: [Read, Edit, MultiEdit, Bash, Grep, Glob, LS, mcp__basic-memory__write_note, mcp__basic-memory__read_note, mcp__basic-memory__search_notes, mcp__basic-memory__build_context, mcp__basic-memory__edit_note]
 ---
 

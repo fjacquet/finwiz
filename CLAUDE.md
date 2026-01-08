@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code. Use `/skill-name` for detailed standards.
+Guidance for Claude Code.
 
 ## Quick Reference
 
@@ -54,24 +54,6 @@ FinWiz is an AI-powered financial analysis platform built with CrewAI for stocks
 - **Flow methods** - Must return `dict[str, Any]`
 - **self.inputs** - NEVER use (deprecated), use `self.state`
 
-## Available Skills
-
-Use `/skill-name` for detailed standards:
-
-| Skill | Purpose |
-|-------|---------|
-| `/finwiz-crewai` | CrewAI agents, tasks, crews, flows |
-| `/finwiz-testing` | pytest-mock patterns, test structure |
-| `/finwiz-ai-minimalism` | Python vs AI decision framework |
-| `/finwiz-flow-architecture` | Flow patterns and state management |
-| `/finwiz-validation` | Pydantic strict mode, schemas |
-| `/finwiz-output-standards` | HTML reports, French language |
-| `/finwiz-financial-libraries` | TA-Lib, Backtrader, QuantLib |
-| `/finwiz-refactoring` | File splitting, backward compat |
-| `/finwiz-security` | API keys, input validation |
-| `/finwiz-development` | Dependencies, code quality |
-| `/finwiz-documentation` | Diátaxis framework |
-| `/finwiz-context7` | Up-to-date library docs via MCP |
 
 ## Environment Variables
 

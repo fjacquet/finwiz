@@ -293,6 +293,12 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         # This prevents token overflow errors (e.g., 302K tokens vs 131K limit)
         if model.startswith("openrouter/"):
             extra_body["transforms"] = ["middle-out"]
+            # Explicitly disable parallel tool calls for OpenRouter models
+            # This is required because some models ignore the top-level parallel_tool_calls param
+            # Also set tool_choice to enforce single tool execution
+            if disable_parallel:
+                extra_body["parallel_tool_calls"] = False
+                extra_body["tool_choice"] = "auto"
             logger.info("OpenRouter middle-out transform enabled for automatic context compression")
 
         # Create LLM with proper configuration
@@ -446,6 +452,14 @@ def get_thinking_llm() -> LLM:
         timeout = int(os.getenv("LITELLM_TIMEOUT") or os.getenv("OPENAI_TIMEOUT") or "300")
         disable_parallel = os.getenv("DISABLE_PARALLEL_TOOL_CALLS", "true").lower() == "true"
 
+        # Build extra body params for OpenRouter models
+        extra_body: dict[str, Any] = {}
+        if model.startswith("openrouter/"):
+            extra_body["transforms"] = ["middle-out"]
+            if disable_parallel:
+                extra_body["parallel_tool_calls"] = False
+                extra_body["tool_choice"] = "auto"
+
         # Create LLM with thinking parameters if supported
         # Note: CrewAI LLM doesn't directly pass thinking params to the model,
         # but we can use extra_body for custom parameters
@@ -454,6 +468,7 @@ def get_thinking_llm() -> LLM:
             "timeout": timeout,
             "parallel_tool_calls": False if disable_parallel else None,
             "drop_params": True,
+            "extra_body": extra_body if extra_body else None,
         }
 
         llm = LLM(**llm_kwargs)

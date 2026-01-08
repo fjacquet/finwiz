@@ -1,5 +1,6 @@
 ---
 name: tool-batch-optimizer
+description: Performance optimization specialist focused on efficient tool call batching and resource utilization optimization.
 ---
 
 # Tool Batch Optimizer Agent
