@@ -246,6 +246,10 @@ class DeepAnalysisOrchestrator:
         # Per-holding timeout - prevents one stuck ticker blocking all
         PER_HOLDING_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
 
+        # Global timeout for entire analysis phase (default: 30 minutes)
+        # Prevents the entire concurrent phase from hanging indefinitely
+        GLOBAL_PHASE_TIMEOUT = int(os.getenv("FINWIZ_PHASE_TIMEOUT", "1800"))
+
         async def analyze_with_timeout(holding: dict[str, Any], executor: Any) -> tuple[str, DeepAnalysisResult | None, Any | None]:
             """Wrap analysis with per-holding timeout that starts when work begins."""
             ticker = holding.get("ticker", "unknown")
@@ -265,16 +269,31 @@ class DeepAnalysisOrchestrator:
                     self.logger.error(f"Analysis failed for {ticker}: {e}")
                     return (ticker, None, None)
 
-        # Use ThreadPoolExecutor with more workers since semaphore controls concurrency
-        with ThreadPoolExecutor(max_workers=max_workers * 2) as executor:
+        # Use ThreadPoolExecutor with explicit cleanup to prevent deadlocks
+        # NOTE: When asyncio.wait_for times out, the underlying thread keeps running
+        # We must shutdown with wait=False to prevent hanging on stuck threads
+        executor = ThreadPoolExecutor(max_workers=max_workers * 2)
+        try:
             # Submit all holdings - semaphore ensures only max_workers run at a time
             # and timeout starts when semaphore is acquired (work begins)
             futures = [analyze_with_timeout(holding, executor) for holding in holdings]
             try:
-                completed = await asyncio.gather(*futures, return_exceptions=False)
+                # Global timeout prevents entire phase from hanging
+                completed = await asyncio.wait_for(
+                    asyncio.gather(*futures, return_exceptions=False),
+                    timeout=GLOBAL_PHASE_TIMEOUT,
+                )
+            except TimeoutError:
+                self.logger.error(f"Global phase timeout after {GLOBAL_PHASE_TIMEOUT}s - aborting remaining analyses")
+                completed = []
             except Exception as e:
                 self.logger.error(f"Deep analysis gather failed: {e}")
                 completed = []
+        finally:
+            # CRITICAL: Don't wait for stuck threads - they may be deadlocked
+            # cancel_futures=True attempts to cancel pending futures (Python 3.9+)
+            self.logger.info("Shutting down executor (not waiting for stuck threads)")
+            executor.shutdown(wait=False, cancel_futures=True)
 
         self.logger.info(f"asyncio.gather completed with {len(completed)} results")
 

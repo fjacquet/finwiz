@@ -215,10 +215,15 @@ class PortfolioMetrics:
 
 
 class PerformanceMonitor:
-    """Performance monitoring system for optimization modes."""
+    """Performance monitoring system for optimization modes.
+
+    Supports concurrent ticker tracking for parallel analysis execution.
+    """
 
     def __init__(self, session_id: str = "default"):
         """Initialize performance monitor."""
+        import threading
+
         self.session_id = session_id
         self.perf_config = get_performance_config_manager()
         self.mode = self.perf_config.get_mode()
@@ -226,51 +231,110 @@ class PerformanceMonitor:
         # Portfolio-level metrics
         self.portfolio_metrics = PortfolioMetrics(session_id=session_id, mode=self.mode)
 
-        # Current ticker being tracked
+        # Concurrent ticker tracking: dict[ticker, TickerMetrics]
+        # Supports parallel analysis execution without race conditions
+        self._active_tickers: dict[str, TickerMetrics] = {}
+        self._lock = threading.Lock()
+
+        # Deprecated: kept for backward compatibility but not used
         self.current_ticker_metrics: TickerMetrics | None = None
 
         logger.info(f"Performance monitor initialized for session {session_id} in {self.mode.value} mode")
 
     def start_ticker_analysis(self, ticker: str, asset_class: str) -> TickerMetrics:
-        """Start tracking performance for a ticker analysis."""
-        self.current_ticker_metrics = TickerMetrics(ticker=ticker, asset_class=asset_class, mode=self.mode)
+        """Start tracking performance for a ticker analysis.
+
+        Thread-safe: supports concurrent tracking of multiple tickers.
+        """
+        metrics = TickerMetrics(ticker=ticker, asset_class=asset_class, mode=self.mode)
+
+        with self._lock:
+            self._active_tickers[ticker] = metrics
+            # Update deprecated field for backward compatibility
+            self.current_ticker_metrics = metrics
 
         logger.info(f"Started performance tracking for {ticker} ({asset_class}) in {self.mode.value} mode")
-        return self.current_ticker_metrics
+        return metrics
 
-    def record_llm_call(self, cost_estimate: float = 0.0) -> None:
+    def record_llm_call(self, cost_estimate: float = 0.0, ticker: str | None = None) -> None:
         """Record an LLM call and its estimated cost."""
-        if self.current_ticker_metrics:
-            self.current_ticker_metrics.llm_call_count += 1
-            self.current_ticker_metrics.cost_estimate += cost_estimate
+        with self._lock:
+            if ticker and ticker in self._active_tickers:
+                self._active_tickers[ticker].llm_call_count += 1
+                self._active_tickers[ticker].cost_estimate += cost_estimate
+            elif self._active_tickers:
+                # Fallback: use most recent active ticker
+                recent_ticker = next(iter(self._active_tickers.values()))
+                recent_ticker.llm_call_count += 1
+                recent_ticker.cost_estimate += cost_estimate
 
-    def record_api_call(self) -> None:
+    def record_api_call(self, ticker: str | None = None) -> None:
         """Record an API call."""
-        if self.current_ticker_metrics:
-            self.current_ticker_metrics.api_call_count += 1
+        with self._lock:
+            if ticker and ticker in self._active_tickers:
+                self._active_tickers[ticker].api_call_count += 1
+            elif self._active_tickers:
+                # Fallback: use most recent active ticker
+                recent_ticker = next(iter(self._active_tickers.values()))
+                recent_ticker.api_call_count += 1
 
-    def record_analysis_result(self, grade: str, composite_score: float, confidence: float) -> None:
+    def record_analysis_result(self, grade: str, composite_score: float, confidence: float, ticker: str | None = None) -> None:
         """Record analysis results for quality tracking."""
-        if self.current_ticker_metrics:
-            self.current_ticker_metrics.grade = grade
-            self.current_ticker_metrics.composite_score = composite_score
-            self.current_ticker_metrics.confidence = confidence
+        with self._lock:
+            if ticker and ticker in self._active_tickers:
+                metrics = self._active_tickers[ticker]
+                metrics.grade = grade
+                metrics.composite_score = composite_score
+                metrics.confidence = confidence
+            elif self._active_tickers:
+                # Fallback: use most recent active ticker
+                recent_ticker = next(iter(self._active_tickers.values()))
+                recent_ticker.grade = grade
+                recent_ticker.composite_score = composite_score
+                recent_ticker.confidence = confidence
 
-    def complete_ticker_analysis(self, success: bool = True, error_message: str | None = None) -> TickerMetrics:
-        """Complete ticker analysis and add to portfolio metrics."""
-        if not self.current_ticker_metrics:
-            raise ValueError("No ticker analysis in progress")
+    def complete_ticker_analysis(self, success: bool = True, error_message: str | None = None, ticker: str | None = None) -> TickerMetrics:
+        """Complete ticker analysis and add to portfolio metrics.
 
-        self.current_ticker_metrics.complete(success, error_message)
-        self.portfolio_metrics.add_ticker_metrics(self.current_ticker_metrics)
+        Thread-safe: supports concurrent completion of multiple tickers.
+
+        Args:
+            success: Whether analysis succeeded
+            error_message: Optional error message if failed
+            ticker: Specific ticker to complete (required for concurrent mode)
+
+        Returns:
+            Completed TickerMetrics
+
+        Raises:
+            ValueError: If no matching ticker analysis is in progress
+        """
+        with self._lock:
+            # Find the metrics to complete
+            if ticker and ticker in self._active_tickers:
+                metrics = self._active_tickers.pop(ticker)
+            elif not ticker and self._active_tickers:
+                # Fallback: complete oldest ticker (for backward compatibility)
+                oldest_ticker = next(iter(self._active_tickers))
+                metrics = self._active_tickers.pop(oldest_ticker)
+                logger.warning(f"complete_ticker_analysis called without ticker, completing {oldest_ticker}")
+            else:
+                # No active tickers - this is now a warning, not an error
+                logger.warning("complete_ticker_analysis called but no ticker analysis in progress")
+                # Return a dummy metrics object to prevent crashes
+                return TickerMetrics(ticker="unknown", asset_class="unknown", mode=self.mode)
+
+            # Update deprecated field
+            self.current_ticker_metrics = next(iter(self._active_tickers.values()), None) if self._active_tickers else None
+
+        # Complete the metrics (outside lock to reduce lock time)
+        metrics.complete(success, error_message)
+        self.portfolio_metrics.add_ticker_metrics(metrics)
 
         # Log performance results
-        self._log_ticker_performance(self.current_ticker_metrics)
+        self._log_ticker_performance(metrics)
 
-        completed_metrics = self.current_ticker_metrics
-        self.current_ticker_metrics = None
-
-        return completed_metrics
+        return metrics
 
     def complete_portfolio_analysis(self) -> PortfolioMetrics:
         """Complete portfolio analysis and generate final report."""

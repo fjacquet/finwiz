@@ -344,10 +344,10 @@ class DeepAnalysisCrew:
 
             # Record performance metrics
             if hasattr(result, "grade") and hasattr(result, "composite_score") and hasattr(result, "confidence"):
-                performance_monitor.record_analysis_result(result.grade, result.composite_score, result.confidence)
+                performance_monitor.record_analysis_result(result.grade, result.composite_score, result.confidence, ticker=ticker)
 
-            # Complete performance tracking
-            performance_monitor.complete_ticker_analysis(success=True)
+            # Complete performance tracking (pass ticker for concurrent tracking)
+            performance_monitor.complete_ticker_analysis(success=True, ticker=ticker)
 
             # Check if hybrid approach was used
             ai_summary_enabled = self.perf_config.should_use_ai_summary()
@@ -370,9 +370,9 @@ class DeepAnalysisCrew:
             return result
 
         except Exception as e:
-            # Complete performance tracking with error
+            # Complete performance tracking with error (pass ticker for concurrent tracking)
             if "performance_monitor" in locals():
-                performance_monitor.complete_ticker_analysis(success=False, error_message=str(e))
+                performance_monitor.complete_ticker_analysis(success=False, error_message=str(e), ticker=ticker)
 
             self.crew_logger.log_error(e)
             raise
