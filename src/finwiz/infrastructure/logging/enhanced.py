@@ -469,8 +469,9 @@ class EnhancedLogger:
             if len(data_str) > max_size:
                 return json.loads(data_str[:max_size]) if data_str[:max_size].endswith("}") else data_str[:max_size] + "..."
             return data
-        except Exception:
+        except (json.JSONDecodeError, TypeError, ValueError, OverflowError) as e:
             # If JSON serialization fails, convert to string and truncate
+            logger.warning(f"JSON serialization failed during data truncation: {e}")
             data_str = str(data)
             if len(data_str) > max_size:
                 return data_str[:max_size] + "..."

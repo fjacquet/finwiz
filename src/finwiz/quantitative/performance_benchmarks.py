@@ -244,8 +244,9 @@ class BenchmarkAnalyzer:
                     frontier_volatilities.append(vol)
                     frontier_sharpe.append(sharpe)
 
-                except Exception:
+                except (ValueError, RuntimeError, ArithmeticError) as e:
                     # Skip points that can't be optimized
+                    logger.warning(f"Efficient frontier optimization failed for target return {target_ret:.4f}: {e}")
                     continue
 
             return frontier_returns, frontier_volatilities, frontier_sharpe

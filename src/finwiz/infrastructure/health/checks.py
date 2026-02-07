@@ -6,6 +6,7 @@ directory structure, system resources, metadata, and validation status.
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,8 @@ from pydantic import BaseModel, Field
 
 from finwiz.infrastructure.logging.utils import IntegrationLogger
 from finwiz.infrastructure.monitoring.freshness_checker import DataFreshnessChecker
+
+_logger = logging.getLogger(__name__)
 
 
 class HealthStatus(BaseModel):
@@ -203,7 +206,8 @@ def check_directory_structure(
                     test_file.touch()
                     test_file.unlink()
                     healthy_dirs.append(str(directory))
-                except Exception:
+                except (OSError, PermissionError) as e:
+                    _logger.warning(f"Directory write access check failed for {directory}: {e}")
                     inaccessible_dirs.append(f"{directory} (no write access)")
 
         # Determine status
@@ -342,7 +346,8 @@ def check_integration_metadata(
                 existing_files.append(filename)
             except json.JSONDecodeError:
                 corrupted_files.append(filename)
-            except Exception:
+            except (OSError, PermissionError) as e:
+                _logger.warning(f"Failed to read metadata file {filename}: {e}")
                 corrupted_files.append(filename)
 
         # Determine status

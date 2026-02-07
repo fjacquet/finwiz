@@ -357,7 +357,8 @@ class DataCache:
 
             return None
 
-        except Exception:
+        except (ValueError, TypeError) as e:
+            self.logger.warning(f"Failed to parse allocation percentage from '{allocation_text}': {e}")
             return None
 
     def _get_aplus_availability_status(self, opportunities: APlusOpportunityCollection | None) -> dict[str, Any]:

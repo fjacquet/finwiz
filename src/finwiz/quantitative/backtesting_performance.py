@@ -253,7 +253,8 @@ class BacktestingPerformanceAnalyzer:
                     benchmark_returns.append(bench_return)
                 else:
                     benchmark_returns.append(0.0)
-            except Exception:
+            except (ValueError, TypeError, KeyError, IndexError) as e:
+                logger.warning(f"Failed to calculate benchmark return for date {date}: {e}")
                 benchmark_returns.append(0.0)
 
         if len(portfolio_returns) > 1 and len(benchmark_returns) > 1:
