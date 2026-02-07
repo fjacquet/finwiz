@@ -31,12 +31,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. No bare `except Exception:` handlers remain -- every catch uses specific exception types (ValueError, KeyError, APIError, etc.) with proper error context logging
   2. All `json.dumps()` calls use `default=str`, preventing TypeError on datetime/Decimal serialization
   3. All crew tasks that produce structured data use `output_pydantic` schemas, and crew results are accessed via Pydantic model fields instead of `str(result)` or `str(result.raw)` patterns
-**Plans**: 2 plans
+**Plans**: 4 plans
 
 Plans:
 
-- [ ] 01-01-PLAN.md -- Replace 43 bare except Exception: handlers + add default=str to 37 json.dumps calls (ERRH-01, ERRH-02)
-- [ ] 01-02-PLAN.md -- Standardize 5 CrewAI output patterns via result.pydantic cascade + fix flow state types (ERRH-03)
+- [ ] 01-01-PLAN.md -- Replace ~22 bare except Exception: handlers in tools/ files (ERRH-01)
+- [ ] 01-02-PLAN.md -- Replace ~21 bare except Exception: handlers in non-tools/ files (ERRH-01)
+- [ ] 01-03-PLAN.md -- Add default=str to ~37 json.dumps calls across 18 files (ERRH-02)
+- [ ] 01-04-PLAN.md -- Standardize 5 CrewAI output patterns via result.pydantic cascade + fix flow state types (ERRH-03)
 
 ### Phase 2: Discovery Core
 
@@ -68,12 +70,12 @@ Plans:
   3. Setting `FF_NEWCOMER_DISCOVERY=true` routes stock/etf/crypto analyzers through the new pipeline; `false` falls back to legacy mocked data with no behavior change
   4. Discovery results are persisted to `output/discovery/newcomer_{asset_class}.json` with valid NewcomerDiscoveryResult schema
   5. All discovery modules have passing unit tests covering happy path and error scenarios
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 
-- [ ] 03-01: Pipeline orchestrator with portfolio exclusion and output persistence (DISC-07, DISC-10)
-- [ ] 03-02: Perplexity enrichment, feature flag routing, and unit tests (DISC-08, DISC-09, DISC-11)
+- [ ] 03-01-PLAN.md -- Pipeline orchestrator with portfolio exclusion and output persistence (DISC-07, DISC-10)
+- [ ] 03-02-PLAN.md -- Perplexity enrichment, feature flag routing, and unit tests (DISC-08, DISC-09, DISC-11)
 
 ### Phase 4: Performance
 
@@ -120,7 +122,7 @@ Note: Phases 4 and 5 depend on Phase 1 but not on each other. However, running P
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Error Handling Cleanup | 0/2 | Not started | - |
+| 1. Error Handling Cleanup | 0/4 | Not started | - |
 | 2. Discovery Core | 0/2 | Not started | - |
 | 3. Discovery Integration | 0/2 | Not started | - |
 | 4. Performance | 0/2 | Not started | - |
