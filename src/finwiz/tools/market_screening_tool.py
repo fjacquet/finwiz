@@ -14,9 +14,12 @@ from pydantic import BaseModel
 
 # Import schemas from centralized location
 from finwiz.schemas.tools import MarketScreeningInput, MarketScreeningResult
+from finwiz.tools.logger import get_logger
 from finwiz.tools.screening_criteria import ScreeningCriteria
 from finwiz.tools.screening_ranking import ScreeningRanking
 from finwiz.tools.screening_utils import ScreeningUtils
+
+logger = get_logger(__name__)
 
 
 class MarketScreeningTool(BaseTool):
@@ -152,11 +155,13 @@ class MarketScreeningTool(BaseTool):
                                 }
                             )
 
-                except Exception:
+                except (KeyError, TypeError, ValueError, AttributeError) as e:
                     # Skip symbols that fail to process
+                    logger.warning(f"Failed to screen symbol {symbol}: {e}")
                     continue
 
             return filtered_candidates
 
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to apply screening filters: {e}")
             return []

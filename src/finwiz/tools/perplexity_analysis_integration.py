@@ -507,7 +507,8 @@ class PerplexityAnalysisIntegration:
 
                 publisher = domain_mapping.get(domain, domain.replace(".com", "").title())
 
-            except Exception:
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.warning(f"Failed to extract publisher from URL: {e}")
                 publisher = "Unknown"
 
         return publisher or "Unknown"
@@ -531,7 +532,8 @@ class PerplexityAnalysisIntegration:
                     elif isinstance(date_value, str):
                         # Return as-is if string
                         return date_value
-                except Exception:
+                except (ValueError, TypeError, OverflowError) as e:
+                    logger.warning(f"Failed to parse published date from field '{field}': {e}")
                     continue
 
         return None

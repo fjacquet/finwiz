@@ -214,8 +214,8 @@ class EnhancedSECAnalysisTool(BaseTool):
             if QueryApi is None:
                 try:
                     from sec_api import QueryApi as _QueryApi
-                except Exception:
-                    logger.debug("sec_api package not available, skipping filing date lookup")
+                except ImportError as e:
+                    logger.debug(f"sec_api package not available, skipping filing date lookup: {e}")
                     return None
                 QueryApi = _QueryApi
 
@@ -570,7 +570,8 @@ logger = get_logger(__name__)
 
 try:
     from unstructured.partition.html import partition_html
-except Exception:
+except ImportError as e:
+    logger.debug(f"unstructured package not available, using fallback HTML partitioner: {e}")
 
     def _partition_html_fallback(text: str) -> list[Any]:
         """Fallback partitioner: return the raw HTML as a single chunk."""

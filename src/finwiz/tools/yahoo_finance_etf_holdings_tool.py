@@ -8,6 +8,9 @@ from pydantic import BaseModel
 
 # Import schema from centralized location
 from finwiz.schemas.tools import GetETFHoldingsInput
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class YahooFinanceETFHoldingsTool(BaseTool):
@@ -43,8 +46,8 @@ class YahooFinanceETFHoldingsTool(BaseTool):
                             "shares": row.get("Shares", "N/A"),
                         }
                         holdings.append(holding)
-            except Exception:
-                pass
+            except (KeyError, ValueError, AttributeError, TypeError) as e:
+                logger.warning(f"Failed to get ETF holdings data for {ticker}: {e}")
 
             # Get sector breakdown if available
             sector_data = {}
@@ -52,8 +55,8 @@ class YahooFinanceETFHoldingsTool(BaseTool):
                 sector_data = etf_data.get_sector_data()
                 if isinstance(sector_data, dict):
                     sector_data = {k: float(v) for k, v in sector_data.items()}
-            except Exception:
-                pass
+            except (KeyError, ValueError, AttributeError, TypeError) as e:
+                logger.warning(f"Failed to get ETF sector data for {ticker}: {e}")
 
             result = {
                 "symbol": ticker,

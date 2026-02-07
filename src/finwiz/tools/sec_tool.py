@@ -16,6 +16,9 @@ from langchain_text_splitters import CharacterTextSplitter
 from pydantic import BaseModel
 
 from finwiz.schemas.tools import SECFilingSearchInput
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SECFilingSearchTool(BaseTool):
@@ -122,7 +125,8 @@ class SECFilingSearchTool(BaseTool):
 
 try:  # defer optional dependency
     from unstructured.partition.html import partition_html
-except Exception:  # pragma: no cover - provide a minimal fallback
+except ImportError as e:  # pragma: no cover - provide a minimal fallback
+    logger.debug(f"unstructured package not available, using fallback: {e}")
 
     def partition_html(text: str) -> list[Any]:  # type: ignore
         """Fallback partitioner: return the raw HTML as a single chunk."""

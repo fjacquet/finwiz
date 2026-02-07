@@ -8,6 +8,9 @@ from pydantic import BaseModel
 
 # Import schema from centralized location
 from finwiz.schemas.tools import GetCompanyInfoInput
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class YahooFinanceCompanyInfoTool(BaseTool):
@@ -38,8 +41,9 @@ class YahooFinanceCompanyInfoTool(BaseTool):
                         latest = revenues.iloc[0]
                         previous = revenues.iloc[1]
                         revenue_growth = (latest - previous) / previous if previous != 0 else "N/A"
-            except Exception:
+            except (KeyError, ValueError, TypeError, AttributeError, IndexError) as e:
                 # Fallback to info field if calculation fails
+                logger.warning(f"Failed to calculate revenue growth for {ticker}: {e}")
                 revenue_growth = info.get("revenueGrowth", "N/A")
 
             # Create a focused company profile
