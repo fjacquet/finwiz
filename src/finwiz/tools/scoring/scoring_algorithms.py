@@ -8,6 +8,9 @@ and cryptocurrencies across fundamental, technical, quality, and risk dimensions
 from typing import Any
 
 from finwiz.schemas.tools import MarketRegime, ScoringCriteria
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def calculate_fundamental_score(symbol: str, asset_type: str, data: dict[str, Any], criteria: ScoringCriteria) -> float:
@@ -22,7 +25,8 @@ def calculate_fundamental_score(symbol: str, asset_type: str, data: dict[str, An
         else:
             return 0.5  # Default score for unknown types
 
-    except Exception:
+    except (ValueError, TypeError, ZeroDivisionError, KeyError) as e:
+        logger.warning(f"Failed to calculate fundamental score for {symbol}: {e}")
         return 0.5  # Default on error
 
 
@@ -177,7 +181,8 @@ def calculate_technical_score(symbol: str, asset_type: str, data: dict[str, Any]
 
         return float(min(max(technical_score, 0.0), 1.0))
 
-    except Exception:
+    except (ValueError, TypeError, ZeroDivisionError) as e:
+        logger.warning(f"Failed to calculate technical score for {symbol}: {e}")
         return 0.5
 
 
@@ -208,7 +213,8 @@ def calculate_quality_score(symbol: str, asset_type: str, data: dict[str, Any], 
 
         return float(min(max(quality_score, 0.0), 1.0))
 
-    except Exception:
+    except (ValueError, TypeError, ZeroDivisionError) as e:
+        logger.warning(f"Failed to calculate quality score for {symbol}: {e}")
         return 0.5
 
 
@@ -237,7 +243,8 @@ def calculate_risk_score(symbol: str, asset_type: str, data: dict[str, Any], reg
 
         return float(risk_score)
 
-    except Exception:
+    except (ValueError, TypeError, ZeroDivisionError) as e:
+        logger.warning(f"Failed to calculate risk score for {symbol}: {e}")
         return 0.5
 
 

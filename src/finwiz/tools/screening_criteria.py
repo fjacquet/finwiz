@@ -7,6 +7,10 @@ screen different asset types (ETFs, stocks, cryptocurrencies) for A+ candidates.
 
 from typing import Any, Literal
 
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class ScreeningCriteria:
     """Screening criteria definitions and filtering logic."""
@@ -55,7 +59,8 @@ class ScreeningCriteria:
             else:
                 return False
 
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to apply screening filters for {asset_type}: {e}")
             return False
 
     @staticmethod
@@ -80,7 +85,8 @@ class ScreeningCriteria:
 
             return True
 
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to apply ETF filters: {e}")
             return False
 
     @staticmethod
@@ -112,7 +118,8 @@ class ScreeningCriteria:
 
             return True
 
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to apply stock filters: {e}")
             return False
 
     @staticmethod
@@ -141,5 +148,6 @@ class ScreeningCriteria:
 
             return True
 
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to apply crypto filters: {e}")
             return False

@@ -297,7 +297,8 @@ class PortfolioPriceService:
 
                         if info and info > 0:
                             return PriceData(symbol=symbol, price=float(info), timestamp=datetime.now(), source="yfinance_crypto", currency="USD")
-                    except Exception:
+                    except (KeyError, ValueError, AttributeError, TypeError) as e:
+                        logger.warning(f"Failed to get crypto price for {test_symbol}: {e}")
                         continue
 
             except TimeoutError:

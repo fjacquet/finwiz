@@ -11,6 +11,9 @@ from typing import Any, Literal, cast
 from pydantic import BaseModel, Field
 
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ScreeningCandidate(BaseModel):
@@ -84,8 +87,9 @@ class ScreeningRanking:
 
                 scored_candidates.append(screening_candidate)
 
-            except Exception:
+            except (KeyError, TypeError, ValueError, AttributeError) as e:
                 # Skip candidates that fail scoring
+                logger.warning(f"Failed to score candidate {candidate.get('symbol', 'unknown')}: {e}")
                 continue
 
         return scored_candidates
@@ -102,7 +106,8 @@ class ScreeningRanking:
             else:
                 return 0.5
 
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to calculate preliminary score for {asset_type}: {e}")
             return 0.5
 
     def _score_etf_preliminary(self, data: dict[str, Any]) -> float:

@@ -494,8 +494,9 @@ class BacktestingTool(BaseTool):
                             "market_return": total_return,
                         }
                     )
-                except Exception:
+                except (KeyError, ValueError, TypeError, IndexError) as e:
                     # If even fallback fails, return empty regimes
+                    logger.warning(f"Fallback regime identification also failed: {e}")
                     pass
 
         return regimes

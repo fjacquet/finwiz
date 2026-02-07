@@ -108,7 +108,8 @@ class ETFDataFetcher:
             else:
                 return "Unknown"
 
-        except Exception:
+        except (KeyError, ValueError, AttributeError, TypeError) as e:
+            logger.warning(f"Failed to extract issuer from page content: {e}")
             return "Unknown"
 
     @staticmethod
@@ -136,7 +137,8 @@ class ETFDataFetcher:
             # Default fallback for common ETFs
             return 0.20  # 0.20% default
 
-        except Exception:
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.warning(f"Failed to extract expense ratio: {e}")
             return 0.20
 
     @staticmethod
@@ -159,7 +161,8 @@ class ETFDataFetcher:
 
             return None  # No tracking difference found
 
-        except Exception:
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.warning(f"Failed to extract tracking difference: {e}")
             return None
 
     @staticmethod
@@ -177,7 +180,8 @@ class ETFDataFetcher:
             else:
                 return "other"
 
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            logger.warning(f"Failed to determine replication method: {e}")
             return "other"
 
     @staticmethod
@@ -198,7 +202,8 @@ class ETFDataFetcher:
             if not highlights:
                 highlights = ["Broad market exposure", "Low cost structure", "High liquidity"]
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to extract highlights: {e}")
             highlights = ["ETF analysis available"]
 
         return highlights[:20]  # Limit to 20 highlights
@@ -252,7 +257,8 @@ class ETFDataFetcher:
 
             return holdings[:max_holdings]
 
-        except Exception:
+        except (requests.exceptions.RequestException, ConnectionError, TimeoutError, KeyError, ValueError, AttributeError, TypeError) as e:
+            logger.warning(f"Failed to extract top holdings for {ticker}: {e}")
             # Return sample holdings on error
             return ETFDataFetcher.create_sample_holdings(ticker, f"https://finance.yahoo.com/quote/{ticker}")
 

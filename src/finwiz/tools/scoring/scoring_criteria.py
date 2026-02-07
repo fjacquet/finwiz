@@ -9,6 +9,9 @@ from datetime import datetime
 from typing import Any, Literal, cast
 
 from finwiz.schemas.tools import MarketRegime, ScoringCriteria
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def assess_market_regime(
@@ -69,7 +72,8 @@ def assess_market_regime(
 
         return regime
 
-    except Exception:
+    except (KeyError, TypeError, ValueError, AttributeError) as e:
+        logger.warning(f"Failed to assess market regime: {e}")
         # Return default regime on error
         return MarketRegime()
 
