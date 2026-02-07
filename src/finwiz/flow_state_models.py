@@ -145,7 +145,7 @@ class FinwizState(BaseModel):
 
     # Investment discovery data
     investment_discovery_available: bool = Field(default=False)
-    investment_discovery_result: str | None = None
+    investment_discovery_result: dict[str, Any] | None = None
     investment_discovery_structured: dict[str, Any] | None = None
     investment_discovery_error: str | None = None
 
