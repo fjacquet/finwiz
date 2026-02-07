@@ -332,7 +332,8 @@ class ReportValidator:
             context = context.strip()
 
             return f"...{context}..."
-        except Exception:
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.warning(f"Failed to extract context for pattern '{pattern}': {e}")
             return "Could not extract context"
 
 

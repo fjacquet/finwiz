@@ -492,7 +492,8 @@ class SECCitationValidator:
 
             return filing_info if filing_info.filing_type else None
 
-        except Exception:
+        except (ValueError, TypeError, AttributeError) as e:
+            self.logger.warning(f"Failed to extract filing info from URL {url}: {e}")
             return None
 
     def _extract_filing_type(self, citation: str) -> str:

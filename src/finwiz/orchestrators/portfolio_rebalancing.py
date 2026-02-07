@@ -333,7 +333,8 @@ class PortfolioRebalancingOrchestrator:
                 max(0.0, min(10.0, current_risk)),
                 max(0.0, min(10.0, projected_risk)),
             )
-        except Exception:
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to calculate risk scores, using defaults: {e}")
             return 5.0, 5.0
 
     def _generate_execution_summary(self, optimized_trades: OptimizedTrades, config: PortfolioConfiguration) -> ExecutionSummary:
@@ -395,7 +396,8 @@ class PortfolioRebalancingOrchestrator:
                 return RebalancingRecommendation.REBALANCE_SOON, datetime.now() + timedelta(days=7)
             else:
                 return RebalancingRecommendation.MONITOR, datetime.now() + timedelta(days=14)
-        except Exception:
+        except (KeyError, TypeError, ValueError, AttributeError) as e:
+            logger.warning(f"Failed to determine recommendation, defaulting to MONITOR: {e}")
             return RebalancingRecommendation.MONITOR, datetime.now() + timedelta(days=14)
 
     # =========================================================================

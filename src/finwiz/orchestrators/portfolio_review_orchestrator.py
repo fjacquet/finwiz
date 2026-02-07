@@ -64,13 +64,15 @@ def get_thresholds() -> tuple[float, float, int]:
     def _f(name: str, default: float) -> float:
         try:
             return float(os.getenv(name, default))
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Failed to parse float env var {name}, using default {default}: {e}")
             return default
 
     def _i(name: str, default: int) -> int:
         try:
             return int(os.getenv(name, default))
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Failed to parse int env var {name}, using default {default}: {e}")
             return default
 
     return (

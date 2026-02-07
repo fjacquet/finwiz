@@ -166,7 +166,8 @@ class DataIntegrityValidator(ValidationScript):
                         if timestamp:
                             all_timestamps[crew_name] = timestamp
 
-                    except Exception:
+                    except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as e:
+                        self.logger.warning(f"Failed to read/parse JSON file {json_file}: {e}")
                         continue
 
             # Check ticker consistency
@@ -203,8 +204,8 @@ class DataIntegrityValidator(ValidationScript):
             elif crew_name == "crypto":
                 if "validated_symbols" in data:
                     tickers.extend([s.get("symbol", "") for s in data["validated_symbols"] if isinstance(s, dict)])
-        except Exception:
-            pass
+        except (KeyError, TypeError, ValueError) as e:
+            self.logger.warning(f"Failed to extract tickers from {crew_name} crew data: {e}")
 
         return [t for t in tickers if t]  # Remove empty strings
 
@@ -214,8 +215,8 @@ class DataIntegrityValidator(ValidationScript):
             if "metadata" in data and "execution_timestamp" in data["metadata"]:
                 timestamp: str | None = data["metadata"]["execution_timestamp"]
                 return timestamp
-        except Exception:
-            pass
+        except (KeyError, TypeError) as e:
+            self.logger.warning(f"Failed to extract timestamp from data: {e}")
 
         return None
 
