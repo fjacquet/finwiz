@@ -5,7 +5,6 @@ This module provides factory methods for creating and configuring CrewAI crews,
 centralizing crew initialization logic and providing consistent error handling.
 """
 
-import json
 from datetime import datetime
 from typing import Any
 
@@ -56,12 +55,19 @@ class CrewFactory:
             crypto_crew = CryptoCrew()
             result = crypto_crew.crew().kickoff(inputs=inputs)
 
-            # Prepare success response
-            result_data = {
-                "crypto_analysis_result": str(result.raw) if hasattr(result, "raw") else str(result),
+            # Prepare success response with structured Pydantic access cascade
+            result_data: dict[str, Any] = {
                 "core_analysis_completed": True,
                 "crypto_analysis_success": True,
             }
+
+            if hasattr(result, "pydantic") and result.pydantic:
+                result_data["crypto_analysis_result"] = result.pydantic.model_dump()
+            elif hasattr(result, "json_dict") and result.json_dict:
+                result_data["crypto_analysis_result"] = result.json_dict
+            else:
+                self.logger.warning("Crypto crew returned no structured output, falling back to raw")
+                result_data["crypto_analysis_result"] = {"raw_output": result.raw if hasattr(result, "raw") else str(result)}
 
             self.logger.info("Cryptocurrency analysis crew completed successfully")
             return result_data
@@ -83,7 +89,7 @@ class CrewFactory:
             }
 
             if fallback_response.success and fallback_response.data:
-                result_data["crypto_analysis_result"] = json.dumps(fallback_response.data)
+                result_data["crypto_analysis_result"] = fallback_response.data if isinstance(fallback_response.data, dict) else {"raw_output": str(fallback_response.data)}
                 self.logger.info(f"Using fallback data for crypto analysis: {fallback_response.message}")
             else:
                 result_data["crypto_analysis_result"] = None
@@ -104,12 +110,19 @@ class CrewFactory:
             stock_crew = StockCrew()
             result = stock_crew.crew().kickoff(inputs=inputs)
 
-            # Prepare success response
-            result_data = {
-                "stock_analysis_result": str(result.raw) if hasattr(result, "raw") else str(result),
+            # Prepare success response with structured Pydantic access cascade
+            result_data: dict[str, Any] = {
                 "core_analysis_completed": True,
                 "stock_analysis_success": True,
             }
+
+            if hasattr(result, "pydantic") and result.pydantic:
+                result_data["stock_analysis_result"] = result.pydantic.model_dump()
+            elif hasattr(result, "json_dict") and result.json_dict:
+                result_data["stock_analysis_result"] = result.json_dict
+            else:
+                self.logger.warning("Stock crew returned no structured output, falling back to raw")
+                result_data["stock_analysis_result"] = {"raw_output": result.raw if hasattr(result, "raw") else str(result)}
 
             self.logger.info("Stock analysis crew completed successfully")
             return result_data
@@ -131,7 +144,7 @@ class CrewFactory:
             }
 
             if fallback_response.success and fallback_response.data:
-                result_data["stock_analysis_result"] = json.dumps(fallback_response.data)
+                result_data["stock_analysis_result"] = fallback_response.data if isinstance(fallback_response.data, dict) else {"raw_output": str(fallback_response.data)}
                 self.logger.info(f"Using fallback data for stock analysis: {fallback_response.message}")
             else:
                 result_data["stock_analysis_result"] = None
@@ -152,12 +165,19 @@ class CrewFactory:
             etf_crew = EtfCrew()
             result = etf_crew.crew().kickoff(inputs=inputs)
 
-            # Prepare success response
-            result_data = {
-                "etf_analysis_result": str(result.raw) if hasattr(result, "raw") else str(result),
+            # Prepare success response with structured Pydantic access cascade
+            result_data: dict[str, Any] = {
                 "core_analysis_completed": True,
                 "etf_analysis_success": True,
             }
+
+            if hasattr(result, "pydantic") and result.pydantic:
+                result_data["etf_analysis_result"] = result.pydantic.model_dump()
+            elif hasattr(result, "json_dict") and result.json_dict:
+                result_data["etf_analysis_result"] = result.json_dict
+            else:
+                self.logger.warning("ETF crew returned no structured output, falling back to raw")
+                result_data["etf_analysis_result"] = {"raw_output": result.raw if hasattr(result, "raw") else str(result)}
 
             self.logger.info("ETF analysis crew completed successfully")
             return result_data
@@ -179,7 +199,7 @@ class CrewFactory:
             }
 
             if fallback_response.success and fallback_response.data:
-                result_data["etf_analysis_result"] = json.dumps(fallback_response.data)
+                result_data["etf_analysis_result"] = fallback_response.data if isinstance(fallback_response.data, dict) else {"raw_output": str(fallback_response.data)}
                 self.logger.info(f"Using fallback data for ETF analysis: {fallback_response.message}")
             else:
                 result_data["etf_analysis_result"] = None
@@ -202,11 +222,18 @@ class CrewFactory:
             # Execute the portfolio rebalancing crew
             result = portfolio_rebalancing_crew.crew().kickoff(inputs=inputs)
 
-            # Prepare success response
-            result_data = {
-                "portfolio_rebalancing_result": str(result.raw) if hasattr(result, "raw") else str(result),
+            # Prepare success response with structured Pydantic access cascade
+            result_data: dict[str, Any] = {
                 "portfolio_rebalancing_available": True,
             }
+
+            if hasattr(result, "pydantic") and result.pydantic:
+                result_data["portfolio_rebalancing_result"] = result.pydantic.model_dump()
+            elif hasattr(result, "json_dict") and result.json_dict:
+                result_data["portfolio_rebalancing_result"] = result.json_dict
+            else:
+                self.logger.warning("Portfolio rebalancing crew returned no structured output, falling back to raw")
+                result_data["portfolio_rebalancing_result"] = {"raw_output": result.raw if hasattr(result, "raw") else str(result)}
 
             self.logger.info("Portfolio rebalancing analysis completed successfully")
             return result_data
@@ -236,11 +263,18 @@ class CrewFactory:
             # Execute the investment discovery crew
             result = investment_discovery_crew.crew().kickoff(inputs=inputs)
 
-            # Prepare success response
-            result_data = {
-                "investment_discovery_result": str(result.raw) if hasattr(result, "raw") else str(result),
+            # Prepare success response with structured Pydantic access cascade
+            result_data: dict[str, Any] = {
                 "investment_discovery_available": True,
             }
+
+            if hasattr(result, "pydantic") and result.pydantic:
+                result_data["investment_discovery_result"] = result.pydantic.model_dump()
+            elif hasattr(result, "json_dict") and result.json_dict:
+                result_data["investment_discovery_result"] = result.json_dict
+            else:
+                self.logger.warning("Investment discovery crew returned no structured output, falling back to raw")
+                result_data["investment_discovery_result"] = {"raw_output": result.raw if hasattr(result, "raw") else str(result)}
 
             self.logger.info("Investment discovery analysis completed successfully")
             return result_data
