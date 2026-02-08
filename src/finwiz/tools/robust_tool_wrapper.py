@@ -44,7 +44,7 @@ class RobustToolWrapper:
         # Case 2: JSON array - take first non-empty dict
         if isinstance(raw_input, list):
             logger.warning(f"Tool received array with {len(raw_input)} items, extracting first valid item")
-            logger.debug(f"Repaired JSON: {json.dumps(raw_input, indent=2)[:500]}")
+            logger.debug(f"Repaired JSON: {json.dumps(raw_input, indent=2, default=str)[:500]}")
 
             for item in raw_input:
                 # Recursively parse each item

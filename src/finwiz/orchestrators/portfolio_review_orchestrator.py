@@ -383,7 +383,7 @@ def save_review_json(
             json.dump(summary_data, f, indent=2)
         logger.info(f"Saved processing summary to {summary_path}")
 
-    out_path.write_text(json.dumps(output_data, indent=2), encoding="utf-8")
+    out_path.write_text(json.dumps(output_data, indent=2, default=str), encoding="utf-8")
 
 
 # =============================================================================

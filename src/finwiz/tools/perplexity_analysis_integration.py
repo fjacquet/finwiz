@@ -229,7 +229,7 @@ class PerplexityAnalysisIntegration:
                 if "country" in search_filters:
                     payload["country"] = search_filters["country"]
 
-                http_response = requests.post("https://api.perplexity.ai/search", headers=headers, data=json.dumps(payload), timeout=30)
+                http_response = requests.post("https://api.perplexity.ai/search", headers=headers, data=json.dumps(payload, default=str), timeout=30)
                 http_response.raise_for_status()
 
                 # Convert search results to the format expected by the parser
@@ -250,7 +250,7 @@ class PerplexityAnalysisIntegration:
 
                 # Create response in expected format
                 response_data = {"citations": citations, "results": search_data.get("results", [])}
-                response = json.dumps(response_data, indent=2, ensure_ascii=False)
+                response = json.dumps(response_data, indent=2, ensure_ascii=False, default=str)
 
                 if response.startswith("Error:"):
                     # Convert tool error to proper exception

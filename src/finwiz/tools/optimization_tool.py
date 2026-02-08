@@ -87,12 +87,12 @@ class OptimizationTool(BaseTool):
                 raise ValueError(f"Unknown optimization method: {input_data.optimization_method}")
 
             logger.info("Portfolio optimization completed successfully")
-            return json.dumps(result, indent=2)
+            return json.dumps(result, indent=2, default=str)
 
         except Exception as e:
             logger.error(f"Portfolio optimization failed: {e}")
             error_result = {"success": False, "error": str(e), "error_type": type(e).__name__}
-            return json.dumps(error_result, indent=2)
+            return json.dumps(error_result, indent=2, default=str)
 
     def _mean_variance_optimization(self, input_data: OptimizationInput) -> dict[str, Any]:
         """Perform mean-variance optimization."""

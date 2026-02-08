@@ -99,12 +99,12 @@ class PortfolioAnalysisTool(BaseTool):
             }
 
             logger.info("Portfolio analysis completed successfully")
-            return json.dumps(analysis_result, indent=2)
+            return json.dumps(analysis_result, indent=2, default=str)
 
         except Exception as e:
             logger.error(f"Portfolio analysis failed: {e}")
             error_result = {"success": False, "error": str(e), "error_type": type(e).__name__}
-            return json.dumps(error_result, indent=2)
+            return json.dumps(error_result, indent=2, default=str)
 
     def _analyze_composition(self, holdings: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze portfolio composition."""

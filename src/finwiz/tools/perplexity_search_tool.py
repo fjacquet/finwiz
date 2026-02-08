@@ -74,7 +74,7 @@ class PerplexitySearchTool(BaseTool):
         if search_domain_filter:
             payload["search_domain_filter"] = search_domain_filter
 
-        response = requests.post(self.base_url, headers=headers, data=json.dumps(payload), timeout=30)
+        response = requests.post(self.base_url, headers=headers, data=json.dumps(payload, default=str), timeout=30)
         response.raise_for_status()
 
         try:
@@ -82,4 +82,4 @@ class PerplexitySearchTool(BaseTool):
         except ValueError:
             return response.text
 
-        return json.dumps(json_payload, indent=2, ensure_ascii=False)
+        return json.dumps(json_payload, indent=2, ensure_ascii=False, default=str)

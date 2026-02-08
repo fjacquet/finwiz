@@ -206,12 +206,12 @@ class ETFAnalysisTool(BaseTool):
                 "overall_rating": results["ratings"].get("overall_efficiency", "Not calculated"),
             }
 
-            return json.dumps(results, indent=2)
+            return json.dumps(results, indent=2, default=str)
 
         except Exception as e:
             error_msg = f"ETF analysis failed: {str(e)}"
             logger.error(error_msg, exc_info=True)
-            return json.dumps({"error": error_msg, "ticker": kwargs.get("ticker", "unknown")})
+            return json.dumps({"error": error_msg, "ticker": kwargs.get("ticker", "unknown")}, default=str)
 
 
 # Convenience function for tool factories

@@ -173,7 +173,7 @@ class DeepAnalysisScoringTool(BaseTool):
 
             logger.info(f"✅ Scored {ticker}: {result.grade} ({result.composite_score:.3f}) - {result.recommendation}")
 
-            return json.dumps(result_dict, indent=2)
+            return json.dumps(result_dict, indent=2, default=str)
 
         except Exception as e:
             logger.error(f"❌ Scoring failed for {ticker}: {e}")
@@ -187,5 +187,6 @@ class DeepAnalysisScoringTool(BaseTool):
                     "grade": "F",
                     "composite_score": 0.0,
                     "recommendation": "SELL",
-                }
+                },
+                default=str,
             )

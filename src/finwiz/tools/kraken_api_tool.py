@@ -45,7 +45,7 @@ class KrakenTickerInfoTool(BaseTool):
                 return f"No data found for pair {pair}. It may be an invalid pair."
 
             ticker_data = data["result"][result_pair[0]]
-            return json.dumps(ticker_data, indent=2)
+            return json.dumps(ticker_data, indent=2, default=str)
 
         except requests.exceptions.RequestException as e:
             return f"Error fetching data from Kraken: {e}"

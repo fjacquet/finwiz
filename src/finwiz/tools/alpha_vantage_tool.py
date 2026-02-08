@@ -93,7 +93,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
                     pass
                 else:
                     # Convert dict to JSON string
-                    alpha_vantage_data = json.dumps(alpha_vantage_data, indent=2)
+                    alpha_vantage_data = json.dumps(alpha_vantage_data, indent=2, default=str)
             else:
                 # Fall back to live API call
                 logger.info(f"Fetching Alpha Vantage company overview for {ticker} with optional Perplexity enhancement")
@@ -147,7 +147,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             # Log data retrieval for debugging
             logger.debug(f"Retrieved Alpha Vantage data for {ticker}")
 
-            return json.dumps(data, indent=2)
+            return json.dumps(data, indent=2, default=str)
 
         # Use caching with 30-minute TTL for company overview data
         result: str = await cached(

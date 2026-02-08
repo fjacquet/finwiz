@@ -153,7 +153,7 @@ async def main() -> None:
                     json.dump(result, f, indent=2)
                 logger.info(f"Results saved to {args.output}")
             else:
-                print(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2, default=str))
 
         elif args.command == "validate":
             result = await validate_performance_requirements(sample_size=args.sample_size)
@@ -163,7 +163,7 @@ async def main() -> None:
                     json.dump(result, f, indent=2)
                 logger.info(f"Results saved to {args.output}")
             else:
-                print(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2, default=str))
 
         elif args.command == "quick":
             # Quick single test

@@ -92,14 +92,14 @@ class EnhancedLogger:
             f"Asset Class: {asset_class}\n"
             f"Exception: {type(exception).__name__}: {exception}\n"
             f"\nInputs Provided:\n"
-            f"{json.dumps(sanitized_inputs, indent=2)}\n"
+            f"{json.dumps(sanitized_inputs, indent=2, default=str)}\n"
             f"\nFull Traceback:\n"
             f"{tb_str}\n"
             f"{'=' * 80}"
         )
 
         # Log structured data for potential log aggregation
-        self.logger.debug(f"Crew failure context: {json.dumps(error_context, indent=2)}")
+        self.logger.debug(f"Crew failure context: {json.dumps(error_context, indent=2, default=str)}")
 
     def log_validation_failure(
         self,
@@ -138,12 +138,12 @@ class EnhancedLogger:
             f"Validation Type: {validation_type}\n"
             f"Field Path: {field_path or 'N/A'}\n"
             f"\nValidation Errors:\n" + "\n".join(f"  • {error}" for error in errors) + f"\n\nData Sample (truncated):\n"
-            f"{json.dumps(truncated_sample, indent=2)}\n"
+            f"{json.dumps(truncated_sample, indent=2, default=str)}\n"
             f"{'=' * 80}"
         )
 
         # Log structured data
-        self.logger.debug(f"Validation failure context: {json.dumps(error_context, indent=2)}")
+        self.logger.debug(f"Validation failure context: {json.dumps(error_context, indent=2, default=str)}")
 
     def log_template_interpolation_failure(
         self,
@@ -189,7 +189,7 @@ class EnhancedLogger:
         )
 
         # Log structured data
-        self.logger.debug(f"Template interpolation failure context: {json.dumps(error_context, indent=2)}")
+        self.logger.debug(f"Template interpolation failure context: {json.dumps(error_context, indent=2, default=str)}")
 
     def log_portfolio_merge_operation(
         self,
@@ -243,7 +243,7 @@ class EnhancedLogger:
             self.logger.error(log_message)
 
         # Log structured data
-        self.logger.debug(f"Portfolio merge context: {json.dumps(merge_context, indent=2)}")
+        self.logger.debug(f"Portfolio merge context: {json.dumps(merge_context, indent=2, default=str)}")
 
     def log_cache_operation(
         self,
@@ -298,7 +298,7 @@ class EnhancedLogger:
             self.logger.warning(log_message)
 
         # Log structured data
-        self.logger.debug(f"Cache operation context: {json.dumps(cache_context, indent=2)}")
+        self.logger.debug(f"Cache operation context: {json.dumps(cache_context, indent=2, default=str)}")
 
     def log_api_call_failure(
         self,
@@ -349,7 +349,7 @@ class EnhancedLogger:
             f"Endpoint: {endpoint}\n"
             f"Status Code: {status_code or 'N/A'}\n"
             f"\nRequest Parameters:\n"
-            f"{json.dumps(sanitized_params, indent=2)}\n"
+            f"{json.dumps(sanitized_params, indent=2, default=str)}\n"
             f"\nResponse Body (truncated):\n"
             f"{truncated_response}\n"
         )
@@ -362,7 +362,7 @@ class EnhancedLogger:
         self.logger.error(log_message)
 
         # Log structured data
-        self.logger.debug(f"API call failure context: {json.dumps(api_context, indent=2)}")
+        self.logger.debug(f"API call failure context: {json.dumps(api_context, indent=2, default=str)}")
 
     def log_flow_halt_summary(
         self,
@@ -423,7 +423,7 @@ class EnhancedLogger:
         )
 
         # Log structured data
-        self.logger.debug(f"Flow halt context: {json.dumps(halt_context, indent=2)}")
+        self.logger.debug(f"Flow halt context: {json.dumps(halt_context, indent=2, default=str)}")
 
     def _sanitize_inputs(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """

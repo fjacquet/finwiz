@@ -145,12 +145,12 @@ class PortfolioRebalancingTool(BaseTool):
             }
 
             logger.info("Portfolio rebalancing analysis completed successfully")
-            return json.dumps(formatted_result, indent=2)
+            return json.dumps(formatted_result, indent=2, default=str)
 
         except Exception as e:
             logger.error(f"Portfolio rebalancing analysis failed: {e}")
             error_result = {"success": False, "error": str(e), "error_type": type(e).__name__}
-            return json.dumps(error_result, indent=2)
+            return json.dumps(error_result, indent=2, default=str)
 
 
 def get_portfolio_rebalancing_tool() -> PortfolioRebalancingTool:

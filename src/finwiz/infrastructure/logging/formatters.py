@@ -27,7 +27,7 @@ class StructuredFormatter(logging.Formatter):
                 "message": record.getMessage(),
                 **record.extra,
             }
-            return json.dumps(structured_data, ensure_ascii=False)
+            return json.dumps(structured_data, ensure_ascii=False, default=str)
 
         return message
 
