@@ -107,12 +107,12 @@ Plans:
   2. Crew output parsing tests cover malformed JSON, Pydantic schema validation failures, and CrewAI output format variations (raw, pydantic, json_dict)
   3. Data adapter fallback tests cover complete adapter failure, fallback chain exhaustion, and partial data degradation scenarios
   4. HTML output validation tests confirm generated HTML is well-formed, free of XSS vectors, and uses correct character encoding
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 
-- [ ] 05-01: Orchestrator integration and crew output parsing tests (TEST-01, TEST-02)
-- [ ] 05-02: Data adapter fallback and HTML validation tests (TEST-03, TEST-04)
+- [ ] 05-01-PLAN.md -- Orchestrator integration tests with real FinwizState mutations + crew output parsing tests (TEST-01, TEST-02)
+- [ ] 05-02-PLAN.md -- Data adapter fallback scenarios + HTML output validation tests (TEST-03, TEST-04)
 
 ## Progress
 
