@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Error Handling Cleanup** - Replace bare exceptions, fix json.dumps, standardize crew output handling
 - [ ] **Phase 2: Discovery Core** - Pydantic schemas and individual discovery modules (universe, screeners, scorer)
-- [ ] **Phase 3: Discovery Integration** - Pipeline orchestrator, enrichment, feature flags, output, and unit tests
+- [x] **Phase 3: Discovery Integration** - Pipeline orchestrator, enrichment, feature flags, output, and unit tests
 - [ ] **Phase 4: Performance** - Batch API calls, token bucket rate limiting, crew timeouts, cache cleanup
 - [ ] **Phase 5: Test Coverage** - Orchestrator, crew output, fallback, and HTML validation tests
 
@@ -74,8 +74,8 @@ Plans:
 
 Plans:
 
-- [ ] 03-01-PLAN.md -- Pipeline orchestrator with portfolio exclusion and output persistence (DISC-07, DISC-10)
-- [ ] 03-02-PLAN.md -- Perplexity enrichment, feature flag routing, and unit tests (DISC-08, DISC-09, DISC-11)
+- [x] 03-01-PLAN.md -- Pipeline orchestrator with portfolio exclusion and output persistence (DISC-07, DISC-10)
+- [x] 03-02-PLAN.md -- Perplexity enrichment, feature flag routing, and unit tests (DISC-08, DISC-09, DISC-11)
 
 ### Phase 4: Performance
 
@@ -124,6 +124,6 @@ Note: Phases 4 and 5 depend on Phase 1 but not on each other. However, running P
 |-------|----------------|--------|-----------|
 | 1. Error Handling Cleanup | 4/4 | Complete | 2026-02-07 |
 | 2. Discovery Core | 0/2 | Not started | - |
-| 3. Discovery Integration | 0/2 | Not started | - |
+| 3. Discovery Integration | 2/2 | Complete | 2026-02-08 |
 | 4. Performance | 0/2 | Not started | - |
 | 5. Test Coverage | 0/2 | Not started | - |

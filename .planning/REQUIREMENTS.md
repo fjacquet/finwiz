@@ -33,11 +33,11 @@
 - [ ] **DISC-04**: Create `BreakoutDetector` for price/volume breakout signals on small/mid-cap stocks ($200M-$50B market cap)
 - [ ] **DISC-05**: Create `MomentumScanner` for volume anomaly + RSI + momentum signals
 - [ ] **DISC-06**: Create `CandidateScorer` reusing existing `ScreeningCriteria` and `score_to_grade()` for scoring and grading
-- [ ] **DISC-07**: Create `NewcomerDiscoveryPipeline` orchestrating all discovery components with portfolio exclusion and legacy format output
-- [ ] **DISC-08**: Add Perplexity enrichment for top candidates (score >= 0.80), gated by `perplexity_research` feature flag
-- [ ] **DISC-09**: Add `newcomer_discovery` feature flag in `config/features/definitions.py` with routing in `scoring/{stock,etf,crypto}_analyzer.py`
-- [ ] **DISC-10**: Save newcomer discovery results to `output/discovery/newcomer_{asset_class}.json` via discovery orchestrator
-- [ ] **DISC-11**: Create unit tests for all discovery modules (universe provider, IPO screener, breakout detector, momentum scanner, candidate scorer, pipeline, schemas)
+- [x] **DISC-07**: Create `NewcomerDiscoveryPipeline` orchestrating all discovery components with portfolio exclusion and legacy format output
+- [x] **DISC-08**: Add Perplexity enrichment for top candidates (score >= 0.80), gated by `perplexity_research` feature flag
+- [x] **DISC-09**: Add `newcomer_discovery` feature flag in `config/features/definitions.py` with routing in `scoring/{stock,etf,crypto}_analyzer.py`
+- [x] **DISC-10**: Save newcomer discovery results to `output/discovery/newcomer_{asset_class}.json` via discovery orchestrator
+- [x] **DISC-11**: Create unit tests for all discovery modules (universe provider, IPO screener, breakout detector, momentum scanner, candidate scorer, pipeline, schemas)
 
 ## v2 Requirements
 
@@ -88,13 +88,14 @@
 | DISC-04 | TBD | Pending |
 | DISC-05 | TBD | Pending |
 | DISC-06 | TBD | Pending |
-| DISC-07 | TBD | Pending |
-| DISC-08 | TBD | Pending |
-| DISC-09 | TBD | Pending |
-| DISC-10 | TBD | Pending |
-| DISC-11 | TBD | Pending |
+| DISC-07 | 3 | Complete |
+| DISC-08 | 3 | Complete |
+| DISC-09 | 3 | Complete |
+| DISC-10 | 3 | Complete |
+| DISC-11 | 3 | Complete |
 
 **Coverage:**
+
 - v1 requirements: 22 total
 - Mapped to phases: 0
 - Unmapped: 22
