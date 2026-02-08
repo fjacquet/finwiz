@@ -51,12 +51,12 @@ Plans:
   2. DynamicUniverseProvider returns candidate tickers from ETF holdings via yfinance, with fallback to static screening_utils lists when yfinance fails
   3. IPOScreener, BreakoutDetector, and MomentumScanner each return scored candidates from their respective data sources (SEC EDGAR, price/volume data, RSI/momentum)
   4. CandidateScorer assigns grades (A+ to F) to candidates using existing ScreeningCriteria and score_to_grade() functions
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 
-- [ ] 02-01: Discovery schemas and universe provider (DISC-01, DISC-02)
-- [ ] 02-02: Screeners, detectors, and scorer (DISC-03, DISC-04, DISC-05, DISC-06)
+- [ ] 02-01-PLAN.md -- Discovery schemas and universe provider (DISC-01, DISC-02)
+- [ ] 02-02-PLAN.md -- Screeners, detectors, and scorer (DISC-03, DISC-04, DISC-05, DISC-06)
 
 ### Phase 3: Discovery Integration
 
@@ -88,12 +88,13 @@ Plans:
   2. Rate limiting uses token bucket algorithm with per-API quotas and burst capacity, replacing all blocking asyncio.sleep() calls
   3. Every crew.kickoff() call is wrapped with asyncio.wait_for() using FINWIZ_HOLDING_TIMEOUT, and repeatedly failing crews trigger a circuit breaker
   4. Cache cleanup uses event-driven LRU eviction with incremental cleanup instead of blocking synchronous sleep
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 
-- [ ] 04-01: Batch API calls and token bucket rate limiting (PERF-01, PERF-02)
-- [ ] 04-02: Crew execution timeouts and cache cleanup (PERF-03, PERF-04)
+- [ ] 04-01-PLAN.md -- Token bucket rate limiter (aiolimiter) + replace blocking sleeps in data collection (PERF-01, PERF-02)
+- [ ] 04-02-PLAN.md -- Crew execution timeouts with asyncio.wait_for() and circuit breaker (PERF-03)
+- [ ] 04-03-PLAN.md -- Event-driven cache cleanup replacing blocking asyncio.sleep(3600) loop (PERF-04)
 
 ### Phase 5: Test Coverage
 
@@ -125,5 +126,5 @@ Note: Phases 4 and 5 depend on Phase 1 but not on each other. However, running P
 | 1. Error Handling Cleanup | 4/4 | Complete | 2026-02-07 |
 | 2. Discovery Core | 0/2 | Not started | - |
 | 3. Discovery Integration | 2/2 | Complete | 2026-02-08 |
-| 4. Performance | 0/2 | Not started | - |
+| 4. Performance | 0/3 | Not started | - |
 | 5. Test Coverage | 0/2 | Not started | - |
