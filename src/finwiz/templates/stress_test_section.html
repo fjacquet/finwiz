@@ -1,0 +1,80 @@
+{% if stress_test_results and stress_test_results|length > 0 %}
+<section class="stress-test-section" style="margin-top: 2rem; padding: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafbfc;">
+    <h2 style="color: #1a1a2e; margin-bottom: 1rem; border-bottom: 2px solid #e74c3c; padding-bottom: 0.5rem;">
+        Analyse de Stress Test du Portefeuille
+    </h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">
+        Projection de l'impact de {{ stress_test_results|length }} sc&eacute;narios de stress sur le portefeuille.
+    </p>
+
+    {% for result in stress_test_results %}
+    {% set scenario = result.scenario %}
+    {% set impact = result.total_portfolio_impact_pct %}
+    {% set abs_impact = impact if impact >= 0 else -impact %}
+
+    {% if abs_impact >= 0.15 %}
+        {% set impact_color = '#e74c3c' %}
+        {% set impact_bg = '#fdf0ef' %}
+    {% elif abs_impact >= 0.05 %}
+        {% set impact_color = '#f39c12' %}
+        {% set impact_bg = '#fef9e7' %}
+    {% else %}
+        {% set impact_color = '#27ae60' %}
+        {% set impact_bg = '#eafaf1' %}
+    {% endif %}
+
+    <div style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid {{ impact_color }}40; border-radius: 6px; background: {{ impact_bg }};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h3 style="color: #1a1a2e; margin: 0;">{{ scenario.name }}</h3>
+            <span style="font-size: 1.4rem; font-weight: bold; color: {{ impact_color }};">
+                {{ "%.1f"|format(impact * 100) }}%
+            </span>
+        </div>
+        <p style="color: #888; font-size: 0.9rem; margin-bottom: 1rem;">{{ scenario.description }}</p>
+
+        {% if result.holding_impacts|length > 0 %}
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+                <tr style="background: #f5f5f5;">
+                    <th style="padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd;">Ticker</th>
+                    <th style="padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd;">Secteur</th>
+                    <th style="padding: 6px 8px; text-align: center; border-bottom: 1px solid #ddd;">Beta</th>
+                    <th style="padding: 6px 8px; text-align: right; border-bottom: 1px solid #ddd;">Impact</th>
+                    <th style="padding: 6px 8px; text-align: center; border-bottom: 1px solid #ddd;">Sensibilit&eacute;</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in result.holding_impacts[:10] %}
+                {% set h_color = '#e74c3c' if h.sensitivity_label == 'HIGH' else '#f39c12' if h.sensitivity_label == 'MEDIUM' else '#27ae60' %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 4px 8px; font-weight: 600;">{{ h.ticker }}</td>
+                    <td style="padding: 4px 8px; color: #666;">{{ h.sector or 'N/A' }}</td>
+                    <td style="padding: 4px 8px; text-align: center;">{{ "%.1f"|format(h.beta) if h.beta else 'N/A' }}</td>
+                    <td style="padding: 4px 8px; text-align: right; color: {{ h_color }};">{{ "%.1f"|format(h.projected_change_pct * 100) }}%</td>
+                    <td style="padding: 4px 8px; text-align: center;">
+                        <span style="background: {{ h_color }}20; color: {{ h_color }}; padding: 2px 8px; border-radius: 3px; font-size: 0.8rem;">
+                            {{ h.sensitivity_label }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if result.holding_impacts|length > 10 %}
+                <tr><td colspan="5" style="padding: 4px 8px; color: #999; text-align: center;">... et {{ result.holding_impacts|length - 10 }} autres positions</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if result.most_affected %}
+        <div style="margin-top: 0.75rem; font-size: 0.85rem;">
+            <span style="color: #e74c3c;">Plus impact&eacute;s: {{ result.most_affected|join(', ') }}</span>
+            {% if result.least_affected %}
+            &nbsp;|&nbsp;
+            <span style="color: #27ae60;">Moins impact&eacute;s: {{ result.least_affected|join(', ') }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</section>
+{% endif %}

@@ -59,6 +59,16 @@ class FinwizFlow(Flow[FinwizState]):
         # Orchestrators are lazy-loaded via registry on first access
         self._orchestrators: dict[str, Any] = {}
 
+        # Register main cache for metrics (CACHE-03)
+        try:
+            from finwiz.infrastructure.caching.manager import get_cache_manager
+            from finwiz.infrastructure.caching.metrics_logger import get_cache_metrics_logger
+
+            cache_metrics = get_cache_metrics_logger()
+            cache_metrics.register_cache("main", get_cache_manager())
+        except Exception as e:
+            logger.debug(f"Cache metrics registration skipped: {e}")
+
         super().__init__(*args, **kwargs)
 
         if not hasattr(self, "state") or self.state is None:
@@ -208,6 +218,23 @@ class FinwizFlow(Flow[FinwizState]):
         logger.info("=" * 80)
         await self.deep_analysis_orch.analyze_and_update_portfolio()
 
+        # Phase 3.5: Stress Testing (if deep analysis ran)
+        if self.state.deep_analysis_success:
+            logger.info("=" * 80)
+            logger.info("PHASE 3.5: Portfolio Stress Testing")
+            logger.info("=" * 80)
+            try:
+                from finwiz.orchestrators.stress_test_orchestrator import StressTestOrchestrator
+
+                stress_orch = StressTestOrchestrator(self.state)
+                stress_results = stress_orch.run_stress_tests()
+                self.state.stress_test_results = [r.model_dump() for r in stress_results]
+                self.state.stress_test_count = len(stress_results)
+                logger.info(f"Stress testing completed: {len(stress_results)} scenarios")
+            except Exception as e:
+                self.state.stress_test_error = str(e)
+                logger.warning(f"Stress testing skipped: {e}")
+
         # Phase 4: Discovery (if enabled)
         import os
 
@@ -235,6 +262,30 @@ class FinwizFlow(Flow[FinwizState]):
         logger.info("=" * 80)
         self.validation_orch.pre_validate_reporter_input()
         self.reporting_orch.report()
+
+        # Post-flow: Log cache metrics summary (CACHE-03)
+        try:
+            from finwiz.infrastructure.caching.metrics_logger import get_cache_metrics_logger
+
+            cache_metrics = get_cache_metrics_logger()
+            cache_metrics.log_summary()
+        except Exception as e:
+            logger.debug(f"Cache metrics logging skipped: {e}")
+
+        # Post-flow: Log LLM cost summary (COST-01, COST-02)
+        try:
+            from finwiz.infrastructure.monitoring.litellm_callback import get_token_monitor
+
+            monitor = get_token_monitor()
+            if monitor:
+                monitor.log_cost_summary()
+                summary = monitor.get_cost_summary()
+                self.state.llm_total_cost = summary["total_cost"]
+                self.state.llm_crew_costs = {k: v["cost"] for k, v in summary["per_crew"].items()}
+                self.state.llm_call_count = summary["call_count"]
+                self.state.llm_cost_summary = summary
+        except Exception as e:
+            logger.debug(f"LLM cost summary skipped: {e}")
 
         logger.info("Sequential workflow completed")
         return {"status": "completed"}

@@ -28,11 +28,14 @@ class PortfolioCacheService:
         """Initialize the portfolio cache service."""
         self.cache_manager = cache_manager or get_cache_manager()
 
-        # Cache TTL settings (in seconds)
-        self.price_data_ttl = 300  # 5 minutes for price data
-        self.portfolio_analysis_ttl = 1800  # 30 minutes for portfolio analysis
-        self.rebalancing_analysis_ttl = 3600  # 1 hour for rebalancing analysis
-        self.validation_ttl = 86400  # 24 hours for ticker validation
+        # Use centralized TTL registry instead of hardcoded values
+        from finwiz.infrastructure.caching.ttl_config import CacheDataType, get_ttl_registry
+
+        registry = get_ttl_registry()
+        self.price_data_ttl = registry.get_ttl(CacheDataType.MARKET_DATA)
+        self.portfolio_analysis_ttl = registry.get_ttl(CacheDataType.ANALYSIS_RESULT)
+        self.rebalancing_analysis_ttl = registry.get_ttl(CacheDataType.ANALYSIS_RESULT)
+        self.validation_ttl = registry.get_ttl(CacheDataType.VALIDATION)  # 24 hours for ticker validation
 
     async def get_price_data(self, symbol: str) -> dict[str, Any] | None:
         """

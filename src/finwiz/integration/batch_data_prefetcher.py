@@ -233,6 +233,9 @@ class BatchDataPreFetcher:
                 "partial_failure": av_failed and not yf_failed,  # Yahoo OK but Alpha Vantage failed
             }
 
+        # Enrich with sector/beta for stress testing (RISK-04)
+        self._enrich_with_sector_beta(combined_data, yf_data)
+
         # Save to cache (includes failed ticker markers)
         self._save_to_cache(combined_data)
 
@@ -472,6 +475,20 @@ class BatchDataPreFetcher:
             logger.warning(f"Failed tickers: {', '.join(failed_tickers)}")
 
         return results
+
+    def _enrich_with_sector_beta(self, combined_data: dict[str, dict[str, Any]], yf_data: dict[str, dict[str, Any]]) -> None:
+        """Add sector and beta enrichment data for stress testing.
+
+        Extracts sector and beta from Yahoo Finance info data when available.
+        Falls back to 'Unknown' sector and 1.0 beta if not found.
+        """
+        for ticker, data in combined_data.items():
+            yf_ticker = yf_data.get(ticker, {})
+            info = yf_ticker.get("info", {}) or {}
+            data["enrichment"] = {
+                "sector": info.get("sector", "Unknown"),
+                "beta": info.get("beta", 1.0) if info.get("beta") is not None else 1.0,
+            }
 
     def _save_to_cache(self, data: dict[str, dict[str, Any]]) -> None:
         """

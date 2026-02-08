@@ -70,8 +70,11 @@ async def execute_crew_with_timeout(
         del _crew_circuit_open[crew_name]
 
     # --- Execute with timeout ---
+    from finwiz.infrastructure.monitoring.litellm_callback import clear_crew_context, set_crew_context
+
     loop = asyncio.get_running_loop()
     try:
+        set_crew_context(crew_name)
         result = await asyncio.wait_for(
             loop.run_in_executor(_executor, lambda: crew_instance.kickoff(inputs=inputs)),
             timeout=effective_timeout,
@@ -93,6 +96,9 @@ async def execute_crew_with_timeout(
             logger.error(f"Circuit breaker OPEN for {crew_name} after {failure_count} consecutive failures")
 
         raise
+
+    finally:
+        clear_crew_context()
 
 
 def reset_circuit_breakers() -> None:

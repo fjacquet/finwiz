@@ -40,6 +40,14 @@ class CacheStrategy(StrEnum):
     ADAPTIVE = "adaptive"  # Adaptive based on access patterns
 
 
+class CacheTier(StrEnum):
+    """Cache entry temperature tiers for eviction priority."""
+
+    HOT = "hot"  # Accessed 5+ times in last hour — evict last
+    WARM = "warm"  # Accessed 2+ times in last 3 hours — evict second
+    COLD = "cold"  # Everything else — evict first
+
+
 @dataclass
 class CacheConfig:
     """Configuration for cache behavior."""
@@ -84,6 +92,17 @@ class CacheEntry:
         """Update last accessed time and increment access count."""
         self.last_accessed = time.time()
         self.access_count += 1
+
+    def calculate_tier(self) -> CacheTier:
+        """Classify entry into a temperature tier based on access patterns."""
+        now = time.time()
+        recency = now - self.last_accessed
+
+        if self.access_count >= 5 and recency < 3600:  # 5+ accesses, last within 1h
+            return CacheTier.HOT
+        if self.access_count >= 2 and recency < 10800:  # 2+ accesses, last within 3h
+            return CacheTier.WARM
+        return CacheTier.COLD
 
 
 @dataclass
@@ -430,20 +449,32 @@ class CacheManager:
             return len(expired_keys)
 
     async def _ensure_memory_capacity(self) -> None:
-        """Ensure memory cache doesn't exceed capacity limits."""
-        while len(self.memory_cache) >= self.config.max_memory_items:
-            # Evict based on strategy
-            if self.config.strategy == CacheStrategy.LRU:
-                # Remove least recently used
-                oldest_key = min(self.memory_cache.keys(), key=lambda k: self.memory_cache[k].last_accessed)
-            elif self.config.strategy == CacheStrategy.LFU:
-                # Remove least frequently used
-                oldest_key = min(self.memory_cache.keys(), key=lambda k: self.memory_cache[k].access_count)
-            else:  # TTL or ADAPTIVE
-                # Remove oldest entry
-                oldest_key = min(self.memory_cache.keys(), key=lambda k: self.memory_cache[k].created_at)
+        """Ensure memory cache doesn't exceed capacity limits.
 
-            await self._remove_entry(oldest_key)
+        Uses tiered eviction: COLD entries are evicted first, then WARM,
+        then HOT. Within each tier, oldest entries are evicted first.
+        """
+        if len(self.memory_cache) < self.config.max_memory_items:
+            return
+
+        # Tier priority: COLD=0 (evict first), WARM=1, HOT=2 (evict last)
+        tier_order = {CacheTier.COLD: 0, CacheTier.WARM: 1, CacheTier.HOT: 2}
+        evicted_tiers: dict[str, int] = {"cold": 0, "warm": 0, "hot": 0}
+
+        while len(self.memory_cache) >= self.config.max_memory_items:
+            # Sort by tier (ascending), then by age (oldest first within tier)
+            evict_key = min(
+                self.memory_cache.keys(),
+                key=lambda k: (tier_order[self.memory_cache[k].calculate_tier()], -self.memory_cache[k].age_seconds),
+            )
+            tier = self.memory_cache[evict_key].calculate_tier()
+            evicted_tiers[tier.value] += 1
+            await self._remove_entry(evict_key)
+
+        total_evicted = sum(evicted_tiers.values())
+        if total_evicted > 0:
+            parts = [f"{count} {tier.upper()}" for tier, count in evicted_tiers.items() if count > 0]
+            logger.info(f"Tiered eviction: removed {total_evicted} entries ({', '.join(parts)})")
 
     def _update_stats(self) -> None:
         """Update cache statistics."""
@@ -478,8 +509,14 @@ class CacheManager:
         logger.info("Cache warming completed")
 
     def get_stats(self) -> dict[str, Any]:
-        """Get comprehensive cache statistics."""
+        """Get comprehensive cache statistics including tier distribution."""
         self._update_stats()
+
+        # Count entries per tier
+        tiers = {"hot": 0, "warm": 0, "cold": 0}
+        for entry in self.memory_cache.values():
+            tier = entry.calculate_tier()
+            tiers[tier.value] += 1
 
         return {
             "hits": self.stats.hits,
@@ -489,6 +526,7 @@ class CacheManager:
             "entry_count": self.stats.entry_count,
             "total_size_mb": self.stats.memory_usage_mb,
             "average_age_seconds": self.stats.average_age,
+            "tiers": tiers,
             "config": {
                 "backend": self.config.backend.value,
                 "default_ttl": self.config.default_ttl,

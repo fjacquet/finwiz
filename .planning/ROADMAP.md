@@ -4,7 +4,7 @@
 
 - [x] **v1 Hardening & Discovery** - Phases 1-5 (shipped 2026-02-08)
 - [x] **v2 Security & Structural Quality** - Phases 6-8 (shipped 2026-02-08)
-- [ ] **v3 Performance & Risk Analysis** - Phases 9-11 (in progress)
+- [x] **v3 Performance & Risk Analysis** - Phases 9-11 (shipped 2026-02-08)
 
 ## Phases
 
@@ -31,8 +31,8 @@ Phases completed: 6-8 (6 plans total)
 **Milestone Goal:** Make FinWiz significantly faster through async parallelism, batch prefetching, and smart caching -- and add portfolio risk stress testing as a new analytical capability. Cost tracking provides LLM spend visibility.
 
 - [x] **Phase 9: Async & Batch Performance** - Full async data collection with batch prefetching and configurable parallel analysis (shipped 2026-02-08)
-- [ ] **Phase 10: Cache & Cost Observability** - Smart tiered caching with type-aware TTLs and LLM cost tracking
-- [ ] **Phase 11: Risk Stress Testing** - Portfolio scenario analysis with market crash, rate shock, and sector shock simulations
+- [x] **Phase 10: Cache & Cost Observability** - Smart tiered caching with type-aware TTLs and LLM cost tracking (shipped 2026-02-08)
+- [x] **Phase 11: Risk Stress Testing** - Portfolio scenario analysis with market crash, rate shock, and sector shock simulations (shipped 2026-02-08)
 
 ## Phase Details
 
@@ -65,12 +65,11 @@ Plans:
   2. Market data entries expire in ~15 minutes, fundamentals in ~24 hours, and static reference data in ~7 days (verified by TTL behavior in logs or tests)
   3. Cache hit/miss rates are visible in log output after each analysis run
   4. After a flow run completes, the output shows actual LLM token costs per crew and a total cost summary using real provider pricing
-**Plans**: TBD
 
 Plans:
 
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [x] 10-01: Tiered Cache Eviction & Type-Aware TTLs (CACHE-01, CACHE-02, CACHE-03)
+- [x] 10-02: LLM Cost Tracking & Reporting (COST-01, COST-02)
 
 ### Phase 11: Risk Stress Testing
 
@@ -83,12 +82,11 @@ Plans:
   2. User can run an interest rate shock scenario and see which holdings are most and least affected
   3. User can run a sector-specific shock scenario and see differential impact across portfolio sectors
   4. The HTML report includes a stress testing section with scenario results presented alongside existing analysis output
-**Plans**: TBD
 
 Plans:
 
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [x] 11-01: Stress Test Engine & Scenarios (RISK-01, RISK-02, RISK-03)
+- [x] 11-02: Stress Test Integration & HTML Report (RISK-04)
 
 ## Progress
 
@@ -99,8 +97,8 @@ Plans:
 | 1-5 | v1 | 13/13 | Shipped | 2026-02-08 |
 | 6-8 | v2 | 6/6 | Shipped | 2026-02-08 |
 | 9. Async & Batch Performance | v3 | 2/2 | Complete | 2026-02-08 |
-| 10. Cache & Cost Observability | v3 | 0/TBD | Not started | - |
-| 11. Risk Stress Testing | v3 | 0/TBD | Not started | - |
+| 10. Cache & Cost Observability | v3 | 2/2 | Complete | 2026-02-08 |
+| 11. Risk Stress Testing | v3 | 2/2 | Complete | 2026-02-08 |
 
 ---
 *Roadmap created: 2026-02-08*

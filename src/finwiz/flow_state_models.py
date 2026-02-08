@@ -230,6 +230,17 @@ class FinwizState(BaseModel):
     prefetched_data: dict[str, dict[str, Any]] | None = None
     batch_prefetch_metrics: dict[str, Any] | None = None
 
+    # LLM cost tracking fields (COST-01, COST-02)
+    llm_total_cost: float = Field(default=0.0)
+    llm_crew_costs: dict[str, float] = Field(default_factory=dict)
+    llm_call_count: int = Field(default=0)
+    llm_cost_summary: dict[str, Any] | None = None
+
+    # Stress testing fields (RISK-01 to RISK-04)
+    stress_test_results: list[dict[str, Any]] = Field(default_factory=list)
+    stress_test_count: int = Field(default=0)
+    stress_test_error: str | None = None
+
     model_config = {
         "extra": "allow",
         "ser_json_timedelta": "iso8601",
