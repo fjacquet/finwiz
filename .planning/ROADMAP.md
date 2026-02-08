@@ -30,7 +30,7 @@ Phases completed: 6-8 (6 plans total)
 
 **Milestone Goal:** Make FinWiz significantly faster through async parallelism, batch prefetching, and smart caching -- and add portfolio risk stress testing as a new analytical capability. Cost tracking provides LLM spend visibility.
 
-- [ ] **Phase 9: Async & Batch Performance** - Full async data collection with batch prefetching and configurable parallel analysis
+- [x] **Phase 9: Async & Batch Performance** - Full async data collection with batch prefetching and configurable parallel analysis (shipped 2026-02-08)
 - [ ] **Phase 10: Cache & Cost Observability** - Smart tiered caching with type-aware TTLs and LLM cost tracking
 - [ ] **Phase 11: Risk Stress Testing** - Portfolio scenario analysis with market crash, rate shock, and sector shock simulations
 
@@ -51,8 +51,8 @@ Phases completed: 6-8 (6 plans total)
 
 Plans:
 
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [x] 09-01: Batch Prefetch Integration (PERF-03, PERF-04)
+- [x] 09-02: Async Adapters + Concurrency Tuning (PERF-01, PERF-02)
 
 ### Phase 10: Cache & Cost Observability
 
@@ -98,7 +98,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1-5 | v1 | 13/13 | Shipped | 2026-02-08 |
 | 6-8 | v2 | 6/6 | Shipped | 2026-02-08 |
-| 9. Async & Batch Performance | v3 | 0/TBD | Not started | - |
+| 9. Async & Batch Performance | v3 | 2/2 | Complete | 2026-02-08 |
 | 10. Cache & Cost Observability | v3 | 0/TBD | Not started | - |
 | 11. Risk Stress Testing | v3 | 0/TBD | Not started | - |
 

@@ -9,10 +9,10 @@ Requirements for the Performance & Risk Analysis milestone. Each maps to roadmap
 
 ### PERF -- Parallel Execution
 
-- [ ] **PERF-01**: Data adapters support async execution (DataSourceOrchestrator fully async)
-- [ ] **PERF-02**: Deep analysis runs holdings concurrently with configurable parallel limit (default raised from 3)
-- [ ] **PERF-03**: BatchDataPreFetcher is integrated into the main analysis flow (not just demo/standalone)
-- [ ] **PERF-04**: All data collection paths use batch API calls where the provider supports it
+- [x] **PERF-01**: Data adapters support async execution (DataSourceOrchestrator fully async) -- Phase 9
+- [x] **PERF-02**: Deep analysis runs holdings concurrently with configurable parallel limit (default raised from 3) -- Phase 9
+- [x] **PERF-03**: BatchDataPreFetcher is integrated into the main analysis flow (not just demo/standalone) -- Phase 9
+- [x] **PERF-04**: All data collection paths use batch API calls where the provider supports it -- Phase 9
 
 ### CACHE -- Cache Optimization
 
@@ -62,10 +62,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | Phase 9 | Pending |
-| PERF-02 | Phase 9 | Pending |
-| PERF-03 | Phase 9 | Pending |
-| PERF-04 | Phase 9 | Pending |
+| PERF-01 | Phase 9 | Done |
+| PERF-02 | Phase 9 | Done |
+| PERF-03 | Phase 9 | Done |
+| PERF-04 | Phase 9 | Done |
 | CACHE-01 | Phase 10 | Pending |
 | CACHE-02 | Phase 10 | Pending |
 | CACHE-03 | Phase 10 | Pending |
