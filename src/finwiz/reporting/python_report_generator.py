@@ -267,6 +267,14 @@ class PythonReportGenerator:
 
         return generate_discovery_section(discovery_results)
 
+    def _generate_stress_test_section(self, stress_test_results: list[dict[str, Any]] | None) -> str:
+        """Generate stress test analysis section (delegates to module)."""
+        from finwiz.reporting.section_generators import (
+            generate_stress_test_section,
+        )
+
+        return generate_stress_test_section(stress_test_results)
+
     # NOTE: _generate_individual_deep_analysis_reports() removed - DEAD CODE
     # Individual reports are now generated on-the-fly by
     # DeepAnalysisOrchestrator._store_enriched_analysis()

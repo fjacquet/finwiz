@@ -356,6 +356,103 @@ def generate_performance_metrics(deep_analysis_results: dict[str, Any] | None) -
         """
 
 
+def _impact_color(impact_pct: float) -> str:
+    """Return CSS color for a portfolio impact percentage."""
+    abs_impact = abs(impact_pct * 100)
+    if abs_impact > 15:
+        return "color:#dc3545;font-weight:bold"
+    if abs_impact > 5:
+        return "color:#fd7e14;font-weight:bold"
+    return "color:#28a745"
+
+
+def _sensitivity_style(label: str) -> str:
+    """Return inline CSS for a sensitivity label."""
+    upper = label.upper()
+    if upper == "HIGH":
+        return 'style="color:#dc3545;font-weight:bold"'
+    if upper == "MEDIUM":
+        return 'style="color:#fd7e14;font-weight:bold"'
+    return 'style="color:#28a745"'
+
+
+def generate_stress_test_section(stress_test_results: list[dict[str, Any]] | None) -> str:
+    """Generate stress test analysis section.
+
+    Args:
+        stress_test_results: List of PortfolioStressTestResult.model_dump() dicts.
+
+    Returns:
+        HTML string for the stress test section, or "" if no data.
+    """
+    if not stress_test_results:
+        return ""
+
+    scenario_cards: list[str] = []
+    for result in stress_test_results:
+        scenario = result.get("scenario", {})
+        name = scenario.get("name", "Scenario inconnu")
+        description = scenario.get("description", "")
+        impact_pct = result.get("total_portfolio_impact_pct", 0.0)
+        projected_pnl = result.get("total_projected_pnl", 0.0)
+        holding_impacts = result.get("holding_impacts", [])
+        most_affected = result.get("most_affected", [])
+        least_affected = result.get("least_affected", [])
+
+        # Build holding impact rows
+        impact_rows: list[str] = []
+        for hi in holding_impacts:
+            sens_label = hi.get("sensitivity_label", "LOW")
+            impact_rows.append(
+                f"<tr><td>{hi.get('ticker', 'N/A')}</td>"
+                f"<td>{hi.get('sector', 'N/A')}</td>"
+                f"<td>{hi.get('beta', 0):.2f}</td>"
+                f'<td style="{_impact_color(hi.get("projected_change_pct", 0))}">'
+                f"{hi.get('projected_change_pct', 0) * 100:+.1f}%</td>"
+                f"<td {_sensitivity_style(sens_label)}>{sens_label}</td></tr>"
+            )
+
+        impacts_html = "\n        ".join(impact_rows) if impact_rows else "<tr><td colspan='5'>Aucun impact calcule</td></tr>"
+
+        most_html = ", ".join(most_affected) if most_affected else "N/A"
+        least_html = ", ".join(least_affected) if least_affected else "N/A"
+
+        scenario_cards.append(f"""
+    <div class="highlight" style="margin-bottom:1.5rem">
+      <h3>{name}</h3>
+      <p class="muted">{description}</p>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" style="{_impact_color(impact_pct)}">{impact_pct * 100:+.1f}%</div>
+          <div>Impact total portefeuille</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${projected_pnl:+,.0f}</div>
+          <div>P&amp;L projete</div>
+        </div>
+      </div>
+      <p><strong>Plus affectes :</strong> {most_html} &nbsp;|&nbsp; <strong>Moins affectes :</strong> {least_html}</p>
+      <table>
+        <thead>
+          <tr><th>Ticker</th><th>Secteur</th><th>Beta</th><th>Variation projetee</th><th>Sensibilite</th></tr>
+        </thead>
+        <tbody>
+        {impacts_html}
+        </tbody>
+      </table>
+    </div>""")
+
+    cards_html = "\n".join(scenario_cards)
+
+    return f"""
+  <div class="section">
+    <h2>Analyse de Stress du Portefeuille</h2>
+    <p class="muted">Projection de l'impact de scenarios de marche extremes sur le portefeuille.</p>
+    {cards_html}
+  </div>
+    """
+
+
 def generate_discovery_section(discovery_results: dict[str, Any] | None) -> str:
     """Generate A+ discovery opportunities section."""
     if not discovery_results or "opportunities" not in discovery_results:
