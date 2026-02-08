@@ -9,17 +9,7 @@ portfolio analysis workflow by delegating to focused orchestrator modules.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from finwiz.orchestrators.alternatives_matching_orchestrator import AlternativesMatchingOrchestrator
-    from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
-    from finwiz.orchestrators.discovery_orchestrator import DiscoveryOrchestrator
-    from finwiz.orchestrators.error_handling_orchestrator import ErrorHandlingOrchestrator
-    from finwiz.orchestrators.progress_tracking_orchestrator import ProgressTrackingOrchestrator
-    from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
-    from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
-    from finwiz.orchestrators.validation_orchestrator import ValidationOrchestrator
+from typing import Any
 
 from crewai.flow import Flow, and_, listen, start
 
@@ -27,6 +17,7 @@ from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 from finwiz.config.resilience_config import get_resilience_config
 from finwiz.crew_factory import CrewFactory
 from finwiz.flow_state import FinwizState, FlowStateManager
+from finwiz.flows.orchestrator_registry import create_orchestrator
 from finwiz.infrastructure.monitoring.litellm_callback import enable_token_monitoring
 from finwiz.infrastructure.resilience.retry import create_retry_decorator
 from finwiz.integration.accessor import CrewDataAccessor
@@ -54,72 +45,22 @@ class OrchestratorDependencies:
 
 
 class FinwizFlow(Flow[FinwizState]):
-    """
-    Main orchestrator for the financial analysis workflow.
-
-    This flow coordinates the complete portfolio analysis workflow by delegating
-    to focused orchestrator modules for improved maintainability and testability.
-
-    Architecture:
-        The Flow delegates to focused orchestrator modules, each with a single
-        responsibility:
-
-        - ErrorHandlingOrchestrator: Crew execution error handling
-        - ProgressTrackingOrchestrator: Progress calculation and metrics
-        - UtilityOrchestrator: Data parsing and validation utilities
-        - DeepAnalysisOrchestrator: Deep analysis execution and result creation
-        - AlternativesMatchingOrchestrator: A+ alternative matching
-        - DiscoveryOrchestrator: Discovery crew execution and consolidation
-        - ValidationOrchestrator: Input validation and data availability
-        - ReportingOrchestrator: Report consolidation and HTML generation
-
-    Workflow Phases:
-        1. Data Validation: validate_data_integration()
-        2. Portfolio Review: check_portfolio()
-        3. Deep Analysis: analyze_and_update_portfolio()
-        4. Discovery: check_crypto(), check_stock(), check_etf()
-        5. Alternative Matching: match_alternatives_after_discovery()
-        6. Rebalancing: check_portfolio_rebalancing()
-        7. Pre-validation: pre_validate_reporter_input()
-        8. Final Report: report()
-
-    State Management:
-        Uses structured Pydantic state (FinwizState) for type safety and
-        validation.
-
-    Example:
-        >>> flow = FinwizFlow()
-        >>> result = flow.kickoff()
-        >>> final_state = flow.state
-        >>> print(f"Analysis complete: {final_state.final_report_path}")
-
-    """
+    """Main flow coordinating portfolio analysis via orchestrator delegation."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the FinwizFlow instance with orchestrators."""
-        # Enable token monitoring for all LLM calls (prevents token overflow issues)
         enable_token_monitoring()
         logger.info("Token monitoring enabled for all LLM calls")
         logger.info("Initializing FinwizFlow with orchestrator delegation")
 
-        # Initialize dependencies FIRST (before super().__init__())
-        # This is required because Flow framework may access properties during initialization
         self.deps = self._initialize_dependencies()
         logger.info("Orchestrator dependencies initialized")
 
-        # Initialize orchestrators (lazy loading via properties) BEFORE super().__init__()
-        self._error_handler_orch: ErrorHandlingOrchestrator | None = None
-        self._progress_orch: ProgressTrackingOrchestrator | None = None
-        self._utility_orch: UtilityOrchestrator | None = None
-        self._deep_analysis_orch: DeepAnalysisOrchestrator | None = None
-        self._alternatives_orch: AlternativesMatchingOrchestrator | None = None
-        self._discovery_orch: DiscoveryOrchestrator | None = None
-        self._validation_orch: ValidationOrchestrator | None = None
-        self._reporting_orch: ReportingOrchestrator | None = None
+        # Orchestrators are lazy-loaded via registry on first access
+        self._orchestrators: dict[str, Any] = {}
 
         super().__init__(*args, **kwargs)
 
-        # Initialize structured state
         if not hasattr(self, "state") or self.state is None:
             self.state = self.deps.state_manager.create_initial_state()  # type: ignore[misc]
             logger.info("Flow state initialized with session metadata")
@@ -182,156 +123,43 @@ class FinwizFlow(Flow[FinwizState]):
             retry_decorator=retry_decorator,
         )
 
-    # Lazy loading properties for orchestrators
+    def _get_orch(self, name: str) -> Any:
+        """Get or create an orchestrator by registry name."""
+        if name not in self._orchestrators:
+            self._orchestrators[name] = create_orchestrator(name, self.state, self.deps)
+        return self._orchestrators[name]
 
     @property
-    def error_handler_orch(self):
-        """Lazy load error handling orchestrator."""
-        if self._error_handler_orch is None:
-            from finwiz.orchestrators.error_handling_orchestrator import ErrorHandlingOrchestrator
-
-            self._error_handler_orch = ErrorHandlingOrchestrator(
-                state=self.state,
-                crew_factory=self.deps.crew_factory,
-                integration_manager=self.deps.integration_manager,
-                error_handler=self.deps.error_handler,
-            )
-        return self._error_handler_orch
+    def error_handler_orch(self) -> Any:
+        return self._get_orch("error_handler")
 
     @property
-    def progress_orch(self):
-        """Lazy load progress tracking orchestrator."""
-        if self._progress_orch is None:
-            from finwiz.orchestrators.progress_tracking_orchestrator import ProgressTrackingOrchestrator
-
-            self._progress_orch = ProgressTrackingOrchestrator(
-                state=self.state,
-            )
-        return self._progress_orch
+    def progress_orch(self) -> Any:
+        return self._get_orch("progress")
 
     @property
-    def utility_orch(self):
-        """Lazy load utility orchestrator."""
-        if self._utility_orch is None:
-            from finwiz.orchestrators.utility_orchestrator import UtilityOrchestrator
-
-            self._utility_orch = UtilityOrchestrator(
-                state=self.state,
-            )
-        return self._utility_orch
+    def utility_orch(self) -> Any:
+        return self._get_orch("utility")
 
     @property
-    def deep_analysis_orch(self):
-        """Lazy load deep analysis orchestrator."""
-        if self._deep_analysis_orch is None:
-            from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
-
-            self._deep_analysis_orch = DeepAnalysisOrchestrator(
-                state=self.state,
-                crew_factory=self.deps.crew_factory,
-                integration_manager=self.deps.integration_manager,
-                error_handler=self.deps.error_handler,
-                batch_prefetch_config=self.deps.batch_prefetch_config,
-            )
-        return self._deep_analysis_orch
+    def deep_analysis_orch(self) -> Any:
+        return self._get_orch("deep_analysis")
 
     @property
-    def alternatives_orch(self):
-        """Lazy load alternatives matching orchestrator."""
-        if self._alternatives_orch is None:
-            from finwiz.orchestrators.alternatives_matching_orchestrator import AlternativesMatchingOrchestrator
-
-            self._alternatives_orch = AlternativesMatchingOrchestrator(
-                state=self.state,
-                crew_factory=self.deps.crew_factory,
-                integration_manager=self.deps.integration_manager,
-                error_handler=self.deps.error_handler,
-            )
-        return self._alternatives_orch
+    def alternatives_orch(self) -> Any:
+        return self._get_orch("alternatives")
 
     @property
-    def discovery_orch(self):
-        """Lazy load discovery orchestrator."""
-        if self._discovery_orch is None:
-            from finwiz.orchestrators.discovery_orchestrator import DiscoveryOrchestrator
-
-            self._discovery_orch = DiscoveryOrchestrator(
-                state=self.state,
-                availability_tracker=self.deps.availability_tracker,
-            )
-        return self._discovery_orch
+    def discovery_orch(self) -> Any:
+        return self._get_orch("discovery")
 
     @property
-    def validation_orch(self):
-        """Lazy load validation orchestrator."""
-        if self._validation_orch is None:
-            from finwiz.orchestrators.validation_orchestrator import ValidationOrchestrator
-
-            self._validation_orch = ValidationOrchestrator(
-                state=self.state,
-                data_accessor=self.deps.data_accessor,
-                integration_manager=self.deps.integration_manager,
-            )
-        return self._validation_orch
+    def validation_orch(self) -> Any:
+        return self._get_orch("validation")
 
     @property
-    def reporting_orch(self):
-        """Lazy load reporting orchestrator."""
-        if self._reporting_orch is None:
-            from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
-
-            self._reporting_orch = ReportingOrchestrator(
-                state=self.state,
-                integration_manager=self.deps.integration_manager,
-            )
-        return self._reporting_orch
-
-    # Convenience properties for direct access to dependencies
-
-    @property
-    def integration_manager(self):
-        """Access integration_manager from deps."""
-        return self.deps.integration_manager
-
-    @property
-    def data_accessor(self):
-        """Access data_accessor from deps."""
-        return self.deps.data_accessor
-
-    @property
-    def error_handler(self):
-        """Access error_handler from deps."""
-        return self.deps.error_handler
-
-    @property
-    def state_manager(self):
-        """Access state_manager from deps."""
-        return self.deps.state_manager
-
-    @property
-    def crew_factory(self):
-        """Access crew_factory from deps."""
-        return self.deps.crew_factory
-
-    @property
-    def availability_tracker(self):
-        """Access availability_tracker from deps."""
-        return self.deps.availability_tracker
-
-    @property
-    def resilience_config(self):
-        """Access resilience_config from deps."""
-        return self.deps.resilience_config
-
-    @property
-    def batch_prefetch_config(self):
-        """Access batch_prefetch_config from deps."""
-        return self.deps.batch_prefetch_config
-
-    @property
-    def retry_decorator(self):
-        """Access retry_decorator from deps."""
-        return self.deps.retry_decorator
+    def reporting_orch(self) -> Any:
+        return self._get_orch("reporting")
 
     def _update_progress(self) -> None:
         """Delegate progress updates to ProgressTrackingOrchestrator."""
@@ -413,146 +241,53 @@ class FinwizFlow(Flow[FinwizState]):
 
     @listen("validate_data_integration")
     async def analyze_and_update_portfolio(self) -> dict[str, Any]:
-        """
-        Perform deep analysis and update portfolio review.
-
-        Delegates to DeepAnalysisOrchestrator.
-
-        Returns:
-            dict: Consolidated analysis results with alternatives
-
-        """
-        result: dict[str, Any] = await self.deep_analysis_orch.analyze_and_update_portfolio()
-        return result
+        """Perform deep analysis and update portfolio review."""
+        return await self.deep_analysis_orch.analyze_and_update_portfolio()
 
     @listen("analyze_and_update_portfolio")
     async def check_portfolio(self) -> dict[str, Any]:
-        """
-        Run portfolio keep-or-sell review.
-
-        Delegates to ValidationOrchestrator.
-
-        Returns:
-            dict: Portfolio review results with decisions
-
-        """
-        result: dict[str, Any] = await self.validation_orch.check_portfolio()
-        return result
+        """Run portfolio keep-or-sell review."""
+        return await self.validation_orch.check_portfolio()
 
     @listen("check_portfolio")
     def check_crypto(self) -> dict[str, Any]:
-        """
-        Initiate cryptocurrency discovery.
-
-        Delegates to DiscoveryOrchestrator.
-
-        Returns:
-            dict: Crypto discovery results
-
-        """
-        result: dict[str, Any] = self.discovery_orch.check_crypto()
-        return result
+        """Initiate cryptocurrency discovery."""
+        return self.discovery_orch.check_crypto()
 
     @listen("check_portfolio")
     def check_stock(self) -> dict[str, Any]:
-        """
-        Initiate stock discovery.
-
-        Delegates to DiscoveryOrchestrator.
-
-        Returns:
-            dict: Stock discovery results
-
-        """
-        result: dict[str, Any] = self.discovery_orch.check_stock()
-        return result
+        """Initiate stock discovery."""
+        return self.discovery_orch.check_stock()
 
     @listen("check_portfolio")
     def check_etf(self) -> dict[str, Any]:
-        """
-        Initiate ETF discovery.
-
-        Delegates to DiscoveryOrchestrator.
-
-        Returns:
-            dict: ETF discovery results
-
-        """
-        result: dict[str, Any] = self.discovery_orch.check_etf()
-        return result
+        """Initiate ETF discovery."""
+        return self.discovery_orch.check_etf()
 
     @listen(and_("check_crypto", "check_stock", "check_etf"))
     def check_investment_discovery(self) -> dict[str, Any]:
-        """
-        Consolidate discovery results.
-
-        Delegates to DiscoveryOrchestrator.
-
-        Returns:
-            dict: Consolidated discovery results
-
-        """
-        result: dict[str, Any] = self.discovery_orch.check_investment_discovery()
-        return result
+        """Consolidate discovery results."""
+        return self.discovery_orch.check_investment_discovery()
 
     @listen("check_investment_discovery")
     def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Match alternatives from discovery results.
-
-        Delegates to AlternativesMatchingOrchestrator.
-
-        Args:
-            discovery_data: Discovery results from upstream
-
-        Returns:
-            dict: Alternative matching results
-
-        """
-        result: dict[str, Any] = self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
-        return result
+        """Match alternatives from discovery results."""
+        return self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
 
     @listen("match_alternatives_after_discovery")
     def check_portfolio_rebalancing(self) -> dict[str, Any]:
-        """
-        Run portfolio rebalancing analysis.
-
-        Delegates to ValidationOrchestrator.
-
-        Returns:
-            dict: Rebalancing analysis results
-
-        """
-        result: dict[str, Any] = self.validation_orch.check_portfolio_rebalancing()
-        return result
+        """Run portfolio rebalancing analysis."""
+        return self.validation_orch.check_portfolio_rebalancing()
 
     @listen("check_portfolio_rebalancing")
     def pre_validate_reporter_input(self) -> dict[str, Any]:
-        """
-        Pre-validate reporter input data.
-
-        Delegates to ValidationOrchestrator.
-
-        Returns:
-            dict: Validation results with consolidated data
-
-        """
-        result: dict[str, Any] = self.validation_orch.pre_validate_reporter_input()
-        return result
+        """Pre-validate reporter input data."""
+        return self.validation_orch.pre_validate_reporter_input()
 
     @listen("pre_validate_reporter_input")
     def report(self) -> dict[str, Any]:
-        """
-        Generate consolidated report.
-
-        Delegates to ReportingOrchestrator.
-
-        Returns:
-            dict: Final report path and generation status
-
-        """
-        result: dict[str, Any] = self.reporting_orch.report()
-        return result
+        """Generate consolidated report."""
+        return self.reporting_orch.report()
 
 
 def plot() -> None:

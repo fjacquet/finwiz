@@ -19,22 +19,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from finwiz.infrastructure.caching.manager import get_cache_manager
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,
     ProcessingSummary,
 )
-from finwiz.reporting.portfolio_review_html import (
-    add_portfolio_review_sections,
-    add_rebalancing_sections,
-)
-from finwiz.schemas.common import RiskAssessmentStandardized
-from finwiz.schemas.portfolio_processing import AssetClass, RawHolding
-from finwiz.schemas.portfolio_review import (
-    HoldingDecision,
-    PortfolioReview,
-)
-from finwiz.scoring.grading_system import score_to_grade
+from finwiz.orchestrators.portfolio_review.merge import merge_deep_analysis_from_flow_state
+from finwiz.schemas.portfolio_review import PortfolioReview
 
 logger = logging.getLogger(__name__)
 
@@ -80,203 +70,6 @@ def get_thresholds() -> tuple[float, float, int]:
         _f("DELTA_THRESHOLD", 0.10),
         _i("MAX_RISK_STEP", 1),
     )
-
-
-# =============================================================================
-# Decision Building Helpers (pure functions - Domain Logic)
-# =============================================================================
-
-
-def calculate_score(is_valid: bool, asset_class: AssetClass) -> float:
-    """
-    Calculate composite score for a holding using shallow validation.
-
-    Args:
-        is_valid: Whether the holding passed validation
-        asset_class: Type of asset
-
-    Returns:
-        Composite score between 0.0 and 1.0
-
-    """
-    if not is_valid:
-        return 0.3  # Invalid holdings get low score
-
-    # Base score for validated holdings (B grade = 75%)
-    base = 0.75
-
-    # ETFs get slight boost for diversification
-    if asset_class == "etf":
-        base += 0.05
-
-    return min(base, 1.0)
-
-
-def assess_risk(is_valid: bool, validation_result: dict[str, Any]) -> RiskAssessmentStandardized:
-    """Assess risk for a holding based on validation result."""
-    if is_valid:
-        return RiskAssessmentStandardized(
-            score=2.0,
-            level="Medium",
-            risk_factors=["Baseline risk - ticker validated"],
-        )
-
-    reason = validation_result.get("reason", "Unknown validation failure")
-    return RiskAssessmentStandardized(
-        score=4.5,
-        level="Very High",
-        risk_factors=[
-            "Validation failed",
-            f"Reason: {reason}",
-            "Unable to verify ticker existence",
-        ],
-    )
-
-
-def build_rationale(
-    is_valid: bool,
-    validation_result: dict[str, Any],
-    holding: RawHolding,
-) -> list[str]:
-    """Build rationale bullets for a holding decision."""
-    rationale: list[str] = []
-
-    rationale.append("⚡ Validation rapide (analyse superficielle)")
-    rationale.append("💡 Activez DEEP_PORTFOLIO_ANALYSIS=true pour une analyse complète")
-
-    if is_valid:
-        rationale.append("✅ Ticker validé avec succès")
-        source = validation_result.get("meta", {}).get("source", "unknown")
-        rationale.append(f"Source de données: {source}")
-        rationale.append("📊 Note basée sur la validation du ticker uniquement")
-        rationale.append("🔍 L'analyse approfondie fournira des métriques détaillées")
-    else:
-        rationale.append("⚠️ Échec de la validation du ticker")
-        reason = validation_result.get("reason", "Unknown reason")
-        rationale.append(f"Problème de validation: {reason}")
-        rationale.append("📋 Inclus dans le rapport pour transparence")
-        rationale.append("🔧 Révision manuelle requise")
-
-    rationale.append(f"📁 Source: {Path(holding.source_file).name}, ligne {holding.line_number}")
-
-    return rationale
-
-
-def build_citations(validation_result: dict[str, Any]) -> list[str]:
-    """Build citations list from validation result."""
-    citations: list[str] = []
-
-    source = validation_result.get("meta", {}).get("source")
-    if source == "yahoo":
-        citations.append("Yahoo Finance")
-    elif source == "coinbase":
-        citations.append("Coinbase Products API")
-
-    return citations
-
-
-def create_error_decision(
-    holding: RawHolding,
-    base_currency: str,
-    error_message: str,
-) -> HoldingDecision:
-    """Create a minimal decision for a holding that failed to process."""
-    grade_info = score_to_grade(0.0)
-
-    return HoldingDecision(
-        asset_class=holding.asset_class,
-        name=holding.name,
-        ticker=holding.ticker,
-        currency=holding.currency or base_currency,
-        decision="SELL",
-        composite_score=0.0,
-        grade=grade_info.grade,
-        grade_description="Processing Error",
-        recommended_action="Review manually",
-        risk=RiskAssessmentStandardized(
-            score=5.0,
-            level="Very High",
-            risk_factors=["Processing error", error_message],
-        ),
-        rationale_bullets=[
-            "❌ Failed to process holding",
-            f"Error: {error_message}",
-            "Manual review required",
-        ],
-        citations=[],
-        alternatives=[],
-        data_freshness="stale",
-    )
-
-
-# =============================================================================
-# Flow State Integration
-# =============================================================================
-
-
-def _merge_deep_analysis_from_flow_state(
-    decisions: list[HoldingDecision],
-    flow_state: Any,
-) -> list[HoldingDecision]:
-    """Merge deep analysis results from Flow state into HoldingDecision objects."""
-    try:
-        deep_analysis_results = getattr(flow_state, "deep_analysis_results", {})
-        portfolio_alternatives = getattr(flow_state, "portfolio_alternatives", {})
-
-        if not deep_analysis_results:
-            logger.info("No deep analysis results available in Flow state")
-            return decisions
-
-        holdings_with_deep_analysis = 0
-        holdings_with_alternatives = 0
-
-        for decision in decisions:
-            ticker = decision.ticker
-
-            if ticker in deep_analysis_results:
-                deep_result = deep_analysis_results[ticker]
-
-                decision.crew_analysis_used = deep_result.crew_name
-                decision.analysis_date = deep_result.analyzed_at
-                decision.composite_score = deep_result.composite_score
-                decision.grade = deep_result.grade
-
-                grade_info = score_to_grade(deep_result.composite_score)
-                decision.grade_description = grade_info.description
-                decision.recommended_action = grade_info.action
-
-                decision.data_freshness = "fresh" if not deep_result.cached else "recent"
-
-                holdings_with_deep_analysis += 1
-                logger.debug(f"Merged deep analysis for {ticker}: grade={deep_result.grade}")
-
-            if ticker in portfolio_alternatives:
-                alternatives_data = portfolio_alternatives[ticker]
-
-                from finwiz.schemas.portfolio_review import Alternative
-
-                alternatives = []
-                for alt_dict in alternatives_data:
-                    try:
-                        alternative = Alternative.model_validate(alt_dict)
-                        alternatives.append(alternative)
-                    except Exception as e:
-                        logger.warning(f"Failed to validate alternative for {ticker}: {e}")
-                        continue
-
-                if alternatives:
-                    decision.alternatives = alternatives[:3]
-                    decision.has_a_plus_opportunities = True
-                    holdings_with_alternatives += 1
-                    logger.debug(f"Added {len(alternatives)} alternatives for {ticker}")
-
-        logger.info(f"Deep analysis merge complete: {holdings_with_deep_analysis} with deep analysis, {holdings_with_alternatives} with alternatives")
-
-        return decisions
-
-    except Exception as e:
-        logger.error(f"Error merging deep analysis from Flow state: {e}", exc_info=True)
-        return decisions
 
 
 # =============================================================================
@@ -339,7 +132,7 @@ async def build_portfolio_review(
 
     if flow_state is not None:
         logger.info("Merging deep analysis data from Flow state")
-        decisions = _merge_deep_analysis_from_flow_state(decisions, flow_state)
+        decisions = merge_deep_analysis_from_flow_state(decisions, flow_state)
 
     review = PortfolioReview(
         as_of=datetime.now(UTC),
@@ -490,114 +283,11 @@ async def run(flow_state: Any | None = None) -> Path:
     return out
 
 
-# =============================================================================
-# Enhanced Orchestrator Class
-# =============================================================================
-
-
-class EnhancedPortfolioReviewOrchestrator:
-    """
-    Enhanced portfolio review orchestrator with integrated rebalancing capabilities.
-
-    Provides seamless integration between portfolio review and rebalancing analysis,
-    with shared caching and unified reporting.
-    """
-
-    def __init__(self) -> None:
-        """Initialize the enhanced orchestrator."""
-        self.cache_manager = get_cache_manager()
-
-    async def run_comprehensive_analysis(
-        self,
-        target_weights: dict[str, float] | None = None,
-        available_capital: float = 0.0,
-        enable_caching: bool = True,
-    ) -> dict[str, Any]:
-        """
-        Run comprehensive portfolio analysis including review and rebalancing.
-
-        Args:
-            target_weights: Target allocation weights for rebalancing
-            available_capital: Available capital for rebalancing
-            enable_caching: Whether to use caching for expensive operations
-
-        Returns:
-            Comprehensive analysis results
-
-        """
-        cache_key = ["portfolio_analysis", str(target_weights), str(available_capital)]
-
-        if enable_caching:
-            cached_result = await self.cache_manager.get(cache_key)
-            if cached_result is not None:
-                result: dict[str, Any] = cached_result
-                return result
-
-        review_path, rebalancing_result = await run_with_rebalancing(
-            target_weights=target_weights,
-            available_capital=available_capital,
-            include_rebalancing=target_weights is not None,
-        )
-
-        review_data = json.loads(Path(review_path).read_text(encoding="utf-8"))
-
-        comprehensive_result = {
-            "portfolio_review": review_data,
-            "rebalancing_analysis": rebalancing_result,
-            "analysis_timestamp": datetime.now(UTC).isoformat(),
-            "has_rebalancing_recommendations": rebalancing_result is not None,
-        }
-
-        if enable_caching:
-            await self.cache_manager.set(cache_key, comprehensive_result, ttl=1800)
-
-        return comprehensive_result
-
-    async def generate_unified_report(
-        self,
-        analysis_result: dict[str, Any],
-        language: str = "en",
-    ) -> str:
-        """Generate unified HTML report combining portfolio review and rebalancing."""
-        from finwiz.tools.html_report_generator import HTMLReportGenerator
-
-        generator = HTMLReportGenerator()
-
-        add_portfolio_review_sections(generator, analysis_result["portfolio_review"])
-
-        if analysis_result["rebalancing_analysis"]:
-            add_rebalancing_sections(generator, analysis_result["rebalancing_analysis"])
-
-        title = f"Comprehensive Portfolio Analysis - {datetime.now().strftime('%Y-%m-%d')}"
-
-        if hasattr(generator, "generate_unified_html"):
-            return generator.generate_unified_html(title=title, language=language)
-        else:
-            return generator.generate_html_fallback(title=title, language=language)
-
-
-# =============================================================================
-# Public API Exports
-# =============================================================================
-
 __all__ = [
-    # Configuration
     "get_csv_paths",
     "get_thresholds",
-    # Decision builders (domain logic)
-    "calculate_score",
-    "assess_risk",
-    "build_rationale",
-    "build_citations",
-    "create_error_decision",
-    # Core functions
     "build_portfolio_review",
     "save_review_json",
     "run",
     "run_with_rebalancing",
-    # Orchestrator
-    "EnhancedPortfolioReviewOrchestrator",
-    # Re-export from reporting layer for convenience
-    "add_portfolio_review_sections",
-    "add_rebalancing_sections",
 ]

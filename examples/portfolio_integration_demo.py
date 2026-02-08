@@ -10,7 +10,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from finwiz.orchestrators.portfolio_review import EnhancedPortfolioReviewOrchestrator
+from finwiz.orchestrators.portfolio_review_enhanced import EnhancedPortfolioReviewOrchestrator
 from finwiz.tools.portfolio_cache_service import get_portfolio_cache_service
 
 
