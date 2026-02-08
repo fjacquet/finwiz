@@ -9,36 +9,40 @@ for 10-20x speed improvement and 100% cost reduction.
 import time
 from typing import Any
 
+from finwiz.config.features.flags import is_feature_enabled
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 def analyze_stock_opportunities(session_id: str) -> dict[str, Any]:
-    """
-    Analyze stock opportunities using pure Python.
+    """Analyze stock opportunities using pure Python.
 
-    This replaces the AI-based StockCrew with fast Python calculations.
-
-    Args:
-        session_id: Session identifier for tracking
-
-    Returns:
-        Dictionary containing analysis results and performance metrics
-
+    When the ``newcomer_discovery`` feature flag is enabled, routes
+    through ``NewcomerDiscoveryPipeline``.  Falls back to legacy
+    mocked data when the flag is disabled or the pipeline fails.
     """
     start_time = time.time()
-    logger.info("🚀 Starting Python-based stock analysis")
+
+    if is_feature_enabled("newcomer_discovery"):
+        try:
+            logger.info("Using NewcomerDiscoveryPipeline for stock discovery")
+            from finwiz.scoring.discovery.pipeline import NewcomerDiscoveryPipeline
+
+            pipeline = NewcomerDiscoveryPipeline("stock")
+            result = pipeline.discover(session_id)
+            return pipeline._to_legacy_format(result, start_time)
+        except Exception as e:
+            logger.error("Newcomer discovery pipeline failed for stock, falling back to legacy: %s", e)
+
+    return _legacy_stock_analysis(session_id, start_time)
+
+
+def _legacy_stock_analysis(session_id: str, start_time: float) -> dict[str, Any]:
+    """Legacy mocked stock analysis (hardcoded data)."""
+    logger.info("Starting Python-based stock analysis (legacy)")
 
     try:
-        # Simulate stock analysis with Python calculations
-        # In a real implementation, this would:
-        # 1. Fetch stock market data
-        # 2. Calculate fundamental metrics (P/E, ROE, etc.)
-        # 3. Perform technical analysis
-        # 4. Assess risk and growth potential
-        # 5. Identify top opportunities
-
         opportunities = [
             {
                 "ticker": "MSFT",
@@ -67,29 +71,23 @@ def analyze_stock_opportunities(session_id: str) -> dict[str, Any]:
         ]
 
         execution_time = time.time() - start_time
-
         results = {
             "opportunities": opportunities,
             "analysis_summary": f"Identified {len(opportunities)} stock opportunities",
             "performance_metrics": {
                 "execution_time_seconds": execution_time,
                 "opportunities_found": len(opportunities),
-                "cost_usd": 0.0,  # 100% cost reduction
-                "llm_calls_made": 0,  # No AI calls
+                "cost_usd": 0.0,
+                "llm_calls_made": 0,
                 "method": "python_analysis",
             },
         }
-
-        logger.info(f"✅ Stock analysis completed in {execution_time:.2f}s")
-        logger.info(f"   Found {len(opportunities)} opportunities")
-        logger.info("   Cost: $0.00 (100% reduction)")
-
+        logger.info("Stock analysis completed in %.2fs", execution_time)
         return results
 
     except Exception as e:
-        logger.error(f"Stock Python analysis failed: {e}")
+        logger.error("Stock Python analysis failed: %s", e)
         execution_time = time.time() - start_time
-
         return {
             "opportunities": [],
             "analysis_summary": f"Stock analysis failed: {e}",

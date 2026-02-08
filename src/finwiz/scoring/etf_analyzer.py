@@ -9,36 +9,40 @@ for 10-20x speed improvement and 100% cost reduction.
 import time
 from typing import Any
 
+from finwiz.config.features.flags import is_feature_enabled
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 def analyze_etf_opportunities(session_id: str) -> dict[str, Any]:
-    """
-    Analyze ETF opportunities using pure Python.
+    """Analyze ETF opportunities using pure Python.
 
-    This replaces the AI-based ETFCrew with fast Python calculations.
-
-    Args:
-        session_id: Session identifier for tracking
-
-    Returns:
-        Dictionary containing analysis results and performance metrics
-
+    When the ``newcomer_discovery`` feature flag is enabled, routes
+    through ``NewcomerDiscoveryPipeline``.  Falls back to legacy
+    mocked data when the flag is disabled or the pipeline fails.
     """
     start_time = time.time()
-    logger.info("🚀 Starting Python-based ETF analysis")
+
+    if is_feature_enabled("newcomer_discovery"):
+        try:
+            logger.info("Using NewcomerDiscoveryPipeline for etf discovery")
+            from finwiz.scoring.discovery.pipeline import NewcomerDiscoveryPipeline
+
+            pipeline = NewcomerDiscoveryPipeline("etf")
+            result = pipeline.discover(session_id)
+            return pipeline._to_legacy_format(result, start_time)
+        except Exception as e:
+            logger.error("Newcomer discovery pipeline failed for etf, falling back to legacy: %s", e)
+
+    return _legacy_etf_analysis(session_id, start_time)
+
+
+def _legacy_etf_analysis(session_id: str, start_time: float) -> dict[str, Any]:
+    """Legacy mocked ETF analysis (hardcoded data)."""
+    logger.info("Starting Python-based ETF analysis (legacy)")
 
     try:
-        # Simulate ETF analysis with Python calculations
-        # In a real implementation, this would:
-        # 1. Fetch ETF data and holdings
-        # 2. Calculate expense ratios and tracking error
-        # 3. Assess diversification and risk metrics
-        # 4. Analyze performance vs benchmarks
-        # 5. Identify top opportunities
-
         opportunities = [
             {
                 "ticker": "VTI",
@@ -67,29 +71,23 @@ def analyze_etf_opportunities(session_id: str) -> dict[str, Any]:
         ]
 
         execution_time = time.time() - start_time
-
         results = {
             "opportunities": opportunities,
             "analysis_summary": f"Identified {len(opportunities)} ETF opportunities",
             "performance_metrics": {
                 "execution_time_seconds": execution_time,
                 "opportunities_found": len(opportunities),
-                "cost_usd": 0.0,  # 100% cost reduction
-                "llm_calls_made": 0,  # No AI calls
+                "cost_usd": 0.0,
+                "llm_calls_made": 0,
                 "method": "python_analysis",
             },
         }
-
-        logger.info(f"✅ ETF analysis completed in {execution_time:.2f}s")
-        logger.info(f"   Found {len(opportunities)} opportunities")
-        logger.info("   Cost: $0.00 (100% reduction)")
-
+        logger.info("ETF analysis completed in %.2fs", execution_time)
         return results
 
     except Exception as e:
-        logger.error(f"ETF Python analysis failed: {e}")
+        logger.error("ETF Python analysis failed: %s", e)
         execution_time = time.time() - start_time
-
         return {
             "opportunities": [],
             "analysis_summary": f"ETF analysis failed: {e}",
