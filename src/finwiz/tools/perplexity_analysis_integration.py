@@ -13,6 +13,7 @@ import json
 import os
 from typing import Any, Literal, cast
 
+from finwiz.config.endpoints import PERPLEXITY_SEARCH
 from finwiz.schemas.perplexity import (
     PerplexityConfig,
     SonarArticle,
@@ -51,12 +52,16 @@ class PerplexityAnalysisIntegration:
 
     def __init__(self, config: PerplexityConfig | None = None) -> None:
         """Initialize the integration wrapper."""
-        self.perplexity_tool = PerplexitySearchTool()
+        try:
+            self.perplexity_tool = PerplexitySearchTool()
+        except (ValueError, Exception):
+            self.perplexity_tool = None  # type: ignore[assignment]
+
         self.config = config or self._create_default_config()
 
         # Validate API key availability
         api_key = os.getenv("PPLX_API_KEY")
-        if not api_key:
+        if not api_key or self.perplexity_tool is None:
             logger.warning("PPLX_API_KEY not found, Perplexity integration will be disabled")
             self._api_available = False
         else:
@@ -229,7 +234,7 @@ class PerplexityAnalysisIntegration:
                 if "country" in search_filters:
                     payload["country"] = search_filters["country"]
 
-                http_response = requests.post("https://api.perplexity.ai/search", headers=headers, data=json.dumps(payload, default=str), timeout=30)
+                http_response = requests.post(PERPLEXITY_SEARCH, headers=headers, data=json.dumps(payload, default=str), timeout=30)
                 http_response.raise_for_status()
 
                 # Convert search results to the format expected by the parser

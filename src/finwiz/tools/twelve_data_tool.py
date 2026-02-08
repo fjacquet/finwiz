@@ -8,19 +8,19 @@ Environment variable required: TWELVE_DATA_API_KEY
 from __future__ import annotations
 
 import asyncio
-import os
 from typing import Any, Literal, cast
 
 import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+# Import schema from centralized location
+from finwiz.config.endpoints import TWELVE_DATA_BASE
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.infrastructure.decorators.api_decorators import api_tool
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider
-
-# Import schema from centralized location
 from finwiz.schemas.tools import TwelveDataIndicatorInput
+from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
@@ -43,7 +43,12 @@ class TwelveDataIndicatorTool(BaseTool):
     )
     args_schema: type[BaseModel] = TwelveDataIndicatorInput
 
-    base_url: str = "https://api.twelvedata.com"
+    base_url: str = TWELVE_DATA_BASE
+
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("TWELVE_DATA_API_KEY", self.__class__.__name__)
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -114,15 +119,11 @@ class TwelveDataIndicatorTool(BaseTool):
         outputsize: int | None,
     ) -> str:
         """Get technical indicator data from Twelve Data API."""
-        api_key = os.getenv("TWELVE_DATA_API_KEY")
-        if not api_key:
-            return "Error: TWELVE_DATA_API_KEY environment variable not set."
-
         endpoint = f"{self.base_url}/{indicator}"
         params: dict[str, str | int] = {
             "symbol": symbol,
             "interval": interval,
-            "apikey": api_key,
+            "apikey": self._api_key,
         }
         if outputsize is not None:
             params["outputsize"] = outputsize

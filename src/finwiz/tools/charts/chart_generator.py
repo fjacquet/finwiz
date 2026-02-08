@@ -9,6 +9,7 @@ import os
 
 import requests
 
+from finwiz.config.endpoints import CHART_IMG_BASE
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -20,7 +21,7 @@ class ChartGenerator:
     def __init__(self) -> None:
         """Initialize the chart generator."""
         self.api_key = os.getenv("CHART_IMG_API_KEY")
-        self.base_url = os.getenv("CHART_IMG_BASE_URL", "https://api.chart-img.com/v1/stock")
+        self.base_url = CHART_IMG_BASE
 
         # Chart generation parameters
         self.default_width = 1200

@@ -8,14 +8,14 @@ Docs: https://www.alphavantage.co/documentation/#news-sentiment
 
 from __future__ import annotations
 
-import os
-
 import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
 # Import schema from centralized location
+from finwiz.config.endpoints import ALPHA_VANTAGE_BASE
 from finwiz.schemas.tools import AlphaVantageNewsInput
+from finwiz.tools.api_key_validation import validate_api_key
 
 
 class AlphaVantageNewsSentimentTool(BaseTool):
@@ -25,7 +25,12 @@ class AlphaVantageNewsSentimentTool(BaseTool):
     description: str = "Fetches news and sentiment using Alpha Vantage NEWS_SENTIMENT endpoint. Requires ALPHA_VANTAGE_API_KEY in environment."
     args_schema: type[BaseModel] = AlphaVantageNewsInput
 
-    base_url: str = "https://www.alphavantage.co/query"
+    base_url: str = ALPHA_VANTAGE_BASE
+
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("ALPHA_VANTAGE_API_KEY", self.__class__.__name__)
 
     def _run(
         self,
@@ -36,15 +41,11 @@ class AlphaVantageNewsSentimentTool(BaseTool):
         limit: int | None = 50,
         topics: str | None = None,
     ) -> str:
-        api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
-        if not api_key:
-            return "Error: ALPHA_VANTAGE_API_KEY environment variable not set."
-
         params: dict[str, str | int] = {
             "function": "NEWS_SENTIMENT",
             "tickers": tickers,
             "sort": sort,
-            "apikey": api_key,
+            "apikey": self._api_key,
         }
         if time_from:
             params["time_from"] = time_from

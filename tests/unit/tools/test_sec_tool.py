@@ -1,14 +1,13 @@
+import pytest
+
 from finwiz.tools.sec_tool import SECFilingSearchTool
 
 
 def test_missing_api_key(monkeypatch):
-    """Returns a clear error when SEC_API_API_KEY is missing."""
+    """Raises ValueError at instantiation when SEC_API_API_KEY is missing."""
     monkeypatch.delenv("SEC_API_API_KEY", raising=False)
-    tool = SECFilingSearchTool()
-    out = tool._run(ticker="AAPL", form_type="10-K", question="risk", top_k=2)
-    assert isinstance(out, dict)
-    assert "error" in out
-    assert "SEC_API_API_KEY" in out["error"]
+    with pytest.raises(ValueError, match="SEC_API_API_KEY"):
+        SECFilingSearchTool()
 
 
 def test_successful_search_with_mocks(monkeypatch):

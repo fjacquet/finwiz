@@ -15,6 +15,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel
 
 # Import schema from centralized location
+from finwiz.config.endpoints import COINBASE_BASE
 from finwiz.schemas.tools import TickerValidationInput
 
 AssetClass = Literal["stock", "etf", "crypto", "auto"]
@@ -104,7 +105,7 @@ class TickerExistenceValidationTool(BaseTool):
     def _validate_crypto(self, symbol: str) -> dict[str, Any]:
         sym = symbol.upper()
         try:
-            r = requests.get("https://api.exchange.coinbase.com/products", timeout=10)
+            r = requests.get(f"{COINBASE_BASE}/products", timeout=10)
             r.raise_for_status()
             products: list[dict[str, Any]] = r.json()
             listed_pairs = [p.get("id") for p in products if isinstance(p.get("id"), str)]

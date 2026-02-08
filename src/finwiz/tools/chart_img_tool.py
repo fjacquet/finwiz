@@ -12,17 +12,17 @@ This tool returns a data URL (base64-encoded PNG) suitable for embedding in HTML
 from __future__ import annotations
 
 import base64
-import os
 
 import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+# Import schema from centralized location
+from finwiz.config.endpoints import CHART_IMG_BASE
 from finwiz.infrastructure.decorators.api_decorators import api_tool
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider
-
-# Import schema from centralized location
 from finwiz.schemas.tools import ChartImgInput
+from finwiz.tools.api_key_validation import validate_api_key
 
 
 class ChartImgTool(BaseTool):
@@ -31,6 +31,11 @@ class ChartImgTool(BaseTool):
     name: str = "Chart-img Generator"
     description: str = "Generates a PNG chart image via Chart-img for a given symbol and timeframe, returning a data URL string. Requires CHART_IMG_API_KEY."
     args_schema: type[BaseModel] = ChartImgInput
+
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("CHART_IMG_API_KEY", self.__class__.__name__)
 
     @api_tool(
         provider=APIProvider.CHART_IMG,
@@ -47,12 +52,7 @@ class ChartImgTool(BaseTool):
         height: int = 500,
         theme: str = "light",
     ) -> str:
-        api_key = os.getenv("CHART_IMG_API_KEY")
-        if not api_key:
-            return "Error: CHART_IMG_API_KEY environment variable not set."
-        base_url = os.getenv("CHART_IMG_BASE_URL", "https://api.chart-img.com/v1/stock")
-
-        headers = {"x-api-key": api_key}
+        headers = {"x-api-key": self._api_key}
         params: dict[str, str] = {
             "symbol": symbol,
             "interval": interval,
@@ -62,7 +62,7 @@ class ChartImgTool(BaseTool):
             "theme": theme,
         }
 
-        resp = requests.get(base_url, headers=headers, params=params, timeout=20)
+        resp = requests.get(CHART_IMG_BASE, headers=headers, params=params, timeout=20)
         resp.raise_for_status()
         content_type = resp.headers.get("Content-Type", "image/png")
         b64 = base64.b64encode(resp.content).decode("ascii")

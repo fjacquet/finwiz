@@ -12,6 +12,7 @@ from typing import Any
 import requests
 from bs4 import BeautifulSoup
 
+from finwiz.config.endpoints import YAHOO_FINANCE_WEB
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -40,7 +41,7 @@ class ETFDataFetcher:
         """Extract ETF data from Yahoo Finance."""
         try:
             # Yahoo Finance ETF summary URL
-            url = f"https://finance.yahoo.com/quote/{ticker}"
+            url = f"{YAHOO_FINANCE_WEB}/quote/{ticker}"
             headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
 
             response = requests.get(url, headers=headers, timeout=30)
@@ -213,7 +214,7 @@ class ETFDataFetcher:
         """Extract top holdings for the ETF."""
         try:
             # Yahoo Finance holdings URL
-            url = f"https://finance.yahoo.com/quote/{ticker}/holdings"
+            url = f"{YAHOO_FINANCE_WEB}/quote/{ticker}/holdings"
             headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
 
             response = requests.get(url, headers=headers, timeout=30)
@@ -260,7 +261,7 @@ class ETFDataFetcher:
         except (requests.exceptions.RequestException, ConnectionError, TimeoutError, KeyError, ValueError, AttributeError, TypeError) as e:
             logger.warning(f"Failed to extract top holdings for {ticker}: {e}")
             # Return sample holdings on error
-            return ETFDataFetcher.create_sample_holdings(ticker, f"https://finance.yahoo.com/quote/{ticker}")
+            return ETFDataFetcher.create_sample_holdings(ticker, f"{YAHOO_FINANCE_WEB}/quote/{ticker}")
 
     @staticmethod
     def create_sample_holdings(ticker: str, url: str) -> list[dict[str, Any]]:

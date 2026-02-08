@@ -8,7 +8,6 @@ and more. Enhanced with optional Perplexity Sonar integration.
 
 import asyncio
 import json
-import os
 from datetime import UTC, datetime
 from typing import Literal, cast
 
@@ -17,12 +16,14 @@ from crewai.tools import BaseTool
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
+from finwiz.config.endpoints import ALPHA_VANTAGE_BASE
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.infrastructure.caching.manager import cache_key, cached
 from finwiz.infrastructure.decorators.api_decorators import api_tool
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import CompanyOverviewInput
+from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
@@ -49,6 +50,11 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         "fundamental analysis and earnings commentary."
     )
     args_schema: type[BaseModel] = CompanyOverviewInput
+
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("ALPHA_VANTAGE_API_KEY", self.__class__.__name__)
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -128,11 +134,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         cache_key_str = cache_key("alpha_vantage", "overview", ticker.upper())
 
         async def fetch_from_api() -> str:
-            api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
-            if not api_key:
-                return "Error: ALPHA_VANTAGE_API_KEY environment variable not set."
-
-            url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={api_key}"
+            url = f"{ALPHA_VANTAGE_BASE}?function=OVERVIEW&symbol={ticker}&apikey={self._api_key}"
 
             response = requests.get(url, timeout=10)
             response.raise_for_status()

@@ -7,13 +7,14 @@ including authentication, rate limiting, caching, and error handling.
 
 from __future__ import annotations
 
-import os
 import time
 from typing import Any
 
 import aiohttp
 
+from finwiz.config.endpoints import TWELVE_DATA_BASE
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider, with_rate_limit
+from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -32,11 +33,8 @@ class TwelveDataClient:
 
     def __init__(self) -> None:
         """Initialize the Twelve Data API client."""
-        self.api_key = os.getenv("TWELVE_DATA_API_KEY")
-        if not self.api_key:
-            logger.warning("TWELVE_DATA_API_KEY not found in environment variables")
-
-        self.base_url = "https://api.twelvedata.com"
+        self.api_key = validate_api_key("TWELVE_DATA_API_KEY", self.__class__.__name__)
+        self.base_url = TWELVE_DATA_BASE
         self._cache: dict[str, dict[str, Any]] = {}
         self.cache_ttl = 300  # 5 minutes cache
         self.timeout = 30
@@ -57,8 +55,7 @@ class TwelveDataClient:
             RuntimeError: If API returns an error response
 
         """
-        if not self.api_key:
-            raise ValueError("TWELVE_DATA_API_KEY environment variable not set")
+        # API key already validated at __init__ via validate_api_key
 
         # Add API key to parameters
         params["apikey"] = self.api_key

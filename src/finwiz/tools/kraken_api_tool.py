@@ -12,6 +12,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel
 
 # Import schema from centralized location
+from finwiz.config.endpoints import KRAKEN_BASE
 from finwiz.schemas.tools import TickerInfoInput
 
 
@@ -29,7 +30,7 @@ class KrakenTickerInfoTool(BaseTool):
 
     def _run(self, pair: str) -> str:
         """Execute the tool to fetch ticker data."""
-        url = f"https://api.kraken.com/0/public/Ticker?pair={pair}"
+        url = f"{KRAKEN_BASE}/Ticker?pair={pair}"
 
         try:
             response = requests.get(url, timeout=10)

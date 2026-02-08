@@ -11,6 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from finwiz.config.endpoints import TWELVE_DATA_BASE
 from finwiz.tools.logger import get_logger
 from finwiz.tools.twelve_data_client import TwelveDataClient
 from finwiz.tools.twelve_data_transformers import (
@@ -58,7 +59,7 @@ class TwelveDataTool:
         self.client = TwelveDataClient()
         self.transformers = TwelveDataTransformers()
         # Expose client configuration for testing and introspection
-        self.base_url = "https://api.twelvedata.com"
+        self.base_url = TWELVE_DATA_BASE
         self.default_outputsize = 100
         self.timeout = 30
         self.cache_ttl = 300

@@ -10,6 +10,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from finwiz.config.endpoints import YAHOO_FINANCE_WEB
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -145,7 +146,7 @@ class ETFAnalyzer:
                 "expense_ratio": factsheet_data.get("expense_ratio", 0.2),
                 "tracking_diff": factsheet_data.get("tracking_diff"),
                 "replication_method": factsheet_data.get("replication_method", "other"),
-                "factsheet_url": factsheet_data.get("factsheet_url", f"https://finance.yahoo.com/quote/{ticker}"),
+                "factsheet_url": factsheet_data.get("factsheet_url", f"{YAHOO_FINANCE_WEB}/quote/{ticker}"),
                 "as_of": factsheet_data.get("as_of", date.today()),
                 "factsheet_highlights": factsheet_data.get("factsheet_highlights", []),
                 "top_holdings": top_holdings,
@@ -163,7 +164,7 @@ class ETFAnalyzer:
                 "ticker": ticker,
                 "issuer": "Unknown",
                 "expense_ratio": 0.2,
-                "factsheet_url": f"https://finance.yahoo.com/quote/{ticker}",
+                "factsheet_url": f"{YAHOO_FINANCE_WEB}/quote/{ticker}",
                 "as_of": date.today(),
                 "error": f"Factsheet construction error: {e}",
             }

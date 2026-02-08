@@ -32,6 +32,7 @@ import aiohttp
 import yfinance as yf  # yfinance has no official type stubs
 from aiohttp import ClientTimeout
 
+from finwiz.config.endpoints import ALPHA_VANTAGE_BASE
 from finwiz.config.yfinance_config import configure_yfinance
 from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider, get_rate_limiter
@@ -428,7 +429,7 @@ class BatchDataPreFetcher:
                     # Wait for rate limit availability
                     await self.rate_limiter.wait_for_availability(APIProvider.ALPHA_VANTAGE, endpoint=f"OVERVIEW/{ticker}")
 
-                    url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={self.alpha_vantage_key}"
+                    url = f"{ALPHA_VANTAGE_BASE}?function=OVERVIEW&symbol={ticker}&apikey={self.alpha_vantage_key}"
 
                     async with session.get(url, timeout=ClientTimeout(total=15)) as response:
                         data = await response.json()
@@ -453,7 +454,6 @@ class BatchDataPreFetcher:
                             logger.debug(f"✗ {error_msg} ({i}/{len(tickers)})")
                             failed_tickers.append(ticker)
                             results[ticker] = {"error": "No data available", "failed": True, "ticker": ticker}
-
 
                 except Exception as e:
                     # Log failed ticker with error message (Requirement 17.53)

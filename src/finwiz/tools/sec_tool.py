@@ -5,7 +5,6 @@ Provides `SECFilingSearchTool`, a BaseTool with typed inputs and structured
 outputs including filing URL, filed date, and cited excerpts.
 """
 
-import os
 from typing import Any
 
 import requests
@@ -16,6 +15,7 @@ from langchain_text_splitters import CharacterTextSplitter
 from pydantic import BaseModel
 
 from finwiz.schemas.tools import SECFilingSearchInput
+from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -33,6 +33,11 @@ class SECFilingSearchTool(BaseTool):
     name: str = "SEC Filing Search Tool"
     description: str = "Find the latest SEC 10-K or 10-Q for a ticker and return relevant, cited excerpts."
     args_schema: type[BaseModel] = SECFilingSearchInput
+
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("SEC_API_API_KEY", self.__class__.__name__)
 
     def _run(self, ticker: str, form_type: str, question: str, top_k: int = 4) -> dict[str, Any]:
         """Execute the SEC filing search and retrieval pipeline."""
@@ -71,9 +76,7 @@ class SECFilingSearchTool(BaseTool):
 
     # ---- Helper methods (isolated for testability) ----
     def _fetch_latest_filing(self, ticker: str, form_type: str) -> dict[str, str] | None:
-        api_key = os.environ.get("SEC_API_API_KEY")
-        if not api_key:
-            raise KeyError("SEC_API_API_KEY")
+        api_key = self._api_key
 
         # Lazy import to allow tests to patch QueryApi and to avoid hard dependency at import time
         global QueryApi

@@ -9,18 +9,18 @@ Requires the environment variable `PPLX_API_KEY` to be set with a valid Perplexi
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
 import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+# Import schema from centralized location
+from finwiz.config.endpoints import PERPLEXITY_CHAT
 from finwiz.infrastructure.decorators.api_decorators import api_tool
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider
-
-# Import schema from centralized location
 from finwiz.schemas.tools import PerplexitySearchInput
+from finwiz.tools.api_key_validation import validate_api_key
 
 
 class PerplexitySearchTool(BaseTool):
@@ -30,7 +30,12 @@ class PerplexitySearchTool(BaseTool):
     description: str = "Queries Perplexity Sonar to obtain grounded answers with citations. Requires the PPLX_API_KEY environment variable."
     args_schema: type[BaseModel] = PerplexitySearchInput
 
-    base_url: str = "https://api.perplexity.ai/chat/completions"
+    base_url: str = PERPLEXITY_CHAT
+
+    def model_post_init(self, __context: Any) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("PPLX_API_KEY", self.__class__.__name__)
 
     @api_tool(
         provider=APIProvider.PERPLEXITY,
@@ -46,12 +51,8 @@ class PerplexitySearchTool(BaseTool):
         search_recency: str | None = None,
         search_domain_filter: list[str] | None = None,
     ) -> str:
-        api_key = os.getenv("PPLX_API_KEY")
-        if not api_key:
-            return "Error: PPLX_API_KEY environment variable not set."
-
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
         }
 

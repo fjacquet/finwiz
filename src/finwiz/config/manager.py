@@ -13,6 +13,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from finwiz.config.endpoints import OPENAI_BASE
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.tools.logger import get_logger
 
@@ -55,7 +56,7 @@ class ConfigurationManager:
             env_var="OPENAI_API_KEY",
             required=True,
             description="OpenAI API key for LLM operations",
-            test_endpoint="https://api.openai.com/v1/models",
+            test_endpoint=f"{OPENAI_BASE}/models",
         ),
         APIKeyConfig(name="Serper", env_var="SERPER_API_KEY", required=True, description="Serper API key for web search functionality"),
         APIKeyConfig(name="Firecrawl", env_var="FIRECRAWL_API_KEY", required=True, description="Firecrawl API key for web scraping"),

@@ -10,6 +10,8 @@ Uses sec-edgar-downloader for reliable filing downloads.
 import httpx
 from pydantic import BaseModel, Field
 
+from finwiz.config.endpoints import SEC_DATA_BASE
+from finwiz.config.endpoints import SEC_EDGAR_BASE as _SEC_EDGAR_BASE
 from finwiz.tools.logger import get_logger
 from finwiz.validation.url import get_url_validator
 
@@ -28,8 +30,8 @@ class SECFilingURLGenerator:
     """
 
     # SEC EDGAR base URLs
-    SEC_EDGAR_BASE = "https://www.sec.gov"
-    SEC_CIK_LOOKUP_URL = "https://www.sec.gov/cgi-bin/browse-edgar"
+    SEC_EDGAR_BASE = _SEC_EDGAR_BASE
+    SEC_CIK_LOOKUP_URL = f"{_SEC_EDGAR_BASE}/cgi-bin/browse-edgar"
 
     # Common filing types
     FILING_TYPES = ["10-K", "10-Q", "8-K", "DEF 14A", "S-1", "20-F"]
@@ -65,7 +67,7 @@ class SECFilingURLGenerator:
 
         try:
             # Use SEC company tickers JSON endpoint
-            url = "https://www.sec.gov/files/company_tickers.json"
+            url = f"{_SEC_EDGAR_BASE}/files/company_tickers.json"
             headers = {"User-Agent": "FinWiz Financial Analysis Tool contact@finwiz.com", "Accept": "application/json"}
 
             with httpx.Client(timeout=self.timeout) as client:
@@ -221,7 +223,7 @@ class SECFilingURLGenerator:
         try:
             # Use SEC EDGAR API to get filing metadata
             # Format: https://data.sec.gov/submissions/CIK{cik}.json
-            url = f"https://data.sec.gov/submissions/CIK{cik}.json"
+            url = f"{SEC_DATA_BASE}/submissions/CIK{cik}.json"
 
             # CRITICAL: SEC requires proper User-Agent with contact info
             # Format: CompanyName Name email@company.com
@@ -248,7 +250,7 @@ class SECFilingURLGenerator:
                     accession_no_dash = accession.replace("-", "")
                     cik_no_zeros = str(int(cik))  # Remove leading zeros
 
-                    direct_url = f"https://www.sec.gov/Archives/edgar/data/{cik_no_zeros}/{accession_no_dash}/{primary_doc}"
+                    direct_url = f"{_SEC_EDGAR_BASE}/Archives/edgar/data/{cik_no_zeros}/{accession_no_dash}/{primary_doc}"
 
                     # Also provide browse URL for user reference
                     browse_url = self.get_company_browse_url(cik, filing_type)

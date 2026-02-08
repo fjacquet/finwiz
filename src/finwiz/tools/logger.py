@@ -25,6 +25,8 @@ import sys
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from pathlib import Path
 
+from finwiz.infrastructure.logging.sanitizer import SensitiveDataFilter
+
 
 def setup_logging(
     log_level: int = logging.INFO,
@@ -54,9 +56,13 @@ def setup_logging(
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 
+    # Shared filter to redact secrets from all log output
+    sensitive_filter = SensitiveDataFilter()
+
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(log_level)
+    console_handler.addFilter(sensitive_filter)
 
     # Create formatters
     console_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -82,6 +88,8 @@ def setup_logging(
         file_formatter = logging.Formatter(file_format, datefmt="%Y-%m-%d %H:%M:%S")
         file_handler.setFormatter(file_formatter)
 
+        file_handler.addFilter(sensitive_filter)
+
         # Add file handler to root logger
         root_logger.addHandler(file_handler)
 
@@ -94,6 +102,8 @@ def setup_logging(
         )
         error_file_handler.setLevel(logging.ERROR)
         error_file_handler.setFormatter(file_formatter)
+
+        error_file_handler.addFilter(sensitive_filter)
 
         # Add error file handler to root logger
         root_logger.addHandler(error_file_handler)

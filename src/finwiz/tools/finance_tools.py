@@ -21,6 +21,7 @@ from finwiz.tools.enhanced_crypto_tool import (
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool, ETFTrackingAnalysisTool
 from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool, StandardizedRiskScoringTool
 from finwiz.tools.kraken_api_tool import KrakenTickerInfoTool
+from finwiz.tools.logger import get_logger
 from finwiz.tools.market_screening_tool import MarketScreeningTool
 from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 from finwiz.tools.regulatory_compliance_tool import RegulatoryComplianceTool
@@ -36,6 +37,17 @@ from finwiz.tools.yahoo_finance_etf_holdings_tool import YahooFinanceETFHoldings
 from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
 from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
 from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+
+_logger = get_logger(__name__)
+
+
+def _safe_init(tool_class: type[BaseTool]) -> BaseTool | None:
+    """Instantiate a tool, returning None if a required API key is missing."""
+    try:
+        return tool_class()
+    except ValueError as exc:
+        _logger.info("Skipping %s: %s", tool_class.__name__, exc)
+        return None
 
 
 def get_yahoo_finance_tools() -> list[BaseTool]:
@@ -63,24 +75,24 @@ def get_stock_research_tools() -> list[BaseTool]:
         list[BaseTool]: A list of tools focused on stock analysis.
 
     """
-    return [
+    # Public API tools (no key required)
+    tools: list[BaseTool] = [
         YahooFinanceTickerInfoTool(),
         YahooFinanceHistoryTool(),
         YahooFinanceCompanyInfoTool(),
         YahooFinanceNewsTool(),
-        AlphaVantageCompanyOverviewTool(),
-        AlphaVantageNewsSentimentTool(),
-        TwelveDataIndicatorTool(),
-        ChartImgTool(),
         TickerExistenceValidationTool(),
-        # Enhanced SEC analysis tools
         EnhancedSECAnalysisTool(),
-        SECFilingSearchTool(),
         StandardizedRiskScoringTool(),
-        # Standardized sentiment analysis
         StandardizedSentimentAnalysisTool(),
         CrossAssetSentimentComparatorTool(),
     ]
+    # API-key-gated tools (skip if key missing)
+    for cls in (AlphaVantageCompanyOverviewTool, AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool, SECFilingSearchTool):
+        t = _safe_init(cls)
+        if t:
+            tools.append(t)
+    return tools
 
 
 def get_crypto_research_tools() -> list[BaseTool]:
@@ -91,28 +103,26 @@ def get_crypto_research_tools() -> list[BaseTool]:
         list[BaseTool]: A list of tools focused on crypto analysis.
 
     """
-    return [
+    tools: list[BaseTool] = [
         YahooFinanceHistoryTool(),
         YahooFinanceNewsTool(),
         YahooFinanceTickerInfoTool(),
         KrakenTickerInfoTool(),
-        AlphaVantageNewsSentimentTool(),
-        TwelveDataIndicatorTool(),
-        ChartImgTool(),
         TickerExistenceValidationTool(),
-        # Enhanced crypto analysis tools
         EnhancedCryptoAnalysisTool(),
         CryptoThesisGeneratorTool(),
         CryptoRiskScoringTool(),
-        # DeFi and regulatory analysis tools
         DeFiMetricsTool(),
         RegulatoryComplianceTool(),
-        # Risk scoring tools
         StandardizedRiskScoringTool(),
-        # Standardized sentiment analysis
         StandardizedSentimentAnalysisTool(),
         CrossAssetSentimentComparatorTool(),
     ]
+    for cls in (AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool):
+        t = _safe_init(cls)
+        if t:
+            tools.append(t)
+    return tools
 
 
 def get_etf_research_tools() -> list[BaseTool]:
@@ -123,23 +133,23 @@ def get_etf_research_tools() -> list[BaseTool]:
         list[BaseTool]: A list of tools focused on ETF analysis.
 
     """
-    return [
+    tools: list[BaseTool] = [
         YahooFinanceTickerInfoTool(),
         YahooFinanceHistoryTool(),
         YahooFinanceETFHoldingsTool(),
         YahooFinanceNewsTool(),
-        AlphaVantageNewsSentimentTool(),
-        TwelveDataIndicatorTool(),
-        ChartImgTool(),
         TickerExistenceValidationTool(),
-        # Enhanced ETF analysis tools
         EnhancedETFAnalysisTool(),
         ETFTrackingAnalysisTool(),
         StandardizedRiskScoringTool(),
-        # Standardized sentiment analysis
         StandardizedSentimentAnalysisTool(),
         CrossAssetSentimentComparatorTool(),
     ]
+    for cls in (AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool):
+        t = _safe_init(cls)
+        if t:
+            tools.append(t)
+    return tools
 
 
 def get_investment_discovery_tools() -> list[BaseTool]:

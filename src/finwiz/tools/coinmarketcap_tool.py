@@ -11,6 +11,7 @@ import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+from finwiz.config.endpoints import CMC_BASE
 from finwiz.infrastructure.decorators.api_decorators import api_tool
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.tools import (
@@ -19,12 +20,13 @@ from finwiz.schemas.tools import (
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
 )
+from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Base URL for CoinMarketCap API
-CMC_BASE_URL = "https://pro-api.coinmarketcap.com/v1"
+# Use centralized endpoint config
+CMC_BASE_URL = CMC_BASE
 
 
 class CoinMarketCapException(Exception):
@@ -46,6 +48,11 @@ class CoinMarketCapInfoTool(BaseTool):
         "Provide the cryptocurrency symbol (e.g., BTC, ETH, SOL)."
     )
     args_schema: type[BaseModel] = CoinInfoInput
+
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("X-CMC_PRO_API_KEY", self.__class__.__name__)
 
     @api_tool(
         provider=APIProvider.COINMARKETCAP,
@@ -135,6 +142,11 @@ class CoinMarketCapListTool(BaseTool):
     description: str = "Get a list of top cryptocurrencies sorted by market cap, volume, price, or recent performance. Returns key metrics for each cryptocurrency."
     args_schema: type[BaseModel] = CryptocurrencyListInput
 
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("X-CMC_PRO_API_KEY", self.__class__.__name__)
+
     def _run(self, limit: int = 25, sort: str = "market_cap") -> str:
         """
         Retrieve a list of top cryptocurrencies.
@@ -169,7 +181,7 @@ class CoinMarketCapListTool(BaseTool):
 
         try:
             headers = {
-                "X-CMC_PRO_API_KEY": os.environ.get("X-CMC_PRO_API_KEY", ""),
+                "X-CMC_PRO_API_KEY": self._api_key,
                 "Accept": "application/json",
             }
 
@@ -229,6 +241,11 @@ class CoinMarketCapHistoricalTool(BaseTool):
     description: str = "Get historical price, volume, and market cap data for a specific cryptocurrency over various time periods (24h, 7d, 30d, 3m, 1y, or ytd)."
     args_schema: type[BaseModel] = CryptocurrencyHistoricalInput
 
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("X-CMC_PRO_API_KEY", self.__class__.__name__)
+
     def _run(self, symbol: str, time_period: str = "30d") -> str:
         """
         Retrieve historical data for a specific cryptocurrency.
@@ -260,7 +277,7 @@ class CoinMarketCapHistoricalTool(BaseTool):
 
         try:
             headers = {
-                "X-CMC_PRO_API_KEY": os.environ.get("X-CMC_PRO_API_KEY", ""),
+                "X-CMC_PRO_API_KEY": self._api_key,
                 "Accept": "application/json",
             }
 
@@ -366,6 +383,11 @@ class CoinMarketCapNewsTool(BaseTool):
     description: str = "Get the latest news about cryptocurrencies from CoinMarketCap. Can be filtered for a specific cryptocurrency or show general crypto news."
     args_schema: type[BaseModel] = CryptocurrencyNewsInput
 
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("X-CMC_PRO_API_KEY", self.__class__.__name__)
+
     def _run(self, symbol: str | None = None, limit: int = 10) -> str:
         """
         Retrieve cryptocurrency news articles.
@@ -393,7 +415,7 @@ class CoinMarketCapNewsTool(BaseTool):
 
         try:
             headers = {
-                "X-CMC_PRO_API_KEY": os.environ.get("X-CMC_PRO_API_KEY", ""),
+                "X-CMC_PRO_API_KEY": self._api_key,
                 "Accept": "application/json",
             }
 

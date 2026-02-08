@@ -8,17 +8,18 @@ Environment variable required: TWELVE_DATA_API_KEY
 from __future__ import annotations
 
 import asyncio
-import os
 from typing import Any, Literal
 
 import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+from finwiz.config.endpoints import TWELVE_DATA_BASE
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.infrastructure.decorators.api_decorators import api_tool
 from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.tools import TwelveDataMultiIndicatorInput
+from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
@@ -41,7 +42,12 @@ class TwelveDataMultiIndicatorTool(BaseTool):
     )
     args_schema: type[BaseModel] = TwelveDataMultiIndicatorInput
 
-    base_url: str = "https://api.twelvedata.com"
+    base_url: str = TWELVE_DATA_BASE
+
+    def model_post_init(self, __context: object) -> None:
+        """Validate API key at instantiation (fail-fast)."""
+        super().model_post_init(__context)
+        self._api_key = validate_api_key("TWELVE_DATA_API_KEY", self.__class__.__name__)
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -150,10 +156,6 @@ class TwelveDataMultiIndicatorTool(BaseTool):
         outputsize: int,
     ) -> dict[str, Any]:
         """Fetch all requested indicators from Twelve Data API."""
-        api_key = os.getenv("TWELVE_DATA_API_KEY")
-        if not api_key:
-            return {"error": "TWELVE_DATA_API_KEY environment variable not set"}
-
         results: dict[str, str | dict[str, str]] = {}
 
         # Fetch RSI
@@ -163,7 +165,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
                     symbol=symbol,
                     interval=interval,
                     indicator="rsi",
-                    api_key=api_key,
+                    api_key=self._api_key,
                     params={"time_period": rsi_period, "outputsize": outputsize},
                 )
             except Exception as e:
@@ -177,7 +179,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
                     symbol=symbol,
                     interval=interval,
                     indicator="macd",
-                    api_key=api_key,
+                    api_key=self._api_key,
                     params={
                         "fast": macd_fast,
                         "slow": macd_slow,
@@ -196,7 +198,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
                     symbol=symbol,
                     interval=interval,
                     indicator="bbands",
-                    api_key=api_key,
+                    api_key=self._api_key,
                     params={
                         "time_period": bbands_period,
                         "sd": bbands_stddev,

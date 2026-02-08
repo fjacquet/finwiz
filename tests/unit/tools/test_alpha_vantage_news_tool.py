@@ -1,26 +1,32 @@
 """Tests for Alpha Vantage News Sentiment Tool."""
 
+import pytest
+
 from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
 
 
 class TestAlphaVantageNewsSentimentTool:
-    def setup_method(self):
+    def setup_method(self, monkeypatch=None):
+        import os
+
+        os.environ.setdefault("ALPHA_VANTAGE_API_KEY", "test-key")
         self.tool = AlphaVantageNewsSentimentTool()
 
     def test_missing_api_key(self, monkeypatch):
         monkeypatch.delenv("ALPHA_VANTAGE_API_KEY", raising=False)
-        out = self.tool._run(tickers="AAPL,MSFT")
-        assert out.startswith("Error: ALPHA_VANTAGE_API_KEY")
+        with pytest.raises(ValueError, match="ALPHA_VANTAGE_API_KEY"):
+            AlphaVantageNewsSentimentTool()
 
     def test_success_with_params(self, mocker, monkeypatch):
         monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "key")
+        tool = AlphaVantageNewsSentimentTool()
         mock_get = mocker.patch("requests.get")
         resp = mocker.Mock()
         resp.raise_for_status = mocker.Mock()
         resp.text = '{"feed": []}'
         mock_get.return_value = resp
 
-        out = self.tool._run(
+        out = tool._run(
             tickers="AAPL,MSFT",
             sort="RELEVANCE",
             time_from="20240101T0000",
@@ -44,7 +50,8 @@ class TestAlphaVantageNewsSentimentTool:
 
     def test_request_error(self, mocker, monkeypatch):
         monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "key")
+        tool = AlphaVantageNewsSentimentTool()
         mock_get = mocker.patch("requests.get")
         mock_get.side_effect = Exception("timeout")
-        out = self.tool._run(tickers="AAPL")
+        out = tool._run(tickers="AAPL")
         assert out.startswith("Error fetching Alpha Vantage news sentiment: ")

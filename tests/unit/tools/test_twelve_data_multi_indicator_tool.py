@@ -87,25 +87,12 @@ class TestTwelveDataMultiIndicatorTool:
         assert "bbands" in results
         assert mock_fetch.call_count == 3
 
-    def test_should_handle_missing_api_key(self, tool, mocker):
-        """Test graceful handling of missing API key."""
+    def test_should_handle_missing_api_key(self, mocker):
+        """Test fail-fast when API key is missing."""
         mocker.patch.dict("os.environ", {}, clear=True)
 
-        results = tool._fetch_all_indicators(
-            symbol="AAPL",
-            interval="1day",
-            indicators=["rsi"],
-            rsi_period=14,
-            macd_fast=12,
-            macd_slow=26,
-            macd_signal=9,
-            bbands_period=20,
-            bbands_stddev=2,
-            outputsize=100,
-        )
-
-        assert "error" in results
-        assert "TWELVE_DATA_API_KEY" in results["error"]
+        with pytest.raises(ValueError, match="TWELVE_DATA_API_KEY"):
+            TwelveDataMultiIndicatorTool()
 
     def test_should_format_multi_indicator_response(self, tool):
         """Test response formatting with multiple indicators."""

@@ -15,6 +15,7 @@ from typing import Any, ClassVar
 import requests
 import yfinance as yf
 
+from finwiz.config.endpoints import SEC_EFTS_BASE
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 from finwiz.tools.logger import get_logger
 
@@ -22,7 +23,7 @@ from finwiz.tools.logger import get_logger
 class IPOScreener:
     """Screens for recent IPO candidates via SEC EDGAR EFTS API."""
 
-    SEC_EFTS_URL: ClassVar[str] = "https://efts.sec.gov/LATEST/search-index"
+    SEC_EFTS_URL: ClassVar[str] = f"{SEC_EFTS_BASE}/search-index"
     SEC_USER_AGENT: ClassVar[str] = "FinWiz Research bot@finwiz.local"
     REQUEST_DELAY: ClassVar[float] = 0.15  # ~6.6 req/sec, under 10 req/sec limit
 
@@ -124,12 +125,7 @@ class IPOScreener:
         Returns:
             List of filing hit dicts with display_name, file_date, form_type.
         """
-        url = (
-            f"{self.SEC_EFTS_URL}"
-            f'?q=%22S-1%22&forms=S-1,S-1/A'
-            f"&dateRange=custom&startdt={start_date}&enddt={end_date}"
-            f"&from=0&size=40"
-        )
+        url = f"{self.SEC_EFTS_URL}?q=%22S-1%22&forms=S-1,S-1/A&dateRange=custom&startdt={start_date}&enddt={end_date}&from=0&size=40"
         headers = {
             "User-Agent": self.SEC_USER_AGENT,
             "Accept": "application/json",

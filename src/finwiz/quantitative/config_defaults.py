@@ -10,6 +10,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from finwiz.config.endpoints import ALPHA_VANTAGE_BASE, TWELVE_DATA_BASE
+
 
 class TechnicalIndicator(StrEnum):
     """Supported technical indicators."""
@@ -128,7 +130,7 @@ def get_default_provider_configs() -> dict[DataProvider, DataProviderConfig]:
             timeout_seconds=30,
             retry_attempts=2,
             cache_ttl_minutes=60,
-            base_url="https://www.alphavantage.co/query",
+            base_url=ALPHA_VANTAGE_BASE,
         ),
         DataProvider.TWELVE_DATA: DataProviderConfig(
             provider=DataProvider.TWELVE_DATA,
@@ -137,7 +139,7 @@ def get_default_provider_configs() -> dict[DataProvider, DataProviderConfig]:
             timeout_seconds=30,
             retry_attempts=2,
             cache_ttl_minutes=30,
-            base_url="https://api.twelvedata.com",
+            base_url=TWELVE_DATA_BASE,
         ),
     }
 

@@ -14,6 +14,7 @@ import requests
 from crewai.tools import BaseTool
 from pydantic import BaseModel
 
+from finwiz.config.endpoints import COINGECKO_BASE
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import (
@@ -143,7 +144,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
         """Get crypto data from CoinGecko API."""
         try:
             # CoinGecko API endpoint (free tier)
-            url = f"https://api.coingecko.com/api/v3/coins/{symbol.lower()}"
+            url = f"{COINGECKO_BASE}/coins/{symbol.lower()}"
             headers = {"Accept": "application/json"}
 
             response = requests.get(url, headers=headers, timeout=30)
@@ -162,7 +163,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
                 }
 
                 if symbol in symbol_map:
-                    url = f"https://api.coingecko.com/api/v3/coins/{symbol_map[symbol]}"
+                    url = f"{COINGECKO_BASE}/coins/{symbol_map[symbol]}"
                     response = requests.get(url, headers=headers, timeout=30)
 
             if response.status_code != 200:

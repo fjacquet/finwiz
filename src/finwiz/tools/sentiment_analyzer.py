@@ -18,6 +18,7 @@ import aiohttp
 import yfinance as yf  # yfinance has no official type stubs
 from pydantic import BaseModel, ConfigDict, Field
 
+from finwiz.config.endpoints import ALPHA_VANTAGE_BASE, CMC_BASE
 from finwiz.schemas.stock import MarketSentiment, SentimentItem
 from finwiz.tools.logger import get_logger
 from finwiz.tools.sentiment.sentiment_aggregators import SentimentAggregators
@@ -234,7 +235,7 @@ class SentimentAnalyzer:
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    "https://www.alphavantage.co/query",
+                    ALPHA_VANTAGE_BASE,
                     params=params,
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as response:
@@ -369,7 +370,7 @@ class SentimentAnalyzer:
             # First get crypto ID
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    "https://pro-api.coinmarketcap.com/v1/cryptocurrency/map",
+                    f"{CMC_BASE}/cryptocurrency/map",
                     headers=headers,
                     params={"symbol": ticker.replace("-USD", "")},
                     timeout=aiohttp.ClientTimeout(total=30),
@@ -386,7 +387,7 @@ class SentimentAnalyzer:
 
                 # Get news for the crypto
                 async with session.get(
-                    "https://pro-api.coinmarketcap.com/v1/content/latest",
+                    f"{CMC_BASE}/content/latest",
                     headers=headers,
                     params={"cryptocurrencies": crypto_id, "limit": max_articles},
                     timeout=aiohttp.ClientTimeout(total=30),
