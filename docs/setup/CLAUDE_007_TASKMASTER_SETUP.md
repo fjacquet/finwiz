@@ -347,6 +347,7 @@ The FinWiz project has:
    ```
 
 3. **CrewAI Compliance Workflow**:
+
    ```yaml
    name: crewai-compliance-check
    trigger: "crew modification"

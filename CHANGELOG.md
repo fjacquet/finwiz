@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+
 - **Major Refactoring**: Split 13 large files (600-1682 lines) into 40+ focused modules
   - `deep_analysis_orchestrator.py` (1,682 → 4 modules): data_collector, executor, processor
   - `deep_analysis_scorer.py` (1,178 → 3 modules): score_result_builder, crew_export_generator
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Centralized exception hierarchy in `exceptions/` module
 
 ### Fixed
+
 - Dead code cleanup: Prefixed 8 unused parameters with underscore (vulture 100% confidence)
 - Security: Fixed MD5 hash usage with `usedforsecurity=False` (bandit high-severity)
 - Lint: Fixed 10 ruff issues (unused imports, unsorted imports)
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added 3 new tests to verify AI crew output format compatibility
 
 ### Added
+
 - Comprehensive CLAUDE.md documentation for all major subfolders
   - `src/finwiz/crews/CLAUDE.md` - Crew development guide
   - `src/finwiz/flows/CLAUDE.md` - Flow orchestration documentation
@@ -47,11 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG.md file for tracking project changes
 
 ### Changed
+
 - Updated main CLAUDE.md with references to subfolder documentation
 
 ## [0.1.0] - 2025-12-07
 
 ### Added
+
 - Initial FinWiz platform release
 - CrewAI-based multi-agent financial analysis system
 - Stock, ETF, and cryptocurrency analysis crews
@@ -66,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-source data fetching with fallback strategies
 
 ### Core Crews
+
 - `StockCrew` - Stock fundamental and technical analysis
 - `EtfCrew` - ETF factsheet and holdings analysis
 - `CryptoCrew` - Cryptocurrency on-chain metrics
@@ -75,12 +81,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ReportCrew` - Final consolidated report generation
 
 ### AI Minimalism Implementation
+
 - Python-based scoring engine (100% cost reduction vs AI)
 - Jinja2 template-based report generation
 - Deterministic calculations for reproducibility
 - AI reserved for analysis requiring reasoning
 
 ### Testing
+
 - pytest with pytest-mock (no unittest.mock)
 - Faker for test data generation
 - 65% minimum coverage requirement

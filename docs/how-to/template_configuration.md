@@ -326,7 +326,7 @@ To add a new section to the template:
 
 {% endraw %}
 
-2. **Add corresponding CSS**:
+1. **Add corresponding CSS**:
 
 ```css
 .performance-metrics {
@@ -341,7 +341,7 @@ To add a new section to the template:
 }
 ```
 
-3. **Update data structure**:
+1. **Update data structure**:
 
 ```python
 template_data["performance_data"] = {

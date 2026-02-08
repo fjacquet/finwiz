@@ -203,22 +203,22 @@ The test suite ran in **182.84 seconds (3:02)** with an average of **0.056 secon
 
 ### Short-term Actions (Important)
 
-4. **Fix Scoring Tests**
+1. **Fix Scoring Tests**
    - Update scoring tests for hybrid analysis changes
    - Verify scoring thresholds are correct
 
-5. **Fix Tool Tests**
+2. **Fix Tool Tests**
    - Update tool mocks for new interfaces
    - Fix RAG tool tests
 
-6. **Increase Coverage**
+3. **Increase Coverage**
    - Add tests for screening modules
    - Add tests for twelve_data modules
    - Target: 65%+ coverage
 
 ### Long-term Actions (Nice to Have)
 
-7. **Performance Optimization**
+1. **Performance Optimization**
    - Consider parallel test execution
    - Optimize fixture setup/teardown
    - Cache expensive operations

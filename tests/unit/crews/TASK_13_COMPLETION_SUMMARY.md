@@ -24,6 +24,7 @@ The `prepare_crew_context()` method in `ReportCrew` was only preserving a limite
 Modified `src/finwiz/crews/report_crew/report_crew.py` to preserve ALL required Flow state fields:
 
 **Before**: Only 8 keys preserved
+
 ```python
 preserved_keys = [
     "portfolio_review", "current_day", "current_month", "current_year", 
@@ -32,6 +33,7 @@ preserved_keys = [
 ```
 
 **After**: 22 keys preserved
+
 ```python
 required_keys = [
     # Basic metadata
@@ -67,11 +69,13 @@ required_keys = [
 Created three new helper methods to construct required status objects:
 
 #### `_extract_validated_tickers_from_portfolio()`
+
 - Extracts ticker symbols from portfolio holdings
 - Prevents hallucination by providing validated tickers to the report crew
 - Handles both nested and flat portfolio review structures
 
 #### `_construct_discovery_status()`
+
 - Constructs discovery status object from Flow state inputs
 - Checks if discovery was run and if opportunities were found
 - Returns appropriate status messages:
@@ -80,6 +84,7 @@ Created three new helper methods to construct required status objects:
   - `"not_run"` - Discovery not executed (use --discovery flag)
 
 #### `_construct_backtesting_status()`
+
 - Constructs backtesting status object from discovery results
 - Checks for validation_results in investment_discovery_structured
 - Returns status indicating data availability
@@ -87,6 +92,7 @@ Created three new helper methods to construct required status objects:
 ### 3. Improved Data Flow Logic
 
 Enhanced the context preparation logic to:
+
 - Always preserve Flow state data (takes precedence over integrated_context)
 - Construct missing required fields if not already present
 - Use pre-constructed validated_tickers_list if available
@@ -105,7 +111,7 @@ Enhanced the context preparation logic to:
 
 ### New Test Files
 
-2. **tests/unit/crews/test_report_crew_context_preservation.py**
+1. **tests/unit/crews/test_report_crew_context_preservation.py**
    - 12 comprehensive unit tests covering all aspects of context preservation
    - Tests for portfolio_review preservation
    - Tests for discovery results preservation
@@ -181,6 +187,7 @@ This fix integrates with:
 To verify the fix works in production:
 
 1. Run a full flow with discovery enabled:
+
    ```bash
    uv run python src/finwiz/main.py --discovery
    ```
@@ -192,6 +199,7 @@ To verify the fix works in production:
    - Complete portfolio review data
 
 3. Run without discovery flag:
+
    ```bash
    uv run python src/finwiz/main.py
    ```

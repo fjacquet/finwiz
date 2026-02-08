@@ -253,7 +253,7 @@ Describe scenarios where this method is best.
    command example
    ```
 
-2. **Action 2**: Next instruction
+1. **Action 2**: Next instruction
 
    ```bash
    another command

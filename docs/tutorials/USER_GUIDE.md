@@ -131,7 +131,7 @@ tail -n 100 logs/finwiz_error.log
 grep -i "warning\|error" logs/finwiz.log | tail -n 20
 ```
 
-2. **Performance Metrics**:
+1. **Performance Metrics**:
 
 ```python
 from finwiz.cache import get_cache_manager
@@ -142,7 +142,7 @@ print(f"Cache hit rate: {stats.hit_rate:.2%}")
 print(f"Total requests: {stats.total_requests}")
 ```
 
-3. **Feature Flags**:
+1. **Feature Flags**:
 
 ```python
 from finwiz.utils.feature_flags import get_feature_flags

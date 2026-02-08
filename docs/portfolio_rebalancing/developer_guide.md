@@ -257,7 +257,7 @@ class MomentumBasedStrategy(OptimizationStrategy):
         self.momentum_window = momentum_window
 ```
 
-2. **Implement Core Optimization Logic**
+1. **Implement Core Optimization Logic**
 
 ```python
 def optimize(
@@ -303,7 +303,7 @@ def optimize(
     )
 ```
 
-3. **Register Strategy with Engine**
+1. **Register Strategy with Engine**
 
 ```python
 from finwiz.quantitative.rebalancing_engine import RebalancingEngine
@@ -412,7 +412,7 @@ class AlphaVantagePriceProvider(PriceDataProvider):
                 )
 ```
 
-2. **Register with Price Service**
+1. **Register with Price Service**
 
 ```python
 from finwiz.tools.portfolio_price_service import PortfolioPriceService
@@ -593,7 +593,7 @@ class TestPortfolioRebalancingOrchestrator:
         mock_dependencies["price_service"].get_current_prices.assert_called_once()
 ```
 
-2. **Test Error Scenarios**
+1. **Test Error Scenarios**
 
 ```python
 @pytest.mark.asyncio
@@ -611,7 +611,7 @@ async def test_should_handle_price_data_failure(self, mock_dependencies):
         await orchestrator.rebalance_portfolio(config)
 ```
 
-3. **Property-Based Testing**
+1. **Property-Based Testing**
 
 ```python
 from hypothesis import given, strategies as st

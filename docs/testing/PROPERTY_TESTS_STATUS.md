@@ -6,7 +6,7 @@ The property-based tests in `tests/property/test_deep_analysis_orchestrator_prop
 
 ## Test Failures Summary
 
-### 4 Failing Tests:
+### 4 Failing Tests
 
 1. **test_batch_processing_success_rate_above_95_percent**
    - Error: `AttributeError: module does not have attribute 'get_analysis_cache_manager'`
@@ -24,7 +24,7 @@ The property-based tests in `tests/property/test_deep_analysis_orchestrator_prop
    - Error: `AttributeError: module does not have attribute 'DeepAnalysisScorer'`
    - Reason: Tests try to mock old scorer class that's no longer imported directly
 
-### 2 Passing Tests:
+### 2 Passing Tests
 
 1. **test_single_holding_performance_constraints** ✅
    - Tests `_validate_analysis_quality()` method which still exists
@@ -36,7 +36,8 @@ The property-based tests in `tests/property/test_deep_analysis_orchestrator_prop
 
 The orchestrator was refactored to use the **HybridAnalysisFlow** pattern:
 
-### Old Implementation (What Tests Expect):
+### Old Implementation (What Tests Expect)
+
 ```python
 class DeepAnalysisOrchestrator:
     def run_deep_analysis_on_holdings(self, holdings):
@@ -47,7 +48,8 @@ class DeepAnalysisOrchestrator:
             # Uses get_analysis_cache_manager()
 ```
 
-### New Implementation (Current):
+### New Implementation (Current)
+
 ```python
 class DeepAnalysisOrchestrator:
     def run_deep_analysis_on_holdings(self, holdings):

@@ -98,6 +98,7 @@ enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time=5.2)
 ### Python Wins on Conflicts
 
 When AI and Python disagree on recommendations:
+
 ```python
 # In synthesize_enriched_analysis()
 final_recommendation = quant.preliminary_recommendation  # Python wins
@@ -108,6 +109,7 @@ This prevents AI hallucination from overriding deterministic calculations.
 ### Fallback Handling
 
 If AI fails, the pipeline returns a degraded but valid result:
+
 ```python
 # Returns QualitativeInsights with LOW confidence
 # EnrichedAnalysis still contains full quantitative data
@@ -118,6 +120,7 @@ If AI fails, the pipeline returns a degraded but valid result:
 ### DeepAnalysisResult
 
 Used for caching and flow state:
+
 ```python
 @dataclass
 class DeepAnalysisResult:
@@ -132,6 +135,7 @@ class DeepAnalysisResult:
 ### EnrichedAnalysis (Pydantic)
 
 Used for HTML report generation:
+
 ```python
 class EnrichedAnalysis(BaseModel):
     ticker: str

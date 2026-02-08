@@ -24,6 +24,7 @@
 **Objectif**: Atteindre 65% de couverture
 
 ### Priorité 1: Modules Non Couverts
+
 ```bash
 # Identifier les fichiers avec couverture < 50%
 uv run pytest --cov=src/finwiz --cov-report=html
@@ -31,6 +32,7 @@ uv run pytest --cov=src/finwiz --cov-report=html
 ```
 
 ### Actions
+
 | Module | Couverture Estimée | Tests à Ajouter |
 |--------|-------------------|-----------------|
 | `orchestrators/deep_analysis_*.py` | ~40% | Tests d'intégration |
@@ -39,6 +41,7 @@ uv run pytest --cov=src/finwiz --cov-report=html
 | `supabase/client_*.py` | ~30% | Mocks Supabase |
 
 ### Commandes
+
 ```bash
 # Tester un module spécifique avec couverture
 uv run pytest tests/unit/orchestrators/ --cov=src/finwiz/orchestrators --cov-report=term-missing
@@ -54,17 +57,20 @@ uv run pytest --cov=src/finwiz --cov-report=html
 **Objectif**: Réduire les erreurs mypy de 1,895 à <500
 
 ### Stratégie Progressive
+
 1. **Semaine 1-2**: Corriger les modules critiques (orchestrators, flows)
 2. **Semaine 3-4**: Corriger les modules quantitatifs
 3. **Semaine 5-6**: Corriger les utilitaires et outils
 
 ### Fichiers Prioritaires (par nombre d'erreurs)
+
 ```bash
 # Identifier les fichiers avec le plus d'erreurs
 uv run mypy src/finwiz --ignore-missing-imports 2>&1 | grep "error:" | cut -d: -f1 | sort | uniq -c | sort -rn | head -20
 ```
 
 ### Patterns Communs à Corriger
+
 ```python
 # Pattern 1: Optional types
 # Avant
@@ -117,6 +123,7 @@ class Analyzer:
 | `utils/batch_data_prefetcher.py` | 578 | Fetchers + Coordinators |
 
 ### Template de Découpage
+
 ```
 fichier_original.py (600 lignes)
 ├── fichier_core.py (~200 lignes)     # Logique métier principale
@@ -129,17 +136,20 @@ fichier_original.py (600 lignes)
 ## Phase 9: Qualité de Code Avancée
 
 ### 9.1 Documentation
+
 - [ ] Docstrings manquantes (pydocstyle)
 - [ ] README par module
 - [ ] Diagrammes d'architecture (Mermaid)
 
 ### 9.2 Complexité Cyclomatique
+
 ```bash
 # Identifier les fonctions trop complexes
 uv run radon cc src/finwiz -a -s
 ```
 
 ### 9.3 Dépendances Circulaires
+
 ```bash
 # Détecter les imports circulaires
 uv run pydeps src/finwiz --cluster
@@ -150,6 +160,7 @@ uv run pydeps src/finwiz --cluster
 ## Phase 10: Sécurité
 
 ### Issues Bandit Restantes
+
 | Sévérité | Nombre | Action |
 |----------|--------|--------|
 | High | 0 | ✅ Résolu |
@@ -157,6 +168,7 @@ uv run pydeps src/finwiz --cluster
 | Low | 66 | Évaluer cas par cas |
 
 ### Actions Recommandées
+
 1. **Pickle (Medium)**: Documenter que c'est pour cache local uniquement
 2. **assert statements (Low)**: Remplacer par exceptions explicites
 3. **subprocess (Low)**: Vérifier les inputs non sanitizés
@@ -178,6 +190,7 @@ uv run pydeps src/finwiz --cluster
 ## Métriques de Suivi
 
 ### Commandes de Vérification
+
 ```bash
 # Qualité globale
 make check                    # Lint + Tests + Docs
@@ -194,6 +207,7 @@ find src/finwiz -name "*.py" -exec wc -l {} + | sort -n | tail -20
 ```
 
 ### Dashboard de Santé
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ FinWiz Code Health Dashboard                        │

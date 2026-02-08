@@ -39,6 +39,7 @@ Reference documentation is **information-oriented** material that provides detai
 ### Configuration
 
 - **[Environment Variables](environment_variables.md)** - Complete configuration reference
+
 <!-- - **[Agent Configuration](agent_configuration.md)** (TBD) --> - Agent YAML configuration
 <!-- - **[Task Configuration](task_configuration.md)** (TBD) --> - Task YAML configuration
 <!-- - **[Tool Configuration](tool_configuration.md)** (TBD) --> - Tool configuration options
@@ -46,12 +47,14 @@ Reference documentation is **information-oriented** material that provides detai
 ### Data Sources
 
 <!-- - **[Data Sources](data_sources.md)** (TBD) --> - Supported data providers
+
 - **[Data Quality](data_quality.md)** - Data quality standards
 - **[API Requirements](api_requirements.md)** - API key requirements
 
 ### Error Reference
 
 <!-- - **[Error Codes](errors.md)** (TBD) --> - Error code reference
+
 - **[API Errors](api_errors.md)** - API error handling
 - **[Validation Errors](validation_errors.md)** - Validation error types
 

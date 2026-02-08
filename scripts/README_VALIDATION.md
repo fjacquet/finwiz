@@ -22,39 +22,48 @@ python scripts/validate_finwiz_architecture.py
 The script performs 15 distinct validation checks across 9 phases:
 
 ### Phase 1: DeepAnalysisCrew Validation
+
 - ✅ DeepAnalysisCrew exists at expected location
 - ✅ Dynamic tool routing implementation
 - ✅ DeepAnalysisResult schema with all required fields
 
 ### Phase 2: Flow Orchestration Validation
+
 - ✅ Flow sequence matches business logic
 - ✅ Atomic operations (analyze_and_update_portfolio)
 - ✅ Listener dependencies are correct
 
 ### Phase 3: Discovery Crew Task Descriptions
+
 - ✅ Stock crew has "top 10" language
 - ✅ ETF crew has "top 10" language
 - ✅ Crypto crew has "top 10" language
 
 ### Phase 4: Enum Documentation
+
 - ✅ All tasks.yaml files have "REQUIRED ENUM VALUES" section
 
 ### Phase 5: Test Framework Validation
+
 - ✅ No unittest.mock imports (pytest-mock only)
 
 ### Phase 6: File Size Validation
+
 - ✅ All Python files under 400 lines
 
 ### Phase 7: HTML Generation Validation
+
 - ✅ BeautifulSoup used for HTML generation
 - ✅ No string concatenation patterns
 
 ### Phase 8: ReportCrew Tools Validation
+
 - ✅ @final_reporter decorator present
 - ✅ Empty tools list
 - ✅ No external API calls
 
 ### Phase 9: Feature Flags Documentation
+
 - ✅ All feature flags documented in .env.example
 
 ## Report Format
@@ -84,10 +93,12 @@ The generated report includes:
 ## Current Status
 
 As of the last run:
+
 - **Compliance Score**: 46.7% (7/15 checks passed)
 - **Status**: ⚠️ NEEDS ATTENTION
 
 ### Passing Checks
+
 - DeepAnalysisCrew exists
 - Flow sequence correct
 - Atomic operations implemented
@@ -95,6 +106,7 @@ As of the last run:
 - Discovery crew task descriptions correct
 
 ### Failing Checks
+
 - Dynamic tool routing (needs implementation)
 - DeepAnalysisResult schema (needs creation)
 - Enum documentation (2 crews missing)
@@ -147,6 +159,7 @@ def _validate_new_requirement(self):
 ## Requirements Mapping
 
 The validator checks compliance with:
+
 - **Requirement 1**: Unified Deep Analysis Crew (1.1-1.8)
 - **Requirement 2**: Corrected Flow Orchestration (2.1-2.10)
 - **Requirement 4**: Analysis Capabilities (4.18)

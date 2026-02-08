@@ -40,6 +40,7 @@ Data quality issues detected. Crew outputs may not be properly consumed.
 ### Issue: ALL holdings have fallback Grade D
 
 **Symptom**:
+
 ```
 ❌ FAIL: ALL holdings have fallback Grade D (actual analysis not used)
 ```
@@ -51,6 +52,7 @@ Data quality issues detected. Crew outputs may not be properly consumed.
 ### Issue: Placeholder URLs (example.com)
 
 **Symptom**:
+
 ```
 ❌ FAIL: Found 3 example.com placeholder URLs
 ```
@@ -62,6 +64,7 @@ Data quality issues detected. Crew outputs may not be properly consumed.
 ### Issue: NOT PROVIDED messages
 
 **Symptom**:
+
 ```
 ❌ FAIL: Found 3 'NOT PROVIDED' messages
 ```
@@ -100,5 +103,6 @@ uv run python src/finwiz/main.py && ./scripts/verify_data_quality.sh
 ## See Full Documentation
 
 For detailed information, see:
+
 - `scripts/README_VERIFY_DATA_QUALITY.md` - Complete documentation
 - `TASK_19_VERIFICATION_SCRIPT_SUMMARY.md` - Implementation summary

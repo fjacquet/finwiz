@@ -204,6 +204,7 @@ FinWiz implements strict data validation at multiple levels:
 - **Error Context**: Detailed error messages with field-level context
 
 Configuration via `VALIDATION_STRICTNESS`:
+
 - `off` - Validation disabled (development only)
 - `warn` - Errors converted to warnings (default)
 - `error` - Strict enforcement, halt on errors (production)
@@ -279,12 +280,14 @@ FinWiz is licensed under the MIT License. See LICENSE file for details.
 ## 🎯 Roadmap
 
 ### Current Phase (Phase 2B)
+
 - ✅ Codebase modernization and refactoring
 - ✅ Improved code organization and modularity
 - ✅ Enhanced type safety and testing
 - 🔄 Performance optimization and benchmarking
 
 ### Upcoming
+
 - Enhanced real-time portfolio monitoring
 - Advanced scenario analysis and stress testing
 - Machine learning-based pattern recognition

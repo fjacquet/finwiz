@@ -130,6 +130,7 @@ agent_name:
 - [x] Other crews already follow concise KB pattern (refactored in Phase 2)
 
 **Applied pattern:**
+
 ```yaml
 **Knowledge Base Usage**: Query "{ticker} [topic]" before analysis.
 Store findings with ticker, date, key metrics. Update when data changes.
@@ -138,6 +139,7 @@ Store findings with ticker, date, key metrics. Update when data changes.
 ### Task 3.2: Add Expected Output Examples ⏸️ DEFERRED
 
 **Reason:** Portfolio rebalancing tasks already have extensive documentation:
+
 - REQUIRED FIELDS TO EXTRACT FROM CONTEXT sections
 - VALIDATION requirements with specific thresholds
 - REQUIRED ENUM VALUES specifications

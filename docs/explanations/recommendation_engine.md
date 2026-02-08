@@ -136,6 +136,7 @@ def generate_conclusion(composite_score: float, grade: str, recommendation: str)
 > "ASML receives a B grade with a composite score of 0.77. Fundamental analysis (score: 0.84) shows ROE of 53.9%, debt-to-equity of 0.14, and revenue growth of 2.6%. Technical analysis (score: 0.72) indicates sideways trend with RSI at 50.0. Risk assessment (score: 0.58) shows 38.9% volatility and maximum drawdown of -23.4%. Despite high volatility typical of semiconductor sector, excellent fundamentals and quality company status justify a BUY recommendation."
 
 **Key Decision Factors**:
+
 - ✓ Exceptional fundamentals (ROE 53.9%, Margins 29.4%, Low debt 0.14)
 - ✓ Quality company detection triggered adaptive weighting
 - ✓ High volatility acceptable for cyclical semiconductor sector
@@ -158,6 +159,7 @@ def generate_conclusion(composite_score: float, grade: str, recommendation: str)
 > "GES receives a D grade with a composite score of 0.56. Fundamental analysis (score: 0.26) shows ROE of 7.6%, debt-to-equity of 2.97, and revenue growth of 2.3%. Technical analysis (score: 0.72) indicates sideways trend with RSI at 50.0. Risk assessment (score: 0.58) shows 27.0% volatility and maximum drawdown of -23.4%. Weak fundamentals, unfavorable technical setup, or elevated risk profile warrant a SELL recommendation."
 
 **Key Decision Factors**:
+
 - ✗ Poor fundamentals (ROE 7.6%, Debt 297%, Margins 1.01%)
 - ✗ Altman Z-Score 2.14 indicates bankruptcy risk
 - ✗ Struggling retail apparel sector with intense competition
@@ -178,6 +180,7 @@ def generate_conclusion(composite_score: float, grade: str, recommendation: str)
 > "Ticker receives a C+ grade with a composite score of 0.72. Fundamental analysis (score: 0.68) shows moderate financial health with room for improvement. Technical analysis (score: 0.75) indicates upward trend with positive momentum. Risk assessment (score: 0.74) shows acceptable volatility profile. Mixed signals across fundamental, technical, and risk factors suggest a HOLD recommendation pending further developments."
 
 **Key Decision Factors**:
+
 - ~ Moderate fundamentals - not strong enough for BUY
 - ✓ Positive technical trends suggest potential improvement
 - ~ Risk profile acceptable but not exceptional

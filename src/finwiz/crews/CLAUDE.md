@@ -125,6 +125,7 @@ class StockCrew:
 ## Config File Templates
 
 ### agents.yaml
+
 ```yaml
 analyst:
   role: Financial Analyst
@@ -136,6 +137,7 @@ analyst:
 ```
 
 ### tasks.yaml
+
 ```yaml
 analysis_task:
   description: >

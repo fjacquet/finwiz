@@ -27,11 +27,13 @@ Before:
 **File**: `src/finwiz/orchestrators/deep_analysis_orchestrator.py`
 
 **Before**:
+
 ```python
 critical_tech_fields = ["rsi", "macd", "macd_signal"]
 ```
 
 **After**:
+
 ```python
 tech_fields = [
     "rsi",
@@ -47,6 +49,7 @@ tech_fields = [
 ```
 
 **Features**:
+
 - Extracts ALL technical indicators needed by scorer
 - Handles alternative field naming (sma_50 → moving_avg_50)
 - Logs extraction for debugging
@@ -58,6 +61,7 @@ tech_fields = [
 **Purpose**: Calculate missing technical indicators on-the-fly when not available from data collection.
 
 **Capabilities**:
+
 - **Moving Averages**: 50-day and 200-day SMAs from price history
 - **RSI**: 14-period Relative Strength Index
 - **MACD**: MACD line and signal line (12/26/9 periods)
@@ -88,6 +92,7 @@ macd_signal = macd.ewm(span=9).mean()
 **File**: `src/finwiz/scoring/deep_analysis_scorer.py`
 
 **Integration Point**:
+
 ```python
 def _calculate_component_scores(self, asset_class: str, data: dict[str, Any]):
     # Calculate missing technical indicators as fallback
@@ -101,6 +106,7 @@ def _calculate_component_scores(self, asset_class: str, data: dict[str, Any]):
 ```
 
 **Flow**:
+
 1. Extract price history from data (if available)
 2. Calculate any missing indicators
 3. Proceed with scoring using complete data
@@ -108,6 +114,7 @@ def _calculate_component_scores(self, asset_class: str, data: dict[str, Any]):
 ## Expected Results
 
 ### Scenario 1: Full Data Available
+
 **When**: QuantitativeAnalysisTool provides all indicators
 
 ```
@@ -123,6 +130,7 @@ Expected Output:
 ```
 
 ### Scenario 2: Partial Data with Price History
+
 **When**: Some indicators missing but price history available
 
 ```
@@ -140,6 +148,7 @@ Expected Output:
 ```
 
 ### Scenario 3: Minimal Data (No Price History)
+
 **When**: Only current price available
 
 ```
@@ -163,13 +172,15 @@ Expected Output:
 
 ## Impact on Investment Decisions
 
-### Before Fix:
+### Before Fix
+
 - Technical score based on neutral defaults (RSI=50, MACD=0)
 - Trend detection impossible (moving averages = current price)
 - Beta assumptions (always 1.0)
 - Lower confidence in recommendations
 
-### After Fix:
+### After Fix
+
 - Technical score based on real market data
 - Accurate trend detection (uptrend, downtrend, sideways)
 - Real RSI values (overbought/oversold detection)
@@ -178,13 +189,15 @@ Expected Output:
 
 ## Testing Recommendations
 
-### Unit Tests Needed:
+### Unit Tests Needed
+
 1. Test `calculate_missing_technical_indicators()` with various data scenarios
 2. Test `get_price_history_from_data()` with different formats
 3. Test fallback calculations (RSI, MACD, MAs) against known values
 4. Test integration with DeepAnalysisScorer
 
-### Integration Test:
+### Integration Test
+
 ```python
 def test_technical_indicators_end_to_end():
     """Test full flow from data collection to scoring with fallbacks."""
@@ -218,6 +231,7 @@ def test_technical_indicators_end_to_end():
 **Logging**: New debug logs show what's extracted vs calculated vs defaulted.
 
 **Monitoring**: Watch for these log patterns:
+
 - ✅ `Extracted {field}=` - Data from collection tool
 - 📊 `Calculated {field}:` - Fallback calculation
 - ⚠️ `Insufficient data` - Using neutral defaults

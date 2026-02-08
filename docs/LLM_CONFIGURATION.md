@@ -38,24 +38,28 @@ Use the LiteLLM format: `provider/model-name`
 ### Examples
 
 **OpenAI:**
+
 ```bash
 LLM_MODEL_STANDARD=openai/gpt-4o
 LLM_MODEL_MINI=openai/gpt-4o-mini
 ```
 
 **Anthropic Claude:**
+
 ```bash
 LLM_MODEL_STANDARD=anthropic/claude-3-5-sonnet-20241022
 LLM_MODEL_MINI=anthropic/claude-3-haiku-20240307
 ```
 
 **Google Gemini:**
+
 ```bash
 LLM_MODEL_STANDARD=gemini/gemini-pro
 LLM_MODEL_MINI=gemini/gemini-flash-lite-latest
 ```
 
 **Mistral:**
+
 ```bash
 LLM_MODEL_STANDARD=mistral/mistral-large-latest
 LLM_MODEL_MINI=mistral/mistral-small-latest
@@ -64,26 +68,31 @@ LLM_MODEL_MINI=mistral/mistral-small-latest
 ## Model Types Explained
 
 ### Standard Model (`LLM_MODEL_STANDARD`)
+
 - Used for general crew operations
 - Default for most analysis tasks
 - Balance between performance and cost
 
 ### Mini Model (`LLM_MODEL_MINI`)
+
 - Used in maximum speed optimization mode
 - Faster and cheaper operations
 - Suitable for high-volume processing
 
 ### Manager Model (`LLM_MODEL_MANAGER`)
+
 - Used for crew manager operations
 - Coordinates multi-agent workflows
 - Can be same as standard or more powerful
 
 ### Planning Model (`LLM_MODEL_PLANNING`)
+
 - Used for crew planning operations
 - Strategic decision-making
 - Can be same as standard or more powerful
 
 ### Baseline Model (`LLM_MODEL_BASELINE`)
+
 - Used for comparison and baseline operations
 - Typically a more powerful model
 - Used for quality benchmarking
@@ -91,6 +100,7 @@ LLM_MODEL_MINI=mistral/mistral-small-latest
 ## Usage Examples
 
 ### Example 1: Cost Optimization
+
 Use cheaper models for most operations:
 
 ```bash
@@ -102,6 +112,7 @@ LLM_MODEL_BASELINE=openai/gpt-4o
 ```
 
 ### Example 2: Performance Optimization
+
 Use fast models for speed:
 
 ```bash
@@ -113,6 +124,7 @@ LLM_MODEL_BASELINE=openai/gpt-4o
 ```
 
 ### Example 3: Quality Focus
+
 Use powerful models for best results:
 
 ```bash
@@ -176,20 +188,26 @@ perf_config.set_mode(OptimizationMode.MAXIMUM_SPEED)
 ## Troubleshooting
 
 ### Model Not Found
+
 If you get a "model not found" error:
+
 1. Check the model name format: `provider/model-name`
 2. Verify the model is available for your API key
 3. Check API key is set: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.
 
 ### Timeout Issues
+
 If operations timeout:
+
 ```bash
 # Increase timeout (in seconds)
 OPENAI_TIMEOUT=600
 ```
 
 ### Cost Concerns
+
 Monitor costs by:
+
 1. Using mini models for high-volume operations
 2. Setting `LLM_MODEL_MINI` to cheapest available model
 3. Enabling maximum speed mode for batch processing
@@ -197,6 +215,7 @@ Monitor costs by:
 ## Migration from Hardcoded Models
 
 ### Before (Hardcoded)
+
 ```python
 llm = LLM(
     model="openai/gpt-4o-mini",
@@ -206,6 +225,7 @@ llm = LLM(
 ```
 
 ### After (Environment-Driven)
+
 ```python
 from finwiz.utils.llm_config import get_configured_llm
 

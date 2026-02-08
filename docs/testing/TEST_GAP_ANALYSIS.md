@@ -3,9 +3,11 @@
 ## Why Tests Didn't Detect the Bug
 
 ### Root Cause
+
 Tests existed for `DataQualityMetrics` but **NOT for the integration** between scorers and the metrics tracker.
 
 ### What Was Tested ✅
+
 1. **DataQualityMetrics class** (`test_data_quality_metrics.py`):
    - ✅ `record_calculated_field()` works
    - ✅ `record_defaulted_field()` works
@@ -19,6 +21,7 @@ Tests existed for `DataQualityMetrics` but **NOT for the integration** between s
    - ✅ Recommendation logic
 
 ### What Was NOT Tested ❌
+
 1. **Integration between DeepAnalysisScorer and DataQualityMetrics**:
    - ❌ Does DeepAnalysisScorer actually call `record_calculated_field()`?
    - ❌ Are metrics passed to component scorers?
@@ -35,6 +38,7 @@ Tests existed for `DataQualityMetrics` but **NOT for the integration** between s
    - ❌ No verification that `_safe_get_float()` tracks fields
 
 ### The Missing Link
+
 Tests verified that **individual components worked in isolation**, but **never tested the full integration**:
 
 ```
@@ -46,7 +50,9 @@ DataQualityMetrics ← DeepAnalysisScorer ← Component Scorers ← Asset Analyz
 ## Test Strategy Going Forward
 
 ### 1. Unit Tests for New Code
+
 Test each new method in isolation:
+
 - `AssetAnalyzer.set_data_quality_metrics()`
 - `AssetAnalyzer._track_calculated_field()`
 - `StockAnalyzer._safe_get_float()` with tracking
@@ -56,20 +62,26 @@ Test each new method in isolation:
 - `RiskScorer.set_data_quality_metrics()`
 
 ### 2. Integration Tests
+
 Test the full data flow:
+
 - DeepAnalysisScorer → DataQualityMetrics
 - DeepAnalysisScorer → FundamentalScorer → Analyzer → DataQualityMetrics
 - DeepAnalysisScorer → TechnicalScorer → DataQualityMetrics
 - DeepAnalysisScorer → RiskScorer → DataQualityMetrics
 
 ### 3. Property-Based Tests
+
 Verify invariants:
+
 - `fields_calculated + fields_defaulted ≤ total_fields_expected`
 - `completeness_score = len(fields_calculated) / total_fields_expected`
 - Fields are never both calculated AND defaulted
 
 ### 4. Regression Tests
+
 Prevent this specific bug from recurring:
+
 - Test that non-zero completeness is achieved with real data
 - Test that fields_calculated list is populated
 - Test end-to-end scoring produces data quality metrics

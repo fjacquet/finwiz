@@ -29,6 +29,7 @@ mocker.patch("finwiz.tools.enhanced_etf_tool.EnhancedETFAnalysisTool", return_va
 **Files**: `tests/integration/test_hybrid_analysis_quality.py`
 
 **Issues**:
+
 1. Word count variance exceeds 10% (calculated: 203, reported: 2000)
 2. `InvestmentSynthesis` has no attribute `catalysts`
 3. Executive summary has 35 words (minimum 200)
@@ -321,6 +322,7 @@ def mock_crew_execution(mocker):
 ```
 
 **Key Changes**:
+
 1. Increased word counts to meet minimums (business_model: 125 words, investment_thesis: 750 words, etc.)
 2. Removed `catalysts` field (doesn't exist in schema)
 3. Added proper `action_plan` dict with all required keys
@@ -370,12 +372,14 @@ def test_orchestrator_module_file_size_constraint(self):
 ```
 
 **Option B - Refactor Files** (Long-term):
+
 - Split `deep_analysis_orchestrator.py` into smaller modules
 - Split `reporting_orchestrator.py` into smaller modules
 
 ### Fix 4: Task Configuration Schema
 
-**Files**: 
+**Files**:
+
 - `src/finwiz/crews/stock_crew/config/tasks.yaml`
 - `src/finwiz/crews/deep_analysis/config/tasks.yaml`
 

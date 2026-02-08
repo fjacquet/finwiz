@@ -268,7 +268,7 @@ class AssetType(str, Enum):
     COMMODITY = "commodity"  # New asset type
 ```
 
-2. **Create screening criteria:**
+1. **Create screening criteria:**
 
 ```python
 class CommodityScreeningCriteria(BaseModel):
@@ -277,7 +277,7 @@ class CommodityScreeningCriteria(BaseModel):
     contango_backwardation_neutral: bool = Field(True)
 ```
 
-3. **Implement scorer:**
+1. **Implement scorer:**
 
 ```python
 class CommodityScorer(BaseScorer):
@@ -286,7 +286,7 @@ class CommodityScorer(BaseScorer):
         pass
 ```
 
-4. **Add agent configuration:**
+1. **Add agent configuration:**
 
 ```yaml
 # config/agents.yaml

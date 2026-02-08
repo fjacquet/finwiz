@@ -72,6 +72,7 @@ with open(f"output/reports/{session_id}/portfolio_review.html", "w") as f:
 ## AI Minimalism
 
 Templates are ALWAYS rendered by Python (Jinja2), NEVER by AI agents:
+
 - Deterministic output
 - Zero LLM cost
 - 100% reliability

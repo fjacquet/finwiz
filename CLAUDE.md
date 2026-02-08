@@ -85,6 +85,7 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 ### Orchestrator Delegation
 
 `FinwizFlow` delegates to lazy-loaded orchestrators in `orchestrators/`:
+
 - `ValidationOrchestrator` - input validation, portfolio review
 - `DeepAnalysisOrchestrator` - per-holding analysis
 - `DiscoveryOrchestrator` - A+ investment discovery

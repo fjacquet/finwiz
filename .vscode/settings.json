@@ -23,5 +23,6 @@
 	"sonarlint.connectedMode.project": {
 		"connectionId": "fjacquet",
 		"projectKey": "fjacquet_finwiz"
-	}
+	},
+	"snyk.advanced.autoSelectOrganization": true
 }

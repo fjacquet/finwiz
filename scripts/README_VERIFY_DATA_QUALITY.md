@@ -72,6 +72,7 @@ Penalties:
 ```
 
 **Thresholds**:
+
 - **0.90+**: Excellent (Grade A+/A)
 - **0.80-0.89**: Good (Grade B)
 - **0.70-0.79**: Acceptable (Grade C)

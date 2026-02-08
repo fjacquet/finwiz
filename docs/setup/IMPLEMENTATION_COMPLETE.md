@@ -39,6 +39,7 @@ All three reported issues with FinWiz report generation have been successfully f
 ### Key Fixes
 
 #### Fix #1: Individual HTML Generation
+
 ```python
 def _generate_individual_deep_analysis_reports(self, results_by_ticker):
     for ticker, result in results_by_ticker.items():
@@ -47,6 +48,7 @@ def _generate_individual_deep_analysis_reports(self, results_by_ticker):
 ```
 
 #### Fix #2: Discovery Integration
+
 ```python
 def _generate_discovery_section(self, discovery_results):
     # Displays all A+ opportunities with:
@@ -56,6 +58,7 @@ def _generate_discovery_section(self, discovery_results):
 ```
 
 #### Fix #3: Score Persistence (CRITICAL)
+
 ```python
 def report(self):
     # ... load portfolio and deep analysis ...
@@ -73,6 +76,7 @@ def report(self):
 Created comprehensive test suite: `scripts/test_report_generation.py`
 
 **Tests 4 critical aspects**:
+
 1. Portfolio scores properly merged to disk
 2. Individual HTML files generated
 3. Discovery opportunities in final report
@@ -102,12 +106,14 @@ uv run python scripts/test_report_generation.py
 All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism.md`:
 
 ✅ **Using Python (Good)**:
+
 - Pure Python score merging
 - File I/O operations
 - Template-based HTML generation
 - Data consolidation
 
 ⚠️ **Still Using String Concatenation** (Room for Improvement):
+
 - Current HTML generation uses f-strings
 - Should refactor to use existing Jinja2 templates in `src/finwiz/templates/`
 - Use `TemplateRenderer` class from `src/finwiz/utils/template_renderer.py`
@@ -119,6 +125,7 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 ### Portfolio Review Scores
 
 **Before** (placeholder scores):
+
 ```json
 {
   "MSFT": {"score": 0.750, "grade": "B"},
@@ -130,6 +137,7 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 ```
 
 **After** (real Python scorer results):
+
 ```json
 {
   "MSFT": {"score": 0.735, "grade": "C+"},
@@ -143,11 +151,13 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 ### Final Report Content
 
 **Before**:
+
 - No individual HTML files
 - No discovery section
 - Incorrect scores throughout
 
 **After**:
+
 - ✅ Individual HTML per holding
 - ✅ Discovery section with 8 A+ opportunities
 - ✅ Correct scores from Python analysis
@@ -155,11 +165,13 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 ## Performance Impact
 
 **No performance degradation**:
+
 - All operations are Python I/O (milliseconds)
 - No additional LLM calls
 - File generation happens in parallel with report rendering
 
 **Benefits**:
+
 - 100% accurate scores in reports
 - Complete data integration  
 - Professional individual reports
@@ -168,11 +180,13 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 ## Next Steps
 
 ### Immediate (Ready to Deploy)
+
 1. Run full workflow: `crewai flow kickoff`
 2. Verify with test suite: `uv run python scripts/test_report_generation.py`
 3. Review output HTML: `open output/finwiz_family_financial_plan.html`
 
 ### Future Improvements (Backlog)
+
 1. Refactor to Jinja2 templates (AI Minimalism best practice)
 2. Add more detailed individual reports (charts, metrics breakdown)
 3. Enhance discovery section (grade improvement calculations)
@@ -203,6 +217,7 @@ The fixes are production-ready and can be deployed immediately. Run the test sui
 ---
 
 **Questions or Issues?**
+
 - See `docs/setup/REPORT_GENERATION_FIXES.md` for technical details
 - Run test suite for diagnostic information
 - Check logs in `logs/finwiz.log` for execution details

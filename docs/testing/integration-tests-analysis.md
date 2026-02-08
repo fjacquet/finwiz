@@ -4,7 +4,8 @@
 
 **Problem**: 15 tests in `tests/integration/` fail, claiming to use mocks but missing fixtures.
 
-**Progress**: 
+**Progress**:
+
 - ✅ Created 3 missing fixtures in `tests/conftest.py`
 - ❌ Tests still fail - deeper architecture issue
 
@@ -96,6 +97,7 @@ def test_should_limit_llm_cost_to_10_cents(mock_hybrid_analysis_flow):
 ```
 
 **Benefits:**
+
 - ✅ Simple and clean
 - ✅ Tests what they claim (performance, cost)
 - ✅ No need to understand Flow internals
@@ -139,6 +141,7 @@ def test_flow_always_returns_valid_enriched_analysis(ticker, asset_class, mocker
 ```
 
 **Benefits:**
+
 - ✅ Actually tests properties that should hold
 - ✅ Generates hundreds of test cases automatically
 - ✅ Catches edge cases hardcoded tests miss
@@ -173,11 +176,13 @@ def test_real_performance_with_llm():
 ```
 
 **Benefits:**
+
 - ✅ Honest about what tests do
 - ✅ Can run manually with real API keys
 - ✅ Tests actual system performance
 
 **Drawbacks:**
+
 - ❌ Costs money (LLM API calls)
 - ❌ Slow (30+ seconds each)
 - ❌ Requires API keys
@@ -202,7 +207,8 @@ def test_real_performance_with_llm():
    - Not actually integration tests
    - Redundant with orchestrator unit tests
 
-**Result**: 
+**Result**:
+
 - 15 failures → 0 failures
 - Better test coverage (property tests)
 - Clearer test organization (unit vs property vs integration)
@@ -262,17 +268,20 @@ rm tests/integration/test_hybrid_analysis_reliability.py  # 10 tests
 ## Expected Outcome
 
 **Before:**
+
 - 3,248 passing
 - 15 failing "integration" tests
 - Misleading test names
 
 **After:**
+
 - 3,253 passing (5 fixed performance tests)
 - 0 failing
 - 4 new property tests (stronger guarantees)
 - Honest test organization
 
 **Quality improvement:**
+
 - Property tests catch edge cases hardcoded tests miss
 - Clear separation: unit (fast, mocked) vs integration (slow, real APIs)
 - Better documentation of what's actually being tested

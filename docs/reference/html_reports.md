@@ -496,7 +496,7 @@ All templates extend `base_template.html` which provides:
 
 {% endraw %}
 
-3. Register in `template_renderer.py`:
+1. Register in `template_renderer.py`:
 
    ```python
    self.render_methods = {
@@ -504,7 +504,7 @@ All templates extend `base_template.html` which provides:
    }
    ```
 
-4. Add helper function in `html_generator.py`:
+2. Add helper function in `html_generator.py`:
 
    ```python
    def save_custom_report(data: dict, output_path: str) -> tuple[Path, Path]:

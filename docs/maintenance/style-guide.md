@@ -606,7 +606,7 @@ Confirm everything is working correctly:
 
    Expected output: `mkdocs, version 1.5.x`
 
-2. **Test build process**:
+1. **Test build process**:
 
    ```bash
    make docs-build
@@ -614,7 +614,7 @@ Confirm everything is working correctly:
 
    Should complete without errors.
 
-3. **Start development server**:
+2. **Start development server**:
 
    ```bash
    make docs-serve
