@@ -200,6 +200,8 @@ class PythonReportGenerator:
 
   {self._generate_performance_metrics(deep_analysis_results)}
 
+  {self._generate_stress_test_section(stress_test_results)}
+
   <footer>
     <p>📋 Rapport généré par FinWiz • Analyse Python déterministe</p>
     <p class="small">⚡ Performance: Analyse complète en quelques secondes • 100% réduction des coûts LLM</p>
