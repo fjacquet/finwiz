@@ -1,9 +1,9 @@
 """Enums for quantitative analysis models."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class TradeType(str, Enum):
+class TradeType(StrEnum):
     """Type of trade."""
 
     BUY = "BUY"
@@ -12,7 +12,7 @@ class TradeType(str, Enum):
     COVER = "COVER"
 
 
-class TradeStatus(str, Enum):
+class TradeStatus(StrEnum):
     """Status of trade."""
 
     OPEN = "OPEN"
@@ -20,7 +20,7 @@ class TradeStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
-class MarketRegimeType(str, Enum):
+class MarketRegimeType(StrEnum):
     """Market regime types."""
 
     BULL = "BULL"
@@ -29,7 +29,7 @@ class MarketRegimeType(str, Enum):
     VOLATILE = "VOLATILE"
 
 
-class SignalType(str, Enum):
+class SignalType(StrEnum):
     """Technical analysis signal types."""
 
     BUY = "BUY"

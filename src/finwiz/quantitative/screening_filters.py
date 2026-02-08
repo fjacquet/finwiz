@@ -5,7 +5,7 @@ This module provides stock data models, filtering logic, and result structures
 for the stock screening engine.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
-class ScreeningUniverse(str, Enum):
+class ScreeningUniverse(StrEnum):
     """Stock screening universes."""
 
     SP500 = "SP500"
@@ -25,7 +25,7 @@ class ScreeningUniverse(str, Enum):
     ALL_US = "ALL_US"
 
 
-class SortOrder(str, Enum):
+class SortOrder(StrEnum):
     """Sort order for screening results."""
 
     ASCENDING = "asc"

@@ -6,13 +6,13 @@ the backtesting system.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, validator
 
 
-class PositionSizingMethod(str, Enum):
+class PositionSizingMethod(StrEnum):
     """Position sizing methods for backtesting."""
 
     FIXED_AMOUNT = "fixed_amount"
@@ -21,7 +21,7 @@ class PositionSizingMethod(str, Enum):
     VOLATILITY_ADJUSTED = "volatility_adjusted"
 
 
-class TradeType(str, Enum):
+class TradeType(StrEnum):
     """Types of trades in backtesting."""
 
     BUY = "BUY"
@@ -30,7 +30,7 @@ class TradeType(str, Enum):
     COVER = "COVER"
 
 
-class TradeStatus(str, Enum):
+class TradeStatus(StrEnum):
     """Status of trades in backtesting."""
 
     OPEN = "OPEN"

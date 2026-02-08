@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -19,7 +19,7 @@ from finwiz.schemas.portfolio_rebalancing import RebalancingNeed
 logger = logging.getLogger(__name__)
 
 
-class AlertType(str, Enum):
+class AlertType(StrEnum):
     """Alert type enumeration."""
 
     DEVIATION_ALERT = "DEVIATION_ALERT"
@@ -29,7 +29,7 @@ class AlertType(str, Enum):
     PRICE_DATA_STALE = "PRICE_DATA_STALE"
 
 
-class AlertSeverity(str, Enum):
+class AlertSeverity(StrEnum):
     """Alert severity enumeration."""
 
     INFO = "INFO"

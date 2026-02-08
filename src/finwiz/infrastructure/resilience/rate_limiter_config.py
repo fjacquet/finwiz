@@ -6,10 +6,10 @@ configuration constants separate from runtime logic.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class APIProvider(str, Enum):
+class APIProvider(StrEnum):
     """Supported API providers with their rate limits."""
 
     ALPHA_VANTAGE = "alpha_vantage"

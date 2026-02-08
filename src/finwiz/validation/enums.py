@@ -1,10 +1,10 @@
 """Validation enums and constants."""
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 
-class ValidationMode(str, Enum):
+class ValidationMode(StrEnum):
     """Validation strictness modes."""
 
     OFF = "off"

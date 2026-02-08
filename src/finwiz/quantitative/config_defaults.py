@@ -6,12 +6,12 @@ This module provides default values, enums, and dataclasses for configuration.
 
 import os
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 
-class TechnicalIndicator(str, Enum):
+class TechnicalIndicator(StrEnum):
     """Supported technical indicators."""
 
     SMA = "sma"
@@ -36,7 +36,7 @@ class TechnicalIndicator(str, Enum):
     ULTIMATE_OSCILLATOR = "ultimate_oscillator"
 
 
-class DataProvider(str, Enum):
+class DataProvider(StrEnum):
     """Supported data providers for quantitative analysis."""
 
     YFINANCE = "yfinance"
@@ -46,7 +46,7 @@ class DataProvider(str, Enum):
     IEX_CLOUD = "iex_cloud"
 
 
-class BacktestFramework(str, Enum):
+class BacktestFramework(StrEnum):
     """Supported backtesting frameworks."""
 
     BACKTRADER = "backtrader"
@@ -55,7 +55,7 @@ class BacktestFramework(str, Enum):
     CUSTOM = "custom"
 
 
-class OptimizationMethod(str, Enum):
+class OptimizationMethod(StrEnum):
     """Portfolio optimization methods."""
 
     MEAN_VARIANCE = "mean_variance"
@@ -66,7 +66,7 @@ class OptimizationMethod(str, Enum):
     EFFICIENT_FRONTIER = "efficient_frontier"
 
 
-class ScreeningCriteria(str, Enum):
+class ScreeningCriteria(StrEnum):
     """Stock screening criteria."""
 
     MARKET_CAP = "market_cap"

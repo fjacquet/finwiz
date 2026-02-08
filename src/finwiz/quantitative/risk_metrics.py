@@ -6,12 +6,12 @@ This module defines data models for risk warnings, thresholds, and assessments.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk level enumeration."""
 
     LOW = "LOW"
@@ -20,7 +20,7 @@ class RiskLevel(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-class RiskWarningType(str, Enum):
+class RiskWarningType(StrEnum):
     """Risk warning type enumeration."""
 
     CONCENTRATION = "CONCENTRATION"

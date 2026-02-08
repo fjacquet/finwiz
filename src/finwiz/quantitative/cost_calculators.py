@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-class BrokerType(str, Enum):
+class BrokerType(StrEnum):
     """Broker fee structure types."""
 
     DISCOUNT = "DISCOUNT"  # Low-cost brokers (e.g., Schwab, Fidelity)
@@ -24,7 +24,7 @@ class BrokerType(str, Enum):
     COMMISSION_FREE = "COMMISSION_FREE"  # Zero-commission brokers
 
 
-class MarketCapCategory(str, Enum):
+class MarketCapCategory(StrEnum):
     """Market capitalization categories for spread estimation."""
 
     LARGE_CAP = "LARGE_CAP"  # > $10B

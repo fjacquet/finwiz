@@ -8,13 +8,13 @@ including metadata tracking, validation status, and data freshness monitoring.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class DataSourceType(str, Enum):
+class DataSourceType(StrEnum):
     """Types of data sources used by crews."""
 
     SEC_EDGAR = "SEC_EDGAR"
@@ -26,7 +26,7 @@ class DataSourceType(str, Enum):
     CACHED = "CACHED"
 
 
-class DataQuality(str, Enum):
+class DataQuality(StrEnum):
     """Data quality assessment levels."""
 
     HIGH = "HIGH"
@@ -267,7 +267,7 @@ class APlusOpportunityCollection(BaseModel):
     backtesting_metrics: dict[str, Any] | None = Field(None, description="Backtesting performance metrics")
 
 
-class IntegrationErrorType(str, Enum):
+class IntegrationErrorType(StrEnum):
     """Types of integration errors."""
 
     MISSING_DATA = "MISSING_DATA"
@@ -293,7 +293,7 @@ class IntegrationError(BaseModel):
     context: dict = Field(default_factory=dict, description="Additional context information")
 
 
-class DataAvailabilityStatus(str, Enum):
+class DataAvailabilityStatus(StrEnum):
     """Overall data availability status."""
 
     COMPLETE = "COMPLETE"

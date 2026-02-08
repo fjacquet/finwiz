@@ -14,7 +14,7 @@ import pickle
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +23,7 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
-class CacheBackend(str, Enum):
+class CacheBackend(StrEnum):
     """Supported cache backend types."""
 
     MEMORY = "memory"
@@ -31,7 +31,7 @@ class CacheBackend(str, Enum):
     HYBRID = "hybrid"
 
 
-class CacheStrategy(str, Enum):
+class CacheStrategy(StrEnum):
     """Cache invalidation and refresh strategies."""
 
     TTL = "ttl"  # Time-to-live based

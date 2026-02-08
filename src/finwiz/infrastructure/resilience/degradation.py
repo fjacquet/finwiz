@@ -9,7 +9,7 @@ import asyncio
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any, cast
 
 from finwiz.config.features.flags import get_feature_flags
@@ -19,7 +19,7 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
-class ServiceStatus(str, Enum):
+class ServiceStatus(StrEnum):
     """Service availability status."""
 
     HEALTHY = "healthy"
@@ -29,7 +29,7 @@ class ServiceStatus(str, Enum):
     TIMEOUT = "timeout"
 
 
-class DegradationLevel(str, Enum):
+class DegradationLevel(StrEnum):
     """Levels of service degradation."""
 
     NONE = "none"  # Full functionality

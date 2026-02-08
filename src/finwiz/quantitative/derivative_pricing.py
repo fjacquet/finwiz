@@ -6,7 +6,7 @@ and QuantLib integration for professional-grade financial instrument valuation.
 """
 
 import math
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
@@ -15,14 +15,14 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
-class OptionType(str, Enum):
+class OptionType(StrEnum):
     """Option types for derivatives pricing."""
 
     CALL = "call"
     PUT = "put"
 
 
-class ExerciseStyle(str, Enum):
+class ExerciseStyle(StrEnum):
     """Exercise styles for options."""
 
     EUROPEAN = "european"
@@ -30,7 +30,7 @@ class ExerciseStyle(str, Enum):
     BERMUDAN = "bermudan"
 
 
-class PricingModel(str, Enum):
+class PricingModel(StrEnum):
     """Pricing models for derivatives."""
 
     BLACK_SCHOLES = "black_scholes"

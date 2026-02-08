@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -24,7 +24,7 @@ from finwiz.quantitative.portfolio_monitor import AlertSeverity, PortfolioAlert
 logger = logging.getLogger(__name__)
 
 
-class NotificationType(str, Enum):
+class NotificationType(StrEnum):
     """Notification type enumeration."""
 
     EMAIL = "EMAIL"
@@ -33,7 +33,7 @@ class NotificationType(str, Enum):
     WEBHOOK = "WEBHOOK"
 
 
-class NotificationStatus(str, Enum):
+class NotificationStatus(StrEnum):
     """Notification delivery status enumeration."""
 
     PENDING = "PENDING"

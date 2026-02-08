@@ -6,14 +6,14 @@ health checking, pipeline management, and crew coordination.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
 
 # Enums for integration
-class ValidationSeverity(str, Enum):
+class ValidationSeverity(StrEnum):
     """Validation error severity levels."""
 
     INFO = "INFO"
@@ -22,7 +22,7 @@ class ValidationSeverity(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-class HealthStatus(str, Enum):
+class HealthStatus(StrEnum):
     """Health status levels."""
 
     HEALTHY = "HEALTHY"
@@ -31,7 +31,7 @@ class HealthStatus(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-class DataQualityLevel(str, Enum):
+class DataQualityLevel(StrEnum):
     """Data quality assessment levels."""
 
     EXCELLENT = "EXCELLENT"
@@ -41,7 +41,7 @@ class DataQualityLevel(str, Enum):
     UNACCEPTABLE = "UNACCEPTABLE"
 
 
-class RecoveryStrategy(str, Enum):
+class RecoveryStrategy(StrEnum):
     """Data recovery strategy types."""
 
     RETRY = "RETRY"

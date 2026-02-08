@@ -4,10 +4,10 @@ Portfolio Rebalancing Enums.
 Basic enumeration types for portfolio rebalancing operations.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 
-class TradeAction(str, Enum):
+class TradeAction(StrEnum):
     """Trade action enumeration."""
 
     BUY = "BUY"
@@ -15,7 +15,7 @@ class TradeAction(str, Enum):
     HOLD = "HOLD"
 
 
-class UrgencyLevel(str, Enum):
+class UrgencyLevel(StrEnum):
     """Trade urgency level enumeration."""
 
     LOW = "LOW"
@@ -24,7 +24,7 @@ class UrgencyLevel(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-class RebalancingMethod(str, Enum):
+class RebalancingMethod(StrEnum):
     """Rebalancing optimization method enumeration."""
 
     MINIMIZE_TRADES = "MINIMIZE_TRADES"
@@ -33,7 +33,7 @@ class RebalancingMethod(str, Enum):
     TAX_EFFICIENT = "TAX_EFFICIENT"
 
 
-class RebalancingRecommendation(str, Enum):
+class RebalancingRecommendation(StrEnum):
     """Overall rebalancing recommendation enumeration."""
 
     REBALANCE_NOW = "REBALANCE_NOW"

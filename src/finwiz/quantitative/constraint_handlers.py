@@ -6,7 +6,7 @@ including weight constraints, sector limits, turnover constraints, and other
 portfolio construction constraints.
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import numpy as np
@@ -17,7 +17,7 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
-class ConstraintType(str, Enum):
+class ConstraintType(StrEnum):
     """Portfolio constraint types."""
 
     WEIGHT_SUM = "weight_sum"

@@ -6,14 +6,14 @@ the portfolio configuration system.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from finwiz.schemas.portfolio_rebalancing import PortfolioConfiguration, RebalancingMethod
 
 
-class StrategyTemplate(str, Enum):
+class StrategyTemplate(StrEnum):
     """Pre-defined portfolio strategy templates."""
 
     BALANCED = "balanced"
@@ -26,7 +26,7 @@ class StrategyTemplate(str, Enum):
     CUSTOM = "custom"
 
 
-class ConfigurationStatus(str, Enum):
+class ConfigurationStatus(StrEnum):
     """Portfolio configuration status."""
 
     ACTIVE = "active"

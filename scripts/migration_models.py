@@ -3,12 +3,12 @@ Pydantic models for documentation migration system.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class DiátaxisCategory(str, Enum):
+class DiátaxisCategory(StrEnum):
     """Diátaxis framework categories for documentation organization."""
 
     TUTORIALS = "tutorials"
@@ -18,7 +18,7 @@ class DiátaxisCategory(str, Enum):
     ARCHIVE = "archive"
 
 
-class ValidationStatus(str, Enum):
+class ValidationStatus(StrEnum):
     """Status of document validation."""
 
     SUCCESS = "success"

@@ -7,14 +7,14 @@ used throughout the FinWiz system.
 
 import os
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-class FeatureFlagStrategy(str, Enum):
+class FeatureFlagStrategy(StrEnum):
     """Feature flag evaluation strategies."""
 
     BOOLEAN = "boolean"  # Simple on/off
@@ -24,7 +24,7 @@ class FeatureFlagStrategy(str, Enum):
     CIRCUIT_BREAKER = "circuit_breaker"  # Circuit breaker pattern
 
 
-class FallbackStrategy(str, Enum):
+class FallbackStrategy(StrEnum):
     """Fallback strategies for degraded functionality."""
 
     DISABLE = "disable"  # Disable feature completely

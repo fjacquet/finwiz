@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 RiskLevel = Literal["Low", "Medium", "High", "Very High"]
 
 
-class AssetClass(str, Enum):
+class AssetClass(StrEnum):
     """Asset class enumeration for type-safe asset classification."""
 
     STOCK = "stock"

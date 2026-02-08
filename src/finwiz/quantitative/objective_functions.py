@@ -7,7 +7,7 @@ and risk parity objectives.
 """
 
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Never
 
 import numpy as np
@@ -37,7 +37,7 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
-class ObjectiveFunction(str, Enum):
+class ObjectiveFunction(StrEnum):
     """Portfolio optimization objective functions."""
 
     MAX_SHARPE = "max_sharpe"

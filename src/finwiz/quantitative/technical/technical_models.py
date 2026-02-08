@@ -6,7 +6,7 @@ providing a single source of truth for technical analysis data structures.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, validator
@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, validator
 # ============================================================================
 
 
-class SignalType(str, Enum):
+class SignalType(StrEnum):
     """Types of technical analysis signals."""
 
     BUY = "BUY"
@@ -26,7 +26,7 @@ class SignalType(str, Enum):
     STRONG_SELL = "STRONG_SELL"
 
 
-class SignalStrength(str, Enum):
+class SignalStrength(StrEnum):
     """Signal strength levels."""
 
     VERY_WEAK = "very_weak"
@@ -36,7 +36,7 @@ class SignalStrength(str, Enum):
     VERY_STRONG = "very_strong"
 
 
-class ZoneType(str, Enum):
+class ZoneType(StrEnum):
     """Types of technical analysis zones."""
 
     SUPPORT = "support"
@@ -45,7 +45,7 @@ class ZoneType(str, Enum):
     CONFLUENCE = "confluence"
 
 
-class TrendDirection(str, Enum):
+class TrendDirection(StrEnum):
     """Market trend directions."""
 
     UPTREND = "uptrend"
