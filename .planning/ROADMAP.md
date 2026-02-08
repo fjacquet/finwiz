@@ -35,10 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 
-- [ ] 01-01-PLAN.md -- Replace ~22 bare except Exception: handlers in tools/ files (ERRH-01)
-- [ ] 01-02-PLAN.md -- Replace ~21 bare except Exception: handlers in non-tools/ files (ERRH-01)
-- [ ] 01-03-PLAN.md -- Add default=str to ~37 json.dumps calls across 18 files (ERRH-02)
-- [ ] 01-04-PLAN.md -- Standardize 5 CrewAI output patterns via result.pydantic cascade + fix flow state types (ERRH-03)
+- [x] 01-01-PLAN.md -- Replace ~22 bare except Exception: handlers in tools/ files (ERRH-01)
+- [x] 01-02-PLAN.md -- Replace ~21 bare except Exception: handlers in non-tools/ files (ERRH-01)
+- [x] 01-03-PLAN.md -- Add default=str to ~37 json.dumps calls across 18 files (ERRH-02)
+- [x] 01-04-PLAN.md -- Standardize 5 CrewAI output patterns via result.pydantic cascade + fix flow state types (ERRH-03)
 
 ### Phase 2: Discovery Core
 
@@ -122,7 +122,7 @@ Note: Phases 4 and 5 depend on Phase 1 but not on each other. However, running P
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Error Handling Cleanup | 0/4 | Not started | - |
+| 1. Error Handling Cleanup | 4/4 | Complete | 2026-02-07 |
 | 2. Discovery Core | 0/2 | Not started | - |
 | 3. Discovery Integration | 0/2 | Not started | - |
 | 4. Performance | 0/2 | Not started | - |
