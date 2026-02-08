@@ -9,13 +9,16 @@ Pure Python ($0 cost) -- no AI calls. Components:
 - CandidateScorer: scores and grades candidates
 """
 
+from finwiz.discovery.breakout_detector import BreakoutDetector
+from finwiz.discovery.candidate_scorer import CandidateScorer
+from finwiz.discovery.ipo_screener import IPOScreener
+from finwiz.discovery.momentum_scanner import MomentumScanner
 from finwiz.discovery.universe_provider import DynamicUniverseProvider
 
 __all__ = [
+    "BreakoutDetector",
+    "CandidateScorer",
     "DynamicUniverseProvider",
-    # Added by 02-02:
-    # "IPOScreener",
-    # "BreakoutDetector",
-    # "MomentumScanner",
-    # "CandidateScorer",
+    "IPOScreener",
+    "MomentumScanner",
 ]
