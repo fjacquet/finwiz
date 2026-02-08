@@ -5,6 +5,8 @@ This module provides factory methods for creating and configuring CrewAI crews,
 centralizing crew initialization logic and providing consistent error handling.
 """
 
+import asyncio
+import concurrent.futures
 from datetime import datetime
 from typing import Any
 
@@ -15,6 +17,7 @@ from finwiz.crews.investment_discovery_crew.investment_discovery_crew import Inv
 from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import PortfolioRebalancingCrew
 from finwiz.crews.report_crew.report_crew import ReportCrew
 from finwiz.crews.stock_crew.stock_crew import StockCrew
+from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
 from finwiz.orchestrators.error_handling.core_analysis_error_handler import CoreAnalysisErrorHandler
 from finwiz.tools.logger import get_logger
 
@@ -42,6 +45,24 @@ class CrewFactory:
         self.output_cache = None
         self.logger.info("CrewFactory initialized (storage disabled per cleanup)")
 
+    def _run_crew_with_timeout(self, crew_name: str, crew_instance: Any, inputs: dict[str, Any]) -> Any:
+        """Execute crew with timeout and circuit breaker protection.
+
+        Bridges sync caller -> async execute_crew_with_timeout.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            # Already in async context -- run in a separate thread to avoid deadlock
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, execute_crew_with_timeout(crew_name, crew_instance, inputs))
+                return future.result()
+        else:
+            return asyncio.run(execute_crew_with_timeout(crew_name, crew_instance, inputs))
+
     def execute_crypto_crew(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute cryptocurrency analysis crew with error handling."""
         if not is_feature_enabled("crypto_analysis"):
@@ -53,7 +74,7 @@ class CrewFactory:
         try:
             self.logger.info("Starting cryptocurrency analysis crew (Phase 2: Core Analysis)")
             crypto_crew = CryptoCrew()
-            result = crypto_crew.crew().kickoff(inputs=inputs)
+            result = self._run_crew_with_timeout("crypto", crypto_crew.crew(), inputs)
 
             # Prepare success response with structured Pydantic access cascade
             result_data: dict[str, Any] = {
@@ -108,7 +129,7 @@ class CrewFactory:
         try:
             self.logger.info("Starting stock analysis crew (Phase 2: Core Analysis)")
             stock_crew = StockCrew()
-            result = stock_crew.crew().kickoff(inputs=inputs)
+            result = self._run_crew_with_timeout("stock", stock_crew.crew(), inputs)
 
             # Prepare success response with structured Pydantic access cascade
             result_data: dict[str, Any] = {
@@ -163,7 +184,7 @@ class CrewFactory:
         try:
             self.logger.info("Starting ETF analysis crew (Phase 2: Core Analysis)")
             etf_crew = EtfCrew()
-            result = etf_crew.crew().kickoff(inputs=inputs)
+            result = self._run_crew_with_timeout("etf", etf_crew.crew(), inputs)
 
             # Prepare success response with structured Pydantic access cascade
             result_data: dict[str, Any] = {
@@ -220,7 +241,7 @@ class CrewFactory:
             portfolio_rebalancing_crew = PortfolioRebalancingCrew()
 
             # Execute the portfolio rebalancing crew
-            result = portfolio_rebalancing_crew.crew().kickoff(inputs=inputs)
+            result = self._run_crew_with_timeout("portfolio_rebalancing", portfolio_rebalancing_crew.crew(), inputs)
 
             # Prepare success response with structured Pydantic access cascade
             result_data: dict[str, Any] = {
@@ -261,7 +282,7 @@ class CrewFactory:
             investment_discovery_crew = InvestmentDiscoveryCrew()
 
             # Execute the investment discovery crew
-            result = investment_discovery_crew.crew().kickoff(inputs=inputs)
+            result = self._run_crew_with_timeout("investment_discovery", investment_discovery_crew.crew(), inputs)
 
             # Prepare success response with structured Pydantic access cascade
             result_data: dict[str, Any] = {
@@ -332,7 +353,7 @@ class CrewFactory:
                 }
 
             # Execute the report crew with prepared context
-            report_crew.crew().kickoff(inputs=prepared_context)
+            self._run_crew_with_timeout("report", report_crew.crew(), prepared_context)
 
             self.logger.info("Report generation completed successfully")
             return {"report_generation_success": True}

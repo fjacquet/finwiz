@@ -1,14 +1,13 @@
 """Tests for crew execution wrapper with timeout and circuit breaker."""
 
-import asyncio
 import time
 
 import pytest
 
 from finwiz.infrastructure.resilience.crew_execution import (
-    CircuitBreakerOpenError,
     FAILURE_THRESHOLD,
     RECOVERY_TIMEOUT,
+    CircuitBreakerOpenError,
     _crew_circuit_open,
     _crew_failures,
     execute_crew_with_timeout,
