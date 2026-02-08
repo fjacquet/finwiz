@@ -229,6 +229,13 @@ def create_default_flags() -> dict[str, FeatureFlagConfig]:
             fallback_strategy=FallbackStrategy.DISABLE,
             description="A+ grade investment discovery agents for proactive opportunity identification",
         ),
+        "newcomer_discovery": FeatureFlagConfig(
+            name="newcomer_discovery",
+            enabled=get_env_bool("FF_NEWCOMER_DISCOVERY", False),
+            strategy=FeatureFlagStrategy.BOOLEAN,
+            fallback_strategy=FallbackStrategy.DEFAULT_VALUES,
+            description="Route stock/etf/crypto analyzers through NewcomerDiscoveryPipeline instead of legacy mocked data",
+        ),
         "stock_analysis": FeatureFlagConfig(
             name="stock_analysis",
             enabled=get_env_bool("FF_STOCK_ANALYSIS", True),
