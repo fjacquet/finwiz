@@ -489,11 +489,15 @@ class ReportingOrchestrator:
         # Load discovery results if available
         discovery_results = self._read_discovery_results()
 
+        # Load stress test results from state if available
+        stress_test_results: list[dict[str, Any]] | None = getattr(self.state, "stress_test_results", None) or None
+
         report_path = generate_python_report(
             portfolio_review=portfolio_review,
             deep_analysis_results=deep_analysis_results,
             session_id=session_id,
             discovery_results=discovery_results,
+            stress_test_results=stress_test_results,
         )
 
         return report_path

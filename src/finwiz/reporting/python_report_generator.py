@@ -30,7 +30,12 @@ class PythonReportGenerator:
         self.logger = logger
 
     def generate_family_financial_plan(
-        self, portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default", discovery_results: dict[str, Any] | None = None
+        self,
+        portfolio_review: PortfolioReview,
+        deep_analysis_results: dict[str, Any] | None = None,
+        session_id: str = "default",
+        discovery_results: dict[str, Any] | None = None,
+        stress_test_results: list[dict[str, Any]] | None = None,
     ) -> str:
         """
         Generate comprehensive family financial plan HTML report.
@@ -40,6 +45,7 @@ class PythonReportGenerator:
             deep_analysis_results: Deep analysis results (if available)
             session_id: Session identifier
             discovery_results: A+ discovery results (if available)
+            stress_test_results: Stress test results (if available)
 
         Returns:
             Path to generated HTML report
@@ -63,6 +69,7 @@ class PythonReportGenerator:
             deep_analysis_results=deep_analysis_results,
             discovery_results=discovery_results,
             session_id=session_id,
+            stress_test_results=stress_test_results,
         )
 
         # Write to file
@@ -155,6 +162,7 @@ class PythonReportGenerator:
         deep_analysis_results: dict[str, Any] | None,
         discovery_results: dict[str, Any] | None,
         session_id: str,
+        stress_test_results: list[dict[str, Any]] | None = None,
     ) -> str:
         """Generate complete HTML report."""
         # Generate timestamp
@@ -295,7 +303,11 @@ class PythonReportGenerator:
 
 
 def generate_python_report(
-    portfolio_review: PortfolioReview, deep_analysis_results: dict[str, Any] | None = None, session_id: str = "default", discovery_results: dict[str, Any] | None = None
+    portfolio_review: PortfolioReview,
+    deep_analysis_results: dict[str, Any] | None = None,
+    session_id: str = "default",
+    discovery_results: dict[str, Any] | None = None,
+    stress_test_results: list[dict[str, Any]] | None = None,
 ) -> str:
     """
     Convenience function to generate Python-based report.
@@ -304,5 +316,9 @@ def generate_python_report(
     """
     generator = PythonReportGenerator()
     return generator.generate_family_financial_plan(
-        portfolio_review=portfolio_review, deep_analysis_results=deep_analysis_results, session_id=session_id, discovery_results=discovery_results
+        portfolio_review=portfolio_review,
+        deep_analysis_results=deep_analysis_results,
+        session_id=session_id,
+        discovery_results=discovery_results,
+        stress_test_results=stress_test_results,
     )
