@@ -7,9 +7,9 @@
 
 ### Error Handling
 
-- [ ] **ERRH-01**: Replace all bare `except Exception:` handlers with specific exception types (ValueError, KeyError, APIError, etc.) across 44+ locations
-- [ ] **ERRH-02**: Add `default=str` parameter to all `json.dumps()` calls missing it across 40+ locations
-- [ ] **ERRH-03**: Standardize CrewAI output handling via Pydantic `output_pydantic` schemas instead of inconsistent `str(result.raw)` / `str(result)` patterns
+- [x] **ERRH-01**: Replace all bare `except Exception:` handlers with specific exception types (ValueError, KeyError, APIError, etc.) across 44+ locations
+- [x] **ERRH-02**: Add `default=str` parameter to all `json.dumps()` calls missing it across 40+ locations
+- [x] **ERRH-03**: Standardize CrewAI output handling via Pydantic `output_pydantic` schemas instead of inconsistent `str(result.raw)` / `str(result)` patterns
 
 ### Performance
 
@@ -20,19 +20,19 @@
 
 ### Test Coverage
 
-- [ ] **TEST-01**: Add orchestrator integration tests with real `FinwizState` mutations, concurrent execution, and error propagation
-- [ ] **TEST-02**: Add crew output parsing tests covering malformed JSON, schema validation failures, and CrewAI output format variations
-- [ ] **TEST-03**: Add data adapter fallback tests covering complete failure scenarios, fallback chain exhaustion, and partial data degradation
-- [ ] **TEST-04**: Add HTML output validation tests for generated HTML validity, XSS prevention, and character encoding
+- [x] **TEST-01**: Add orchestrator integration tests with real `FinwizState` mutations, concurrent execution, and error propagation
+- [x] **TEST-02**: Add crew output parsing tests covering malformed JSON, schema validation failures, and CrewAI output format variations
+- [x] **TEST-03**: Add data adapter fallback tests covering complete failure scenarios, fallback chain exhaustion, and partial data degradation
+- [x] **TEST-04**: Add HTML output validation tests for generated HTML validity, XSS prevention, and character encoding
 
 ### Discovery Pipeline
 
-- [ ] **DISC-01**: Create Pydantic schemas for discovery candidates (`NewcomerCandidate`, `EnrichmentResult`, `NewcomerDiscoveryResult`) in `schemas/newcomer_discovery.py`
-- [ ] **DISC-02**: Create `DynamicUniverseProvider` that mines ETF holdings via yfinance with fallback to existing screening_utils universe lists
-- [ ] **DISC-03**: Create `IPOScreener` that queries SEC EDGAR EFTS API for recent S-1/S-1A filings and extracts ticker fundamentals
-- [ ] **DISC-04**: Create `BreakoutDetector` for price/volume breakout signals on small/mid-cap stocks ($200M-$50B market cap)
-- [ ] **DISC-05**: Create `MomentumScanner` for volume anomaly + RSI + momentum signals
-- [ ] **DISC-06**: Create `CandidateScorer` reusing existing `ScreeningCriteria` and `score_to_grade()` for scoring and grading
+- [x] **DISC-01**: Create Pydantic schemas for discovery candidates (`NewcomerCandidate`, `EnrichmentResult`, `NewcomerDiscoveryResult`) in `schemas/newcomer_discovery.py`
+- [x] **DISC-02**: Create `DynamicUniverseProvider` that mines ETF holdings via yfinance with fallback to existing screening_utils universe lists
+- [x] **DISC-03**: Create `IPOScreener` that queries SEC EDGAR EFTS API for recent S-1/S-1A filings and extracts ticker fundamentals
+- [x] **DISC-04**: Create `BreakoutDetector` for price/volume breakout signals on small/mid-cap stocks ($200M-$50B market cap)
+- [x] **DISC-05**: Create `MomentumScanner` for volume anomaly + RSI + momentum signals
+- [x] **DISC-06**: Create `CandidateScorer` reusing existing `ScreeningCriteria` and `score_to_grade()` for scoring and grading
 - [x] **DISC-07**: Create `NewcomerDiscoveryPipeline` orchestrating all discovery components with portfolio exclusion and legacy format output
 - [x] **DISC-08**: Add Perplexity enrichment for top candidates (score >= 0.80), gated by `perplexity_research` feature flag
 - [x] **DISC-09**: Add `newcomer_discovery` feature flag in `config/features/definitions.py` with routing in `scoring/{stock,etf,crypto}_analyzer.py`
@@ -71,23 +71,23 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ERRH-01 | TBD | Pending |
-| ERRH-02 | TBD | Pending |
-| ERRH-03 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| PERF-02 | TBD | Pending |
-| PERF-03 | TBD | Pending |
-| PERF-04 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| TEST-04 | TBD | Pending |
-| DISC-01 | TBD | Pending |
-| DISC-02 | TBD | Pending |
-| DISC-03 | TBD | Pending |
-| DISC-04 | TBD | Pending |
-| DISC-05 | TBD | Pending |
-| DISC-06 | TBD | Pending |
+| ERRH-01 | 1 | Complete |
+| ERRH-02 | 1 | Complete |
+| ERRH-03 | 1 | Complete |
+| PERF-01 | 4 | Complete |
+| PERF-02 | 4 | Complete |
+| PERF-03 | 4 | Complete |
+| PERF-04 | 4 | Complete |
+| TEST-01 | 5 | Complete |
+| TEST-02 | 5 | Complete |
+| TEST-03 | 5 | Complete |
+| TEST-04 | 5 | Complete |
+| DISC-01 | 2 | Complete |
+| DISC-02 | 2 | Complete |
+| DISC-03 | 2 | Complete |
+| DISC-04 | 2 | Complete |
+| DISC-05 | 2 | Complete |
+| DISC-06 | 2 | Complete |
 | DISC-07 | 3 | Complete |
 | DISC-08 | 3 | Complete |
 | DISC-09 | 3 | Complete |
@@ -97,9 +97,9 @@
 **Coverage:**
 
 - v1 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22
+- Mapped to phases: 22
+- Complete: 22/22 (100%)
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-07 after initial definition*
+*Last updated: 2026-02-08 after milestone completion*

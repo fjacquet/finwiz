@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Discovery Core** - Pydantic schemas and individual discovery modules (universe, screeners, scorer)
 - [x] **Phase 3: Discovery Integration** - Pipeline orchestrator, enrichment, feature flags, output, and unit tests
 - [x] **Phase 4: Performance** - Batch API calls, token bucket rate limiting, crew timeouts, cache cleanup
-- [ ] **Phase 5: Test Coverage** - Orchestrator, crew output, fallback, and HTML validation tests
+- [x] **Phase 5: Test Coverage** - Orchestrator, crew output, fallback, and HTML validation tests
 
 ## Phase Details
 
@@ -111,8 +111,8 @@ Plans:
 
 Plans:
 
-- [ ] 05-01-PLAN.md -- Orchestrator integration tests with real FinwizState mutations + crew output parsing tests (TEST-01, TEST-02)
-- [ ] 05-02-PLAN.md -- Data adapter fallback scenarios + HTML output validation tests (TEST-03, TEST-04)
+- [x] 05-01-PLAN.md -- Orchestrator integration tests with real FinwizState mutations + crew output parsing tests (TEST-01, TEST-02)
+- [x] 05-02-PLAN.md -- Data adapter fallback scenarios + HTML output validation tests (TEST-03, TEST-04)
 
 ## Progress
 
@@ -127,4 +127,4 @@ Note: Phases 4 and 5 depend on Phase 1 but not on each other. However, running P
 | 2. Discovery Core | 2/2 | Complete | 2026-02-08 |
 | 3. Discovery Integration | 2/2 | Complete | 2026-02-08 |
 | 4. Performance | 3/3 | Complete | 2026-02-08 |
-| 5. Test Coverage | 0/2 | Not started | - |
+| 5. Test Coverage | 2/2 | Complete | 2026-02-08 |
