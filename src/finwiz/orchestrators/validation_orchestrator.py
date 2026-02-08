@@ -164,18 +164,24 @@ class ValidationOrchestrator:
         from finwiz.crews.portfolio_rebalancing.portfolio_rebalancing_crew import PortfolioRebalancingCrew
 
         try:
-            # Execute rebalancing crew
+            import asyncio
+
+            from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
+
+            # Execute rebalancing crew with timeout and circuit breaker
             crew = PortfolioRebalancingCrew()
-            result = crew.crew().kickoff(
-                inputs={
-                    "current_day": self.state.current_day,
-                    "current_month": self.state.current_month,
-                    "current_year": self.state.current_year,
-                    "current_date": self.state.current_date,
-                    "full_date": self.state.full_date,
-                    "timestamp": self.state.timestamp,
-                    "report_language": self.state.report_language,
-                }
+            crew_instance = crew.crew()
+            rebalancing_inputs = {
+                "current_day": self.state.current_day,
+                "current_month": self.state.current_month,
+                "current_year": self.state.current_year,
+                "current_date": self.state.current_date,
+                "full_date": self.state.full_date,
+                "timestamp": self.state.timestamp,
+                "report_language": self.state.report_language,
+            }
+            result = asyncio.run(
+                execute_crew_with_timeout("portfolio_rebalancing_validation", crew_instance, rebalancing_inputs)
             )
 
             # Extract rebalancing results from crew output

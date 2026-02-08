@@ -25,23 +25,27 @@ Replace mocked discovery with real newcomer detection (IPOs, breakouts, momentum
 ### Active
 
 **Error Handling:**
+
 - [ ] Replace 44+ bare `except Exception:` with specific exception types
 - [ ] Add `default=str` to 40+ `json.dumps()` calls missing it
 - [ ] Standardize CrewAI output handling via Pydantic schemas
 
 **Performance:**
+
 - [ ] Batch API calls instead of sequential per-holding fetches
 - [ ] Replace 14+ blocking `asyncio.sleep()` rate limiters with token bucket
 - [ ] Add timeouts to crew execution (wrap `kickoff()` with `asyncio.wait_for()`)
 - [ ] Fix cache cleanup blocking (event-driven instead of synchronous sleep)
 
 **Test Coverage:**
+
 - [ ] Orchestrator integration tests with real state mutations
 - [ ] Crew output parsing tests (malformed JSON, schema validation)
 - [ ] Data adapter fallback scenario tests
 - [ ] HTML output validation tests
 
 **Newcomer Discovery Pipeline:**
+
 - [ ] Pydantic schemas for discovery candidates and enrichment
 - [ ] Dynamic universe provider (mine ETF holdings via yfinance)
 - [ ] IPO screener (SEC EDGAR EFTS for recent S-1 filings)

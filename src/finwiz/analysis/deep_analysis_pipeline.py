@@ -138,8 +138,22 @@ def generate_qualitative(
     crew_inputs = _build_crew_inputs(ctx, quant)
 
     try:
-        # Use wrapper's kickoff() to enable debug logging and performance monitoring
-        crew_result = crew.kickoff(inputs=crew_inputs)
+        # Use wrapper with timeout and circuit breaker protection
+        import asyncio
+        import concurrent.futures
+
+        from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
+                crew_result = future.result()
+        else:
+            crew_result = asyncio.run(execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
         qual = _extract_qualitative(crew_result, quant)
         logger.info(f"Qualitative insights generated for {ctx.ticker}")
         return qual

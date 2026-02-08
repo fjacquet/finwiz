@@ -5,9 +5,13 @@ This module provides utility functions for flow management, including
 output directory handling, caching, and result persistence.
 """
 
+import asyncio
+import concurrent.futures
 import logging
 import os
 from typing import Any
+
+from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -68,7 +72,18 @@ def run_crew_with_caching(
 
     logger.info(f"Starting {crew_class.__name__} analysis")
     try:
-        result = crew_class().crew().kickoff(inputs=inputs)
+        crew_instance = crew_class().crew()
+        crew_name = crew_class.__name__.lower().replace("crew", "")
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, execute_crew_with_timeout(crew_name, crew_instance, inputs))
+                result = future.result()
+        else:
+            result = asyncio.run(execute_crew_with_timeout(crew_name, crew_instance, inputs))
         logger.info(f"{crew_class.__name__} analysis completed successfully")
         result_raw = result.raw
 

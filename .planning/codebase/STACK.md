@@ -5,38 +5,46 @@
 ## Languages
 
 **Primary:**
+
 - Python 3.12 (cpython-3.12.11-macos-aarch64-none) - All source code
 
 **Secondary:**
+
 - YAML - Agent and task configurations (`crews/*/config/`)
 - Markdown - Documentation (`docs/`, MkDocs)
 
 ## Runtime
 
 **Environment:**
+
 - CPython 3.12.11
 
 **Package Manager:**
+
 - uv (modern Python package manager)
 - Lockfile: `uv.lock` (present, managed)
 
 ## Frameworks
 
 **Core:**
+
 - CrewAI >=1.5.0 - AI agent framework with flow orchestration
   - Extras: `google-genai`, `tools`
   - Configured as flow type in `pyproject.toml`
 
 **Web/API:**
+
 - FastAPI >=0.128.0 - API endpoints (portfolio rebalancing API)
 
 **AI/LLM:**
+
 - LangChain >=0.3.27 - LLM orchestration
 - LangChain OpenAI >=1.0.3 - OpenAI integration
 - LangChain Community >=0.3.29 - Community integrations
 - LiteLLM >=1.80.0 - Multi-provider LLM gateway
 
 **Financial Analysis:**
+
 - Backtrader >=1.9.78.123 - Backtesting framework
 - TA-Lib >=0.6.6 - Technical analysis indicators
 - QuantLib >=1.39 - Quantitative finance library
@@ -44,12 +52,14 @@
 - Empyrical-Reloaded >=0.5.12 - Performance metrics
 
 **Data Processing:**
+
 - Pandas >=2.3.2 - Data analysis
 - NumPy >=1.26.4 - Numerical computing
 - SciPy >=1.15.3 - Scientific computing
 - Statsmodels >=0.14.5 - Statistical modeling
 
 **Testing:**
+
 - pytest >=8.4.1 - Test runner
 - pytest-mock >=3.14.1 - Mocking (unittest.mock BANNED)
 - pytest-cov >=7.0.0 - Coverage reporting (65% minimum)
@@ -59,6 +69,7 @@
 - Faker >=33.1.0 - Test data generation
 
 **Build/Dev:**
+
 - Hatchling - Build backend
 - Ruff >=0.11.13 - Linting and formatting (180 char line length)
 - Mypy >=1.17.1 - Static type checking
@@ -68,6 +79,7 @@
 - pip-audit >=2.9.0 - Dependency auditing
 
 **Documentation:**
+
 - MkDocs >=1.6.1 - Documentation site generator
 - MkDocs Material >=9.6.22 - Material theme
 - MkDocs Mermaid2 Plugin >=1.2.3 - Diagram support
@@ -77,23 +89,27 @@
 ## Key Dependencies
 
 **Critical:**
+
 - crewai[google-genai,tools] >=1.5.0 - Core agent framework
 - pydantic >=2.11.7 - Data validation (all schemas in `schemas/`)
 - yfinance >=0.2.62 - Primary market data source
 - python-dotenv >=1.0.1 - Environment configuration
 
 **Infrastructure:**
+
 - supabase >=2.22.4 - PostgreSQL database client
 - asyncpg >=0.30.0 - Async PostgreSQL driver
 - qdrant-client >=1.16.0 - Vector database client
 - faiss-cpu >=1.9.0 - Local vector search
 
 **Web Scraping:**
+
 - firecrawl-py >=2.7.1 - Web scraping
 - beautifulsoup4 >=4.14.2 - HTML parsing
 - unstructured >=0.18.11 - Document processing
 
 **Data Sources:**
+
 - sec-edgar-downloader >=5.0.0 - SEC filings
 - sec-api >=1.0.32 - SEC API client
 - intrinio >=0.2.1 - Financial data API
@@ -104,6 +120,7 @@
 - perplexityai >=0.12.0 - Perplexity AI integration
 
 **Utilities:**
+
 - plotly >=6.3.0 - Interactive charts
 - nest-asyncio >=1.6.0 - Nested event loops
 - trio >=0.31.0 - Async I/O
@@ -112,18 +129,21 @@
 ## Configuration
 
 **Environment:**
+
 - Configuration: Pydantic BaseSettings in `src/finwiz/config/settings.py`
 - Environment files: `.env`, `config/development.env`, `config/staging.env`, `config/production.env`
 - Environment prefix: `FINWIZ_`
 - Nested delimiter: `__`
 
 **Build:**
+
 - `pyproject.toml` - Project metadata, dependencies, tool configs
 - `ruff.toml` - Code quality rules (in pyproject.toml)
 - `mypy.ini` - Type checking configuration
 - `.pre-commit-config.yaml` - Pre-commit hooks
 
 **Testing:**
+
 - Pytest config in `pyproject.toml`
 - Default markers: `integration`, `unit`, `slow`, `asyncio`, `performance`, `benchmark`, `crew`, `flow`
 - Default run excludes integration tests (`-m "not integration"`)
@@ -131,6 +151,7 @@
 - Test paths: `tests/`
 
 **Code Quality:**
+
 - Line length: 180 characters
 - Python target: py312
 - Formatter: Ruff (double quotes, 4-space indent)
@@ -140,11 +161,13 @@
 ## Platform Requirements
 
 **Development:**
+
 - Python 3.12+ (3.13 not supported per `requires-python = ">=3.12,<3.13"`)
 - uv package manager
 - macOS/Linux (primary development on macOS ARM64)
 
 **Production:**
+
 - Deployment: Not containerized (no Dockerfile detected)
 - Documentation: GitHub Pages (MkDocs Material)
 - CI/CD: GitHub Actions (docs deployment)

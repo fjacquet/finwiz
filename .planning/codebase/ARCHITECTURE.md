@@ -7,6 +7,7 @@
 **Overall:** Layered Architecture with Functional Pipeline Core + AI Orchestration (Hybrid Python/AI)
 
 **Key Characteristics:**
+
 - Separation of deterministic Python logic ($0 cost) from AI reasoning (variable cost)
 - Flow-based orchestration using CrewAI Flow framework with Pydantic state management
 - Orchestrator delegation pattern for single-responsibility modules
@@ -16,6 +17,7 @@
 ## Layers
 
 **Presentation Layer:**
+
 - Purpose: HTML report generation and output formatting
 - Location: `src/finwiz/reporting/`, `src/finwiz/templates/`
 - Contains: Report generators, HTML builders, CSS/JS components, formatters
@@ -23,6 +25,7 @@
 - Used by: ReportingOrchestrator (Phase 6 of flow)
 
 **Application Layer (Flow Orchestration):**
+
 - Purpose: Workflow coordination via CrewAI Flow framework
 - Location: `src/finwiz/flows/`, `src/finwiz/orchestrators/`
 - Contains: FinwizFlow (main coordinator), specialized orchestrators (ValidationOrchestrator, DeepAnalysisOrchestrator, DiscoveryOrchestrator, ReportingOrchestrator, etc.)
@@ -31,6 +34,7 @@
 - Pattern: Lazy-loaded orchestrator properties, dependency injection via OrchestratorDependencies dataclass
 
 **Domain Layer:**
+
 - Purpose: Business logic for financial analysis (Python-first, AI-assisted)
 - Location: `src/finwiz/analysis/`, `src/finwiz/scoring/`, `src/finwiz/quantitative/`
 - Contains: Functional analysis pipeline, scoring engines (composite: 40% fundamental, 30% technical, 30% risk), quantitative calculations
@@ -42,6 +46,7 @@
   - `src/finwiz/scoring/grading_system.py` - grade assignment (A+ to F)
 
 **Integration Layer (Crews + Tools):**
+
 - Purpose: AI crews for qualitative insights and data collection tools
 - Location: `src/finwiz/crews/`, `src/finwiz/tools/`
 - Contains: CrewAI crews (stock_crew, etf_crew, crypto_crew, deep_analysis, investment_discovery_crew, portfolio_rebalancing_crew, report_crew), Python tools for data fetching
@@ -50,6 +55,7 @@
 - Pattern: `@CrewBase` decorator, YAML config files (`config/agents.yaml`, `config/tasks.yaml`)
 
 **Infrastructure Layer:**
+
 - Purpose: Cross-cutting concerns and system-level utilities
 - Location: `src/finwiz/infrastructure/`, `src/finwiz/config/`, `src/finwiz/data/`
 - Contains: Caching, logging, monitoring (LiteLLM callbacks), resilience (retry decorators, circuit breakers), JSON serialization, time utilities, health checks
@@ -57,6 +63,7 @@
 - Used by: All other layers
 
 **Data Access Layer:**
+
 - Purpose: External API integration and data fetching
 - Location: `src/finwiz/data/adapters/`, `src/finwiz/integration/`
 - Contains: API clients (Yahoo Finance, Alpha Vantage, TwelveData, CoinMarketCap), data adapters, CrewDataIntegrationManager
@@ -64,6 +71,7 @@
 - Used by: Tools, Orchestrators
 
 **Schema Layer (Cross-cutting):**
+
 - Purpose: Type-safe data contracts using Pydantic
 - Location: `src/finwiz/schemas/`
 - Contains: All Pydantic models (hybrid_analysis, crew_exports, quantitative, rebalancing, tools, api, integration)
@@ -137,6 +145,7 @@ synthesize_enriched_analysis(ctx, quant, qual)
 ```
 
 **State Management:**
+
 - Flow uses Pydantic FinwizState for type-safe state across phases
 - State persisted in memory during flow execution
 - CrewDataIntegrationManager stores crew outputs in JSON files (`output/{crew_type}/{ticker}.json`)
@@ -145,12 +154,14 @@ synthesize_enriched_analysis(ctx, quant, qual)
 ## Key Abstractions
 
 **FinwizFlow (Flow Orchestrator):**
+
 - Purpose: Main workflow coordinator using CrewAI Flow framework
 - Examples: `src/finwiz/flows/orchestrator.py`
 - Pattern: Flow[FinwizState] with @start() and @listen() decorators for phase sequencing
 - Delegates to specialized orchestrators via lazy-loaded properties
 
 **Orchestrators (Single-Responsibility Coordinators):**
+
 - Purpose: Focused orchestration modules for specific phases
 - Examples:
   - `src/finwiz/orchestrators/validation_orchestrator.py` - input validation, portfolio review
@@ -160,21 +171,25 @@ synthesize_enriched_analysis(ctx, quant, qual)
 - Pattern: Each orchestrator receives FinwizState and specialized dependencies
 
 **AnalysisContext (Immutable Analysis Input):**
+
 - Purpose: Type-safe context for functional pipeline
 - Examples: `src/finwiz/analysis/deep_analysis_pipeline.py`
 - Pattern: @dataclass(frozen=True) with ticker, asset_class, company_name
 
 **DeepAnalysisScorer (Composite Scorer):**
+
 - Purpose: Deterministic Python scoring engine ($0 cost)
 - Examples: `src/finwiz/scoring/deep_analysis_scorer.py`
 - Pattern: Composite pattern with FundamentalScorer (40%), TechnicalScorer (30%), RiskScorer (30%)
 
 **CrewFactory (Crew Execution with Error Handling):**
+
 - Purpose: Create and execute crews with fallback strategies
 - Examples: `src/finwiz/crew_factory.py`
 - Pattern: Factory with CoreAnalysisErrorHandler for graceful degradation
 
 **CrewDataIntegrationManager (Crew Output Storage):**
+
 - Purpose: Store and retrieve crew outputs from JSON files
 - Examples: `src/finwiz/integration/manager.py`
 - Pattern: File-based storage in `output/{crew_type}/{ticker}.json`
@@ -182,11 +197,13 @@ synthesize_enriched_analysis(ctx, quant, qual)
 ## Entry Points
 
 **Main Application:**
+
 - Location: `src/finwiz/main.py`
 - Triggers: Command-line execution (`crewai flow kickoff`)
 - Responsibilities: Delegates to app_initializer.kickoff()
 
 **Application Initializer:**
+
 - Location: `src/finwiz/core/app_initializer.py`
 - Triggers: Called by main.py
 - Responsibilities:
@@ -196,6 +213,7 @@ synthesize_enriched_analysis(ctx, quant, qual)
   - Execute flow.kickoff()
 
 **FinwizFlow (Main Flow):**
+
 - Location: `src/finwiz/flows/orchestrator.py`
 - Triggers: app_initializer calls flow.kickoff()
 - Responsibilities:
@@ -205,6 +223,7 @@ synthesize_enriched_analysis(ctx, quant, qual)
   - Manage flow state (FinwizState)
 
 **Functional Analysis Pipeline:**
+
 - Location: `src/finwiz/analysis/deep_analysis_pipeline.py`
 - Triggers: Called by DeepAnalysisOrchestrator for each holding
 - Responsibilities:
@@ -217,6 +236,7 @@ synthesize_enriched_analysis(ctx, quant, qual)
 **Strategy:** Defensive programming with graceful degradation and fallback strategies
 
 **Patterns:**
+
 - **Crew Failure Handling**: CoreAnalysisErrorHandler provides fallback data when crews fail
 - **Retry with Exponential Backoff**: create_retry_decorator() in `src/finwiz/infrastructure/resilience/retry.py`
 - **Circuit Breakers**: Feature flags in `src/finwiz/config/features/flags.py` disable failing components
@@ -227,12 +247,14 @@ synthesize_enriched_analysis(ctx, quant, qual)
 ## Cross-Cutting Concerns
 
 **Logging:**
+
 - Approach: Structured logging via `src/finwiz/tools/logger.py`
 - Format: `[timestamp] [level] [module] message`
 - Destination: `logs/` directory + console
 - Configuration: setup_logging() in app_initializer.py
 
 **Validation:**
+
 - Approach: Multi-level validation
   1. Environment validation (API keys, required config)
   2. Template variable validation at startup (crew YAML files)
@@ -241,12 +263,14 @@ synthesize_enriched_analysis(ctx, quant, qual)
 - Location: `src/finwiz/validation/`, `src/finwiz/cli/argument_parser.py`
 
 **Authentication:**
+
 - Approach: API keys via environment variables
 - Required: OPENAI_API_KEY, SERPER_API_KEY
 - Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, COINMARKETCAP_API_KEY, TWELVE_DATA_API_KEY
 - Validation: initialize_environment() in cli/argument_parser.py
 
 **Caching:**
+
 - Approach: File-based JSON caching
 - Quantitative Results: `cache/quantitative/{ticker}_{asset_class}.json`
 - Portfolio Analysis: `cache/portfolio_analysis/`
@@ -254,18 +278,21 @@ synthesize_enriched_analysis(ctx, quant, qual)
 - Implementation: `src/finwiz/infrastructure/caching/`
 
 **Monitoring:**
+
 - Approach: LiteLLM callback for token usage tracking
 - Implementation: `src/finwiz/infrastructure/monitoring/litellm_callback.py`
 - Metrics: Token count, cost estimation, model usage
-- Initialization: enable_token_monitoring() in FinwizFlow.__init__()
+- Initialization: enable_token_monitoring() in FinwizFlow.**init**()
 
 **Resilience:**
+
 - Approach: Retry decorators, circuit breakers, timeout handling
 - Configuration: `src/finwiz/config/resilience_config.py`
 - Parameters: max_retries=3, retry_base_delay=1.0s, exponential backoff
 - Implementation: `src/finwiz/infrastructure/resilience/`
 
 **Feature Flags:**
+
 - Approach: Environment-based toggles with circuit breakers
 - Implementation: `src/finwiz/config/features/flags.py`
 - Flags: DEEP_ANALYSIS_ENABLED, PERPLEXITY_RESEARCH_ENABLED, INVESTMENT_DISCOVERY_ENABLED, PORTFOLIO_REBALANCING_ENABLED
