@@ -114,27 +114,27 @@ format:
 	ruff check --fix .
 	ruff format .
 
-check: lint test check-unittest-mock docs-validate
+check: lint test check-unittest-mock check-file-size docs-validate
 	@echo "✅ All quality checks passed"
 
 # unittest.mock enforcement check
 check-unittest-mock:
 	@echo "🔍 Checking for banned unittest.mock usage..."
-	@if grep -r "from unittest.mock" tests/ 2>/dev/null; then \
+	@if grep -rE "^[[:space:]]*(from unittest\.mock|import unittest\.mock)" tests/ 2>/dev/null; then \
 		echo "❌ ERROR: unittest.mock found in test files!"; \
-		echo "✅ Use pytest-mock instead:"; \
-		echo "   def test_example(mocker):"; \
-		echo "       mock_obj = mocker.patch('module.function')"; \
-		exit 1; \
-	elif grep -r "import unittest.mock" tests/ 2>/dev/null; then \
-		echo "❌ ERROR: unittest.mock found in test files!"; \
-		echo "✅ Use pytest-mock instead:"; \
+		echo "Use pytest-mock instead:"; \
 		echo "   def test_example(mocker):"; \
 		echo "       mock_obj = mocker.patch('module.function')"; \
 		exit 1; \
 	else \
 		echo "✅ No unittest.mock violations found"; \
 	fi
+
+# File size enforcement (new files only, 300 lines max)
+check-file-size:
+	@echo "🔍 Checking new file sizes..."
+	@uv run python scripts/check_new_file_size.py $$(git diff --cached --name-only --diff-filter=A -- '*.py' 2>/dev/null)
+	@echo "✅ No oversized new files"
 
 # Cleanup
 clean:

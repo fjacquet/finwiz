@@ -1,0 +1,57 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Lint, Test & Quality Gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Check for banned unittest.mock
+        run: make check-unittest-mock
+
+      - name: Check new file sizes (300 lines max)
+        run: |
+          # In CI, check files added in this PR compared to base branch
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            NEW_FILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD -- '*.py')
+          else
+            NEW_FILES=$(git diff --name-only --diff-filter=A HEAD~1...HEAD -- '*.py' 2>/dev/null || true)
+          fi
+          if [ -n "$NEW_FILES" ]; then
+            echo "$NEW_FILES" | xargs python scripts/check_new_file_size.py --check-all
+          else
+            echo "No new Python files to check"
+          fi
+
+      - name: Run tests
+        run: uv run pytest -m "not integration" -v

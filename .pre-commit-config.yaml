@@ -45,10 +45,20 @@ repos:
     hooks:
       - id: check-unittest-mock
         name: Check for banned unittest.mock
-        entry: bash -c 'if grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.mock)" tests/ -r 2>/dev/null; then echo "❌ ERROR: unittest.mock found in tests/"; echo "Use pytest-mock instead. Import '\''mocker'\'' fixture in test functions."; exit 1; fi'
+        entry: >-
+          bash -c 'if grep -E "^[[:space:]]*(from unittest\.mock|import unittest\.mock)"
+          tests/ -r 2>/dev/null; then echo "unittest.mock found in tests/";
+          echo "Use pytest-mock instead."; exit 1; fi'
         language: system
         files: ^tests/.*\.py$
         pass_filenames: false
+
+      - id: check-new-file-size
+        name: Check new file size (300 lines max)
+        entry: uv run python scripts/check_new_file_size.py
+        language: system
+        files: \.py$
+        pass_filenames: true
 
   # Python type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
