@@ -2,30 +2,22 @@
 
 ## What This Is
 
-FinWiz is an AI-powered financial analysis platform built with CrewAI that analyzes portfolios of stocks, ETFs, and crypto using hybrid Python scoring + AI crews. It features a real investment discovery pipeline (IPOs, breakouts, momentum) alongside comprehensive portfolio analysis with quantitative backtesting and rebalancing. Security hardening, structural quality, and automated enforcement are built in.
+FinWiz is an AI-powered financial analysis platform built with CrewAI that analyzes portfolios of stocks, ETFs, and crypto using hybrid Python scoring + AI crews. It features real investment discovery, comprehensive portfolio analysis with quantitative backtesting and rebalancing, portfolio stress testing against market scenarios, and async-parallel data collection with smart caching. Security hardening, structural quality, and automated enforcement are built in.
 
 ## Core Value
 
 Hybrid financial analysis: deterministic Python scoring ($0, <100ms) for quantitative rigor, AI crews for qualitative reasoning, with real newcomer detection for investment discovery.
 
-## Current Milestone: v3 Performance & Risk Analysis
-
-**Goal:** Make FinWiz significantly faster through parallelism, batching, and caching — and add portfolio risk stress testing as a new analytical capability.
-
-**Target features:**
-
-- Parallel deep analysis — complete async migration, raise PARALLEL_LIMIT for concurrent holdings
-- Batch data fetching — expand batch_data_prefetcher to all data collection paths
-- Cache improvements — tiered eviction, smarter TTL, reduce redundant API calls
-- Cost tracking — LiteLLM callback for actual token usage and cost measurement
-- Risk stress testing — scenario analysis (market crash, rate hike, sector shock) for portfolio
-
 ## Current State
 
-Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
+Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
 
-- 106,718 LOC Python, 4416 tests passing, 66% coverage
-- Tech stack: Python 3.12, CrewAI >=1.5.0, uv, aiolimiter, TA-Lib
+- 107,586 LOC Python, 4,516 tests passing, 66.85% coverage
+- Tech stack: Python 3.12, CrewAI >=1.5.0, uv, aiolimiter, TA-Lib, LiteLLM
+- Async: Full async data collection, batch prefetching, configurable parallel analysis
+- Caching: Tiered eviction (hot/warm/cold), type-aware TTLs, metrics logging
+- Cost: LLM cost tracking per crew with real provider pricing
+- Risk: Portfolio stress testing (market crash, rate shock, sector shock) with HTML report
 - Security: fail-fast API key validation, log sanitization, centralized endpoints
 - Quality: pre-commit hooks + CI pipeline enforce ruff, file size, unittest.mock ban
 - Codebase mapped in `.planning/codebase/` (7 documents)
@@ -62,15 +54,22 @@ Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
 - ✓ Consolidate duplicate portfolio review logic across 10+ files — v2
 - ✓ Redesign lazy-loaded orchestrators to eliminate circular import risk — v2
 - ✓ Automated quality enforcement (pre-commit hooks, CI checks, file size linting) — v2
+- ✓ Complete async migration for all data adapters — v3
+- ✓ Configurable parallel limit for concurrent holdings analysis — v3
+- ✓ Batch data prefetcher integrated into main analysis flow — v3
+- ✓ Batch API calls for providers supporting multi-ticker — v3
+- ✓ Tiered cache eviction (hot/warm/cold) with type-aware TTLs — v3
+- ✓ Cache hit/miss metrics logging for observability — v3
+- ✓ LLM cost tracking per crew using real provider pricing — v3
+- ✓ Per-crew and total costs reported in analysis output — v3
+- ✓ Market crash scenario stress testing — v3
+- ✓ Interest rate shock scenario stress testing — v3
+- ✓ Sector-specific shock scenario stress testing — v3
+- ✓ Stress test results in HTML report with color-coded impact tables — v3
 
 ### Active
 
-- [ ] Complete async migration for all data adapters
-- [ ] Raise deep analysis parallel limit for concurrent holdings
-- [ ] Expand batch data prefetcher to all data collection paths
-- [ ] Implement tiered cache eviction with smarter TTL
-- [ ] Implement LiteLLM cost tracking callback
-- [ ] Add risk stress testing scenarios (market crash, rate hike, sector shock)
+(None — planning next milestone)
 
 ### Out of Scope
 
@@ -79,6 +78,8 @@ Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
 - Multi-user support — architectural change
 - Real-time data / streaming — future milestone
 - i18n framework — future milestone
+- OpenTelemetry tracing — future milestone
+- Persistent cross-run cache — future milestone
 
 ## Constraints
 
@@ -104,12 +105,15 @@ Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
 | Token bucket over fixed sleep | aiolimiter handles burst + rate limiting natively | ✓ Good — cleaner than manual sleep |
 | Circuit breaker for crew timeouts | Prevent cascade failures from repeatedly failing crews | ✓ Good — auto-recovery after 60s |
 | Lazy imports in discovery pipeline | Forward-compatible: Phase 3 can be built before Phase 2 | ✓ Good — flexible dev order |
-| Fail-fast API key validation | ValueError at **init** catches config errors immediately | ✓ Good — 9 tool classes protected |
+| Fail-fast API key validation | ValueError at __init__ catches config errors immediately | ✓ Good — 9 tool classes protected |
 | Centralized log sanitizer | 3-handler approach covers all log output paths | ✓ Good — zero leaks in tests |
 | Endpoint config module | Single source for all 13 API URLs | ✓ Good — no hardcoded URLs |
 | Dead code deletion for duplicates | 5 divergent portfolio review copies → 1 shared module | ✓ Good — reduced maintenance burden |
 | Registry pattern for orchestrators | Eliminates circular imports, enables lazy loading | ✓ Good — clean `__getattr__` approach |
 | Pre-commit with `--check-all` for CI | Same hooks, different mode for CI vs local | ✓ Good — parity achieved |
+| PythonReportGenerator for production | FinalReportGenerator (Jinja2) unused; production uses inline HTML | ✓ Good — Phase 12 targeted correct generator |
+| Section generator delegation | HTML generation in section_generators.py, delegated from PythonReportGenerator | ✓ Good — consistent pattern across all sections |
+| Inline CSS color coding for stress test | Red/orange/green for impact severity and sensitivity labels | ✓ Good — matches existing report styling |
 
 ---
-*Last updated: 2026-02-08 after v3 milestone started*
+*Last updated: 2026-02-08 after v3 milestone completion*

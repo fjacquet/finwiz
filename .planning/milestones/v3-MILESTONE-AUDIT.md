@@ -3,18 +3,16 @@
 ---
 milestone: v3
 audited: 2026-02-08
-status: gaps_found
+re-audited: 2026-02-08
+status: passed
 scores:
-  requirements: 12/13
-  phases: 3/3
-  integration: 29/30
+  requirements: 13/13
+  phases: 4/4
+  integration: 30/30
   flows: 1/1
 gaps:
-  requirements:
-    - "RISK-04: Stress test HTML template exists but not wired into FinalReportGenerator"
-  integration:
-    - "stress_test_results stored in state but FinalReportGenerator._prepare_template_data() doesn't pass it to template"
-    - "stress_test_section.html exists but not included in crew_reports/final_report.html"
+  requirements: []
+  integration: []
   flows: []
 tech_debt: []
 ---
@@ -35,9 +33,9 @@ tech_debt: []
 | RISK-01: Market crash | 11 | MET | `_apply_market_crash()` in `engine.py:91` — beta-adjusted, crypto 1.5x, bonds -0.3x |
 | RISK-02: Rate shock | 11 | MET | `_apply_rate_shock()` in `engine.py:114` — duration-based bonds, growth/value sector differentiation |
 | RISK-03: Sector shock | 11 | MET | `_apply_sector_shock()` in `engine.py:150` — target sector + spillover to non-target |
-| RISK-04: Stress in HTML | 11 | PARTIAL | Template `stress_test_section.html` exists (80 lines), engine runs, results stored in state — but NOT wired into `FinalReportGenerator._prepare_template_data()` or `final_report.html` |
+| RISK-04: Stress in HTML | 12 | MET | `generate_stress_test_section()` in `section_generators.py:379`, wired via `PythonReportGenerator._generate_stress_test_section()`, state passed through `ReportingOrchestrator._generate_python_report()` |
 
-**Summary:** 12/13 requirements satisfied (92.3%), 1 partial (RISK-04 rendering gap)
+**Summary:** 13/13 requirements satisfied (100%)
 
 ## Phase Status
 
@@ -45,13 +43,14 @@ tech_debt: []
 |-------|------|--------|-------|-------|
 | 9 | Async & Batch Performance | COMPLETE | 09-01, 09-02 | 82 tests |
 | 10 | Cache & Cost Observability | COMPLETE | 10-01, 10-02 | 32 tests |
-| 11 | Risk Stress Testing | COMPLETE (backend) | 11-01, 11-02 | 28 tests |
+| 11 | Risk Stress Testing | COMPLETE | 11-01, 11-02 | 28 tests |
+| 12 | Wire Stress Test Report | COMPLETE | 12-01 | 15 tests |
 
 ## Cross-Phase Integration
 
-**Status:** 29/30 connections verified (1 gap)
+**Status:** 30/30 connections verified (0 gaps)
 
-### Connected (29)
+### Connected (30)
 
 Phase 9 → Phase 10:
 - BatchDataPreFetcher populates `state.prefetched_data` → StressTestOrchestrator reads it for enrichment
@@ -69,9 +68,11 @@ Phase 11 → Flow:
 - Runs after deep analysis (Phase 3.5) in `orchestrator.py:222-236`
 - Results stored in `state.stress_test_results` and `state.stress_test_count`
 
-### Gap (1)
-
-- **`state.stress_test_results` → `FinalReportGenerator`**: Data stored in state but `_prepare_template_data()` (line 108-135) doesn't include it. Template `stress_test_section.html` exists but isn't included in `crew_reports/final_report.html`.
+Phase 12 → Flow:
+- `ReportingOrchestrator._generate_python_report()` reads `state.stress_test_results` (line 493)
+- Passes to `generate_python_report()` → `PythonReportGenerator.generate_family_financial_plan()`
+- `_generate_stress_test_section()` delegates to `generate_stress_test_section()` in `section_generators.py`
+- HTML output contains scenario cards, impact tables, color-coded sensitivity labels
 
 ## E2E Flow
 
@@ -86,32 +87,22 @@ main.py → core → flows/orchestrator.py → run_sequential_workflow()
   Phase 4: discovery                                            ✅
   Phase 5: alternative matching                                 ✅
   Phase 6: reporting                                            ✅
-    └─ stress test section in HTML report                       ❌ NOT WIRED
+    └─ stress test section in HTML report                       ✅ WIRED (Phase 12)
   Post-flow: cache metrics summary                              ✅
   Post-flow: LLM cost summary                                   ✅
 ```
 
 ## Tests
 
-- 4501 total tests passing (62 new for Phases 10-11)
+- 4516 total tests passing (77 new for v3)
 - 66.85% coverage (above 65% threshold)
 - All pre-commit hooks pass (14/14)
 - `make check` passes clean
 
-## Gap Detail: RISK-04
-
-**What exists:**
-- `stress_test_section.html` (80 lines, Jinja2 template with scenario cards)
-- `state.stress_test_results` populated with model_dump() data
-- Engine runs 3 default scenarios successfully
-
-**What's missing:**
-1. `FinalReportGenerator._prepare_template_data()` doesn't pass `stress_test_results` to template context
-2. `crew_reports/final_report.html` doesn't include `stress_test_section.html`
-
-**Fix scope:** ~10 lines across 2 files (report generator + main template)
-
 ---
-*Audit performed: 2026-02-08*
+*Initial audit: 2026-02-08*
+*Re-audit after Phase 12: 2026-02-08*
 *Phase 9 committed: c37b5a4*
 *Phase 10+11 committed: c6a28cb*
+*Phase 12 committed: 54df9bb*
+*Pyright fixes committed: ee82813*

@@ -1,3 +1,12 @@
+# Requirements Archive: v3 Performance & Risk Analysis
+
+**Archived:** 2026-02-08
+**Status:** SHIPPED
+
+For current requirements, see `.planning/REQUIREMENTS.md`.
+
+---
+
 # Requirements: FinWiz v3
 
 **Defined:** 2026-02-08

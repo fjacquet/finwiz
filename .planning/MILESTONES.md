@@ -55,3 +55,32 @@
 **Archive:** `milestones/v2-ROADMAP.md`, `milestones/v2-REQUIREMENTS.md`, `milestones/v2-MILESTONE-AUDIT.md`
 
 ---
+
+## v3 Performance & Risk Analysis (Shipped: 2026-02-08)
+
+**Delivered:** Full async parallelism, smart caching with observability, LLM cost tracking, and portfolio risk stress testing with HTML report integration.
+
+**Phases completed:** 9-12 (7 plans total)
+
+**Key accomplishments:**
+
+- Full async data collection with batch prefetching and configurable parallelism (DEEP_ANALYSIS_BATCH_SIZE env-configurable)
+- Smart tiered cache eviction (hot/warm/cold) with type-aware TTLs (market:15min, fundamentals:24h, static:7d)
+- LLM cost tracking per crew using litellm.completion_cost() with crew attribution via contextvars
+- Portfolio stress testing engine: market crash, interest rate shock, and sector-specific shock scenarios
+- Stress test results rendered in production HTML report with color-coded impact tables and sensitivity labels
+- Resolved all Pyright errors in reporting pipeline (dead code removal, missing state fields, signature fixes)
+
+**Stats:**
+
+- 233 files changed, +7553/-2551 lines
+- 107,586 lines of Python
+- 4 phases, 7 plans, 13 requirements
+- 4,516 tests passing, 66.85% coverage
+- 1 day (2026-02-08)
+
+**Audit:** Passed (13/13 requirements, 4/4 phases, 30/30 integration, 1/1 E2E flow)
+
+**Archive:** `milestones/v3-ROADMAP.md`, `milestones/v3-REQUIREMENTS.md`, `milestones/v3-MILESTONE-AUDIT.md`
+
+---
