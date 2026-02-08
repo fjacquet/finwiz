@@ -419,10 +419,6 @@ class BatchDataPreFetcher:
             logger.warning("Alpha Vantage API key not set, skipping Alpha Vantage data fetch")
             return {ticker: {"error": "API key not set", "failed": True, "ticker": ticker} for ticker in tickers}
 
-        # Rate limit: 5 calls/minute (free tier)
-        rate_limit = 5
-        delay_between_calls = 60 / rate_limit  # 12 seconds
-
         results = {}
         failed_tickers = []  # Track failed tickers (Requirement 17.53)
 
@@ -458,10 +454,6 @@ class BatchDataPreFetcher:
                             failed_tickers.append(ticker)
                             results[ticker] = {"error": "No data available", "failed": True, "ticker": ticker}
 
-                    # Rate limiting delay (except for last ticker)
-                    if i < len(tickers):
-                        logger.debug(f"Rate limit delay: {delay_between_calls:.1f}s before next request")
-                        await asyncio.sleep(delay_between_calls)
 
                 except Exception as e:
                     # Log failed ticker with error message (Requirement 17.53)

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.infrastructure.caching.manager import CacheConfig, CacheManager, cache_key
-from finwiz.infrastructure.resilience.rate_limiter import RateLimiter, get_rate_limiter
+from finwiz.infrastructure.resilience.rate_limiter import APIProvider, RateLimiter, get_rate_limiter
 from finwiz.schemas.portfolio_review import AssetClass
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
 from finwiz.tools.logger import get_logger
@@ -125,9 +125,9 @@ class HoldingAnalyzerOrchestrator:
 
                 results.append(analysis)
 
-            # Small delay between batches to respect rate limits
+            # Token-bucket throttle between batches instead of fixed sleep
             if batch_idx + self.parallel_batch_size < len(holdings):
-                await asyncio.sleep(1.0)
+                await get_rate_limiter().acquire(APIProvider.YAHOO_FINANCE)
 
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info(
