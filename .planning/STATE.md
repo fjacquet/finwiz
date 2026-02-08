@@ -5,36 +5,37 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Replace mocked discovery with real newcomer detection while eliminating production-risk code quality issues
-**Current focus:** Phase 3 complete -- next: Phase 2 (Discovery Core) or Phase 4 (Performance)
+**Current focus:** Phase 2 plan 1 complete -- next: 02-02 (screeners and scorer)
 
 ## Current Position
 
-Phase: 3 of 5 (Discovery Integration) -- COMPLETE
-Plan: 2 of 2 in current phase -- COMPLETE
-Status: Phase 3 complete. Phases 1 and 3 done. Phases 2, 4, 5 need planning.
-Last activity: 2026-02-08 -- Completed 03-02-PLAN.md (feature flags, Perplexity enrichment, unit tests)
+Phase: 2 of 5 (Discovery Core)
+Plan: 1 of 2 in current phase
+Status: In progress. Phases 1 and 3 done. Phase 2 plan 1 done, plan 2 pending.
+Last activity: 2026-02-08 -- Completed 02-01-PLAN.md (discovery schemas and universe provider)
 
-Progress: [██████░░░░] ~50%
+Progress: [███████░░░] ~70%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 6
-- Average duration: ~5.2 min
-- Total execution time: ~31 min
+- Total plans completed: 7
+- Average duration: ~4.8 min
+- Total execution time: ~34 min
 
 **By Phase:**
 
 | Phase | Plans | Completed | Avg/Plan |
 |-------|-------|-----------|----------|
 | 1 - Error Handling | 4 | 4 | ~6 min |
+| 2 - Discovery Core | 2 | 1 | ~3 min |
 | 3 - Discovery Integration | 2 | 2 | ~4.5 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-04 (~7 min), 01-03 (~5 min), 03-01 (~3 min), 03-02 (~6 min)
-- Trend: Stable ~5 min/plan
+- Last 5 plans: 01-03 (~5 min), 03-01 (~3 min), 03-02 (~6 min), 02-01 (~3 min)
+- Trend: Stable ~4 min/plan
 
 *Updated after each plan completion*
 
@@ -61,6 +62,9 @@ Recent decisions affecting current work:
 - 03-02: Enrichment uses asyncio.run() with running-loop detection for sync/async boundary
 - 03-02: _gather_candidates refactored to data-driven screener list with importlib for compactness
 - 03-02: Contract tests mock sys.modules since Phase 2 modules do not exist yet
+- 02-01: Literal over Enum on newcomer schemas (simpler, matches existing pattern)
+- 02-01: Crypto universe goes straight to static fallback (no yfinance ETF holdings)
+- 02-01: Per-ETF error isolation (individual failures skip, not abort)
 
 ### Pending Todos
 
@@ -70,10 +74,10 @@ None yet.
 
 - 56 pre-existing UP042 lint warnings (str+Enum inheritance) across codebase -- not blocking, but will need cleanup eventually
 - 2 pre-existing test failures in test_notification_service.py -- not related to current changes
-- Phase 2 (Discovery Core) not yet executed -- pipeline uses lazy imports as workaround; setting FF_NEWCOMER_DISCOVERY=true without Phase 2 modules will fall back to legacy data
+- Phase 2 plan 2 (screeners + scorer) still needed before FF_NEWCOMER_DISCOVERY=true works end-to-end
 
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 03-02-PLAN.md (Phase 3 complete)
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
