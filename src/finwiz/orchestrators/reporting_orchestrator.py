@@ -614,7 +614,8 @@ class ReportingOrchestrator:
             html_path = export_path.with_suffix(".html")
 
             # Generate HTML report
-            generator.generate_report(data, str(html_path))
+            html_content = generator.generate_report(data)
+            html_path.write_text(html_content, encoding="utf-8")
 
             self.logger.info(f"✅ Generated HTML report: {html_path}")
             return html_path

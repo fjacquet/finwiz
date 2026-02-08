@@ -287,30 +287,6 @@ class PythonReportGenerator:
 
         return generate_individual_report_html(ticker, result)
 
-    def _generate_detailed_scores_section(self, result: dict[str, Any]) -> str:
-        """Generate detailed score breakdown section (delegates to module)."""
-        from finwiz.reporting.individual_report_generator import generate_detailed_scores_section
-
-        return str(generate_detailed_scores_section(result))
-
-    def _generate_fundamental_details(self, result: dict[str, Any]) -> str:
-        """Generate fundamental analysis details (delegates to module)."""
-        from finwiz.reporting.individual_report_generator import generate_fundamental_details
-
-        return str(generate_fundamental_details(result))
-
-    def _generate_technical_details(self, result: dict[str, Any]) -> str:
-        """Generate technical analysis details (delegates to module)."""
-        from finwiz.reporting.individual_report_generator import generate_technical_details
-
-        return str(generate_technical_details(result))
-
-    def _generate_risk_details(self, result: dict[str, Any]) -> str:
-        """Generate risk analysis details (delegates to module)."""
-        from finwiz.reporting.individual_report_generator import generate_risk_details
-
-        return str(generate_risk_details(result))
-
 
 def generate_python_report(
     portfolio_review: PortfolioReview,

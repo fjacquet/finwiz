@@ -509,6 +509,7 @@ class TestHTMLAutoGeneration:
 
         # Mock the generator
         mock_generator = mocker.Mock()
+        mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
             "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
             return_value=mock_generator,
@@ -584,6 +585,7 @@ class TestHTMLAutoGeneration:
         }
 
         mock_generator = mocker.Mock()
+        mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
             "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
             return_value=mock_generator,
@@ -610,6 +612,7 @@ class TestHTMLAutoGeneration:
         }
 
         mock_generator = mocker.Mock()
+        mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
             "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
             return_value=mock_generator,
@@ -632,6 +635,7 @@ class TestHTMLAutoGeneration:
         crew_export_paths = {"stock_crew": [str(export_file)]}
 
         mock_generator = mocker.Mock()
+        mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
             "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
             return_value=mock_generator,
@@ -655,6 +659,7 @@ class TestHTMLAutoGeneration:
         crew_export_paths = {"stock_crew": [str(export_file)]}
 
         mock_generator = mocker.Mock()
+        mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
             "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
             return_value=mock_generator,
@@ -683,6 +688,7 @@ class TestHTMLAutoGeneration:
         }
 
         mock_generator = mocker.Mock()
+        mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
             "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
             return_value=mock_generator,
