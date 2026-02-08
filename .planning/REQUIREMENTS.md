@@ -1,31 +1,31 @@
 # Requirements: FinWiz v3
 
 **Defined:** 2026-02-08
-**Core Value:** Hybrid financial analysis with real newcomer detection — now faster, cheaper to observe, and with risk scenario analysis.
+**Core Value:** Hybrid financial analysis with real newcomer detection -- now faster, cheaper to observe, and with risk scenario analysis.
 
 ## v3 Requirements
 
 Requirements for the Performance & Risk Analysis milestone. Each maps to roadmap phases.
 
-### PERF — Parallel Execution
+### PERF -- Parallel Execution
 
 - [ ] **PERF-01**: Data adapters support async execution (DataSourceOrchestrator fully async)
 - [ ] **PERF-02**: Deep analysis runs holdings concurrently with configurable parallel limit (default raised from 3)
 - [ ] **PERF-03**: BatchDataPreFetcher is integrated into the main analysis flow (not just demo/standalone)
 - [ ] **PERF-04**: All data collection paths use batch API calls where the provider supports it
 
-### CACHE — Cache Optimization
+### CACHE -- Cache Optimization
 
 - [ ] **CACHE-01**: Cache uses tiered eviction (hot/warm/cold based on access frequency)
 - [ ] **CACHE-02**: TTL is data-type-aware (market data: 15min, fundamentals: 24h, static: 7d)
 - [ ] **CACHE-03**: Cache hit/miss metrics are logged for observability
 
-### COST — Cost Tracking
+### COST -- Cost Tracking
 
 - [ ] **COST-01**: LiteLLM callback tracks actual token costs using provider pricing
 - [ ] **COST-02**: Per-crew and total costs are reported in analysis output
 
-### RISK — Risk Stress Testing
+### RISK -- Risk Stress Testing
 
 - [ ] **RISK-01**: User can run market crash scenario (-20% broad market) against portfolio
 - [ ] **RISK-02**: User can run interest rate shock scenario against portfolio
@@ -52,7 +52,7 @@ Deferred to future releases.
 | Feature | Reason |
 |---------|--------|
 | Real-time data streaming | Architectural change, different milestone |
-| Multi-user support | Requires auth, sessions, DB — separate effort |
+| Multi-user support | Requires auth, sessions, DB -- separate effort |
 | i18n framework | Not performance-related |
 | File size refactoring (300-line splits) | Enforce for new code only, not bulk refactor |
 
@@ -62,25 +62,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
-| PERF-04 | — | Pending |
-| CACHE-01 | — | Pending |
-| CACHE-02 | — | Pending |
-| CACHE-03 | — | Pending |
-| COST-01 | — | Pending |
-| COST-02 | — | Pending |
-| RISK-01 | — | Pending |
-| RISK-02 | — | Pending |
-| RISK-03 | — | Pending |
-| RISK-04 | — | Pending |
+| PERF-01 | Phase 9 | Pending |
+| PERF-02 | Phase 9 | Pending |
+| PERF-03 | Phase 9 | Pending |
+| PERF-04 | Phase 9 | Pending |
+| CACHE-01 | Phase 10 | Pending |
+| CACHE-02 | Phase 10 | Pending |
+| CACHE-03 | Phase 10 | Pending |
+| COST-01 | Phase 10 | Pending |
+| COST-02 | Phase 10 | Pending |
+| RISK-01 | Phase 11 | Pending |
+| RISK-02 | Phase 11 | Pending |
+| RISK-03 | Phase 11 | Pending |
+| RISK-04 | Phase 11 | Pending |
 
 **Coverage:**
+
 - v3 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-08*
-*Last updated: 2026-02-08 after initial definition*
+*Last updated: 2026-02-08 after roadmap creation*
