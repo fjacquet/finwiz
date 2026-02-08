@@ -216,9 +216,22 @@
   - Runner: ubuntu-latest, Python 3.12
   - Build tool: uv, MkDocs
 
+**Quality CI Pipeline (v2):**
+
+- GitHub Actions: `.github/workflows/quality.yml`
+  - Triggers: Push to main, PR
+  - Jobs: `make check` (lint + test + unittest.mock check + docs validation)
+  - Runner: ubuntu-latest, Python 3.12
+  - Same rules as local pre-commit hooks
+
+**Pre-commit Hooks (v2):**
+
+- Config: `.pre-commit-config.yaml`
+- Hooks: ruff lint, ruff format, file size limit (300 lines new files), unittest.mock ban, trailing whitespace, YAML check
+
 **Application Deployment:**
 
-- No CI/CD detected - Local execution only
+- Local execution only
   - Entry point: `uv run python src/finwiz/main.py`
   - CLI commands: `kickoff`, `run_crew`, `plot` (via `pyproject.toml`)
 
@@ -295,4 +308,4 @@
 
 ---
 
-*Integration audit: 2026-02-07*
+*Integration audit: 2026-02-07 (updated 2026-02-08 after v2)*

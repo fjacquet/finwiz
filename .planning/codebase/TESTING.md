@@ -248,6 +248,7 @@ def stock_data():
 ## Coverage
 
 **Requirements:** 65% minimum threshold (enforced by `--cov-fail-under=65`)
+**Current:** 4416 tests passing, 66% coverage (as of v2 milestone)
 
 **View Coverage:**
 
@@ -603,4 +604,4 @@ make docs-validate          # Validate documentation
 
 ---
 
-*Testing analysis: 2026-02-07*
+*Testing analysis: 2026-02-07 (updated 2026-02-08 after v2)*

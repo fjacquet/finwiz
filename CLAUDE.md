@@ -98,7 +98,6 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 
 - **unittest.mock is BANNED** - Use pytest-mock only (`mocker.patch()`). Enforced by ruff and `make check-unittest-mock`.
 - **json.dumps** - Always use `default=str` to handle datetime and other non-serializable types.
-- **File size** - Max 300 lines per file. Split larger files into focused modules.
 - **Pydantic models** - All models go in `schemas/`, not in domain folders.
 - **Final reporters** - Report crew agents must have `tools=[]` and use `@final_reporter` decorator.
 - **Flow methods** - Must return `dict[str, Any]`.
@@ -134,6 +133,7 @@ SERPER_API_KEY=...              # Required
 ### When to Use grepai (REQUIRED)
 
 Use `grepai search` INSTEAD OF Grep/Glob/find for:
+
 - Understanding what code does or where functionality lives
 - Finding implementations by intent (e.g., "authentication logic", "error handling")
 - Exploring unfamiliar parts of the codebase
@@ -142,6 +142,7 @@ Use `grepai search` INSTEAD OF Grep/Glob/find for:
 ### When to Use Standard Tools
 
 Only use Grep/Glob when you need:
+
 - Exact text matching (variable names, imports, specific strings)
 - File path patterns (e.g., `**/*.go`)
 
@@ -169,6 +170,7 @@ grepai search "API request validation" --json --compact
 ### Call Graph Tracing
 
 Use `grepai trace` to understand function relationships:
+
 - Finding all callers of a function before modifying it
 - Understanding what functions are called by a given function
 - Visualizing the complete call graph around a symbol
@@ -194,4 +196,3 @@ grepai trace graph "ValidateToken" --depth 3 --json
 2. Use `grepai trace` to understand function relationships
 3. Use `Read` tool to examine files from results
 4. Only use Grep for exact string searches if needed
-

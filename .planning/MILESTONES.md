@@ -26,3 +26,32 @@
 **Archive:** `milestones/v1-ROADMAP.md`, `milestones/v1-REQUIREMENTS.md`, `milestones/v1-MILESTONE-AUDIT.md`
 
 ---
+
+## v2 Security & Structural Quality (Shipped: 2026-02-08)
+
+**Delivered:** Security hardening, structural debt elimination, and automated code quality enforcement across the entire codebase.
+
+**Phases completed:** 6-8 (6 plans total)
+
+**Key accomplishments:**
+
+- Fail-fast API key validation across 9 tool classes — no silent degradation on missing keys
+- Centralized log sanitization with 3 handlers filtering sensitive data before output
+- All 13 API endpoint URLs consolidated into `config/endpoints.py` (zero hardcoded URLs remain)
+- Portfolio review logic consolidated from 10+ duplicate sites into single `decisions.py` module
+- Orchestrator registry pattern eliminates circular import risk with lazy loading
+- Pre-commit hooks + CI pipeline enforce ruff, file size limits, and unittest.mock ban on every commit
+
+**Stats:**
+
+- 83 files changed, +1801/-1182 lines
+- 106,718 lines of Python
+- 3 phases, 6 plans, 7 requirements
+- 4416 tests passing, 66% coverage
+- 1 day (2026-02-08)
+
+**Audit:** Passed (7/7 requirements, 3/3 phases, 5/5 integration, 5/5 E2E flows)
+
+**Archive:** `milestones/v2-ROADMAP.md`, `milestones/v2-REQUIREMENTS.md`, `milestones/v2-MILESTONE-AUDIT.md`
+
+---

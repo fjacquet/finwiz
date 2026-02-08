@@ -315,7 +315,7 @@ def process_data(ticker: str, data: dict[str, Any]) -> dict[str, Any]:
 
 ## File Structure
 
-**Maximum file size:** 300 lines
+**Maximum file size:** 300 lines (enforced by pre-commit hook for new files, CI pipeline for all commits — v2)
 
 **When to split:**
 
@@ -333,4 +333,10 @@ def process_data(ticker: str, data: dict[str, Any]) -> dict[str, Any]:
 
 ---
 
-*Convention analysis: 2026-02-07*
+**Quality Enforcement (v2):**
+
+- Pre-commit hooks: ruff lint/format, file size limit (300 lines new files), unittest.mock ban
+- CI pipeline: `.github/workflows/quality.yml` runs `make check` on every push/PR
+- Same rules locally and in CI — no environment-specific divergence
+
+*Convention analysis: 2026-02-07 (updated 2026-02-08 after v2)*

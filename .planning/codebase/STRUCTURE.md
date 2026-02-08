@@ -98,6 +98,7 @@ finwiz/
   - `orchestrators/portfolio_review/`: Portfolio review logic
   - `orchestrators/registry/`: Orchestrator registry
   - `orchestrators/validation/`: Validation helpers
+  - `orchestrators/registry/`: Orchestrator registry (v2 — eliminates circular imports)
 - Key files:
   - `validation_orchestrator.py`: Input validation, portfolio review
   - `deep_analysis_orchestrator.py`: Per-holding analysis coordination
@@ -531,4 +532,4 @@ finwiz/
 
 ---
 
-*Structure analysis: 2026-02-07*
+*Structure analysis: 2026-02-07 (updated 2026-02-08 after v2)*

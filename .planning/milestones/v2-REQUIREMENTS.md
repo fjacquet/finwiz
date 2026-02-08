@@ -1,4 +1,12 @@
-# Requirements: v2 Security & Structural Quality
+# Requirements Archive: v2 Security & Structural Quality
+
+**Archived:** 2026-02-08
+**Status:** SHIPPED
+
+This is the archived requirements specification for v2.
+For current requirements, see `.planning/REQUIREMENTS.md` (created for next milestone).
+
+---
 
 ## Security Hardening
 
@@ -15,10 +23,6 @@
 
 - [x] **QUAL-01**: Pre-commit hooks enforce ruff lint/format, file size limits (300 lines for new files), and unittest.mock ban on every commit
 - [x] **QUAL-02**: CI pipeline runs the same quality checks as pre-commit, failing the build on violations
-
-## Future Requirements
-
-None — all proposed features included in this milestone.
 
 ## Out of Scope
 
@@ -40,4 +44,12 @@ None — all proposed features included in this milestone.
 | QUAL-02 | Phase 8 | Complete |
 
 ---
-*Created: 2026-02-08 for milestone v2*
+
+## Milestone Summary
+
+**Shipped:** 7 of 7 requirements
+**Adjusted:** None — all requirements delivered as originally specified
+**Dropped:** None
+
+---
+*Archived: 2026-02-08 as part of v2 milestone completion*

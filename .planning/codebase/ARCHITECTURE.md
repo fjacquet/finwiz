@@ -31,7 +31,7 @@
 - Contains: FinwizFlow (main coordinator), specialized orchestrators (ValidationOrchestrator, DeepAnalysisOrchestrator, DiscoveryOrchestrator, ReportingOrchestrator, etc.)
 - Depends on: Domain layer, Infrastructure layer, Crews
 - Used by: Core initialization (`src/finwiz/core/app_initializer.py`)
-- Pattern: Lazy-loaded orchestrator properties, dependency injection via OrchestratorDependencies dataclass
+- Pattern: Registry-based orchestrator loading via `orchestrator_registry.py` (v2), dependency injection via OrchestratorDependencies dataclass
 
 **Domain Layer:**
 
@@ -158,7 +158,7 @@ synthesize_enriched_analysis(ctx, quant, qual)
 - Purpose: Main workflow coordinator using CrewAI Flow framework
 - Examples: `src/finwiz/flows/orchestrator.py`
 - Pattern: Flow[FinwizState] with @start() and @listen() decorators for phase sequencing
-- Delegates to specialized orchestrators via lazy-loaded properties
+- Delegates to specialized orchestrators via registry pattern (lazy-loaded)
 
 **Orchestrators (Single-Responsibility Coordinators):**
 
@@ -249,6 +249,7 @@ synthesize_enriched_analysis(ctx, quant, qual)
 **Logging:**
 
 - Approach: Structured logging via `src/finwiz/tools/logger.py`
+- Sanitization: `infrastructure/logging/sanitizer.py` filters API keys, tokens, credentials (v2)
 - Format: `[timestamp] [level] [module] message`
 - Destination: `logs/` directory + console
 - Configuration: setup_logging() in app_initializer.py
@@ -265,6 +266,8 @@ synthesize_enriched_analysis(ctx, quant, qual)
 **Authentication:**
 
 - Approach: API keys via environment variables
+- Fail-fast: Tools validate required keys at `__init__` and raise `ValueError` if missing (v2)
+- Endpoints: All API URLs centralized in `config/endpoints.py` (v2)
 - Required: OPENAI_API_KEY, SERPER_API_KEY
 - Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, COINMARKETCAP_API_KEY, TWELVE_DATA_API_KEY
 - Validation: initialize_environment() in cli/argument_parser.py
@@ -300,4 +303,4 @@ synthesize_enriched_analysis(ctx, quant, qual)
 
 ---
 
-*Architecture analysis: 2026-02-07*
+*Architecture analysis: 2026-02-07 (updated 2026-02-08 after v2)*

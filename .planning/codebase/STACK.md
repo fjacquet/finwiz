@@ -175,4 +175,4 @@
 
 ---
 
-*Stack analysis: 2026-02-07*
+*Stack analysis: 2026-02-07 (updated 2026-02-08 after v2)*
