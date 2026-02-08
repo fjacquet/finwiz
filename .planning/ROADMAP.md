@@ -14,7 +14,7 @@ This milestone hardens the FinWiz codebase (error handling, performance, test co
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Error Handling Cleanup** - Replace bare exceptions, fix json.dumps, standardize crew output handling
-- [ ] **Phase 2: Discovery Core** - Pydantic schemas and individual discovery modules (universe, screeners, scorer)
+- [x] **Phase 2: Discovery Core** - Pydantic schemas and individual discovery modules (universe, screeners, scorer)
 - [x] **Phase 3: Discovery Integration** - Pipeline orchestrator, enrichment, feature flags, output, and unit tests
 - [ ] **Phase 4: Performance** - Batch API calls, token bucket rate limiting, crew timeouts, cache cleanup
 - [ ] **Phase 5: Test Coverage** - Orchestrator, crew output, fallback, and HTML validation tests
@@ -55,8 +55,8 @@ Plans:
 
 Plans:
 
-- [ ] 02-01-PLAN.md -- Discovery schemas and universe provider (DISC-01, DISC-02)
-- [ ] 02-02-PLAN.md -- Screeners, detectors, and scorer (DISC-03, DISC-04, DISC-05, DISC-06)
+- [x] 02-01-PLAN.md -- Discovery schemas and universe provider (DISC-01, DISC-02)
+- [x] 02-02-PLAN.md -- Screeners, detectors, and scorer (DISC-03, DISC-04, DISC-05, DISC-06)
 
 ### Phase 3: Discovery Integration
 
@@ -124,7 +124,7 @@ Note: Phases 4 and 5 depend on Phase 1 but not on each other. However, running P
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Error Handling Cleanup | 4/4 | Complete | 2026-02-07 |
-| 2. Discovery Core | 0/2 | Not started | - |
+| 2. Discovery Core | 2/2 | Complete | 2026-02-08 |
 | 3. Discovery Integration | 2/2 | Complete | 2026-02-08 |
 | 4. Performance | 0/3 | Not started | - |
 | 5. Test Coverage | 0/2 | Not started | - |
