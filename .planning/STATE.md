@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Replace mocked discovery with real newcomer detection while eliminating production-risk code quality issues
-**Current focus:** Phases 1, 2, 3 complete -- next: Phase 4 (Performance) or Phase 5 (Test Coverage)
+**Current focus:** Phase 4 complete -- next: Phase 5 (Test Coverage)
 
 ## Current Position
 
-Phase: 3 of 5 complete (Discovery Integration)
-Plan: All plans complete for Phases 1, 2, 3
-Status: Phases 1, 2, 3 done. Phases 4, 5 remaining.
-Last activity: 2026-02-08 -- Completed Phase 2 (02-02-PLAN.md: screeners, detectors, and scorer)
+Phase: 5 of 5 (Test Coverage)
+Plan: 0 of 2 in current phase
+Status: Phases 1, 2, 3, 4 done. Phase 5 pending.
+Last activity: 2026-02-08 -- Completed Phase 4 (Performance) -- all 3 plans
 
-Progress: [████████░░] ~80%
+Progress: [█████████░] ~90%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
-- Average duration: ~4.6 min
-- Total execution time: ~37 min
+- Total plans completed: 11
+- Average duration: ~4.5 min
+- Total execution time: ~50 min
 
 **By Phase:**
 
@@ -31,11 +31,12 @@ Progress: [████████░░] ~80%
 | 1 - Error Handling | 4 | 4 | ~6 min |
 | 2 - Discovery Core | 2 | 2 | ~4 min |
 | 3 - Discovery Integration | 2 | 2 | ~4.5 min |
+| 4 - Performance | 3 | 3 | ~5 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 03-01 (~3 min), 03-02 (~6 min), 02-01 (~3 min), 02-02 (~5 min)
-- Trend: Stable ~4 min/plan
+- Last 5 plans: 02-02 (~5 min), 04-01 (~5 min), 04-02 (~5 min), 04-03 (~4 min)
+- Trend: Stable ~4-5 min/plan
 
 *Updated after each plan completion*
 
@@ -69,6 +70,14 @@ Recent decisions affecting current work:
 - 02-02: Breakout detector filters to $200M-$50B market cap, requires composite >= 0.3
 - 02-02: Momentum scanner uses TA-Lib RSI + ROC (40% RSI, 30% volume, 30% momentum)
 - 02-02: CandidateScorer blends source score (40%) with screening infrastructure score (60%)
+- 04-01: Extracted rate_limiter_config.py to keep both files under 300 lines
+- 04-01: Re-exported symbols from rate_limiter.py for backward compatibility
+- 04-01: Removed asyncio.Lock (aiolimiter handles synchronization internally)
+- 04-02: crew.kickoff() is sync -- must use run_in_executor() to avoid event loop blocking
+- 04-02: CircuitBreakerOpenError caught by existing generic except Exception handlers
+- 04-02: FINWIZ_HOLDING_TIMEOUT env var controls timeout (default 300s)
+- 04-03: Kept CacheConfig.auto_cleanup field for API compatibility (controls incremental cleanup)
+- 04-03: Incremental cleanup every 100 insertions, batch size 10
 
 ### Pending Todos
 
@@ -82,5 +91,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed Phase 2 (Discovery Core)
+Stopped at: Completed Phase 4 (Performance)
 Resume file: None

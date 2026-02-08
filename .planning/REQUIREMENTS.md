@@ -13,10 +13,10 @@
 
 ### Performance
 
-- [ ] **PERF-01**: Implement batch API calls in data collection instead of sequential per-holding fetches using `asyncio.gather()` with semaphore
-- [ ] **PERF-02**: Replace 14+ blocking `asyncio.sleep()` rate limiters with token bucket algorithm (per-API quotas with burst capacity)
-- [ ] **PERF-03**: Wrap all `crew.kickoff()` calls with `asyncio.wait_for()` using `FINWIZ_HOLDING_TIMEOUT`, with circuit breaker for repeatedly failing crews
-- [ ] **PERF-04**: Replace blocking cache cleanup (`asyncio.sleep(3600)`) with event-driven LRU eviction and incremental cleanup
+- [x] **PERF-01**: Implement batch API calls in data collection instead of sequential per-holding fetches using `asyncio.gather()` with semaphore
+- [x] **PERF-02**: Replace 14+ blocking `asyncio.sleep()` rate limiters with token bucket algorithm (per-API quotas with burst capacity)
+- [x] **PERF-03**: Wrap all `crew.kickoff()` calls with `asyncio.wait_for()` using `FINWIZ_HOLDING_TIMEOUT`, with circuit breaker for repeatedly failing crews
+- [x] **PERF-04**: Replace blocking cache cleanup (`asyncio.sleep(3600)`) with event-driven LRU eviction and incremental cleanup
 
 ### Test Coverage
 

@@ -13,10 +13,10 @@ This milestone hardens the FinWiz codebase (error handling, performance, test co
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Error Handling Cleanup** - Replace bare exceptions, fix json.dumps, standardize crew output handling
+- [x] **Phase 1: Error Handling Cleanup** - Replace bare exceptions, fix json.dumps, standardize crew output handling
 - [x] **Phase 2: Discovery Core** - Pydantic schemas and individual discovery modules (universe, screeners, scorer)
 - [x] **Phase 3: Discovery Integration** - Pipeline orchestrator, enrichment, feature flags, output, and unit tests
-- [ ] **Phase 4: Performance** - Batch API calls, token bucket rate limiting, crew timeouts, cache cleanup
+- [x] **Phase 4: Performance** - Batch API calls, token bucket rate limiting, crew timeouts, cache cleanup
 - [ ] **Phase 5: Test Coverage** - Orchestrator, crew output, fallback, and HTML validation tests
 
 ## Phase Details
@@ -92,9 +92,9 @@ Plans:
 
 Plans:
 
-- [ ] 04-01-PLAN.md -- Token bucket rate limiter (aiolimiter) + replace blocking sleeps in data collection (PERF-01, PERF-02)
-- [ ] 04-02-PLAN.md -- Crew execution timeouts with asyncio.wait_for() and circuit breaker (PERF-03)
-- [ ] 04-03-PLAN.md -- Event-driven cache cleanup replacing blocking asyncio.sleep(3600) loop (PERF-04)
+- [x] 04-01-PLAN.md -- Token bucket rate limiter (aiolimiter) + replace blocking sleeps in data collection (PERF-01, PERF-02)
+- [x] 04-02-PLAN.md -- Crew execution timeouts with asyncio.wait_for() and circuit breaker (PERF-03)
+- [x] 04-03-PLAN.md -- Event-driven cache cleanup replacing blocking asyncio.sleep(3600) loop (PERF-04)
 
 ### Phase 5: Test Coverage
 
@@ -126,5 +126,5 @@ Note: Phases 4 and 5 depend on Phase 1 but not on each other. However, running P
 | 1. Error Handling Cleanup | 4/4 | Complete | 2026-02-07 |
 | 2. Discovery Core | 2/2 | Complete | 2026-02-08 |
 | 3. Discovery Integration | 2/2 | Complete | 2026-02-08 |
-| 4. Performance | 0/3 | Not started | - |
+| 4. Performance | 3/3 | Complete | 2026-02-08 |
 | 5. Test Coverage | 0/2 | Not started | - |
