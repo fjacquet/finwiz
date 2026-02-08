@@ -11,8 +11,12 @@ from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 
 def _make_candidate(ticker: str, score: float = 0.65) -> NewcomerCandidate:
     return NewcomerCandidate(
-        ticker=ticker, name=f"{ticker} Momentum", asset_class="stock",
-        source="momentum", composite_score=score, grade="C+",
+        ticker=ticker,
+        name=f"{ticker} Momentum",
+        asset_class="stock",
+        source="momentum",
+        composite_score=score,
+        grade="C+",
     )
 
 

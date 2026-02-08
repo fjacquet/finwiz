@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -64,12 +64,12 @@ class DataSource(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     source_type: DataSourceType = Field(description="Type of data source")
-    source_url: Optional[str] = Field(default=None, description="URL of the data source")
+    source_url: str | None = Field(default=None, description="URL of the data source")
     accessed_at: datetime = Field(description="When the source was accessed")
 
     @field_validator("source_url")
     @classmethod
-    def validate_source_url(cls, v: Optional[str]) -> Optional[str]:
+    def validate_source_url(cls, v: str | None) -> str | None:
         """Validate that source_url is a valid URL if provided."""
         if v is None:
             return v
@@ -91,7 +91,7 @@ class DataSource(BaseModel):
         return v
 
     data_quality: DataQuality = Field(description="Assessed quality of the data")
-    response_time_ms: Optional[float] = Field(default=None, ge=0.0, description="Response time in milliseconds")
+    response_time_ms: float | None = Field(default=None, ge=0.0, description="Response time in milliseconds")
 
 
 class CrewOutputMetadata(BaseModel):
@@ -106,8 +106,8 @@ class CrewOutputMetadata(BaseModel):
     data_sources: list[DataSource] = Field(default_factory=list, description="List of data sources used")
     dependencies_met: bool = Field(description="Whether all required dependencies were available")
     freshness_status: FreshnessStatus = Field(description="Data freshness information")
-    execution_duration_seconds: Optional[float] = Field(default=None, ge=0.0, description="How long the crew execution took")
-    input_hash: Optional[str] = Field(default=None, description="Hash of input parameters for cache validation")
+    execution_duration_seconds: float | None = Field(default=None, ge=0.0, description="How long the crew execution took")
+    input_hash: str | None = Field(default=None, description="Hash of input parameters for cache validation")
 
 
 # Enhanced SEC Citation Models
@@ -157,9 +157,9 @@ class ValidatedTicker(BaseModel):
     is_valid: bool = Field(description="Whether the ticker is valid")
     validation_source: str = Field(min_length=1, description="Source used for validation")
     validation_timestamp: datetime = Field(description="When validation was performed")
-    market: Optional[str] = Field(default=None, description="Market where ticker is traded")
-    sector: Optional[str] = Field(default=None, description="Sector classification")
-    company_name: Optional[str] = Field(default=None, description="Full company name")
+    market: str | None = Field(default=None, description="Market where ticker is traded")
+    sector: str | None = Field(default=None, description="Sector classification")
+    company_name: str | None = Field(default=None, description="Full company name")
     validation_errors: list[str] = Field(default_factory=list, description="List of validation errors")
     alternative_suggestions: list[str] = Field(default_factory=list, description="Alternative ticker suggestions if validation failed")
 
@@ -173,9 +173,9 @@ class ValidatedETF(BaseModel):
     is_valid: bool = Field(description="Whether the ETF ticker is valid")
     validation_source: str = Field(min_length=1, description="Source used for validation")
     validation_timestamp: datetime = Field(description="When validation was performed")
-    fund_name: Optional[str] = Field(default=None, description="Full fund name")
-    issuer: Optional[str] = Field(default=None, description="Fund issuer/provider")
-    expense_ratio: Optional[float] = Field(default=None, ge=0.0, le=5.0, description="Expense ratio percentage")
+    fund_name: str | None = Field(default=None, description="Full fund name")
+    issuer: str | None = Field(default=None, description="Fund issuer/provider")
+    expense_ratio: float | None = Field(default=None, ge=0.0, le=5.0, description="Expense ratio percentage")
     validation_errors: list[str] = Field(default_factory=list, description="List of validation errors")
 
 
@@ -188,9 +188,9 @@ class ValidatedCrypto(BaseModel):
     is_valid: bool = Field(description="Whether the crypto symbol is valid")
     validation_source: str = Field(min_length=1, description="Source used for validation")
     validation_timestamp: datetime = Field(description="When validation was performed")
-    full_name: Optional[str] = Field(default=None, description="Full cryptocurrency name")
-    market_cap_rank: Optional[int] = Field(default=None, ge=1, description="Market capitalization rank")
-    is_active: Optional[bool] = Field(default=None, description="Whether the crypto is actively traded")
+    full_name: str | None = Field(default=None, description="Full cryptocurrency name")
+    market_cap_rank: int | None = Field(default=None, ge=1, description="Market capitalization rank")
+    is_active: bool | None = Field(default=None, description="Whether the crypto is actively traded")
     validation_errors: list[str] = Field(default_factory=list, description="List of validation errors")
 
 
@@ -286,8 +286,8 @@ class IntegrationError(BaseModel):
     error_type: IntegrationErrorType = Field(description="Type of integration error")
     crew_name: str = Field(min_length=1, description="Name of the crew that encountered the error")
     error_message: str = Field(min_length=1, description="Detailed error message")
-    expected_path: Optional[str] = Field(default=None, description="Expected file or data path")
-    actual_path: Optional[str] = Field(default=None, description="Actual file or data path found")
+    expected_path: str | None = Field(default=None, description="Expected file or data path")
+    actual_path: str | None = Field(default=None, description="Actual file or data path found")
     recovery_suggestions: list[str] = Field(default_factory=list, description="List of suggested recovery actions")
     timestamp: datetime = Field(description="When the error occurred")
     context: dict = Field(default_factory=dict, description="Additional context information")

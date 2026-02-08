@@ -17,9 +17,14 @@ from finwiz.scoring.discovery.pipeline import (
 def _make_candidate(ticker: str, score: float = 0.5, asset_class: str = "stock") -> NewcomerCandidate:
     """Helper to build a NewcomerCandidate."""
     return NewcomerCandidate(
-        ticker=ticker, name=f"{ticker} Inc.", asset_class=asset_class,
-        source="test", composite_score=score, grade="B",
-        recommendation="REVIEW", rationale="Test candidate",
+        ticker=ticker,
+        name=f"{ticker} Inc.",
+        asset_class=asset_class,
+        source="test",
+        composite_score=score,
+        grade="B",
+        recommendation="REVIEW",
+        rationale="Test candidate",
     )
 
 
@@ -37,10 +42,10 @@ class TestNewcomerDiscoveryPipeline:
     def test_excludes_portfolio_tickers(self, pipeline, mocker):
         """Candidates already in portfolio are filtered out."""
         candidates = [
-            _make_candidate("AAPL", 0.9),   # in portfolio
-            _make_candidate("TSLA", 0.85),   # not in portfolio
-            _make_candidate("MSFT", 0.88),   # in portfolio
-            _make_candidate("AMZN", 0.82),   # not in portfolio
+            _make_candidate("AAPL", 0.9),  # in portfolio
+            _make_candidate("TSLA", 0.85),  # not in portfolio
+            _make_candidate("MSFT", 0.88),  # in portfolio
+            _make_candidate("AMZN", 0.82),  # not in portfolio
         ]
         mocker.patch.object(pipeline, "_gather_candidates", return_value=candidates)
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
@@ -82,9 +87,12 @@ class TestNewcomerDiscoveryPipeline:
     def test_to_legacy_format_shape(self, pipeline):
         """_to_legacy_format returns dict with expected keys."""
         result = NewcomerDiscoveryResult(
-            asset_class="stock", session_id="s1",
-            timestamp="2026-01-01T00:00:00", candidates=[_make_candidate("TSLA", 0.9)],
-            total_candidates=1, summary="test",
+            asset_class="stock",
+            session_id="s1",
+            timestamp="2026-01-01T00:00:00",
+            candidates=[_make_candidate("TSLA", 0.9)],
+            total_candidates=1,
+            summary="test",
         )
         legacy = pipeline._to_legacy_format(result, time.time())
         assert "opportunities" in legacy
@@ -121,7 +129,8 @@ class TestNewcomerDiscoveryPipeline:
         mocker.patch.object(pipeline, "_gather_candidates", return_value=candidates)
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
         mocker.patch.object(
-            pipeline, "_enrich_top_candidates",
+            pipeline,
+            "_enrich_top_candidates",
             side_effect=lambda c: (c, 1, 0),  # attempted 1, succeeded 0
         )
         mocker.patch.object(pipeline, "_persist_result")
@@ -167,6 +176,7 @@ class TestPortfolioTickerLoading:
         # Manually call with a real csv
         import csv as csv_mod
         from io import StringIO
+
         content = "Ticker,Name\nAAPL,Apple\nTSLA,Tesla\n"
         reader = csv_mod.DictReader(StringIO(content))
         for row in reader:

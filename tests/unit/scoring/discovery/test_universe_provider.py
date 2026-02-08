@@ -11,8 +11,12 @@ from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 
 def _make_candidate(ticker: str, asset_class: str = "stock") -> NewcomerCandidate:
     return NewcomerCandidate(
-        ticker=ticker, name=f"{ticker} Co.", asset_class=asset_class,
-        source="universe", composite_score=0.5, grade="C",
+        ticker=ticker,
+        name=f"{ticker} Co.",
+        asset_class=asset_class,
+        source="universe",
+        composite_score=0.5,
+        grade="C",
     )
 
 
@@ -23,7 +27,8 @@ class TestDynamicUniverseProvider:
         """Universe provider returns a list of NewcomerCandidate objects."""
         mock_cls = mocker.MagicMock()
         mock_cls.return_value.get_candidates.return_value = [
-            _make_candidate("NEWCO"), _make_candidate("FRESH"),
+            _make_candidate("NEWCO"),
+            _make_candidate("FRESH"),
         ]
         mock_mod = mocker.MagicMock()
         mock_mod.DynamicUniverseProvider = mock_cls

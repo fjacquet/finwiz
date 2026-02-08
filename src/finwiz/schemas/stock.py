@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
@@ -112,10 +112,10 @@ class StockCandidate(BaseModel):
 
     ticker: str = Field(min_length=1, max_length=10)
     company_name: str = Field(description="Full company name")
-    sector: Optional[str] = Field(None, description="Industry sector")
-    market_cap: Optional[float] = Field(None, gt=0, description="Market capitalization in USD")
-    pe_ratio: Optional[float] = Field(None, description="Price-to-earnings ratio")
-    dividend_yield: Optional[float] = Field(None, ge=0.0, le=100.0, description="Dividend yield percentage")
+    sector: str | None = Field(None, description="Industry sector")
+    market_cap: float | None = Field(None, gt=0, description="Market capitalization in USD")
+    pe_ratio: float | None = Field(None, description="Price-to-earnings ratio")
+    dividend_yield: float | None = Field(None, ge=0.0, le=100.0, description="Dividend yield percentage")
     selection_rationale: str = Field(description="Why this stock was selected", min_length=20)
     confidence_level: float = Field(ge=0.0, le=1.0, description="Confidence in selection")
 
@@ -140,13 +140,13 @@ class TechnicalIndicators(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     ticker: str = Field(min_length=1, max_length=10)
-    rsi: Optional[float] = Field(None, ge=0.0, le=100.0, description="Relative Strength Index")
-    macd: Optional[float] = Field(None, description="MACD indicator value")
-    macd_signal: Optional[float] = Field(None, description="MACD signal line")
-    bollinger_upper: Optional[float] = Field(None, gt=0, description="Bollinger Bands upper bound")
-    bollinger_lower: Optional[float] = Field(None, gt=0, description="Bollinger Bands lower bound")
-    moving_avg_50: Optional[float] = Field(None, gt=0, description="50-day moving average")
-    moving_avg_200: Optional[float] = Field(None, gt=0, description="200-day moving average")
+    rsi: float | None = Field(None, ge=0.0, le=100.0, description="Relative Strength Index")
+    macd: float | None = Field(None, description="MACD indicator value")
+    macd_signal: float | None = Field(None, description="MACD signal line")
+    bollinger_upper: float | None = Field(None, gt=0, description="Bollinger Bands upper bound")
+    bollinger_lower: float | None = Field(None, gt=0, description="Bollinger Bands lower bound")
+    moving_avg_50: float | None = Field(None, gt=0, description="50-day moving average")
+    moving_avg_200: float | None = Field(None, gt=0, description="200-day moving average")
     support_levels: list[float] = Field(default_factory=list, description="Support price levels")
     resistance_levels: list[float] = Field(default_factory=list, description="Resistance price levels")
 
@@ -157,16 +157,16 @@ class QuantitativeMetrics(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     ticker: str = Field(min_length=1, max_length=10)
-    sharpe_ratio: Optional[float] = Field(None, description="Sharpe ratio")
-    sortino_ratio: Optional[float] = Field(None, description="Sortino ratio")
-    max_drawdown: Optional[float] = Field(None, le=0.0, description="Maximum drawdown percentage")
-    volatility: Optional[float] = Field(None, ge=0.0, description="Annualized volatility")
-    beta: Optional[float] = Field(None, description="Beta relative to market")
-    alpha: Optional[float] = Field(None, description="Alpha (excess return)")
-    var_95: Optional[float] = Field(None, description="Value at Risk (95% confidence)")
-    expected_return: Optional[float] = Field(None, description="Expected annual return")
-    recommendation: Optional[Literal["BUY", "HOLD", "SELL"]] = Field(None, description="Investment recommendation")
-    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Recommendation confidence")
+    sharpe_ratio: float | None = Field(None, description="Sharpe ratio")
+    sortino_ratio: float | None = Field(None, description="Sortino ratio")
+    max_drawdown: float | None = Field(None, le=0.0, description="Maximum drawdown percentage")
+    volatility: float | None = Field(None, ge=0.0, description="Annualized volatility")
+    beta: float | None = Field(None, description="Beta relative to market")
+    alpha: float | None = Field(None, description="Alpha (excess return)")
+    var_95: float | None = Field(None, description="Value at Risk (95% confidence)")
+    expected_return: float | None = Field(None, description="Expected annual return")
+    recommendation: Literal["BUY", "HOLD", "SELL"] | None = Field(None, description="Investment recommendation")
+    confidence: float | None = Field(None, ge=0.0, le=1.0, description="Recommendation confidence")
 
 
 class StockTechnicalAnalysis(BaseModel):
@@ -180,18 +180,18 @@ class StockTechnicalAnalysis(BaseModel):
     analysis_date: date = Field(description="Date of analysis")
 
     # Financial fundamentals
-    revenue: Optional[float] = Field(None, gt=0, description="Annual revenue in USD")
-    revenue_growth: Optional[float] = Field(None, description="Revenue growth rate")
-    net_income: Optional[float] = Field(None, description="Net income in USD")
-    profit_margin: Optional[float] = Field(None, ge=-100.0, le=100.0, description="Profit margin percentage")
-    roe: Optional[float] = Field(None, description="Return on equity")
-    debt_to_equity: Optional[float] = Field(None, ge=0.0, description="Debt-to-equity ratio")
+    revenue: float | None = Field(None, gt=0, description="Annual revenue in USD")
+    revenue_growth: float | None = Field(None, description="Revenue growth rate")
+    net_income: float | None = Field(None, description="Net income in USD")
+    profit_margin: float | None = Field(None, ge=-100.0, le=100.0, description="Profit margin percentage")
+    roe: float | None = Field(None, description="Return on equity")
+    debt_to_equity: float | None = Field(None, ge=0.0, description="Debt-to-equity ratio")
 
     # Technical indicators
-    technical_indicators: Optional[TechnicalIndicators] = Field(None, description="Technical indicators")
+    technical_indicators: TechnicalIndicators | None = Field(None, description="Technical indicators")
 
     # Quantitative analysis
-    quantitative_metrics: Optional[QuantitativeMetrics] = Field(None, description="Quantitative metrics")
+    quantitative_metrics: QuantitativeMetrics | None = Field(None, description="Quantitative metrics")
 
     # 10-K insights
     ten_k_insights: list[TenKInsight] = Field(default_factory=list, description="10-K filing insights")
@@ -202,7 +202,7 @@ class StockTechnicalAnalysis(BaseModel):
 
     # Overall assessment
     investment_thesis: str = Field(description="Investment thesis summary", min_length=50)
-    price_target: Optional[float] = Field(None, gt=0, description="12-month price target")
+    price_target: float | None = Field(None, gt=0, description="12-month price target")
 
 
 class StockRiskProfile(BaseModel):
@@ -229,7 +229,7 @@ class StockRiskProfile(BaseModel):
     quantitative_risk_metrics: dict[str, Any] = Field(default_factory=dict, description="Quantitative risk metrics (VaR, drawdown, etc.)")
 
     # Market sentiment
-    sentiment: Optional[MarketSentiment] = Field(None, description="Market sentiment analysis")
+    sentiment: MarketSentiment | None = Field(None, description="Market sentiment analysis")
 
     # Risk mitigation
     risk_mitigation_strategies: list[str] = Field(default_factory=list, description="Risk mitigation strategies", max_length=10)

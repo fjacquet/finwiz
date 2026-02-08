@@ -108,10 +108,7 @@ class BreakoutDetector:
                     "20d_high": float(history["Close"].iloc[-self.PRICE_BREAKOUT_WINDOW : -1].max()),
                     "volume_ratio": self._volume_ratio(history),
                 },
-                rationale=(
-                    f"Price/volume breakout detected: "
-                    f"price score {price_score:.2f}, volume score {volume_score:.2f}"
-                ),
+                rationale=(f"Price/volume breakout detected: price score {price_score:.2f}, volume score {volume_score:.2f}"),
             )
         except (ValueError, KeyError, TypeError):
             self._logger.warning(
@@ -196,7 +193,4 @@ class BreakoutDetector:
         Returns:
             True if within MIN_MARKET_CAP..MAX_MARKET_CAP range.
         """
-        return (
-            market_cap is not None
-            and self.MIN_MARKET_CAP <= market_cap <= self.MAX_MARKET_CAP
-        )
+        return market_cap is not None and self.MIN_MARKET_CAP <= market_cap <= self.MAX_MARKET_CAP

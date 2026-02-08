@@ -13,8 +13,12 @@ from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 
 def _make_candidate(ticker: str) -> NewcomerCandidate:
     return NewcomerCandidate(
-        ticker=ticker, name=f"{ticker} IPO Co.", asset_class="stock",
-        source="ipo", composite_score=0.6, grade="C+",
+        ticker=ticker,
+        name=f"{ticker} IPO Co.",
+        asset_class="stock",
+        source="ipo",
+        composite_score=0.6,
+        grade="C+",
     )
 
 
@@ -25,7 +29,8 @@ class TestIPOScreener:
         """IPO screener returns candidates from SEC data."""
         mock_cls = mocker.MagicMock()
         mock_cls.return_value.screen.return_value = [
-            _make_candidate("NEWIPO1"), _make_candidate("NEWIPO2"),
+            _make_candidate("NEWIPO1"),
+            _make_candidate("NEWIPO2"),
         ]
         mock_mod = mocker.MagicMock()
         mock_mod.IPOScreener = mock_cls

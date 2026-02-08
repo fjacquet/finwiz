@@ -47,21 +47,13 @@ class TestHtmlOutputValidation:
 
         # Check <meta charset="UTF-8">
         meta_charset = soup.find("meta", attrs={"charset": True})
-        has_charset_tag = (
-            meta_charset is not None
-            and meta_charset["charset"].upper() == "UTF-8"
-        )
+        has_charset_tag = meta_charset is not None and meta_charset["charset"].upper() == "UTF-8"
 
         # Alternative: <meta http-equiv="Content-Type" content="...charset=UTF-8">
         meta_http = soup.find("meta", attrs={"http-equiv": "Content-Type"})
-        has_http_equiv = (
-            meta_http is not None
-            and "UTF-8" in meta_http.get("content", "").upper()
-        )
+        has_http_equiv = meta_http is not None and "UTF-8" in meta_http.get("content", "").upper()
 
-        assert has_charset_tag or has_http_equiv, (
-            "No UTF-8 charset declaration found in meta tags"
-        )
+        assert has_charset_tag or has_http_equiv, "No UTF-8 charset declaration found in meta tags"
 
     def test_html_has_style_block(self, sample_html):
         """HTML contains inline CSS style block with expected classes."""
@@ -78,7 +70,7 @@ class TestHtmlOutputValidation:
         html = generator.generate_report(sample_data)
 
         # Raw <script> should NOT appear
-        assert '<script>alert' not in html
+        assert "<script>alert" not in html
 
         # Escaped version should appear
         assert "&lt;script&gt;" in html or "&#60;script&#62;" in html
@@ -86,9 +78,7 @@ class TestHtmlOutputValidation:
         soup = BeautifulSoup(html, "html.parser")
         scripts = soup.find_all("script")
         for s in scripts:
-            assert "alert" not in (s.string or ""), (
-                "Executable script tag with alert found in output"
-            )
+            assert "alert" not in (s.string or ""), "Executable script tag with alert found in output"
 
     def test_html_xss_prevention_event_handler_escaped(self, generator, sample_data):
         """Injected onmouseover event handler is escaped in output."""
@@ -96,9 +86,7 @@ class TestHtmlOutputValidation:
         html = generator.generate_report(sample_data)
 
         soup = BeautifulSoup(html, "html.parser")
-        assert not soup.find(attrs={"onmouseover": True}), (
-            "onmouseover attribute found in generated HTML"
-        )
+        assert not soup.find(attrs={"onmouseover": True}), "onmouseover attribute found in generated HTML"
 
     def test_html_contains_key_content_sections(self, sample_html):
         """HTML contains expected content: ticker, grade, recommendation, summary."""
@@ -122,9 +110,7 @@ class TestHtmlOutputValidation:
         assert soup is not None
 
         all_tags = soup.find_all()
-        assert len(all_tags) > 10, (
-            f"Only {len(all_tags)} tags found; expected substantial HTML"
-        )
+        assert len(all_tags) > 10, f"Only {len(all_tags)} tags found; expected substantial HTML"
 
         # No CDATA or broken tag artifacts
         assert "<![CDATA[" not in sample_html
@@ -132,10 +118,7 @@ class TestHtmlOutputValidation:
     def test_html_special_characters_in_rationale(self, generator, sample_data):
         """Special characters in investment_rationale are properly escaped."""
         # Build a rationale with special chars, repeated to meet 500-word threshold
-        special_segment = (
-            "Revenue grew 25% YoY. P/E ratio < 30. Risk: 'moderate'. "
-            "Debt/Equity & leverage acceptable. Growth > expectations. "
-        )
+        special_segment = "Revenue grew 25% YoY. P/E ratio < 30. Risk: 'moderate'. Debt/Equity & leverage acceptable. Growth > expectations. "
         # Repeat to reach 500+ words
         sample_data["investment_rationale"] = (special_segment * 50).strip()
 

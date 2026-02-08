@@ -40,9 +40,7 @@ class TestOrchestratorStateIntegration:
 
     # ---- DiscoveryOrchestrator: crypto ----
 
-    def test_discovery_check_crypto_sets_state_on_success(
-        self, discovery_orchestrator, state, mocker
-    ):
+    def test_discovery_check_crypto_sets_state_on_success(self, discovery_orchestrator, state, mocker):
         """Crypto success path sets crypto_analysis_success and crypto_opportunities on state."""
         mocker.patch(
             "finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities",
@@ -65,9 +63,7 @@ class TestOrchestratorStateIntegration:
         assert isinstance(state.crypto_opportunities, list)
         assert len(state.crypto_opportunities) == 2
 
-    def test_discovery_check_crypto_sets_state_on_failure(
-        self, discovery_orchestrator, state, mocker
-    ):
+    def test_discovery_check_crypto_sets_state_on_failure(self, discovery_orchestrator, state, mocker):
         """Crypto failure path sets crypto_analysis_success=False and crypto_analysis_error."""
         mocker.patch(
             "finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities",
@@ -85,9 +81,7 @@ class TestOrchestratorStateIntegration:
 
     # ---- DiscoveryOrchestrator: stock ----
 
-    def test_discovery_check_stock_sets_state_on_success(
-        self, discovery_orchestrator, state, mocker
-    ):
+    def test_discovery_check_stock_sets_state_on_success(self, discovery_orchestrator, state, mocker):
         """Stock success path sets stock_analysis_success and stock_opportunities on state."""
         mocker.patch(
             "finwiz.scoring.stock_analyzer.analyze_stock_opportunities",
@@ -107,9 +101,7 @@ class TestOrchestratorStateIntegration:
 
     # ---- DiscoveryOrchestrator: etf ----
 
-    def test_discovery_check_etf_sets_state_on_success(
-        self, discovery_orchestrator, state, mocker
-    ):
+    def test_discovery_check_etf_sets_state_on_success(self, discovery_orchestrator, state, mocker):
         """ETF success path sets etf_analysis_success and etf_opportunities on state."""
         mocker.patch(
             "finwiz.scoring.etf_analyzer.analyze_etf_opportunities",
@@ -196,9 +188,7 @@ class TestOrchestratorStateIntegration:
 
     # ---- Discovery consolidation ----
 
-    def test_discovery_consolidation_aggregates_all_opportunities(
-        self, state, mocker
-    ):
+    def test_discovery_consolidation_aggregates_all_opportunities(self, state, mocker):
         """Consolidation gathers opportunities from all 3 asset classes into state."""
         orch = DiscoveryOrchestrator(state)
         mocker.patch.object(orch, "_save_discovery_results")
@@ -215,9 +205,7 @@ class TestOrchestratorStateIntegration:
 
     # ---- Error propagation across boundaries ----
 
-    def test_error_propagation_across_orchestrator_boundaries(
-        self, state, mocker
-    ):
+    def test_error_propagation_across_orchestrator_boundaries(self, state, mocker):
         """Failed crypto leaves state without crypto_opportunities; consolidation handles it."""
         orch1 = DiscoveryOrchestrator(state, availability_tracker=mocker.Mock())
         mocker.patch.object(orch1, "_save_discovery_results")

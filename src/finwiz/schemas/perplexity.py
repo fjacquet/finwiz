@@ -8,7 +8,7 @@ with strict validation following FinWiz standards.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, validator
 
@@ -43,13 +43,13 @@ class SonarArticle(BaseModel):
             raise ValueError(f"Invalid URL format: {v}")
         return v
 
-    published_date: Optional[str] = Field(None, description="Publication date (ISO format)")
+    published_date: str | None = Field(None, description="Publication date (ISO format)")
     relevance_score: float = Field(0.0, ge=0.0, le=1.0, description="Relevance to query (0.0-1.0)")
     content_type: Literal["news", "filing", "analysis", "earnings", "regulatory"] = Field("news", description="Type of content")
     analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field("general", description="Analysis context for this article")
 
     @validator("published_date")
-    def validate_published_date(cls, v: Optional[str]) -> Optional[str]:
+    def validate_published_date(cls, v: str | None) -> str | None:
         """Validate published date format."""
         if v is None:
             return v
@@ -76,7 +76,7 @@ class SonarSearchResult(BaseModel):
     search_time_ms: int = Field(0, ge=0, description="Search execution time in milliseconds")
     source: str = Field("perplexity_sonar", description="Data source identifier")
     success: bool = Field(True, description="Whether search was successful")
-    error_message: Optional[str] = Field(None, description="Error message if search failed")
+    error_message: str | None = Field(None, description="Error message if search failed")
     fallback_used: bool = Field(False, description="Whether fallback mechanism was used")
     retry_count: int = Field(0, ge=0, description="Number of retry attempts made")
 
@@ -96,7 +96,7 @@ class PerplexitySearchRequest(BaseModel):
     asset_type: Literal["stock", "etf", "crypto"] = Field(..., description="Asset type")
     analysis_type: Literal["sentiment", "technical", "fundamental", "general"] = Field("general", description="Type of analysis to perform")
     max_results: int = Field(10, ge=1, le=50, description="Maximum results to return")
-    search_filters: Optional[dict[str, str]] = Field(None, description="Additional search filters")
+    search_filters: dict[str, str] | None = Field(None, description="Additional search filters")
 
     @validator("ticker")
     def validate_ticker_format(cls, v: str) -> str:
@@ -112,8 +112,8 @@ class PerplexitySearchResponse(BaseModel):
     success: bool = Field(..., description="Whether search was successful")
     results: list[SonarArticle] = Field(default_factory=list, description="Search results")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
-    error_message: Optional[str] = Field(None, description="Error message if search failed")
-    rate_limit_info: Optional[dict[str, int]] = Field(None, description="Rate limit status")
+    error_message: str | None = Field(None, description="Error message if search failed")
+    rate_limit_info: dict[str, int] | None = Field(None, description="Rate limit status")
     search_time_ms: int = Field(0, ge=0, description="Search execution time")
 
 

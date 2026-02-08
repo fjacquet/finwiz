@@ -89,11 +89,14 @@ class NewcomerDiscoveryPipeline:
         candidates, enrich_tried, enrich_ok = self._enrich_top_candidates(candidates)
 
         result = NewcomerDiscoveryResult(
-            asset_class=self.asset_class, session_id=session_id,
-            timestamp=datetime.now().isoformat(), candidates=candidates,
+            asset_class=self.asset_class,
+            session_id=session_id,
+            timestamp=datetime.now().isoformat(),
+            candidates=candidates,
             total_candidates=len(candidates),
             summary=f"Discovered {len(candidates)} {self.asset_class} newcomer candidates",
-            enrichment_attempted=enrich_tried, enrichment_succeeded=enrich_ok,
+            enrichment_attempted=enrich_tried,
+            enrichment_succeeded=enrich_ok,
         )
         self._persist_result(result, self.asset_class)
         elapsed = time.time() - start_time
@@ -125,6 +128,7 @@ class NewcomerDiscoveryPipeline:
         for module_path, cls_name, method_name in screeners:
             try:
                 import importlib
+
                 mod = importlib.import_module(module_path)
                 cls = getattr(mod, cls_name)
                 method = getattr(cls(), method_name)
@@ -145,6 +149,7 @@ class NewcomerDiscoveryPipeline:
         """Score each candidate via CandidateScorer.  Returns as-is if scorer unavailable."""
         try:
             from finwiz.scoring.discovery.candidate_scorer import CandidateScorer
+
             return [CandidateScorer().score(c) for c in candidates]
         except ImportError:
             logger.warning("CandidateScorer not available (Phase 2 pending)")
@@ -158,7 +163,8 @@ class NewcomerDiscoveryPipeline:
     # ------------------------------------------------------------------
 
     def _enrich_top_candidates(
-        self, candidates: list[NewcomerCandidate],
+        self,
+        candidates: list[NewcomerCandidate],
     ) -> tuple[list[NewcomerCandidate], int, int]:
         """Enrich top-scoring candidates with Perplexity research.
 
@@ -202,6 +208,7 @@ class NewcomerDiscoveryPipeline:
                 continue
             try:
                 import asyncio
+
                 query = f"{candidate.ticker} investment analysis outlook"
                 try:
                     loop = asyncio.get_running_loop()
@@ -210,16 +217,22 @@ class NewcomerDiscoveryPipeline:
                 if loop and loop.is_running():
                     logger.warning("Event loop running, skipping enrichment for %s", candidate.ticker)
                     continue
-                result = asyncio.run(integration.search_financial_news(
-                    query=query, ticker=candidate.ticker,
-                    asset_type=self.asset_class, analysis_type="fundamental",
-                ))
+                result = asyncio.run(
+                    integration.search_financial_news(
+                        query=query,
+                        ticker=candidate.ticker,
+                        asset_type=self.asset_class,
+                        analysis_type="fundamental",
+                    )
+                )
                 if result.success:
                     candidate.enrichment = EnrichmentResult(
-                        source="perplexity_sonar", query=query,
+                        source="perplexity_sonar",
+                        query=query,
                         articles_found=result.total_results,
                         summary="; ".join(a.summary[:200] for a in result.results[:3] if a.summary),
-                        key_insights=[a.title for a in result.results[:5]], success=True,
+                        key_insights=[a.title for a in result.results[:5]],
+                        success=True,
                     )
                     record_perplexity_success("newcomer_discovery", result.total_results, candidate.ticker)
                     succeeded += 1
@@ -258,7 +271,8 @@ class NewcomerDiscoveryPipeline:
         """Convert to dict format expected by DiscoveryOrchestrator."""
         opportunities: list[dict[str, Any]] = [
             {
-                "ticker": c.ticker, "name": getattr(c, "name", c.ticker),
+                "ticker": c.ticker,
+                "name": getattr(c, "name", c.ticker),
                 "grade": getattr(c, "grade", ""),
                 "composite_score": c.composite_score,
                 "recommendation": getattr(c, "recommendation", "REVIEW"),
@@ -272,7 +286,8 @@ class NewcomerDiscoveryPipeline:
             "performance_metrics": {
                 "execution_time_seconds": time.time() - start_time,
                 "opportunities_found": len(opportunities),
-                "cost_usd": 0.0, "llm_calls_made": 0,
+                "cost_usd": 0.0,
+                "llm_calls_made": 0,
                 "method": "newcomer_discovery_pipeline",
             },
         }

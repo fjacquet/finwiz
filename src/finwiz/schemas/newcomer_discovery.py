@@ -8,7 +8,7 @@ enrichment results, and aggregated discovery results.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,10 +22,10 @@ class EnrichmentResult(BaseModel):
     query: str = Field("", description="Search query used")
     articles_found: int = Field(0, ge=0, description="Number of articles retrieved")
     summary: str = Field("", description="AI-generated summary of findings")
-    sentiment: Optional[str] = Field(None, description="Overall sentiment from articles")
+    sentiment: str | None = Field(None, description="Overall sentiment from articles")
     key_insights: list[str] = Field(default_factory=list, description="Key insights extracted")
     success: bool = Field(True, description="Whether enrichment succeeded")
-    error_message: Optional[str] = Field(None, description="Error message if failed")
+    error_message: str | None = Field(None, description="Error message if failed")
 
 
 class NewcomerCandidate(BaseModel):
@@ -48,12 +48,12 @@ class NewcomerCandidate(BaseModel):
     discovery_date: datetime = Field(default_factory=datetime.utcnow, description="When this candidate was discovered")
 
     # Optional scoring breakdown
-    fundamental_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Fundamental analysis score")
-    technical_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
-    momentum_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Momentum score")
+    fundamental_score: float | None = Field(None, ge=0.0, le=1.0, description="Fundamental analysis score")
+    technical_score: float | None = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
+    momentum_score: float | None = Field(None, ge=0.0, le=1.0, description="Momentum score")
 
     # Optional enrichment
-    enrichment: Optional[EnrichmentResult] = Field(None, description="Perplexity enrichment data")
+    enrichment: EnrichmentResult | None = Field(None, description="Perplexity enrichment data")
 
     # Metadata
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")

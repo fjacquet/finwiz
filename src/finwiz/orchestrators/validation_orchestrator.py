@@ -180,9 +180,7 @@ class ValidationOrchestrator:
                 "timestamp": self.state.timestamp,
                 "report_language": self.state.report_language,
             }
-            result = asyncio.run(
-                execute_crew_with_timeout("portfolio_rebalancing_validation", crew_instance, rebalancing_inputs)
-            )
+            result = asyncio.run(execute_crew_with_timeout("portfolio_rebalancing_validation", crew_instance, rebalancing_inputs))
 
             # Extract rebalancing results from crew output
             if hasattr(result, "pydantic") and result.pydantic:

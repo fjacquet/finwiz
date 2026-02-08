@@ -20,10 +20,19 @@ class DynamicUniverseProvider:
 
     # Default seed ETFs for mining stock holdings
     DEFAULT_STOCK_SEED_ETFS: ClassVar[list[str]] = [
-        "SPY", "QQQ", "VTI", "VGT", "VHT", "VFH", "VNQ", "XLE",
+        "SPY",
+        "QQQ",
+        "VTI",
+        "VGT",
+        "VHT",
+        "VFH",
+        "VNQ",
+        "XLE",
     ]
     DEFAULT_ETF_SEED_ETFS: ClassVar[list[str]] = [
-        "VT", "AOA", "AOR",
+        "VT",
+        "AOA",
+        "AOR",
     ]  # ETFs-of-ETFs for ETF discovery
     MARKET_REGION: ClassVar[str] = "us"
 
@@ -59,11 +68,7 @@ class DynamicUniverseProvider:
             tickers = self._fallback_static_universe("crypto")
             source = "static"
         else:
-            seed_etfs = (
-                self._seed_etfs or self.DEFAULT_STOCK_SEED_ETFS
-                if asset_class == "stock"
-                else self.DEFAULT_ETF_SEED_ETFS
-            )
+            seed_etfs = self._seed_etfs or self.DEFAULT_STOCK_SEED_ETFS if asset_class == "stock" else self.DEFAULT_ETF_SEED_ETFS
             try:
                 tickers = self._mine_etf_holdings(seed_etfs)
             except (ValueError, Exception):
@@ -133,20 +138,20 @@ class DynamicUniverseProvider:
                 return []
 
             # Index contains the symbol names
-            symbols = [
-                str(sym).upper()
-                for sym in holdings_df.index
-                if sym is not None and str(sym).strip()
-            ]
+            symbols = [str(sym).upper() for sym in holdings_df.index if sym is not None and str(sym).strip()]
 
             self._logger.debug(
-                "Mined %d holdings from %s", len(symbols), etf_ticker,
+                "Mined %d holdings from %s",
+                len(symbols),
+                etf_ticker,
             )
             return symbols
 
         except (ValueError, KeyError, OSError):
             self._logger.warning(
-                "Failed to fetch holdings for ETF %s", etf_ticker, exc_info=True,
+                "Failed to fetch holdings for ETF %s",
+                etf_ticker,
+                exc_info=True,
             )
             return []
 
@@ -161,7 +166,8 @@ class DynamicUniverseProvider:
         """
         try:
             result: dict[str, Any] = self._screening_utils.get_screening_universe(
-                asset_class, self.MARKET_REGION,
+                asset_class,
+                self.MARKET_REGION,
             )
 
             if "error" in result:
@@ -174,7 +180,9 @@ class DynamicUniverseProvider:
 
             symbols: list[str] = result.get("symbols", [])
             self._logger.debug(
-                "Static universe for %s: %d symbols", asset_class, len(symbols),
+                "Static universe for %s: %d symbols",
+                asset_class,
+                len(symbols),
             )
             return symbols
 

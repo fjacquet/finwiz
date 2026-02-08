@@ -128,10 +128,7 @@ class MomentumScanner:
                     "volume_signal": round(volume_signal, 4),
                     "momentum_signal": round(momentum_signal, 4),
                 },
-                rationale=(
-                    f"Momentum signals: RSI={rsi_value:.1f}, "
-                    f"volume ratio={volume_ratio:.1f}x, ROC={roc_value:.2f}"
-                ),
+                rationale=(f"Momentum signals: RSI={rsi_value:.1f}, volume ratio={volume_ratio:.1f}x, ROC={roc_value:.2f}"),
             )
         except (ValueError, KeyError, TypeError):
             self._logger.warning(
@@ -232,9 +229,5 @@ class MomentumScanner:
         Returns:
             Weighted composite clamped to [0.0, 1.0].
         """
-        raw = (
-            self.WEIGHT_VOLUME * volume
-            + self.WEIGHT_RSI * rsi
-            + self.WEIGHT_MOMENTUM * momentum
-        )
+        raw = self.WEIGHT_VOLUME * volume + self.WEIGHT_RSI * rsi + self.WEIGHT_MOMENTUM * momentum
         return max(0.0, min(1.0, raw))

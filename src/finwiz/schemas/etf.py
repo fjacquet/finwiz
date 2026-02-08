@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -53,7 +53,7 @@ class ETFFactsheet(BaseModel):
     ticker: str = Field(min_length=1, max_length=15)
     issuer: str
     expense_ratio: float = Field(ge=0.0, le=5.0, description="Total expense ratio (%)")
-    tracking_diff: Optional[float] = Field(
+    tracking_diff: float | None = Field(
         default=None,
         ge=-10.0,
         le=10.0,
@@ -88,7 +88,7 @@ class ETFFactsheet(BaseModel):
         return v
 
     # standardized risk lives separately
-    risk: Optional[RiskAssessmentStandardized] = None
+    risk: RiskAssessmentStandardized | None = None
 
 
 class ETFMarketTrend(BaseModel):
@@ -114,10 +114,10 @@ class ETFCandidate(BaseModel):
     ticker: str = Field(min_length=1, max_length=15)
     name: str = Field(description="Full ETF name")
     issuer: str = Field(description="ETF issuer/provider")
-    category: Optional[str] = Field(None, description="ETF category (e.g., equity, bond, commodity)")
-    aum: Optional[float] = Field(None, gt=0, description="Assets under management in USD")
-    expense_ratio: Optional[float] = Field(None, ge=0.0, le=5.0, description="Expense ratio percentage")
-    tracking_error: Optional[float] = Field(None, ge=0.0, description="Tracking error vs benchmark")
+    category: str | None = Field(None, description="ETF category (e.g., equity, bond, commodity)")
+    aum: float | None = Field(None, gt=0, description="Assets under management in USD")
+    expense_ratio: float | None = Field(None, ge=0.0, le=5.0, description="Expense ratio percentage")
+    tracking_error: float | None = Field(None, ge=0.0, description="Tracking error vs benchmark")
     selection_rationale: str = Field(description="Why this ETF was selected", min_length=20)
     confidence_level: float = Field(ge=0.0, le=1.0, description="Confidence in selection")
 
@@ -141,13 +141,13 @@ class ETFTechnicalIndicators(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     ticker: str = Field(min_length=1, max_length=15)
-    rsi: Optional[float] = Field(None, ge=0.0, le=100.0, description="Relative Strength Index")
-    macd: Optional[float] = Field(None, description="MACD indicator value")
-    macd_signal: Optional[float] = Field(None, description="MACD signal line")
-    bollinger_upper: Optional[float] = Field(None, gt=0, description="Bollinger Bands upper bound")
-    bollinger_lower: Optional[float] = Field(None, gt=0, description="Bollinger Bands lower bound")
-    moving_avg_50: Optional[float] = Field(None, gt=0, description="50-day moving average")
-    moving_avg_200: Optional[float] = Field(None, gt=0, description="200-day moving average")
+    rsi: float | None = Field(None, ge=0.0, le=100.0, description="Relative Strength Index")
+    macd: float | None = Field(None, description="MACD indicator value")
+    macd_signal: float | None = Field(None, description="MACD signal line")
+    bollinger_upper: float | None = Field(None, gt=0, description="Bollinger Bands upper bound")
+    bollinger_lower: float | None = Field(None, gt=0, description="Bollinger Bands lower bound")
+    moving_avg_50: float | None = Field(None, gt=0, description="50-day moving average")
+    moving_avg_200: float | None = Field(None, gt=0, description="200-day moving average")
 
 
 class ETFQuantitativeMetrics(BaseModel):
@@ -156,16 +156,16 @@ class ETFQuantitativeMetrics(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     ticker: str = Field(min_length=1, max_length=15)
-    sharpe_ratio: Optional[float] = Field(None, description="Sharpe ratio")
-    sortino_ratio: Optional[float] = Field(None, description="Sortino ratio")
-    max_drawdown: Optional[float] = Field(None, le=0.0, description="Maximum drawdown percentage")
-    volatility: Optional[float] = Field(None, ge=0.0, description="Annualized volatility")
-    beta: Optional[float] = Field(None, description="Beta relative to benchmark")
-    alpha: Optional[float] = Field(None, description="Alpha (excess return)")
-    tracking_error: Optional[float] = Field(None, ge=0.0, description="Tracking error vs benchmark")
-    correlation_with_benchmark: Optional[float] = Field(None, ge=-1.0, le=1.0, description="Correlation with benchmark")
-    recommendation: Optional[Literal["BUY", "HOLD", "SELL"]] = Field(None, description="Investment recommendation")
-    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Recommendation confidence")
+    sharpe_ratio: float | None = Field(None, description="Sharpe ratio")
+    sortino_ratio: float | None = Field(None, description="Sortino ratio")
+    max_drawdown: float | None = Field(None, le=0.0, description="Maximum drawdown percentage")
+    volatility: float | None = Field(None, ge=0.0, description="Annualized volatility")
+    beta: float | None = Field(None, description="Beta relative to benchmark")
+    alpha: float | None = Field(None, description="Alpha (excess return)")
+    tracking_error: float | None = Field(None, ge=0.0, description="Tracking error vs benchmark")
+    correlation_with_benchmark: float | None = Field(None, ge=-1.0, le=1.0, description="Correlation with benchmark")
+    recommendation: Literal["BUY", "HOLD", "SELL"] | None = Field(None, description="Investment recommendation")
+    confidence: float | None = Field(None, ge=0.0, le=1.0, description="Recommendation confidence")
 
 
 class ETFTechnicalAnalysis(BaseModel):
@@ -179,27 +179,27 @@ class ETFTechnicalAnalysis(BaseModel):
     analysis_date: date = Field(description="Date of analysis")
 
     # ETF structure
-    factsheet: Optional[ETFFactsheet] = Field(None, description="ETF factsheet data")
-    replication_method: Optional[str] = Field(None, description="Replication method details")
-    lending_practices: Optional[str] = Field(None, description="Securities lending practices")
+    factsheet: ETFFactsheet | None = Field(None, description="ETF factsheet data")
+    replication_method: str | None = Field(None, description="Replication method details")
+    lending_practices: str | None = Field(None, description="Securities lending practices")
 
     # Performance
-    tracking_accuracy: Optional[str] = Field(None, description="Tracking accuracy assessment")
-    historical_performance: Optional[str] = Field(None, description="Historical performance summary")
+    tracking_accuracy: str | None = Field(None, description="Tracking accuracy assessment")
+    historical_performance: str | None = Field(None, description="Historical performance summary")
 
     # Technical indicators
-    technical_indicators: Optional[ETFTechnicalIndicators] = Field(None, description="Technical indicators")
+    technical_indicators: ETFTechnicalIndicators | None = Field(None, description="Technical indicators")
 
     # Quantitative analysis
-    quantitative_metrics: Optional[ETFQuantitativeMetrics] = Field(None, description="Quantitative metrics")
+    quantitative_metrics: ETFQuantitativeMetrics | None = Field(None, description="Quantitative metrics")
 
     # Management
-    fund_manager_assessment: Optional[str] = Field(None, description="Fund manager expertise assessment")
-    issuer_stability: Optional[str] = Field(None, description="Issuer stability assessment")
+    fund_manager_assessment: str | None = Field(None, description="Fund manager expertise assessment")
+    issuer_stability: str | None = Field(None, description="Issuer stability assessment")
 
     # Overall assessment
     investment_thesis: str = Field(description="Investment thesis summary", min_length=50)
-    liquidity_profile: Optional[str] = Field(None, description="Liquidity profile assessment")
+    liquidity_profile: str | None = Field(None, description="Liquidity profile assessment")
 
 
 class ETFRiskProfile(BaseModel):

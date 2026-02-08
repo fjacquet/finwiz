@@ -34,24 +34,18 @@ class TestCrewOutputParsing:
 
         def _setup(factory_instance, mock_result, crew_class_path):
             mocker.patch(crew_class_path)
-            mocker.patch.object(
-                factory_instance, "_run_crew_with_timeout", return_value=mock_result
-            )
+            mocker.patch.object(factory_instance, "_run_crew_with_timeout", return_value=mock_result)
 
         return _setup
 
     @pytest.fixture
     def mock_feature_enabled(self, mocker):
         """Mock is_feature_enabled to return True for all flags by default."""
-        return mocker.patch(
-            "finwiz.crew_factory.is_feature_enabled", return_value=True
-        )
+        return mocker.patch("finwiz.crew_factory.is_feature_enabled", return_value=True)
 
     # ---- Crypto crew: pydantic path ----
 
-    def test_crypto_crew_pydantic_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_crypto_crew_pydantic_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """Crypto crew with pydantic output uses model_dump()."""
         mock_pydantic = mocker.Mock()
         mock_pydantic.model_dump.return_value = {"recommendation": "BUY", "score": 0.85}
@@ -70,9 +64,7 @@ class TestCrewOutputParsing:
 
     # ---- Crypto crew: json_dict path ----
 
-    def test_crypto_crew_json_dict_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_crypto_crew_json_dict_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """Crypto crew with json_dict output uses json_dict directly."""
         mock_result = mocker.Mock()
         mock_result.pydantic = None
@@ -88,9 +80,7 @@ class TestCrewOutputParsing:
 
     # ---- Crypto crew: raw fallback path ----
 
-    def test_crypto_crew_raw_fallback_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_crypto_crew_raw_fallback_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """Crypto crew with no pydantic/json_dict falls back to raw output."""
         mock_result = mocker.Mock()
         mock_result.pydantic = None
@@ -106,9 +96,7 @@ class TestCrewOutputParsing:
 
     # ---- Crypto crew: pydantic model_dump error ----
 
-    def test_crypto_crew_pydantic_model_dump_error(
-        self, factory, mocker, mock_feature_enabled
-    ):
+    def test_crypto_crew_pydantic_model_dump_error(self, factory, mocker, mock_feature_enabled):
         """Pydantic model_dump() raising AttributeError triggers exception path."""
         mock_pydantic = mocker.Mock()
         mock_pydantic.model_dump.side_effect = AttributeError("no model_dump")
@@ -129,9 +117,7 @@ class TestCrewOutputParsing:
 
     # ---- Stock crew: pydantic path ----
 
-    def test_stock_crew_pydantic_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_stock_crew_pydantic_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """Stock crew with pydantic output uses model_dump()."""
         mock_pydantic = mocker.Mock()
         mock_pydantic.model_dump.return_value = {"recommendation": "SELL", "score": 0.3}
@@ -150,9 +136,7 @@ class TestCrewOutputParsing:
 
     # ---- Stock crew: json_dict path ----
 
-    def test_stock_crew_json_dict_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_stock_crew_json_dict_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """Stock crew with json_dict output uses json_dict directly."""
         mock_result = mocker.Mock()
         mock_result.pydantic = None
@@ -168,9 +152,7 @@ class TestCrewOutputParsing:
 
     # ---- Stock crew: raw fallback path ----
 
-    def test_stock_crew_raw_fallback_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_stock_crew_raw_fallback_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """Stock crew with no pydantic/json_dict falls back to raw output."""
         mock_result = mocker.Mock()
         mock_result.pydantic = None
@@ -186,9 +168,7 @@ class TestCrewOutputParsing:
 
     # ---- ETF crew: pydantic path ----
 
-    def test_etf_crew_pydantic_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_etf_crew_pydantic_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """ETF crew with pydantic output uses model_dump()."""
         mock_pydantic = mocker.Mock()
         mock_pydantic.model_dump.return_value = {"recommendation": "BUY", "expense_ratio": 0.03}
@@ -207,9 +187,7 @@ class TestCrewOutputParsing:
 
     # ---- ETF crew: raw fallback path ----
 
-    def test_etf_crew_raw_fallback_output(
-        self, factory, mocker, mock_crew_run, mock_feature_enabled
-    ):
+    def test_etf_crew_raw_fallback_output(self, factory, mocker, mock_crew_run, mock_feature_enabled):
         """ETF crew with no pydantic/json_dict falls back to raw output."""
         mock_result = mocker.Mock()
         mock_result.pydantic = None
@@ -237,9 +215,7 @@ class TestCrewOutputParsing:
 
     # ---- Stock crew execution failure with error handler ----
 
-    def test_stock_crew_execution_failure_uses_error_handler(
-        self, factory, mocker, mock_feature_enabled
-    ):
+    def test_stock_crew_execution_failure_uses_error_handler(self, factory, mocker, mock_feature_enabled):
         """Stock crew failure invokes error_handler.handle_crew_failure for fallback."""
         mocker.patch("finwiz.crew_factory.StockCrew")
         mocker.patch.object(

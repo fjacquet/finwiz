@@ -16,9 +16,14 @@ class TestNewcomerCandidate:
     def test_valid_candidate(self):
         """Valid candidate is created without errors."""
         c = NewcomerCandidate(
-            ticker="TSLA", name="Tesla Inc.", asset_class="stock",
-            source="universe", composite_score=0.85, grade="A",
-            recommendation="BUY", rationale="Strong growth",
+            ticker="TSLA",
+            name="Tesla Inc.",
+            asset_class="stock",
+            source="universe",
+            composite_score=0.85,
+            grade="A",
+            recommendation="BUY",
+            rationale="Strong growth",
         )
         assert c.ticker == "TSLA"
         assert c.composite_score == 0.85
@@ -52,8 +57,11 @@ class TestNewcomerCandidate:
     def test_model_dump_serialization(self):
         """model_dump() produces serializable dict."""
         c = NewcomerCandidate(
-            ticker="AMZN", asset_class="stock", composite_score=0.9,
-            grade="A", metadata={"sector": "tech"},
+            ticker="AMZN",
+            asset_class="stock",
+            composite_score=0.9,
+            grade="A",
+            metadata={"sector": "tech"},
         )
         d = c.model_dump()
         assert d["ticker"] == "AMZN"
@@ -64,12 +72,16 @@ class TestNewcomerCandidate:
     def test_with_enrichment(self):
         """Candidate with enrichment data."""
         enrichment = EnrichmentResult(
-            articles_found=5, summary="Positive outlook",
-            key_insights=["Strong earnings"], success=True,
+            articles_found=5,
+            summary="Positive outlook",
+            key_insights=["Strong earnings"],
+            success=True,
         )
         c = NewcomerCandidate(
-            ticker="GOOG", asset_class="stock",
-            composite_score=0.88, enrichment=enrichment,
+            ticker="GOOG",
+            asset_class="stock",
+            composite_score=0.88,
+            enrichment=enrichment,
         )
         assert c.enrichment is not None
         assert c.enrichment.articles_found == 5
@@ -86,9 +98,12 @@ class TestEnrichmentResult:
     def test_valid_enrichment(self):
         """Valid enrichment result is created."""
         e = EnrichmentResult(
-            source="perplexity_sonar", query="TSLA analysis",
-            articles_found=3, summary="Positive outlook",
-            key_insights=["Strong Q4", "EV market share"], success=True,
+            source="perplexity_sonar",
+            query="TSLA analysis",
+            articles_found=3,
+            summary="Positive outlook",
+            key_insights=["Strong Q4", "EV market share"],
+            success=True,
         )
         assert e.articles_found == 3
         assert len(e.key_insights) == 2
@@ -125,9 +140,12 @@ class TestNewcomerDiscoveryResult:
             NewcomerCandidate(ticker="B", asset_class="stock", composite_score=0.8),
         ]
         r = NewcomerDiscoveryResult(
-            asset_class="stock", session_id="sess-1",
-            timestamp="2026-01-01T00:00:00", candidates=candidates,
-            total_candidates=2, summary="Found 2 candidates",
+            asset_class="stock",
+            session_id="sess-1",
+            timestamp="2026-01-01T00:00:00",
+            candidates=candidates,
+            total_candidates=2,
+            summary="Found 2 candidates",
         )
         assert r.total_candidates == 2
         assert len(r.candidates) == 2
@@ -135,8 +153,10 @@ class TestNewcomerDiscoveryResult:
     def test_empty_result(self):
         """Discovery result with no candidates."""
         r = NewcomerDiscoveryResult(
-            asset_class="etf", session_id="sess-2",
-            timestamp="2026-01-01T00:00:00", summary="No candidates",
+            asset_class="etf",
+            session_id="sess-2",
+            timestamp="2026-01-01T00:00:00",
+            summary="No candidates",
         )
         assert r.total_candidates == 0
         assert r.candidates == []
@@ -144,9 +164,12 @@ class TestNewcomerDiscoveryResult:
     def test_enrichment_tracking(self):
         """Enrichment attempt/success counts are tracked."""
         r = NewcomerDiscoveryResult(
-            asset_class="crypto", session_id="s",
-            timestamp="2026-01-01T00:00:00", summary="test",
-            enrichment_attempted=5, enrichment_succeeded=3,
+            asset_class="crypto",
+            session_id="s",
+            timestamp="2026-01-01T00:00:00",
+            summary="test",
+            enrichment_attempted=5,
+            enrichment_succeeded=3,
         )
         assert r.enrichment_attempted == 5
         assert r.enrichment_succeeded == 3
@@ -155,9 +178,12 @@ class TestNewcomerDiscoveryResult:
         """Full model serialization produces valid dict."""
         c = NewcomerCandidate(ticker="X", asset_class="stock", composite_score=0.5)
         r = NewcomerDiscoveryResult(
-            asset_class="stock", session_id="s",
-            timestamp="2026-01-01T00:00:00", candidates=[c],
-            total_candidates=1, summary="test",
+            asset_class="stock",
+            session_id="s",
+            timestamp="2026-01-01T00:00:00",
+            candidates=[c],
+            total_candidates=1,
+            summary="test",
         )
         d = r.model_dump()
         assert isinstance(d, dict)

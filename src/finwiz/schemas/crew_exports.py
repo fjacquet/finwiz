@@ -9,7 +9,7 @@ All schemas use strict validation with extra='forbid' to ensure data quality.
 """
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -88,7 +88,7 @@ class ETFCrewExport(CrewExportBase):
 
     # Cost Analysis
     expense_ratio: float = Field(..., ge=0.0, le=5.0, description="Total expense ratio (percentage)")
-    tracking_error: Optional[float] = Field(None, description="Tracking error vs benchmark (if applicable)")
+    tracking_error: float | None = Field(None, description="Tracking error vs benchmark (if applicable)")
 
     # Recommendations
     recommendation: Literal["BUY", "HOLD", "SELL"] = Field(..., description="Investment recommendation")
@@ -264,13 +264,13 @@ class ConsolidatedReportExport(BaseModel):
     etf_analyses: list[ETFCrewExport] = Field(default_factory=list, description="All ETF analysis results")
     crypto_analyses: list[CryptoCrewExport] = Field(default_factory=list, description="All crypto analysis results")
     deep_analyses: list[DeepAnalysisCrewExport | PythonDeepAnalysisResult] = Field(default_factory=list, description="All deep analysis results (CrewAI or Python)")
-    discovery_results: Optional[DiscoveryCrewExport] = Field(None, description="Investment discovery results (single)")
-    rebalancing_results: Optional[RebalancingCrewExport] = Field(None, description="Portfolio rebalancing results (single)")
+    discovery_results: DiscoveryCrewExport | None = Field(None, description="Investment discovery results (single)")
+    rebalancing_results: RebalancingCrewExport | None = Field(None, description="Portfolio rebalancing results (single)")
 
     # Additional Data (optional, set by consolidator)
-    portfolio_data: Optional[dict[str, Any]] = Field(None, description="Portfolio review data")
-    aplus_opportunities: Optional[dict[str, Any]] = Field(None, description="A+ investment opportunities")
-    backtesting_data: Optional[dict[str, Any]] = Field(None, description="Backtesting results")
+    portfolio_data: dict[str, Any] | None = Field(None, description="Portfolio review data")
+    aplus_opportunities: dict[str, Any] | None = Field(None, description="A+ investment opportunities")
+    backtesting_data: dict[str, Any] | None = Field(None, description="Backtesting results")
 
     # Execution Metadata
     crew_execution_status: dict[str, str] = Field(default_factory=dict, description="Execution status for each crew (completed/failed)")

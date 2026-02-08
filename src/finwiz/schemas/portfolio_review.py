@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -31,20 +31,20 @@ class Alternative(BaseModel):
 
     # A+ discovery enhancement fields
     is_a_plus_candidate: bool = Field(default=False, description="Whether this is an A+ grade candidate")
-    discovery_source: Optional[str] = Field(None, description="Source of A+ discovery (e.g., 'investment_discovery_crew')")
-    confidence_level: Optional[float] = Field(None, ge=0.0, le=1.0, description="Confidence in A+ classification")
-    expected_annual_benefit: Optional[float] = Field(None, description="Expected annual benefit in percentage points")
+    discovery_source: str | None = Field(None, description="Source of A+ discovery (e.g., 'investment_discovery_crew')")
+    confidence_level: float | None = Field(None, ge=0.0, le=1.0, description="Confidence in A+ classification")
+    expected_annual_benefit: float | None = Field(None, description="Expected annual benefit in percentage points")
 
     # NEW: Transition strategy fields
     transition_strategy: str = Field(default="", description="Strategy for transitioning to this alternative")
     swap_timing: Literal["immediate", "gradual", "tax_optimized"] = Field(default="gradual", description="Recommended timing for swap")
     tax_implications: str = Field(default="", description="Tax considerations for the swap")
-    expected_cost_basis_impact: Optional[float] = Field(None, description="Expected impact on cost basis")
+    expected_cost_basis_impact: float | None = Field(None, description="Expected impact on cost basis")
 
     # NEW: Comparison metrics
-    expense_ratio_savings: Optional[float] = Field(None, description="Expense ratio savings for ETFs")
-    fundamental_improvement: Optional[dict] = Field(None, description="Fundamental metric improvements for stocks")
-    liquidity_improvement: Optional[float] = Field(None, description="Liquidity improvement for crypto")
+    expense_ratio_savings: float | None = Field(None, description="Expense ratio savings for ETFs")
+    fundamental_improvement: dict | None = Field(None, description="Fundamental metric improvements for stocks")
+    liquidity_improvement: float | None = Field(None, description="Liquidity improvement for crypto")
 
 
 class APlusImprovementSuggestion(BaseModel):
@@ -61,7 +61,7 @@ class APlusImprovementSuggestion(BaseModel):
     allocation_percentage: float = Field(..., ge=0.0, le=100.0, description="Recommended allocation percentage")
     implementation_priority: Priority = Field(..., description="Implementation priority")
     rationale: str = Field(..., description="Detailed rationale for the improvement")
-    expected_annual_benefit: Optional[float] = Field(None, description="Expected annual benefit in percentage points")
+    expected_annual_benefit: float | None = Field(None, description="Expected annual benefit in percentage points")
     risk_impact_description: str = Field(..., description="Description of risk impact")
     cost_analysis: dict[str, float] = Field(default_factory=dict, description="Transaction costs and fees")
     implementation_notes: list[str] = Field(default_factory=list, description="Implementation considerations")
@@ -74,17 +74,17 @@ class PriceTargets(BaseModel):
 
     current_price: float
     currency: str
-    fair_value_estimate: Optional[float] = None
+    fair_value_estimate: float | None = None
 
     # Buy targets
-    buy_target_primary: Optional[float] = None
-    buy_target_secondary: Optional[float] = None
+    buy_target_primary: float | None = None
+    buy_target_secondary: float | None = None
     buy_rationale: str = ""
 
     # Sell targets
-    sell_target_primary: Optional[float] = None
-    sell_target_secondary: Optional[float] = None
-    stop_loss_level: Optional[float] = None
+    sell_target_primary: float | None = None
+    sell_target_secondary: float | None = None
+    stop_loss_level: float | None = None
     sell_rationale: str = ""
 
     # Technical levels
@@ -135,18 +135,18 @@ class HoldingDecision(BaseModel):
     alternatives: list[Alternative] = Field(default_factory=list, max_length=3)
 
     # NEW: Price targets and position sizing
-    price_targets: Optional[PriceTargets] = None
-    position_sizing: Optional[PositionSizeRecommendation] = None
+    price_targets: PriceTargets | None = None
+    position_sizing: PositionSizeRecommendation | None = None
 
     # A+ improvement suggestions enhancement
     a_plus_improvement_suggestions: list[APlusImprovementSuggestion] = Field(default_factory=list, max_length=5, description="A+ improvement suggestions for this holding")
     has_a_plus_opportunities: bool = Field(default=False, description="Whether A+ improvement opportunities exist for this holding")
-    current_grade_potential: Optional[str] = Field(None, description="Assessment of current holding's potential for grade improvement")
+    current_grade_potential: str | None = Field(None, description="Assessment of current holding's potential for grade improvement")
 
     # NEW: Data freshness and crew analysis tracking
     data_freshness: Literal["fresh", "recent", "stale"] = Field(default="stale", description="Freshness of analysis data")
-    crew_analysis_used: Optional[str] = Field(None, description="Which crew analysis was used (stock_crew/etf_crew/crypto_crew)")
-    analysis_date: Optional[datetime] = Field(None, description="When the analysis was performed")
+    crew_analysis_used: str | None = Field(None, description="Which crew analysis was used (stock_crew/etf_crew/crypto_crew)")
+    analysis_date: datetime | None = Field(None, description="When the analysis was performed")
 
 
 class APlusOpportunitySection(BaseModel):
@@ -170,7 +170,7 @@ class APlusOpportunitySection(BaseModel):
     total_expected_annual_benefit: float = Field(default=0.0, description="Total expected annual benefit")
 
     # Discovery metadata
-    last_discovery_date: Optional[datetime] = Field(None, description="When A+ discovery was last performed")
+    last_discovery_date: datetime | None = Field(None, description="When A+ discovery was last performed")
     discovery_coverage: list[str] = Field(default_factory=list, description="Asset types covered in discovery")
     market_conditions_note: str = Field(default="", description="Note about market conditions during discovery")
 

@@ -13,13 +13,12 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from finwiz.integration.data_accessor import CrewDataAccessor
-from finwiz.utils.core_analysis_error_handler import CoreAnalysisErrorHandler
-
 from finwiz.crew_factory import CrewFactory
 from finwiz.flow_state import FlowStateManager
+from finwiz.integration.data_accessor import CrewDataAccessor
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.tools.logger import get_logger, setup_logging
+from finwiz.utils.core_analysis_error_handler import CoreAnalysisErrorHandler
 
 # Setup logging
 log_dir = Path(__file__).parent / "logs"

@@ -11,8 +11,11 @@ from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 
 def _make_candidate(ticker: str, score: float = 0.0) -> NewcomerCandidate:
     return NewcomerCandidate(
-        ticker=ticker, name=f"{ticker} Corp.", asset_class="stock",
-        source="test", composite_score=score,
+        ticker=ticker,
+        name=f"{ticker} Corp.",
+        asset_class="stock",
+        source="test",
+        composite_score=score,
     )
 
 
@@ -64,6 +67,7 @@ class TestCandidateScorer:
 
         scores_to_grades = [(0.96, "A+"), (0.88, "A"), (0.81, "B+"), (0.5, "D"), (0.3, "F")]
         for score, grade in scores_to_grades:
+
             def mock_score(candidate, s=score, g=grade):
                 candidate.composite_score = s
                 candidate.grade = g
@@ -95,7 +99,9 @@ class TestCandidateScorer:
 
         mod = importlib.import_module("finwiz.scoring.discovery.candidate_scorer")
         candidate = NewcomerCandidate(
-            ticker="MINI", asset_class="stock", composite_score=0.0,
+            ticker="MINI",
+            asset_class="stock",
+            composite_score=0.0,
         )
         result = mod.CandidateScorer().score(candidate)
         assert result.composite_score == 0.4

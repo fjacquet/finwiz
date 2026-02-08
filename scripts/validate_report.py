@@ -12,9 +12,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from finwiz.validation.report_validator import validate_report_file
-
 from finwiz.tools.logger import get_logger
+from finwiz.validation.report_validator import validate_report_file
 
 logger = get_logger(__name__)
 
