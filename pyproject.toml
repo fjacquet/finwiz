@@ -55,6 +55,7 @@ dependencies = [
     "langchain-openai>=1.0.3",
     "fastapi>=0.128.0",
     "cryptography>=46.0.3",
+    "aiolimiter>=1.2.1",
 ]
 
 [project.scripts]

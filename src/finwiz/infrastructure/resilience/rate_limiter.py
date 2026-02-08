@@ -1,228 +1,101 @@
 """
 Rate limiting and throttling utilities for external API calls.
 
-This module provides comprehensive rate limiting, throttling, and retry strategies
-for all external API integrations to prevent rate limit violations and ensure
-reliable operation.
+This module provides token-bucket rate limiting using aiolimiter, retry strategies
+with exponential backoff, and monitoring for all external API integrations.
 """
 
 import asyncio
 import time
 from collections import defaultdict, deque
 from collections.abc import Callable
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
+from aiolimiter import AsyncLimiter
+
+from finwiz.infrastructure.resilience.rate_limiter_config import (
+    DEFAULT_RATE_LIMITS,
+    APIProvider,
+    RateLimitConfig,
+    RequestRecord,
+)
 from finwiz.tools.logger import get_logger
+
+# Re-export for backward compatibility
+__all__ = [
+    "APIProvider",
+    "RateLimitConfig",
+    "DEFAULT_RATE_LIMITS",
+    "RequestRecord",
+    "RateLimiter",
+    "get_rate_limiter",
+    "with_rate_limit",
+]
 
 logger = get_logger(__name__)
 
 
-class APIProvider(str, Enum):
-    """Supported API providers with their rate limits."""
-
-    ALPHA_VANTAGE = "alpha_vantage"
-    ALPHA_VANTAGE_PREMIUM = "alpha_vantage_premium"
-    YAHOO_FINANCE = "yahoo_finance"
-    TWELVE_DATA = "twelve_data"
-    TWELVE_DATA_PREMIUM = "twelve_data_premium"
-    CHART_IMG = "chart_img"
-    COINMARKETCAP = "coinmarketcap"
-    KRAKEN = "kraken"
-    SEC_EDGAR = "sec_edgar"
-    PERPLEXITY = "perplexity"
-
-
-@dataclass
-class RateLimitConfig:
-    """Configuration for API rate limiting."""
-
-    requests_per_minute: int
-    requests_per_hour: int = 0
-    requests_per_day: int = 0
-    burst_limit: int = 5
-    cooldown_seconds: float = 1.0
-    max_retries: int = 3
-    base_backoff: float = 1.0
-    max_backoff: float = 60.0
-    jitter: bool = True
-
-
-# Default rate limit configurations for each API provider
-DEFAULT_RATE_LIMITS: dict[APIProvider, RateLimitConfig] = {
-    APIProvider.ALPHA_VANTAGE: RateLimitConfig(
-        requests_per_minute=5,
-        requests_per_hour=500,
-        requests_per_day=500,
-        burst_limit=2,
-        cooldown_seconds=12.0,  # 5 requests per minute = 12 seconds between requests
-        max_retries=3,
-        base_backoff=2.0,
-        max_backoff=120.0,
-    ),
-    APIProvider.ALPHA_VANTAGE_PREMIUM: RateLimitConfig(
-        requests_per_minute=75,
-        requests_per_hour=4500,
-        requests_per_day=75000,
-        burst_limit=10,
-        cooldown_seconds=0.8,  # 75 requests per minute
-        max_retries=3,
-        base_backoff=1.0,
-        max_backoff=60.0,
-    ),
-    APIProvider.YAHOO_FINANCE: RateLimitConfig(
-        requests_per_minute=600,  # 10 requests per second
-        requests_per_hour=36000,
-        burst_limit=20,
-        cooldown_seconds=0.1,  # 10 requests per second
-        max_retries=3,
-        base_backoff=1.0,
-        max_backoff=30.0,
-    ),
-    APIProvider.TWELVE_DATA: RateLimitConfig(
-        requests_per_minute=8,
-        requests_per_hour=480,
-        requests_per_day=800,
-        burst_limit=3,
-        cooldown_seconds=7.5,  # 8 requests per minute
-        max_retries=3,
-        base_backoff=2.0,
-        max_backoff=60.0,
-    ),
-    APIProvider.TWELVE_DATA_PREMIUM: RateLimitConfig(
-        requests_per_minute=800,
-        requests_per_hour=48000,
-        requests_per_day=800000,
-        burst_limit=50,
-        cooldown_seconds=0.075,  # 800 requests per minute
-        max_retries=3,
-        base_backoff=0.5,
-        max_backoff=30.0,
-    ),
-    APIProvider.CHART_IMG: RateLimitConfig(
-        requests_per_minute=30,
-        requests_per_hour=1000,
-        burst_limit=5,
-        cooldown_seconds=2.0,
-        max_retries=3,
-        base_backoff=1.0,
-        max_backoff=30.0,
-    ),
-    APIProvider.COINMARKETCAP: RateLimitConfig(
-        requests_per_minute=30,
-        requests_per_hour=1000,
-        requests_per_day=10000,
-        burst_limit=5,
-        cooldown_seconds=2.0,
-        max_retries=3,
-        base_backoff=1.0,
-        max_backoff=60.0,
-    ),
-    APIProvider.KRAKEN: RateLimitConfig(
-        requests_per_minute=60,
-        requests_per_hour=1000,
-        burst_limit=10,
-        cooldown_seconds=1.0,
-        max_retries=3,
-        base_backoff=1.0,
-        max_backoff=30.0,
-    ),
-    APIProvider.SEC_EDGAR: RateLimitConfig(
-        requests_per_minute=10,
-        requests_per_hour=600,
-        burst_limit=3,
-        cooldown_seconds=6.0,  # 10 requests per minute
-        max_retries=3,
-        base_backoff=2.0,
-        max_backoff=60.0,
-    ),
-    APIProvider.PERPLEXITY: RateLimitConfig(
-        requests_per_minute=30,
-        requests_per_hour=1200,
-        burst_limit=5,
-        cooldown_seconds=2.0,
-        max_retries=3,
-        base_backoff=1.0,
-        max_backoff=30.0,
-    ),
-}
-
-
-@dataclass
-class RequestRecord:
-    """Record of an API request for rate limiting tracking."""
-
-    timestamp: float
-    endpoint: str
-    success: bool = True
-
-
 class RateLimiter:
     """
-    Thread-safe rate limiter with sliding window and exponential backoff.
+    Token-bucket rate limiter using aiolimiter with monitoring and retry support.
 
-    Tracks requests per provider and endpoint, implements throttling,
-    and provides retry strategies with exponential backoff.
+    Each API provider gets its own AsyncLimiter instance configured from
+    DEFAULT_RATE_LIMITS. The token bucket handles synchronization internally,
+    eliminating the need for an external asyncio.Lock.
     """
 
     def __init__(self, config: dict[APIProvider, RateLimitConfig] | None = None) -> None:
-        """Initialize rate limiter with configuration."""
+        """Initialize rate limiter with per-provider token buckets."""
         self.config = config or DEFAULT_RATE_LIMITS
+
+        # Create a token-bucket limiter per provider
+        self._limiters: dict[APIProvider, AsyncLimiter] = {}
+        for provider, cfg in self.config.items():
+            # max_rate = burst capacity, time_period = window that achieves correct per-minute rate
+            time_period = 60.0 / cfg.requests_per_minute * cfg.burst_limit
+            self._limiters[provider] = AsyncLimiter(max_rate=cfg.burst_limit, time_period=time_period)
+
+        # Monitoring / stats (kept for observability)
         self.request_history: dict[APIProvider, deque] = defaultdict(deque)
         self.last_request_time: dict[APIProvider, float] = {}
         self.retry_counts: dict[str, int] = defaultdict(int)
-        self._lock = asyncio.Lock()
 
     async def acquire(self, provider: APIProvider, endpoint: str = "") -> bool:
         """
-        Acquire permission to make an API request.
+        Acquire permission to make an API request via the token bucket.
 
         Args:
             provider: API provider to check limits for
             endpoint: Specific endpoint being called
 
         Returns:
-            True if request is allowed, False if rate limited
+            True once a token has been acquired (waits if necessary)
 
         """
-        async with self._lock:
-            config = self.config.get(provider)
-            if not config:
-                logger.warning(f"No rate limit config for provider {provider}")
-                return True
-
-            now = time.time()
-            history = self.request_history[provider]
-
-            # Clean old requests from sliding window
-            self._clean_old_requests(history, now)
-
-            # Check if we're within rate limits
-            if not self._check_rate_limits(history, config, now):
-                stats = self._get_current_stats(history, config, now)
-                logger.warning(
-                    f"Rate limit exceeded for {provider} - "
-                    f"Minute: {stats['minute_count']}/{config.requests_per_minute}, "
-                    f"Hour: {stats['hour_count']}/{config.requests_per_hour}, "
-                    f"Day: {stats['day_count']}/{config.requests_per_day}"
-                )
-                return False
-
-            # Check cooldown period
-            last_request = self.last_request_time.get(provider, 0)
-            time_since_last = now - last_request
-
-            if time_since_last < config.cooldown_seconds:
-                sleep_time = config.cooldown_seconds - time_since_last
-                logger.info(f"Rate limit throttling for {provider}: sleeping {sleep_time:.2f}s (cooldown: {config.cooldown_seconds}s)")
-                await asyncio.sleep(sleep_time)
-
-            # Record the request
-            history.append(RequestRecord(timestamp=now, endpoint=endpoint))
-            self.last_request_time[provider] = now
-
+        limiter = self._limiters.get(provider)
+        if not limiter:
+            logger.warning(f"No rate limit config for provider {provider}")
             return True
+
+        # Wait for a token (aiolimiter handles queuing internally)
+        await limiter.acquire()
+
+        # Record the request for monitoring
+        now = time.time()
+        history = self.request_history[provider]
+        self._clean_old_requests(history, now)
+        history.append(RequestRecord(timestamp=now, endpoint=endpoint))
+        self.last_request_time[provider] = now
+
+        return True
+
+    async def wait_for_availability(self, provider: APIProvider, endpoint: str = "") -> None:
+        """Wait until a request can be made for the given provider."""
+        try:
+            await asyncio.wait_for(self.acquire(provider, endpoint), timeout=300)
+        except TimeoutError:
+            logger.error(f"Timeout waiting for rate limit availability for {provider}")
+            raise TimeoutError(f"Rate limit timeout for {provider}")
 
     def _clean_old_requests(self, history: deque, now: float) -> None:
         """Remove requests older than 1 hour from history."""
@@ -240,36 +113,6 @@ class RateLimiter:
             "hour_count": hour_count,
             "day_count": day_count,
         }
-
-    def _check_rate_limits(self, history: deque, config: RateLimitConfig, now: float) -> bool:
-        """Check if current request count is within limits."""
-        stats = self._get_current_stats(history, config, now)
-
-        # Check against limits
-        return not (
-            stats["minute_count"] >= config.requests_per_minute
-            or (config.requests_per_hour > 0 and stats["hour_count"] >= config.requests_per_hour)
-            or (config.requests_per_day > 0 and stats["day_count"] >= config.requests_per_day)
-        )
-
-    async def wait_for_availability(self, provider: APIProvider, endpoint: str = "") -> None:
-        """Wait until a request can be made for the given provider."""
-        config = self.config.get(provider)
-        if not config:
-            return
-
-        max_wait_time = 300  # 5 minutes maximum wait
-        start_time = time.time()
-
-        while time.time() - start_time < max_wait_time:
-            if await self.acquire(provider, endpoint):
-                return
-
-            # Wait before checking again
-            await asyncio.sleep(config.cooldown_seconds)
-
-        logger.error(f"Timeout waiting for rate limit availability for {provider}")
-        raise TimeoutError(f"Rate limit timeout for {provider}")
 
     def get_retry_delay(self, provider: APIProvider, attempt: int) -> float:
         """Calculate exponential backoff delay for retry attempts."""
