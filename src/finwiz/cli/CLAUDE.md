@@ -1,58 +1,35 @@
 # CLI Module
 
-This directory contains command-line interface utilities for parsing arguments and running FinWiz from the terminal.
+Command-line interface utilities for configuring and launching FinWiz.
 
 ## Directory Structure
 
 ```
 cli/
-├── argument_parser.py    # Main argument parsing logic
-└── __init__.py
+├── __init__.py
+└── argument_parser.py    # Configuration and argument parsing
 ```
 
-## Major Entry Points
+## Entry Points
 
-| File | Class/Function | Purpose |
-|------|---------------|---------|
-| `argument_parser.py` | `parse_args()` | Parse command line arguments |
-| `argument_parser.py` | `create_parser()` | Create ArgumentParser with all options |
-| `argument_parser.py` | `validate_args()` | Validate argument combinations |
+| File | Function | Purpose |
+|------|----------|---------|
+| `argument_parser.py` | `parse_arguments()` | Parse command-line arguments |
+| `argument_parser.py` | `initialize_configuration()` | Load and validate configuration |
+| `argument_parser.py` | `initialize_environment()` | Set up environment and retry mechanism |
+| `argument_parser.py` | `initialize_flow()` | Create and configure FinwizFlow instance |
 
-## CLI Options
-
-```bash
-# Full portfolio analysis
-crewai flow kickoff
-
-# Specific ticker analysis
-uv run python src/finwiz/main.py --ticker AAPL
-
-# A+ discovery mode
-uv run python src/finwiz/main.py --discovery
-
-# Portfolio rebalancing
-uv run python src/finwiz/main.py --rebalancing
-
-# Verbose mode
-uv run python src/finwiz/main.py --verbose
-
-# Specify portfolio file
-uv run python src/finwiz/main.py --portfolio data/portfolio.csv
-```
-
-## Usage in Code
+## Usage
 
 ```python
-from finwiz.cli.argument_parser import parse_args
+from finwiz.cli.argument_parser import parse_arguments, initialize_configuration
 
-args = parse_args()
-if args.ticker:
-    run_single_ticker_analysis(args.ticker)
-elif args.discovery:
-    run_discovery_mode()
+args = parse_arguments()
+config = initialize_configuration()
 ```
 
 ## Related Modules
 
-- `finwiz.main` - Main entry point
-- `finwiz.flows.flow_orchestrator` - Flow execution
+- `finwiz.main` — Main entry point that calls CLI functions
+- `finwiz.core.app_initializer` — Uses CLI functions during bootstrap
+- `finwiz.flows.orchestrator` — Flow created by `initialize_flow()`

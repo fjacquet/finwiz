@@ -1,47 +1,44 @@
 # Core Module
 
-This directory contains core application initialization and bootstrapping logic.
+Application bootstrapping and entry point for the FinWiz platform.
 
 ## Directory Structure
 
 ```
 core/
-├── app_initializer.py    # Application initialization logic
-└── __init__.py
+├── __init__.py
+└── app_initializer.py    # Main entry point
 ```
 
-## Major Entry Points
+## Entry Points
 
-| File | Class/Function | Purpose |
-|------|---------------|---------|
-| `app_initializer.py` | `AppInitializer` | Initializes all FinWiz components |
-| `app_initializer.py` | `initialize_app()` | Main entry point for app setup |
-| `app_initializer.py` | `validate_environment()` | Check required env vars |
-| `app_initializer.py` | `setup_logging()` | Configure logging infrastructure |
+| File | Function | Purpose |
+|------|----------|---------|
+| `app_initializer.py` | `kickoff()` | Bootstraps and runs the full FinWiz flow |
 
-## Usage Pattern
+## Startup Sequence
+
+`kickoff()` performs these steps in order:
+
+1. Validate template variables at startup
+2. Initialize configuration (settings, env)
+3. Initialize environment and retry mechanism
+4. Create `FinwizState` instance
+5. Create `FinwizFlow` instance
+6. Execute the flow (`flow.kickoff()`)
+7. Returns `None`
+
+## Usage
 
 ```python
-from finwiz.core.app_initializer import initialize_app
+from finwiz.core.app_initializer import kickoff
 
-# Initialize application
-app = initialize_app()
-
-# Access initialized components
-cache = app.cache
-config = app.config
+kickoff()  # Runs the full analysis pipeline
 ```
-
-## Initialization Sequence
-
-1. Load environment variables
-2. Validate required API keys
-3. Initialize caching layer
-4. Setup logging
-5. Configure LLM clients
-6. Return initialized app context
 
 ## Related Modules
 
-- `finwiz.config.settings` - Configuration loading
-- `finwiz.utils.logging_helpers` - Logging setup
+- `finwiz.flows.orchestrator` — `FinwizFlow` created and executed by `kickoff()`
+- `finwiz.flow_state` — `FinwizState` created during bootstrap
+- `finwiz.config.settings` — Configuration loaded during init
+- `finwiz.validation.template` — Template variable validation at startup

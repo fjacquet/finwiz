@@ -1,184 +1,128 @@
 # Tools Module
 
-This directory contains all custom CrewAI tools for financial data retrieval, analysis, and processing. Tools are the primary way agents interact with external data sources and perform calculations.
+Custom CrewAI tools for financial data retrieval, analysis, and processing. Tools are how agents interact with external data and perform calculations.
 
 ## Directory Structure
 
 ```
 tools/
-├── analysis/              # Analysis coordination tools
-│   ├── analysis_coordinator.py
-│   └── holding_processors.py
-├── charts/                # Chart generation tools
-│   ├── chart_analysis.py
-│   └── chart_generator.py
-├── etf/                   # ETF-specific tools
-│   ├── etf_analyzers.py
-│   └── etf_data_fetchers.py
-├── rebalancing/           # Rebalancing report tools
-│   ├── css_*.py           # Styling components
-│   ├── template_*.py      # Template builders
-│   └── rebalancing_html_builders.py
-├── reporting/             # Report generation tools
-│   ├── report_formatters.py
+├── tool_factories.py                # MAIN: get_stock/etf/crypto/discovery_crew_tools()
+├── finance_tools.py                 # Core research tool bundles
+├── logger.py                        # get_logger() — project-wide logging
+│
+├── # Data source tools
+├── yahoo_finance_tool.py            # YahooFinanceTool (primary market data)
+├── yahoo_finance_news_tool.py       # News feed
+├── yahoo_finance_ticker_info_tool.py # Ticker info
+├── yahoo_finance_company_info_tool.py # Company fundamentals
+├── yahoo_finance_etf_holdings_tool.py # ETF holdings data
+├── yahoo_finance_history_tool.py    # Price history
+├── alpha_vantage_tool.py            # AlphaVantageTool
+├── alpha_vantage_news_tool.py       # AV news feed
+├── twelve_data_tool.py              # TwelveDataTool
+├── sec_tool.py                      # SECTool (10-K, 10-Q filings)
+├── coinmarketcap_tool.py            # CoinMarketCapTool
+├── kraken_api_tool.py               # KrakenAPITool
+├── perplexity_search_tool.py        # PerplexitySearchTool (AI research)
+│
+├── # Analysis tools
+├── quantitative_analysis_tool.py    # QuantitativeAnalysisTool
+├── valuation_tool.py                # ValuationTool (DCF, P/E)
+├── backtesting_tool.py              # BacktestingTool
+├── optimization_tool.py             # OptimizationTool
+├── risk_assessment_tool.py          # RiskAssessmentTool
+├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
+├── market_screening_tool.py         # MarketScreeningTool
+├── deep_analysis_scoring_tool.py    # DeepAnalysisScoringTool
+├── technical_analyzer.py            # TechnicalAnalyzer
+├── sentiment_analyzer.py            # SentimentAnalyzer
+├── chart_analyzer.py                # Chart analysis
+│
+├── # Enhanced tools (per-asset specialization)
+├── enhanced_crypto_tool.py          # CryptoAnalysisTool, CryptoThesisGenerator, CryptoRiskScoring
+├── enhanced_etf_tool.py             # Enhanced ETF analysis
+├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
+├── enhanced_sentiment_tool.py       # Enhanced sentiment
+├── enhanced_technical_analyzer_tool.py # Enhanced technical
+├── enhanced_twelve_data_tool.py     # Enhanced TwelveData
+├── a_plus_scoring_tool.py           # A+ scoring
+├── defi_metrics_tool.py             # DeFi metrics
+├── regulatory_compliance_tool.py    # Compliance checking
+├── alternative_finder_tool.py       # Alternative investments
+├── ticker_validation_tool.py        # Ticker validation
+├── price_target_calculator.py       # Price targets
+├── position_sizing_tool.py          # Position sizing
+│
+├── # Screening
+├── screening_criteria.py            # ScreeningCriteria (A+ thresholds)
+├── screening_utils.py               # Screening utilities
+├── screening_ranking.py             # Ranking logic
+│
+├── # Infrastructure
+├── tool_result.py                   # ToolResult class
+├── tool_input_validator.py          # Input validation
+├── tool_input_fixer.py              # Input fixing
+├── robust_tool_wrapper.py           # Error wrapping
+├── base_tools.py                    # AsyncFeedbackTool base
+├── custom_tool.py                   # Custom tool base
+├── crewai_retry_patch.py            # Retry patch
+├── llm_retry.py                     # LLM retry logic
+├── search_tool_factory.py           # Search tool factory
+├── web_tools.py                     # Web scraping
+│
+├── # Perplexity subsystem
+├── perplexity_logging.py
+├── perplexity_errors.py
+├── perplexity_integration_validator.py
+├── perplexity_analysis_integration.py
+├── perplexity_feature_utils.py
+├── perplexity_performance.py
+│
+├── # Subdirectories
+├── analysis/                        # Analysis coordination
+│   ├── analysis_coordinator.py      # HoldingAnalyzerOrchestrator
+│   └── holding_processors.py        # HoldingProcessor
+├── charts/                          # Chart generation
+├── etf/                             # ETF data fetchers
+│   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
+├── reporting/                       # Report formatters
+│   ├── report_formatters.py         # HTMLReportFormatter
 │   └── report_sections.py
-├── scoring/               # Python scoring algorithms
-│   ├── scoring_algorithms.py
-│   └── scoring_criteria.py
-├── sentiment/             # Sentiment analysis tools
-│   ├── sentiment_aggregators.py
-│   └── sentiment_calculators.py
-├── twelve_data/           # TwelveData API integration
-│   ├── transformers.py
-│   └── validators.py
-├── tool_factories.py      # MAIN: Centralized tool initialization
-├── finance_tools.py       # Core financial data tools
-├── quantitative_analysis_tool.py  # Quantitative metrics
-├── valuation_tool.py      # DCF, P/E valuation
-└── [many more specialized tools]
+├── scoring/                         # Scoring helpers
+│   ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
+│   └── scoring_algorithms.py
+├── sentiment/                       # Sentiment calculators
+│   └── sentiment_calculators.py     # SentimentCalculators
+└── twelve_data/                     # TwelveData helpers
+    ├── transformers.py
+    └── validators.py
 ```
 
-## Major Entry Points
+## Entry Points
 
-### Tool Factories (PRIMARY)
+| File | Function/Class | Purpose |
+|------|---------------|---------|
+| `tool_factories.py` | `get_stock_crew_tools()` | Stock crew tool set |
+| `tool_factories.py` | `get_etf_crew_tools()` | ETF crew tool set |
+| `tool_factories.py` | `get_crypto_crew_tools()` | Crypto crew tool set |
+| `tool_factories.py` | `get_discovery_crew_tools()` | Discovery crew tool set |
+| `tool_factories.py` | `get_deep_analysis_tools()` | Deep analysis tool set |
+| `logger.py` | `get_logger()` | Project-wide logger |
+| `screening_criteria.py` | `ScreeningCriteria` | A+ thresholds for screening |
 
-| File | Function | Purpose |
-|------|----------|---------|
-| `tool_factories.py` | `get_stock_crew_tools()` | Tools for stock analysis crews |
-| `tool_factories.py` | `get_etf_crew_tools()` | Tools for ETF analysis crews |
-| `tool_factories.py` | `get_crypto_crew_tools()` | Tools for crypto analysis crews |
-| `tool_factories.py` | `get_discovery_crew_tools()` | Tools for investment discovery |
-| `tool_factories.py` | `get_deep_analysis_tools()` | Tools for deep per-holding analysis |
+## Usage
 
-### Core Research Tools
-
-| File | Function | Purpose |
-|------|----------|---------|
-| `finance_tools.py` | `get_stock_research_tools()` | Yahoo Finance, SEC, news tools |
-| `finance_tools.py` | `get_etf_research_tools()` | ETF holdings, expense analysis |
-| `finance_tools.py` | `get_crypto_research_tools()` | CoinMarketCap, on-chain metrics |
-
-### Quantitative Tools
-
-| File | Class | Purpose |
-|------|-------|---------|
-| `quantitative_analysis_tool.py` | `QuantitativeAnalysisTool` | Backtrader, TA-Lib integration |
-| `valuation_tool.py` | `ValuationTool` | DCF, P/E, technical targets |
-| `backtesting_tool.py` | `BacktestingTool` | Strategy backtesting |
-| `optimization_tool.py` | `OptimizationTool` | Portfolio optimization |
-
-### Data Source Tools
-
-| File | Class | Purpose |
-|------|-------|---------|
-| `yahoo_finance_tool.py` | `YahooFinanceTool` | Primary market data |
-| `alpha_vantage_tool.py` | `AlphaVantageTool` | Fundamental data |
-| `twelve_data_tool.py` | `TwelveDataTool` | Real-time quotes |
-| `sec_tool.py` | `SECTool` | SEC filings (10-K, 10-Q) |
-| `coinmarketcap_tool.py` | `CoinMarketCapTool` | Crypto market data |
-| `kraken_api_tool.py` | `KrakenAPITool` | Crypto trading data |
-
-### Research Tools
-
-| File | Class | Purpose |
-|------|-------|---------|
-| `perplexity_search_tool.py` | `PerplexitySearchTool` | AI-powered research |
-
-## Tool Factory Pattern
-
-Always use factories to get tools, never instantiate directly:
+Always use factories, never instantiate tools directly:
 
 ```python
 from finwiz.tools.tool_factories import get_stock_crew_tools
 
-# Get standardized tool set
-tools = get_stock_crew_tools(
-    include_quantitative=True,
-    include_valuation=True,
-    prefetched_data=None  # or dict for batch mode
-)
-```
-
-## Creating a Custom Tool
-
-```python
-from crewai.tools import BaseTool
-from pydantic import Field
-
-class MyCustomTool(BaseTool):
-    name: str = "my_custom_tool"
-    description: str = "Description for the AI agent"
-
-    # Input schema
-    ticker: str = Field(..., description="Stock ticker symbol")
-
-    def _run(self, ticker: str) -> str:
-        # Tool implementation
-        result = fetch_data(ticker)
-        return json.dumps(result, default=str)
-```
-
-## Tool Best Practices
-
-1. **Return JSON**: Always return `json.dumps(data, default=str)`
-2. **Handle Errors**: Wrap in try/except, return error messages
-3. **Rate Limiting**: Use `max_rpm` in agent config
-4. **Caching**: Use `@cache_result` decorator for expensive calls
-5. **Validation**: Validate inputs with Pydantic
-
-## Tool Input/Output Validation
-
-```python
-from finwiz.tools.tool_input_validator import validate_tool_input
-from finwiz.tools.tool_result import ToolResult
-
-class SafeTool(BaseTool):
-    def _run(self, **kwargs) -> str:
-        # Validate input
-        validated = validate_tool_input(self.input_schema, kwargs)
-
-        # Execute
-        result = self.execute(validated)
-
-        # Return standardized result
-        return ToolResult(
-            success=True,
-            data=result
-        ).to_json()
-```
-
-## Batch Mode Support
-
-For high-performance batch processing:
-
-```python
-def get_stock_crew_tools(
-    prefetched_data: dict | None = None,  # Pre-fetched data for batch mode
-) -> list[BaseTool]:
-    if prefetched_data:
-        # Use pre-fetched data (10-20x faster)
-        return get_batch_mode_tools(prefetched_data)
-    else:
-        # Use live API calls (single ticker mode)
-        return get_live_mode_tools()
-```
-
-## Testing
-
-```bash
-# Test tool factories
-uv run pytest tests/unit/tools/test_tool_factories.py -v
-
-# Test specific tool
-uv run pytest tests/unit/tools/test_yahoo_finance_tool.py -v
-
-# Test all tools
-uv run pytest tests/unit/tools/ -v
+tools = get_stock_crew_tools(include_quantitative=True)
 ```
 
 ## Related Modules
 
-- `finwiz.data.adapters` - Data source adapters
-- `finwiz.quantitative` - Quantitative analysis library
-- `finwiz.integration` - Data integration layer
-- `finwiz.schemas.tools.inputs` - Tool input schemas
+- `finwiz.quantitative` — Quantitative analysis library
+- `finwiz.integration` — Data integration layer
+- `finwiz.schemas.tools.inputs` — Tool input schemas
+- `finwiz.crews` — Crews that use these tools

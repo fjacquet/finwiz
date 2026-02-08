@@ -1,61 +1,70 @@
 # Config Module
 
-This directory contains configuration management for the FinWiz platform, including environment settings, batch processing, and resilience configuration.
+Configuration management — environment settings, feature flags, LLM config, and performance tuning.
 
 ## Directory Structure
 
 ```
 config/
-├── settings.py                 # Main settings loader (Pydantic BaseSettings)
-├── batch_prefetch_config.py    # Batch processing configuration
-├── critical_fields_config.py   # Critical data field definitions
-├── portfolio_analysis_config.py # Portfolio analysis settings
-├── resilience_config.py        # Retry, timeout, circuit breaker config
-└── __init__.py
+├── __init__.py                      # Exports: FinWizSettings, get_settings(), etc.
+├── settings.py                      # MAIN: FinWizSettings (Pydantic BaseSettings)
+├── batch_prefetch_config.py         # Batch processing configuration
+├── critical_fields_config.py        # Critical data field definitions by asset class
+├── portfolio_analysis_config.py     # Portfolio analysis settings
+├── resilience_config.py             # Retry, timeout, circuit breaker config
+├── yfinance_config.py               # Yahoo Finance configuration
+├── manager.py                       # Runtime config management
+├── loader.py                        # Config loading utilities
+│
+├── features/                        # Feature flag system
+│   ├── __init__.py
+│   ├── flags.py                     # FeatureFlags, is_feature_enabled(), get_feature_flags()
+│   ├── definitions.py               # create_default_flags() — all flag definitions
+│   └── evaluators.py                # Flag evaluation logic
+│
+├── llm/                             # LLM model configuration
+│   └── llm_config.py                # get_configured_llm(), get_llm_for_crew(), model capabilities
+│
+└── performance/                     # Performance tuning
+    └── performance_config.py        # OptimizationMode, get_optimization_mode(), batch sizing
 ```
 
-## Major Entry Points
+## Entry Points
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `settings.py` | `Settings` | Main Pydantic settings class with env loading |
-| `settings.py` | `get_settings()` | Cached settings instance getter |
-| `batch_prefetch_config.py` | `BatchPrefetchConfig` | Batch mode toggle and sizing |
-| `resilience_config.py` | `ResilienceConfig` | Retry policies, timeouts |
-| `critical_fields_config.py` | `CRITICAL_FIELDS` | Required data fields by asset class |
-
-## Usage Pattern
-
-```python
-from finwiz.config.settings import get_settings
-
-settings = get_settings()
-api_key = settings.openai_api_key
-batch_size = settings.deep_analysis_batch_size
-```
+| `settings.py` | `FinWizSettings` | Main Pydantic settings (env loading) |
+| `settings.py` | `get_settings()` | Cached settings singleton |
+| `features/flags.py` | `is_feature_enabled()` | Check feature flag status |
+| `features/definitions.py` | `create_default_flags()` | All flag definitions |
+| `llm/llm_config.py` | `get_configured_llm()` | Get LLM for general use |
+| `llm/llm_config.py` | `get_llm_for_crew()` | Get LLM configured for crew execution |
+| `performance/performance_config.py` | `get_optimization_mode()` | Current performance mode |
 
 ## Environment Variables
 
-Key variables loaded from `.env`:
-
 ```bash
-# API Keys
-OPENAI_API_KEY=...
-SERPER_API_KEY=...
-ANTHROPIC_API_KEY=...
-
-# Batch Processing
+OPENAI_API_KEY=...           # Required
+SERPER_API_KEY=...           # Required
+ANTHROPIC_API_KEY=...        # Optional
 BATCH_PREFETCH_ENABLED=true
 DEEP_ANALYSIS_BATCH_SIZE=5
-BATCH_PREFETCH_MIN_HOLDINGS=10
-
-# Resilience
 MAX_RETRIES=3
-RETRY_DELAY=1.0
-CIRCUIT_BREAKER_THRESHOLD=5
+FF_NEWCOMER_DISCOVERY=false  # Feature flags use FF_ prefix
+```
+
+## Usage
+
+```python
+from finwiz.config.settings import get_settings
+from finwiz.config.features.flags import is_feature_enabled
+
+settings = get_settings()
+if is_feature_enabled("batch_prefetch"):
+    batch_size = settings.deep_analysis_batch_size
 ```
 
 ## Related Modules
 
-- `finwiz.utils.configuration_manager` - Runtime config management
-- `finwiz.utils.feature_flags` - Feature flag system
+- `finwiz.core.app_initializer` — Loads config during bootstrap
+- `finwiz.crews.helpers.llm_config` — Crew-specific LLM helpers
