@@ -5,6 +5,7 @@
 ## APIs & External Services
 
 **AI/LLM Providers:**
+
 - OpenAI - Primary LLM provider
   - SDK/Client: `langchain-openai`, `crewai`
   - Auth: `OPENAI_API_KEY`
@@ -31,6 +32,7 @@
   - Recommended models: Grok 4.1 Fast, Gemini 3 Flash, Claude Opus 4.5, DeepSeek V3.2
 
 **Search & Research:**
+
 - Serper - Web search API
   - SDK/Client: Custom integration
   - Auth: `SERPER_API_KEY`
@@ -53,6 +55,7 @@
   - Auth: `BRAVE_API_KEY`
 
 **Financial Data - Market Data:**
+
 - Yahoo Finance - Primary market data source
   - SDK/Client: `yfinance` >=0.2.62
   - Auth: None (public API)
@@ -76,6 +79,7 @@
   - Implementation: `src/finwiz/tools/twelve_data_*.py`
 
 **Financial Data - SEC Filings:**
+
 - SEC EDGAR - Public company filings
   - SDK/Client: `sec-edgar-downloader` >=5.0.0
   - Auth: None (public data)
@@ -86,6 +90,7 @@
   - Auth: `SEC_API_API_KEY`
 
 **Financial Data - Other:**
+
 - Intrinio - Financial data platform
   - SDK/Client: `intrinio` >=0.2.1
   - Auth: API key (env var not documented)
@@ -99,6 +104,7 @@
   - Auth: API key (env var not documented)
 
 **Cryptocurrency:**
+
 - CoinMarketCap - Crypto market data
   - Auth: `COINMARKETCAP_API_KEY`, `CMC_PRO_API_KEY`
   - Implementation: Tools for crypto analysis
@@ -108,6 +114,7 @@
   - Usage: Crypto trading data
 
 **Charting:**
+
 - ChartImg - Chart generation API
   - Auth: `CHART_IMG_API_KEY`, `CHARTIMG_API_KEY`
   - Feature flag: `FF_CHART_ANALYSIS`
@@ -116,6 +123,7 @@
 ## Data Storage
 
 **Databases:**
+
 - Supabase (PostgreSQL)
   - Connection: Environment variables (not explicitly documented)
   - Client: `supabase` >=2.22.4, `asyncpg` >=0.30.0
@@ -124,6 +132,7 @@
   - Implementation: Referenced in `src/finwiz/scoring/portfolio_deep_analyzer.py`
 
 **Vector Databases:**
+
 - Qdrant - Remote vector search
   - Client: `qdrant-client` >=1.16.0
   - Usage: LangChain embeddings, RAG
@@ -133,11 +142,13 @@
   - Usage: Local embeddings, similarity search
 
 **File Storage:**
+
 - Local filesystem - Primary storage
   - Locations: `cache/`, `output/`, `htmlcov/`, `logs/`
   - Reports: HTML and PDF in `output/`
 
 **Caching:**
+
 - Hybrid cache system
   - Backend: `CACHE_BACKEND` (memory, file, hybrid)
   - TTL: `CACHE_TTL` (default: 2700s = 45 minutes)
@@ -151,11 +162,13 @@
 ## Authentication & Identity
 
 **Auth Provider:**
+
 - None detected - No user authentication system
   - Application runs locally or in trusted environment
   - API keys managed via environment variables
 
 **API Key Management:**
+
 - Storage: `.env` file (not committed)
 - Loading: `python-dotenv` >=1.0.1
 - Validation: Optional rotation via `FINWIZ_ENABLE_API_KEY_ROTATION` (default: false)
@@ -163,9 +176,11 @@
 ## Monitoring & Observability
 
 **Error Tracking:**
+
 - None - No third-party error tracking service
 
 **Logs:**
+
 - Local logging - Custom logger in `src/finwiz/tools/logger.py`
   - Level: `FINWIZ_LOG_LEVEL` (default: INFO)
   - Structured: `FINWIZ_LOG_STRUCTURED` (default: true)
@@ -173,23 +188,27 @@
   - Output: `logs/` directory
 
 **Metrics:**
+
 - Internal metrics collection
   - Enabled: `FINWIZ_ENABLE_METRICS` (default: true)
   - Implementation: `src/finwiz/infrastructure/health/monitoring.py`
 
 **Telemetry:**
+
 - CrewAI telemetry disabled - `CREWAI_DISABLE_TELEMETRY=true`
 - OpenTelemetry SDK disabled - `OTEL_SDK_DISABLED=true`
 
 ## CI/CD & Deployment
 
 **Hosting:**
+
 - GitHub Pages - Documentation only
   - Platform: Static site hosting
   - Deployment: Automated via GitHub Actions
   - URL: `https://fjacquet.github.io/finwiz`
 
 **CI Pipeline:**
+
 - GitHub Actions
   - Workflow: `.github/workflows/docs.yml`
   - Triggers: Push to main (docs changes), PR, manual dispatch
@@ -198,6 +217,7 @@
   - Build tool: uv, MkDocs
 
 **Application Deployment:**
+
 - No CI/CD detected - Local execution only
   - Entry point: `uv run python src/finwiz/main.py`
   - CLI commands: `kickoff`, `run_crew`, `plot` (via `pyproject.toml`)
@@ -205,12 +225,14 @@
 ## Environment Configuration
 
 **Required env vars:**
+
 - `OPENAI_API_KEY` - OpenAI API access
 - `SERPER_API_KEY` - Web search
 - `FIRECRAWL_API_KEY` - Web scraping
 - `PPLX_API_KEY` - Perplexity research
 
 **Optional env vars:**
+
 - LLM: `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`
 - Financial: `ALPHA_VANTAGE_API_KEY`, `TWELVE_DATA_API_KEY`, `SEC_API_API_KEY`
 - Crypto: `COINMARKETCAP_API_KEY`, `KRAKEN_API_KEY`, `KRAKEN_API_SECRET`
@@ -218,25 +240,30 @@
 - Charts: `CHART_IMG_API_KEY`
 
 **Secrets location:**
+
 - `.env` file in project root (gitignored)
 - Environment-specific configs in `config/*.env`
 
 ## Webhooks & Callbacks
 
 **Incoming:**
+
 - None - No webhook endpoints detected
 
 **Outgoing:**
+
 - None - No outbound webhooks configured
 
 ## Feature Flags & Circuit Breakers
 
 **Feature Toggles:**
+
 - Environment-based - All flags in `.env` with `FF_` prefix
 - Implementation: `src/finwiz/config/features/flags.py`
 - Key flags: `FF_PERPLEXITY_RESEARCH`, `FF_TWELVE_DATA`, `FF_CHART_ANALYSIS`, `FF_PORTFOLIO_REBALANCING`
 
 **Circuit Breakers:**
+
 - Perplexity: `FF_PERPLEXITY_BREAKER_THRESHOLD=10`, `FF_PERPLEXITY_BREAKER_TIMEOUT=300`
 - TwelveData: `FF_TWELVE_DATA_BREAKER_THRESHOLD=3`, `FF_TWELVE_DATA_BREAKER_TIMEOUT=900`
 - ChartImg: `FF_CHART_BREAKER_THRESHOLD=2`, `FF_CHART_BREAKER_TIMEOUT=600`
@@ -246,6 +273,7 @@
 ## Rate Limiting
 
 **API Provider Rate Limits:**
+
 - Alpha Vantage: `ALPHA_VANTAGE_RATE_LIMIT` (default: 5 calls/min)
 - Application: `FINWIZ_RATE_LIMIT_ENABLED=true`, `FINWIZ_RATE_LIMIT_REQUESTS_PER_MINUTE=60`
 - Implementation: APIProvider enum in `src/finwiz/infrastructure/resilience/rate_limiter.py`
@@ -253,12 +281,14 @@
 ## Retry & Resilience
 
 **Retry Configuration:**
+
 - Max retries: `FINWIZ_MAX_RETRIES` (default: 3)
 - Base delay: `FINWIZ_RETRY_BASE_DELAY` (default: 2s)
 - Max delay: `FINWIZ_RETRY_MAX_DELAY` (default: 60s)
 - Implementation: `src/finwiz/config/resilience_config.py`
 
 **Timeouts:**
+
 - Holding analysis: `FINWIZ_HOLDING_TIMEOUT` (default: 300s)
 - Flow execution: `FINWIZ_FLOW_TIMEOUT` (default: 7200s)
 - Request timeout: `FINWIZ_REQUEST_TIMEOUT` (default: 30s)

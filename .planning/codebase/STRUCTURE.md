@@ -62,6 +62,7 @@ finwiz/
 ## Directory Purposes
 
 **src/finwiz/ (Root Package):**
+
 - Purpose: Main application package
 - Contains: Entry points, core abstractions, factory classes
 - Key files:
@@ -72,12 +73,14 @@ finwiz/
   - `crew_factory.py`: Crew creation with error handling wrapper
 
 **src/finwiz/core/:**
+
 - Purpose: Application bootstrapping and initialization
 - Contains: Startup logic, configuration validation
 - Key files:
   - `app_initializer.py`: Main initialization sequence (kickoff())
 
 **src/finwiz/flows/:**
+
 - Purpose: CrewAI Flow orchestration
 - Contains: FinwizFlow (main coordinator), flow utilities
 - Key files:
@@ -85,6 +88,7 @@ finwiz/
   - `hybrid_analysis_synthesizer.py`: Analysis result synthesis
 
 **src/finwiz/orchestrators/:**
+
 - Purpose: Specialized orchestration modules (single-responsibility)
 - Contains: ValidationOrchestrator, DeepAnalysisOrchestrator, DiscoveryOrchestrator, ReportingOrchestrator, ErrorHandlingOrchestrator, ProgressTrackingOrchestrator, UtilityOrchestrator
 - Subdirectories:
@@ -102,12 +106,14 @@ finwiz/
   - `deep_analysis_data_collector.py`: Data collection for analysis
 
 **src/finwiz/analysis/:**
+
 - Purpose: Functional analysis pipeline (pure functions with composition)
 - Contains: Pipeline functions (collect, calculate, generate, synthesize)
 - Key files:
   - `deep_analysis_pipeline.py`: Main functional pipeline with analyze_holding()
 
 **src/finwiz/scoring/:**
+
 - Purpose: Deterministic Python scoring engines ($0 cost)
 - Contains: Composite scorer, component scorers, grading system
 - Subdirectories:
@@ -121,6 +127,7 @@ finwiz/
   - `thresholds.py`: Scoring thresholds configuration
 
 **src/finwiz/crews/:**
+
 - Purpose: AI crews for qualitative insights
 - Contains: CrewAI crew classes with @CrewBase decorator
 - Subdirectories (each crew):
@@ -137,6 +144,7 @@ finwiz/
   - `helpers/`: Shared crew utilities
 
 **src/finwiz/tools/:**
+
 - Purpose: Data collection and analysis tools
 - Contains: API clients, data fetchers, analysis tools
 - Subdirectories:
@@ -155,6 +163,7 @@ finwiz/
   - `perplexity_search_tool.py`: Perplexity API integration
 
 **src/finwiz/schemas/:**
+
 - Purpose: Pydantic models for all data contracts
 - Contains: Type-safe data models
 - Subdirectories:
@@ -169,6 +178,7 @@ finwiz/
   - `integration_models.py`: Data integration models
 
 **src/finwiz/quantitative/:**
+
 - Purpose: Quantitative finance calculations
 - Contains: Backtesting, optimization, risk metrics, technical indicators, performance analysis
 - Subdirectories:
@@ -183,6 +193,7 @@ finwiz/
   - `technical.py`: Technical analysis
 
 **src/finwiz/reporting/:**
+
 - Purpose: HTML report generation
 - Contains: Report generators, HTML builders, CSS/JS components
 - Subdirectories:
@@ -195,6 +206,7 @@ finwiz/
   - `consolidator.py`: Report consolidation logic
 
 **src/finwiz/data/:**
+
 - Purpose: Data access layer and external API integration
 - Contains: API clients, data adapters
 - Subdirectories:
@@ -202,6 +214,7 @@ finwiz/
 - Key files: API-specific data access modules
 
 **src/finwiz/infrastructure/:**
+
 - Purpose: Cross-cutting concerns and system utilities
 - Contains: Caching, logging, monitoring, resilience, JSON utilities
 - Subdirectories:
@@ -215,6 +228,7 @@ finwiz/
   - `infrastructure/health/`: Health checks
 
 **src/finwiz/integration/:**
+
 - Purpose: Crew data integration management
 - Contains: CrewDataIntegrationManager, CrewDataAccessor, DataAvailabilityTracker
 - Key files:
@@ -223,6 +237,7 @@ finwiz/
   - `availability.py`: DataAvailabilityTracker (data staleness checking)
 
 **src/finwiz/config/:**
+
 - Purpose: Configuration management
 - Contains: Settings, feature flags, resilience config, LLM config
 - Subdirectories:
@@ -236,6 +251,7 @@ finwiz/
   - `batch_prefetch_config.py`: Batch data prefetch settings
 
 **src/finwiz/validation/:**
+
 - Purpose: Input and output validation
 - Contains: Template validation, AI output validation
 - Key files:
@@ -243,6 +259,7 @@ finwiz/
   - `ai_output.py`: AI response validation with retry
 
 **tests/:**
+
 - Purpose: Comprehensive test suite
 - Contains: Unit tests, integration tests, fixtures
 - Subdirectories mirror src/finwiz/ structure
@@ -254,11 +271,13 @@ finwiz/
 ## Key File Locations
 
 **Entry Points:**
+
 - `src/finwiz/main.py`: CLI entry point (imports kickoff from app_initializer)
 - `src/finwiz/core/app_initializer.py`: Main bootstrap logic (kickoff())
 - `src/finwiz/flows/orchestrator.py`: FinwizFlow class (main workflow coordinator)
 
 **Configuration:**
+
 - `.env`: Environment variables (API keys, feature flags)
 - `.env.example`: Example configuration
 - `pyproject.toml`: Project dependencies, tool configuration (ruff, mypy, pytest)
@@ -266,18 +285,21 @@ finwiz/
 - `src/finwiz/config/features/flags.py`: Feature flags
 
 **Core Logic:**
+
 - `src/finwiz/analysis/deep_analysis_pipeline.py`: Functional analysis pipeline
 - `src/finwiz/scoring/deep_analysis_scorer.py`: Composite scoring engine
 - `src/finwiz/crew_factory.py`: Crew execution with error handling
 - `src/finwiz/integration/manager.py`: Crew data storage and retrieval
 
 **Testing:**
+
 - `tests/conftest.py`: Shared test fixtures
 - `tests/unit/`: Unit tests (mirrors src structure)
 - `tests/integration/`: Integration tests (requires API keys)
 - `Makefile`: Test commands (make test, make coverage, make check)
 
 **Documentation:**
+
 - `README.md`: Project overview
 - `CLAUDE.md`: Project-specific instructions for Claude
 - `docs/`: MkDocs documentation site
@@ -286,6 +308,7 @@ finwiz/
 ## Naming Conventions
 
 **Files:**
+
 - **Pattern**: snake_case.py (all lowercase with underscores)
 - **Examples**:
   - `deep_analysis_pipeline.py` (analysis module)
@@ -294,6 +317,7 @@ finwiz/
   - `app_initializer.py` (initializer)
 
 **Directories:**
+
 - **Pattern**: snake_case (all lowercase with underscores)
 - **Examples**:
   - `deep_analysis/` (crew directory)
@@ -301,6 +325,7 @@ finwiz/
   - `error_handling/` (orchestrator subdirectory)
 
 **Functions:**
+
 - **Pattern**: snake_case (all lowercase with underscores)
 - **Examples**:
   - `analyze_holding()` (main entry point)
@@ -309,6 +334,7 @@ finwiz/
   - `is_feature_enabled()` (utility function)
 
 **Classes:**
+
 - **Pattern**: PascalCase (capitalized words, no underscores)
 - **Examples**:
   - `FinwizFlow` (main flow)
@@ -317,6 +343,7 @@ finwiz/
   - `ValidationOrchestrator` (orchestrator)
 
 **Variables:**
+
 - **Pattern**: snake_case (all lowercase with underscores)
 - **Examples**:
   - `crew_factory` (instance)
@@ -324,11 +351,13 @@ finwiz/
   - `raw_data` (data variable)
 
 **Constants:**
+
 - **Pattern**: UPPER_SNAKE_CASE (all uppercase with underscores)
 - **Examples**:
   - `MAXIMUM_SPEED` (mode constant - though not widely used in codebase)
 
 **Pydantic Models:**
+
 - **Pattern**: PascalCase (like classes)
 - **Examples**:
   - `FinwizState` (flow state)
@@ -337,6 +366,7 @@ finwiz/
   - `DeepAnalysisResult` (cached result)
 
 **Crew Names:**
+
 - **Pattern**: snake_case_crew (directory and module name)
 - **Examples**:
   - `stock_crew/` → `StockCrew` class
@@ -344,6 +374,7 @@ finwiz/
   - `investment_discovery_crew/` → `InvestmentDiscoveryCrew` class
 
 **Configuration Files:**
+
 - **Pattern**: lowercase with hyphens or underscores
 - **Examples**:
   - `agents.yaml` (crew config)
@@ -354,6 +385,7 @@ finwiz/
 ## Where to Add New Code
 
 **New Feature:**
+
 - Primary code:
   - Domain logic: `src/finwiz/analysis/` or `src/finwiz/scoring/`
   - Orchestration: `src/finwiz/orchestrators/`
@@ -362,6 +394,7 @@ finwiz/
 - Schemas: `src/finwiz/schemas/` (if new data contracts needed)
 
 **New Crew:**
+
 - Implementation: `src/finwiz/crews/{crew_name}/`
 - Structure:
   - `{crew_name}.py`: Crew class with @CrewBase
@@ -371,17 +404,20 @@ finwiz/
 - Tests: `tests/unit/crews/{crew_name}/`
 
 **New Orchestrator:**
+
 - Implementation: `src/finwiz/orchestrators/{orchestrator_name}_orchestrator.py`
 - Integration: Add lazy-loaded property in `src/finwiz/flows/orchestrator.py`
 - Tests: `tests/unit/orchestrators/`
 
 **New Tool:**
+
 - Implementation: `src/finwiz/tools/{tool_name}_tool.py`
 - Factory registration: Add to `src/finwiz/tools/tool_factories.py`
 - Tests: `tests/unit/tools/`
 - Schemas (if needed): `src/finwiz/schemas/tools/`
 
 **New Schema:**
+
 - Implementation: `src/finwiz/schemas/{domain}/` (create subdirectory if needed)
 - Pattern: Use Pydantic BaseModel
 - Location guidelines:
@@ -392,16 +428,19 @@ finwiz/
   - API models: `schemas/api/`
 
 **Utilities:**
+
 - Shared helpers: `src/finwiz/utils/`
 - Infrastructure utilities: `src/finwiz/infrastructure/{category}/`
 - Test utilities: `tests/fixtures/` or `tests/conftest.py`
 
 **Configuration:**
+
 - Feature flags: `src/finwiz/config/features/flags.py`
 - Settings: `src/finwiz/config/settings.py`
 - Domain config: `src/finwiz/config/{config_name}_config.py`
 
 **Reports:**
+
 - Report generators: `src/finwiz/reporting/{report_type}_report_generator.py`
 - HTML components: `src/finwiz/reporting/{category}/`
 - Templates: `src/finwiz/templates/`
@@ -409,6 +448,7 @@ finwiz/
 ## Special Directories
 
 **cache/:**
+
 - Purpose: File-based caching for quantitative results
 - Generated: Yes (at runtime)
 - Committed: No (.gitignore)
@@ -417,6 +457,7 @@ finwiz/
   - `cache/portfolio_analysis/`
 
 **output/:**
+
 - Purpose: Generated reports and crew outputs
 - Generated: Yes (at runtime)
 - Committed: No (.gitignore)
@@ -428,12 +469,14 @@ finwiz/
   - `output/discovery/`: Discovery crew JSON outputs
 
 **logs/:**
+
 - Purpose: Application logs
 - Generated: Yes (at runtime)
 - Committed: No (.gitignore)
 - Files: Timestamped log files
 
 **data/:**
+
 - Purpose: Input data files
 - Generated: No (manually created)
 - Committed: Example files only
@@ -441,40 +484,47 @@ finwiz/
   - `data/portfolio_holdings.csv`: Portfolio to analyze
 
 **docs/:**
+
 - Purpose: MkDocs documentation site
 - Generated: Manually written + auto-generated
 - Committed: Yes
 - Build: `mkdocs build` → `site/`
 
 **site/:**
+
 - Purpose: Built MkDocs documentation
 - Generated: Yes (by mkdocs build)
 - Committed: No (.gitignore)
 
 **scripts/:**
+
 - Purpose: Utility scripts for development
 - Generated: No (manually created)
 - Committed: Yes
 - Examples: Data generation, analysis helpers
 
 **.planning/:**
+
 - Purpose: Codebase documentation for GSD commands
 - Generated: By GSD map-codebase command
 - Committed: Yes
 - Files: ARCHITECTURE.md, STRUCTURE.md, STACK.md, etc.
 
 **.serena/:**
+
 - Purpose: Serena MCP cache and memories
 - Generated: Yes (by Serena MCP)
 - Committed: No (.gitignore)
 
 **.claude/:**
+
 - Purpose: Claude-specific configuration and old agent definitions
 - Generated: No (manually created)
 - Committed: Yes
 - Note: Contains legacy agent definitions (now deprecated)
 
 **checkpoints/:**
+
 - Purpose: Flow checkpoints (if used)
 - Generated: Yes (by CrewAI Flow)
 - Committed: No (.gitignore)

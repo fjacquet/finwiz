@@ -5,14 +5,17 @@
 ## Test Framework
 
 **Runner:**
+
 - `pytest` 8.4.1+
 - Config: `pyproject.toml` under `[tool.pytest.ini_options]`
 
 **Assertion Library:**
+
 - Built-in pytest assertions
 - `pytest.approx()` for floating-point comparisons
 
 **Run Commands:**
+
 ```bash
 make test              # Run unit tests only (excludes integration)
 make test-all          # Run all tests including integration
@@ -25,15 +28,18 @@ pytest -m integration  # Run tests by marker
 ## Test File Organization
 
 **Location:**
+
 - Co-located with code: No (tests in separate directory)
 - Separate test directory: Yes
 
 **Naming:**
+
 - Test files: `test_*.py` (e.g., `test_backtesting.py`, `test_risk_scorer.py`)
 - Test classes: `Test*` (e.g., `TestRiskScorer`, `TestTrade`)
 - Test functions: `test_*` (e.g., `test_should_create_valid_trade_when_all_fields_provided`)
 
 **Structure:**
+
 ```
 tests/
 ├── conftest.py                    # Shared fixtures
@@ -61,6 +67,7 @@ tests/
 ## Test Structure
 
 **Suite Organization:**
+
 ```python
 from faker import Faker
 import pytest
@@ -98,6 +105,7 @@ class TestRiskScorer:
 ```
 
 **Patterns:**
+
 - Test class per module/class being tested
 - `@pytest.fixture` for reusable setup
 - AAA pattern: Arrange, Act, Assert (explicitly labeled in complex tests)
@@ -109,6 +117,7 @@ class TestRiskScorer:
 **Framework:** `pytest-mock` (unittest.mock is BANNED)
 
 **Patterns:**
+
 ```python
 def test_should_fetch_data_from_api(mocker):
     """Test API data fetching."""
@@ -141,6 +150,7 @@ def test_should_handle_api_failure(mocker):
 ```
 
 **What to Mock:**
+
 - External API calls (Yahoo Finance, Alpha Vantage, etc.)
 - Database connections
 - File system operations (for unit tests)
@@ -148,12 +158,14 @@ def test_should_handle_api_failure(mocker):
 - Expensive calculations in integration tests
 
 **What NOT to Mock:**
+
 - Pure functions being tested
 - Pydantic model validation
 - Simple utility functions
 - Domain logic (score calculations, business rules)
 
 **Mocker Usage:**
+
 - `mocker.patch("module.path.function")` - Patch function/method
 - `mocker.patch.object(obj, "method")` - Patch object method
 - `mocker.Mock()` - Create mock object
@@ -165,6 +177,7 @@ def test_should_handle_api_failure(mocker):
 ## Fixtures and Factories
 
 **Test Data:**
+
 ```python
 # In tests/conftest.py
 from faker import Faker
@@ -197,12 +210,14 @@ def stock_data():
 ```
 
 **Location:**
+
 - Shared fixtures: `tests/conftest.py`
 - Module-specific fixtures: `tests/unit/quantitative/conftest.py`
 - Factory functions: `tests/fixtures/mock_factories.py`
 - Test data creators: `tests/fixtures/asset_data.py`
 
 **Factory Pattern:**
+
 ```python
 # In tests/fixtures/asset_data.py
 def create_stock_data(
@@ -235,6 +250,7 @@ def stock_data():
 **Requirements:** 65% minimum threshold (enforced by `--cov-fail-under=65`)
 
 **View Coverage:**
+
 ```bash
 make coverage              # Run tests with coverage
 make coverage-report       # Open HTML coverage report in browser
@@ -242,6 +258,7 @@ make coverage-check        # Validate coverage meets threshold
 ```
 
 **Configuration:**
+
 ```python
 # pyproject.toml
 [tool.pytest.ini_options]
@@ -254,6 +271,7 @@ addopts = [
 ```
 
 **Coverage Reports:**
+
 - Terminal: Shows missing lines per file
 - HTML: `htmlcov/index.html` with detailed line-by-line coverage
 - Fail threshold: 65% (build fails if below)
@@ -261,6 +279,7 @@ addopts = [
 ## Test Types
 
 **Unit Tests:**
+
 - Scope: Single function/class in isolation
 - Location: `tests/unit/`
 - Marker: `@pytest.mark.unit` (optional, default)
@@ -268,6 +287,7 @@ addopts = [
 - Speed: Fast (<1s per test)
 
 **Integration Tests:**
+
 - Scope: Multiple components working together
 - Location: `tests/integration/`
 - Marker: `@pytest.mark.integration` (required)
@@ -276,18 +296,21 @@ addopts = [
 - Deselected by default: `-m "not integration"` in pytest config
 
 **Property Tests:**
+
 - Framework: `hypothesis` (installed in dev dependencies)
 - Location: `tests/property/`
 - Marker: `@pytest.mark.property`
 - Purpose: Generate random test cases to find edge cases
 
 **E2E Tests:**
+
 - Not currently used
 - Would test entire flow execution
 
 ## Common Patterns
 
 **Async Testing:**
+
 ```python
 @pytest.mark.asyncio
 async def test_should_validate_data_async():
@@ -301,6 +324,7 @@ async def test_should_validate_data_async():
 ```
 
 **Error Testing:**
+
 ```python
 def test_should_raise_error_for_invalid_price():
     """Test validation of price constraints."""
@@ -320,6 +344,7 @@ def test_should_raise_error_for_invalid_price():
 ```
 
 **Parametrized Tests:**
+
 ```python
 @pytest.mark.parametrize(
     "rsi,expected_score",
@@ -348,6 +373,7 @@ def test_should_score_rsi_correctly(rsi, expected_score):
 ```
 
 **Float Comparisons:**
+
 ```python
 from pytest import approx
 
@@ -362,6 +388,7 @@ def test_should_calculate_composite_score():
 ```
 
 **Fixture Composition:**
+
 ```python
 @pytest.fixture
 def scorer():
@@ -388,6 +415,7 @@ def test_should_score_with_fixtures(scorer, sample_data):
 ## Test Markers
 
 **Available Markers:**
+
 ```python
 # pyproject.toml
 [tool.pytest.ini_options]
@@ -405,6 +433,7 @@ markers = [
 ```
 
 **Usage:**
+
 ```python
 @pytest.mark.integration
 def test_should_fetch_real_data():
@@ -425,6 +454,7 @@ async def test_should_run_async():
 ```
 
 **Running by Marker:**
+
 ```bash
 pytest -m integration      # Run only integration tests
 pytest -m "not integration"  # Skip integration tests (default)
@@ -435,6 +465,7 @@ pytest -m "unit and not slow"    # Run fast unit tests
 ## Test Configuration
 
 **pytest.ini_options:**
+
 ```python
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -465,6 +496,7 @@ filterwarnings = [
 ## unittest.mock Enforcement
 
 **Runtime Blocker:**
+
 ```python
 # tests/conftest_unittest_blocker.py
 class UnittestMockBlocker:
@@ -490,6 +522,7 @@ sys.meta_path.insert(0, UnittestMockBlocker())
 ```
 
 **Ruff Enforcement:**
+
 ```python
 # pyproject.toml
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
@@ -497,6 +530,7 @@ sys.meta_path.insert(0, UnittestMockBlocker())
 ```
 
 **Makefile Check:**
+
 ```bash
 make check-unittest-mock   # Check for unittest.mock violations
 ```
@@ -506,6 +540,7 @@ make check-unittest-mock   # Check for unittest.mock violations
 **Pattern:** `test_should_{action}_when_{condition}`
 
 **Examples:**
+
 - `test_should_create_valid_trade_when_all_fields_provided`
 - `test_should_validate_positive_entry_price_when_provided`
 - `test_should_calculate_pnl_correctly_for_long_position`
@@ -513,6 +548,7 @@ make check-unittest-mock   # Check for unittest.mock violations
 - `test_should_raise_error_for_invalid_input`
 
 **Benefits:**
+
 - Readable as specifications
 - Clear intent from name alone
 - Easy to understand test failures
@@ -520,6 +556,7 @@ make check-unittest-mock   # Check for unittest.mock violations
 ## Test Data Generation
 
 **Using Faker:**
+
 ```python
 from faker import Faker
 
@@ -536,6 +573,7 @@ def test_with_faker(fake: Faker):
 ```
 
 **Using Fixtures:**
+
 ```python
 def test_with_fixtures(stock_data, etf_data, crypto_data):
     """Test with fixture data."""
@@ -547,11 +585,13 @@ def test_with_fixtures(stock_data, etf_data, crypto_data):
 ## Quality Checks
 
 **Full Quality Suite:**
+
 ```bash
 make check   # Run lint + test + unittest.mock check + docs validation
 ```
 
 **Individual Checks:**
+
 ```bash
 make lint                   # Ruff linting and formatting
 make test                   # Unit tests only
