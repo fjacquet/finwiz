@@ -8,6 +8,17 @@ FinWiz is an AI-powered financial analysis platform built with CrewAI that analy
 
 Hybrid financial analysis: deterministic Python scoring ($0, <100ms) for quantitative rigor, AI crews for qualitative reasoning, with real newcomer detection for investment discovery.
 
+## Current Milestone: v4 Data Intelligence & Smart Scoring
+
+**Goal:** Enrich the analysis pipeline with news sentiment, macroeconomic indicators, and additional data providers so that composite scores factor in market context — not just technicals and fundamentals.
+
+**Target features:**
+- News & sentiment scoring per holding from free APIs
+- Macroeconomic indicators (Fed rate, CPI, VIX, 10Y yield) as portfolio context
+- Additional data providers for reliability, coverage, and data quality
+- Smart composite scoring that factors in sentiment + macro conditions
+- New HTML report sections for news, sentiment, and macro context
+
 ## Current State
 
 Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
@@ -69,7 +80,13 @@ Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
 
 ### Active
 
-(None — planning next milestone)
+- [ ] News & sentiment data collection from free APIs
+- [ ] Sentiment scoring per holding integrated into analysis pipeline
+- [ ] Macroeconomic indicators (Fed rate, CPI, VIX, 10Y yield) data collection
+- [ ] Macro context integration into portfolio analysis
+- [ ] Additional data providers (Polygon, Finnhub, or similar free tiers)
+- [ ] Composite scoring enhanced with sentiment + macro factors
+- [ ] HTML report sections for news, sentiment, and macro context
 
 ### Out of Scope
 
@@ -116,4 +133,4 @@ Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
 | Inline CSS color coding for stress test | Red/orange/green for impact severity and sensitivity labels | ✓ Good — matches existing report styling |
 
 ---
-*Last updated: 2026-02-08 after v3 milestone completion*
+*Last updated: 2026-02-08 after v4 milestone start*

@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-08)
 
 **Core value:** Hybrid financial analysis with real newcomer detection -- now faster and with risk scenario analysis
-**Current focus:** Planning next milestone
+**Current focus:** v4 Data Intelligence & Smart Scoring
 
 ## Current Position
 
-Phase: v3 complete (12 phases shipped across 3 milestones)
-Status: v3 milestone archived -- ready for next milestone
-Last activity: 2026-02-08 -- Completed v3 milestone archival
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-08 — Milestone v4 started
 
 ## Milestones Shipped
 
@@ -50,7 +51,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: v3 milestone complete and archived
+Stopped at: v4 milestone definition in progress
 Resume file: None
 
-*Updated after v3 milestone completion*
+*Updated after v4 milestone start*
