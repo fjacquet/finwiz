@@ -121,31 +121,38 @@ class CacheManager:
         self.cache_dir = Path(self.config.cache_directory)
         self.cache_dir.mkdir(exist_ok=True)
         self._lock = asyncio.Lock()
-        self._cleanup_task: asyncio.Task | None = None
+        self._insertion_count: int = 0
+        self._cleanup_every_n: int = 100  # Run incremental cleanup every 100 insertions
+        self._cleanup_batch_size: int = 10  # Remove up to 10 expired entries per cleanup
 
-        if self.config.auto_cleanup:
-            self._start_cleanup_task()
+    async def _incremental_cleanup(self, max_entries: int | None = None) -> int:
+        """Remove a small batch of expired entries from memory cache.
 
-    def _start_cleanup_task(self) -> None:
-        """Start background cleanup task."""
+        Called periodically during set() operations to prevent unbounded growth.
+        This replaces the blocking asyncio.sleep(3600) cleanup loop.
 
-        async def cleanup_loop() -> None:
-            while True:
-                try:
-                    await asyncio.sleep(self.config.cleanup_interval)
-                    await self.cleanup_expired()
-                except asyncio.CancelledError:
+        Args:
+            max_entries: Maximum entries to remove (default: self._cleanup_batch_size)
+
+        Returns:
+            Number of entries removed
+        """
+        max_entries = max_entries or self._cleanup_batch_size
+        expired_keys: list[str] = []
+
+        for key, entry in self.memory_cache.items():
+            if entry.is_expired:
+                expired_keys.append(key)
+                if len(expired_keys) >= max_entries:
                     break
-                except Exception as e:
-                    logger.error(f"Error in cache cleanup: {e}")
 
-        try:
-            # Only create task if there's a running event loop
-            loop = asyncio.get_running_loop()
-            self._cleanup_task = loop.create_task(cleanup_loop())
-        except RuntimeError:
-            # No event loop running, cleanup task will be started later
-            self._cleanup_task = None
+        for key in expired_keys:
+            await self._remove_entry(key)
+
+        if expired_keys:
+            logger.debug(f"Incremental cleanup: removed {len(expired_keys)} expired entries")
+
+        return len(expired_keys)
 
     def _generate_key(self, key_parts: str | list[Any]) -> str:
         """Generate a consistent cache key from input parts."""
@@ -302,6 +309,12 @@ class CacheManager:
                     logger.warning(f"Error writing cache file: {e}")
 
             self._update_stats()
+
+            # Incremental cleanup: periodically remove expired entries
+            if self.config.auto_cleanup:
+                self._insertion_count += 1
+                if self._insertion_count % self._cleanup_every_n == 0:
+                    await self._incremental_cleanup()
 
     async def delete(self, key: str | list[Any]) -> bool:
         """
@@ -485,14 +498,9 @@ class CacheManager:
         }
 
     async def close(self) -> None:
-        """Clean up resources and stop background tasks."""
-        if self._cleanup_task:
-            self._cleanup_task.cancel()
-            try:
-                await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
-
+        """Clean up resources."""
+        # Run a final cleanup of expired entries
+        await self._incremental_cleanup(max_entries=self._cleanup_batch_size * 10)
         logger.info("Cache manager closed")
 
 
