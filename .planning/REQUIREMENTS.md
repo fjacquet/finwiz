@@ -31,13 +31,13 @@ None — all proposed features included in this milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| REFAC-01 | — | Pending |
-| REFAC-02 | — | Pending |
-| QUAL-01 | — | Pending |
-| QUAL-02 | — | Pending |
+| SEC-01 | Phase 6 | Pending |
+| SEC-02 | Phase 6 | Pending |
+| SEC-03 | Phase 6 | Pending |
+| REFAC-01 | Phase 7 | Pending |
+| REFAC-02 | Phase 7 | Pending |
+| QUAL-01 | Phase 8 | Pending |
+| QUAL-02 | Phase 8 | Pending |
 
 ---
 *Created: 2026-02-08 for milestone v2*
