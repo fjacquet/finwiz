@@ -79,6 +79,9 @@ Recent decisions affecting current work:
 - 04-02: FINWIZ_HOLDING_TIMEOUT env var controls timeout (default 300s)
 - 04-03: Kept CacheConfig.auto_cleanup field for API compatibility (controls incremental cleanup)
 - 04-03: Incremental cleanup every 100 insertions, batch size 10
+- 05-01: Mock _save_discovery_results via patch.object instead of mocking Path/open
+- 05-01: Mock _run_crew_with_timeout instead of actual crew classes for output parsing tests
+- 05-01: Mock os.getenv for deep analysis feature flag instead of env var fixture
 - 05-02: Used _make_mock_adapter helper to reduce mock boilerplate in fallback tests
 - 05-02: html.parser (stdlib) for BeautifulSoup, no lxml dependency needed
 
