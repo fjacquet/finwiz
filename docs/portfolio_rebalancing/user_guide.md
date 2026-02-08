@@ -58,8 +58,8 @@ The `PortfolioConfiguration` is the main input to the rebalancing system:
 
 ```python
 from finwiz.schemas.portfolio_rebalancing import (
-    PortfolioConfiguration, 
-    Holding, 
+    PortfolioConfiguration,
+    Holding,
     RebalancingMethod
 )
 
@@ -70,21 +70,21 @@ config = PortfolioConfiguration(
         Holding(symbol="GOOGL", shares=25.0, cost_basis=2200.0),
         Holding(symbol="MSFT", shares=100.0, cost_basis=280.0),
     ],
-    
+
     # Target allocation percentages (must sum to ≤ 100%)
     target_weights={
         "AAPL": 0.33,  # 33%
         "GOOGL": 0.33, # 33%
         "MSFT": 0.34,  # 34%
     },
-    
+
     # Optional: Position-specific tolerance bands
     tolerance_bands={
         "AAPL": 0.03,  # ±3%
         "GOOGL": 0.05, # ±5%
         "MSFT": 0.03,  # ±3%
     },
-    
+
     # Global settings
     global_tolerance=0.05,           # Default ±5% tolerance
     available_capital=5000.0,        # Additional capital available
@@ -102,7 +102,7 @@ result = await orchestrator.rebalance_portfolio(config)
 
 # With portfolio ID for tracking
 result = await orchestrator.rebalance_portfolio(
-    config, 
+    config,
     portfolio_id="my-retirement-portfolio"
 )
 
@@ -111,7 +111,7 @@ html_report = await orchestrator.generate_rebalancing_report(result)
 
 # Generate French report
 html_report_fr = await orchestrator.generate_rebalancing_report(
-    result, 
+    result,
     language="fr"
 )
 ```
@@ -126,8 +126,8 @@ Holding(symbol="AAPL", shares=100.0)
 
 # With cost basis for tax analysis
 Holding(
-    symbol="AAPL", 
-    shares=100.0, 
+    symbol="AAPL",
+    shares=100.0,
     cost_basis=150.0,
     acquisition_date=datetime(2023, 1, 15)
 )
@@ -312,8 +312,8 @@ config.min_trade_size = 1.0
 # Include cost basis for tax analysis
 holdings = [
     Holding(
-        symbol="AAPL", 
-        shares=100.0, 
+        symbol="AAPL",
+        shares=100.0,
         cost_basis=120.0,  # For capital gains calculation
         acquisition_date=datetime(2023, 1, 15)
     )
@@ -329,28 +329,28 @@ config.rebalancing_method = RebalancingMethod.TAX_EFFICIENT
 # Monthly rebalancing
 async def monthly_rebalancing():
     result = await orchestrator.rebalance_portfolio(config)
-    
+
     if result.overall_recommendation in [
         RebalancingRecommendation.REBALANCE_NOW,
         RebalancingRecommendation.REBALANCE_SOON
     ]:
         # Execute trades or alert user
         return result.trade_recommendations
-    
+
     return None
 
 # Threshold-based rebalancing
 async def threshold_rebalancing():
     result = await orchestrator.rebalance_portfolio(config)
-    
+
     # Only rebalance if any position deviates by more than 5%
     max_deviation = max(
         abs(dev) for dev in result.current_portfolio.deviations_from_target.values()
     )
-    
+
     if max_deviation > 0.05:
         return result.trade_recommendations
-    
+
     return None
 ```
 
@@ -488,7 +488,7 @@ result = await orchestrator.rebalance_portfolio(config)
 if len(result.trade_recommendations) == 0:
     print("Portfolio is already within tolerance bands")
     print("Current deviations:", result.current_portfolio.deviations_from_target)
-    
+
     # Consider tightening tolerances if needed
     config.global_tolerance = 0.02  # Tighter tolerance
 ```

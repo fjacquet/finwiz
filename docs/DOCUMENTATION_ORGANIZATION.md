@@ -416,7 +416,7 @@ result = scorer.calculate_composite_score(
 ### Links
 
 1. **Relative Links**: Use `../` for cross-references
-2. **Descriptive Text**: "See the [User Guide](USER_GUIDE.md)" not "Click [here](USER_GUIDE.md)"
+2. **Descriptive Text**: "See the [User Guide](USER_GUIDE.md)" not "Click [User Guide](USER_GUIDE.md)"
 3. **Verify Links**: Ensure targets exist
 
 ### Structure

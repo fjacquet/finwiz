@@ -70,11 +70,11 @@ def test_batch_processing_success_rate_above_95_percent(self, mocker, num_holdin
     # Mock HybridAnalysisFlow.kickoff() instead of internal methods
     mock_flow = mocker.patch('finwiz.flows.hybrid_analysis_flow.HybridAnalysisFlow')
     mock_flow.return_value.kickoff.return_value = mock_result
-    
+
     # Test orchestrator with mocked flow
     orchestrator = DeepAnalysisOrchestrator(...)
     results = orchestrator.run_deep_analysis_on_holdings(holdings)
-    
+
     # Assert success rate ≥95%
     assert len(results) / len(holdings) >= 0.95
 ```

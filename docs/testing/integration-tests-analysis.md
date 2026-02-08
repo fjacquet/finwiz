@@ -65,7 +65,7 @@ def mock_hybrid_analysis_flow(mocker):
     from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
     from finwiz.schemas.hybrid_analysis.quantitative import QuantitativeAnalysis
     from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
-    
+
     # Create complete mock result
     mock_result = EnrichedAnalysis(
         ticker="AAPL",
@@ -78,7 +78,7 @@ def mock_hybrid_analysis_flow(mocker):
         llm_cost_dollars=0.05,  # ✅ This is what tests actually check!
         processing_time_seconds=15.0,  # ✅ This too!
     )
-    
+
     # Mock the entire kickoff method
     return mocker.patch.object(
         HybridAnalysisFlow,
@@ -90,9 +90,9 @@ def test_should_limit_llm_cost_to_10_cents(mock_hybrid_analysis_flow):
     """Test that LLM cost per holding is ≤$0.10."""
     flow = HybridAnalysisFlow()
     flow.state.ticker = "AAPL"
-    
+
     result = flow.kickoff()  # Returns mocked result
-    
+
     assert result.llm_cost_dollars <= 0.10  # ✅ Now this works!
 ```
 
@@ -124,13 +124,13 @@ def test_flow_always_returns_valid_enriched_analysis(ticker, asset_class, mocker
     # Mock entire flow kickoff
     mock_result = create_valid_enriched_analysis(ticker, asset_class)
     mocker.patch.object(HybridAnalysisFlow, 'kickoff', return_value=mock_result)
-    
+
     flow = HybridAnalysisFlow()
     flow.state.ticker = ticker
     flow.state.asset_class = asset_class
-    
+
     result = flow.kickoff()
-    
+
     # Invariants that ALWAYS hold
     assert isinstance(result, EnrichedAnalysis)
     assert result.ticker == ticker
@@ -168,9 +168,9 @@ def test_real_performance_with_llm():
     """REAL integration test with actual LLM calls."""
     flow = HybridAnalysisFlow()  # No mocks!
     flow.state.ticker = "AAPL"
-    
+
     result = flow.kickoff()  # Real execution
-    
+
     assert result.llm_cost_dollars <= 0.10
     # This actually tests real performance!
 ```
@@ -239,10 +239,10 @@ def mock_hybrid_flow_result():
 # 2. Update performance tests
 def test_should_limit_llm_cost_to_10_cents(mocker, mock_hybrid_flow_result):
     mocker.patch.object(HybridAnalysisFlow, 'kickoff', return_value=mock_hybrid_flow_result)
-    
+
     flow = HybridAnalysisFlow()
     result = flow.kickoff()
-    
+
     assert result.llm_cost_dollars <= 0.10
 ```
 

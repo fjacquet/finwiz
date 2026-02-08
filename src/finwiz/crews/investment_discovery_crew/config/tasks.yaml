@@ -1,13 +1,13 @@
 etf_discovery_task:
   description: >
-    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and 
-    docs/schemas/examples/aplus_discovery_result.example.json to understand the exact 
+    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and
+    docs/schemas/examples/aplus_discovery_result.example.json to understand the exact
     output format required.
-    
+
     Scan global ETF markets to identify A+ grade opportunities with exceptional
     characteristics. Focus on low-cost, well-diversified ETFs with strong tracking
     records and UCITS compatibility for European investors.
-    
+
     Analysis Requirements:
     - Screen ETFs with expense ratios ≤ 0.15% (broad market) or ≤ 0.25% (specialized)
     - Minimum AUM of $1B for liquidity
@@ -16,20 +16,20 @@ etf_discovery_task:
     - UCITS compliance verification for Swiss and European investors
     - Regulatory domicile analysis (Ireland, Luxembourg, etc.)
     - Cross-border investment eligibility assessment
-    
+
     Use the Market Screening Tool to identify candidates, then apply A+ Scoring Tool
     for detailed evaluation. Validate all tickers and perform comprehensive analysis
     using Enhanced ETF Analysis Tool.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "discoveries", etc.
     - The JSON must match the APlusDiscoveryResult schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - asset_type: MUST be "etf" (lowercase, no other values allowed)
     - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization, target A+ grade for all candidates)
-    
+
     RISK ASSESSMENT FORMAT (CRITICAL):
     For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
     - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
@@ -37,7 +37,7 @@ etf_discovery_task:
     - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
     - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
-    
+
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
@@ -47,26 +47,26 @@ etf_discovery_task:
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
-    A structured ranked list of top 10 A+ grade ETF candidates conforming to the 
-    APlusDiscoveryResult Pydantic schema. Include composite scores, letter grades 
-    (A+ target: ≥ 0.95), cost analysis, tracking performance, liquidity metrics, 
+    A structured ranked list of top 10 A+ grade ETF candidates conforming to the
+    APlusDiscoveryResult Pydantic schema. Include composite scores, letter grades
+    (A+ target: ≥ 0.95), cost analysis, tracking performance, liquidity metrics,
     UCITS compliance status, and replacement recommendations.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
-    
+
   agent: etf_discovery_agent
   output_file: "output/discovery/a_plus_etfs.json"
   async_execution: true
 
 stock_discovery_task:
   description: >
-    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and 
+    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and
     docs/schemas/MarketRegime.schema.json to understand the exact output format required.
-    
+
     Identify individual stocks with A+ potential through comprehensive fundamental
     analysis. Focus on companies with exceptional competitive moats, strong financials,
     and sustainable growth prospects that maximize returns for the equity portion.
-    
+
     Fundamental Screening Criteria (Requirements 2.1):
     - ROE ≥ 20% sustained over 3 years minimum
     - Revenue growth ≥ 15% annually over 5 years consistently
@@ -74,38 +74,38 @@ stock_discovery_task:
     - Free Cash Flow positive and growing trend over 3+ years
     - Market cap ≥ $1B for institutional liquidity
     - Dominant market position in growing sectors with competitive moats
-    
+
     Competitive Moat Analysis Workflow (Requirements 2.2):
     - Analyze competitive advantages: brand strength, network effects, switching costs
     - Evaluate barriers to entry and competitive positioning
     - Assess market share trends and competitive dynamics
     - Review management quality and strategic execution
     - Examine pricing power and margin sustainability
-    
+
     Portfolio Integration Analysis (Requirements 2.3):
     - Verify compatibility with investor objectives and risk profile
     - Evaluate correlation with existing portfolio holdings
     - Assess sector and geographic diversification impact
     - Calculate optimal allocation recommendations
     - Consider implementation timing and market conditions
-    
+
     Use Market Screening Tool for initial filtering based on fundamental criteria,
     A+ Scoring Tool for comprehensive evaluation, Enhanced SEC Analysis Tool for
     10-K/10-Q fundamental analysis, and Portfolio Analysis Tool for correlation
     and allocation optimization.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "discoveries", etc.
     - The JSON must match the APlusDiscoveryResult schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - asset_type: MUST be "stock" (lowercase, no other values allowed)
     - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization, target A+ grade for all candidates)
     - regime_type: MUST be one of: "bull", "bear", "sideways", "volatile" (lowercase, no other values allowed)
     - interest_rate_trend: MUST be one of: "rising", "falling", "stable" (lowercase, no other values allowed)
     - market_stress_level: MUST be one of: "low", "medium", "high" (lowercase, no other values allowed)
-    
+
     RISK ASSESSMENT FORMAT (CRITICAL):
     For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
     - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
@@ -113,13 +113,13 @@ stock_discovery_task:
     - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
     - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
-    
+
     CRITERIA FORMAT (CRITICAL):
     For discovery_criteria and criteria_used fields, use APlusCriteria schema:
     - stock_min_roe: Use percentage format (e.g., 20 for 20%, not 0.20)
     - stock_min_revenue_growth: Use percentage format (e.g., 15 for 15%, not 0.15)
     - crypto_min_daily_volume: Must be >= 100000 (1e5)
-    
+
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
@@ -129,13 +129,13 @@ stock_discovery_task:
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
-    A structured curated list of top 15 A+ grade stock candidates conforming to the 
-    APlusDiscoveryResult Pydantic schema. Include fundamental analysis, competitive moat 
-    analysis, growth prospects, risk factors, valuation assessment, portfolio correlation 
+    A structured curated list of top 15 A+ grade stock candidates conforming to the
+    APlusDiscoveryResult Pydantic schema. Include fundamental analysis, competitive moat
+    analysis, growth prospects, risk factors, valuation assessment, portfolio correlation
     analysis, and optimal allocation suggestions.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
-    
+
   agent: stock_discovery_agent
   output_file: "output/discovery/a_plus_stocks.json"
   async_execution: true
@@ -144,13 +144,13 @@ stock_discovery_task:
 
 crypto_discovery_task:
   description: >
-    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and 
+    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and
     docs/schemas/PortfolioImprovement.schema.json to understand the exact output format required.
-    
+
     Discover A+ grade cryptocurrencies with strong fundamentals and institutional
     adoption potential. Focus on digital assets with real utility, strong tokenomics,
     and regulatory compliance potential across multiple jurisdictions.
-    
+
     A+ Screening Criteria (Requirements 3.1):
     - Market cap ≥ $10B for institutional liquidity and stability
     - Daily trading volume ≥ $500M for market depth and liquidity
@@ -159,41 +159,41 @@ crypto_discovery_task:
     - Clear utility and proven use cases beyond speculation
     - Active and transparent development team with regular updates
     - Strong tokenomics with deflationary or utility-driven mechanisms
-    
+
     Regulatory Risk Assessment Workflow (Requirements 3.2):
     - Analyze regulatory compliance across US, EU, Switzerland, UK, Singapore
     - Assess regulatory clarity and potential future restrictions
     - Evaluate exchange listing status and regulatory approval
     - Review compliance with AML/KYC requirements by jurisdiction
     - Identify potential regulatory risks and mitigation strategies
-    
+
     Acquisition Strategy Analysis (Requirements 3.3):
     - Recommend optimal acquisition strategies (DCA vs lump sum)
     - Analyze market timing considerations and volatility patterns
     - Suggest entry points based on technical and fundamental analysis
     - Provide implementation timeline and risk management strategies
-    
+
     Allocation Management (Requirements 3.4):
     - Enforce strict 5% maximum allocation limit for all crypto combined
     - When 5% limit is reached, propose internal rebalancing strategies
     - Optimize allocation weights within the 5% constraint
     - Suggest replacement strategies for underperforming crypto holdings
-    
+
     Use Market Screening Tool for initial filtering, Enhanced Crypto Analysis Tool
     for comprehensive evaluation, DeFi Metrics Tool for protocol analysis, and
     A+ Scoring Tool for final grading assessment.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "discoveries", etc.
     - The JSON must match the APlusDiscoveryResult schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - asset_type: MUST be "crypto" (lowercase, no other values allowed)
     - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization, target A+ grade for all candidates)
     - improvement_type: MUST be one of: "replacement", "addition", "rebalancing" (lowercase, no other values allowed)
     - implementation_priority: MUST be one of: "high", "medium", "low" (lowercase, no other values allowed)
-    
+
     RISK ASSESSMENT FORMAT (CRITICAL):
     For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
     - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
@@ -201,11 +201,11 @@ crypto_discovery_task:
     - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
     - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
-    
+
     CRITERIA FORMAT (CRITICAL):
     For discovery_criteria and criteria_used fields, use APlusCriteria schema:
     - crypto_min_daily_volume: Must be >= 100000 (1e5)
-    
+
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
@@ -215,13 +215,13 @@ crypto_discovery_task:
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
-    A structured selective list of top 5 A+ grade crypto candidates conforming to the 
-    APlusDiscoveryResult Pydantic schema. Include composite A+ scores, tokenomics analysis, 
-    institutional adoption metrics, DeFi protocol metrics, regulatory risk assessment, 
+    A structured selective list of top 5 A+ grade crypto candidates conforming to the
+    APlusDiscoveryResult Pydantic schema. Include composite A+ scores, tokenomics analysis,
+    institutional adoption metrics, DeFi protocol metrics, regulatory risk assessment,
     acquisition strategy recommendations, and allocation recommendations within 5% limit.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
-    
+
   agent: crypto_discovery_agent
   output_file: "output/discovery/a_plus_crypto.json"
   async_execution: true
@@ -233,7 +233,7 @@ validation_task:
     Validate all A+ candidates through rigorous backtesting and risk analysis.
     Ensure recommendations meet the highest standards of due diligence across
     multiple market regimes and time periods.
-    
+
     Validation Requirements:
     - Backtest over minimum 5 years of data
     - Test across bull, bear, and sideways markets
@@ -241,14 +241,14 @@ validation_task:
     - Stress test under various scenarios
     - Validate tracking error for ETFs
     - Assess correlation with existing holdings
-    
+
     Reject any candidates that fail validation criteria.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the ValidationResult object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "validation", "results", etc.
     - The JSON must match the ValidationResult schema exactly
-    
+
     OUTPUT: Return a structured JSON output conforming to the ValidationResult schema.
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
@@ -258,13 +258,13 @@ validation_task:
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
-    A structured validation report for all A+ candidates conforming to the ValidationResult 
-    Pydantic schema. Include backtesting results with risk metrics (Sharpe, Sortino, Max 
-    Drawdown), performance across different market regimes, stress test results, final 
+    A structured validation report for all A+ candidates conforming to the ValidationResult
+    Pydantic schema. Include backtesting results with risk metrics (Sharpe, Sortino, Max
+    Drawdown), performance across different market regimes, stress test results, final
     validation status (PASS/FAIL), and detailed rationale for any rejections.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
-    
+
   agent: validation_agent
   output_file: "output/discovery/validation_report.json"
   async_execution: true
@@ -276,7 +276,7 @@ optimization_task:
     Integrate validated A+ discoveries into existing portfolios for maximum
     improvement. Optimize allocations while maintaining appropriate risk-return
     profiles and considering implementation constraints.
-    
+
     Portfolio Integration Logic (Requirements 5.1, 5.4):
     - Analyze current portfolio composition and grade distribution
     - Identify optimal replacement opportunities for lower-grade holdings
@@ -284,7 +284,7 @@ optimization_task:
     - Ensure seamless integration with existing portfolio review system
     - Update allocation targets automatically when recommendations are accepted
     - Maintain compatibility with user investment objectives and risk profile
-    
+
     Impact Analysis Requirements (Requirements 5.2):
     - Calculate before/after portfolio grade improvements (target: +10% minimum)
     - Analyze impact on portfolio risk metrics (volatility, Sharpe ratio, max drawdown)
@@ -292,7 +292,7 @@ optimization_task:
     - Evaluate sector and geographic allocation impacts
     - Project expected performance improvements vs benchmarks
     - Include confidence intervals and sensitivity analysis
-    
+
     Allocation Optimization Requirements (Requirements 5.3):
     - Optimize allocation weights using modern portfolio theory principles
     - Apply risk constraints and diversification requirements
@@ -300,27 +300,27 @@ optimization_task:
     - Respect regulatory constraints (UCITS compliance, concentration limits)
     - Maintain appropriate asset class allocations (max 5% crypto)
     - Generate specific buy/sell recommendations with quantities and timing
-    
+
     Implementation Planning:
     - Prioritize recommendations by expected impact and implementation ease
     - Create phased implementation timeline to minimize market impact
     - Consider market conditions and optimal execution timing
     - Provide specific action items with clear next steps
     - Include monitoring and rebalancing recommendations
-    
+
     Use Portfolio Analysis Tool for current portfolio assessment, Optimization Tool
     for allocation calculations, Risk Assessment Tool for impact analysis, and
     integration with existing grading system for grade improvement calculations.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the OptimizationResult object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "optimization", "results", etc.
     - The JSON must match the OptimizationResult schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - risk_assessment.scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
-    
+
     OUTPUT: Return a structured JSON output conforming to the OptimizationResult schema.
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
@@ -330,15 +330,15 @@ optimization_task:
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
-    A structured comprehensive portfolio optimization report conforming to the 
-    OptimizationResult Pydantic schema. Include executive summary, current portfolio 
-    analysis, before/after comparison (target: +10% grade improvement), impact analysis, 
-    optimal allocation recommendations, risk impact assessment, implementation plan, 
-    transaction cost analysis, regulatory compliance verification, and monitoring 
+    A structured comprehensive portfolio optimization report conforming to the
+    OptimizationResult Pydantic schema. Include executive summary, current portfolio
+    analysis, before/after comparison (target: +10% grade improvement), impact analysis,
+    optimal allocation recommendations, risk impact assessment, implementation plan,
+    transaction cost analysis, regulatory compliance verification, and monitoring
     recommendations.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
-    
+
   agent: portfolio_optimization_agent
   output_file: "output/discovery/optimization_report.json"
   async_execution: true
@@ -350,7 +350,7 @@ report_generation_task:
     Generate comprehensive HTML report with dedicated A+ opportunities section,
     showcasing portfolio grade improvements and implementation recommendations.
     Provide full French language support for Swiss and European investors.
-    
+
     HTML Report Format Requirements (Requirements 5.1, 5.2):
     - Professional HTML structure with responsive design and FinWiz branding
     - Dedicated "Opportunités A+ Identifiées" section with detailed analysis
@@ -360,7 +360,7 @@ report_generation_task:
     - Implementation roadmap with prioritized action items
     - Risk assessment and mitigation strategies section
     - Data sources and methodology transparency
-    
+
     Before/After Portfolio Comparison Requirements (Requirements 5.1, 5.2):
     - Current portfolio composition with individual asset grades
     - Proposed portfolio composition with A+ replacements
@@ -370,7 +370,7 @@ report_generation_task:
     - Diversification impact analysis with sector/geographic breakdowns
     - Expected performance improvement vs benchmarks
     - Visual charts showing grade improvements and allocation changes
-    
+
     French Language Support Configuration (Requirements 5.2):
     - Complete French translation of all report sections
     - Financial terminology localization for Swiss/European context
@@ -379,7 +379,7 @@ report_generation_task:
     - Regulatory references adapted for UCITS and European regulations
     - Cultural adaptation for Swiss investment preferences
     - Bilingual executive summary (French primary, English secondary)
-    
+
     Report Structure and Content:
     - Résumé Exécutif (Executive Summary) with key findings
     - Analyse du Portefeuille Actuel (Current Portfolio Analysis)
@@ -391,7 +391,7 @@ report_generation_task:
     - Plan d'Implémentation (Implementation Plan)
     - Évaluation des Risques (Risk Assessment)
     - Annexes Techniques (Technical Appendices)
-    
+
     Technical Implementation:
     - Use HTML Report Generator with French template support
     - Integrate with existing FinWiz report styling and branding
@@ -399,7 +399,7 @@ report_generation_task:
     - Include interactive elements for grade comparison visualization
     - Implement responsive design for mobile and desktop viewing
     - Add export functionality for sharing and archiving
-    
+
   expected_output: >
     Professional HTML investment discovery report including:
     - Comprehensive executive summary in French highlighting A+ opportunities
@@ -415,7 +415,7 @@ report_generation_task:
     - Interactive charts for grade distribution and allocation changes
     - Data source citations and methodology transparency
     - Risk mitigation strategies and monitoring recommendations
-    
+
   agent: portfolio_optimization_agent
   output_file: "output/discovery/rapport_opportunites_a_plus.html"
   async_execution: false
@@ -426,10 +426,10 @@ report_generation_task:
 generate_export_task:
   description: >
     Consolidate all A+ investment discovery findings from context into a DiscoveryCrewExport object.
-    
+
     CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
     from previous tasks to extract all required information.
-    
+
     CONTEXT SOURCES:
     - etf_discovery_task: A+ ETF opportunities
     - stock_discovery_task: A+ stock opportunities
@@ -438,7 +438,7 @@ generate_export_task:
     - optimization_task: Portfolio optimization results
     - report_generation_task: Consolidated discovery report
     - feedback_learning_task: Refined A+ criteria
-    
+
     REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
     1. opportunities (List[DiscoveryOpportunity], max 10):
        - Extract from discovery tasks context (etf, stock, crypto)
@@ -450,7 +450,7 @@ generate_export_task:
          * grade: "A+" (default for discoveries)
          * rationale: Why this is an A+ opportunity (min 50 chars)
        - Limit to top 10 opportunities across all asset classes
-    
+
     2. screening_criteria (dict):
        - Extract from validation_task context
        - Include criteria used for A+ screening:
@@ -458,39 +458,39 @@ generate_export_task:
          * Backtesting requirements (5 years, 8% return, Sharpe >= 1.0)
          * Risk limits (max drawdown <= -25%)
          * Consistency requirements (win rate >= 45%, regime consistency >= 60%)
-    
+
     3. market_context (string, min 50 chars):
        - Extract from discovery tasks context
        - Describe market conditions during discovery
        - Include sector trends, market sentiment, economic factors
        - Reference current date: {full_date}
-    
+
     4. data_sources (list of strings):
        - List all data sources used in discovery:
          * ETF: ["Yahoo Finance", "ETF.com", "Morningstar"]
          * Stock: ["SEC EDGAR", "Yahoo Finance", "Alpha Vantage"]
          * Crypto: ["CoinMarketCap", "Kraken", "CoinGecko"]
          * Backtesting: ["Historical price data", "Quantitative analysis"]
-    
+
     5. report_html_path (string):
        - Set to: "output/reports/{session_id}/discovery_crew/discovery_report.html"
-    
+
     6. report_json_path (string):
        - Set to: "output/reports/{session_id}/discovery_crew/discovery_export.json"
-    
+
     METADATA FIELDS (auto-populated):
     - crew_name: "discovery_crew" (default)
     - ticker: "N/A" (not applicable for discovery - portfolio-level)
     - asset_class: "N/A" (multiple asset classes analyzed)
     - session_id: From input parameter {session_id}
     - analysis_date: Current timestamp (auto-generated)
-    
+
     OUTPUT FORMAT:
     - Return a valid DiscoveryCrewExport Pydantic object
     - All fields must conform to schema validation
     - Use extra='forbid' - no additional fields allowed
     - Ensure all required fields are present
-    
+
     VALIDATION:
     - opportunities list must have max 10 items
     - Each opportunity.composite_score must be >= 0.7 (A+ threshold)
@@ -498,7 +498,7 @@ generate_export_task:
     - Each opportunity.rationale must be at least 50 characters
     - market_context must be at least 50 characters
     - All nested objects must conform to their schemas
-    
+
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
   expected_output: >
     A validated DiscoveryCrewExport Pydantic object containing all A+ opportunities

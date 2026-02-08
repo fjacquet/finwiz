@@ -590,6 +590,6 @@ When content becomes outdated:
 
 ---
 
-**Last Updated**: 2025-10-26  
-**Version**: 1.0  
+**Last Updated**: 2025-10-26
+**Version**: 1.0
 **Maintainer**: FinWiz Documentation Team

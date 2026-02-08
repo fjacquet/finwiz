@@ -81,26 +81,26 @@ The Flow orchestrator manages concurrent crew execution:
 @listen("check_portfolio")
 def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
     """Execute deep analysis with batch processing."""
-    
+
     # Phase 1: Batch data pre-fetching
     prefetcher = BatchDataPreFetcher(tickers=underperforming_tickers)
     prefetched_data = await prefetcher.prefetch_all_data()
-    
+
     # Phase 2: Concurrent crew execution in batches
     batch_size = get_batch_size()
     batches = create_batches(underperforming_tickers, batch_size)
-    
+
     for batch_num, batch_tickers in enumerate(batches):
         # Execute batch concurrently
         batch_results = await asyncio.gather(*[
             execute_deep_analysis_crew(ticker, prefetched_data[ticker])
             for ticker in batch_tickers
         ])
-        
+
         # Process batch results
         for ticker, result in zip(batch_tickers, batch_results):
             deep_analysis_results[ticker] = result
-    
+
     return {"deep_analysis_results": deep_analysis_results}
 ```
 
@@ -291,7 +291,7 @@ def adjust_batch_size_for_memory(base_batch_size: int) -> int:
     """Adjust batch size based on available memory."""
     memory_manager = MemoryManager()
     available_memory_gb = memory_manager.get_available_memory_gb()
-    
+
     if available_memory_gb < 2.0:
         # Low memory: reduce batch size
         return max(1, base_batch_size // 2)
@@ -315,11 +315,11 @@ async def _fetch_yahoo_finance_batch(self, tickers: list[str]) -> dict[str, Any]
     """Fetch Yahoo Finance data for multiple tickers with error handling."""
     results = {}
     failed_tickers = []
-    
+
     try:
         # Attempt batch download
         data = yf.download(tickers, period="1y", group_by="ticker")
-        
+
         for ticker in tickers:
             try:
                 # Process individual ticker data
@@ -333,19 +333,19 @@ async def _fetch_yahoo_finance_batch(self, tickers: list[str]) -> dict[str, Any]
                 logger.error(f"Failed to process Yahoo Finance data for {ticker}: {e}")
                 failed_tickers.append(ticker)
                 results[ticker] = {"failed": True, "error": str(e)}
-    
+
     except Exception as e:
         # Entire batch failed - mark all as failed
         logger.error(f"Yahoo Finance batch download failed: {e}")
         for ticker in tickers:
             results[ticker] = {"failed": True, "error": str(e)}
             failed_tickers.append(ticker)
-    
+
     # Log summary
     if failed_tickers:
         logger.warning(f"Yahoo Finance batch: {len(failed_tickers)} failed out of {len(tickers)}")
         logger.warning(f"Failed tickers: {failed_tickers}")
-    
+
     return results
 ```
 
@@ -357,12 +357,12 @@ If batch processing fails completely, the system falls back to sequential mode:
 def _fallback_to_sequential_mode(self, reason: str) -> dict[str, Any]:
     """Fallback to sequential analysis mode."""
     logger.warning(f"Falling back to sequential mode: {reason}")
-    
+
     # Update state to indicate fallback
     self.state.batch_prefetch_enabled = False
     self.state.fallback_reason = reason
     self.state.fallback_timestamp = datetime.now()
-    
+
     # Execute sequential analysis
     return self._run_deep_analysis_sequential()
 ```
@@ -374,19 +374,19 @@ The system detects various failure scenarios:
 ```python
 def _should_fallback_to_sequential(self, prefetched_data: dict) -> tuple[bool, str]:
     """Determine if we should fallback to sequential mode."""
-    
+
     total_tickers = len(prefetched_data)
     failed_tickers = sum(1 for data in prefetched_data.values() if data.get("failed", False))
     failure_rate = failed_tickers / total_tickers if total_tickers > 0 else 0
-    
+
     # Fallback if failure rate is too high
     if failure_rate > 0.5:  # More than 50% failed
         return True, f"High failure rate: {failure_rate:.1%} ({failed_tickers}/{total_tickers})"
-    
+
     # Fallback if no data was fetched at all
     if total_tickers == 0:
         return True, "No tickers to analyze"
-    
+
     # Continue with batch mode
     return False, ""
 ```
@@ -401,29 +401,29 @@ The system tracks detailed performance metrics:
 @dataclass
 class BatchPrefetchMetrics:
     """Comprehensive batch processing metrics."""
-    
+
     # Basic counts
     total_tickers: int = 0
     successful_tickers: int = 0
     failed_tickers: int = 0
-    
+
     # Timing metrics
     prefetch_duration_seconds: float = 0.0
     crew_execution_duration_seconds: float = 0.0
     total_duration_seconds: float = 0.0
-    
+
     # Performance metrics
     time_savings_percentage: float = 0.0
     estimated_sequential_time_seconds: float = 0.0
-    
+
     # Batch configuration
     batch_size: int = 5
     total_batches: int = 0
-    
+
     # Resource usage
     memory_usage_mb: float = 0.0
     peak_memory_usage_mb: float = 0.0
-    
+
     # Error tracking
     failed_ticker_list: list[str] = field(default_factory=list)
     error_summary: dict[str, int] = field(default_factory=dict)
@@ -629,7 +629,7 @@ monitor = PerformanceMonitor()
 with monitor.track_batch_processing() as tracker:
     # Run batch processing
     result = execute_batch_processing()
-    
+
     # View performance metrics
     metrics = tracker.get_metrics()
     print(f"Total time: {metrics.total_duration_seconds:.1f}s")
@@ -688,8 +688,8 @@ This system enables FinWiz to scale from small portfolios to large institutional
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-25  
+**Version**: 1.0
+**Last Updated**: 2025-01-25
 **Related Documentation**:
 
 - [Performance Configuration Guide](PERFORMANCE_CONFIGURATION.md)

@@ -344,14 +344,14 @@ try:
     if not file_path.exists():
         logger.warning(f"File not found: {file_path}")
         return None
-    
+
     with open(file_path, encoding="utf-8") as f:
         data = json.load(f)
-    
+
     # Validate structure
     assert "ticker" in data
     assert "composite_score" in data
-    
+
     return data
 except Exception as e:
     logger.error(f"Failed to read {file_path}: {e}")

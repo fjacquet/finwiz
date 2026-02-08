@@ -9,7 +9,7 @@ This document provides a comprehensive overview of the unit test suite for the I
 ### Total Tests: 99
 
 - **A+ Scoring Tool**: 23 tests
-- **Market Screening Tool**: 49 tests  
+- **Market Screening Tool**: 49 tests
 - **Backtesting Tool**: 17 tests
 - **Comprehensive Integration Tests**: 27 tests
 

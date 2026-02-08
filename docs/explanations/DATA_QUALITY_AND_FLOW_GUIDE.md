@@ -4,7 +4,7 @@
 
 This document provides comprehensive guidance on FinWiz's data flow architecture, quality requirements, error handling, and troubleshooting. It addresses the critical data consumption gap that was fixed in the regression-diagnosis-and-fix specification.
 
-**Last Updated**: 2025-01-18  
+**Last Updated**: 2025-01-18
 **Related Spec**: `.kiro/specs/regression-diagnosis-and-fix/`
 
 ---
@@ -74,7 +74,7 @@ class HoldingDecision(BaseModel):
     ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$')
     grade: str = Field(..., pattern=r'^(A\+|A|B|C|D|F)$')
     composite_score: float = Field(..., ge=0.0, le=1.0)
-    
+
     model_config = {
         "extra": "forbid",  # Reject unknown fields
         "str_strip_whitespace": True
@@ -193,11 +193,11 @@ validator = DataConsolidationValidator()
 try:
     # Validate all expected crew data exists
     crew_data = validator.validate_crew_data_retrieval(['stock', 'etf', 'crypto'])
-    
+
     # Data successfully retrieved
     for crew_name, data in crew_data.items():
         print(f"✅ {crew_name}: {len(data)} records")
-        
+
 except DataRetrievalError as e:
     # Fail fast - data missing or corrupted
     logger.error(f"❌ Data retrieval failed: {e}")
@@ -220,12 +220,12 @@ try:
         holdings=portfolio_holdings,
         deep_analysis_results=deep_analysis_data
     )
-    
+
     # Verify merge succeeded
     for holding in merged_holdings:
         assert holding.grade != "D" or holding.composite_score != 0.6
         assert holding.has_deep_analysis == True
-        
+
 except DataMergeError as e:
     # Fail fast - merge failed
     logger.error(f"❌ Data merge failed: {e}")
@@ -246,10 +246,10 @@ try:
     # Validate report inputs
     validator.validate_report_inputs(crew_inputs)
     validator.validate_portfolio_review_data(crew_inputs['portfolio_review'])
-    
+
     # Generate report with validated data
     report = generate_report(crew_inputs)
-    
+
 except ReportValidationError as e:
     # Fail fast - refuse to generate report with bad data
     logger.error(f"❌ Report validation failed: {e}")
@@ -456,7 +456,7 @@ def test_data_quality_threshold():
     """Ensure data quality meets minimum threshold."""
     metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
     score = metrics.get_quality_score()
-    
+
     assert score >= 0.90, f"Data quality score {score:.2%} below threshold 90%"
 ```
 
@@ -702,7 +702,7 @@ for field in required_fields:
    ```bash
    # Holdings tickers
    cat output/portfolio/portfolio_review.json | jq '.portfolio_review.holdings[].ticker'
-   
+
    # Analysis tickers
    cat output/stock/stock_output_*.json | jq '.ticker'
    ```
@@ -737,7 +737,7 @@ for field in required_fields:
 
    ```python
    from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
-   
+
    generator = SECFilingURLGenerator()
    url = generator.get_filing_url("AAPL", "10-K")
    print(f"Generated URL: {url}")
@@ -747,7 +747,7 @@ for field in required_fields:
 
    ```python
    from finwiz.utils.url_validator import URLValidator
-   
+
    validator = URLValidator()
    is_valid = validator.validate_url("https://www.sec.gov/...")
    print(f"URL valid: {is_valid}")
@@ -769,7 +769,7 @@ for field in required_fields:
 
    ```python
    from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
-   
+
    tracker = DataAvailabilityTracker()
    summary = tracker.get_availability_summary()
    print(summary)
@@ -803,7 +803,7 @@ for field in required_fields:
 
    ```python
    from finwiz.tools.alternative_finder_tool import AlternativeFinder
-   
+
    finder = AlternativeFinder()
    alternatives = finder.find_alternatives(holding)
    print(f"Found {len(alternatives)} alternatives")
@@ -819,7 +819,7 @@ for field in required_fields:
 
    ```python
    from finwiz.utils.data_quality_metrics import DataQualityMetrics
-   
+
    metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
    print(metrics.get_summary())
    ```
@@ -829,10 +829,10 @@ for field in required_fields:
    ```python
    if metrics.fallback_grades_count > 0:
        print(f"⚠️ {metrics.fallback_grades_count} fallback grades detected")
-   
+
    if metrics.placeholder_urls_count > 0:
        print(f"⚠️ {metrics.placeholder_urls_count} placeholder URLs detected")
-   
+
    if metrics.missing_data_count > 0:
        print(f"⚠️ {metrics.missing_data_count} missing data points detected")
    ```
@@ -865,7 +865,7 @@ for field in required_fields:
 
    ```python
    import httpx
-   
+
    async with httpx.AsyncClient(timeout=30.0) as client:
        response = await client.get(url)
    ```
@@ -887,7 +887,7 @@ for field in required_fields:
    ```python
    from pydantic import ValidationError
    from finwiz.schemas.portfolio_review import HoldingDecision
-   
+
    try:
        holding = HoldingDecision(**data)
    except ValidationError as e:
@@ -955,7 +955,7 @@ os.environ["ALLOW_GRACEFUL_DEGRADATION"] = "false"
 def test_data_quality():
     """Ensure data quality meets standards."""
     metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
-    
+
     assert metrics.get_quality_score() >= 0.90
     assert metrics.fallback_grades_count == 0
     assert metrics.placeholder_urls_count == 0
@@ -989,6 +989,6 @@ For issues or questions:
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-18  
+**Version**: 1.0
+**Last Updated**: 2025-01-18
 **Maintainer**: FinWiz Development Team

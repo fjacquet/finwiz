@@ -4,7 +4,7 @@
 
 ## Directory Layout
 
-```
+```console
 finwiz/
 ├── src/finwiz/           # Main source code
 │   ├── main.py           # Application entry point

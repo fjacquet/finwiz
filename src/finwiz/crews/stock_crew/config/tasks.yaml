@@ -25,33 +25,33 @@
 sec_analysis_task:
   description: >
     Analyze SEC 10-K and 10-Q filings for {ticker} to extract qualitative business insights.
-    
+
     CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
     - Python has calculated ALL financial metrics (ROE, debt ratios, growth rates)
     - Python grade: {grade}, composite score: {composite_score}
     - Python preliminary recommendation: {preliminary_recommendation}
-    
+
     YOUR EXCLUSIVE FOCUS (Qualitative Analysis Only):
     1. Business Model Deep Dive
        - How does the company make money?
        - What are the key revenue streams?
        - What is the business model sustainability?
-    
+
     2. Competitive Advantages Analysis
        - What moats protect the business?
        - What makes this company unique?
        - How defensible is the competitive position?
-    
+
     3. Strategic Direction Assessment
        - What are the key strategic initiatives?
        - How is management positioning for growth?
        - What are the innovation priorities?
-    
+
     4. Risk Factors from Filings
        - What risks does management disclose?
        - What are the material uncertainties?
        - What could disrupt the business model?
-    
+
     DO NOT recalculate any financial metrics - focus on qualitative business insights.
     Use the Enhanced SEC Analysis Tool to fetch filing data, then interpret qualitatively.
 
@@ -73,7 +73,7 @@ sec_analysis_task:
     - competitive_advantages: List of identified competitive advantages
     - risk_factors: Risk factors from SEC filings with severity ratings
     - strategic_initiatives: Key strategic initiatives with expected impact
-  
+
   agent: sec_analyst
   output_pydantic: SecAnalysisInsights
   async_execution: true
@@ -81,34 +81,34 @@ sec_analysis_task:
 fundamental_context_task:
   description: >
     Provide industry context and competitive positioning for {ticker}.
-    
+
     CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
     - Python has calculated ROE: {fundamental_metrics[roe]}
     - Python has calculated debt/equity: {fundamental_metrics[debt_to_equity]}
     - Python has calculated revenue growth: {fundamental_metrics[revenue_growth]}
     - Python fundamental score: {fundamental_score}
-    
+
     YOUR EXCLUSIVE FOCUS (Qualitative Context Only):
     1. Industry Analysis
        - What are the key industry trends?
        - How is the competitive landscape evolving?
        - What are the industry growth drivers?
-    
+
     2. Growth Drivers
        - What catalysts could drive future growth?
        - What market opportunities exist?
        - What are the expansion possibilities?
-    
+
     3. Competitive Positioning
        - How does the company compare to peers?
        - What is the market share trajectory?
        - What are the competitive strengths/weaknesses?
-    
+
     4. Management Assessment
        - What is the management track record?
        - How effective is capital allocation?
        - What is the corporate governance quality?
-    
+
     DO NOT recalculate ROE, debt ratios, or growth rates - provide context for these metrics.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -121,7 +121,7 @@ fundamental_context_task:
     - growth_drivers: Key growth drivers and catalysts
     - competitive_positioning: Competitive positioning analysis
     - management_assessment: Management quality and track record
-  
+
   agent: fundamental_analyst
   output_pydantic: FundamentalContextInsights
   async_execution: true
@@ -131,34 +131,34 @@ fundamental_context_task:
 technical_strategy_task:
   description: >
     Interpret technical patterns and develop entry/exit strategy for {ticker}.
-    
+
     CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
     - Python has calculated RSI: {technical_indicators[rsi]}
     - Python has calculated MACD: {technical_indicators[macd]}
     - Python has calculated trend strength: {technical_indicators[trend_strength]}
     - Python technical score: {technical_score}
-    
+
     YOUR EXCLUSIVE FOCUS (Qualitative Technical Analysis Only):
     1. Chart Patterns
        - What chart patterns are forming?
        - What technical formations are significant?
        - What do the patterns suggest about momentum?
-    
+
     2. Support/Resistance Levels
        - What are the key support levels?
        - What are the key resistance levels?
        - What price levels are critical?
-    
+
     3. Entry/Exit Strategy
        - What are optimal entry points?
        - What are target exit prices?
        - What stop-loss levels are appropriate?
-    
+
     4. Timing Assessment
        - Is this a good time to enter?
        - What is the momentum direction?
        - What are the timing risks?
-    
+
     DO NOT recalculate RSI, MACD, or other indicators - interpret the signals qualitatively.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -171,7 +171,7 @@ technical_strategy_task:
     - support_resistance: Key support and resistance levels
     - entry_exit_strategy: Entry/exit strategy with price targets (minimum 100 words)
     - timing_assessment: Market timing and momentum assessment
-  
+
   agent: technical_analyst
   output_pydantic: TechnicalStrategyInsights
   async_execution: true
@@ -181,39 +181,39 @@ technical_strategy_task:
 contextual_risk_task:
   description: >
     Analyze contextual risks for {ticker} beyond quantitative metrics.
-    
+
     CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
     - Python has calculated volatility: {risk_metrics[volatility]}
     - Python has calculated beta: {risk_metrics[beta]}
     - Python has calculated max drawdown: {risk_metrics[max_drawdown]}
     - Python risk score: {risk_score}
-    
+
     YOUR EXCLUSIVE FOCUS (Qualitative Risk Analysis Only):
     1. Regulatory Risks
        - What regulatory changes could impact the business?
        - What compliance challenges exist?
        - What policy risks are material?
-    
+
     2. Geopolitical Risks
        - What geopolitical events could affect operations?
        - What macroeconomic risks are relevant?
        - What currency or trade risks exist?
-    
+
     3. Competitive Risks
        - What competitive threats are emerging?
        - What disruption risks exist?
        - What market share risks are present?
-    
+
     4. Operational Risks
        - What execution risks exist?
        - What supply chain vulnerabilities are present?
        - What operational challenges could arise?
-    
+
     5. Stress Scenarios
        - What worst-case scenarios should be considered?
        - How resilient is the business model?
        - What are the tail risks?
-    
+
     DO NOT recalculate volatility, beta, or drawdown - identify qualitative risk factors.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -227,7 +227,7 @@ contextual_risk_task:
     - competitive_risks: Competitive and market risks
     - operational_risks: Operational and execution risks
     - stress_scenarios: Stress test scenarios and outcomes
-  
+
   agent: risk_analyst
   output_pydantic: ContextualRiskInsights
   async_execution: true
@@ -237,7 +237,7 @@ contextual_risk_task:
 investment_synthesis_task:
   description: >
     Synthesize all analyses into comprehensive investment strategy for {ticker}.
-    
+
     CRITICAL - CONTEXT PROVIDED (Do NOT recalculate):
     - Python grade: {grade}, composite score: {composite_score}
     - Python preliminary recommendation: {preliminary_recommendation}
@@ -248,30 +248,30 @@ investment_synthesis_task:
     - Fundamental context from fundamental_context_task
     - Technical strategy from technical_strategy_task
     - Contextual risks from contextual_risk_task
-    
+
     YOUR ROLE (Synthesis & Strategic Guidance):
     1. Investment Thesis Development (200+ words)
        - Synthesize Python metrics with qualitative insights
        - Develop comprehensive investment rationale
        - Explain the investment opportunity clearly
-    
+
     2. Scenario Analysis
        - Bull Case: What could drive outperformance?
        - Base Case: What is the most likely outcome?
        - Bear Case: What could go wrong?
        - Assign probabilities to each scenario
-    
+
     3. Recommendation Refinement
        - Start with Python preliminary recommendation
        - Refine based on qualitative insights
        - Assess confidence level (LOW/MEDIUM/HIGH)
        - Provide clear reasoning for any changes
-    
+
     4. Actionable Strategy Development
        - Immediate actions to take
        - Key monitoring points
        - Exit triggers and stop-loss levels
-    
+
     DO NOT recalculate scores or grades - synthesize Python metrics with AI insights.
 
     ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
@@ -283,7 +283,7 @@ investment_synthesis_task:
 
     OUTPUT FORMAT SPECIFICATION (Requirement 12.7):
     Return a valid JSON object matching the InvestmentSynthesis schema exactly.
-    
+
     REQUIRED FIELDS WITH DESCRIPTIONS:
     - investment_thesis (string, min 200 words): Comprehensive investment thesis synthesizing all analyses
     - bull_case (string, min 100 words): Optimistic scenario with specific catalysts and drivers
@@ -293,7 +293,7 @@ investment_synthesis_task:
     - final_recommendation (string): Exactly "BUY", "HOLD", or "SELL" (uppercase)
     - recommendation_confidence (string): Exactly "LOW", "MEDIUM", or "HIGH" (uppercase)
     - action_plan (dict): Must contain three keys: "immediate_actions", "monitoring_points", "exit_triggers" (each a list of strings)
-    
+
     EXAMPLE OUTPUT (Requirement 12.7):
     {{
       "investment_thesis": "Apple represents a compelling investment opportunity at current levels due to several converging factors. The company's transition to a services-focused business model is accelerating, with services revenue growing at 15% annually and now representing 22% of total revenue. This shift provides more predictable, higher-margin revenue streams that command premium valuations. The iPhone replacement cycle remains healthy with the iPhone 15 driving solid upgrade momentum, particularly in international markets. Management's capital allocation strategy continues to be shareholder-friendly, with $90B in annual buybacks reducing share count by 3% annually. The company's ecosystem lock-in creates powerful network effects, with over 2 billion active devices creating a massive installed base for services expansion. Recent product launches including Vision Pro demonstrate continued innovation capability, though near-term revenue contribution will be modest. The balance sheet remains fortress-like with $162B in net cash, providing flexibility for M&A, R&D investment, and continued capital returns. Valuation at 28x forward earnings is reasonable given the quality of the business, though not cheap. Overall, the combination of services growth, ecosystem strength, capital returns, and innovation pipeline supports a positive long-term outlook despite near-term macro headwinds.",
@@ -330,7 +330,7 @@ investment_synthesis_task:
         ]
       }}
     }}
-    
+
     VALIDATION REQUIREMENTS (Requirement 12.1-12.6):
     - Output MUST be a valid JSON object (not string, list, or other type)
     - Do NOT return tool_calls or function_call keys
@@ -358,7 +358,7 @@ investment_synthesis_task:
     - final_recommendation: Final AI-refined recommendation (BUY/HOLD/SELL)
     - recommendation_confidence: AI confidence level (LOW/MEDIUM/HIGH)
     - action_plan: Actionable steps (immediate_actions, monitoring_points, exit_triggers)
-  
+
   agent: investment_strategist
   output_pydantic: InvestmentSynthesis
   async_execution: true
@@ -368,10 +368,10 @@ investment_synthesis_task:
 generate_enriched_analysis_task:
   description: >
     Consolidate Python metrics and AI insights into EnrichedAnalysis for {ticker}.
-    
+
     CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS.
     Use ONLY the context from previous tasks.
-    
+
     CONTEXT SOURCES:
     - Python quantitative analysis: QuantitativeAnalysis object with all scores/metrics
     - sec_analysis_task: SecAnalysisInsights
@@ -379,7 +379,7 @@ generate_enriched_analysis_task:
     - technical_strategy_task: TechnicalStrategyInsights
     - contextual_risk_task: ContextualRiskInsights
     - investment_synthesis_task: InvestmentSynthesis
-    
+
     CONSOLIDATION PROCESS:
     1. Extract QuantitativeAnalysis from context (Python-calculated)
     2. Build QualitativeInsights from AI task outputs:
@@ -404,7 +404,7 @@ generate_enriched_analysis_task:
        - unique_insights_count: Count unique insights from AI analysis
        - processing_time_seconds: Calculate from timestamps
        - llm_cost_dollars: Estimate from LLM calls
-    
+
     VALIDATION:
     - Ensure report_word_count >= 2000
     - Ensure unique_insights_count >= 5
@@ -431,7 +431,7 @@ generate_enriched_analysis_task:
     - Executive summary and investment rationale
     - Quality metrics (word count >= 2000, insights >= 5)
     - Processing metadata (time, cost)
-  
+
   agent: investment_reporter
   output_pydantic: EnrichedAnalysis
   async_execution: false  # Final task must be synchronous

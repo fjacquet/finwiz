@@ -77,6 +77,11 @@ class DeepAnalysisOrchestrator:
         holdings = portfolio_review.get("holdings", [])
         self.logger.info(f"Starting deep analysis for {len(holdings)} holdings")
 
+        # Step 0: Batch prefetch data for all holdings
+        from finwiz.orchestrators.batch_prefetch_runner import run_batch_prefetch
+
+        run_batch_prefetch(self.state, holdings, self.logger)
+
         # Step 1: Run deep analysis on all holdings CONCURRENTLY
         try:
             # Use concurrent execution for better performance
@@ -231,7 +236,12 @@ class DeepAnalysisOrchestrator:
                 return (ticker or "unknown", None, None)
 
             try:
-                result, enriched = analyze_holding(ticker, asset_class, company_name)
+                result, enriched = analyze_holding(
+                    ticker,
+                    asset_class,
+                    company_name,
+                    prefetched_data=self.state.prefetched_data if self.state.batch_prefetch_enabled else None,
+                )
                 return (ticker, result, enriched)
             except Exception as e:
                 self.logger.error(f"Concurrent analysis failed for {ticker}: {e}")

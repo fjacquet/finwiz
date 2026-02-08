@@ -3,7 +3,7 @@ name: documentation-specialist
 description: |
   Documentation expert focused on creating comprehensive, clear, and maintainable documentation.
   Expert in technical writing, API documentation, user guides, and documentation systems.
-  
+
   Use when:
   - Creating technical documentation and user guides
   - Writing API documentation and specifications
@@ -252,7 +252,7 @@ async function main() {
     const result = await client.doSomething({
       param1: 'example-value'
     })
-    
+
     console.log('Success:', result)
   } catch (error) {
     console.error('Error:', error.message)
@@ -336,7 +336,7 @@ interface Config {
 
 **Problem:** Getting 401 Unauthorized errors
 
-**Solution:** 
+**Solution:**
 1. Verify your API key is correct
 2. Check that the API key has the necessary permissions
 3. Ensure you're using the correct environment
@@ -442,33 +442,33 @@ info:
   title: Your API
   description: |
     Comprehensive API for managing resources and operations.
-    
+
     ## Authentication
-    
+
     This API uses Bearer token authentication. Include your API key in the Authorization header:
-    
+
     ```
     Authorization: Bearer your-api-key-here
     ```
-    
+
     ## Rate Limiting
-    
+
     API requests are limited to 1000 requests per hour per API key. Rate limit information is included in response headers:
-    
+
     - `X-RateLimit-Limit`: Request limit per hour
     - `X-RateLimit-Remaining`: Remaining requests in current window
     - `X-RateLimit-Reset`: Unix timestamp when the rate limit resets
-    
+
     ## Error Handling
-    
+
     The API uses conventional HTTP response codes to indicate success or failure:
-    
+
     - `2xx`: Success
     - `4xx`: Client error (invalid request, authentication, etc.)
     - `5xx`: Server error
-    
+
     Error responses include a JSON object with error details:
-    
+
     ```json
     {
       "error": {
@@ -483,7 +483,7 @@ info:
       }
     }
     ```
-    
+
   version: 1.0.0
   contact:
     name: API Support
@@ -508,23 +508,23 @@ paths:
       summary: List users
       description: |
         Retrieve a paginated list of users. Supports filtering, sorting, and searching.
-        
+
         ### Filtering
-        
+
         Use query parameters to filter results:
         - `role=admin` - Filter by user role
         - `active=true` - Filter by active status
         - `created_after=2023-01-01` - Filter by creation date
-        
+
         ### Sorting
-        
+
         Use the `sort` parameter with field names:
         - `sort=created_at` - Sort by creation date (ascending)
         - `sort=-created_at` - Sort by creation date (descending)
         - `sort=name,created_at` - Multiple sort fields
-        
+
         ### Searching
-        
+
         Use the `search` parameter to search across multiple fields:
         - `search=john` - Search for "john" in name and email fields
       tags:
@@ -612,16 +612,16 @@ paths:
       summary: Create user
       description: |
         Create a new user account.
-        
+
         ### Validation Rules
-        
+
         - Email must be unique and valid format
         - Password must be at least 8 characters with uppercase, lowercase, numbers, and special characters
         - Name must be 1-100 characters
         - Role defaults to 'user' if not specified
-        
+
         ### Email Verification
-        
+
         After successful creation, a verification email is sent to the user's email address.
         The user account will be created but marked as inactive until email verification is completed.
       tags:

@@ -15,7 +15,7 @@ All crews must follow this exact structure:
 src/finwiz/crews/{crew_name}/
 ├── {crew_name}.py          # @agent, @task, @crew decorators
 └── config/
-    ├── agents.yaml         # Agent configurations  
+    ├── agents.yaml         # Agent configurations
     └── tasks.yaml          # Task definitions
 ```
 
@@ -106,10 +106,10 @@ class FinwizFlow(Flow[FinwizState]):
         # Direct crew instantiation (CrewAI Flow standard)
         crew = StockCrew()
         result = crew.crew().kickoff(inputs={"ticker": "AAPL"})
-        
+
         # Update structured state
         self.state.analysis_results = result.raw
-        
+
         # REQUIRED: Return for downstream methods
         return {"results": result.raw}
 ```

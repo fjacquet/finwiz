@@ -40,9 +40,7 @@ class TestAdapterFallbackScenarios:
         return adapter
 
     @pytest.mark.asyncio
-    async def test_all_adapters_unavailable_falls_to_industry_averages(
-        self, orchestrator, mocker
-    ):
+    async def test_all_adapters_unavailable_falls_to_industry_averages(self, orchestrator, mocker):
         """When ALL adapters are unavailable, IndustryAverages is used."""
         for adapter in orchestrator.adapters:
             mocker.patch.object(adapter, "is_available", return_value=False)
@@ -55,14 +53,10 @@ class TestAdapterFallbackScenarios:
         assert result.confidence < 0.6
 
     @pytest.mark.asyncio
-    async def test_primary_adapter_raises_data_acquisition_error(
-        self, orchestrator, mocker
-    ):
+    async def test_primary_adapter_raises_data_acquisition_error(self, orchestrator, mocker):
         """When primary adapter raises DataAcquisitionError, next adapter is tried."""
         adapter1 = self._make_mock_adapter(mocker, "FailSource")
-        adapter1.get_fundamental_data.side_effect = DataAcquisitionError(
-            "Connection refused"
-        )
+        adapter1.get_fundamental_data.side_effect = DataAcquisitionError("Connection refused")
 
         complete_data = FundamentalData(
             ticker="AAPL",
@@ -90,9 +84,7 @@ class TestAdapterFallbackScenarios:
     async def test_primary_adapter_raises_timeout_error(self, orchestrator, mocker):
         """When primary adapter raises TimeoutError, it is recorded and next tried."""
         adapter1 = self._make_mock_adapter(mocker, "SlowSource")
-        adapter1.get_fundamental_data.side_effect = TimeoutError(
-            "3s timeout exceeded"
-        )
+        adapter1.get_fundamental_data.side_effect = TimeoutError("3s timeout exceeded")
 
         complete_data = FundamentalData(
             ticker="AAPL",
@@ -115,9 +107,7 @@ class TestAdapterFallbackScenarios:
         assert any("timeout" in w.lower() for w in result.warnings)
 
     @pytest.mark.asyncio
-    async def test_primary_adapter_returns_invalid_data_rejected(
-        self, orchestrator, mocker
-    ):
+    async def test_primary_adapter_returns_invalid_data_rejected(self, orchestrator, mocker):
         """When primary adapter returns invalid data, it is rejected."""
         invalid_data = FundamentalData(
             ticker="AAPL",
@@ -159,9 +149,7 @@ class TestAdapterFallbackScenarios:
         mocker.patch.object(
             orchestrator.fallback_adapter,
             "get_fundamental_data",
-            new=mocker.AsyncMock(
-                side_effect=Exception("IndustryAverages DB corrupted")
-            ),
+            new=mocker.AsyncMock(side_effect=Exception("IndustryAverages DB corrupted")),
         )
 
         result = await orchestrator.get_fundamental_data("AAPL", sector="Technology")
@@ -172,9 +160,7 @@ class TestAdapterFallbackScenarios:
         assert result.get_completeness_score() == 0.0
 
     @pytest.mark.asyncio
-    async def test_partial_data_degradation_with_lineage_tracking(
-        self, orchestrator, mocker
-    ):
+    async def test_partial_data_degradation_with_lineage_tracking(self, orchestrator, mocker):
         """Partial data from one adapter is filled by IndustryAverages with lineage."""
         partial_data = FundamentalData(
             ticker="AAPL",

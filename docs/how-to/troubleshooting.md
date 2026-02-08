@@ -156,7 +156,7 @@ def render_discovery_latest(self, json_data: dict[str, Any]) -> str:
         data = json_data["pydantic"]
     else:
         data = json_data
-    
+
     # Now use 'data' for template rendering
     return self.template.render(data=data)
 ```
@@ -276,7 +276,7 @@ class PythonDeepAnalysisResult(BaseModel):
 # In template_renderer.py
 def _generate_rationale(candidate: dict) -> str:
     """Generate rationale from different data structures."""
-    
+
     # For stocks: combine moat + growth + valuation
     if 'competitive_moat' in candidate:
         parts = []
@@ -287,7 +287,7 @@ def _generate_rationale(candidate: dict) -> str:
         if candidate.get('valuation'):
             parts.append(f"Valuation: {candidate['valuation']}")
         return " | ".join(parts)
-    
+
     # For crypto: combine tokenomics + utility
     elif 'tokenomics_summary' in candidate:
         parts = []
@@ -296,7 +296,7 @@ def _generate_rationale(candidate: dict) -> str:
         if candidate.get('utility_summary'):
             parts.append(f"Utility: {candidate['utility_summary']}")
         return " | ".join(parts)
-    
+
     # Fallback to direct rationale
     return candidate.get('rationale', 'No rationale available')[:500]
 ```
@@ -323,7 +323,7 @@ AttributeError: 'StateWithId' object has no attribute 'errors'
 # In flow_state.py
 class FinwizState(BaseModel):
     # ... existing fields ...
-    
+
     # Error tracking
     errors: list[str] = Field(
         default_factory=list,

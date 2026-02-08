@@ -96,24 +96,24 @@ class APlusDiscoveryResult(BaseModel):
     # Discovery metadata
     discovery_date: datetime
     asset_class: str = Field(..., pattern="^(stock|etf|crypto)$")
-    
+
     # Discovered opportunities
     opportunities: List[InvestmentCandidate] = []
     total_opportunities: int = Field(..., ge=0)
-    
+
     # Quality metrics
     avg_composite_score: float = Field(..., ge=0.0, le=1.0)
     score_distribution: Dict[str, int] = {}
-    
+
     # Screening criteria
     screening_criteria: Dict[str, Any] = {}
     total_screened: int = Field(..., ge=0)
     pass_rate: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Market context
     market_conditions: str = Field(..., description="Current market environment")
     sector_distribution: Dict[str, int] = {}
-    
+
     # Metadata
     session_id: str
     data_sources: List[str] = []
@@ -135,28 +135,28 @@ class InvestmentCandidate(BaseModel):
     ticker: str = Field(..., description="Asset ticker symbol")
     name: str = Field(..., description="Asset name")
     asset_class: str = Field(..., pattern="^(stock|etf|crypto)$")
-    
+
     # Quality assessment
     grade: str = Field(..., pattern="^(A\\+|A|B|C|D|F)$")
     composite_score: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Key metrics
     fundamental_score: float = Field(..., ge=0.0, le=1.0)
     technical_score: float = Field(..., ge=0.0, le=1.0)
     risk_score: int = Field(..., ge=1, le=10)
-    
+
     # Investment thesis
     investment_thesis: str = Field(..., min_length=100)
     key_strengths: List[str] = []
     potential_catalysts: List[str] = []
-    
+
     # Financial metrics (asset-class specific)
     price_target: Optional[float] = None
     upside_potential: Optional[float] = None
-    
+
     # Risk considerations
     risk_factors: List[str] = []
-    
+
     # Discovery metadata
     discovery_rank: int = Field(..., ge=1)
     confidence: float = Field(..., ge=0.0, le=1.0)
@@ -181,30 +181,30 @@ Ticker validation results.
 class ValidatedTicker(BaseModel):
     # Input ticker
     ticker: str = Field(..., description="Input ticker symbol")
-    
+
     # Validation results
     is_valid: bool = Field(..., description="Whether ticker is valid")
     normalized_ticker: str = Field(..., description="Normalized ticker format")
-    
+
     # Asset information
     asset_type: str = Field(..., pattern="^(stock|etf|crypto|unknown)$")
     exchange: Optional[str] = None
     currency: Optional[str] = None
-    
+
     # Market status
     is_tradeable: bool = Field(..., description="Whether asset is tradeable")
     market_status: str = Field(..., pattern="^(OPEN|CLOSED|PRE_MARKET|AFTER_HOURS)$")
-    
+
     # Data availability
     has_fundamental_data: bool = False
     has_price_data: bool = False
     has_volume_data: bool = False
-    
+
     # Validation metadata
     validation_date: datetime
     data_source: str = Field(..., description="Validation data source")
     confidence: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Error information (if invalid)
     error_message: Optional[str] = None
     suggestions: List[str] = []
@@ -225,21 +225,21 @@ class ValidationResult(BaseModel):
     # Validation status
     is_valid: bool = Field(..., description="Overall validation result")
     validation_type: str = Field(..., description="Type of validation performed")
-    
+
     # Validation details
     passed_checks: List[str] = []
     failed_checks: List[str] = []
     warnings: List[str] = []
-    
+
     # Data quality
     quality_score: float = Field(..., ge=0.0, le=1.0)
     completeness: float = Field(..., ge=0.0, le=1.0)
     freshness_score: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Validation metadata
     validation_date: datetime
     validator_version: str = Field(default="FinWiz Validator v2.0")
-    
+
     # Remediation
     remediation_suggestions: List[str] = []
     can_proceed: bool = Field(..., description="Whether to proceed despite issues")
@@ -268,14 +268,14 @@ Schemas include custom validation logic:
 ```python
 class TenKInsight(BaseModel):
     ticker: str = Field(..., description="Stock ticker symbol")
-    
+
     @field_validator('ticker')
     @classmethod
     def validate_ticker_format(cls, v: str) -> str:
         if not re.match(r'^[A-Z]{1,5}$', v):
             raise ValueError('Ticker must be 1-5 uppercase letters')
         return v.upper()
-    
+
     @model_validator(mode='after')
     def validate_score_consistency(self) -> 'TenKInsight':
         if self.composite_score > 0.95 and self.grade != 'A+':
@@ -356,7 +356,7 @@ def load_analysis_result(data: dict) -> TenKInsight:
     # Handle legacy format
     if 'version' not in data or data['version'] < '2.0':
         data = migrate_legacy_format(data)
-    
+
     return TenKInsight.model_validate(data)
 ```
 
@@ -369,5 +369,5 @@ def load_analysis_result(data: dict) -> TenKInsight:
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

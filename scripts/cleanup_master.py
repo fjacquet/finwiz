@@ -114,7 +114,7 @@ def generate_cleanup_report():
 - Removed old output directory: `output.old/`
 - Eliminated `.DS_Store` files throughout codebase
 
-#### 2. Script Organization  
+#### 2. Script Organization
 - Moved verification scripts to `scripts/archive/`
 - Preserved functionality while reducing root directory clutter
 - Maintained all essential development tools
@@ -166,7 +166,7 @@ mypy src/      # Regenerates .mypy_cache
 finwiz/
 ├── docs/
 │   ├── tutorials/      # Learning guides
-│   ├── how-to/         # Problem-solving guides  
+│   ├── how-to/         # Problem-solving guides
 │   ├── reference/      # API docs, schemas
 │   ├── explanations/   # Concept explanations
 │   └── archive/        # Essential archives only
@@ -180,9 +180,9 @@ finwiz/
 
 ---
 
-**Cleanup Status**: ✅ COMPLETE  
-**Functionality**: ✅ PRESERVED  
-**Documentation**: ✅ ORGANIZED  
+**Cleanup Status**: ✅ COMPLETE
+**Functionality**: ✅ PRESERVED
+**Documentation**: ✅ ORGANIZED
 **Maintenance**: ✅ AUTOMATED
 """
 

@@ -178,13 +178,13 @@ def ledoit_wolf_shrinkage(returns):
     """Ledoit-Wolf shrinkage estimator."""
     sample_cov = np.cov(returns.T)
     n, p = returns.shape
-    
+
     # Shrinkage target (identity matrix)
     target = np.trace(sample_cov) / p * np.eye(p)
-    
+
     # Optimal shrinkage intensity
     shrinkage = calculate_shrinkage_intensity(returns, sample_cov, target)
-    
+
     return shrinkage * target + (1 - shrinkage) * sample_cov
 ```
 
@@ -205,7 +205,7 @@ def capm_expected_returns(returns, market_returns, risk_free_rate):
     """Calculate CAPM expected returns."""
     betas = calculate_betas(returns, market_returns)
     market_premium = market_returns.mean() - risk_free_rate
-    
+
     return risk_free_rate + betas * market_premium
 ```
 
@@ -220,20 +220,20 @@ def mean_variance_optimization(mu, Sigma, risk_aversion):
     """Solve mean-variance optimization problem."""
     n = len(mu)
     w = cp.Variable(n)
-    
+
     # Objective: maximize return - risk penalty
     objective = cp.Maximize(mu.T @ w - 0.5 * risk_aversion * cp.quad_form(w, Sigma))
-    
+
     # Constraints
     constraints = [
         cp.sum(w) == 1,  # Weights sum to 1
         w >= 0           # Long-only
     ]
-    
+
     # Solve
     problem = cp.Problem(objective, constraints)
     problem.solve()
-    
+
     return w.value
 ```
 
@@ -269,7 +269,7 @@ def calculate_risk_contributions(weights, cov_matrix):
     portfolio_vol = np.sqrt(weights.T @ cov_matrix @ weights)
     marginal_contrib = cov_matrix @ weights / portfolio_vol
     risk_contrib = weights * marginal_contrib
-    
+
     return risk_contrib / risk_contrib.sum()
 ```
 
@@ -279,21 +279,21 @@ def calculate_risk_contributions(weights, cov_matrix):
 def equal_risk_contribution(cov_matrix):
     """Optimize for equal risk contribution."""
     n = cov_matrix.shape[0]
-    
+
     def objective(weights):
         risk_contrib = calculate_risk_contributions(weights, cov_matrix)
         target_contrib = 1.0 / n
         return np.sum((risk_contrib - target_contrib) ** 2)
-    
+
     # Constraints
     constraints = [
         {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},  # Sum to 1
         {'type': 'ineq', 'fun': lambda w: w}             # Non-negative
     ]
-    
+
     # Initial guess
     x0 = np.ones(n) / n
-    
+
     # Optimize
     result = minimize(objective, x0, constraints=constraints)
     return result.x
@@ -322,13 +322,13 @@ Where:
 ```python
 def factor_attribution(portfolio_returns, factor_returns, factor_loadings):
     """Attribute portfolio performance to factors."""
-    
+
     # Factor contributions
     factor_contrib = factor_loadings @ factor_returns
-    
+
     # Specific return (alpha)
     specific_return = portfolio_returns - factor_contrib
-    
+
     return {
         'factor_contributions': factor_contrib,
         'specific_return': specific_return,
@@ -343,26 +343,26 @@ def factor_attribution(portfolio_returns, factor_returns, factor_loadings):
 ```python
 def walk_forward_backtest(returns, optimization_func, window=252, rebalance_freq=21):
     """Perform walk-forward backtesting."""
-    
+
     results = []
-    
+
     for t in range(window, len(returns), rebalance_freq):
         # Training data
         train_data = returns.iloc[t-window:t]
-        
+
         # Optimize portfolio
         weights = optimization_func(train_data)
-        
+
         # Out-of-sample performance
         oos_returns = returns.iloc[t:t+rebalance_freq]
         portfolio_returns = (oos_returns * weights).sum(axis=1)
-        
+
         results.append({
             'date': returns.index[t],
             'weights': weights,
             'returns': portfolio_returns
         })
-    
+
     return results
 ```
 
@@ -371,18 +371,18 @@ def walk_forward_backtest(returns, optimization_func, window=252, rebalance_freq
 ```python
 def calculate_performance_metrics(returns):
     """Calculate comprehensive performance metrics."""
-    
+
     total_return = (1 + returns).prod() - 1
     annualized_return = (1 + total_return) ** (252 / len(returns)) - 1
     volatility = returns.std() * np.sqrt(252)
     sharpe_ratio = annualized_return / volatility
-    
+
     # Drawdown analysis
     cumulative = (1 + returns).cumprod()
     running_max = cumulative.expanding().max()
     drawdown = (cumulative - running_max) / running_max
     max_drawdown = drawdown.min()
-    
+
     return {
         'total_return': total_return,
         'annualized_return': annualized_return,

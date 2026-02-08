@@ -125,7 +125,7 @@ def mock_crew_execution(mocker):
     )
 
     # Generate content that meets ALL quality thresholds
-    
+
     # Business model: 100+ words
     business_model = " ".join([
         "Strong business model with recurring revenue streams and high customer retention.",
@@ -134,7 +134,7 @@ def mock_crew_execution(mocker):
         "Platform effects create network value that strengthens with scale.",
         "Diversified revenue streams reduce dependency on single products or markets.",
     ] * 5)  # ~125 words
-    
+
     # Investment thesis: 700+ words (for 500+ word rationale requirement)
     investment_thesis = " ".join([
         "This investment opportunity presents compelling value based on multiple factors.",
@@ -148,7 +148,7 @@ def mock_crew_execution(mocker):
         "Catalyst pipeline includes new product launches and market expansion.",
         "Financial health is robust with strong balance sheet and cash generation.",
     ] * 15)  # ~750 words
-    
+
     # Industry analysis: 100+ words
     industry_analysis = " ".join([
         "Technology sector showing strong growth with AI adoption accelerating.",
@@ -162,7 +162,7 @@ def mock_crew_execution(mocker):
         "Industry margins are expanding due to operating leverage and scale effects.",
         "Technology adoption curves suggest sustained multi-year growth runway.",
     ] * 3)  # ~120 words
-    
+
     # Entry/exit strategy: 100+ words
     entry_exit_strategy = " ".join([
         "Enter on pullback to $145 support level with volume confirmation and RSI reset.",
@@ -176,7 +176,7 @@ def mock_crew_execution(mocker):
         "Use options strategies for additional downside protection if needed.",
         "Review position quarterly and adjust based on fundamental changes.",
     ] * 3)  # ~120 words
-    
+
     # Bull case: 100+ words
     bull_case = " ".join([
         "Continued growth in services and AI with margin expansion driving profitability.",
@@ -190,7 +190,7 @@ def mock_crew_execution(mocker):
         "Operating leverage delivers margin expansion beyond current guidance.",
         "Capital returns accelerate with increased buybacks and dividend growth.",
     ] * 3)  # ~120 words
-    
+
     # Base case: 100+ words
     base_case = " ".join([
         "Steady growth with market share maintenance and consistent dividend growth.",
@@ -204,7 +204,7 @@ def mock_crew_execution(mocker):
         "Operating efficiency improvements offset inflationary pressures.",
         "Balance sheet strength supports strategic flexibility and opportunistic M&A.",
     ] * 3)  # ~120 words
-    
+
     # Bear case: 100+ words
     bear_case = " ".join([
         "Regulatory headwinds and competition pressure margins below expectations.",
@@ -339,30 +339,30 @@ def test_orchestrator_module_file_size_constraint(self):
     """..."""
     orchestrator_files = get_orchestrator_files()
     assert len(orchestrator_files) > 0, "No orchestrator files found"
-    
+
     violations = []
-    
+
     for file_path in orchestrator_files:
         if file_path.name == "__init__.py":
             continue
-        
+
         line_count = count_lines(file_path)
-        
+
         # Temporary exceptions with TODO comments
         # TODO: Refactor these files to meet 400-line limit
         exceptions = {
             "deep_analysis_orchestrator.py": 1200,  # Needs refactoring
             "reporting_orchestrator.py": 600,  # Needs splitting
         }
-        
+
         max_limit = exceptions.get(file_path.name, 400)
-        
+
         if line_count > max_limit:
             violations.append((file_path.name, line_count, max_limit))
-    
+
     if violations:
         violation_details = "\n".join(
-            f"  - {name}: {count} lines (exceeds by {count - limit})" 
+            f"  - {name}: {count} lines (exceeds by {count - limit})"
             for name, count, limit in violations
         )
         pytest.fail(
@@ -459,7 +459,7 @@ def test_should_handle_multiple_sections_analysis(self, tool, mocker):
             "relevance_rank": 1,
         },
     ]
-    
+
     mocker.patch.object(tool, "_extract_section_insights", return_value=mock_insights)
     mocker.patch.object(tool, "_perform_risk_assessment", return_value={
         "ticker": "AAPL",
@@ -508,7 +508,7 @@ def test_should_handle_risk_assessment_disabled(self, tool, mocker):
             "relevance_rank": 1,
         }
     ]
-    
+
     mocker.patch.object(tool, "_extract_section_insights", return_value=mock_insights)
 
     # Act

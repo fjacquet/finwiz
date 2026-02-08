@@ -4,7 +4,7 @@ description: |
   Legacy system modernization expert specializing in upgrading, refactoring, and migrating
   legacy codebases to modern architectures, technologies, and practices. Combines insights
   from wshobson/agents legacy modernization with our comprehensive quality and resilience systems.
-  
+
   Use when:
   - Planning and executing legacy system modernization projects
   - Migrating from monolithic to microservices architectures
@@ -346,7 +346,7 @@ You have access to Basic Memory MCP for modernization patterns and project knowl
 
 ### Technology Specialists
 - Work with language specialists for technology-specific modernization patterns
-- Collaborate with `@database-admin` for data migration and modernization strategies  
+- Collaborate with `@database-admin` for data migration and modernization strategies
 - Partner with `@cloud-architect` for cloud modernization and infrastructure planning
 - Coordinate with `@devops-troubleshooter` for deployment and operational modernization
 
@@ -363,7 +363,7 @@ You have access to Basic Memory MCP for modernization patterns and project knowl
 **Approach**: Gradual microservices extraction using strangler fig pattern
 **Strategy**:
 1. Extract catalog service for product information
-2. Implement separate user management service  
+2. Implement separate user management service
 3. Create order processing microservice
 4. Decompose payment processing functionality
 5. Implement API gateway and service mesh

@@ -106,12 +106,12 @@ from pydantic import BaseModel, Field, field_validator
 
 class StockAnalysis(BaseModel):
     """Stock analysis output schema."""
-    
+
     ticker: str = Field(..., description="Stock ticker symbol")
     grade: str = Field(..., pattern="^[A-F][+-]?$")
     composite_score: float = Field(..., ge=0.0, le=1.0)
     recommendation: str = Field(..., pattern="^(BUY|HOLD|SELL)$")
-    
+
     @field_validator('ticker')
     @classmethod
     def validate_ticker(cls, v: str) -> str:
@@ -146,13 +146,13 @@ def generate_report(self, data: dict[str, Any]) -> dict[str, Any]:
     export_path = f"output/reports/{session_id}/analysis.json"
     with open(export_path, 'w') as f:
         f.write(json.dumps(data, indent=2))
-    
+
     # Pass path to next crew
     report_crew = ReportCrew()
     result = report_crew.crew().kickoff(inputs={
         "analysis_file": export_path  # Path, not data
     })
-    
+
     return {"report_path": result.report_path}
 
 # ❌ WRONG: Pass large data directly
@@ -174,16 +174,16 @@ import concurrent.futures
 
 def analyze_portfolio_concurrent(holdings: list[str]) -> dict[str, Any]:
     """Analyze multiple holdings concurrently."""
-    
+
     results = {}
-    
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         # Submit all tasks
         future_to_ticker = {
             executor.submit(analyze_holding, ticker): ticker
             for ticker in holdings
         }
-        
+
         # Collect results as they complete
         for future in concurrent.futures.as_completed(future_to_ticker):
             ticker = future_to_ticker[future]
@@ -192,7 +192,7 @@ def analyze_portfolio_concurrent(holdings: list[str]) -> dict[str, Any]:
             except Exception as e:
                 logger.error(f"Error analyzing {ticker}: {e}")
                 results[ticker] = None
-    
+
     return results
 ```
 
@@ -396,10 +396,10 @@ from finwiz.utils.logging_helpers import CrewLogger
 
 class StockCrew:
     """Stock analysis crew."""
-    
+
     def __init__(self):
         self.logger = CrewLogger("StockCrew")
-    
+
     @agent
     def analyst(self) -> Agent:
         """Financial analyst with quantitative tools."""
@@ -415,7 +415,7 @@ class StockCrew:
             max_rpm=20,
             verbose=True
         )
-    
+
     @final_reporter  # Enforces empty tools
     @agent
     def reporter(self) -> Agent:
@@ -426,7 +426,7 @@ class StockCrew:
             reasoning=False,
             verbose=True
         )
-    
+
     @async_task
     @task
     def research_task(self) -> Task:
@@ -435,7 +435,7 @@ class StockCrew:
             config=self.tasks_config["research"],
             agent=self.analyst()
         )
-    
+
     @sync_task  # Final task MUST be sync
     @task
     def report_task(self) -> Task:
@@ -446,7 +446,7 @@ class StockCrew:
             output_json=True,
             agent=self.reporter()
         )
-    
+
     @crew
     def crew(self) -> Crew:
         """Create crew with configured agents and tasks."""
@@ -484,50 +484,50 @@ reporter:
 research:
   description: |
     Perform comprehensive analysis of {ticker} ({asset_class}).
-    
+
     Required Analysis:
     1. Fundamental Analysis:
        - Financial metrics (P/E, ROE, debt ratios)
        - Revenue and earnings trends
        - Competitive positioning
-    
+
     2. Technical Analysis:
        - Price trends and patterns
        - Key technical indicators
        - Support/resistance levels
-    
+
     3. Risk Assessment:
        - Volatility analysis
        - Sector and market risks
        - Company-specific risks
-  
+
   expected_output: |
     Comprehensive analysis with:
     - Fundamental metrics and interpretation
     - Technical analysis findings
     - Risk assessment (1-10 scale)
     - Investment thesis
-  
+
   agent: analyst
   async_execution: true
 
 report:
   description: |
     Generate final investment report for {ticker}.
-    
+
     Consolidate all analysis into structured output:
     - Grade (A+ to F)
     - Composite score (0.0-1.0)
     - Clear recommendation (BUY/HOLD/SELL)
     - Supporting rationale
-  
+
   expected_output: |
     Structured report with:
     - Executive summary
     - Detailed findings
     - Clear recommendation
     - Risk disclosure
-  
+
   output_pydantic: "StockAnalysisExport"
   output_json: true
   agent: reporter
@@ -549,79 +549,79 @@ from typing import Any
 
 class FinwizState(BaseModel):
     """Type-safe flow state."""
-    
+
     session_id: str = Field(default="")
     portfolio_review: dict[str, Any] = Field(default_factory=dict)
     deep_analysis_results: dict[str, Any] = Field(default_factory=dict)
     rebalancing_recommendations: dict[str, Any] = Field(default_factory=dict)
-    
+
 class FinwizFlow(Flow[FinwizState]):
     """Main FinWiz orchestration flow."""
-    
+
     @start()
     def initialize(self) -> dict[str, Any]:
         """Initialize flow with session setup."""
         import uuid
-        
+
         session_id = str(uuid.uuid4())
         self.state.session_id = session_id
-        
+
         logger.info(f"Flow initialized: {session_id}")
-        
+
         return {"session_id": session_id, "status": "initialized"}
-    
+
     @listen(initialize)
     def analyze_portfolio(self, data: dict[str, Any]) -> dict[str, Any]:
         """Analyze portfolio holdings."""
         from finwiz.orchestrators.portfolio_review import PortfolioReviewOrchestrator
-        
+
         orchestrator = PortfolioReviewOrchestrator()
-        
+
         # Run portfolio analysis
         results = orchestrator.run_portfolio_review(
             stock_csv="data/stock.csv",
             etf_csv="data/etf.csv",
             session_id=self.state.session_id
         )
-        
+
         # Update state
         self.state.portfolio_review = results.model_dump()
-        
+
         return {
             "holdings_analyzed": len(results.holdings),
             "recommendations": results.summary
         }
-    
+
     @listen(analyze_portfolio)
     def generate_alternatives(self, data: dict[str, Any]) -> dict[str, Any]:
         """Generate alternatives for SELL recommendations."""
         from finwiz.orchestrators.portfolio_review import generate_alternatives
-        
+
         sell_holdings = [
             h for h in self.state.portfolio_review["holdings"]
             if h["recommendation"] == "SELL"
         ]
-        
+
         alternatives = generate_alternatives(
             sell_holdings,
             session_id=self.state.session_id
         )
-        
+
         return {"alternatives": alternatives}
-    
+
     @listen(generate_alternatives)
     def create_final_report(self, data: dict[str, Any]) -> dict[str, Any]:
         """Generate comprehensive final report."""
         from finwiz.reporting.portfolio_report_generator import PortfolioReportGenerator
-        
+
         generator = PortfolioReportGenerator()
-        
+
         report_path = generator.generate_report(
             portfolio_data=self.state.portfolio_review,
             alternatives=data["alternatives"],
             session_id=self.state.session_id
         )
-        
+
         return {
             "report_path": report_path,
             "status": "complete"
@@ -652,28 +652,28 @@ def get_stock_crew_tools(
     collection_suffix: str = "stock"
 ) -> List[Tool]:
     """Get standardized tool set for stock analysis."""
-    
+
     tools = []
-    
+
     # Core tools (always included)
     from finwiz.tools.data_fetcher import DataFetcherTool
     from finwiz.tools.technical_analyzer import TechnicalAnalyzerTool
-    
+
     tools.extend([
         DataFetcherTool(),
         TechnicalAnalyzerTool()
     ])
-    
+
     # Optional RAG integration
     if include_rag:
         from finwiz.tools.rag_search import RAGSearchTool
         tools.append(RAGSearchTool(collection_name=f"finwiz_{collection_suffix}"))
-    
+
     # Optional quantitative analysis
     if include_quantitative:
         from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
         tools.append(QuantitativeAnalysisTool())
-    
+
     return tools
 
 def get_etf_crew_tools(
@@ -681,21 +681,21 @@ def get_etf_crew_tools(
     include_quantitative: bool = False
 ) -> List[Tool]:
     """Get standardized tool set for ETF analysis."""
-    
+
     tools = []
-    
+
     from finwiz.tools.data_fetcher import DataFetcherTool
     from finwiz.tools.etf_analyzer import ETFAnalyzerTool
-    
+
     tools.extend([
         DataFetcherTool(),
         ETFAnalyzerTool()
     ])
-    
+
     if include_rag:
         from finwiz.tools.rag_search import RAGSearchTool
         tools.append(RAGSearchTool(collection_name="finwiz_etf"))
-    
+
     return tools
 ```
 
@@ -760,11 +760,11 @@ class StockCrew:
     def __init__(self):
         super().__init__()
         self.logger = CrewLogger("StockCrew")
-    
+
     def kickoff(self, inputs: dict) -> Any:
         self.logger.log_start(inputs)
         start_time = time.time()
-        
+
         try:
             result = super().kickoff(inputs)
             duration = time.time() - start_time
@@ -787,22 +787,22 @@ from typing import Literal
 
 class DeepAnalysisExport(BaseModel):
     """Deep analysis export schema."""
-    
+
     ticker: str = Field(..., description="Ticker symbol")
     asset_class: Literal["stock", "etf", "crypto"] = Field(...)
     grade: str = Field(..., pattern="^[A-F][+-]?$")
     composite_score: float = Field(..., ge=0.0, le=1.0)
     recommendation: Literal["BUY", "HOLD", "SELL"] = Field(...)
-    
+
     fundamental_score: float = Field(..., ge=0.0, le=1.0)
     technical_score: float = Field(..., ge=0.0, le=1.0)
     sentiment_score: float = Field(..., ge=0.0, le=1.0)
-    
+
     risk_level: int = Field(..., ge=1, le=10)
     confidence: float = Field(..., ge=0.0, le=1.0)
-    
+
     reasoning: str = Field(..., min_length=50)
-    
+
     @field_validator('ticker')
     @classmethod
     def validate_ticker(cls, v: str) -> str:
@@ -838,11 +838,11 @@ from pathlib import Path
 
 class HTMLReportGenerator:
     """Generate HTML reports from analysis data."""
-    
+
     def __init__(self):
         template_dir = Path(__file__).parent.parent / "templates" / "crew_reports"
         self.env = Environment(loader=FileSystemLoader(template_dir))
-    
+
     def generate_crew_report(
         self,
         crew_name: str,
@@ -850,10 +850,10 @@ class HTMLReportGenerator:
         output_path: str
     ) -> str:
         """Generate HTML report for crew analysis."""
-        
+
         # Load template
         template = self.env.get_template(f"{crew_name}_report.html.j2")
-        
+
         # Render with data
         html_content = template.render(
             ticker=export_data["ticker"],
@@ -862,11 +862,11 @@ class HTMLReportGenerator:
             recommendation=export_data["recommendation"],
             **export_data
         )
-        
+
         # Write to file
         with open(output_path, 'w') as f:
             f.write(html_content)
-        
+
         return output_path
 ```
 
@@ -951,30 +951,30 @@ from finwiz.utils.logging_helpers import CrewLogger
 
 class MyCustomCrew:
     """Custom crew for specific analysis."""
-    
+
     def __init__(self):
         self.logger = CrewLogger("MyCustomCrew")
         self.agents_config = self._load_agents_config()
         self.tasks_config = self._load_tasks_config()
-    
+
     def _load_agents_config(self) -> dict:
         """Load agents configuration from YAML."""
         import yaml
         from pathlib import Path
-        
+
         config_path = Path(__file__).parent / "config" / "agents.yaml"
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)
-    
+
     def _load_tasks_config(self) -> dict:
         """Load tasks configuration from YAML."""
         import yaml
         from pathlib import Path
-        
+
         config_path = Path(__file__).parent / "config" / "tasks.yaml"
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)
-    
+
     @agent
     def analyst(self) -> Agent:
         """Primary analyst agent."""
@@ -987,7 +987,7 @@ class MyCustomCrew:
             max_rpm=20,
             verbose=True
         )
-    
+
     @final_reporter
     @agent
     def reporter(self) -> Agent:
@@ -998,7 +998,7 @@ class MyCustomCrew:
             reasoning=False,
             verbose=True
         )
-    
+
     @async_task
     @task
     def analysis_task(self) -> Task:
@@ -1007,7 +1007,7 @@ class MyCustomCrew:
             config=self.tasks_config["analysis"],
             agent=self.analyst()
         )
-    
+
     @sync_task
     @task
     def report_task(self) -> Task:
@@ -1018,7 +1018,7 @@ class MyCustomCrew:
             output_json=True,
             agent=self.reporter()
         )
-    
+
     @crew
     def crew(self) -> Crew:
         """Create crew with configured agents and tasks."""
@@ -1056,27 +1056,27 @@ reporter:
 analysis:
   description: |
     Perform custom analysis of {ticker}.
-    
+
     Analysis Requirements:
     1. Custom metric calculation
     2. Specialized data collection
     3. Domain-specific evaluation
-  
+
   expected_output: |
     Comprehensive analysis with:
     - Custom metrics
     - Specialized findings
     - Actionable insights
-  
+
   agent: analyst
   async_execution: true
 
 report:
   description: |
     Generate final report for {ticker}.
-    
+
     Create structured output with all findings.
-  
+
   expected_output: "Structured report with recommendations"
   output_pydantic: "MyCustomExport"
   output_json: true
@@ -1091,7 +1091,7 @@ report:
 ```python
 class MyCustomExport(BaseModel):
     """Custom crew export schema."""
-    
+
     ticker: str = Field(..., description="Ticker symbol")
     custom_metric: float = Field(..., ge=0.0, le=1.0)
     recommendation: str = Field(...)
@@ -1116,12 +1116,12 @@ def test_crew_initialization():
 def test_agents_configuration(mocker):
     """Test agents are configured correctly."""
     crew = MyCustomCrew()
-    
+
     analyst = crew.analyst()
     assert analyst is not None
     assert len(analyst.tools) > 0
     assert analyst.reasoning is True
-    
+
     reporter = crew.reporter()
     assert reporter is not None
     assert len(reporter.tools) == 0  # Final reporter has no tools
@@ -1131,14 +1131,14 @@ def test_crew_execution(mocker):
     """Test crew executes successfully."""
     # Mock expensive operations
     mocker.patch('finwiz.tools.data_fetcher.DataFetcherTool._run')
-    
+
     crew = MyCustomCrew()
-    
+
     result = crew.crew().kickoff(inputs={
         "ticker": "TEST",
         "asset_class": "stock"
     })
-    
+
     # Validate result
     assert result is not None
     export = MyCustomExport(**result.model_dump())
@@ -1154,13 +1154,13 @@ def test_crew_execution(mocker):
 def run_custom_analysis(self, data: dict[str, Any]) -> dict[str, Any]:
     """Run custom analysis crew."""
     from finwiz.crews.my_custom_crew.my_custom_crew import MyCustomCrew
-    
+
     crew = MyCustomCrew()
     result = crew.crew().kickoff(inputs={
         "ticker": data["ticker"],
         "asset_class": "stock"
     })
-    
+
     return {"custom_analysis": result.model_dump()}
 ```
 
@@ -1283,7 +1283,7 @@ def test_calculate_composite_score(scorer, stock_data):
         asset_class="stock",
         data=stock_data
     )
-    
+
     assert result.grade in ["A+", "A", "B+", "B", "C+", "C", "D", "F"]
     assert 0.0 <= result.composite_score <= 1.0
     assert result.recommendation in ["BUY", "HOLD", "SELL"]
@@ -1328,13 +1328,13 @@ def test_fetch_stock_data(mocker):
         "currentPrice": 175.50,
         "marketCap": 2_800_000_000_000
     }
-    
+
     mocker.patch('yfinance.Ticker', return_value=mock_ticker)
-    
+
     # Test data accessor
     accessor = DataAccessor()
     data = accessor.fetch_stock_data("AAPL")
-    
+
     assert data["symbol"] == "AAPL"
     assert data["currentPrice"] == 175.50
 
@@ -1345,9 +1345,9 @@ def test_api_error_handling(mocker):
         'yfinance.Ticker',
         side_effect=Exception("API Error")
     )
-    
+
     accessor = DataAccessor()
-    
+
     with pytest.raises(Exception, match="API Error"):
         accessor.fetch_stock_data("INVALID")
 ```
@@ -1362,7 +1362,7 @@ from finwiz.schemas.crew_exports import StockAnalysisExport
 def test_stock_crew_initialization():
     """Test stock crew initializes correctly."""
     crew = StockCrew()
-    
+
     assert crew is not None
     assert crew.logger is not None
     assert crew.agents_config is not None
@@ -1371,11 +1371,11 @@ def test_stock_crew_initialization():
 def test_agents_have_correct_tools(mocker):
     """Test agents are configured with correct tools."""
     crew = StockCrew()
-    
+
     analyst = crew.analyst()
     assert len(analyst.tools) > 0
     assert analyst.reasoning is True
-    
+
     reporter = crew.reporter()
     assert len(reporter.tools) == 0  # Final reporter has no tools
 
@@ -1385,17 +1385,17 @@ def test_crew_execution_full(mocker):
     # Mock expensive API calls
     mocker.patch('finwiz.tools.data_fetcher.DataFetcherTool._run')
     mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
-    
+
     crew = StockCrew()
-    
+
     result = crew.crew().kickoff(inputs={
         "ticker": "AAPL",
         "asset_class": "stock"
     })
-    
+
     # Validate result structure
     assert result is not None
-    
+
     # Validate export schema
     export = StockAnalysisExport(**result.model_dump())
     assert export.ticker == "AAPL"
@@ -1621,23 +1621,23 @@ def calculate_composite_score(
     data: dict[str, Any]
 ) -> dict[str, Any]:
     """Calculate composite score for asset.
-    
+
     Args:
         ticker: Asset ticker symbol (e.g., "AAPL")
         asset_class: Type of asset ("stock", "etf", "crypto")
         data: Financial metrics dictionary
-    
+
     Returns:
         Dictionary containing:
             - grade: Letter grade (A+ to F)
             - composite_score: Numeric score (0.0-1.0)
             - recommendation: Investment action (BUY/HOLD/SELL)
             - reasoning: Explanation of score
-    
+
     Raises:
         ValueError: If asset_class is invalid
         KeyError: If required metrics missing from data
-    
+
     Example:
         >>> scorer = DeepAnalysisScorer()
         >>> result = scorer.calculate_composite_score(
@@ -1826,30 +1826,30 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      
+
       - name: Install uv
         run: pip install uv
-      
+
       - name: Install dependencies
         run: uv sync
-      
+
       - name: Run linting
         run: make lint
-      
+
       - name: Run type checking
         run: make mypy
-      
+
       - name: Run tests
         run: make test
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:

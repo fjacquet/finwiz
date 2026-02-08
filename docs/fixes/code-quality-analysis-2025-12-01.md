@@ -1,8 +1,8 @@
 # Code Quality Analysis Report
 
-**Date**: 2025-12-01  
-**Analyst**: Kiro AI  
-**Scope**: Python code files in open editors  
+**Date**: 2025-12-01
+**Analyst**: Kiro AI
+**Scope**: Python code files in open editors
 **Status**: ✅ ALL ISSUES FIXED
 
 ## Executive Summary
@@ -64,7 +64,7 @@ def _extract_json_from_text(text: str) -> str:
     """Extract JSON object or array from text."""
     obj_start = text.find('{')
     arr_start = text.find('[')
-    
+
     if obj_start == -1 and arr_start == -1:
         return text
     # ... handles both {} and []
@@ -250,8 +250,8 @@ def json_repair_context():
 
 ---
 
-**Version**: 3.0  
-**Created**: 2025-12-01  
-**Updated**: 2025-12-01  
-**Purpose**: Document code quality findings and track fixes  
+**Version**: 3.0
+**Created**: 2025-12-01
+**Updated**: 2025-12-01
+**Purpose**: Document code quality findings and track fixes
 **Final Status**: ✅ ALL 17 ISSUES RESOLVED

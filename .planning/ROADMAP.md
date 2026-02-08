@@ -37,10 +37,12 @@ Phases completed: 6-8 (6 plans total)
 ## Phase Details
 
 ### Phase 9: Async & Batch Performance
+
 **Goal**: All data collection and deep analysis runs fully async with batch prefetching and configurable parallelism
 **Depends on**: Phase 8 (v2 complete)
 **Requirements**: PERF-01, PERF-02, PERF-03, PERF-04
 **Success Criteria** (what must be TRUE):
+
   1. Running `crewai flow kickoff` uses async data adapters throughout -- no synchronous API calls remain in the data collection path
   2. Deep analysis processes multiple holdings concurrently, and the parallel limit is configurable via environment variable (not hardcoded to 3)
   3. BatchDataPreFetcher loads data for all holdings before deep analysis begins as part of the normal flow (not a standalone demo script)
@@ -48,14 +50,17 @@ Phases completed: 6-8 (6 plans total)
 **Plans**: TBD
 
 Plans:
+
 - [ ] 09-01: TBD
 - [ ] 09-02: TBD
 
 ### Phase 10: Cache & Cost Observability
+
 **Goal**: The platform manages cache intelligently with tiered eviction and type-aware TTLs, and provides full visibility into LLM token costs per crew and overall
 **Depends on**: Phase 9 (async data paths established, cache layer exercised by new batch flows)
 **Requirements**: CACHE-01, CACHE-02, CACHE-03, COST-01, COST-02
 **Success Criteria** (what must be TRUE):
+
   1. Cache evicts cold entries first, preserving frequently-accessed hot data -- observable via log output showing tier assignments during eviction
   2. Market data entries expire in ~15 minutes, fundamentals in ~24 hours, and static reference data in ~7 days (verified by TTL behavior in logs or tests)
   3. Cache hit/miss rates are visible in log output after each analysis run
@@ -63,14 +68,17 @@ Plans:
 **Plans**: TBD
 
 Plans:
+
 - [ ] 10-01: TBD
 - [ ] 10-02: TBD
 
 ### Phase 11: Risk Stress Testing
+
 **Goal**: Users can stress test their portfolio against realistic market scenarios and see projected impact in the HTML report
 **Depends on**: Phase 9 (analysis pipeline stable with async infrastructure)
 **Requirements**: RISK-01, RISK-02, RISK-03, RISK-04
 **Success Criteria** (what must be TRUE):
+
   1. User can run a market crash scenario (-20% broad market) and see projected per-holding and total portfolio impact
   2. User can run an interest rate shock scenario and see which holdings are most and least affected
   3. User can run a sector-specific shock scenario and see differential impact across portfolio sectors
@@ -78,6 +86,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
+
 - [ ] 11-01: TBD
 - [ ] 11-02: TBD
 

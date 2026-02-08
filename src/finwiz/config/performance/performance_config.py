@@ -45,7 +45,7 @@ class OptimizationConfig:
 
     # Deep Analysis Configuration
     deep_analysis_ai_summary: bool = False
-    deep_analysis_batch_size: int = 5
+    deep_analysis_batch_size: int = 10
 
     # Optimization Mode
     mode: OptimizationMode = OptimizationMode.MAXIMUM_SPEED
@@ -75,10 +75,10 @@ class PerformanceConfigManager:
         deep_analysis_ai_summary = os.getenv("DEEP_ANALYSIS_AI_SUMMARY", "false").lower() == "true"
 
         try:
-            deep_analysis_batch_size = int(os.getenv("DEEP_ANALYSIS_BATCH_SIZE", "5"))
+            deep_analysis_batch_size = int(os.getenv("DEEP_ANALYSIS_BATCH_SIZE", "10"))
         except ValueError:
-            logger.warning("Invalid DEEP_ANALYSIS_BATCH_SIZE value, using default: 5")
-            deep_analysis_batch_size = 5
+            logger.warning("Invalid DEEP_ANALYSIS_BATCH_SIZE value, using default: 10")
+            deep_analysis_batch_size = 10
 
         # Determine optimization mode based on configuration
         mode = self._determine_optimization_mode(risk_assessment_use_mini, use_minimal_risk_tools, deep_analysis_ai_summary)

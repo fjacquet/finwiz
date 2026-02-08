@@ -83,10 +83,10 @@ from finwiz.utils.html_generator import JSONWriter
 with JSONWriter("output/portfolio_review.json", "portfolio_review") as writer:
     # Build your data
     data = {"holdings": [], "summary": {}}
-    
+
     # Add more data as needed
     writer.update({"additional_field": "value"})
-    
+
     # Write final data (JSON + HTML generated on exit)
     writer.write(data)
 ```
@@ -100,12 +100,12 @@ from finwiz.utils.html_generator import auto_html
 def generate_portfolio_report(holdings_data):
     # Your existing logic
     report_data = process_holdings(holdings_data)
-    
+
     # Save JSON file
     output_path = "output/portfolio_review.json"
     with open(output_path, 'w') as f:
         json.dump(report_data, f, indent=2)
-    
+
     return output_path  # HTML generated automatically
 ```
 
@@ -117,35 +117,35 @@ def generate_portfolio_report(holdings_data):
 from finwiz.utils.html_generator import save_portfolio_review, save_backtesting_results
 
 class FinwizFlow(Flow[FinwizState]):
-    
+
     @listen("analyze_portfolio")
     def save_portfolio_results(self, analysis_data: dict[str, Any]) -> dict[str, Any]:
         # Process analysis data
         portfolio_data = self._format_portfolio_data(analysis_data)
-        
+
         # Save with automatic HTML generation
         json_path, html_path = save_portfolio_review(
-            portfolio_data, 
+            portfolio_data,
             f"output/portfolio/portfolio_review_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         )
-        
+
         return {
             "portfolio_saved": True,
             "json_path": str(json_path),
             "html_path": str(html_path) if html_path else None
         }
-    
+
     @listen("run_backtesting")
     def save_backtesting_results(self, backtest_data: dict[str, Any]) -> dict[str, Any]:
         # Format backtesting results
         results_data = self._format_backtesting_data(backtest_data)
-        
+
         # Save with HTML generation
         json_path, html_path = save_backtesting_results(
             results_data,
             "output/backtesting_results_default.json"
         )
-        
+
         return {
             "backtesting_saved": True,
             "results_path": str(json_path),
@@ -159,10 +159,10 @@ class FinwizFlow(Flow[FinwizState]):
 from finwiz.utils.html_generator import save_a_plus_discovery
 
 class StockDiscoveryCrew:
-    
+
     def save_discovery_results(self, discovery_data: dict) -> str:
         """Save discovery results with HTML generation."""
-        
+
         # Format data for template
         formatted_data = {
             "discovery_id": f"StockRun-{datetime.now().strftime('%Y-%m-%d-%H%M')}",
@@ -172,16 +172,16 @@ class StockDiscoveryCrew:
             "discovery_criteria": discovery_data.get("criteria", {}),
             "candidates": discovery_data.get("candidates", [])
         }
-        
+
         # Save with automatic HTML generation
         json_path, html_path = save_a_plus_discovery(
             formatted_data,
             f"output/discovery/a_plus_stocks_{datetime.now().strftime('%Y%m%d')}.json"
         )
-        
+
         if html_path:
             print(f"📊 Discovery report generated: {html_path}")
-        
+
         return str(json_path)
 ```
 
@@ -311,6 +311,6 @@ See `examples/inline_html_example.py` for complete working examples of all integ
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-10-27  
+**Version**: 1.0
+**Last Updated**: 2025-10-27
 **Next**: See `src/finwiz/templates/README.md` for template customization

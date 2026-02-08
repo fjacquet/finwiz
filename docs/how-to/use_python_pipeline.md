@@ -269,11 +269,11 @@ try:
         holdings=holdings,
         session_id=session_id
     )
-    
+
     if analysis_results["successful_analyses"] == 0:
         logger.warning("No holdings analyzed successfully")
         # Handle gracefully
-        
+
 except Exception as e:
     logger.error(f"Deep analysis failed: {e}", exc_info=True)
     # Implement fallback strategy
@@ -302,7 +302,7 @@ if analysis_results["successful_analyses"] > 0:
     discovery_results = integrate_aplus_discovery_with_deep_analysis(
         session_id=session_id
     )
-    
+
     # Only run backtesting if A+ opportunities found
     if discovery_results["has_a_plus_analysis"]:
         backtesting_results = connect_backtesting_to_discovery_results(

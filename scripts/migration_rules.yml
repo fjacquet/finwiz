@@ -8,10 +8,10 @@ classification_rules:
       - "**/tutorial*.md"
       - "**/user_guide.md"
       - "**/portfolio_holdings_analysis_user_guide.md"
-    keywords: 
+    keywords:
       - "getting started"
       - "tutorial"
-      - "walkthrough" 
+      - "walkthrough"
       - "step by step"
       - "learn"
       - "first time"
@@ -23,7 +23,7 @@ classification_rules:
       - "first, we"
       - "next, you"
       - "now that you"
-    
+
   how_to:
     patterns:
       - "**/BATCH_PROCESSING.md"
@@ -54,7 +54,7 @@ classification_rules:
       - "here's how"
       - "you can"
       - "if you want to"
-    
+
   reference:
     patterns:
       - "**/API_REFERENCE.md"
@@ -84,7 +84,7 @@ classification_rules:
       - "usage:"
       - "syntax:"
       - "options:"
-    
+
   explanations:
     patterns:
       - "**/ARCHITECTURE.md"
@@ -155,13 +155,13 @@ transformation_rules:
     add_category: true
     add_tags: true
     preserve_existing: true
-    
+
   markdown_formatting:
     standardize_headers: true
     fix_code_blocks: true
     normalize_links: true
     add_toc: true
-    
+
   content_validation:
     check_links: true
     validate_code_blocks: true

@@ -332,14 +332,14 @@ from finwiz.crews.investment_discovery_crew import InvestmentDiscoveryCrew
 
 async def discover_async():
     crew = InvestmentDiscoveryCrew()
-    
+
     # Parallel discovery across asset types
     results = await asyncio.gather(
         crew.discover_etfs_async(),
         crew.discover_stocks_async(),
         crew.discover_crypto_async()
     )
-    
+
     return {
         'etfs': results[0],
         'stocks': results[1],
@@ -359,7 +359,7 @@ results = asyncio.run(discover_async())
 ```python
 {
   "symbol": "string",
-  "name": "string", 
+  "name": "string",
   "asset_type": "etf|stock|crypto",
   "current_price": "number",
   "market_cap": "number|null",
@@ -397,7 +397,7 @@ results = asyncio.run(discover_async())
   },
   "cost_analysis": {
     "current_expense_ratio": "number",
-    "new_expense_ratio": "number", 
+    "new_expense_ratio": "number",
     "annual_savings": "number",
     "transaction_costs": "number"
   },

@@ -49,10 +49,10 @@ def test_should_return_buy_recommendation_when_strong_metrics(mocker):
     # Arrange - Set up test data and mocks
     mock_api = mocker.patch('finwiz.tools.yahoo_finance_tool.get_data')
     mock_api.return_value = {'pe_ratio': 15, 'growth': 0.25}
-    
+
     # Act - Execute the code under test
     result = analyze_stock('AAPL')
-    
+
     # Assert - Verify the results
     assert result.recommendation == 'BUY'
     mock_api.assert_called_once_with('AAPL')
@@ -69,10 +69,10 @@ def test_should_fetch_stock_data_when_valid_ticker(mocker):
     mock_ticker = mocker.Mock()
     mock_ticker.info = {'symbol': 'AAPL', 'price': 150.0}
     mock_get.return_value = mock_ticker
-    
+
     # Test the function
     result = get_stock_data('AAPL')
-    
+
     # Verify
     assert result['symbol'] == 'AAPL'
     assert result['price'] == 150.0
@@ -84,9 +84,9 @@ def test_should_fetch_stock_data_when_valid_ticker(mocker):
 ```python
 def test_should_read_config_file(mocker):
     mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='{"key": "value"}'))
-    
+
     result = load_config('config.json')
-    
+
     assert result['key'] == 'value'
     mock_open.assert_called_once_with('config.json')
 ```
@@ -96,9 +96,9 @@ def test_should_read_config_file(mocker):
 ```python
 def test_should_use_api_key_from_env(mocker):
     mocker.patch.dict('os.environ', {'API_KEY': 'test_key'})
-    
+
     result = get_api_key()
-    
+
     assert result == 'test_key'
 ```
 
@@ -108,9 +108,9 @@ def test_should_use_api_key_from_env(mocker):
 def test_should_use_current_timestamp(mocker):
     mock_now = mocker.patch('datetime.datetime')
     mock_now.now.return_value = datetime(2025, 3, 10)
-    
+
     result = generate_report()
-    
+
     assert '2025-03-10' in result.timestamp
 ```
 
@@ -149,11 +149,11 @@ def test_should_load_agent_configurations_from_yaml(self):
     """Fast, focused test of configuration loading."""
     import yaml
     from pathlib import Path
-    
+
     config_path = Path("src/finwiz/crews/deep_analysis/config/agents.yaml")
     with open(config_path) as f:
         config = yaml.safe_load(f)
-    
+
     # Verify structure
     assert "asset_analyst" in config
     assert "role" in config["asset_analyst"]
@@ -161,7 +161,7 @@ def test_should_load_agent_configurations_from_yaml(self):
 def test_should_validate_asset_class_parameter(self):
     """Test validation logic without instantiating crew."""
     valid_asset_classes = ["stock", "etf", "crypto"]
-    
+
     for asset_class in valid_asset_classes:
         assert asset_class.lower() in ["stock", "etf", "crypto"]
 ```
@@ -172,10 +172,10 @@ def test_should_validate_asset_class_parameter(self):
 def test_crew_execution(self, mocker):
     """This will hang or timeout!"""
     crew = DeepAnalysisCrew()  # Hangs during initialization
-    
+
     # Mock everything (impractical)
     mocker.patch.object(crew, "asset_analyst", return_value=mock_agent)
-    
+
     # This will still hang or be very slow
     result = crew.kickoff(inputs={"ticker": "AAPL", "asset_class": "stock"})
 ```
@@ -194,7 +194,7 @@ def test_portfolio_analysis():
     ticker = fake.stock_symbol()
     price = fake.pyfloat(min_value=10, max_value=1000, right_digits=2)
     company_name = fake.company()
-    
+
     # Use in test
     result = analyze_holding(ticker, price, company_name)
     assert result is not None

@@ -11,7 +11,7 @@ Le système de découverte A+ est une fonctionnalité avancée de FinWiz qui uti
 La notation A+ utilise un système de scoring sophistiqué qui évalue chaque investissement sur plusieurs dimensions :
 
 - **Fondamentaux** (40%) : Métriques financières clés (ROE, croissance, dette)
-- **Qualité** (30%) : Stabilité, gouvernance, position concurrentielle  
+- **Qualité** (30%) : Stabilité, gouvernance, position concurrentielle
 - **Coûts** (20%) : Frais de gestion, coûts de transaction
 - **Risque** (10%) : Volatilité, corrélations, risques spécifiques
 
@@ -29,7 +29,7 @@ Un investissement A+ doit exceller dans toutes ces catégories avec un score com
 En moyenne, le système identifie :
 
 - **ETFs A+** : 5-8 nouvelles opportunités par mois
-- **Actions A+** : 10-15 nouvelles opportunités par mois  
+- **Actions A+** : 10-15 nouvelles opportunités par mois
 - **Cryptos A+** : 2-4 nouvelles opportunités par mois
 
 Ces chiffres varient selon les conditions de marché. Les périodes volatiles génèrent souvent plus d'opportunités.

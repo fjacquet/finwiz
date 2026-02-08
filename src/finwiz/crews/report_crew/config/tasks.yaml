@@ -20,7 +20,7 @@
 comprehensive_financial_integration_task:
   description: |
     ⚠️ CRITICAL ANTI-HALLUCINATION RULES - READ FIRST ⚠️
-    
+
     1. You MUST ONLY use ticker symbols from inputs.validated_tickers_list[]
     2. DO NOT invent, create, or hallucinate ANY ticker symbols under any circumstances
     3. DO NOT create fake company names, SEC filings, or URLs
@@ -28,62 +28,62 @@ comprehensive_financial_integration_task:
     5. Every ticker you mention MUST exist in inputs.validated_tickers_list[]
     6. If you cannot find a ticker in validated_tickers_list, DO NOT mention it
     7. If validated_tickers_list has fewer than 3 tickers, acknowledge the limitation
-    
+
     ⚠️ DATA QUALITY AND TRANSPARENCY RULES ⚠️
-    
+
     1. **USE NEW DATA ACCESSORS**: All data must be accessed through validated accessors:
        - SECFilingURLGenerator for SEC filing URLs (never hardcode URLs)
        - PortfolioHoldingsProcessor for portfolio data (processes ALL holdings)
        - APlusDiscoveryAccessor for A+ opportunities (checks if discovery ran)
        - BacktestingMetricsExtractor for backtesting data (handles missing metrics)
        - DataAvailabilityTracker for data source status (tracks freshness)
-    
+
     2. **DISPLAY "DATA NOT AVAILABLE" INSTEAD OF GENERATING FAKE DATA**:
        - When SEC filings are unavailable: Display "No SEC filings available"
        - When A+ discovery hasn't run: Display inputs.discovery_status.message
        - When backtesting data is missing: Display inputs.backtesting_status.message
        - When sentiment data is unavailable: Display "Sentiment data not available"
        - NEVER generate fake URLs, fake metrics, or placeholder data
-    
+
     3. **INCLUDE DATA AVAILABILITY SUMMARY**:
        - Use inputs.data_availability_summary for comprehensive status
        - Display total_sources, available_sources, unavailable_sources, stale_sources
        - Show source_details for each data source (status, age, record count)
        - Include this summary in report footer and annexes section
-    
+
     4. **SHOW FRESHNESS WARNINGS**:
        - Use inputs.data_availability_summary.freshness_warnings
        - Display warnings for data older than 7 days with ⚠️ icon
        - Indicate data age in days/hours
        - Recommend refreshing stale data sources
-    
+
     5. **TRANSPARENT ERROR HANDLING**:
        - When data is missing: Explain why and what it means
        - When validation fails: Show which holdings failed and why
        - When URLs are invalid: Display "URL not available" instead of broken links
        - Always provide context for missing or incomplete data
-    
+
     VERIFIED DATA SOURCES (use ONLY these):
     - inputs.validated_tickers_list[] - The ONLY tickers you are allowed to use
     - inputs.stock_analysis_data - Analysis for tickers in validated_tickers_list
     - inputs.etf_analysis_data - ETF analysis for validated tickers
     - inputs.crypto_analysis_data - Crypto analysis for validated symbols
-    
+
     FORBIDDEN ACTIONS (will cause task failure):
     - Creating placeholder or example tickers (ABC, XYZ, etc.)
     - Inventing company names like "Alpha Beta Corp", "Lumina Networks", "Xylon Holdings"
     - Fabricating SEC filing URLs or CIK numbers
     - Using any ticker not explicitly listed in validated_tickers_list
     - Making up data when real data is unavailable
-    
+
     If you find yourself wanting to create an example ticker or company name,
     STOP immediately and work only with the validated tickers provided.
-    
+
     ---
-    
+
     Review and synthesize investment recommendations using the integrated data system.
-    Access consolidated data from Stock, ETF, Crypto, and Discovery crews through the 
-    integrated data context. Extract key data, analyze integrated opportunities, and 
+    Access consolidated data from Stock, ETF, Crypto, and Discovery crews through the
+    integrated data context. Extract key data, analyze integrated opportunities, and
     produce a consolidated analysis with proper SEC/EDGAR citations and market sentiment.
 
     Key Steps:
@@ -143,7 +143,7 @@ comprehensive_financial_integration_task:
 
     Data Sources (accessed through integrated context):
     - Stock crew data: 10-K insights, validated tickers, SEC citations, market sentiments
-    - ETF crew data: validated ETFs, factsheets, holdings analysis, risk assessments  
+    - ETF crew data: validated ETFs, factsheets, holdings analysis, risk assessments
     - Crypto crew data: validated symbols, crypto theses, market analysis
     - Discovery crew data (via APlusDiscoveryAccessor):
       * inputs.discovery_status: Status of discovery execution (has_results, message, status)
@@ -165,7 +165,7 @@ comprehensive_financial_integration_task:
     A structured analytical document that consolidates findings from all specialized crews
     using the integrated data system. CRITICAL: Every ticker symbol mentioned must be from
     inputs.validated_tickers_list[] - NO exceptions. The document should include:
-    
+
     1. SEC/EDGAR citations with filing dates (ONLY for validated tickers)
     2. Market sentiment analysis with source attribution
     3. **A+ DISCOVERY STATUS AND OPPORTUNITIES**:
@@ -196,9 +196,9 @@ comprehensive_financial_integration_task:
        - Validation statistics and success rates
     7. Clear handling of missing or stale data with warnings
     8. Verifiable data and references with proper data lineage
-    
+
     DO NOT include any ticker symbols not in validated_tickers_list[].
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the ReporterInput object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "report", "analysis", etc.
@@ -221,8 +221,8 @@ optimal_portfolio_allocation_task:
   description: |
     ⚠️ CRITICAL: Use ONLY tickers from inputs.validated_tickers_list[] ⚠️
     DO NOT invent or hallucinate ticker symbols. Every ticker must be validated.
-    
-    Based on the integrated data analysis, develop an optimal, diversified portfolio allocation 
+
+    Based on the integrated data analysis, develop an optimal, diversified portfolio allocation
     strategy incorporating A+ opportunities and validated ticker symbols. Use consolidated data
     to ensure all recommendations are properly validated and include allocation updates based
     on A+ discoveries.
@@ -231,7 +231,7 @@ optimal_portfolio_allocation_task:
     1. Review the consolidated analysis with integrated data and A+ opportunities.
     2. Incorporate A+ opportunity allocation recommendations and replacement notes.
     3. Use validated ticker symbols from consolidated ticker validation results.
-    4. **USE BACKTESTING SHARPE RATIOS FOR WEIGHTING**: 
+    4. **USE BACKTESTING SHARPE RATIOS FOR WEIGHTING**:
        - Weight allocations based on risk-adjusted returns (Sharpe ratios) from backtesting
        - Prioritize candidates with Sharpe > 1.5 for higher allocations
        - Reduce allocations for candidates with Sharpe < 1.0
@@ -259,7 +259,7 @@ optimal_portfolio_allocation_task:
     12. Handle graceful degradation if A+ opportunities or backtesting data are unavailable.
     13. Justify each allocation choice with reference to backtesting metrics, regime consistency, market context, and technical scores.
     14. Ensure the portfolio is diversified and balances growth potential with capital preservation based on current market regime.
-    
+
     CRITICAL OUTPUT REQUIREMENTS:
     - All holdings MUST have shares > 0 (never use 0.0 for shares)
     - Calculate actual share quantities based on CHF amounts and current prices
@@ -290,7 +290,7 @@ optimal_portfolio_allocation_task:
   expected_output: >
     A specific and actionable portfolio allocation plan incorporating A+ opportunities and
     validated ticker symbols. The plan must include:
-    
+
     1. Exact CHF amounts for each investment with percentage allocations
     2. **BACKTESTING-BASED WEIGHTINGS**: Allocation percentages justified by Sharpe ratios and risk-adjusted returns
     3. **REGIME CONSISTENCY CONSIDERATIONS**: Asset selection based on multi-regime performance
@@ -311,7 +311,7 @@ risk_assessment_mitigation_task:
   description: |
     ⚠️ CRITICAL: Use ONLY tickers from inputs.validated_tickers_list[] ⚠️
     DO NOT invent or hallucinate ticker symbols. Every ticker must be validated.
-    
+
     Conduct a thorough risk assessment using consolidated risk data from all crews.
     Incorporate market sentiment analysis and A+ opportunity risk profiles to develop
     comprehensive mitigation strategies.
@@ -375,7 +375,7 @@ risk_assessment_mitigation_task:
   expected_output: >
     A detailed report identifying key risks using consolidated data from all crews.
     The report must include:
-    
+
     1. Market sentiment-based risks with source attribution
     2. A+ opportunity risk analysis with risk scores
     3. **BACKTESTING DOWNSIDE RISK DATA**:
@@ -410,12 +410,12 @@ risk_assessment_mitigation_task:
 comprehensive_investment_report_task:
   description: |
     ⚠️⚠️⚠️ MOST CRITICAL RULE - READ THIS FIRST ⚠️⚠️⚠️
-    
+
     **PORTFOLIO GRADES ARE WRONG - USE REAL GRADES FROM deep_analysis_html_content**
-    
+
     The portfolio_review.holdings[] data has FAKE placeholder grades (all 0.7/C).
     The REAL grades are in inputs.deep_analysis_html_content[ticker].
-    
+
     FOR EVERY HOLDING YOU MENTION:
     1. Look up ticker in inputs.deep_analysis_html_content[ticker]
     2. Use deep_analysis_html_content[ticker]['grade'] (e.g., "A-", "A", "B+")
@@ -423,49 +423,49 @@ comprehensive_investment_report_task:
     4. **EXTRACT CURRENT PRICE**: Use deep_analysis_html_content[ticker]['current_price'] for the "Prix Actuel" column
     5. If current_price is not available: Display "N/A" or "Prix non disponible"
     6. NEVER use portfolio_review.holdings[].grade or .composite_score (they are fake 0.7/C)
-    
+
     Example:
     - AAPL: Use deep_analysis_html_content["AAPL"] = {grade: "A-", composite_score: 0.82} ✅
     - MSFT: Use deep_analysis_html_content["MSFT"] = {grade: "A", composite_score: 0.86} ✅
     - DO NOT use portfolio_review grade C/0.7 ❌
-    
+
     ---
-    
+
     ⚠️ CRITICAL ANTI-HALLUCINATION RULES ⚠️
-    
+
     1. You MUST ONLY use ticker symbols from inputs.validated_tickers_list[]
     2. DO NOT invent ticker symbols like ABC, XYZ, LMN, TEST, SAMPLE
     3. DO NOT create fake company names like "Alpha Beta Corp", "Lumina Networks", "Xylon Holdings"
     4. DO NOT fabricate SEC filing URLs or CIK numbers
     5. Every ticker in the HTML report MUST be from validated_tickers_list[]
     6. If a ticker is not in validated_tickers_list[], DO NOT include it in the report
-    
+
     Read the consolidated analysis from previous tasks, but VERIFY every ticker against
     inputs.validated_tickers_list[] before including it in the HTML report.
-    
+
     ---
-    
+
     ⚠️ CRITICAL URL REQUIREMENTS - READ FIRST ⚠️
-    
+
     **ABSOLUTE PROHIBITION ON FAKE URLS**:
     - ❌ NEVER EVER use example.com, test.com, sample.com, or any placeholder URLs
     - ❌ NEVER invent or hallucinate URLs - if you don't have a real URL, write "Source: Internal analysis" or "URL not available"
     - ✅ ONLY use real URLs from upstream data (sentiment tools, SEC filings, etc.)
     - ✅ If sentiment data has no URL: write "Source: [Tool Name] - URL not provided"
     - ✅ For SEC data: Use SECFilingURLGenerator or write "SEC EDGAR Database (search at sec.gov/edgar)"
-    
+
     **EXAMPLES OF CORRECT CITATIONS**:
     - ✅ "Apple reports strong iPhone sales" — Source: Yahoo Finance News — 2025-10-25 — score: 0.9
     - ✅ "Services revenue beats estimates" — Source: Alpha Vantage News API — 2025-10-24 — score: 0.85
     - ✅ "Azure growth accelerates" — Source: Perplexity Sonar — 2025-10-22 — score: 0.88
-    
+
     **EXAMPLES OF FORBIDDEN CITATIONS**:
     - ❌ "Apple reports strong iPhone sales" — https://news.example.com/apple-earnings-2025
     - ❌ "Services revenue beats estimates" — https://test.com/apple-services-2025
     - ❌ Any URL containing example.com, test.com, sample.com, placeholder.com
-    
+
     NOW PROCEED WITH THE TASK:
-    
+
     Compile all findings using the integrated data system to create a comprehensive investment report
     with SEC/EDGAR citations, market sentiment analysis, A+ opportunities, and validated ticker symbols.
     Generate a visually appealing HTML report that leverages all integrated data sources.
@@ -502,7 +502,7 @@ comprehensive_investment_report_task:
 
     ⭐ 3.1. Opportunités A+ Découvertes (du système d'intégration)
       - **VÉRIFIER LE STATUT DE DÉCOUVERTE**: Utilisez inputs.discovery_status pour déterminer l'état
-      - **SI discovery_status.has_results est False**: 
+      - **SI discovery_status.has_results est False**:
         * Afficher le message: inputs.discovery_status.message
         * Exemple: "A+ discovery not run - use --discovery flag to enable discovery analysis"
         * Ne pas inventer de fausses opportunités
@@ -620,25 +620,25 @@ comprehensive_investment_report_task:
           // Tri de tableau interactif avec support des notes, nombres et texte
           let sortState = {}; // Stocke l'état de tri pour chaque colonne
           let originalOrder = []; // Stocke l'ordre original des lignes
-          
+
           // Initialiser l'ordre original au chargement
           document.addEventListener('DOMContentLoaded', function() {
             const table = document.getElementById('portfolio-table');
             const tbody = table.querySelector('tbody');
             originalOrder = Array.from(tbody.querySelectorAll('tr'));
           });
-          
+
           function sortTable(columnIndex) {
             const table = document.getElementById('portfolio-table');
             const tbody = table.querySelector('tbody');
             const rows = Array.from(tbody.querySelectorAll('tr'));
             const headers = table.querySelectorAll('th');
-            
+
             // Initialiser l'état de tri pour cette colonne si nécessaire
             if (!sortState[columnIndex]) {
               sortState[columnIndex] = 'none';
             }
-            
+
             // Déterminer le prochain état de tri
             let nextState;
             if (sortState[columnIndex] === 'none') {
@@ -648,13 +648,13 @@ comprehensive_investment_report_task:
             } else {
               nextState = 'none';
             }
-            
+
             // Réinitialiser tous les états sauf celui-ci
             Object.keys(sortState).forEach(key => {
               if (key != columnIndex) sortState[key] = 'none';
             });
             sortState[columnIndex] = nextState;
-            
+
             // Mettre à jour les indicateurs visuels
             headers.forEach((header, idx) => {
               header.classList.remove('sort-asc', 'sort-desc');
@@ -663,30 +663,30 @@ comprehensive_investment_report_task:
                 if (nextState === 'desc') header.classList.add('sort-desc');
               }
             });
-            
+
             // Si retour à l'ordre original
             if (nextState === 'none') {
               originalOrder.forEach(row => tbody.appendChild(row));
               return;
             }
-            
+
             // Trier les lignes
             rows.sort((a, b) => {
               const cellA = a.cells[columnIndex];
               const cellB = b.cells[columnIndex];
-              
+
               // Utiliser data-sort-value si disponible
               let valueA = cellA.getAttribute('data-sort-value');
               let valueB = cellB.getAttribute('data-sort-value');
-              
+
               // Sinon utiliser le contenu texte
               if (!valueA) valueA = cellA.textContent.trim();
               if (!valueB) valueB = cellB.textContent.trim();
-              
+
               // Conversion en nombre si possible
               const numA = parseFloat(valueA);
               const numB = parseFloat(valueB);
-              
+
               let comparison = 0;
               if (!isNaN(numA) && !isNaN(numB)) {
                 // Comparaison numérique
@@ -695,15 +695,15 @@ comprehensive_investment_report_task:
                 // Comparaison alphabétique
                 comparison = valueA.localeCompare(valueB, 'fr');
               }
-              
+
               return nextState === 'asc' ? comparison : -comparison;
             });
-            
+
             // Réorganiser le DOM
             rows.forEach(row => tbody.appendChild(row));
           }
           </script>
-          
+
           <style>
           .sortable-table th.sortable {
             cursor: pointer;
@@ -748,7 +748,7 @@ comprehensive_investment_report_task:
        - Glossaire des termes 📚
        - Liste de lectures recommandées 📖
         - Contacts importants 📞
-    
+
     📎 Annexes & Prochaines étapes
        - **Méthodologie de Découverte** 🔬 (NOUVELLE SECTION):
          * Critères de sélection utilisés:
@@ -827,7 +827,7 @@ comprehensive_investment_report_task:
     Utilisez généreusement les emojis, icônes et éléments visuels pour améliorer la lisibilité.
     Incluez des en-têtes de section clairs, des listes à puces et des tableaux le cas échéant.
     Assurez-vous que le rapport est adapté aux mobiles et s'imprime bien.
-    
+
     **PIED DE PAGE DU RAPPORT** (REQUIS):
     - **INCLURE LE RÉSUMÉ DE DISPONIBILITÉ DES DONNÉES** (obligatoire)
     - Utiliser inputs.data_availability_summary_formatted pour le contenu
@@ -836,35 +836,35 @@ comprehensive_investment_report_task:
     - Lister les avertissements de fraîcheur s'il y en a
     - Ajouter l'horodatage de génération du rapport
     - **TRANSPARENCE TOTALE**: Le pied de page doit clairement indiquer quelles données sont disponibles/manquantes
-    
+
     ⚠️ RÈGLES STRICTES - PAS DE GÉNÉRATION DE DONNÉES ⚠️
-    
+
     1. **JAMAIS GÉNÉRER DE FAUSSES DONNÉES**:
        - Ne jamais inventer des URLs SEC/EDGAR
        - Ne jamais créer de faux numéros CIK
        - Ne jamais générer de fausses métriques de backtesting
        - Ne jamais inventer des scores de sentiment
        - Ne jamais créer de fausses opportunités A+
-    
+
     2. **TOUJOURS AFFICHER "NON DISPONIBLE" QUAND LES DONNÉES MANQUENT**:
        - SEC filings: "No SEC filings available" ou "SEC data not available"
        - A+ discovery: Afficher inputs.discovery_status.message (ex: "A+ discovery not run")
        - Backtesting: Afficher inputs.backtesting_status.message (ex: "Backtesting data not available")
        - Sentiment: "Sentiment data not available" si aucune source
        - Portfolio: "Portfolio data incomplete" avec détails sur les positions manquantes
-    
+
     3. **EXPLIQUER POURQUOI LES DONNÉES MANQUENT**:
        - Discovery pas exécuté: "Use --discovery flag to enable A+ opportunity discovery"
        - Backtesting indisponible: "Backtesting requires discovery to be run first"
        - SEC filings introuvables: "No recent SEC filings found for this ticker"
        - Sentiment indisponible: "No recent news articles found for sentiment analysis"
-    
+
     4. **UTILISER LES ACCESSEURS DE DONNÉES**:
        - SECFilingURLGenerator: Pour tous les URLs SEC (jamais hardcodés)
        - APlusDiscoveryAccessor: Pour vérifier si discovery a été exécuté
        - BacktestingMetricsExtractor: Pour extraire les métriques (None si manquantes)
        - DataAvailabilityTracker: Pour le statut de toutes les sources
-    
+
     5. **VALIDATION DES URLS**:
        - Tous les URLs doivent être vérifiés avant inclusion
        - URLs invalides ou None: Afficher "URL not available"
@@ -877,37 +877,37 @@ comprehensive_investment_report_task:
     mise en page professionnelle qui rend les informations financières complexes accessibles
     à tous les membres de la famille.
     Le rapport doit être en français.
-    
+
     **EXIGENCES DE QUALITÉ DES DONNÉES** (CRITIQUES):
-    
+
     1. **ZÉRO URLS HALLUCINÉS**: Tous les URLs SEC/EDGAR doivent être réels et vérifiés
        - Utiliser SECFilingURLGenerator pour tous les URLs SEC
        - Si URL est None: Afficher "No SEC filings available"
        - Jamais d'URLs hardcodés ou inventés
-    
+
     2. **TRANSPARENCE TOTALE SUR LES DONNÉES MANQUANTES**:
        - Afficher clairement "Data not available" quand applicable
        - Expliquer pourquoi les données manquent
        - Indiquer comment obtenir les données manquantes (ex: --discovery flag)
-    
+
     3. **RÉSUMÉ DE DISPONIBILITÉ DES DONNÉES OBLIGATOIRE**:
        - Section dédiée dans les annexes avec inputs.data_availability_summary
        - Pied de page avec résumé formaté (inputs.data_availability_summary_formatted)
        - Icônes de statut: ✅ disponible, ⚠️ périmé, ❌ indisponible
-    
+
     4. **AVERTISSEMENTS DE FRAÎCHEUR**:
        - Afficher tous les avertissements de inputs.data_availability_summary.freshness_warnings
        - Indiquer l'âge des données en jours/heures
        - Recommander le rafraîchissement si > 7 jours
-    
+
     5. **PORTFOLIO COMPLET**:
        - Inclure 100% des positions des fichiers CSV
        - Afficher le statut de validation pour chaque position
        - Expliquer les positions exclues avec raisons
        - Résumé: positions traitées vs positions dans CSV
-    
+
     **NOUVELLES SECTIONS REQUISES**:
-    
+
     1. **Section "Analyse de Performance Backtesting"** 📊:
        - **VÉRIFIER inputs.backtesting_status.has_data AVANT d'afficher**
        - Si has_data est False: Afficher inputs.backtesting_status.message
@@ -917,26 +917,26 @@ comprehensive_investment_report_task:
          * Inclure explication quand métriques sont incomplètes
          * Statistiques récapitulatives de inputs.backtesting_summary si disponible
          * Identification des meilleurs/pires performers basée sur Sharpe ratio
-    
+
     2. **Section "Contexte de Marché & Analyse de Régime"** 🌐:
        - Indicateurs VIX actuels avec contexte historique
        - Indicateurs macro (inflation, taux d'intérêt) avec tendances
        - Évaluation du niveau de stress du marché
        - Implications pour l'allocation d'actifs (défensif vs croissance)
-    
+
     3. **Section "Méthodologie de Découverte"** 🔬:
        - Critères de sélection et seuils utilisés
        - Statistiques de validation (total examiné, candidats trouvés, taux de réussite)
        - Répartition des scores (fondamental, technique, qualité, risque) pour chaque candidat
        - Sources de données utilisées
-    
+
     4. **Section "Insights d'Optimisation"** 💡:
        - Résultats de validation avec taux de réussite/échec
        - Amélioration attendue du grade du portefeuille
        - Impact sur la diversification et le risque
        - Complexité de mise en œuvre
        - Top 5 opportunités par score composite
-    
+
     Inclure une annexe "Corrections et Suggestions — Validation des Tickers" fondée exclusivement
     sur les annexes JSON validées des équipes (validated_tickers[], validated_etfs[], validated_symbols[]),
     ainsi qu'un court bloc JSON récapitulatif. Aucun appel externe supplémentaire ne doit être effectué.

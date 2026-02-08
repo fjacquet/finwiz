@@ -19,17 +19,17 @@ def _validate_score_uniqueness(
     if len(analysis_results) < 2:
         # Need at least 2 holdings to check uniqueness
         return
-    
+
     # Extract composite scores
     composite_scores = [
-        result.composite_score 
+        result.composite_score
         for result in analysis_results.values()
     ]
-    
+
     # Calculate standard deviation
     import statistics
     composite_std = statistics.stdev(composite_scores)
-    
+
     # Check for identical scores (std dev < 0.03 indicates hardcoded values)
     if composite_std < 0.03:
         raise ValueError(
@@ -60,7 +60,7 @@ def _extract_holding_data(
 ) -> dict[str, Any] | None:
     """Extract real market data from holding for scoring."""
     from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-    
+
     try:
         # Fetch real quantitative data
         quant_tool = QuantitativeAnalysisTool()
@@ -69,7 +69,7 @@ def _extract_holding_data(
             asset_class=holding.asset_class,
             analysis_type="performance"
         )
-        
+
         # Extract real values
         return {
             "ticker": holding.ticker,
@@ -110,16 +110,16 @@ def _export_json_files(
     stock_dir = self.output_dir / "stock"
     etf_dir = self.output_dir / "etf"
     crypto_dir = self.output_dir / "crypto"
-    
+
     for dir_path in [stock_dir, etf_dir, crypto_dir]:
         dir_path.mkdir(parents=True, exist_ok=True)
-    
+
     exported_files = []
-    
+
     # Export with session_id in filename
     for ticker, export_data in json_exports.items():
         asset_class = export_data["asset_class"]
-        
+
         # Determine output directory
         if asset_class == "stock":
             output_path = stock_dir / f"{ticker}_{session_id}.json"
@@ -129,13 +129,13 @@ def _export_json_files(
             output_path = crypto_dir / f"{ticker}_{session_id}.json"
         else:
             output_path = stock_dir / f"{ticker}_{session_id}.json"
-        
+
         # Write JSON file
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
-        
+
         exported_files.append(str(output_path))
-    
+
     return {"exported_files": exported_files}
 ```
 
@@ -167,33 +167,33 @@ def analyze_portfolio_holdings(
         "failed_analyses": 0,
         "deep_analysis_results": {}
     }
-    
+
     for holding in holdings:
         try:
             # Extract data
             data = self._extract_holding_data(holding)
-            
+
             # Skip if data unavailable
             if data is None:
                 logger.warning(f"Skipping {holding.ticker} - data unavailable")
                 results["failed_analyses"] += 1
                 continue
-            
+
             # Run analysis
             analysis_result = self.scorer.calculate_composite_score(
                 ticker=holding.ticker,
                 asset_class=holding.asset_class,
                 data=data
             )
-            
+
             # Store result
             results["deep_analysis_results"][holding.ticker] = analysis_result
             results["successful_analyses"] += 1
-            
+
         except Exception as e:
             logger.error(f"Failed to analyze {holding.ticker}: {e}")
             results["failed_analyses"] += 1
-    
+
     return results
 ```
 
@@ -252,10 +252,10 @@ async def analyze_holding_async(holding, session_id):
     """Async analysis for parallel processing."""
     # Fetch data asynchronously
     data = await fetch_data_async(holding.ticker)
-    
+
     # Calculate score (CPU-bound, still sequential)
     result = calculate_score(data)
-    
+
     return result
 
 # Process multiple holdings in parallel
@@ -285,10 +285,10 @@ BATCH_SIZE = 10
 for i in range(0, len(holdings), BATCH_SIZE):
     batch = holdings[i:i + BATCH_SIZE]
     batch_results = analyze_batch(batch, session_id)
-    
+
     # Write results immediately
     export_batch_results(batch_results)
-    
+
     # Clear memory
     del batch_results
 ```
@@ -306,13 +306,13 @@ def test_should_calculate_unique_scores_per_ticker(mocker):
         create_holding("MSFT"),
         create_holding("GOOGL")
     ]
-    
+
     # Mock data fetching to return different values
     mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
-    
+
     # Act
     results = analyze_portfolio_with_python(holdings, "test_session")
-    
+
     # Assert
     scores = [r.composite_score for r in results["deep_analysis_results"].values()]
     assert len(set(scores)) == len(scores), "Scores should be unique"
@@ -327,12 +327,12 @@ def test_should_complete_full_pipeline():
     # Arrange
     holdings = load_test_holdings()
     session_id = f"integration_test_{int(time.time())}"
-    
+
     # Act
     analysis_results = analyze_portfolio_with_python(holdings, session_id)
     discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id)
     backtesting_results = connect_backtesting_to_discovery_results(session_id)
-    
+
     # Assert
     assert analysis_results["successful_analyses"] > 0
     assert discovery_results["has_a_plus_analysis"] in [True, False]
@@ -350,21 +350,21 @@ def analyze_portfolio_with_python(
 ) -> dict[str, Any]:
     """
     Analyze portfolio holdings using pure Python.
-    
+
     This function replaces AI-based DeepAnalysisCrew with deterministic
     Python calculations for 10-20x speed improvement and 100% cost reduction.
-    
+
     Args:
         holdings: List of portfolio holdings to analyze
         session_id: Unique session identifier for tracking
-    
+
     Returns:
         Dictionary containing:
             - successful_analyses: Count of successful analyses
             - failed_analyses: Count of failed analyses
             - deep_analysis_results: Map of ticker to analysis result
             - performance_metrics: Execution metrics
-    
+
     Example:
         >>> results = analyze_portfolio_with_python(holdings, "session_123")
         >>> print(f"Analyzed {results['successful_analyses']} holdings")

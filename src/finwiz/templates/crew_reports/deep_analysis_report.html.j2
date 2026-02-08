@@ -15,12 +15,12 @@
 <div class="section">
     <h2>📋 Résumé Exécutif</h2>
     <p>
-        L'analyse approfondie de <strong>{{ ticker }}</strong> révèle un actif de classe {{ asset_class|upper }} 
-        avec un score composite de <strong>{{ "%.1f"|format(composite_score * 100) }}%</strong> 
+        L'analyse approfondie de <strong>{{ ticker }}</strong> révèle un actif de classe {{ asset_class|upper }}
+        avec un score composite de <strong>{{ "%.1f"|format(composite_score * 100) }}%</strong>
         et une note de <strong>{{ grade }}</strong>.
     </p>
     <p>
-        Notre recommandation est de <strong>{{ recommendation }}</strong> cet actif 
+        Notre recommandation est de <strong>{{ recommendation }}</strong> cet actif
         avec un niveau de confiance de <strong>{{ "%.0f"|format(confidence * 100) }}%</strong>.
     </p>
 </div>
@@ -60,7 +60,7 @@
 <!-- Key Metrics Section -->
 <div class="section">
     <h2>📊 Métriques Clés</h2>
-    
+
     <!-- Fundamental Analysis -->
     {% if fundamental_details %}
     <h3>💰 Analyse Fondamentale</h3>
@@ -131,7 +131,7 @@
         {% endif %}
     </div>
     {% endif %}
-    
+
     <!-- Technical Analysis -->
     {% if technical_details %}
     <h3>📈 Analyse Technique</h3>
@@ -206,7 +206,7 @@
         </div>
         {% endif %}
     </div>
-    
+
     <h3>Facteurs de Risque Identifiés</h3>
     <ul>
         {% if risk_details.volatility is defined and risk_details.volatility > 0.30 %}
@@ -242,7 +242,7 @@
         {% endif %}
     </ul>
     <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem;">
-        <strong>Note:</strong> Ce rapport a été généré par le moteur de scoring Python de FinWiz, 
+        <strong>Note:</strong> Ce rapport a été généré par le moteur de scoring Python de FinWiz,
         garantissant des résultats déterministes et reproductibles.
     </p>
 </div>

@@ -14,9 +14,9 @@
 market_analysis_task:
   description: >
     IMPORTANT: Today's date is {full_date}. Use this as your current date reference for all analysis.
-    
-    As an AI-driven cryptocurrency market analyst, use advanced reasoning to analyze current market 
-    trends, sentiment, and news. Apply intelligent decision-making to identify the top 10 promising 
+
+    As an AI-driven cryptocurrency market analyst, use advanced reasoning to analyze current market
+    trends, sentiment, and news. Apply intelligent decision-making to identify the top 10 promising
     cryptocurrencies with high growth potential.
 
     AI REASONING REQUIREMENTS:
@@ -25,7 +25,7 @@ market_analysis_task:
     - Demonstrate understanding of crypto market dynamics, blockchain technology, and adoption patterns
     - Show adaptive thinking based on current market conditions as of {full_date}
     - Generate investment insights through AI reasoning, not just algorithmic screening
-    
+
     CRITICAL DATE CONTEXT:
     - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
     - All analysis must reflect market conditions as of {full_date}, NOT historical dates
@@ -48,22 +48,22 @@ market_analysis_task:
     Validation Requirement:
     - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
     - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
-    
+
     AI-Enhanced Sentiment Analysis:
     - Use the "Standardized Sentiment Analysis Tool" with intelligent interpretation
     - Apply AI reasoning to analyze sentiment patterns and their implications
     - Generate insights on sentiment-driven price movements and market psychology
     - Use AI to extract trending topics and assess their relevance to investment decisions
     - Provide AI-generated confidence intervals and uncertainty acknowledgments
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the CryptoMarketAnalysis object directly - do NOT wrap it in additional fields
     - Do NOT add "data", "results", "analysis", or any wrapper fields
     - The JSON must match the CryptoMarketAnalysis schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - market_sentiment: MUST be one of: "bullish", "bearish", "neutral", "mixed" (lowercase, no other values allowed)
-    
+
     OUTPUT: Return a structured JSON output conforming to the CryptoMarketAnalysis schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -71,10 +71,10 @@ market_analysis_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured list of the top 10 promising cryptocurrencies conforming to the 
-    CryptoMarketAnalysis Pydantic schema. Include analysis, validation status, and 
+    A structured list of the top 10 promising cryptocurrencies conforming to the
+    CryptoMarketAnalysis Pydantic schema. Include analysis, validation status, and
     crypto theses with initial thesis bullets.
-    
+
     CRITICAL SCHEMA REQUIREMENTS:
     - Read docs/schemas/CryptoThesis.schema.json and docs/schemas/examples/crypto_thesis.example.json
     - Follow the exact schema structure shown in the example files
@@ -87,10 +87,10 @@ market_analysis_task:
 
 technical_analysis_task:
   description: >
-    Conduct a detailed technical analysis of the cryptocurrencies identified by the market analyst. 
-    Identify potential entry and exit points, support and resistance levels, and overall price trends 
+    Conduct a detailed technical analysis of the cryptocurrencies identified by the market analyst.
+    Identify potential entry and exit points, support and resistance levels, and overall price trends
     for the top 10 projects.
-    
+
     Technical Indicators & Charts:
     - Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands for relevant intervals (if the symbol/interval is supported),
       and cite the parameters used.
@@ -100,18 +100,18 @@ technical_analysis_task:
       * Crypto-specific volatility analysis and momentum indicators
       * Support and resistance level identification with price targets
     - Generate charts with the "Chart-img Generator" tool and embed returned data URLs directly in the report.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the CryptoTechnicalAnalysis object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "analysis", etc.
     - The JSON must match the CryptoTechnicalAnalysis schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - volume_trend: MUST be one of: "increasing", "decreasing", "stable" (lowercase)
     - trend_direction: MUST be one of: "bullish", "bearish", "neutral", "mixed" (lowercase)
     - trend_strength: MUST be one of: "strong", "moderate", "weak" (lowercase)
     - recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase)
-    
+
     OUTPUT: Return a structured JSON output conforming to the CryptoTechnicalAnalysis schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -119,10 +119,10 @@ technical_analysis_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured technical analysis report for the top 10 cryptocurrencies conforming to 
-    the CryptoTechnicalAnalysis Pydantic schema. Include chart patterns, key price levels, 
+    A structured technical analysis report for the top 10 cryptocurrencies conforming to
+    the CryptoTechnicalAnalysis Pydantic schema. Include chart patterns, key price levels,
     technical indicators, and entry/exit points.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: technical_analyst
   output_pydantic: CryptoTechnicalAnalysis
@@ -136,7 +136,7 @@ risk_assessment_task:
     Evaluate the risks associated with the top 10 cryptocurrencies identified
     in previous tasks. Use the "Enhanced Crypto Analysis Tool" with risk assessment
     enabled to perform standardized crypto risk scoring.
-    
+
     Enhanced Risk Assessment:
     - Use the "Enhanced Crypto Analysis Tool" for comprehensive risk analysis of each cryptocurrency
     - Apply the "Crypto Risk Scoring Tool" methodology for consistent 0-5 risk scores
@@ -146,13 +146,13 @@ risk_assessment_task:
       * Extreme volatility metrics and tail risk analysis (VaR/CVaR)
       * Correlation analysis with traditional assets and other cryptocurrencies
       * Drawdown analysis during crypto market crashes and recovery patterns
-    
+
     Sentiment Analysis:
     - Use the "Standardized Sentiment Analysis Tool" with asset_class="crypto" for consistent sentiment methodology
     - Apply standardized cross-asset sentiment scoring with crypto-specific considerations
     - Extract trending topics relevant to cryptocurrency markets and regulatory developments
     - Include top positive/negative headlines with URLs and dates using consistent format
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the CryptoRiskProfile object directly - do NOT wrap it in additional fields
     - Do NOT add "profiles", "metadata", "data", or any wrapper fields
@@ -161,11 +161,11 @@ risk_assessment_task:
       regulatory_risk, technology_risk, market_risk, adoption_risk, quantitative_risk_metrics,
       tokenomics_assessment, risk_mitigation_strategies, risk_summary
     - Example: {"schema_version": 1, "symbol": "BTC", "name": "Bitcoin", ...}
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - risk_assessment.scale: MUST be one of: "0_5", "L_M_H", "L_M_H_VH" (use "0_5" for 0-5 scale)
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values)
-    
+
     OUTPUT: Return a structured JSON output conforming to the CryptoRiskProfile schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -173,10 +173,10 @@ risk_assessment_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured comprehensive risk assessment report for each of the top 10 cryptocurrencies 
-    conforming to the CryptoRiskProfile Pydantic schema. Include potential risks, mitigation 
+    A structured comprehensive risk assessment report for each of the top 10 cryptocurrencies
+    conforming to the CryptoRiskProfile Pydantic schema. Include potential risks, mitigation
     strategies, and standardized risk scores (0-5 scale) with crypto-specific methodology.
-    
+
     IMPORTANT: Return the CryptoRiskProfile object directly without any wrapper fields.
   agent: risk_assessor
   output_pydantic: CryptoRiskProfile
@@ -190,7 +190,7 @@ investment_strategy_task:
     Develop a comprehensive investment strategy for the top cryptocurrencies
     based on the technical analysis and risk assessment. Use the "Enhanced Crypto Analysis Tool"
     to generate detailed investment thesis and standardized risk assessments.
-    
+
     Enhanced Analysis Requirements:
     - Use the "Enhanced Crypto Analysis Tool" for each cryptocurrency to generate:
       * Structured investment thesis bullets with market analysis
@@ -202,10 +202,10 @@ investment_strategy_task:
       * Complete backtesting analysis with crypto-specific strategies
       * Performance attribution and risk-adjusted return calculations
       * Investment recommendations with quantitative justification and price targets
-    
+
     Provide recommendations for asset allocation, position sizing, and clear
     investment thesis with proper risk-adjusted returns analysis.
-    
+
     CRITICAL SCHEMA CONSTRAINTS:
     - symbol: Maximum 30 characters (e.g., "BTC" or "TOP10PORT" for portfolios)
     - investment_thesis.symbol: Same as above, maximum 30 characters
@@ -219,18 +219,18 @@ investment_strategy_task:
         - "https://cardano.org/"
     - quantitative_metrics.max_drawdown: MUST be NEGATIVE or zero (e.g., -0.62 for 62% drawdown, NOT 0.62)
     - quantitative_metrics.symbol: Same as symbol field, maximum 30 characters
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the CryptoInvestmentStrategy object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "strategy", "recommendations", etc.
     - The JSON must match the CryptoInvestmentStrategy schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - time_horizon: MUST be one of: "short", "medium", "long" (lowercase)
     - recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase)
     - risk_assessment.scale: MUST be "0_5" (for 0-5 scale)
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized)
-    
+
     OUTPUT: Return a structured JSON output conforming to the CryptoInvestmentStrategy schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -238,11 +238,11 @@ investment_strategy_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured detailed investment strategy document conforming to the CryptoInvestmentStrategy 
-    Pydantic schema. Include asset allocation, risk management, long-term outlook, standardized 
-    risk scores (0-5 scale), quantitative analysis results with backtesting performance, and 
+    A structured detailed investment strategy document conforming to the CryptoInvestmentStrategy
+    Pydantic schema. Include asset allocation, risk management, long-term outlook, standardized
+    risk scores (0-5 scale), quantitative analysis results with backtesting performance, and
     technical signals for each cryptocurrency.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: investment_strategist
   output_pydantic: CryptoInvestmentStrategy
@@ -295,35 +295,35 @@ final_report_task:
 generate_export_task:
   description: >
     Consolidate all cryptocurrency analysis findings from context into a CryptoCrewExport object.
-    
+
     CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
     from previous tasks to extract all required information.
-    
+
     CONTEXT SOURCES:
     - market_analysis_task: Market trends, thesis, and adoption analysis
     - technical_analysis_task: Technical indicators, price action, volatility
     - risk_assessment_task: Risk assessment and risk scores
     - investment_strategy_task: Investment strategy and recommendations
     - final_report_task: Consolidated findings
-    
+
     REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
     1. thesis (CryptoThesis):
        - Extract from market_analysis_task context
        - Include investment thesis, key points, adoption metrics
-    
+
     2. risk_assessment (RiskAssessmentStandardized):
        - Extract from risk_assessment_task context
        - Include risk_score (0-5), risk_factors, systematic_risk, idiosyncratic_risk
-    
+
     3. technical_analysis (dict):
        - Extract from technical_analysis_task context
        - Include price trends, support/resistance, momentum indicators
-    
+
     4. composite_score (float 0.0-1.0):
        - Calculate based on all analysis dimensions
        - Weight: 30% thesis strength, 30% technical, 40% risk
        - Formula: (thesis_score * 0.3) + (technical_score * 0.3) + ((5 - risk_score) / 5 * 0.4)
-    
+
     5. grade (A+ to F):
        - A+: composite_score >= 0.85
        - A: composite_score >= 0.75
@@ -331,54 +331,54 @@ generate_export_task:
        - C: composite_score >= 0.55
        - D: composite_score >= 0.45
        - F: composite_score < 0.45
-    
+
     6. volatility_30d (float):
        - Extract from technical_analysis_task context
        - 30-day annualized volatility
-    
+
     7. max_drawdown (float):
        - Extract from technical_analysis_task context
        - Maximum drawdown (negative percentage)
-    
+
     8. recommendation (BUY/HOLD/SELL):
        - BUY: grade >= B AND positive technical signals AND manageable risk
        - HOLD: grade = C OR mixed signals
        - SELL: grade <= D OR excessive risk
-    
+
     9. confidence (float 0.0-1.0):
        - Based on data quality and consistency across analyses
        - High confidence (0.8-1.0): All analyses agree, strong signals
        - Medium confidence (0.5-0.8): Some disagreement, mixed signals
        - Low confidence (0.0-0.5): Conflicting analyses, weak signals
-    
+
     10. rationale (string, min 50 chars):
         - Explain the recommendation based on all analysis findings
         - Reference specific metrics from thesis and technical analysis
         - Address volatility, adoption trends, and risk factors
         - Mention regulatory considerations and market positioning
-    
+
     11. data_sources (list of strings):
         - List all data sources used: ["CoinMarketCap", "Kraken", "CoinGecko", etc.]
-    
+
     12. report_html_path (string):
         - Set to: "output/reports/{session_id}/crypto_crew/{ticker}_report.html"
-    
+
     13. report_json_path (string):
         - Set to: "output/reports/{session_id}/crypto_crew/{ticker}_export.json"
-    
+
     METADATA FIELDS (auto-populated):
     - crew_name: "crypto_crew" (default)
     - ticker: From input parameter {ticker}
     - asset_class: "crypto" (default)
     - session_id: From input parameter {session_id}
     - analysis_date: Current timestamp (auto-generated)
-    
+
     OUTPUT FORMAT:
     - Return a valid CryptoCrewExport Pydantic object
     - All fields must conform to schema validation
     - Use extra='forbid' - no additional fields allowed
     - Ensure all required fields are present
-    
+
     VALIDATION:
     - composite_score must be between 0.0 and 1.0
     - grade must be one of: A+, A, B, C, D, F
@@ -388,7 +388,7 @@ generate_export_task:
     - volatility_30d must be >= 0.0
     - max_drawdown must be <= 0.0
     - All nested objects must conform to their schemas
-    
+
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
 
     ⚠️ CRITICAL ANTI-HALLUCINATION RULES:

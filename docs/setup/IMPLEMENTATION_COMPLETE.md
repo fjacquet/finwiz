@@ -1,7 +1,7 @@
 # Report Generation Fixes - Implementation Complete ✅
 
-**Date**: 2025-11-23  
-**Author**: Claude Code Assistant  
+**Date**: 2025-11-23
+**Author**: Claude Code Assistant
 **Status**: Ready for Testing
 
 ## Summary
@@ -32,7 +32,7 @@ All three reported issues with FinWiz report generation have been successfully f
 **317 lines of code added** across 4 files:
 
 1. `src/finwiz/reporting/python_report_generator.py` (+269 lines)
-2. `src/finwiz/orchestrators/reporting_orchestrator.py` (+48 lines)  
+2. `src/finwiz/orchestrators/reporting_orchestrator.py` (+48 lines)
 3. `scripts/test_report_generation.py` (+257 lines, new file)
 4. `docs/setup/REPORT_GENERATION_FIXES.md` (comprehensive documentation)
 
@@ -53,7 +53,7 @@ def _generate_individual_deep_analysis_reports(self, results_by_ticker):
 def _generate_discovery_section(self, discovery_results):
     # Displays all A+ opportunities with:
     # - Count by asset class
-    # - Full opportunities table  
+    # - Full opportunities table
     # - Replacement recommendations
 ```
 
@@ -62,7 +62,7 @@ def _generate_discovery_section(self, discovery_results):
 ```python
 def report(self):
     # ... load portfolio and deep analysis ...
-    
+
     if deep_analysis_results:
         self._merge_deep_analysis_into_portfolio(portfolio_review, deep_analysis_results)
         # NEW: Save merged portfolio back to disk
@@ -94,9 +94,9 @@ uv run python scripts/test_report_generation.py
 # Expected output:
 # ✅ PASS: Portfolio Scores Merged
 # ✅ PASS: Individual HTML Files
-# ✅ PASS: Discovery in Report  
+# ✅ PASS: Discovery in Report
 # ✅ PASS: All JSON Integrated
-# 
+#
 # 4/4 tests passed
 # 🎉 All tests passed!
 ```
@@ -173,7 +173,7 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 **Benefits**:
 
 - 100% accurate scores in reports
-- Complete data integration  
+- Complete data integration
 - Professional individual reports
 - Actionable discovery recommendations
 

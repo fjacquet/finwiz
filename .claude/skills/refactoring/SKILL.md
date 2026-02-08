@@ -14,7 +14,7 @@ Guidelines for refactoring large files and reorganizing code while maintaining b
 - **Rule**: All Pydantic models belong in `src/finwiz/schemas/`
 - **Pattern**: Domain-specific subfolders mirror domain folders
   - `schemas/quantitative/` for quantitative models
-  - `schemas/rebalancing/` for rebalancing models  
+  - `schemas/rebalancing/` for rebalancing models
   - `schemas/tools/` for tool input/output models
 - **Rationale**: Centralizes all data contracts for easy discovery and maintenance
 
@@ -116,7 +116,7 @@ mocker.patch("finwiz.quantitative.config_manager.get_config")
 class BacktestConfig(BaseModel):
     # Pydantic models moved to schemas/
 
-# src/finwiz/quantitative/config_manager.py (230 lines)  
+# src/finwiz/quantitative/config_manager.py (230 lines)
 class QuantitativeConfigManager:
     # Business logic stays in domain folder
 
@@ -134,7 +134,7 @@ from finwiz.quantitative.config_manager import (
 
 __all__ = [
     "BacktestConfig",
-    "QuantConfig", 
+    "QuantConfig",
     "ScreenerConfig",
     "QuantitativeConfigManager",
     "get_backtest_config",

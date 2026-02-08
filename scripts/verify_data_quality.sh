@@ -33,9 +33,9 @@ echo ""
 print_status() {
     local status=$1
     local message=$2
-    
+
     TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-    
+
     if [ "$status" = "PASS" ]; then
         echo -e "${GREEN}✅ PASS${NC}: $message"
         PASSED_CHECKS=$((PASSED_CHECKS + 1))
@@ -54,7 +54,7 @@ print_status() {
 check_file_exists() {
     local filepath=$1
     local description=$2
-    
+
     if [ -f "$filepath" ]; then
         print_status "PASS" "$description exists: $filepath"
         return 0
@@ -69,14 +69,14 @@ check_directory_has_files() {
     local dirpath=$1
     local pattern=$2
     local description=$3
-    
+
     if [ ! -d "$dirpath" ]; then
         print_status "FAIL" "$description directory not found: $dirpath"
         return 1
     fi
-    
+
     local file_count=$(find "$dirpath" -name "$pattern" -type f 2>/dev/null | wc -l)
-    
+
     if [ "$file_count" -gt 0 ]; then
         print_status "PASS" "$description has $file_count file(s)"
         return 0
@@ -112,16 +112,16 @@ echo "----------------------------------------"
 if [ -n "$PORTFOLIO_FILE" ] && [ -f "$PORTFOLIO_FILE" ]; then
     # Check for fallback Grade D pattern
     # Pattern: "grade": "D", "composite_score": 0.6
-    
+
     # Count total holdings
     TOTAL_HOLDINGS=$(jq '.portfolio_review.holdings | length' "$PORTFOLIO_FILE" 2>/dev/null || echo "0")
-    
+
     if [ "$TOTAL_HOLDINGS" -gt 0 ]; then
         print_status "INFO" "Portfolio has $TOTAL_HOLDINGS holdings"
-        
+
         # Count fallback grades (Grade D with score 0.6)
         FALLBACK_GRADES=$(jq '[.portfolio_review.holdings[] | select(.grade == "D" and .composite_score == 0.6)] | length' "$PORTFOLIO_FILE" 2>/dev/null || echo "0")
-        
+
         if [ "$FALLBACK_GRADES" -eq 0 ]; then
             print_status "PASS" "No fallback Grade D patterns detected"
         elif [ "$FALLBACK_GRADES" -eq "$TOTAL_HOLDINGS" ]; then
@@ -129,21 +129,21 @@ if [ -n "$PORTFOLIO_FILE" ] && [ -f "$PORTFOLIO_FILE" ]; then
         else
             print_status "WARN" "$FALLBACK_GRADES of $TOTAL_HOLDINGS holdings have fallback Grade D"
         fi
-        
+
         # Check for "Validation rapide" messages (fallback indicator)
         VALIDATION_RAPIDE=$(jq '[.portfolio_review.holdings[] | select(.rationale_bullets[]? | contains("Validation rapide"))] | length' "$PORTFOLIO_FILE" 2>/dev/null || echo "0")
-        
+
         if [ "$VALIDATION_RAPIDE" -gt 0 ]; then
             print_status "WARN" "$VALIDATION_RAPIDE holdings have 'Validation rapide' messages (fallback data)"
         fi
-        
+
         # Check grade distribution
         echo ""
         echo "Grade Distribution:"
         jq -r '.portfolio_review.holdings[] | .grade' "$PORTFOLIO_FILE" 2>/dev/null | sort | uniq -c | while read count grade; do
             echo "  $grade: $count"
         done
-        
+
     else
         print_status "FAIL" "Portfolio has no holdings"
     fi
@@ -160,34 +160,34 @@ REPORT_FILE=$(find output -name "finwiz_*.html" -o -name "*_financial_plan.html"
 
 if [ -n "$REPORT_FILE" ] && [ -f "$REPORT_FILE" ]; then
     print_status "PASS" "Report found: $REPORT_FILE"
-    
+
     # Check for example.com placeholder URLs
     PLACEHOLDER_URLS=$(grep -c "example\.com" "$REPORT_FILE" 2>/dev/null || echo "0")
-    
+
     if [ "$PLACEHOLDER_URLS" -eq 0 ]; then
         print_status "PASS" "No example.com placeholder URLs found"
     else
         print_status "FAIL" "Found $PLACEHOLDER_URLS example.com placeholder URLs"
     fi
-    
+
     # Check for "NOT PROVIDED" messages
     NOT_PROVIDED=$(grep -c "NOT PROVIDED" "$REPORT_FILE" 2>/dev/null || echo "0")
-    
+
     if [ "$NOT_PROVIDED" -eq 0 ]; then
         print_status "PASS" "No 'NOT PROVIDED' messages found"
     else
         print_status "FAIL" "Found $NOT_PROVIDED 'NOT PROVIDED' messages"
     fi
-    
+
     # Check for "aucune alternative fournie" (no alternatives provided)
     NO_ALTERNATIVES=$(grep -ci "aucune alternative fournie" "$REPORT_FILE" 2>/dev/null || echo "0")
-    
+
     if [ "$NO_ALTERNATIVES" -eq 0 ]; then
         print_status "PASS" "No 'aucune alternative fournie' messages found"
     else
         print_status "WARN" "Found $NO_ALTERNATIVES 'aucune alternative fournie' messages"
     fi
-    
+
 else
     print_status "FAIL" "HTML report not found"
 fi
@@ -201,34 +201,34 @@ METRICS_FILE=$(find .finwiz/metrics -name "data_quality_metrics_*.json" 2>/dev/n
 
 if [ -n "$METRICS_FILE" ] && [ -f "$METRICS_FILE" ]; then
     print_status "PASS" "Data quality metrics found: $METRICS_FILE"
-    
+
     # Extract quality score
     QUALITY_SCORE=$(jq -r '.quality_score' "$METRICS_FILE" 2>/dev/null || echo "0")
     QUALITY_GRADE=$(jq -r '.quality_grade' "$METRICS_FILE" 2>/dev/null || echo "F")
-    
+
     echo ""
     echo "Quality Metrics:"
     echo "  Score: $QUALITY_SCORE"
     echo "  Grade: $QUALITY_GRADE"
-    
+
     # Extract individual metrics
     METRICS_FALLBACK=$(jq -r '.metrics.fallback_grades' "$METRICS_FILE" 2>/dev/null || echo "0")
     METRICS_PLACEHOLDER=$(jq -r '.metrics.placeholder_urls' "$METRICS_FILE" 2>/dev/null || echo "0")
     METRICS_MISSING=$(jq -r '.metrics.missing_data' "$METRICS_FILE" 2>/dev/null || echo "0")
     METRICS_SUCCESS=$(jq -r '.metrics.successful_merges' "$METRICS_FILE" 2>/dev/null || echo "0")
     METRICS_FAILED=$(jq -r '.metrics.failed_merges' "$METRICS_FILE" 2>/dev/null || echo "0")
-    
+
     echo "  Fallback Grades: $METRICS_FALLBACK"
     echo "  Placeholder URLs: $METRICS_PLACEHOLDER"
     echo "  Missing Data: $METRICS_MISSING"
     echo "  Successful Merges: $METRICS_SUCCESS"
     echo "  Failed Merges: $METRICS_FAILED"
-    
+
     # Update counters for final score calculation
     FALLBACK_GRADES=$METRICS_FALLBACK
     PLACEHOLDER_URLS=$METRICS_PLACEHOLDER
     MISSING_DATA=$METRICS_MISSING
-    
+
 else
     print_status "WARN" "Data quality metrics file not found (may not have been exported)"
 fi
@@ -246,15 +246,15 @@ if [ "$TOTAL_HOLDINGS" -gt 0 ]; then
     # Penalty for fallback grades (each reduces score by 0.1)
     FALLBACK_PENALTY=$(echo "scale=2; $FALLBACK_GRADES * 0.1" | bc)
     QUALITY_SCORE=$(echo "scale=2; $QUALITY_SCORE - $FALLBACK_PENALTY" | bc)
-    
+
     # Penalty for placeholder URLs (each reduces score by 0.05)
     PLACEHOLDER_PENALTY=$(echo "scale=2; $PLACEHOLDER_URLS * 0.05" | bc)
     QUALITY_SCORE=$(echo "scale=2; $QUALITY_SCORE - $PLACEHOLDER_PENALTY" | bc)
-    
+
     # Penalty for missing data (each reduces score by 0.05)
     MISSING_PENALTY=$(echo "scale=2; $MISSING_DATA * 0.05" | bc)
     QUALITY_SCORE=$(echo "scale=2; $QUALITY_SCORE - $MISSING_PENALTY" | bc)
-    
+
     # Ensure score doesn't go below 0
     QUALITY_SCORE=$(echo "if ($QUALITY_SCORE < 0) 0 else $QUALITY_SCORE" | bc)
 fi

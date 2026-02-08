@@ -13,6 +13,7 @@ Hybrid financial analysis: deterministic Python scoring ($0, <100ms) for quantit
 **Goal:** Make FinWiz significantly faster through parallelism, batching, and caching — and add portfolio risk stress testing as a new analytical capability.
 
 **Target features:**
+
 - Parallel deep analysis — complete async migration, raise PARALLEL_LIMIT for concurrent holdings
 - Batch data fetching — expand batch_data_prefetcher to all data collection paths
 - Cache improvements — tiered eviction, smarter TTL, reduce redundant API calls

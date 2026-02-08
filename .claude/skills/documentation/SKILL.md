@@ -24,7 +24,7 @@ Organize all documentation using four categories:
 
 Ask yourself:
 1. **Is it step-by-step learning?** → Tutorial
-2. **Is it solving a specific problem?** → How-to Guide  
+2. **Is it solving a specific problem?** → How-to Guide
 3. **Is it reference information?** → Reference
 4. **Otherwise** → Explanation
 
@@ -130,7 +130,7 @@ def analyze_stock(ticker: str) -> StockAnalysis:
     """Analyze stock with proper error handling."""
     if not ticker:
         raise ValueError("Ticker cannot be empty")
-    
+
     return StockAnalysis(ticker=ticker)
 ```
 
@@ -261,7 +261,7 @@ example_code()
 # Markdown linting
 make docs-lint
 
-# Link validation  
+# Link validation
 make docs-validate
 
 # Build validation
@@ -278,13 +278,13 @@ Follow Python docstring standards:
 def analyze_portfolio(holdings: list[Holding]) -> PortfolioAnalysis:
     """
     Analyze portfolio holdings and generate recommendations.
-    
+
     Args:
         holdings: List of portfolio holdings to analyze
-        
+
     Returns:
         PortfolioAnalysis with recommendations and risk assessment
-        
+
     Raises:
         ValidationError: If holdings data is invalid
         APIError: If external data sources are unavailable
@@ -305,7 +305,7 @@ class StockAnalysis(BaseModel):
 ## Anti-Patterns to Avoid
 
 ❌ **Monolithic files** - Split large documents into focused files
-❌ **Generic titles** - Use specific, descriptive headings  
+❌ **Generic titles** - Use specific, descriptive headings
 ❌ **Untested code** - All examples must be verified
 ❌ **Broken links** - Validate all cross-references
 ❌ **Inconsistent terminology** - Use standard FinWiz terms

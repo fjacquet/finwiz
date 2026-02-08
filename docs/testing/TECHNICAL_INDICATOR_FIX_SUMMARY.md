@@ -98,7 +98,7 @@ def _calculate_component_scores(self, asset_class: str, data: dict[str, Any]):
     # Calculate missing technical indicators as fallback
     price_history = get_price_history_from_data(data)
     data = calculate_missing_technical_indicators(data, price_history)
-    
+
     # Now calculate scores with complete data
     fundamental_score, fundamental_details = self.calculate_fundamental_score(asset_class, data)
     technical_score, technical_details = self.calculate_technical_score(data)
@@ -201,7 +201,7 @@ Expected Output:
 ```python
 def test_technical_indicators_end_to_end():
     """Test full flow from data collection to scoring with fallbacks."""
-    
+
     # Setup: Data with price history but no indicators
     data = {
         "ticker": "AAPL",
@@ -212,10 +212,10 @@ def test_technical_indicators_end_to_end():
         # ... other fundamentals
         # NO technical indicators
     }
-    
+
     scorer = DeepAnalysisScorer()
     result = scorer.calculate_composite_score("AAPL", "stock", data)
-    
+
     # Verify indicators were calculated
     assert result.technical_details["rsi"] != 50.0  # Not default
     assert result.technical_details["moving_avg_50"] != 150.0  # Not current price

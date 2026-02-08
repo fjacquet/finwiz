@@ -15,7 +15,7 @@ from crewai.flow import flow, start, listen
 
 class InvestmentDiscoveryCrew:
     """Main crew orchestrating A+ investment discovery."""
-    
+
     @agent
     def etf_discovery_agent(self) -> Agent:
         return Agent(
@@ -23,7 +23,7 @@ class InvestmentDiscoveryCrew:
             tools=self._get_etf_tools(),
             verbose=True
         )
-    
+
     @agent
     def stock_discovery_agent(self) -> Agent:
         return Agent(
@@ -31,7 +31,7 @@ class InvestmentDiscoveryCrew:
             tools=self._get_stock_tools(),
             verbose=True
         )
-    
+
     @task
     def etf_discovery_task(self) -> Task:
         return Task(
@@ -64,20 +64,20 @@ class APlusScoringTool(BaseTool):
     criteria that adapt to market conditions. Integrates with existing FinWiz
     grading system (A+ to F scale).
     """
-    
-    def _run(self, 
-             symbol: str, 
+
+    def _run(self,
+             symbol: str,
              asset_type: str,
              fundamental_data: dict,
              market_context: dict = None) -> dict:
         """Calculate A+ score with detailed breakdown."""
-        
+
         scorer = self._get_scorer(asset_type)
         market_regime = self._analyze_market_context(market_context)
-        
+
         # Dynamic criteria adjustment based on market conditions
         criteria = self._adjust_criteria_for_market(asset_type, market_regime)
-        
+
         # Calculate component scores
         scores = {
             'fundamental_score': scorer.calculate_fundamental_score(
@@ -93,11 +93,11 @@ class APlusScoringTool(BaseTool):
                 fundamental_data, asset_type
             )
         }
-        
+
         # Weighted final score
         final_score = self._calculate_weighted_score(scores, asset_type)
         grade = self._score_to_grade(final_score)
-        
+
         return {
             'symbol': symbol,
             'final_score': final_score,
@@ -120,25 +120,25 @@ class MarketScreeningTool(BaseTool):
     Screens large universes of investments using quantitative filters
     to identify A+ candidates efficiently. Supports ETFs, stocks, and crypto.
     """
-    
+
     def _run(self,
              asset_type: str,
              screening_criteria: dict,
              market_region: str = "global",
              max_results: int = 50) -> dict:
         """Screen market for A+ candidates."""
-        
+
         screener = self._get_screener(asset_type)
-        
+
         # Apply quantitative filters
         candidates = screener.screen_universe(
             criteria=screening_criteria,
             region=market_region
         )
-        
+
         # Rank by preliminary A+ potential
         ranked_candidates = self._rank_by_a_plus_potential(candidates)
-        
+
         return {
             'asset_type': asset_type,
             'total_screened': len(candidates),
@@ -186,7 +186,7 @@ class InvestmentCandidate(BaseModel):
     market_cap: Optional[float] = Field(None, gt=0)
     preliminary_score: float = Field(..., ge=0, le=1)
     discovery_date: datetime = Field(default_factory=datetime.now)
-    
+
 class APlusAnalysis(BaseModel):
     """Complete A+ analysis result for an investment candidate."""
     candidate: InvestmentCandidate
@@ -197,7 +197,7 @@ class APlusAnalysis(BaseModel):
     final_grade: Grade
     confidence_level: float = Field(..., ge=0, le=1)
     rationale: List[str] = Field(..., min_items=1)
-    
+
 class PortfolioImprovement(BaseModel):
     """Represents a suggested portfolio improvement using A+ discoveries."""
     current_holding: Optional[str] = Field(None, description="Current position symbol")
@@ -233,7 +233,7 @@ class ETFScreeningCriteria(BaseModel):
     min_history_years: int = Field(3, ge=1, le=20)
     required_regions: List[str] = Field(default_factory=list)
     ucits_compliant: bool = Field(True, description="UCITS compliance required")
-    
+
 class StockScreeningCriteria(BaseModel):
     """Screening criteria specific to stocks."""
     min_roe: float = Field(0.20, ge=0, le=1.0)
@@ -242,7 +242,7 @@ class StockScreeningCriteria(BaseModel):
     min_market_cap_billions: float = Field(1.0, gt=0)
     required_free_cash_flow: bool = Field(True)
     min_profit_margin: float = Field(0.10, ge=0, le=1.0)
-    
+
 class CryptoScreeningCriteria(BaseModel):
     """Screening criteria specific to cryptocurrencies."""
     min_market_cap_billions: float = Field(10.0, gt=0)
@@ -310,18 +310,18 @@ The scoring system is designed to be flexible and adaptable:
 # src/finwiz/scoring/custom_criteria.py
 class CustomScoringCriteria:
     """Allows customization of A+ scoring criteria."""
-    
+
     def __init__(self, user_preferences: dict):
         self.preferences = user_preferences
-        
+
     def adjust_etf_criteria(self, base_criteria: ETFScreeningCriteria) -> ETFScreeningCriteria:
         """Adjust ETF criteria based on user preferences."""
         if self.preferences.get('cost_sensitive', False):
             base_criteria.max_expense_ratio *= 0.8  # More strict on costs
-            
+
         if self.preferences.get('risk_averse', False):
             base_criteria.min_aum_billions *= 2  # Require larger funds
-            
+
         return base_criteria
 ```
 
@@ -353,29 +353,29 @@ class MarketContextAnalyzer:
     def get_current_market_regime(self) -> MarketRegime:
         """Identify current market regime based on multiple indicators."""
         indicators = self._fetch_market_indicators()
-        
+
         if indicators.vix_level > 25:
             return MarketRegime.HIGH_VOLATILITY
         elif indicators.yield_curve_slope < 0:
             return MarketRegime.BEAR_MARKET
         # ... additional logic
-        
-    def adjust_criteria_for_regime(self, 
-                                   base_criteria: dict, 
+
+    def adjust_criteria_for_regime(self,
+                                   base_criteria: dict,
                                    regime: MarketRegime) -> dict:
         """Adjust scoring criteria based on market regime."""
         adjusted = base_criteria.copy()
-        
+
         if regime == MarketRegime.HIGH_VOLATILITY:
             # Emphasize quality and stability
             adjusted['quality_weight'] *= 1.2
             adjusted['volatility_penalty'] *= 1.5
-            
+
         elif regime == MarketRegime.BEAR_MARKET:
             # Focus on defensive characteristics
             adjusted['dividend_yield_bonus'] *= 1.3
             adjusted['debt_penalty'] *= 1.4
-            
+
         return adjusted
 ```
 
@@ -400,27 +400,27 @@ class TestAPlusScoringTool:
             'tracking_error': 0.001,
             'history_years': 5
         }
-        
+
         # Act
         result = tool._run(
             symbol='VTI',
             asset_type='etf',
             fundamental_data=mock_data
         )
-        
+
         # Assert
         assert result['final_score'] >= 0.95
         assert result['grade'] == 'A+'
         assert 'Low expense ratio' in result['rationale']
-        
+
     def test_should_adjust_criteria_for_high_volatility_market(self, mocker):
         # Arrange
         tool = APlusScoringTool()
         mock_market_context = {'vix_level': 35, 'regime': 'high_volatility'}
-        
+
         # Act
         criteria = tool._adjust_criteria_for_market('stock', mock_market_context)
-        
+
         # Assert
         assert criteria['quality_weight'] > 1.0  # Increased quality emphasis
         assert criteria['volatility_penalty'] > 1.0  # Higher volatility penalty
@@ -439,12 +439,12 @@ class TestDiscoveryWorkflow:
         # Arrange
         mock_market_data = mocker.patch('finwiz.tools.market_screening_tool.get_market_data')
         mock_market_data.return_value = self._get_mock_market_data()
-        
+
         crew = InvestmentDiscoveryCrew()
-        
+
         # Act
         result = crew.kickoff()
-        
+
         # Assert
         assert result.a_plus_candidates
         assert len(result.a_plus_candidates) > 0
@@ -464,15 +464,15 @@ import json
 
 class DiscoveryCache:
     """Caches expensive discovery operations."""
-    
+
     @lru_cache(maxsize=1000)
-    def get_screening_results(self, 
-                              asset_type: str, 
+    def get_screening_results(self,
+                              asset_type: str,
                               criteria_hash: str) -> List[Dict]:
         """Cache screening results for 24 hours."""
         # Implementation with TTL cache
         pass
-    
+
     def _hash_criteria(self, criteria: dict) -> str:
         """Create hash of screening criteria for cache key."""
         return hashlib.md5(
@@ -490,24 +490,24 @@ from concurrent.futures import ThreadPoolExecutor
 
 class ParallelDiscoveryProcessor:
     """Processes multiple asset discoveries in parallel."""
-    
-    async def discover_all_assets(self, 
+
+    async def discover_all_assets(self,
                                   asset_types: List[str]) -> Dict[str, any]:
         """Run discovery for multiple asset types in parallel."""
-        
+
         tasks = [
-            self._discover_asset_type(asset_type) 
+            self._discover_asset_type(asset_type)
             for asset_type in asset_types
         ]
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         return {
-            asset_type: result 
+            asset_type: result
             for asset_type, result in zip(asset_types, results)
             if not isinstance(result, Exception)
         }
-    
+
     async def _discover_asset_type(self, asset_type: str) -> Dict:
         """Discover A+ candidates for specific asset type."""
         # Implementation with async processing
@@ -531,19 +531,19 @@ class DiscoveryMetrics:
     a_plus_candidates_found: int
     api_calls_made: int
     cache_hit_rate: float
-    
+
 class DiscoveryMonitor:
     """Monitors discovery performance and quality."""
-    
-    def track_discovery_performance(self, 
-                                    asset_type: str, 
+
+    def track_discovery_performance(self,
+                                    asset_type: str,
                                     metrics: DiscoveryMetrics):
         """Track performance metrics for analysis."""
         # Log to monitoring system
         pass
-    
-    def calculate_precision_recall(self, 
-                                   predictions: List[str], 
+
+    def calculate_precision_recall(self,
+                                   predictions: List[str],
                                    actual_performance: List[float]) -> Dict[str, float]:
         """Calculate precision/recall of A+ predictions."""
         # Implementation for model validation
@@ -593,23 +593,23 @@ from typing import Dict, List
 
 class DiscoveryConfig(BaseSettings):
     """Configuration for A+ discovery system."""
-    
+
     # Scoring thresholds
     a_plus_threshold: float = Field(0.95, ge=0.9, le=1.0)
     confidence_threshold: float = Field(0.8, ge=0.5, le=1.0)
-    
+
     # Performance settings
     max_candidates_per_type: int = Field(50, ge=10, le=200)
     discovery_timeout_seconds: int = Field(600, ge=60, le=3600)
-    
+
     # Market data settings
     data_providers: List[str] = Field(default=['yahoo', 'alpha_vantage'])
     cache_ttl_hours: int = Field(24, ge=1, le=168)
-    
+
     # Regional settings
     default_regions: List[str] = Field(default=['US', 'EU', 'CH'])
     currency_preference: str = Field('USD')
-    
+
     class Config:
         env_file = '.env'
         env_prefix = 'DISCOVERY_'
@@ -724,14 +724,14 @@ import os
 
 class PortfolioDataProtection:
     """Protects sensitive portfolio data during discovery."""
-    
+
     def __init__(self):
         self.cipher = Fernet(os.getenv('PORTFOLIO_ENCRYPTION_KEY'))
-    
+
     def encrypt_portfolio_data(self, portfolio_data: dict) -> bytes:
         """Encrypt portfolio data before processing."""
         return self.cipher.encrypt(json.dumps(portfolio_data).encode())
-    
+
     def decrypt_portfolio_data(self, encrypted_data: bytes) -> dict:
         """Decrypt portfolio data for analysis."""
         return json.loads(self.cipher.decrypt(encrypted_data).decode())
@@ -785,8 +785,8 @@ def calculate_etf_fundamental_score(data: dict) -> float:
     aum_score = min(1, data['aum'] / 1e9)
     tracking_score = max(0, 1 - (data['tracking_error'] / 0.002))
     history_score = min(1, data['history_years'] / 5)
-    
-    return (expense_score * 0.4 + aum_score * 0.3 + 
+
+    return (expense_score * 0.4 + aum_score * 0.3 +
             tracking_score * 0.2 + history_score * 0.1)
 ```
 
@@ -808,8 +808,8 @@ def calculate_stock_fundamental_score(data: dict) -> float:
     debt_score = max(0, 1 - (data['debt_to_equity'] / 0.3))
     fcf_score = 1.0 if data['fcf_positive'] else 0.0
     margin_score = min(1, data['profit_margin'] / 0.10)
-    
-    return (roe_score * 0.3 + growth_score * 0.25 + debt_score * 0.2 + 
+
+    return (roe_score * 0.3 + growth_score * 0.25 + debt_score * 0.2 +
             fcf_score * 0.15 + margin_score * 0.1)
 ```
 
@@ -831,8 +831,8 @@ def calculate_crypto_fundamental_score(data: dict) -> float:
     age_score = min(1, data['age_months'] / 36)
     adoption_score = 1.0 if data['institutional_adoption'] else 0.0
     utility_score = 1.0 if data['real_utility'] else 0.0
-    
-    return (mcap_score * 0.3 + volume_score * 0.2 + age_score * 0.2 + 
+
+    return (mcap_score * 0.3 + volume_score * 0.2 + age_score * 0.2 +
             adoption_score * 0.15 + utility_score * 0.15)
 ```
 

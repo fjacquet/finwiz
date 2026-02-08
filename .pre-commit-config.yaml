@@ -4,7 +4,7 @@
 repos:
   # Code formatting and linting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.13
+    rev: v0.15.0
     hooks:
       - id: ruff
         args: [--fix]
@@ -17,6 +17,8 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        args: ['--unsafe']
+        exclude: ^mkdocs\.yml$
       - id: check-json
       - id: check-toml
       - id: check-merge-conflict
@@ -28,11 +30,11 @@ repos:
     hooks:
       - id: docs-validation
         name: Documentation Validation
-        entry: python scripts/validate_docs.py
+        entry: uv run python scripts/validate_docs.py
         language: system
         files: ^docs/.*\.md$
         pass_filenames: false
-        
+
       - id: mkdocs-build-check
         name: MkDocs Build Check
         entry: uv run mkdocs build --strict --clean
@@ -60,11 +62,12 @@ repos:
         files: \.py$
         pass_filenames: true
 
-  # Python type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+  # Python type checking (local hook to use project's virtual environment)
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies: [types-PyYAML, types-requests]
-        args: [--config-file=pyproject.toml]
+        name: mypy
+        entry: uv run mypy src/finwiz --config-file=pyproject.toml
+        language: system
         files: ^src/finwiz/.*\.py$
+        pass_filenames: false

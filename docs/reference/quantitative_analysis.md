@@ -84,16 +84,16 @@ class CustomStrategy(StrategyFramework):
         ("stop_loss_pct", 0.05),
         ("take_profit_pct", 0.15),
     )
-    
+
     def __init__(self):
         super().__init__()
         self.sma = bt.indicators.SimpleMovingAverage(
             self.datas[0], period=self.params.period
         )
-    
+
     def next(self):
         super().next()
-        
+
         if not self.position:
             if self.datas[0].close[0] > self.sma[0]:
                 size = self.calculate_position_size(self.datas[0].close[0])

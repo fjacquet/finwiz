@@ -4,7 +4,7 @@ description: |
   Universal quality system engineer that automatically implements trunk.io quality infrastructure
   for any repository. Provides comprehensive code quality, formatting, and security scanning
   across all supported languages and file types.
-  
+
   Use when:
   - Setting up quality systems for new repositories
   - Ensuring consistent code quality across all projects
@@ -256,10 +256,10 @@ echo "✅ Quality checks passed. Proceeding with commit."
 if [ ! -d ".trunk" ]; then
     # Initialize trunk.io
     trunk init
-    
+
     # Auto-detect and enable appropriate linters
     trunk check enable --all
-    
+
     # Configure pre-commit hooks
     trunk actions enable trunk-fmt-pre-commit
     trunk actions enable trunk-check-pre-push
@@ -286,7 +286,7 @@ trunk check --output=json > quality-report.json
 # Before any commit, run quality pipeline
 quality_check() {
     echo "🔍 Running quality checks..."
-    
+
     # Check if trunk needs initialization
     local trunk_initialized=false
     if [ ! -d ".trunk" ]; then
@@ -294,15 +294,15 @@ quality_check() {
         trunk init
         trunk_initialized=true
     fi
-    
+
     # Check if new linters were added
     local linters_before=$(trunk config show-linters --enabled 2>/dev/null | wc -l)
-    
+
     # Auto-detect and enable appropriate linters
     trunk check enable --all --quiet
-    
+
     local linters_after=$(trunk config show-linters --enabled 2>/dev/null | wc -l)
-    
+
     # Notify user of configuration changes
     if [ "$trunk_initialized" = true ]; then
         echo "🔧 Trunk.io initialized with quality system for this repository"
@@ -312,28 +312,28 @@ quality_check() {
         echo "➕ Added $new_count new linters based on codebase analysis"
         echo "📋 Newly enabled: $(trunk config show-linters --enabled | tail -n $new_count | tr '\n' ' ')"
     fi
-    
+
     # Format code
     echo "🎨 Formatting code..."
     local fmt_changes=$(trunk fmt --all 2>&1)
     if [[ "$fmt_changes" == *"formatted"* ]]; then
         echo "✨ Code formatting applied to files"
     fi
-    
+
     # Fix auto-resolvable issues
     echo "🔧 Auto-fixing quality issues..."
     local fix_output=$(trunk check --fix --all 2>&1)
     if [[ "$fix_output" == *"fixed"* ]]; then
         echo "🔨 Auto-fixed quality issues in codebase"
     fi
-    
+
     # Verify no remaining issues
     if ! trunk check --ci; then
         echo "❌ Quality issues found. Please review and fix:"
         trunk check
         return 1
     fi
-    
+
     echo "✅ All quality checks passed - ready to commit"
     return 0
 }

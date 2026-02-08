@@ -130,7 +130,7 @@ def _generate_deep_analysis_section(self, deep_analysis_results: dict[str, Any] 
     successful = deep_analysis_results.get("successful_analyses", 0)
     failed = deep_analysis_results.get("failed_analyses", 0)
     total = deep_analysis_results.get("total_holdings", 0)
-    
+
     # Improved messaging based on context
     if successful == 0 and failed == 0:
         if total == 0:
@@ -171,6 +171,6 @@ To verify the exact cause, check:
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-10-28  
+**Version**: 1.0
+**Last Updated**: 2025-10-28
 **Source**: Integrated from analysis/DIAGNOSTIC_ANALYSE_APPROFONDIE.md and analysis/FIX_ANALYSE_APPROFONDIE_MESSAGE.md

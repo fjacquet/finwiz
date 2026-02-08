@@ -315,6 +315,6 @@ FinWiz is built on top of excellent open-source projects:
 
 ---
 
-**Last Updated**: November 2025  
-**Version**: 2.0 (Post-Phase 2B Modernization)  
+**Last Updated**: November 2025
+**Version**: 2.0 (Post-Phase 2B Modernization)
 **Status**: Active Development

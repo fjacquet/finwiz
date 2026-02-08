@@ -19,19 +19,19 @@ errors_found=0
 check_file() {
     local file="$1"
     local temp_file=$(mktemp)
-    
+
     # Extract all Jinja2 tags and their line numbers
     grep -n '{%\|{{' "$file" > "$temp_file" 2>/dev/null || true
-    
+
     if [ ! -s "$temp_file" ]; then
         rm "$temp_file"
         return 0
     fi
-    
+
     local in_raw_block=false
     local in_code_block=false
     local file_has_errors=false
-    
+
     while IFS=: read -r line_num line_content; do
         # Check if we're entering/exiting a raw block
         if echo "$line_content" | grep -q '{% *raw *%}\|{%raw%}'; then
@@ -42,7 +42,7 @@ check_file() {
             in_raw_block=false
             continue
         fi
-        
+
         # Check if we're in a code block (simplified check)
         if echo "$line_content" | grep -q '```'; then
             if [ "$in_code_block" = true ]; then
@@ -51,7 +51,7 @@ check_file() {
                 in_code_block=true
             fi
         fi
-        
+
         # If we find Jinja2 syntax outside raw blocks, it's an error
         if [ "$in_raw_block" = false ] && [ "$in_code_block" = true ]; then
             if echo "$line_content" | grep -qE '{%[^}]*%}|{{[^}]*}}'; then
@@ -67,9 +67,9 @@ check_file() {
             fi
         fi
     done < "$temp_file"
-    
+
     rm "$temp_file"
-    
+
     if [ "$file_has_errors" = true ]; then
         echo ""
     fi

@@ -15,19 +15,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#2563eb">
   <meta name="color-scheme" content="light dark">
-  
+
   <!-- Accessibility improvements -->
   <meta name="description" content="{% if page and page.meta and page.meta.description %}{{ page.meta.description }}{% else %}{{ config.site_description }}{% endif %}">
-  
+
   <!-- Preconnect to external resources for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  
+
   <!-- Enhanced PWA support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="{{ config.site_name }}">
-  
+
   <!-- Structured data for better SEO -->
   <script type="application/ld+json">
   {
@@ -47,7 +47,7 @@
 {% block content %}
   <!-- Add skip navigation for accessibility -->
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  
+
   <!-- Main content with proper ARIA landmarks -->
   <main id="main-content" role="main" aria-label="Main content">
     {{ super() }}
@@ -57,15 +57,15 @@
 {% block footer %}
   <footer class="md-footer" role="contentinfo" aria-label="Footer">
     {{ super() }}
-    
+
     <!-- Additional footer content for accessibility -->
     <div class="md-footer-meta md-typeset">
       <div class="md-footer-meta__inner md-grid">
         <div class="md-footer-accessibility">
           <p>
-            <strong>Accessibility:</strong> 
-            This documentation is designed to be accessible. 
-            If you encounter any accessibility issues, please 
+            <strong>Accessibility:</strong>
+            This documentation is designed to be accessible.
+            If you encounter any accessibility issues, please
             <a href="{{ config.repo_url }}/issues" target="_blank" rel="noopener">report them</a>.
           </p>
           <p>

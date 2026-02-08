@@ -210,7 +210,7 @@ class TestCollectRawData:
 
         result = collect_raw_data(analysis_context)
 
-        mock_collector.collect_data.assert_called_once_with("AAPL", "stock", batch_enabled=False)
+        mock_collector.collect_data.assert_called_once_with("AAPL", "stock", batch_enabled=False, prefetched_data=None)
         assert result == mock_raw_data
 
     def test_collect_raw_data_with_etf(self, mocker):
@@ -226,7 +226,7 @@ class TestCollectRawData:
 
         result = collect_raw_data(ctx)
 
-        mock_collector.collect_data.assert_called_once_with("SPY", "etf", batch_enabled=False)
+        mock_collector.collect_data.assert_called_once_with("SPY", "etf", batch_enabled=False, prefetched_data=None)
 
 
 class TestCalculateQuantitative:

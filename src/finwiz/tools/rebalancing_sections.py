@@ -191,9 +191,9 @@ class RebalancingSections:
         return f"""
         <div class="projected-portfolio">
             <div class="portfolio-stats">
-                <p><strong>{"Valeur Totale Projetée" if is_french else "Projected Total Value"}:</strong> 
+                <p><strong>{"Valeur Totale Projetée" if is_french else "Projected Total Value"}:</strong>
                    ${projected.total_value:,.2f}</p>
-                <p><strong>{"Positions Hors Tolérance" if is_french else "Positions Outside Tolerance"}:</strong> 
+                <p><strong>{"Positions Hors Tolérance" if is_french else "Positions Outside Tolerance"}:</strong>
                    {len(projected.positions_needing_rebalancing)}</p>
             </div>
             <h4>{"Comparaison Avant/Après" if is_french else "Before/After Comparison"}</h4>
@@ -295,7 +295,7 @@ class RebalancingSections:
                 </div>
             </div>
             <div class="risk-improvement {risk_direction}">
-                <p><strong>{"Changement de Risque" if is_french else "Risk Change"}:</strong> 
+                <p><strong>{"Changement de Risque" if is_french else "Risk Change"}:</strong>
                    <span class="risk-value">{risk_change:+.2f}</span>
                    {self.formatters.get_risk_interpretation(risk_change, is_french)}
                 </p>

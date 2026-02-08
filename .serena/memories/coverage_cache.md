@@ -2,7 +2,7 @@
 
 ## Best Quick Wins (0% coverage, small files)
 1. **src/finwiz/config/loader.py** (26 lines, 0%) → +26 coverage
-2. **src/finwiz/api/rebalancing.py** (55 lines, 0%) → +55 coverage  
+2. **src/finwiz/api/rebalancing.py** (55 lines, 0%) → +55 coverage
 3. **src/finwiz/config/resilience_config.py** (51 lines, 0%) → +51 coverage
 
 **Total from top 3: ~132 lines** - easily reaches 65% target

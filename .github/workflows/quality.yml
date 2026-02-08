@@ -48,7 +48,7 @@ jobs:
             NEW_FILES=$(git diff --name-only --diff-filter=A HEAD~1...HEAD -- '*.py' 2>/dev/null || true)
           fi
           if [ -n "$NEW_FILES" ]; then
-            echo "$NEW_FILES" | xargs python scripts/check_new_file_size.py --check-all
+            echo "$NEW_FILES" | xargs uv run python scripts/check_new_file_size.py --check-all
           else
             echo "No new Python files to check"
           fi

@@ -29,7 +29,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
 
    ```python
    from finwiz.tools.ticker_validation_tool import TickerValidationTool
-   
+
    validator = TickerValidationTool()
    result = validator._run(ticker="AAPL")
    print(result)
@@ -63,7 +63,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
    ```python
    import logging
    logging.basicConfig(level=logging.DEBUG)
-   
+
    # Run analysis and check logs
    results = analyze_portfolio_with_python(holdings, session_id)
    ```
@@ -72,7 +72,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
 
    ```python
    from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-   
+
    tool = QuantitativeAnalysisTool()
    data = tool._run(symbol="AAPL", asset_class="stock", analysis_type="performance")
    print(data)
@@ -149,7 +149,7 @@ discovery_results["total_opportunities_found"] == 0
 
    ```python
    from pathlib import Path
-   
+
    output_dir = Path("output")
    for asset_class in ["stock", "etf", "crypto"]:
        dir_path = output_dir / asset_class
@@ -163,7 +163,7 @@ discovery_results["total_opportunities_found"] == 0
    ```python
    # Generate once, use everywhere
    session_id = f"analysis_{int(time.time())}"
-   
+
    analysis_results = analyze_portfolio_with_python(holdings, session_id)
    discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id)
    ```
@@ -213,7 +213,7 @@ backtesting_results["reason"] == "No A+ candidates available"
    ```python
    # Ensure discovery runs before backtesting
    discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id)
-   
+
    if discovery_results["has_a_plus_analysis"]:
        backtesting_results = connect_backtesting_to_discovery_results(session_id)
    else:
@@ -233,7 +233,7 @@ backtesting_results["reason"] == "No A+ candidates available"
    ```python
    from pathlib import Path
    import json
-   
+
    discovery_file = Path(f"output/aplus_discovery_{session_id}.json")
    if discovery_file.exists():
        with open(discovery_file) as f:
@@ -300,7 +300,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'output/stock/AAPL_sessi
 
    ```python
    from pathlib import Path
-   
+
    for dir_name in ["stock", "etf", "crypto"]:
        dir_path = Path("output") / dir_name
        dir_path.mkdir(parents=True, exist_ok=True)
@@ -340,7 +340,7 @@ Exception: Failed to generate report: ...
 
    ```python
    from finwiz.reporting.python_report_generator import PythonReportGenerator
-   
+
    generator = PythonReportGenerator()
    # Check for template errors
    ```
@@ -351,7 +351,7 @@ Exception: Failed to generate report: ...
 
    ```python
    from pathlib import Path
-   
+
    template_path = Path("src/finwiz/templates/report.html.j2")
    if not template_path.exists():
        print(f"❌ Template not found: {template_path}")
@@ -361,7 +361,7 @@ Exception: Failed to generate report: ...
 
    ```python
    from finwiz.schemas.portfolio_review import PortfolioReview
-   
+
    # Ensure portfolio_review is valid
    assert isinstance(portfolio_review, PortfolioReview)
    assert len(portfolio_review.holdings) > 0
@@ -397,7 +397,7 @@ Analysis takes longer than expected (> 2 seconds per holding).
    ```python
    # Cache market data to avoid redundant API calls
    from functools import lru_cache
-   
+
    @lru_cache(maxsize=1000)
    def get_cached_data(ticker, date):
        return fetch_market_data(ticker, date)
@@ -417,11 +417,11 @@ Analysis takes longer than expected (> 2 seconds per holding).
 
    ```python
    import time
-   
+
    start = time.time()
    data = fetch_data(ticker)
    elapsed = time.time() - start
-   
+
    if elapsed > 1.0:
        logger.warning(f"Slow API call for {ticker}: {elapsed:.2f}s")
    ```
@@ -450,7 +450,7 @@ Memory usage increases significantly during analysis.
    def analyze_holdings_generator(holdings):
        for holding in holdings:
            yield analyze_holding(holding)
-   
+
    # Process one at a time
    for result in analyze_holdings_generator(holdings):
        export_result(result)
@@ -460,7 +460,7 @@ Memory usage increases significantly during analysis.
 
    ```python
    import psutil
-   
+
    process = psutil.Process()
    memory_mb = process.memory_info().rss / 1024 / 1024
    print(f"Memory usage: {memory_mb:.1f} MB")

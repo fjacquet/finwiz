@@ -12,32 +12,32 @@ Results from A+ investment opportunity discovery across asset classes.
 class APlusDiscoveryResult(BaseModel):
     discovery_date: datetime = Field(default_factory=datetime.now)
     discovery_criteria: Dict[str, Any] = Field(default_factory=dict)
-    
+
     # Discovery summary
     total_opportunities: int = Field(..., ge=0)
     asset_breakdown: Dict[str, int] = Field(default_factory=dict)
-    
+
     # Opportunities by category
     stock_opportunities: List[InvestmentCandidate] = Field(default_factory=list)
     etf_opportunities: List[InvestmentCandidate] = Field(default_factory=list)
     crypto_opportunities: List[InvestmentCandidate] = Field(default_factory=list)
-    
+
     # Categorized opportunities
     opportunity_sections: List[APlusOpportunitySection] = Field(default_factory=list)
-    
+
     # Discovery quality metrics
     screening_universe_size: int = Field(..., ge=0)
     pass_rate: float = Field(..., ge=0.0, le=1.0)
     confidence_level: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Market context
     market_conditions: Dict[str, Any] = Field(default_factory=dict)
     discovery_notes: str = Field(default="")
-    
+
     # Data sources and freshness
     data_sources: List[str] = Field(default_factory=list)
     data_freshness: datetime = Field(default_factory=datetime.now)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -100,36 +100,36 @@ class InvestmentCandidate(BaseModel):
     ticker: str = Field(..., description="Asset ticker symbol")
     name: str = Field(..., description="Asset name")
     asset_class: Literal["stock", "etf", "crypto"]
-    
+
     # Grading and scoring
     grade: str = Field(..., pattern=r'^A\+$|^[A-F][+-]?$')
     composite_score: float = Field(..., ge=0.0, le=1.0)
     confidence: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Key metrics (asset-class specific)
     key_metrics: Dict[str, float] = Field(default_factory=dict)
-    
+
     # Strengths and opportunities
     key_strengths: List[str] = Field(default_factory=list)
     growth_catalysts: List[str] = Field(default_factory=list)
-    
+
     # Risk assessment
     risk_score: int = Field(..., ge=1, le=10)
     risk_factors: List[str] = Field(default_factory=list)
-    
+
     # Market context
     current_price: Optional[float] = Field(None, gt=0)
     price_target: Optional[float] = Field(None, gt=0)
     upside_potential: Optional[float] = Field(None, ge=0.0)
-    
+
     # Discovery context
     discovery_reason: str = Field(..., min_length=50)
     category: Optional[str] = Field(None, description="Opportunity category")
-    
+
     # Data quality
     data_completeness: float = Field(..., ge=0.0, le=1.0)
     analysis_depth: Literal["BASIC", "STANDARD", "COMPREHENSIVE"] = Field(default="STANDARD")
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -190,24 +190,24 @@ Categorized grouping of A+ investment opportunities.
 class APlusOpportunitySection(BaseModel):
     category: str = Field(..., min_length=5, description="Opportunity category name")
     description: str = Field(..., min_length=20, description="Category description")
-    
+
     # Opportunities in this category
     opportunities: List[str] = Field(..., min_items=1, description="Ticker symbols")
     opportunity_count: int = Field(..., ge=1)
-    
+
     # Category characteristics
     avg_grade: str = Field(..., pattern=r'^A\+$|^[A-F][+-]?$')
     avg_confidence: float = Field(..., ge=0.0, le=1.0)
     avg_risk_score: float = Field(..., ge=1.0, le=10.0)
-    
+
     # Category themes
     common_strengths: List[str] = Field(default_factory=list)
     shared_catalysts: List[str] = Field(default_factory=list)
     category_risks: List[str] = Field(default_factory=list)
-    
+
     # Investment thesis
     category_thesis: str = Field(..., min_length=100)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -255,31 +255,31 @@ Specific suggestions for improving portfolio through A+ opportunities.
 class APlusImprovementSuggestion(BaseModel):
     suggestion_type: Literal["REPLACE", "ADD", "INCREASE", "DIVERSIFY"]
     priority: Literal["HIGH", "MEDIUM", "LOW"]
-    
+
     # Current situation
     current_holding: Optional[str] = Field(None, description="Current ticker to replace/modify")
     current_allocation: Optional[float] = Field(None, ge=0.0, le=1.0)
-    
+
     # Suggested action
     suggested_ticker: str = Field(..., description="A+ opportunity ticker")
     suggested_allocation: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Expected benefits
     expected_return_improvement: Optional[float] = Field(None)
     expected_risk_improvement: Optional[float] = Field(None)
     diversification_benefit: Optional[float] = Field(None, ge=0.0, le=1.0)
-    
+
     # Rationale
     improvement_rationale: str = Field(..., min_length=100)
     key_advantages: List[str] = Field(default_factory=list)
-    
+
     # Implementation
     implementation_timeline: Literal["IMMEDIATE", "SHORT", "MEDIUM", "LONG"]
     implementation_notes: str = Field(default="")
-    
+
     # Confidence
     confidence: float = Field(..., ge=0.0, le=1.0)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -324,13 +324,13 @@ def validate_opportunity_consistency(self) -> 'APlusDiscoveryResult':
     calculated_total = sum(self.asset_breakdown.values())
     if calculated_total != self.total_opportunities:
         raise ValueError('Asset breakdown does not sum to total opportunities')
-    
+
     # Validate opportunity lists match breakdown
     actual_stocks = len(self.stock_opportunities)
     expected_stocks = self.asset_breakdown.get('stock', 0)
     if actual_stocks != expected_stocks:
         raise ValueError(f'Stock opportunities count mismatch: {actual_stocks} vs {expected_stocks}')
-    
+
     return self
 ```
 
@@ -388,19 +388,19 @@ discovery = APlusDiscoveryResult(
 ```python
 # Filter by grade
 aplus_only = [
-    candidate for candidate in discovery.stock_opportunities 
+    candidate for candidate in discovery.stock_opportunities
     if candidate.grade == "A+"
 ]
 
 # Filter by risk score
 low_risk = [
-    candidate for candidate in discovery.stock_opportunities 
+    candidate for candidate in discovery.stock_opportunities
     if candidate.risk_score <= 5
 ]
 
 # Filter by confidence
 high_confidence = [
-    candidate for candidate in discovery.stock_opportunities 
+    candidate for candidate in discovery.stock_opportunities
     if candidate.confidence >= 0.8
 ]
 ```

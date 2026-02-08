@@ -30,7 +30,7 @@ class TestPerformanceConfig:
         assert config.risk_assessment_use_mini is True
         assert config.use_minimal_risk_tools is True
         assert config.deep_analysis_ai_summary is False
-        assert config.deep_analysis_batch_size == 5
+        assert config.deep_analysis_batch_size == 10
         assert config.mode == OptimizationMode.MAXIMUM_SPEED
 
     def test_should_load_environment_configuration(self, mocker):
@@ -101,8 +101,8 @@ class TestPerformanceConfig:
         """Test handling of invalid batch size string."""
         mocker.patch.dict(os.environ, {"DEEP_ANALYSIS_BATCH_SIZE": "invalid"}, clear=True)
         config_manager = PerformanceConfigManager()
-        # Should use default value of 5
-        assert config_manager.get_batch_size() == 5
+        # Should use default value of 10
+        assert config_manager.get_batch_size() == 10
 
     def test_global_functions(self, mocker):
         """Test global convenience functions."""

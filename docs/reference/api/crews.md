@@ -451,7 +451,7 @@ class AnalysisFlow(Flow):
         crew = StockCrew()
         result = crew.crew().kickoff(inputs={"ticker": "AAPL"})
         return {"stock_analysis": result}
-    
+
     @listen("analyze_stock")
     def generate_report(self, stock_data):
         crew = ReportCrew()
@@ -471,13 +471,13 @@ import asyncio
 
 async def analyze_portfolio(tickers):
     crews = [StockCrew() for _ in tickers]
-    
+
     # Execute crews in parallel
     tasks = [
         crew.crew().kickoff(inputs={"ticker": ticker})
         for crew, ticker in zip(crews, tickers)
     ]
-    
+
     results = await asyncio.gather(*tasks)
     return dict(zip(tickers, results))
 ```
@@ -523,5 +523,5 @@ result = OutputSchema.model_validate(crew_output)
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

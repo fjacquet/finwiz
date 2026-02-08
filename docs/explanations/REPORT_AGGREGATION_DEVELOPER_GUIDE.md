@@ -44,25 +44,25 @@ from datetime import datetime
 class MyNewCrewExport(CrewExportBase):
     """Export schema for MyNewCrew analysis."""
     crew_name: str = Field(default="my_new_crew")
-    
+
     # Analysis Results
     analysis_data: Dict[str, Any] = Field(..., description="Main analysis results")
     risk_assessment: RiskAssessmentStandardized
-    
+
     # Scores and Grades
     composite_score: float = Field(..., ge=0.0, le=1.0)
     grade: str = Field(..., pattern="^(A\\+|A|B|C|D|F)$")
-    
+
     # Recommendations
     recommendation: str = Field(..., pattern="^(BUY|HOLD|SELL)$")
     confidence: float = Field(..., ge=0.0, le=1.0)
     rationale: str = Field(..., min_length=50)
-    
+
     # Metadata
     data_sources: List[str]
     report_html_path: str
     report_json_path: str
-    
+
     model_config = {
         "extra": "forbid",  # Reject unknown fields
         "str_strip_whitespace": True
@@ -105,14 +105,14 @@ def generate_export_task(self) -> Task:
     return Task(
         description="""
         Consolidate all analysis findings from context and create a validated export.
-        
+
         Steps:
         1. Extract analysis data from context
         2. Create MyNewCrewExport object with all required fields
         3. Validate against Pydantic schema
         4. Save JSON to output/reports/{session_id}/my_new_crew/{ticker}_export.json
         5. Return the export object
-        
+
         CRITICAL: All fields must be populated with actual data, not placeholders.
         """,
         expected_output="Validated MyNewCrewExport object saved to JSON",
@@ -143,10 +143,10 @@ def execute_my_new_crew(self) -> dict[str, Any]:
     # Execute crew
     crew = MyNewCrew()
     result = crew.crew().kickoff(inputs={"ticker": self.state.ticker})
-    
+
     # Get JSON export path
     json_path = f"output/reports/{self.state.session_id}/my_new_crew/{self.state.ticker}_export.json"
-    
+
     # Generate HTML from JSON using Python template
     generator = HTMLReportGenerator()
     html_path = generator.generate_crew_report(
@@ -154,16 +154,16 @@ def execute_my_new_crew(self) -> dict[str, Any]:
         export_data=json.loads(Path(json_path).read_text()),
         output_path=json_path.replace("_export.json", "_report.html")
     )
-    
+
     # Store paths in state
     if "my_new_crew" not in self.state.crew_export_paths:
         self.state.crew_export_paths["my_new_crew"] = []
     self.state.crew_export_paths["my_new_crew"].append(json_path)
-    
+
     if "my_new_crew" not in self.state.crew_html_paths:
         self.state.crew_html_paths["my_new_crew"] = []
     self.state.crew_html_paths["my_new_crew"].append(html_path)
-    
+
     return {"crew_name": "my_new_crew", "json_path": json_path, "html_path": html_path}
 ```
 
@@ -180,7 +180,7 @@ class ReportConsolidator:
     def consolidate_reports(self, crew_export_paths: Dict[str, List[str]]) -> ConsolidatedReportExport:
         """Consolidate all crew exports."""
         # ... existing code ...
-        
+
         # Load MyNewCrew exports
         my_new_analyses = []
         if "my_new_crew" in crew_export_paths:
@@ -188,14 +188,14 @@ class ReportConsolidator:
                 crew_export_paths["my_new_crew"],
                 MyNewCrewExport
             )
-        
+
         # Create consolidated export
         consolidated = ConsolidatedReportExport(
             session_id=self.session_id,
             # ... existing fields ...
             my_new_analyses=my_new_analyses
         )
-        
+
         return consolidated
 ```
 
@@ -225,7 +225,7 @@ If you need custom styling, extend the base template:
             padding: 20px;
             background-color: #f5f5f5;
         }
-        
+
         /* Light/Dark mode support */
         @media (prefers-color-scheme: dark) {
             body {
@@ -233,7 +233,7 @@ If you need custom styling, extend the base template:
                 color: #e0e0e0;
             }
         }
-        
+
         /* Grade colors */
         .grade-a-plus { color: #27ae60; font-weight: bold; }
         .grade-a { color: #2ecc71; }
@@ -241,7 +241,7 @@ If you need custom styling, extend the base template:
         .grade-c { color: #e67e22; }
         .grade-d { color: #e74c3c; }
         .grade-f { color: #c0392b; font-weight: bold; }
-        
+
         /* Responsive tables */
         table {
             width: 100%;
@@ -249,7 +249,7 @@ If you need custom styling, extend the base template:
             margin: 20px 0;
             background-color: white;
         }
-        
+
         @media (prefers-color-scheme: dark) {
             table {
                 background-color: #2a2a2a;
@@ -368,19 +368,19 @@ class HTMLReportGenerator:
             "crypto_crew": "crypto_report.html",
             "my_new_crew": "my_new_crew_report.html",  # Add your template
         }
-        
+
         template_name = template_map.get(crew_name)
         if not template_name:
             raise ValueError(f"No template found for crew: {crew_name}")
-        
+
         # Load and render template
         template = self.jinja_env.get_template(f"crew_reports/{template_name}")
         html_content = template.render(data=export_data)
-        
+
         # Save HTML
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         Path(output_path).write_text(html_content, encoding='utf-8')
-        
+
         return output_path
 ```
 
@@ -395,7 +395,7 @@ To add fields to an existing export schema:
 
 class StockCrewExport(CrewExportBase):
     # ... existing fields ...
-    
+
     # Add new field
     new_metric: float = Field(
         ...,
@@ -403,7 +403,7 @@ class StockCrewExport(CrewExportBase):
         le=100.0,
         description="New metric description"
     )
-    
+
     # Add field validator
     @field_validator('new_metric')
     @classmethod
@@ -424,12 +424,12 @@ class DetailedAnalysis(BaseModel):
     metric_1: float
     metric_2: float
     summary: str
-    
+
     model_config = {"extra": "forbid"}
 
 class StockCrewExport(CrewExportBase):
     # ... existing fields ...
-    
+
     # Use nested model
     detailed_analysis: DetailedAnalysis
 ```
@@ -442,7 +442,7 @@ When making breaking changes, version your schemas:
 class StockCrewExportV2(CrewExportBase):
     """Version 2 of StockCrewExport with breaking changes."""
     schema_version: str = Field(default="2.0")
-    
+
     # ... new fields ...
 ```
 
@@ -557,7 +557,7 @@ def test_should_validate_valid_export():
         report_html_path="output/reports/session/my_new_crew/AAPL_report.html",
         report_json_path="output/reports/session/my_new_crew/AAPL_export.json"
     )
-    
+
     assert export.ticker == "AAPL"
     assert export.grade == "A"
 
@@ -569,7 +569,7 @@ def test_should_reject_invalid_grade():
             grade="Z",  # Invalid grade
             # ... other fields ...
         )
-    
+
     assert "grade" in str(exc_info.value)
 
 def test_should_reject_extra_fields():
@@ -580,7 +580,7 @@ def test_should_reject_extra_fields():
             unknown_field="value",  # Extra field
             # ... other fields ...
         )
-    
+
     assert "extra fields not permitted" in str(exc_info.value)
 ```
 
@@ -603,14 +603,14 @@ def test_should_generate_html_from_export(mocker, tmp_path):
         # ... other fields ...
     }
     output_path = tmp_path / "report.html"
-    
+
     # Act
     result_path = generator.generate_crew_report(
         crew_name="my_new_crew",
         export_data=export_data,
         output_path=str(output_path)
     )
-    
+
     # Assert
     assert output_path.exists()
     html_content = output_path.read_text()
@@ -631,18 +631,18 @@ def test_should_consolidate_crew_exports(mocker, tmp_path):
     """Test consolidation of multiple crew exports."""
     # Arrange
     consolidator = ReportConsolidator(session_id="test_session")
-    
+
     # Create mock JSON files
     stock_export = tmp_path / "stock_export.json"
     stock_export.write_text('{"ticker": "AAPL", "grade": "A", ...}')
-    
+
     crew_export_paths = {
         "stock_crew": [str(stock_export)]
     }
-    
+
     # Act
     consolidated = consolidator.consolidate_reports(crew_export_paths)
-    
+
     # Assert
     assert consolidated.session_id == "test_session"
     assert len(consolidated.stock_analyses) == 1
@@ -663,7 +663,7 @@ class MyNewCrew:
             tools=[],  # Enforced empty
             verbose=True
         )
-    
+
     @task
     def generate_export_task(self) -> Task:
         return Task(
@@ -683,10 +683,10 @@ def execute_crew_with_html(self) -> dict[str, Any]:
     # 1. Execute crew
     crew = MyNewCrew()
     result = crew.crew().kickoff(inputs=inputs)
-    
+
     # 2. Get JSON path
     json_path = f"output/reports/{session_id}/{crew_name}/{ticker}_export.json"
-    
+
     # 3. Generate HTML using Python
     generator = HTMLReportGenerator()
     html_path = generator.generate_crew_report(
@@ -694,11 +694,11 @@ def execute_crew_with_html(self) -> dict[str, Any]:
         export_data=json.loads(Path(json_path).read_text()),
         output_path=json_path.replace("_export.json", "_report.html")
     )
-    
+
     # 4. Store paths in state
     self.state.crew_export_paths[crew_name] = [json_path]
     self.state.crew_html_paths[crew_name] = [html_path]
-    
+
     return {"json_path": json_path, "html_path": html_path}
 ```
 
@@ -710,7 +710,7 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
     # 1. Load and validate exports
     stock_analyses = _load_exports(crew_export_paths.get("stock_crew", []), StockCrewExport)
     etf_analyses = _load_exports(crew_export_paths.get("etf_crew", []), ETFCrewExport)
-    
+
     # 2. Create consolidated export
     consolidated = ConsolidatedReportExport(
         session_id=session_id,
@@ -718,11 +718,11 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
         etf_analyses=etf_analyses,
         consolidation_date=datetime.now()
     )
-    
+
     # 3. Save to JSON
     output_path = f"output/reports/{session_id}/consolidated_report.json"
     Path(output_path).write_text(consolidated.model_dump_json(indent=2))
-    
+
     return consolidated
 ```
 
@@ -773,8 +773,8 @@ Follow these patterns to extend the architecture while maintaining these benefit
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-25  
+**Version**: 1.0
+**Last Updated**: 2025-01-25
 **Related Docs**:
 
 - Architecture Design (internal spec)

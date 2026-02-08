@@ -13,7 +13,7 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from finwiz.tools.logger import get_logger
 
@@ -29,7 +29,7 @@ MAX_ENRICHMENT_CANDIDATES = 10
 class NewcomerDiscoveryPipeline:
     """Orchestrates newcomer discovery for a single asset class."""
 
-    def __init__(self, asset_class: str) -> None:
+    def __init__(self, asset_class: Literal["stock", "etf", "crypto"]) -> None:
         self.asset_class = asset_class
         self.portfolio_tickers: set[str] = set()
         self._load_portfolio_tickers()

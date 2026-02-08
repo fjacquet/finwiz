@@ -160,7 +160,7 @@ environments:
     optimization:
       minify_assets: true
       compress_files: true
-      
+
   staging:
     name: "Staging"
     branch: "gh-pages-staging"
@@ -309,7 +309,7 @@ The system generates several report files:
    # For major changes, use staging first
    make docs-deploy-staging
    make docs-status-staging
-   
+
    # Then deploy to production
    make docs-deploy-production
    make docs-status

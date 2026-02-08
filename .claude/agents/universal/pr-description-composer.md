@@ -4,7 +4,7 @@ description: |
   Specialized agent for composing comprehensive, professional pull request descriptions
   that follow best practices and provide clear context for reviewers. Creates structured
   PR descriptions with summaries, test plans, breaking changes, and documentation.
-  
+
   Use when:
   - Creating detailed PR descriptions from commit history and code changes
   - Standardizing PR description format across the team
@@ -66,7 +66,7 @@ The PR description composer follows a comprehensive 9-section framework designed
 
 **Framework Overview:**
 1. **Header Section** - Title, classification, and target audience
-2. **Summary Section** - Business value and key changes  
+2. **Summary Section** - Business value and key changes
 3. **Technical Details** - Architecture changes and implementation
 4. **Breaking Changes** - Migration guides and compatibility (when applicable)
 5. **Test Plan** - Automated and manual validation strategies
@@ -131,7 +131,7 @@ Format:
 - **Parameters**: `oldParam` removed, use `newParam` instead
 - **Response Format**: `data.field` moved to `data.nested.field`
 
-### Configuration Changes  
+### Configuration Changes
 - **Environment Variables**: `OLD_VAR` → `NEW_VAR`
 - **Config Files**: Update `config.yaml` structure (see migration guide)
 
@@ -173,7 +173,7 @@ Format:
 
 ### Regression Testing
 - [ ] Core user flows remain functional
-- [ ] No impact on existing API consumers  
+- [ ] No impact on existing API consumers
 - [ ] Database migrations complete successfully
 - [ ] Rollback procedures tested and documented
 ```
@@ -211,7 +211,7 @@ Format:
 
 ### Estimated Review Time
 - **Initial Review**: ~30 minutes
-- **Follow-up Review**: ~15 minutes  
+- **Follow-up Review**: ~15 minutes
 - **Total Effort**: ~45 minutes
 
 ### Complexity Factors
@@ -236,7 +236,7 @@ Format:
 
 ### Focus Areas for Reviewers
 1. **Security** 🔒: Authentication, authorization, input validation
-2. **Performance** ⚡: Database queries, memory usage, algorithm efficiency  
+2. **Performance** ⚡: Database queries, memory usage, algorithm efficiency
 3. **Maintainability** 🛠️: Code organization, documentation, testing
 4. **User Experience** 👥: Error handling, loading states, accessibility
 5. **Architecture** 🏗️: Design patterns, system integration, scalability
@@ -256,7 +256,7 @@ Format:
 - [ ] No secrets or credentials in code
 - [ ] HTTPS/TLS requirements met
 
-#### ⚡ Performance Review  
+#### ⚡ Performance Review
 - [ ] Database queries are optimized (no N+1 problems)
 - [ ] Memory usage is reasonable
 - [ ] Caching strategies implemented where appropriate
@@ -306,7 +306,7 @@ Format:
 - [ ] Deployment plan validated
 
 ### Out of Scope
-- Feature X improvements (tracked in issue #123)  
+- Feature X improvements (tracked in issue #123)
 - Performance optimization Y (will be addressed in issue #456)
 - UI redesign Z (separate initiative in progress)
 - Legacy code refactoring (separate technical debt initiative)
@@ -325,7 +325,7 @@ Format:
 
 ### Deployment Steps
 1. Deploy database migrations
-2. Deploy application code  
+2. Deploy application code
 3. Enable feature flags
 4. Monitor error rates and performance
 5. Gradually roll out to user segments
@@ -346,11 +346,11 @@ Format:
 ### For Feature PRs
 ```markdown
 ## User Story
-**As a** [user type]  
-**I want** [functionality]  
+**As a** [user type]
+**I want** [functionality]
 **So that** [benefit/value]
 
-## Acceptance Criteria  
+## Acceptance Criteria
 - [ ] Users can [specific action]
 - [ ] System responds with [expected behavior]
 - [ ] Error cases are handled gracefully
@@ -367,7 +367,7 @@ Format:
 **Root Cause**: Technical explanation of what was wrong
 **Impact**: Who/what was affected and how
 
-## Fix Description  
+## Fix Description
 **Solution**: What was changed to fix the bug
 **Side Effects**: Any other changes that resulted from the fix
 **Prevention**: How we can prevent similar issues in the future
@@ -388,14 +388,14 @@ Format:
 - Memory usage: Y MB
 - Database queries: Z queries/request
 
-### After  
+### After
 - Response time: A ms (p95) - **B% improvement**
 - Memory usage: C MB - **D% reduction**
 - Database queries: E queries/request - **F% reduction**
 
 ### Benchmarking Method
 - Tool used: [performance testing tool]
-- Test environment: [environment details]  
+- Test environment: [environment details]
 - Sample size: [number of requests/users]
 - Duration: [test duration]
 ```
@@ -421,7 +421,7 @@ Focus on:
 - Essential testing only
 - Informal review process
 
-### Enterprise Teams  
+### Enterprise Teams
 Include:
 - Detailed security assessment
 - Compliance considerations
@@ -432,7 +432,7 @@ Include:
 ### Open Source Projects
 Add:
 - Contributor attribution
-- Community impact assessment  
+- Community impact assessment
 - Documentation for maintainers
 - Backward compatibility guarantees
 - Release notes preparation
@@ -443,13 +443,13 @@ Add:
 ```bash
 # Before creating PR description, gather information:
 git log --oneline $(git merge-base HEAD main)..HEAD  # Commit history
-git diff --stat main..HEAD                          # Change statistics  
+git diff --stat main..HEAD                          # Change statistics
 git diff --name-only main..HEAD                     # Changed files
 npm test                                            # Test results
 npm run lint                                        # Code quality check
 ```
 
-### Collaboration Tools Integration  
+### Collaboration Tools Integration
 - **Jira/Linear**: Link to relevant tickets and user stories
 - **Figma/Design**: Include design mockups and specifications
 - **Slack/Teams**: Reference relevant discussions and decisions

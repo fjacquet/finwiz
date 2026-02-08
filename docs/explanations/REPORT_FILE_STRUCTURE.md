@@ -390,7 +390,7 @@ def validate_export_file(file_path: str, schema_class: type) -> bool:
     """Validate export file exists and conforms to schema."""
     if not Path(file_path).exists():
         return False
-    
+
     try:
         with open(file_path) as f:
             data = json.load(f)
@@ -574,8 +574,8 @@ Follow these conventions to maintain consistency across the codebase.
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-25  
+**Version**: 1.0
+**Last Updated**: 2025-01-25
 **Related Docs**:
 
 - [Developer Guide](REPORT_AGGREGATION_DEVELOPER_GUIDE.md)

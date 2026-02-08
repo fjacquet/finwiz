@@ -27,7 +27,7 @@ Modified `src/finwiz/crews/report_crew/report_crew.py` to preserve ALL required 
 
 ```python
 preserved_keys = [
-    "portfolio_review", "current_day", "current_month", "current_year", 
+    "portfolio_review", "current_day", "current_month", "current_year",
     "current_date", "full_date", "timestamp", "report_language"
 ]
 ```
@@ -37,26 +37,26 @@ preserved_keys = [
 ```python
 required_keys = [
     # Basic metadata
-    "current_day", "current_month", "current_year", 
+    "current_day", "current_month", "current_year",
     "current_date", "full_date", "timestamp", "report_language",
-    
+
     # Portfolio data (CRITICAL - prevents template variable errors)
     "portfolio_review",
-    
+
     # Discovery results (CRITICAL - enables discovery section in report)
     "aplus_opportunities",
-    "investment_discovery_structured", 
+    "investment_discovery_structured",
     "investment_discovery_result",
     "investment_discovery_available",
-    
+
     # Rebalancing results
     "portfolio_rebalancing_result",
     "portfolio_rebalancing_available",
-    
+
     # Deep analysis results
     "deep_analysis_results",
     "deep_analysis_success",
-    
+
     # Data availability and status
     "data_availability_summary_formatted",
     "data_availability_report",

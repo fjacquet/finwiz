@@ -226,4 +226,4 @@ find src/finwiz -name "*.py" -exec wc -l {} + | sort -n | tail -20
 - CLAUDE.md - Guide de développement (racine projet)
 - CHANGELOG.md - Historique des changements (racine projet)
 - pyproject.toml - Configuration des outils (racine projet)
-- [Makefile](../Makefile) - Commandes disponibles
+- Makefile - Commandes disponibles

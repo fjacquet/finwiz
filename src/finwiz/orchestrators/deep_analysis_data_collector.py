@@ -14,6 +14,7 @@ class DeepAnalysisDataCollector:
     def __init__(self, state: Any) -> None:
         self.state = state
         self.logger = get_logger(self.__class__.__name__)
+        self._prefetched_data: dict[str, Any] | None = None
 
         # Initialize DataSourceOrchestrator for multi-source data acquisition
         from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
@@ -24,7 +25,13 @@ class DeepAnalysisDataCollector:
             enable_validation=True,
         )
 
-    def collect_data(self, ticker: str, asset_class: str, batch_enabled: bool = False) -> dict[str, Any]:
+    def collect_data(
+        self,
+        ticker: str,
+        asset_class: str,
+        batch_enabled: bool = False,
+        prefetched_data: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Python directly calls tools to collect raw financial data.
 
@@ -35,11 +42,12 @@ class DeepAnalysisDataCollector:
             ticker: Ticker symbol
             asset_class: Asset class (stock/etf/crypto)
             batch_enabled: Whether batch mode is enabled
+            prefetched_data: Batch-prefetched data dict (from BatchDataPreFetcher)
 
         Returns:
             Dictionary with raw metrics for Python scoring
         """
-
+        self._prefetched_data = prefetched_data
         self.logger.info(f"🐍 Python collecting data for {ticker} ({asset_class})")
 
         collected_data = {
@@ -71,7 +79,18 @@ class DeepAnalysisDataCollector:
         return flattened
 
     def _collect_ticker_info(self, ticker: str, collected_data: dict[str, Any]) -> dict[str, Any]:
-        """Collect basic ticker info from Yahoo Finance."""
+        """Collect basic ticker info from Yahoo Finance or prefetched data."""
+        # Use prefetched data if available for this ticker
+        if self._prefetched_data and ticker in self._prefetched_data:
+            yf_data = self._prefetched_data[ticker].get("yahoo_finance", {})
+            if yf_data and not yf_data.get("failed", False):
+                self.logger.info(f"⚡ Using prefetched Yahoo Finance data for {ticker}")
+                if "current_price" in yf_data:
+                    collected_data["current_price"] = yf_data["current_price"]
+                collected_data["ticker_info"] = yf_data
+                collected_data["ticker_info"]["data_source"] = "prefetched"
+                return collected_data
+
         from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
         try:

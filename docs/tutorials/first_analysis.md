@@ -387,11 +387,11 @@ Find examples of:
 
 Congratulations! You've completed your first FinWiz analysis. You now know how to:
 
-✅ Run single asset analysis  
-✅ Interpret grades and scores  
-✅ Understand risk assessments  
-✅ Read price targets  
-✅ Make informed investment decisions  
+✅ Run single asset analysis
+✅ Interpret grades and scores
+✅ Understand risk assessments
+✅ Read price targets
+✅ Make informed investment decisions
 
 **Key takeaways:**
 
@@ -411,5 +411,5 @@ Congratulations! You've completed your first FinWiz analysis. You now know how t
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

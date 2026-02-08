@@ -19,7 +19,7 @@ The Python Scoring Engine is a high-performance, deterministic alternative to AI
 # src/finwiz/scoring/deep_analysis_scorer.py
 class DeepAnalysisScorer:
     """Pure Python scoring engine for financial analysis."""
-    
+
     def calculate_composite_score(self, data: dict) -> float:
         """Calculate weighted composite score (0.0-1.0)."""
         fundamental = self.calculate_fundamental_score(data) * 0.40
@@ -34,7 +34,7 @@ class DeepAnalysisScorer:
 # src/finwiz/scoring/portfolio_deep_analyzer.py
 class PortfolioDeepAnalyzer:
     """Concurrent portfolio analysis using Python scoring."""
-    
+
     def analyze_portfolio_holdings(self, portfolio: Portfolio) -> dict:
         """Analyze all holdings concurrently with Python scoring."""
         # Process holdings in parallel for maximum performance
@@ -48,7 +48,7 @@ class PortfolioDeepAnalyzer:
 # src/finwiz/reporting/python_report_generator.py
 class PythonReportGenerator:
     """Template-based HTML report generation (NO AI)."""
-    
+
     def generate_family_financial_plan(self, data: dict) -> str:
         """Generate professional French reports using Jinja2."""
         # Use templates for consistent formatting
@@ -74,7 +74,7 @@ Based on financial health metrics:
 def calculate_fundamental_score(self, data: dict) -> float:
     """Calculate fundamental score (0.0-1.0)."""
     base_score = 0.5
-    
+
     # ROE bonus/penalty
     roe = data.get('roe', 0)
     if roe > 0.20:  # 20%+
@@ -83,21 +83,21 @@ def calculate_fundamental_score(self, data: dict) -> float:
         base_score += 0.2
     elif roe < 0.05:  # <5%
         base_score -= 0.2
-    
+
     # Debt-to-equity penalty
     debt_equity = data.get('debt_to_equity', 0)
     if debt_equity > 0.5:
         base_score -= 0.2
     elif debt_equity > 0.3:
         base_score -= 0.1
-    
+
     # Growth bonus
     revenue_growth = data.get('revenue_growth', 0)
     if revenue_growth > 0.15:  # 15%+
         base_score += 0.2
     elif revenue_growth > 0.10:  # 10-15%
         base_score += 0.1
-    
+
     return max(0.0, min(1.0, base_score))
 ```
 
@@ -109,7 +109,7 @@ Based on momentum and trend indicators:
 def calculate_technical_score(self, data: dict) -> float:
     """Calculate technical score (0.0-1.0)."""
     base_score = 0.5
-    
+
     # RSI analysis
     rsi = data.get('rsi', 50)
     if 30 <= rsi <= 70:  # Neutral zone
@@ -118,14 +118,14 @@ def calculate_technical_score(self, data: dict) -> float:
         base_score += 0.3
     elif rsi > 70:  # Overbought
         base_score -= 0.2
-    
+
     # Trend analysis
     trend = data.get('trend_direction', 'neutral')
     if trend == 'bullish':
         base_score += 0.3
     elif trend == 'bearish':
         base_score -= 0.3
-    
+
     return max(0.0, min(1.0, base_score))
 ```
 
@@ -137,7 +137,7 @@ Lower risk = higher contribution to composite score:
 def calculate_risk_score(self, data: dict) -> int:
     """Calculate risk score (0-5 scale, 0=Very Low, 5=Very High)."""
     risk_score = 2  # Base moderate risk
-    
+
     # Volatility adjustment
     volatility = data.get('volatility', 0.2)
     if volatility > 0.4:  # High volatility
@@ -146,14 +146,14 @@ def calculate_risk_score(self, data: dict) -> int:
         risk_score += 1
     elif volatility < 0.15:  # Low volatility
         risk_score -= 1
-    
+
     # Maximum drawdown adjustment
     max_drawdown = abs(data.get('max_drawdown', 0.1))
     if max_drawdown > 0.3:  # >30% drawdown
         risk_score += 1
     elif max_drawdown < 0.1:  # <10% drawdown
         risk_score -= 1
-    
+
     return max(0, min(5, risk_score))
 ```
 
@@ -218,13 +218,13 @@ graph TB
     G --> H[PythonReportGenerator]
     H --> I[Jinja2 Templates]
     I --> J[HTML Report]
-    
+
     K[A+ Discovery] --> L[APlusDiscoveryIntegrator]
     L --> G
-    
+
     M[Backtesting] --> N[BacktestingPipelineConnector]
     N --> L
-    
+
     O[Final Report] --> P[Template Consolidation]
     P --> J
 ```
@@ -241,7 +241,7 @@ def analyze_portfolio_holdings(self, portfolio: Portfolio) -> dict:
         for holding in portfolio.holdings:
             future = executor.submit(self._analyze_single_holding, holding)
             futures.append((holding.ticker, future))
-        
+
         # Collect results as they complete
         results = {}
         for ticker, future in futures:
@@ -250,7 +250,7 @@ def analyze_portfolio_holdings(self, portfolio: Portfolio) -> dict:
             except Exception as e:
                 logger.error(f"Analysis failed for {ticker}: {e}")
                 results[ticker] = self._create_error_result(ticker, str(e))
-        
+
         return results
 ```
 
@@ -366,10 +366,10 @@ For maximum flexibility, FinWiz supports a hybrid approach:
 if os.getenv('DEEP_ANALYSIS_AI_SUMMARY', 'false').lower() == 'true':
     # Python scoring (10-30 seconds, $0)
     python_result = scorer.calculate_composite_score(data)
-    
+
     # Optional AI summary (5-10 seconds, $0.01)
     ai_summary = generate_ai_summary(python_result, data)
-    
+
     # Total: 15-40 seconds, $0.01 (vs 5-10 minutes, $0.05-0.10)
 ```
 
@@ -394,6 +394,6 @@ This provides:
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2025-10-26  
+**Version**: 2.0
+**Last Updated**: 2025-10-26
 **Status**: Core components implemented, integration in progress

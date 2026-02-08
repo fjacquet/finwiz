@@ -24,6 +24,7 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 19 (v1: 13, v2: 6)
 - v3 plans completed: 0
 

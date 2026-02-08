@@ -41,19 +41,19 @@ from typing import Literal
 
 class StockAnalysis(BaseModel):
     """Stock analysis with strict validation."""
-    
+
     model_config = {
         "extra": "forbid",           # Reject unknown fields
         "str_strip_whitespace": True, # Auto-clean strings
         "validate_assignment": True,  # Validate on assignment
         "use_enum_values": True      # Use enum values, not names
     }
-    
+
     ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$', description="Stock ticker symbol")
     recommendation: Literal["BUY", "HOLD", "SELL"] = Field(..., description="Investment recommendation")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence level 0-1")
     risk_score: int = Field(..., ge=1, le=10, description="Risk score 1-10")
-    
+
     @field_validator('ticker')
     @classmethod
     def validate_ticker(cls, v: str) -> str:
@@ -67,15 +67,15 @@ class StockAnalysis(BaseModel):
 ```python
 class TickerInput(BaseModel):
     """Validate ticker input with strict rules."""
-    
+
     model_config = {
         "str_strip_whitespace": True,
         "str_upper": True,
         "extra": "forbid"
     }
-    
+
     symbol: str = Field(..., pattern=r'^[A-Z]{1,5}$')
-    
+
     @field_validator('symbol')
     @classmethod
     def validate_ticker(cls, v: str) -> str:
@@ -198,18 +198,18 @@ class CryptoValidation(BaseModel):
 ```python
 class DataQuality(BaseModel):
     """Ensure all required fields are present and valid."""
-    
+
     model_config = {"extra": "forbid"}
-    
+
     # All required fields must be present
     required_field: str = Field(..., min_length=1)
-    
+
     # No null values for required fields
     non_null_field: str = Field(..., description="Cannot be null")
-    
+
     # Proper data types enforced
     numeric_field: float = Field(..., description="Must be numeric")
-    
+
     # Valid enum values only
     status: Literal["active", "inactive"] = Field(..., description="Valid status only")
 ```
@@ -221,9 +221,9 @@ from datetime import datetime, timedelta
 
 class DataFreshness(BaseModel):
     """Validate data timestamps and freshness."""
-    
+
     timestamp: datetime = Field(..., description="Data timestamp")
-    
+
     @field_validator('timestamp')
     @classmethod
     def validate_freshness(cls, v: datetime) -> datetime:
@@ -237,12 +237,12 @@ class DataFreshness(BaseModel):
 ```python
 class DataSources(BaseModel):
     """Validate data source citations."""
-    
+
     sources: list[str] = Field(..., min_length=1, description="At least one source required")
     as_of_dates: list[datetime] = Field(..., description="As-of dates for each source")
     urls: list[str] = Field(default=[], description="Source URLs where applicable")
     limitations: list[str] = Field(default=[], description="Data limitations")
-    
+
     @field_validator('as_of_dates')
     @classmethod
     def validate_dates_match_sources(cls, v, info):
@@ -259,7 +259,7 @@ class DataSources(BaseModel):
 ```python
 class ValidationError(BaseModel):
     """Structured validation error information."""
-    
+
     field_path: str = Field(..., description="Path to the field with error")
     message: str = Field(..., description="Human-readable error message")
     error_type: str = Field(..., description="Type of validation error")
@@ -271,7 +271,7 @@ class ValidationError(BaseModel):
 ```python
 def handle_validation_error(error: ValidationError) -> dict:
     """Handle validation errors with clear messaging."""
-    
+
     response = {
         "error": True,
         "field": error.field_path,
@@ -279,10 +279,10 @@ def handle_validation_error(error: ValidationError) -> dict:
         "suggestion": get_remediation_suggestion(error.error_type),
         "context": error.context
     }
-    
+
     # Log for debugging
     logger.error(f"Validation failed: {error.field_path} - {error.message}")
-    
+
     return response
 ```
 
@@ -291,17 +291,17 @@ def handle_validation_error(error: ValidationError) -> dict:
 ```python
 def validate_with_fallback(data: dict, schema: type[BaseModel]) -> BaseModel:
     """Validate with graceful degradation."""
-    
+
     try:
         return schema.model_validate(data)
     except ValidationError as e:
         logger.warning(f"Validation failed: {e}")
-        
+
         # Use cached data if available
         cached_data = get_cached_data()
         if cached_data:
             return schema.model_validate(cached_data)
-        
+
         # Fall back to baseline analysis
         return create_baseline_analysis()
 ```
@@ -352,7 +352,7 @@ def analysis_task(self) -> Task:
 ```python
 def validate_analysis_result(data: dict) -> StockAnalysis:
     """Manually validate analysis result."""
-    
+
     try:
         return StockAnalysis.model_validate(data)
     except ValidationError as e:

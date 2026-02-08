@@ -83,7 +83,7 @@ tests/
 **New Structure**:
 
 - `tests/unit/crews/stock_crew/` - Stock analysis crew tests
-- `tests/unit/crews/etf_crew/` - ETF analysis crew tests  
+- `tests/unit/crews/etf_crew/` - ETF analysis crew tests
 - `tests/unit/crews/crypto_crew/` - Cryptocurrency analysis crew tests
 
 **Benefits**:
@@ -164,7 +164,7 @@ markers = [
     "integration: Integration tests (slow, requires API keys)",
     "slow: Slow tests (> 30 seconds)",
     "core_analysis: Core analysis related tests",
-    "crew: Crew-specific tests", 
+    "crew: Crew-specific tests",
     "flow: Flow orchestration tests"
 ]
 ```
@@ -255,7 +255,7 @@ uv run pytest tests/performance/ -v -m slow
 # All crew-related tests
 uv run pytest -m crew -v
 
-# All flow-related tests  
+# All flow-related tests
 uv run pytest -m flow -v
 
 # Core analysis integration tests
@@ -308,6 +308,6 @@ The new structure is designed for easy extension:
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-10-28  
+**Version**: 1.0
+**Last Updated**: 2025-10-28
 **Source**: Integrated from analysis/REORGANIZATION_SUMMARY.md

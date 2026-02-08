@@ -10,33 +10,33 @@ graph TB
     B --> C[Portfolio Analysis Pipeline]
     B --> D[Investment Discovery Pipeline]
     B --> E[Report Aggregation System]
-    
+
     C --> F[Python Scoring Engine]
     C --> G[Concurrent Portfolio Analyzer]
-    
+
     F --> H[DeepAnalysisScorer]
     F --> I[Asset-Specific Analyzers]
-    
+
     H --> J[Fundamental Scoring]
     H --> K[Technical Scoring]
     H --> L[Risk Assessment]
-    
+
     G --> M[Data Sources]
     M --> N[Yahoo Finance]
     M --> O[Alpha Vantage]
     M --> P[SEC EDGAR]
     M --> Q[CoinMarketCap]
-    
+
     D --> R[A+ Discovery Integrator]
     D --> S[Backtesting Pipeline Connector]
-    
+
     E --> T[Python Report Generator]
     E --> U[Jinja2 Templates]
-    
+
     T --> V[HTML Reports]
     T --> W[JSON Exports]
     T --> X[PDF Generation]
-    
+
     Y[AI Crews] -.-> |Optional Deep Analysis| F
     Y -.-> |Data Collection Only| M
 ```

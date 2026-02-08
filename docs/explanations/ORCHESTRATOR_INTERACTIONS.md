@@ -1,7 +1,7 @@
 # Orchestrator Interactions
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-18  
+**Version**: 1.0
+**Last Updated**: 2025-01-18
 **Status**: Production
 
 ## Overview
@@ -25,31 +25,31 @@ sequenceDiagram
 
     User->>Flow: kickoff()
     Flow->>State: Initialize state
-    
+
     Flow->>Val: validate_data_integration()
     Val->>State: Update validation status
     Val-->>Flow: Return validation result
-    
+
     Flow->>Val: check_portfolio()
     Val->>State: Update portfolio data
     Val-->>Flow: Return portfolio result
-    
+
     Flow->>Deep: run_deep_analysis_on_holdings()
     Deep->>State: Update deep_analysis_results
     Deep-->>Flow: Return analysis results
-    
+
     Flow->>Alt: match_alternatives_for_holdings()
     Alt->>State: Update portfolio_alternatives
     Alt-->>Flow: Return alternatives
-    
+
     Flow->>Disc: check_investment_discovery()
     Disc->>State: Update discovery_results
     Disc-->>Flow: Return discovery results
-    
+
     Flow->>Rep: report()
     Rep->>State: Update final_report_path
     Rep-->>Flow: Return report path
-    
+
     Flow-->>User: Return final result
 ```
 
@@ -58,7 +58,7 @@ sequenceDiagram
 ```mermaid
 graph TD
     Flow[FinwizFlow]
-    
+
     Flow --> ErrorOrch[ErrorHandlingOrchestrator]
     Flow --> ProgOrch[ProgressTrackingOrchestrator]
     Flow --> UtilOrch[UtilityOrchestrator]
@@ -67,19 +67,19 @@ graph TD
     Flow --> AltOrch[AlternativesMatchingOrchestrator]
     Flow --> DiscOrch[DiscoveryOrchestrator]
     Flow --> RepOrch[ReportingOrchestrator]
-    
+
     DeepOrch --> ErrorOrch
     DeepOrch --> ProgOrch
     DeepOrch --> UtilOrch
-    
+
     AltOrch --> UtilOrch
-    
+
     DiscOrch --> ErrorOrch
-    
+
     RepOrch --> UtilOrch
-    
+
     ValOrch --> UtilOrch
-    
+
     style Flow fill:#e1f5ff
     style ErrorOrch fill:#ffe1e1
     style ProgOrch fill:#e1ffe1
@@ -106,22 +106,22 @@ sequenceDiagram
     participant State as FinwizState
 
     Flow->>Deep: run_deep_analysis_on_holdings(holdings)
-    
+
     loop For each holding
         Deep->>Error: execute_crew_with_error_handling()
         Error->>Crew: Execute deep analysis crew
         Crew-->>Error: Return crew result
         Error-->>Deep: Return wrapped result
-        
+
         Deep->>Util: parse_crew_output_for_holding()
         Util-->>Deep: Return parsed data
-        
+
         Deep->>State: Store analysis result
-        
+
         Deep->>Prog: update_progress()
         Prog->>State: Update progress metrics
     end
-    
+
     Deep->>State: Store all results
     Deep-->>Flow: Return analysis results
 ```
@@ -136,10 +136,10 @@ sequenceDiagram
     participant State as FinwizState
 
     Flow->>Alt: match_alternatives_for_holdings(holdings, discovery)
-    
+
     loop For each holding
         Alt->>Alt: Check grade < B
-        
+
         alt Grade < B
             Alt->>Util: parse_crew_output_for_holding()
             Util-->>Alt: Return parsed alternatives
@@ -148,7 +148,7 @@ sequenceDiagram
             Alt->>Alt: Skip (no alternatives needed)
         end
     end
-    
+
     Alt->>State: Store all alternatives
     Alt-->>Flow: Return alternatives map
 ```
@@ -164,7 +164,7 @@ sequenceDiagram
     participant State as FinwizState
 
     Flow->>Disc: check_investment_discovery()
-    
+
     par Parallel Discovery
         Disc->>Error: execute_crew_with_error_handling(crypto_crew)
         Error->>Crew: Execute crypto discovery
@@ -181,7 +181,7 @@ sequenceDiagram
         Crew-->>Error: Return ETF results
         Error-->>Disc: Return wrapped results
     end
-    
+
     Disc->>Disc: Consolidate all results
     Disc->>State: Store discovery results
     Disc-->>Flow: Return consolidated results
@@ -198,20 +198,20 @@ sequenceDiagram
     participant FS as FileSystem
 
     Flow->>Rep: report()
-    
+
     Rep->>State: Get crew export paths
     Rep->>Rep: consolidate_reports()
-    
+
     loop For each crew export
         Rep->>FS: Read export file
         FS-->>Rep: Return export data
         Rep->>Util: parse_crew_output()
         Util-->>Rep: Return parsed data
     end
-    
+
     Rep->>Rep: generate_final_report()
     Rep->>Rep: generate_html_from_export()
-    
+
     Rep->>FS: Write HTML report
     Rep->>State: Store report path
     Rep-->>Flow: Return report path
@@ -229,7 +229,7 @@ graph LR
     Alt --> Disc[Discovery]
     Disc --> Rep[Reporting]
     Rep --> Final[Final State]
-    
+
     style Init fill:#e1f5ff
     style Val fill:#f5e1ff
     style Deep fill:#e1fff5
@@ -260,9 +260,9 @@ sequenceDiagram
     participant State as FinwizState
 
     Orch->>Error: execute_crew_with_error_handling(crew_func)
-    
+
     Error->>Crew: Execute crew
-    
+
     alt Success
         Crew-->>Error: Return result
         Error->>Error: Wrap success result
@@ -273,7 +273,7 @@ sequenceDiagram
         Error->>State: Store error info
         Error-->>Orch: Return {success: false, error: info}
     end
-    
+
     Orch->>Orch: Handle result
     Orch->>State: Update state accordingly
 ```
@@ -291,7 +291,7 @@ sequenceDiagram
     Prog->>Prog: Calculate percentage
     Prog->>State: Update progress fields
     Prog->>Prog: Log progress
-    
+
     opt Save Metrics
         Deep->>Prog: save_batch_metrics_to_file(metrics, path)
         Prog->>FS: Write metrics file
@@ -312,11 +312,11 @@ sequenceDiagram
     Util->>Util: Parse JSON/Pydantic
     Util->>Util: Validate structure
     Util-->>Orch: Return parsed data
-    
+
     Orch->>Util: calculate_grade_distribution(holdings)
     Util->>Util: Aggregate grades
     Util-->>Orch: Return distribution
-    
+
     Orch->>Util: extract_sec_filing_urls(output)
     Util->>Util: Parse URLs
     Util->>Util: validate_and_fix_sec_urls()
@@ -334,7 +334,7 @@ sequenceDiagram
 
     User->>Flow: Access flow.deep_analysis_orch
     Flow->>Prop: Call property getter
-    
+
     alt First Access
         Prop->>Prop: Check if _deep_analysis_orch is None
         Prop->>Orch: Create DeepAnalysisOrchestrator(state, **deps)
@@ -354,24 +354,24 @@ sequenceDiagram
 graph TD
     Flow[FinwizFlow]
     Deps[OrchestratorDependencies]
-    
+
     Flow --> Deps
-    
+
     Deps --> CF[CrewFactory]
     Deps --> IM[IntegrationManager]
     Deps --> EH[ErrorHandler]
     Deps --> SM[StateManager]
     Deps --> RC[ResilienceConfig]
     Deps --> BC[BatchPrefetchConfig]
-    
+
     Orch1[ErrorHandlingOrchestrator]
     Orch2[DeepAnalysisOrchestrator]
     Orch3[ReportingOrchestrator]
-    
+
     Deps -.-> Orch1
     Deps -.-> Orch2
     Deps -.-> Orch3
-    
+
     style Flow fill:#e1f5ff
     style Deps fill:#ffe1e1
     style Orch1 fill:#e1ffe1
@@ -448,7 +448,7 @@ async def run_discovery():
     crypto_task = asyncio.create_task(check_crypto())
     stock_task = asyncio.create_task(check_stock())
     etf_task = asyncio.create_task(check_etf())
-    
+
     results = await asyncio.gather(
         crypto_task, stock_task, etf_task
     )
@@ -513,6 +513,6 @@ async def run_discovery():
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-18  
+**Version**: 1.0
+**Last Updated**: 2025-01-18
 **Status**: Production

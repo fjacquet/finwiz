@@ -15,25 +15,25 @@
 # ETF Market Analysis Tasks
 etf_market_trends_task:
   description: >
-    FIRST: Read the schema file src/finwiz/schemas/etf.py (ETFMarketTrend class) to understand 
+    FIRST: Read the schema file src/finwiz/schemas/etf.py (ETFMarketTrend class) to understand
     the exact output format required.
-    
+
     Research and identify current market trends and emerging sectors in the ETF space.
-    
+
     1. Identify key ETF market trends
     2. Analyze global economic factors impacting ETF categories
     3. Examine liquidity and volume trends across ETF segments
     4. Research regulatory developments affecting ETF structures
     5. Prefer the "Alpha Vantage News Sentiment" tool to summarize structured news/sentiment for
        key ETFs and sectors; complement with `YahooFinanceNewsTool` when needed.
-    
+
     Today is {full_date}. Ensure your analysis reflects current market conditions.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the ETFMarketTrend object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "trends", "analysis", etc.
     - The JSON must match the ETFMarketTrend schema exactly
-    
+
     OUTPUT: Return a structured JSON output conforming to the ETFMarketTrend schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -41,9 +41,9 @@ etf_market_trends_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured analysis of current ETF market trends conforming to the ETFMarketTrend 
+    A structured analysis of current ETF market trends conforming to the ETFMarketTrend
     Pydantic schema. Include growth trends, global factors, and market insights.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: market_etf_analyst
   output_pydantic: ETFMarketTrend
@@ -54,7 +54,7 @@ etf_market_trends_task:
 etf_screening_task:
   description: >
     Screen and identify the top 10 most stable and diversified ETFs for long-term investment.
-    
+
     CRITICAL DATE CONTEXT:
     - TODAY'S DATE IS {full_date} - Use this as your reference point for "current" market conditions
     - All analysis must reflect market conditions as of {full_date}, NOT historical dates
@@ -100,7 +100,7 @@ etf_screening_task:
     - Return ONLY the ETFScreeningResult object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "etfs", etc.
     - The JSON must match the ETFScreeningResult schema exactly
-    
+
     OUTPUT: Return a structured JSON output conforming to the ETFScreeningResult schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -108,9 +108,9 @@ etf_screening_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured list of 10 stable, diversified ETFs conforming to the ETFScreeningResult 
+    A structured list of 10 stable, diversified ETFs conforming to the ETFScreeningResult
     Pydantic schema. Include analysis, validation status, and AI-driven insights.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: market_etf_analyst
   output_pydantic: ETFScreeningResult
@@ -125,9 +125,9 @@ etf_technical_detail_task:
     - docs/schemas/ETFFactsheet.schema.json
     - docs/schemas/examples/etf_factsheet.example.json
     to understand the exact output format required.
-    
+
     Perform detailed technical analysis on each of the 10 selected ETFs from the screening task.
-    
+
     1. Analyze replication methods and lending practices, considering any recent changes as of {full_date}.
     2. Evaluate tracking accuracy and benchmark adherence using the latest performance data.
     3. Assess fund manager expertise and issuer stability based on current information.
@@ -147,16 +147,16 @@ etf_technical_detail_task:
        - Performance metrics calculation including correlation analysis with underlying assets
        - Use asset_class="etf" and analysis_type="comprehensive" for complete ETF analysis
     9. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the ETFTechnicalAnalysis object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "analysis", "results", etc.
     - The JSON must match the ETFTechnicalAnalysis schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - factsheet.replication_method: MUST be one of: "physical", "synthetic", "optimized", "other" (lowercase)
     - quantitative_metrics.recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase, if provided)
-    
+
     OUTPUT: Return a structured JSON output conforming to the ETFTechnicalAnalysis schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -164,8 +164,8 @@ etf_technical_detail_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured technical assessment of each ETF conforming to the ETFTechnicalAnalysis 
-    Pydantic schema. Include ETF structure, tracking accuracy, liquidity profile, fund 
+    A structured technical assessment of each ETF conforming to the ETFTechnicalAnalysis
+    Pydantic schema. Include ETF structure, tracking accuracy, liquidity profile, fund
     management, quantitative analysis, factsheet highlights, and top holdings.
 
     CRITICAL SCHEMA REQUIREMENTS:
@@ -188,9 +188,9 @@ etf_risk_assessment_task:
     - src/finwiz/schemas/common.py (RiskAssessmentStandardized class)
     - docs/schemas/RiskAssessmentStandardized.schema.json
     to understand the exact output format required.
-    
+
     Evaluate risks for each of the 10 ETFs identified in previous tasks.
-    
+
     1. Use the "Enhanced ETF Analysis Tool" with risk assessment enabled to perform standardized risk scoring.
     2. Assess volatility metrics and historical drawdowns using data up to {full_date}.
     3. Identify concentration risks within ETF holdings based on the latest disclosures from factsheet analysis.
@@ -210,11 +210,11 @@ etf_risk_assessment_task:
        - Extract trending topics relevant to ETF sectors and holdings
        - Include top positive/negative headlines with URLs and dates
        - Ensure sentiment scoring consistency with stock and crypto analysis
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - risk_assessment.scale: MUST be "0_5" (for 0-5 scale, this is the default and standard)
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
-    
+
     Follow the output instructions in docs/output_formatting_guide.md. Ensure your risk assessment is based on information available as of {full_date}.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -236,13 +236,13 @@ etf_risk_assessment_task:
 etf_investment_strategy_task:
   description: >
     Develop investment strategies for each of the 10 ETFs based on their risk profiles and technical analysis.
-    
+
     1. Determine optimal entry price points and target valuations
     2. Recommend position sizing based on risk/reward profiles
     3. Define time horizons for expected returns
     4. Create portfolio allocation strategies and diversification approaches
     5. Develop specific risk management tactics for each ETF
-    
+
     Consider all factors known as of {timestamp} and use {current_year} regulatory standards.
     Base your investment recommendations on current market conditions as of {full_date}.
   expected_output: >
@@ -279,35 +279,35 @@ etf_investment_strategy_task:
 generate_export_task:
   description: >
     Consolidate all ETF analysis findings from context into an ETFCrewExport object.
-    
+
     CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
     from previous tasks to extract all required information.
-    
+
     CONTEXT SOURCES:
     - etf_market_trends_task: Market trends and ETF landscape
     - etf_screening_task: ETF screening results
     - etf_technical_detail_task: ETF factsheet, holdings, technical analysis
     - etf_risk_assessment_task: Risk assessment and risk scores
     - etf_investment_strategy_task: Investment strategy and recommendations
-    
+
     REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
     1. factsheet (ETFFactsheet):
        - Extract from etf_technical_detail_task context
        - Include fund_name, ticker, expense_ratio, aum, inception_date, etc.
-    
+
     2. top_holdings (List[ETFTopHolding]):
        - Extract from etf_technical_detail_task context
        - Include ticker, name, weight, sector for top holdings
-    
+
     3. risk_assessment (RiskAssessmentStandardized):
        - Extract from etf_risk_assessment_task context
        - Include risk_score (0-5), risk_factors, systematic_risk, idiosyncratic_risk
-    
+
     4. composite_score (float 0.0-1.0):
        - Calculate based on all analysis dimensions
        - Weight: 30% expense ratio, 30% tracking error, 40% risk
        - Formula: (expense_score * 0.3) + (tracking_score * 0.3) + ((5 - risk_score) / 5 * 0.4)
-    
+
     5. grade (A+ to F):
        - A+: composite_score >= 0.85
        - A: composite_score >= 0.75
@@ -315,54 +315,54 @@ generate_export_task:
        - C: composite_score >= 0.55
        - D: composite_score >= 0.45
        - F: composite_score < 0.45
-    
+
     6. expense_ratio (float):
        - Extract from factsheet
        - Total expense ratio as percentage
-    
+
     7. tracking_error (Optional[float]):
        - Extract from factsheet if available
        - Tracking error vs benchmark
-    
+
     8. recommendation (BUY/HOLD/SELL):
        - BUY: grade >= B AND low expense ratio AND low tracking error
        - HOLD: grade = C OR moderate costs
        - SELL: grade <= D OR high costs
-    
+
     9. confidence (float 0.0-1.0):
        - Based on data quality and consistency across analyses
        - High confidence (0.8-1.0): All analyses agree, strong signals
        - Medium confidence (0.5-0.8): Some disagreement, mixed signals
        - Low confidence (0.0-0.5): Conflicting analyses, weak signals
-    
+
     10. rationale (string, min 50 chars):
         - Explain the recommendation based on all analysis findings
         - Reference specific metrics from factsheet
         - Address expense ratio, tracking error, holdings quality
         - Mention risk factors and diversification benefits
-    
+
     11. data_sources (list of strings):
         - List all data sources used: ["Yahoo Finance", "ETF.com", "Morningstar", etc.]
-    
+
     12. report_html_path (string):
         - Set to: "output/reports/{session_id}/etf_crew/{ticker}_report.html"
-    
+
     13. report_json_path (string):
         - Set to: "output/reports/{session_id}/etf_crew/{ticker}_export.json"
-    
+
     METADATA FIELDS (auto-populated):
     - crew_name: "etf_crew" (default)
     - ticker: From input parameter {ticker}
     - asset_class: "etf" (default)
     - session_id: From input parameter {session_id}
     - analysis_date: Current timestamp (auto-generated)
-    
+
     OUTPUT FORMAT:
     - Return a valid ETFCrewExport Pydantic object
     - All fields must conform to schema validation
     - Use extra='forbid' - no additional fields allowed
     - Ensure all required fields are present
-    
+
     VALIDATION:
     - composite_score must be between 0.0 and 1.0
     - grade must be one of: A+, A, B, C, D, F
@@ -371,7 +371,7 @@ generate_export_task:
     - rationale must be at least 50 characters
     - expense_ratio must be between 0.0 and 5.0
     - All nested objects must conform to their schemas
-    
+
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
 
     ⚠️ CRITICAL ANTI-HALLUCINATION RULES:

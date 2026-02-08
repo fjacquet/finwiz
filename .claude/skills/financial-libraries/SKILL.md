@@ -89,7 +89,7 @@ When implementing new financial calculations:
 ### What Uses Libraries (Calculations)
 
 - Technical indicators: TA-Lib
-- Risk metrics: Empyrical-Reloaded  
+- Risk metrics: Empyrical-Reloaded
 - Backtesting: Backtrader
 
 ### What Uses Custom Code (Business Logic)

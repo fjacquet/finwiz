@@ -86,5 +86,5 @@ markdown_extensions:
 
 ---
 
-**Version**: 1.0  
+**Version**: 1.0
 **Last Updated**: 2025-11-01

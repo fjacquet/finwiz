@@ -80,7 +80,7 @@ pytest tests/ -v
 ```
 
 **Quality Standards for ML Projects**:
-- Pyright type checking: **ZERO ERRORS**  
+- Pyright type checking: **ZERO ERRORS**
 - All data processing functions have proper type hints
 - Model training/inference code is properly typed
 - Code formatting: black + isort compliance

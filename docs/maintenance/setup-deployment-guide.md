@@ -18,7 +18,7 @@ This guide provides comprehensive instructions for setting up, maintaining, and 
    ```bash
    # macOS/Linux
    curl -LsSf https://astral.sh/uv/install.sh | sh
-   
+
    # Windows
    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
@@ -446,6 +446,6 @@ See the Content Creation Guide and Style Guide for detailed contribution guideli
 
 ---
 
-**Last Updated**: 2025-10-26  
-**Version**: 1.0  
+**Last Updated**: 2025-10-26
+**Version**: 1.0
 **Maintainer**: FinWiz Documentation Team

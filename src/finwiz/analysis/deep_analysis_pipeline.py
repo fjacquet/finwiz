@@ -52,12 +52,16 @@ class AnalysisContext:
 
 
 # === STEP 1: Collect Raw Data (Python tools) ===
-def collect_raw_data(ctx: AnalysisContext) -> dict[str, Any]:
+def collect_raw_data(
+    ctx: AnalysisContext,
+    prefetched_data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Pure function: Collect raw financial data using Python tools.
 
     Args:
         ctx: Analysis context with ticker and asset class
+        prefetched_data: Batch-prefetched data dict (from BatchDataPreFetcher)
 
     Returns:
         Dictionary containing raw financial data from multiple sources
@@ -74,7 +78,13 @@ def collect_raw_data(ctx: AnalysisContext) -> dict[str, Any]:
     minimal_state = SimpleNamespace(full_date=datetime.now().isoformat())
 
     collector = DeepAnalysisDataCollector(state=minimal_state)
-    raw_data = collector.collect_data(ctx.ticker, ctx.asset_class, batch_enabled=False)
+    batch_enabled = prefetched_data is not None
+    raw_data = collector.collect_data(
+        ctx.ticker,
+        ctx.asset_class,
+        batch_enabled=batch_enabled,
+        prefetched_data=prefetched_data,
+    )
     logger.info(f"Raw data collected for {ctx.ticker}: {len(raw_data)} fields")
     return raw_data
 
@@ -222,6 +232,7 @@ def analyze_holding(
     ticker: str,
     asset_class: str,
     company_name: str = "",
+    prefetched_data: dict[str, Any] | None = None,
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
     """
     Complete analysis pipeline for a single holding.
@@ -236,6 +247,7 @@ def analyze_holding(
         ticker: Asset ticker symbol
         asset_class: Asset class (stock, etf, crypto)
         company_name: Optional company name
+        prefetched_data: Batch-prefetched data dict (from BatchDataPreFetcher)
 
     Returns:
         Tuple of (DeepAnalysisResult for caching, EnrichedAnalysis for HTML)
@@ -246,7 +258,7 @@ def analyze_holding(
     logger.info(f"Starting analysis pipeline for {ticker} ({asset_class})")
 
     # Pipeline composition
-    raw_data = collect_raw_data(ctx)
+    raw_data = collect_raw_data(ctx, prefetched_data=prefetched_data)
     result, quant = calculate_quantitative(ctx, raw_data)
     qual = generate_qualitative(ctx, quant)
     processing_time = time.time() - start

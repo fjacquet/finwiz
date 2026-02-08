@@ -15,8 +15,9 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from finwiz.schemas.crew_exports import ConsolidatedReportExport
 from finwiz.utils.final_report_generator import FinalReportGenerator
+
+from finwiz.schemas.crew_exports import ConsolidatedReportExport
 
 
 def verify_implementation():

@@ -12,47 +12,47 @@ Comprehensive portfolio analysis with holdings evaluation and recommendations.
 class PortfolioReview(BaseModel):
     portfolio_id: str = Field(..., description="Unique portfolio identifier")
     analysis_date: datetime = Field(default_factory=datetime.now)
-    
+
     # Portfolio overview
     total_value: float = Field(..., gt=0, description="Total portfolio value")
     currency: str = Field(default="USD", description="Portfolio currency")
-    
+
     # Holdings analysis
     holdings: List[HoldingDecision] = Field(default_factory=list)
     total_holdings: int = Field(..., ge=0)
-    
+
     # Performance metrics
     ytd_return: Optional[float] = None
     one_year_return: Optional[float] = None
     three_year_return: Optional[float] = None
-    
+
     # Risk metrics
     portfolio_risk_score: int = Field(..., ge=1, le=10)
     portfolio_volatility: Optional[float] = Field(None, ge=0.0)
     sharpe_ratio: Optional[float] = None
     max_drawdown: Optional[float] = Field(None, le=0.0)
-    
+
     # Diversification analysis
     sector_diversification: Dict[str, float] = Field(default_factory=dict)
     geographic_diversification: Dict[str, float] = Field(default_factory=dict)
     asset_class_allocation: Dict[str, float] = Field(default_factory=dict)
-    
+
     # Recommendations
     overall_grade: str = Field(..., pattern=r'^[A-F][+-]?$')
     improvement_potential: float = Field(..., ge=0.0, le=1.0)
     rebalancing_needed: bool = Field(default=False)
-    
+
     # Alternative suggestions
     alternatives: List[Alternative] = Field(default_factory=list)
-    
+
     # Summary
     executive_summary: str = Field(..., min_length=200)
     key_recommendations: List[str] = Field(default_factory=list)
-    
+
     # Data quality
     data_freshness: datetime = Field(default_factory=datetime.now)
     confidence_level: float = Field(..., ge=0.0, le=1.0)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -123,37 +123,37 @@ Individual holding analysis with keep/sell/rebalance recommendations.
 class HoldingDecision(BaseModel):
     ticker: str = Field(..., description="Asset ticker symbol")
     asset_class: str = Field(..., description="Asset class (stock, etf, crypto)")
-    
+
     # Current position
     current_shares: float = Field(..., gt=0)
     current_value: float = Field(..., gt=0)
     current_allocation: float = Field(..., ge=0.0, le=1.0)
     average_cost: Optional[float] = Field(None, gt=0)
-    
+
     # Analysis results
     decision: Literal["KEEP", "SELL", "REDUCE", "INCREASE"] = Field(...)
     recommended_allocation: Optional[float] = Field(None, ge=0.0, le=1.0)
-    
+
     # Performance metrics
     unrealized_gain_loss: Optional[float] = None
     unrealized_gain_loss_pct: Optional[float] = None
-    
+
     # Analysis details
     grade: Optional[str] = Field(None, pattern=r'^[A-F][+-]?$')
     confidence: float = Field(..., ge=0.0, le=1.0)
     rationale: str = Field(..., min_length=50)
-    
+
     # Risk assessment
     risk_score: int = Field(..., ge=1, le=10)
     risk_contribution: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Recommendations
     action_priority: Literal["HIGH", "MEDIUM", "LOW"] = Field(default="MEDIUM")
     time_horizon: Literal["IMMEDIATE", "SHORT", "MEDIUM", "LONG"] = Field(default="MEDIUM")
-    
+
     # Alternative suggestions
     alternatives: List[str] = Field(default_factory=list)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -196,28 +196,28 @@ class Alternative(BaseModel):
     ticker: str = Field(..., description="Alternative asset ticker")
     name: str = Field(..., description="Asset name")
     asset_class: str = Field(..., description="Asset class")
-    
+
     # Replacement context
     replaces: Optional[str] = Field(None, description="Ticker being replaced")
     reason: str = Field(..., min_length=50, description="Why this alternative")
-    
+
     # Expected benefits
     expected_return: Optional[float] = Field(None, description="Expected annual return")
     risk_improvement: Optional[float] = Field(None, description="Risk reduction")
     diversification_benefit: Optional[float] = Field(None, ge=0.0, le=1.0)
-    
+
     # Recommendation strength
     confidence: float = Field(..., ge=0.0, le=1.0)
     priority: Literal["HIGH", "MEDIUM", "LOW"] = Field(default="MEDIUM")
-    
+
     # Implementation
     suggested_allocation: Optional[float] = Field(None, ge=0.0, le=1.0)
     implementation_timeline: Literal["IMMEDIATE", "SHORT", "MEDIUM", "LONG"] = Field(default="MEDIUM")
-    
+
     # Analysis
     key_advantages: List[str] = Field(default_factory=list)
     potential_risks: List[str] = Field(default_factory=list)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -263,28 +263,28 @@ Portfolio optimization results with recommended allocation changes.
 class OptimizationResult(BaseModel):
     optimization_date: datetime = Field(default_factory=datetime.now)
     optimization_method: str = Field(..., description="Optimization method used")
-    
+
     # Current vs optimized portfolio
     current_portfolio: Dict[str, float] = Field(..., description="Current allocations")
     optimized_portfolio: Dict[str, float] = Field(..., description="Optimal allocations")
-    
+
     # Expected improvements
     expected_return_improvement: float = Field(..., description="Expected return increase")
     expected_risk_reduction: float = Field(..., description="Expected risk decrease")
     expected_sharpe_improvement: float = Field(..., description="Sharpe ratio improvement")
-    
+
     # Implementation details
     trades_required: List[Dict[str, Any]] = Field(default_factory=list)
     estimated_transaction_costs: float = Field(default=0.0, ge=0.0)
     net_expected_benefit: float = Field(..., description="Benefit after costs")
-    
+
     # Constraints applied
     constraints: Dict[str, Any] = Field(default_factory=dict)
-    
+
     # Confidence and validation
     confidence_level: float = Field(..., ge=0.0, le=1.0)
     backtesting_results: Optional[Dict[str, float]] = Field(None)
-    
+
     model_config = {
         "extra": "forbid"
     }
@@ -300,23 +300,23 @@ Specific improvement suggestions for portfolio enhancement.
 class PortfolioImprovement(BaseModel):
     improvement_type: Literal["DIVERSIFICATION", "RISK_REDUCTION", "RETURN_ENHANCEMENT", "COST_REDUCTION"]
     priority: Literal["HIGH", "MEDIUM", "LOW"]
-    
+
     # Description
     title: str = Field(..., min_length=10)
     description: str = Field(..., min_length=50)
-    
+
     # Expected impact
     expected_benefit: float = Field(..., ge=0.0, le=1.0)
     implementation_difficulty: Literal["EASY", "MODERATE", "DIFFICULT"]
-    
+
     # Implementation
     action_items: List[str] = Field(default_factory=list)
     timeline: str = Field(..., description="Implementation timeline")
-    
+
     # Metrics
     current_metric: Optional[float] = None
     target_metric: Optional[float] = None
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -353,7 +353,7 @@ def validate_decision_consistency(cls, v: str, info: ValidationInfo) -> str:
     if 'recommended_allocation' in info.data:
         current = info.data.get('current_allocation', 0)
         recommended = info.data['recommended_allocation']
-        
+
         if v == "KEEP" and abs(current - recommended) > 0.05:
             raise ValueError('KEEP decision inconsistent with allocation change')
     return v

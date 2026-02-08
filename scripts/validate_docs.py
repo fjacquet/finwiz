@@ -128,9 +128,14 @@ class DocumentationValidator:
         """Extract internal markdown links from content."""
         links = []
 
+        # Strip fenced code blocks, HTML comments, and inline code before extracting links
+        content_no_code = re.sub(r"```[\s\S]*?```", "", content)
+        content_no_code = re.sub(r"<!--[\s\S]*?-->", "", content_no_code)
+        content_no_code = re.sub(r"`[^`]+`", "", content_no_code)
+
         # Find markdown links [text](url)
         link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
-        matches = re.findall(link_pattern, content)
+        matches = re.findall(link_pattern, content_no_code)
 
         for text, url in matches:
             # Skip external links
@@ -162,7 +167,11 @@ class DocumentationValidator:
         else:
             # Relative path from source file
             source_dir = source_file.parent
-            target_path = str((source_dir / target_path).resolve().relative_to(self.docs_dir.resolve()))
+            try:
+                target_path = str((source_dir / target_path).resolve().relative_to(self.docs_dir.resolve()))
+            except ValueError:
+                self.errors.append(f"Broken link in {source_file}: '{link_target}' resolves outside docs/")
+                return
 
         # Normalize path separators
         target_path = target_path.replace("\\", "/")

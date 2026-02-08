@@ -577,10 +577,10 @@ import asyncio
 # Async tool execution
 async def analyze_multiple_tickers(tickers):
     tool = QuantitativeAnalysisTool(asset_class="stock")
-    
+
     tasks = [tool.run_async(ticker) for ticker in tickers]
     results = await asyncio.gather(*tasks)
-    
+
     return dict(zip(tickers, results))
 ```
 
@@ -677,20 +677,20 @@ class CustomAnalysisTool(BaseTool):
     def __init__(self, custom_param: str):
         super().__init__()
         self.custom_param = custom_param
-    
+
     def run(self, ticker: str) -> dict:
         # Custom analysis logic
         result = self._perform_analysis(ticker)
-        
+
         # Validate output
         self._validate_output(result)
-        
+
         return result
-    
+
     def _perform_analysis(self, ticker: str) -> dict:
         # Implementation details
         pass
-    
+
     def _validate_output(self, result: dict) -> None:
         # Output validation
         pass
@@ -743,5 +743,5 @@ if quality['quality_score'] < 0.8:
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

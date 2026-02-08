@@ -130,65 +130,65 @@ class FinwizFlow(Flow[FinwizState]):
     @listen("check_portfolio")
     def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
         """Execute deep analysis with batch pre-fetching and memory monitoring."""
-        
+
         # Initialize prefetcher with memory management
         session_id = self.state.session_id
         self.prefetcher = BatchDataPreFetcher(
             session_id=session_id,
             enable_alpha_vantage=False  # Yahoo Finance only for speed
         )
-        
+
         # Get memory manager reference
         self.memory_manager = self.prefetcher.memory_manager
-        
+
         # Monitor memory at start
         self.memory_manager.monitor_memory("deep-analysis-start")
-        
+
         # Get holdings to analyze
         holdings = self._get_underperforming_holdings()
         tickers = [h["ticker"] for h in holdings]
-        
+
         # Pre-fetch all data in batch
         logger.info(f"Pre-fetching data for {len(tickers)} holdings...")
         prefetched_data = self.prefetcher.prefetch_all_data(tickers)
-        
+
         # Monitor memory after pre-fetch
         self.memory_manager.monitor_memory("pre-fetch-complete")
-        
+
         # Execute crews with pre-fetched data
         results = {}
         for ticker in tickers:
             ticker_data = prefetched_data.get(ticker, {})
-            
+
             # Create and execute crew with pre-fetched data
             crew = DeepAnalysisCrew()
             crew.set_prefetched_data(ticker_data)
             result = crew.crew().kickoff(inputs={"ticker": ticker})
             results[ticker] = result
-            
+
             # Monitor memory periodically
             if len(results) % 10 == 0:
                 self.memory_manager.monitor_memory(f"crew-execution-{len(results)}")
-        
+
         # Monitor memory after all crews complete
         self.memory_manager.monitor_memory("all-crews-complete")
-        
+
         # Get memory metrics for reporting
         memory_metrics = self.prefetcher.get_memory_metrics()
-        
+
         # Validate memory constraints
         if not self.prefetcher.validate_memory_constraints():
             logger.warning("Memory constraints were exceeded during execution")
-        
+
         # Store metrics in state
         self.state.batch_prefetch_metrics = {
             "memory": memory_metrics,
             "tickers_analyzed": len(results),
             "successful": sum(1 for r in results.values() if r.get("success", False))
         }
-        
+
         return {"results": results, "memory_metrics": memory_metrics}
-    
+
     def cleanup(self):
         """Clean up resources after Flow completion."""
         if self.prefetcher:
@@ -417,23 +417,23 @@ Test memory management functionality:
 def test_memory_monitoring(tmp_path):
     """Test memory monitoring at different stages."""
     manager = MemoryManager(session_id="test-123")
-    
+
     # Monitor at different stages
     sample1 = manager.monitor_memory("stage-1")
     assert sample1["within_limit"]
-    
+
     sample2 = manager.monitor_memory("stage-2")
     assert sample2["peak_mb"] >= sample1["memory_mb"]
 
 def test_cache_cleanup(tmp_path):
     """Test cache cleanup functionality."""
     manager = MemoryManager(session_id="test-123")
-    
+
     # Create some cache files
     cache_dir = Path(f"cache/batch_data/test-123")
     cache_dir.mkdir(parents=True, exist_ok=True)
     (cache_dir / "test.json").write_text("{}")
-    
+
     # Clean up
     result = manager.cleanup_cache()
     assert result["success"]
@@ -442,7 +442,7 @@ def test_cache_cleanup(tmp_path):
 def test_memory_constraints():
     """Test memory constraint validation."""
     manager = MemoryManager(session_id="test-123")
-    
+
     # Should be within limits initially
     assert manager.validate_memory_constraints()
 ```
@@ -455,18 +455,18 @@ Test with actual batch processing:
 def test_batch_prefetch_with_memory_management():
     """Test batch prefetch with memory monitoring."""
     prefetcher = BatchDataPreFetcher(session_id="test-123")
-    
+
     # Pre-fetch data
     data = prefetcher.prefetch_all_data(["AAPL", "MSFT"])
-    
+
     # Check memory metrics
     metrics = prefetcher.get_memory_metrics()
     assert metrics["within_limit"]
     assert metrics["peak_memory_mb"] < 500
-    
+
     # Validate constraints
     assert prefetcher.validate_memory_constraints()
-    
+
     # Clean up
     cleanup = prefetcher.cleanup_cache()
     assert cleanup["success"]
@@ -481,6 +481,6 @@ def test_batch_prefetch_with_memory_management():
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-25  
+**Version**: 1.0
+**Last Updated**: 2025-01-25
 **Status**: Implemented

@@ -2,10 +2,10 @@
 analyze_holding_task:
   description: >
     FIRST: Read the schema file docs/schemas/HoldingDecision.schema.json to understand the exact output format required.
-    
+
     Analyze individual portfolio holding using appropriate crew (stock/ETF/crypto) and map outputs to schema.
 
-    This task coordinates deep analysis for a single holding by checking for cached crew analysis, 
+    This task coordinates deep analysis for a single holding by checking for cached crew analysis,
     triggering fresh analysis if needed, and mapping crew outputs to the portfolio review schema.
 
     1. Use HoldingAnalyzerOrchestrator to check for cached analysis (< 7 days old).
@@ -33,14 +33,14 @@ analyze_holding_task:
     - Return ONLY the HoldingDecision object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "analysis", etc.
     - The JSON must match the HoldingDecision schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - decision: MUST be one of: "KEEP", "SELL" (uppercase, no other values allowed)
     - asset_class: MUST be one of: "stock", "etf", "crypto" (lowercase, no other values allowed)
     - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization and plus signs)
     - risk.scale: MUST be "0_5" (for 0-5 scale, not "L_M_H" or "L_M_H_VH")
     - risk.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized first letter only)
-    
+
     OUTPUT: Return a structured JSON output conforming to the HoldingDecision schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -48,10 +48,10 @@ analyze_holding_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured complete HoldingDecision object conforming to the HoldingDecision Pydantic 
-    schema. Include fundamental/technical analysis, SEC citations (if applicable), data 
+    A structured complete HoldingDecision object conforming to the HoldingDecision Pydantic
+    schema. Include fundamental/technical analysis, SEC citations (if applicable), data
     freshness indicator, crew analysis source, confidence level, and composite score.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: holding_analyzer
   output_pydantic: HoldingDecision
@@ -62,7 +62,7 @@ calculate_price_targets_task:
   description: >
     Calculate actionable buy/sell price targets for a portfolio holding.
 
-    This task generates specific price targets that investors can use to execute trades, including 
+    This task generates specific price targets that investors can use to execute trades, including
     buy-on-dip levels, profit-taking targets, and stop-loss levels for risk management.
 
     1. Use PriceTargetCalculator to calculate fair value estimate:
@@ -81,12 +81,12 @@ calculate_price_targets_task:
     6. Ensure all targets are in holding's native currency.
 
     INPUT: Ticker, asset class, current price, price history, fundamental data, recommendation
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the PriceTargets object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "targets", etc.
     - The JSON must match the PriceTargets schema exactly
-    
+
     OUTPUT: Return a structured JSON output conforming to the PriceTargets schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -94,11 +94,11 @@ calculate_price_targets_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured complete PriceTargets object conforming to the PriceTargets Pydantic schema. 
-    Include current price, fair value estimate, buy targets (primary/secondary), sell targets 
-    (primary/secondary), stop-loss level, support/resistance levels, calculation method, 
+    A structured complete PriceTargets object conforming to the PriceTargets Pydantic schema.
+    Include current price, fair value estimate, buy targets (primary/secondary), sell targets
+    (primary/secondary), stop-loss level, support/resistance levels, calculation method,
     confidence level, and French rationale for each target.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: price_target_specialist
   output_pydantic: PriceTargets
@@ -110,11 +110,11 @@ calculate_price_targets_task:
 find_alternatives_task:
   description: >
     FIRST: Read the schema file docs/schemas/Alternative.schema.json to understand the exact output format required.
-    
+
     Find better investment alternatives for underperforming holdings (graded below B).
 
-    This task identifies superior alternatives that match the holding's sector/exposure while 
-    offering better fundamentals, lower costs, or higher quality. Prioritizes A+ candidates 
+    This task identifies superior alternatives that match the holding's sector/exposure while
+    offering better fundamentals, lower costs, or higher quality. Prioritizes A+ candidates
     from the investment discovery crew.
 
     1. Use AlternativeFinder to check if holding needs alternatives (grade < B).
@@ -135,16 +135,16 @@ find_alternatives_task:
     6. Limit to top 2-3 alternatives per holding.
 
     INPUT: Holding profile (ticker, grade, asset class, sector, metrics)
-    
+
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the Alternative object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "alternatives", etc.
     - The JSON must match the Alternative schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - asset_class: MUST be one of: "stock", "etf", "crypto" (lowercase, no other values allowed)
     - grade: MUST be one of: "A+", "A", "B+", "B", "C+", "C", "D", "F" (exact format with capitalization and plus signs)
-    
+
     OUTPUT: Return a structured JSON output conforming to the Alternative schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -152,11 +152,11 @@ find_alternatives_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured list of 0-3 Alternative objects conforming to the Alternative Pydantic schema 
-    for holdings graded below B. Each alternative includes ticker, name, grade, composite score, 
-    key metrics, thesis bullets, transition strategy (immediate/gradual/tax-optimized), tax 
+    A structured list of 0-3 Alternative objects conforming to the Alternative Pydantic schema
+    for holdings graded below B. Each alternative includes ticker, name, grade, composite score,
+    key metrics, thesis bullets, transition strategy (immediate/gradual/tax-optimized), tax
     implications, and expected improvements. Empty list for holdings graded B or above.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: alternative_researcher
   output_pydantic: Alternative
@@ -170,7 +170,7 @@ portfolio_analysis_task:
   description: >
     Analyze current portfolio composition and calculate precise weightings against target allocations.
 
-    This task involves comprehensive analysis of the current portfolio holdings, calculation of 
+    This task involves comprehensive analysis of the current portfolio holdings, calculation of
     accurate market-weighted allocations, and identification of deviations from target weightings.
 
     1. Retrieve current market prices for all portfolio holdings as of {full_date}.
@@ -196,10 +196,10 @@ portfolio_analysis_task:
     - Return ONLY the PortfolioAnalysis object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "analysis", etc.
     - The JSON must match the PortfolioAnalysis schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - For any position sizing recommendations, sizing_action: MUST be one of: "add", "trim", "hold", "exit" (lowercase, no other values allowed)
-    
+
     OUTPUT: Return a structured JSON output conforming to the PortfolioAnalysis schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -207,11 +207,11 @@ portfolio_analysis_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured comprehensive portfolio analysis conforming to the PortfolioAnalysis Pydantic 
-    schema. Include current weightings, target deviations, risk metrics, positions requiring 
-    rebalancing, quantitative portfolio metrics, and risk assessment. Each holding should have 
+    A structured comprehensive portfolio analysis conforming to the PortfolioAnalysis Pydantic
+    schema. Include current weightings, target deviations, risk metrics, positions requiring
+    rebalancing, quantitative portfolio metrics, and risk assessment. Each holding should have
     deep analysis from appropriate crew with data freshness indicators.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: portfolio_analyst
   output_pydantic: PortfolioAnalysis
@@ -227,7 +227,7 @@ rebalancing_optimization_task:
   description: >
     Generate optimal trade recommendations to rebalance the portfolio to target allocations.
 
-    This task involves sophisticated optimization to determine the most cost-effective trades 
+    This task involves sophisticated optimization to determine the most cost-effective trades
     needed to bring the portfolio back into alignment with target weightings.
 
     1. Retrieve portfolio analysis results from the previous task and knowledge base.
@@ -259,11 +259,11 @@ rebalancing_optimization_task:
     - Return ONLY the RebalancingRecommendation object directly - do NOT wrap it in additional fields
     - Do NOT add wrapper fields like "data", "results", "recommendations", etc.
     - The JSON must match the RebalancingRecommendation schema exactly
-    
+
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - For any risk assessments, risk_assessment.scale: MUST be "0_5" (for 0-5 scale, not "L_M_H" or "L_M_H_VH")
     - For any risk assessments, risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized first letter only)
-    
+
     OUTPUT: Return a structured JSON output conforming to the RebalancingRecommendation schema.
     🚨 JSON OUTPUT REQUIREMENTS 🚨
     - Output MUST be ONLY valid JSON - no explanatory text before or after
@@ -271,11 +271,11 @@ rebalancing_optimization_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A structured detailed trade recommendations conforming to the RebalancingRecommendation 
-    Pydantic schema. Include buy/sell quantities, estimated costs, priority rankings, 
-    optimization analysis, price targets for each holding, alternatives for underperforming 
+    A structured detailed trade recommendations conforming to the RebalancingRecommendation
+    Pydantic schema. Include buy/sell quantities, estimated costs, priority rankings,
+    optimization analysis, price targets for each holding, alternatives for underperforming
     positions, transition strategies, and cost-benefit analysis.
-    
+
     IMPORTANT: Return the object directly without any wrapper fields.
   agent: rebalancing_strategist
   output_pydantic: RebalancingRecommendation
@@ -289,7 +289,7 @@ risk_validation_task:
   description: >
     Validate rebalancing recommendations against risk constraints and investment policies.
 
-    This task involves comprehensive risk assessment of the proposed rebalancing trades 
+    This task involves comprehensive risk assessment of the proposed rebalancing trades
     to ensure compliance with risk management policies and investment mandates.
 
     1. Retrieve trade recommendations from the rebalancing optimization task.
@@ -312,7 +312,7 @@ risk_validation_task:
     10. Provide risk mitigation recommendations and alternative approaches if needed.
     11. Store risk validation results and compliance status in the knowledge base.
 
-    Follow the standardized risk assessment framework and ensure all recommendations 
+    Follow the standardized risk assessment framework and ensure all recommendations
     comply with established risk management policies.
 
     OUTPUT: Return comprehensive risk validation with compliance status, position sizing recommendations, and mitigation strategies.
@@ -322,8 +322,8 @@ risk_validation_task:
     - Do NOT include any text, comments, or explanations outside the JSON
     - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
-    A detailed risk assessment of rebalancing recommendations including compliance validation, 
-    risk scores, stress test results, position sizing recommendations, and mitigation strategies. 
+    A detailed risk assessment of rebalancing recommendations including compliance validation,
+    risk scores, stress test results, position sizing recommendations, and mitigation strategies.
     The report should be formatted in professional HTML with clear risk indicators and actionable recommendations.
     Also include a machine-readable JSON appendix containing:
     - risk_assessments[] matching the RiskAssessmentStandardized schema
@@ -341,7 +341,7 @@ risk_validation_task:
 #   description: >
 #     Translate the English portfolio rebalancing report to French while preserving exact HTML structure and styling.
 
-#     This task involves professional translation of the comprehensive portfolio rebalancing analysis 
+#     This task involves professional translation of the comprehensive portfolio rebalancing analysis
 #     from English to French, maintaining all technical accuracy and visual formatting.
 
 #     1. Receive the complete HTML portfolio rebalancing report from the risk validation task.
@@ -360,13 +360,13 @@ risk_validation_task:
 #     5. Preserve all JSON appendices exactly as provided (no translation of structured data).
 #     6. Ensure the translated report maintains the same visual appearance and functionality.
 
-#     CRITICAL: Do not modify any HTML structure, CSS styling, or numerical data. 
+#     CRITICAL: Do not modify any HTML structure, CSS styling, or numerical data.
 #     Only translate the text content while preserving all formatting and technical elements.
 
 #     OUTPUT: Return the complete French version of the portfolio rebalancing report.
 #   expected_output: >
-#     A complete French translation of the portfolio rebalancing report maintaining exact HTML structure, 
-#     CSS styling, and technical accuracy. All financial terms should be properly translated while 
+#     A complete French translation of the portfolio rebalancing report maintaining exact HTML structure,
+#     CSS styling, and technical accuracy. All financial terms should be properly translated while
 #     preserving numerical data and formatting.
 #   agent: translator
 #   output_file: "output/portfolio/portfolio_rebalancing_report_french.html"
@@ -378,10 +378,10 @@ risk_validation_task:
 generate_export_task:
   description: >
     Consolidate all portfolio rebalancing findings from context into a RebalancingCrewExport object.
-    
+
     CRITICAL: This is a FINAL REPORTER task - you have NO TOOLS. Use ONLY the context
     from previous tasks to extract all required information.
-    
+
     CONTEXT SOURCES:
     - analyze_holding_task: Individual holding analysis results
     - calculate_price_targets_task: Price target calculations
@@ -389,54 +389,54 @@ generate_export_task:
     - portfolio_analysis_task: Current portfolio composition and metrics
     - rebalancing_optimization_task: Optimal allocation and trade recommendations
     - risk_validation_task: Risk validation and performance projections
-    
+
     REQUIRED FIELDS TO EXTRACT FROM CONTEXT:
     1. Input Summary:
        - holdings_analyzed: Count of current holdings analyzed
        - deep_analyses_reviewed: Count of deep analyses performed
        - opportunities_discovered: Count of A+ alternatives found
-    
+
     2. Current State:
        - current_allocation: Dict[ticker, percentage] from portfolio_analysis_task
        - current_total_value: Total portfolio value from portfolio_analysis_task
-    
+
     3. Optimization Results:
        - target_allocation: Dict[ticker, percentage] from rebalancing_optimization_task
        - trades_required: List[TradeRecommendation] from rebalancing_optimization_task
          * Each trade must have: action (BUY/SELL/HOLD), ticker, asset_class, quantity, rationale
-    
+
     4. Performance Metrics:
        - expected_return: Expected annual return (percentage) from risk_validation_task
        - expected_risk: Expected volatility (percentage) from risk_validation_task
        - sharpe_ratio: Risk-adjusted return metric from risk_validation_task
-    
+
     5. Improvement Analysis:
        - improvement_summary: How rebalancing improves portfolio (min 50 chars)
        - risk_reduction: Expected risk reduction (percentage points)
        - return_improvement: Expected return improvement (percentage points)
-    
+
     6. data_sources (list of strings):
        - List all data sources used: ["Yahoo Finance", "Portfolio Analysis", "Quantitative Analysis", etc.]
-    
+
     7. report_html_path (string):
        - Set to: "output/reports/{session_id}/rebalancing_crew/rebalancing_report.html"
-    
+
     8. report_json_path (string):
        - Set to: "output/reports/{session_id}/rebalancing_crew/rebalancing_export.json"
-    
+
     METADATA FIELDS (auto-populated):
     - crew_name: "rebalancing_crew" (default)
     - ticker: "N/A" (not applicable for rebalancing - portfolio-level)
     - asset_class: "portfolio" (default)
     - session_id: From input parameter {session_id}
     - analysis_date: Current timestamp (auto-generated)
-    
+
     OUTPUT FORMAT:
     - Return a valid RebalancingCrewExport Pydantic object
     - All fields must conform to schema validation
     - Use extra='forbid' - no additional fields allowed
     - Ensure all required fields are present
-    
+
     VALIDATION:
     - holdings_analyzed must be >= 0
     - deep_analyses_reviewed must be >= 0
@@ -447,7 +447,7 @@ generate_export_task:
     - Each trade.action must be one of: BUY, SELL, HOLD
     - improvement_summary must be at least 50 characters
     - All nested objects must conform to their schemas
-    
+
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
 
     ⚠️ CRITICAL ANTI-HALLUCINATION RULES:

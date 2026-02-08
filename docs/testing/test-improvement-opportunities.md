@@ -195,12 +195,12 @@ from hypothesis import given, strategies as st
 def test_scoring_never_crashes_regardless_of_input(ticker, roe, debt_to_equity):
     """Property: Scorer should handle any valid numeric input without crashing."""
     scorer = DeepAnalysisScorer()
-    
+
     data = {"roe": roe, "debt_to_equity": debt_to_equity}
-    
+
     # Should never raise, even with extreme values
     result = scorer.calculate_composite_score(ticker, "stock", data)
-    
+
     assert 0.0 <= result.composite_score <= 1.0
     assert result.grade in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]
 ```
@@ -236,7 +236,7 @@ def mock_data_collection(mocker):
 def mock_scorer(mocker):
     """Mock scorer to return deterministic results."""
     from finwiz.scoring.deep_analysis_scorer import ScoringResult
-    
+
     mock_result = ScoringResult(
         ticker="AAPL",
         composite_score=0.85,
@@ -252,7 +252,7 @@ def mock_scorer(mocker):
 def mock_crew_execution(mocker):
     """Mock CrewAI execution to avoid LLM calls."""
     from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
-    
+
     mock_insights = QualitativeInsights(
         executive_summary="Mock analysis",
         investment_thesis="Strong buy thesis",
@@ -270,11 +270,11 @@ def test_should_complete_single_holding_within_30_seconds(
     """Test that single holding analysis completes within 30 seconds."""
     flow = HybridAnalysisFlow()
     flow.state.ticker = "AAPL"
-    
+
     start_time = time.time()
     result = flow.kickoff()
     elapsed_time = time.time() - start_time
-    
+
     assert elapsed_time <= 30.0
     assert isinstance(result, EnrichedAnalysis)
 ```
@@ -295,13 +295,13 @@ def test_flow_always_produces_valid_enriched_analysis(ticker, asset_class, mocke
     mock_data = mocker.patch.object(...)
     mock_scorer = mocker.patch(...)
     mock_crew = mocker.patch(...)
-    
+
     flow = HybridAnalysisFlow()
     flow.state.ticker = ticker
     flow.state.asset_class = asset_class
-    
+
     result = flow.kickoff()
-    
+
     # Invariants that should ALWAYS hold
     assert isinstance(result, EnrichedAnalysis)
     assert result.ticker == ticker
@@ -354,7 +354,7 @@ def fake_company_info(fake: Faker) -> dict[str, Any]:
     """Generate realistic company information."""
     return {
         "sector": fake.random_element([
-            "Technology", "Healthcare", "Finance", "Energy", 
+            "Technology", "Healthcare", "Finance", "Energy",
             "Consumer Discretionary", "Industrials", "Materials"
         ]),
         "industry": fake.company(),
@@ -379,7 +379,7 @@ def test_scoring_with_various_metrics(fake_financial_metrics, fake_ticker):
     result = scorer.calculate_composite_score(
         fake_ticker, "stock", fake_financial_metrics
     )
-    
+
     # Properties that should ALWAYS hold
     assert 0.0 <= result.composite_score <= 1.0
     assert result.grade in VALID_GRADES
@@ -414,14 +414,14 @@ def financial_metrics_strategy(draw):
 def test_scorer_never_produces_invalid_grades(ticker, metrics):
     """Property: Scorer should always produce valid grades for any realistic input."""
     scorer = DeepAnalysisScorer()
-    
+
     result = scorer.calculate_composite_score(ticker, "stock", metrics)
-    
+
     # Invariants
     assert 0.0 <= result.composite_score <= 1.0
     assert result.grade in VALID_GRADES
     assert result.ticker == ticker
-    
+
     # Grade matches score
     if result.composite_score >= 0.95:
         assert result.grade == "A+"
@@ -517,7 +517,7 @@ def test_analyze_any_ticker(fake_ticker):
 def test_high_roe():
     data = {"roe": 0.25}
 
-# AFTER  
+# AFTER
 def test_realistic_roe(fake_financial_metrics):
     data = fake_financial_metrics  # Different values each run!
 ```

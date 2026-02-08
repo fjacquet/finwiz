@@ -247,7 +247,7 @@ Gap to Target: -25% A+ allocation
 Priority Exits:
 1. Ticker ABC (Grade F) → Replace with A+ Alternative XYZ
    Expected improvement: +$1,200/year
-   
+
 2. Ticker DEF (Grade D) → Replace with A+ Alternative UVW
    Expected improvement: +$800/year
 ```
@@ -258,7 +258,7 @@ Priority Exits:
 Upgrade Targets:
 1. Ticker GHI (Grade C) → Replace with A+ Alternative RST
    Expected improvement: +$600/year
-   
+
 2. Ticker JKL (Grade C) → Replace with A+ Alternative MNO
    Expected improvement: +$500/year
 ```
@@ -516,5 +516,5 @@ After completing your first portfolio analysis:
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

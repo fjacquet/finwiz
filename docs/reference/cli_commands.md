@@ -527,5 +527,5 @@ time uv run python src/finwiz/main.py --mode portfolio_review
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

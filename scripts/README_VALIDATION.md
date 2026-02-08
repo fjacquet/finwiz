@@ -145,7 +145,7 @@ def _validate_new_requirement(self):
     """Check for new requirement."""
     # Perform validation
     passed = check_condition()
-    
+
     self._add_result(ValidationResult(
         check_name="New requirement check",
         passed=passed,

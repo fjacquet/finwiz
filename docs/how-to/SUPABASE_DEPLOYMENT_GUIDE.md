@@ -36,7 +36,7 @@ The Supabase timeout fix implements:
    SUPABASE_READ_TIMEOUT=10.0
    SUPABASE_WRITE_TIMEOUT=15.0
    SUPABASE_MAX_RETRIES=1
-   
+
    # Circuit Breaker Configuration
    SUPABASE_CIRCUIT_BREAKER_THRESHOLD=5
    SUPABASE_CIRCUIT_BREAKER_TIMEOUT=60
@@ -47,13 +47,13 @@ The Supabase timeout fix implements:
    ```bash
    # Restart the application to pick up new configuration
    # Method depends on your deployment setup:
-   
+
    # Docker:
    docker-compose restart finwiz
-   
+
    # Systemd:
    sudo systemctl restart finwiz
-   
+
    # Kubernetes:
    kubectl rollout restart deployment/finwiz
    ```
@@ -91,7 +91,7 @@ The Supabase timeout fix implements:
    ```bash
    # Look for timeout warnings
    grep "Database operation timed out" logs/finwiz.log
-   
+
    # Check success rate
    grep "Supabase Metrics" logs/finwiz.log | tail -20
    ```
@@ -231,12 +231,12 @@ The Supabase timeout fix implements:
    # Test 1: Normal operation
    python src/finwiz/main.py
    # Verify: Analysis completes, cache works
-   
+
    # Test 2: Supabase unavailable
    # Temporarily set SUPABASE_ENABLED=false
    python src/finwiz/main.py
    # Verify: Analysis still completes, logs show cache disabled
-   
+
    # Test 3: Slow network
    # Temporarily set SUPABASE_READ_TIMEOUT=2.0
    python src/finwiz/main.py
@@ -270,7 +270,7 @@ The Supabase timeout fix implements:
 1. **Supabase Metrics** (logged every 100 operations):
 
    ```
-   Supabase Metrics: Available=True, Success Rate=95.2%, Avg Response Time=245.3ms, 
+   Supabase Metrics: Available=True, Success Rate=95.2%, Avg Response Time=245.3ms,
    Circuit Breaker=CLOSED, Total Ops=500, Successful=476, Failed=24, Timeouts=12
    ```
 

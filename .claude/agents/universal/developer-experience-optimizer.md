@@ -4,7 +4,7 @@ description: |
   Developer Experience (DX) optimization specialist focused on improving developer productivity,
   reducing friction, and enhancing the overall development experience across tools, workflows,
   and processes. Combines insights from wshobson/agents DX optimization with our quality systems.
-  
+
   Use when:
   - Optimizing developer workflows and productivity
   - Reducing development friction and cognitive load
@@ -286,7 +286,7 @@ npm run build --cache
 ```markdown
 **Problem**: Developers wait too long for build/test results
 **Analysis**: Measure current feedback loop times and identify bottlenecks
-**Solutions**: 
+**Solutions**:
 - Implement incremental builds and testing
 - Optimize CI pipeline for faster execution
 - Add local development optimizations

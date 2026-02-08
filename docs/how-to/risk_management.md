@@ -109,10 +109,10 @@ def calculate_position_size(risk_score, portfolio_value, max_risk_per_position=0
     # Higher risk = smaller position
     risk_multiplier = (11 - risk_score) / 10  # Inverse relationship
     base_allocation = 0.05  # 5% base allocation
-    
+
     position_size = base_allocation * risk_multiplier
     max_position = portfolio_value * max_risk_per_position
-    
+
     return min(position_size * portfolio_value, max_position)
 ```
 
@@ -226,19 +226,19 @@ risk_parity_weights = rp_optimizer.optimize(
 ```python
 def allocate_by_risk_contribution(assets, risk_budget):
     """Allocate portfolio based on risk contribution targets."""
-    
+
     risk_contributions = {}
     for asset in assets:
         # Calculate marginal contribution to portfolio risk
         marginal_risk = calculate_marginal_risk(asset, portfolio)
         risk_contributions[asset] = marginal_risk
-    
+
     # Adjust weights to match risk budget
     adjusted_weights = adjust_weights_for_risk_budget(
-        risk_contributions, 
+        risk_contributions,
         risk_budget
     )
-    
+
     return adjusted_weights
 ```
 
@@ -266,12 +266,12 @@ def allocate_by_risk_contribution(assets, risk_budget):
 class VolatilityTargetingStrategy:
     def __init__(self, target_volatility=0.15):
         self.target_volatility = target_volatility
-    
+
     def adjust_exposure(self, current_volatility, current_exposure):
         """Adjust exposure based on realized volatility."""
         volatility_ratio = self.target_volatility / current_volatility
         adjusted_exposure = current_exposure * volatility_ratio
-        
+
         # Apply bounds
         return max(0.5, min(1.5, adjusted_exposure))
 ```
@@ -281,14 +281,14 @@ class VolatilityTargetingStrategy:
 ```python
 def assess_market_regime():
     """Assess current market regime for risk management."""
-    
+
     indicators = {
         "vix_level": get_vix_level(),
         "credit_spreads": get_credit_spreads(),
         "yield_curve": get_yield_curve_slope(),
         "momentum": get_market_momentum()
     }
-    
+
     # Risk-off signals
     risk_off_count = 0
     if indicators["vix_level"] > 25:
@@ -299,7 +299,7 @@ def assess_market_regime():
         risk_off_count += 1
     if indicators["momentum"] < -0.05:
         risk_off_count += 1
-    
+
     if risk_off_count >= 3:
         return "RISK_OFF"
     elif risk_off_count <= 1:
@@ -315,7 +315,7 @@ def assess_market_regime():
 ```python
 def generate_risk_dashboard(portfolio):
     """Generate daily risk dashboard."""
-    
+
     dashboard = {
         "portfolio_value": portfolio.total_value,
         "daily_var": calculate_daily_var(portfolio),
@@ -324,7 +324,7 @@ def generate_risk_dashboard(portfolio):
         "sector_exposures": calculate_sector_exposures(portfolio),
         "top_risk_contributors": get_top_risk_contributors(portfolio, n=5)
     }
-    
+
     return dashboard
 ```
 
@@ -340,11 +340,11 @@ class RiskAlertSystem:
             "beta": 1.3,                 # Max portfolio beta
             "correlation": 0.90          # Max market correlation
         }
-    
+
     def check_alerts(self, portfolio):
         """Check for risk threshold breaches."""
         alerts = []
-        
+
         # Check each threshold
         for metric, threshold in self.alert_thresholds.items():
             current_value = calculate_metric(portfolio, metric)
@@ -355,7 +355,7 @@ class RiskAlertSystem:
                     "threshold": threshold,
                     "severity": "HIGH" if current_value > threshold * 1.2 else "MEDIUM"
                 })
-        
+
         return alerts
 ```
 

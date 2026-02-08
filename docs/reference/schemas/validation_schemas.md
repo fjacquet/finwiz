@@ -13,34 +13,34 @@ class ValidatedTicker(BaseModel):
     symbol: str = Field(..., description="Validated ticker symbol")
     original_input: str = Field(..., description="Original user input")
     asset_class: Optional[str] = Field(None, description="Detected asset class")
-    
+
     # Validation results
     is_valid: bool = Field(..., description="Whether ticker is valid")
     validation_source: str = Field(..., description="Source used for validation")
-    
+
     # Market data
     exchange: Optional[str] = Field(None, description="Primary exchange")
     currency: Optional[str] = Field(None, description="Trading currency")
     market_cap: Optional[float] = Field(None, ge=0, description="Market capitalization")
-    
+
     # Quality metrics
     data_availability: float = Field(..., ge=0.0, le=1.0, description="Data availability score")
     liquidity_score: float = Field(..., ge=0.0, le=1.0, description="Liquidity assessment")
-    
+
     # Metadata
     company_name: Optional[str] = Field(None, description="Company/asset name")
     sector: Optional[str] = Field(None, description="Sector classification")
     industry: Optional[str] = Field(None, description="Industry classification")
-    
+
     # Validation timestamp
     validated_at: datetime = Field(default_factory=datetime.now)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True,
         "str_upper": True  # Automatically uppercase ticker symbols
     }
-    
+
     @field_validator('symbol')
     @classmethod
     def validate_ticker_format(cls, v: str) -> str:
@@ -87,47 +87,47 @@ class ValidationError(BaseModel):
     error_type: str = Field(..., description="Error type classification")
     input_value: Any = Field(..., description="The invalid input value")
     suggested_fix: Optional[str] = Field(None, description="Suggested correction")
-    
+
     model_config = {"extra": "forbid"}
 
 class ValidationResult(BaseModel):
     is_valid: bool = Field(..., description="Overall validation status")
     validation_timestamp: datetime = Field(default_factory=datetime.now)
-    
+
     # Validation details
     schema_name: str = Field(..., description="Schema being validated against")
     schema_version: str = Field(default="1.0", description="Schema version")
-    
+
     # Results
     errors: List[ValidationError] = Field(default_factory=list)
     warnings: List[ValidationError] = Field(default_factory=list)
-    
+
     # Processed data
     sanitized_data: Optional[Dict[str, Any]] = Field(None, description="Cleaned/sanitized data")
     original_data: Dict[str, Any] = Field(..., description="Original input data")
-    
+
     # Quality metrics
     data_completeness: float = Field(..., ge=0.0, le=1.0, description="Completeness score")
     data_quality_score: float = Field(..., ge=0.0, le=1.0, description="Overall quality score")
-    
+
     # Validation context
     validation_mode: Literal["strict", "lenient", "warn_only"] = Field(default="strict")
     validation_rules_applied: List[str] = Field(default_factory=list)
-    
+
     model_config = {"extra": "forbid"}
-    
+
     @property
     def error_count(self) -> int:
         return len(self.errors)
-    
+
     @property
     def warning_count(self) -> int:
         return len(self.warnings)
-    
+
     @property
     def has_errors(self) -> bool:
         return len(self.errors) > 0
-    
+
     @property
     def has_warnings(self) -> bool:
         return len(self.warnings) > 0
@@ -190,31 +190,31 @@ class ReporterInput(BaseModel):
     report_type: Literal["stock_analysis", "etf_analysis", "crypto_analysis", "portfolio_review"]
     template_name: str = Field(..., description="Report template to use")
     output_format: Literal["html", "pdf", "json"] = Field(default="html")
-    
+
     # Data inputs
     analysis_data: Dict[str, Any] = Field(..., description="Analysis results to include")
     portfolio_data: Optional[Dict[str, Any]] = Field(None, description="Portfolio context")
-    
+
     # Report customization
     include_charts: bool = Field(default=True)
     include_risk_details: bool = Field(default=True)
     include_data_sources: bool = Field(default=True)
     language: str = Field(default="en", description="Report language")
-    
+
     # Quality requirements
     min_confidence_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
     require_recent_data: bool = Field(default=True)
     max_data_age_hours: int = Field(default=24, ge=1)
-    
+
     # Validation settings
     strict_validation: bool = Field(default=True)
     allow_partial_data: bool = Field(default=False)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
     }
-    
+
     @field_validator('analysis_data')
     @classmethod
     def validate_analysis_data_structure(cls, v: Dict[str, Any]) -> Dict[str, Any]:
@@ -272,41 +272,41 @@ class DataQualityIssue(BaseModel):
 class DataQualityAssessment(BaseModel):
     assessment_timestamp: datetime = Field(default_factory=datetime.now)
     data_source: str = Field(..., description="Source of data being assessed")
-    
+
     # Overall quality metrics
     overall_quality_score: float = Field(..., ge=0.0, le=1.0)
     completeness_score: float = Field(..., ge=0.0, le=1.0)
     freshness_score: float = Field(..., ge=0.0, le=1.0)
     accuracy_score: float = Field(..., ge=0.0, le=1.0)
     consistency_score: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Data characteristics
     total_fields: int = Field(..., ge=0)
     populated_fields: int = Field(..., ge=0)
     missing_fields: int = Field(..., ge=0)
-    
+
     # Freshness analysis
     newest_data_age: Optional[timedelta] = None
     oldest_data_age: Optional[timedelta] = None
     avg_data_age: Optional[timedelta] = None
-    
+
     # Quality issues
     issues: List[DataQualityIssue] = Field(default_factory=list)
     critical_issues: int = Field(default=0, ge=0)
-    
+
     # Recommendations
     usable_for_analysis: bool = Field(..., description="Whether data is suitable for analysis")
     confidence_impact: float = Field(..., ge=0.0, le=1.0, description="Impact on analysis confidence")
     recommended_actions: List[str] = Field(default_factory=list)
-    
+
     model_config = {"extra": "forbid"}
-    
+
     @property
     def completion_rate(self) -> float:
         if self.total_fields == 0:
             return 0.0
         return self.populated_fields / self.total_fields
-    
+
     @property
     def has_critical_issues(self) -> bool:
         return self.critical_issues > 0
@@ -319,7 +319,7 @@ class DataQualityAssessment(BaseModel):
 ```python
 class TickerValidator:
     """Utility class for ticker validation"""
-    
+
     @staticmethod
     def validate_format(ticker: str) -> bool:
         """Validate ticker format"""
@@ -328,12 +328,12 @@ class TickerValidator:
         # Allow alphanumeric, hyphens, and dots
         clean_ticker = ticker.replace('-', '').replace('.', '')
         return clean_ticker.isalnum() and len(ticker) <= 10
-    
+
     @staticmethod
     def normalize(ticker: str) -> str:
         """Normalize ticker format"""
         return ticker.strip().upper()
-    
+
     @staticmethod
     def detect_asset_class(ticker: str) -> Optional[str]:
         """Detect asset class from ticker format"""
@@ -346,12 +346,12 @@ class TickerValidator:
 
 class ConfidenceValidator:
     """Utility class for confidence validation"""
-    
+
     @staticmethod
     def validate_range(confidence: float) -> bool:
         """Validate confidence is in valid range"""
         return 0.0 <= confidence <= 1.0
-    
+
     @staticmethod
     def assess_quality(confidence: float) -> str:
         """Assess confidence quality"""

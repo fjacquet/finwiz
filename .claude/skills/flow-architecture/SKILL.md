@@ -75,13 +75,13 @@ def analyze_and_update_portfolio(self) -> dict[str, Any]:
     """Atomic operation: deep analysis + alternatives + portfolio update."""
     # Step 1: Deep analysis
     deep_results = self._run_deep_analysis_on_holdings()
-    
+
     # Step 2: Match alternatives
     alternatives = self._match_alternatives_for_holdings(deep_results)
-    
+
     # Step 3: Update portfolio (ONCE)
     portfolio_updated = self._update_portfolio_review_with_enriched_data()
-    
+
     return consolidated_results
 ```
 
@@ -223,10 +223,10 @@ Explicit single-ticker task descriptions:
 deep_analysis_task:
   description: >
     Perform comprehensive analysis of the provided {asset_class} ticker: {ticker}
-    
+
     SINGLE TICKER MODE: You are analyzing ONE specific {asset_class}, not screening multiple assets.
     The ticker {ticker} is provided as input. Do NOT request additional tickers.
-    
+
     Analysis Steps for {asset_class}:
     1. Validate {ticker} using TickerValidationTool
     2. Fetch {asset_class}-specific data for {ticker}

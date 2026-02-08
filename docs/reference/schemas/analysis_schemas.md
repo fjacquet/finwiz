@@ -17,21 +17,21 @@ class TenKInsight(BaseModel):
     confidence_level: float = Field(..., ge=0.0, le=1.0)
     price_target: Optional[float] = Field(None, gt=0)
     current_price: float = Field(..., gt=0)
-    
+
     # Financial metrics
     financial_metrics: Dict[str, float] = Field(default_factory=dict)
-    
+
     # Risk assessment
     risk_assessment: RiskAssessmentStandardized
-    
+
     # Analysis rationale
     rationale: str = Field(..., min_length=100)
     key_strengths: List[str] = Field(default_factory=list)
     key_concerns: List[str] = Field(default_factory=list)
-    
+
     # Data sources
     data_sources: List[str] = Field(default_factory=list)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True
@@ -97,29 +97,29 @@ class ETFFactsheet(BaseModel):
     analysis_date: datetime = Field(default_factory=datetime.now)
     recommendation: Literal["BUY", "HOLD", "SELL"]
     confidence_level: float = Field(..., ge=0.0, le=1.0)
-    
+
     # ETF-specific metrics
     expense_ratio: float = Field(..., ge=0.0, le=1.0)
     aum: float = Field(..., gt=0, description="Assets under management")
     tracking_error: Optional[float] = Field(None, ge=0.0)
-    
+
     # Holdings analysis
     top_holdings: List[ETFTopHolding] = Field(default_factory=list)
     sector_allocation: Dict[str, float] = Field(default_factory=dict)
-    
+
     # Performance metrics
     ytd_return: Optional[float] = None
     one_year_return: Optional[float] = None
     three_year_return: Optional[float] = None
-    
+
     # Risk assessment
     risk_assessment: RiskAssessmentStandardized
-    
+
     # Analysis
     rationale: str = Field(..., min_length=100)
     key_strengths: List[str] = Field(default_factory=list)
     key_concerns: List[str] = Field(default_factory=list)
-    
+
     # Data sources
     data_sources: List[str] = Field(default_factory=list)
 ```
@@ -176,29 +176,29 @@ class CryptoThesis(BaseModel):
     analysis_date: datetime = Field(default_factory=datetime.now)
     recommendation: Literal["BUY", "HOLD", "SELL"]
     confidence_level: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Crypto-specific metrics
     market_cap: float = Field(..., gt=0)
     circulating_supply: Optional[float] = Field(None, gt=0)
     max_supply: Optional[float] = Field(None, gt=0)
-    
+
     # Technology assessment
     technology_score: int = Field(..., ge=1, le=10)
     adoption_score: int = Field(..., ge=1, le=10)
     team_score: int = Field(..., ge=1, le=10)
-    
+
     # Market metrics
     volatility_30d: Optional[float] = Field(None, ge=0.0)
     volume_24h: Optional[float] = Field(None, ge=0.0)
-    
+
     # Risk assessment
     risk_assessment: RiskAssessmentStandardized
-    
+
     # Analysis
     thesis: str = Field(..., min_length=200)
     key_catalysts: List[str] = Field(default_factory=list)
     key_risks: List[str] = Field(default_factory=list)
-    
+
     # Data sources
     data_sources: List[str] = Field(default_factory=list)
 ```
@@ -213,26 +213,26 @@ Market sentiment analysis from news, social media, and analyst reports.
 class MarketSentiment(BaseModel):
     ticker: str = Field(..., description="Asset ticker symbol")
     analysis_date: datetime = Field(default_factory=datetime.now)
-    
+
     # Sentiment scores
     overall_sentiment: float = Field(..., ge=-1.0, le=1.0)
     news_sentiment: float = Field(..., ge=-1.0, le=1.0)
     social_sentiment: Optional[float] = Field(None, ge=-1.0, le=1.0)
     analyst_sentiment: Optional[float] = Field(None, ge=-1.0, le=1.0)
-    
+
     # Sentiment sources
     news_articles_analyzed: int = Field(default=0, ge=0)
     social_posts_analyzed: int = Field(default=0, ge=0)
     analyst_reports_analyzed: int = Field(default=0, ge=0)
-    
+
     # Key themes
     positive_themes: List[str] = Field(default_factory=list)
     negative_themes: List[str] = Field(default_factory=list)
-    
+
     # Confidence and reliability
     confidence_level: float = Field(..., ge=0.0, le=1.0)
     data_quality_score: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Data sources
     data_sources: List[str] = Field(default_factory=list)
 ```
@@ -255,22 +255,22 @@ class RiskAssessmentStandardized(BaseModel):
     overall_risk_score: int = Field(..., ge=1, le=10, description="1=Very Low, 10=Very High")
     systematic_risk: float = Field(..., ge=0.0, le=1.0, description="Market/sector risk component")
     idiosyncratic_risk: float = Field(..., ge=0.0, le=1.0, description="Asset-specific risk")
-    
+
     # Risk categorization
     risk_category: RiskCategory
-    
+
     # Risk factors
     risk_factors: List[str] = Field(default_factory=list)
     risk_mitigation: List[str] = Field(default_factory=list)
-    
+
     # Risk metrics
     volatility: Optional[float] = Field(None, ge=0.0)
     max_drawdown: Optional[float] = Field(None, le=0.0)
     beta: Optional[float] = Field(None)
-    
+
     # Confidence in assessment
     confidence_level: float = Field(..., ge=0.0, le=1.0)
-    
+
     model_config = {
         "extra": "forbid",
         "use_enum_values": True

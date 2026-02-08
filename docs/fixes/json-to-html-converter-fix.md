@@ -1,7 +1,7 @@
 # JSON to HTML Converter Fix
 
-**Date**: 2025-11-23  
-**Issue**: Failed conversions for deep_analysis_stock_output JSON files  
+**Date**: 2025-11-23
+**Issue**: Failed conversions for deep_analysis_stock_output JSON files
 **Status**: ✅ Fixed
 
 ## Problem

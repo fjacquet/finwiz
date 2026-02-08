@@ -25,7 +25,7 @@ log() {
     shift
     local message="$*"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
+
     echo -e "${timestamp} [${level}] ${message}" | tee -a "$LOG_FILE"
 }
 
@@ -59,32 +59,32 @@ trap 'error_handler $LINENO' ERR
 # Rollback function
 rollback_investment_discovery() {
     log_warn "Initiating Investment Discovery rollback procedure..."
-    
+
     # Stop monitoring services
     stop_monitoring_services
-    
+
     # Disable investment discovery feature flag
     export FF_INVESTMENT_DISCOVERY="false"
-    
+
     # Run general rollback
     if [[ -f "$SCRIPT_DIR/rollback.sh" ]]; then
         "$SCRIPT_DIR/rollback.sh" --skip-verification
     fi
-    
+
     log_success "Investment Discovery rollback completed"
 }
 
 # Stop monitoring services
 stop_monitoring_services() {
     log_info "Stopping Investment Discovery monitoring services..."
-    
+
     # Stop monitoring processes
     local monitor_pids=$(pgrep -f "investment_discovery_monitor" || true)
     if [[ -n "$monitor_pids" ]]; then
         log_info "Stopping monitoring processes: $monitor_pids"
         echo "$monitor_pids" | xargs -r kill -TERM
         sleep 3
-        
+
         # Force kill if still running
         local remaining_pids=$(pgrep -f "investment_discovery_monitor" || true)
         if [[ -n "$remaining_pids" ]]; then
@@ -92,23 +92,23 @@ stop_monitoring_services() {
             echo "$remaining_pids" | xargs -r kill -KILL
         fi
     fi
-    
+
     log_success "Monitoring services stopped"
 }
 
 # Pre-deployment checks for Investment Discovery
 pre_deployment_checks() {
     log_info "Running Investment Discovery pre-deployment checks..."
-    
+
     # Check if base deployment script exists
     if [[ ! -f "$SCRIPT_DIR/deploy.sh" ]]; then
         log_error "Base deployment script not found: $SCRIPT_DIR/deploy.sh"
         exit 1
     fi
-    
+
     # Check Investment Discovery specific requirements
     cd "$PROJECT_ROOT"
-    
+
     # Validate Investment Discovery Crew configuration
     if ! uv run python -c "
 import sys
@@ -124,7 +124,7 @@ except Exception as e:
         log_error "Investment Discovery Crew configuration validation failed"
         exit 1
     fi
-    
+
     # Check monitoring system
     if ! uv run python -c "
 import sys
@@ -140,25 +140,25 @@ except Exception as e:
         log_error "Investment Discovery monitoring system validation failed"
         exit 1
     fi
-    
+
     # Check required directories
     mkdir -p "$PROJECT_ROOT/output/discovery" "$PROJECT_ROOT/output/monitoring"
-    
+
     log_success "Investment Discovery pre-deployment checks passed"
 }
 
 # Deploy Investment Discovery specific components
 deploy_investment_discovery() {
     log_info "Deploying Investment Discovery components..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Set Investment Discovery specific environment variables
     export FF_INVESTMENT_DISCOVERY="true"
     export FF_INVESTMENT_DISCOVERY_MONITORING="true"
     export FINWIZ_DISCOVERY_OUTPUT_DIR="output/discovery"
     export FINWIZ_MONITORING_OUTPUT_DIR="output/monitoring"
-    
+
     # Configure discovery parameters based on environment
     case "$DEPLOYMENT_ENV" in
         "production")
@@ -180,7 +180,7 @@ deploy_investment_discovery() {
             export MONITORING_ALERT_THRESHOLD="0.5"  # 50% error rate
             ;;
     esac
-    
+
     # Initialize monitoring database
     log_info "Initializing monitoring database..."
     uv run python -c "
@@ -190,16 +190,16 @@ from finwiz.monitoring.investment_discovery_monitor import get_discovery_monitor
 monitor = get_discovery_monitor()
 print('Investment Discovery monitoring initialized')
 "
-    
+
     log_success "Investment Discovery components deployed"
 }
 
 # Start monitoring services
 start_monitoring_services() {
     log_info "Starting Investment Discovery monitoring services..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Create monitoring service script
     cat > "$PROJECT_ROOT/scripts/start_discovery_monitor.sh" << 'EOF'
 #!/bin/bash
@@ -222,21 +222,21 @@ async def monitoring_loop():
         try:
             health_data = await monitor_discovery_health()
             logger.info(f'Health check completed: {health_data[\"health_status\"][\"status\"]}')
-            
+
             # Check for critical alerts
             critical_alerts = [
-                alert for alert in health_data['active_alerts'] 
+                alert for alert in health_data['active_alerts']
                 if alert.get('severity') == 'critical'
             ]
-            
+
             if critical_alerts:
                 logger.error(f'Critical alerts detected: {len(critical_alerts)}')
                 for alert in critical_alerts:
                     logger.error(f'CRITICAL: {alert[\"message\"]}')
-            
+
             # Wait 60 seconds before next check
             await asyncio.sleep(60)
-            
+
         except Exception as e:
             logger.error(f'Monitoring loop error: {e}')
             await asyncio.sleep(30)  # Shorter wait on error
@@ -255,13 +255,13 @@ logger.info('Starting Investment Discovery monitoring service...')
 asyncio.run(monitoring_loop())
 "
 EOF
-    
+
     chmod +x "$PROJECT_ROOT/scripts/start_discovery_monitor.sh"
-    
+
     # Start monitoring service in background
     nohup "$PROJECT_ROOT/scripts/start_discovery_monitor.sh" > "$PROJECT_ROOT/logs/discovery_monitor.log" 2>&1 &
     local monitor_pid=$!
-    
+
     # Wait a moment and check if it started successfully
     sleep 3
     if kill -0 "$monitor_pid" 2>/dev/null; then
@@ -276,9 +276,9 @@ EOF
 # Post-deployment verification for Investment Discovery
 post_deployment_verification() {
     log_info "Running Investment Discovery post-deployment verification..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Test Investment Discovery Crew initialization
     if ! timeout 60 uv run python -c "
 import sys
@@ -308,7 +308,7 @@ print('✅ Investment Discovery post-deployment verification successful')
         log_error "Investment Discovery post-deployment verification failed"
         exit 1
     fi
-    
+
     # Test monitoring service
     if [[ -f "$PROJECT_ROOT/logs/discovery_monitor.pid" ]]; then
         local monitor_pid=$(cat "$PROJECT_ROOT/logs/discovery_monitor.pid")
@@ -319,16 +319,16 @@ print('✅ Investment Discovery post-deployment verification successful')
             exit 1
         fi
     fi
-    
+
     log_success "Investment Discovery post-deployment verification completed"
 }
 
 # Create monitoring dashboard
 create_monitoring_dashboard() {
     log_info "Creating Investment Discovery monitoring dashboard..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Create dashboard HTML template
     cat > "$PROJECT_ROOT/output/monitoring/dashboard.html" << 'EOF'
 <!DOCTYPE html>
@@ -361,45 +361,45 @@ create_monitoring_dashboard() {
             <button class="refresh-btn" onclick="refreshDashboard()">Refresh Data</button>
             <div class="timestamp" id="lastUpdate">Last updated: Loading...</div>
         </div>
-        
+
         <div class="metrics-grid">
             <div class="metric-card">
                 <div class="metric-title">System Health</div>
                 <div class="metric-value" id="healthStatus">Loading...</div>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">Total Discoveries</div>
                 <div class="metric-value" id="totalDiscoveries">Loading...</div>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">A+ Discoveries</div>
                 <div class="metric-value" id="aPlusDiscoveries">Loading...</div>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">Success Rate</div>
                 <div class="metric-value" id="successRate">Loading...</div>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">Average Discovery Time</div>
                 <div class="metric-value" id="avgDiscoveryTime">Loading...</div>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">Active Alerts</div>
                 <div class="metric-value" id="activeAlerts">Loading...</div>
             </div>
         </div>
-        
+
         <div class="metric-card" style="margin-top: 20px;">
             <div class="metric-title">Recent Alerts</div>
             <div id="alertsList">Loading...</div>
         </div>
     </div>
-    
+
     <script>
         async function refreshDashboard() {
             try {
@@ -416,63 +416,63 @@ create_monitoring_dashboard() {
                     active_alerts: [],
                     recent_alerts: []
                 };
-                
+
                 updateDashboard(mockData);
             } catch (error) {
                 console.error('Failed to refresh dashboard:', error);
             }
         }
-        
+
         function updateDashboard(data) {
             document.getElementById('healthStatus').textContent = data.health_status.status;
             document.getElementById('healthStatus').className = 'metric-value status-' + data.health_status.status;
-            
+
             document.getElementById('totalDiscoveries').textContent = data.discovery_metrics.total_discoveries;
             document.getElementById('aPlusDiscoveries').textContent = data.discovery_metrics.a_plus_discoveries;
             document.getElementById('successRate').textContent = (data.discovery_metrics.discovery_success_rate * 100).toFixed(1) + '%';
             document.getElementById('avgDiscoveryTime').textContent = data.discovery_metrics.avg_discovery_time.toFixed(1) + 's';
             document.getElementById('activeAlerts').textContent = data.active_alerts.length;
-            
+
             const alertsList = document.getElementById('alertsList');
             if (data.recent_alerts.length === 0) {
                 alertsList.innerHTML = '<div style="color: #27ae60;">No recent alerts</div>';
             } else {
-                alertsList.innerHTML = data.recent_alerts.map(alert => 
+                alertsList.innerHTML = data.recent_alerts.map(alert =>
                     `<div class="alert-${alert.severity}">${alert.message} (${alert.timestamp})</div>`
                 ).join('');
             }
-            
+
             document.getElementById('lastUpdate').textContent = 'Last updated: ' + new Date().toLocaleString();
         }
-        
+
         // Auto-refresh every 30 seconds
         setInterval(refreshDashboard, 30000);
-        
+
         // Initial load
         refreshDashboard();
     </script>
 </body>
 </html>
 EOF
-    
+
     log_success "Monitoring dashboard created at output/monitoring/dashboard.html"
 }
 
 # Main deployment function
 main() {
     log_info "Starting Investment Discovery Crew deployment (Environment: $DEPLOYMENT_ENV)"
-    
+
     # Run base deployment first
     log_info "Running base FinWiz deployment..."
     "$SCRIPT_DIR/deploy.sh" -e "$DEPLOYMENT_ENV"
-    
+
     # Investment Discovery specific deployment
     pre_deployment_checks
     deploy_investment_discovery
     start_monitoring_services
     post_deployment_verification
     create_monitoring_dashboard
-    
+
     log_success "🚀 Investment Discovery Crew deployment completed successfully!"
     log_info "Deployment environment: $DEPLOYMENT_ENV"
     log_info "Monitoring dashboard: output/monitoring/dashboard.html"

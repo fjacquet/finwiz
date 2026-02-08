@@ -64,9 +64,9 @@ class SentimentResponseFormatter:
 - **Overall Sentiment**: {sentiment.title()} ({score:+.4f})
 - **Confidence Level**: {confidence:.1%}
 - **Total Articles Analyzed**: {article_count}
-{sources_info}- **Sentiment Distribution**: 
+{sources_info}- **Sentiment Distribution**:
   - 📈 Bullish: {distribution.get("bullish", 0)} articles
-  - ⚖️ Neutral: {distribution.get("neutral", 0)} articles  
+  - ⚖️ Neutral: {distribution.get("neutral", 0)} articles
   - 📉 Bearish: {distribution.get("bearish", 0)} articles
 
 ## 🔍 Market Outlook
@@ -157,7 +157,7 @@ Please verify the ticker symbol and try again later.
 
 ## ⚠️ No Recent News Found
 
-No news articles were found for {ticker} within the last {days_back} days. 
+No news articles were found for {ticker} within the last {days_back} days.
 
 **Suggestions:**
 - Try increasing the time range (days_back parameter)

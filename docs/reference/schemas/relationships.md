@@ -61,7 +61,7 @@ class BaseAnalysis:
 **Inheritance Pattern:**
 
 - `TenKInsight` extends BaseAnalysis for stocks
-- `ETFFactsheet` extends BaseAnalysis for ETFs  
+- `ETFFactsheet` extends BaseAnalysis for ETFs
 - `CryptoThesis` extends BaseAnalysis for cryptocurrencies
 - All include `RiskAssessmentStandardized`
 
@@ -109,7 +109,7 @@ sequenceDiagram
     participant Analysis
     participant Risk
     participant Report
-    
+
     User->>Validation: Raw ticker input
     Validation->>Validation: ValidatedTicker
     Validation->>Analysis: Validated input
@@ -128,7 +128,7 @@ sequenceDiagram
     participant Analysis
     participant Discovery
     participant Report
-    
+
     User->>Portfolio: Holdings list
     Portfolio->>Analysis: Individual holdings
     Analysis->>Portfolio: Analysis results
@@ -147,7 +147,7 @@ sequenceDiagram
     participant Analysis
     participant Categorization
     participant Results
-    
+
     Discovery->>Screening: Market universe
     Screening->>Analysis: Candidate tickers
     Analysis->>Categorization: Analysis results
@@ -168,7 +168,7 @@ class TenKInsight(BaseModel):
     risk_assessment: RiskAssessmentStandardized
 
 class ETFFactsheet(BaseModel):
-    # ... other fields  
+    # ... other fields
     risk_assessment: RiskAssessmentStandardized
 
 class CryptoThesis(BaseModel):
@@ -196,7 +196,7 @@ All schemas support validation workflows:
 # Validation result contains sanitized data
 ValidationResult:
     sanitized_data: Dict[str, Any]  # Can be used to create any schema
-    
+
 # Example usage
 if validation_result.is_valid:
     analysis = TenKInsight.model_validate(validation_result.sanitized_data)
@@ -260,7 +260,7 @@ class TenKInsight(BaseModel):
     # Existing required fields
     ticker: str
     recommendation: str
-    
+
     # New optional fields (backward compatible)
     esg_score: Optional[float] = None      # Added in v1.1
     analyst_coverage: Optional[int] = None  # Added in v1.2
@@ -273,7 +273,7 @@ Schema versions are tracked:
 ```python
 class BaseSchema(BaseModel):
     schema_version: str = Field(default="1.0")
-    
+
     model_config = {
         "extra": "forbid",
         "validate_assignment": True
@@ -307,11 +307,11 @@ def create_analysis_schema(asset_class: str, data: dict):
         "etf": ETFFactsheet,
         "crypto": CryptoThesis
     }
-    
+
     schema_class = schema_map.get(asset_class)
     if not schema_class:
         raise ValueError(f"Unknown asset class: {asset_class}")
-    
+
     return schema_class.model_validate(data)
 ```
 
@@ -323,12 +323,12 @@ Combine multiple schemas into portfolio view:
 def create_portfolio_review(holdings_data: List[dict]) -> PortfolioReview:
     """Create portfolio review from individual holdings"""
     holdings = []
-    
+
     for holding_data in holdings_data:
         # Create individual holding decision
         holding = HoldingDecision.model_validate(holding_data)
         holdings.append(holding)
-    
+
     # Aggregate into portfolio
     return PortfolioReview(
         holdings=holdings,
@@ -344,20 +344,20 @@ Validate data through multiple schema layers:
 ```python
 def validate_analysis_pipeline(raw_data: dict) -> TenKInsight:
     """Validate data through complete pipeline"""
-    
+
     # Step 1: Input validation
     validation_result = ValidationResult.validate_input(raw_data)
     if not validation_result.is_valid:
         raise ValidationError("Input validation failed")
-    
+
     # Step 2: Ticker validation
     ticker_data = validation_result.sanitized_data
     validated_ticker = ValidatedTicker.model_validate(ticker_data)
-    
+
     # Step 3: Analysis schema validation
     analysis_data = run_analysis(validated_ticker)
     analysis = TenKInsight.model_validate(analysis_data)
-    
+
     return analysis
 ```
 

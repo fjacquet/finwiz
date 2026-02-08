@@ -1,7 +1,7 @@
 # CrewAI Steering Documentation Update
 
-**Date**: 2025-11-15  
-**Source**: Context7 MCP Server (`/websites/crewai`)  
+**Date**: 2025-11-15
+**Source**: Context7 MCP Server (`/websites/crewai`)
 **Updated Files**: `.kiro/steering/crewai-standards.md`
 
 ## Summary
@@ -181,15 +181,15 @@ class PoemFlow(Flow[PoemState]):
     @listen(generate_sentence_count)
     def generate_poem(self, data):
         count = data["count"]
-        
+
         # Execute crew
         result = PoemCrew().crew().kickoff(
             inputs={"sentence_count": count}
         )
-        
+
         # Store in state
         self.state.poem = result.raw
-        
+
         return {"poem": result.raw}
 ```
 
@@ -244,5 +244,5 @@ All patterns validated against:
 
 ---
 
-**Maintained By**: Kiro AI Assistant  
+**Maintained By**: Kiro AI Assistant
 **Last Context7 Refresh**: 2025-11-15

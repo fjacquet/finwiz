@@ -83,7 +83,7 @@ template_data = {
     "asset_class": "stock",
     "analysis_date": datetime.now(),
     "session_id": "analysis_2025_01_25",
-    
+
     # Scores and Grades
     "composite_score": 0.78,        # 0.0-1.0
     "fundamental_score": 0.82,      # 0.0-1.0
@@ -93,7 +93,7 @@ template_data = {
     "recommendation": "BUY",        # BUY, HOLD, SELL
     "confidence": 0.85,            # 0.0-1.0
     "rationale": "Strong fundamentals...",
-    
+
     # Component Details
     "fundamental_details": {
         "roe": 0.25,               # Stock-specific
@@ -109,7 +109,7 @@ template_data = {
         "volume_24h": 2000000000,
         "age_years": 5.2
     },
-    
+
     "technical_details": {
         "rsi": 55.0,
         "trend_direction": "uptrend",
@@ -118,14 +118,14 @@ template_data = {
         "moving_avg_200": 140.0,
         "macd_diff": 0.5
     },
-    
+
     "risk_details": {
         "volatility": 0.18,
         "max_drawdown": -0.15,
         "beta": 1.1,
         "beta_deviation": 0.1
     },
-    
+
     # Metadata
     "data_sources": ["Yahoo Finance", "SEC EDGAR", "Alpha Vantage"],
     "report_html_path": "output/reports/.../report.html",
@@ -145,8 +145,8 @@ All templates use professional French financial terminology:
 <!-- Executive Summary -->
 <h2>📋 Résumé Exécutif</h2>
 <p>
-    L'analyse approfondie de <strong>{{ ticker }}</strong> révèle un actif de classe {{ asset_class|upper }} 
-    avec un score composite de <strong>{{ "%.1f"|format(composite_score * 100) }}%</strong> 
+    L'analyse approfondie de <strong>{{ ticker }}</strong> révèle un actif de classe {{ asset_class|upper }}
+    avec un score composite de <strong>{{ "%.1f"|format(composite_score * 100) }}%</strong>
     et une note de <strong>{{ grade }}</strong>.
 </p>
 
@@ -410,7 +410,7 @@ Create specialized templates by extending the base:
 <!-- ETF-specific additional metrics -->
 <div class="section etf-specific">
     <h3>📊 Métriques ETF Spécialisées</h3>
-    
+
     {% if holdings_data %}
     <h4>Top Holdings</h4>
     <table class="holdings-table">
@@ -450,7 +450,7 @@ from finwiz.reporting.deep_analysis_report_generator import DeepAnalysisReportGe
 
 class DeepAnalysisReportGenerator:
     """Generate HTML reports from DeepAnalysisResult using Jinja2 templates."""
-    
+
     def __init__(self):
         """Initialize report generator with Jinja2 environment."""
         template_dir = Path(__file__).parent.parent / "templates"
@@ -458,10 +458,10 @@ class DeepAnalysisReportGenerator:
             loader=FileSystemLoader(template_dir),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        
+
         # Register custom filters
         self._register_custom_filters()
-    
+
     def generate_report(
         self,
         result: DeepAnalysisResult,
@@ -469,18 +469,18 @@ class DeepAnalysisReportGenerator:
         output_path: str
     ) -> str:
         """Generate HTML report from analysis result."""
-        
+
         # Prepare template data
         template_data = self._prepare_template_data(result, detailed_analysis)
-        
+
         # Load and render template
         template = self.jinja_env.get_template("crew_reports/deep_analysis_report.html.j2")
         html_content = template.render(**template_data)
-        
+
         # Save to file
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        
+
         return output_path
 ```
 
@@ -511,7 +511,7 @@ Test template rendering with mock data:
 def test_should_render_deep_analysis_template_with_stock_data():
     """Test deep analysis template rendering for stocks."""
     generator = DeepAnalysisReportGenerator()
-    
+
     # Mock DeepAnalysisResult
     result = DeepAnalysisResult(
         ticker="AAPL",
@@ -528,24 +528,24 @@ def test_should_render_deep_analysis_template_with_stock_data():
         technical_details={"rsi": 55.0, "trend_direction": "uptrend"},
         risk_details={"volatility": 0.18, "max_drawdown": -0.15}
     )
-    
+
     # Mock detailed analysis
     detailed_analysis = {
         "data_sources": ["Yahoo Finance", "SEC EDGAR"],
         "analysis_timestamp": "2025-01-25T10:30:00Z"
     }
-    
+
     # Generate report
     output_path = "/tmp/test_report.html"
     generated_path = generator.generate_report(result, detailed_analysis, output_path)
-    
+
     # Verify file created
     assert Path(generated_path).exists()
-    
+
     # Verify HTML content
     with open(generated_path, 'r') as f:
         html_content = f.read()
-    
+
     assert "AAPL" in html_content
     assert "Grade A" in html_content
     assert "BUY" in html_content
@@ -567,15 +567,15 @@ def test_template_visual_scenarios():
         # Medium-grade ETF
         {"ticker": "SPY", "grade": "B", "recommendation": "HOLD", "asset_class": "etf"},
     ]
-    
+
     for scenario in scenarios:
         result = create_mock_result(**scenario)
         html = generator.generate_report(result, {}, f"/tmp/{scenario['ticker']}.html")
-        
+
         # Verify scenario-specific content
         with open(html, 'r') as f:
             content = f.read()
-        
+
         assert scenario["grade"] in content
         assert scenario["recommendation"] in content
         assert scenario["asset_class"].upper() in content
@@ -589,24 +589,24 @@ Ensure templates meet accessibility standards:
 def test_template_accessibility():
     """Test template accessibility compliance."""
     html_content = generate_sample_report()
-    
+
     # Parse HTML
     soup = BeautifulSoup(html_content, 'html.parser')
-    
+
     # Check for required accessibility features
     assert soup.find('html').get('lang') == 'fr'  # Language specified
     assert soup.find('title') is not None         # Title present
-    
+
     # Check heading hierarchy
     headings = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
     assert len(headings) > 0
     assert headings[0].name == 'h1'  # Starts with h1
-    
+
     # Check alt text for images (if any)
     images = soup.find_all('img')
     for img in images:
         assert img.get('alt') is not None
-    
+
     # Check color contrast (would need additional tools)
     # Check keyboard navigation (would need browser testing)
 ```
@@ -644,11 +644,11 @@ from finwiz.utils.performance_monitor import PerformanceMonitor
 def monitor_template_performance():
     """Monitor template rendering performance."""
     monitor = PerformanceMonitor()
-    
+
     start_time = time.time()
     html_content = generator.generate_report(result, detailed_analysis, output_path)
     render_time = time.time() - start_time
-    
+
     # Log performance metrics
     monitor.log_template_render(
         template_name="deep_analysis_report",
@@ -656,7 +656,7 @@ def monitor_template_performance():
         output_size=len(html_content),
         data_complexity=len(detailed_analysis)
     )
-    
+
     # Alert if performance degrades
     if render_time > 0.5:  # 500ms threshold
         logger.warning(f"Template rendering slow: {render_time:.2f}s")
@@ -776,8 +776,8 @@ This template system enables FinWiz to generate high-quality reports at scale wh
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-25  
+**Version**: 1.0
+**Last Updated**: 2025-01-25
 **Related Documentation**:
 
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)

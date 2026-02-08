@@ -92,15 +92,15 @@ from pydantic import BaseModel, Field, field_validator
 
 class TickerInput(BaseModel):
     """Validate ticker input with strict security."""
-    
+
     model_config = {
         "str_strip_whitespace": True,
         "str_upper": True,
         "extra": "forbid"  # Reject unknown fields
     }
-    
+
     symbol: str = Field(..., pattern=r'^[A-Z]{1,5}$')
-    
+
     @field_validator('symbol')
     @classmethod
     def validate_ticker(cls, v: str) -> str:
@@ -199,15 +199,15 @@ def read_report(filename: str) -> str:
     # Validate filename
     if not filename.replace('-', '').replace('_', '').isalnum():
         raise ValueError("Invalid filename")
-    
+
     # Resolve path safely
     base_path = Path("reports")
     file_path = (base_path / filename).resolve()
-    
+
     # Ensure path is within base directory
     if not str(file_path).startswith(str(base_path.resolve())):
         raise ValueError("Path traversal attempt")
-    
+
     return file_path.read_text()
 
 # ❌ WRONG - Path traversal risk
@@ -227,7 +227,7 @@ def run_analysis(ticker: str) -> str:
     # Validate input
     if not ticker.isalpha():
         raise ValueError("Invalid ticker")
-    
+
     # Use list form (safer)
     result = subprocess.run(
         ["python", "analyze.py", ticker],

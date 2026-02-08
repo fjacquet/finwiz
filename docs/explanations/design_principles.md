@@ -75,7 +75,7 @@ Make dependencies clear and manageable:
 ```python
 # ✅ Good: Explicit dependencies
 class StockAnalyzer:
-    def __init__(self, 
+    def __init__(self,
                  validator: TickerValidationTool,
                  data_source: YahooFinanceTool,
                  risk_assessor: RiskAssessmentTool):
@@ -138,7 +138,7 @@ class StockAnalysis(BaseModel):
     ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$')
     grade: str = Field(..., pattern=r'^(A\+|A|B|C|D|F)$')
     composite_score: float = Field(..., ge=0.0, le=1.0)
-    
+
     model_config = ConfigDict(
         extra='forbid',           # Reject unknown fields
         str_strip_whitespace=True, # Clean input data
@@ -168,7 +168,7 @@ class AnalysisResult(BaseModel):
     # ... other fields ...
     data_freshness: Dict[str, datetime]
     stale_data_warning: bool = False
-    
+
     @model_validator(mode='after')
     def check_data_freshness(self) -> 'AnalysisResult':
         now = datetime.now()
@@ -185,7 +185,7 @@ Handle missing data transparently:
 
 ```python
 # ✅ Good: Explicit handling of missing data
-def calculate_score(fundamental: Optional[float], 
+def calculate_score(fundamental: Optional[float],
                    technical: Optional[float]) -> ScoreResult:
     if fundamental is None and technical is None:
         return ScoreResult(
@@ -193,7 +193,7 @@ def calculate_score(fundamental: Optional[float],
             confidence=0.0,
             warning="Insufficient data for scoring"
         )
-    
+
     # Calculate with available data
     available_scores = [s for s in [fundamental, technical] if s is not None]
     return ScoreResult(
@@ -245,7 +245,7 @@ Limit AI agent scope to prevent hallucinations:
 class RiskAssessmentAgent(Agent):
     """Focused on risk assessment only."""
     tools = [RiskCalculationTool, VolatilityTool]  # Limited tool set
-    
+
     def assess_risk(self, ticker: str) -> RiskAssessment:
         # Focused task with clear boundaries
         pass
@@ -317,7 +317,7 @@ Detect errors early and communicate clearly:
 def analyze_ticker(ticker: str) -> AnalysisResult:
     if not re.match(r'^[A-Z]{1,5}$', ticker):
         raise ValueError(f"Invalid ticker format: {ticker}. Must be 1-5 uppercase letters.")
-    
+
     # Continue with valid ticker
     pass
 
@@ -375,7 +375,7 @@ Validate all external inputs:
 ```python
 class TickerInput(BaseModel):
     ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$')
-    
+
     @field_validator('ticker')
     @classmethod
     def validate_ticker(cls, v: str) -> str:
@@ -396,7 +396,7 @@ class APIClient:
         self.api_key = os.getenv("API_KEY")
         if not self.api_key:
             raise ConfigurationError("API_KEY environment variable not set")
-    
+
     def make_request(self, url: str) -> dict:
         headers = {"Authorization": f"Bearer {self.api_key}"}
         # Never log headers or api_key
@@ -413,7 +413,7 @@ Never log sensitive financial information:
 def analyze_portfolio(holdings: List[Holding]) -> PortfolioAnalysis:
     logger.info(f"Analyzing portfolio with {len(holdings)} holdings")  # Safe
     # Never log: actual holdings, values, or personal information
-    
+
     for holding in holdings:
         # Process holding
         logger.debug(f"Processing {holding.ticker}")  # Ticker is public info
@@ -431,10 +431,10 @@ Focus on what the code does, not how it does it:
 def test_should_return_buy_recommendation_for_strong_stock():
     # Arrange
     strong_stock_data = create_strong_stock_data()
-    
+
     # Act
     result = analyze_stock(strong_stock_data)
-    
+
     # Assert
     assert result.recommendation == "BUY"
     assert result.confidence > 0.8
@@ -454,7 +454,7 @@ def test_should_handle_api_failure_gracefully(mocker):
     # Mock external API to simulate failure
     mock_api = mocker.patch('finwiz.tools.yahoo_finance_tool.get_data')
     mock_api.side_effect = APIError("Service unavailable")
-    
+
     # Test graceful handling
     result = analyze_stock("AAPL")
     assert result.error is not None
@@ -484,7 +484,7 @@ Write self-documenting code:
 
 ```python
 # ✅ Good: Self-documenting
-def calculate_risk_adjusted_return(returns: List[float], 
+def calculate_risk_adjusted_return(returns: List[float],
                                  risk_free_rate: float) -> float:
     """Calculate Sharpe ratio (risk-adjusted return)."""
     excess_returns = [r - risk_free_rate for r in returns]
@@ -517,14 +517,14 @@ Documentation should evolve with code:
 def analyze_stock(ticker: str, deep_analysis: bool = False) -> AnalysisResult:
     """
     Analyze a stock ticker.
-    
+
     Args:
         ticker: Stock symbol (1-5 uppercase letters)
         deep_analysis: Enable comprehensive analysis (added in v2.0)
-    
+
     Returns:
         AnalysisResult with recommendation and confidence
-        
+
     Raises:
         ValueError: If ticker format is invalid
         APIError: If market data is unavailable
@@ -539,14 +539,14 @@ Maintain compatibility when possible:
 
 ```python
 # ✅ Good: Backward compatible change
-def analyze_stock(ticker: str, 
+def analyze_stock(ticker: str,
                  deep_analysis: bool = False,  # New optional parameter
                  **kwargs) -> AnalysisResult:
     # Old calls still work, new functionality available
     pass
 
 # ❌ Bad: Breaking change
-def analyze_stock(ticker: str, 
+def analyze_stock(ticker: str,
                  analysis_type: str) -> AnalysisResult:  # Required new parameter
     # Breaks existing code
     pass
@@ -597,5 +597,5 @@ By following these principles, FinWiz maintains high code quality, reliability, 
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 **Last Updated**: 2025-10-26

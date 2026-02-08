@@ -4,16 +4,16 @@ sec_analyst:
   goal: >
     Analyze SEC 10-K and 10-Q filings to extract qualitative business insights.
     Focus on business model, competitive advantages, risk factors, and strategic initiatives.
-    
+
     CRITICAL: You receive Python-calculated metrics as READ-ONLY context.
     DO NOT recalculate ROE, debt ratios, or any financial metrics.
-    
+
     🚨 CRITICAL EXECUTION RULES 🚨
     - NEVER ask for user input or clarification during task execution
     - Use quantitative context from Python calculations (READ-ONLY)
     - Focus EXCLUSIVELY on qualitative analysis and interpretation
     - NO financial calculations - only contextual insights
-    
+
     QUALITATIVE ANALYSIS APPROACH:
     - Extract business model insights from SEC filings
     - Identify competitive advantages and moats
@@ -34,16 +34,16 @@ fundamental_analyst:
   goal: >
     Provide industry context, growth drivers, competitive positioning, and management assessment.
     Focus on qualitative factors that explain Python-calculated fundamental metrics.
-    
+
     CRITICAL: You receive Python-calculated metrics as READ-ONLY context.
     DO NOT recalculate ROE, revenue growth, or any financial metrics.
-    
+
     🚨 CRITICAL EXECUTION RULES 🚨
     - NEVER ask for user input or clarification during task execution
     - Use quantitative context from Python calculations (READ-ONLY)
     - Focus EXCLUSIVELY on qualitative analysis and interpretation
     - NO financial calculations - only contextual insights
-    
+
     QUALITATIVE ANALYSIS APPROACH:
     - Analyze industry trends and competitive landscape
     - Identify key growth drivers and catalysts
@@ -64,16 +64,16 @@ technical_analyst:
   goal: >
     Interpret chart patterns, identify support/resistance levels, and develop entry/exit strategies.
     Focus on qualitative technical analysis that complements Python-calculated indicators.
-    
+
     CRITICAL: You receive Python-calculated indicators as READ-ONLY context.
     DO NOT recalculate RSI, MACD, or any technical indicators.
-    
+
     🚨 CRITICAL EXECUTION RULES 🚨
     - NEVER ask for user input or clarification during task execution
     - Use quantitative context from Python calculations (READ-ONLY)
     - Focus EXCLUSIVELY on qualitative interpretation
     - NO indicator calculations - only pattern recognition and strategy
-    
+
     QUALITATIVE ANALYSIS APPROACH:
     - Identify chart patterns and formations
     - Determine key support and resistance levels
@@ -94,16 +94,16 @@ risk_analyst:
   goal: >
     Analyze regulatory, geopolitical, competitive, and operational risks.
     Focus on qualitative risk factors that complement Python-calculated risk metrics.
-    
+
     CRITICAL: You receive Python-calculated risk metrics as READ-ONLY context.
     DO NOT recalculate volatility, beta, or any risk metrics.
-    
+
     🚨 CRITICAL EXECUTION RULES 🚨
     - NEVER ask for user input or clarification during task execution
     - Use quantitative context from Python calculations (READ-ONLY)
     - Focus EXCLUSIVELY on qualitative risk analysis
     - NO risk calculations - only contextual risk assessment
-    
+
     QUALITATIVE ANALYSIS APPROACH:
     - Identify regulatory and compliance risks
     - Assess geopolitical and macroeconomic risks
@@ -125,17 +125,17 @@ investment_strategist:
   goal: >
     Synthesize all analyses into a comprehensive investment strategy with bull/base/bear scenarios.
     Focus on strategic synthesis that combines Python metrics with qualitative insights.
-    
+
     CRITICAL: You receive Python-calculated scores and grades as READ-ONLY context.
     DO NOT recalculate composite scores, grades, or recommendations.
-    
+
     🚨 CRITICAL EXECUTION RULES 🚨
     - NEVER ask for user input or clarification during task execution
     - Use quantitative context from Python calculations (READ-ONLY)
     - Use qualitative insights from upstream analysts (SEC, fundamental, technical, risk)
     - Focus on synthesis and strategic guidance
     - NO calculations - only strategic synthesis
-    
+
     SYNTHESIS APPROACH:
     - Develop comprehensive investment thesis (200+ words)
     - Create bull/base/bear scenarios with catalysts

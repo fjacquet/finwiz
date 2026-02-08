@@ -61,11 +61,11 @@ make docs-lint
    # - Missing quotes around special characters
    # - Incorrect indentation
    # - Missing colons or dashes
-   
+
    # Fix example:
    # Wrong:
    site_name: FinWiz Documentation: AI Platform
-   
+
    # Correct:
    site_name: "FinWiz Documentation: AI Platform"
    ```
@@ -75,7 +75,7 @@ make docs-lint
    ```bash
    # Check specific file
    markdownlint docs/path/to/file.md
-   
+
    # Common fixes:
    # - Add language to code blocks
    # - Fix heading hierarchy
@@ -368,7 +368,7 @@ git remote -v
    ```bash
    # Generate SSH key if needed
    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-   
+
    # Add to GitHub repository deploy keys
    ```
 
@@ -429,7 +429,7 @@ Error: Build process exceeded time limit
    ```bash
    # Use fast build for testing
    make docs-build-fast
-   
+
    # Optimize images
    find docs -name "*.png" -exec optipng {} \;
    ```
@@ -439,7 +439,7 @@ Error: Build process exceeded time limit
    ```bash
    # Check site size
    du -sh site/
-   
+
    # Remove large files
    find docs -size +1M -type f
    ```
@@ -474,10 +474,10 @@ time make docs-build
    ```bash
    # Compress PNG images
    find docs -name "*.png" -exec optipng -o2 {} \;
-   
+
    # Compress JPEG images
    find docs -name "*.jpg" -exec jpegoptim --max=85 {} \;
-   
+
    # Convert to WebP (if supported)
    find docs -name "*.png" -exec cwebp -q 80 {} -o {}.webp \;
    ```
@@ -567,7 +567,7 @@ grep -r "](http" docs/
    ```markdown
    # Use relative paths
    [Link text](../reference/api.md)
-   
+
    # Include file extensions
    [Link text](guide.md) not [Link text](guide)
    ```
@@ -577,7 +577,7 @@ grep -r "](http" docs/
    ```bash
    # Check if external sites moved
    curl -I https://example.com/old-url
-   
+
    # Update to new URLs
    ```
 
@@ -586,7 +586,7 @@ grep -r "](http" docs/
    ```bash
    # Install link checker
    npm install -g markdown-link-check
-   
+
    # Check specific file
    markdown-link-check docs/path/to/file.md
    ```
@@ -606,7 +606,7 @@ grep -r "](http" docs/
    ```markdown
    # Use relative paths from current file
    ![Alt text](../assets/image.png)
-   
+
    # Not absolute paths
    ![Alt text](/assets/image.png)
    ```
@@ -684,7 +684,7 @@ Error: Package not found
    ```bash
    # Update uv
    curl -LsSf https://astral.sh/uv/install.sh | sh
-   
+
    # Sync dependencies
    uv sync --group docs
    ```
@@ -694,7 +694,7 @@ Error: Package not found
    ```bash
    # Clear uv cache
    uv cache clean
-   
+
    # Reinstall dependencies
    uv sync --group docs --reinstall
    ```
@@ -704,7 +704,7 @@ Error: Package not found
    ```bash
    # Ensure compatible Python version
    python --version
-   
+
    # Should be 3.8 or higher
    ```
 
@@ -723,7 +723,7 @@ Error: Package not found
    ```bash
    # Check if port 8000 is in use
    lsof -i :8000
-   
+
    # Use different port
    mkdocs serve --dev-addr 127.0.0.1:8001
    ```
@@ -789,6 +789,6 @@ make docs-build 2>&1 | tee build-error.log
 
 ---
 
-**Last Updated**: 2025-10-26  
-**Version**: 1.0  
+**Last Updated**: 2025-10-26
+**Version**: 1.0
 **Maintainer**: FinWiz Documentation Team

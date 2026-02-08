@@ -59,7 +59,7 @@ def calculate_sharpe_ratio(returns: list[float], risk_free_rate: float) -> float
     """Calculate Sharpe ratio with proper error handling."""
     if not returns:
         raise ValueError("Returns list cannot be empty")
-    
+
     # Implementation with clear logic...
     return sharpe_ratio
 
@@ -150,22 +150,22 @@ git config --global commit.gpgsign true
 def analyze_portfolio(holdings: list[Holding]) -> PortfolioAnalysis:
     """
     Analyze portfolio holdings and generate recommendations.
-    
+
     This function performs comprehensive analysis including:
     - Risk assessment using modern portfolio theory
     - Performance attribution analysis
     - Rebalancing recommendations
-    
+
     Args:
         holdings: List of portfolio holdings with current allocations
-        
+
     Returns:
         PortfolioAnalysis with recommendations and risk metrics
-        
+
     Raises:
         ValidationError: If holdings data is invalid
         APIError: If external data sources are unavailable
-        
+
     Example:
         >>> holdings = [Holding(ticker="AAPL", weight=0.3)]
         >>> analysis = analyze_portfolio(holdings)

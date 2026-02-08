@@ -77,13 +77,13 @@ Create a detailed outline with:
    ```bash
    # Tutorials
    touch docs/tutorials/new-tutorial.md
-   
+
    # How-to guides
    touch docs/how-to/new-guide.md
-   
+
    # Reference
    touch docs/reference/new-reference.md
-   
+
    # Explanations
    touch docs/explanations/new-explanation.md
    ```
@@ -766,6 +766,6 @@ Use GitHub issues for:
 
 ---
 
-**Last Updated**: 2025-10-26  
-**Version**: 1.0  
+**Last Updated**: 2025-10-26
+**Version**: 1.0
 **Maintainer**: FinWiz Documentation Team

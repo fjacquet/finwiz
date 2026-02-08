@@ -72,7 +72,7 @@ class BaseAnalysis(BaseModel):
     analysis_date: datetime = Field(default_factory=datetime.now)
     confidence_level: float = Field(..., ge=0.0, le=1.0)
     data_sources: List[str] = Field(default_factory=list)
-    
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True,
@@ -341,7 +341,7 @@ def test_ten_k_insight_validation():
         "confidence_level": 0.85,
         # ... other required fields
     }
-    
+
     analysis = TenKInsight.model_validate(valid_data)
     assert analysis.ticker == "AAPL"
     assert analysis.recommendation == "BUY"

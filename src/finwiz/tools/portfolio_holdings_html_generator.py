@@ -457,11 +457,11 @@ class PortfolioHoldingsHTMLGenerator:
         </table>
         <div style="margin-top:10px;padding:15px;background:#f8f9fa;border-radius:5px">
             <p style="margin:0;color:#666;font-size:0.9em">
-                <strong>Légende:</strong> 
-                🔍 = Analyse approfondie par équipe spécialisée | 
-                ⚡ = Validation rapide | 
-                🟢 = Données fraîches (< 24h) | 
-                🟡 = Données récentes (< 7j) | 
+                <strong>Légende:</strong>
+                🔍 = Analyse approfondie par équipe spécialisée |
+                ⚡ = Validation rapide |
+                🟢 = Données fraîches (< 24h) |
+                🟡 = Données récentes (< 7j) |
                 🔴 = Données anciennes (> 7j)
             </p>
         </div>
@@ -586,7 +586,7 @@ class PortfolioHoldingsHTMLGenerator:
 
             alt_sections.append(f"""
             <div class="alternatives-expandable">
-                <h4>🔄 Alternatives pour {holding.ticker} 
+                <h4>🔄 Alternatives pour {holding.ticker}
                     <span class="grade-badge" style="background-color:{holding_color};margin-left:10px">{holding.grade}</span>
                     <span style="font-size:0.9em;color:#666;margin-left:10px">({len(holding.alternatives)} alternatives A+)</span>
                 </h4>

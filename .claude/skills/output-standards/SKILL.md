@@ -62,7 +62,7 @@ Primary output is a comprehensive HTML report that is:
     <h1>📊 Rapport d'Analyse FinWiz</h1>
     <p><strong>Date:</strong> 2025-03-10</p>
     <p><strong>Actif:</strong> Apple Inc. (AAPL)</p>
-    
+
     <!-- Content sections -->
 </body>
 </html>
@@ -205,7 +205,7 @@ def generate_final_report(self) -> Task:
     return Task(
         description="""
         Consolidate all analysis findings into a comprehensive French HTML report.
-        
+
         CRITICAL REQUIREMENTS:
         - Output MUST be complete, well-formed HTML
         - Use French for all user-facing content

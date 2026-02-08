@@ -367,8 +367,8 @@ Use full URLs for external links:
 
 **Avoid "link" in link text**:
 
-✅ **Good**: "Download the [configuration file](config.yaml)"
-❌ **Avoid**: "Download the [configuration file link](config.yaml)"
+✅ **Good**: `"Download the [configuration file](config.yaml)"`
+❌ **Avoid**: `"Download the [configuration file link](config.yaml)"`
 
 ### Images
 
@@ -705,26 +705,26 @@ Confirm everything is working correctly:
 def analyze_portfolio(holdings: List[Holding]) -> PortfolioAnalysis:
     """
     Analyze portfolio holdings and generate recommendations.
-    
+
     Args:
         holdings: List of portfolio holdings to analyze
-        
+
     Returns:
         PortfolioAnalysis with recommendations and risk assessment
-        
+
     Raises:
         ValidationError: If holdings data is invalid
     """
     # Validate input data
     if not holdings:
         raise ValidationError("Holdings list cannot be empty")
-    
+
     # Perform analysis
     analysis = PortfolioAnalysis()
     for holding in holdings:
         result = analyze_stock(holding.ticker)
         analysis.add_holding_result(result)
-    
+
     return analysis
 
 # Usage example
@@ -829,6 +829,6 @@ plugins:
 
 ---
 
-**Last Updated**: 2025-10-26  
-**Version**: 1.0  
+**Last Updated**: 2025-10-26
+**Version**: 1.0
 **Maintainer**: FinWiz Documentation Team

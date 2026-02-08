@@ -9,7 +9,7 @@ Le système de découverte d'investissements A+ de FinWiz transforme votre expé
 Un investissement A+ représente l'excellence dans sa catégorie avec un score ≥ 0.95 sur notre échelle de notation. Ces investissements combinent :
 
 - **Performance exceptionnelle** : Rendements supérieurs ajustés au risque
-- **Qualité supérieure** : Fondamentaux solides et gestion exemplaire  
+- **Qualité supérieure** : Fondamentaux solides et gestion exemplaire
 - **Coûts optimisés** : Frais réduits maximisant vos rendements nets
 - **Liquidité élevée** : Facilité d'achat et de vente
 - **Transparence** : Informations complètes et fiables
@@ -116,8 +116,8 @@ Réduction de risque : -5% de volatilité
    Frais : 0.08% (excellent)
    Remplacement suggéré : FTSE Developed Markets ETF (0.45% frais)
    Impact : +0.37% rendement net annuel
-   
-🏆 SCHD - Schwab US Dividend Equity ETF  
+
+🏆 SCHD - Schwab US Dividend Equity ETF
    Score A+ : 0.96/1.00
    Frais : 0.06% (exceptionnel)
    Nouveau ajout suggéré : Diversification dividendes US
@@ -149,7 +149,7 @@ Volatilité : 14.8%        →  Volatilité : 14.1%
 ### Niveaux de confiance
 
 - **🟢 Confiance élevée (90-100%)** : Recommandation forte, action immédiate
-- **🟡 Confiance modérée (70-89%)** : Bonne opportunité, surveillance recommandée  
+- **🟡 Confiance modérée (70-89%)** : Bonne opportunité, surveillance recommandée
 - **🟠 Confiance faible (50-69%)** : Opportunité conditionnelle, analyse supplémentaire
 
 ## Exemples concrets d'amélioration
@@ -191,7 +191,7 @@ Remplacement suggéré : Vanguard FTSE All-World (VWRL)
 🏆 ASML Holding N.V. (ASML)
    Score A+ : 0.98/1.00
    Secteur : Semi-conducteurs (équipements)
-   
+
 Critères A+ validés :
 ✅ ROE : 32% (3 ans moyenne)
 ✅ Croissance CA : 18% annuel (5 ans)
@@ -224,7 +224,7 @@ Score moyen crypto : B (0.78)
 ```
 🏆 Solana (SOL) - Score A+ : 0.95
    Ajout suggéré : 1% (réduction BTC à 2%)
-   
+
 Justification A+ :
 ✅ Adoption institutionnelle croissante
 ✅ Écosystème DeFi mature
@@ -286,7 +286,7 @@ ASML (ASML) : A+ → B+
 Cause : Révision à la baisse des prévisions secteur
 Action suggérée : Surveillance renforcée, pas de vente immédiate
 
-📈 NOUVELLE OPPORTUNITÉ  
+📈 NOUVELLE OPPORTUNITÉ
 Découverte : Microsoft (MSFT) atteint critères A+
 Score : 0.96 (nouveau record)
 Action suggérée : Analyse d'intégration portefeuille
@@ -611,7 +611,7 @@ monitoring:
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.0
 
 ## Best Practices
 
