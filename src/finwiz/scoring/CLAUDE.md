@@ -27,10 +27,14 @@ scoring/
 │   ├── crypto_analyzer.py         # CryptoAnalyzer
 │   └── factory.py                 # AnalyzerFactory.get_analyzer(asset_class)
 │
-├── # Legacy discovery analyzers (hardcoded mocks)
-├── stock_analyzer.py              # analyze_stock_opportunities() — returns mock data
-├── etf_analyzer.py                # analyze_etf_opportunities() — returns mock data
-└── crypto_analyzer.py             # analyze_crypto_opportunities() — returns mock data
+├── discovery/                     # Newcomer discovery pipeline (feature-flag gated)
+│   ├── __init__.py                # Exports: NewcomerDiscoveryPipeline
+│   └── pipeline.py               # NewcomerDiscoveryPipeline orchestrator
+│
+├── # Legacy discovery analyzers (route through pipeline when FF_NEWCOMER_DISCOVERY=true)
+├── stock_analyzer.py              # analyze_stock_opportunities()
+├── etf_analyzer.py                # analyze_etf_opportunities()
+└── crypto_analyzer.py             # analyze_crypto_opportunities()
 ```
 
 ## Entry Points
