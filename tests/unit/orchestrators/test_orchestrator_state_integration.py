@@ -4,7 +4,7 @@ Orchestrator state integration tests.
 Tests verify that orchestrator methods mutate FinwizState fields correctly,
 not just return values. Covers DiscoveryOrchestrator and DeepAnalysisOrchestrator.
 
-Uses pytest-mock exclusively (unittest.mock is BANNED per project rules).
+Uses pytest-mock exclusively (mocker fixture).
 """
 
 import pytest
