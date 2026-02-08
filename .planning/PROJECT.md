@@ -8,6 +8,18 @@ FinWiz is an AI-powered financial analysis platform built with CrewAI that analy
 
 Hybrid financial analysis: deterministic Python scoring ($0, <100ms) for quantitative rigor, AI crews for qualitative reasoning, with real newcomer detection for investment discovery.
 
+## Current Milestone: v2 Security & Structural Quality
+
+**Goal:** Harden security, eliminate structural debt, and automate code quality enforcement.
+
+**Target features:**
+- Fail-fast API key validation at tool instantiation
+- Log sanitization to prevent sensitive data leakage
+- Centralized API endpoint configuration
+- Deduplicated portfolio review logic
+- Refactored lazy-loaded orchestrators (eliminate circular import risk)
+- Automated code quality enforcement (pre-commit hooks, CI checks)
+
 ## Current State
 
 Shipped v1 (2026-02-08): Hardening & Discovery milestone complete.
@@ -45,14 +57,25 @@ Shipped v1 (2026-02-08): Hardening & Discovery milestone complete.
 
 ### Active
 
-(No active requirements — define with `/gsd:new-milestone`)
+**Security Hardening:**
+
+- [ ] Fail-fast on missing API keys at tool instantiation
+- [ ] Log sanitization for sensitive data (API keys, tokens)
+- [ ] Centralize hardcoded API endpoint URLs
+
+**Structural Refactoring:**
+
+- [ ] Consolidate duplicate portfolio review logic across 10+ files
+- [ ] Redesign lazy-loaded orchestrators to eliminate circular import risk
+
+**Code Quality Tooling:**
+
+- [ ] Automated quality enforcement (pre-commit hooks, CI checks, file size linting)
 
 ### Out of Scope
 
-- File size violations (300-line limit) — 150+ files, tracked as REFAC-04
-- Duplicate portfolio review consolidation — big refactor across 10+ files
-- Lazy-loaded orchestrator redesign — circular import restructuring
-- Security hardening (API key rotation, endpoint centralization) — separate effort
+- File size violations (300-line limit) — 150+ files, deferred (enforce for new code only)
+- API key rotation support — runtime key refresh too complex for v2
 - Multi-user support — architectural change
 - Real-time data / streaming — future milestone
 - i18n framework — future milestone
@@ -81,5 +104,8 @@ Shipped v1 (2026-02-08): Hardening & Discovery milestone complete.
 | Circuit breaker for crew timeouts | Prevent cascade failures from repeatedly failing crews | ✓ Good — auto-recovery after 60s |
 | Lazy imports in discovery pipeline | Forward-compatible: Phase 3 can be built before Phase 2 | ✓ Good — flexible dev order |
 
+| Skip file size splits in v2 | 150+ files, enforce for new code only via tooling | — Pending |
+| Skip API key rotation in v2 | Runtime refresh is complex, fail-fast is higher priority | — Pending |
+
 ---
-*Last updated: 2026-02-08 after v1 milestone*
+*Last updated: 2026-02-08 after v2 milestone start*

@@ -5,40 +5,31 @@
 See: .planning/PROJECT.md (updated 2026-02-08)
 
 **Core value:** Hybrid financial analysis with real newcomer detection
-**Current focus:** v1 milestone complete — planning next milestone
+**Current focus:** v2 Security & Structural Quality — defining requirements
 
 ## Current Position
 
-Phase: v1 complete (5 phases, 13 plans)
-Plan: All shipped
-Status: Milestone archived
-Last activity: 2026-02-08 — v1 milestone complete, tagged
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-08 — Milestone v2 started
 
-Progress: [##########] 100% (v1)
+Progress: [░░░░░░░░░░] 0% (v2)
 
 ## Performance Metrics
 
-**Velocity:**
+**Velocity (from v1):**
 
 - Total plans completed: 13
 - Average duration: ~4.3 min
 - Total execution time: ~56 min
-
-**By Phase:**
-
-| Phase | Plans | Completed | Avg/Plan |
-|-------|-------|-----------|----------|
-| 1 - Error Handling | 4 | 4 | ~6 min |
-| 2 - Discovery Core | 2 | 2 | ~4 min |
-| 3 - Discovery Integration | 2 | 2 | ~4.5 min |
-| 4 - Performance | 3 | 3 | ~5 min |
-| 5 - Test Coverage | 2 | 2 | ~4 min |
 
 ## Accumulated Context
 
 ### Decisions
 
 All v1 decisions logged in PROJECT.md Key Decisions table with outcomes.
+v2 decisions: Skip file splits (enforce for new code via tooling), skip API key rotation.
 
 ### Pending Todos
 
@@ -46,13 +37,12 @@ None.
 
 ### Blockers/Concerns
 
-None — milestone complete.
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: v1 milestone archived and tagged
+Stopped at: Milestone v2 started, defining requirements
 Resume file: None
-Next action: `/gsd:new-milestone` to start next milestone
 
-*Updated after v1 milestone completion*
+*Updated after v2 milestone start*
