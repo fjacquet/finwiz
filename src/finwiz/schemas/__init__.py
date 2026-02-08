@@ -12,6 +12,7 @@ Modules:
 - tools: tool input validation schemas
 - api: FastAPI request/response models
 - investment_discovery: A+ investment discovery schemas
+- newcomer_discovery: newcomer discovery pipeline schemas
 - portfolio_rebalancing: portfolio rebalancing and optimization schemas
 - perplexity: Perplexity API integration schemas
 - validation: ticker validation schemas
@@ -63,6 +64,13 @@ from .investment_discovery import (  # noqa: F401
     OptimizationResult,
     PortfolioImprovement,
     ValidationResult,
+)
+
+# Newcomer discovery schemas
+from .newcomer_discovery import (  # noqa: F401
+    EnrichmentResult,
+    NewcomerCandidate,
+    NewcomerDiscoveryResult,
 )
 
 # Perplexity integration schemas
@@ -168,6 +176,10 @@ __all__ = [
     "OptimizationResult",
     "PortfolioImprovement",
     "ValidationResult",
+    # Newcomer discovery schemas
+    "EnrichmentResult",
+    "NewcomerCandidate",
+    "NewcomerDiscoveryResult",
     # Perplexity integration schemas
     "PerplexityConfig",
     "PerplexitySearchRequest",
