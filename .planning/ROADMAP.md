@@ -4,7 +4,7 @@
 
 - [x] **v1 Hardening & Discovery** - Phases 1-5 (shipped 2026-02-08)
 - [x] **v2 Security & Structural Quality** - Phases 6-8 (shipped 2026-02-08)
-- [x] **v3 Performance & Risk Analysis** - Phases 9-11 (shipped 2026-02-08)
+- [ ] **v3 Performance & Risk Analysis** - Phases 9-12 (in progress — gap closure)
 
 ## Phases
 
@@ -33,6 +33,7 @@ Phases completed: 6-8 (6 plans total)
 - [x] **Phase 9: Async & Batch Performance** - Full async data collection with batch prefetching and configurable parallel analysis (shipped 2026-02-08)
 - [x] **Phase 10: Cache & Cost Observability** - Smart tiered caching with type-aware TTLs and LLM cost tracking (shipped 2026-02-08)
 - [x] **Phase 11: Risk Stress Testing** - Portfolio scenario analysis with market crash, rate shock, and sector shock simulations (shipped 2026-02-08)
+- [ ] **Phase 12: Wire Stress Test Report Rendering** - Close RISK-04 gap: wire stress test results into HTML report
 
 ## Phase Details
 
@@ -88,9 +89,25 @@ Plans:
 - [x] 11-01: Stress Test Engine & Scenarios (RISK-01, RISK-02, RISK-03)
 - [x] 11-02: Stress Test Integration & HTML Report (RISK-04)
 
+### Phase 12: Wire Stress Test Report Rendering
+
+**Goal**: Stress test results appear in the final HTML report alongside existing analysis output
+**Depends on**: Phase 11 (stress test engine and orchestrator complete)
+**Requirements**: RISK-04
+**Gap Closure**: Closes audit gap — template exists, data is calculated, but rendering pipeline not wired
+**Success Criteria** (what must be TRUE):
+
+  1. `FinalReportGenerator._prepare_template_data()` includes `stress_test_results` and `stress_test_count` in template context
+  2. `crew_reports/final_report.html` renders the stress test section when data is present
+  3. HTML output contains scenario cards with per-holding impact and sensitivity labels
+
+Plans:
+
+- [ ] 12-01: TBD
+
 ## Progress
 
-**Execution Order:** 9 -> 10 -> 11
+**Execution Order:** 9 -> 10 -> 11 -> 12
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -99,6 +116,7 @@ Plans:
 | 9. Async & Batch Performance | v3 | 2/2 | Complete | 2026-02-08 |
 | 10. Cache & Cost Observability | v3 | 2/2 | Complete | 2026-02-08 |
 | 11. Risk Stress Testing | v3 | 2/2 | Complete | 2026-02-08 |
+| 12. Wire Stress Test Report | v3 | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-08*
