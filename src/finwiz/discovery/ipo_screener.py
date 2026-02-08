@@ -100,7 +100,7 @@ class IPOScreener:
                     },
                 )
                 candidates.append(candidate)
-            except Exception:
+            except (ValueError, KeyError, TypeError):
                 self._logger.warning(
                     "Failed to build candidate for ticker %s",
                     ticker,
@@ -199,7 +199,7 @@ class IPOScreener:
                 "sector": info.get("sector"),
                 "name": info.get("longName") or info.get("shortName") or ticker,
             }
-        except Exception:
+        except (ValueError, KeyError, OSError):
             self._logger.warning(
                 "Failed to enrich fundamentals for %s",
                 ticker,

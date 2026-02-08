@@ -230,7 +230,7 @@ class NewcomerDiscoveryPipeline:
                 logger.warning("Perplexity enrichment failed for %s: %s", candidate.ticker, e)
                 try:
                     record_perplexity_failure("newcomer_discovery", candidate.ticker, str(e))
-                except Exception:
+                except (ValueError, OSError):
                     pass
 
         logger.info("Enrichment complete: %d attempted, %d succeeded", attempted, succeeded)

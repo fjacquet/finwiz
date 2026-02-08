@@ -68,7 +68,7 @@ class CandidateScorer:
                 if passes:
                     candidate.metadata["passes_a_plus_filters"] = True
 
-            except Exception:
+            except (ValueError, KeyError, TypeError):
                 self._logger.warning(
                     "Failed to score candidate %s, keeping original values",
                     candidate.ticker,
@@ -91,10 +91,11 @@ class CandidateScorer:
             Dict matching the format expected by ScreeningRanking and ScreeningCriteria.
         """
         meta = candidate.metadata
+        effective_market_cap = candidate.market_cap or meta.get("market_cap", 0)
 
         if candidate.asset_class == "stock":
             return {
-                "market_cap": candidate.market_cap or 0,
+                "market_cap": effective_market_cap,
                 "roe": meta.get("roe", 0),
                 "revenue_growth": meta.get("revenue_growth", 0),
                 "debt_to_equity": meta.get("debt_to_equity", 0.5),
@@ -105,14 +106,14 @@ class CandidateScorer:
         if candidate.asset_class == "etf":
             return {
                 "expense_ratio": meta.get("expense_ratio", 0.5),
-                "aum": candidate.market_cap or 0,
+                "aum": effective_market_cap,
                 "tracking_error": meta.get("tracking_error", 0.01),
                 "history_years": meta.get("history_years", 0),
                 "name": candidate.name,
             }
         # crypto
         return {
-            "market_cap": candidate.market_cap or 0,
+            "market_cap": effective_market_cap,
             "daily_volume": meta.get("daily_volume", 0),
             "age_months": meta.get("age_months", 0),
             "institutional_adoption": meta.get("institutional_adoption", False),

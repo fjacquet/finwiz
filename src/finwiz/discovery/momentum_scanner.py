@@ -133,7 +133,7 @@ class MomentumScanner:
                     f"volume ratio={volume_ratio:.1f}x, ROC={roc_value:.2f}"
                 ),
             )
-        except Exception:
+        except (ValueError, KeyError, TypeError):
             self._logger.warning(
                 "Failed to analyze ticker %s for momentum",
                 ticker,

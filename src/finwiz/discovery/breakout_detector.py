@@ -113,7 +113,7 @@ class BreakoutDetector:
                     f"price score {price_score:.2f}, volume score {volume_score:.2f}"
                 ),
             )
-        except Exception:
+        except (ValueError, KeyError, TypeError):
             self._logger.warning(
                 "Failed to analyze ticker %s for breakout",
                 ticker,
@@ -179,7 +179,7 @@ class BreakoutDetector:
         """
         try:
             return yf.Ticker(ticker).info.get("marketCap")
-        except Exception:
+        except (ValueError, KeyError, OSError):
             self._logger.warning(
                 "Failed to get market cap for %s",
                 ticker,

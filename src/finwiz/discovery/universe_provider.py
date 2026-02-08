@@ -144,7 +144,7 @@ class DynamicUniverseProvider:
             )
             return symbols
 
-        except Exception:
+        except (ValueError, KeyError, OSError):
             self._logger.warning(
                 "Failed to fetch holdings for ETF %s", etf_ticker, exc_info=True,
             )
@@ -178,7 +178,7 @@ class DynamicUniverseProvider:
             )
             return symbols
 
-        except Exception:
+        except (ValueError, KeyError, AttributeError):
             self._logger.warning(
                 "Failed to get static universe for %s",
                 asset_class,
