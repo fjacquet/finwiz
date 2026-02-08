@@ -1,7 +1,12 @@
-# Requirements: FinWiz Hardening & Discovery
+# Requirements Archive: v1 Hardening & Discovery
 
-**Defined:** 2026-02-07
-**Core Value:** Replace mocked discovery with real newcomer detection while eliminating production-risk code quality issues
+**Archived:** 2026-02-08
+**Status:** SHIPPED
+
+This is the archived requirements specification for v1.
+For current requirements, see `.planning/REQUIREMENTS.md` (created for next milestone).
+
+---
 
 ## v1 Requirements
 
@@ -39,34 +44,6 @@
 - [x] **DISC-10**: Save newcomer discovery results to `output/discovery/newcomer_{asset_class}.json` via discovery orchestrator
 - [x] **DISC-11**: Create unit tests for all discovery modules (universe provider, IPO screener, breakout detector, momentum scanner, candidate scorer, pipeline, schemas)
 
-## v2 Requirements
-
-### Security Hardening
-
-- **SEC-01**: Implement API key rotation support
-- **SEC-02**: Centralize hardcoded API endpoints
-- **SEC-03**: Add comprehensive log sanitization for sensitive data
-- **SEC-04**: Fail fast at tool instantiation when required API keys are missing
-
-### Structural Refactoring
-
-- **REFAC-01**: Consolidate duplicate portfolio review logic across 10+ files
-- **REFAC-02**: Redesign lazy-loaded orchestrators to eliminate circular import risk
-- **REFAC-03**: Move schema migration utilities from production code to CLI scripts
-- **REFAC-04**: Enforce 300-line file size limit across 150+ violating files
-
-## Out of Scope
-
-| Feature | Reason |
-|---------|--------|
-| File size limit enforcement | 150+ files affected, massive effort, low immediate payoff |
-| Multi-user support | Architectural change requiring database, auth, user context |
-| Real-time data / streaming | Future milestone, requires WebSocket architecture |
-| i18n framework | TARGETLANG=fr exists but proper gettext is a separate effort |
-| Duplicate portfolio review consolidation | 10+ files, big refactor not blocking |
-| Lazy-loaded orchestrator redesign | Works today, circular imports are architectural |
-| Migration utilities relocation | Low immediate impact |
-
 ## Traceability
 
 | Requirement | Phase | Status |
@@ -94,12 +71,11 @@
 | DISC-10 | 3 | Complete |
 | DISC-11 | 3 | Complete |
 
-**Coverage:**
+## Milestone Summary
 
-- v1 requirements: 22 total
-- Mapped to phases: 22
-- Complete: 22/22 (100%)
+**Shipped:** 22 of 22 v1 requirements
+**Adjusted:** None -- all requirements implemented as specified
+**Dropped:** None
 
 ---
-*Requirements defined: 2026-02-07*
-*Last updated: 2026-02-08 after milestone completion*
+*Archived: 2026-02-08 as part of v1 milestone completion*
