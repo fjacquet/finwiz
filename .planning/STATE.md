@@ -5,16 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-08)
 
 **Core value:** Hybrid financial analysis with real newcomer detection
-**Current focus:** Planning next milestone
+**Current focus:** v3 Performance & Risk Analysis
 
 ## Current Position
 
-Phase: All v1+v2 phases complete (8 phases, 19 plans)
-Plan: N/A
-Status: Ready for next milestone
-Last activity: 2026-02-08 — v2 milestone archived
-
-Progress: [███████████████] 100% (v1+v2 shipped)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-08 — Milestone v3 started
 
 ## Milestones Shipped
 
@@ -38,7 +36,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: v2 milestone archived
+Stopped at: v3 milestone started — research phase next
 Resume file: None
 
-*Updated after v2 milestone completion*
+*Updated after v3 milestone start*

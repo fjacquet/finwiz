@@ -8,6 +8,17 @@ FinWiz is an AI-powered financial analysis platform built with CrewAI that analy
 
 Hybrid financial analysis: deterministic Python scoring ($0, <100ms) for quantitative rigor, AI crews for qualitative reasoning, with real newcomer detection for investment discovery.
 
+## Current Milestone: v3 Performance & Risk Analysis
+
+**Goal:** Make FinWiz significantly faster through parallelism, batching, and caching — and add portfolio risk stress testing as a new analytical capability.
+
+**Target features:**
+- Parallel deep analysis — complete async migration, raise PARALLEL_LIMIT for concurrent holdings
+- Batch data fetching — expand batch_data_prefetcher to all data collection paths
+- Cache improvements — tiered eviction, smarter TTL, reduce redundant API calls
+- Cost tracking — LiteLLM callback for actual token usage and cost measurement
+- Risk stress testing — scenario analysis (market crash, rate hike, sector shock) for portfolio
+
 ## Current State
 
 Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
@@ -53,7 +64,12 @@ Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
 
 ### Active
 
-(None — next milestone requirements to be defined via `/gsd:new-milestone`)
+- [ ] Complete async migration for all data adapters
+- [ ] Raise deep analysis parallel limit for concurrent holdings
+- [ ] Expand batch data prefetcher to all data collection paths
+- [ ] Implement tiered cache eviction with smarter TTL
+- [ ] Implement LiteLLM cost tracking callback
+- [ ] Add risk stress testing scenarios (market crash, rate hike, sector shock)
 
 ### Out of Scope
 
@@ -87,7 +103,7 @@ Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
 | Token bucket over fixed sleep | aiolimiter handles burst + rate limiting natively | ✓ Good — cleaner than manual sleep |
 | Circuit breaker for crew timeouts | Prevent cascade failures from repeatedly failing crews | ✓ Good — auto-recovery after 60s |
 | Lazy imports in discovery pipeline | Forward-compatible: Phase 3 can be built before Phase 2 | ✓ Good — flexible dev order |
-| Fail-fast API key validation | ValueError at __init__ catches config errors immediately | ✓ Good — 9 tool classes protected |
+| Fail-fast API key validation | ValueError at **init** catches config errors immediately | ✓ Good — 9 tool classes protected |
 | Centralized log sanitizer | 3-handler approach covers all log output paths | ✓ Good — zero leaks in tests |
 | Endpoint config module | Single source for all 13 API URLs | ✓ Good — no hardcoded URLs |
 | Dead code deletion for duplicates | 5 divergent portfolio review copies → 1 shared module | ✓ Good — reduced maintenance burden |
@@ -95,4 +111,4 @@ Shipped v2 (2026-02-08): Security & Structural Quality milestone complete.
 | Pre-commit with `--check-all` for CI | Same hooks, different mode for CI vs local | ✓ Good — parity achieved |
 
 ---
-*Last updated: 2026-02-08 after v2 milestone completion*
+*Last updated: 2026-02-08 after v3 milestone started*
