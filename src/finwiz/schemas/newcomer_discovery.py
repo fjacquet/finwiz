@@ -7,6 +7,7 @@ enrichment results, and aggregated discovery results.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -41,6 +42,11 @@ class NewcomerCandidate(BaseModel):
     recommendation: str = Field("REVIEW", description="Action recommendation")
     rationale: str = Field("", max_length=2000, description="Reasoning for the recommendation")
 
+    # Screener-populated fields
+    market_cap: float | None = Field(None, ge=0, description="Market capitalization in USD")
+    sector: str | None = Field(None, max_length=100, description="Industry sector")
+    discovery_date: datetime = Field(default_factory=datetime.utcnow, description="When this candidate was discovered")
+
     # Optional scoring breakdown
     fundamental_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Fundamental analysis score")
     technical_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Technical analysis score")
@@ -64,6 +70,8 @@ class NewcomerDiscoveryResult(BaseModel):
     candidates: list[NewcomerCandidate] = Field(default_factory=list, description="Discovered candidates")
     total_candidates: int = Field(0, ge=0, description="Total candidate count")
     summary: str = Field("", description="Human-readable summary")
+    sources_used: list[str] = Field(default_factory=list, description="Discovery sources used in this run")
+    top_picks: list[str] = Field(default_factory=list, description="Top N candidate tickers")
     pipeline_version: str = Field("1.0", description="Pipeline version")
     enrichment_attempted: int = Field(0, ge=0, description="Number of candidates enrichment was attempted for")
     enrichment_succeeded: int = Field(0, ge=0, description="Number of candidates successfully enriched")
