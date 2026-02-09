@@ -197,6 +197,7 @@ def synthesize_enriched_analysis(
     quant: QuantitativeAnalysis,
     qual: QualitativeInsights,
     processing_time: float = 0.0,
+    sentiment_summary: dict[str, Any] | None = None,
 ) -> EnrichedAnalysis:
     """
     Pure function: Combines quantitative + qualitative into EnrichedAnalysis.
@@ -208,6 +209,7 @@ def synthesize_enriched_analysis(
         quant: Python-calculated quantitative analysis
         qual: AI-generated qualitative insights
         processing_time: Total processing time in seconds
+        sentiment_summary: Optional sentiment summary with score, confidence, top headlines
 
     Returns:
         EnrichedAnalysis combining both analyses
@@ -238,6 +240,7 @@ def synthesize_enriched_analysis(
         unique_insights_count=unique_insights,
         processing_time_seconds=processing_time,
         llm_cost_dollars=0.05,  # Estimate
+        sentiment_summary=sentiment_summary,
     )
 
     logger.info(f"Synthesis complete: {ctx.ticker} grade={enriched.final_grade} rec={enriched.final_recommendation} words={enriched.report_word_count}")
@@ -279,13 +282,85 @@ def analyze_holding(
     result, quant = calculate_quantitative(ctx, raw_data)
     qual = generate_qualitative(ctx, quant)
     processing_time = time.time() - start
-    enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time)
+    sentiment_summary = _build_sentiment_summary(raw_data)
+    enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary)
 
     logger.info(f"Pipeline complete for {ticker}: {processing_time:.1f}s")
     return result, enriched
 
 
 # === Helper Functions ===
+
+
+def _build_sentiment_summary(raw_data: dict[str, Any]) -> dict[str, Any] | None:
+    """Build sentiment summary dict from raw_data for enriched JSON persistence.
+
+    Extracts top headlines, aggregate score, confidence, and article counts
+    from the news_sentiment data collected during raw data phase.
+
+    Args:
+        raw_data: Raw data dict potentially containing 'news_sentiment'.
+
+    Returns:
+        Sentiment summary dict or None if no news sentiment data available.
+    """
+    ns_raw = raw_data.get("news_sentiment")
+    if ns_raw is None:
+        return None
+
+    try:
+        # news_sentiment may be a dict (from model_dump) or a NewsSentimentResult
+        if isinstance(ns_raw, dict):
+            aggregate_sentiment = ns_raw.get("aggregate_sentiment", 0.0)
+            article_count = ns_raw.get("article_count", 0)
+            bullish_count = ns_raw.get("bullish_count", 0)
+            bearish_count = ns_raw.get("bearish_count", 0)
+            neutral_count = ns_raw.get("neutral_count", 0)
+            articles = ns_raw.get("articles", [])
+            # Confidence: not stored on NewsSentimentResult, compute from article count
+            confidence = min(1.0, article_count / 10.0) if article_count > 0 else 0.0
+        else:
+            # NewsSentimentResult object
+            aggregate_sentiment = getattr(ns_raw, "aggregate_sentiment", 0.0)
+            article_count = getattr(ns_raw, "article_count", 0)
+            bullish_count = getattr(ns_raw, "bullish_count", 0)
+            bearish_count = getattr(ns_raw, "bearish_count", 0)
+            neutral_count = getattr(ns_raw, "neutral_count", 0)
+            articles = getattr(ns_raw, "articles", []) or []
+            confidence = min(1.0, article_count / 10.0) if article_count > 0 else 0.0
+
+        # Top 5 headlines
+        top_headlines: list[dict[str, str]] = []
+        for article in articles[:5]:
+            if isinstance(article, dict):
+                top_headlines.append(
+                    {
+                        "title": article.get("title", ""),
+                        "source": article.get("source", ""),
+                        "sentiment_label": article.get("sentiment_label", "neutral"),
+                    }
+                )
+            else:
+                top_headlines.append(
+                    {
+                        "title": getattr(article, "title", ""),
+                        "source": getattr(article, "source", ""),
+                        "sentiment_label": getattr(article, "sentiment_label", "neutral") or "neutral",
+                    }
+                )
+
+        return {
+            "score": aggregate_sentiment,
+            "confidence": confidence,
+            "article_count": article_count,
+            "bullish_count": bullish_count,
+            "bearish_count": bearish_count,
+            "neutral_count": neutral_count,
+            "top_headlines": top_headlines,
+        }
+    except Exception as e:
+        logger.warning(f"Failed to build sentiment summary: {e}")
+        return None
 
 
 def _get_analysis_crew(asset_class: str) -> Any:

@@ -90,6 +90,9 @@ class EnrichedAnalysis(BaseModel):
     processing_time_seconds: float = Field(default=0.0, ge=0, description="Total processing time in seconds")
     llm_cost_dollars: float = Field(default=0.0, ge=0, description="LLM cost for analysis in dollars")
 
+    # Sentiment summary for report enrichment (Phase 16)
+    sentiment_summary: dict[str, Any] | None = Field(default=None, description="Sentiment summary with score, confidence, article_count, and top headlines")
+
     model_config = {
         "str_strip_whitespace": True,
         "validate_default": True,

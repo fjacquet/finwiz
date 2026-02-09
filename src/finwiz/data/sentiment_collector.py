@@ -74,3 +74,37 @@ class SentimentMacroCollector:
         except Exception as e:
             logger.warning(f"Macro collection failed: {e}")
             return None
+
+    def collect_economic_calendar(self, tickers: list[str] | None = None, days_ahead: int = 30) -> dict | None:
+        """Collect upcoming economic events and earnings calendar.
+
+        Returns None if feature disabled or unavailable.
+
+        Args:
+            tickers: Optional list of tickers for earnings calendar.
+            days_ahead: Number of days to look ahead.
+
+        Returns:
+            Dict with economic_events and earnings_events, or None.
+        """
+        if not is_feature_enabled("economic_calendar"):
+            return None
+
+        try:
+            from finwiz.data.adapters.economic_calendar_adapter import EconomicCalendarAdapter
+
+            adapter = EconomicCalendarAdapter()
+            if not adapter.is_available():
+                return None
+
+            calendar = adapter.get_economic_calendar(days_ahead=days_ahead)
+            result = calendar.model_dump()
+
+            if tickers:
+                earnings = adapter.get_earnings_calendar(tickers, days_ahead=days_ahead)
+                result["earnings_events"] = [e.model_dump() for e in earnings]
+
+            return result
+        except Exception as e:
+            logger.warning(f"Economic calendar collection failed: {e}")
+            return None

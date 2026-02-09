@@ -127,6 +127,9 @@ class DeepAnalysisOrchestrator:
         """
         from finwiz.analysis import analyze_holding
 
+        # Ensure macro_snapshot is set on state for report-time access (Phase 16)
+        self._ensure_macro_snapshot_on_state()
+
         results: dict[str, DeepAnalysisResult] = {}
         self._enriched_analyses = {}
 
@@ -223,6 +226,9 @@ class DeepAnalysisOrchestrator:
 
         self.logger.info(f"Starting concurrent deep analysis: {len(holdings)} holdings, max_workers={max_workers}")
 
+        # Ensure macro_snapshot is set on state for report-time access (Phase 16)
+        self._ensure_macro_snapshot_on_state()
+
         results: dict[str, DeepAnalysisResult] = {}
         self._enriched_analyses = {}
 
@@ -317,6 +323,26 @@ class DeepAnalysisOrchestrator:
 
         self.logger.info(f"Concurrent analysis completed: {len(results)}/{len(holdings)} holdings")
         return results
+
+    def _ensure_macro_snapshot_on_state(self) -> None:
+        """Set macro_snapshot on FinwizState if not already set.
+
+        Collects macro data once per session for report-time access (Phase 16).
+        """
+        if self.state.macro_snapshot is not None:
+            return
+
+        try:
+            from finwiz.data.sentiment_collector import SentimentMacroCollector
+
+            collector = SentimentMacroCollector()
+            macro = collector.collect_macro()
+            if macro is not None:
+                snapshot_dict: dict[str, Any] = macro.model_dump() if hasattr(macro, "model_dump") else dict(macro)  # type: ignore[arg-type]
+                self.state.macro_snapshot = snapshot_dict
+                self.logger.info(f"Macro snapshot set on FinwizState: {macro.get_market_regime()} regime")
+        except Exception as e:
+            self.logger.debug(f"Macro snapshot collection for state skipped: {e}")
 
     def _match_alternatives(self, deep_results: dict[str, DeepAnalysisResult]) -> dict[str, list[dict[str, Any]]]:
         """Match alternatives for underperforming holdings."""

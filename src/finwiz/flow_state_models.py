@@ -253,6 +253,9 @@ class FinwizState(BaseModel):
     stress_test_count: int = Field(default=0)
     stress_test_error: str | None = None
 
+    # Macro snapshot for report-time access (Phase 16)
+    macro_snapshot: dict[str, Any] | None = Field(default=None, description="Session-level MacroSnapshot dict for report generation")
+
     model_config = {
         "extra": "allow",
         "ser_json_timedelta": "iso8601",
