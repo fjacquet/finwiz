@@ -2,36 +2,27 @@
 
 ## What This Is
 
-FinWiz is an AI-powered financial analysis platform built with CrewAI that analyzes portfolios of stocks, ETFs, and crypto using hybrid Python scoring + AI crews. It features real investment discovery, comprehensive portfolio analysis with quantitative backtesting and rebalancing, portfolio stress testing against market scenarios, and async-parallel data collection with smart caching. Security hardening, structural quality, and automated enforcement are built in.
+FinWiz is an AI-powered financial analysis platform built with CrewAI that analyzes portfolios of stocks, ETFs, and crypto using hybrid Python scoring + AI crews. It features real investment discovery, comprehensive portfolio analysis with quantitative backtesting and rebalancing, portfolio stress testing against market scenarios, async-parallel data collection with smart caching, and smart scoring enriched with news sentiment and macroeconomic context. Security hardening, structural quality, and automated enforcement are built in.
 
 ## Core Value
 
-Hybrid financial analysis: deterministic Python scoring ($0, <100ms) for quantitative rigor, AI crews for qualitative reasoning, with real newcomer detection for investment discovery.
-
-## Current Milestone: v4 Data Intelligence & Smart Scoring
-
-**Goal:** Enrich the analysis pipeline with news sentiment, macroeconomic indicators, and additional data providers so that composite scores factor in market context — not just technicals and fundamentals.
-
-**Target features:**
-- News & sentiment scoring per holding from free APIs
-- Macroeconomic indicators (Fed rate, CPI, VIX, 10Y yield) as portfolio context
-- Additional data providers for reliability, coverage, and data quality
-- Smart composite scoring that factors in sentiment + macro conditions
-- New HTML report sections for news, sentiment, and macro context
+Hybrid financial analysis enriched with news sentiment and macroeconomic context for smarter scoring: deterministic Python scoring ($0, <100ms) for quantitative rigor, AI crews for qualitative reasoning, with real newcomer detection for investment discovery.
 
 ## Current State
 
-Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
+Shipped v4 (2026-02-09): Data Intelligence & Smart Scoring milestone complete.
 
-- 107,586 LOC Python, 4,516 tests passing, 66.85% coverage
-- Tech stack: Python 3.12, CrewAI >=1.5.0, uv, aiolimiter, TA-Lib, LiteLLM
+- ~110,000 LOC Python, 4,795 tests passing, 67.41% coverage
+- Tech stack: Python 3.12, CrewAI >=1.5.0, uv, aiolimiter, TA-Lib, LiteLLM, finnhub-python, fredapi
+- Scoring: 40/30/30 base (fundamental/technical/risk) + additive sentiment + macro overlays with 4-gate safety
+- Data: Finnhub news, FRED macro indicators, Fear & Greed Index, Economic Calendar -- all feature-flagged
+- Reports: Per-holding sentiment cards, macro dashboard with traffic-light indicators, Fear & Greed gauge, economic calendar
 - Async: Full async data collection, batch prefetching, configurable parallel analysis
 - Caching: Tiered eviction (hot/warm/cold), type-aware TTLs, metrics logging
 - Cost: LLM cost tracking per crew with real provider pricing
 - Risk: Portfolio stress testing (market crash, rate shock, sector shock) with HTML report
 - Security: fail-fast API key validation, log sanitization, centralized endpoints
 - Quality: pre-commit hooks + CI pipeline enforce ruff, file size, unittest.mock ban
-- Codebase mapped in `.planning/codebase/` (7 documents)
 
 ## Requirements
 
@@ -77,16 +68,26 @@ Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
 - ✓ Interest rate shock scenario stress testing — v3
 - ✓ Sector-specific shock scenario stress testing — v3
 - ✓ Stress test results in HTML report with color-coded impact tables — v3
+- ✓ Finnhub news adapter with waterfall fallback — v4
+- ✓ FRED macro adapter (Fed rate, CPI, VIX, yields) with session caching — v4
+- ✓ Fear & Greed Index adapter with library + HTTP fallback — v4
+- ✓ News deduplication and source reliability weighting — v4
+- ✓ Feature flags for sentiment and macro pipelines with circuit breakers — v4
+- ✓ SentimentScorer with temporal decay, reliability weighting, confidence metric — v4
+- ✓ No-news = None (not neutral 0.0) explicit handling — v4
+- ✓ Sentiment as additive overlay with 4-gate safety (flag, weight, data, confidence) — v4
+- ✓ MacroScorer with VIX, yield curve, Fed rate, per-asset-class sensitivity — v4
+- ✓ Macro as additive overlay with 4-gate safety preserving 40/30/30 base — v4
+- ✓ Real VIX replacing hardcoded 20.0 in market regime assessment — v4
+- ✓ Real Fed rate replacing hardcoded estimates — v4
+- ✓ Per-holding sentiment section in HTML reports — v4
+- ✓ Macro dashboard with traffic-light indicators and Fear & Greed gauge — v4
+- ✓ Economic calendar with FOMC, CPI releases, and earnings dates — v4
+- ✓ Discovery pipeline returns real screened candidates — v4
 
 ### Active
 
-- [ ] News & sentiment data collection from free APIs
-- [ ] Sentiment scoring per holding integrated into analysis pipeline
-- [ ] Macroeconomic indicators (Fed rate, CPI, VIX, 10Y yield) data collection
-- [ ] Macro context integration into portfolio analysis
-- [ ] Additional data providers (Polygon, Finnhub, or similar free tiers)
-- [ ] Composite scoring enhanced with sentiment + macro factors
-- [ ] HTML report sections for news, sentiment, and macro context
+(None — all requirements shipped through v4. Next milestone defines new requirements.)
 
 ### Out of Scope
 
@@ -97,6 +98,9 @@ Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
 - i18n framework — future milestone
 - OpenTelemetry tracing — future milestone
 - Persistent cross-run cache — future milestone
+- FinBERT sentiment model — v4 research deferred (SENT-F01)
+- Sector-relative sentiment normalization — v4 research deferred (SENT-F02)
+- Historical macro overlay charts — v4 research deferred (MACRO-F01)
 
 ## Constraints
 
@@ -104,11 +108,13 @@ Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
 - **Serialization**: `json.dumps` always with `default=str`
 - **Schemas**: Pydantic models go in `schemas/`, not domain folders
 - **Discovery**: Discovered candidates MUST exclude tickers already in portfolio
-- **Feature flags**: New discovery gated by `FF_NEWCOMER_DISCOVERY` flag, legacy mocks remain as fallback
+- **Feature flags**: All new data pipelines gated by feature flags with safe defaults (off)
 - **Line length**: 180 characters (ruff configured)
 - **Coverage**: 65% minimum threshold
 - **AI Minimalism**: Python for deterministic tasks, AI only for qualitative reasoning
 - **Quality**: Pre-commit hooks enforce ruff, file size limits, unittest.mock ban
+- **Scoring overlays**: Additive only, never redistribute base 40/30/30 weights
+- **French localization**: All HTML report labels in French
 
 ## Key Decisions
 
@@ -131,6 +137,12 @@ Shipped v3 (2026-02-08): Performance & Risk Analysis milestone complete.
 | PythonReportGenerator for production | FinalReportGenerator (Jinja2) unused; production uses inline HTML | ✓ Good — Phase 12 targeted correct generator |
 | Section generator delegation | HTML generation in section_generators.py, delegated from PythonReportGenerator | ✓ Good — consistent pattern across all sections |
 | Inline CSS color coding for stress test | Red/orange/green for impact severity and sensitivity labels | ✓ Good — matches existing report styling |
+| Additive overlays for sentiment/macro | 4-gate safety: flag, weight, data, confidence. Never redistribute base weights | ✓ Good — zero risk of score regression |
+| Component scorer pattern | SentimentScorer/MacroScorer return (score_or_None, details_dict) | ✓ Good — consistent, testable, composable |
+| Session-level macro data collection | Collect once per run, share across holdings via FinwizState | ✓ Good — avoids redundant API calls |
+| Traffic-light CSS for macro indicators | Reuse existing risk-low/risk-medium/risk-high pattern | ✓ Good — consistent report styling |
+| Fear & Greed as CSS-only gauge | Horizontal gradient bar with positioned marker, no JavaScript | ✓ Good — works in all report viewers |
+| Sentiment persistence in enriched JSON | Store sentiment_summary during analysis for report-time access | ✓ Good — avoids re-fetching at report time |
 
 ---
-*Last updated: 2026-02-08 after v4 milestone start*
+*Last updated: 2026-02-09 after v4 milestone completion*

@@ -1,3 +1,12 @@
+# Requirements Archive: v4 Data Intelligence & Smart Scoring
+
+**Archived:** 2026-02-09
+**Status:** SHIPPED
+
+For current requirements, see `.planning/REQUIREMENTS.md`.
+
+---
+
 # Requirements: FinWiz v4 -- Data Intelligence & Smart Scoring
 
 **Defined:** 2026-02-08

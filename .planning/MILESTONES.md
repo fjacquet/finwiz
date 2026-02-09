@@ -84,3 +84,32 @@
 **Archive:** `milestones/v3-ROADMAP.md`, `milestones/v3-REQUIREMENTS.md`, `milestones/v3-MILESTONE-AUDIT.md`
 
 ---
+
+## v4 Data Intelligence & Smart Scoring (Shipped: 2026-02-09)
+
+**Delivered:** News sentiment, macroeconomic indicators, and smart scoring overlays enriching the composite analysis pipeline with market context beyond technicals and fundamentals.
+
+**Phases completed:** 13-16 (17 plans total)
+
+**Key accomplishments:**
+
+- Built data foundation with Finnhub news adapter (waterfall fallback), FRED macro adapter (session-cached), Fear & Greed adapter, and 5 feature flags with circuit breakers
+- Created SentimentScorer with temporal decay weighting, source reliability, and 40/30/30 confidence metric -- explicit None for no-news holdings
+- Created MacroScorer using real VIX, yield curve spread, and Fed rate from FRED -- per-asset-class sensitivity (stock=1.0, etf=0.7, crypto=0.3)
+- Wired both overlays as additive adjustments in composite scorer with identical 4-gate safety (flag, weight, data, confidence) preserving 40/30/30 base weights
+- Added 3 HTML report sections: per-holding sentiment cards, macro dashboard with traffic-light indicators and Fear & Greed gauge, economic calendar with FOMC/CPI/earnings dates
+- EconomicCalendarAdapter from Finnhub with session caching, sentiment_summary persistence in enriched JSON, macro_snapshot on FinwizState for report-time access
+
+**Stats:**
+
+- 106 files changed, +11,784 / -1,282 lines
+- ~110,000 lines of Python
+- 4 phases, 17 plans, 30 requirements
+- 4,795 tests passing, 67.41% coverage
+- 2 days (2026-02-08 to 2026-02-09)
+
+**Audit:** Passed (30/30 requirements, 28/29 integration connections, 3/3 E2E flows)
+
+**Archive:** `milestones/v4-ROADMAP.md`, `milestones/v4-REQUIREMENTS.md`, `milestones/v4-MILESTONE-AUDIT.md`
+
+---
