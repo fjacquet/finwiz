@@ -50,7 +50,7 @@ Phases completed: 9-12 (7 plans total)
 - Decimal phases (13.1, 13.2): Urgent insertions if needed (marked with INSERTED)
 
 - [x] **Phase 13: Data Foundation** - Adapters, schemas, feature flags, and infrastructure for news and macro data
-- [ ] **Phase 14: Sentiment Scoring** - Per-holding sentiment computation and composite score integration
+- [x] **Phase 14: Sentiment Scoring** - Per-holding sentiment computation and composite score integration
 - [ ] **Phase 15: Macro Context** - Real macro data replaces hardcoded values, dynamic risk adjustment
 - [ ] **Phase 16: Report Enrichment** - New HTML sections for sentiment, macro dashboard, and economic calendar
 
@@ -90,11 +90,11 @@ Plans:
   3. Holdings with no news coverage show sentiment as "unavailable" (None), not neutral (0.0)
   4. Composite score includes sentiment as an additive adjustment that defaults to zero impact (weight=0.0, feature-flagged off)
   5. Enabling sentiment scoring with a non-zero weight does not change the existing 40/30/30 fundamental/technical/risk weight distribution
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 14-01-PLAN.md — SentimentScorer: schema, utilities, and scorer class
-- [ ] 14-02-PLAN.md — Composite score integration: overlay wiring and regression tests
+- [x] 14-01-PLAN.md — SentimentScorer: schema, utilities, and scorer class
+- [x] 14-02-PLAN.md — Composite score integration: overlay wiring and regression tests
 
 ### Phase 15: Macro Context
 **Goal**: Real macroeconomic data replaces hardcoded values and adjusts risk scoring dynamically based on market regime
@@ -138,10 +138,10 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16
 | 6-8 | v2 | 6/6 | Shipped | 2026-02-08 |
 | 9-12 | v3 | 7/7 | Shipped | 2026-02-08 |
 | 13. Data Foundation | v4 | 10/10 | Complete | 2026-02-09 |
-| 14. Sentiment Scoring | v4 | 0/2 | Planned | - |
+| 14. Sentiment Scoring | v4 | 2/2 | Complete | 2026-02-09 |
 | 15. Macro Context | v4 | 0/TBD | Not started | - |
 | 16. Report Enrichment | v4 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-08*
-*Last updated: 2026-02-09 after Phase 13 completion*
+*Last updated: 2026-02-09 after Phase 14 completion*
