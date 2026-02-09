@@ -18,10 +18,12 @@ from finwiz.flow_state import DeepAnalysisResult
 
 if TYPE_CHECKING:
     from finwiz.validation.quality_metrics import DataQualityMetrics
+from finwiz.config.features.flags import is_feature_enabled
 from finwiz.scoring.crew_export_generator import CrewExportGenerator
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
 from finwiz.scoring.risk_scorer import RiskScorer
 from finwiz.scoring.score_result_builder import ScoreResultBuilder
+from finwiz.scoring.sentiment_scorer import SentimentScorer
 from finwiz.scoring.technical_fallback import (
     calculate_missing_technical_indicators,
     get_price_history_from_data,
@@ -62,6 +64,7 @@ class DeepAnalysisScorer:
         self.fundamental_scorer = FundamentalScorer(thresholds=self.thresholds)
         self.technical_scorer = TechnicalScorer(thresholds=self.thresholds)
         self.risk_scorer = RiskScorer(thresholds=self.thresholds)
+        self._sentiment_scorer = SentimentScorer(thresholds=self.thresholds)
 
         # Initialize result builders
         self.result_builder = ScoreResultBuilder(thresholds=self.thresholds)
@@ -94,8 +97,8 @@ class DeepAnalysisScorer:
             # Step 3: Calculate component scores
             scores = self._calculate_component_scores(asset_class, data)
 
-            # Step 4: Compute weighted composite score
-            composite_score = self._compute_weighted_score(scores)
+            # Step 4: Compute weighted composite score (with optional sentiment overlay)
+            composite_score = self._compute_weighted_score(scores, data)
 
             # Step 5: Build final result (delegate to ScoreResultBuilder)
             # After _initialize_tracking, data quality metrics is guaranteed to be set
@@ -230,11 +233,12 @@ class DeepAnalysisScorer:
             "risk_details": risk_details,
         }
 
-    def _compute_weighted_score(self, scores: dict[str, Any]) -> float:
+    def _compute_weighted_score(self, scores: dict[str, Any], data: dict[str, Any] | None = None) -> float:
         """
         Compute weighted composite score from component scores.
 
         Uses adaptive weights: high-quality companies get more weight on fundamentals.
+        Applies additive sentiment overlay when enabled (Phase 14).
         """
         fundamental_score = scores["fundamental_score"]
         fundamental_details = scores.get("fundamental_details", {})
@@ -246,7 +250,7 @@ class DeepAnalysisScorer:
             weight_fundamental = 0.50
             weight_technical = 0.25
             weight_risk = 0.25
-            self.logger.info("✨ Quality company detected - using adaptive weights (50/25/25)")
+            self.logger.info("Quality company detected - using adaptive weights (50/25/25)")
         else:
             weight_fundamental = self.thresholds.weight_fundamental
             weight_technical = self.thresholds.weight_technical
@@ -254,6 +258,24 @@ class DeepAnalysisScorer:
 
         # Calculate weighted composite score
         composite_score = weight_fundamental * scores["fundamental_score"] + weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]
+
+        # Phase 14: Additive sentiment overlay (SCORE-01)
+        # Applied AFTER composite is computed. Does NOT change 40/30/30 weights.
+        sentiment_adjustment, sentiment_details = self._calculate_sentiment_overlay(data or {})
+        if sentiment_adjustment != 0.0:
+            composite_score = max(0.0, min(1.0, composite_score + sentiment_adjustment))
+        scores["sentiment_overlay"] = sentiment_details
+
+        # Store sentiment data for DeepAnalysisResult
+        if sentiment_details.get("sentiment_overlay_applied"):
+            scores["sentiment_score"] = sentiment_details.get("sentiment_score")
+            scores["sentiment_confidence"] = sentiment_details.get("confidence")
+        else:
+            # Check if sentiment was computed but overlay wasn't applied (weight=0 or flag off)
+            sent_details = sentiment_details.get("sentiment_details", {})
+            if "confidence" in sent_details:
+                scores["sentiment_score"] = sent_details.get("sentiment_score")
+                scores["sentiment_confidence"] = sent_details.get("confidence")
 
         # Store adaptive weights in scores for transparency
         scores["weights_used"] = {
@@ -264,6 +286,64 @@ class DeepAnalysisScorer:
         }
 
         return float(composite_score)
+
+    def _calculate_sentiment_overlay(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+        """Calculate additive sentiment overlay adjustment.
+
+        The overlay is computed as: weight * sentiment_score * confidence
+        This is ADDITIVE on top of the existing composite score (SCORE-01).
+        Returns 0.0 adjustment when:
+        - sentiment_scoring feature flag is off
+        - weight_sentiment_overlay is 0.0
+        - No sentiment data available
+        - Confidence below minimum threshold
+
+        Args:
+            data: Raw data dict containing news_sentiment
+
+        Returns:
+            Tuple of (adjustment_value, details_dict)
+        """
+        details: dict[str, Any] = {"sentiment_overlay_applied": False}
+
+        # Gate 1: Feature flag
+        if not is_feature_enabled("sentiment_scoring"):
+            details["reason"] = "feature_flag_off"
+            return 0.0, details
+
+        # Gate 2: Weight is zero
+        weight = self.thresholds.weight_sentiment_overlay
+        if weight == 0.0:
+            details["reason"] = "weight_is_zero"
+            return 0.0, details
+
+        # Gate 3: Compute sentiment
+        sentiment_score, sentiment_details = self._sentiment_scorer.calculate_sentiment_score(data)
+        details["sentiment_details"] = sentiment_details
+
+        if sentiment_score is None:
+            details["reason"] = "no_sentiment_score"
+            return 0.0, details
+
+        # Gate 4: Confidence threshold
+        confidence = sentiment_details.get("confidence", 0.0)
+        if confidence < self.thresholds.sentiment_min_confidence:
+            details["reason"] = "below_confidence_threshold"
+            details["confidence"] = confidence
+            details["min_confidence"] = self.thresholds.sentiment_min_confidence
+            return 0.0, details
+
+        # Compute adjustment: weight * score * confidence
+        adjustment = weight * sentiment_score * confidence
+        details["sentiment_overlay_applied"] = True
+        details["sentiment_score"] = sentiment_score
+        details["confidence"] = confidence
+        details["weight"] = weight
+        details["adjustment"] = adjustment
+
+        self.logger.info(f"Sentiment overlay: score={sentiment_score:.4f}, confidence={confidence:.4f}, weight={weight}, adjustment={adjustment:.6f}")
+
+        return adjustment, details
 
     def calculate_fundamental_score(self, asset_class: str, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         """

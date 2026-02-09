@@ -105,6 +105,8 @@ class ScoreResultBuilder:
             warnings=[],
             cached=False,
             data_quality=data_quality_summary,
+            sentiment_score=scores.get("sentiment_score"),
+            sentiment_confidence=scores.get("sentiment_confidence"),
         )
 
         # Log successful scoring with data quality info

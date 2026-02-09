@@ -50,6 +50,10 @@ class DeepAnalysisResult(BaseModel):
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")
 
+    # Sentiment scoring (Phase 14)
+    sentiment_score: float | None = Field(None, ge=-1.0, le=1.0, description="Sentiment score from news analysis (-1 bearish to +1 bullish). None = no news data.")
+    sentiment_confidence: float | None = Field(None, ge=0.0, le=1.0, description="Confidence in sentiment score. None = no news data.")
+
     model_config = {
         "extra": "forbid",
         "str_strip_whitespace": True,
