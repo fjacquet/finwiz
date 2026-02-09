@@ -29,10 +29,10 @@ def load_expense_ratios() -> dict[str, Any]:
     if _EXPENSE_RATIOS_CACHE is not None:
         return _EXPENSE_RATIOS_CACHE
 
-    # Path from src/finwiz/utils/ -> project_root/data/
-    # __file__ = .../src/finwiz/utils/etf_expense_fallback.py
-    # parent.parent.parent.parent = project_root
-    config_path = Path(__file__).parent.parent.parent.parent / "data" / "etf_expense_ratios.yaml"
+    # Path from src/finwiz/quantitative/etf/ -> project_root/data/
+    # __file__ = .../src/finwiz/quantitative/etf/etf_expense_fallback.py
+    # parent(etf).parent(quantitative).parent(finwiz).parent(src).parent(project_root)
+    config_path = Path(__file__).parent.parent.parent.parent.parent / "data" / "etf_expense_ratios.yaml"
 
     try:
         with open(config_path) as f:

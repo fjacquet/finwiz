@@ -94,6 +94,10 @@ class YFinanceAdapter(BaseDataAdapter):
 
         # Extract Debt to Equity
         debt_to_equity = self._extract_float(data, "debtToEquity", warnings, "Debt-to-equity")
+        # yfinance returns debtToEquity as percentage (e.g. 102.63 for 102.63%).
+        # Normalize to ratio (1.0263) for consistency with the rest of the codebase.
+        if debt_to_equity is not None:
+            debt_to_equity = debt_to_equity / 100.0
 
         # Extract Revenue Growth
         revenue_growth = self._extract_float(data, "revenueGrowth", warnings, "Revenue growth")

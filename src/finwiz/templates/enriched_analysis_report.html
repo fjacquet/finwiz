@@ -1036,6 +1036,7 @@
         <div class="section">
             <h2>🎯 Analyse de Scénarios</h2>
 
+            {% if investment_synthesis and investment_synthesis.scenario_probabilities %}
             <div class="scenario-grid">
                 <div class="scenario-card bull">
                     <h3>🚀 Scénario Haussier</h3>
@@ -1055,12 +1056,16 @@
                     <p>{{ investment_synthesis.bear_case }}</p>
                 </div>
             </div>
+            {% else %}
+            <p>Analyse de scénarios non disponible.</p>
+            {% endif %}
         </div>
 
         <!-- Action Plan -->
         <div class="section">
             <h2>✅ Plan d'Action</h2>
 
+            {% if investment_synthesis and investment_synthesis.action_plan %}
             <h3>Actions Immédiates</h3>
             <ul class="action-list">
                 {% for action in investment_synthesis.action_plan.immediate_actions %}
@@ -1081,6 +1086,9 @@
                 <li>{{ trigger }}</li>
                 {% endfor %}
             </ul>
+            {% else %}
+            <p>Plan d'action non disponible.</p>
+            {% endif %}
         </div>
 
         <!-- Quality Metrics -->

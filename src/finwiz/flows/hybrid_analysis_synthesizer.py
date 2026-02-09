@@ -58,9 +58,11 @@ class HybridAnalysisSynthesizer:
             processing_time = self._calculate_processing_time(processing_start)
             llm_cost = self._calculate_llm_cost(data)
 
+            investment_rationale = qualitative.investment_synthesis.investment_thesis if qualitative.investment_synthesis else "Investment rationale unavailable."
+
             word_count = self._calculate_word_count_manually(
                 executive_summary,
-                qualitative.investment_synthesis.investment_thesis,
+                investment_rationale,
                 qualitative,
             )
 
@@ -73,9 +75,9 @@ class HybridAnalysisSynthesizer:
                 final_grade=quantitative.grade,
                 final_score=quantitative.composite_score,
                 final_recommendation=final_recommendation,
-                recommendation_confidence=qualitative.investment_synthesis.recommendation_confidence,
+                recommendation_confidence=(qualitative.investment_synthesis.recommendation_confidence if qualitative.investment_synthesis else "MEDIUM"),
                 executive_summary=executive_summary,
-                investment_rationale=qualitative.investment_synthesis.investment_thesis,
+                investment_rationale=investment_rationale,
                 report_word_count=word_count,
                 unique_insights_count=unique_insights_count,
                 processing_time_seconds=processing_time,
@@ -105,14 +107,12 @@ class HybridAnalysisSynthesizer:
             Final recommendation (BUY, HOLD, or SELL)
         """
         python_rec = quantitative.preliminary_recommendation
-        ai_rec = qualitative.investment_synthesis.final_recommendation
+        ai_rec = qualitative.investment_synthesis.final_recommendation if qualitative.investment_synthesis else "HOLD"
 
         if python_rec == ai_rec:
             return python_rec
 
-        self.logger.warning(
-            f"Recommendation discrepancy: Python={python_rec}, AI={ai_rec}. Using Python recommendation. Reasoning: {qualitative.investment_synthesis.confidence_rationale}"
-        )
+        self.logger.warning(f"Recommendation discrepancy: Python={python_rec}, AI={ai_rec}. Using Python recommendation.")
         return python_rec
 
     def _generate_executive_summary(
@@ -130,42 +130,43 @@ class HybridAnalysisSynthesizer:
         Returns:
             Executive summary (minimum 200 words)
         """
+        rec = qualitative.investment_synthesis.final_recommendation if qualitative.investment_synthesis else quantitative.preliminary_recommendation
+        conf = qualitative.investment_synthesis.recommendation_confidence if qualitative.investment_synthesis else "MEDIUM"
+
         summary_parts = [
-            f"Investment Grade: {quantitative.grade} with composite score of {quantitative.composite_score:.2f}. "
-            f"Final Recommendation: {qualitative.investment_synthesis.final_recommendation} "
-            f"(Confidence: {qualitative.investment_synthesis.recommendation_confidence}).",
+            f"Investment Grade: {quantitative.grade} with composite score of {quantitative.composite_score:.2f}. Final Recommendation: {rec} (Confidence: {conf}).",
             f"Quantitative Analysis: Fundamental score {quantitative.fundamental_score:.2f}, "
             f"Technical score {quantitative.technical_score:.2f}, "
             f"Risk score {quantitative.risk_score:.2f}.",
         ]
 
-        if qualitative.sec_insights.business_model:
+        if qualitative.sec_insights and qualitative.sec_insights.business_model:
             business_summary = qualitative.sec_insights.business_model[:200].strip()
             if not business_summary.endswith("."):
                 business_summary += "..."
             summary_parts.append(f"Business Model: {business_summary}")
 
-        if qualitative.sec_insights.competitive_advantages:
+        if qualitative.sec_insights and qualitative.sec_insights.competitive_advantages:
             advantages = qualitative.sec_insights.competitive_advantages[:3]
             summary_parts.append(f"Key Competitive Advantages: {', '.join(advantages)}.")
 
-        if qualitative.fundamental_context.industry_analysis:
+        if qualitative.fundamental_context and qualitative.fundamental_context.industry_analysis:
             industry_summary = qualitative.fundamental_context.industry_analysis[:150].strip()
             if not industry_summary.endswith("."):
                 industry_summary += "..."
             summary_parts.append(f"Industry Context: {industry_summary}")
 
-        if qualitative.investment_synthesis.investment_thesis:
+        if qualitative.investment_synthesis and qualitative.investment_synthesis.investment_thesis:
             thesis_excerpt = qualitative.investment_synthesis.investment_thesis[:300].strip()
             if not thesis_excerpt.endswith("."):
                 thesis_excerpt += "..."
             summary_parts.append(f"Investment Thesis: {thesis_excerpt}")
 
-        if qualitative.sec_insights.risk_factors:
+        if qualitative.sec_insights and qualitative.sec_insights.risk_factors:
             risks = qualitative.sec_insights.risk_factors[:3]
             summary_parts.append(f"Key Risk Factors: {', '.join(risks)}.")
 
-        if qualitative.technical_strategy.timing_assessment:
+        if qualitative.technical_strategy and qualitative.technical_strategy.timing_assessment:
             timing = qualitative.technical_strategy.timing_assessment[:100].strip()
             if not timing.endswith("."):
                 timing += "..."
@@ -178,7 +179,7 @@ class HybridAnalysisSynthesizer:
             self.logger.warning(f"Executive summary has {word_count} words, padding to meet 200-word minimum")
             summary += " " + quantitative.python_rationale
 
-            if len(summary.split()) < 200:
+            if len(summary.split()) < 200 and qualitative.fundamental_context:
                 summary += " " + qualitative.fundamental_context.competitive_positioning
                 summary += " " + qualitative.fundamental_context.management_assessment
 
@@ -201,38 +202,38 @@ class HybridAnalysisSynthesizer:
         Returns:
             Total word count
         """
-        sections = [executive_summary, investment_rationale]
+        sections: list[str | None] = [executive_summary, investment_rationale]
 
-        # SEC insights
-        sections.append(qualitative.sec_insights.business_model)
-        sections.extend(qualitative.sec_insights.competitive_advantages)
-        sections.extend(qualitative.sec_insights.risk_factors)
-        sections.extend(qualitative.sec_insights.strategic_initiatives)
+        if qualitative.sec_insights:
+            sections.append(qualitative.sec_insights.business_model)
+            sections.extend(qualitative.sec_insights.competitive_advantages)
+            sections.extend(qualitative.sec_insights.risk_factors)
+            sections.extend(qualitative.sec_insights.strategic_initiatives)
 
-        # Fundamental context
-        sections.append(qualitative.fundamental_context.industry_analysis)
-        sections.extend(qualitative.fundamental_context.growth_drivers)
-        sections.append(qualitative.fundamental_context.competitive_positioning)
-        sections.append(qualitative.fundamental_context.management_assessment)
+        if qualitative.fundamental_context:
+            sections.append(qualitative.fundamental_context.industry_analysis)
+            sections.extend(qualitative.fundamental_context.growth_drivers)
+            sections.append(qualitative.fundamental_context.competitive_positioning)
+            sections.append(qualitative.fundamental_context.management_assessment)
 
-        # Technical strategy
-        sections.extend(qualitative.technical_strategy.chart_patterns)
-        sections.append(qualitative.technical_strategy.support_resistance)
-        sections.append(qualitative.technical_strategy.entry_exit_strategy)
-        sections.append(qualitative.technical_strategy.timing_assessment)
+        if qualitative.technical_strategy:
+            sections.extend(qualitative.technical_strategy.chart_patterns)
+            sections.append(qualitative.technical_strategy.support_resistance)
+            sections.append(qualitative.technical_strategy.entry_exit_strategy)
+            sections.append(qualitative.technical_strategy.timing_assessment)
 
-        # Contextual risks
-        sections.extend(qualitative.contextual_risks.regulatory_risks)
-        sections.extend(qualitative.contextual_risks.geopolitical_risks)
-        sections.extend(qualitative.contextual_risks.competitive_risks)
-        sections.extend(qualitative.contextual_risks.operational_risks)
-        sections.extend(qualitative.contextual_risks.stress_scenarios)
+        if qualitative.contextual_risks:
+            sections.extend(qualitative.contextual_risks.regulatory_risks)
+            sections.extend(qualitative.contextual_risks.geopolitical_risks)
+            sections.extend(qualitative.contextual_risks.competitive_risks)
+            sections.extend(qualitative.contextual_risks.operational_risks)
+            sections.extend(qualitative.contextual_risks.stress_scenarios)
 
-        # Investment synthesis
-        sections.append(qualitative.investment_synthesis.investment_thesis)
-        sections.append(qualitative.investment_synthesis.bull_case)
-        sections.append(qualitative.investment_synthesis.base_case)
-        sections.append(qualitative.investment_synthesis.bear_case)
+        if qualitative.investment_synthesis:
+            sections.append(qualitative.investment_synthesis.investment_thesis)
+            sections.append(qualitative.investment_synthesis.bull_case)
+            sections.append(qualitative.investment_synthesis.base_case)
+            sections.append(qualitative.investment_synthesis.bear_case)
 
         combined_text = " ".join(str(section) for section in sections if section)
         return len(combined_text.split())
@@ -247,15 +248,17 @@ class HybridAnalysisSynthesizer:
         Returns:
             Number of unique insights
         """
-        insights = [
-            *qualitative.sec_insights.competitive_advantages,
-            *qualitative.sec_insights.risk_factors,
-            *qualitative.sec_insights.strategic_initiatives,
-            *qualitative.fundamental_context.growth_drivers,
-            qualitative.investment_synthesis.bull_case,
-            qualitative.investment_synthesis.base_case,
-            qualitative.investment_synthesis.bear_case,
-        ]
+        insights: list[str] = []
+        if qualitative.sec_insights:
+            insights.extend(qualitative.sec_insights.competitive_advantages)
+            insights.extend(qualitative.sec_insights.risk_factors)
+            insights.extend(qualitative.sec_insights.strategic_initiatives)
+        if qualitative.fundamental_context:
+            insights.extend(qualitative.fundamental_context.growth_drivers)
+        if qualitative.investment_synthesis:
+            insights.append(qualitative.investment_synthesis.bull_case)
+            insights.append(qualitative.investment_synthesis.base_case)
+            insights.append(qualitative.investment_synthesis.bear_case)
         return len(set(insights))
 
     def _calculate_processing_time(self, processing_start: float) -> float:

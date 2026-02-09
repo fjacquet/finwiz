@@ -216,11 +216,11 @@ class EnrichedAnalysisReportGenerator:
         # Extract nested qualitative data for easier template access
         if "qualitative" in data:
             qual = data["qualitative"]
-            template_vars["sec_insights"] = qual.get("sec_insights", {})
-            template_vars["fundamental_context"] = qual.get("fundamental_context", {})
-            template_vars["technical_strategy"] = qual.get("technical_strategy", {})
-            template_vars["contextual_risks"] = qual.get("contextual_risks", {})
-            template_vars["investment_synthesis"] = qual.get("investment_synthesis", {})
+            template_vars["sec_insights"] = qual.get("sec_insights") or {}
+            template_vars["fundamental_context"] = qual.get("fundamental_context") or {}
+            template_vars["technical_strategy"] = qual.get("technical_strategy") or {}
+            template_vars["contextual_risks"] = qual.get("contextual_risks") or {}
+            template_vars["investment_synthesis"] = qual.get("investment_synthesis") or {}
 
         # Extract sentiment summary for report enrichment (Phase 16)
         sentiment_summary = data.get("sentiment_summary", None)

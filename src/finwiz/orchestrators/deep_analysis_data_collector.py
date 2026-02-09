@@ -117,6 +117,8 @@ class DeepAnalysisDataCollector:
                 return self._collect_crypto_data(ticker, collected_data)
             elif asset_class.lower() == "stock":
                 return self._collect_stock_data(ticker, collected_data)
+            elif asset_class.lower() == "etf":
+                return self._collect_etf_data(ticker, collected_data)
         except Exception as e:
             self.logger.error(f"❌ Asset-specific data collection failed: {e}", exc_info=True)
             if asset_class.lower() == "crypto":
@@ -124,6 +126,8 @@ class DeepAnalysisDataCollector:
                 collected_data["age_years"] = 3.0
                 collected_data["market_cap"] = 10e9
                 collected_data["crypto_info"] = {}
+            elif asset_class.lower() == "etf":
+                collected_data["expense_ratio"] = None
             else:
                 collected_data["company_info"] = {}
 
@@ -222,6 +226,33 @@ class DeepAnalysisDataCollector:
                         collected_data[field] = metrics[key]
 
             collected_data["company_info"] = company_result
+
+        return collected_data
+
+    def _collect_etf_data(self, ticker: str, collected_data: dict[str, Any]) -> dict[str, Any]:
+        """Collect ETF-specific data, with fallback for European ETFs missing expense_ratio."""
+        from finwiz.quantitative.etf.etf_expense_fallback import get_fallback_expense_ratio
+
+        self.logger.info(f"Collecting ETF-specific data for {ticker}")
+
+        # Try to extract expense_ratio from ticker_info (yfinance)
+        expense_ratio = None
+        if "ticker_info" in collected_data and isinstance(collected_data["ticker_info"], dict):
+            raw_ratio = collected_data["ticker_info"].get("expense_ratio")
+            if raw_ratio is not None and raw_ratio != "N/A":
+                try:
+                    expense_ratio = float(raw_ratio)
+                except (ValueError, TypeError):
+                    pass
+
+        # Fallback to YAML config for European ETFs
+        if expense_ratio is None:
+            expense_ratio = get_fallback_expense_ratio(ticker)
+            if expense_ratio is not None:
+                self.logger.info(f"Using fallback expense_ratio for {ticker}: {expense_ratio}")
+
+        if expense_ratio is not None:
+            collected_data["expense_ratio"] = expense_ratio
 
         return collected_data
 
@@ -373,6 +404,15 @@ class DeepAnalysisDataCollector:
         for section in ["ticker_info", "company_info", "quantitative_analysis", "sec_analysis", "sentiment_analysis"]:
             if section in data and isinstance(data[section], dict):
                 self._flatten_recursive(data[section], flattened)
+
+        # Ensure expense_ratio is extracted from ticker_info if not already present
+        if "expense_ratio" not in flattened and "ticker_info" in data and isinstance(data["ticker_info"], dict):
+            raw_ratio = data["ticker_info"].get("expense_ratio")
+            if raw_ratio is not None and raw_ratio != "N/A":
+                try:
+                    flattened["expense_ratio"] = float(raw_ratio)
+                except (ValueError, TypeError):
+                    pass
 
         return flattened
 
