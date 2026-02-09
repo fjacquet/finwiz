@@ -2,17 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-08)
+See: .planning/PROJECT.md (updated 2026-02-09)
 
-**Core value:** Hybrid financial analysis with real newcomer detection -- now faster and with risk scenario analysis
-**Current focus:** v4 Data Intelligence & Smart Scoring
+**Core value:** Hybrid financial analysis enriched with news sentiment and macroeconomic context for smarter scoring
+**Current focus:** Phase 13 - Data Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-08 — Milestone v4 started
+Phase: 13 of 16 (Data Foundation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-09 -- Roadmap created for v4 milestone
+
+Progress: [========================░░░░░░] 76% (26/34 plans across all milestones, v4 plans TBD)
 
 ## Milestones Shipped
 
@@ -40,6 +42,12 @@ Last activity: 2026-02-08 — Milestone v4 started
 
 All decisions logged in PROJECT.md Key Decisions table.
 
+Recent decisions affecting current work:
+- Additive overlay pattern for sentiment/macro scoring (NOT weight redistribution)
+- Feature-flag all new scoring factors with default=off
+- Finnhub pre-computed sentiment first, VADER as local fallback (not FinBERT)
+- Macro data collected ONCE per run at session level, not per holding
+
 ### Pending Todos
 
 None.
@@ -50,8 +58,8 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-08
-Stopped at: v4 milestone definition in progress
+Last session: 2026-02-09
+Stopped at: v4 roadmap created, ready to plan Phase 13
 Resume file: None
 
-*Updated after v4 milestone start*
+*Updated after v4 roadmap creation*

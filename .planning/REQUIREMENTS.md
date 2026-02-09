@@ -1,4 +1,4 @@
-# Requirements: FinWiz v4 — Data Intelligence & Smart Scoring
+# Requirements: FinWiz v4 -- Data Intelligence & Smart Scoring
 
 **Defined:** 2026-02-08
 **Core Value:** Smarter scoring by factoring in news sentiment and macroeconomic context, not just technicals and fundamentals.
@@ -24,8 +24,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **SENT-01**: Headline sentiment scoring using Finnhub pre-computed sentiment with VADER as local fallback
 - [ ] **SENT-02**: Aggregate sentiment score per holding (weighted average by source reliability)
 - [ ] **SENT-03**: Sentiment confidence metric based on article count, source diversity, and recency
-- [ ] **SENT-04**: Temporal decay weighting — recent articles weighted more than older ones (exponential decay)
-- [ ] **SENT-05**: Explicit "no news" handling — absence of news is None, not neutral (0.0)
+- [ ] **SENT-04**: Temporal decay weighting -- recent articles weighted more than older ones (exponential decay)
+- [ ] **SENT-05**: Explicit "no news" handling -- absence of news is None, not neutral (0.0)
 
 ### Macro Context
 
@@ -42,7 +42,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **SCORE-01**: Sentiment factor integrated into composite scoring as additive adjustment overlay (not weight redistribution)
 - [ ] **SCORE-02**: Sentiment scoring starts at weight=0.0 (feature-flagged off) with configurable weight via ScoringThresholds
 - [ ] **SCORE-03**: Macro context adjusts risk scoring weights dynamically based on market regime
-- [ ] **SCORE-04**: Per-asset-class macro sensitivity — stocks, ETFs, and crypto respond differently to macro indicators
+- [ ] **SCORE-04**: Per-asset-class macro sensitivity -- stocks, ETFs, and crypto respond differently to macro indicators
 
 ### Report Enrichment
 
@@ -103,11 +103,14 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | DATA-07 | Phase 13 | Pending |
 | DATA-08 | Phase 13 | Pending |
 | DATA-09 | Phase 13 | Pending |
+| DISC-01 | Phase 13 | Pending |
 | SENT-01 | Phase 14 | Pending |
 | SENT-02 | Phase 14 | Pending |
 | SENT-03 | Phase 14 | Pending |
 | SENT-04 | Phase 14 | Pending |
 | SENT-05 | Phase 14 | Pending |
+| SCORE-01 | Phase 14 | Pending |
+| SCORE-02 | Phase 14 | Pending |
 | MACRO-01 | Phase 15 | Pending |
 | MACRO-02 | Phase 15 | Pending |
 | MACRO-03 | Phase 15 | Pending |
@@ -115,21 +118,18 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | MACRO-05 | Phase 15 | Pending |
 | MACRO-06 | Phase 15 | Pending |
 | MACRO-07 | Phase 15 | Pending |
-| SCORE-01 | Phase 14 | Pending |
-| SCORE-02 | Phase 14 | Pending |
 | SCORE-03 | Phase 15 | Pending |
 | SCORE-04 | Phase 15 | Pending |
 | REPORT-01 | Phase 16 | Pending |
 | REPORT-02 | Phase 16 | Pending |
 | REPORT-03 | Phase 16 | Pending |
 | REPORT-04 | Phase 16 | Pending |
-| DISC-01 | Phase 13 | Pending |
 
 **Coverage:**
 - v4 requirements: 30 total
 - Mapped to phases: 30
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-08*
-*Last updated: 2026-02-08 after initial definition*
+*Last updated: 2026-02-09 after roadmap creation*
