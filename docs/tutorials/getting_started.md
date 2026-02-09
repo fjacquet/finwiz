@@ -35,7 +35,7 @@ Complete guide for deploying, operating, and running your first FinWiz analysis.
 
 - `CHART_IMG_API_KEY` - Chart generation
 - `TWELVE_DATA_API_KEY` - Technical indicators
-- `COINMARKETCAP_API_KEY` - Crypto data
+- `X-CMC_PRO_API_KEY` - Crypto data
 - `PPLX_API_KEY` - Perplexity Sonar integration
 
 ## Installation

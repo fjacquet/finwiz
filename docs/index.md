@@ -269,7 +269,7 @@ Professional-grade quantitative analysis framework:
 - ALPHA_VANTAGE_API_KEY - Financial data
 - TWELVE_DATA_API_KEY - Technical indicators
 - CHART_IMG_API_KEY - Chart generation
-- COINMARKETCAP_API_KEY - Cryptocurrency data
+- X-CMC_PRO_API_KEY - Cryptocurrency data
 - PPLX_API_KEY - Perplexity research
 
 ## Architecture Overview

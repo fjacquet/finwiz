@@ -80,7 +80,7 @@ class ConfigurationManager:
         ),
         APIKeyConfig(
             name="CoinMarketCap",
-            env_var="COINMARKETCAP_API_KEY",
+            env_var="X-CMC_PRO_API_KEY",
             required=False,  # Optional for crypto analysis
             description="CoinMarketCap API key for cryptocurrency data",
         ),
@@ -187,7 +187,7 @@ class ConfigurationManager:
         feature_dependencies = {
             "CHART_IMG_API_KEY": "chart_analysis",
             "TWELVE_DATA_API_KEY": "twelve_data_integration",
-            "COINMARKETCAP_API_KEY": "enhanced_sentiment_analysis",
+            "X-CMC_PRO_API_KEY": "enhanced_sentiment_analysis",
             "KRAKEN_API_KEY": "enhanced_sentiment_analysis",
         }
 
@@ -214,7 +214,7 @@ class ConfigurationManager:
             "ALPHA_VANTAGE_API_KEY": lambda k: len(k) >= 16,
             "CHART_IMG_API_KEY": lambda k: len(k) >= 16,
             "TWELVE_DATA_API_KEY": lambda k: len(k) >= 16,
-            "COINMARKETCAP_API_KEY": lambda k: len(k) >= 32,
+            "X-CMC_PRO_API_KEY": lambda k: len(k) >= 32,
             "KRAKEN_API_KEY": lambda k: len(k) >= 16,
         }
 

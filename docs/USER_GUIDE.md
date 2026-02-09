@@ -71,7 +71,7 @@ All FinWiz operations require these API keys:
 - **ALPHA_VANTAGE_API_KEY**: Financial data ([Get key](https://www.alphavantage.co/support/#api-key))
 - **CHART_IMG_API_KEY**: Professional chart generation
 - **TWELVE_DATA_API_KEY**: Technical indicators and market data
-- **COINMARKETCAP_API_KEY**: Cryptocurrency data
+- **X-CMC_PRO_API_KEY**: Cryptocurrency data
 - **PPLX_API_KEY**: Perplexity Sonar for enhanced research
 
 ### Installation
@@ -136,7 +136,7 @@ SERPER_API_KEY=your-serper-key-here
 ALPHA_VANTAGE_API_KEY=your-alpha-vantage-key-here
 TWELVE_DATA_API_KEY=your-twelve-data-key-here
 CHART_IMG_API_KEY=your-chart-img-key-here
-COINMARKETCAP_API_KEY=your-coinmarketcap-key-here
+X-CMC_PRO_API_KEY=your-coinmarketcap-key-here
 PPLX_API_KEY=your-perplexity-key-here
 
 # Validation Configuration
@@ -935,7 +935,7 @@ SERPER_API_KEY=...                 # Serper API key for web search
 ALPHA_VANTAGE_API_KEY=...          # Financial data
 TWELVE_DATA_API_KEY=...            # Technical indicators
 CHART_IMG_API_KEY=...              # Chart generation
-COINMARKETCAP_API_KEY=...          # Crypto data
+X-CMC_PRO_API_KEY=...          # Crypto data
 PPLX_API_KEY=...                   # Perplexity research
 FIRECRAWL_API_KEY=...              # Web scraping
 ```

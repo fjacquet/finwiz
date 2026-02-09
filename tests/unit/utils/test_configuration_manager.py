@@ -35,7 +35,7 @@ class TestConfigurationManager:
             "ALPHA_VANTAGE_API_KEY",
             "CHART_IMG_API_KEY",
             "TWELVE_DATA_API_KEY",
-            "COINMARKETCAP_API_KEY",
+            "X-CMC_PRO_API_KEY",
             "KRAKEN_API_KEY",
         ]
         for var in env_vars_to_clear:

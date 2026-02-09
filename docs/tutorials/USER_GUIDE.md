@@ -33,7 +33,7 @@ Complete guide for deploying, operating, and migrating FinWiz.
 
 - `CHART_IMG_API_KEY` - Chart generation
 - `TWELVE_DATA_API_KEY` - Technical indicators
-- `COINMARKETCAP_API_KEY` - Crypto data
+- `X-CMC_PRO_API_KEY` - Crypto data
 - `PPLX_API_KEY` - Perplexity Sonar integration
 
 ### Installation
@@ -1660,7 +1660,7 @@ ALPHA_VANTAGE_API_KEY=your-alpha-vantage-key-here
 # Optional keys (controlled by feature flags)
 CHART_IMG_API_KEY=your-chart-img-key-here
 TWELVE_DATA_API_KEY=your-twelve-data-key-here
-COINMARKETCAP_API_KEY=your-coinmarketcap-key-here
+X-CMC_PRO_API_KEY=your-coinmarketcap-key-here
 KRAKEN_API_KEY=your-kraken-key-here
 PPLX_API_KEY=your-perplexity-api-key-here
 ```
@@ -1685,40 +1685,6 @@ degradation_manager.update_service_config(
 ### Overview
 
 Centralized data management and coordination between analysis crews with validation, freshness checking, and error handling.
-
-### Configuration File
-
-**Location**: `config/integration.yaml`
-
-```yaml
-integration:
-  output_dir: "output"
-
-  freshness:
-    default_max_age_hours: 24
-    crew_thresholds:
-      stock: 24 # Stock analysis valid for 24 hours
-      etf: 48 # ETF analysis valid for 48 hours
-      crypto: 12 # Crypto analysis valid for 12 hours
-      discovery: 72 # Discovery valid for 72 hours
-      portfolio: 168 # Portfolio review valid for 1 week
-
-  validation:
-    strict_validation: true
-    timeout_seconds: 30
-    continue_on_warnings: true
-
-  error_handling:
-    max_retries: 3
-    retry_delay: 2
-    graceful_degradation: true
-
-  logging:
-    level: "INFO"
-    structured: true
-    log_lineage: true
-    log_performance: false
-```
 
 ### Environment Variables
 

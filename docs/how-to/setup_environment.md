@@ -102,7 +102,7 @@ These API keys enable additional features:
 # Optional API Keys
 CHART_IMG_API_KEY=your_chart_img_key_here
 TWELVE_DATA_API_KEY=your_twelve_data_key_here
-COINMARKETCAP_API_KEY=your_coinmarketcap_key_here
+X-CMC_PRO_API_KEY=your_coinmarketcap_key_here
 PPLX_API_KEY=your_perplexity_api_key_here
 ```
 
@@ -353,7 +353,7 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 | `FIRECRAWL_API_KEY`     | Yes      | Web scraping             |
 | `ALPHA_VANTAGE_API_KEY` | Yes      | Financial data           |
 | `TWELVE_DATA_API_KEY`   | No       | Technical indicators     |
-| `COINMARKETCAP_API_KEY` | No       | Crypto data              |
+| `X-CMC_PRO_API_KEY` | No       | Crypto data              |
 | `PPLX_API_KEY`          | No       | Perplexity search        |
 
 ### Performance Settings
