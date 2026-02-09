@@ -252,6 +252,32 @@ class ScoringThresholds:
     sentiment_min_articles_for_high_confidence: int = 10  # Article count for max confidence factor
     sentiment_min_sources_for_max_diversity: int = 3  # Source count for max diversity factor
 
+    # ============================================================================
+    # MACRO SCORING CONFIGURATION (Phase 15)
+    # ============================================================================
+
+    # Yield curve classification thresholds (10Y-2Y spread in percentage points)
+    yield_curve_inverted: float = 0.0  # Below 0 = inverted
+    yield_curve_flat: float = 0.5  # 0 to 0.5 = flat
+    yield_curve_steep: float = 2.0  # Above 2.0 = steep (0.5-2.0 = normal)
+
+    # Per-asset-class macro sensitivity coefficients (SCORE-04)
+    macro_sensitivity_stock: float = 1.0  # Full sensitivity
+    macro_sensitivity_etf: float = 0.7  # Moderate sensitivity
+    macro_sensitivity_crypto: float = 0.3  # Low sensitivity
+
+    # Macro confidence threshold
+    macro_min_confidence: float = 0.0  # Minimum confidence to apply (0.0 = always)
+
+    # VIX regime thresholds for scoring
+    macro_vix_high: float = 30.0  # High volatility threshold
+    macro_vix_elevated: float = 20.0  # Elevated volatility threshold
+    macro_vix_low: float = 15.0  # Low volatility threshold
+
+    # Fed rate thresholds
+    macro_rate_tight: float = 5.0  # Tight monetary policy threshold
+    macro_rate_accommodative: float = 2.0  # Accommodative policy threshold
+
 
 # Global instance for easy access
 DEFAULT_THRESHOLDS = ScoringThresholds()

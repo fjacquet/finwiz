@@ -67,7 +67,7 @@ from .investment_discovery import (  # noqa: F401
 )
 
 # Sentiment & macro schemas (v4)
-from .macro import MacroSnapshot  # noqa: F401
+from .macro import MacroScore, MacroSnapshot, YieldCurveRegime  # noqa: F401
 
 # Newcomer discovery schemas
 from .newcomer_discovery import (  # noqa: F401
@@ -237,9 +237,11 @@ __all__ = [
     "TechnicalIndicators",
     "TenKInsight",
     # Sentiment & macro schemas (v4)
+    "MacroScore",
     "MacroSnapshot",
     "NewsArticle",
     "NewsSentimentResult",
+    "YieldCurveRegime",
     # Validation schemas
     "ValidatedTicker",
 ]

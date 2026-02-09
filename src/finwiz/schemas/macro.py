@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+# Yield curve regime classification based on 10Y-2Y spread
+YieldCurveRegime = Literal["inverted", "flat", "normal", "steep", "unknown"]
 
 
 class MacroSnapshot(BaseModel):
@@ -46,3 +49,21 @@ class MacroSnapshot(BaseModel):
         if self.is_recession_signal():
             return "recession_risk"
         return "normal"
+
+
+class MacroScore(BaseModel):
+    """Computed macro adjustment score for a single holding.
+
+    Produced by MacroScorer, consumed by DeepAnalysisScorer as an additive overlay.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    ticker: str = Field(..., description="Ticker symbol this score applies to")
+    macro_score: float | None = Field(None, ge=-1.0, le=1.0, description="Computed macro adjustment score")
+    yield_curve_regime: YieldCurveRegime | None = Field(None, description="Classified yield curve regime")
+    market_regime: str | None = Field(None, description="Market regime from VIX/yield curve")
+    confidence: float | None = Field(None, ge=0.0, le=1.0, description="Data completeness confidence (0-1)")
+    asset_class: str | None = Field(None, description="Asset class used for sensitivity scaling")
+    sensitivity_applied: float | None = Field(None, description="Sensitivity coefficient applied")
+    details: dict[str, Any] = Field(default_factory=dict, description="Full scoring breakdown")
