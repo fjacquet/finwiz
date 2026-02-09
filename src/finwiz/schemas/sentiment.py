@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -46,6 +46,26 @@ class NewsSentimentResult(BaseModel):
     source_breakdown: dict[str, int] = Field(default_factory=dict, description="Article count per source")
     data_freshness_hours: float = Field(0.0, ge=0.0, description="Hours since newest article")
     fetched_at: datetime = Field(default_factory=datetime.now, description="When sentiment was collected")
+
+    @field_validator("ticker")
+    @classmethod
+    def uppercase_ticker(cls, v: str) -> str:
+        return v.upper()
+
+
+class SentimentScore(BaseModel):
+    """Phase 14 sentiment scoring output for a single holding."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    ticker: str = Field(..., min_length=1, max_length=10, description="Ticker symbol")
+    score: float | None = Field(None, ge=-1.0, le=1.0, description="Aggregate sentiment score (-1 bearish to +1 bullish). None = no news data.")
+    confidence: float | None = Field(None, ge=0.0, le=1.0, description="Confidence in the sentiment score. None = no news data.")
+    article_count: int = Field(0, ge=0, description="Number of articles used in scoring")
+    source_count: int = Field(0, ge=0, description="Number of unique sources")
+    temporal_decay_applied: bool = Field(False, description="Whether temporal decay weighting was applied")
+    data_freshness_hours: float = Field(0.0, ge=0.0, description="Hours since newest article")
+    details: dict[str, Any] = Field(default_factory=dict, description="Scoring breakdown details")
 
     @field_validator("ticker")
     @classmethod

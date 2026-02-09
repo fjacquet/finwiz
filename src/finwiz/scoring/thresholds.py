@@ -243,6 +243,15 @@ class ScoringThresholds:
     weight_sentiment_overlay: float = 0.0  # Additive sentiment adjustment
     weight_macro_overlay: float = 0.0  # Additive macro context adjustment
 
+    # ============================================================================
+    # SENTIMENT SCORING CONFIGURATION (Phase 14)
+    # ============================================================================
+    sentiment_half_life_hours: float = 48.0  # Temporal decay half-life (articles 2 days old = 50% weight)
+    sentiment_min_confidence: float = 0.0  # Minimum confidence to apply sentiment overlay (0.0 = always apply)
+    sentiment_max_freshness_hours: float = 168.0  # Maximum freshness window (7 days)
+    sentiment_min_articles_for_high_confidence: int = 10  # Article count for max confidence factor
+    sentiment_min_sources_for_max_diversity: int = 3  # Source count for max diversity factor
+
 
 # Global instance for easy access
 DEFAULT_THRESHOLDS = ScoringThresholds()
