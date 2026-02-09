@@ -1,0 +1,263 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>🔍 Latest Discovery Report</h1>
+    <div class="subtitle">
+        Most Recent Investment Discovery Analysis
+    </div>
+</div>
+
+<!-- Discovery Summary -->
+<div class="section">
+    <h2 class="section-title">📊 Discovery Summary</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Discovery Date</h4>
+            <div class="metric-value" style="font-size: 1.2rem;">
+                {{ discovery_date.strftime('%Y-%m-%d') if discovery_date else 'N/A' }}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Total Opportunities</h4>
+            <div class="metric-value">{{ total_opportunities or 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>A+ Candidates</h4>
+            <div class="metric-value">{{ a_plus_count or 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Asset Classes</h4>
+            <div class="metric-value">{{ asset_classes_count or 0 }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Asset Class Breakdown -->
+{% if asset_class_breakdown %}
+<div class="section">
+    <h2 class="section-title">🏷️ Asset Class Distribution</h2>
+    <div class="metrics-grid">
+        {% for asset_class, count in asset_class_breakdown.items() %}
+        <div class="metric-card">
+            <h4>{{ asset_class.title() }}</h4>
+            <div class="metric-value">{{ count }}</div>
+            <div class="metric-change">
+                {% set percentage = (count / total_opportunities * 100) if total_opportunities else 0 %}
+                {{ "%.1f"|format(percentage) }}% of total
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Top Opportunities -->
+{% if top_opportunities %}
+<div class="section">
+    <h2 class="section-title">🌟 Top Investment Opportunities</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Ticker</th>
+                    <th>Name</th>
+                    <th>Asset Class</th>
+                    <th>Grade</th>
+                    <th>Score</th>
+                    <th>Recommendation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for opportunity in top_opportunities %}
+                <tr>
+                    <td class="text-center font-bold">{{ loop.index }}</td>
+                    <td class="font-bold">{{ opportunity.ticker or 'N/A' }}</td>
+                    <td>{{ opportunity.name or opportunity.company_name or 'N/A' }}</td>
+                    <td>
+                        <span class="status-indicator">
+                            {{ opportunity.asset_class.title() if opportunity.asset_class else 'N/A' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="grade-{{ opportunity.grade.lower().replace('+', '-plus') if opportunity.grade else 'unknown' }}">
+                            {{ opportunity.grade or 'N/A' }}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        {% if opportunity.score or opportunity.composite_score %}
+                            {{ "%.3f"|format(opportunity.score or opportunity.composite_score) }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="status-{{ opportunity.recommendation.lower() if opportunity.recommendation else 'hold' }}">
+                            {{ opportunity.recommendation or 'HOLD' }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Discovery Details -->
+{% if discovery_details %}
+<div class="section">
+    <h2 class="section-title">📖 Discovery Details</h2>
+    {% for detail in discovery_details %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ detail.ticker or 'Unknown' }} - {{ detail.name or detail.company_name or 'Unknown Company' }}</span>
+                <span class="grade-{{ detail.grade.lower().replace('+', '-plus') if detail.grade else 'unknown' }}">
+                    {{ detail.grade or 'N/A' }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if detail.rationale %}
+            <p><strong>Investment Rationale:</strong></p>
+            <p>{{ detail.rationale }}</p>
+            {% endif %}
+
+            {% if detail.key_metrics %}
+            <div class="mt-1">
+                <strong>Key Metrics:</strong>
+                <div class="metrics-grid" style="margin-top: 0.5rem;">
+                    {% for metric, value in detail.key_metrics.items() %}
+                    <div class="metric-card" style="padding: 0.75rem;">
+                        <h4 style="font-size: 0.8rem;">{{ metric.replace('_', ' ').title() }}</h4>
+                        <div class="metric-value" style="font-size: 1rem;">
+                            {% if metric.endswith('_ratio') or metric.endswith('_percent') %}
+                                {{ "%.2f"|format(value) }}
+                            {% elif metric.startswith('price') or metric.endswith('_price') %}
+                                ${{ "%.2f"|format(value) }}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if detail.strengths %}
+            <div class="mt-1">
+                <strong>Key Strengths:</strong>
+                <ul>
+                    {% for strength in detail.strengths %}
+                    <li>{{ strength }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if detail.risks %}
+            <div class="mt-1">
+                <strong>Risk Factors:</strong>
+                <ul>
+                    {% for risk in detail.risks %}
+                    <li>{{ risk }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Discovery Criteria -->
+{% if discovery_criteria %}
+<div class="section">
+    <h2 class="section-title">🎯 Discovery Criteria</h2>
+    <div class="card">
+        <div class="card-header">Applied Screening Filters</div>
+        <div class="card-body">
+            <div class="metrics-grid">
+                {% for criterion, value in discovery_criteria.items() %}
+                <div class="metric-card">
+                    <h4>{{ criterion.replace('_', ' ').title() }}</h4>
+                    <div class="metric-value" style="font-size: 1.2rem;">
+                        {% if criterion.endswith('_percent') %}
+                            {{ (value * 100)|round(1) }}%
+                        {% elif criterion.endswith('_ratio') %}
+                            {{ value|round(2) }}
+                        {% elif 'market_cap' in criterion or 'volume' in criterion %}
+                            {{ "${:,.0f}".format(value) if value >= 1000000 else "${:,}".format(value) }}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Performance Summary -->
+{% if performance_summary %}
+<div class="section">
+    <h2 class="section-title">📈 Performance Summary</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="metrics-grid">
+                {% for metric, value in performance_summary.items() %}
+                <div class="metric-card">
+                    <h4>{{ metric.replace('_', ' ').title() }}</h4>
+                    <div class="metric-value">
+                        {% if metric.endswith('_return') or metric.endswith('_yield') %}
+                            {{ "%.2f"|format(value * 100) }}%
+                        {% elif metric.endswith('_ratio') %}
+                            {{ "%.2f"|format(value) }}
+                        {% elif metric.endswith('_score') %}
+                            {{ "%.1f"|format(value) }}/10
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Next Steps -->
+<div class="section">
+    <h2 class="section-title">🚀 Next Steps</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Recommended Actions:</strong></p>
+            <ul>
+                <li>Review detailed analysis for each A+ candidate</li>
+                <li>Consider portfolio allocation and diversification</li>
+                <li>Evaluate risk tolerance and investment timeline</li>
+                <li>Consult with financial advisor for personalized advice</li>
+                <li>Monitor market conditions and company fundamentals</li>
+            </ul>
+
+            <div class="mt-2">
+                <p><strong>Important Reminders:</strong></p>
+                <ul>
+                    <li>Past performance does not guarantee future results</li>
+                    <li>All investments carry risk of loss</li>
+                    <li>Diversification is key to risk management</li>
+                    <li>Regular portfolio review is recommended</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>💎 A+ Investment Discovery</h1>
+    <div class="subtitle">
+        {{ asset_type.title() }} Opportunities - {{ grade }} Grade
+    </div>
+</div>
+
+<!-- Discovery Summary -->
+<div class="section">
+    <h2 class="section-title">📊 Discovery Summary</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Discovery ID</h4>
+            <div class="metric-value" style="font-size: 1.2rem;">{{ discovery_id }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Asset Type</h4>
+            <div class="metric-value">{{ asset_type.title() }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Target Grade</h4>
+            <div class="metric-value grade-a-plus">{{ grade }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Candidates Found</h4>
+            <div class="metric-value">{{ candidates|length }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Discovery Criteria -->
+<div class="section">
+    <h2 class="section-title">🎯 Selection Criteria</h2>
+    <div class="card">
+        <div class="card-header">Applied Filters</div>
+        <div class="card-body">
+            <div class="metrics-grid">
+                {% for key, value in discovery_criteria.items() %}
+                <div class="metric-card">
+                    <h4>{{ key.replace('_', ' ').title() }}</h4>
+                    <div class="metric-value" style="font-size: 1.2rem;">
+                        {% if key.endswith('_percent') %}
+                            {{ (value * 100)|round(1) }}%
+                        {% elif key.endswith('_ratio') %}
+                            {{ value|round(2) }}
+                        {% elif 'market_cap' in key or 'volume' in key %}
+                            {{ "${:,.0f}".format(value) if value >= 1000000 else "${:,}".format(value) }}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- A+ Candidates -->
+<div class="section">
+    <h2 class="section-title">🌟 A+ Investment Candidates</h2>
+    {% for candidate in candidates %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ candidate['ticker'] }} - {{ candidate['company_name'] }}</span>
+                <span class="grade-a-plus">{{ candidate['grade'] }}</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <p><strong>Rationale:</strong> {{ candidate['rationale'] }}</p>
+
+            {% if candidate['criteria_used'] %}
+            <div class="mt-1">
+                <strong>Criteria Met:</strong>
+                <div class="metrics-grid" style="margin-top: 0.5rem;">
+                    {% for key, value in candidate['criteria_used'].items() %}
+                    <div class="metric-card" style="padding: 0.75rem;">
+                        <h4 style="font-size: 0.8rem;">{{ key.replace('_', ' ').title() }}</h4>
+                        <div class="metric-value" style="font-size: 1rem;">
+                            {% if key.endswith('_percent') %}
+                                {{ (value * 100)|round(1) }}%
+                            {% elif key.endswith('_ratio') %}
+                                {{ value|round(2) }}
+                            {% elif 'market_cap' in key or 'volume' in key %}
+                                {{ "${:,.0f}".format(value) if value >= 1000000 else "${:,}".format(value) }}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Performance Insights -->
+{% if candidates %}
+<div class="section">
+    <h2 class="section-title">📈 Performance Insights</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Company</th>
+                    <th>Asset Type</th>
+                    <th>Grade</th>
+                    <th>Key Strength</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for candidate in candidates %}
+                <tr>
+                    <td class="font-bold">{{ candidate['ticker'] }}</td>
+                    <td>{{ candidate['company_name'] }}</td>
+                    <td>
+                        <span class="status-indicator">
+                            {{ candidate['asset_type'].title() }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="grade-a-plus">{{ candidate['grade'] }}</span>
+                    </td>
+                    <td class="text-muted">
+                        {{ candidate['rationale'].split('.')[0] }}...
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>💼 Portfolio Review</h1>
+    <div class="subtitle">
+        Comprehensive Portfolio Analysis - {{ base_currency }} Base Currency
+    </div>
+</div>
+
+<!-- Portfolio Summary -->
+<div class="section">
+    <h2 class="section-title">📊 Portfolio Overview</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Total Holdings</h4>
+            <div class="metric-value">{{ holdings|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Keep Decisions</h4>
+            <div class="metric-value">{{ holdings|selectattr("decision", "equalto", "KEEP")|list|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Sell Decisions</h4>
+            <div class="metric-value">{{ holdings|selectattr("decision", "equalto", "SELL")|list|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Average Grade</h4>
+            <div class="metric-value">
+                {% set grade_counts = {"A+": 0, "A": 0, "B": 0, "C": 0, "D": 0, "F": 0} %}
+                {% for holding in holdings %}
+                    {% set _ = grade_counts.update({holding.grade: grade_counts.get(holding.grade, 0) + 1}) %}
+                {% endfor %}
+                {% set total = holdings|length %}
+                {% if total > 0 %}
+                    {% set a_plus_pct = (grade_counts["A+"] / total * 100)|round(0) %}
+                    {% set a_pct = (grade_counts["A"] / total * 100)|round(0) %}
+                    {% if a_plus_pct > 50 %}A+{% elif (a_plus_pct + a_pct) > 50 %}A{% elif grade_counts["B"] > grade_counts["C"] %}B{% elif grade_counts["C"] > grade_counts["D"] %}C{% else %}D{% endif %}
+                {% else %}N/A{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Asset Class Distribution -->
+<div class="section">
+    <h2 class="section-title">🏷️ Asset Class Breakdown</h2>
+    <div class="metrics-grid">
+        {% set asset_classes = holdings|map(attribute='asset_class')|unique|list %}
+        {% for asset_class in asset_classes %}
+        <div class="metric-card">
+            <h4>{{ asset_class.title() }}</h4>
+            <div class="metric-value">{{ holdings|selectattr("asset_class", "equalto", asset_class)|list|length }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Holdings Details -->
+<div class="section">
+    <h2 class="section-title">📋 Holdings Analysis</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Name</th>
+                    <th>Asset Class</th>
+                    <th>Grade</th>
+                    <th>Decision</th>
+                    <th>Risk Level</th>
+                    <th>Score</th>
+                    <th>Analysis Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for holding in holdings %}
+                <tr>
+                    <td class="font-bold">{{ holding.ticker }}</td>
+                    <td>{{ holding.name }}</td>
+                    <td>
+                        <span class="status-indicator">
+                            {{ holding.asset_class.title() }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="grade-{{ holding.grade.lower().replace('+', '-plus') }}">
+                            {{ holding.grade }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-{{ 'buy' if holding.decision == 'KEEP' else 'sell' }}">
+                            {{ holding.decision }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="risk-{{ holding.risk.level.lower() }}">
+                            {{ holding.risk.level }} ({{ "%.2f"|format(holding.risk.score) }})
+                        </span>
+                    </td>
+                    <td class="text-right">{{ "%.3f"|format(holding.composite_score) }}</td>
+                    <td class="text-muted">{{ holding.crew_analysis_used }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Risk Analysis -->
+<div class="section">
+    <h2 class="section-title">⚠️ Risk Assessment</h2>
+    {% for holding in holdings %}
+    <div class="card">
+        <div class="card-header">
+            {{ holding.ticker }} - {{ holding.name }}
+        </div>
+        <div class="card-body">
+            <p><strong>Risk Level:</strong>
+                <span class="risk-{{ holding.risk.level.lower() }}">
+                    {{ holding.risk.level }} (Score: {{ "%.2f"|format(holding.risk.score) }})
+                </span>
+            </p>
+            <p><strong>Risk Factors:</strong></p>
+            <ul>
+                {% for factor in holding.risk.risk_factors %}
+                <li>{{ factor }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Recommendations -->
+<div class="section">
+    <h2 class="section-title">💡 Recommendations</h2>
+    {% for holding in holdings %}
+    <div class="card">
+        <div class="card-header">
+            {{ holding.ticker }} - {{ holding.recommended_action }}
+        </div>
+        <div class="card-body">
+            <ul>
+                {% for bullet in holding.rationale_bullets %}
+                <li>{{ bullet }}</li>
+                {% endfor %}
+            </ul>
+            {% if holding.alternatives %}
+            <p class="mt-1"><strong>Alternatives Available:</strong> {{ holding.alternatives|length }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

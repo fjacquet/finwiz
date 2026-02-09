@@ -1,0 +1,91 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>📊 Backtesting Results</h1>
+    <div class="subtitle">
+        Investment Candidates Performance Analysis
+    </div>
+</div>
+
+<!-- Summary Metrics -->
+<div class="section">
+    <h2 class="section-title">📈 Summary Metrics</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Total Candidates</h4>
+            <div class="metric-value">{{ candidates|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>A+ Grade Count</h4>
+            <div class="metric-value">{{ candidates|selectattr("grade", "equalto", "A+")|list|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>A Grade Count</h4>
+            <div class="metric-value">{{ candidates|selectattr("grade", "equalto", "A")|list|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Average Score</h4>
+            <div class="metric-value">{{ "%.2f"|format((candidates|map(attribute='composite_score')|sum) / (candidates|length)) }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Asset Class Breakdown -->
+<div class="section">
+    <h2 class="section-title">🏷️ Asset Class Distribution</h2>
+    <div class="metrics-grid">
+        {% set asset_classes = candidates|map(attribute='asset_class')|unique|list %}
+        {% for asset_class in asset_classes %}
+        <div class="metric-card">
+            <h4>{{ asset_class.title() }}</h4>
+            <div class="metric-value">{{ candidates|selectattr("asset_class", "equalto", asset_class)|list|length }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Candidates Table -->
+<div class="section">
+    <h2 class="section-title">🎯 Investment Candidates</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Asset Class</th>
+                    <th>Grade</th>
+                    <th>Score</th>
+                    <th>Recommendation</th>
+                    <th>Analysis File</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for candidate in candidates %}
+                <tr>
+                    <td class="font-bold">{{ candidate.ticker }}</td>
+                    <td>
+                        <span class="status-indicator">
+                            {{ candidate.asset_class.title() }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="grade-{{ candidate.grade.lower().replace('+', '-plus') }}">
+                            {{ candidate.grade }}
+                        </span>
+                    </td>
+                    <td class="text-right">{{ "%.3f"|format(candidate.composite_score) }}</td>
+                    <td>
+                        <span class="status-{{ candidate.recommendation.lower() }}">
+                            {{ candidate.recommendation }}
+                        </span>
+                    </td>
+                    <td class="text-muted">{{ candidate.analysis_file.split('/')[-1] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

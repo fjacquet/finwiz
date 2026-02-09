@@ -1,0 +1,338 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>⚙️ Portfolio Processing Summary</h1>
+    <div class="subtitle">
+        Processing Status and Performance Metrics
+    </div>
+</div>
+
+<!-- Processing Overview -->
+<div class="section">
+    <h2 class="section-title">📊 Processing Overview</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Processing Status</h4>
+            <div class="metric-value" style="font-size: 1.2rem;">
+                {% if processing_status == 'COMPLETED' %}
+                    <span class="status-buy">COMPLETED</span>
+                {% elif processing_status == 'FAILED' %}
+                    <span class="status-sell">FAILED</span>
+                {% elif processing_status == 'IN_PROGRESS' %}
+                    <span class="status-hold">IN PROGRESS</span>
+                {% else %}
+                    <span class="status-hold">{{ processing_status or 'UNKNOWN' }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Total Holdings</h4>
+            <div class="metric-value">{{ total_holdings or 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Processed</h4>
+            <div class="metric-value">{{ processed_holdings or 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Success Rate</h4>
+            <div class="metric-value">
+                {% if total_holdings and total_holdings > 0 %}
+                    {{ "%.1f"|format((processed_holdings or 0) / total_holdings * 100) }}%
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing Timeline -->
+<div class="section">
+    <h2 class="section-title">⏱️ Processing Timeline</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Start Time</h4>
+            <div class="metric-value" style="font-size: 1rem;">
+                {{ start_time.strftime('%H:%M:%S') if start_time else 'N/A' }}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>End Time</h4>
+            <div class="metric-value" style="font-size: 1rem;">
+                {{ end_time.strftime('%H:%M:%S') if end_time else 'N/A' }}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Duration</h4>
+            <div class="metric-value" style="font-size: 1rem;">
+                {% if start_time and end_time %}
+                    {{ ((end_time - start_time).total_seconds() / 60)|round(1) }} min
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Avg per Holding</h4>
+            <div class="metric-value" style="font-size: 1rem;">
+                {% if start_time and end_time and processed_holdings and processed_holdings > 0 %}
+                    {{ (((end_time - start_time).total_seconds() / processed_holdings))|round(1) }}s
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing Steps -->
+{% if processing_steps %}
+<div class="section">
+    <h2 class="section-title">📋 Processing Steps</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                    <th>Items Processed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in processing_steps %}
+                <tr>
+                    <td class="font-bold">{{ step.name or 'Unknown Step' }}</td>
+                    <td>{{ step.description or 'No description' }}</td>
+                    <td>
+                        {% if step.status == 'COMPLETED' %}
+                            <span class="status-buy">COMPLETED</span>
+                        {% elif step.status == 'FAILED' %}
+                            <span class="status-sell">FAILED</span>
+                        {% elif step.status == 'IN_PROGRESS' %}
+                            <span class="status-hold">IN PROGRESS</span>
+                        {% else %}
+                            <span class="status-hold">{{ step.status or 'UNKNOWN' }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        {% if step.duration %}
+                            {{ "%.1f"|format(step.duration) }}s
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td class="text-right">{{ step.items_processed or 0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Holdings Processing Status -->
+{% if holdings_status %}
+<div class="section">
+    <h2 class="section-title">📈 Holdings Processing Status</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Name</th>
+                    <th>Asset Class</th>
+                    <th>Status</th>
+                    <th>Processing Time</th>
+                    <th>Analysis Type</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for holding in holdings_status %}
+                <tr>
+                    <td class="font-bold">{{ holding.ticker or 'N/A' }}</td>
+                    <td>{{ holding.name or 'N/A' }}</td>
+                    <td>
+                        <span class="status-indicator">
+                            {{ holding.asset_class.title() if holding.asset_class else 'N/A' }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if holding.status == 'COMPLETED' %}
+                            <span class="status-buy">COMPLETED</span>
+                        {% elif holding.status == 'FAILED' %}
+                            <span class="status-sell">FAILED</span>
+                        {% elif holding.status == 'IN_PROGRESS' %}
+                            <span class="status-hold">IN PROGRESS</span>
+                        {% else %}
+                            <span class="status-hold">{{ holding.status or 'PENDING' }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        {% if holding.processing_time %}
+                            {{ "%.1f"|format(holding.processing_time) }}s
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ holding.analysis_type or 'N/A' }}</td>
+                    <td>
+                        {% if holding.grade %}
+                            <span class="grade-{{ holding.grade.lower().replace('+', '-plus') }}">
+                                {{ holding.grade }}
+                            </span>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Error Summary -->
+{% if errors %}
+<div class="section">
+    <h2 class="section-title">❌ Processing Errors</h2>
+    {% for error in errors %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ error.ticker or 'System Error' }}</span>
+                <span class="status-sell">ERROR</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <p><strong>Error Type:</strong> {{ error.error_type or 'Unknown' }}</p>
+            <p><strong>Message:</strong> {{ error.message or 'No error message provided' }}</p>
+            {% if error.timestamp %}
+            <p><strong>Time:</strong> {{ error.timestamp.strftime('%H:%M:%S') }}</p>
+            {% endif %}
+            {% if error.stack_trace %}
+            <details>
+                <summary><strong>Stack Trace</strong></summary>
+                <pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--border-radius); margin-top: 0.5rem; overflow-x: auto;">{{ error.stack_trace }}</pre>
+            </details>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Performance Metrics -->
+{% if performance_metrics %}
+<div class="section">
+    <h2 class="section-title">🚀 Performance Metrics</h2>
+    <div class="metrics-grid">
+        {% for metric_name, metric_value in performance_metrics.items() %}
+        <div class="metric-card">
+            <h4>{{ metric_name.replace('_', ' ').title() }}</h4>
+            <div class="metric-value">
+                {% if metric_name.endswith('_time') or metric_name.endswith('_duration') %}
+                    {{ "%.2f"|format(metric_value) }}s
+                {% elif metric_name.endswith('_rate') or metric_name.endswith('_percentage') %}
+                    {{ "%.1f"|format(metric_value * 100) }}%
+                {% elif metric_name.endswith('_count') %}
+                    {{ metric_value }}
+                {% else %}
+                    {{ metric_value }}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Resource Usage -->
+{% if resource_usage %}
+<div class="section">
+    <h2 class="section-title">💻 Resource Usage</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="metrics-grid">
+                {% for resource, usage in resource_usage.items() %}
+                <div class="metric-card">
+                    <h4>{{ resource.replace('_', ' ').title() }}</h4>
+                    <div class="metric-value">
+                        {% if resource.endswith('_memory') %}
+                            {{ "%.1f"|format(usage / 1024 / 1024) }} MB
+                        {% elif resource.endswith('_cpu') %}
+                            {{ "%.1f"|format(usage) }}%
+                        {% elif resource.endswith('_calls') %}
+                            {{ usage }}
+                        {% else %}
+                            {{ usage }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Configuration -->
+{% if configuration %}
+<div class="section">
+    <h2 class="section-title">⚙️ Processing Configuration</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="metrics-grid">
+                {% for config_key, config_value in configuration.items() %}
+                <div class="metric-card">
+                    <h4>{{ config_key.replace('_', ' ').title() }}</h4>
+                    <div class="metric-value" style="font-size: 1rem;">
+                        {% if config_value is sameas true %}
+                            <span class="status-buy">Enabled</span>
+                        {% elif config_value is sameas false %}
+                            <span class="status-sell">Disabled</span>
+                        {% else %}
+                            {{ config_value }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Summary and Recommendations -->
+<div class="section">
+    <h2 class="section-title">📝 Summary & Recommendations</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Processing Summary:</strong></p>
+            <ul>
+                <li>Total holdings processed: {{ processed_holdings or 0 }} of {{ total_holdings or 0 }}</li>
+                <li>Success rate: {{ "%.1f"|format((processed_holdings or 0) / (total_holdings or 1) * 100) }}%</li>
+                <li>Total processing time: {{ ((end_time - start_time).total_seconds() / 60)|round(1) if start_time and end_time else 'N/A' }} minutes</li>
+                <li>Errors encountered: {{ errors|length if errors else 0 }}</li>
+            </ul>
+
+            {% if errors %}
+            <div class="mt-1">
+                <p><strong>Recommendations:</strong></p>
+                <ul>
+                    <li>Review error details above for failed holdings</li>
+                    <li>Check data quality and API connectivity</li>
+                    <li>Consider reprocessing failed holdings</li>
+                    <li>Monitor system resources during processing</li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

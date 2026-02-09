@@ -1,0 +1,185 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>🔍 Deep Analysis Report</h1>
+    <div class="subtitle">
+        Comprehensive Investment Analysis
+    </div>
+</div>
+
+<!-- Analysis Summary -->
+<div class="section">
+    <h2 class="section-title">📊 Analysis Summary</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Total Analyzed</h4>
+            <div class="metric-value">{{ analysis_results|length if analysis_results else 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>A+ Grades</h4>
+            <div class="metric-value">
+                {% if analysis_results %}
+                    {{ analysis_results|selectattr("grade", "equalto", "A+")|list|length }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Buy Recommendations</h4>
+            <div class="metric-value">
+                {% if analysis_results %}
+                    {{ analysis_results|selectattr("recommendation", "equalto", "BUY")|list|length }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Analysis Date</h4>
+            <div class="metric-value" style="font-size: 1rem;">
+                {{ analysis_date.strftime('%Y-%m-%d') if analysis_date else 'N/A' }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analysis Results -->
+{% if analysis_results %}
+<div class="section">
+    <h2 class="section-title">📋 Detailed Analysis</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Asset Class</th>
+                    <th>Grade</th>
+                    <th>Recommendation</th>
+                    <th>Confidence</th>
+                    <th>Risk Score</th>
+                    <th>Price Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in analysis_results %}
+                <tr>
+                    <td class="font-bold">{{ result.ticker }}</td>
+                    <td>
+                        <span class="status-indicator">
+                            {{ result.asset_class.title() if result.asset_class else 'N/A' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="grade-{{ result.grade.lower().replace('+', '-plus') if result.grade else 'unknown' }}">
+                            {{ result.grade or 'N/A' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-{{ result.recommendation.lower() if result.recommendation else 'hold' }}">
+                            {{ result.recommendation or 'HOLD' }}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        {% if result.confidence %}
+                            {{ "%.1f"|format(result.confidence * 100) }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        {% if result.risk_score %}
+                            <span class="risk-{{ 'low' if result.risk_score < 3 else 'medium' if result.risk_score < 7 else 'high' }}">
+                                {{ result.risk_score }}/10
+                            </span>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        {% if result.price_target %}
+                            ${{ "%.2f"|format(result.price_target) }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Individual Analysis Details -->
+<div class="section">
+    <h2 class="section-title">📖 Individual Analysis Details</h2>
+    {% for result in analysis_results %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ result.ticker }} Analysis</span>
+                <span class="grade-{{ result.grade.lower().replace('+', '-plus') if result.grade else 'unknown' }}">
+                    {{ result.grade or 'N/A' }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if result.rationale %}
+            <p><strong>Investment Rationale:</strong></p>
+            <p>{{ result.rationale }}</p>
+            {% endif %}
+
+            {% if result.key_metrics %}
+            <div class="mt-1">
+                <strong>Key Metrics:</strong>
+                <div class="metrics-grid" style="margin-top: 0.5rem;">
+                    {% for metric, value in result.key_metrics.items() %}
+                    <div class="metric-card" style="padding: 0.75rem;">
+                        <h4 style="font-size: 0.8rem;">{{ metric.replace('_', ' ').title() }}</h4>
+                        <div class="metric-value" style="font-size: 1rem;">
+                            {% if metric.endswith('_ratio') or metric.endswith('_percent') %}
+                                {{ "%.2f"|format(value) }}
+                            {% elif metric.startswith('price') or metric.endswith('_price') %}
+                                ${{ "%.2f"|format(value) }}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if result.risk_factors %}
+            <div class="mt-1">
+                <strong>Risk Factors:</strong>
+                <ul>
+                    {% for factor in result.risk_factors %}
+                    <li>{{ factor }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="section">
+    <h2 class="section-title">ℹ️ No Analysis Results</h2>
+    <div class="card">
+        <div class="card-body text-center">
+            <p>No deep analysis results available. This could be due to:</p>
+            <ul style="text-align: left; margin-top: 1rem;">
+                <li>Analysis still in progress</li>
+                <li>No assets selected for deep analysis</li>
+                <li>Analysis configuration not enabled</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

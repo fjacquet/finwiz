@@ -1,0 +1,198 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>🎨 FinWiz Template Demo</h1>
+    <div class="subtitle">
+        Showcase of Dark/Light Mode and Responsive Design
+    </div>
+</div>
+
+<!-- Theme Demo -->
+<div class="section">
+    <h2 class="section-title">🌓 Theme Demonstration</h2>
+    <div class="card">
+        <div class="card-header">Theme Toggle</div>
+        <div class="card-body">
+            <p>Click the theme toggle button in the top-right corner to switch between light and dark modes.</p>
+            <p>The theme preference is saved in your browser's local storage.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Grid Demo -->
+<div class="section">
+    <h2 class="section-title">📊 Metrics Grid</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Total Assets</h4>
+            <div class="metric-value">42</div>
+            <div class="metric-change positive">+12.5%</div>
+        </div>
+        <div class="metric-card">
+            <h4>Portfolio Value</h4>
+            <div class="metric-value">$125,430</div>
+            <div class="metric-change positive">+8.2%</div>
+        </div>
+        <div class="metric-card">
+            <h4>Risk Score</h4>
+            <div class="metric-value">6.8</div>
+            <div class="metric-change negative">-0.3</div>
+        </div>
+        <div class="metric-card">
+            <h4>A+ Holdings</h4>
+            <div class="metric-value">15</div>
+            <div class="metric-change positive">+3</div>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Examples -->
+<div class="section">
+    <h2 class="section-title">🏆 Grade Styling</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Grade</th>
+                    <th>Recommendation</th>
+                    <th>Risk Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="font-bold">AAPL</td>
+                    <td><span class="grade-a-plus">A+</span></td>
+                    <td><span class="status-buy">BUY</span></td>
+                    <td><span class="risk-low">Low</span></td>
+                </tr>
+                <tr>
+                    <td class="font-bold">GOOGL</td>
+                    <td><span class="grade-a">A</span></td>
+                    <td><span class="status-buy">BUY</span></td>
+                    <td><span class="risk-low">Low</span></td>
+                </tr>
+                <tr>
+                    <td class="font-bold">TSLA</td>
+                    <td><span class="grade-b">B</span></td>
+                    <td><span class="status-hold">HOLD</span></td>
+                    <td><span class="risk-medium">Medium</span></td>
+                </tr>
+                <tr>
+                    <td class="font-bold">GME</td>
+                    <td><span class="grade-d">D</span></td>
+                    <td><span class="status-sell">SELL</span></td>
+                    <td><span class="risk-high">High</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Progress Bars -->
+<div class="section">
+    <h2 class="section-title">📈 Progress Indicators</h2>
+    <div class="card">
+        <div class="card-body">
+            <h4>Portfolio Allocation</h4>
+            <div class="progress-container">
+                <div class="progress-bar" data-width="75%" style="width: 75%;"></div>
+            </div>
+            <p class="text-muted">75% allocated</p>
+
+            <h4 class="mt-1">Risk Tolerance</h4>
+            <div class="progress-container">
+                <div class="progress-bar" data-width="60%" style="width: 60%;"></div>
+            </div>
+            <p class="text-muted">60% of maximum risk</p>
+
+            <h4 class="mt-1">Diversification Score</h4>
+            <div class="progress-container">
+                <div class="progress-bar" data-width="85%" style="width: 85%;"></div>
+            </div>
+            <p class="text-muted">85% diversified</p>
+        </div>
+    </div>
+</div>
+
+<!-- Card Examples -->
+<div class="section">
+    <h2 class="section-title">📋 Card Components</h2>
+    <div class="card">
+        <div class="card-header">Investment Recommendation</div>
+        <div class="card-body">
+            <p><strong>Ticker:</strong> AAPL</p>
+            <p><strong>Recommendation:</strong> <span class="status-buy">BUY</span></p>
+            <p><strong>Target Price:</strong> $180.00</p>
+            <p><strong>Rationale:</strong> Strong fundamentals, growing market share, and excellent management team.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Risk Assessment</div>
+        <div class="card-body">
+            <p><strong>Overall Risk:</strong> <span class="risk-medium">Medium</span></p>
+            <p><strong>Key Risk Factors:</strong></p>
+            <ul>
+                <li>Market volatility exposure</li>
+                <li>Regulatory changes in tech sector</li>
+                <li>Currency exchange rate fluctuations</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Responsive Design Demo -->
+<div class="section">
+    <h2 class="section-title">📱 Responsive Design</h2>
+    <div class="card">
+        <div class="card-body">
+            <p>This template is fully responsive and adapts to different screen sizes:</p>
+            <ul>
+                <li><strong>Desktop (>768px):</strong> Multi-column grid layout with full features</li>
+                <li><strong>Tablet (768px):</strong> Adjusted grid spacing and optimized touch targets</li>
+                <li><strong>Mobile (<768px):</strong> Single-column layout with stacked elements</li>
+            </ul>
+            <p class="mt-1">Try resizing your browser window to see the responsive behavior in action!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Print Demo -->
+<div class="section">
+    <h2 class="section-title">🖨️ Print Optimization</h2>
+    <div class="card">
+        <div class="card-body">
+            <p>All templates are optimized for printing and PDF generation:</p>
+            <ul>
+                <li>Print-friendly color scheme</li>
+                <li>Proper page breaks</li>
+                <li>Optimized font sizes</li>
+                <li>Hidden interactive elements</li>
+            </ul>
+            <p class="mt-1">Use your browser's print function (Ctrl+P / Cmd+P) to see the print layout.</p>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Demo -->
+<div class="section">
+    <h2 class="section-title">⚡ Interactive Features</h2>
+    <div class="card">
+        <div class="card-body">
+            <p>Templates include interactive JavaScript features:</p>
+            <ul>
+                <li>Theme toggle with localStorage persistence</li>
+                <li>Hover effects on metric cards</li>
+                <li>Animated progress bars</li>
+                <li>Smooth transitions and animations</li>
+            </ul>
+            <button onclick="alert('Interactive features working!')" style="background: var(--accent-primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--border-radius); cursor: pointer; margin-top: 1rem;">
+                Test Interaction
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

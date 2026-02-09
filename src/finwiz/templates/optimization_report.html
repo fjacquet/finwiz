@@ -1,0 +1,241 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>⚡ Portfolio Optimization Report</h1>
+    <div class="subtitle">
+        Advanced Portfolio Optimization Analysis
+    </div>
+</div>
+
+<!-- Optimization Summary -->
+<div class="section">
+    <h2 class="section-title">📊 Optimization Summary</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Optimization Status</h4>
+            <div class="metric-value" style="font-size: 1.2rem;">
+                {% if optimization_status %}
+                    {{ optimization_status.title() }}
+                {% else %}
+                    Pending
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Total Assets</h4>
+            <div class="metric-value">{{ total_assets or 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Expected Return</h4>
+            <div class="metric-value">
+                {% if expected_return %}
+                    {{ "%.2f"|format(expected_return * 100) }}%
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Risk Level</h4>
+            <div class="metric-value">
+                {% if portfolio_risk %}
+                    {{ "%.2f"|format(portfolio_risk * 100) }}%
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current vs Optimized Comparison -->
+{% if current_portfolio and optimized_portfolio %}
+<div class="section">
+    <h2 class="section-title">📈 Current vs Optimized Portfolio</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current Portfolio</th>
+                    <th>Optimized Portfolio</th>
+                    <th>Improvement</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="font-bold">Expected Return</td>
+                    <td class="text-right">{{ "%.2f"|format((current_portfolio.expected_return or 0) * 100) }}%</td>
+                    <td class="text-right">{{ "%.2f"|format((optimized_portfolio.expected_return or 0) * 100) }}%</td>
+                    <td class="text-right">
+                        {% set improvement = ((optimized_portfolio.expected_return or 0) - (current_portfolio.expected_return or 0)) * 100 %}
+                        <span class="{{ 'metric-change positive' if improvement > 0 else 'metric-change negative' if improvement < 0 else '' }}">
+                            {{ "+%.2f"|format(improvement) if improvement > 0 else "%.2f"|format(improvement) }}%
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="font-bold">Risk (Volatility)</td>
+                    <td class="text-right">{{ "%.2f"|format((current_portfolio.risk or 0) * 100) }}%</td>
+                    <td class="text-right">{{ "%.2f"|format((optimized_portfolio.risk or 0) * 100) }}%</td>
+                    <td class="text-right">
+                        {% set risk_change = ((optimized_portfolio.risk or 0) - (current_portfolio.risk or 0)) * 100 %}
+                        <span class="{{ 'metric-change negative' if risk_change > 0 else 'metric-change positive' if risk_change < 0 else '' }}">
+                            {{ "+%.2f"|format(risk_change) if risk_change > 0 else "%.2f"|format(risk_change) }}%
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="font-bold">Sharpe Ratio</td>
+                    <td class="text-right">{{ "%.3f"|format(current_portfolio.sharpe_ratio or 0) }}</td>
+                    <td class="text-right">{{ "%.3f"|format(optimized_portfolio.sharpe_ratio or 0) }}</td>
+                    <td class="text-right">
+                        {% set sharpe_change = (optimized_portfolio.sharpe_ratio or 0) - (current_portfolio.sharpe_ratio or 0) %}
+                        <span class="{{ 'metric-change positive' if sharpe_change > 0 else 'metric-change negative' if sharpe_change < 0 else '' }}">
+                            {{ "+%.3f"|format(sharpe_change) if sharpe_change > 0 else "%.3f"|format(sharpe_change) }}
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Optimization Recommendations -->
+{% if recommendations %}
+<div class="section">
+    <h2 class="section-title">💡 Optimization Recommendations</h2>
+    {% for recommendation in recommendations %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ recommendation.action or 'Action' }}</span>
+                <span class="status-{{ recommendation.priority.lower() if recommendation.priority else 'medium' }}">
+                    {{ recommendation.priority or 'Medium' }} Priority
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <p><strong>Description:</strong> {{ recommendation.description or 'No description available' }}</p>
+            {% if recommendation.expected_impact %}
+            <p><strong>Expected Impact:</strong> {{ recommendation.expected_impact }}</p>
+            {% endif %}
+            {% if recommendation.implementation_notes %}
+            <p><strong>Implementation:</strong> {{ recommendation.implementation_notes }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Asset Allocation Changes -->
+{% if allocation_changes %}
+<div class="section">
+    <h2 class="section-title">🔄 Proposed Allocation Changes</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Current Weight</th>
+                    <th>Target Weight</th>
+                    <th>Change</th>
+                    <th>Action Required</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for change in allocation_changes %}
+                <tr>
+                    <td class="font-bold">{{ change.asset or 'Unknown' }}</td>
+                    <td class="text-right">{{ "%.2f"|format((change.current_weight or 0) * 100) }}%</td>
+                    <td class="text-right">{{ "%.2f"|format((change.target_weight or 0) * 100) }}%</td>
+                    <td class="text-right">
+                        {% set weight_change = ((change.target_weight or 0) - (change.current_weight or 0)) * 100 %}
+                        <span class="{{ 'metric-change positive' if weight_change > 0 else 'metric-change negative' if weight_change < 0 else '' }}">
+                            {{ "+%.2f"|format(weight_change) if weight_change > 0 else "%.2f"|format(weight_change) }}%
+                        </span>
+                    </td>
+                    <td>
+                        {% if weight_change > 0.5 %}
+                            <span class="status-buy">Increase Position</span>
+                        {% elif weight_change < -0.5 %}
+                            <span class="status-sell">Reduce Position</span>
+                        {% else %}
+                            <span class="status-hold">Maintain</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Risk Analysis -->
+{% if risk_analysis %}
+<div class="section">
+    <h2 class="section-title">⚠️ Risk Analysis</h2>
+    <div class="card">
+        <div class="card-header">Portfolio Risk Assessment</div>
+        <div class="card-body">
+            {% if risk_analysis.var_95 %}
+            <p><strong>Value at Risk (95%):</strong> {{ "%.2f"|format(risk_analysis.var_95 * 100) }}%</p>
+            {% endif %}
+            {% if risk_analysis.max_drawdown %}
+            <p><strong>Maximum Drawdown:</strong> {{ "%.2f"|format(risk_analysis.max_drawdown * 100) }}%</p>
+            {% endif %}
+            {% if risk_analysis.correlation_risk %}
+            <p><strong>Correlation Risk:</strong> {{ risk_analysis.correlation_risk }}</p>
+            {% endif %}
+            {% if risk_analysis.concentration_risk %}
+            <p><strong>Concentration Risk:</strong> {{ risk_analysis.concentration_risk }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Implementation Timeline -->
+{% if implementation_timeline %}
+<div class="section">
+    <h2 class="section-title">📅 Implementation Timeline</h2>
+    {% for phase in implementation_timeline %}
+    <div class="card">
+        <div class="card-header">
+            Phase {{ loop.index }}: {{ phase.name or 'Unnamed Phase' }}
+        </div>
+        <div class="card-body">
+            <p><strong>Duration:</strong> {{ phase.duration or 'Not specified' }}</p>
+            <p><strong>Actions:</strong></p>
+            <ul>
+                {% for action in phase.actions or [] %}
+                <li>{{ action }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Disclaimer -->
+<div class="section">
+    <h2 class="section-title">⚠️ Important Disclaimer</h2>
+    <div class="card">
+        <div class="card-body">
+            <p>This optimization report is based on historical data and mathematical models. Past performance does not guarantee future results. Please consider:</p>
+            <ul>
+                <li>Market conditions can change rapidly</li>
+                <li>Transaction costs and taxes may impact actual returns</li>
+                <li>Diversification does not guarantee against loss</li>
+                <li>Consult with a financial advisor before making investment decisions</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

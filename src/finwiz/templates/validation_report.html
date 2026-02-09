@@ -1,0 +1,269 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>✅ Validation Report</h1>
+    <div class="subtitle">
+        Data Quality and Validation Analysis
+    </div>
+</div>
+
+<!-- Validation Summary -->
+<div class="section">
+    <h2 class="section-title">📊 Validation Summary</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Overall Status</h4>
+            <div class="metric-value" style="font-size: 1.2rem;">
+                {% if validation_status == 'PASSED' %}
+                    <span class="status-buy">PASSED</span>
+                {% elif validation_status == 'FAILED' %}
+                    <span class="status-sell">FAILED</span>
+                {% else %}
+                    <span class="status-hold">{{ validation_status or 'UNKNOWN' }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="metric-card">
+            <h4>Total Checks</h4>
+            <div class="metric-value">{{ total_checks or 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Passed</h4>
+            <div class="metric-value">{{ passed_checks or 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Failed</h4>
+            <div class="metric-value">{{ failed_checks or 0 }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Validation Results by Category -->
+{% if validation_results %}
+<div class="section">
+    <h2 class="section-title">📋 Validation Results</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Check Name</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Severity</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in validation_results %}
+                <tr>
+                    <td class="font-bold">{{ result.check_name or 'Unknown Check' }}</td>
+                    <td>
+                        <span class="status-indicator">
+                            {{ result.category or 'General' }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if result.status == 'PASSED' %}
+                            <span class="status-buy">PASSED</span>
+                        {% elif result.status == 'FAILED' %}
+                            <span class="status-sell">FAILED</span>
+                        {% elif result.status == 'WARNING' %}
+                            <span class="status-hold">WARNING</span>
+                        {% else %}
+                            <span class="status-hold">{{ result.status or 'UNKNOWN' }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="risk-{{ result.severity.lower() if result.severity else 'medium' }}">
+                            {{ result.severity or 'Medium' }}
+                        </span>
+                    </td>
+                    <td class="text-muted">{{ result.message or 'No message provided' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Failed Validations Details -->
+{% if failed_validations %}
+<div class="section">
+    <h2 class="section-title">❌ Failed Validations</h2>
+    {% for failure in failed_validations %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ failure.check_name or 'Unknown Check' }}</span>
+                <span class="status-sell">FAILED</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <p><strong>Error Message:</strong> {{ failure.error_message or 'No error message provided' }}</p>
+            {% if failure.expected_value %}
+            <p><strong>Expected:</strong> {{ failure.expected_value }}</p>
+            {% endif %}
+            {% if failure.actual_value %}
+            <p><strong>Actual:</strong> {{ failure.actual_value }}</p>
+            {% endif %}
+            {% if failure.recommendation %}
+            <p><strong>Recommendation:</strong> {{ failure.recommendation }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Warnings -->
+{% if warnings %}
+<div class="section">
+    <h2 class="section-title">⚠️ Warnings</h2>
+    {% for warning in warnings %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ warning.check_name or 'Unknown Check' }}</span>
+                <span class="status-hold">WARNING</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <p><strong>Warning Message:</strong> {{ warning.message or 'No warning message provided' }}</p>
+            {% if warning.impact %}
+            <p><strong>Potential Impact:</strong> {{ warning.impact }}</p>
+            {% endif %}
+            {% if warning.suggestion %}
+            <p><strong>Suggestion:</strong> {{ warning.suggestion }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Data Quality Metrics -->
+{% if data_quality_metrics %}
+<div class="section">
+    <h2 class="section-title">📊 Data Quality Metrics</h2>
+    <div class="metrics-grid">
+        {% for metric_name, metric_value in data_quality_metrics.items() %}
+        <div class="metric-card">
+            <h4>{{ metric_name.replace('_', ' ').title() }}</h4>
+            <div class="metric-value">
+                {% if metric_name.endswith('_percentage') or metric_name.endswith('_rate') %}
+                    {{ "%.1f"|format(metric_value * 100) }}%
+                {% elif metric_name.endswith('_score') %}
+                    {{ "%.2f"|format(metric_value) }}/10
+                {% else %}
+                    {{ metric_value }}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Schema Validation -->
+{% if schema_validation %}
+<div class="section">
+    <h2 class="section-title">🔍 Schema Validation</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Required</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Issues</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for field in schema_validation %}
+                <tr>
+                    <td class="font-bold">{{ field.name or 'Unknown Field' }}</td>
+                    <td>
+                        {% if field.required %}
+                            <span class="status-sell">Required</span>
+                        {% else %}
+                            <span class="status-hold">Optional</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ field.type or 'Unknown' }}</td>
+                    <td>
+                        {% if field.valid %}
+                            <span class="status-buy">Valid</span>
+                        {% else %}
+                            <span class="status-sell">Invalid</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ field.issues|join(', ') if field.issues else 'None' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recommendations -->
+{% if recommendations %}
+<div class="section">
+    <h2 class="section-title">💡 Recommendations</h2>
+    {% for recommendation in recommendations %}
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="font-bold">{{ recommendation.title or 'Recommendation' }}</span>
+                <span class="status-{{ recommendation.priority.lower() if recommendation.priority else 'medium' }}">
+                    {{ recommendation.priority or 'Medium' }} Priority
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <p>{{ recommendation.description or 'No description provided' }}</p>
+            {% if recommendation.action_items %}
+            <p><strong>Action Items:</strong></p>
+            <ul>
+                {% for item in recommendation.action_items %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Validation Configuration -->
+{% if validation_config %}
+<div class="section">
+    <h2 class="section-title">⚙️ Validation Configuration</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="metrics-grid">
+                {% for config_key, config_value in validation_config.items() %}
+                <div class="metric-card">
+                    <h4>{{ config_key.replace('_', ' ').title() }}</h4>
+                    <div class="metric-value" style="font-size: 1rem;">
+                        {% if config_value is sameas true %}
+                            <span class="status-buy">Enabled</span>
+                        {% elif config_value is sameas false %}
+                            <span class="status-sell">Disabled</span>
+                        {% else %}
+                            {{ config_value }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

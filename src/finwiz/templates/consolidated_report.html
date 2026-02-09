@@ -1,0 +1,309 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="header">
+    <h1>📋 Consolidated Report</h1>
+    <div class="subtitle">
+        Session: {{ session_id }} - {{ consolidation_date.strftime('%Y-%m-%d %H:%M:%S') if consolidation_date else 'N/A' }}
+    </div>
+</div>
+
+<!-- Execution Summary -->
+<div class="section">
+    <h2 class="section-title">⚡ Execution Summary</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Session ID</h4>
+            <div class="metric-value" style="font-size: 1.2rem;">{{ session_id or 'N/A' }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Execution Time</h4>
+            <div class="metric-value">{{ "%.3f"|format(total_execution_time or 0) }}s</div>
+        </div>
+        <div class="metric-card">
+            <h4>Total Errors</h4>
+            <div class="metric-value">{{ errors|length if errors else 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Consolidation Date</h4>
+            <div class="metric-value" style="font-size: 1rem;">
+                {{ consolidation_date.strftime('%m/%d/%Y') if consolidation_date else 'N/A' }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Crew Execution Status -->
+<div class="section">
+    <h2 class="section-title">🤖 Crew Execution Status</h2>
+    {% if crew_execution_status %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Crew</th>
+                    <th>Status</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for crew_name, status in crew_execution_status.items() %}
+                <tr>
+                    <td class="font-bold">{{ crew_name.replace('_', ' ').title() }}</td>
+                    <td>
+                        {% if status == 'success' %}
+                            <span class="status-buy">SUCCESS</span>
+                        {% elif status == 'failed' %}
+                            <span class="status-sell">FAILED</span>
+                        {% elif status == 'partial' %}
+                            <span class="status-hold">PARTIAL</span>
+                        {% else %}
+                            <span class="status-hold">{{ status.upper() }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">
+                        {% if status == 'success' %}
+                            Crew executed successfully
+                        {% elif status == 'failed' %}
+                            Crew execution failed - check error details
+                        {% elif status == 'partial' %}
+                            Crew partially completed
+                        {% else %}
+                            {{ status }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Analysis Results -->
+<div class="section">
+    <h2 class="section-title">📊 Analysis Results</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Stock Analyses</h4>
+            <div class="metric-value">{{ stock_analyses|length if stock_analyses else 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>ETF Analyses</h4>
+            <div class="metric-value">{{ etf_analyses|length if etf_analyses else 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Crypto Analyses</h4>
+            <div class="metric-value">{{ crypto_analyses|length if crypto_analyses else 0 }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Deep Analyses</h4>
+            <div class="metric-value">{{ deep_analyses|length if deep_analyses else 0 }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Analyses -->
+{% if stock_analyses %}
+<div class="section">
+    <h2 class="section-title">📈 Stock Analyses</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Grade</th>
+                    <th>Score</th>
+                    <th>Recommendation</th>
+                    <th>Analysis Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for analysis in stock_analyses %}
+                <tr>
+                    <td class="font-bold">{{ analysis.ticker or 'N/A' }}</td>
+                    <td>
+                        <span class="grade-{{ analysis.grade.lower().replace('+', '-plus') if analysis.grade else 'unknown' }}">
+                            {{ analysis.grade or 'N/A' }}
+                        </span>
+                    </td>
+                    <td class="text-right">{{ "%.3f"|format(analysis.score or 0) }}</td>
+                    <td>
+                        <span class="status-{{ analysis.recommendation.lower() if analysis.recommendation else 'hold' }}">
+                            {{ analysis.recommendation or 'HOLD' }}
+                        </span>
+                    </td>
+                    <td class="text-muted">
+                        {{ analysis.analysis_date.strftime('%Y-%m-%d') if analysis.analysis_date else 'N/A' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- ETF Analyses -->
+{% if etf_analyses %}
+<div class="section">
+    <h2 class="section-title">🏦 ETF Analyses</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Grade</th>
+                    <th>Score</th>
+                    <th>Recommendation</th>
+                    <th>Analysis Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for analysis in etf_analyses %}
+                <tr>
+                    <td class="font-bold">{{ analysis.ticker or 'N/A' }}</td>
+                    <td>
+                        <span class="grade-{{ analysis.grade.lower().replace('+', '-plus') if analysis.grade else 'unknown' }}">
+                            {{ analysis.grade or 'N/A' }}
+                        </span>
+                    </td>
+                    <td class="text-right">{{ "%.3f"|format(analysis.score or 0) }}</td>
+                    <td>
+                        <span class="status-{{ analysis.recommendation.lower() if analysis.recommendation else 'hold' }}">
+                            {{ analysis.recommendation or 'HOLD' }}
+                        </span>
+                    </td>
+                    <td class="text-muted">
+                        {{ analysis.analysis_date.strftime('%Y-%m-%d') if analysis.analysis_date else 'N/A' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Crypto Analyses -->
+{% if crypto_analyses %}
+<div class="section">
+    <h2 class="section-title">₿ Crypto Analyses</h2>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Grade</th>
+                    <th>Score</th>
+                    <th>Recommendation</th>
+                    <th>Analysis Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for analysis in crypto_analyses %}
+                <tr>
+                    <td class="font-bold">{{ analysis.ticker or 'N/A' }}</td>
+                    <td>
+                        <span class="grade-{{ analysis.grade.lower().replace('+', '-plus') if analysis.grade else 'unknown' }}">
+                            {{ analysis.grade or 'N/A' }}
+                        </span>
+                    </td>
+                    <td class="text-right">{{ "%.3f"|format(analysis.score or 0) }}</td>
+                    <td>
+                        <span class="status-{{ analysis.recommendation.lower() if analysis.recommendation else 'hold' }}">
+                            {{ analysis.recommendation or 'HOLD' }}
+                        </span>
+                    </td>
+                    <td class="text-muted">
+                        {{ analysis.analysis_date.strftime('%Y-%m-%d') if analysis.analysis_date else 'N/A' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Discovery Results -->
+{% if discovery_results %}
+<div class="section">
+    <h2 class="section-title">🔍 Discovery Results</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Discovery Status:</strong> {{ discovery_results.status or 'N/A' }}</p>
+            {% if discovery_results.opportunities %}
+            <p><strong>Opportunities Found:</strong> {{ discovery_results.opportunities|length }}</p>
+            {% endif %}
+            {% if discovery_results.summary %}
+            <p><strong>Summary:</strong> {{ discovery_results.summary }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Rebalancing Results -->
+{% if rebalancing_results %}
+<div class="section">
+    <h2 class="section-title">⚖️ Rebalancing Results</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Rebalancing Status:</strong> {{ rebalancing_results.status or 'N/A' }}</p>
+            {% if rebalancing_results.recommendations %}
+            <p><strong>Recommendations:</strong> {{ rebalancing_results.recommendations|length }}</p>
+            {% endif %}
+            {% if rebalancing_results.summary %}
+            <p><strong>Summary:</strong> {{ rebalancing_results.summary }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Error Details -->
+{% if errors %}
+<div class="section">
+    <h2 class="section-title">❌ Error Details</h2>
+    {% for error in errors %}
+    <div class="card">
+        <div class="card-header">
+            <span class="status-sell">ERROR</span>
+        </div>
+        <div class="card-body">
+            <p>{{ error }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Summary -->
+<div class="section">
+    <h2 class="section-title">📝 Consolidation Summary</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Consolidation completed in {{ "%.3f"|format(total_execution_time or 0) }} seconds</strong></p>
+
+            <div class="mt-1">
+                <p><strong>Results Summary:</strong></p>
+                <ul>
+                    <li>Stock analyses: {{ stock_analyses|length if stock_analyses else 0 }}</li>
+                    <li>ETF analyses: {{ etf_analyses|length if etf_analyses else 0 }}</li>
+                    <li>Crypto analyses: {{ crypto_analyses|length if crypto_analyses else 0 }}</li>
+                    <li>Deep analyses: {{ deep_analyses|length if deep_analyses else 0 }}</li>
+                    <li>Total errors: {{ errors|length if errors else 0 }}</li>
+                </ul>
+            </div>
+
+            {% if errors %}
+            <div class="mt-1">
+                <p><strong>Note:</strong> This consolidation encountered validation errors, likely due to schema mismatches between generated JSON files and expected formats. The system continued processing and generated reports with available valid data.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
