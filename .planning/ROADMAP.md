@@ -106,11 +106,11 @@ Plans:
   3. Yield curve spread (10Y-2Y) is computed and classified into regime (inverted/flat/normal/steep)
   4. Risk scoring weights adjust dynamically based on detected market regime -- high-volatility regimes increase risk weight
   5. Stocks, ETFs, and crypto respond to macro indicators with different sensitivity coefficients
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
-- [ ] 15-02: TBD
+- [ ] 15-01-PLAN.md — MacroScorer component: schema, thresholds, scorer class, and test suite
+- [ ] 15-02-PLAN.md — Composite wiring: macro overlay, hardcoded value replacement, and regression tests
 
 ### Phase 16: Report Enrichment
 **Goal**: HTML report visualizes sentiment scores, macroeconomic context, and upcoming economic events for each holding and the portfolio
@@ -139,9 +139,9 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16
 | 9-12 | v3 | 7/7 | Shipped | 2026-02-08 |
 | 13. Data Foundation | v4 | 10/10 | Complete | 2026-02-09 |
 | 14. Sentiment Scoring | v4 | 2/2 | Complete | 2026-02-09 |
-| 15. Macro Context | v4 | 0/TBD | Not started | - |
+| 15. Macro Context | v4 | 0/2 | Planned | - |
 | 16. Report Enrichment | v4 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-08*
-*Last updated: 2026-02-09 after Phase 14 completion*
+*Last updated: 2026-02-09 after Phase 15 planning*
