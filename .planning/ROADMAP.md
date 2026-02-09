@@ -51,7 +51,7 @@ Phases completed: 9-12 (7 plans total)
 
 - [x] **Phase 13: Data Foundation** - Adapters, schemas, feature flags, and infrastructure for news and macro data
 - [x] **Phase 14: Sentiment Scoring** - Per-holding sentiment computation and composite score integration
-- [ ] **Phase 15: Macro Context** - Real macro data replaces hardcoded values, dynamic risk adjustment
+- [x] **Phase 15: Macro Context** - Real macro data replaces hardcoded values, dynamic risk adjustment
 - [ ] **Phase 16: Report Enrichment** - New HTML sections for sentiment, macro dashboard, and economic calendar
 
 ## Phase Details
@@ -109,8 +109,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 15-01-PLAN.md — MacroScorer component: schema, thresholds, scorer class, and test suite
-- [ ] 15-02-PLAN.md — Composite wiring: macro overlay, hardcoded value replacement, and regression tests
+- [x] 15-01-PLAN.md — MacroScorer component: schema, thresholds, scorer class, and test suite
+- [x] 15-02-PLAN.md — Composite wiring: macro overlay, hardcoded value replacement, and regression tests
 
 ### Phase 16: Report Enrichment
 **Goal**: HTML report visualizes sentiment scores, macroeconomic context, and upcoming economic events for each holding and the portfolio
@@ -121,11 +121,12 @@ Plans:
   2. Portfolio-level macro dashboard shows VIX, yield curve, GDP, CPI, and Fed rate with traffic-light color coding (green/yellow/red)
   3. Fear & Greed Index gauge is displayed in the macro dashboard section
   4. Economic calendar section shows upcoming FOMC meetings, CPI releases, and earnings dates
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 16-01: TBD
-- [ ] 16-02: TBD
+- [ ] 16-01-PLAN.md -- Data plumbing: EconomicCalendar schemas/adapter, sentiment summary persistence, macro_snapshot on FinwizState
+- [ ] 16-02-PLAN.md -- Consolidated report sections: sentiment summary, macro dashboard with F&G gauge, economic calendar + CSS
+- [ ] 16-03-PLAN.md -- Per-holding template enrichment: sentiment sections in enriched and deep analysis reports
 
 ## Progress
 
@@ -139,9 +140,9 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16
 | 9-12 | v3 | 7/7 | Shipped | 2026-02-08 |
 | 13. Data Foundation | v4 | 10/10 | Complete | 2026-02-09 |
 | 14. Sentiment Scoring | v4 | 2/2 | Complete | 2026-02-09 |
-| 15. Macro Context | v4 | 0/2 | Planned | - |
-| 16. Report Enrichment | v4 | 0/TBD | Not started | - |
+| 15. Macro Context | v4 | 2/2 | Complete | 2026-02-09 |
+| 16. Report Enrichment | v4 | 0/3 | Planning complete | - |
 
 ---
 *Roadmap created: 2026-02-08*
-*Last updated: 2026-02-09 after Phase 15 planning*
+*Last updated: 2026-02-09 after Phase 16 planning*
