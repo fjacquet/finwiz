@@ -424,6 +424,7 @@ _This guide ensures Claude Code has immediate access to Task Master's essential 
 ### When to Use grepai (REQUIRED)
 
 Use `grepai search` INSTEAD OF Grep/Glob/find for:
+
 - Understanding what code does or where functionality lives
 - Finding implementations by intent (e.g., "authentication logic", "error handling")
 - Exploring unfamiliar parts of the codebase
@@ -432,6 +433,7 @@ Use `grepai search` INSTEAD OF Grep/Glob/find for:
 ### When to Use Standard Tools
 
 Only use Grep/Glob when you need:
+
 - Exact text matching (variable names, imports, specific strings)
 - File path patterns (e.g., `**/*.go`)
 
@@ -459,6 +461,7 @@ grepai search "API request validation" --json --compact
 ### Call Graph Tracing
 
 Use `grepai trace` to understand function relationships:
+
 - Finding all callers of a function before modifying it
 - Understanding what functions are called by a given function
 - Visualizing the complete call graph around a symbol
