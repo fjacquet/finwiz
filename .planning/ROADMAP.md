@@ -49,7 +49,7 @@ Phases completed: 9-12 (7 plans total)
 - Integer phases (13, 14, 15, 16): Planned milestone work
 - Decimal phases (13.1, 13.2): Urgent insertions if needed (marked with INSERTED)
 
-- [ ] **Phase 13: Data Foundation** - Adapters, schemas, feature flags, and infrastructure for news and macro data
+- [x] **Phase 13: Data Foundation** - Adapters, schemas, feature flags, and infrastructure for news and macro data
 - [ ] **Phase 14: Sentiment Scoring** - Per-holding sentiment computation and composite score integration
 - [ ] **Phase 15: Macro Context** - Real macro data replaces hardcoded values, dynamic risk adjustment
 - [ ] **Phase 16: Report Enrichment** - New HTML sections for sentiment, macro dashboard, and economic calendar
@@ -66,11 +66,19 @@ Phases completed: 9-12 (7 plans total)
   3. Duplicate news articles from multiple sources are deduplicated before processing
   4. Discovery pipeline returns real screened candidates instead of hardcoded mock data
   5. Disabling feature flags (default) results in no new API calls and existing behavior is unchanged
-**Plans**: TBD
+**Plans**: 10/10 complete
 
 Plans:
-- [ ] 13-01: TBD
-- [ ] 13-02: TBD
+- [x] 13-01: Pydantic schemas (sentiment.py, macro.py)
+- [x] 13-02: Endpoints & APIProvider
+- [x] 13-03: Feature flags (5 new flags)
+- [x] 13-04: News utilities (dedup, reliability, weighted sentiment)
+- [x] 13-05: Finnhub news adapter (waterfall fallback)
+- [x] 13-06: FRED macro adapter (session-cached)
+- [x] 13-07: Fear & Greed adapter (library + HTTP fallback)
+- [x] 13-08: Dependencies (6 new packages)
+- [x] 13-09: Discovery pipeline fix (newcomer_discovery → True)
+- [x] 13-10: Integration wiring (SentimentMacroCollector + pipeline)
 
 ### Phase 14: Sentiment Scoring
 **Goal**: Each holding receives a sentiment score derived from news headlines, integrated into the composite score as an additive overlay
@@ -129,11 +137,11 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16
 | 1-5 | v1 | 13/13 | Shipped | 2026-02-08 |
 | 6-8 | v2 | 6/6 | Shipped | 2026-02-08 |
 | 9-12 | v3 | 7/7 | Shipped | 2026-02-08 |
-| 13. Data Foundation | v4 | 0/TBD | Not started | - |
+| 13. Data Foundation | v4 | 10/10 | Complete | 2026-02-09 |
 | 14. Sentiment Scoring | v4 | 0/TBD | Not started | - |
 | 15. Macro Context | v4 | 0/TBD | Not started | - |
 | 16. Report Enrichment | v4 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-08*
-*Last updated: 2026-02-09 after v4 roadmap creation*
+*Last updated: 2026-02-09 after Phase 13 completion*
