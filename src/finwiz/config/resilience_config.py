@@ -116,7 +116,7 @@ def get_resilience_config() -> ResilienceConfig:
         retry_max_delay = float(os.getenv("FINWIZ_RETRY_MAX_DELAY", "60"))
 
         # Load timeout configuration
-        holding_timeout = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "300"))
+        holding_timeout = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
         flow_timeout = int(os.getenv("FINWIZ_FLOW_TIMEOUT", "7200"))
 
         # Load resume configuration

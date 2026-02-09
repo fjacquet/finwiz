@@ -7,6 +7,7 @@ Wraps all crew.kickoff() calls with:
 """
 
 import asyncio
+import atexit
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -17,7 +18,7 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 # Configuration
-CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "300"))
+CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
 FAILURE_THRESHOLD = 3
 RECOVERY_TIMEOUT = 60.0
 
@@ -25,6 +26,15 @@ RECOVERY_TIMEOUT = 60.0
 _executor = ThreadPoolExecutor(max_workers=4)
 _crew_failures: dict[str, int] = {}
 _crew_circuit_open: dict[str, float] = {}
+
+
+def shutdown_executor() -> None:
+    """Shut down the thread pool executor so the process can exit cleanly."""
+    _executor.shutdown(wait=False, cancel_futures=True)
+    logger.debug("Crew executor shut down")
+
+
+atexit.register(shutdown_executor)
 
 
 class CircuitBreakerOpenError(RuntimeError):

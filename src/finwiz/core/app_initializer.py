@@ -61,6 +61,11 @@ def kickoff() -> None:
         finwiz_flow.kickoff()
         logger.info("✅ FinWiz analysis workflow completed successfully")
 
+        # Step 7: Shut down background thread pool so the process can exit cleanly
+        from finwiz.infrastructure.resilience.crew_execution import shutdown_executor
+
+        shutdown_executor()
+
     except SystemExit:
         # Re-raise SystemExit to allow proper application termination
         raise
