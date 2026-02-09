@@ -90,11 +90,11 @@ Plans:
   3. Holdings with no news coverage show sentiment as "unavailable" (None), not neutral (0.0)
   4. Composite score includes sentiment as an additive adjustment that defaults to zero impact (weight=0.0, feature-flagged off)
   5. Enabling sentiment scoring with a non-zero weight does not change the existing 40/30/30 fundamental/technical/risk weight distribution
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: TBD
-- [ ] 14-02: TBD
+- [ ] 14-01-PLAN.md — SentimentScorer: schema, utilities, and scorer class
+- [ ] 14-02-PLAN.md — Composite score integration: overlay wiring and regression tests
 
 ### Phase 15: Macro Context
 **Goal**: Real macroeconomic data replaces hardcoded values and adjusts risk scoring dynamically based on market regime
@@ -138,7 +138,7 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16
 | 6-8 | v2 | 6/6 | Shipped | 2026-02-08 |
 | 9-12 | v3 | 7/7 | Shipped | 2026-02-08 |
 | 13. Data Foundation | v4 | 10/10 | Complete | 2026-02-09 |
-| 14. Sentiment Scoring | v4 | 0/TBD | Not started | - |
+| 14. Sentiment Scoring | v4 | 0/2 | Planned | - |
 | 15. Macro Context | v4 | 0/TBD | Not started | - |
 | 16. Report Enrichment | v4 | 0/TBD | Not started | - |
 
