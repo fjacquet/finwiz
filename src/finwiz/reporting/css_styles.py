@@ -216,4 +216,41 @@ def get_report_css() -> str:
         border-bottom-color: #bb8fce;
       }
     }
+
+    /* Traffic-light indicators (Phase 16) */
+    .traffic-light { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+    .traffic-light-green { background-color: #22c55e; }
+    .traffic-light-yellow { background-color: #eab308; }
+    .traffic-light-red { background-color: #ef4444; }
+
+    /* Fear & Greed gauge (Phase 16) */
+    .fear-greed-gauge { position: relative; height: 30px; border-radius: 15px; background: linear-gradient(to right, #dc2626, #ef4444, #eab308, #22c55e, #16a34a); margin: 10px 0; }
+    .fear-greed-marker { position: absolute; top: -5px; width: 4px; height: 40px; background: #1e293b; border-radius: 2px; transform: translateX(-50%); }
+    .fear-greed-label { text-align: center; font-weight: 600; font-size: 1.1em; margin-top: 5px; }
+    .fear-greed-value { text-align: center; font-size: 2em; font-weight: 700; margin-bottom: 5px; }
+
+    /* Macro dashboard grid (Phase 16) */
+    .macro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+    .macro-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center; }
+    .macro-card h4 { margin: 0 0 8px 0; color: #475569; font-size: 0.9em; }
+    .macro-value { font-size: 1.5em; font-weight: 700; margin: 5px 0; }
+
+    /* Economic calendar table (Phase 16) */
+    .calendar-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .calendar-table th { background: #f1f5f9; padding: 10px; text-align: left; border-bottom: 2px solid #cbd5e1; color: #334155; }
+    .calendar-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+    .calendar-table tr:hover { background: #f8fafc; }
+
+    @media (max-width: 768px) {
+      .macro-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .macro-card { background: #383838; border-color: #404040; }
+      .macro-card h4 { color: #b8c9da; }
+      .calendar-table th { background: #3a5a7a; color: #e0e0e0; border-bottom-color: #5a7fa0; }
+      .calendar-table td { border-bottom-color: #404040; }
+      .calendar-table tr:hover { background: #333; }
+      .fear-greed-marker { background: #e0e0e0; }
+    }
         """
