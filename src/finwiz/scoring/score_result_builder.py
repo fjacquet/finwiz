@@ -107,6 +107,8 @@ class ScoreResultBuilder:
             data_quality=data_quality_summary,
             sentiment_score=scores.get("sentiment_score"),
             sentiment_confidence=scores.get("sentiment_confidence"),
+            macro_score=scores.get("macro_score_value"),
+            macro_regime=scores.get("macro_regime"),
         )
 
         # Log successful scoring with data quality info

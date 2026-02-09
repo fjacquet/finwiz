@@ -26,9 +26,14 @@ def assess_market_regime(
                 regime: MarketRegime = cache["regime"]
                 return regime
 
-        # Extract market indicators from context
-        vix_level = market_context.get("vix", 20.0)
-        inflation_rate = market_context.get("inflation", 3.0)
+        # Phase 15: Use real macro data when available (MACRO-01, MACRO-03)
+        macro_snapshot = market_context.get("macro_snapshot")
+        if isinstance(macro_snapshot, dict):
+            vix_level = macro_snapshot.get("vix") or market_context.get("vix", 20.0)
+            inflation_rate = macro_snapshot.get("cpi_yoy") or market_context.get("inflation", 3.0)
+        else:
+            vix_level = market_context.get("vix", 20.0)
+            inflation_rate = market_context.get("inflation", 3.0)
 
         # Determine regime type
         if vix_level > 30:

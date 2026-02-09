@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 from finwiz.config.features.flags import is_feature_enabled
 from finwiz.scoring.crew_export_generator import CrewExportGenerator
 from finwiz.scoring.fundamental_scorer import FundamentalScorer
+from finwiz.scoring.macro_scorer import MacroScorer
 from finwiz.scoring.risk_scorer import RiskScorer
 from finwiz.scoring.score_result_builder import ScoreResultBuilder
 from finwiz.scoring.sentiment_scorer import SentimentScorer
@@ -65,6 +66,7 @@ class DeepAnalysisScorer:
         self.technical_scorer = TechnicalScorer(thresholds=self.thresholds)
         self.risk_scorer = RiskScorer(thresholds=self.thresholds)
         self._sentiment_scorer = SentimentScorer(thresholds=self.thresholds)
+        self._macro_scorer = MacroScorer(thresholds=self.thresholds)
 
         # Initialize result builders
         self.result_builder = ScoreResultBuilder(thresholds=self.thresholds)
@@ -277,6 +279,21 @@ class DeepAnalysisScorer:
                 scores["sentiment_score"] = sent_details.get("sentiment_score")
                 scores["sentiment_confidence"] = sent_details.get("confidence")
 
+        # Phase 15: Additive macro overlay (SCORE-03, SCORE-04)
+        # Determine asset_class from data or default to "stock"
+        asset_class = "stock"
+        if data:
+            asset_class = data.get("asset_class", "stock")
+        macro_adjustment, macro_details = self._calculate_macro_overlay(data or {}, asset_class)
+        if macro_adjustment != 0.0:
+            composite_score = max(0.0, min(1.0, composite_score + macro_adjustment))
+        scores["macro_overlay"] = macro_details
+
+        # Store macro data for DeepAnalysisResult
+        if macro_details.get("macro_overlay_applied"):
+            scores["macro_score_value"] = macro_details.get("macro_score")
+            scores["macro_regime"] = macro_details.get("macro_details", {}).get("market_regime")
+
         # Store adaptive weights in scores for transparency
         scores["weights_used"] = {
             "fundamental": weight_fundamental,
@@ -342,6 +359,53 @@ class DeepAnalysisScorer:
         details["adjustment"] = adjustment
 
         self.logger.info(f"Sentiment overlay: score={sentiment_score:.4f}, confidence={confidence:.4f}, weight={weight}, adjustment={adjustment:.6f}")
+
+        return adjustment, details
+
+    def _calculate_macro_overlay(self, data: dict[str, Any], asset_class: str = "stock") -> tuple[float, dict[str, Any]]:
+        """Calculate additive macro overlay adjustment.
+
+        Applied AFTER composite score (SCORE-03).
+        4-gate safety pattern matching sentiment overlay (Phase 14).
+        """
+        details: dict[str, Any] = {"macro_overlay_applied": False}
+
+        # Gate 1: Feature flag
+        if not is_feature_enabled("macro_scoring"):
+            details["reason"] = "feature_flag_off"
+            return 0.0, details
+
+        # Gate 2: Weight is zero
+        weight = self.thresholds.weight_macro_overlay
+        if weight == 0.0:
+            details["reason"] = "weight_is_zero"
+            return 0.0, details
+
+        # Gate 3: Compute macro score
+        macro_score, macro_details = self._macro_scorer.calculate_macro_score(data, asset_class)
+        details["macro_details"] = macro_details
+        if macro_score is None:
+            details["reason"] = "no_macro_data"
+            return 0.0, details
+
+        # Gate 4: Confidence threshold
+        confidence = macro_details.get("confidence", 0.0)
+        if confidence < self.thresholds.macro_min_confidence:
+            details["reason"] = "below_confidence_threshold"
+            details["confidence"] = confidence
+            details["min_confidence"] = self.thresholds.macro_min_confidence
+            return 0.0, details
+
+        # Compute adjustment: weight * macro_score * confidence
+        adjustment = weight * macro_score * confidence
+        details["macro_overlay_applied"] = True
+        details["macro_score"] = macro_score
+        details["confidence"] = confidence
+        details["weight"] = weight
+        details["adjustment"] = adjustment
+        details["asset_class"] = asset_class
+
+        self.logger.info(f"Macro overlay: score={macro_score:.4f}, confidence={confidence:.4f}, weight={weight}, asset_class={asset_class}, adjustment={adjustment:.6f}")
 
         return adjustment, details
 

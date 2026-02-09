@@ -6,6 +6,7 @@ inflation rates, interest rate trends, and macroeconomic indicators.
 """
 
 import logging
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -144,7 +145,7 @@ class MarketContextExtractor:
             # Extract core macro indicators
             indicators = MacroIndicators(
                 inflation_rate=market_regime.inflation_rate,
-                interest_rate=self._estimate_interest_rate(market_regime),
+                interest_rate=self._estimate_interest_rate(market_regime, macro_snapshot=None),
                 interest_rate_trend=market_regime.interest_rate_trend,
                 gdp_growth=self._extract_gdp_growth(discovery_result),
                 unemployment_rate=self._extract_unemployment_rate(discovery_result),
@@ -256,22 +257,28 @@ class MarketContextExtractor:
         else:
             return "extreme"
 
-    def _estimate_interest_rate(self, market_regime: MarketRegime) -> float:
+    def _estimate_interest_rate(self, market_regime: MarketRegime, macro_snapshot: dict[str, Any] | None = None) -> float:
         """
-        Estimate current interest rate based on trend.
+        Estimate current interest rate, using real FRED data when available.
 
-        This is a simplified estimation. In production, this would come from
-        actual Fed funds rate or similar data source.
+        Phase 15: Uses real Fed funds rate from macro_snapshot if present (MACRO-02).
+        Falls back to trend-based estimation if no real data.
         """
+        # Phase 15: Use real Fed rate if available (MACRO-02)
+        if macro_snapshot and isinstance(macro_snapshot, dict):
+            fed_rate = macro_snapshot.get("fed_rate")
+            if fed_rate is not None:
+                self.logger.info(f"Using real Fed funds rate from FRED: {fed_rate}%")
+                return float(fed_rate)
+
+        # Fallback: trend-based estimation (original behavior)
         trend = market_regime.interest_rate_trend
-
-        # Rough estimates based on 2024-2025 environment
         if trend == "rising":
-            return 5.5  # Higher end of recent range
+            return 5.5
         elif trend == "falling":
-            return 4.5  # Lower end of recent range
+            return 4.5
         else:
-            return 5.0  # Mid-range
+            return 5.0
 
     def _extract_gdp_growth(self, discovery_result: APlusDiscoveryResult) -> float | None:
         """
