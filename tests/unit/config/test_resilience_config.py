@@ -35,6 +35,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -50,6 +52,8 @@ class TestResilienceConfig:
         assert valid_config.state_max_age_hours == 24
         assert valid_config.parallel_limit == 10
         assert valid_config.deep_analysis_parallel_limit == 3
+        assert valid_config.circuit_breaker_threshold == 5
+        assert valid_config.circuit_breaker_recovery == 120.0
         assert valid_config.cleanup_state_on_success is False
         assert valid_config.state_cleanup_max_age_days == 7
 
@@ -70,6 +74,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -89,6 +95,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -108,6 +116,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -127,6 +137,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -146,6 +158,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -165,6 +179,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -184,6 +200,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -203,6 +221,8 @@ class TestResilienceConfig:
             state_max_age_hours=0,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -222,6 +242,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=0,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -241,6 +263,8 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=0,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -260,11 +284,55 @@ class TestResilienceConfig:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=0,
         )
 
         with pytest.raises(ValueError, match="state_cleanup_max_age_days must be at least 1"):
+            config.validate()
+
+    def test_should_raise_for_zero_circuit_breaker_threshold(self):
+        """Test validation fails for zero circuit_breaker_threshold."""
+        config = ResilienceConfig(
+            max_retries=3,
+            retry_base_delay=2.0,
+            retry_max_delay=60.0,
+            holding_timeout=300,
+            flow_timeout=7200,
+            auto_resume=False,
+            state_max_age_hours=24,
+            parallel_limit=10,
+            deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=0,
+            circuit_breaker_recovery=120.0,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
+        )
+
+        with pytest.raises(ValueError, match="circuit_breaker_threshold must be at least 1"):
+            config.validate()
+
+    def test_should_raise_for_zero_circuit_breaker_recovery(self):
+        """Test validation fails for zero circuit_breaker_recovery."""
+        config = ResilienceConfig(
+            max_retries=3,
+            retry_base_delay=2.0,
+            retry_max_delay=60.0,
+            holding_timeout=300,
+            flow_timeout=7200,
+            auto_resume=False,
+            state_max_age_hours=24,
+            parallel_limit=10,
+            deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=0.0,
+            cleanup_state_on_success=False,
+            state_cleanup_max_age_days=7,
+        )
+
+        with pytest.raises(ValueError, match="circuit_breaker_recovery must be positive"):
             config.validate()
 
 
@@ -293,6 +361,8 @@ class TestGetResilienceConfig:
         assert config.state_max_age_hours == 24
         assert config.parallel_limit == 10
         assert config.deep_analysis_parallel_limit == 3
+        assert config.circuit_breaker_threshold == 5
+        assert config.circuit_breaker_recovery == 120.0
         assert config.cleanup_state_on_success is False
         assert config.state_cleanup_max_age_days == 7
 
@@ -417,6 +487,22 @@ class TestGetResilienceConfig:
         config = get_resilience_config()
 
         assert config.state_cleanup_max_age_days == 14
+
+    def test_should_load_circuit_breaker_threshold_from_env(self, mocker):
+        """Test loads circuit_breaker_threshold from environment."""
+        mocker.patch.dict("os.environ", {"FINWIZ_CIRCUIT_BREAKER_THRESHOLD": "10"})
+
+        config = get_resilience_config()
+
+        assert config.circuit_breaker_threshold == 10
+
+    def test_should_load_circuit_breaker_recovery_from_env(self, mocker):
+        """Test loads circuit_breaker_recovery from environment."""
+        mocker.patch.dict("os.environ", {"FINWIZ_CIRCUIT_BREAKER_RECOVERY": "300"})
+
+        config = get_resilience_config()
+
+        assert config.circuit_breaker_recovery == 300.0
 
     def test_should_return_singleton(self, mocker):
         """Test returns same instance on repeated calls."""

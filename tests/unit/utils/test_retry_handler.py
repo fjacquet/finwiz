@@ -315,6 +315,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -347,6 +349,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -383,6 +387,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -417,6 +423,8 @@ class TestCreateRetryDecorator:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )
@@ -455,6 +463,8 @@ class TestRetryHandlerIntegration:
             state_max_age_hours=24,
             parallel_limit=10,
             deep_analysis_parallel_limit=3,
+            circuit_breaker_threshold=5,
+            circuit_breaker_recovery=120.0,
             cleanup_state_on_success=False,
             state_cleanup_max_age_days=7,
         )

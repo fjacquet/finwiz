@@ -30,6 +30,10 @@ class ResilienceConfig:
     parallel_limit: int
     deep_analysis_parallel_limit: int
 
+    # Circuit breaker configuration
+    circuit_breaker_threshold: int
+    circuit_breaker_recovery: float
+
     # State cleanup configuration
     cleanup_state_on_success: bool
     state_cleanup_max_age_days: int
@@ -67,6 +71,13 @@ class ResilienceConfig:
         if self.deep_analysis_parallel_limit < 1:
             raise ValueError(f"deep_analysis_parallel_limit must be at least 1, got {self.deep_analysis_parallel_limit}")
 
+        # Validate circuit breaker configuration
+        if self.circuit_breaker_threshold < 1:
+            raise ValueError(f"circuit_breaker_threshold must be at least 1, got {self.circuit_breaker_threshold}")
+
+        if self.circuit_breaker_recovery <= 0:
+            raise ValueError(f"circuit_breaker_recovery must be positive, got {self.circuit_breaker_recovery}")
+
         # Validate state cleanup configuration
         if self.state_cleanup_max_age_days < 1:
             raise ValueError(f"state_cleanup_max_age_days must be at least 1, got {self.state_cleanup_max_age_days}")
@@ -87,8 +98,10 @@ def get_resilience_config() -> ResilienceConfig:
         FINWIZ_MAX_RETRIES: Maximum retry attempts (default: 3)
         FINWIZ_RETRY_BASE_DELAY: Base delay in seconds (default: 2)
         FINWIZ_RETRY_MAX_DELAY: Maximum delay in seconds (default: 60)
-        FINWIZ_HOLDING_TIMEOUT: Per-holding timeout in seconds (default: 300)
+        FINWIZ_HOLDING_TIMEOUT: Per-holding timeout in seconds (default: 600)
         FINWIZ_FLOW_TIMEOUT: Global flow timeout in seconds (default: 7200)
+        FINWIZ_CIRCUIT_BREAKER_THRESHOLD: Consecutive failures to open breaker (default: 5)
+        FINWIZ_CIRCUIT_BREAKER_RECOVERY: Seconds before half-open retry (default: 120)
         FINWIZ_AUTO_RESUME: Auto-resume from checkpoint (default: false)
         FINWIZ_STATE_MAX_AGE_HOURS: Max checkpoint age in hours (default: 24)
         FINWIZ_PARALLEL_LIMIT: Concurrent portfolio holdings (default: 10)
@@ -132,6 +145,10 @@ def get_resilience_config() -> ResilienceConfig:
             )
         )
 
+        # Load circuit breaker configuration
+        circuit_breaker_threshold = int(os.getenv("FINWIZ_CIRCUIT_BREAKER_THRESHOLD", "5"))
+        circuit_breaker_recovery = float(os.getenv("FINWIZ_CIRCUIT_BREAKER_RECOVERY", "120"))
+
         # Load state cleanup configuration
         cleanup_state_on_success = os.getenv("FINWIZ_CLEANUP_STATE_ON_SUCCESS", "false").lower() == "true"
         state_cleanup_max_age_days = int(os.getenv("FINWIZ_STATE_CLEANUP_MAX_AGE_DAYS", "7"))
@@ -147,6 +164,8 @@ def get_resilience_config() -> ResilienceConfig:
             state_max_age_hours=state_max_age_hours,
             parallel_limit=parallel_limit,
             deep_analysis_parallel_limit=deep_analysis_parallel_limit,
+            circuit_breaker_threshold=circuit_breaker_threshold,
+            circuit_breaker_recovery=circuit_breaker_recovery,
             cleanup_state_on_success=cleanup_state_on_success,
             state_cleanup_max_age_days=state_cleanup_max_age_days,
         )

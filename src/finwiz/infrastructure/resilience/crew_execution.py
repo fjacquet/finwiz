@@ -17,10 +17,21 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Configuration
+# Configuration — loaded lazily from ResilienceConfig
 CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
-FAILURE_THRESHOLD = 3
-RECOVERY_TIMEOUT = 60.0
+
+
+def _get_failure_threshold() -> int:
+    from finwiz.config.resilience_config import get_resilience_config
+
+    return get_resilience_config().circuit_breaker_threshold
+
+
+def _get_recovery_timeout() -> float:
+    from finwiz.config.resilience_config import get_resilience_config
+
+    return get_resilience_config().circuit_breaker_recovery
+
 
 # Module-level state
 _executor = ThreadPoolExecutor(max_workers=4)
@@ -69,11 +80,14 @@ async def execute_crew_with_timeout(
     """
     effective_timeout = timeout if timeout is not None else CREW_TIMEOUT
 
+    recovery_timeout = _get_recovery_timeout()
+    failure_threshold = _get_failure_threshold()
+
     # --- Circuit breaker check ---
     if crew_name in _crew_circuit_open:
         elapsed = time.time() - _crew_circuit_open[crew_name]
-        if elapsed < RECOVERY_TIMEOUT:
-            logger.warning(f"Circuit breaker OPEN for {crew_name} ({elapsed:.0f}s < {RECOVERY_TIMEOUT}s)")
+        if elapsed < recovery_timeout:
+            logger.warning(f"Circuit breaker OPEN for {crew_name} ({elapsed:.0f}s < {recovery_timeout}s)")
             raise CircuitBreakerOpenError(f"Circuit breaker open for {crew_name}")
         # Half-open: recovery timeout passed, allow retry
         logger.info(f"Circuit breaker half-open for {crew_name}, allowing retry")
@@ -98,10 +112,10 @@ async def execute_crew_with_timeout(
         # Track failure
         _crew_failures[crew_name] = _crew_failures.get(crew_name, 0) + 1
         failure_count = _crew_failures[crew_name]
-        logger.warning(f"Crew {crew_name} failed ({failure_count}/{FAILURE_THRESHOLD}): {exc}")
+        logger.warning(f"Crew {crew_name} failed ({failure_count}/{failure_threshold}): {exc}")
 
         # Open circuit breaker if threshold reached
-        if failure_count >= FAILURE_THRESHOLD:
+        if failure_count >= failure_threshold:
             _crew_circuit_open[crew_name] = time.time()
             logger.error(f"Circuit breaker OPEN for {crew_name} after {failure_count} consecutive failures")
 

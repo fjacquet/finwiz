@@ -5,14 +5,16 @@ import time
 import pytest
 
 from finwiz.infrastructure.resilience.crew_execution import (
-    FAILURE_THRESHOLD,
-    RECOVERY_TIMEOUT,
     CircuitBreakerOpenError,
     _crew_circuit_open,
     _crew_failures,
     execute_crew_with_timeout,
     reset_circuit_breakers,
 )
+
+# Default values matching ResilienceConfig defaults
+FAILURE_THRESHOLD = 5
+RECOVERY_TIMEOUT = 120.0
 
 
 @pytest.fixture(autouse=True)
@@ -80,7 +82,7 @@ async def test_circuit_breaker_opens_after_threshold(mocker):
     crew = _make_crew(mocker, side_effect=RuntimeError("fail"))
 
     # Fail FAILURE_THRESHOLD times
-    for i in range(FAILURE_THRESHOLD):
+    for _i in range(FAILURE_THRESHOLD):
         with pytest.raises(RuntimeError):
             await execute_crew_with_timeout("flaky_crew", crew, {"ticker": "FAIL"}, timeout=10)
 
