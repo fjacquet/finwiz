@@ -169,8 +169,8 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
     # Sanity check ranges for critical numeric fields
     # These catch data extraction errors (e.g., defaults of 0.0 that passed through)
     SANITY_CHECKS = {
-        # Stock metrics that should NEVER be exactly 0.0 for real companies
-        "roe": lambda v: v is not None and (v < -0.5 or v > 2.0 or v == 0.0),  # ROE exactly 0.0 is suspicious
+        # Stock metrics — only flag extreme outliers likely caused by data errors
+        "roe": lambda v: v is not None and (v < -5.0 or v > 5.0),  # ROE outside -500%..500% is suspicious
         "current_price": lambda v: v is not None and v <= 0.0,  # Price must be positive
         # These CAN be 0.0 legitimately, so only check for None or extreme values
         "debt_to_equity": lambda v: v is None or v < 0.0 or v > 100.0,

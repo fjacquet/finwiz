@@ -5,6 +5,7 @@ This module contains performance metrics calculation, benchmark comparison,
 and risk analysis functions for backtesting results.
 """
 
+import math
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +19,18 @@ from finwiz.tools.logger import get_logger
 from .backtesting_models import BacktestResult
 
 logger = get_logger(__name__)
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Convert to int, treating NaN/None as default."""
+    if value is None:
+        return default
+    try:
+        if math.isnan(float(value)):
+            return default
+    except (TypeError, ValueError):
+        return default
+    return int(value)
 
 
 class BacktestingPerformanceAnalyzer:
@@ -114,9 +127,9 @@ class BacktestingPerformanceAnalyzer:
 
         if hasattr(analyzers, "trades") and analyzers.trades.get_analysis():
             trade_analysis = analyzers.trades.get_analysis()
-            total_trades = trade_analysis.get("total", {}).get("total", 0) or 0
-            winning_trades = trade_analysis.get("won", {}).get("total", 0) or 0
-            losing_trades = trade_analysis.get("lost", {}).get("total", 0) or 0
+            total_trades = _safe_int(trade_analysis.get("total", {}).get("total", 0))
+            winning_trades = _safe_int(trade_analysis.get("won", {}).get("total", 0))
+            losing_trades = _safe_int(trade_analysis.get("lost", {}).get("total", 0))
 
         # Calculate volatility from portfolio values
         volatility = self.calculate_volatility(strategy_instance.portfolio_values)

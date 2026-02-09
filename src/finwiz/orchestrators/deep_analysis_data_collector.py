@@ -380,11 +380,8 @@ class DeepAnalysisDataCollector:
                 # AND calculated beta is not the default value (1.0)
                 calc_beta = perf.get("beta")
                 if calc_beta is not None and "beta" not in flattened:
-                    if calc_beta != 1.0:
-                        flattened["beta"] = calc_beta
-                        self.logger.debug(f"Using calculated beta: {calc_beta}")
-                    else:
-                        self.logger.debug("Skipping default calculated beta (1.0)")
+                    flattened["beta"] = calc_beta
+                    self.logger.debug(f"Using calculated beta: {calc_beta}")
 
             if "technical_analysis" in quant and isinstance(quant["technical_analysis"], dict):
                 tech = quant["technical_analysis"]

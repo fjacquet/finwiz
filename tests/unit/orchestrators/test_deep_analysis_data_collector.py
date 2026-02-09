@@ -77,3 +77,35 @@ class TestCollectEtfData:
         collected = {"ticker_info": {"expense_ratio": "N/A"}}
         result = collector._collect_etf_data("XB0T.DE", collected)
         assert result["expense_ratio"] == 0.002
+
+
+class TestFlattenBetaHandling:
+    """Tests for beta handling in flatten_collected_data."""
+
+    @pytest.fixture
+    def collector(self, mocker):
+        return DeepAnalysisDataCollector(state=mocker.MagicMock())
+
+    def test_should_use_calculated_beta_1_0_when_yfinance_absent(self, collector):
+        """Calculated beta=1.0 should be accepted, not skipped."""
+        data = {
+            "ticker": "GOOGL",
+            "ticker_info": {},
+            "quantitative_analysis": {
+                "performance_metrics": {"beta": 1.0, "volatility": 0.25},
+            },
+        }
+        result = collector.flatten_collected_data(data)
+        assert result["beta"] == 1.0
+
+    def test_should_prefer_yfinance_beta_over_calculated(self, collector):
+        """yfinance beta takes priority over calculated beta."""
+        data = {
+            "ticker": "AAPL",
+            "ticker_info": {"beta": 1.23},
+            "quantitative_analysis": {
+                "performance_metrics": {"beta": 1.0},
+            },
+        }
+        result = collector.flatten_collected_data(data)
+        assert result["beta"] == 1.23
