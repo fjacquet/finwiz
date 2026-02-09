@@ -5,7 +5,7 @@
 - [x] **v1 Hardening & Discovery** - Phases 1-5 (shipped 2026-02-08)
 - [x] **v2 Security & Structural Quality** - Phases 6-8 (shipped 2026-02-08)
 - [x] **v3 Performance & Risk Analysis** - Phases 9-12 (shipped 2026-02-08)
-- [ ] **v4 Data Intelligence & Smart Scoring** - Phases 13-16 (in progress)
+- [x] **v4 Data Intelligence & Smart Scoring** - Phases 13-16 (shipped 2026-02-09)
 
 ## Phases
 
@@ -52,7 +52,7 @@ Phases completed: 9-12 (7 plans total)
 - [x] **Phase 13: Data Foundation** - Adapters, schemas, feature flags, and infrastructure for news and macro data
 - [x] **Phase 14: Sentiment Scoring** - Per-holding sentiment computation and composite score integration
 - [x] **Phase 15: Macro Context** - Real macro data replaces hardcoded values, dynamic risk adjustment
-- [ ] **Phase 16: Report Enrichment** - New HTML sections for sentiment, macro dashboard, and economic calendar
+- [x] **Phase 16: Report Enrichment** - New HTML sections for sentiment, macro dashboard, and economic calendar
 
 ## Phase Details
 
@@ -124,9 +124,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 16-01-PLAN.md -- Data plumbing: EconomicCalendar schemas/adapter, sentiment summary persistence, macro_snapshot on FinwizState
-- [ ] 16-02-PLAN.md -- Consolidated report sections: sentiment summary, macro dashboard with F&G gauge, economic calendar + CSS
-- [ ] 16-03-PLAN.md -- Per-holding template enrichment: sentiment sections in enriched and deep analysis reports
+- [x] 16-01-PLAN.md -- Data plumbing: EconomicCalendar schemas/adapter, sentiment summary persistence, macro_snapshot on FinwizState
+- [x] 16-02-PLAN.md -- Consolidated report sections: sentiment summary, macro dashboard with F&G gauge, economic calendar + CSS
+- [x] 16-03-PLAN.md -- Per-holding template enrichment: sentiment sections in enriched and deep analysis reports
 
 ## Progress
 
@@ -141,8 +141,8 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16
 | 13. Data Foundation | v4 | 10/10 | Complete | 2026-02-09 |
 | 14. Sentiment Scoring | v4 | 2/2 | Complete | 2026-02-09 |
 | 15. Macro Context | v4 | 2/2 | Complete | 2026-02-09 |
-| 16. Report Enrichment | v4 | 0/3 | Planning complete | - |
+| 16. Report Enrichment | v4 | 3/3 | Complete | 2026-02-09 |
 
 ---
 *Roadmap created: 2026-02-08*
-*Last updated: 2026-02-09 after Phase 16 planning*
+*Last updated: 2026-02-09 after Phase 16 completion — v4 milestone complete*
