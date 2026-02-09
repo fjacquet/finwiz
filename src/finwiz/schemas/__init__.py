@@ -43,6 +43,9 @@ from .crypto import (  # noqa: F401
     CryptoThesis,
 )
 
+# Economic calendar schemas (v4 Phase 16)
+from .economic_calendar import EarningsEvent, EconomicCalendar, EconomicEvent  # noqa: F401
+
 # ETF crew schemas
 from .etf import (  # noqa: F401
     ETFCandidate,
@@ -236,6 +239,10 @@ __all__ = [
     "StockTechnicalAnalysis",
     "TechnicalIndicators",
     "TenKInsight",
+    # Economic calendar schemas (v4 Phase 16)
+    "EarningsEvent",
+    "EconomicCalendar",
+    "EconomicEvent",
     # Sentiment & macro schemas (v4)
     "MacroScore",
     "MacroSnapshot",

@@ -8,6 +8,7 @@ from .base_adapter import (
     InvalidDataError,
     TimeoutError,
 )
+from .economic_calendar_adapter import EconomicCalendarAdapter
 from .eod_adapter import EODAdapter
 from .fear_greed_adapter import FearGreedAdapter
 from .finnhub_news_adapter import FinnhubNewsAdapter
@@ -32,4 +33,5 @@ __all__ = [
     "FinnhubNewsAdapter",
     "FREDAdapter",
     "FearGreedAdapter",
+    "EconomicCalendarAdapter",
 ]

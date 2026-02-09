@@ -308,4 +308,11 @@ def create_default_flags() -> dict[str, FeatureFlagConfig]:
             fallback_strategy=FallbackStrategy.DEFAULT_VALUES,
             description="Additive macro overlay for composite scoring (weight=0.0 when disabled)",
         ),
+        "economic_calendar": FeatureFlagConfig(
+            name="economic_calendar",
+            enabled=get_env_bool("FF_ECONOMIC_CALENDAR", False),
+            strategy=FeatureFlagStrategy.BOOLEAN,
+            fallback_strategy=FallbackStrategy.DISABLE,
+            description="Finnhub economic calendar and earnings dates for report enrichment",
+        ),
     }
