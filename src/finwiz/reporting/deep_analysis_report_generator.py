@@ -189,6 +189,9 @@ class DeepAnalysisReportGenerator:
         # Ensure session_id exists
         template_vars.setdefault("session_id", "default")
 
+        # Extract sentiment data for report enrichment (Phase 16)
+        template_vars.setdefault("sentiment_data", data.get("sentiment_data", None))
+
         return template_vars
 
     def _get_default_data_sources(self, asset_class: str) -> list[str]:

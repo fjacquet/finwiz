@@ -227,6 +227,45 @@
     </ul>
 </div>
 
+{% if sentiment_data %}
+<div class="section">
+    <h3>📰 Sentiment de Marche</h3>
+    <div class="metrics-grid">
+        {% if sentiment_data.score is defined %}
+        <div class="metric-card">
+            <h4>Score de Sentiment</h4>
+            <p class="metric-value {% if sentiment_data.score > 0.2 %}risk-low{% elif sentiment_data.score < -0.2 %}risk-high{% else %}risk-medium{% endif %}">
+                {{ "%.2f"|format(sentiment_data.score) }}
+            </p>
+        </div>
+        {% endif %}
+        {% if sentiment_data.confidence is defined %}
+        <div class="metric-card">
+            <h4>Confiance</h4>
+            <p class="metric-value">{{ "%.0f"|format(sentiment_data.confidence * 100) }}%</p>
+        </div>
+        {% endif %}
+        {% if sentiment_data.article_count is defined %}
+        <div class="metric-card">
+            <h4>Articles Analyses</h4>
+            <p class="metric-value">{{ sentiment_data.article_count }}</p>
+        </div>
+        {% endif %}
+    </div>
+    {% if sentiment_data.top_headlines %}
+    <h4>Titres Recents</h4>
+    <ul style="list-style: none; padding: 0;">
+        {% for headline in sentiment_data.top_headlines %}
+        <li style="padding: 6px 0; border-bottom: 1px solid #e2e8f0;">
+            <strong>{{ headline.title }}</strong>
+            <span style="color: #64748b; font-size: 0.85em;">({{ headline.source }})</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endif %}
+
 <!-- Data Sources Section -->
 <div class="data-sources">
     <h3>📚 Sources de Données</h3>
