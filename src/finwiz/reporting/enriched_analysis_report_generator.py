@@ -222,6 +222,10 @@ class EnrichedAnalysisReportGenerator:
             template_vars["contextual_risks"] = qual.get("contextual_risks", {})
             template_vars["investment_synthesis"] = qual.get("investment_synthesis", {})
 
+        # Extract sentiment summary for report enrichment (Phase 16)
+        sentiment_summary = data.get("sentiment_summary", None)
+        template_vars["sentiment_data"] = sentiment_summary
+
         return template_vars
 
     def generate_and_save_report(self, enriched_analysis: EnrichedAnalysis | dict[str, Any], output_path: str | Path) -> str:

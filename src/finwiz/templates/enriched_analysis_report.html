@@ -430,6 +430,21 @@
                 border-color: #2c3e50 transparent transparent transparent;
             }
         }
+
+        /* Sentiment section styles */
+        .headline-list { list-style: none; padding: 0; }
+        .headline-list li { padding: 8px 0; border-bottom: 1px solid var(--border-color, #e2e8f0); }
+        .headline-title { font-weight: 500; }
+        .headline-source { color: var(--text-muted, #64748b); font-size: 0.85em; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: 600; margin-left: 8px; }
+        .badge-bullish { background: #dcfce7; color: #166534; }
+        .badge-bearish { background: #fee2e2; color: #991b1b; }
+        .badge-neutral { background: #f1f5f9; color: #475569; }
+        @media (prefers-color-scheme: dark) {
+            .badge-bullish { background: #166534; color: #dcfce7; }
+            .badge-bearish { background: #991b1b; color: #fee2e2; }
+            .badge-neutral { background: #475569; color: #f1f5f9; }
+        }
     </style>
 </head>
 <!-- Glossary definitions for hover tooltips - Complete French explanations with interpretations -->
@@ -982,6 +997,41 @@
             </ul>
             {% endif %}
         </div>
+
+        <!-- Sentiment de Marche -->
+        {% if sentiment_data %}
+        <div class="section">
+            <h2>📰 Sentiment de Marche</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>Score de Sentiment</h4>
+                    <p class="metric-value" style="color: {% if sentiment_data.score > 0.2 %}#22c55e{% elif sentiment_data.score < -0.2 %}#ef4444{% else %}#64748b{% endif %};">
+                        {{ "%.2f"|format(sentiment_data.score) }}
+                    </p>
+                </div>
+                <div class="metric-card">
+                    <h4>Confiance</h4>
+                    <p class="metric-value">{{ "%.0f"|format(sentiment_data.confidence * 100) }}%</p>
+                </div>
+                <div class="metric-card">
+                    <h4>Articles Analyses</h4>
+                    <p class="metric-value">{{ sentiment_data.article_count }}</p>
+                </div>
+            </div>
+            {% if sentiment_data.top_headlines %}
+            <h3>Titres Recents</h3>
+            <ul class="headline-list">
+                {% for headline in sentiment_data.top_headlines %}
+                <li>
+                    <span class="headline-title">{{ headline.title }}</span>
+                    <span class="headline-source">({{ headline.source }})</span>
+                    <span class="badge badge-{{ headline.sentiment_label }}">{{ headline.sentiment_label }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
 
         <!-- Scenario Analysis -->
         <div class="section">
