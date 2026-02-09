@@ -9,6 +9,9 @@ from .base_adapter import (
     TimeoutError,
 )
 from .eod_adapter import EODAdapter
+from .fear_greed_adapter import FearGreedAdapter
+from .finnhub_news_adapter import FinnhubNewsAdapter
+from .fred_adapter import FREDAdapter
 from .industry_averages import IndustryAveragesAdapter
 from .intrinio_adapter import IntrinioAdapter
 from .tiingo_adapter import TiingoAdapter
@@ -26,4 +29,7 @@ __all__ = [
     "TiingoAdapter",
     "EODAdapter",
     "IndustryAveragesAdapter",
+    "FinnhubNewsAdapter",
+    "FREDAdapter",
+    "FearGreedAdapter",
 ]

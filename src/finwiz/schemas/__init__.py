@@ -66,6 +66,9 @@ from .investment_discovery import (  # noqa: F401
     ValidationResult,
 )
 
+# Sentiment & macro schemas (v4)
+from .macro import MacroSnapshot  # noqa: F401
+
 # Newcomer discovery schemas
 from .newcomer_discovery import (  # noqa: F401
     EnrichmentResult,
@@ -126,6 +129,7 @@ from .quantitative import (  # noqa: F401
 
 # Report crew schemas
 from .report import ReporterInput  # noqa: F401
+from .sentiment import NewsArticle, NewsSentimentResult  # noqa: F401
 
 # Stock crew schemas
 from .stock import (  # noqa: F401
@@ -232,6 +236,10 @@ __all__ = [
     "StockTechnicalAnalysis",
     "TechnicalIndicators",
     "TenKInsight",
+    # Sentiment & macro schemas (v4)
+    "MacroSnapshot",
+    "NewsArticle",
+    "NewsSentimentResult",
     # Validation schemas
     "ValidatedTicker",
 ]

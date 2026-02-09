@@ -86,6 +86,23 @@ def collect_raw_data(
         prefetched_data=prefetched_data,
     )
     logger.info(f"Raw data collected for {ctx.ticker}: {len(raw_data)} fields")
+
+    # v4 Data Intelligence: collect sentiment and macro data if feature flags are enabled
+    try:
+        from finwiz.data.sentiment_collector import SentimentMacroCollector
+
+        v4_collector = SentimentMacroCollector()
+        sentiment = v4_collector.collect_sentiment(ctx.ticker)
+        macro = v4_collector.collect_macro()
+        if sentiment is not None:
+            raw_data["news_sentiment"] = sentiment.model_dump(mode="json")
+            logger.info(f"News sentiment collected for {ctx.ticker}: {sentiment.article_count} articles")
+        if macro is not None:
+            raw_data["macro_snapshot"] = macro.model_dump(mode="json")
+            logger.info(f"Macro snapshot collected: {macro.get_market_regime()} regime")
+    except Exception as e:
+        logger.debug(f"v4 sentiment/macro collection skipped for {ctx.ticker}: {e}")
+
     return raw_data
 
 

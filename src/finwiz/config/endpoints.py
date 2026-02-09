@@ -29,5 +29,15 @@ SEC_DATA_BASE: str = os.getenv("SEC_DATA_BASE_URL", "https://data.sec.gov")
 # --- Charts ---
 CHART_IMG_BASE: str = os.getenv("CHART_IMG_BASE_URL", "https://api.chart-img.com/v1/stock")
 
+# --- News / Sentiment ---
+FINNHUB_BASE: str = os.getenv("FINNHUB_BASE_URL", "https://finnhub.io/api/v1")
+GNEWS_BASE: str = os.getenv("GNEWS_BASE_URL", "https://gnews.io/api/v4")
+
+# --- Macro Data ---
+FRED_BASE: str = os.getenv("FRED_BASE_URL", "https://api.stlouisfed.org/fred")
+
+# --- Market Indicators ---
+FEAR_GREED_BASE: str = os.getenv("FEAR_GREED_BASE_URL", "https://production.dataviz.cnn.io/index/fearandgreed/graphdata")
+
 # --- Web (no API key, not overridable) ---
 YAHOO_FINANCE_WEB: str = "https://finance.yahoo.com"

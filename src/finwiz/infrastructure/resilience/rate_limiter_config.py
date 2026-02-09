@@ -22,6 +22,10 @@ class APIProvider(StrEnum):
     KRAKEN = "kraken"
     SEC_EDGAR = "sec_edgar"
     PERPLEXITY = "perplexity"
+    FINNHUB = "finnhub"
+    FRED = "fred"
+    FEAR_GREED = "fear_greed"
+    GNEWS = "gnews"
 
 
 @dataclass
@@ -134,6 +138,43 @@ DEFAULT_RATE_LIMITS: dict[APIProvider, RateLimitConfig] = {
         cooldown_seconds=2.0,
         max_retries=3,
         base_backoff=1.0,
+        max_backoff=30.0,
+    ),
+    APIProvider.FINNHUB: RateLimitConfig(
+        requests_per_minute=60,
+        requests_per_hour=3600,
+        burst_limit=10,
+        cooldown_seconds=1.0,
+        max_retries=3,
+        base_backoff=1.0,
+        max_backoff=30.0,
+    ),
+    APIProvider.FRED: RateLimitConfig(
+        requests_per_minute=120,
+        requests_per_hour=7200,
+        burst_limit=20,
+        cooldown_seconds=0.5,
+        max_retries=3,
+        base_backoff=1.0,
+        max_backoff=30.0,
+    ),
+    APIProvider.FEAR_GREED: RateLimitConfig(
+        requests_per_minute=10,
+        requests_per_hour=60,
+        burst_limit=2,
+        cooldown_seconds=6.0,
+        max_retries=2,
+        base_backoff=2.0,
+        max_backoff=30.0,
+    ),
+    APIProvider.GNEWS: RateLimitConfig(
+        requests_per_minute=10,
+        requests_per_hour=100,
+        requests_per_day=100,
+        burst_limit=3,
+        cooldown_seconds=6.0,
+        max_retries=2,
+        base_backoff=2.0,
         max_backoff=30.0,
     ),
 }

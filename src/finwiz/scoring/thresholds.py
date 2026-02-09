@@ -235,6 +235,14 @@ class ScoringThresholds:
     weight_risk_drawdown: float = 0.30  # 30% drawdown
     weight_risk_beta: float = 0.20  # 20% beta
 
+    # ============================================================================
+    # ADDITIVE OVERLAY WEIGHTS (v4 Data Intelligence)
+    # These are ADDITIVE on top of the 40/30/30 composite — not redistributed.
+    # Default 0.0 = disabled. Activated by feature flags in Phase 14+.
+    # ============================================================================
+    weight_sentiment_overlay: float = 0.0  # Additive sentiment adjustment
+    weight_macro_overlay: float = 0.0  # Additive macro context adjustment
+
 
 # Global instance for easy access
 DEFAULT_THRESHOLDS = ScoringThresholds()

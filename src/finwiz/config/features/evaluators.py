@@ -168,6 +168,27 @@ def get_default_values(flag_name: str) -> Any:
             "source": "fallback",
             "status": "disabled",
         },
+        "finnhub_news": {
+            "articles": [],
+            "aggregate_sentiment": 0.0,
+            "article_count": 0,
+            "source": "default",
+        },
+        "fred_macro": {
+            "fed_rate": None,
+            "cpi_yoy": None,
+            "unemployment_rate": None,
+            "gdp_growth": None,
+            "vix": None,
+            "source": "default",
+        },
+        "fear_greed_index": {
+            "value": None,
+            "label": None,
+            "source": "default",
+        },
+        "sentiment_scoring": {"weight": 0.0, "source": "disabled"},
+        "macro_scoring": {"weight": 0.0, "source": "disabled"},
     }
     result = defaults.get(flag_name, {})
     if result:
