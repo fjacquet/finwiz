@@ -692,3 +692,225 @@ class TestSentimentOverlay:
         assert result.risk_score is not None
         # Score should be valid
         assert 0.0 <= result.composite_score <= 1.0
+
+
+def _make_macro_snapshot_data(**overrides: object) -> dict[str, float | None]:
+    """Create a macro_snapshot dict for testing."""
+    defaults: dict[str, float | None] = {
+        "vix": 20.0,
+        "fed_rate": 4.5,
+        "cpi_yoy": 3.0,
+        "treasury_10y": 4.0,
+        "treasury_2y": 3.5,
+        "yield_curve_spread": 0.5,
+        "gdp_growth": 2.0,
+        "unemployment_rate": 4.0,
+    }
+    defaults.update(overrides)  # type: ignore[arg-type]
+    return defaults
+
+
+class TestMacroOverlay:
+    """Tests for Phase 15 macro overlay integration (SCORE-03, SCORE-04)."""
+
+    @pytest.fixture
+    def scorer(self):
+        """Create DeepAnalysisScorer instance with default thresholds."""
+        return DeepAnalysisScorer()
+
+    @pytest.fixture
+    def sample_stock_data(self):
+        """Sample stock data for testing."""
+        return {
+            "ticker": "AAPL",
+            "asset_class": "stock",
+            "current_price": 150.0,
+            "roe": 0.25,
+            "debt_to_equity": 0.3,
+            "revenue_growth": 0.15,
+            "profit_margin": 0.20,
+            "rsi": 55.0,
+            "moving_avg_50": 145.0,
+            "moving_avg_200": 140.0,
+            "macd": 0.5,
+            "macd_signal": 0.3,
+            "volatility": 0.20,
+            "max_drawdown": -0.15,
+            "beta": 1.1,
+        }
+
+    def test_macro_overlay_zero_weight_no_impact(self, scorer, sample_stock_data):
+        """SCORE-03: Default weight=0.0 produces identical results with macro data present."""
+        # Score without macro data
+        result_without = scorer.calculate_composite_score("AAPL", "stock", sample_stock_data)
+
+        # Add macro snapshot data
+        data_with = dict(sample_stock_data)
+        data_with["macro_snapshot"] = _make_macro_snapshot_data()
+        result_with = scorer.calculate_composite_score("AAPL", "stock", data_with)
+
+        # Scores must be identical when weight=0.0 (default)
+        assert result_without.composite_score == result_with.composite_score
+
+    def test_macro_overlay_flag_off_no_impact(self, scorer, sample_stock_data, mocker):
+        """SCORE-03: Feature flag off = no overlay applied."""
+        mocker.patch("finwiz.scoring.deep_analysis_scorer.is_feature_enabled", return_value=False)
+
+        scorer.thresholds.weight_macro_overlay = 0.10
+        adjustment, details = scorer._calculate_macro_overlay(sample_stock_data)
+        assert adjustment == 0.0
+        assert details["reason"] == "feature_flag_off"
+
+    def test_macro_overlay_positive_raises_score(self, scorer, sample_stock_data, mocker):
+        """SCORE-03: Positive macro environment raises composite score."""
+        mocker.patch("finwiz.scoring.deep_analysis_scorer.is_feature_enabled", return_value=True)
+
+        # Get baseline score (weight=0 gated)
+        baseline = scorer.calculate_composite_score("AAPL", "stock", sample_stock_data)
+
+        # Enable overlay with favorable macro data: low VIX, steep yield curve, low rates
+        scorer_pos = DeepAnalysisScorer(thresholds=ScoringThresholds(weight_macro_overlay=0.10))
+        data_pos = dict(sample_stock_data)
+        data_pos["macro_snapshot"] = _make_macro_snapshot_data(
+            vix=12.0,
+            fed_rate=1.5,
+            treasury_10y=4.0,
+            treasury_2y=1.5,
+            yield_curve_spread=2.5,
+        )
+        result_pos = scorer_pos.calculate_composite_score("AAPL", "stock", data_pos)
+
+        # Positive macro should raise score
+        assert result_pos.composite_score >= baseline.composite_score
+
+    def test_macro_overlay_negative_lowers_score(self, scorer, sample_stock_data, mocker):
+        """SCORE-03: Negative macro environment lowers composite score."""
+        mocker.patch("finwiz.scoring.deep_analysis_scorer.is_feature_enabled", return_value=True)
+
+        # Get baseline score (weight=0 gated)
+        baseline = scorer.calculate_composite_score("AAPL", "stock", sample_stock_data)
+
+        # Enable overlay with adverse macro data: high VIX, inverted yield curve, tight rates
+        scorer_neg = DeepAnalysisScorer(thresholds=ScoringThresholds(weight_macro_overlay=0.10))
+        data_neg = dict(sample_stock_data)
+        data_neg["macro_snapshot"] = _make_macro_snapshot_data(
+            vix=35.0,
+            fed_rate=6.0,
+            treasury_10y=3.5,
+            treasury_2y=4.0,
+            yield_curve_spread=-0.5,
+        )
+        result_neg = scorer_neg.calculate_composite_score("AAPL", "stock", data_neg)
+
+        # Negative macro should lower score
+        assert result_neg.composite_score <= baseline.composite_score
+
+    def test_macro_overlay_clamped_to_bounds(self, scorer, sample_stock_data, mocker):
+        """SCORE-03: Composite score stays in [0.0, 1.0] even with extreme overlay."""
+        mocker.patch("finwiz.scoring.deep_analysis_scorer.is_feature_enabled", return_value=True)
+
+        # Extreme positive overlay
+        scorer_extreme = DeepAnalysisScorer(thresholds=ScoringThresholds(weight_macro_overlay=5.0))
+        data_pos = dict(sample_stock_data)
+        data_pos["macro_snapshot"] = _make_macro_snapshot_data(
+            vix=10.0,
+            fed_rate=1.0,
+            yield_curve_spread=3.0,
+        )
+        result_pos = scorer_extreme.calculate_composite_score("AAPL", "stock", data_pos)
+        assert 0.0 <= result_pos.composite_score <= 1.0
+
+        # Extreme negative overlay
+        data_neg = dict(sample_stock_data)
+        data_neg["macro_snapshot"] = _make_macro_snapshot_data(
+            vix=40.0,
+            fed_rate=7.0,
+            yield_curve_spread=-1.0,
+        )
+        result_neg = scorer_extreme.calculate_composite_score("AAPL", "stock", data_neg)
+        assert 0.0 <= result_neg.composite_score <= 1.0
+
+    def test_40_30_30_weights_unchanged_with_macro(self, scorer, mocker):
+        """SCORE-04: The 40/30/30 weight distribution is NOT changed by macro overlay."""
+        mocker.patch("finwiz.scoring.deep_analysis_scorer.is_feature_enabled", return_value=True)
+
+        scorer_overlay = DeepAnalysisScorer(thresholds=ScoringThresholds(weight_macro_overlay=0.05))
+        # Use data that does NOT trigger quality company adaptive weights (50/25/25):
+        # Lower ROE, higher debt, lower margin to avoid quality detection
+        data = {
+            "ticker": "TEST",
+            "asset_class": "stock",
+            "current_price": 100.0,
+            "roe": 0.10,
+            "debt_to_equity": 1.0,
+            "revenue_growth": 0.05,
+            "profit_margin": 0.08,
+            "rsi": 50.0,
+            "moving_avg_50": 98.0,
+            "moving_avg_200": 95.0,
+            "macd": 0.2,
+            "macd_signal": 0.1,
+            "volatility": 0.25,
+            "max_drawdown": -0.20,
+            "beta": 1.2,
+            "macro_snapshot": _make_macro_snapshot_data(),
+        }
+
+        # Calculate scores to inspect weights_used
+        scores = scorer_overlay._calculate_component_scores("stock", data)
+        scorer_overlay._compute_weighted_score(scores, data)
+
+        weights = scores["weights_used"]
+        assert weights["fundamental"] == approx(0.40)
+        assert weights["technical"] == approx(0.30)
+        assert weights["risk"] == approx(0.30)
+        assert weights["is_quality_company"] is False
+
+    def test_macro_overlay_no_data(self, scorer, sample_stock_data, mocker):
+        """SCORE-03: No macro_snapshot in data returns 0.0 with reason tracking."""
+        mocker.patch("finwiz.scoring.deep_analysis_scorer.is_feature_enabled", return_value=True)
+        scorer.thresholds.weight_macro_overlay = 0.10
+
+        # No macro_snapshot in data
+        adjustment, details = scorer._calculate_macro_overlay(sample_stock_data)
+        assert adjustment == 0.0
+        assert details["reason"] == "no_macro_data"
+
+    def test_macro_result_fields_propagated(self, scorer, sample_stock_data, mocker):
+        """SCORE-03: DeepAnalysisResult gets macro_score and macro_regime when overlay active."""
+        mocker.patch("finwiz.scoring.deep_analysis_scorer.is_feature_enabled", return_value=True)
+
+        scorer_active = DeepAnalysisScorer(thresholds=ScoringThresholds(weight_macro_overlay=0.10))
+        data = dict(sample_stock_data)
+        data["macro_snapshot"] = _make_macro_snapshot_data(
+            vix=12.0,
+            fed_rate=1.5,
+            yield_curve_spread=2.5,
+        )
+        result = scorer_active.calculate_composite_score("AAPL", "stock", data)
+
+        # macro_score should be populated (not None)
+        assert result.macro_score is not None
+        # macro_regime should be populated (not None)
+        assert result.macro_regime is not None
+
+    def test_assess_market_regime_uses_real_vix(self):
+        """MACRO-01: assess_market_regime uses real VIX from macro_snapshot."""
+        from finwiz.tools.scoring.scoring_criteria import assess_market_regime
+
+        # High VIX -> volatile regime
+        regime_high = assess_market_regime({"macro_snapshot": {"vix": 35.0, "cpi_yoy": 2.0}})
+        assert regime_high.regime_type == "volatile"
+
+        # Low VIX -> bull regime
+        regime_low = assess_market_regime({"macro_snapshot": {"vix": 12.0, "cpi_yoy": 2.0}})
+        assert regime_low.regime_type == "bull"
+
+    def test_assess_market_regime_fallback(self):
+        """MACRO-01: assess_market_regime falls back to defaults without macro_snapshot."""
+        from finwiz.tools.scoring.scoring_criteria import assess_market_regime
+
+        # No macro_snapshot -> falls back to vix=20.0 default -> sideways
+        regime = assess_market_regime({})
+        assert regime.regime_type == "sideways"
+        assert regime.vix_level == approx(20.0)
