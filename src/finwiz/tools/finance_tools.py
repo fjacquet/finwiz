@@ -182,7 +182,8 @@ def get_stock_discovery_tools() -> list[BaseTool]:
         list[BaseTool]: A list of tools focused on stock discovery and fundamental analysis.
 
     """
-    return [
+    # Public API tools (no key required)
+    tools: list[BaseTool] = [
         # Core discovery tools
         MarketScreeningTool(),  # Provides stock_screening_tool functionality
         APlusScoringTool(),  # Provides a_plus_scoring_tool functionality
@@ -190,7 +191,6 @@ def get_stock_discovery_tools() -> list[BaseTool]:
         EnhancedSECAnalysisTool(),  # 10-K/10-Q analysis for fundamental insights
         YahooFinanceCompanyInfoTool(),  # Company fundamentals and metrics
         YahooFinanceTickerInfoTool(),  # Financial ratios and key metrics
-        AlphaVantageCompanyOverviewTool(),  # Additional fundamental data
         # Supporting analysis tools
         QuantitativeAnalysisTool(),  # Quantitative metrics and ratios
         StandardizedRiskScoringTool(),  # Risk assessment
@@ -198,11 +198,15 @@ def get_stock_discovery_tools() -> list[BaseTool]:
         TickerExistenceValidationTool(),  # Ticker validation
         # Historical and technical analysis
         YahooFinanceHistoryTool(),  # Price history for trend analysis
-        TwelveDataIndicatorTool(),  # Technical indicators
         # News and sentiment
         YahooFinanceNewsTool(),  # Company news analysis
-        AlphaVantageNewsSentimentTool(),  # News sentiment scoring
     ]
+    # API-key-gated tools (skip if key missing)
+    for cls in (AlphaVantageCompanyOverviewTool, AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool):
+        t = _safe_init(cls)
+        if t:
+            tools.append(t)
+    return tools
 
 
 # Tool aliases for backward compatibility and explicit naming

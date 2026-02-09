@@ -35,47 +35,61 @@ from finwiz.tools.risk_assessment_tool import get_risk_assessment_tool
 
 load_dotenv()
 
-# Get specialized tools
-investment_discovery_tools = get_investment_discovery_tools()
-quantitative_tool = get_quantitative_analysis_tool()
+# Lazy-loaded tool caches (avoid module-level instantiation that fails without API keys)
+_tool_cache: dict[str, list] = {}
 
-# Get asset-specific research tools
-etf_tools = get_etf_research_tools()
-stock_tools = get_stock_discovery_tools()  # Use specialized stock discovery tools
-crypto_tools = get_crypto_research_tools()
 
-# Common tools for all agents
-common_tools = [
-    *investment_discovery_tools,
-    quantitative_tool,
-    # Schema and documentation access
-    DirectoryReadTool(directory="output/discovery"),
-    DirectoryReadTool(directory="docs/schemas"),
-    DirectoryReadTool(directory="docs/schemas/examples"),
-    FileReadTool(file_path="docs/schemas/APlusDiscoveryResult.schema.json"),
-    FileReadTool(file_path="docs/schemas/OptimizationResult.schema.json"),
-    FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
-]
+def _get_common_tools() -> list:
+    """Get common tools shared by all discovery agents (lazy-loaded)."""
+    if "common" not in _tool_cache:
+        investment_discovery_tools = get_investment_discovery_tools()
+        quantitative_tool = get_quantitative_analysis_tool()
+        _tool_cache["common"] = [
+            *investment_discovery_tools,
+            quantitative_tool,
+            # Schema and documentation access
+            DirectoryReadTool(directory="output/discovery"),
+            DirectoryReadTool(directory="docs/schemas"),
+            DirectoryReadTool(directory="docs/schemas/examples"),
+            FileReadTool(file_path="docs/schemas/APlusDiscoveryResult.schema.json"),
+            FileReadTool(file_path="docs/schemas/OptimizationResult.schema.json"),
+            FileReadTool(file_path="docs/schemas/ValidationResult.schema.json"),
+        ]
+    return _tool_cache["common"]
 
-# ETF Discovery Agent tools
-etf_discovery_tools = common_tools + etf_tools
 
-# Stock Discovery Agent tools
-stock_discovery_tools = common_tools + stock_tools
+def _get_etf_discovery_tools() -> list:
+    """Get ETF discovery agent tools (lazy-loaded)."""
+    if "etf" not in _tool_cache:
+        _tool_cache["etf"] = _get_common_tools() + get_etf_research_tools()
+    return _tool_cache["etf"]
 
-# Crypto Discovery Agent tools
-crypto_discovery_tools = common_tools + crypto_tools
 
-# Portfolio and validation tools
+def _get_stock_discovery_tools() -> list:
+    """Get stock discovery agent tools (lazy-loaded)."""
+    if "stock" not in _tool_cache:
+        _tool_cache["stock"] = _get_common_tools() + get_stock_discovery_tools()
+    return _tool_cache["stock"]
 
-portfolio_optimization_tools = [
-    get_portfolio_analysis_tool(),
-    get_optimization_tool(),
-    get_risk_assessment_tool(),
-    get_portfolio_rebalancing_tool(),
-]
 
-portfolio_tools = common_tools + portfolio_optimization_tools
+def _get_crypto_discovery_tools() -> list:
+    """Get crypto discovery agent tools (lazy-loaded)."""
+    if "crypto" not in _tool_cache:
+        _tool_cache["crypto"] = _get_common_tools() + get_crypto_research_tools()
+    return _tool_cache["crypto"]
+
+
+def _get_portfolio_tools() -> list:
+    """Get portfolio optimization tools (lazy-loaded)."""
+    if "portfolio" not in _tool_cache:
+        portfolio_optimization_tools = [
+            get_portfolio_analysis_tool(),
+            get_optimization_tool(),
+            get_risk_assessment_tool(),
+            get_portfolio_rebalancing_tool(),
+        ]
+        _tool_cache["portfolio"] = _get_common_tools() + portfolio_optimization_tools
+    return _tool_cache["portfolio"]
 
 
 @CrewBase
@@ -130,7 +144,7 @@ class InvestmentDiscoveryCrew:
         return Agent(
             config=self.agents_config["etf_discovery_agent"],
             verbose=True,
-            tools=etf_discovery_tools,
+            tools=_get_etf_discovery_tools(),
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
@@ -142,7 +156,7 @@ class InvestmentDiscoveryCrew:
         return Agent(
             config=self.agents_config["stock_discovery_agent"],
             verbose=True,
-            tools=stock_discovery_tools,
+            tools=_get_stock_discovery_tools(),
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
@@ -154,7 +168,7 @@ class InvestmentDiscoveryCrew:
         return Agent(
             config=self.agents_config["crypto_discovery_agent"],
             verbose=True,
-            tools=crypto_discovery_tools,
+            tools=_get_crypto_discovery_tools(),
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
@@ -166,7 +180,7 @@ class InvestmentDiscoveryCrew:
         return Agent(
             config=self.agents_config["portfolio_optimization_agent"],
             verbose=True,
-            tools=portfolio_tools,
+            tools=_get_portfolio_tools(),
             reasoning=True,
             max_reasoning_attempts=3,  # Prevent infinite loops
             llm=self._get_configured_llm(),
@@ -183,7 +197,7 @@ class InvestmentDiscoveryCrew:
             get_backtesting_tool(),
             get_risk_assessment_tool(),
             StandardizedRiskScoringTool(),
-            quantitative_tool,
+            get_quantitative_analysis_tool(),
         ]
 
         return Agent(
