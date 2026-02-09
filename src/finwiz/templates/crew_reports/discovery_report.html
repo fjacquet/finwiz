@@ -1,0 +1,126 @@
+{% extends "crew_reports/base.html" %}
+
+{% block title %}Opportunités d'Investissement A+ - FinWiz{% endblock %}
+
+{% block content %}
+<h1>💎 Opportunités d'Investissement A+</h1>
+
+<div class="section">
+    <p><strong>Date d'Analyse:</strong> {{ data.analysis_date }}</p>
+    <p><strong>Session:</strong> {{ data.session_id }}</p>
+    <p><strong>Nombre d'Opportunités:</strong> {{ data.opportunities|length }}</p>
+</div>
+
+<!-- Screening Criteria Section -->
+{% if data.screening_criteria %}
+<div class="section">
+    <h2>🎯 Critères de Sélection</h2>
+    {% if data.screening_criteria is mapping %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Critère</th>
+                    <th>Valeur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, value in data.screening_criteria.items() %}
+                <tr>
+                    <td>{{ key|replace('_', ' ')|title }}</td>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ data.screening_criteria }}</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Market Context Section -->
+{% if data.market_context %}
+<div class="section">
+    <h2>🌐 Contexte de Marché</h2>
+    <p>{{ data.market_context }}</p>
+</div>
+{% endif %}
+
+<!-- Opportunities Section -->
+{% if data.opportunities %}
+<div class="section">
+    <h2>🚀 Opportunités Identifiées</h2>
+
+    {% for opportunity in data.opportunities %}
+    <div class="section" style="margin-bottom: 1.5rem; border-left: 4px solid var(--success);">
+        <h3>{{ opportunity.ticker }} - {{ opportunity.name }}</h3>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Classe d'Actif</h4>
+                <p class="metric-value" style="font-size: 1.2rem;">{{ opportunity.asset_class|upper }}</p>
+            </div>
+            <div class="metric-card">
+                <h4>Grade</h4>
+                <p class="metric-value grade-a-plus" style="font-size: 1.5rem;">{{ opportunity.grade }}</p>
+            </div>
+            <div class="metric-card">
+                <h4>Score Composite</h4>
+                <p class="metric-value grade-a-plus">{{ "%.0f"|format(opportunity.composite_score * 100) }}%</p>
+            </div>
+        </div>
+
+        <h4>Rationale</h4>
+        <p>{{ opportunity.rationale }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Summary Table -->
+<div class="section">
+    <h2>📋 Résumé des Opportunités</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Nom</th>
+                <th>Classe</th>
+                <th>Grade</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for opportunity in data.opportunities %}
+            <tr>
+                <td><strong>{{ opportunity.ticker }}</strong></td>
+                <td>{{ opportunity.name }}</td>
+                <td>{{ opportunity.asset_class|upper }}</td>
+                <td class="grade-a-plus">{{ opportunity.grade }}</td>
+                <td class="text-right grade-a-plus">{{ "%.0f"|format(opportunity.composite_score * 100) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="section">
+    <p><em>Aucune opportunité A+ identifiée pour cette session.</em></p>
+</div>
+{% endif %}
+
+<!-- Data Sources Section -->
+<div class="data-sources">
+    <h3>📚 Sources de Données</h3>
+    <ul>
+        {% for source in data.data_sources %}
+        <li>{{ source }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Report Paths -->
+<div class="section" style="font-size: 0.9rem; color: var(--text-muted);">
+    <p><strong>Rapport JSON:</strong> {{ data.report_json_path }}</p>
+    <p><strong>Rapport HTML:</strong> {{ data.report_html_path }}</p>
+</div>
+{% endblock %}

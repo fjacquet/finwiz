@@ -1,0 +1,183 @@
+{% extends "crew_reports/base.html" %}
+
+{% block title %}Analyse {{ data.ticker }} - FinWiz{% endblock %}
+
+{% block content %}
+<h1>📊 Analyse d'ETF: {{ data.ticker }}</h1>
+
+<div class="section">
+    <p><strong>Classe d'Actif:</strong> {{ data.asset_class|upper }}</p>
+    <p><strong>Date d'Analyse:</strong> {{ data.analysis_date }}</p>
+    <p><strong>Session:</strong> {{ data.session_id }}</p>
+</div>
+
+<!-- Recommendation Section -->
+<div class="section recommendation {{ data.recommendation|lower }}">
+    <h2>💡 Recommandation</h2>
+    <p class="grade-{{ data.grade|lower|replace('+', '-plus') }}" style="font-size: 1.5rem;">
+        {% if data.recommendation == 'BUY' %}✅{% elif data.recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
+        <strong>{{ data.recommendation }}</strong> - Grade {{ data.grade }}
+    </p>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Score Composite</h4>
+            <p class="metric-value">{{ "%.0f"|format(data.composite_score * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Niveau de Confiance</h4>
+            <p class="metric-value">{{ "%.0f"|format(data.confidence * 100) }}%</p>
+        </div>
+    </div>
+    <p><strong>Rationale:</strong> {{ data.rationale }}</p>
+</div>
+
+<!-- ETF Factsheet Section -->
+{% if data.factsheet %}
+<div class="section">
+    <h2>📋 Fiche Technique de l'ETF</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Caractéristique</th>
+                <th>Valeur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if data.factsheet.fund_name %}
+            <tr>
+                <td>Nom du Fonds</td>
+                <td>{{ data.factsheet.fund_name }}</td>
+            </tr>
+            {% endif %}
+            {% if data.factsheet.inception_date %}
+            <tr>
+                <td>Date de Création</td>
+                <td>{{ data.factsheet.inception_date }}</td>
+            </tr>
+            {% endif %}
+            {% if data.factsheet.aum %}
+            <tr>
+                <td>Actifs Sous Gestion</td>
+                <td>{{ "${:,.0f}".format(data.factsheet.aum) }}</td>
+            </tr>
+            {% endif %}
+            {% if data.factsheet.benchmark %}
+            <tr>
+                <td>Indice de Référence</td>
+                <td>{{ data.factsheet.benchmark }}</td>
+            </tr>
+            {% endif %}
+            {% if data.factsheet.category %}
+            <tr>
+                <td>Catégorie</td>
+                <td>{{ data.factsheet.category }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Cost Analysis Section -->
+<div class="section">
+    <h2>💰 Analyse des Coûts</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Ratio de Frais</h4>
+            <p class="metric-value">{{ "%.2f"|format(data.expense_ratio * 100) }}%</p>
+        </div>
+        {% if data.tracking_error %}
+        <div class="metric-card">
+            <h4>Erreur de Suivi</h4>
+            <p class="metric-value">{{ "%.2f"|format(data.tracking_error * 100) }}%</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Top Holdings Section -->
+{% if data.top_holdings %}
+<div class="section">
+    <h2>🏆 Principales Participations</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Symbole</th>
+                <th>Nom</th>
+                <th>Poids (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for holding in data.top_holdings[:10] %}
+            <tr>
+                <td>{{ holding.symbol }}</td>
+                <td>{{ holding.name }}</td>
+                <td class="text-right">{{ "%.2f"|format(holding.weight * 100) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Risk Assessment Section -->
+{% if data.risk_assessment %}
+<div class="section risk-assessment">
+    <h2>⚠️ Évaluation des Risques</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Score de Risque</h4>
+            <p class="metric-value {% if data.risk_assessment.risk_score <= 3 %}risk-low{% elif data.risk_assessment.risk_score <= 6 %}risk-medium{% else %}risk-high{% endif %}">
+                {{ data.risk_assessment.risk_score }}/10
+            </p>
+        </div>
+        {% if data.risk_assessment.systematic_risk %}
+        <div class="metric-card">
+            <h4>Risque Systématique</h4>
+            <p class="metric-value">{{ "%.2f"|format(data.risk_assessment.systematic_risk) }}</p>
+        </div>
+        {% endif %}
+        {% if data.risk_assessment.idiosyncratic_risk %}
+        <div class="metric-card">
+            <h4>Risque Idiosyncratique</h4>
+            <p class="metric-value">{{ "%.2f"|format(data.risk_assessment.idiosyncratic_risk) }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if data.risk_assessment.risk_factors %}
+    <h3>Facteurs de Risque</h3>
+    <ul>
+        {% for factor in data.risk_assessment.risk_factors %}
+        <li>{{ factor }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if data.risk_assessment.mitigation_strategies %}
+    <h3>Stratégies d'Atténuation</h3>
+    <ul>
+        {% for strategy in data.risk_assessment.mitigation_strategies %}
+        <li>{{ strategy }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Data Sources Section -->
+<div class="data-sources">
+    <h3>📚 Sources de Données</h3>
+    <ul>
+        {% for source in data.data_sources %}
+        <li>{{ source }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Report Paths -->
+<div class="section" style="font-size: 0.9rem; color: var(--text-muted);">
+    <p><strong>Rapport JSON:</strong> {{ data.report_json_path }}</p>
+    <p><strong>Rapport HTML:</strong> {{ data.report_html_path }}</p>
+</div>
+{% endblock %}

@@ -14,6 +14,11 @@ from finwiz.infrastructure.decorators.agent_validators import FinalReporterError
 class TestFinalReporterDecorator:
     """Test suite for @final_reporter decorator."""
 
+    @pytest.fixture(autouse=True)
+    def _set_openai_key(self, monkeypatch):
+        """Provide a fake OPENAI_API_KEY so crewai.Agent() can be instantiated."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
     def test_should_allow_agent_when_no_tools(self, mocker):
         """Test decorator allows agents with no tools."""
         # Arrange

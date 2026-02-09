@@ -109,7 +109,7 @@ class TestDeepAnalysisCrew:
         assert agents_config.exists(), "agents.yaml configuration file not found"
         assert tasks_config.exists(), "tasks.yaml configuration file not found"
 
-    def test_should_instantiate_crew_without_keyerror(self):
+    def test_should_instantiate_crew_without_keyerror(self, monkeypatch):
         """
         Test that DeepAnalysisCrew instantiates without KeyError.
 
@@ -118,6 +118,7 @@ class TestDeepAnalysisCrew:
 
         Requirements: 2.1
         """
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
         # Should instantiate without KeyError
@@ -128,7 +129,7 @@ class TestDeepAnalysisCrew:
         assert hasattr(crew, "agents_config")
         assert hasattr(crew, "tasks_config")
 
-    def test_should_have_exactly_one_agent(self):
+    def test_should_have_exactly_one_agent(self, monkeypatch):
         """
         Test that the crew contains exactly 1 agent.
 
@@ -137,6 +138,7 @@ class TestDeepAnalysisCrew:
 
         Requirements: Token overflow fix
         """
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
         crew = DeepAnalysisCrew()

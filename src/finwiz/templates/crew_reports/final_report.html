@@ -1,0 +1,699 @@
+{% extends "crew_reports/base.html" %}
+
+{% block title %}Rapport FinWiz Consolidé - {{ session_id }}{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📊 Rapport d'Analyse FinWiz</h1>
+    <div class="subtitle">
+        <p><strong>Session:</strong> {{ session_id }}</p>
+        <p><strong>Date de Consolidation:</strong> {{ consolidation_date.strftime('%d %B %Y à %H:%M') }}</p>
+        <p><strong>Temps d'Exécution Total:</strong> {{ "%.2f"|format(total_time) }} secondes</p>
+    </div>
+</div>
+
+<!-- Executive Summary -->
+<section class="section">
+    <h2 class="section-title">📋 Résumé Exécutif</h2>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Actions Analysées</h4>
+            <div class="metric-value">{{ stock_analyses|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>ETFs Analysés</h4>
+            <div class="metric-value">{{ etf_analyses|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Cryptomonnaies Analysées</h4>
+            <div class="metric-value">{{ crypto_analyses|length }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Analyses Approfondies</h4>
+            <div class="metric-value">{{ deep_analyses|length }}</div>
+        </div>
+    </div>
+
+    <h3>Statut d'Exécution des Crews</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Crew</th>
+                <th>Statut</th>
+                <th>Résultats</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for crew_name, status in execution_status.items() %}
+            <tr>
+                <td>{{ crew_name }}</td>
+                <td>
+                    {% if status == "completed" %}
+                    <span class="status-indicator status-green"></span>✅ Complété
+                    {% else %}
+                    <span class="status-indicator status-red"></span>❌ Échoué
+                    {% endif %}
+                </td>
+                <td>
+                    {% if crew_name == "stock_crew" %}
+                    {{ stock_analyses|length }} actions
+                    {% elif crew_name == "etf_crew" %}
+                    {{ etf_analyses|length }} ETFs
+                    {% elif crew_name == "crypto_crew" %}
+                    {{ crypto_analyses|length }} cryptos
+                    {% elif crew_name == "deep_analysis_crew" %}
+                    {{ deep_analyses|length }} analyses
+                    {% elif crew_name == "discovery_crew" %}
+                    {{ discovery_results.opportunities|length if discovery_results else 0 }} opportunités
+                    {% elif crew_name == "rebalancing_crew" %}
+                    {{ rebalancing_results.trades_required|length if rebalancing_results else 0 }} transactions
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Error Summary Section (if any crews failed) -->
+    {% set failed_crews = execution_status.values()|select("equalto", "failed")|list %}
+    {% if failed_crews|length > 0 %}
+    <div class="error-summary" style="margin-top: 20px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+        <h3 style="color: #856404; margin-top: 0;">⚠️ Avertissement: Certains Crews ont Échoué</h3>
+        <p style="color: #856404;">
+            {{ failed_crews|length }} crew(s) n'ont pas pu compléter leur analyse.
+            Les résultats ci-dessous représentent les analyses partielles disponibles.
+        </p>
+        <p style="color: #856404; font-size: 0.9em; margin-bottom: 0;">
+            Les sections manquantes sont marquées avec un avertissement.
+            Veuillez consulter les logs pour plus de détails sur les erreurs.
+        </p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Stock Analyses -->
+{% if stock_analyses %}
+<section class="section">
+    <h2 class="section-title">📈 Analyses d'Actions</h2>
+
+    {% for analysis in stock_analyses %}
+    <div class="analysis-card">
+        <h3>{{ analysis.ticker }} - {{ analysis.fundamental_analysis.company_name if analysis.fundamental_analysis.company_name else analysis.ticker }}</h3>
+
+        <div class="recommendation-banner recommendation-{{ analysis.recommendation|lower }}">
+            {% if analysis.recommendation == 'BUY' %}
+            ✅ ACHETER
+            {% elif analysis.recommendation == 'SELL' %}
+            ❌ VENDRE
+            {% else %}
+            ⏸️ CONSERVER
+            {% endif %}
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Grade</h4>
+                <div class="metric-value grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
+                    {{ analysis.grade }}
+                </div>
+            </div>
+            <div class="metric-card">
+                <h4>Score Composite</h4>
+                <div class="metric-value">{{ "%.0f"|format(analysis.composite_score * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Confiance</h4>
+                <div class="metric-value">{{ "%.0f"|format(analysis.confidence * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Risque</h4>
+                {% if analysis.risk_assessment is defined and analysis.risk_assessment %}
+                <div class="metric-value risk-{{ 'low' if analysis.risk_assessment.risk_score <= 3 else ('medium' if analysis.risk_assessment.risk_score <= 6 else 'high') }}">
+                    {{ analysis.risk_assessment.risk_score }}/10
+                </div>
+                {% elif analysis.risk_score is defined and analysis.risk_score is not none %}
+                <div class="metric-value risk-{{ 'low' if analysis.risk_score <= 0.3 else ('medium' if analysis.risk_score <= 0.6 else 'high') }}">
+                    {{ "%.1f"|format(analysis.risk_score * 10) }}/10
+                </div>
+                {% else %}
+                <div class="metric-value">N/A</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rationale">
+            <h4>Rationale</h4>
+            <p>{{ analysis.rationale }}</p>
+        </div>
+
+        <div class="data-sources">
+            <h4>Sources de Données</h4>
+            <ul>
+                {% for source in analysis.data_sources %}
+                <li>{{ source }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if analysis.report_html_path %}
+        <div class="report-link">
+            <a href="{{ analysis.report_html_path }}" class="btn-view-report" target="_blank">
+                📄 Voir le Rapport Complet
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+<section class="section missing-report" style="background-color: #f8f9fa; border-left: 4px solid #6c757d;">
+    <h2 class="section-title">📈 Analyses d'Actions</h2>
+    {% if execution_status.get("stock_crew") == "failed" %}
+    <div style="padding: 15px; background-color: #fff3cd; border-radius: 4px; margin-top: 10px;">
+        <p style="color: #856404; margin: 0;">
+            ⚠️ <strong>Crew Échoué:</strong> L'analyse des actions n'a pas pu être complétée en raison d'une erreur.
+        </p>
+    </div>
+    {% else %}
+    <p class="text-muted">ℹ️ Aucune analyse d'action disponible pour cette session.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- ETF Analyses -->
+{% if etf_analyses %}
+<section class="section">
+    <h2 class="section-title">📊 Analyses d'ETFs</h2>
+
+    {% for analysis in etf_analyses %}
+    <div class="analysis-card">
+        <h3>{{ analysis.ticker }}</h3>
+
+        <div class="recommendation-banner recommendation-{{ analysis.recommendation|lower }}">
+            {% if analysis.recommendation == 'BUY' %}
+            ✅ ACHETER
+            {% elif analysis.recommendation == 'SELL' %}
+            ❌ VENDRE
+            {% else %}
+            ⏸️ CONSERVER
+            {% endif %}
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Grade</h4>
+                <div class="metric-value grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
+                    {{ analysis.grade }}
+                </div>
+            </div>
+            <div class="metric-card">
+                <h4>Score Composite</h4>
+                <div class="metric-value">{{ "%.0f"|format(analysis.composite_score * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Ratio de Frais</h4>
+                <div class="metric-value">{{ "%.2f"|format(analysis.expense_ratio * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Erreur de Suivi</h4>
+                <div class="metric-value">
+                    {% if analysis.tracking_error %}
+                    {{ "%.2f"|format(analysis.tracking_error * 100) }}%
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="rationale">
+            <h4>Rationale</h4>
+            <p>{{ analysis.rationale }}</p>
+        </div>
+
+        {% if analysis.top_holdings %}
+        <div class="top-holdings">
+            <h4>Principales Positions</h4>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Nom</th>
+                        <th class="text-right">Poids</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for holding in analysis.top_holdings[:5] %}
+                    <tr>
+                        <td>{{ holding.ticker }}</td>
+                        <td>{{ holding.name }}</td>
+                        <td class="text-right">{{ "%.2f"|format(holding.weight * 100) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if analysis.report_html_path %}
+        <div class="report-link">
+            <a href="{{ analysis.report_html_path }}" class="btn-view-report" target="_blank">
+                📄 Voir le Rapport Complet
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+<section class="section missing-report" style="background-color: #f8f9fa; border-left: 4px solid #6c757d;">
+    <h2 class="section-title">📊 Analyses d'ETFs</h2>
+    {% if execution_status.get("etf_crew") == "failed" %}
+    <div style="padding: 15px; background-color: #fff3cd; border-radius: 4px; margin-top: 10px;">
+        <p style="color: #856404; margin: 0;">
+            ⚠️ <strong>Crew Échoué:</strong> L'analyse des ETFs n'a pas pu être complétée en raison d'une erreur.
+        </p>
+    </div>
+    {% else %}
+    <p class="text-muted">ℹ️ Aucune analyse d'ETF disponible pour cette session.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- Crypto Analyses -->
+{% if crypto_analyses %}
+<section class="section">
+    <h2 class="section-title">🪙 Analyses de Cryptomonnaies</h2>
+
+    {% for analysis in crypto_analyses %}
+    <div class="analysis-card">
+        <h3>{{ analysis.ticker }}</h3>
+
+        <div class="recommendation-banner recommendation-{{ analysis.recommendation|lower }}">
+            {% if analysis.recommendation == 'BUY' %}
+            ✅ ACHETER
+            {% elif analysis.recommendation == 'SELL' %}
+            ❌ VENDRE
+            {% else %}
+            ⏸️ CONSERVER
+            {% endif %}
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Grade</h4>
+                <div class="metric-value grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
+                    {{ analysis.grade }}
+                </div>
+            </div>
+            <div class="metric-card">
+                <h4>Score Composite</h4>
+                <div class="metric-value">{{ "%.0f"|format(analysis.composite_score * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Volatilité 30j</h4>
+                <div class="metric-value risk-high">{{ "%.2f"|format(analysis.volatility_30d * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Drawdown Max</h4>
+                <div class="metric-value risk-high">{{ "%.2f"|format(analysis.max_drawdown * 100) }}%</div>
+            </div>
+        </div>
+
+        <div class="rationale">
+            <h4>Rationale</h4>
+            <p>{{ analysis.rationale }}</p>
+        </div>
+
+        <div class="risk-warning">
+            <h4>⚠️ Avertissement sur les Risques</h4>
+            <p>Les cryptomonnaies présentent une volatilité extrême et des risques réglementaires significatifs. N'investissez que ce que vous pouvez vous permettre de perdre.</p>
+        </div>
+
+        {% if analysis.report_html_path %}
+        <div class="report-link">
+            <a href="{{ analysis.report_html_path }}" class="btn-view-report" target="_blank">
+                📄 Voir le Rapport Complet
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+<section class="section missing-report" style="background-color: #f8f9fa; border-left: 4px solid #6c757d;">
+    <h2 class="section-title">🪙 Analyses de Cryptomonnaies</h2>
+    {% if execution_status.get("crypto_crew") == "failed" %}
+    <div style="padding: 15px; background-color: #fff3cd; border-radius: 4px; margin-top: 10px;">
+        <p style="color: #856404; margin: 0;">
+            ⚠️ <strong>Crew Échoué:</strong> L'analyse des cryptomonnaies n'a pas pu être complétée en raison d'une erreur.
+        </p>
+    </div>
+    {% else %}
+    <p class="text-muted">ℹ️ Aucune analyse de cryptomonnaie disponible pour cette session.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- Deep Analyses -->
+{% if deep_analyses %}
+<section class="section">
+    <h2 class="section-title">🔍 Analyses Approfondies</h2>
+    <p class="text-muted">Analyses détaillées des actifs sous-performants nécessitant une attention particulière.</p>
+
+    {% for analysis in deep_analyses %}
+    <div class="analysis-card">
+        <h3>{{ analysis.ticker }} ({{ analysis.asset_class|upper }})</h3>
+
+        <div class="recommendation-banner recommendation-{{ analysis.recommendation|lower }}">
+            {% if analysis.recommendation == 'BUY' %}
+            ✅ ACHETER
+            {% elif analysis.recommendation == 'SELL' %}
+            ❌ VENDRE
+            {% else %}
+            ⏸️ CONSERVER
+            {% endif %}
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Grade</h4>
+                <div class="metric-value grade-{{ analysis.grade|lower|replace('+', '-plus') }}">
+                    {{ analysis.grade }}
+                </div>
+            </div>
+            <div class="metric-card">
+                <h4>Score Composite</h4>
+                <div class="metric-value">{{ "%.0f"|format(analysis.composite_score * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Confiance</h4>
+                <div class="metric-value">{{ "%.0f"|format(analysis.confidence * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Niveau de Risque</h4>
+                {% if analysis.risk_assessment is defined and analysis.risk_assessment %}
+                <div class="metric-value risk-{{ 'high' if analysis.risk_assessment.risk_score <= 3 else ('medium' if analysis.risk_assessment.risk_score <= 6 else 'low') }}">
+                    {{ analysis.risk_assessment.risk_score }}/10
+                </div>
+                <small>{% if analysis.risk_assessment.risk_score <= 3 %}Élevé{% elif analysis.risk_assessment.risk_score <= 6 %}Modéré{% else %}Faible{% endif %}</small>
+                {% elif analysis.risk_score is defined and analysis.risk_score is not none %}
+                <div class="metric-value risk-{{ 'high' if analysis.risk_score <= 0.3 else ('medium' if analysis.risk_score <= 0.6 else 'low') }}">
+                    {{ "%.1f"|format((1.0 - analysis.risk_score) * 10) }}/10
+                </div>
+                <small>{% if analysis.risk_score >= 0.7 %}Faible{% elif analysis.risk_score >= 0.4 %}Modéré{% else %}Élevé{% endif %}</small>
+                {% else %}
+                <div class="metric-value">N/A</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rationale">
+            <h4>Analyse Détaillée</h4>
+            <p>{{ analysis.rationale }}</p>
+        </div>
+
+        {% if analysis.report_html_path %}
+        <div class="report-link">
+            <a href="{{ analysis.report_html_path }}" class="btn-view-report" target="_blank">
+                📄 Voir le Rapport Complet
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
+<!-- Discovery Results -->
+{% if discovery_results and discovery_results.opportunities %}
+<section class="section">
+    <h2 class="section-title">💎 Opportunités A+ Découvertes</h2>
+    <p class="text-muted">Nouvelles opportunités d'investissement de haute qualité identifiées par notre système de découverte.</p>
+
+    <div class="discovery-summary">
+        <h3>Critères de Sélection</h3>
+        <p>{{ discovery_results.market_context }}</p>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Nom</th>
+                <th>Classe d'Actif</th>
+                <th class="text-right">Score</th>
+                <th>Grade</th>
+                <th>Rationale</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for opp in discovery_results.opportunities %}
+            <tr>
+                <td><strong>{{ opp.ticker }}</strong></td>
+                <td>{{ opp.name }}</td>
+                <td>{{ opp.asset_class|upper }}</td>
+                <td class="text-right grade-a-plus">{{ "%.0f"|format(opp.composite_score * 100) }}%</td>
+                <td class="grade-a-plus"><strong>{{ opp.grade }}</strong></td>
+                <td>{{ opp.rationale }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if discovery_results.report_html_path %}
+    <div class="report-link" style="margin-top: 20px;">
+        <a href="{{ discovery_results.report_html_path }}" class="btn-view-report" target="_blank">
+            📄 Voir le Rapport Complet des Découvertes
+        </a>
+    </div>
+    {% endif %}
+</section>
+{% else %}
+<section class="section missing-report" style="background-color: #f8f9fa; border-left: 4px solid #6c757d;">
+    <h2 class="section-title">💎 Opportunités A+ Découvertes</h2>
+    {% if execution_status.get("discovery_crew") == "failed" %}
+    <div style="padding: 15px; background-color: #fff3cd; border-radius: 4px; margin-top: 10px;">
+        <p style="color: #856404; margin: 0;">
+            ⚠️ <strong>Crew Échoué:</strong> La découverte d'opportunités n'a pas pu être complétée en raison d'une erreur.
+        </p>
+    </div>
+    {% else %}
+    <p class="text-muted">ℹ️ Aucune opportunité de découverte disponible pour cette session.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- Rebalancing Recommendations -->
+{% if rebalancing_results %}
+<section class="section">
+    <h2 class="section-title">⚖️ Recommandations de Rééquilibrage</h2>
+
+    <div class="rebalancing-summary">
+        <h3>Vue d'Ensemble</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Actifs Analysés</h4>
+                <div class="metric-value">{{ rebalancing_results.holdings_analyzed }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Analyses Approfondies</h4>
+                <div class="metric-value">{{ rebalancing_results.deep_analyses_reviewed }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Opportunités Découvertes</h4>
+                <div class="metric-value">{{ rebalancing_results.opportunities_discovered }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Transactions Requises</h4>
+                <div class="metric-value">{{ rebalancing_results.trades_required|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="performance-metrics">
+        <h3>Métriques de Performance Attendues</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Rendement Attendu</h4>
+                <div class="metric-value">{{ "%.2f"|format(rebalancing_results.expected_return * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Risque Attendu</h4>
+                <div class="metric-value">{{ "%.2f"|format(rebalancing_results.expected_risk * 100) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h4>Ratio de Sharpe</h4>
+                <div class="metric-value">{{ "%.2f"|format(rebalancing_results.sharpe_ratio) }}</div>
+            </div>
+            <div class="metric-card">
+                <h4>Amélioration du Rendement</h4>
+                <div class="metric-value">+{{ "%.2f"|format(rebalancing_results.return_improvement * 100) }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="improvement-summary">
+        <h3>Résumé des Améliorations</h3>
+        <p>{{ rebalancing_results.improvement_summary }}</p>
+    </div>
+
+    <h3>Transactions Recommandées</h3>
+    <table class="data-table trades-table">
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Ticker</th>
+                <th>Classe d'Actif</th>
+                <th class="text-right">Quantité</th>
+                <th>Rationale</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trade in rebalancing_results.trades_required %}
+            <tr class="{{ trade.action|lower }}">
+                <td class="action-cell">
+                    {% if trade.action == 'BUY' %}
+                    ✅ {{ trade.action }}
+                    {% elif trade.action == 'SELL' %}
+                    ❌ {{ trade.action }}
+                    {% else %}
+                    ⏸️ {{ trade.action }}
+                    {% endif %}
+                </td>
+                <td><strong>{{ trade.ticker }}</strong></td>
+                <td>{{ trade.asset_class|upper }}</td>
+                <td class="text-right">
+                    {% if trade.quantity %}
+                    {{ "%.2f"|format(trade.quantity) }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
+                <td>{{ trade.rationale }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Allocation Actuelle vs Cible</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th class="text-right">Allocation Actuelle</th>
+                <th class="text-right">Allocation Cible</th>
+                <th class="text-right">Changement</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticker, current_weight in rebalancing_results.current_allocation.items() %}
+            <tr>
+                <td><strong>{{ ticker }}</strong></td>
+                <td class="text-right">{{ "%.2f"|format(current_weight * 100) }}%</td>
+                <td class="text-right">
+                    {% if ticker in rebalancing_results.target_allocation %}
+                    {{ "%.2f"|format(rebalancing_results.target_allocation[ticker] * 100) }}%
+                    {% else %}
+                    0.00%
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% set target = rebalancing_results.target_allocation.get(ticker, 0) %}
+                    {% set change = (target - current_weight) * 100 %}
+                    <span class="{{ 'risk-high' if change < 0 else 'risk-low' }}">
+                        {{ "%+.2f"|format(change) }}%
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+
+            {# Add new positions from target allocation #}
+            {% for ticker, target_weight in rebalancing_results.target_allocation.items() %}
+            {% if ticker not in rebalancing_results.current_allocation %}
+            <tr>
+                <td><strong>{{ ticker }}</strong> <span class="text-muted">(Nouveau)</span></td>
+                <td class="text-right">0.00%</td>
+                <td class="text-right">{{ "%.2f"|format(target_weight * 100) }}%</td>
+                <td class="text-right">
+                    <span class="risk-low">+{{ "%.2f"|format(target_weight * 100) }}%</span>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if rebalancing_results.report_html_path %}
+    <div class="report-link" style="margin-top: 20px;">
+        <a href="{{ rebalancing_results.report_html_path }}" class="btn-view-report" target="_blank">
+            📄 Voir le Rapport Complet de Rééquilibrage
+        </a>
+    </div>
+    {% endif %}
+</section>
+{% else %}
+<section class="section missing-report" style="background-color: #f8f9fa; border-left: 4px solid #6c757d;">
+    <h2 class="section-title">⚖️ Recommandations de Rééquilibrage</h2>
+    {% if execution_status.get("rebalancing_crew") == "failed" %}
+    <div style="padding: 15px; background-color: #fff3cd; border-radius: 4px; margin-top: 10px;">
+        <p style="color: #856404; margin: 0;">
+            ⚠️ <strong>Crew Échoué:</strong> Le rééquilibrage du portefeuille n'a pas pu être complété en raison d'une erreur.
+        </p>
+    </div>
+    {% else %}
+    <p class="text-muted">ℹ️ Aucune recommandation de rééquilibrage disponible pour cette session.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- Report Generation Metrics -->
+<section class="section">
+    <h2 class="section-title">📊 Métriques de Génération</h2>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Rapports Individuels</h4>
+            <div class="metric-value">{{ individual_reports_count|default(0) }}</div>
+        </div>
+        <div class="metric-card">
+            <h4>Coût de Génération</h4>
+            <div class="metric-value cost-free">$0.00</div>
+            <small>Python/Jinja2</small>
+        </div>
+        <div class="metric-card">
+            <h4>Temps d'Exécution</h4>
+            <div class="metric-value">{{ "%.2f"|format(total_time) }}s</div>
+        </div>
+        <div class="metric-card">
+            <h4>Fiabilité</h4>
+            <div class="metric-value">100%</div>
+            <small>Déterministe</small>
+        </div>
+    </div>
+
+    {% if individual_report_paths %}
+    <div class="all-reports-links" style="margin-top: 20px;">
+        <h3>Tous les Rapports Individuels</h3>
+        <div class="report-links-grid">
+            {% for report in individual_report_paths %}
+            <a href="{{ report.path }}" class="btn-view-report-small" target="_blank">
+                {{ report.ticker }} ({{ report.crew }})
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <p><strong>Rapport généré par FinWiz</strong></p>
+    <p>{{ consolidation_date.strftime('%d %B %Y à %H:%M') }}</p>
+    <p class="text-muted">Ce rapport est fourni à titre informatif uniquement et ne constitue pas un conseil en investissement.</p>
+    <p class="text-muted">Consultez toujours un conseiller financier professionnel avant de prendre des décisions d'investissement.</p>
+</footer>
+{% endblock %}

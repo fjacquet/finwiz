@@ -9,8 +9,9 @@ class TestTwelveDataMultiIndicatorTool:
     """Test suite for TwelveDataMultiIndicatorTool."""
 
     @pytest.fixture
-    def tool(self):
-        """Create tool instance."""
+    def tool(self, monkeypatch):
+        """Create tool instance with test API key."""
+        monkeypatch.setenv("TWELVE_DATA_API_KEY", "test-key")
         return TwelveDataMultiIndicatorTool()
 
     def test_should_have_correct_name_and_description(self, tool):

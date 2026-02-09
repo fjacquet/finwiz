@@ -156,6 +156,10 @@ docs/.cache/
 *VALIDATION*.md
 *MIGRATION*.md
 
+# Exception: Keep Jinja2 templates (needed by tests and application)
+!src/finwiz/templates/**/*.html
+!src/finwiz/templates/**/*.j2
+
 # Exception: Keep essential documentation
 !README.md
 !CLAUDE.md

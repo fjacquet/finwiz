@@ -1,0 +1,183 @@
+{% extends "crew_reports/base.html" %}
+
+{% block title %}Recommandations de Rééquilibrage - FinWiz{% endblock %}
+
+{% block content %}
+<h1>⚖️ Recommandations de Rééquilibrage de Portefeuille</h1>
+
+<div class="section">
+    <p><strong>Date d'Analyse:</strong> {{ data.analysis_date }}</p>
+    <p><strong>Session:</strong> {{ data.session_id }}</p>
+</div>
+
+<!-- Input Summary Section -->
+<div class="section">
+    <h2>📊 Résumé des Données d'Entrée</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Participations Analysées</h4>
+            <p class="metric-value">{{ data.holdings_analyzed }}</p>
+        </div>
+        <div class="metric-card">
+            <h4>Analyses Approfondies</h4>
+            <p class="metric-value">{{ data.deep_analyses_reviewed }}</p>
+        </div>
+        <div class="metric-card">
+            <h4>Opportunités A+</h4>
+            <p class="metric-value">{{ data.opportunities_discovered }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Current State Section -->
+<div class="section">
+    <h2>📈 État Actuel du Portefeuille</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Valeur Totale</h4>
+            <p class="metric-value">{{ "${:,.2f}".format(data.current_total_value) }}</p>
+        </div>
+    </div>
+
+    <h3>Allocation Actuelle</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Allocation (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticker, allocation in data.current_allocation.items() %}
+            <tr>
+                <td>{{ ticker }}</td>
+                <td class="text-right">{{ "%.2f"|format(allocation * 100) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Target Allocation Section -->
+<div class="section">
+    <h2>🎯 Allocation Cible Recommandée</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Allocation Actuelle (%)</th>
+                <th>Allocation Cible (%)</th>
+                <th>Changement</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticker, target_alloc in data.target_allocation.items() %}
+            <tr>
+                <td>{{ ticker }}</td>
+                <td class="text-right">{{ "%.2f"|format((data.current_allocation.get(ticker, 0) * 100)) }}%</td>
+                <td class="text-right">{{ "%.2f"|format(target_alloc * 100) }}%</td>
+                <td class="text-right {% if target_alloc > data.current_allocation.get(ticker, 0) %}risk-low{% elif target_alloc < data.current_allocation.get(ticker, 0) %}risk-high{% endif %}">
+                    {{ "%+.2f"|format((target_alloc - data.current_allocation.get(ticker, 0)) * 100) }}%
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Trade Recommendations Section -->
+{% if data.trades_required %}
+<div class="section">
+    <h2>💼 Transactions Requises</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Ticker</th>
+                <th>Classe d'Actif</th>
+                <th>Quantité</th>
+                <th>Rationale</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trade in data.trades_required %}
+            <tr class="{% if trade.action == 'BUY' %}buy{% elif trade.action == 'SELL' %}sell{% else %}hold{% endif %}">
+                <td class="action-cell">
+                    {% if trade.action == 'BUY' %}🟢{% elif trade.action == 'SELL' %}🔴{% else %}⚪{% endif %}
+                    {{ trade.action }}
+                </td>
+                <td><strong>{{ trade.ticker }}</strong></td>
+                <td>{{ trade.asset_class|upper }}</td>
+                <td class="text-right">
+                    {% if trade.quantity %}
+                        {{ "%.2f"|format(trade.quantity) }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td>{{ trade.rationale }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Performance Metrics Section -->
+<div class="section">
+    <h2>📊 Métriques de Performance Attendues</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Rendement Attendu</h4>
+            <p class="metric-value risk-low">{{ "%.2f"|format(data.expected_return * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Risque Attendu</h4>
+            <p class="metric-value risk-medium">{{ "%.2f"|format(data.expected_risk * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Ratio de Sharpe</h4>
+            <p class="metric-value">{{ "%.2f"|format(data.sharpe_ratio) }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Improvement Analysis Section -->
+{% if data.improvement_summary %}
+<div class="section">
+    <h2>📈 Analyse d'Amélioration</h2>
+    <p>{{ data.improvement_summary }}</p>
+
+    <div class="metrics-grid">
+        {% if data.risk_reduction %}
+        <div class="metric-card">
+            <h4>Réduction du Risque</h4>
+            <p class="metric-value risk-low">{{ "%.2f"|format(data.risk_reduction * 100) }}%</p>
+        </div>
+        {% endif %}
+        {% if data.return_improvement %}
+        <div class="metric-card">
+            <h4>Amélioration du Rendement</h4>
+            <p class="metric-value risk-low">{{ "%.2f"|format(data.return_improvement * 100) }}%</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Data Sources Section -->
+<div class="data-sources">
+    <h3>📚 Sources de Données</h3>
+    <ul>
+        {% for source in data.data_sources %}
+        <li>{{ source }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Report Paths -->
+<div class="section" style="font-size: 0.9rem; color: var(--text-muted);">
+    <p><strong>Rapport JSON:</strong> {{ data.report_json_path }}</p>
+    <p><strong>Rapport HTML:</strong> {{ data.report_html_path }}</p>
+</div>
+{% endblock %}

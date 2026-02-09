@@ -2,6 +2,8 @@
 
 import os
 
+import pytest
+
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
 
@@ -19,7 +21,9 @@ def mock_rate_limit_decorator(mocker):
 
 
 class TestTwelveDataIndicatorTool:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _setup(self, monkeypatch):
+        monkeypatch.setenv("TWELVE_DATA_API_KEY", "test-key")
         self.tool = TwelveDataIndicatorTool()
 
     def test_missing_api_key(self, monkeypatch, mocker):

@@ -2,6 +2,8 @@
 
 import os
 
+import pytest
+
 from finwiz.tools.chart_img_tool import ChartImgTool
 
 
@@ -19,7 +21,9 @@ def mock_rate_limit_decorator(mocker):
 
 
 class TestChartImgTool:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _setup(self, monkeypatch):
+        monkeypatch.setenv("CHART_IMG_API_KEY", "test-key")
         self.tool = ChartImgTool()
 
     def test_missing_api_key(self, monkeypatch, mocker):

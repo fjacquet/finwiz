@@ -1,0 +1,180 @@
+{% extends "crew_reports/base.html" %}
+
+{% block title %}Analyse {{ data.ticker }} - FinWiz{% endblock %}
+
+{% block content %}
+<h1>📈 Analyse d'Action: {{ data.ticker }}</h1>
+
+<div class="section">
+    <p><strong>Classe d'Actif:</strong> {{ data.asset_class|upper }}</p>
+    <p><strong>Date d'Analyse:</strong> {{ data.analysis_date }}</p>
+    <p><strong>Session:</strong> {{ data.session_id }}</p>
+</div>
+
+<!-- Recommendation Section -->
+<div class="section recommendation {{ data.recommendation|lower }}">
+    <h2>💡 Recommandation</h2>
+    <p class="grade-{{ data.grade|lower|replace('+', '-plus') }}" style="font-size: 1.5rem;">
+        {% if data.recommendation == 'BUY' %}✅{% elif data.recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
+        <strong>{{ data.recommendation }}</strong> - Grade {{ data.grade }}
+    </p>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Score Composite</h4>
+            <p class="metric-value">{{ "%.0f"|format(data.composite_score * 100) }}%</p>
+        </div>
+        <div class="metric-card">
+            <h4>Niveau de Confiance</h4>
+            <p class="metric-value">{{ "%.0f"|format(data.confidence * 100) }}%</p>
+        </div>
+    </div>
+    <p><strong>Rationale:</strong> {{ data.rationale }}</p>
+</div>
+
+<!-- Fundamental Analysis Section -->
+{% if data.fundamental_analysis %}
+<div class="section">
+    <h2>📊 Analyse Fondamentale</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Métrique</th>
+                <th>Valeur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if data.fundamental_analysis.company_name %}
+            <tr>
+                <td>Nom de l'Entreprise</td>
+                <td>{{ data.fundamental_analysis.company_name }}</td>
+            </tr>
+            {% endif %}
+            {% if data.fundamental_analysis.sector %}
+            <tr>
+                <td>Secteur</td>
+                <td>{{ data.fundamental_analysis.sector }}</td>
+            </tr>
+            {% endif %}
+            {% if data.fundamental_analysis.industry %}
+            <tr>
+                <td>Industrie</td>
+                <td>{{ data.fundamental_analysis.industry }}</td>
+            </tr>
+            {% endif %}
+            {% if data.fundamental_analysis.market_cap %}
+            <tr>
+                <td>Capitalisation Boursière</td>
+                <td>{{ "${:,.0f}".format(data.fundamental_analysis.market_cap) }}</td>
+            </tr>
+            {% endif %}
+            {% if data.fundamental_analysis.revenue %}
+            <tr>
+                <td>Revenus</td>
+                <td>{{ "${:,.0f}".format(data.fundamental_analysis.revenue) }}</td>
+            </tr>
+            {% endif %}
+            {% if data.fundamental_analysis.net_income %}
+            <tr>
+                <td>Revenu Net</td>
+                <td>{{ "${:,.0f}".format(data.fundamental_analysis.net_income) }}</td>
+            </tr>
+            {% endif %}
+            {% if data.fundamental_analysis.pe_ratio %}
+            <tr>
+                <td>Ratio P/E</td>
+                <td>{{ "%.2f"|format(data.fundamental_analysis.pe_ratio) }}</td>
+            </tr>
+            {% endif %}
+            {% if data.fundamental_analysis.debt_to_equity %}
+            <tr>
+                <td>Ratio Dette/Capitaux Propres</td>
+                <td>{{ "%.2f"|format(data.fundamental_analysis.debt_to_equity) }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Technical Indicators Section -->
+{% if data.technical_indicators %}
+<div class="section">
+    <h2>📉 Indicateurs Techniques</h2>
+    <div class="metrics-grid">
+        {% for key, value in data.technical_indicators.items() %}
+        <div class="metric-card">
+            <h4>{{ key|replace('_', ' ')|title }}</h4>
+            <p class="metric-value">
+                {% if value is number %}
+                    {{ "%.2f"|format(value) }}
+                {% else %}
+                    {{ value }}
+                {% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Risk Assessment Section -->
+{% if data.risk_assessment %}
+<div class="section risk-assessment">
+    <h2>⚠️ Évaluation des Risques</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Score de Risque</h4>
+            <p class="metric-value {% if data.risk_assessment.risk_score <= 3 %}risk-low{% elif data.risk_assessment.risk_score <= 6 %}risk-medium{% else %}risk-high{% endif %}">
+                {{ data.risk_assessment.risk_score }}/10
+            </p>
+        </div>
+        {% if data.risk_assessment.systematic_risk %}
+        <div class="metric-card">
+            <h4>Risque Systématique</h4>
+            <p class="metric-value">{{ "%.2f"|format(data.risk_assessment.systematic_risk) }}</p>
+        </div>
+        {% endif %}
+        {% if data.risk_assessment.idiosyncratic_risk %}
+        <div class="metric-card">
+            <h4>Risque Idiosyncratique</h4>
+            <p class="metric-value">{{ "%.2f"|format(data.risk_assessment.idiosyncratic_risk) }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if data.risk_assessment.risk_factors %}
+    <h3>Facteurs de Risque</h3>
+    <ul>
+        {% for factor in data.risk_assessment.risk_factors %}
+        <li>{{ factor }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if data.risk_assessment.mitigation_strategies %}
+    <h3>Stratégies d'Atténuation</h3>
+    <ul>
+        {% for strategy in data.risk_assessment.mitigation_strategies %}
+        <li>{{ strategy }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Data Sources Section -->
+<div class="data-sources">
+    <h3>📚 Sources de Données</h3>
+    <ul>
+        {% for source in data.data_sources %}
+        <li>{{ source }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Report Paths -->
+<div class="section" style="font-size: 0.9rem; color: var(--text-muted);">
+    <p><strong>Rapport JSON:</strong> {{ data.report_json_path }}</p>
+    <p><strong>Rapport HTML:</strong> {{ data.report_html_path }}</p>
+</div>
+{% endblock %}
