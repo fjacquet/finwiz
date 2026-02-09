@@ -1,12 +1,16 @@
 """Unit tests for news deduplication and source reliability utilities."""
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
+
+import pytest
 
 from finwiz.data.news_utils import (
+    calculate_sentiment_confidence,
     calculate_weighted_sentiment,
     deduplicate_articles,
     get_source_reliability,
     jaccard_similarity,
+    temporal_decay_weight,
 )
 from finwiz.schemas.sentiment import NewsArticle
 
@@ -158,3 +162,58 @@ class TestCalculateWeightedSentiment:
             _make_article(title="Also none", sentiment_score=None),
         ]
         assert calculate_weighted_sentiment(articles) == 0.0
+
+
+class TestTemporalDecayWeight:
+    """Tests for temporal_decay_weight function (Phase 14)."""
+
+    def test_brand_new_article(self):
+        """Brand-new article gets weight ~1.0."""
+        now = datetime.now(tz=UTC)
+        weight = temporal_decay_weight(now, half_life_hours=48.0)
+        assert weight == pytest.approx(1.0, abs=0.01)
+
+    def test_one_half_life(self):
+        """Article one half-life old gets weight ~0.5."""
+        now = datetime.now(tz=UTC)
+        old = now - timedelta(hours=48)
+        weight = temporal_decay_weight(old, half_life_hours=48.0)
+        assert weight == pytest.approx(0.5, abs=0.01)
+
+    def test_two_half_lives(self):
+        """Article two half-lives old gets weight ~0.25."""
+        now = datetime.now(tz=UTC)
+        old = now - timedelta(hours=96)
+        weight = temporal_decay_weight(old, half_life_hours=48.0)
+        assert weight == pytest.approx(0.25, abs=0.01)
+
+    def test_naive_datetime(self):
+        """Naive datetime treated as UTC."""
+        now = datetime.now(tz=UTC)
+        naive_now = now.replace(tzinfo=None)
+        weight = temporal_decay_weight(naive_now, half_life_hours=48.0)
+        assert weight == pytest.approx(1.0, abs=0.05)
+
+
+class TestCalculateSentimentConfidence:
+    """Tests for calculate_sentiment_confidence function (Phase 14)."""
+
+    def test_perfect_input(self):
+        """Perfect input (many articles, many sources, fresh data) = 1.0."""
+        c = calculate_sentiment_confidence(10, 3, 0.0)
+        assert c == pytest.approx(1.0, abs=0.01)
+
+    def test_no_articles(self):
+        """Zero articles = 0.0 count factor."""
+        c = calculate_sentiment_confidence(0, 3, 0.0)
+        assert c == pytest.approx(0.6, abs=0.01)  # 0*0.4 + 1.0*0.3 + 1.0*0.3
+
+    def test_stale_data(self):
+        """Data at max freshness = 0.0 freshness factor."""
+        c = calculate_sentiment_confidence(10, 3, 168.0)
+        assert c == pytest.approx(0.7, abs=0.01)  # 1.0*0.4 + 1.0*0.3 + 0*0.3
+
+    def test_single_source(self):
+        """Single source = 1/3 diversity factor."""
+        c = calculate_sentiment_confidence(10, 1, 0.0)
+        assert c == pytest.approx(0.8, abs=0.05)  # 1.0*0.4 + 0.33*0.3 + 1.0*0.3
