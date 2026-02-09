@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Hybrid financial analysis enriched with news sentiment and macroeconomic context for smarter scoring
-**Current focus:** Phase 15 complete - MacroScorer built and wired into composite scoring pipeline
+**Current focus:** Phase 16 (Report Enrichment) -- Plan 01 complete, Plans 02-03 remaining
 
 ## Current Position
 
-Phase: 15 of 16 (Macro Context)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-09 -- Completed 15-02-PLAN.md (Composite wiring)
+Phase: 16 of 16 (Report Enrichment)
+Plan: 1 of 3 in current phase -- COMPLETE
+Status: In progress
+Last activity: 2026-02-09 -- Completed 16-01-PLAN.md (data infrastructure), 4740 tests passing, 67.42% coverage
 
-Progress: [==============================░] 91% (40/44 plans across all milestones)
+Progress: [================================░] 95% (42/44 plans across all milestones)
 
 ## Milestones Shipped
 
@@ -26,14 +26,14 @@ Progress: [==============================░] 91% (40/44 plans across all milest
 
 **Velocity:**
 
-- Total plans completed: 40 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 2)
-- Total phases completed: 15 (Phase 15 complete)
+- Total plans completed: 42 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 2 + 1 config, v4-phase16: 1)
+- Total phases completed: 15 (Phase 16 in progress)
 
 **Codebase:**
 
 - ~109,000 LOC Python
-- 4,635 tests passing (10 new in 15-02)
-- 66.89% coverage (above 65% threshold)
+- 4,740 tests passing (25 new in Plan 16-01)
+- 67.42% coverage (above 65% threshold)
 - All pre-commit hooks pass (14/14)
 
 ## Accumulated Context
@@ -59,6 +59,12 @@ Recent decisions affecting current work:
 - Macro overlay uses identical 4-gate safety as sentiment (flag->weight->data->confidence)
 - Both overlays stack: composite = base + sentiment_adj + macro_adj, clamped per-overlay
 - Quality company adaptive weights (50/25/25) coexist with macro overlay without interference
+- assess_market_regime() reads real VIX from macro_snapshot with fallback to 20.0
+- _estimate_interest_rate() accepts real Fed rate from FRED with fallback to trend-based
+- [16-01] sentiment_summary added as optional field on EnrichedAnalysis (auto-persisted in enriched JSON)
+- [16-01] Confidence = min(1.0, article_count/10) as simple heuristic for sentiment summary
+- [16-01] macro_snapshot set once per session in DeepAnalysisOrchestrator (not pipeline)
+- [16-01] Economic calendar filters US events + high-impact keywords (FOMC, CPI, GDP, employment)
 
 ### Pending Todos
 
@@ -71,7 +77,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 15 complete (both plans done), ready for Phase 16
-Resume file: .planning/phases/15-macro-context/15-02-SUMMARY.md
+Stopped at: Plan 16-01 complete, ready for Plan 16-02 (sentiment/macro report section templates)
+Resume file: .planning/phases/16-report-enrichment/16-01-SUMMARY.md
 
-*Updated after Plan 15-02 composite wiring completion*
+*Updated after Plan 16-01 completion (25 new tests, 4740 total passing)*
