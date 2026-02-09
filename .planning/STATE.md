@@ -5,35 +5,36 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Hybrid financial analysis enriched with news sentiment and macroeconomic context for smarter scoring
-**Current focus:** Phase 16 (Report Enrichment) -- Plan 01 complete, Plans 02-03 remaining
+**Current focus:** Phase 16 (Report Enrichment) -- COMPLETE (all 3 plans done)
 
 ## Current Position
 
 Phase: 16 of 16 (Report Enrichment)
-Plan: 1 of 3 in current phase -- COMPLETE
-Status: In progress
-Last activity: 2026-02-09 -- Completed 16-01-PLAN.md (data infrastructure), 4740 tests passing, 67.42% coverage
+Plan: 3 of 3 in current phase -- COMPLETE
+Status: Phase complete
+Last activity: 2026-02-09 -- Completed 16-03-PLAN.md (per-holding sentiment rendering), 4761 tests passing, 67.03% coverage
 
-Progress: [================================░] 95% (42/44 plans across all milestones)
+Progress: [████████████████████████████████] 100% (44/44 plans across all milestones)
 
 ## Milestones Shipped
 
 - v1 Hardening & Discovery (Phases 1-5, 13 plans) -- 2026-02-08
 - v2 Security & Structural Quality (Phases 6-8, 6 plans) -- 2026-02-08
 - v3 Performance & Risk Analysis (Phases 9-12, 7 plans) -- 2026-02-08
+- v4 Data Intelligence & Smart Scoring (Phases 13-16, 18 plans) -- 2026-02-09
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 42 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 2 + 1 config, v4-phase16: 1)
-- Total phases completed: 15 (Phase 16 in progress)
+- Total plans completed: 44 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 2 + 1 config, v4-phase16: 3)
+- Total phases completed: 16 (ALL COMPLETE)
 
 **Codebase:**
 
 - ~109,000 LOC Python
-- 4,740 tests passing (25 new in Plan 16-01)
-- 67.42% coverage (above 65% threshold)
+- 4,761 tests passing (21 new in Plan 16-03)
+- 67.03% coverage (above 65% threshold)
 - All pre-commit hooks pass (14/14)
 
 ## Accumulated Context
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - [16-01] Confidence = min(1.0, article_count/10) as simple heuristic for sentiment summary
 - [16-01] macro_snapshot set once per session in DeepAnalysisOrchestrator (not pipeline)
 - [16-01] Economic calendar filters US events + high-impact keywords (FOMC, CPI, GDP, employment)
+- [16-03] Enriched template uses inline color styles; deep analysis uses base.html risk classes
+- [16-03] sentiment_data key in templates mapped from sentiment_summary in enriched JSON
 
 ### Pending Todos
 
@@ -77,7 +80,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Plan 16-01 complete, ready for Plan 16-02 (sentiment/macro report section templates)
-Resume file: .planning/phases/16-report-enrichment/16-01-SUMMARY.md
+Stopped at: Plan 16-03 complete, Phase 16 complete, all milestones shipped
+Resume file: .planning/phases/16-report-enrichment/16-03-SUMMARY.md
 
-*Updated after Plan 16-01 completion (25 new tests, 4740 total passing)*
+*Updated after Plan 16-03 completion (21 new tests, 4761 total passing)*
