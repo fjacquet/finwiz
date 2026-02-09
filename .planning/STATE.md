@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Hybrid financial analysis enriched with news sentiment and macroeconomic context for smarter scoring
-**Current focus:** Phase 16 (Report Enrichment) -- COMPLETE (all 3 plans done)
+**Current focus:** Phase 16 (Report Enrichment) -- Plan 02 complete, Plan 03 remaining
 
 ## Current Position
 
 Phase: 16 of 16 (Report Enrichment)
-Plan: 3 of 3 in current phase -- COMPLETE
-Status: Phase complete
-Last activity: 2026-02-09 -- Completed 16-03-PLAN.md (per-holding sentiment rendering), 4761 tests passing, 67.03% coverage
+Plan: 2 of 3 in current phase -- COMPLETE
+Status: In progress
+Last activity: 2026-02-09 -- Completed 16-02-PLAN.md (sentiment/macro/calendar report sections), 4795 tests passing, 67.41% coverage
 
-Progress: [████████████████████████████████] 100% (44/44 plans across all milestones)
+Progress: [================================░] 98% (43/44 plans across all milestones)
 
 ## Milestones Shipped
 
@@ -27,14 +27,14 @@ Progress: [███████████████████████
 
 **Velocity:**
 
-- Total plans completed: 44 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 2 + 1 config, v4-phase16: 3)
-- Total phases completed: 16 (ALL COMPLETE)
+- Total plans completed: 43 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 2 + 1 config, v4-phase16: 2)
+- Total phases completed: 15 (Phase 16 in progress)
 
 **Codebase:**
 
 - ~109,000 LOC Python
-- 4,761 tests passing (21 new in Plan 16-03)
-- 67.03% coverage (above 65% threshold)
+- 4,795 tests passing (34 new in Plan 16-02)
+- 67.41% coverage (above 65% threshold)
 - All pre-commit hooks pass (14/14)
 
 ## Accumulated Context
@@ -66,8 +66,11 @@ Recent decisions affecting current work:
 - [16-01] Confidence = min(1.0, article_count/10) as simple heuristic for sentiment summary
 - [16-01] macro_snapshot set once per session in DeepAnalysisOrchestrator (not pipeline)
 - [16-01] Economic calendar filters US events + high-impact keywords (FOMC, CPI, GDP, employment)
-- [16-03] Enriched template uses inline color styles; deep analysis uses base.html risk classes
-- [16-03] sentiment_data key in templates mapped from sentiment_summary in enriched JSON
+- [16-02] Macro dashboard placed after executive summary (portfolio-level context first)
+- [16-02] Sentiment section placed after holdings analysis (per-holding detail context)
+- [16-02] Economic calendar placed before footer (forward-looking events)
+- [16-02] Traffic-light thresholds: VIX<=20 green, yield_curve>0.50 green, GDP>2.0 green, CPI<3.0 green
+- [16-02] Fear & Greed gauge as pure CSS horizontal gradient bar (no JS)
 
 ### Pending Todos
 
@@ -80,7 +83,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Plan 16-03 complete, Phase 16 complete, all milestones shipped
-Resume file: .planning/phases/16-report-enrichment/16-03-SUMMARY.md
+Stopped at: Plan 16-02 complete, ready for Plan 16-03 (per-holding enriched report templates)
+Resume file: .planning/phases/16-report-enrichment/16-02-SUMMARY.md
 
-*Updated after Plan 16-03 completion (21 new tests, 4761 total passing)*
+*Updated after Plan 16-02 completion (34 new tests, 4795 total passing)*
