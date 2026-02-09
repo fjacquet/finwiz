@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Hybrid financial analysis enriched with news sentiment and macroeconomic context for smarter scoring
-**Current focus:** Phase 15 in progress - MacroScorer built, composite wiring next
+**Current focus:** Phase 15 complete - MacroScorer built and wired into composite scoring pipeline
 
 ## Current Position
 
 Phase: 15 of 16 (Macro Context)
-Plan: 1 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-09 -- Completed 15-01-PLAN.md (MacroScorer component scorer)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-09 -- Completed 15-02-PLAN.md (Composite wiring)
 
-Progress: [=============================░] 89% (39/44 plans across all milestones)
+Progress: [==============================░] 91% (40/44 plans across all milestones)
 
 ## Milestones Shipped
 
@@ -26,13 +26,13 @@ Progress: [=============================░] 89% (39/44 plans across all milesto
 
 **Velocity:**
 
-- Total plans completed: 39 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 1)
-- Total phases completed: 14 (Phase 15 in progress)
+- Total plans completed: 40 (v1: 13, v2: 6, v3: 7, v4-phase13: 10, v4-phase14: 2, v4-phase15: 2)
+- Total phases completed: 15 (Phase 15 complete)
 
 **Codebase:**
 
 - ~109,000 LOC Python
-- 4,625 tests passing (31 new in 15-01)
+- 4,635 tests passing (10 new in 15-02)
 - 66.89% coverage (above 65% threshold)
 - All pre-commit hooks pass (14/14)
 
@@ -56,6 +56,9 @@ Recent decisions affecting current work:
 - MacroScorer follows exact SentimentScorer component pattern: (score_or_None, details_dict)
 - Yield curve classified into 4 regimes at boundaries: 0.0, 0.5, 2.0
 - No feature flag logic in MacroScorer -- gating deferred to DeepAnalysisScorer (Plan 15-02)
+- Macro overlay uses identical 4-gate safety as sentiment (flag->weight->data->confidence)
+- Both overlays stack: composite = base + sentiment_adj + macro_adj, clamped per-overlay
+- Quality company adaptive weights (50/25/25) coexist with macro overlay without interference
 
 ### Pending Todos
 
@@ -68,7 +71,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 15 Plan 01 complete (MacroScorer), ready for Plan 15-02 (composite wiring)
-Resume file: .planning/phases/15-macro-context/15-01-SUMMARY.md
+Stopped at: Phase 15 complete (both plans done), ready for Phase 16
+Resume file: .planning/phases/15-macro-context/15-02-SUMMARY.md
 
-*Updated after Plan 15-01 MacroScorer completion*
+*Updated after Plan 15-02 composite wiring completion*
