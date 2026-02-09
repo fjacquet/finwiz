@@ -36,6 +36,9 @@ class PythonReportGenerator:
         session_id: str = "default",
         discovery_results: dict[str, Any] | None = None,
         stress_test_results: list[dict[str, Any]] | None = None,
+        holdings_sentiment: dict[str, dict] | None = None,
+        macro_snapshot: dict | None = None,
+        economic_calendar: dict | None = None,
     ) -> str:
         """
         Generate comprehensive family financial plan HTML report.
@@ -46,6 +49,9 @@ class PythonReportGenerator:
             session_id: Session identifier
             discovery_results: A+ discovery results (if available)
             stress_test_results: Stress test results (if available)
+            holdings_sentiment: Per-holding sentiment data (if available)
+            macro_snapshot: Portfolio-level macro snapshot (if available)
+            economic_calendar: Economic calendar data (if available)
 
         Returns:
             Path to generated HTML report
@@ -70,6 +76,9 @@ class PythonReportGenerator:
             discovery_results=discovery_results,
             session_id=session_id,
             stress_test_results=stress_test_results,
+            holdings_sentiment=holdings_sentiment,
+            macro_snapshot=macro_snapshot,
+            economic_calendar=economic_calendar,
         )
 
         # Write to file
@@ -163,6 +172,9 @@ class PythonReportGenerator:
         discovery_results: dict[str, Any] | None,
         session_id: str,
         stress_test_results: list[dict[str, Any]] | None = None,
+        holdings_sentiment: dict[str, dict] | None = None,
+        macro_snapshot: dict | None = None,
+        economic_calendar: dict | None = None,
     ) -> str:
         """Generate complete HTML report."""
         # Generate timestamp
@@ -181,16 +193,20 @@ class PythonReportGenerator:
 </head>
 <body>
   <header>
-    <h1>📊 Plan financier familial — Rapport FinWiz</h1>
-    <div class="muted">Généré le {timestamp} • Session: {session_id}</div>
-    <div class="muted">⚡ Analyse Python ultra-rapide • 0 appels LLM • Coût: $0</div>
+    <h1>Plan financier familial -- Rapport FinWiz</h1>
+    <div class="muted">Genere le {timestamp} -- Session: {session_id}</div>
+    <div class="muted">Analyse Python ultra-rapide -- 0 appels LLM -- Cout: $0</div>
   </header>
 
   {self._generate_executive_summary(portfolio_stats)}
 
+  {self._generate_macro_dashboard_section(macro_snapshot)}
+
   {self._generate_portfolio_overview(portfolio_review, portfolio_stats)}
 
   {self._generate_holdings_analysis(portfolio_review.holdings)}
+
+  {self._generate_sentiment_section(holdings_sentiment)}
 
   {self._generate_recommendations(portfolio_stats, discovery_results)}
 
@@ -202,9 +218,11 @@ class PythonReportGenerator:
 
   {self._generate_stress_test_section(stress_test_results)}
 
+  {self._generate_economic_calendar_section(economic_calendar)}
+
   <footer>
-    <p>📋 Rapport généré par FinWiz • Analyse Python déterministe</p>
-    <p class="small">⚡ Performance: Analyse complète en quelques secondes • 100% réduction des coûts LLM</p>
+    <p>Rapport genere par FinWiz -- Analyse Python deterministe</p>
+    <p class="small">Performance: Analyse complete en quelques secondes -- 100% reduction des couts LLM</p>
   </footer>
 </body>
 </html>"""
@@ -277,6 +295,24 @@ class PythonReportGenerator:
 
         return generate_stress_test_section(stress_test_results)
 
+    def _generate_sentiment_section(self, holdings_sentiment: dict[str, dict] | None) -> str:
+        """Generate sentiment summary section (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_sentiment_section
+
+        return generate_sentiment_section(holdings_sentiment)
+
+    def _generate_macro_dashboard_section(self, macro_snapshot: dict | None) -> str:
+        """Generate macro dashboard section (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_macro_dashboard_section
+
+        return generate_macro_dashboard_section(macro_snapshot)
+
+    def _generate_economic_calendar_section(self, economic_calendar: dict | None) -> str:
+        """Generate economic calendar section (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_economic_calendar_section
+
+        return generate_economic_calendar_section(economic_calendar)
+
     # NOTE: _generate_individual_deep_analysis_reports() removed - DEAD CODE
     # Individual reports are now generated on-the-fly by
     # DeepAnalysisOrchestrator._store_enriched_analysis()
@@ -294,6 +330,9 @@ def generate_python_report(
     session_id: str = "default",
     discovery_results: dict[str, Any] | None = None,
     stress_test_results: list[dict[str, Any]] | None = None,
+    holdings_sentiment: dict[str, dict] | None = None,
+    macro_snapshot: dict | None = None,
+    economic_calendar: dict | None = None,
 ) -> str:
     """
     Convenience function to generate Python-based report.
@@ -307,4 +346,7 @@ def generate_python_report(
         session_id=session_id,
         discovery_results=discovery_results,
         stress_test_results=stress_test_results,
+        holdings_sentiment=holdings_sentiment,
+        macro_snapshot=macro_snapshot,
+        economic_calendar=economic_calendar,
     )
