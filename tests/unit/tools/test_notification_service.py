@@ -363,6 +363,9 @@ class TestNotificationService:
         user_id = "test_user"
         notification_service.set_user_preferences(user_id, sample_preferences)
 
+        # Ensure test is not blocked by quiet hours (CI runs at 06:xx UTC which is within 22-7)
+        mocker.patch.object(notification_service, "_is_quiet_hours", return_value=False)
+
         # Mock email provider
         mock_email_provider = mocker.AsyncMock()
         mock_record = NotificationRecord(
@@ -401,6 +404,9 @@ class TestNotificationService:
             title="Critical Portfolio Alert",
             message="Critical portfolio deviation detected",
         )
+
+        # Ensure test is not blocked by quiet hours (CI runs at 06:xx UTC which is within 22-7)
+        mocker.patch.object(notification_service, "_is_quiet_hours", return_value=False)
 
         # Mock providers
         mock_email_provider = mocker.AsyncMock()
