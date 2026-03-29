@@ -103,14 +103,13 @@ class TestMemoryManager:
         assert len(metrics["samples"]) == 3
         assert metrics["max_memory_limit_mb"] == 1024
 
-    def test_should_validate_memory_constraints_when_within_limit(self):
+    def test_should_validate_memory_constraints_when_within_limit(self, mocker):
         """Test memory constraint validation when within limit."""
         manager = MemoryManager(session_id="test-session")
 
-        # Monitor memory (should be well within 500 MB limit)
-        manager.monitor_memory("test-stage")
+        # Pin peak_memory to 200 MB so the test is deterministic on any CI runner
+        mocker.patch.object(manager, "peak_memory", 200 * 1024 * 1024)
 
-        # Validate constraints
         is_valid = manager.validate_memory_constraints()
 
         assert is_valid

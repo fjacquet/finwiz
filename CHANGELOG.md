@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-29
+
+### Added
+
+- **MacroScorer**: New component scorer wiring macro-economic data into the composite scoring pipeline (40% fundamental, 30% technical, 30% risk)
+- **Sentiment & Macro report sections**: Wire sentiment summary, macro dashboard, and economic calendar sections into the per-holding enriched analysis report
+- **EconomicCalendar schemas**: New `EconomicCalendar` Pydantic models and adapter with feature-flag guard
+- **Report enrichment pipeline**: Persist `sentiment_summary` in enriched JSON; add macro overlay and calendar section generators
+- **Per-holding sentiment rendering**: Dedicated sentiment section in deep analysis HTML report
+- Comprehensive CLAUDE.md documentation for all 12 major subfolders (crews, flows, tools, schemas, quantitative, orchestrators, reporting, utils, data, integration, scoring, validation)
+
 ### Changed
 
-- **Major Refactoring**: Split 13 large files (600-1682 lines) into 40+ focused modules
+- **Major Refactoring** — Split 13 large files (600–1682 lines) into 40+ focused modules
   - `deep_analysis_orchestrator.py` (1,682 → 4 modules): data_collector, executor, processor
   - `deep_analysis_scorer.py` (1,178 → 3 modules): score_result_builder, crew_export_generator
   - `hybrid_analysis_flow.py` (1,042 → 3 modules): data_collector, synthesizer
@@ -21,37 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `flow_state.py` (620 → 4 modules): models, analysis, utils
 - Applied functional programming patterns (list comprehensions, itertools, operator module)
 - Centralized exception hierarchy in `exceptions/` module
+- Circuit breaker now configurable via `ResilienceConfig`
+- Holding analysis timeout increased to 600 s to accommodate deep analysis workloads
+- Upgraded all dependencies (`uv.lock`)
 
 ### Fixed
 
-- Dead code cleanup: Prefixed 8 unused parameters with underscore (vulture 100% confidence)
-- Security: Fixed MD5 hash usage with `usedforsecurity=False` (bandit high-severity)
-- Lint: Fixed 10 ruff issues (unused imports, unsorted imports)
-- Tests: Fixed 6 test failures from method path changes after refactoring
-- `data_extractor.py`: Added fallback to `final_grade`/`final_score` when AI crews output these instead of `grade`/`composite_score`
-- `python_report_generator.py`: Handle None grade gracefully to prevent `'NoneType' has no attribute 'lower'` error
-- Added 3 new tests to verify AI crew output format compatibility
-
-### Added
-
-- Comprehensive CLAUDE.md documentation for all major subfolders
-  - `src/finwiz/crews/CLAUDE.md` - Crew development guide
-  - `src/finwiz/flows/CLAUDE.md` - Flow orchestration documentation
-  - `src/finwiz/tools/CLAUDE.md` - Tool factories and usage
-  - `src/finwiz/schemas/CLAUDE.md` - Pydantic schema documentation
-  - `src/finwiz/quantitative/CLAUDE.md` - Quantitative analysis guide
-  - `src/finwiz/orchestrators/CLAUDE.md` - Orchestration patterns
-  - `src/finwiz/reporting/CLAUDE.md` - Report generation (Python/Jinja2)
-  - `src/finwiz/utils/CLAUDE.md` - Utility functions and decorators
-  - `src/finwiz/data/CLAUDE.md` - Data acquisition layer
-  - `src/finwiz/integration/CLAUDE.md` - Data integration and validation
-  - `src/finwiz/scoring/CLAUDE.md` - Python scoring engine
-  - `src/finwiz/validation/CLAUDE.md` - Validation infrastructure
-- This CHANGELOG.md file for tracking project changes
-
-### Changed
-
-- Updated main CLAUDE.md with references to subfolder documentation
+- **CI: memory constraint test** — Mock `peak_memory` so `test_should_validate_memory_constraints_when_within_limit` is deterministic and no longer fails on loaded CI runners (#11)
+- **CI: notification quiet-hours test** — Mock quiet-hours logic to prevent timezone-dependent failures in CI (#10)
+- Force-exit after flow completion to prevent thread-pool hang on process exit
+- ROE validation relaxed; `beta=1.0` accepted; NaN guarded in backtesting calculations
+- `data_extractor.py`: Fallback to `final_grade`/`final_score` when AI crews emit those keys instead of `grade`/`composite_score`
+- `python_report_generator.py`: Handle `None` grade to prevent `'NoneType' has no attribute 'lower'` error
+- Dead code: Prefixed 8 unused parameters with underscore (vulture 100% confidence)
+- Security: `MD5` hash flagged with `usedforsecurity=False` (bandit high-severity)
+- Lint: 10 ruff issues resolved (unused imports, unsorted imports)
 
 ## [0.1.0] - 2025-12-07
 
