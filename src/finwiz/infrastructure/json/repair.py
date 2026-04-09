@@ -178,6 +178,56 @@ def _fix_python_repr(text: str) -> str:
     return text
 
 
+def _fix_unescaped_inner_quotes(text: str) -> str:
+    """
+    Fix unescaped double quotes inside JSON string values.
+
+    LLMs sometimes produce strings like:
+        "risque de "feature creep" et pression"
+    which should be:
+        "risque de \\"feature creep\\" et pression"
+
+    Uses a state machine: when inside a string, a '"' is structural (closing)
+    only if followed by a JSON structural token (:, ,, }, ]) or EOF.
+    Otherwise it's an interior quote that needs escaping.
+    """
+    result: list[str] = []
+    i = 0
+    in_string = False
+
+    while i < len(text):
+        char = text[i]
+
+        # Handle escape sequences inside strings
+        if char == "\\" and in_string and i + 1 < len(text):
+            result.append(text[i : i + 2])
+            i += 2
+            continue
+
+        if char == '"':
+            if not in_string:
+                in_string = True
+                result.append(char)
+                i += 1
+            else:
+                # Determine if this quote is structural (closing) or interior
+                rest = text[i + 1 :].lstrip()
+                if not rest or rest[0] in ":,}]":
+                    # Structural closing quote
+                    in_string = False
+                    result.append(char)
+                    i += 1
+                else:
+                    # Interior quote — escape it
+                    result.append('\\"')
+                    i += 1
+        else:
+            result.append(char)
+            i += 1
+
+    return "".join(result)
+
+
 def _add_missing_commas(text: str) -> str:
     """
     Add missing commas between JSON elements.
@@ -323,6 +373,7 @@ BASIC_REPAIR_STEPS: list[Callable[[str], str]] = [
     _remove_comments,
     _escape_newlines_in_strings,  # Must escape before other processing
     _replace_single_quotes,
+    _fix_unescaped_inner_quotes,  # Escape interior quotes before comma fixes
     _add_missing_commas,  # Add missing commas BEFORE removing trailing
     _remove_trailing_commas,
     _fix_double_commas,  # Cleanup any double commas

@@ -43,6 +43,7 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 | Requirement | Target | Rationale |
 |-------------|--------|-----------|
 | Token budget | <100K tokens per crew run | LiteLLM alert threshold; prevents cost explosion |
+| LLM response cap | max_tokens per model type (1024-4096) | Prevents unbounded output; configurable via `LLM_MAX_TOKENS` |
 | Cost per ticker | <$0.10 for deep analysis | Python handles deterministic work for $0 |
 | Execution time | 10-30s per deep analysis (Python); 5-10min per discovery crew (AI) | Acceptable for batch portfolio analysis |
 | Test coverage | 65% minimum | Enforced by pytest-cov |
@@ -55,6 +56,7 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 - **AI Minimalism (ADR-003)** -- Python for deterministic tasks, AI only for qualitative reasoning.
 - **Sync-first pipeline (ADR-004)** -- Deterministic execution order for financial calculations.
 - **Context scoping (ADR-006)** -- Send summarized metrics to AI, never raw data dumps.
+- **Token optimization (ADR-007)** -- Deduplicate prompt boilerplate, cap LLM response lengths, guard against token overflow.
 - **Python wins** -- When AI and Python scores disagree, Python takes precedence.
 
 ## 7. Scope Boundaries

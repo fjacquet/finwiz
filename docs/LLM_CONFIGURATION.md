@@ -31,6 +31,40 @@ MODEL=openai/gpt-4o-mini
 OPENAI_TIMEOUT=300
 ```
 
+## Response Length Limits (max_tokens)
+
+Each model type has a default `max_tokens` cap to prevent unbounded output:
+
+| Model Type | Default max_tokens | Use Case |
+|------------|-------------------|----------|
+| mini | 1024 | Fast, high-volume operations |
+| manager | 1024 | Crew coordination |
+| standard | 2048 | General analysis |
+| planning | 2048 | Strategic planning |
+| baseline | 4096 | Quality benchmarking |
+
+Override globally via environment variable:
+
+```bash
+LLM_MAX_TOKENS=3000  # Override default for all model types
+```
+
+Override per-call in code:
+
+```python
+llm = get_configured_llm(model_type="standard", max_tokens=4096)
+```
+
+The deep analysis crew uses `max_tokens=4096` because its structured JSON output requires 1500-2000 words.
+
+### Pre-call Token Guard
+
+A configurable guard logs errors when estimated prompt tokens exceed the threshold:
+
+```bash
+MAX_PROMPT_TOKENS=100000  # Default: 100K tokens
+```
+
 ## Supported Model Formats
 
 Use the LiteLLM format: `provider/model-name`

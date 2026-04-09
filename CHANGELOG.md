@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Token optimization (ADR-007)** -- Pruned ~10K tokens of YAML boilerplate across all 7 crews: removed 33 redundant JSON OUTPUT blocks, 11 ANTI-HALLUCINATION blocks, 8 "Read schema" instructions, and compressed 25+ agent backstories to ~15 words each
+- **LLM max_tokens caps** -- Added response length limits per model type (standard: 2048, mini: 1024, manager: 1024, planning: 2048, baseline: 4096) to prevent unbounded output; configurable via `LLM_MAX_TOKENS` env var
+- **Deep analysis max_tokens** -- Increased to 4096 to accommodate structured JSON output requiring 1500-2000 words
+
+### Fixed
+
+- **risk_factors schema** -- Added field_validator to `SecAnalysisInsights` to coerce LLM dict responses (`{'risk': '...', 'severity': '...'}`) to plain strings, preventing Pydantic validation failures
+- **LLM cache key** -- Include `max_tokens` in cache key to prevent callers with different token limits from receiving the wrong cached instance
+
+### Added
+
+- **Pre-call token guard** -- LiteLLM callback now logs error when estimated prompt tokens exceed configurable `MAX_PROMPT_TOKENS` threshold (default: 100K)
+- **CrewAI usage_metrics logging** -- Token consumption per crew logged after each execution for cost visibility
+- **ADR-007** -- Token Consumption Optimization architecture decision record
+
 ## [0.2.0] - 2026-03-29
 
 ### Added
