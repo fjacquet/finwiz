@@ -1,9 +1,5 @@
 etf_discovery_task:
   description: >
-    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and
-    docs/schemas/examples/aplus_discovery_result.example.json to understand the exact
-    output format required.
-
     Scan global ETF markets to identify A+ grade opportunities with exceptional
     characteristics. Focus on low-cost, well-diversified ETFs with strong tracking
     records and UCITS compatibility for European investors.
@@ -40,11 +36,6 @@ etf_discovery_task:
 
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
     A structured ranked list of top 10 A+ grade ETF candidates conforming to the
@@ -60,9 +51,6 @@ etf_discovery_task:
 
 stock_discovery_task:
   description: >
-    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and
-    docs/schemas/MarketRegime.schema.json to understand the exact output format required.
-
     Identify individual stocks with A+ potential through comprehensive fundamental
     analysis. Focus on companies with exceptional competitive moats, strong financials,
     and sustainable growth prospects that maximize returns for the equity portion.
@@ -122,11 +110,6 @@ stock_discovery_task:
 
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
     A structured curated list of top 15 A+ grade stock candidates conforming to the
@@ -144,9 +127,6 @@ stock_discovery_task:
 
 crypto_discovery_task:
   description: >
-    FIRST: Read the schema files docs/schemas/APlusDiscoveryResult.schema.json and
-    docs/schemas/PortfolioImprovement.schema.json to understand the exact output format required.
-
     Discover A+ grade cryptocurrencies with strong fundamentals and institutional
     adoption potential. Focus on digital assets with real utility, strong tokenomics,
     and regulatory compliance potential across multiple jurisdictions.
@@ -208,11 +188,6 @@ crypto_discovery_task:
 
     OUTPUT: Return a structured JSON output conforming to the APlusDiscoveryResult schema.
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
     A structured selective list of top 5 A+ grade crypto candidates conforming to the
@@ -251,11 +226,6 @@ validation_task:
 
     OUTPUT: Return a structured JSON output conforming to the ValidationResult schema.
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
     A structured validation report for all A+ candidates conforming to the ValidationResult
@@ -323,11 +293,6 @@ optimization_task:
 
     OUTPUT: Return a structured JSON output conforming to the OptimizationResult schema.
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
     A structured comprehensive portfolio optimization report conforming to the

@@ -55,18 +55,8 @@ sec_analysis_task:
     DO NOT recalculate any financial metrics - focus on qualitative business insights.
     Use the Enhanced SEC Analysis Tool to fetch filing data, then interpret qualitatively.
 
-    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
-    - NEVER invent or guess URLs, ISINs, or company names
-    - NEVER fabricate financial metrics or prices
-    - If data is missing, explicitly state "Données non disponibles"
-    - All URLs must come from verified data sources
-    - Cross-reference data points before including in output
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     SecAnalysisInsights Pydantic object containing:
     - business_model: Comprehensive business model analysis (minimum 100 words)
@@ -110,11 +100,7 @@ fundamental_context_task:
        - What is the corporate governance quality?
 
     DO NOT recalculate ROE, debt ratios, or growth rates - provide context for these metrics.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     FundamentalContextInsights Pydantic object containing:
     - industry_analysis: Industry context and trends (minimum 100 words)
@@ -160,11 +146,7 @@ technical_strategy_task:
        - What are the timing risks?
 
     DO NOT recalculate RSI, MACD, or other indicators - interpret the signals qualitatively.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     TechnicalStrategyInsights Pydantic object containing:
     - chart_patterns: Identified chart patterns and formations
@@ -214,11 +196,7 @@ contextual_risk_task:
        - What are the tail risks?
 
     DO NOT recalculate volatility, beta, or drawdown - identify qualitative risk factors.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     ContextualRiskInsights Pydantic object containing:
     - regulatory_risks: Regulatory and compliance risks
@@ -272,12 +250,6 @@ investment_synthesis_task:
 
     DO NOT recalculate scores or grades - synthesize Python metrics with AI insights.
 
-    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
-    - NEVER invent or guess URLs, ISINs, or company names
-    - NEVER fabricate financial metrics or prices
-    - If data is missing, explicitly state "Données non disponibles"
-    - All URLs must come from verified data sources
-    - Cross-reference data points before including in output
 
     OUTPUT FORMAT SPECIFICATION (Requirement 12.7):
     Return a valid JSON object matching the InvestmentSynthesis schema exactly.
@@ -292,43 +264,6 @@ investment_synthesis_task:
     - recommendation_confidence (string): Exactly "LOW", "MEDIUM", or "HIGH" (uppercase)
     - action_plan (dict): Must contain three keys: "immediate_actions", "monitoring_points", "exit_triggers" (each a list of strings)
 
-    EXAMPLE OUTPUT (Requirement 12.7):
-    {{
-      "investment_thesis": "Apple represents a compelling investment opportunity at current levels due to several converging factors. The company's transition to a services-focused business model is accelerating, with services revenue growing at 15% annually and now representing 22% of total revenue. This shift provides more predictable, higher-margin revenue streams that command premium valuations. The iPhone replacement cycle remains healthy with the iPhone 15 driving solid upgrade momentum, particularly in international markets. Management's capital allocation strategy continues to be shareholder-friendly, with $90B in annual buybacks reducing share count by 3% annually. The company's ecosystem lock-in creates powerful network effects, with over 2 billion active devices creating a massive installed base for services expansion. Recent product launches including Vision Pro demonstrate continued innovation capability, though near-term revenue contribution will be modest. The balance sheet remains fortress-like with $162B in net cash, providing flexibility for M&A, R&D investment, and continued capital returns. Valuation at 28x forward earnings is reasonable given the quality of the business, though not cheap. Overall, the combination of services growth, ecosystem strength, capital returns, and innovation pipeline supports a positive long-term outlook despite near-term macro headwinds.",
-      "bull_case": "In the bull scenario, Apple's services business accelerates beyond expectations, reaching 30% of total revenue within 3 years driven by strong App Store growth, Apple Pay adoption, and new subscription offerings. Vision Pro gains traction faster than anticipated, creating a new $20B+ revenue stream by 2027. The India market becomes a major growth driver, with iPhone market share doubling from current levels as the middle class expands. Regulatory headwinds prove manageable, with the company successfully navigating EU regulations without material margin impact. The AI integration across products drives a super-cycle upgrade, with consumers eager to access new AI-powered features. Gross margins expand to 45% as services mix increases and supply chain efficiencies improve. This scenario could drive the stock to $220-240, representing 25-35% upside from current levels.",
-      "base_case": "The base case assumes steady execution of Apple's current strategy with services growing 12-15% annually and iPhone revenue remaining relatively flat with modest unit growth offset by pricing pressure. Vision Pro launches successfully but remains a niche product for the next 2-3 years, contributing $5-8B in annual revenue. Regulatory challenges result in some App Store fee reductions in Europe but don't materially impact overall profitability. Gross margins remain stable in the 43-44% range. The company continues aggressive buybacks, reducing share count by 3% annually. China revenue stabilizes after recent weakness, growing low single digits. This scenario supports a stock price of $185-195, representing 5-10% upside with dividend yield providing additional returns. This is the most probable outcome with 50% likelihood.",
-      "bear_case": "In the bear scenario, iPhone demand weakens significantly as smartphone market saturation intensifies and replacement cycles extend beyond 4 years. Services growth slows to high single digits as regulatory pressure forces App Store fee reductions globally and alternative payment systems gain traction. Vision Pro fails to gain mainstream adoption, becoming a niche product with limited revenue contribution. China-US tensions escalate, resulting in a 30% decline in China revenue due to nationalist sentiment and government restrictions. Regulatory fines and compliance costs impact margins, with gross margins compressing to 40%. The company struggles to find the next major product category, with innovation appearing incremental rather than revolutionary. This scenario could see the stock decline to $140-150, representing 15-20% downside risk.",
-      "scenario_probabilities": {{
-        "bull": 0.25,
-        "base": 0.50,
-        "bear": 0.25
-      }},
-      "final_recommendation": "BUY",
-      "recommendation_confidence": "HIGH",
-      "action_plan": {{
-        "immediate_actions": [
-          "Initiate position with 25% of target allocation on any pullback to $172-175 range",
-          "Set initial stop-loss at $168 to limit downside risk to 5%",
-          "Monitor Q1 2025 earnings (late January) for services growth acceleration and iPhone demand trends"
-        ],
-        "monitoring_points": [
-          "Services revenue growth rate - target 15%+ to validate thesis",
-          "iPhone ASP trends - watch for pricing power maintenance",
-          "China revenue trajectory - stabilization is key assumption",
-          "Vision Pro adoption metrics - units sold and developer ecosystem growth",
-          "Regulatory developments in EU and US - assess margin impact",
-          "Gross margin trends - watch for services mix benefits"
-        ],
-        "exit_triggers": [
-          "Break below $165 on high volume - invalidates technical setup",
-          "Services growth decelerates below 10% for two consecutive quarters",
-          "China revenue declines exceed 20% year-over-year",
-          "Regulatory actions result in margin compression below 42%",
-          "Management guidance suggests iPhone demand weakness beyond seasonal patterns"
-        ]
-      }}
-    }}
-
     VALIDATION REQUIREMENTS (Requirement 12.1-12.6):
     - Output MUST be a valid JSON object (not string, list, or other type)
     - Do NOT return tool_calls or function_call keys
@@ -341,11 +276,7 @@ investment_synthesis_task:
     - Each action_plan key must contain a list of strings (minimum 1 item per list)
     - If output fails validation, system will retry with explicit format instructions
     - After 2 failed attempts, fallback to Python-only analysis
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     InvestmentSynthesis Pydantic object containing:
     - investment_thesis: Comprehensive investment thesis (minimum 200 words)
@@ -413,18 +344,8 @@ generate_enriched_analysis_task:
     - Validate all required fields are present
     - Ensure schema compliance
 
-    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
-    - NEVER invent or guess URLs, ISINs, or company names
-    - NEVER fabricate financial metrics or prices
-    - If data is missing, explicitly state "Données non disponibles"
-    - All URLs must come from verified data sources
-    - Cross-reference data points before including in output
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
+
   expected_output: >
     EnrichedAnalysis Pydantic object containing:
     - Complete Python quantitative analysis (READ-ONLY from context)

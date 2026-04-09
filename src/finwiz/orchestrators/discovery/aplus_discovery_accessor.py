@@ -100,16 +100,16 @@ class APlusDiscoveryAccessor:
             stocks_data = cast(dict[str, Any], results["stocks"])
             etfs_data = cast(dict[str, Any], results["etfs"])
             crypto_data = cast(dict[str, Any], results["crypto"])
-            total_opportunities = len(stocks_data.get("a_plus_candidates", [])) + len(etfs_data.get("a_plus_candidates", [])) + len(crypto_data.get("a_plus_candidates", []))
+            total_opportunities = len(stocks_data.get("opportunities", [])) + len(etfs_data.get("opportunities", [])) + len(crypto_data.get("opportunities", []))
 
             results["total_opportunities"] = total_opportunities
 
             self.logger.info(
                 "Discovery results loaded successfully",
                 extra={
-                    "stock_count": len(stocks_data.get("a_plus_candidates", [])),
-                    "etf_count": len(etfs_data.get("a_plus_candidates", [])),
-                    "crypto_count": len(crypto_data.get("a_plus_candidates", [])),
+                    "stock_count": len(stocks_data.get("opportunities", [])),
+                    "etf_count": len(etfs_data.get("opportunities", [])),
+                    "crypto_count": len(crypto_data.get("opportunities", [])),
                     "total_opportunities": total_opportunities,
                 },
             )
@@ -143,21 +143,21 @@ class APlusDiscoveryAccessor:
             summary_parts = []
 
             # Stock opportunities
-            stock_candidates = results["stocks"].get("a_plus_candidates", [])
+            stock_candidates = results["stocks"].get("opportunities", [])
             if stock_candidates:
-                a_plus_stocks = [c for c in stock_candidates if c.get("candidate", {}).get("grade") == "A+"]
+                a_plus_stocks = [c for c in stock_candidates if c.get("grade") == "A+"]
                 summary_parts.append(f"{len(stock_candidates)} stock opportunities ({len(a_plus_stocks)} A+ grade)")
 
             # ETF opportunities
-            etf_candidates = results["etfs"].get("a_plus_candidates", [])
+            etf_candidates = results["etfs"].get("opportunities", [])
             if etf_candidates:
-                a_plus_etfs = [c for c in etf_candidates if c.get("candidate", {}).get("grade") == "A+"]
+                a_plus_etfs = [c for c in etf_candidates if c.get("grade") == "A+"]
                 summary_parts.append(f"{len(etf_candidates)} ETF opportunities ({len(a_plus_etfs)} A+ grade)")
 
             # Crypto opportunities
-            crypto_candidates = results["crypto"].get("a_plus_candidates", [])
+            crypto_candidates = results["crypto"].get("opportunities", [])
             if crypto_candidates:
-                a_plus_crypto = [c for c in crypto_candidates if c.get("candidate", {}).get("grade") == "A+"]
+                a_plus_crypto = [c for c in crypto_candidates if c.get("grade") == "A+"]
                 summary_parts.append(f"{len(crypto_candidates)} crypto opportunities ({len(a_plus_crypto)} A+ grade)")
 
             summary = f"Discovery analysis identified {total_opportunities} high-quality investment opportunities: " + ", ".join(summary_parts)
@@ -181,7 +181,7 @@ class APlusDiscoveryAccessor:
         try:
             content = stock_file.read_text(encoding="utf-8")
             data: dict[str, Any] = json.loads(content)
-            self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} stock candidates")
+            self.logger.debug(f"Loaded {len(data.get('opportunities', []))} stock candidates")
             return data
         except Exception as e:
             self.logger.error(f"Failed to load stock results: {e!s}", exc_info=True)
@@ -198,7 +198,7 @@ class APlusDiscoveryAccessor:
         try:
             content = etf_file.read_text(encoding="utf-8")
             data: dict[str, Any] = json.loads(content)
-            self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} ETF candidates")
+            self.logger.debug(f"Loaded {len(data.get('opportunities', []))} ETF candidates")
             return data
         except Exception as e:
             self.logger.error(f"Failed to load ETF results: {e!s}", exc_info=True)
@@ -215,7 +215,7 @@ class APlusDiscoveryAccessor:
         try:
             content = crypto_file.read_text(encoding="utf-8")
             data: dict[str, Any] = json.loads(content)
-            self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} crypto candidates")
+            self.logger.debug(f"Loaded {len(data.get('opportunities', []))} crypto candidates")
             return data
         except Exception as e:
             self.logger.error(f"Failed to load crypto results: {e!s}", exc_info=True)

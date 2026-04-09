@@ -996,6 +996,10 @@
                 {% endfor %}
             </ul>
             {% endif %}
+
+            {% if not contextual_risks.regulatory_risks and not contextual_risks.geopolitical_risks and not contextual_risks.competitive_risks and not contextual_risks.operational_risks and not contextual_risks.stress_scenarios %}
+            <p>Analyse des risques contextuels non disponible pour cette analyse.</p>
+            {% endif %}
         </div>
 
         {% if sentiment_data %}

@@ -135,6 +135,7 @@ def calculate_quantitative(
 def generate_qualitative(
     ctx: AnalysisContext,
     quant: QuantitativeAnalysis,
+    raw_data: dict[str, Any] | None = None,
 ) -> QualitativeInsights:
     """
     Side effect: Calls AI crew for qualitative analysis.
@@ -162,7 +163,7 @@ def generate_qualitative(
     logger.info(f"Generating qualitative insights for {ctx.ticker}")
 
     crew = _get_analysis_crew(ctx.asset_class)
-    crew_inputs = _build_crew_inputs(ctx, quant)
+    crew_inputs = _build_crew_inputs(ctx, quant, raw_data)
 
     try:
         # Use wrapper with timeout and circuit breaker protection
@@ -280,7 +281,7 @@ def analyze_holding(
     # Pipeline composition
     raw_data = collect_raw_data(ctx, prefetched_data=prefetched_data)
     result, quant = calculate_quantitative(ctx, raw_data)
-    qual = generate_qualitative(ctx, quant)
+    qual = generate_qualitative(ctx, quant, raw_data=raw_data)
     processing_time = time.time() - start
     sentiment_summary = _build_sentiment_summary(raw_data)
     enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary)
@@ -413,7 +414,7 @@ def _truncate_text(text: str | None, max_chars: int = 500) -> str:
     return truncated + "..."
 
 
-def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> dict[str, Any]:
+def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_data: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build inputs dict for crew kickoff.
 
     IMPORTANT: We pass SUMMARIZED metrics, not full dictionaries.
@@ -443,10 +444,24 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> dic
         "python_rationale": _truncate_text(quant.python_rationale, max_chars=500),
     }
 
-    # ⚡ DIAGNOSTIC: Log sizes of each input field for debugging
+    # Add company context from raw data to reduce AI hallucination
+    if raw_data:
+        inputs["sector"] = raw_data.get("sector", "Unknown")
+        inputs["industry"] = raw_data.get("industry", "Unknown")
+        business_summary = raw_data.get("business_summary", "")
+        if business_summary and business_summary != "N/A":
+            inputs["company_description"] = _truncate_text(business_summary, max_chars=500)
+        else:
+            inputs["company_description"] = "No company description available."
+    else:
+        inputs["sector"] = "Unknown"
+        inputs["industry"] = "Unknown"
+        inputs["company_description"] = "No company description available."
+
+    # DIAGNOSTIC: Log sizes of each input field for debugging
     total_chars = sum(len(str(v)) for v in inputs.values() if v is not None)
     estimated_tokens = total_chars // 4
-    logger.info(f"⚡ Crew inputs for {ctx.ticker}: {total_chars:,} chars (~{estimated_tokens:,} tokens)")
+    logger.info(f"Crew inputs for {ctx.ticker}: {total_chars:,} chars (~{estimated_tokens:,} tokens)")
 
     return inputs
 
@@ -740,11 +755,11 @@ def _create_fallback_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalys
             timing_assessment=fallback_text,
         ),
         contextual_risks=ContextualRiskInsights(
-            regulatory_risks=[],
-            geopolitical_risks=[],
-            competitive_risks=[],
-            operational_risks=[],
-            stress_scenarios=[],
+            regulatory_risks=["Analyse indisponible (echec AI)"],
+            geopolitical_risks=["Analyse indisponible (echec AI)"],
+            competitive_risks=["Analyse indisponible (echec AI)"],
+            operational_risks=["Analyse indisponible (echec AI)"],
+            stress_scenarios=["Analyse indisponible (echec AI)"],
         ),
         investment_synthesis=InvestmentSynthesis(
             investment_thesis=(

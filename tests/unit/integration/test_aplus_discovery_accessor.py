@@ -39,23 +39,21 @@ class TestAPlusDiscoveryAccessor:
     def sample_stock_discovery(self, discovery_dir):
         """Create sample stock discovery file."""
         data = {
-            "a_plus_candidates": [
+            "opportunities": [
                 {
-                    "candidate": {
-                        "ticker": "AAPL",
-                        "name": "Apple Inc.",
-                        "grade": "A+",
-                        "composite_score": 0.95,
-                    },
+                    "ticker": "AAPL",
+                    "name": "Apple Inc.",
+                    "grade": "A+",
+                    "composite_score": 0.95,
+                    "recommendation": "BUY",
                     "rationale": "Strong fundamentals",
                 },
                 {
-                    "candidate": {
-                        "ticker": "MSFT",
-                        "name": "Microsoft Corp.",
-                        "grade": "A",
-                        "composite_score": 0.88,
-                    },
+                    "ticker": "MSFT",
+                    "name": "Microsoft Corp.",
+                    "grade": "A",
+                    "composite_score": 0.88,
+                    "recommendation": "BUY",
                     "rationale": "Good performance",
                 },
             ]
@@ -68,14 +66,13 @@ class TestAPlusDiscoveryAccessor:
     def sample_etf_discovery(self, discovery_dir):
         """Create sample ETF discovery file."""
         data = {
-            "a_plus_candidates": [
+            "opportunities": [
                 {
-                    "candidate": {
-                        "ticker": "SPY",
-                        "name": "S&P 500 ETF",
-                        "grade": "A+",
-                        "composite_score": 0.92,
-                    },
+                    "ticker": "SPY",
+                    "name": "S&P 500 ETF",
+                    "grade": "A+",
+                    "composite_score": 0.92,
+                    "recommendation": "BUY",
                     "rationale": "Low cost, broad diversification",
                 }
             ]
@@ -87,7 +84,7 @@ class TestAPlusDiscoveryAccessor:
     @pytest.fixture
     def sample_crypto_discovery(self, discovery_dir):
         """Create sample crypto discovery file."""
-        data = {"a_plus_candidates": []}
+        data = {"opportunities": []}
         file_path = discovery_dir / "a_plus_crypto.json"
         file_path.write_text(json.dumps(data), encoding="utf-8")
         return file_path
@@ -154,8 +151,8 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert results is not None
         assert "stocks" in results
-        assert len(results["stocks"]["a_plus_candidates"]) == 2
-        assert results["stocks"]["a_plus_candidates"][0]["candidate"]["ticker"] == "AAPL"
+        assert len(results["stocks"]["opportunities"]) == 2
+        assert results["stocks"]["opportunities"][0]["ticker"] == "AAPL"
 
     def test_should_load_etf_discovery_results(self, accessor, sample_etf_discovery):
         """Test loading ETF discovery results."""
@@ -165,8 +162,8 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert results is not None
         assert "etfs" in results
-        assert len(results["etfs"]["a_plus_candidates"]) == 1
-        assert results["etfs"]["a_plus_candidates"][0]["candidate"]["ticker"] == "SPY"
+        assert len(results["etfs"]["opportunities"]) == 1
+        assert results["etfs"]["opportunities"][0]["ticker"] == "SPY"
 
     def test_should_load_crypto_discovery_results(self, accessor, sample_crypto_discovery):
         """Test loading crypto discovery results."""
@@ -176,7 +173,7 @@ class TestAPlusDiscoveryAccessor:
         # Assert
         assert results is not None
         assert "crypto" in results
-        assert len(results["crypto"]["a_plus_candidates"]) == 0
+        assert len(results["crypto"]["opportunities"]) == 0
 
     def test_should_load_all_discovery_results(
         self,
@@ -295,7 +292,7 @@ class TestAPlusDiscoveryAccessor:
     def test_should_handle_missing_stock_file(self, accessor, discovery_dir):
         """Test handling when stock file is missing."""
         # Arrange - only create ETF file
-        data = {"a_plus_candidates": []}
+        data = {"opportunities": []}
         etf_file = discovery_dir / "a_plus_etfs.json"
         etf_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -310,7 +307,7 @@ class TestAPlusDiscoveryAccessor:
     def test_should_handle_missing_etf_file(self, accessor, discovery_dir):
         """Test handling when ETF file is missing."""
         # Arrange - only create stock file
-        data = {"a_plus_candidates": []}
+        data = {"opportunities": []}
         stock_file = discovery_dir / "a_plus_stocks.json"
         stock_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -325,7 +322,7 @@ class TestAPlusDiscoveryAccessor:
     def test_should_handle_missing_crypto_file(self, accessor, discovery_dir):
         """Test handling when crypto file is missing."""
         # Arrange - only create stock file
-        data = {"a_plus_candidates": []}
+        data = {"opportunities": []}
         stock_file = discovery_dir / "a_plus_stocks.json"
         stock_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -354,7 +351,7 @@ class TestAPlusDiscoveryAccessor:
         """Test handling of file read errors."""
         # Arrange
         stock_file = discovery_dir / "a_plus_stocks.json"
-        stock_file.write_text('{"a_plus_candidates": []}', encoding="utf-8")
+        stock_file.write_text('{"opportunities": []}', encoding="utf-8")
 
         # Mock read_text to raise an exception
         mocker.patch.object(Path, "read_text", side_effect=Exception("Read error"))
@@ -394,7 +391,7 @@ class TestAPlusDiscoveryAccessor:
     def test_should_handle_empty_candidates_list(self, accessor, discovery_dir):
         """Test handling of empty candidates list."""
         # Arrange
-        data = {"a_plus_candidates": []}
+        data = {"opportunities": []}
         stock_file = discovery_dir / "a_plus_stocks.json"
         stock_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -409,14 +406,13 @@ class TestAPlusDiscoveryAccessor:
         """Test handling when grade field is missing."""
         # Arrange
         data = {
-            "a_plus_candidates": [
+            "opportunities": [
                 {
-                    "candidate": {
-                        "ticker": "AAPL",
-                        "name": "Apple Inc.",
-                        # Missing grade field
-                        "composite_score": 0.95,
-                    },
+                    "ticker": "AAPL",
+                    "name": "Apple Inc.",
+                    # Missing grade field
+                    "composite_score": 0.95,
+                    "recommendation": "BUY",
                     "rationale": "Strong fundamentals",
                 }
             ]

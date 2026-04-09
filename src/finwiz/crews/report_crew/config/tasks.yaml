@@ -153,11 +153,6 @@ comprehensive_financial_integration_task:
     - Consolidated market sentiment: aggregated scores, top sources with attribution
     - Consolidated ticker validation: validation status, alternatives for failed validations
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
     OUTPUT: A comprehensive document with integrated insights, SEC/EDGAR citations,
     market sentiment analysis, and prioritized investment opportunities.
@@ -205,11 +200,6 @@ comprehensive_financial_integration_task:
     - The JSON must match the ReporterInput schema exactly
     - Return the object directly without any wrapper fields
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   agent: financial_integration_analyst
   output_pydantic: ReporterInput
@@ -280,11 +270,6 @@ optimal_portfolio_allocation_task:
     - The JSON must match the PortfolioConfiguration schema exactly
     - Return the object directly without any wrapper fields
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
     OUTPUT: A detailed portfolio allocation plan with A+ opportunity integration.
   expected_output: >
@@ -365,11 +350,6 @@ risk_assessment_mitigation_task:
     - The JSON must match the RiskAssessmentStandardized schema exactly
     - Return the object directly without any wrapper fields
 
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
     OUTPUT: A comprehensive risk assessment with integrated data and sentiment analysis.
   expected_output: >

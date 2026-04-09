@@ -59,9 +59,15 @@ class CrewFactory:
             # Already in async context -- run in a separate thread to avoid deadlock
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 future = pool.submit(asyncio.run, execute_crew_with_timeout(crew_name, crew_instance, inputs))
-                return future.result()
+                result = future.result()
         else:
-            return asyncio.run(execute_crew_with_timeout(crew_name, crew_instance, inputs))
+            result = asyncio.run(execute_crew_with_timeout(crew_name, crew_instance, inputs))
+
+        # Log CrewAI usage_metrics for token consumption visibility
+        if hasattr(crew_instance, "usage_metrics"):
+            self.logger.info(f"Crew '{crew_name}' usage_metrics: {crew_instance.usage_metrics}")
+
+        return result
 
     def execute_crypto_crew(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute cryptocurrency analysis crew with error handling."""

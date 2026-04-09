@@ -8,7 +8,7 @@ that complement Python-calculated quantitative metrics.
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class SecAnalysisInsights(BaseModel):
@@ -23,6 +23,20 @@ class SecAnalysisInsights(BaseModel):
     competitive_advantages: list[str] = Field(default_factory=list, description="List of identified competitive advantages")
     risk_factors: list[str] = Field(default_factory=list, description="Risk factors from SEC filings with severity ratings")
     strategic_initiatives: list[str] = Field(default_factory=list, description="Key strategic initiatives with expected impact")
+
+    @field_validator("risk_factors", mode="before")
+    @classmethod
+    def coerce_risk_factors(cls, v: list) -> list[str]:
+        """Coerce dict entries (e.g. {'risk': '...', 'severity': '...'}) to strings."""
+        result = []
+        for item in v:
+            if isinstance(item, dict):
+                risk = item.get("risk", item.get("name", str(item)))
+                severity = item.get("severity", "")
+                result.append(f"{risk} (Sévérité: {severity})" if severity else str(risk))
+            else:
+                result.append(str(item))
+        return result
 
     model_config = {
         "str_strip_whitespace": True,

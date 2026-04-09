@@ -219,7 +219,7 @@ def _validate_api_key_for_model(model: str) -> None:
         raise OSError(f"{required_key} not found in environment variables. Required for model: {model}. Please set your API key in the .env file.")
 
 
-def get_configured_llm(model_override: str | None = None, model_type: str = "standard") -> LLM:
+def get_configured_llm(model_override: str | None = None, model_type: str = "standard", max_tokens: int | None = None) -> LLM:
     """
     Get a properly configured LLM instance for CrewAI.
 
@@ -266,8 +266,8 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         fallback = "openai/gpt-4o" if model_type == "baseline" else "openai/gpt-4o-mini"
         model = _get_model_from_env(env_var, fallback)
 
-    # Check cache first
-    cache_key = f"{model}:{model_type}"
+    # Check cache first (include max_tokens so callers with different limits get distinct instances)
+    cache_key = f"{model}:{model_type}:{max_tokens}"
     if cache_key in _llm_cache:
         logger.debug(f"Returning cached LLM instance for {cache_key}")
         return _llm_cache[cache_key]
@@ -281,6 +281,21 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
     try:
         # Get timeout from environment (check multiple env vars for compatibility)
         timeout = int(os.getenv("LITELLM_TIMEOUT") or os.getenv("OPENAI_TIMEOUT") or "300")
+
+        # Determine max_tokens: explicit override > env var > defaults by model type
+        if max_tokens is None:
+            env_max = os.getenv("LLM_MAX_TOKENS")
+            if env_max:
+                max_tokens = int(env_max)
+            else:
+                max_tokens_defaults = {
+                    "standard": 2048,
+                    "mini": 1024,
+                    "manager": 1024,
+                    "planning": 2048,
+                    "baseline": 4096,
+                }
+                max_tokens = max_tokens_defaults.get(model_type, 2048)
 
         # Check if parallel tool calls should be disabled
         # Some providers (OpenRouter/Novita) + Instructor don't support parallel tool calls
@@ -305,6 +320,7 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         llm = LLM(
             model=model,
             timeout=timeout,
+            max_tokens=max_tokens,
             # Disable parallel tool calls to avoid Instructor compatibility issues
             # See: https://github.com/BerriAI/litellm/issues/4235
             parallel_tool_calls=False if disable_parallel else None,
@@ -318,7 +334,7 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         _llm_cache[cache_key] = llm
 
         parallel_status = "disabled" if disable_parallel else "enabled"
-        logger.info(f"LLM configured: {model} (timeout: {timeout}s, parallel_tool_calls: {parallel_status})")
+        logger.info(f"LLM configured: {model} (timeout: {timeout}s, max_tokens: {max_tokens}, parallel_tool_calls: {parallel_status})")
         return llm
 
     except Exception as e:

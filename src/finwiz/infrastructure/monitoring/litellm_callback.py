@@ -6,6 +6,7 @@ helping diagnose token overflow issues.
 """
 
 import contextvars
+import os
 from typing import Any
 
 import litellm
@@ -66,6 +67,12 @@ class TokenMonitorCallback(CustomLogger):
             msg_sizes.append(f"msg[{i}]:{size}")
 
         estimated_tokens = total_chars // 4
+
+        # Guard: reject calls that exceed configurable token threshold
+        max_prompt_tokens = int(os.getenv("MAX_PROMPT_TOKENS", "100000"))
+        if estimated_tokens > max_prompt_tokens:
+            crew_name = _current_crew_name.get("unknown")
+            logger.error(f"🛑 PROMPT TOO LARGE: ~{estimated_tokens:,} tokens exceeds limit of {max_prompt_tokens:,} (crew={crew_name}, model={model}). Review task context chain.")
 
         # Log at different levels based on size
         if estimated_tokens > 100000:

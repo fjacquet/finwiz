@@ -8,11 +8,17 @@ deep_qualitative_analysis_task:
     LANGUE: Rédigez en FRANÇAIS. Noms de champs JSON en anglais, contenu en français.
 
     CONTEXT (Python-calculated - DO NOT recalculate):
+    - Company: {company_name} | Sector: {sector} | Industry: {industry}
+    - Description: {company_description}
     - Grade: {grade}, Score: {composite_score}, Recommendation: {preliminary_recommendation}
     - Scores: Fundamental {fundamental_score}, Technical {technical_score}, Risk {risk_score}
     - Metrics: {fundamental_metrics}
     - Indicators: {technical_indicators}
     - Risk: {risk_metrics}
+
+    IMPORTANT: Base your business model description and competitive analysis on the company
+    description and sector/industry provided above. Do NOT invent or hallucinate business
+    details, partnerships, or initiatives not supported by the provided context.
 
     PROVIDE QUALITATIVE ANALYSIS ONLY:
     1. SEC Insights: Business model (100+ words), competitive advantages, risk factors

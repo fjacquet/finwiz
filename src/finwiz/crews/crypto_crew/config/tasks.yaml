@@ -38,13 +38,6 @@ market_analysis_task:
     - Use reasoning to assess tokenomics, utility, and long-term viability
     - Apply AI decision-making to select cryptocurrencies with optimal risk-return profiles
 
-    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
-    - NEVER invent or guess URLs, wallet addresses, or token names
-    - NEVER fabricate financial metrics, prices, or market caps
-    - If data is missing, explicitly state "Données non disponibles"
-    - All URLs must come from verified data sources (CoinMarketCap, CoinGecko, etc.)
-    - Cross-reference data points before including in output
-
     Validation Requirement:
     - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
     - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
@@ -65,11 +58,6 @@ market_analysis_task:
     - market_sentiment: MUST be one of: "bullish", "bearish", "neutral", "mixed" (lowercase, no other values allowed)
 
     OUTPUT: Return a structured JSON output conforming to the CryptoMarketAnalysis schema.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured list of the top 10 promising cryptocurrencies conforming to the
     CryptoMarketAnalysis Pydantic schema. Include analysis, validation status, and
@@ -113,11 +101,6 @@ technical_analysis_task:
     - recommendation: MUST be one of: "BUY", "HOLD", "SELL" (uppercase)
 
     OUTPUT: Return a structured JSON output conforming to the CryptoTechnicalAnalysis schema.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured technical analysis report for the top 10 cryptocurrencies conforming to
     the CryptoTechnicalAnalysis Pydantic schema. Include chart patterns, key price levels,
@@ -166,11 +149,6 @@ risk_assessment_task:
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values)
 
     OUTPUT: Return a structured JSON output conforming to the CryptoRiskProfile schema.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured comprehensive risk assessment report for each of the top 10 cryptocurrencies
     conforming to the CryptoRiskProfile Pydantic schema. Include potential risks, mitigation
@@ -230,11 +208,6 @@ investment_strategy_task:
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized)
 
     OUTPUT: Return a structured JSON output conforming to the CryptoInvestmentStrategy schema.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A structured detailed investment strategy document conforming to the CryptoInvestmentStrategy
     Pydantic schema. Include asset allocation, risk management, long-term outlook, standardized
@@ -258,11 +231,6 @@ final_report_task:
     assessment, and investment strategy into a single, comprehensive
     investment report. The final report should be well-structured, easy to
     read, and provide a clear, actionable investment plan.
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
   expected_output: >
     A polished, final investment report that presents a crypto
     investment plan, complete with justifications, data, and clear next steps.
@@ -391,19 +359,6 @@ generate_export_task:
     - All nested objects must conform to their schemas
 
     Today is {full_date}. Use this date for analysis_date if not auto-generated.
-
-    ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
-    - NEVER invent or guess URLs, wallet addresses, or token names
-    - NEVER fabricate financial metrics, prices, or market caps
-    - If data is missing, explicitly state "Données non disponibles"
-    - All URLs must come from verified data sources (CoinMarketCap, CoinGecko, etc.)
-    - Cross-reference data points before including in output
-
-    🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON - no explanatory text before or after
-    - Your ENTIRE response must be a single JSON object starting with { and ending with }
-    - Do NOT include any text, comments, or explanations outside the JSON
-    - CRITICAL: NO trailing commas in JSON - last item in arrays/objects must NOT have comma
 
   expected_output: >
     A validated CryptoCrewExport Pydantic object containing all analysis findings,

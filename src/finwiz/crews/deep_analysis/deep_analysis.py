@@ -210,7 +210,7 @@ class DeepAnalysisCrew:
         if self.perf_config.should_use_mini_model():
             return get_mini_llm()
         else:
-            return get_configured_llm(model_type="standard")
+            return get_configured_llm(model_type="standard", max_tokens=4096)
 
     @agent
     def asset_analyst(self) -> Agent:
