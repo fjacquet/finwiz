@@ -79,4 +79,4 @@ class YahooFinanceCompanyInfoTool(BaseTool):
             # Clean up N/A values
             return {k: v if not isinstance(v, dict) else {k2: v2 for k2, v2 in v.items() if v2 != "N/A"} for k, v in company_info.items() if v != "N/A"}
         except Exception as e:
-            return {"error": f"Failed to get company info for {ticker}: {str(e)}"}
+            return {"error": f"Failed to get company info for {ticker}: {e!s}"}

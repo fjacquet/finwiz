@@ -62,7 +62,7 @@ class SchemaManager:
             return {"raw_usage_metrics": str(usage_metrics)}
 
         except Exception as e:
-            self.logger.warning(f"Failed to serialize usage_metrics: {str(e)}")
+            self.logger.warning(f"Failed to serialize usage_metrics: {e!s}")
             return {"serialization_error": str(e), "raw_usage_metrics": str(usage_metrics)}
 
     def save_json_file(self, file_path: Path, data: dict[str, Any]) -> None:
@@ -91,6 +91,6 @@ class SchemaManager:
                     loaded_data: dict[str, Any] = json.load(f)
                     return loaded_data
         except Exception as e:
-            self.logger.warning(f"Failed to load JSON file {file_path}: {str(e)}")
+            self.logger.warning(f"Failed to load JSON file {file_path}: {e!s}")
 
         return default

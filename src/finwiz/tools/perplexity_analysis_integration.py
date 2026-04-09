@@ -301,7 +301,7 @@ class PerplexityAnalysisIntegration:
                     # Use exponential backoff
                     wait_time = PerplexityFallbackManager.calculate_backoff_delay(attempt, self.config.backoff_factor, 60.0)
 
-                logger.warning(f"Perplexity search attempt {attempt + 1} failed, retrying in {wait_time:.2f}s: {str(e)}")
+                logger.warning(f"Perplexity search attempt {attempt + 1} failed, retrying in {wait_time:.2f}s: {e!s}")
                 await asyncio.sleep(wait_time)
 
         # All retries exhausted, raise the last exception
@@ -419,7 +419,7 @@ class PerplexityAnalysisIntegration:
                     if article:
                         articles.append(article)
                 except Exception as e:
-                    logger.warning(f"Failed to parse citation {i}: {str(e)}")
+                    logger.warning(f"Failed to parse citation {i}: {e!s}")
                     continue
 
             # If no citations found, try to extract from message content
@@ -431,13 +431,13 @@ class PerplexityAnalysisIntegration:
                 PerplexityOperationLogger.log_parsing_metrics(ticker, raw_response_size, len(articles))
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Perplexity JSON response: {str(e)}")
+            logger.error(f"Failed to parse Perplexity JSON response: {e!s}")
             if ticker:
-                PerplexityOperationLogger.log_api_failure(ticker, f"JSON parsing error: {str(e)}")
+                PerplexityOperationLogger.log_api_failure(ticker, f"JSON parsing error: {e!s}")
         except Exception as e:
-            logger.error(f"Unexpected error parsing Perplexity response: {str(e)}")
+            logger.error(f"Unexpected error parsing Perplexity response: {e!s}")
             if ticker:
-                PerplexityOperationLogger.log_api_failure(ticker, f"Response parsing error: {str(e)}")
+                PerplexityOperationLogger.log_api_failure(ticker, f"Response parsing error: {e!s}")
 
         return articles
 
@@ -479,7 +479,7 @@ class PerplexityAnalysisIntegration:
             )
 
         except Exception as e:
-            logger.warning(f"Failed to create SonarArticle from citation: {str(e)}")
+            logger.warning(f"Failed to create SonarArticle from citation: {e!s}")
             return None
 
     def _extract_publisher(self, citation: dict[str, Any], url: str) -> str:
@@ -598,11 +598,11 @@ class PerplexityAnalysisIntegration:
                     articles.append(article)
 
                 except Exception as e:
-                    logger.warning(f"Failed to create article from URL {url}: {str(e)}")
+                    logger.warning(f"Failed to create article from URL {url}: {e!s}")
                     continue
 
         except Exception as e:
-            logger.error(f"Failed to extract articles from content: {str(e)}")
+            logger.error(f"Failed to extract articles from content: {e!s}")
 
         return articles
 

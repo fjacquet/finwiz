@@ -17,12 +17,12 @@ from .config import (
 from .manager import CrewDataIntegrationManager
 
 __all__ = [
-    "CrewDataIntegrationManager",
     "CrewDataAccessor",
-    "IntegrationConfig",
+    "CrewDataIntegrationManager",
     "CrewDependencyConfig",
     "DataQualityConfig",
-    "get_integration_config",
+    "IntegrationConfig",
     "get_crew_dependency_config",
     "get_data_quality_config",
+    "get_integration_config",
 ]

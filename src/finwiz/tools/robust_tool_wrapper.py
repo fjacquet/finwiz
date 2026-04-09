@@ -116,8 +116,8 @@ class RobustToolWrapper:
                 return original_run(*args, **kwargs)
 
             except Exception as e:
-                logger.error(f"Tool {tool.name} failed: {str(e)}")
-                return f"Error: {tool.name} failed - {str(e)}"
+                logger.error(f"Tool {tool.name} failed: {e!s}")
+                return f"Error: {tool.name} failed - {e!s}"
 
         tool._run = robust_run  # type: ignore[method-assign]
         return tool

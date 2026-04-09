@@ -72,7 +72,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
                 logger.warning("Perplexity integration initialized but API key not available")
                 return None
         except Exception as e:
-            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
     def _run(
@@ -123,7 +123,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Enhanced crypto analysis failed for {symbol}: {str(e)}")
+            logger.error(f"Enhanced crypto analysis failed for {symbol}: {e!s}")
             return {"error": f"Enhanced crypto analysis failed for {symbol}: {e}"}
 
     def _get_crypto_data(self, symbol: str) -> dict[str, Any]:
@@ -492,7 +492,7 @@ class EnhancedCryptoAnalysisTool(BaseTool):
                 return []
 
         except Exception as e:
-            logger.warning(f"Perplexity crypto search failed for {symbol}: {str(e)}")
+            logger.warning(f"Perplexity crypto search failed for {symbol}: {e!s}")
 
             # Record failure for feature flag tracking
             from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker

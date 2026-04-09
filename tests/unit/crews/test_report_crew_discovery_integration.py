@@ -78,9 +78,9 @@ class TestReportCrewDiscoveryIntegration:
 
                 except Exception as e:
                     return {
-                        "error": f"Data integration failed: {str(e)}",
+                        "error": f"Data integration failed: {e!s}",
                         "fallback_mode": True,
-                        "discovery_status": {"has_results": False, "message": f"Discovery data unavailable due to error: {str(e)}"},
+                        "discovery_status": {"has_results": False, "message": f"Discovery data unavailable due to error: {e!s}"},
                     }
 
         return MockReportCrew()

@@ -106,7 +106,7 @@ class ExtractionEngine:
             return collection
 
         except Exception as e:
-            self.logger.error(f"Failed to extract A+ opportunities: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to extract A+ opportunities: {e!s}", exc_info=True)
             return None
 
     def _extract_stock_opportunities(self) -> list[dict[str, Any]]:

@@ -129,7 +129,7 @@ class RetryLLMWrapper(BaseLLM):
 
                 except Exception as e:
                     last_exception = e
-                    logger.warning(f"LLM call failed with error: {str(e)}. Retrying...")
+                    logger.warning(f"LLM call failed with error: {e!s}. Retrying...")
                     raise e
 
         # This code should not be reached due to reraise=True in Retrying
@@ -180,7 +180,7 @@ class RetryLLMWrapper(BaseLLM):
                 return result
 
             except Exception as e:
-                logger.warning(f"Async LLM call failed with error: {str(e)}. Retrying...")
+                logger.warning(f"Async LLM call failed with error: {e!s}. Retrying...")
                 attempt += 1
                 if attempt >= self.max_retries:
                     logger.error(f"All {self.max_retries} async LLM call attempts failed")

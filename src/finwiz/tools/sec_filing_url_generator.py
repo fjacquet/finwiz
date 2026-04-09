@@ -90,7 +90,7 @@ class SECFilingURLGenerator:
                 return None
 
         except Exception as e:
-            logger.error(f"Error looking up CIK for {ticker}: {str(e)}")
+            logger.error(f"Error looking up CIK for {ticker}: {e!s}")
             return None
 
     def get_filing_url(self, ticker: str, filing_type: str = "10-K", verify: bool = False) -> str | None:
@@ -192,7 +192,7 @@ class SECFilingURLGenerator:
                     return False
 
         except Exception as e:
-            logger.error(f"Error verifying URL {url}: {str(e)}")
+            logger.error(f"Error verifying URL {url}: {e!s}")
             return False
 
     def get_direct_filing_url(self, ticker: str, filing_type: str = "10-K") -> dict | None:

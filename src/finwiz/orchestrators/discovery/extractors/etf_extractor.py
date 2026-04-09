@@ -136,5 +136,5 @@ class ETFOpportunityExtractor(OpportunityExtractor):
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to build ETF opportunity: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to build ETF opportunity: {e!s}", exc_info=True)
             return None

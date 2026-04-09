@@ -126,7 +126,7 @@ class DataAvailabilityTracker:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to track data source {source}: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to track data source {source}: {e!s}", exc_info=True)
 
     def get_availability_summary(self) -> DataAvailabilitySummary:
         """
@@ -168,7 +168,7 @@ class DataAvailabilityTracker:
             return summary
 
         except Exception as e:
-            self.logger.error(f"Failed to generate availability summary: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to generate availability summary: {e!s}", exc_info=True)
             # Return empty summary on error
             return DataAvailabilitySummary(
                 total_sources=0,
@@ -204,7 +204,7 @@ class DataAvailabilityTracker:
             self.logger.debug(f"Generated {len(warnings)} freshness warnings")
 
         except Exception as e:
-            self.logger.error(f"Failed to generate freshness warnings: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to generate freshness warnings: {e!s}", exc_info=True)
             warnings.append("Error generating freshness warnings")
 
         return warnings
@@ -326,5 +326,5 @@ class DataAvailabilityTracker:
             return "\n".join(lines)
 
         except Exception as e:
-            self.logger.error(f"Failed to format summary for report: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to format summary for report: {e!s}", exc_info=True)
             return "Error formatting data availability summary"

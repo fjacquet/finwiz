@@ -499,8 +499,8 @@ class PortfolioRebalancingOrchestrator:
 
 # Re-exports for backward compatibility
 __all__ = [
-    "PortfolioRebalancingOrchestrator",
-    "OptimizationFailedError",
     "InsufficientPriceDataError",
+    "OptimizationFailedError",
     "PortfolioRebalancingError",
+    "PortfolioRebalancingOrchestrator",
 ]

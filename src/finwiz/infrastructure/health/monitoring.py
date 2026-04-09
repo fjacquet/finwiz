@@ -25,7 +25,7 @@ from .checks import (
 )
 
 # Re-export HealthStatus for backward compatibility
-__all__ = ["HealthStatus", "SystemHealthReport", "IntegrationHealthChecker", "get_health_checker", "perform_quick_health_check", "perform_comprehensive_health_check"]
+__all__ = ["HealthStatus", "IntegrationHealthChecker", "SystemHealthReport", "get_health_checker", "perform_comprehensive_health_check", "perform_quick_health_check"]
 from finwiz.infrastructure.logging.utils import IntegrationLogger
 
 
@@ -185,7 +185,7 @@ class IntegrationHealthChecker:
             return report
 
         except Exception as e:
-            error_msg = f"Health check failed: {str(e)}"
+            error_msg = f"Health check failed: {e!s}"
             self.logger.log_integration_error(error_type="HEALTH_CHECK_ERROR", crew_name="system", error_message=error_msg)
 
             return SystemHealthReport(
@@ -343,7 +343,7 @@ class IntegrationHealthChecker:
         except Exception as e:
             return {
                 "overall_status": "critical",
-                "issues": [f"Health check failed: {str(e)}"],
+                "issues": [f"Health check failed: {e!s}"],
                 "check_timestamp": datetime.now().isoformat(),
             }
 
@@ -367,7 +367,7 @@ class IntegrationHealthChecker:
             return output_file
 
         except Exception as e:
-            error_msg = f"Failed to export health report: {str(e)}"
+            error_msg = f"Failed to export health report: {e!s}"
             self.logger.log_integration_error(error_type="HEALTH_EXPORT_ERROR", crew_name="system", error_message=error_msg)
             raise
 

@@ -121,7 +121,7 @@ class MarketScreeningTool(BaseTool):
 
         except Exception as e:
             return {
-                "error": f"Market screening failed for {asset_type}: {str(e)}",
+                "error": f"Market screening failed for {asset_type}: {e!s}",
                 "asset_type": asset_type,
                 "candidates_found": 0,
                 "a_plus_candidates": 0,

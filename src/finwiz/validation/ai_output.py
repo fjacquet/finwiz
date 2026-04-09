@@ -430,7 +430,7 @@ def validate_ai_output_with_retry(
 
                 if retry_callback:
                     format_instructions = get_explicit_format_example()
-                    retry_context = f"Previous attempt failed: {str(e)}"
+                    retry_context = f"Previous attempt failed: {e!s}"
                     result = retry_callback(format_instructions=format_instructions, retry_context=retry_context)
                 else:
                     # No retry callback - cannot retry

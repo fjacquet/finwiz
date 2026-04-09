@@ -14,10 +14,10 @@ from .decisions import (
 from .merge import merge_deep_analysis_from_flow_state
 
 __all__ = [
-    "calculate_score",
     "assess_risk",
-    "build_rationale",
     "build_citations",
+    "build_rationale",
+    "calculate_score",
     "create_error_decision",
     "merge_deep_analysis_from_flow_state",
 ]

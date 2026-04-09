@@ -130,7 +130,7 @@ class PipelineStages:
                 result.total_warnings += len(schema_result.warnings)
 
             except Exception as e:
-                error_msg = f"Failed to validate {crew_name} crew: {str(e)}"
+                error_msg = f"Failed to validate {crew_name} crew: {e!s}"
                 self.logger.error(error_msg, exc_info=True)
 
                 integration_error = IntegrationError(
@@ -279,7 +279,7 @@ class PipelineStages:
             return result
 
         except Exception as e:
-            error_msg = f"SEC citation validation failed: {str(e)}"
+            error_msg = f"SEC citation validation failed: {e!s}"
             self.logger.error(error_msg, exc_info=True)
 
             return {
@@ -369,7 +369,7 @@ class PipelineStages:
                     json.dump(report, f, indent=2, default=str)
                 self.logger.info(f"Validation report saved to {output_path}")
             except Exception as e:
-                self.logger.error(f"Failed to save validation report: {str(e)}", exc_info=True)
+                self.logger.error(f"Failed to save validation report: {e!s}", exc_info=True)
 
         return report
 
@@ -414,7 +414,7 @@ class PipelineStages:
             )
 
         except Exception as e:
-            error_msg = f"Cross-crew consistency validation failed: {str(e)}"
+            error_msg = f"Cross-crew consistency validation failed: {e!s}"
             self.logger.error(error_msg, exc_info=True)
             result.consistency_errors.append(error_msg)
             result.is_consistent = False
@@ -447,5 +447,5 @@ class PipelineStages:
             return data
 
         except Exception as e:
-            self.logger.error(f"Failed to load data for {crew_name} crew: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to load data for {crew_name} crew: {e!s}", exc_info=True)
             return None

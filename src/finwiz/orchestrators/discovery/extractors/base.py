@@ -64,7 +64,7 @@ class OpportunityExtractor(ABC):
             return opportunities
 
         except Exception as e:
-            self.logger.error(f"Failed to extract opportunities: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to extract opportunities: {e!s}", exc_info=True)
             return []
 
     @abstractmethod

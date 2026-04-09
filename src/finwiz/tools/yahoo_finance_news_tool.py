@@ -56,4 +56,4 @@ class YahooFinanceNewsTool(BaseTool):
 
             return result
         except Exception as e:
-            return f"Error retrieving news for {ticker}: {str(e)}"
+            return f"Error retrieving news for {ticker}: {e!s}"

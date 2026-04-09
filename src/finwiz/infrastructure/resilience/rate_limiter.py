@@ -23,11 +23,11 @@ from finwiz.tools.logger import get_logger
 
 # Re-export for backward compatibility
 __all__ = [
+    "DEFAULT_RATE_LIMITS",
     "APIProvider",
     "RateLimitConfig",
-    "DEFAULT_RATE_LIMITS",
-    "RequestRecord",
     "RateLimiter",
+    "RequestRecord",
     "get_rate_limiter",
     "with_rate_limit",
 ]

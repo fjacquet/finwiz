@@ -133,7 +133,7 @@ class DataFreshnessChecker:
             return freshness_status
 
         except Exception as e:
-            self.logger.error(f"Error checking freshness for {file_path}: {str(e)}", exc_info=True)
+            self.logger.error(f"Error checking freshness for {file_path}: {e!s}", exc_info=True)
 
             return FreshnessStatus(
                 is_fresh=False,
@@ -175,7 +175,7 @@ class DataFreshnessChecker:
             return stale_files
 
         except Exception as e:
-            self.logger.error(f"Error getting stale files: {str(e)}", exc_info=True)
+            self.logger.error(f"Error getting stale files: {e!s}", exc_info=True)
             return []
 
     def recommend_refresh_order(self, max_age_hours: int = 24) -> list[str]:
@@ -244,7 +244,7 @@ class DataFreshnessChecker:
             return refresh_needed
 
         except Exception as e:
-            self.logger.error(f"Error generating refresh order: {str(e)}", exc_info=True)
+            self.logger.error(f"Error generating refresh order: {e!s}", exc_info=True)
             return self.crew_directories  # Fallback to default order
 
     def generate_freshness_report(self, max_age_hours: int = 24) -> FreshnessReport:
@@ -352,7 +352,7 @@ class DataFreshnessChecker:
             return report
 
         except Exception as e:
-            self.logger.error(f"Error generating freshness report: {str(e)}", exc_info=True)
+            self.logger.error(f"Error generating freshness report: {e!s}", exc_info=True)
 
             # Return error report
             return FreshnessReport(
@@ -428,5 +428,5 @@ class DataFreshnessChecker:
             )
 
         except Exception as e:
-            self.logger.error(f"Error checking freshness for crew {crew_name}: {str(e)}", exc_info=True)
+            self.logger.error(f"Error checking freshness for crew {crew_name}: {e!s}", exc_info=True)
             return None

@@ -74,7 +74,7 @@ def perform_technical_analysis(
 
     except Exception as e:
         logger.error(f"Error in technical analysis: {e}")
-        return f"Technical analysis error: {str(e)}"
+        return f"Technical analysis error: {e!s}"
 
 
 def _extract_indicator_values(

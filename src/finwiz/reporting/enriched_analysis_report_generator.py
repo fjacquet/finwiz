@@ -189,7 +189,7 @@ class EnrichedAnalysisReportGenerator:
         template_vars["generation_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Ensure analysis_date is properly formatted
-        if "analysis_date" in data and data["analysis_date"]:
+        if data.get("analysis_date"):
             if isinstance(data["analysis_date"], str):
                 try:
                     template_vars["analysis_date"] = datetime.fromisoformat(data["analysis_date"].replace("Z", "+00:00"))

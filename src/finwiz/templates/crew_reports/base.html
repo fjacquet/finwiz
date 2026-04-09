@@ -4,40 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Rapport FinWiz{% endblock %}</title>
+    {% include "partials/_design_tokens.html" %}
     <style>
-        /* Base Styles with Light/Dark Mode Support */
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
-            --bg-card: #ffffff;
-            --text-primary: #2c3e50;
-            --text-secondary: #34495e;
-            --text-muted: #666;
-            --border-color: #ddd;
-            --accent: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --shadow: rgba(0, 0, 0, 0.1);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-primary: #1a1a1a;
-                --bg-secondary: #2d2d2d;
-                --bg-card: #2d2d2d;
-                --text-primary: #ecf0f1;
-                --text-secondary: #bdc3c7;
-                --text-muted: #95a5a6;
-                --border-color: #444;
-                --accent: #3498db;
-                --success: #2ecc71;
-                --warning: #f39c12;
-                --danger: #e74c3c;
-                --shadow: rgba(0, 0, 0, 0.3);
-            }
-        }
-
         /* Reset and Base */
         * {
             margin: 0;
@@ -46,7 +14,6 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: var(--text-primary);
             background-color: var(--bg-secondary);
@@ -458,7 +425,17 @@
         {% block extra_styles %}{% endblock %}
     </style>
 </head>
-<body>
+<body data-theme="light">
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" style="position:fixed;top:1rem;right:1rem;z-index:1000;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--border-radius);padding:0.5rem;cursor:pointer;box-shadow:var(--shadow-sm);">
+        <svg class="sun-icon" viewBox="0 0 24 24" style="width:1.25rem;height:1.25rem;fill:var(--text-primary);stroke:var(--text-primary);stroke-width:2;stroke-linecap:round;">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" style="display:none;width:1.25rem;height:1.25rem;fill:var(--text-primary);">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+    </button>
+
     <div class="container">
         {% block content %}{% endblock %}
 
@@ -468,5 +445,24 @@
             <p><em>Généré le {{ generation_date }}</em></p>
         </div>
     </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const newTheme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.querySelector('.sun-icon').style.display = newTheme === 'dark' ? 'none' : 'block';
+            document.querySelector('.moon-icon').style.display = newTheme === 'dark' ? 'block' : 'none';
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', saved);
+            if (saved === 'dark') {
+                document.querySelector('.sun-icon').style.display = 'none';
+                document.querySelector('.moon-icon').style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

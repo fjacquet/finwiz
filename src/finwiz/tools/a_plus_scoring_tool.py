@@ -156,7 +156,7 @@ class APlusScoringTool(BaseTool):
 
         except Exception as e:
             return {
-                "error": f"A+ scoring failed for {symbol}: {str(e)}",
+                "error": f"A+ scoring failed for {symbol}: {e!s}",
                 "symbol": symbol,
                 "asset_type": asset_type,
                 "composite_score": 0.0,

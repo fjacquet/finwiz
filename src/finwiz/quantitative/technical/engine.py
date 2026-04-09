@@ -106,7 +106,7 @@ class TechnicalAnalysisEngine:
                 indicator_results[indicator.value] = indicator_result
                 all_signals.extend(indicator_result.signals)
             except Exception as e:
-                self.logger.error(f"Failed to calculate {indicator.value} for {symbol}: {str(e)}")
+                self.logger.error(f"Failed to calculate {indicator.value} for {symbol}: {e!s}")
 
         # Detect confluence zones
         confluence_zones = self._detect_confluence_zones(all_signals, data)

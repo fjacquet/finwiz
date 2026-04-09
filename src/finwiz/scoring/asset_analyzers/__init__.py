@@ -12,9 +12,9 @@ from finwiz.scoring.asset_analyzers.factory import AnalyzerFactory
 from finwiz.scoring.asset_analyzers.stock_analyzer import StockAnalyzer
 
 __all__ = [
-    "AssetAnalyzer",
-    "StockAnalyzer",
-    "ETFAnalyzer",
-    "CryptoAnalyzer",
     "AnalyzerFactory",
+    "AssetAnalyzer",
+    "CryptoAnalyzer",
+    "ETFAnalyzer",
+    "StockAnalyzer",
 ]

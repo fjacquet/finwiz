@@ -176,7 +176,7 @@ class EnhancedSentimentAnalysisTool(BaseTool):
             )
 
         except Exception as e:
-            logger.error(f"Error in enhanced sentiment analysis for {ticker}: {str(e)}")
+            logger.error(f"Error in enhanced sentiment analysis for {ticker}: {e!s}")
             # Return structured error data for consistency
             return json.dumps(
                 {

@@ -271,7 +271,7 @@ class RiskManager:
 
 
 # Re-export classes for backward compatibility
-from finwiz.quantitative.risk_metrics import (  # noqa: E402, F401
+from finwiz.quantitative.risk_metrics import (  # noqa: E402
     ConcentrationLimits,
     TaxLossHarvestingConfig,
     TurnoverLimits,
@@ -279,14 +279,14 @@ from finwiz.quantitative.risk_metrics import (  # noqa: E402, F401
 )
 
 __all__ = [
+    "ConcentrationLimits",
+    "RiskAssessment",
+    "RiskLevel",
     "RiskManager",
     "RiskManagerConfig",
-    "RiskAssessment",
     "RiskWarning",
-    "RiskLevel",
     "RiskWarningType",
-    "ConcentrationLimits",
+    "TaxLossHarvestingConfig",
     "TurnoverLimits",
     "VolatilityThresholds",
-    "TaxLossHarvestingConfig",
 ]

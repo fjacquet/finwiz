@@ -103,7 +103,7 @@ class FreshnessValidatedTool(BaseTool):
 
         except Exception as e:
             logger.error(f"Freshness validated tool execution failed: {e}")
-            return {"error": f"Tool execution failed: {str(e)}"}
+            return {"error": f"Tool execution failed: {e!s}"}
 
     def _attempt_refresh(self, *args: Any, **kwargs: Any) -> RefreshResult:
         """

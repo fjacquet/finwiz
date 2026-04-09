@@ -38,7 +38,7 @@ class TestAcquire:
     """Token bucket acquire is called for known providers."""
 
     @pytest.mark.asyncio
-    async def test_acquire_uses_token_bucket(self, mocker) -> None:  # noqa: ANN001
+    async def test_acquire_uses_token_bucket(self, mocker) -> None:
         limiter = RateLimiter()
         mock_acquire = mocker.patch.object(
             limiter._limiters[APIProvider.YAHOO_FINANCE],
@@ -57,7 +57,7 @@ class TestAcquire:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_acquire_records_request(self, mocker) -> None:  # noqa: ANN001
+    async def test_acquire_records_request(self, mocker) -> None:
         limiter = RateLimiter()
         mocker.patch.object(
             limiter._limiters[APIProvider.YAHOO_FINANCE],
@@ -79,7 +79,7 @@ class TestWaitForAvailability:
     """wait_for_availability delegates to acquire."""
 
     @pytest.mark.asyncio
-    async def test_delegates_to_acquire(self, mocker) -> None:  # noqa: ANN001
+    async def test_delegates_to_acquire(self, mocker) -> None:
         limiter = RateLimiter()
         mock_acq = mocker.patch.object(limiter, "acquire", new_callable=mocker.AsyncMock, return_value=True)
         await limiter.wait_for_availability(APIProvider.YAHOO_FINANCE, endpoint="/test")
@@ -169,7 +169,7 @@ class TestConfigReExports:
 class TestGetRateLimiter:
     """get_rate_limiter() returns a configured singleton."""
 
-    def test_returns_rate_limiter_instance(self, mocker) -> None:  # noqa: ANN001
+    def test_returns_rate_limiter_instance(self, mocker) -> None:
         # Reset the global so we get a fresh instance
         import finwiz.infrastructure.resilience.rate_limiter as mod
 

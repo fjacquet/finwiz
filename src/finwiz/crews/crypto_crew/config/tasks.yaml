@@ -128,8 +128,7 @@ technical_analysis_task:
   output_pydantic: CryptoTechnicalAnalysis
   output_file: "output/crypto/crypto_technical_analysis.json"
   async_execution: true
-  context:
-    - market_analysis_task
+  # ⚡ CONTEXT SCOPING: Removed linear context from market_analysis_task
 
 risk_assessment_task:
   description: >
@@ -182,8 +181,7 @@ risk_assessment_task:
   output_pydantic: CryptoRiskProfile
   output_file: "output/crypto/crypto_risk_assessment.json"
   async_execution: true
-  context:
-    - technical_analysis_task
+  # ⚡ CONTEXT SCOPING: Removed linear context from technical_analysis_task
 
 investment_strategy_task:
   description: >
@@ -248,7 +246,10 @@ investment_strategy_task:
   output_pydantic: CryptoInvestmentStrategy
   output_file: "output/crypto/crypto_investment_strategy.json"
   async_execution: true
+  # ⚡ CONTEXT SCOPING: Fan-in from all 3 parallel tasks
   context:
+    - market_analysis_task
+    - technical_analysis_task
     - risk_assessment_task
 
 final_report_task:

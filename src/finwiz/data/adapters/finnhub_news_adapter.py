@@ -118,7 +118,7 @@ class FinnhubNewsAdapter:
             # Finnhub sentiment: mspr field (normalized -1 to +1 in API response)
             sentiment_score: float | None = None
             sentiment_label: Literal["bullish", "bearish", "neutral"] | None = None
-            if "sentiment" in item and item["sentiment"]:
+            if item.get("sentiment"):
                 sentiment_score = max(-1.0, min(1.0, float(item["sentiment"])))
                 sentiment_label = _sentiment_to_label(sentiment_score)
 

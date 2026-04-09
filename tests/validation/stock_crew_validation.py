@@ -59,7 +59,7 @@ def run_test():
         print("-------------------------")
 
     except Exception as e:
-        logger.critical(f"Single crew validation failed: {str(e)}", exc_info=True)
+        logger.critical(f"Single crew validation failed: {e!s}", exc_info=True)
         raise
 
 

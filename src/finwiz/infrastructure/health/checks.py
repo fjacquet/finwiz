@@ -94,7 +94,7 @@ def check_data_freshness(
         return HealthStatus(
             component="data_freshness",
             status="critical",
-            message=f"Freshness check failed: {str(e)}",
+            message=f"Freshness check failed: {e!s}",
             last_check=datetime.now(),
         )
 
@@ -169,7 +169,7 @@ def check_data_availability(
         return HealthStatus(
             component="data_availability",
             status="critical",
-            message=f"Availability check failed: {str(e)}",
+            message=f"Availability check failed: {e!s}",
             last_check=datetime.now(),
         )
 
@@ -239,7 +239,7 @@ def check_directory_structure(
         return HealthStatus(
             component="directory_structure",
             status="critical",
-            message=f"Directory check failed: {str(e)}",
+            message=f"Directory check failed: {e!s}",
             last_check=datetime.now(),
         )
 
@@ -304,7 +304,7 @@ def check_system_resources(
         return HealthStatus(
             component="system_resources",
             status="warning",
-            message=f"Resource check failed: {str(e)}",
+            message=f"Resource check failed: {e!s}",
             last_check=datetime.now(),
         )
 
@@ -381,7 +381,7 @@ def check_integration_metadata(
         return HealthStatus(
             component="integration_metadata",
             status="critical",
-            message=f"Metadata check failed: {str(e)}",
+            message=f"Metadata check failed: {e!s}",
             last_check=datetime.now(),
         )
 
@@ -461,6 +461,6 @@ def check_validation_status(
         return HealthStatus(
             component="validation_status",
             status="warning",
-            message=f"Validation check failed: {str(e)}",
+            message=f"Validation check failed: {e!s}",
             last_check=datetime.now(),
         )

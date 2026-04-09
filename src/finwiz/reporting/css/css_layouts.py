@@ -1,4 +1,8 @@
-"""Layout and interactive CSS styles for rebalancing reports."""
+"""Layout and interactive CSS styles for rebalancing reports.
+
+Uses CSS variables from the shared design tokens (_design_tokens.html)
+for consistent theming across all reports.
+"""
 
 
 def get_scenario_styles() -> str:
@@ -6,23 +10,23 @@ def get_scenario_styles() -> str:
     return """
     /* Scenario cards */
     .scenario-card {
-        background: white;
+        background: var(--bg-card);
         border-radius: 8px;
         padding: 20px;
         margin: 15px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: var(--transition);
     }
 
     .scenario-card:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        box-shadow: var(--shadow-md);
         transform: translateY(-2px);
     }
 
     .scenario-card h4 {
         margin: 0 0 15px 0;
-        color: #2c3e50;
+        color: var(--text-primary);
         border: none;
     }
 
@@ -35,7 +39,7 @@ def get_scenario_styles() -> str:
 
     .scenario-metrics .metric {
         padding: 8px 12px;
-        background-color: #f8f9fa;
+        background-color: var(--bg-secondary);
         border-radius: 4px;
         font-size: 0.9em;
     }
@@ -57,23 +61,23 @@ def get_execution_styles() -> str:
         display: flex;
         justify-content: space-between;
         padding: 12px;
-        background: white;
+        background: var(--bg-card);
         border-radius: 6px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     .stat-label {
-        color: #666;
+        color: var(--text-muted);
         font-weight: 500;
     }
 
     .stat-value {
-        color: #2c3e50;
+        color: var(--text-primary);
         font-weight: bold;
     }
 
     .next-steps {
-        background: #f8f9fa;
+        background: var(--bg-secondary);
         padding: 20px;
         border-radius: 8px;
         margin-top: 20px;
@@ -81,7 +85,7 @@ def get_execution_styles() -> str:
 
     .next-steps h4 {
         margin: 0 0 15px 0;
-        color: #2c3e50;
+        color: var(--text-primary);
         border: none;
     }
 
@@ -102,22 +106,22 @@ def get_interactive_styles() -> str:
     return """
     /* Interactive elements */
     .execute-btn {
-        background: #3498db;
+        background: var(--accent);
         color: white;
         border: none;
         padding: 8px 16px;
         border-radius: 4px;
         cursor: pointer;
         font-size: 0.9em;
-        transition: background-color 0.3s ease;
+        transition: var(--transition);
     }
 
     .execute-btn:hover {
-        background: #2980b9;
+        filter: brightness(0.9);
     }
 
     .execute-btn:disabled {
-        background: #95a5a6;
+        background: var(--text-muted);
         cursor: not-allowed;
     }
     """

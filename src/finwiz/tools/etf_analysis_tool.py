@@ -209,7 +209,7 @@ class ETFAnalysisTool(BaseTool):
             return json.dumps(results, indent=2, default=str)
 
         except Exception as e:
-            error_msg = f"ETF analysis failed: {str(e)}"
+            error_msg = f"ETF analysis failed: {e!s}"
             logger.error(error_msg, exc_info=True)
             return json.dumps({"error": error_msg, "ticker": kwargs.get("ticker", "unknown")}, default=str)
 

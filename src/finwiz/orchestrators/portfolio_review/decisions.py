@@ -174,9 +174,9 @@ def create_error_decision(
 
 
 __all__ = [
-    "calculate_score",
     "assess_risk",
-    "build_rationale",
     "build_citations",
+    "build_rationale",
+    "calculate_score",
     "create_error_decision",
 ]

@@ -242,7 +242,7 @@ class ValidationOrchestrator:
             self._update_core_analysis_summary(consolidated_data, core_analysis_status)
 
             crew_data = consolidated_data.get("consolidated_crew_data", {})
-            core_analysis_count = sum(1 for crew_type in ["stock", "etf", "crypto"] if crew_type in crew_data and crew_data[crew_type])
+            core_analysis_count = sum(1 for crew_type in ["stock", "etf", "crypto"] if crew_data.get(crew_type))
 
             return {
                 "success": True,

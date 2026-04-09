@@ -200,4 +200,4 @@ class StockFilter:
 
 
 # Import for type hints
-from finwiz.quantitative.screening_criteria import ScreeningFilter, ScreeningScore  # noqa: E402, F401
+from finwiz.quantitative.screening_criteria import ScreeningFilter, ScreeningScore  # noqa: E402

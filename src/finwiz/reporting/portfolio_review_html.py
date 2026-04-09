@@ -443,8 +443,8 @@ def add_rebalancing_sections(generator: Any, rebalancing_data: dict[str, Any]) -
 # =============================================================================
 
 __all__ = [
-    "generate_holdings_table",
-    "generate_trades_table",
     "add_portfolio_review_sections",
     "add_rebalancing_sections",
+    "generate_holdings_table",
+    "generate_trades_table",
 ]

@@ -41,7 +41,7 @@ def get_cached_crew_output(
         return None
 
     except Exception as e:
-        logger.error(f"Failed to get cached output for crew {crew_name}: {str(e)}")
+        logger.error(f"Failed to get cached output for crew {crew_name}: {e!s}")
         return None
 
 
@@ -102,7 +102,7 @@ def get_upstream_data(
 
     except Exception as e:
         logger.error(
-            f"Failed to get upstream data for {requesting_crew}: {str(e)}",
+            f"Failed to get upstream data for {requesting_crew}: {e!s}",
             exc_info=True,
         )
         return UpstreamDataCollection(available_data={}, missing_data=crew_dirs, stale_data=[])
@@ -264,5 +264,5 @@ def get_crew_data_with_freshness_check(
                 return None
 
     except Exception as e:
-        logger.error(f"Failed to get data for {crew_name} crew: {str(e)}", exc_info=True)
+        logger.error(f"Failed to get data for {crew_name} crew: {e!s}", exc_info=True)
         return None

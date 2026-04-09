@@ -73,7 +73,7 @@ class APlusDiscoveryAccessor:
             return has_results
 
         except Exception as e:
-            self.logger.error(f"Error checking for discovery results: {str(e)}", exc_info=True)
+            self.logger.error(f"Error checking for discovery results: {e!s}", exc_info=True)
             return False
 
     def load_discovery_results(self) -> dict | None:
@@ -117,7 +117,7 @@ class APlusDiscoveryAccessor:
             return results
 
         except Exception as e:
-            self.logger.error(f"Failed to load discovery results: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to load discovery results: {e!s}", exc_info=True)
             return None
 
     def get_opportunities_summary(self) -> str:
@@ -167,7 +167,7 @@ class APlusDiscoveryAccessor:
             return summary
 
         except Exception as e:
-            self.logger.error(f"Failed to generate opportunities summary: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to generate opportunities summary: {e!s}", exc_info=True)
             return "Error generating opportunities summary"
 
     def _load_stock_results(self) -> dict[str, Any]:
@@ -184,7 +184,7 @@ class APlusDiscoveryAccessor:
             self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} stock candidates")
             return data
         except Exception as e:
-            self.logger.error(f"Failed to load stock results: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to load stock results: {e!s}", exc_info=True)
             return {}
 
     def _load_etf_results(self) -> dict[str, Any]:
@@ -201,7 +201,7 @@ class APlusDiscoveryAccessor:
             self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} ETF candidates")
             return data
         except Exception as e:
-            self.logger.error(f"Failed to load ETF results: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to load ETF results: {e!s}", exc_info=True)
             return {}
 
     def _load_crypto_results(self) -> dict[str, Any]:
@@ -218,5 +218,5 @@ class APlusDiscoveryAccessor:
             self.logger.debug(f"Loaded {len(data.get('a_plus_candidates', []))} crypto candidates")
             return data
         except Exception as e:
-            self.logger.error(f"Failed to load crypto results: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to load crypto results: {e!s}", exc_info=True)
             return {}

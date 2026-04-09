@@ -160,7 +160,7 @@ class DeepAnalysisReportGenerator:
         template_vars["generation_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Ensure analysis_date is properly formatted
-        if "analysis_date" in data and data["analysis_date"]:
+        if data.get("analysis_date"):
             if isinstance(data["analysis_date"], str):
                 # Try to parse string date
                 try:

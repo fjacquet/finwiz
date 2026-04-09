@@ -31,7 +31,6 @@ logger = get_logger(__name__)
 
 # Re-export for backward compatibility
 __all__ = [
-    "TwelveDataTool",
     "BollingerBandsData",
     "BollingerBandsValue",
     "MACDData",
@@ -41,6 +40,7 @@ __all__ = [
     "StochasticValue",
     "TechnicalIndicatorSummary",
     "TechnicalIndicatorValue",
+    "TwelveDataTool",
     "TwelveDataTransformers",
 ]
 

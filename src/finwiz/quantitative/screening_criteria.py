@@ -150,4 +150,4 @@ class CriteriaEvaluator:
 
 
 # Import StockData for type hints
-from finwiz.quantitative.screening_filters import StockData  # noqa: E402, F401
+from finwiz.quantitative.screening_filters import StockData  # noqa: E402

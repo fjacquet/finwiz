@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Example showing how to integrate inline HTML generation into existing FinWiz code.
 
-This demonstrates the before/after of adding HTML generation to existing functions."""
+This demonstrates the before/after of adding HTML generation to existing functions.
+"""
 
 import json
 import sys

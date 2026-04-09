@@ -131,7 +131,7 @@ class DataCache:
             return serialized_consolidated
 
         except Exception as e:
-            self.logger.error(f"Failed to consolidate data: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to consolidate data: {e!s}", exc_info=True)
             return {}
 
     def get_aplus_opportunities(self, max_age_hours: int = 24) -> APlusOpportunityCollection | None:
@@ -176,7 +176,7 @@ class DataCache:
                 return None
 
         except Exception as e:
-            self.logger.error(f"Failed to extract A+ opportunities: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to extract A+ opportunities: {e!s}", exc_info=True)
             return None
 
     def get_consolidated_reporter_input(self, max_age_hours: int = 24) -> dict[str, Any]:
@@ -245,7 +245,7 @@ class DataCache:
             return serialized_input
 
         except Exception as e:
-            self.logger.error(f"Failed to generate reporter input: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to generate reporter input: {e!s}", exc_info=True)
             return {}
 
     def _generate_portfolio_allocation_updates(self, opportunities: APlusOpportunityCollection) -> list[dict[str, Any]]:
@@ -322,7 +322,7 @@ class DataCache:
             return allocation_updates
 
         except Exception as e:
-            self.logger.error(f"Failed to generate portfolio allocation updates: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to generate portfolio allocation updates: {e!s}", exc_info=True)
             return []
 
     def _parse_allocation_percentage(self, allocation_text: str) -> float | None:
@@ -435,7 +435,7 @@ class DataCache:
             return result
 
         except Exception as e:
-            self.logger.error(f"Failed to consolidate market sentiment: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to consolidate market sentiment: {e!s}", exc_info=True)
             return create_error_response_for_sentiment(str(e))
 
     def get_consolidated_ticker_validation(self, max_age_hours: int = 24) -> dict[str, Any]:
@@ -470,5 +470,5 @@ class DataCache:
             return result
 
         except Exception as e:
-            self.logger.error(f"Failed to consolidate ticker validation: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to consolidate ticker validation: {e!s}", exc_info=True)
             return create_error_response_for_ticker_validation(str(e))

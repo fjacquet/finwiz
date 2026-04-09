@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 # Re-export classes for backward compatibility
 __all__ = [
-    "ValidationErrorAnalysis",
     "DataRepairSuggestion",
-    "ValidationErrorReport",
+    "ValidationErrorAnalysis",
     "ValidationErrorRecovery",
+    "ValidationErrorReport",
 ]
 
 

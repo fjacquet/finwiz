@@ -83,7 +83,7 @@ class EnhancedSECAnalysisTool(BaseTool):
                 logger.warning("Perplexity integration initialized but API key not available")
                 return None
         except Exception as e:
-            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
     def _run(
@@ -156,8 +156,8 @@ class EnhancedSECAnalysisTool(BaseTool):
         except KeyError as e:
             return f"Error: Missing environment/config: {e}"
         except Exception as e:
-            logger.error(f"Enhanced SEC analysis failed for {ticker}: {str(e)}")
-            return f"Error: Enhanced SEC analysis failed for {ticker}: {str(e)}"
+            logger.error(f"Enhanced SEC analysis failed for {ticker}: {e!s}")
+            return f"Error: Enhanced SEC analysis failed for {ticker}: {e!s}"
 
     def _fetch_latest_filing(self, ticker: str, form_type: str) -> dict[str, str] | None:
         """
@@ -234,7 +234,7 @@ class EnhancedSECAnalysisTool(BaseTool):
                 return filed_at
 
         except Exception as e:
-            logger.debug(f"Could not retrieve filing date from SEC API: {str(e)}")
+            logger.debug(f"Could not retrieve filing date from SEC API: {e!s}")
 
         return None
 
@@ -420,7 +420,7 @@ class EnhancedSECAnalysisTool(BaseTool):
                 return []
 
         except Exception as e:
-            logger.warning(f"Perplexity fundamental search failed for {ticker}: {str(e)}")
+            logger.warning(f"Perplexity fundamental search failed for {ticker}: {e!s}")
 
             # Record failure for feature flag tracking
             from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker

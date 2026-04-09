@@ -246,7 +246,7 @@ class BacktestingTool(BaseTool):
 
         except Exception as e:
             logger.error(f"Error in backtesting: {e}")
-            return f"Error performing backtesting: {str(e)}"
+            return f"Error performing backtesting: {e!s}"
 
     def _get_strategy_class(self, strategy_name: str) -> type:
         """Get strategy class based on strategy name."""

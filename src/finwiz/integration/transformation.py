@@ -50,7 +50,7 @@ def serialize_datetime_objects(obj: Any, _seen: set[int] | None = None) -> Any:
             return [serialize_datetime_objects(item, _seen) for item in obj]
         elif isinstance(obj, set):
             return [serialize_datetime_objects(item, _seen) for item in obj]
-        elif hasattr(obj, "items") and callable(getattr(obj, "items")):
+        elif hasattr(obj, "items") and callable(obj.items):
             # Handle mappingproxy and other dict-like objects
             return {key: serialize_datetime_objects(value, _seen) for key, value in obj.items()}
         elif hasattr(obj, "model_dump"):

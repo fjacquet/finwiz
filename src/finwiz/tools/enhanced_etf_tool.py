@@ -71,7 +71,7 @@ class EnhancedETFAnalysisTool(BaseTool):
                 logger.warning("Perplexity integration initialized but API key not available")
                 return None
         except Exception as e:
-            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
     def _run(
@@ -125,7 +125,7 @@ class EnhancedETFAnalysisTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Enhanced ETF analysis failed for {ticker}: {str(e)}")
+            logger.error(f"Enhanced ETF analysis failed for {ticker}: {e!s}")
             return {"error": f"Enhanced ETF analysis failed for {ticker}: {e}"}
 
     def _extract_factsheet_data(self, ticker: str) -> dict[str, Any]:
@@ -172,7 +172,7 @@ class EnhancedETFAnalysisTool(BaseTool):
                 return []
 
         except Exception as e:
-            logger.warning(f"Perplexity ETF search failed for {ticker}: {str(e)}")
+            logger.warning(f"Perplexity ETF search failed for {ticker}: {e!s}")
             return []
 
 

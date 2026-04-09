@@ -47,7 +47,7 @@ def initialize_perplexity_integration(tool_name: str) -> PerplexityAnalysisInteg
             return None
 
     except Exception as e:
-        logger.error(f"Failed to initialize Perplexity integration for {tool_name}: {str(e)}")
+        logger.error(f"Failed to initialize Perplexity integration for {tool_name}: {e!s}")
         return None
 
 

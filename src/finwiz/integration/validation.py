@@ -132,7 +132,7 @@ class DataValidator:
             return report
 
         except Exception as e:
-            self.logger.error(f"Data availability check failed: {str(e)}", exc_info=True)
+            self.logger.error(f"Data availability check failed: {e!s}", exc_info=True)
 
             # Return error report
             return DataAvailabilityReport(
@@ -147,7 +147,7 @@ class DataValidator:
                     IntegrationError(
                         error_type=IntegrationErrorType.ACCESS_ERROR,
                         crew_name="system",
-                        error_message=f"Data availability check failed: {str(e)}",
+                        error_message=f"Data availability check failed: {e!s}",
                         recovery_suggestions=["Check system logs", "Restart integration system"],
                         timestamp=datetime.now(),
                     )
@@ -186,8 +186,8 @@ class DataValidator:
             return warnings
 
         except Exception as e:
-            self.logger.error(f"Failed to get stale data warnings: {str(e)}", exc_info=True)
-            return [f"Error checking data staleness: {str(e)}"]
+            self.logger.error(f"Failed to get stale data warnings: {e!s}", exc_info=True)
+            return [f"Error checking data staleness: {e!s}"]
 
     def validate_crew_data_structure(self, crew_name: str, crew_data: dict[str, Any]) -> dict[str, Any]:
         """

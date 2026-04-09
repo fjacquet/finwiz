@@ -4,6 +4,6 @@ from finwiz.tools.analysis.analysis_coordinator import HoldingAnalyzerOrchestrat
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis
 
 __all__ = [
-    "HoldingAnalyzerOrchestrator",
     "HoldingAnalysis",
+    "HoldingAnalyzerOrchestrator",
 ]

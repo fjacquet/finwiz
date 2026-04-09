@@ -109,7 +109,7 @@ def setup_logging(
         root_logger.addHandler(error_file_handler)
 
 
-def get_logger(name: str, log_level: int | None = None) -> logging.Logger:  # noqa: UP007
+def get_logger(name: str, log_level: int | None = None) -> logging.Logger:
     """
     Get a logger with the given name.
 

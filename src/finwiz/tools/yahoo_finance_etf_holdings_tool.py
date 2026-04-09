@@ -70,4 +70,4 @@ class YahooFinanceETFHoldingsTool(BaseTool):
 
             return {k: v for k, v in result.items() if v != "N/A" and v != []}
         except Exception as e:
-            return {"error": f"Failed to get ETF holdings for {ticker}: {str(e)}"}
+            return {"error": f"Failed to get ETF holdings for {ticker}: {e!s}"}

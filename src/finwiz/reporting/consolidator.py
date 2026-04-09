@@ -324,5 +324,5 @@ class ReportConsolidator:
             logger.info(f"Consolidation complete in {consolidated.total_execution_time:.3f}s - saved to {output_path}")
         except Exception as e:
             logger.error(f"Failed to save consolidated report: {e}")
-            consolidated.errors.append(f"Failed to save consolidated report: {str(e)}")
+            consolidated.errors.append(f"Failed to save consolidated report: {e!s}")
             raise

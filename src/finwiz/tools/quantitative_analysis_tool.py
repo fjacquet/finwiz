@@ -118,7 +118,7 @@ class QuantitativeAnalysisTool(BaseTool):
 
         except Exception as e:
             logger.error(f"Error in quantitative analysis: {e}")
-            return f"Error performing quantitative analysis: {str(e)}"
+            return f"Error performing quantitative analysis: {e!s}"
 
     def _calculate_start_date(self, timeframe: str, end_date: datetime) -> datetime:
         """Calculate start date based on timeframe."""
@@ -149,7 +149,7 @@ class QuantitativeAnalysisTool(BaseTool):
             return data
         except Exception as e:
             logger.error(f"Error fetching data for {input_data.symbol}: {e}")
-            return f"Error fetching data: {str(e)}"
+            return f"Error fetching data: {e!s}"
 
     def _dispatch_analysis(
         self,

@@ -229,8 +229,7 @@ etf_risk_assessment_task:
   agent: risk_assessor
   output_file: "output/etf/etf_risk_assessment.json"
   async_execution: false
-  context:
-    - etf_technical_detail_task
+  # ⚡ CONTEXT SCOPING: Removed linear context from etf_technical_detail_task
 
 # Investment Strategy Tasks
 etf_investment_strategy_task:
@@ -253,7 +252,10 @@ etf_investment_strategy_task:
   agent: risk_assessor
   output_file: "output/etf/etf_investment_strategies_en.html"
   async_execution: false
+  # ⚡ CONTEXT SCOPING: Fan-in from all 3 parallel tasks
   context:
+    - etf_screening_task
+    - etf_technical_detail_task
     - etf_risk_assessment_task
 
 # translation_task:

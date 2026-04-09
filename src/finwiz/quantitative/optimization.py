@@ -286,7 +286,7 @@ class PortfolioOptimizer:
                 objective_value=0.0,
                 optimization_method=method,
                 success=False,
-                message=f"Optimization failed: {str(e)}. Using equal weights.",
+                message=f"Optimization failed: {e!s}. Using equal weights.",
                 iterations=0,
                 computation_time=computation_time,
             )

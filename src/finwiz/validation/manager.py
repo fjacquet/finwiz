@@ -216,7 +216,7 @@ class ValidationManager:
             result.add_error(
                 field_path="validation",
                 error_type="unexpected_error",
-                message=f"Unexpected validation error: {str(e)}",
+                message=f"Unexpected validation error: {e!s}",
                 context={"schema": schema_class.__name__, "exception_type": type(e).__name__},
             )
             logger.exception(f"Unexpected validation error for {schema_class.__name__}")

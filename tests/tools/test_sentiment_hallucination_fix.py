@@ -97,7 +97,7 @@ class TestSentimentHallucinationFix:
             # Verify no articles contain fake URL patterns
             all_articles = result["top_pos"] + result["top_neg"]
             for article in all_articles:
-                if "url" in article and article["url"]:
+                if article.get("url"):
                     url = article["url"]
                     # Should not contain obvious fake patterns
                     assert "xyz12345" not in url

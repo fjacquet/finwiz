@@ -71,6 +71,6 @@ def kickoff() -> None:
         # Re-raise SystemExit to allow proper application termination
         raise
     except Exception as e:
-        logger.critical(f"❌ FinWiz analysis workflow failed: {str(e)}", exc_info=True)
+        logger.critical(f"❌ FinWiz analysis workflow failed: {e!s}", exc_info=True)
         logger.critical("Check the logs above for detailed error information")
         raise

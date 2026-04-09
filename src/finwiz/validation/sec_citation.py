@@ -177,7 +177,7 @@ class SECCitationValidator:
             )
 
         except Exception as e:
-            error_msg = f"SEC citation validation failed: {str(e)}"
+            error_msg = f"SEC citation validation failed: {e!s}"
             self.logger.error(error_msg, exc_info=True)
             result.validation_errors.append(error_msg)
             result.is_valid = False
@@ -207,7 +207,7 @@ class SECCitationValidator:
                 results[citation_id] = result
 
             except Exception as e:
-                error_msg = f"Failed to validate citation {i}: {str(e)}"
+                error_msg = f"Failed to validate citation {i}: {e!s}"
                 self.logger.error(error_msg, exc_info=True)
 
                 results[f"citation_{i}"] = SECCitationValidationResult(is_valid=False, validation_timestamp=datetime.now(), validation_errors=[error_msg])
@@ -310,7 +310,7 @@ class SECCitationValidator:
             )
 
         except Exception as e:
-            error_msg = f"SEC citation consolidation failed: {str(e)}"
+            error_msg = f"SEC citation consolidation failed: {e!s}"
             self.logger.error(error_msg, exc_info=True)
             consolidated.validation_summary = {"error": error_msg, "total_citations_processed": 0, "valid_citations": 0}
 
@@ -344,7 +344,7 @@ class SECCitationValidator:
                             citation = SECCitation.model_validate(raw_citation)
                             citations.append(citation)
                         except PydanticValidationError as e:
-                            self.logger.warning(f"Invalid SEC citation in {crew_name} output: {str(e)}")
+                            self.logger.warning(f"Invalid SEC citation in {crew_name} output: {e!s}")
 
                 elif "ten_k_insights" in output:
                     # Extract from 10-K insights (stock crew)
@@ -359,7 +359,7 @@ class SECCitationValidator:
                     self.logger.debug(f"Extracted {len(citations)} citations from {crew_name} crew")
 
             except Exception as e:
-                self.logger.error(f"Failed to extract citations from {crew_name} crew: {str(e)}", exc_info=True)
+                self.logger.error(f"Failed to extract citations from {crew_name} crew: {e!s}", exc_info=True)
 
         total_citations = sum(len(citations) for citations in crew_citations.values())
         self.logger.info(
@@ -400,7 +400,7 @@ class SECCitationValidator:
             return True, "", filing_info
 
         except Exception as e:
-            return False, f"URL validation failed: {str(e)}", None
+            return False, f"URL validation failed: {e!s}", None
 
     def _validate_filing_date(self, filed_at: datetime) -> bool:
         """Validate filing date is reasonable."""
@@ -549,7 +549,7 @@ class SECCitationValidator:
                     citations.append(citation)
 
             except Exception as e:
-                self.logger.warning(f"Failed to extract citation from insight: {str(e)}")
+                self.logger.warning(f"Failed to extract citation from insight: {e!s}")
 
         return citations
 

@@ -118,7 +118,7 @@ class JsonToHtmlConverter:
             return str(html_path)
 
         except Exception as e:
-            logger.warning(f"Failed to convert {json_path.name}: {str(e)}")
+            logger.warning(f"Failed to convert {json_path.name}: {e!s}")
             return None
 
     def convert_directory(self, output_dir: Path = Path("output")) -> dict[str, list[str]]:

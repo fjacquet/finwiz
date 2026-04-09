@@ -11,8 +11,8 @@ from finwiz.orchestrators.discovery.extractors.etf_extractor import ETFOpportuni
 from finwiz.orchestrators.discovery.extractors.stock_extractor import StockOpportunityExtractor
 
 __all__ = [
+    "CryptoOpportunityExtractor",
+    "ETFOpportunityExtractor",
     "OpportunityExtractor",
     "StockOpportunityExtractor",
-    "ETFOpportunityExtractor",
-    "CryptoOpportunityExtractor",
 ]

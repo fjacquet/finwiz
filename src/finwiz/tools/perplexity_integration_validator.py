@@ -116,7 +116,7 @@ class PerplexityIntegrationValidator:
                     result["issues"].append("Missing _get_perplexity_integration method")
 
             except Exception as e:
-                result["issues"].append(f"Failed to instantiate tool: {str(e)}")
+                result["issues"].append(f"Failed to instantiate tool: {e!s}")
 
             # Check source code for feature flag checking patterns
             source_code = inspect.getsource(tool_class)
@@ -137,7 +137,7 @@ class PerplexityIntegrationValidator:
                 result["issues"].append("Missing proper logging statements")
 
         except Exception as e:
-            result["issues"].append(f"Validation error: {str(e)}")
+            result["issues"].append(f"Validation error: {e!s}")
 
         # Determine overall status
         if result["issues"]:

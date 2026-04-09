@@ -75,4 +75,4 @@ def perform_backtesting(
 
     except Exception as e:
         logger.error(f"Error in backtesting: {e}")
-        return f"Backtesting error: {str(e)}"
+        return f"Backtesting error: {e!s}"

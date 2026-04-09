@@ -138,5 +138,5 @@ class APlusDataExtractor:
             return is_valid, errors
 
         except Exception as e:
-            self.logger.error(f"A+ opportunities validation failed: {str(e)}", exc_info=True)
-            return False, [f"Validation error: {str(e)}"]
+            self.logger.error(f"A+ opportunities validation failed: {e!s}", exc_info=True)
+            return False, [f"Validation error: {e!s}"]

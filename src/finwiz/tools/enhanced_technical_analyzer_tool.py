@@ -65,7 +65,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
                 logger.warning("Perplexity integration initialized but API key not available")
                 return None
         except Exception as e:
-            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
     def _run(self, ticker: str, asset_type: str = "stock", lookback_days: int = 100, include_perplexity: bool = True) -> str:
@@ -98,8 +98,8 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             )
 
         except Exception as e:
-            logger.error(f"Error in enhanced technical analysis for {ticker}: {str(e)}")
-            return f"Error performing enhanced technical analysis for {ticker}: {str(e)}"
+            logger.error(f"Error in enhanced technical analysis for {ticker}: {e!s}")
+            return f"Error performing enhanced technical analysis for {ticker}: {e!s}"
 
     def _get_price_data(self, ticker: str, lookback_days: int) -> PriceData | None:
         """Get historical price data for technical analysis."""
@@ -126,7 +126,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
             return price_data
 
         except Exception as e:
-            logger.error(f"Error fetching price data for {ticker}: {str(e)}")
+            logger.error(f"Error fetching price data for {ticker}: {e!s}")
             return None
 
     async def _get_perplexity_technical_insights(self, ticker: str, asset_type: str) -> list[SonarArticle]:
@@ -149,7 +149,7 @@ class EnhancedTechnicalAnalyzerTool(BaseTool):
                 return []
 
         except Exception as e:
-            logger.warning(f"Perplexity technical search failed for {ticker}: {str(e)}")
+            logger.warning(f"Perplexity technical search failed for {ticker}: {e!s}")
 
             # Record failure for feature flag tracking
             from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker

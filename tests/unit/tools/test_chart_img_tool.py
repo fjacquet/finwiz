@@ -152,7 +152,7 @@ class TestChartImgTool:
                 resp.raise_for_status()
                 return "success"
             except Exception as e:
-                return f"Error generating chart image for {symbol}: {str(e)}"
+                return f"Error generating chart image for {symbol}: {e!s}"
 
         mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 
