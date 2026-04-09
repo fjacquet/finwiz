@@ -182,7 +182,7 @@ class TestTwelveDataIndicatorTool:
                 resp.raise_for_status()
                 return resp.text
             except Exception as e:
-                return f"Error fetching Twelve Data {indicator} for {symbol}: {str(e)}"
+                return f"Error fetching Twelve Data {indicator} for {symbol}: {e!s}"
 
         mocker.patch.object(tool, "_run", side_effect=mock_run_method)
 

@@ -322,7 +322,7 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         return llm
 
     except Exception as e:
-        logger.error(f"Failed to configure LLM: {str(e)}")
+        logger.error(f"Failed to configure LLM: {e!s}")
         raise
 
 
@@ -481,7 +481,7 @@ def get_thinking_llm() -> LLM:
         return llm
 
     except Exception as e:
-        logger.error(f"Failed to configure thinking LLM: {str(e)}")
+        logger.error(f"Failed to configure thinking LLM: {e!s}")
         raise
 
 
@@ -569,7 +569,7 @@ def validate_llm_config() -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"LLM configuration validation failed: {str(e)}")
+        logger.error(f"LLM configuration validation failed: {e!s}")
         return False
 
 

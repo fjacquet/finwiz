@@ -1,4 +1,8 @@
-"""Element-specific CSS styles for rebalancing reports."""
+"""Element-specific CSS styles for rebalancing reports.
+
+Uses CSS variables from the shared design tokens (_design_tokens.html)
+for consistent theming across all reports.
+"""
 
 
 def get_base_styles() -> str:
@@ -6,7 +10,7 @@ def get_base_styles() -> str:
     return """
     /* Rebalancing-specific styles */
     .executive-summary {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
         border-radius: 10px;
         padding: 20px;
         margin-bottom: 20px;
@@ -20,13 +24,13 @@ def get_base_styles() -> str:
     }
 
     .status-indicator.rebalance_now {
-        background-color: #fff3cd;
-        border: 1px solid #ffeaa7;
+        background-color: rgba(253, 126, 20, 0.15);
+        border: 1px solid var(--warning);
     }
 
     .status-indicator.no_action {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
+        background-color: rgba(25, 135, 84, 0.15);
+        border: 1px solid var(--success);
     }
 
     .summary-metrics {
@@ -37,32 +41,32 @@ def get_base_styles() -> str:
     }
 
     .metric-card {
-        background: white;
+        background: var(--bg-card);
         padding: 15px;
         border-radius: 8px;
         text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     .metric-card h4 {
         margin: 0 0 10px 0;
         font-size: 0.9em;
-        color: #666;
+        color: var(--text-muted);
         border: none;
     }
 
     .metric-value {
         font-size: 1.5em;
         font-weight: bold;
-        color: #2c3e50;
+        color: var(--text-primary);
     }
 
     .metric-value.positive {
-        color: #27ae60;
+        color: var(--success);
     }
 
     .metric-value.negative {
-        color: #e74c3c;
+        color: var(--danger);
     }
     """
 
@@ -75,14 +79,14 @@ def get_table_styles() -> str:
         width: 100%;
         border-collapse: collapse;
         margin: 15px 0;
-        background: white;
+        background: var(--bg-card);
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     .portfolio-table th, .trades-table th, .comparison-table th {
-        background: #34495e;
+        background: var(--text-secondary);
         color: white;
         padding: 12px;
         text-align: left;
@@ -91,11 +95,11 @@ def get_table_styles() -> str:
 
     .portfolio-table td, .trades-table td, .comparison-table td {
         padding: 10px 12px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .portfolio-table tr:hover, .trades-table tr:hover, .comparison-table tr:hover {
-        background-color: #f8f9fa;
+        background-color: var(--bg-secondary);
     }
     """
 
@@ -105,65 +109,65 @@ def get_action_styles() -> str:
     return """
     /* Action styling */
     .action-buy {
-        color: #27ae60;
+        color: var(--success);
         font-weight: bold;
     }
 
     .action-sell {
-        color: #e74c3c;
+        color: var(--danger);
         font-weight: bold;
     }
 
     .action-hold {
-        color: #7f8c8d;
+        color: var(--text-muted);
     }
 
     /* Deviation styling */
     .deviation-high {
-        color: #e74c3c;
+        color: var(--danger);
         font-weight: bold;
     }
 
     .deviation-medium {
-        color: #f39c12;
+        color: var(--warning);
         font-weight: bold;
     }
 
     .deviation-low {
-        color: #27ae60;
+        color: var(--success);
     }
 
     /* Urgency styling */
     .urgency-urgent {
-        color: #e74c3c;
+        color: var(--danger);
         font-weight: bold;
-        background-color: #fdf2f2;
+        background-color: rgba(220, 53, 69, 0.05);
     }
 
     .urgency-high {
-        color: #f39c12;
+        color: var(--warning);
         font-weight: bold;
     }
 
     .urgency-medium {
-        color: #3498db;
+        color: var(--accent);
     }
 
     .urgency-low {
-        color: #7f8c8d;
+        color: var(--text-muted);
     }
 
     /* Weight change styling */
     .weight-change.positive {
-        color: #27ae60;
+        color: var(--success);
     }
 
     .weight-change.negative {
-        color: #e74c3c;
+        color: var(--danger);
     }
 
     .weight-change.neutral {
-        color: #7f8c8d;
+        color: var(--text-muted);
     }
     """
 
@@ -173,7 +177,7 @@ def get_trade_styles() -> str:
     return """
     /* Trade details */
     .trade-details {
-        background-color: #f8f9fa;
+        background-color: var(--bg-secondary);
     }
 
     .trade-rationale {
@@ -189,16 +193,16 @@ def get_trade_styles() -> str:
     .market-warning {
         margin-top: 10px;
         padding: 8px;
-        background-color: #fff3cd;
-        border-left: 4px solid #ffc107;
+        background-color: rgba(253, 126, 20, 0.15);
+        border-left: 4px solid var(--warning);
         border-radius: 4px;
     }
 
     .tax-implications {
         margin-top: 10px;
         padding: 8px;
-        background-color: #e7f3ff;
-        border-left: 4px solid #007bff;
+        background-color: rgba(13, 110, 253, 0.1);
+        border-left: 4px solid var(--accent);
         border-radius: 4px;
     }
     """
@@ -220,26 +224,26 @@ def get_risk_styles() -> str:
         text-align: center;
         padding: 20px;
         border-radius: 10px;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: var(--bg-card);
+        box-shadow: var(--shadow-sm);
         flex: 1;
     }
 
     .risk-score h4 {
         margin: 0 0 10px 0;
-        color: #666;
+        color: var(--text-muted);
         border: none;
     }
 
     .score-value {
         font-size: 2em;
         font-weight: bold;
-        color: #2c3e50;
+        color: var(--text-primary);
     }
 
     .risk-arrow {
         font-size: 2em;
-        color: #3498db;
+        color: var(--accent);
     }
 
     .risk-improvement {
@@ -250,18 +254,18 @@ def get_risk_styles() -> str:
     }
 
     .risk-improvement.improvement {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
+        background-color: rgba(25, 135, 84, 0.15);
+        border: 1px solid var(--success);
     }
 
     .risk-improvement.deterioration {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
+        background-color: rgba(220, 53, 69, 0.1);
+        border: 1px solid var(--danger);
     }
 
     .risk-improvement.neutral {
-        background-color: #e2e3e5;
-        border: 1px solid #d6d8db;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
     }
 
     .risk-value {
@@ -276,40 +280,40 @@ def get_cost_styles() -> str:
     return """
     /* Cost analysis */
     .cost-breakdown {
-        background: white;
+        background: var(--bg-card);
         border-radius: 8px;
         padding: 20px;
         margin: 15px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     .cost-item {
         display: flex;
         justify-content: space-between;
         padding: 10px 0;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .cost-item.total {
-        border-top: 2px solid #34495e;
+        border-top: 2px solid var(--text-secondary);
         border-bottom: none;
         margin-top: 10px;
         font-size: 1.1em;
     }
 
     .cost-label {
-        color: #666;
+        color: var(--text-muted);
     }
 
     .cost-value {
-        color: #2c3e50;
+        color: var(--text-primary);
         font-weight: 600;
     }
 
     .cost-metrics {
         margin-top: 15px;
         padding: 15px;
-        background-color: #f8f9fa;
+        background-color: var(--bg-secondary);
         border-radius: 6px;
     }
     """

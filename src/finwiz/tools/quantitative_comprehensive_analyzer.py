@@ -102,7 +102,7 @@ def perform_comprehensive_analysis(
 
     except Exception as e:
         logger.error(f"Error in comprehensive analysis: {e}")
-        return f"Comprehensive analysis error: {str(e)}"
+        return f"Comprehensive analysis error: {e!s}"
 
 
 def _create_technical_result(symbol: str, tech_result) -> QuantitativeTechnicalAnalysis:

@@ -60,7 +60,7 @@ def log_crew_execution_start(
         schema_manager.save_json_file(execution_log_path, execution_log)
 
     except Exception as e:
-        logger.warning(f"Failed to log execution start for {crew_name}: {str(e)}")
+        logger.warning(f"Failed to log execution start for {crew_name}: {e!s}")
 
 
 async def coordinate_crew_execution(
@@ -99,7 +99,7 @@ async def coordinate_crew_execution(
                 executed_crews.append(crew.name)
 
             except Exception as e:
-                error_msg = f"Failed to coordinate crew {crew.name}: {str(e)}"
+                error_msg = f"Failed to coordinate crew {crew.name}: {e!s}"
                 errors.append(error_msg)
                 failed_crews.append(crew.name)
                 logger.error(error_msg, exc_info=True)
@@ -129,7 +129,7 @@ async def coordinate_crew_execution(
 
     except Exception as e:
         execution_time = (datetime.now() - start_time).total_seconds()
-        error_msg = f"Crew coordination failed: {str(e)}"
+        error_msg = f"Crew coordination failed: {e!s}"
         logger.error(error_msg, exc_info=True)
 
         return ExecutionResult(

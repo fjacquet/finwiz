@@ -120,10 +120,10 @@ class CoinMarketCapInfoTool(BaseTool):
         info += f"**Last Updated:** {quote.get('last_updated', 'N/A')}\n\n"
 
         # Add additional details if available
-        if "platform" in crypto_data and crypto_data["platform"]:
+        if crypto_data.get("platform"):
             info += f"**Token Platform:** {crypto_data['platform'].get('name', 'N/A')}\n"
 
-        if "tags" in crypto_data and crypto_data["tags"]:
+        if crypto_data.get("tags"):
             info += f"**Categories:** {', '.join(crypto_data['tags'][:5])}\n"
 
         logger.info(f"Successfully retrieved information for {symbol}")
@@ -224,7 +224,7 @@ class CoinMarketCapListTool(BaseTool):
             return result
 
         except Exception as e:
-            error_msg = f"Error retrieving cryptocurrency list: {str(e)}"
+            error_msg = f"Error retrieving cryptocurrency list: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -366,7 +366,7 @@ class CoinMarketCapHistoricalTool(BaseTool):
             return result
 
         except Exception as e:
-            error_msg = f"Error retrieving historical data for {symbol}: {str(e)}"
+            error_msg = f"Error retrieving historical data for {symbol}: {e!s}"
             logger.error(error_msg)
             return error_msg
 
@@ -476,7 +476,7 @@ class CoinMarketCapNewsTool(BaseTool):
             return result
 
         except Exception as e:
-            error_msg = f"Error retrieving cryptocurrency news: {str(e)}"
+            error_msg = f"Error retrieving cryptocurrency news: {e!s}"
             logger.error(error_msg)
             return error_msg
 

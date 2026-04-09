@@ -12,7 +12,7 @@ from typing import Any
 from finwiz.schemas.quantitative.config_models import BacktestConfig, QuantConfig, ScreenerConfig
 
 
-class QuantitativeConfigManager:  # noqa: PLR0904
+class QuantitativeConfigManager:
     """
     Manager class for quantitative analysis configuration.
 

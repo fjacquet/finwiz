@@ -367,7 +367,7 @@ class PortfolioHoldingsProcessor:
             logger.warning(f"Validation failed for {holding.ticker}: {e}")
             return {
                 "valid": False,
-                "reason": f"Validation error: {str(e)}",
+                "reason": f"Validation error: {e!s}",
                 "meta": {},
             }
 

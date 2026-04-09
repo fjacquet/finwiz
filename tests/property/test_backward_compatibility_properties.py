@@ -235,7 +235,7 @@ class TestOrchestratorImportFromNewLocation:
         """
         try:
             module = __import__("finwiz.flow_state", fromlist=["DeepAnalysisResult"])
-            imported_object = getattr(module, "DeepAnalysisResult")
+            imported_object = module.DeepAnalysisResult
         except (ImportError, AttributeError) as e:
             pytest.fail(f"Failed to import DeepAnalysisResult from finwiz.flow_state: {e}")
 

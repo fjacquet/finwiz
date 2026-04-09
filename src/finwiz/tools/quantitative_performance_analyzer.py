@@ -79,7 +79,7 @@ def perform_performance_analysis(
 
     except Exception as e:
         logger.error(f"Error in performance analysis: {e}")
-        return f"Performance analysis error: {str(e)}"
+        return f"Performance analysis error: {e!s}"
 
 
 def add_etf_metrics(perf_dict: dict, symbol: str, logger) -> dict:

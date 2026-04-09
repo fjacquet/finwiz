@@ -91,7 +91,7 @@ class ValidationManager:
             return result
 
         except Exception as e:
-            error_msg = f"Validation failed for crew {crew_name}: {str(e)}"
+            error_msg = f"Validation failed for crew {crew_name}: {e!s}"
             self.logger.error(error_msg, exc_info=True)
 
             return ValidationResult(is_valid=False, validation_timestamp=datetime.now(), errors=[error_msg], warnings=[])
@@ -114,4 +114,4 @@ class ValidationManager:
             schema_manager.save_json_file(self.validation_status_path, validation_status)
 
         except Exception as e:
-            self.logger.warning(f"Failed to store validation result for {crew_name}: {str(e)}")
+            self.logger.warning(f"Failed to store validation result for {crew_name}: {e!s}")

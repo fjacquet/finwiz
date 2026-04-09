@@ -68,7 +68,7 @@ class YFinanceAdapter(BaseDataAdapter):
         except builtins.TimeoutError:
             raise TimeoutError(f"YFinance request timed out after {self.timeout_seconds}s for {ticker}")
         except Exception as e:
-            raise DataAcquisitionError(f"YFinance error for {ticker}: {str(e)}")
+            raise DataAcquisitionError(f"YFinance error for {ticker}: {e!s}")
 
     def _fetch_yfinance_data(self, ticker: str) -> dict:
         """Fetch data from yfinance (blocking call)."""

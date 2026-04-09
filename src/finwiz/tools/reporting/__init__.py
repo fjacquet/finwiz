@@ -9,7 +9,7 @@ from finwiz.tools.reporting.report_sections import (
 )
 
 __all__ = [
+    "HTMLReportFormatter",
     "ReportSection",
     "ReportSectionBuilder",
-    "HTMLReportFormatter",
 ]

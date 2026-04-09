@@ -126,7 +126,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
 
         except Exception as e:
             # Return empty list instead of fake sample articles
-            logger.error(f"News collection failed for {symbol}: {str(e)}")
+            logger.error(f"News collection failed for {symbol}: {e!s}")
             return []
 
     def _get_financial_news(self, symbol: str, max_count: int, days_back: int) -> list[dict[str, Any]]:
@@ -176,7 +176,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                             logger.warning(f"Perplexity search returned no results for {symbol}")
 
                 except Exception as e:
-                    logger.warning(f"Perplexity integration failed for {symbol}: {str(e)}")
+                    logger.warning(f"Perplexity integration failed for {symbol}: {e!s}")
 
             # Try Yahoo Finance news tool
             try:
@@ -202,14 +202,14 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                         logger.info(f"Retrieved {len(articles)} real articles from Yahoo Finance for {symbol}")
                         return articles[:max_count]
             except Exception as e:
-                logger.warning(f"Yahoo Finance news failed for {symbol}: {str(e)}")
+                logger.warning(f"Yahoo Finance news failed for {symbol}: {e!s}")
 
             # If no real sources work, return empty list instead of fake data
             logger.warning(f"No real news sources available for {symbol} - returning empty list instead of fake data")
             return []
 
         except Exception as e:
-            logger.error(f"Error collecting financial news for {symbol}: {str(e)}")
+            logger.error(f"Error collecting financial news for {symbol}: {e!s}")
             return []
 
     def _get_crypto_news(self, symbol: str, max_count: int, days_back: int) -> list[dict[str, Any]]:
@@ -255,7 +255,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                             logger.warning(f"Perplexity crypto search returned no results for {symbol}")
 
                 except Exception as e:
-                    logger.warning(f"Perplexity crypto integration failed for {symbol}: {str(e)}")
+                    logger.warning(f"Perplexity crypto integration failed for {symbol}: {e!s}")
 
             # If Perplexity not available, log and return empty
             if not articles:
@@ -264,7 +264,7 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             return articles
 
         except Exception as e:
-            logger.error(f"Error collecting crypto news for {symbol}: {str(e)}")
+            logger.error(f"Error collecting crypto news for {symbol}: {e!s}")
             return []
 
     def _get_general_news(self, symbol: str, max_count: int, days_back: int) -> list[dict[str, Any]]:
@@ -310,13 +310,13 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                             logger.debug(f"Perplexity general search returned no results for {symbol}")
 
                 except Exception as e:
-                    logger.warning(f"Perplexity general news integration failed for {symbol}: {str(e)}")
+                    logger.warning(f"Perplexity general news integration failed for {symbol}: {e!s}")
 
             # If Perplexity not available, return empty
             return articles
 
         except Exception as e:
-            logger.error(f"Error collecting general news for {symbol}: {str(e)}")
+            logger.error(f"Error collecting general news for {symbol}: {e!s}")
             return []
 
     def _create_sample_financial_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:

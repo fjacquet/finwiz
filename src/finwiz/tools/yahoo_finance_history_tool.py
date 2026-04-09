@@ -111,4 +111,4 @@ class YahooFinanceHistoryTool(BaseTool):
 
             return result
         except Exception as e:
-            return {"error": f"Failed to get history for {ticker}: {str(e)}"}
+            return {"error": f"Failed to get history for {ticker}: {e!s}"}

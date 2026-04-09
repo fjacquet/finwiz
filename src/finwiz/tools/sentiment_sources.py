@@ -103,7 +103,7 @@ class SentimentDataSources:
                 self.logger.warning("Perplexity integration initialized but API key not available")
                 return None
         except Exception as e:
-            self.logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            self.logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
     def get_news_data(self, ticker: str, max_articles: int) -> list[dict]:
@@ -427,7 +427,7 @@ class SentimentDataSources:
             except Exception as e:
                 # Any exception in Sonar integration should not break the reporter flow
                 sonar_fallback_used = True
-                self.logger.warning(f"Sonar integration error for {ticker}, continuing with Yahoo Finance only: {str(e)}")
+                self.logger.warning(f"Sonar integration error for {ticker}, continuing with Yahoo Finance only: {e!s}")
 
                 # Record failure for feature flag tracking
                 from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker

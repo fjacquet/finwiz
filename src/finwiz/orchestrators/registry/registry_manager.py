@@ -105,7 +105,7 @@ class RegistryManager:
         try:
             return self.freshness_checker.recommend_refresh_order(max_age_hours)
         except Exception as e:
-            self.logger.error(f"Failed to get refresh recommendations: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to get refresh recommendations: {e!s}", exc_info=True)
             return []
 
     def check_data_freshness(self, max_age_hours: int = 24) -> FreshnessReport:
@@ -115,7 +115,7 @@ class RegistryManager:
         try:
             return self.freshness_checker.generate_freshness_report(max_age_hours)
         except Exception as e:
-            self.logger.error(f"Data freshness check failed: {str(e)}", exc_info=True)
+            self.logger.error(f"Data freshness check failed: {e!s}", exc_info=True)
             return FreshnessReport(
                 fresh_data=[],
                 stale_data=[],

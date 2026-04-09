@@ -166,7 +166,7 @@ class TwelveDataTransformers:
         values = []
         current_value = None
 
-        if "values" in api_response and api_response["values"]:
+        if api_response.get("values"):
             for item in api_response["values"]:
                 value = TechnicalIndicatorValue(datetime=item["datetime"], value=float(item["rsi"]))
                 values.append(value)
@@ -207,7 +207,7 @@ class TwelveDataTransformers:
         current_macd = None
         current_signal = None
 
-        if "values" in api_response and api_response["values"]:
+        if api_response.get("values"):
             for item in api_response["values"]:
                 value = MACDValue(
                     datetime=item["datetime"],
@@ -254,7 +254,7 @@ class TwelveDataTransformers:
         """
         values = []
 
-        if "values" in api_response and api_response["values"]:
+        if api_response.get("values"):
             for item in api_response["values"]:
                 value = BollingerBandsValue(
                     datetime=item["datetime"],
@@ -298,7 +298,7 @@ class TwelveDataTransformers:
         current_k = None
         current_d = None
 
-        if "values" in api_response and api_response["values"]:
+        if api_response.get("values"):
             for item in api_response["values"]:
                 value = StochasticValue(datetime=item["datetime"], slow_k=float(item["slow_k"]), slow_d=float(item["slow_d"]))
                 values.append(value)

@@ -42,14 +42,14 @@ def get_generator_for_crew(crew_name: str) -> BaseReportGenerator | None:
 
 
 __all__ = [
-    "PythonReportGenerator",
-    "generate_python_report",
+    "CREW_GENERATORS",
     "BaseReportGenerator",
-    "StockReportGenerator",
-    "ETFReportGenerator",
     "CryptoReportGenerator",
     "DiscoveryReportGenerator",
+    "ETFReportGenerator",
+    "PythonReportGenerator",
     "RebalancingReportGenerator",
-    "CREW_GENERATORS",
+    "StockReportGenerator",
+    "generate_python_report",
     "get_generator_for_crew",
 ]

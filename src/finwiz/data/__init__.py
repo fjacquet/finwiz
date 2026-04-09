@@ -7,7 +7,7 @@ from .data_source_orchestrator import (
 )
 
 __all__ = [
+    "DataLineage",
     "DataSourceOrchestrator",
     "OrchestrationResult",
-    "DataLineage",
 ]

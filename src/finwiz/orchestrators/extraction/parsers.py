@@ -146,7 +146,7 @@ class DataParser:
             return unwrapped_candidates
 
         except Exception as e:
-            self.logger.error(f"Failed to load {asset_type} opportunities from {file_path}: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to load {asset_type} opportunities from {file_path}: {e!s}", exc_info=True)
             return []
 
     def extract_moat_info(self, moat_analysis: Any) -> tuple[str, str, list[str]]:

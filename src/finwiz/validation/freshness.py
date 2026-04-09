@@ -103,7 +103,7 @@ class DataFreshnessValidator:
 
         except Exception as e:
             logger.error(f"Freshness validation failed for {data_source}: {e}")
-            return FreshnessResult(is_fresh=False, age_hours=None, warning=f"Validation error: {str(e)}", should_refresh=True, data_source=data_source)
+            return FreshnessResult(is_fresh=False, age_hours=None, warning=f"Validation error: {e!s}", should_refresh=True, data_source=data_source)
 
     def _extract_timestamp(self, data: dict[str, Any] | list[dict[str, Any]]) -> datetime | None:
         """

@@ -106,4 +106,4 @@ class YahooFinanceTickerInfoTool(BaseTool):
             return cleaned_result
         except Exception as e:
             logger.error(f"Failed to get ticker info for {ticker}: {e}")
-            return {"error": f"Failed to get ticker info for {ticker}: {str(e)}"}
+            return {"error": f"Failed to get ticker info for {ticker}: {e!s}"}

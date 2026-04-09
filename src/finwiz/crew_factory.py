@@ -359,7 +359,7 @@ class CrewFactory:
             return {"report_generation_success": True}
 
         except Exception as e:
-            self.logger.error(f"Report generation failed: {str(e)}", exc_info=True)
+            self.logger.error(f"Report generation failed: {e!s}", exc_info=True)
 
             # Return error response
             return {

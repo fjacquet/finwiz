@@ -56,7 +56,7 @@ async def run_performance_benchmark(test_cases: list[dict[str, Any]], iterations
         }
 
     except Exception as e:
-        logger.error(f"Benchmark failed: {str(e)}")
+        logger.error(f"Benchmark failed: {e!s}")
         return {"error": str(e)}
 
 
@@ -93,7 +93,7 @@ async def validate_performance_requirements(sample_size: int = 20) -> dict[str, 
         return validation_result
 
     except Exception as e:
-        logger.error(f"Validation failed: {str(e)}")
+        logger.error(f"Validation failed: {e!s}")
         return {"error": str(e)}
 
 
@@ -200,7 +200,7 @@ async def main() -> None:
         logger.info("Benchmark interrupted by user")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"Benchmark failed: {str(e)}")
+        logger.error(f"Benchmark failed: {e!s}")
         sys.exit(1)
 
 

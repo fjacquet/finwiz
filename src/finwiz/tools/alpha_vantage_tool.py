@@ -72,7 +72,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
                 logger.warning("Perplexity integration initialized but API key not available")
                 return None
         except Exception as e:
-            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
     def _run(self, ticker: str, include_perplexity: bool = True, prefetched_data: dict | None = None) -> str:
@@ -120,8 +120,8 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             )
 
         except Exception as e:
-            logger.error(f"Error in enhanced Alpha Vantage analysis for {ticker}: {str(e)}")
-            return f"Error performing enhanced company overview analysis for {ticker}: {str(e)}"
+            logger.error(f"Error in enhanced Alpha Vantage analysis for {ticker}: {e!s}")
+            return f"Error performing enhanced company overview analysis for {ticker}: {e!s}"
 
     @api_tool(
         provider=APIProvider.ALPHA_VANTAGE,
@@ -182,7 +182,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
                 return []
 
         except Exception as e:
-            logger.warning(f"Perplexity fundamental search failed for {ticker}: {str(e)}")
+            logger.warning(f"Perplexity fundamental search failed for {ticker}: {e!s}")
 
             # Record failure for feature flag tracking
             from finwiz.tools.perplexity_logging import PerplexityFeatureFlagTracker

@@ -210,11 +210,11 @@ class DataSourceOrchestrator:
             except (DataAcquisitionError, TimeoutError, InvalidDataError) as e:
                 self.logger.debug(f"{adapter.source_name} failed for {ticker}: {e}")
                 result.sources_failed.append(adapter.source_name)
-                result.warnings.append(f"{adapter.source_name}: {str(e)}")
+                result.warnings.append(f"{adapter.source_name}: {e!s}")
             except Exception as e:
                 self.logger.error(f"Unexpected error from {adapter.source_name} for {ticker}: {e}")
                 result.sources_failed.append(adapter.source_name)
-                result.warnings.append(f"{adapter.source_name}: Unexpected error - {str(e)}")
+                result.warnings.append(f"{adapter.source_name}: Unexpected error - {e!s}")
 
     def _merge_data(self, data: FundamentalData, result: OrchestrationResult) -> None:
         """Merge data from source into result (only fill missing fields)."""
@@ -259,7 +259,7 @@ class DataSourceOrchestrator:
 
         except Exception as e:
             self.logger.error(f"Fallback failed for {ticker}: {e}")
-            result.warnings.append(f"Fallback failed: {str(e)}")
+            result.warnings.append(f"Fallback failed: {e!s}")
 
     def _calculate_confidence(self, result: OrchestrationResult) -> float:
         """Calculate confidence score based on data sources and completeness."""

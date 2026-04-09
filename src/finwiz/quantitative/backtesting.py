@@ -24,14 +24,14 @@ from .backtesting_utils import create_backtrader_datafeed, setup_cerebro
 
 # Re-export for backward compatibility
 __all__ = [
-    "BacktestingEngine",
     "BacktestResult",
+    "BacktestingEngine",
     "PositionSizingMethod",
+    "SimpleMovingAverageStrategy",
+    "StrategyFramework",
     "Trade",
     "TradeStatus",
     "TradeType",
-    "SimpleMovingAverageStrategy",
-    "StrategyFramework",
     "get_backtesting_engine",
 ]
 

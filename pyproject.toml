@@ -62,6 +62,7 @@ dependencies = [
     "feedparser>=6.0.11",
     "gnews>=0.3.7",
     "fear-and-greed>=0.0.9",
+    "requests>=2.33.1",
 ]
 
 [project.scripts]
@@ -122,8 +123,41 @@ target-version = "py312"
 [tool.ruff.lint]
 # Enable Pyflakes and pycodestyle rules by default.
 # Flake8-compatible list of codes to enable/disable.
-select = ["E", "F", "W", "I", "UP", "TID"]
-ignore = ["E501", "F841", "W291"]
+select = ["E", "F", "W", "I", "UP", "TID", "D", "S", "B", "RUF"]
+ignore = [
+    "E501",   # Line too long (handled by line-length=180)
+    "F841",   # Local variable assigned but never used
+    "W291",   # Trailing whitespace
+    "D100",   # Missing docstring in public module
+    "D102",   # Missing docstring in public method (too many existing violations)
+    "D104",   # Missing docstring in public package
+    "D105",   # Missing docstring in magic method
+    "D107",   # Missing docstring in __init__
+    "D203",   # 1 blank line before class docstring (conflicts with D211)
+    "D212",   # Multi-line summary at first line (conflicts with D213; codebase uses second-line style)
+    "D213",   # Multi-line summary at second line (conflicts with D212)
+    "D301",   # Escape sequence in docstring (edge cases with raw strings)
+    "D417",   # Missing argument description in docstring (partial docstrings common)
+    "S101",   # Use of assert (common in non-test code for invariants)
+    "S110",   # try-except-pass (intentional silencing in some cases)
+    "S301",   # Suspicious pickle usage (used for caching)
+    "S311",   # Standard pseudo-random generators (not used for security)
+    "B904",   # raise-without-from-inside-except (needs gradual adoption)
+    "RUF001", # Ambiguous unicode in string (emoji in logging is intentional)
+    "RUF002", # Ambiguous unicode in docstring (emoji in docstrings)
+    "RUF012", # Mutable class default (common in Pydantic/dataclass patterns)
+    "RUF005", # Collection literal concatenation (style preference)
+    "RUF015", # Unnecessary iterable allocation for first element
+    "RUF022", # Unsorted __all__ (cosmetic, not worth fixing now)
+    "RUF034", # Useless if-else (style preference in existing code)
+    "RUF059", # Unused unpacked variable (common in tuple unpacking)
+    "B007",   # Unused loop control variable (common _ pattern needed)
+    "B023",   # Function uses loop variable (needs careful refactoring)
+    "B028",   # No explicit stacklevel in warnings.warn
+    "B905",   # zip-without-explicit-strict (Python 3.10+ pattern)
+    "S104",   # Hardcoded bind all interfaces (dev server)
+    "S324",   # Hashlib insecure hash (used for non-security checksums)
+]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -138,14 +172,18 @@ unfixable = []
 "unittest.mock.patch".msg = "Use pytest-mock instead. Use 'mocker.patch()' from the mocker fixture."
 "unittest.mock.patch.object".msg = "Use pytest-mock instead. Use 'mocker.patch.object()' from the mocker fixture."
 
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [ "ANN","D100", "D101", "D102", "D103"]
+"tests/**/*.py" = ["ANN", "D", "S", "B017", "RUF013", "RUF043"]
 "src/finwiz/schemas/**/*.py" = ["D100", "D101", "D102", "D103", "D401", "UP045"]
 "src/finwiz/crews/**/*.py" = ["D102"]
 "src/finwiz/tools/etf_crew.py" = ["D102"]
-"scripts/**/*.py" = ["ANN", "D"]
+"scripts/**/*.py" = ["ANN", "D", "S", "B", "RUF"]
 "tests/property/*.py" = ["D400", "D415"]
 "src/finwiz/crews/deep_analysis/deep_analysis.py" = ["D401"]
+"src/finwiz/reporting/css/*.py" = ["D"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.

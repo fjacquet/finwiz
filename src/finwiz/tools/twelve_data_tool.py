@@ -66,7 +66,7 @@ class TwelveDataIndicatorTool(BaseTool):
                 logger.warning("Perplexity integration initialized but API key not available")
                 return None
         except Exception as e:
-            logger.error(f"Failed to initialize Perplexity integration: {str(e)}")
+            logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
     @api_tool(
@@ -104,8 +104,8 @@ class TwelveDataIndicatorTool(BaseTool):
             )
 
         except Exception as e:
-            logger.error(f"Error in enhanced technical analysis for {symbol}: {str(e)}")
-            return f"Error performing enhanced technical analysis for {symbol}: {str(e)}"
+            logger.error(f"Error in enhanced technical analysis for {symbol}: {e!s}")
+            return f"Error performing enhanced technical analysis for {symbol}: {e!s}"
 
     def _get_twelve_data_indicator(
         self,
@@ -168,7 +168,7 @@ class TwelveDataIndicatorTool(BaseTool):
                 return []
 
         except Exception as e:
-            logger.warning(f"Perplexity technical search failed for {symbol}: {str(e)}")
+            logger.warning(f"Perplexity technical search failed for {symbol}: {e!s}")
             feature_flags = get_feature_flags()
             feature_flags.record_failure("perplexity_research")
             return []

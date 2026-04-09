@@ -12,11 +12,11 @@ from .handlers import IntegrationLogHandler
 
 # Re-export all classes for backward compatibility
 __all__ = [
+    "IntegrationLogFormatter",
+    "IntegrationLogHandler",
     "IntegrationLogger",
     "LogAnalyzer",
-    "IntegrationLogFormatter",
     "StructuredFormatter",
-    "IntegrationLogHandler",
     "integration_logger",
     "log_analyzer",
 ]

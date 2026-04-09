@@ -123,5 +123,5 @@ class CryptoOpportunityExtractor(OpportunityExtractor):
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to build crypto opportunity: {str(e)}", exc_info=True)
+            self.logger.error(f"Failed to build crypto opportunity: {e!s}", exc_info=True)
             return None

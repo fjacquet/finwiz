@@ -94,7 +94,7 @@ def _extract_opportunities(
     """Extract investment opportunities from crew data."""
     opportunities_key = f"{crew_type}s" if crew_type != "crypto" else "cryptos"
     if opportunities_key in summary["investment_opportunities"]:
-        if "pydantic" in crew_data and crew_data["pydantic"]:
+        if crew_data.get("pydantic"):
             pydantic_data = crew_data["pydantic"]
             if "opportunities" in pydantic_data:
                 summary["investment_opportunities"][opportunities_key].extend(pydantic_data["opportunities"][:3])

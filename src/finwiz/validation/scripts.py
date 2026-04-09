@@ -92,7 +92,7 @@ class DataIntegrityValidator(ValidationScript):
 
         except Exception as e:
             results["error"] = str(e)
-            results["issues_found"].append(f"Validation script failed: {str(e)}")
+            results["issues_found"].append(f"Validation script failed: {e!s}")
             return results
 
     def _validate_crew_data(self, crew_name: str) -> dict[str, Any]:
@@ -131,9 +131,9 @@ class DataIntegrityValidator(ValidationScript):
                         status["validation_errors"].append(f"{json_file.name}: Missing metadata field")
 
                 except json.JSONDecodeError as e:
-                    status["validation_errors"].append(f"{json_file.name}: Invalid JSON - {str(e)}")
+                    status["validation_errors"].append(f"{json_file.name}: Invalid JSON - {e!s}")
                 except Exception as e:
-                    status["validation_errors"].append(f"{json_file.name}: Read error - {str(e)}")
+                    status["validation_errors"].append(f"{json_file.name}: Read error - {e!s}")
 
         return status
 
@@ -186,7 +186,7 @@ class DataIntegrityValidator(ValidationScript):
             return consistency
 
         except Exception as e:
-            consistency["inconsistencies"].append(f"Consistency check failed: {str(e)}")
+            consistency["inconsistencies"].append(f"Consistency check failed: {e!s}")
             return consistency
 
     def _extract_tickers_from_data(self, data: dict, crew_name: str) -> list[str]:
@@ -487,11 +487,11 @@ def run_all_validations(output_dir: Path | None = None) -> dict[str, Any]:
             validator.print_results(results)
 
             # Collect critical issues
-            if "issues_found" in results and results["issues_found"]:
+            if results.get("issues_found"):
                 all_results["critical_issues"].extend(results["issues_found"])
 
             # Collect recommendations
-            if "recommendations" in results and results["recommendations"]:
+            if results.get("recommendations"):
                 all_results["all_recommendations"].extend(results["recommendations"])
 
             # Update overall status
@@ -502,8 +502,8 @@ def run_all_validations(output_dir: Path | None = None) -> dict[str, Any]:
                     all_results["overall_status"] = "warning"
 
         except Exception as e:
-            print(f"ERROR: {validator_name} failed: {str(e)}")
-            all_results["critical_issues"].append(f"{validator_name} failed: {str(e)}")
+            print(f"ERROR: {validator_name} failed: {e!s}")
+            all_results["critical_issues"].append(f"{validator_name} failed: {e!s}")
             all_results["overall_status"] = "critical"
 
     # Print summary

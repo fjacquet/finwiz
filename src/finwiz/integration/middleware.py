@@ -207,7 +207,7 @@ class CrewIntegrationMiddleware:
             return result
 
         except Exception as e:
-            error_msg = f"Pre-execution hook failed for {crew_name}: {str(e)}"
+            error_msg = f"Pre-execution hook failed for {crew_name}: {e!s}"
             self.logger.error(error_msg, exc_info=True)
 
             return PreExecutionResult(can_proceed=False, dependencies_met=False, errors=[error_msg])
@@ -279,7 +279,7 @@ class CrewIntegrationMiddleware:
             return result
 
         except Exception as e:
-            error_msg = f"Post-execution hook failed for {execution_id}: {str(e)}"
+            error_msg = f"Post-execution hook failed for {execution_id}: {e!s}"
             self.logger.error(error_msg, exc_info=True)
 
             # Execute error hooks
@@ -287,7 +287,7 @@ class CrewIntegrationMiddleware:
                 try:
                     await self._execute_hooks("on_error", self.active_executions[execution_id])
                 except Exception as hook_error:
-                    self.logger.error(f"Error hook failed: {str(hook_error)}")
+                    self.logger.error(f"Error hook failed: {hook_error!s}")
 
             return PostExecutionResult(storage_success=False, validation_success=False, metadata_stored=False, errors=[error_msg])
 
@@ -312,7 +312,7 @@ class CrewIntegrationMiddleware:
             return await self.integration_manager.coordinate_crew_execution(crew_configs)
 
         except Exception as e:
-            error_msg = f"Coordinated execution failed: {str(e)}"
+            error_msg = f"Coordinated execution failed: {e!s}"
             self.logger.error(error_msg, exc_info=True)
 
             return ExecutionResult(
@@ -348,7 +348,7 @@ class CrewIntegrationMiddleware:
             return {"all_met": len(missing) == 0, "missing": missing, "stale": stale, "data": data}
 
         except Exception as e:
-            self.logger.error(f"Dependency validation failed: {str(e)}", exc_info=True)
+            self.logger.error(f"Dependency validation failed: {e!s}", exc_info=True)
             return {"all_met": False, "missing": dependencies, "stale": [], "data": {}}
 
     async def _validate_crew_output(self, crew_name: str, crew_output: dict[str, Any]) -> ValidationStatus:
@@ -366,7 +366,7 @@ class CrewIntegrationMiddleware:
             )
 
         except Exception as e:
-            error_msg = f"Output validation failed: {str(e)}"
+            error_msg = f"Output validation failed: {e!s}"
             self.logger.error(error_msg, exc_info=True)
 
             return ValidationStatus(
@@ -421,7 +421,7 @@ class CrewIntegrationMiddleware:
                 await hook(context)
             except Exception as e:
                 self.logger.error(
-                    f"Hook execution failed: {str(e)}",
+                    f"Hook execution failed: {e!s}",
                     extra={"hook_type": hook_type, "hook_function": hook.__name__, "execution_id": context.execution_id},
                     exc_info=True,
                 )

@@ -178,7 +178,7 @@ class ValidationPipeline:
             return result
 
         except Exception as e:
-            error_msg = f"Validation failed for {crew_name} crew: {str(e)}"
+            error_msg = f"Validation failed for {crew_name} crew: {e!s}"
             self.logger.error(error_msg, exc_info=True)
 
             result = BaseValidationResult(is_valid=False)

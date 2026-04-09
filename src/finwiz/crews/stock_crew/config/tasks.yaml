@@ -125,8 +125,8 @@ fundamental_context_task:
   agent: fundamental_analyst
   output_pydantic: FundamentalContextInsights
   async_execution: true
-  context:
-    - sec_analysis_task
+  # ⚡ CONTEXT SCOPING: Removed context: [sec_analysis_task] — Python supplies all metrics via template vars.
+  # This eliminates cascading context accumulation (was: sec output injected into fundamental prompt).
 
 technical_strategy_task:
   description: >
@@ -175,8 +175,7 @@ technical_strategy_task:
   agent: technical_analyst
   output_pydantic: TechnicalStrategyInsights
   async_execution: true
-  context:
-    - fundamental_context_task
+  # ⚡ CONTEXT SCOPING: Removed context: [fundamental_context_task] — Python supplies technical indicators via template vars.
 
 contextual_risk_task:
   description: >
@@ -231,8 +230,7 @@ contextual_risk_task:
   agent: risk_analyst
   output_pydantic: ContextualRiskInsights
   async_execution: true
-  context:
-    - technical_strategy_task
+  # ⚡ CONTEXT SCOPING: Removed context: [technical_strategy_task] — Python supplies risk metrics via template vars.
 
 investment_synthesis_task:
   description: >
@@ -362,7 +360,11 @@ investment_synthesis_task:
   agent: investment_strategist
   output_pydantic: InvestmentSynthesis
   async_execution: true
+  # ⚡ CONTEXT SCOPING: Fan-in from all 4 parallel tasks (was: linear chain via contextual_risk_task only)
   context:
+    - sec_analysis_task
+    - fundamental_context_task
+    - technical_strategy_task
     - contextual_risk_task
 
 generate_enriched_analysis_task:

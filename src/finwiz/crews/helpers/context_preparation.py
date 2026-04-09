@@ -259,20 +259,20 @@ class ContextPreparationManager:
             return integrated_data
 
         except Exception as e:
-            logger.error(f"Failed to get integrated data context: {str(e)}", exc_info=True)
+            logger.error(f"Failed to get integrated data context: {e!s}", exc_info=True)
 
             # Track error in availability tracker
-            self.availability_tracker.track_data_source(source="data_integration", status="unavailable", error_message=f"Data integration failed: {str(e)}")
+            self.availability_tracker.track_data_source(source="data_integration", status="unavailable", error_message=f"Data integration failed: {e!s}")
 
             # Generate error summary
             error_summary = self.availability_tracker.get_availability_summary()
 
             return {
-                "error": f"Data integration failed: {str(e)}",
+                "error": f"Data integration failed: {e!s}",
                 "fallback_mode": True,
                 "data_availability_report": None,
-                "stale_data_warnings": [f"Data integration error: {str(e)}"],
-                "discovery_status": {"has_results": False, "message": f"Discovery data unavailable due to error: {str(e)}"},
+                "stale_data_warnings": [f"Data integration error: {e!s}"],
+                "discovery_status": {"has_results": False, "message": f"Discovery data unavailable due to error: {e!s}"},
                 "data_availability_summary": error_summary.model_dump(mode="json"),
                 "data_availability_summary_formatted": self.availability_tracker.format_summary_for_report(error_summary),
             }
@@ -381,7 +381,7 @@ class ContextPreparationManager:
 
         except Exception as e:
             logger.error(f"Failed to extract backtesting data: {e}", exc_info=True)
-            return {"has_backtesting_data": False, "message": f"Backtesting data extraction failed: {str(e)}", "status": "error"}
+            return {"has_backtesting_data": False, "message": f"Backtesting data extraction failed: {e!s}", "status": "error"}
 
     @staticmethod
     def _safe_get_metric(data: dict[str, Any], key: str) -> Any:
@@ -440,10 +440,10 @@ class ContextPreparationManager:
             return integrated_context
 
         except Exception as e:
-            logger.error(f"Failed to prepare crew context: {str(e)}", exc_info=True)
+            logger.error(f"Failed to prepare crew context: {e!s}", exc_info=True)
             # Return minimal context for graceful degradation
             return {
-                "error": f"Context preparation failed: {str(e)}",
+                "error": f"Context preparation failed: {e!s}",
                 "fallback_mode": True,
                 "execution_metadata": {
                     "max_age_hours": max_age_hours,

@@ -19,11 +19,11 @@ from finwiz.quantitative.optimization_algorithms import (
 
 # Re-export main classes for backward compatibility
 __all__ = [
-    "RebalancingEngine",
+    "MinimizeCostsStrategy",
+    "MinimizeTradesStrategy",
     "OptimizationConstraint",
     "OptimizationStrategy",
     "OptimizedTrades",
-    "MinimizeCostsStrategy",
-    "MinimizeTradesStrategy",
+    "RebalancingEngine",
     "RiskAwareStrategy",
 ]
