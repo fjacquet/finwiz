@@ -30,13 +30,13 @@ class PerformanceTargets:
     def for_hybrid(cls) -> "PerformanceTargets":
         """Get targets for hybrid approach (Python + AI summary)."""
         return cls(
-            time_min=15,
-            time_max=40,
+            time_min=3,
+            time_max=30,
             llm_calls=1,
             cost=0.01,
-            speedup_min=8,
-            speedup_max=15,
-            cost_reduction=80,
+            speedup_min=15,
+            speedup_max=100,
+            cost_reduction=85,
             approach_name="HYBRID",
         )
 
@@ -169,16 +169,19 @@ def log_performance_validation(validation: dict[str, Any]) -> None:
     ticker = validation["ticker"]
     targets = validation["targets"]
 
+    def _mark(passed: bool) -> str:
+        return "✅" if passed else "❌"
+
     logger.info(
         f"📊 PERFORMANCE VALIDATION for {ticker} ({validation['approach']}):\n"
-        f"  ✅ Execution time: {validation['execution_time']:.2f}s "
+        f"  {_mark(validation['time_target_met'])} Execution time: {validation['execution_time']:.2f}s "
         f"({'✅ PASS' if validation['time_target_met'] else '❌ FAIL'} - target: {targets['time_range']})\n"
-        f"  ✅ LLM calls: {validation['llm_calls']} "
+        f"  {_mark(validation['llm_target_met'])} LLM calls: {validation['llm_calls']} "
         f"({'✅ PASS' if validation['llm_target_met'] else '❌ FAIL'} - target: {targets['llm_calls']})\n"
-        f"  ✅ Cost: ${validation['cost_usd']:.4f} "
+        f"  {_mark(validation['cost_target_met'])} Cost: ${validation['cost_usd']:.4f} "
         f"({'✅ PASS' if validation['cost_target_met'] else '❌ FAIL'} - target: {targets['cost']})\n"
-        f"  🚀 Speedup achieved: {validation['speedup_factor']:.1f}x "
+        f"  {_mark(validation['speedup_target_met'])} Speedup achieved: {validation['speedup_factor']:.1f}x "
         f"({'✅ PASS' if validation['speedup_target_met'] else '❌ FAIL'} - target: {targets['speedup_range']})\n"
-        f"  💸 Cost reduction: {validation['cost_reduction_pct']:.1f}% "
+        f"  {_mark(validation['cost_reduction_target_met'])} Cost reduction: {validation['cost_reduction_pct']:.1f}% "
         f"({'✅ PASS' if validation['cost_reduction_target_met'] else '❌ FAIL'} - target: {targets['cost_reduction']})"
     )

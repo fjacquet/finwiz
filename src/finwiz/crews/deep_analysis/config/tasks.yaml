@@ -41,7 +41,6 @@ deep_qualitative_analysis_task:
     technical_strategy, contextual_risks, investment_synthesis.
 
   agent: asset_analyst
-  async_execution: true
 
 # NOTE: generate_enriched_analysis_task was REMOVED
 # Python's synthesize_enriched_analysis() handles consolidation for $0
