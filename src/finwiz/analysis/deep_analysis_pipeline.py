@@ -235,6 +235,28 @@ def synthesize_enriched_analysis(
     if qual.investment_synthesis:
         qual = qual.model_copy(update={"investment_synthesis": qual.investment_synthesis.model_copy(update={"scenario_probabilities": final_probs})})
 
+    # Fill empty AI prose (bull/base/bear/thesis) with Python-generated content
+    if qual.investment_synthesis:
+        s = qual.investment_synthesis
+        if not (s.investment_thesis or s.bull_case or s.base_case or s.bear_case):
+            py_qual = _create_python_qualitative(ctx, quant)
+            if py_qual.investment_synthesis:
+                py_s = py_qual.investment_synthesis
+                qual = qual.model_copy(
+                    update={
+                        "investment_synthesis": s.model_copy(
+                            update={
+                                "investment_thesis": py_s.investment_thesis,
+                                "bull_case": py_s.bull_case,
+                                "base_case": py_s.base_case,
+                                "bear_case": py_s.bear_case,
+                                "action_plan": s.action_plan or py_s.action_plan,
+                            }
+                        )
+                    }
+                )
+                logger.info(f"Empty AI prose filled with Python content for {ctx.ticker}")
+
     executive_summary = _generate_executive_summary(quant, qual)
     investment_rationale = _get_investment_rationale(qual)
     word_count = _calculate_word_count(executive_summary, investment_rationale, qual)

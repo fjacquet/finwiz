@@ -34,17 +34,20 @@ implied volatility fetched via yfinance. Implement a strict priority chain:
 ### Implementation
 
 **Data collection** (`deep_analysis_data_collector.py`):
+
 - `_collect_options_iv()` fetches the options chain for the expiry closest to 90 days out
 - IV is linearly interpolated at the +20% strike (bull) and -15% strike (bear)
 - Results stored as `options_bull_iv`, `options_bear_iv`, `options_T` in `raw_data`
 - Fails silently — any exception skips options data without aborting the pipeline
 
 **Probability computation** (`deep_analysis_pipeline.py`):
+
 - `_bs_nd2(S, K, T, r, σ)` — Black-Scholes N(d₂): risk-neutral P(S_T > K)
 - `_compute_options_probabilities(raw_data)` — returns `ScenarioProbabilities` or `None`
 - Priority logic applied in `synthesize_enriched_analysis()` before writing to `EnrichedAnalysis`
 
 **Formula (Python fallback)**:
+
 ```
 signal = 0.7 × composite_score + 0.3 × (1 − risk_score / 5)
 bull   = 0.10 + 0.45 × signal
