@@ -8,6 +8,25 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
+def _interpolate_iv(df: Any, target_strike: float) -> float | None:
+    """Interpolate impliedVolatility at target_strike from options DataFrame."""
+    df = df[df["impliedVolatility"] > 0].sort_values("strike")
+    if df.empty:
+        return None
+    above = df[df["strike"] >= target_strike]
+    below = df[df["strike"] <= target_strike]
+    if above.empty:
+        return float(df.iloc[-1]["impliedVolatility"])
+    if below.empty:
+        return float(df.iloc[0]["impliedVolatility"])
+    lo = below.iloc[-1]
+    hi = above.iloc[0]
+    if hi["strike"] == lo["strike"]:
+        return float(lo["impliedVolatility"])
+    weight = (target_strike - lo["strike"]) / (hi["strike"] - lo["strike"])
+    return float(lo["impliedVolatility"] * (1 - weight) + hi["impliedVolatility"] * weight)
+
+
 class DeepAnalysisDataCollector:
     """Collects raw financial data using Python tool calls (not AI agents)."""
 
@@ -74,6 +93,10 @@ class DeepAnalysisDataCollector:
 
         # Flatten nested structures for Python scorer
         flattened = self.flatten_collected_data(collected_data)
+
+        # Fetch options IV for probability computation (stocks/ETFs only, fails silently)
+        if asset_class.lower() in ("stock", "etf") and flattened.get("current_price"):
+            self._collect_options_iv(ticker, float(flattened["current_price"]), flattened)
 
         self.logger.info(f"✅ Python collected {len(flattened)} fields: {list(flattened.keys())[:10]}")
         return flattened
@@ -343,6 +366,40 @@ class DeepAnalysisDataCollector:
             collected_data["sec_analysis"] = {}
 
         return collected_data
+
+    def _collect_options_iv(self, ticker: str, current_price: float, raw_data: dict[str, Any]) -> None:
+        """Fetch implied volatility at bull/bear thresholds. Fails silently if unavailable."""
+        try:
+            from datetime import datetime, timedelta
+
+            import yfinance as yf
+
+            tk = yf.Ticker(ticker)
+            expirations = tk.options
+            if not expirations:
+                return
+
+            # Pick expiry closest to 90 days out
+            target = datetime.now() + timedelta(days=90)
+            expiry = min(expirations, key=lambda d: abs(datetime.strptime(d, "%Y-%m-%d") - target))
+            T = (datetime.strptime(expiry, "%Y-%m-%d") - datetime.now()).days / 365.0
+            if T <= 0:
+                return
+
+            chain = tk.option_chain(expiry)
+            bull_strike = current_price * 1.20
+            bear_strike = current_price * 0.85
+
+            bull_iv = _interpolate_iv(chain.calls, bull_strike)
+            bear_iv = _interpolate_iv(chain.puts, bear_strike)
+
+            if bull_iv and bear_iv:
+                raw_data["options_bull_iv"] = bull_iv
+                raw_data["options_bear_iv"] = bear_iv
+                raw_data["options_T"] = T
+                self.logger.info(f"✅ Options IV fetched for {ticker}: bull_iv={bull_iv:.3f}, bear_iv={bear_iv:.3f}, T={T:.2f}y")
+        except Exception as exc:
+            self.logger.warning(f"Options IV fetch skipped for {ticker}: {exc}")
 
     def flatten_collected_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """

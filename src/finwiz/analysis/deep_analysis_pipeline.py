@@ -14,6 +14,7 @@ Architecture:
 from __future__ import annotations
 
 import logging
+import os
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -199,6 +200,7 @@ def synthesize_enriched_analysis(
     qual: QualitativeInsights,
     processing_time: float = 0.0,
     sentiment_summary: dict[str, Any] | None = None,
+    options_probs: ScenarioProbabilities | None = None,
 ) -> EnrichedAnalysis:
     """
     Pure function: Combines quantitative + qualitative into EnrichedAnalysis.
@@ -218,7 +220,21 @@ def synthesize_enriched_analysis(
     logger.info(f"Synthesizing enriched analysis for {ctx.ticker}")
 
     # Python wins on recommendation conflicts
-    final_rec = _synthesize_recommendation(quant, qual)
+    final_rec, recommendation_conflict = _synthesize_recommendation(quant, qual)
+
+    # Priority: options-implied > AI probs > Python formula (AI probs are uncalibrated)
+    if options_probs is not None:
+        final_probs = options_probs
+        logger.info(f"Options-implied scenario probabilities used for {ctx.ticker}")
+    elif qual.investment_synthesis and qual.investment_synthesis.scenario_probabilities is not None:
+        final_probs = qual.investment_synthesis.scenario_probabilities
+    else:
+        final_probs = _compute_scenario_probabilities(quant)
+        logger.info(f"Scenario probabilities computed from Python scores for {ctx.ticker} (no options data)")
+
+    if qual.investment_synthesis:
+        qual = qual.model_copy(update={"investment_synthesis": qual.investment_synthesis.model_copy(update={"scenario_probabilities": final_probs})})
+
     executive_summary = _generate_executive_summary(quant, qual)
     investment_rationale = _get_investment_rationale(qual)
     word_count = _calculate_word_count(executive_summary, investment_rationale, qual)
@@ -234,6 +250,7 @@ def synthesize_enriched_analysis(
         final_grade=quant.grade,
         final_score=quant.composite_score,
         final_recommendation=final_rec,
+        recommendation_conflict=recommendation_conflict,
         recommendation_confidence=_get_confidence(qual),
         executive_summary=executive_summary,
         investment_rationale=investment_rationale,
@@ -280,11 +297,12 @@ def analyze_holding(
 
     # Pipeline composition
     raw_data = collect_raw_data(ctx, prefetched_data=prefetched_data)
+    options_probs = _compute_options_probabilities(raw_data)  # None for crypto/niche ETFs
     result, quant = calculate_quantitative(ctx, raw_data)
     qual = generate_qualitative(ctx, quant, raw_data=raw_data)
     processing_time = time.time() - start
     sentiment_summary = _build_sentiment_summary(raw_data)
-    enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary)
+    enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
 
     logger.info(f"Pipeline complete for {ticker}: {processing_time:.1f}s")
     return result, enriched
@@ -785,16 +803,74 @@ def _create_fallback_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalys
     )
 
 
-def _synthesize_recommendation(quant: QuantitativeAnalysis, qual: QualitativeInsights) -> str:
-    """Synthesize final recommendation. Python wins on conflicts."""
+def _synthesize_recommendation(quant: QuantitativeAnalysis, qual: QualitativeInsights) -> tuple[str, str | None]:
+    """Return (final_recommendation, conflict_note | None). Python wins on conflicts."""
     python_rec = quant.preliminary_recommendation
     ai_rec = qual.investment_synthesis.final_recommendation if qual.investment_synthesis else "HOLD"
 
     if python_rec == ai_rec:
-        return python_rec
+        return python_rec, None
 
+    conflict = f"L'IA suggère {ai_rec} ; l'analyse quantitative Python (score={quant.composite_score:.2f}, grade={quant.grade}) prend la priorité selon le principe AI Minimalism."
     logger.warning(f"Recommendation conflict: Python={python_rec}, AI={ai_rec}. Using Python.")
-    return python_rec
+    return python_rec, conflict
+
+
+def _compute_scenario_probabilities(quant: QuantitativeAnalysis) -> ScenarioProbabilities:
+    """Derive scenario probabilities from Python quantitative scores. $0, deterministic.
+
+    Combines composite_score (0.0-1.0) and normalised risk_score:
+      signal=0.0 (worst)  → bull=0.10, base=0.30, bear=0.60
+      signal=0.5 (median) → bull≈0.33, base≈0.32, bear=0.35
+      signal=1.0 (best)   → bull=0.55, base=0.35, bear=0.10
+    """
+    risk_normalized = 1.0 - min(quant.risk_score / 5.0, 1.0)
+    signal = 0.7 * quant.composite_score + 0.3 * risk_normalized
+    bull = round(0.10 + 0.45 * signal, 2)
+    bear = round(0.60 - 0.50 * signal, 2)
+    base = round(1.0 - bull - bear, 2)
+    return ScenarioProbabilities(bull=bull, base=base, bear=bear)
+
+
+def _bs_nd2(S: float, K: float, T: float, r: float, sigma: float) -> float:
+    """Black-Scholes N(d₂): risk-neutral probability that S_T > K."""
+    import math
+
+    from scipy.stats import norm  # type: ignore[import-untyped]
+
+    if T <= 0 or sigma <= 0 or S <= 0:
+        return 0.5
+    d2 = (math.log(S / K) + (r - 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+    return float(norm.cdf(d2))
+
+
+def _compute_options_probabilities(raw_data: dict[str, Any]) -> ScenarioProbabilities | None:
+    """Compute options-implied scenario probabilities via Black-Scholes N(d₂).
+
+    Returns None when options IV data is unavailable (crypto, niche ETFs, etc.).
+    Priority: options-implied > Python formula > AI guess.
+    """
+    bull_iv_raw = raw_data.get("options_bull_iv")
+    bear_iv_raw = raw_data.get("options_bear_iv")
+    t_raw = raw_data.get("options_T")
+    s_raw = raw_data.get("current_price")
+    if bull_iv_raw is None or bear_iv_raw is None or t_raw is None or s_raw is None:
+        return None
+
+    s_val = float(s_raw)
+    t_val = float(t_raw)
+    bull_val = float(bull_iv_raw)
+    bear_val = float(bear_iv_raw)
+    r = float(os.getenv("RISK_FREE_RATE", "0.045"))
+    p_bull = _bs_nd2(s_val, s_val * 1.20, t_val, r, bull_val)
+    p_bear = 1.0 - _bs_nd2(s_val, s_val * 0.85, t_val, r, bear_val)
+    p_base = max(0.0, 1.0 - p_bull - p_bear)
+    total = p_bull + p_base + p_bear
+    return ScenarioProbabilities(
+        bull=round(p_bull / total, 2),
+        base=round(p_base / total, 2),
+        bear=round(p_bear / total, 2),
+    )
 
 
 def _generate_executive_summary(quant: QuantitativeAnalysis, qual: QualitativeInsights) -> str:

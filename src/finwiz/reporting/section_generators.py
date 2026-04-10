@@ -45,8 +45,7 @@ def generate_executive_summary(portfolio_stats: dict[str, Any]) -> str:
 
     <h3>Key Points</h3>
     <ul>
-      <li><strong>Ultra-fast analysis:</strong> Python processing in seconds (vs 5-10 minutes with AI)</li>
-      <li><strong>Zero cost:</strong> 0 LLM calls, 100% savings on analysis fees</li>
+      <li><strong>Ultra-fast:</strong> Python portfolio scoring in seconds (deterministic, $0)</li>
       <li><strong>Deterministic:</strong> Consistent and reproducible results</li>
       <li><strong>Transparent:</strong> Verifiable and auditable Python calculations</li>
     </ul>

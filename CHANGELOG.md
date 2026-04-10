@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Options-implied scenario probabilities** -- Scenario probability bars (bull/base/bear) are now derived from market-implied data via Black-Scholes N(d₂) applied to yfinance options chains. Picks the expiry closest to 90 days, interpolates IV at +20% (bull) and -15% (bear) strikes. Fallback chain: options-implied → AI-provided → Python composite-score formula. Crypto and niche ETFs without liquid options use the Python fallback. Configurable via `RISK_FREE_RATE` env var (default: 0.045).
+- **Recommendation conflict notice** -- When Python quantitative score and AI qualitative recommendation disagree, an amber warning box is shown in the HTML report (Python still wins; conflict is surfaced for transparency).
+- **Python-computed scenario probabilities fallback** -- When AI omits `scenario_probabilities`, Python derives them from `composite_score` and `risk_score` (deterministic, $0), preventing "non disponible" display in scenario cards.
+
 ### Changed
 
 - **Token optimization (ADR-007)** -- Pruned ~10K tokens of YAML boilerplate across all 7 crews: removed 33 redundant JSON OUTPUT blocks, 11 ANTI-HALLUCINATION blocks, 8 "Read schema" instructions, and compressed 25+ agent backstories to ~15 words each

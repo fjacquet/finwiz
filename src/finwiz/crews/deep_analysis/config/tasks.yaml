@@ -25,12 +25,26 @@ deep_qualitative_analysis_task:
     2. Fundamental Context: Industry analysis (100+ words), growth drivers, positioning
     3. Technical Strategy: Chart patterns, support/resistance, entry/exit strategy
     4. Contextual Risks: Regulatory, geopolitical, competitive, operational
-    5. Investment Synthesis: Thesis (200+ words), bull/base/bear cases (100+ words each)
+    5. Investment Synthesis: Thesis (200+ words), bull/base/bear cases (100+ words each),
+       scenario probabilities as floats summing to 1.0, and a concrete action plan.
+
+    REQUIRED investment_synthesis structure (all fields mandatory):
+    "investment_synthesis": {
+      "investment_thesis": "...",
+      "bull_case": "...",
+      "base_case": "...",
+      "bear_case": "...",
+      "scenario_probabilities": {"bull": 0.30, "base": 0.50, "bear": 0.20},
+      "final_recommendation": "BUY|HOLD|SELL",
+      "recommendation_confidence": "LOW|MEDIUM|HIGH",
+      "action_plan": {
+        "immediate_actions": ["action 1", "action 2"],
+        "monitoring_points": ["metric to watch 1", "metric to watch 2"],
+        "exit_triggers": ["condition 1", "condition 2"]
+      }
+    }
 
     OUTPUT: Valid JSON matching QualitativeInsights schema.
-    - final_recommendation: "BUY", "HOLD", or "SELL"
-    - recommendation_confidence: "LOW", "MEDIUM", or "HIGH"
-    - scenario_probabilities: must sum to 1.0
     - ai_confidence: 0.0-1.0
     - analysis_timestamp: ISO 8601 format
 

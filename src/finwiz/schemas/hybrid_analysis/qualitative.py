@@ -147,6 +147,16 @@ class InvestmentSynthesis(BaseModel):
     recommendation_confidence: Literal["LOW", "MEDIUM", "HIGH"] = Field(default="MEDIUM", description="AI confidence in recommendation")
     action_plan: ActionPlan | None = Field(default=None, description="Actionable steps: immediate_actions, monitoring_points, exit_triggers")
 
+    @model_validator(mode="before")
+    @classmethod
+    def provide_defaults_for_optional_fields(cls, values: object) -> object:
+        """Ensure action_plan is never None (empty lists are honest; None hides the section)."""
+        if not isinstance(values, dict):
+            return values
+        if values.get("action_plan") is None:
+            values["action_plan"] = {"immediate_actions": [], "monitoring_points": [], "exit_triggers": []}
+        return values
+
     model_config = {
         "str_strip_whitespace": True,
     }

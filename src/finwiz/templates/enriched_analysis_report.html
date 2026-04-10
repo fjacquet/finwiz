@@ -724,6 +724,11 @@
                     Confiance: {{ recommendation_confidence }} | Score: {{ "%.0f"|format(final_score * 100) }}%
                 </span>
             </div>
+            {% if recommendation_conflict %}
+            <div style="margin-top:12px;padding:12px 16px;background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;color:#92400e;font-size:0.9rem;">
+                ⚠️ <strong>Avis de conflit :</strong> {{ recommendation_conflict }}
+            </div>
+            {% endif %}
         </div>
 
         <!-- Quantitative Metrics -->
@@ -1040,23 +1045,23 @@
         <div class="section">
             <h2>🎯 Analyse de Scénarios</h2>
 
-            {% if investment_synthesis and investment_synthesis.scenario_probabilities %}
+            {% if investment_synthesis and (investment_synthesis.bull_case or investment_synthesis.base_case or investment_synthesis.bear_case) %}
             <div class="scenario-grid">
                 <div class="scenario-card bull">
                     <h3>🚀 Scénario Haussier</h3>
-                    <p class="probability">{{ "%.0f"|format(investment_synthesis.scenario_probabilities.bull * 100) }}%</p>
+                    {% if investment_synthesis.scenario_probabilities %}<p class="probability">{{ "%.0f"|format(investment_synthesis.scenario_probabilities.bull * 100) }}%</p>{% endif %}
                     <p>{{ investment_synthesis.bull_case }}</p>
                 </div>
 
                 <div class="scenario-card base">
                     <h3>📊 Scénario de Base</h3>
-                    <p class="probability">{{ "%.0f"|format(investment_synthesis.scenario_probabilities.base * 100) }}%</p>
+                    {% if investment_synthesis.scenario_probabilities %}<p class="probability">{{ "%.0f"|format(investment_synthesis.scenario_probabilities.base * 100) }}%</p>{% endif %}
                     <p>{{ investment_synthesis.base_case }}</p>
                 </div>
 
                 <div class="scenario-card bear">
                     <h3>📉 Scénario Baissier</h3>
-                    <p class="probability">{{ "%.0f"|format(investment_synthesis.scenario_probabilities.bear * 100) }}%</p>
+                    {% if investment_synthesis.scenario_probabilities %}<p class="probability">{{ "%.0f"|format(investment_synthesis.scenario_probabilities.bear * 100) }}%</p>{% endif %}
                     <p>{{ investment_synthesis.bear_case }}</p>
                 </div>
             </div>

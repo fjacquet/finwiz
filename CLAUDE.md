@@ -123,6 +123,7 @@ SERPER_API_KEY=...              # Required
 # Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, etc.
 # Feature flags: DEEP_ANALYSIS_ENABLED, PERPLEXITY_RESEARCH_ENABLED
 # Validation: VALIDATION_STRICTNESS=off|warn|error
+# Scenario probabilities: RISK_FREE_RATE=0.045  (Black-Scholes risk-free rate for options-implied probabilities)
 ```
 
 

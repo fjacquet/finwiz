@@ -76,6 +76,7 @@ class EnrichedAnalysis(BaseModel):
     final_grade: str = Field(default="C", description="Final grade (from Python)")
     final_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Final score (from Python)")
     final_recommendation: str = Field(default="HOLD", description="Final recommendation (BUY/HOLD/SELL)")
+    recommendation_conflict: str | None = Field(default=None, description="Conflict note when Python and AI recommendations differ (Python wins)")
     recommendation_confidence: str = Field(default="MEDIUM", description="AI confidence assessment (LOW/MEDIUM/HIGH)")
 
     # Rich output (AI-generated)

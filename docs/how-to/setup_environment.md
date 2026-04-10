@@ -364,6 +364,7 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 | `USE_MINIMAL_RISK_TOOLS`   | `true`  | Minimal tool set         |
 | `BATCH_PREFETCH_ENABLED`   | `true`  | Enable batch processing  |
 | `DEEP_ANALYSIS_BATCH_SIZE` | `5`     | Concurrent batch size    |
+| `RISK_FREE_RATE`           | `0.045` | US risk-free rate used in Black-Scholes for options-implied scenario probabilities |
 
 ### Feature Flags
 
