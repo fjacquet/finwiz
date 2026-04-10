@@ -232,25 +232,30 @@ def synthesize_enriched_analysis(
         final_probs = _compute_scenario_probabilities(quant)
         logger.info(f"Scenario probabilities computed from Python scores for {ctx.ticker} (no options data)")
 
-    if qual.investment_synthesis:
-        qual = qual.model_copy(update={"investment_synthesis": qual.investment_synthesis.model_copy(update={"scenario_probabilities": final_probs})})
-
-    # Fill empty AI prose (bull/base/bear/thesis) with Python-generated content
-    if qual.investment_synthesis:
-        s = qual.investment_synthesis
-        if not (s.investment_thesis or s.bull_case or s.base_case or s.bear_case):
+    if qual.investment_synthesis is None:
+        # AI returned null for the whole object — build from Python and inject probs
+        py_qual = _create_python_qualitative(ctx, quant)
+        if py_qual.investment_synthesis:
+            qual = qual.model_copy(update={"investment_synthesis": py_qual.investment_synthesis.model_copy(update={"scenario_probabilities": final_probs})})
+            logger.info(f"Null AI investment_synthesis replaced with Python content for {ctx.ticker}")
+    else:
+        # AI returned an object — inject probs then fill any empty prose
+        ai_synth = qual.investment_synthesis  # non-None confirmed by else branch
+        updated_synth = ai_synth.model_copy(update={"scenario_probabilities": final_probs})
+        qual = qual.model_copy(update={"investment_synthesis": updated_synth})
+        if not (updated_synth.investment_thesis or updated_synth.bull_case or updated_synth.base_case or updated_synth.bear_case):
             py_qual = _create_python_qualitative(ctx, quant)
             if py_qual.investment_synthesis:
                 py_s = py_qual.investment_synthesis
                 qual = qual.model_copy(
                     update={
-                        "investment_synthesis": s.model_copy(
+                        "investment_synthesis": updated_synth.model_copy(
                             update={
                                 "investment_thesis": py_s.investment_thesis,
                                 "bull_case": py_s.bull_case,
                                 "base_case": py_s.base_case,
                                 "bear_case": py_s.bear_case,
-                                "action_plan": s.action_plan or py_s.action_plan,
+                                "action_plan": updated_synth.action_plan or py_s.action_plan,
                             }
                         )
                     }
