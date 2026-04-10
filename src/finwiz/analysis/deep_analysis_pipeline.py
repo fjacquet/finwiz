@@ -232,11 +232,20 @@ def synthesize_enriched_analysis(
         final_probs = _compute_scenario_probabilities(quant)
         logger.info(f"Scenario probabilities computed from Python scores for {ctx.ticker} (no options data)")
 
+    # Lazy Python fallback — computed once, shared across all empty-section checks
+    _py_qual: QualitativeInsights | None = None
+
+    def _py() -> QualitativeInsights:
+        nonlocal _py_qual
+        if _py_qual is None:
+            _py_qual = _create_python_qualitative(ctx, quant)
+        return _py_qual
+
     if qual.investment_synthesis is None:
         # AI returned null for the whole object — build from Python and inject probs
-        py_qual = _create_python_qualitative(ctx, quant)
-        if py_qual.investment_synthesis:
-            qual = qual.model_copy(update={"investment_synthesis": py_qual.investment_synthesis.model_copy(update={"scenario_probabilities": final_probs})})
+        py_synth = _py().investment_synthesis
+        if py_synth is not None:
+            qual = qual.model_copy(update={"investment_synthesis": py_synth.model_copy(update={"scenario_probabilities": final_probs})})
             logger.info(f"Null AI investment_synthesis replaced with Python content for {ctx.ticker}")
     else:
         # AI returned an object — inject probs then fill any empty prose
@@ -244,9 +253,8 @@ def synthesize_enriched_analysis(
         updated_synth = ai_synth.model_copy(update={"scenario_probabilities": final_probs})
         qual = qual.model_copy(update={"investment_synthesis": updated_synth})
         if not (updated_synth.investment_thesis or updated_synth.bull_case or updated_synth.base_case or updated_synth.bear_case):
-            py_qual = _create_python_qualitative(ctx, quant)
-            if py_qual.investment_synthesis:
-                py_s = py_qual.investment_synthesis
+            py_s = _py().investment_synthesis
+            if py_s is not None:
                 qual = qual.model_copy(
                     update={
                         "investment_synthesis": updated_synth.model_copy(
@@ -261,6 +269,22 @@ def synthesize_enriched_analysis(
                     }
                 )
                 logger.info(f"Empty AI prose filled with Python content for {ctx.ticker}")
+
+    # Fill other empty sections (fundamental_context, technical_strategy, contextual_risks)
+    fc, ts, cr = qual.fundamental_context, qual.technical_strategy, qual.contextual_risks
+    needs_fc = not fc or not (fc.industry_analysis or fc.growth_drivers or fc.competitive_positioning)
+    needs_ts = not ts or not (ts.support_resistance or ts.entry_exit_strategy)
+    needs_cr = not cr or not (cr.regulatory_risks or cr.geopolitical_risks or cr.competitive_risks or cr.operational_risks)
+    if needs_fc or needs_ts or needs_cr:
+        section_updates: dict[str, Any] = {}
+        if needs_fc:
+            section_updates["fundamental_context"] = _py().fundamental_context
+        if needs_ts:
+            section_updates["technical_strategy"] = _py().technical_strategy
+        if needs_cr:
+            section_updates["contextual_risks"] = _py().contextual_risks
+        qual = qual.model_copy(update=section_updates)
+        logger.info(f"Empty AI sections filled with Python content for {ctx.ticker}: {list(section_updates.keys())}")
 
     executive_summary = _generate_executive_summary(quant, qual)
     investment_rationale = _get_investment_rationale(qual)

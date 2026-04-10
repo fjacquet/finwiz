@@ -204,11 +204,10 @@ class DeepAnalysisCrew:
             - LLM_MODEL_MINI for performance-optimized operations
             - LLM_MODEL_STANDARD for standard operations
         """
-        from finwiz.config.llm.llm_config import get_mini_llm
-
-        # Use mini model for maximum speed and balanced modes
+        # Deep analysis needs high max_tokens regardless of model — full JSON output
+        # requires 1500-2000 words across 5 sections. Mini default (1024) is far too low.
         if self.perf_config.should_use_mini_model():
-            return get_mini_llm()
+            return get_configured_llm(model_type="mini", max_tokens=4096)
         else:
             return get_configured_llm(model_type="standard", max_tokens=6144)
 
