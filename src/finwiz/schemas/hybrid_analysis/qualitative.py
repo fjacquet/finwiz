@@ -24,6 +24,14 @@ class SecAnalysisInsights(BaseModel):
     risk_factors: list[str] = Field(default_factory=list, description="Risk factors from SEC filings with severity ratings")
     strategic_initiatives: list[str] = Field(default_factory=list, description="Key strategic initiatives with expected impact")
 
+    @field_validator("business_model", mode="before")
+    @classmethod
+    def coerce_business_model(cls, v: object) -> str:
+        """Coerce dict to string (AI sometimes returns a dict for prose fields)."""
+        if isinstance(v, dict):
+            return " | ".join(f"{k}: {val}" for k, val in v.items())
+        return str(v) if v is not None else ""
+
     @field_validator("risk_factors", mode="before")
     @classmethod
     def coerce_risk_factors(cls, v: list) -> list[str]:
@@ -56,6 +64,14 @@ class FundamentalContextInsights(BaseModel):
     competitive_positioning: str = Field(default="", description="Competitive positioning analysis")
     management_assessment: str = Field(default="", description="Management quality and track record")
 
+    @field_validator("industry_analysis", "competitive_positioning", "management_assessment", mode="before")
+    @classmethod
+    def coerce_prose_to_string(cls, v: object) -> str:
+        """Coerce dict entries to strings (AI sometimes returns dicts for prose fields)."""
+        if isinstance(v, dict):
+            return " | ".join(f"{k}: {val}" for k, val in v.items())
+        return str(v) if v is not None else ""
+
     model_config = {
         "str_strip_whitespace": True,
     }
@@ -73,6 +89,14 @@ class TechnicalStrategyInsights(BaseModel):
     support_resistance: str = Field(default="", description="Key support and resistance levels")
     entry_exit_strategy: str = Field(default="", description="Entry/exit strategy with price targets")
     timing_assessment: str = Field(default="", description="Market timing and momentum assessment")
+
+    @field_validator("support_resistance", "entry_exit_strategy", "timing_assessment", mode="before")
+    @classmethod
+    def coerce_prose_to_string(cls, v: object) -> str:
+        """Coerce dict entries (e.g. {'support_levels': '...', 'resistance_levels': '...'}) to strings."""
+        if isinstance(v, dict):
+            return " | ".join(f"{k}: {val}" for k, val in v.items())
+        return str(v) if v is not None else ""
 
     model_config = {
         "str_strip_whitespace": True,
@@ -146,6 +170,14 @@ class InvestmentSynthesis(BaseModel):
     final_recommendation: Literal["BUY", "HOLD", "SELL"] = Field(default="HOLD", description="Final AI-refined recommendation")
     recommendation_confidence: Literal["LOW", "MEDIUM", "HIGH"] = Field(default="MEDIUM", description="AI confidence in recommendation")
     action_plan: ActionPlan | None = Field(default=None, description="Actionable steps: immediate_actions, monitoring_points, exit_triggers")
+
+    @field_validator("investment_thesis", "bull_case", "base_case", "bear_case", mode="before")
+    @classmethod
+    def coerce_prose_to_string(cls, v: object) -> str:
+        """Coerce dict to string (AI sometimes returns a dict for prose fields)."""
+        if isinstance(v, dict):
+            return " | ".join(f"{k}: {val}" for k, val in v.items())
+        return str(v) if v is not None else ""
 
     @model_validator(mode="before")
     @classmethod
