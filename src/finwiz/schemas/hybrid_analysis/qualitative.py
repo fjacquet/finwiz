@@ -171,6 +171,9 @@ class QualitativeInsights(BaseModel):
     guidance.
     """
 
+    # Investment Strategy — placed FIRST so LLM fills it before token budget runs out
+    investment_synthesis: InvestmentSynthesis | None = Field(default=None, description="Investment synthesis and recommendation")
+
     # SEC Analysis
     sec_insights: SecAnalysisInsights | None = Field(default=None, description="SEC filings analysis")
 
@@ -182,9 +185,6 @@ class QualitativeInsights(BaseModel):
 
     # Risk Analysis
     contextual_risks: ContextualRiskInsights | None = Field(default=None, description="Contextual risk analysis")
-
-    # Investment Strategy
-    investment_synthesis: InvestmentSynthesis | None = Field(default=None, description="Investment synthesis and recommendation")
 
     # Metadata
     analysis_timestamp: datetime | None = Field(default=None, description="When AI analysis was performed (UTC)")

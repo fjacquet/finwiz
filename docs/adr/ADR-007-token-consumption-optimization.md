@@ -31,15 +31,23 @@ Apply four optimization layers:
 
 2. **LLM response caps (max_tokens)**
    - Standard: 2048, Mini: 1024, Manager: 1024, Planning: 2048, Baseline: 4096.
-   - Deep analysis crew overrides to 4096 (structured JSON output needs ~1500-2000 words).
+   - Deep analysis crew overrides to 6144 (structured JSON output needs ~1500-2000 words;
+     raised from 4096 after observing `investment_synthesis` truncation under token pressure).
    - Configurable via `LLM_MAX_TOKENS` environment variable.
    - Cache key includes `max_tokens` to prevent wrong-limit cache hits.
 
-3. **Schema resilience**
+3. **QualitativeInsights field ordering** (`schemas/hybrid_analysis/qualitative.py`)
+
+   `investment_synthesis` moved to first position. LLMs generate fields in schema order;
+   placing the most user-visible section first guarantees it is filled before earlier
+   sections exhaust the token budget. Zero runtime cost — field access by name is
+   unaffected by declaration order.
+
+4. **Schema resilience**
    - `SecAnalysisInsights.risk_factors` field_validator coerces dict entries
      (e.g. `{'risk': '...', 'severity': '...'}`) to plain strings.
 
-4. **Observability**
+5. **Observability**
    - Pre-call token estimation guard in LiteLLM callback (configurable `MAX_PROMPT_TOKENS`).
    - CrewAI `usage_metrics` logged after each crew execution.
 

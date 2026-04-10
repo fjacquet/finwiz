@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Token optimization (ADR-007)** -- Pruned ~10K tokens of YAML boilerplate across all 7 crews: removed 33 redundant JSON OUTPUT blocks, 11 ANTI-HALLUCINATION blocks, 8 "Read schema" instructions, and compressed 25+ agent backstories to ~15 words each
 - **LLM max_tokens caps** -- Added response length limits per model type (standard: 2048, mini: 1024, manager: 1024, planning: 2048, baseline: 4096) to prevent unbounded output; configurable via `LLM_MAX_TOKENS` env var
-- **Deep analysis max_tokens** -- Increased to 4096 to accommodate structured JSON output requiring 1500-2000 words
+- **Deep analysis max_tokens** -- Increased to 4096 to accommodate structured JSON output requiring 1500-2000 words; further raised to 6144 to reduce token-pressure truncation of `investment_synthesis` prose
+- **QualitativeInsights field ordering** -- `investment_synthesis` moved to first position in schema so LLM fills the most user-visible section before token budget runs out (zero-cost change, transparent to all callers)
 
 ### Fixed
 
