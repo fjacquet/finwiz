@@ -126,6 +126,9 @@ class PortfolioHoldingsProcessor:
         """
         Read holdings from a single CSV file.
 
+        Honors the optional `Active` column: rows with `Active=false` are skipped
+        and a single INFO summary log is emitted per asset class.
+
         Args:
             path: Path to CSV file
             asset_class: Type of asset (stock, etf, crypto)
@@ -135,6 +138,7 @@ class PortfolioHoldingsProcessor:
 
         """
         holdings: list[RawHolding] = []
+        skipped: list[str] = []
 
         try:
             with path.open(newline="", encoding="utf-8") as f:
@@ -143,13 +147,19 @@ class PortfolioHoldingsProcessor:
                     name = (row.get("Name") or "").strip()
                     ticker = self.normalize_ticker(row.get("Ticker") or "", asset_class=asset_class)
                     currency = (row.get("Currency") or "").strip()
+                    active_raw = (row.get("Active") or "true").strip().lower()
 
                     # Log every row we encounter
-                    logger.debug(f"CSV line {line_num}: name='{name}', ticker='{ticker}', currency='{currency}', asset_class='{asset_class}'")
+                    logger.debug(f"CSV line {line_num}: name='{name}', ticker='{ticker}', currency='{currency}', active='{active_raw}', asset_class='{asset_class}'")
 
                     # Skip completely empty rows
                     if not name and not ticker:
                         logger.debug(f"Skipping empty row at line {line_num}")
+                        continue
+
+                    # Skip inactive rows (delisted, insufficient history, etc.)
+                    if active_raw == "false":
+                        skipped.append(ticker or name)
                         continue
 
                     # Create holding even if data is incomplete
@@ -166,6 +176,14 @@ class PortfolioHoldingsProcessor:
 
         except Exception as e:
             logger.error(f"Error reading CSV file {path}: {e}", exc_info=True)
+
+        if skipped:
+            logger.info(
+                "Skipped %d inactive %s holdings: %s",
+                len(skipped),
+                asset_class,
+                ", ".join(skipped),
+            )
 
         return holdings
 
