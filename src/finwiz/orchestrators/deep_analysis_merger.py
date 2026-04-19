@@ -217,7 +217,9 @@ class DeepAnalysisDataMerger:
         else:
             # Log when no alternatives are available for underperforming holdings
             if analysis.grade in ["C", "D", "F"]:
-                self.logger.info(f"No alternatives available for {holding.ticker} (grade: {analysis.grade}). Consider running with --discovery flag to find A+ alternatives.")
+                self.logger.info(
+                    f"No alternatives available for {holding.ticker} (grade: {analysis.grade}). Enable discovery with INVESTMENT_DISCOVERY_ENABLED=true to find A+ alternatives."
+                )
 
         # Note: HoldingDecision doesn't have has_deep_analysis field in the schema
         # but we set crew_analysis_used which indicates deep analysis was performed

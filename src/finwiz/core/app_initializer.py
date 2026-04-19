@@ -56,9 +56,15 @@ def kickoff() -> None:
         finwiz_flow = FinwizFlow(state=flow_state)
         logger.debug("FinwizFlow instance created with FinwizState")
 
+        # Step 5: Resolve runtime toggles from env vars into CrewAI flow inputs.
+        # This is the canonical CrewAI pattern: flow.kickoff(inputs={...})
+        # populates structured state before any @start() method runs.
+        discovery_enabled = os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true"
+        flow_inputs: dict[str, object] = {"discovery_enabled": discovery_enabled}
+
         # Step 6: Execute the flow
-        logger.info("🚀 Starting FinWiz analysis execution")
-        finwiz_flow.kickoff()
+        logger.info("🚀 Starting FinWiz analysis execution (discovery_enabled=%s)", discovery_enabled)
+        finwiz_flow.kickoff(inputs=flow_inputs)
         logger.info("✅ FinWiz analysis workflow completed successfully")
 
         # Step 7: Force-exit the process so third-party thread pools

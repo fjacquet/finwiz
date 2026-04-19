@@ -236,10 +236,14 @@ class FinwizFlow(Flow[FinwizState]):
                 logger.warning(f"Stress testing skipped: {e}")
 
         # Phase 4: Discovery (if enabled)
+        # Toggle sources (either path works):
+        #   1. state.discovery_enabled — populated from flow.kickoff(inputs={"discovery_enabled": True})
+        #   2. INVESTMENT_DISCOVERY_ENABLED=true env var (forwarded by app_initializer.kickoff)
         import os
 
         discovery_data = {}
-        if os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true":
+        discovery_enabled = self.state.discovery_enabled or (os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true")
+        if discovery_enabled:
             logger.info("=" * 80)
             logger.info("PHASE 4: Investment Discovery")
             logger.info("=" * 80)
