@@ -117,3 +117,82 @@ class TestFREDAdapter:
         """All expected macro fields have FRED series mappings."""
         expected_fields = {"fed_rate", "cpi_yoy", "unemployment_rate", "gdp_growth", "treasury_10y", "treasury_2y", "vix"}
         assert set(FRED_SERIES.keys()) == expected_fields
+
+    def test_transient_failure_retried_and_recovers(self, mocker):
+        """Tenacity retries transient errors and recovers on third attempt."""
+        mocker.patch.dict("os.environ", {"FRED_API_KEY": "test_key"})
+        adapter = FREDAdapter()
+
+        mock_fred_cls = mocker.patch("fredapi.Fred")
+        mock_fred = mock_fred_cls.return_value
+
+        call_counts: dict[str, int] = {s: 0 for s in FRED_SERIES.values()}
+
+        def mock_get_series(series_id, **kwargs):
+            call_counts[series_id] += 1
+            if series_id == "FEDFUNDS" and call_counts[series_id] < 3:
+                raise ConnectionError("transient 500")
+            return pd.Series([5.25])
+
+        mock_fred.get_series.side_effect = mock_get_series
+
+        # Speed up the test by patching sleep
+        mocker.patch("tenacity.nap.time.sleep", return_value=None)
+
+        snapshot = adapter.get_macro_snapshot()
+        assert snapshot.fed_rate == 5.25
+        assert call_counts["FEDFUNDS"] == 3  # 2 failures + 1 success
+
+    def test_all_series_fail_falls_back_to_cache(self, mocker, tmp_path):
+        """When all FRED series fail, loads the on-disk JSON cache."""
+        mocker.patch.dict("os.environ", {"FRED_API_KEY": "test_key"})
+
+        # Pre-seed an on-disk cache.
+        from finwiz.data.adapters import fred_adapter as fred_module
+        from finwiz.schemas.macro import MacroSnapshot
+
+        cache_path = tmp_path / "fred_snapshot.json"
+        cached = MacroSnapshot(
+            fed_rate=4.0,
+            cpi_yoy=3.0,
+            unemployment_rate=4.2,
+            treasury_10y=4.5,
+            treasury_2y=4.8,
+            vix=18.0,
+            data_sources={"fed_rate": "FRED:FEDFUNDS"},
+        )
+        cache_path.write_text(cached.model_dump_json(), encoding="utf-8")
+        mocker.patch.object(fred_module, "FRED_CACHE_PATH", cache_path)
+
+        adapter = FREDAdapter()
+        mock_fred_cls = mocker.patch("fredapi.Fred")
+        mock_fred = mock_fred_cls.return_value
+        mock_fred.get_series.side_effect = ConnectionError("down")
+        mocker.patch("tenacity.nap.time.sleep", return_value=None)
+
+        snapshot = adapter.get_macro_snapshot()
+        assert snapshot.fed_rate == 4.0  # from cache
+        assert snapshot.vix == 18.0
+
+    def test_successful_snapshot_is_persisted(self, mocker, tmp_path):
+        """A successful snapshot is written to disk as JSON."""
+        mocker.patch.dict("os.environ", {"FRED_API_KEY": "test_key"})
+
+        from finwiz.data.adapters import fred_adapter as fred_module
+
+        cache_path = tmp_path / "fred_snapshot.json"
+        mocker.patch.object(fred_module, "FRED_CACHE_PATH", cache_path)
+
+        adapter = FREDAdapter()
+        mock_fred_cls = mocker.patch("fredapi.Fred")
+        mock_fred = mock_fred_cls.return_value
+        mock_fred.get_series.return_value = pd.Series([5.25])
+
+        adapter.get_macro_snapshot()
+        assert cache_path.exists()
+
+        # Verify it's valid Pydantic JSON
+        from finwiz.schemas.macro import MacroSnapshot
+
+        reloaded = MacroSnapshot.model_validate_json(cache_path.read_text())
+        assert reloaded.fed_rate == 5.25
