@@ -25,6 +25,16 @@ pipeline = NewcomerDiscoveryPipeline("stock")
 result = pipeline.discover()  # Returns NewcomerDiscoveryResult
 ```
 
+## Screener Wiring
+
+The pipeline composes 5 live components from `finwiz.discovery.*`:
+
+1. `DynamicUniverseProvider.get_universe()` — builds ticker universe (excluding portfolio).
+2. `BreakoutDetector.detect(universe)` — breakout-signal candidates.
+3. `MomentumScanner.scan(universe)` — momentum-signal candidates.
+4. `IPOScreener.screen()` — SEC EDGAR S-1 IPO candidates (stock only).
+5. `CandidateScorer.score_and_grade(candidates)` — blended scoring + grading.
+
 ## Feature Flag
 
 Gated by `newcomer_discovery` feature flag in `config/features/definitions.py`.

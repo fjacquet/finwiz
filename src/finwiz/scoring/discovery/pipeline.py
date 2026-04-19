@@ -108,7 +108,14 @@ class NewcomerDiscoveryPipeline:
     # ------------------------------------------------------------------
 
     def _gather_candidates(self) -> list[NewcomerCandidate]:
-        """Gather candidates from universe provider and all screeners (deduplicated)."""
+        """Gather candidates from universe provider and all screeners (deduplicated).
+
+        Pipeline:
+          1. Build ticker universe via DynamicUniverseProvider (excludes portfolio).
+          2. Run universe-consuming screeners (Breakout, Momentum) against it.
+          3. Run IPOScreener (SEC EDGAR, stock-only) independently.
+          4. Deduplicate candidates by upper-cased ticker.
+        """
         candidates: list[NewcomerCandidate] = []
         seen: set[str] = set()
 
@@ -119,26 +126,57 @@ class NewcomerDiscoveryPipeline:
                     seen.add(key)
                     candidates.append(c)
 
-        screeners: list[tuple[str, str, str]] = [
-            ("finwiz.scoring.discovery.universe_provider", "DynamicUniverseProvider", "get_candidates"),
-            ("finwiz.scoring.discovery.ipo_screener", "IPOScreener", "screen"),
-            ("finwiz.scoring.discovery.breakout_detector", "BreakoutDetector", "detect"),
-            ("finwiz.scoring.discovery.momentum_scanner", "MomentumScanner", "scan"),
-        ]
-        for module_path, cls_name, method_name in screeners:
-            try:
-                import importlib
+        # Step 1: build ticker universe (excludes portfolio holdings).
+        universe: list[str] = []
+        try:
+            from finwiz.discovery.universe_provider import DynamicUniverseProvider
 
-                mod = importlib.import_module(module_path)
-                cls = getattr(mod, cls_name)
-                method = getattr(cls(), method_name)
-                _add(method(self.asset_class))
-            except ImportError:
-                logger.warning("%s not available (Phase 2 pending)", cls_name)
+            universe = DynamicUniverseProvider().get_universe(
+                self.asset_class,
+                exclude_tickers=list(self.portfolio_tickers),
+            )
+        except ImportError as e:
+            logger.warning("DynamicUniverseProvider import failed: %s", e)
+        except Exception as e:
+            logger.warning("DynamicUniverseProvider failed: %s", e)
+
+        # Step 2: universe-consuming screeners (Breakout, Momentum).
+        if universe:
+            try:
+                from finwiz.discovery.breakout_detector import BreakoutDetector
+
+                _add(BreakoutDetector().detect(universe))
+            except ImportError as e:
+                logger.warning("BreakoutDetector import failed: %s", e)
             except (ValueError, OSError) as e:
-                logger.warning("%s failed: %s", cls_name, e)
+                logger.warning("BreakoutDetector failed: %s", e)
             except Exception as e:
-                logger.warning("%s unexpected error: %s", cls_name, e)
+                logger.warning("BreakoutDetector unexpected error: %s", e)
+
+            try:
+                from finwiz.discovery.momentum_scanner import MomentumScanner
+
+                _add(MomentumScanner().scan(universe))
+            except ImportError as e:
+                logger.warning("MomentumScanner import failed: %s", e)
+            except (ValueError, OSError) as e:
+                logger.warning("MomentumScanner failed: %s", e)
+            except Exception as e:
+                logger.warning("MomentumScanner unexpected error: %s", e)
+
+        # Step 3: IPOScreener (stock-only, queries SEC EDGAR directly).
+        if self.asset_class == "stock":
+            try:
+                from finwiz.discovery.ipo_screener import IPOScreener
+
+                _add(IPOScreener().screen())
+            except ImportError as e:
+                logger.warning("IPOScreener import failed: %s", e)
+            except (ValueError, OSError) as e:
+                logger.warning("IPOScreener failed: %s", e)
+            except Exception as e:
+                logger.warning("IPOScreener unexpected error: %s", e)
+
         return candidates
 
     # ------------------------------------------------------------------
@@ -146,13 +184,15 @@ class NewcomerDiscoveryPipeline:
     # ------------------------------------------------------------------
 
     def _score_candidates(self, candidates: list[NewcomerCandidate]) -> list[NewcomerCandidate]:
-        """Score each candidate via CandidateScorer.  Returns as-is if scorer unavailable."""
+        """Score and grade candidates via CandidateScorer.  Returns as-is if scorer unavailable."""
+        if not candidates:
+            return candidates
         try:
-            from finwiz.scoring.discovery.candidate_scorer import CandidateScorer
+            from finwiz.discovery.candidate_scorer import CandidateScorer
 
-            return [CandidateScorer().score(c) for c in candidates]
-        except ImportError:
-            logger.warning("CandidateScorer not available (Phase 2 pending)")
+            return CandidateScorer().score_and_grade(candidates)
+        except ImportError as e:
+            logger.warning("CandidateScorer import failed: %s", e)
             return candidates
         except Exception as e:
             logger.warning("Candidate scoring failed: %s", e)
