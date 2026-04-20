@@ -12,9 +12,13 @@ from typing import ClassVar
 import pandas as pd
 import yfinance as yf
 
+from finwiz.discovery.signal_curves import volume_anomaly_score
 from finwiz.discovery.ticker_utils import to_yfinance_symbol
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 from finwiz.tools.logger import get_logger
+
+_BREAKOUT_COMPOSITE_FLOOR: float = 0.5
+_BREAKOUT_STRONG_SIGNAL: float = 0.5
 
 
 class BreakoutDetector:
@@ -103,7 +107,9 @@ class BreakoutDetector:
             volume_score = self._check_volume_breakout(history)
             composite = 0.5 * price_score + 0.5 * volume_score
 
-            if composite < 0.3:
+            if composite < _BREAKOUT_COMPOSITE_FLOOR:
+                return None
+            if price_score < _BREAKOUT_STRONG_SIGNAL and volume_score < _BREAKOUT_STRONG_SIGNAL:
                 return None
 
             info = ticker_obj.info
@@ -154,16 +160,12 @@ class BreakoutDetector:
     def _check_volume_breakout(self, history: pd.DataFrame) -> float:
         """Calculate volume breakout score (0.0-1.0).
 
-        Args:
-            history: DataFrame with volume data.
-
-        Returns:
-            Score from 0.0 (no spike) to 1.0 (extreme volume spike).
+        Delegates to the shared ``volume_anomaly_score`` curve so volume
+        gating agrees with ``MomentumScanner``. The breakout-specific
+        spike threshold is absorbed by the curve: ratios below the
+        neutral band return sub-0.5, ratios ≥ 3x saturate at 1.0.
         """
-        ratio = self._volume_ratio(history)
-        if ratio >= self.VOLUME_SPIKE_THRESHOLD:
-            return min(1.0, (ratio - 1.0) / 4.0)
-        return 0.0
+        return volume_anomaly_score(self._volume_ratio(history))
 
     def _volume_ratio(self, history: pd.DataFrame) -> float:
         """Calculate current volume / 20-day average volume.
