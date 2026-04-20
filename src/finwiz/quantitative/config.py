@@ -8,7 +8,7 @@ environment variable management.
 This is the main entry point that re-exports from specialized modules:
 - config_defaults: Enums, dataclasses, and default values
 - config_validators: Pydantic validators
-- config_builders: Configuration classes and manager
+- config_manager: Configuration classes and manager
 """
 
 # Re-export from specialized modules for backward compatibility
