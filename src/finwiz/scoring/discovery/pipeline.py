@@ -145,7 +145,7 @@ class NewcomerDiscoveryPipeline:
             try:
                 from finwiz.discovery.breakout_detector import BreakoutDetector
 
-                _add(BreakoutDetector().detect(universe))
+                _add(BreakoutDetector().detect(universe, self.asset_class))
             except ImportError as e:
                 logger.warning("BreakoutDetector import failed: %s", e)
             except (ValueError, OSError) as e:
@@ -156,7 +156,7 @@ class NewcomerDiscoveryPipeline:
             try:
                 from finwiz.discovery.momentum_scanner import MomentumScanner
 
-                _add(MomentumScanner().scan(universe))
+                _add(MomentumScanner().scan(universe, self.asset_class))
             except ImportError as e:
                 logger.warning("MomentumScanner import failed: %s", e)
             except (ValueError, OSError) as e:

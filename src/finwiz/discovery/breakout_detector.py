@@ -12,6 +12,7 @@ from typing import ClassVar
 import pandas as pd
 import yfinance as yf
 
+from finwiz.discovery.ticker_utils import to_yfinance_symbol
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 from finwiz.tools.logger import get_logger
 
@@ -32,12 +33,16 @@ class BreakoutDetector:
     def detect(
         self,
         universe: list[str],
+        asset_class: str = "stock",
         max_candidates: int = 20,
     ) -> list[NewcomerCandidate]:
         """Detect breakout candidates from a ticker universe.
 
         Args:
             universe: List of ticker symbols to scan.
+            asset_class: Asset class of the universe ("stock", "etf", "crypto").
+                Drives yfinance symbol normalization and the ``asset_class``
+                field on each emitted ``NewcomerCandidate``.
             max_candidates: Maximum number of candidates to return.
 
         Returns:
@@ -50,7 +55,7 @@ class BreakoutDetector:
         candidates: list[NewcomerCandidate] = []
 
         for ticker in universe:
-            result = self._analyze_ticker(ticker)
+            result = self._analyze_ticker(ticker, asset_class)
             if result is not None:
                 candidates.append(result)
 
@@ -63,21 +68,32 @@ class BreakoutDetector:
         )
         return top
 
-    def _analyze_ticker(self, ticker: str) -> NewcomerCandidate | None:
+    def _analyze_ticker(
+        self,
+        ticker: str,
+        asset_class: str,
+    ) -> NewcomerCandidate | None:
         """Analyze a single ticker for breakout signals.
 
         Args:
-            ticker: Stock ticker symbol.
+            ticker: Bare ticker symbol. The yfinance query form is derived via
+                :func:`to_yfinance_symbol` so crypto tickers get a ``-USD``
+                suffix only at the query boundary.
+            asset_class: Asset class used for yfinance normalization and
+                propagated onto the returned ``NewcomerCandidate``.
 
         Returns:
             NewcomerCandidate if breakout detected, None otherwise.
         """
         try:
-            market_cap = self._get_market_cap(ticker)
-            if not self._passes_market_cap_filter(market_cap):
+            query_symbol = to_yfinance_symbol(ticker, asset_class)
+            market_cap = self._get_market_cap(query_symbol)
+            # Crypto coins don't have a "market cap" in the equity sense;
+            # the small/mid-cap filter only applies to stocks.
+            if asset_class == "stock" and not self._passes_market_cap_filter(market_cap):
                 return None
 
-            ticker_obj = yf.Ticker(ticker)
+            ticker_obj = yf.Ticker(query_symbol)
             history = ticker_obj.history(period=self.LOOKBACK_PERIOD)
 
             if history is None or len(history) < self.PRICE_BREAKOUT_WINDOW:
@@ -96,7 +112,7 @@ class BreakoutDetector:
             return NewcomerCandidate(
                 ticker=ticker,
                 source="breakout",
-                asset_class="stock",
+                asset_class=asset_class,  # type: ignore[arg-type]
                 composite_score=composite,
                 grade="",
                 market_cap=market_cap,

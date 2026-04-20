@@ -267,8 +267,8 @@ class TestScreenerWiring:
         result = p._gather_candidates()
 
         mock_universe.assert_called_once()
-        mock_breakout.assert_called_once_with(["TSLA", "AMZN"])
-        mock_momentum.assert_called_once_with(["TSLA", "AMZN"])
+        mock_breakout.assert_called_once_with(["TSLA", "AMZN"], "stock")
+        mock_momentum.assert_called_once_with(["TSLA", "AMZN"], "stock")
         mock_ipo.assert_called_once()
         tickers = {c.ticker for c in result}
         assert "TSLA" in tickers

@@ -14,6 +14,7 @@ import pandas as pd
 import talib
 import yfinance as yf
 
+from finwiz.discovery.ticker_utils import to_yfinance_symbol
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 from finwiz.tools.logger import get_logger
 
@@ -39,12 +40,16 @@ class MomentumScanner:
     def scan(
         self,
         universe: list[str],
+        asset_class: str = "stock",
         max_candidates: int = 20,
     ) -> list[NewcomerCandidate]:
         """Scan universe for momentum candidates.
 
         Args:
             universe: List of ticker symbols to scan.
+            asset_class: Asset class of the universe ("stock", "etf", "crypto").
+                Drives yfinance symbol normalization and the ``asset_class``
+                field on each emitted ``NewcomerCandidate``.
             max_candidates: Maximum number of candidates to return.
 
         Returns:
@@ -57,7 +62,7 @@ class MomentumScanner:
         candidates: list[NewcomerCandidate] = []
 
         for ticker in universe:
-            result = self._analyze_ticker(ticker)
+            result = self._analyze_ticker(ticker, asset_class)
             if result is not None:
                 candidates.append(result)
 
@@ -70,17 +75,26 @@ class MomentumScanner:
         )
         return top
 
-    def _analyze_ticker(self, ticker: str) -> NewcomerCandidate | None:
+    def _analyze_ticker(
+        self,
+        ticker: str,
+        asset_class: str,
+    ) -> NewcomerCandidate | None:
         """Analyze a single ticker for momentum signals.
 
         Args:
-            ticker: Stock ticker symbol.
+            ticker: Bare ticker symbol (``BTC``, ``AAPL``, ...). The yfinance
+                query form is derived via :func:`to_yfinance_symbol` so crypto
+                tickers get a ``-USD`` suffix only at the query boundary.
+            asset_class: Asset class used for yfinance normalization and
+                propagated onto the returned ``NewcomerCandidate``.
 
         Returns:
             NewcomerCandidate if momentum signal detected, None otherwise.
         """
         try:
-            ticker_obj = yf.Ticker(ticker)
+            query_symbol = to_yfinance_symbol(ticker, asset_class)
+            ticker_obj = yf.Ticker(query_symbol)
             history = ticker_obj.history(period=self.LOOKBACK_PERIOD)
 
             if history is None or len(history) < 30:
@@ -113,7 +127,7 @@ class MomentumScanner:
             return NewcomerCandidate(
                 ticker=ticker,
                 source="momentum",
-                asset_class="stock",
+                asset_class=asset_class,  # type: ignore[arg-type]
                 composite_score=composite,
                 grade="",
                 market_cap=info.get("marketCap"),
