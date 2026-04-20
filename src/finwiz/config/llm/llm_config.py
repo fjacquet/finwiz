@@ -289,13 +289,13 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
                 max_tokens = int(env_max)
             else:
                 max_tokens_defaults = {
-                    "standard": 2048,
-                    "mini": 1024,
-                    "manager": 1024,
-                    "planning": 2048,
-                    "baseline": 4096,
+                    "standard": 20480,
+                    "mini": 10240,
+                    "manager": 10240,
+                    "planning": 20480,
+                    "baseline": 40960,
                 }
-                max_tokens = max_tokens_defaults.get(model_type, 2048)
+                max_tokens = max_tokens_defaults.get(model_type, 20480)
 
         # Check if parallel tool calls should be disabled
         # Some providers (OpenRouter/Novita) + Instructor don't support parallel tool calls

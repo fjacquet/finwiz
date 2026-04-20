@@ -182,7 +182,7 @@ uv run pytest tests/unit/tools/
 uv run pytest --cov=src/finwiz --cov-report=html
 
 # Run specific test
-uv run pytest tests/unit/tools/test_market_screening_tool.py::test_should_screen_stocks
+uv run pytest tests/unit/tools/test_market_screening_tool.py::TestMarketScreeningTool::test_should_screen_stock_universe_successfully
 ```
 
 ### Testing Standards

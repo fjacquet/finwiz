@@ -23,12 +23,9 @@ orchestrators/
 ├── portfolio_review_orchestrator.py     # EnhancedPortfolioReviewOrchestrator, run(), run_with_rebalancing()
 ├── portfolio_rebalancing.py             # run_rebalancing(), calculate_trades()
 ├── portfolio_holdings_processor.py      # PortfolioHoldingsProcessor
-├── optimization_validator.py            # Optimization validation
 │
 ├── # Helpers
 ├── validation_helpers.py                # Validation utilities
-├── crew_export_migrator.py              # Export migration
-├── deep_analysis_merger.py              # Analysis merging
 │
 ├── # Subdirectories
 ├── discovery/                           # Discovery sub-pipeline

@@ -454,6 +454,18 @@ class DeepAnalysisDataCollector:
                     if "sma_200" in flattened and "moving_avg_200" not in flattened:
                         flattened["moving_avg_200"] = flattened["sma_200"]
 
+        # Third fallback: compute beta from 1y daily returns vs benchmark.
+        # For crypto, leave beta as None (equity-style beta is not meaningful);
+        # the scorer treats crypto beta as optional.
+        if "beta" not in flattened:
+            ticker = data.get("ticker")
+            asset_class = (data.get("asset_class") or "").lower()
+            if ticker and asset_class in ("stock", "etf"):
+                computed = self._compute_benchmark_beta(ticker, asset_class)
+                if computed is not None:
+                    flattened["beta"] = computed
+                    self.logger.info(f"Computed fallback beta for {ticker} vs benchmark: {computed:.3f}")
+
         # Process nested sections
         for section in ["ticker_info", "company_info", "quantitative_analysis", "sec_analysis", "sentiment_analysis"]:
             if section in data and isinstance(data[section], dict):
@@ -469,6 +481,72 @@ class DeepAnalysisDataCollector:
                     pass
 
         return flattened
+
+    # Benchmark tickers for beta regression fallback.  Mapping is by listing
+    # suffix — reliable enough without a currency lookup, and the .SW/.DE/.PA
+    # listings are the ones that actually lack a yfinance `beta` today.
+    _BETA_BENCHMARK_US = "^GSPC"
+    _BETA_BENCHMARK_EU = "^STOXX50E"
+    _BETA_BENCHMARK_JP = "^N225"
+
+    @classmethod
+    def _benchmark_for_ticker(cls, ticker: str) -> str:
+        """Pick a market benchmark for regression-based beta by listing suffix."""
+        suffix = ticker.split(".")[-1].upper() if "." in ticker else ""
+        eu_suffixes = {"SW", "DE", "DU", "PA", "AS", "MI", "MC", "L", "BR", "LS", "VI"}
+        if suffix in eu_suffixes:
+            return cls._BETA_BENCHMARK_EU
+        if suffix in {"T", "JP"}:
+            return cls._BETA_BENCHMARK_JP
+        return cls._BETA_BENCHMARK_US
+
+    def _compute_benchmark_beta(self, ticker: str, asset_class: str) -> float | None:
+        """Regression-based beta fallback (1y daily returns vs market benchmark).
+
+        Returns None on any failure — caller keeps `beta` absent and the scorer
+        treats that as a data-quality issue rather than silently defaulting to 0.0.
+        """
+        try:
+            import yfinance as yf
+
+            from finwiz.quantitative.risk.risk_metrics import calculate_beta
+
+            benchmark = self._benchmark_for_ticker(ticker)
+            hist = yf.download(
+                [ticker, benchmark],
+                period="1y",
+                interval="1d",
+                progress=False,
+                auto_adjust=True,
+                group_by="ticker",
+                threads=False,
+            )
+            if hist is None or hist.empty:
+                return None
+
+            # yfinance returns a MultiIndex column frame when multiple tickers
+            # are requested; pick Close for each.
+            try:
+                ticker_close = hist[ticker]["Close"].dropna()
+                bench_close = hist[benchmark]["Close"].dropna()
+            except (KeyError, AttributeError):
+                return None
+
+            # Align on the intersection of trading days.
+            aligned = ticker_close.to_frame("a").join(bench_close.to_frame("b"), how="inner").dropna()
+            if len(aligned) < 60:  # need ~3 months of overlap for a stable beta
+                self.logger.debug(f"Beta fallback: only {len(aligned)} aligned days for {ticker}, skipping")
+                return None
+
+            ticker_returns = aligned["a"].pct_change().dropna()
+            bench_returns = aligned["b"].pct_change().dropna()
+            beta = calculate_beta(ticker_returns, bench_returns)
+            if beta == 0.0 or beta is None:  # calculate_beta returns 0.0 on NaN/empty
+                return None
+            return float(beta)
+        except Exception as e:
+            self.logger.debug(f"Benchmark-beta fallback failed for {ticker} ({asset_class}): {e}")
+            return None
 
     def _flatten_recursive(self, obj: Any, target: dict[str, Any]) -> None:
         """Recursively flatten nested dict structures."""

@@ -56,7 +56,7 @@ class DiscoveryStatusHelper:
             logger.info("No discovery data found in inputs or files")
             return {
                 "has_results": False,
-                "message": "A+ discovery not run - use --discovery flag to enable discovery analysis",
+                "message": "A+ discovery not run - set INVESTMENT_DISCOVERY_ENABLED=true to enable discovery analysis",
                 "status": "not_run",
             }
 

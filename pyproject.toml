@@ -1,6 +1,6 @@
 [project]
 name = "finwiz"
-version = "0.2.0"
+version = "0.2.1"
 description = "finwiz using crewAI"
 authors = [{ name = "Your Name", email = "fred.jacquet@gmail.com" }]
 requires-python = ">=3.12,<3.13"
@@ -353,6 +353,35 @@ module = [
 ]
 ignore_missing_imports = true
 
+
+[tool.coverage.run]
+# FinWiz AI Minimalism rule: coverage measures *deterministic* Python only.
+# LLM-backed code paths (crew agents, prompt composition, qualitative
+# synthesis glue, Perplexity wrappers) depend on model sampling and must
+# NOT be driven by line coverage — the right guards there are schema
+# contract tests, crew-contract-reviewer, and evals. See
+# `feedback_no_coverage_on_ai.md` for the full rationale.
+omit = [
+    # Entire crew tree — agents, tasks, crew wiring, prompt config.
+    "src/finwiz/crews/*",
+    "src/finwiz/crews/**/*",
+    # Crew factory is pure LLM instantiation + fallback wiring.
+    "src/finwiz/crew_factory.py",
+    # LLM configuration (model choice, temperature, API keys).
+    "src/finwiz/config/llm/*",
+    "src/finwiz/config/llm/**/*",
+    # Perplexity LLM-backed search / analysis wrappers.
+    "src/finwiz/tools/perplexity_search_tool.py",
+    "src/finwiz/tools/perplexity_analysis_integration.py",
+    "src/finwiz/tools/perplexity_errors.py",
+    "src/finwiz/tools/perplexity_feature_utils.py",
+    "src/finwiz/tools/perplexity_logging.py",
+    "src/finwiz/tools/perplexity_performance.py",
+    "src/finwiz/tools/perplexity_performance_benchmark.py",
+    # LLM retry / litellm telemetry — both LLM-specific, not deterministic.
+    "src/finwiz/tools/llm_retry.py",
+    "src/finwiz/infrastructure/monitoring/litellm_callback.py",
+]
 
 [tool.bandit]
 exclude_dirs = ["tests", "venv", ".venv"]

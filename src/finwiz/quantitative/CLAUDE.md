@@ -11,7 +11,6 @@ quantitative/
 ├── # Core engines
 ├── backtesting.py                   # BacktestingEngine, get_backtesting_engine()
 ├── optimization.py                  # PortfolioOptimizer, EfficientFrontier
-├── screening.py                     # StockScreener
 ├── risk_manager.py                  # RiskManager (14 methods)
 ├── cost_analyzer.py                 # CostAnalyzer (19 methods)
 ├── performance.py                   # PerformanceAnalyzer, get_performance_analyzer()
@@ -68,7 +67,6 @@ quantitative/
 |------|---------------|---------|
 | `backtesting.py` | `BacktestingEngine` | Run strategy backtests |
 | `optimization.py` | `PortfolioOptimizer` | Portfolio optimization (mean-variance, etc.) |
-| `screening.py` | `StockScreener` | Screen stocks by criteria |
 | `risk_manager.py` | `RiskManager` | Risk assessment and limits |
 | `cost_analyzer.py` | `CostAnalyzer` | Trading cost analysis |
 | `performance.py` | `PerformanceAnalyzer` | Performance attribution |

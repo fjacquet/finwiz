@@ -104,7 +104,22 @@ class TestNewcomerDiscoveryPipeline:
 
     def test_screener_failure_doesnt_crash(self, pipeline, mocker):
         """If one screener raises, pipeline continues with other screeners."""
-        mocker.patch("importlib.import_module", side_effect=ImportError("not found"))
+        mocker.patch(
+            "finwiz.discovery.universe_provider.DynamicUniverseProvider.get_universe",
+            side_effect=RuntimeError("universe failed"),
+        )
+        mocker.patch(
+            "finwiz.discovery.breakout_detector.BreakoutDetector.detect",
+            side_effect=ImportError("not found"),
+        )
+        mocker.patch(
+            "finwiz.discovery.momentum_scanner.MomentumScanner.scan",
+            side_effect=ImportError("not found"),
+        )
+        mocker.patch(
+            "finwiz.discovery.ipo_screener.IPOScreener.screen",
+            side_effect=ImportError("not found"),
+        )
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
@@ -207,6 +222,108 @@ class TestPortfolioTickerLoading:
         mocker.patch("finwiz.scoring.discovery.pipeline.Path.exists", return_value=False)
         pipeline = NewcomerDiscoveryPipeline("stock")
         assert isinstance(pipeline.portfolio_tickers, set)
+
+
+class TestScreenerWiring:
+    """Tests that screener classes are wired to the correct import paths."""
+
+    def test_all_screeners_importable_from_finwiz_discovery(self):
+        """All 5 discovery classes import from finwiz.discovery.* (not finwiz.scoring.discovery.*)."""
+        from finwiz.discovery.breakout_detector import BreakoutDetector
+        from finwiz.discovery.candidate_scorer import CandidateScorer
+        from finwiz.discovery.ipo_screener import IPOScreener
+        from finwiz.discovery.momentum_scanner import MomentumScanner
+        from finwiz.discovery.universe_provider import DynamicUniverseProvider
+
+        assert hasattr(DynamicUniverseProvider, "get_universe")
+        assert hasattr(IPOScreener, "screen")
+        assert hasattr(BreakoutDetector, "detect")
+        assert hasattr(MomentumScanner, "scan")
+        assert hasattr(CandidateScorer, "score_and_grade")
+
+    def test_gather_candidates_calls_real_screeners(self, mocker):
+        """_gather_candidates calls universe provider + breakout + momentum (IPO excluded)."""
+        mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
+        p = NewcomerDiscoveryPipeline("stock")
+        p.portfolio_tickers = set()
+
+        mock_universe = mocker.patch(
+            "finwiz.discovery.universe_provider.DynamicUniverseProvider.get_universe",
+            return_value=["TSLA", "AMZN"],
+        )
+        mock_breakout = mocker.patch(
+            "finwiz.discovery.breakout_detector.BreakoutDetector.detect",
+            return_value=[_make_candidate("TSLA", 0.85)],
+        )
+        mock_momentum = mocker.patch(
+            "finwiz.discovery.momentum_scanner.MomentumScanner.scan",
+            return_value=[_make_candidate("AMZN", 0.82)],
+        )
+
+        result = p._gather_candidates()
+
+        mock_universe.assert_called_once()
+        mock_breakout.assert_called_once_with(["TSLA", "AMZN"], "stock")
+        mock_momentum.assert_called_once_with(["TSLA", "AMZN"], "stock")
+        tickers = {c.ticker for c in result}
+        assert "TSLA" in tickers
+        assert "AMZN" in tickers
+
+    def test_gather_excludes_ipo_screener_entirely(self, mocker):
+        """IPOScreener is intentionally removed from the opportunity pipeline.
+
+        SEC S-1 filings have no fundamentals or trading history — they grade
+        F uniformly and are events, not investable signals.
+        """
+        mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
+        p = NewcomerDiscoveryPipeline("stock")
+        p.portfolio_tickers = set()
+
+        mocker.patch(
+            "finwiz.discovery.universe_provider.DynamicUniverseProvider.get_universe",
+            return_value=["TSLA"],
+        )
+        mocker.patch(
+            "finwiz.discovery.breakout_detector.BreakoutDetector.detect",
+            return_value=[],
+        )
+        mocker.patch(
+            "finwiz.discovery.momentum_scanner.MomentumScanner.scan",
+            return_value=[],
+        )
+        mock_ipo = mocker.patch(
+            "finwiz.discovery.ipo_screener.IPOScreener.screen",
+            return_value=[_make_candidate("IPO1", 0.5)],
+        )
+
+        p._gather_candidates()
+        mock_ipo.assert_not_called()
+
+    def test_gather_skips_ipo_for_non_stock_asset_classes(self, mocker):
+        """IPOScreener is not called for any asset class (backwards-compat assertion)."""
+        mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
+        p = NewcomerDiscoveryPipeline("etf")
+        p.portfolio_tickers = set()
+
+        mocker.patch(
+            "finwiz.discovery.universe_provider.DynamicUniverseProvider.get_universe",
+            return_value=["SPY"],
+        )
+        mocker.patch(
+            "finwiz.discovery.breakout_detector.BreakoutDetector.detect",
+            return_value=[],
+        )
+        mocker.patch(
+            "finwiz.discovery.momentum_scanner.MomentumScanner.scan",
+            return_value=[],
+        )
+        mock_ipo = mocker.patch(
+            "finwiz.discovery.ipo_screener.IPOScreener.screen",
+            return_value=[],
+        )
+
+        p._gather_candidates()
+        mock_ipo.assert_not_called()
 
 
 class TestEnrichment:

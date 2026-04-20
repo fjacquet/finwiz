@@ -207,9 +207,9 @@ class DeepAnalysisCrew:
         # Deep analysis needs high max_tokens regardless of model — full JSON output
         # requires 1500-2000 words across 5 sections. Mini default (1024) is far too low.
         if self.perf_config.should_use_mini_model():
-            return get_configured_llm(model_type="mini", max_tokens=4096)
+            return get_configured_llm(model_type="mini", max_tokens=40960)
         else:
-            return get_configured_llm(model_type="standard", max_tokens=6144)
+            return get_configured_llm(model_type="standard", max_tokens=61440)
 
     @agent
     def asset_analyst(self) -> Agent:

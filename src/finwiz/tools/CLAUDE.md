@@ -11,7 +11,6 @@ tools/
 ├── logger.py                        # get_logger() — project-wide logging
 │
 ├── # Data source tools
-├── yahoo_finance_tool.py            # YahooFinanceTool (primary market data)
 ├── yahoo_finance_news_tool.py       # News feed
 ├── yahoo_finance_ticker_info_tool.py # Ticker info
 ├── yahoo_finance_company_info_tool.py # Company fundamentals
@@ -21,7 +20,6 @@ tools/
 ├── alpha_vantage_news_tool.py       # AV news feed
 ├── twelve_data_tool.py              # TwelveDataTool
 ├── sec_tool.py                      # SECTool (10-K, 10-Q filings)
-├── coinmarketcap_tool.py            # CoinMarketCapTool
 ├── kraken_api_tool.py               # KrakenAPITool
 ├── perplexity_search_tool.py        # PerplexitySearchTool (AI research)
 │
@@ -33,7 +31,6 @@ tools/
 ├── risk_assessment_tool.py          # RiskAssessmentTool
 ├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
 ├── market_screening_tool.py         # MarketScreeningTool
-├── deep_analysis_scoring_tool.py    # DeepAnalysisScoringTool
 ├── technical_analyzer.py            # TechnicalAnalyzer
 ├── sentiment_analyzer.py            # SentimentAnalyzer
 ├── chart_analyzer.py                # Chart analysis
@@ -44,7 +41,6 @@ tools/
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
 ├── enhanced_sentiment_tool.py       # Enhanced sentiment
 ├── enhanced_technical_analyzer_tool.py # Enhanced technical
-├── enhanced_twelve_data_tool.py     # Enhanced TwelveData
 ├── a_plus_scoring_tool.py           # A+ scoring
 ├── defi_metrics_tool.py             # DeFi metrics
 ├── regulatory_compliance_tool.py    # Compliance checking
@@ -60,20 +56,14 @@ tools/
 │
 ├── # Infrastructure
 ├── tool_result.py                   # ToolResult class
-├── tool_input_validator.py          # Input validation
-├── tool_input_fixer.py              # Input fixing
 ├── robust_tool_wrapper.py           # Error wrapping
 ├── base_tools.py                    # AsyncFeedbackTool base
-├── custom_tool.py                   # Custom tool base
 ├── crewai_retry_patch.py            # Retry patch
 ├── llm_retry.py                     # LLM retry logic
-├── search_tool_factory.py           # Search tool factory
-├── web_tools.py                     # Web scraping
 │
 ├── # Perplexity subsystem
 ├── perplexity_logging.py
 ├── perplexity_errors.py
-├── perplexity_integration_validator.py
 ├── perplexity_analysis_integration.py
 ├── perplexity_feature_utils.py
 ├── perplexity_performance.py

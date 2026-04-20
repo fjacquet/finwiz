@@ -103,6 +103,12 @@ class FinwizState(BaseModel):
     session_id: str = Field(default="")
     analysis_count: int = Field(default=0)
 
+    # Phase 4 discovery toggle — populated from CLI flag or env var at startup.
+    discovery_enabled: bool = Field(
+        default=False,
+        description="Whether Phase 4 (A+ investment discovery) runs this session",
+    )
+
     # Core analysis results
     stock_result: str = Field(default="")
     etf_result: str = Field(default="")

@@ -162,7 +162,7 @@ class AlternativeFinder:
                 f"⚠️ No alternatives found for {holding.ticker} (grade: {holding.grade}). "
                 f"Reasons: 1) Discovery crew may not have run, 2) No A+ candidates match asset class, "
                 f"3) Sector/cost matching not yet implemented. "
-                f"Consider running discovery crew with --discovery flag.",
+                f"Enable discovery via INVESTMENT_DISCOVERY_ENABLED=true or flow.kickoff(inputs={{'discovery_enabled': True}}).",
                 extra={
                     "ticker": holding.ticker,
                     "grade": holding.grade,
@@ -179,7 +179,7 @@ class AlternativeFinder:
         # Check for latest discovery output
         latest_file = self.discovery_output_dir / "discovery_latest.json"
         if not latest_file.exists():
-            self.logger.warning(f"No discovery crew output found at {latest_file}. Run analysis with --discovery flag to generate A+ alternatives.")
+            self.logger.warning(f"No discovery crew output found at {latest_file}. Enable discovery via INVESTMENT_DISCOVERY_ENABLED=true to generate A+ alternatives.")
             return alternatives
 
         try:

@@ -235,7 +235,7 @@ class TestAPlusDiscoveryAccessor:
 
         # Assert
         assert "not run" in summary.lower()
-        assert "--discovery" in summary
+        assert "INVESTMENT_DISCOVERY_ENABLED" in summary
 
     def test_should_generate_summary_when_no_opportunities(self, accessor, sample_crypto_discovery):
         """Test summary generation when no opportunities found."""

@@ -108,10 +108,21 @@ class TestCandidateScorer:
 
     def test_import_error_returns_unscored(self, mocker):
         """Pipeline returns candidates unscored when scorer is unavailable."""
+        import builtins
+
         from finwiz.scoring.discovery.pipeline import NewcomerDiscoveryPipeline
 
         mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
         pipeline = NewcomerDiscoveryPipeline("stock")
         candidates = [_make_candidate("UNSC", 0.5)]
+
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "finwiz.discovery.candidate_scorer":
+                raise ImportError("simulated: scorer unavailable")
+            return real_import(name, *args, **kwargs)
+
+        mocker.patch.object(builtins, "__import__", side_effect=fake_import)
         result = pipeline._score_candidates(candidates)
         assert result[0].composite_score == 0.5  # unchanged

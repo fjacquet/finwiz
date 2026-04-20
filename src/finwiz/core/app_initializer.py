@@ -10,6 +10,8 @@ import logging
 import os
 import warnings
 
+from dotenv import load_dotenv
+
 from finwiz.cli.argument_parser import (
     initialize_configuration,
     initialize_environment,
@@ -17,6 +19,10 @@ from finwiz.cli.argument_parser import (
 from finwiz.flow_state import FinwizState
 from finwiz.flows.orchestrator import FinwizFlow
 from finwiz.tools.logger import get_logger, setup_logging
+
+# Load .env at module import so env-based toggles (e.g. INVESTMENT_DISCOVERY_ENABLED)
+# are available regardless of which crew modules get imported first.
+load_dotenv()
 
 # Setup logging configuration
 log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "logs")
@@ -56,9 +62,15 @@ def kickoff() -> None:
         finwiz_flow = FinwizFlow(state=flow_state)
         logger.debug("FinwizFlow instance created with FinwizState")
 
+        # Step 5: Resolve runtime toggles from env vars into CrewAI flow inputs.
+        # This is the canonical CrewAI pattern: flow.kickoff(inputs={...})
+        # populates structured state before any @start() method runs.
+        discovery_enabled = os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true"
+        flow_inputs: dict[str, object] = {"discovery_enabled": discovery_enabled}
+
         # Step 6: Execute the flow
-        logger.info("🚀 Starting FinWiz analysis execution")
-        finwiz_flow.kickoff()
+        logger.info("🚀 Starting FinWiz analysis execution (discovery_enabled=%s)", discovery_enabled)
+        finwiz_flow.kickoff(inputs=flow_inputs)
         logger.info("✅ FinWiz analysis workflow completed successfully")
 
         # Step 7: Force-exit the process so third-party thread pools
