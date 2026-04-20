@@ -168,7 +168,6 @@ docs/.cache/
 !LICENSE.md
 !DOCUMENTATION_MIGRATION_SUMMARY.md
 !docs/**/*.md
-!.kiro/**/*.md
 !.taskmaster/**/*.md
 
 # =============================================================================
@@ -319,3 +318,5 @@ fixup/performance/core_analysis/test_core_analysis_performance.py
 site/
 .cache/
 .grepai/
+# Added by code-review-graph
+.code-review-graph/
