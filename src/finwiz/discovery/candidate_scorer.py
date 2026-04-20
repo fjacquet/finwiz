@@ -16,6 +16,12 @@ from finwiz.tools.logger import get_logger
 from finwiz.tools.screening_criteria import ScreeningCriteria
 from finwiz.tools.screening_ranking import ScreeningRanking
 
+# Sources that emit a self-contained [0,1] composite from their own signals
+# (momentum/volume/breakout). For these, the source composite IS the right
+# score — routing through ScreeningRanking would zero-penalize missing ROE /
+# revenue / FCF fields and collapse them to F.
+SIGNAL_BASED_SOURCES: frozenset[str] = frozenset({"momentum", "breakout"})
+
 
 class CandidateScorer:
     """Scores and grades newcomer candidates using existing scoring infrastructure."""
@@ -33,8 +39,10 @@ class CandidateScorer:
         """Score, grade, and sort candidates.
 
         For each candidate:
-        1. Calculate a preliminary score via ScreeningRanking.
-        2. Blend with existing source-specific composite_score (if non-default).
+        1. Calculate a preliminary score (source-aware — see ``_calculate_score``).
+        2. For fundamentals-rich sources, blend with source composite_score if
+           non-default. Signal-based sources (momentum/breakout) skip the blend
+           because their source composite is already the right score.
         3. Assign letter grade and recommendation via score_to_grade.
         4. Check A+ screening filter pass/fail.
 
@@ -47,17 +55,17 @@ class CandidateScorer:
         for candidate in candidates:
             try:
                 preliminary = self._calculate_score(candidate)
-                grade_str, recommendation = self._assign_grade(preliminary)
 
-                # Blend: preserve source signal if candidate has a non-default score
-                if candidate.composite_score not in (0.0, 0.5):
+                if candidate.source in SIGNAL_BASED_SOURCES:
+                    # Source composite is self-contained and signal-appropriate;
+                    # fundamentals-oriented blend would dilute it.
+                    final_score = preliminary
+                elif candidate.composite_score not in (0.0, 0.5):
                     final_score = 0.6 * preliminary + 0.4 * candidate.composite_score
                 else:
                     final_score = preliminary
 
                 final_score = max(0.0, min(1.0, final_score))
-
-                # Re-grade on final blended score
                 grade_str, recommendation = self._assign_grade(final_score)
 
                 candidate.composite_score = final_score
@@ -122,7 +130,15 @@ class CandidateScorer:
         }
 
     def _calculate_score(self, candidate: NewcomerCandidate) -> float:
-        """Calculate preliminary score using ScreeningRanking.
+        """Calculate preliminary score, branching by discovery source.
+
+        Signal-based sources (momentum, breakout) already emit a normalized
+        [0,1] composite from the signals they populate. Routing those through
+        the fundamentals-oriented ScreeningRanking zero-penalizes their
+        missing ROE / revenue / FCF fields and collapses the score to F.
+
+        Fundamentals-rich sources (ipo, universe, unknown) keep the original
+        ScreeningRanking path.
 
         Args:
             candidate: The candidate to score.
@@ -130,6 +146,9 @@ class CandidateScorer:
         Returns:
             Float score between 0.0 and 1.0.
         """
+        if candidate.source in SIGNAL_BASED_SOURCES:
+            return candidate.composite_score
+
         market_data = self._build_market_data_dict(candidate)
         return self._screening_ranking.calculate_preliminary_score(
             market_data,

@@ -10,6 +10,8 @@ import logging
 import os
 import warnings
 
+from dotenv import load_dotenv
+
 from finwiz.cli.argument_parser import (
     initialize_configuration,
     initialize_environment,
@@ -17,6 +19,10 @@ from finwiz.cli.argument_parser import (
 from finwiz.flow_state import FinwizState
 from finwiz.flows.orchestrator import FinwizFlow
 from finwiz.tools.logger import get_logger, setup_logging
+
+# Load .env at module import so env-based toggles (e.g. INVESTMENT_DISCOVERY_ENABLED)
+# are available regardless of which crew modules get imported first.
+load_dotenv()
 
 # Setup logging configuration
 log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "logs")
