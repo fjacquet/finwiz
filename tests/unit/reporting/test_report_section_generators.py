@@ -425,13 +425,13 @@ class TestGenerateDiscoverySection:
     def test_should_generate_not_available_when_none(self):
         """Test generation of not available message when results are None."""
         html = generate_discovery_section(None)
-        assert "A+ Opportunity Discovery" in html
-        assert "No new A+ opportunities discovered" in html
+        assert "Discovered Opportunities" in html
+        assert "No new opportunities discovered" in html
 
     def test_should_generate_not_available_when_no_opportunities(self):
         """Test generation of not available when no opportunities key."""
         html = generate_discovery_section({"other_data": "value"})
-        assert "No new A+ opportunities discovered" in html
+        assert "No new opportunities discovered" in html
 
     def test_should_display_opportunities_list(self):
         """Test display of discovered opportunities."""
@@ -501,6 +501,47 @@ class TestGenerateDiscoverySection:
         assert "Replacement" in html
         assert "Diversification" in html
         assert "DCA" in html
+
+    def test_conviction_picks_renders_when_a_grades_present(self):
+        """Conviction Picks callout appears when at least one A/A+ candidate exists."""
+        results = {
+            "opportunities": [
+                {"ticker": "LRCX", "name": "Lam Research", "grade": "A", "composite_score": 0.88},
+                {"ticker": "GOOG", "name": "Alphabet", "grade": "B+", "composite_score": 0.82},
+                {"ticker": "AMD", "name": "AMD", "grade": "C+", "composite_score": 0.71},
+            ]
+        }
+        html = generate_discovery_section(results)
+        assert "Conviction Picks" in html
+        assert "1 A/A+ Candidates" in html
+        # A/A+ picks appear ahead of the broader table — LRCX in conviction block
+        conviction_idx = html.index("Conviction Picks")
+        main_list_idx = html.index("Discovered Opportunities List")
+        assert conviction_idx < main_list_idx
+
+    def test_conviction_picks_hidden_when_no_a_grades(self):
+        """No callout when every candidate is B or lower."""
+        results = {
+            "opportunities": [
+                {"ticker": "GOOG", "name": "Alphabet", "grade": "B+", "composite_score": 0.82},
+                {"ticker": "AMD", "name": "AMD", "grade": "C+", "composite_score": 0.71},
+            ]
+        }
+        html = generate_discovery_section(results)
+        assert "Conviction Picks" not in html
+
+    def test_conviction_picks_sorts_by_score_descending(self):
+        """Multiple A/A+ candidates are ordered by composite_score."""
+        results = {
+            "opportunities": [
+                {"ticker": "MID", "name": "Mid", "grade": "A", "composite_score": 0.87},
+                {"ticker": "TOP", "name": "Top", "grade": "A+", "composite_score": 0.96},
+                {"ticker": "LOW", "name": "Low", "grade": "A", "composite_score": 0.85},
+            ]
+        }
+        html = generate_discovery_section(results)
+        conviction_block = html.split("Discovered Opportunities List")[0]
+        assert conviction_block.index("TOP") < conviction_block.index("MID") < conviction_block.index("LOW")
 
 
 class TestEdgeCases:

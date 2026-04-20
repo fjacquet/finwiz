@@ -85,6 +85,7 @@ class NewcomerDiscoveryPipeline:
         logger.info("%d candidates remain after portfolio exclusion", len(candidates))
 
         candidates = self._score_candidates(candidates)
+        candidates = self._filter_actionable(candidates)
         candidates.sort(key=lambda c: c.composite_score, reverse=True)
         candidates, enrich_tried, enrich_ok = self._enrich_top_candidates(candidates)
 
@@ -108,13 +109,16 @@ class NewcomerDiscoveryPipeline:
     # ------------------------------------------------------------------
 
     def _gather_candidates(self) -> list[NewcomerCandidate]:
-        """Gather candidates from universe provider and all screeners (deduplicated).
+        """Gather candidates from universe provider and signal-based screeners.
 
         Pipeline:
           1. Build ticker universe via DynamicUniverseProvider (excludes portfolio).
           2. Run universe-consuming screeners (Breakout, Momentum) against it.
-          3. Run IPOScreener (SEC EDGAR, stock-only) independently.
-          4. Deduplicate candidates by upper-cased ticker.
+          3. Deduplicate candidates by upper-cased ticker.
+
+        IPOScreener is intentionally excluded: SEC S-1 filings have no
+        trading history or fundamentals, get a hardcoded composite of 0.5,
+        and uniformly grade F — they are events, not investable signals.
         """
         candidates: list[NewcomerCandidate] = []
         seen: set[str] = set()
@@ -164,19 +168,6 @@ class NewcomerDiscoveryPipeline:
             except Exception as e:
                 logger.warning("MomentumScanner unexpected error: %s", e)
 
-        # Step 3: IPOScreener (stock-only, queries SEC EDGAR directly).
-        if self.asset_class == "stock":
-            try:
-                from finwiz.discovery.ipo_screener import IPOScreener
-
-                _add(IPOScreener().screen())
-            except ImportError as e:
-                logger.warning("IPOScreener import failed: %s", e)
-            except (ValueError, OSError) as e:
-                logger.warning("IPOScreener failed: %s", e)
-            except Exception as e:
-                logger.warning("IPOScreener unexpected error: %s", e)
-
         return candidates
 
     # ------------------------------------------------------------------
@@ -196,6 +187,18 @@ class NewcomerDiscoveryPipeline:
             return candidates
         except Exception as e:
             logger.warning("Candidate scoring failed: %s", e)
+            return candidates
+
+    def _filter_actionable(self, candidates: list[NewcomerCandidate]) -> list[NewcomerCandidate]:
+        """Drop D/F candidates from the opportunity surface (grade<C dropped)."""
+        if not candidates:
+            return candidates
+        try:
+            from finwiz.discovery.candidate_scorer import filter_actionable_candidates
+
+            return filter_actionable_candidates(candidates)
+        except ImportError as e:
+            logger.warning("filter_actionable_candidates import failed: %s", e)
             return candidates
 
     # ------------------------------------------------------------------

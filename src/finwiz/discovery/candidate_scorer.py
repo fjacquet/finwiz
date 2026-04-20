@@ -8,7 +8,7 @@ ScreeningCriteria for A+ filters, and score_to_grade for letter grades.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 from finwiz.scoring.grading_system import score_to_grade
@@ -21,6 +21,42 @@ from finwiz.tools.screening_ranking import ScreeningRanking
 # score — routing through ScreeningRanking would zero-penalize missing ROE /
 # revenue / FCF fields and collapse them to F.
 SIGNAL_BASED_SOURCES: frozenset[str] = frozenset({"momentum", "breakout"})
+
+# Grades considered actionable for the opportunity-list surface. Anything
+# weaker (D, D+, D-, F) is noise and must not reach the report. Applied as
+# a post-scoring filter rather than a score threshold because grades are the
+# canonical semantic the user reasons about.
+_ACTIONABLE_GRADES: Final[frozenset[str]] = frozenset(
+    {"A+", "A", "A-", "B+", "B", "B-", "C+", "C"},
+)
+
+
+def filter_actionable_candidates(
+    candidates: list[NewcomerCandidate],
+) -> list[NewcomerCandidate]:
+    """Drop candidates whose grade is below C (the actionable floor).
+
+    Called by pipeline orchestration after ``CandidateScorer.score_and_grade``
+    populates grades. Kept separate from ``score_and_grade`` so callers that
+    legitimately need the full scored list (diagnostics, tests) can access it.
+
+    Args:
+        candidates: Scored and graded candidates.
+
+    Returns:
+        Subset whose grade is in ``_ACTIONABLE_GRADES``, preserving input order.
+    """
+    logger = get_logger(__name__)
+    actionable = [c for c in candidates if c.grade in _ACTIONABLE_GRADES]
+    dropped = len(candidates) - len(actionable)
+    if dropped:
+        logger.info(
+            "filter_actionable_candidates: %d scored -> %d actionable (dropped %d grade<C)",
+            len(candidates),
+            len(actionable),
+            dropped,
+        )
+    return actionable
 
 
 class CandidateScorer:

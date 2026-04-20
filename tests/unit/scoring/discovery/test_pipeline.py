@@ -242,7 +242,7 @@ class TestScreenerWiring:
         assert hasattr(CandidateScorer, "score_and_grade")
 
     def test_gather_candidates_calls_real_screeners(self, mocker):
-        """_gather_candidates calls universe provider + breakout + momentum + ipo (stock only)."""
+        """_gather_candidates calls universe provider + breakout + momentum (IPO excluded)."""
         mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
         p = NewcomerDiscoveryPipeline("stock")
         p.portfolio_tickers = set()
@@ -259,23 +259,48 @@ class TestScreenerWiring:
             "finwiz.discovery.momentum_scanner.MomentumScanner.scan",
             return_value=[_make_candidate("AMZN", 0.82)],
         )
-        mock_ipo = mocker.patch(
-            "finwiz.discovery.ipo_screener.IPOScreener.screen",
-            return_value=[],
-        )
 
         result = p._gather_candidates()
 
         mock_universe.assert_called_once()
         mock_breakout.assert_called_once_with(["TSLA", "AMZN"], "stock")
         mock_momentum.assert_called_once_with(["TSLA", "AMZN"], "stock")
-        mock_ipo.assert_called_once()
         tickers = {c.ticker for c in result}
         assert "TSLA" in tickers
         assert "AMZN" in tickers
 
+    def test_gather_excludes_ipo_screener_entirely(self, mocker):
+        """IPOScreener is intentionally removed from the opportunity pipeline.
+
+        SEC S-1 filings have no fundamentals or trading history — they grade
+        F uniformly and are events, not investable signals.
+        """
+        mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
+        p = NewcomerDiscoveryPipeline("stock")
+        p.portfolio_tickers = set()
+
+        mocker.patch(
+            "finwiz.discovery.universe_provider.DynamicUniverseProvider.get_universe",
+            return_value=["TSLA"],
+        )
+        mocker.patch(
+            "finwiz.discovery.breakout_detector.BreakoutDetector.detect",
+            return_value=[],
+        )
+        mocker.patch(
+            "finwiz.discovery.momentum_scanner.MomentumScanner.scan",
+            return_value=[],
+        )
+        mock_ipo = mocker.patch(
+            "finwiz.discovery.ipo_screener.IPOScreener.screen",
+            return_value=[_make_candidate("IPO1", 0.5)],
+        )
+
+        p._gather_candidates()
+        mock_ipo.assert_not_called()
+
     def test_gather_skips_ipo_for_non_stock_asset_classes(self, mocker):
-        """IPOScreener is only called for asset_class='stock'."""
+        """IPOScreener is not called for any asset class (backwards-compat assertion)."""
         mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
         p = NewcomerDiscoveryPipeline("etf")
         p.portfolio_tickers = set()

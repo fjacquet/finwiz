@@ -11,7 +11,11 @@ from __future__ import annotations
 
 import pytest
 
-from finwiz.discovery.candidate_scorer import SIGNAL_BASED_SOURCES, CandidateScorer
+from finwiz.discovery.candidate_scorer import (
+    SIGNAL_BASED_SOURCES,
+    CandidateScorer,
+    filter_actionable_candidates,
+)
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 
 
@@ -209,3 +213,57 @@ class TestBlendingBehavior:
 
         assert scored.composite_score == pytest.approx(0.96)
         assert scored.grade == "A+"
+
+
+class TestFilterActionableCandidates:
+    """Opportunity-surface filter: only C-or-better candidates survive."""
+
+    def _graded(self, ticker: str, grade: str, score: float = 0.6) -> NewcomerCandidate:
+        c = _make_candidate(source="momentum", composite_score=score, ticker=ticker)
+        c.grade = grade
+        return c
+
+    def test_drops_f_grade(self) -> None:
+        kept = filter_actionable_candidates([self._graded("BAD", "F", 0.2)])
+        assert kept == []
+
+    def test_drops_d_grades(self) -> None:
+        kept = filter_actionable_candidates(
+            [
+                self._graded("DM", "D", 0.55),
+                self._graded("DPL", "D+", 0.58),
+                self._graded("DMN", "D-", 0.51),
+            ]
+        )
+        assert kept == []
+
+    def test_retains_c_and_above(self) -> None:
+        inputs = [
+            self._graded("CFLR", "C", 0.66),
+            self._graded("CPLS", "C+", 0.72),
+            self._graded("BMID", "B", 0.76),
+            self._graded("BPLS", "B+", 0.81),
+            self._graded("AMID", "A", 0.86),
+            self._graded("APLS", "A+", 0.96),
+        ]
+        kept = filter_actionable_candidates(inputs)
+        assert [c.ticker for c in kept] == [c.ticker for c in inputs]
+
+    def test_mixed_drops_only_below_c(self) -> None:
+        inputs = [
+            self._graded("KEEP1", "B+", 0.81),
+            self._graded("DROP1", "D", 0.55),
+            self._graded("KEEP2", "C", 0.66),
+            self._graded("DROP2", "F", 0.2),
+        ]
+        kept = filter_actionable_candidates(inputs)
+        assert [c.ticker for c in kept] == ["KEEP1", "KEEP2"]
+
+    def test_empty_list_returns_empty(self) -> None:
+        assert filter_actionable_candidates([]) == []
+
+    def test_missing_grade_is_dropped(self) -> None:
+        """Candidates whose grade is still '' (scoring failed) are treated as noise."""
+        candidate = _make_candidate(source="momentum", composite_score=0.5)
+        assert candidate.grade == ""
+        assert filter_actionable_candidates([candidate]) == []
