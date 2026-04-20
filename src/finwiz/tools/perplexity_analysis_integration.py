@@ -227,7 +227,7 @@ class PerplexityAnalysisIntegration:
                 payload = {
                     "query": search_params["query"],
                     "max_results": min(top_k, 20),  # API max is 20
-                    "max_tokens_per_page": 1024,
+                    "max_tokens_per_page": 10240,
                 }
 
                 # Add country filter if available
