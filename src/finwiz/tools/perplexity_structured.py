@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 from typing import Any
 
 import httpx
@@ -18,8 +17,9 @@ from pydantic import BaseModel, ValidationError
 
 from finwiz.config.endpoints import PERPLEXITY_CHAT
 from finwiz.tools.api_key_validation import validate_api_key
+from finwiz.tools.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 DEFAULT_MODEL = "sonar-pro"
 DEFAULT_TIMEOUT = 60.0
@@ -31,7 +31,7 @@ async def perplexity_structured[T: BaseModel](
     schema: type[T],
     system: str = "You are a financial research assistant. Provide concise, evidence-grounded answers with citations.",
     model: str = DEFAULT_MODEL,
-    search_recency: str | None = "month",
+    search_recency_filter: str | None = "month",
     timeout: float = DEFAULT_TIMEOUT,
     api_key: str | None = None,
 ) -> T | None:
@@ -42,7 +42,9 @@ async def perplexity_structured[T: BaseModel](
         schema: Pydantic model class. Its ``model_json_schema()`` is sent to the API.
         system: System instruction for the model.
         model: Perplexity model ID (default: sonar-pro).
-        search_recency: One of ``hour``, ``day``, ``week``, ``month``, ``year`` or None.
+        search_recency_filter: One of ``hour``, ``day``, ``week``, ``month``, ``year`` or None.
+            Maps to the Perplexity API's ``search_recency_filter`` field (the wrong
+            ``search_recency`` was silently ignored, returning unfiltered results).
         timeout: HTTP timeout in seconds.
         api_key: Override PPLX_API_KEY for testing.
 
@@ -62,8 +64,8 @@ async def perplexity_structured[T: BaseModel](
         },
         "return_citations": True,
     }
-    if search_recency:
-        payload["search_recency"] = search_recency
+    if search_recency_filter:
+        payload["search_recency_filter"] = search_recency_filter
 
     headers = {
         "Authorization": f"Bearer {key}",

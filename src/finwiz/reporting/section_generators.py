@@ -28,8 +28,13 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
     macro = escape(posture.get("macro_environment_summary") or "")
     competitive = escape(posture.get("competitive_landscape_summary") or "")
     overall = escape(posture.get("overall_assessment") or "")
-    score_pct = round((posture.get("strategic_score") or 0.5) * 100)
-    conf_pct = round((posture.get("confidence") or 0.5) * 100)
+    # Schema defaults strategic_score / confidence to 0.5; only fall back to that
+    # when the field is genuinely missing (key absent or None) — never use `or 0.5`
+    # because it masks a legitimate AI-rated 0.0 (worst signal) as 50% (neutral).
+    score_raw = posture.get("strategic_score")
+    conf_raw = posture.get("confidence")
+    score_pct = round((score_raw if score_raw is not None else 0.5) * 100)
+    conf_pct = round((conf_raw if conf_raw is not None else 0.5) * 100)
     themes = posture.get("dominant_themes") or []
     themes_html = "".join(f'<span class="badge">{escape(str(t))}</span>' for t in themes)
 

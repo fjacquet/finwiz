@@ -179,7 +179,7 @@ async def synthesize_portfolio_posture(
         prompt=_portfolio_prompt(payload),
         schema=PortfolioStrategicPosture,
         system=SYSTEM_FR,
-        search_recency="week",
+        search_recency_filter="week",
         timeout=timeout,
     )
 
