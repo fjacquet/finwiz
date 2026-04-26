@@ -1,6 +1,6 @@
 # FinWiz Development Makefile
 
-.PHONY: help install test lint format clean setup dev check-unittest-mock cleanup
+.PHONY: help install test test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size cleanup mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci
 
 # Default target
 help:
@@ -35,7 +35,10 @@ help:
 	@echo "  make html-integration - Run HTML integration examples"
 	@echo ""
 	@echo "Quality Assurance:"
-	@echo "  make check       - Run all quality checks"
+	@echo "  make all         - Full PR-ready validation (lint + tests + mypy + docs build --strict)"
+	@echo "  make ci          - Alias for 'make all' (matches CI workflow checks)"
+	@echo "  make check       - Quick quality checks (lint --fix + tests + docs-validate)"
+	@echo "  make lint-check  - Read-only lint (no autofix) + format --check"
 	@echo "  make check-unittest-mock - Check for banned unittest.mock"
 	@echo "  make coverage    - Run tests with coverage report (65% minimum)"
 	@echo "  make coverage-report - Open coverage report in browser"
@@ -110,12 +113,28 @@ lint:
 	ruff check --fix .
 	ruff format .
 
+# Read-only lint + format check — for CI / `make all`. Does NOT auto-fix.
+lint-check:
+	@echo "🔍 Lint (read-only)..."
+	uv run ruff check .
+	uv run ruff format --check .
+	@echo "✅ Lint checks pass"
+
 format:
 	ruff check --fix .
 	ruff format .
 
 check: lint test check-unittest-mock check-file-size docs-validate
 	@echo "✅ All quality checks passed"
+
+# Full validation matching CI workflows (docs.yml + quality.yml). Use this
+# before opening a PR to catch regressions locally without round-tripping CI.
+all: lint-check test mypy check-unittest-mock check-file-size docs-build-strict docs-validate
+	@echo ""
+	@echo "✅✅✅ All quality checks AND builds passed — branch is PR-ready ✅✅✅"
+
+# Alias matching the CI workflow vocabulary
+ci: all
 
 # unittest.mock enforcement check
 check-unittest-mock:
@@ -163,6 +182,12 @@ docs-build:
 	@echo "🔨 Building MkDocs documentation..."
 	uv run mkdocs build
 	@echo "✅ Documentation built to site/ directory"
+
+# Strict build — fails on broken refs, missing pages, etc. Used by `make all`/CI.
+docs-build-strict:
+	@echo "🔨 Building MkDocs documentation (strict mode)..."
+	uv run mkdocs build --strict
+	@echo "✅ Documentation built in strict mode"
 
 docs-deploy:
 	@echo "🚀 Deploying documentation to GitHub Pages..."

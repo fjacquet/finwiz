@@ -260,7 +260,7 @@
     </div>
     {% if p.key_opportunities %}<h4>Opportunités Clés</h4><ul>{% for o in p.key_opportunities %}<li>✅ {{ o }}</li>{% endfor %}</ul>{% endif %}
     {% if p.key_threats %}<h4>Menaces Clés</h4><ul>{% for t in p.key_threats %}<li>⚠️ {{ t }}</li>{% endfor %}</ul>{% endif %}
-    <p><small>Score PESTEL: <strong>{{ "%.0f"|format((p.strategic_score or 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((p.confidence or 0.5) * 100) }}%</small></p>
+    <p><small>Score PESTEL: <strong>{{ "%.0f"|format((p.strategic_score if p.strategic_score is number else 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((p.confidence if p.confidence is number else 0.5) * 100) }}%</small></p>
     {% endif %}
 
     {# === SWOT === #}
@@ -274,7 +274,7 @@
         <div class="metric-card"><h4>⚡ Menaces</h4><ul>{% for x in s.threats %}<li>{{ x }}</li>{% endfor %}{% if not s.threats %}<li><em>Aucune identifiée</em></li>{% endif %}</ul></div>
     </div>
     {% if s.strategic_assessment %}<p><strong>Synthèse:</strong> {{ s.strategic_assessment }}</p>{% endif %}
-    <p><small>Score SWOT: <strong>{{ "%.0f"|format((s.strategic_score or 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((s.confidence or 0.5) * 100) }}%</small></p>
+    <p><small>Score SWOT: <strong>{{ "%.0f"|format((s.strategic_score if s.strategic_score is number else 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((s.confidence if s.confidence is number else 0.5) * 100) }}%</small></p>
     {% endif %}
 
     {# === Porter's Five Forces === #}
@@ -302,7 +302,7 @@
         {% endfor %}
     </div>
     {% if f.competitive_position_summary %}<p><strong>Position concurrentielle:</strong> {{ f.competitive_position_summary }}</p>{% endif %}
-    <p><small>Score Porter (force du moat): <strong>{{ "%.0f"|format((f.strategic_score or 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((f.confidence or 0.5) * 100) }}%</small></p>
+    <p><small>Score Porter (force du moat): <strong>{{ "%.0f"|format((f.strategic_score if f.strategic_score is number else 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((f.confidence if f.confidence is number else 0.5) * 100) }}%</small></p>
     {% endif %}
 </div>
 {% endif %}
