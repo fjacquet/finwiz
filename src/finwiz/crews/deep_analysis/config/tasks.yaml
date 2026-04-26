@@ -5,6 +5,13 @@ deep_qualitative_analysis_task:
   description: >
     Qualitative analysis for {ticker} ({asset_class}).
 
+    📅 DATE D'ANALYSE : {current_date} ({current_date_iso}).
+    Tes données d'entraînement peuvent être périmées (l'entreprise a pu changer
+    d'actionnariat, vendre/acquérir des filiales, changer de PDG depuis ton
+    cutoff). Considère que la `Description` ci-dessous est la SEULE source de
+    vérité sur la structure actuelle de l'entreprise. Tous tes constats doivent
+    être cohérents avec la date {current_date}.
+
     LANGUE: Rédigez en FRANÇAIS. Noms de champs JSON en anglais, contenu en français.
 
     CONTEXT (Python-calculated - DO NOT recalculate):
@@ -16,9 +23,27 @@ deep_qualitative_analysis_task:
     - Indicators: {technical_indicators}
     - Risk: {risk_metrics}
 
-    IMPORTANT: Base your business model description and competitive analysis on the company
-    description and sector/industry provided above. Do NOT invent or hallucinate business
-    details, partnerships, or initiatives not supported by the provided context.
+    🚨 ANTI-HALLUCINATION 🚨
+    - N'invente JAMAIS de filiales, partenariats, ou intégrations non mentionnés
+      dans la `Description` ci-dessus.
+    - Si tu te souviens d'une structure différente (acquisition, joint-venture,
+      filiale) connue avant ton cutoff de formation et NON présente dans la
+      `Description`, considère-la comme OBSOLÈTE en {current_date} et ignore-la.
+    - Quand tu cites des évolutions "récentes", elles doivent dater des 12 mois
+      précédant {current_date}, pas d'années antérieures.
+
+    🔍 OUTIL DE VÉRIFICATION : tu disposes de `Perplexity Sonar Search` pour
+    vérifier les faits courants. UTILISE-LE de façon BORNÉE :
+    - Maximum 2 appels par analyse (coût et latence sont des contraintes dures).
+    - Réserve les appels aux faits MATÉRIELS dont tu n'es pas sûr : structure
+      corporate actuelle (filiales, acquisitions/divestitures récentes),
+      événement majeur des 12 derniers mois, changement de PDG/CFO récent.
+    - N'utilise PAS Perplexity pour les chiffres déjà fournis ci-dessus
+      (scores, métriques fondamentales/techniques/de risque) — ils sont
+      autoritaires.
+    - Si la recherche web contredit ta mémoire, la recherche web gagne.
+    - Si tu n'as pas besoin de vérifier quoi que ce soit (cas le plus
+      fréquent), n'appelle PAS Perplexity et passe directement à l'analyse.
 
     PROVIDE QUALITATIVE ANALYSIS ONLY:
     1. SEC Insights: Business model (100+ words), competitive advantages, risk factors

@@ -595,6 +595,20 @@ def _truncate_text(text: str | None, max_chars: int = 500) -> str:
     return truncated + "..."
 
 
+_FR_MONTHS = {1: "janvier", 2: "février", 3: "mars", 4: "avril", 5: "mai", 6: "juin", 7: "juillet", 8: "août", 9: "septembre", 10: "octobre", 11: "novembre", 12: "décembre"}
+
+
+def _today_french() -> str:
+    """Return today's date in long French form, e.g. ``26 avril 2026``.
+
+    Used to anchor every AI prompt so models stop hallucinating from stale
+    training-data corporate facts (mergers, divestitures, partnerships) that
+    may have changed since their training cutoff.
+    """
+    today = datetime.now()
+    return f"{today.day} {_FR_MONTHS[today.month]} {today.year}"
+
+
 def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_data: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build inputs dict for crew kickoff.
 
@@ -606,10 +620,15 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_da
     like "unsupported format string passed to NoneType.__format__".
     """
     # Build inputs with None-safe defaults and size limits
+    today = datetime.now()
     inputs = {
         "ticker": ctx.ticker or "UNKNOWN",
         "asset_class": ctx.asset_class or "stock",
         "company_name": ctx.company_name or ctx.ticker or "Unknown",
+        # Anchor the AI to today's date so it stops citing pre-training corporate
+        # structure (e.g. DELL/VMware integration that ended in Nov 2021).
+        "current_date": _today_french(),
+        "current_date_iso": today.strftime("%Y-%m-%d"),
         # Numeric defaults prevent "unsupported format string passed to NoneType"
         "grade": quant.grade or "C",
         "composite_score": quant.composite_score if quant.composite_score is not None else 0.5,

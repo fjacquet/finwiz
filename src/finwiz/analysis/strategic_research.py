@@ -27,58 +27,81 @@ from finwiz.tools.perplexity_structured import perplexity_structured
 logger = logging.getLogger(__name__)
 
 
+_FR_MONTHS = {1: "janvier", 2: "février", 3: "mars", 4: "avril", 5: "mai", 6: "juin", 7: "juillet", 8: "août", 9: "septembre", 10: "octobre", 11: "novembre", 12: "décembre"}
+
+
+def _today_french() -> str:
+    """Today's date in long French form, e.g. ``26 avril 2026``."""
+    import datetime as _dt
+
+    today = _dt.date.today()
+    return f"{today.day} {_FR_MONTHS[today.month]} {today.year}"
+
+
 SYSTEM_FR = (
     "Tu es un analyste stratégique financier expert. Réponds en français, "
     "avec des faits récents vérifiables et des citations. "
     "Tu DOIS retourner un JSON valide qui respecte exactement le schéma fourni. "
+    "🚨 ANTI-HALLUCINATION : tes données d'entraînement sont obsolètes — "
+    "fie-toi UNIQUEMENT à ta recherche web actuelle pour la structure corporate "
+    "(acquisitions, divestitures, fusions, joint-ventures, partenariats, équipe "
+    "dirigeante). Si la recherche web contredit ta mémoire, la recherche web "
+    "gagne TOUJOURS. Tous tes constats doivent être cohérents avec la date du jour. "
     "Évalue toi-même les champs strategic_score (0=défavorable, 1=très favorable) "
     "et confidence (0=incertain, 1=très confiant) en te basant sur la qualité "
     "et la fraîcheur des sources que tu as consultées."
 )
 
 
-def _pestel_prompt(ticker: str, sector: str, industry: str, description: str) -> str:
+def _date_preamble(current_date: str) -> str:
+    return f"📅 Aujourd'hui : {current_date}. Toutes tes affirmations factuelles doivent être valides à cette date.\n\n"
+
+
+def _pestel_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str) -> str:
     return (
-        f"Analyse PESTEL pour {ticker} ({sector} / {industry}).\n"
+        _date_preamble(current_date) + f"Analyse PESTEL pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
-        "Couvre les six dimensions (politique, économique, social, technologique, "
-        "environnemental, légal) en 2-4 phrases chacune, en citant des évolutions "
-        "récentes (12 derniers mois). Liste ensuite les menaces et opportunités les "
-        "plus matérielles. Termine en attribuant strategic_score (favorabilité globale "
-        "de l'environnement PESTEL pour cette entreprise) et confidence."
+        f"Couvre les six dimensions (politique, économique, social, technologique, "
+        f"environnemental, légal) en 2-4 phrases chacune, en citant des évolutions "
+        f"des 12 mois précédant {current_date} (pas d'années antérieures). Liste ensuite "
+        f"les menaces et opportunités les plus matérielles à la date du {current_date}. "
+        f"Termine en attribuant strategic_score (favorabilité globale "
+        f"de l'environnement PESTEL pour cette entreprise) et confidence."
     )
 
 
-def _swot_prompt(ticker: str, sector: str, industry: str, description: str) -> str:
+def _swot_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str) -> str:
     return (
-        f"Analyse SWOT pour {ticker} ({sector} / {industry}).\n"
+        _date_preamble(current_date) + f"Analyse SWOT pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
-        "Liste 3-6 éléments par catégorie (forces, faiblesses, opportunités, menaces). "
-        "Sois spécifique : chiffres, parts de marché, avantages produit, dépendances, "
-        "risques concurrentiels. Donne ensuite un strategic_assessment (paragraphe de "
-        "synthèse). Évalue strategic_score (équilibre S+O vs W+T) et confidence."
+        f"Liste 3-6 éléments par catégorie (forces, faiblesses, opportunités, menaces) "
+        f"reflétant la situation au {current_date}. Sois spécifique : chiffres, parts de "
+        f"marché, avantages produit, dépendances, risques concurrentiels — vérifiés via "
+        f"recherche web. Donne ensuite un strategic_assessment (paragraphe de synthèse). "
+        f"Évalue strategic_score (équilibre S+O vs W+T) et confidence."
     )
 
 
-def _porter_prompt(ticker: str, sector: str, industry: str, description: str) -> str:
+def _porter_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str) -> str:
     return (
-        f"Analyse des Cinq Forces de Porter pour {ticker} ({sector} / {industry}).\n"
+        _date_preamble(current_date) + f"Analyse des Cinq Forces de Porter pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
-        "Pour chacune des cinq forces (menace de nouveaux entrants, pouvoir de négociation "
-        "des fournisseurs, pouvoir de négociation des clients, menace des produits de "
-        "substitution, intensité concurrentielle), attribue une intensité (LOW/MEDIUM/HIGH) "
-        "où LOW = favorable à l'entreprise, et fournis une rationale courte avec preuves. "
-        "Termine par competitive_position_summary (force du moat). Évalue strategic_score "
-        "(1 = moat large, 0 = pas de moat) et confidence."
+        f"Pour chacune des cinq forces (menace de nouveaux entrants, pouvoir de négociation "
+        f"des fournisseurs, pouvoir de négociation des clients, menace des produits de "
+        f"substitution, intensité concurrentielle) au {current_date}, attribue une "
+        f"intensité (LOW/MEDIUM/HIGH) où LOW = favorable à l'entreprise, et fournis "
+        f"une rationale courte avec preuves vérifiées (concurrents nommés actuels, parts "
+        f"de marché récentes). Termine par competitive_position_summary (force du moat "
+        f"actuel). Évalue strategic_score (1 = moat large, 0 = pas de moat) et confidence."
     )
 
 
-def _portfolio_prompt(per_holding_payload: str) -> str:
+def _portfolio_prompt(per_holding_payload: str, current_date: str) -> str:
     return (
-        "Voici les analyses stratégiques (PESTEL/SWOT/Five Forces) déjà produites pour "
+        _date_preamble(current_date) + "Voici les analyses stratégiques (PESTEL/SWOT/Five Forces) déjà produites pour "
         "chaque ligne du portefeuille au format JSON :\n\n"
         f"{per_holding_payload}\n\n"
-        "Synthétise une posture stratégique au niveau PORTEFEUILLE :\n"
+        f"Synthétise une posture stratégique au niveau PORTEFEUILLE à la date du {current_date} :\n"
         "- macro_environment_summary : thèmes PESTEL transversaux (régulatoire, macro, géopolitique).\n"
         "- portfolio_strengths / weaknesses / opportunities / threats : SWOT agrégé.\n"
         "- competitive_landscape_summary : industries avec moats les plus forts/faibles.\n"
@@ -95,26 +118,31 @@ async def gather_strategic_analysis(
     industry: str = "",
     description: str = "",
     timeout: float = 60.0,
+    current_date: str | None = None,
 ) -> StrategicAnalysis:
     """Run PESTEL + SWOT + Porter in parallel for one stock.
 
     Returns a :class:`StrategicAnalysis` even on partial failure — fields are
     independently None so a failure of one framework does not break the others.
+
+    ``current_date`` anchors the prompts so the model anchors its claims to today
+    rather than its training cutoff (defaults to today in long French form).
     """
+    date_anchor = current_date or _today_french()
     pestel_coro = perplexity_structured(
-        prompt=_pestel_prompt(ticker, sector, industry, description),
+        prompt=_pestel_prompt(ticker, sector, industry, description, date_anchor),
         schema=PestelAnalysis,
         system=SYSTEM_FR,
         timeout=timeout,
     )
     swot_coro = perplexity_structured(
-        prompt=_swot_prompt(ticker, sector, industry, description),
+        prompt=_swot_prompt(ticker, sector, industry, description, date_anchor),
         schema=SwotAnalysis,
         system=SYSTEM_FR,
         timeout=timeout,
     )
     porter_coro = perplexity_structured(
-        prompt=_porter_prompt(ticker, sector, industry, description),
+        prompt=_porter_prompt(ticker, sector, industry, description, date_anchor),
         schema=FiveForcesAnalysis,
         system=SYSTEM_FR,
         timeout=timeout,
@@ -134,6 +162,7 @@ def gather_strategic_analysis_sync(
     industry: str = "",
     description: str = "",
     timeout: float = 60.0,
+    current_date: str | None = None,
 ) -> StrategicAnalysis:
     """Synchronous wrapper for the async gather. Safe to call from non-async code paths."""
     try:
@@ -147,6 +176,7 @@ def gather_strategic_analysis_sync(
         industry=industry,
         description=description,
         timeout=timeout,
+        current_date=current_date,
     )
 
     if loop and loop.is_running():
@@ -163,20 +193,23 @@ async def synthesize_portfolio_posture(
     holdings_strategic: dict[str, StrategicAnalysis],
     *,
     timeout: float = 90.0,
+    current_date: str | None = None,
 ) -> PortfolioStrategicPosture | None:
     """Synthesize a portfolio-wide PortfolioStrategicPosture from per-holding analyses.
 
     Args:
         holdings_strategic: ``{ticker: StrategicAnalysis}`` for each holding analyzed.
         timeout: HTTP timeout for the synthesis call.
+        current_date: Long-form French date anchor (defaults to today).
     """
     if not holdings_strategic:
         logger.info("No per-holding strategic analyses provided; skipping portfolio synthesis")
         return None
 
     payload = _serialize_holdings(holdings_strategic)
+    date_anchor = current_date or _today_french()
     return await perplexity_structured(
-        prompt=_portfolio_prompt(payload),
+        prompt=_portfolio_prompt(payload, date_anchor),
         schema=PortfolioStrategicPosture,
         system=SYSTEM_FR,
         search_recency_filter="week",
@@ -188,9 +221,10 @@ def synthesize_portfolio_posture_sync(
     holdings_strategic: dict[str, StrategicAnalysis],
     *,
     timeout: float = 90.0,
+    current_date: str | None = None,
 ) -> PortfolioStrategicPosture | None:
     """Synchronous wrapper for portfolio synthesis."""
-    coro = synthesize_portfolio_posture(holdings_strategic, timeout=timeout)
+    coro = synthesize_portfolio_posture(holdings_strategic, timeout=timeout, current_date=current_date)
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Date-anchored AI prompts** -- Every AI prompt (CrewAI deep_qualitative_analysis_task + the four Perplexity strategic prompts in `analysis/strategic_research.py`) now opens with the current date in long French form (e.g. `26 avril 2026`). The model is explicitly told that its training data may be outdated for corporate structure (acquisitions, divestitures, partnerships) and that "récent" means the 12 months preceding `{current_date}`. Resolves the DELL-still-owns-VMware class of hallucination (Dell sold VMware in November 2021).
+- **OpenRouter mid-stream drops** -- Set `litellm.num_retries=3` at module import time in `config/llm/llm_config.py`. CrewAI's `LLM(...)` constructor doesn't expose num_retries (verified), so the litellm module-level global is the only working hook. Catches `httpcore.RemoteProtocolError` / "incomplete chunked read" / `APIError` 502/503/504 with built-in exponential backoff. Tunable via `LLM_NUM_RETRIES` env var (default: 3, with defensive parse for empty/garbage values).
+
+### Changed
+
+- **Qualitative crew now has bounded Perplexity access** -- `asset_analyst` in `crews/deep_analysis/` was running in zero-tool mode, which left it relying on training memory for corporate facts (cause of the DELL/VMware hallucination). Added `PerplexitySearchTool` with strict in-prompt caps: max 2 calls per holding, reserved for material facts (current corporate structure, recent leadership changes, major events in last 12 months), forbidden for already-provided Python data (scores/metrics). Web search wins over model memory whenever they conflict. Token-overflow risk mitigated by the call cap.
+
 ### Removed
 
 - **Dependency cleanup** -- Dropped 16 unused runtime packages and 2 redundant wrappers from `pyproject.toml`. Removed: `firecrawl-py`, `serpapi`, `tavily-python` (no tool actually imported them), `supabase`, `asyncpg` (no persistence layer wired), `qdrant-client`, `faiss-cpu`, `sec-edgar-downloader`, `eod`, `perplexityai`, `quandl`, `statsmodels`, `trio`, `rumdl`. Redundant wrappers: `dotenv` (duplicate of `python-dotenv`), `bs4` (duplicate of `beautifulsoup4`). `uv.lock` shrank by ~250 lines / 35 packages including transitive trees.
