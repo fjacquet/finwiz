@@ -25,6 +25,7 @@ Environment Variables:
 import os
 from typing import Any
 
+import litellm
 from crewai import LLM
 from dotenv import load_dotenv
 
@@ -34,6 +35,14 @@ from finwiz.tools.logger import get_logger
 load_dotenv()
 
 logger = get_logger(__name__)
+
+# Module-level litellm retry policy for transient errors. CrewAI's LLM class
+# doesn't expose num_retries on its constructor, so we set it on the litellm
+# module — it applies to every litellm.completion call made by any CrewAI LLM
+# instance. Catches OpenRouter mid-stream drops (RemoteProtocolError /
+# "incomplete chunked read") and APIError 502/503/504 with built-in
+# exponential backoff. Tunable via LLM_NUM_RETRIES (default: 3).
+litellm.num_retries = int(os.getenv("LLM_NUM_RETRIES", "3"))
 
 
 # =============================================================================
@@ -316,7 +325,9 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
                 extra_body["tool_choice"] = "auto"
             logger.info("OpenRouter middle-out transform enabled for automatic context compression")
 
-        # Create LLM with proper configuration
+        # Create LLM with proper configuration.
+        # Note: retry on transient errors is handled at the litellm module level
+        # (litellm.num_retries set at import time in this file).
         llm = LLM(
             model=model,
             timeout=timeout,
