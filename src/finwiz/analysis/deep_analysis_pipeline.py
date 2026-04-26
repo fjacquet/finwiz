@@ -350,13 +350,125 @@ def analyze_holding(
     raw_data = collect_raw_data(ctx, prefetched_data=prefetched_data)
     options_probs = _compute_options_probabilities(raw_data)  # None for crypto/niche ETFs
     result, quant = calculate_quantitative(ctx, raw_data)
-    qual = generate_qualitative(ctx, quant, raw_data=raw_data)
+
+    # Phase 3 — qualitative AI crew + strategic Perplexity research run in PARALLEL.
+    # The strategic call is independent (no quant/qual context fed in) and only matters
+    # for stocks. ETFs/crypto skip it (frameworks don't fit those asset classes well).
+    qual, strategic = _run_qualitative_and_strategic_in_parallel(ctx, quant, raw_data)
+    if strategic is not None:
+        qual = qual.model_copy(update={"strategic_analysis": strategic})
+
+    # Phase 4 synthesize — re-derives composite with the AI-rated strategic component.
     processing_time = time.time() - start
     sentiment_summary = _build_sentiment_summary(raw_data)
     enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
+    if strategic is not None and enriched.qualitative is not None and enriched.qualitative.strategic_analysis is not None:
+        result = _apply_strategic_recompute(result, enriched)
 
     logger.info(f"Pipeline complete for {ticker}: {processing_time:.1f}s")
     return result, enriched
+
+
+def _run_qualitative_and_strategic_in_parallel(
+    ctx: AnalysisContext,
+    quant: QuantitativeAnalysis,
+    raw_data: dict[str, Any],
+) -> tuple[QualitativeInsights, Any]:
+    """Run the qualitative crew and the strategic Perplexity research concurrently.
+
+    Strategic research is gated to stocks — PESTEL/SWOT/Porter were designed
+    for companies and adapt poorly to ETFs and crypto.
+    """
+    import concurrent.futures
+
+    do_strategic = ctx.asset_class == "stock"
+    sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
+    industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
+    description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        qual_future = pool.submit(generate_qualitative, ctx, quant, raw_data)
+        strategic_future = pool.submit(_safe_strategic, ctx.ticker, sector, industry, description) if do_strategic else None
+
+        try:
+            qual = qual_future.result()
+        except Exception as exc:
+            logger.error(f"Qualitative generation failed for {ctx.ticker}: {exc}")
+            qual = _create_fallback_qualitative(ctx, quant, str(exc))
+
+        if strategic_future is None:
+            return qual, None
+        try:
+            strategic = strategic_future.result()
+        except Exception as exc:
+            logger.warning(f"Strategic research failed for {ctx.ticker}: {exc}")
+            strategic = None
+        return qual, strategic
+
+
+def _safe_strategic(ticker: str, sector: str, industry: str, description: str) -> Any:
+    """Wrapper that swallows import-time/runtime issues with the strategic module."""
+    try:
+        from finwiz.analysis.strategic_research import gather_strategic_analysis_sync
+
+        return gather_strategic_analysis_sync(
+            ticker=ticker,
+            sector=sector,
+            industry=industry,
+            description=description,
+        )
+    except Exception as exc:
+        logger.warning(f"Strategic research skipped for {ticker}: {exc}")
+        return None
+
+
+def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAnalysis) -> DeepAnalysisResult:
+    """Re-derive composite/grade/recommendation using the AI-rated strategic score.
+
+    Mutates the cached :class:`DeepAnalysisResult` and aligns ``enriched`` so the
+    final report shows the recomputed values.
+    """
+    from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
+
+    qual = enriched.qualitative
+    if qual is None or qual.strategic_analysis is None:
+        return result
+    strategic_score = qual.strategic_analysis.composite_strategic_score
+    if strategic_score is None:
+        return result
+
+    quant = enriched.quantitative
+    fundamental = result.fundamental_score if result.fundamental_score is not None else (quant.fundamental_score if quant else 0.5)
+    technical = result.technical_score if result.technical_score is not None else (quant.technical_score if quant else 0.5)
+    raw_risk = result.risk_score if result.risk_score is not None else (quant.risk_score if quant else 2.5)
+    # Risk is stored on a 0-5 scale where lower = better; convert to 0-1 favorability.
+    risk_favorability = max(0.0, min(1.0, 1.0 - (raw_risk / 5.0)))
+
+    scorer = DeepAnalysisScorer()
+    new_composite, new_grade, new_recommendation = scorer.recompute_with_strategic(
+        fundamental_score=fundamental,
+        technical_score=technical,
+        risk_score=risk_favorability,
+        strategic_score=strategic_score,
+    )
+
+    logger.info(
+        f"Strategic recompute for {result.ticker}: "
+        f"{result.composite_score:.3f} ({result.grade}/{result.recommendation}) -> "
+        f"{new_composite:.3f} ({new_grade}/{new_recommendation}) "
+        f"[strategic={strategic_score:.2f}]"
+    )
+
+    enriched.final_score = new_composite
+    enriched.final_grade = new_grade
+    enriched.final_recommendation = new_recommendation
+    return result.model_copy(
+        update={
+            "composite_score": new_composite,
+            "grade": new_grade,
+            "recommendation": new_recommendation,
+        }
+    )
 
 
 # === Helper Functions ===

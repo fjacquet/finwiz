@@ -10,6 +10,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis
+
 
 class SecAnalysisInsights(BaseModel):
     """
@@ -217,6 +219,9 @@ class QualitativeInsights(BaseModel):
 
     # Risk Analysis
     contextual_risks: ContextualRiskInsights | None = Field(default=None, description="Contextual risk analysis")
+
+    # Strategic Analysis (PESTEL + SWOT + Porter's Five Forces, AI-generated via Perplexity)
+    strategic_analysis: StrategicAnalysis | None = Field(default=None, description="Strategic frameworks (PESTEL/SWOT/Porter)")
 
     # Metadata
     analysis_timestamp: datetime | None = Field(default=None, description="When AI analysis was performed (UTC)")

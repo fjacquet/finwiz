@@ -227,6 +227,86 @@
     </ul>
 </div>
 
+<!-- Strategic Analysis Section (PESTEL / SWOT / Porter's Five Forces) -->
+{% if strategic_analysis %}
+<div class="section">
+    <h2>🎯 Analyse Stratégique</h2>
+    {% set _comp = strategic_analysis %}
+    {% set _scores = [] %}
+    {% if _comp.pestel and _comp.pestel.strategic_score is not none %}{% set _ = _scores.append(_comp.pestel.strategic_score) %}{% endif %}
+    {% if _comp.swot and _comp.swot.strategic_score is not none %}{% set _ = _scores.append(_comp.swot.strategic_score) %}{% endif %}
+    {% if _comp.five_forces and _comp.five_forces.strategic_score is not none %}{% set _ = _scores.append(_comp.five_forces.strategic_score) %}{% endif %}
+    {% if _scores %}
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h4>Score Stratégique Global</h4>
+            <p class="metric-value">{{ "%.0f"|format((_scores|sum / _scores|length) * 100) }}%</p>
+            <small>Moyenne PESTEL + SWOT + Porter</small>
+        </div>
+    </div>
+    {% endif %}
+
+    {# === PESTEL === #}
+    {% if _comp.pestel %}
+    {% set p = _comp.pestel %}
+    <h3>🌍 PESTEL — Environnement Macro</h3>
+    <div class="metrics-grid">
+        {% if p.political %}<div class="metric-card"><h4>Politique</h4><p>{{ p.political }}</p></div>{% endif %}
+        {% if p.economic %}<div class="metric-card"><h4>Économique</h4><p>{{ p.economic }}</p></div>{% endif %}
+        {% if p.social %}<div class="metric-card"><h4>Social</h4><p>{{ p.social }}</p></div>{% endif %}
+        {% if p.technological %}<div class="metric-card"><h4>Technologique</h4><p>{{ p.technological }}</p></div>{% endif %}
+        {% if p.environmental %}<div class="metric-card"><h4>Environnemental</h4><p>{{ p.environmental }}</p></div>{% endif %}
+        {% if p.legal %}<div class="metric-card"><h4>Légal</h4><p>{{ p.legal }}</p></div>{% endif %}
+    </div>
+    {% if p.key_opportunities %}<h4>Opportunités Clés</h4><ul>{% for o in p.key_opportunities %}<li>✅ {{ o }}</li>{% endfor %}</ul>{% endif %}
+    {% if p.key_threats %}<h4>Menaces Clés</h4><ul>{% for t in p.key_threats %}<li>⚠️ {{ t }}</li>{% endfor %}</ul>{% endif %}
+    <p><small>Score PESTEL: <strong>{{ "%.0f"|format((p.strategic_score or 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((p.confidence or 0.5) * 100) }}%</small></p>
+    {% endif %}
+
+    {# === SWOT === #}
+    {% if _comp.swot %}
+    {% set s = _comp.swot %}
+    <h3>📐 SWOT — Forces, Faiblesses, Opportunités, Menaces</h3>
+    <div class="metrics-grid">
+        <div class="metric-card"><h4>💪 Forces</h4><ul>{% for x in s.strengths %}<li>{{ x }}</li>{% endfor %}{% if not s.strengths %}<li><em>Aucune identifiée</em></li>{% endif %}</ul></div>
+        <div class="metric-card"><h4>🪫 Faiblesses</h4><ul>{% for x in s.weaknesses %}<li>{{ x }}</li>{% endfor %}{% if not s.weaknesses %}<li><em>Aucune identifiée</em></li>{% endif %}</ul></div>
+        <div class="metric-card"><h4>🚀 Opportunités</h4><ul>{% for x in s.opportunities %}<li>{{ x }}</li>{% endfor %}{% if not s.opportunities %}<li><em>Aucune identifiée</em></li>{% endif %}</ul></div>
+        <div class="metric-card"><h4>⚡ Menaces</h4><ul>{% for x in s.threats %}<li>{{ x }}</li>{% endfor %}{% if not s.threats %}<li><em>Aucune identifiée</em></li>{% endif %}</ul></div>
+    </div>
+    {% if s.strategic_assessment %}<p><strong>Synthèse:</strong> {{ s.strategic_assessment }}</p>{% endif %}
+    <p><small>Score SWOT: <strong>{{ "%.0f"|format((s.strategic_score or 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((s.confidence or 0.5) * 100) }}%</small></p>
+    {% endif %}
+
+    {# === Porter's Five Forces === #}
+    {% if _comp.five_forces %}
+    {% set f = _comp.five_forces %}
+    {% set forces = [
+        ('Menace de nouveaux entrants', f.threat_of_new_entrants),
+        ('Pouvoir des fournisseurs', f.bargaining_power_suppliers),
+        ('Pouvoir des clients', f.bargaining_power_customers),
+        ('Menace de substitution', f.threat_of_substitutes),
+        ('Intensité concurrentielle', f.competitive_rivalry),
+    ] %}
+    <h3>⚔️ Cinq Forces de Porter — Position Concurrentielle</h3>
+    <div class="metrics-grid">
+        {% for label, force in forces %}
+        {% if force %}
+        <div class="metric-card">
+            <h4>{{ label }}</h4>
+            <p class="metric-value {% if force.intensity == 'LOW' %}risk-low{% elif force.intensity == 'HIGH' %}risk-high{% else %}risk-medium{% endif %}">
+                {% if force.intensity == 'LOW' %}🟢 Faible{% elif force.intensity == 'HIGH' %}🔴 Élevée{% else %}🟡 Modérée{% endif %}
+            </p>
+            <small>{{ force.rationale }}</small>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% if f.competitive_position_summary %}<p><strong>Position concurrentielle:</strong> {{ f.competitive_position_summary }}</p>{% endif %}
+    <p><small>Score Porter (force du moat): <strong>{{ "%.0f"|format((f.strategic_score or 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((f.confidence or 0.5) * 100) }}%</small></p>
+    {% endif %}
+</div>
+{% endif %}
+
 {% if sentiment_data %}
 <div class="section">
     <h3>📰 Sentiment de Marche</h3>

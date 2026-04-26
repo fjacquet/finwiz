@@ -501,6 +501,9 @@ class ReportingOrchestrator:
         # Collect economic calendar data
         economic_calendar = self._collect_economic_calendar(portfolio_review)
 
+        # Synthesize portfolio-level strategic posture from per-holding strategic analyses (best-effort).
+        portfolio_strategic_posture = self._synthesize_portfolio_strategic(deep_analysis_results)
+
         report_path = generate_python_report(
             portfolio_review=portfolio_review,
             deep_analysis_results=deep_analysis_results,
@@ -510,9 +513,71 @@ class ReportingOrchestrator:
             holdings_sentiment=holdings_sentiment,
             macro_snapshot=macro_snapshot,
             economic_calendar=economic_calendar,
+            portfolio_strategic_posture=portfolio_strategic_posture,
         )
 
         return report_path
+
+    def _extract_holdings_strategic(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
+        """Walk enriched JSON files and pull each holding's StrategicAnalysis dict.
+
+        Mirrors :meth:`_extract_holdings_sentiment`. Returns ``{ticker: dict}`` where
+        each value is the raw :class:`StrategicAnalysis` model_dump (or None if no
+        strategic analyses were generated, e.g. ETF/crypto-only portfolios).
+        """
+        if not deep_analysis_results:
+            return None
+        strategic: dict[str, dict] = {}
+        session_id = self.state.session_id or "default"
+        for asset_class in ["stock", "etf", "crypto"]:
+            for base_dir in [f"output/enriched/{session_id}/{asset_class}", f"output/enriched/{asset_class}"]:
+                enriched_dir = Path(base_dir)
+                if not enriched_dir.exists():
+                    continue
+                for json_file in enriched_dir.glob("*_enriched.json"):
+                    try:
+                        data = json.loads(json_file.read_text())
+                        ticker = data.get("ticker")
+                        qual = data.get("qualitative") or {}
+                        sa = qual.get("strategic_analysis") if isinstance(qual, dict) else None
+                        if ticker and sa:
+                            strategic[ticker] = sa
+                    except Exception as e:
+                        self.logger.debug(f"Could not extract strategic from {json_file}: {e}")
+        return strategic if strategic else None
+
+    def _synthesize_portfolio_strategic(self, deep_analysis_results: dict[str, Any] | None) -> dict | None:
+        """Synthesize a portfolio-level :class:`PortfolioStrategicPosture` via Perplexity.
+
+        Best-effort: any failure (no strategic data, API down, parse error) returns
+        None so the rest of the report still renders.
+        """
+        try:
+            holdings_strategic_dicts = self._extract_holdings_strategic(deep_analysis_results)
+            if not holdings_strategic_dicts:
+                return None
+
+            from finwiz.analysis.strategic_research import synthesize_portfolio_posture_sync
+            from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis
+
+            holdings_models: dict[str, StrategicAnalysis] = {}
+            for ticker, sa_dict in holdings_strategic_dicts.items():
+                try:
+                    holdings_models[ticker] = StrategicAnalysis.model_validate(sa_dict)
+                except Exception as e:
+                    self.logger.debug(f"Skipping {ticker} for portfolio synthesis (invalid schema): {e}")
+
+            if not holdings_models:
+                return None
+
+            posture = synthesize_portfolio_posture_sync(holdings_models)
+            if posture is None:
+                self.logger.info("Portfolio strategic synthesis returned no posture")
+                return None
+            return posture.model_dump(mode="json")
+        except Exception as e:
+            self.logger.warning(f"Portfolio strategic synthesis failed (non-fatal): {e}")
+            return None
 
     def _extract_holdings_sentiment(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
         """Extract sentiment_summary from enriched JSON files for all holdings.

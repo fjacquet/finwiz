@@ -452,6 +452,40 @@ class DeepAnalysisScorer:
             return common_fields + ["market_cap", "volume_24h", "age_years"]
         return common_fields
 
+    def recompute_with_strategic(
+        self,
+        *,
+        fundamental_score: float,
+        technical_score: float,
+        risk_score: float,
+        strategic_score: float,
+    ) -> tuple[float, str, str]:
+        """Recompute composite score with the AI-rated strategic component.
+
+        Pure arithmetic: applies the 35/25/25/15 weight split. No item counting,
+        no derivation — strategic_score is the AI's self-rating from
+        :class:`StrategicAnalysis.composite_strategic_score`.
+
+        Args:
+            fundamental_score: Existing fundamental component (0-1).
+            technical_score: Existing technical component (0-1).
+            risk_score: Existing risk component (0-1).
+            strategic_score: AI-rated strategic favorability (0-1).
+
+        Returns:
+            Tuple of (new composite score, new letter grade, new recommendation).
+        """
+        composite = (
+            self.thresholds.weight_fundamental_with_strategic * fundamental_score
+            + self.thresholds.weight_technical_with_strategic * technical_score
+            + self.thresholds.weight_risk_with_strategic * risk_score
+            + self.thresholds.weight_strategic * strategic_score
+        )
+        composite = max(0.0, min(1.0, composite))
+        grade = self.result_builder.assign_grade(composite)
+        recommendation = self.result_builder.generate_recommendation(composite, grade)
+        return float(composite), grade, recommendation
+
     # Legacy method delegation for backward compatibility
     def assign_grade(self, composite_score: float) -> str:
         """Assign letter grade based on composite score. Delegates to ScoreResultBuilder."""

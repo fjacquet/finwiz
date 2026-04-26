@@ -39,6 +39,7 @@ class PythonReportGenerator:
         holdings_sentiment: dict[str, dict] | None = None,
         macro_snapshot: dict | None = None,
         economic_calendar: dict | None = None,
+        portfolio_strategic_posture: dict | None = None,
     ) -> str:
         """
         Generate comprehensive family financial plan HTML report.
@@ -79,6 +80,7 @@ class PythonReportGenerator:
             holdings_sentiment=holdings_sentiment,
             macro_snapshot=macro_snapshot,
             economic_calendar=economic_calendar,
+            portfolio_strategic_posture=portfolio_strategic_posture,
         )
 
         # Write to file
@@ -175,6 +177,7 @@ class PythonReportGenerator:
         holdings_sentiment: dict[str, dict] | None = None,
         macro_snapshot: dict | None = None,
         economic_calendar: dict | None = None,
+        portfolio_strategic_posture: dict | None = None,
     ) -> str:
         """Generate complete HTML report."""
         # Generate timestamp
@@ -199,6 +202,8 @@ class PythonReportGenerator:
   </header>
 
   {self._generate_executive_summary(portfolio_stats)}
+
+  {self._generate_strategic_posture_section(portfolio_strategic_posture)}
 
   {self._generate_macro_dashboard_section(macro_snapshot)}
 
@@ -295,6 +300,12 @@ class PythonReportGenerator:
 
         return generate_stress_test_section(stress_test_results)
 
+    def _generate_strategic_posture_section(self, portfolio_strategic_posture: dict | None) -> str:
+        """Generate portfolio-level strategic posture section (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        return generate_strategic_posture_section(portfolio_strategic_posture)
+
     def _generate_sentiment_section(self, holdings_sentiment: dict[str, dict] | None) -> str:
         """Generate sentiment summary section (delegates to module)."""
         from finwiz.reporting.section_generators import generate_sentiment_section
@@ -333,6 +344,7 @@ def generate_python_report(
     holdings_sentiment: dict[str, dict] | None = None,
     macro_snapshot: dict | None = None,
     economic_calendar: dict | None = None,
+    portfolio_strategic_posture: dict | None = None,
 ) -> str:
     """
     Convenience function to generate Python-based report.
@@ -349,4 +361,5 @@ def generate_python_report(
         holdings_sentiment=holdings_sentiment,
         macro_snapshot=macro_snapshot,
         economic_calendar=economic_calendar,
+        portfolio_strategic_posture=portfolio_strategic_posture,
     )

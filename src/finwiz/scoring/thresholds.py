@@ -203,10 +203,17 @@ class ScoringThresholds:
     # COMPONENT WEIGHTS
     # ============================================================================
 
-    # Composite score weights
+    # Composite score weights (Phase 2: pre-AI scoring)
     weight_fundamental: float = 0.40  # 40% fundamental
     weight_technical: float = 0.30  # 30% technical
     weight_risk: float = 0.30  # 30% risk
+
+    # Composite score weights (Phase 4: post-AI, when StrategicAnalysis is available)
+    # Re-derives composite as 35/25/25/15 — the strategic component is AI-rated, not Python-derived.
+    weight_fundamental_with_strategic: float = 0.35
+    weight_technical_with_strategic: float = 0.25
+    weight_risk_with_strategic: float = 0.25
+    weight_strategic: float = 0.15  # 15% strategic (AI-rated PESTEL/SWOT/Porter average)
 
     # Stock fundamental weights
     weight_stock_roe: float = 0.40  # 40% ROE
