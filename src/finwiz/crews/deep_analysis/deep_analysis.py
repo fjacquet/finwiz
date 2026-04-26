@@ -90,6 +90,25 @@ load_dotenv()
 apply_json_repair_patch()
 
 
+def _build_asset_analyst_tools() -> list[Any]:
+    """Return PerplexitySearchTool when PPLX_API_KEY is set, else empty list.
+
+    Falls back gracefully when the env var is missing (CI without secrets,
+    local dev without a Perplexity key) instead of crashing crew construction
+    with a Pydantic ValidationError. The prompt's anti-hallucination rules
+    still apply in zero-tool mode — fact verification is just unavailable.
+    """
+    import os
+
+    if not os.getenv("PPLX_API_KEY"):
+        logger.warning("PPLX_API_KEY not set — asset_analyst falling back to zero-tool mode. Fact verification disabled; relying solely on prompt anti-hallucination rules.")
+        return []
+
+    from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
+
+    return [PerplexitySearchTool()]
+
+
 @CrewBase
 class DeepAnalysisCrew:
     """
@@ -220,14 +239,16 @@ class DeepAnalysisCrew:
         before mentioning them in the narrative, since the model's training data
         is often outdated for corporate facts. The tasks.yaml prompt caps usage
         to 2-3 calls per holding to keep token cost bounded.
-        """
-        from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
 
+        When PPLX_API_KEY is not set (CI, local dev without Perplexity key),
+        the agent falls back to zero-tool mode and the prompt's anti-hallucination
+        rules become the only safeguard.
+        """
         return Agent(
             config=self.agents_config["asset_analyst"],
             verbose=True,
             reasoning=False,  # Plan tool calls via the prompt, not via reasoning loop (cheaper)
-            tools=[PerplexitySearchTool()],
+            tools=_build_asset_analyst_tools(),
             llm=self._get_configured_llm(),
         )
 
