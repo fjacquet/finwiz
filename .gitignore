@@ -214,6 +214,7 @@ yarn-error.log*
 .zed/settings.json
 .gemini/settings.json
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 
 # (Keep existing detailed patterns for backward compatibility)
 .vscode/settings.json
