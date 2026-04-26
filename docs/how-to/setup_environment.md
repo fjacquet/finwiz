@@ -83,7 +83,6 @@ Configure these required API keys in your `.env` file:
 # Required API Keys
 OPENAI_API_KEY=your_openai_key_here
 SERPER_API_KEY=your_serper_key_here
-FIRECRAWL_API_KEY=your_firecrawl_key_here
 ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
 ```
 
@@ -91,7 +90,6 @@ ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
 
 - **OpenAI**: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 - **Serper**: [serper.dev](https://serper.dev/)
-- **Firecrawl**: [firecrawl.dev](https://firecrawl.dev/)
 - **Alpha Vantage**: [alphavantage.co/support/#api-key](https://www.alphavantage.co/support/#api-key)
 
 ### 3. Optional API Keys
@@ -350,7 +348,6 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 | ----------------------- | -------- | ------------------------ |
 | `OPENAI_API_KEY`        | Yes      | OpenAI API access        |
 | `SERPER_API_KEY`        | Yes      | Web search functionality |
-| `FIRECRAWL_API_KEY`     | Yes      | Web scraping             |
 | `ALPHA_VANTAGE_API_KEY` | Yes      | Financial data           |
 | `TWELVE_DATA_API_KEY`   | No       | Technical indicators     |
 | `X-CMC_PRO_API_KEY` | No       | Crypto data              |
@@ -390,7 +387,7 @@ uv pip install --force-reinstall .
 
 ```bash
 # Check API keys are set
-env | grep -E "(OPENAI|SERPER|FIRECRAWL|ALPHA_VANTAGE)_API_KEY"
+env | grep -E "(OPENAI|SERPER|ALPHA_VANTAGE)_API_KEY"
 
 # Test API connectivity
 uv run python scripts/test_api_connections.py

@@ -11,7 +11,8 @@ from pathlib import Path
 
 import pytest
 
-# Add the scripts directory to the path so we can import the plugin
+pytest.importorskip("mkdocs", reason="mkdocs is in the docs dependency group")
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
 
 from mkdocs_schema_plugin import SchemaDocsPlugin

@@ -31,7 +31,6 @@ class TestConfigurationManager:
         env_vars_to_clear = [
             "OPENAI_API_KEY",
             "SERPER_API_KEY",
-            "FIRECRAWL_API_KEY",
             "ALPHA_VANTAGE_API_KEY",
             "CHART_IMG_API_KEY",
             "TWELVE_DATA_API_KEY",
@@ -54,7 +53,6 @@ class TestConfigurationManager:
         key_names = [key.env_var for key in config_manager.REQUIRED_API_KEYS]
         assert "OPENAI_API_KEY" in key_names
         assert "SERPER_API_KEY" in key_names
-        assert "FIRECRAWL_API_KEY" in key_names
         assert "ALPHA_VANTAGE_API_KEY" in key_names
 
     def test_should_load_environment_from_custom_file(self):
@@ -84,7 +82,6 @@ class TestConfigurationManager:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -96,7 +93,7 @@ class TestConfigurationManager:
         # Assert
         assert result is True
         assert len(config_manager.missing_keys) == 0
-        assert len(config_manager.api_keys) >= 4
+        assert len(config_manager.api_keys) >= 3
         assert "OpenAI" in config_manager.api_keys
         assert "Serper" in config_manager.api_keys
 
@@ -182,7 +179,6 @@ class TestConfigurationManager:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -214,7 +210,6 @@ class TestConfigurationManager:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -233,7 +228,6 @@ class TestConfigurationManager:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -288,7 +282,6 @@ class TestConfigurationManager:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -330,7 +323,6 @@ class TestConfigurationManagerConvenienceFunctions:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -348,7 +340,6 @@ class TestConfigurationManagerConvenienceFunctions:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -368,7 +359,6 @@ class TestConfigurationManagerConvenienceFunctions:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
             },
         )
@@ -452,7 +442,6 @@ class TestConfigurationManagerIntegration:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
                 "CHART_IMG_API_KEY": "test-chart-img-key-16chars",
             },
@@ -475,7 +464,6 @@ class TestConfigurationManagerIntegration:
             {
                 "OPENAI_API_KEY": "sk-test-openai-key-1234567890",
                 "SERPER_API_KEY": "test-serper-key-32-characters-long",
-                "FIRECRAWL_API_KEY": "test-firecrawl-key-20chars",
                 "ALPHA_VANTAGE_API_KEY": "test-alpha-vantage-key",
                 # Missing optional keys like CHART_IMG_API_KEY
             },
