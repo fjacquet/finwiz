@@ -42,7 +42,30 @@ logger = get_logger(__name__)
 # instance. Catches OpenRouter mid-stream drops (RemoteProtocolError /
 # "incomplete chunked read") and APIError 502/503/504 with built-in
 # exponential backoff. Tunable via LLM_NUM_RETRIES (default: 3).
-litellm.num_retries = int(os.getenv("LLM_NUM_RETRIES", "3"))
+#
+# Note: tools/crewai_retry_patch.py (initialize_retry_mechanism) is a no-op
+# in current CrewAI — its `Agent._get_llm` patch target no longer exists,
+# and the langchain BaseLLM isinstance gate would fail on crewai.LLM (litellm
+# wrapper) anyway. So this module-level setting is the only active retry layer.
+_DEFAULT_LLM_NUM_RETRIES = 3
+
+
+def _parse_num_retries() -> int:
+    """Safely parse LLM_NUM_RETRIES. Empty/invalid -> default; never raises."""
+    raw = os.getenv("LLM_NUM_RETRIES", "").strip()
+    if not raw:
+        return _DEFAULT_LLM_NUM_RETRIES
+    try:
+        value = int(raw)
+    except ValueError:
+        # Don't crash module import on a typo'd env value (e.g. LLM_NUM_RETRIES=foo).
+        # Logger isn't initialized yet at this point, so use a print warning.
+        print(f"[llm_config] Invalid LLM_NUM_RETRIES={raw!r}, falling back to {_DEFAULT_LLM_NUM_RETRIES}")
+        return _DEFAULT_LLM_NUM_RETRIES
+    return max(0, value)  # Clamp negatives to 0 (litellm treats <=0 as "no retries")
+
+
+litellm.num_retries = _parse_num_retries()
 
 
 # =============================================================================
