@@ -322,11 +322,14 @@ class DeepAnalysisCrew:
         performance_monitor.start_ticker_analysis(ticker, asset_class)
 
         try:
-            # ⚡ TOKEN OVERFLOW FIX: NO TOOLS for agents
-            # Python provides ALL data via summarized inputs (_summarize_metrics in pipeline)
-            # Tool outputs were causing 288K-381K token context overflow (262K limit)
-            # Agent definitions have tools=[] - we must NOT override this
-            logger.info("⚡ ZERO-TOOL MODE: Agents receive data from Python via summarized inputs. No tool calls = no tool output accumulation = no context overflow.")
+            # ⚡ MINIMAL-TOOL MODE: Python pre-summarizes the bulk of inputs to keep
+            # the prompt under the 262K context window. The asset_analyst agent
+            # additionally has PerplexitySearchTool for bounded fact verification
+            # (max 2 calls per holding, capped via the tasks.yaml prompt) — used
+            # only to validate current corporate facts the model might hallucinate.
+            # Tool outputs were previously causing 288K-381K token overflow when
+            # unbounded tool sets were attached; the cap above prevents regression.
+            logger.info("⚡ MINIMAL-TOOL MODE: Python summarizes inputs; agent has PerplexitySearchTool for bounded fact verification (≤2 calls).")
 
             # Log performance targets
             logger.info(
