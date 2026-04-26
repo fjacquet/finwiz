@@ -49,7 +49,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-extras
+          uv sync --all-extras --all-groups
 
       - name: Configure Git for mkdocs-git-revision-date-localized
         run: |
@@ -101,7 +101,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-extras
+          uv sync --all-extras --all-groups
 
       - name: Validate documentation build
         run: |
