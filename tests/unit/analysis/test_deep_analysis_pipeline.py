@@ -460,6 +460,10 @@ class TestAnalyzeHolding:
             "finwiz.analysis.deep_analysis_pipeline.generate_qualitative",
             return_value=mock_qualitative_insights,
         )
+        mocker.patch(
+            "finwiz.analysis.deep_analysis_pipeline._safe_strategic",
+            return_value=None,
+        )
 
         result, enriched = analyze_holding("AAPL", "stock", "Apple Inc.")
 
@@ -519,6 +523,10 @@ class TestAnalyzeHolding:
         mocker.patch(
             "finwiz.analysis.deep_analysis_pipeline.generate_qualitative",
             return_value=mock_qualitative_insights,
+        )
+        mocker.patch(
+            "finwiz.analysis.deep_analysis_pipeline._safe_strategic",
+            return_value=None,
         )
 
         result, enriched = analyze_holding("MSFT", "stock", "Microsoft")

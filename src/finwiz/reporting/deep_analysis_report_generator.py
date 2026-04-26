@@ -192,6 +192,15 @@ class DeepAnalysisReportGenerator:
         # Extract sentiment data for report enrichment (Phase 16)
         template_vars.setdefault("sentiment_data", data.get("sentiment_data", None))
 
+        # Extract strategic analysis (PESTEL/SWOT/Porter) for the dedicated template section.
+        # Source can be top-level (after enriched.model_dump flattening) or under "qualitative".
+        strategic = data.get("strategic_analysis")
+        if strategic is None:
+            qual = data.get("qualitative") or {}
+            if isinstance(qual, dict):
+                strategic = qual.get("strategic_analysis")
+        template_vars["strategic_analysis"] = strategic
+
         return template_vars
 
     def _get_default_data_sources(self, asset_class: str) -> list[str]:

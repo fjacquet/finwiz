@@ -59,7 +59,6 @@ class ConfigurationManager:
             test_endpoint=f"{OPENAI_BASE}/models",
         ),
         APIKeyConfig(name="Serper", env_var="SERPER_API_KEY", required=True, description="Serper API key for web search functionality"),
-        APIKeyConfig(name="Firecrawl", env_var="FIRECRAWL_API_KEY", required=True, description="Firecrawl API key for web scraping"),
         APIKeyConfig(
             name="Alpha Vantage",
             env_var="ALPHA_VANTAGE_API_KEY",
@@ -210,7 +209,6 @@ class ConfigurationManager:
             "OPENAI_API_KEY": lambda k: k.startswith("sk-") and len(k) > 20,
             "OPENROUTER_API_KEY": lambda k: k.startswith("sk-or-") and len(k) > 30,
             "SERPER_API_KEY": lambda k: len(k) >= 32,
-            "FIRECRAWL_API_KEY": lambda k: len(k) >= 20,
             "ALPHA_VANTAGE_API_KEY": lambda k: len(k) >= 16,
             "CHART_IMG_API_KEY": lambda k: len(k) >= 16,
             "TWELVE_DATA_API_KEY": lambda k: len(k) >= 16,
@@ -251,7 +249,6 @@ class ConfigurationManager:
                 "OPENAI_API_KEY=sk-your-openai-key-here",
                 "OPENROUTER_API_KEY=sk-or-your-openrouter-key-here",
                 "SERPER_API_KEY=your-serper-key-here",
-                "FIRECRAWL_API_KEY=your-firecrawl-key-here",
                 "ALPHA_VANTAGE_API_KEY=your-alpha-vantage-key-here",
                 "",
                 "For optional APIs, you can disable features using feature flags:",

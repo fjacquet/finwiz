@@ -350,13 +350,125 @@ def analyze_holding(
     raw_data = collect_raw_data(ctx, prefetched_data=prefetched_data)
     options_probs = _compute_options_probabilities(raw_data)  # None for crypto/niche ETFs
     result, quant = calculate_quantitative(ctx, raw_data)
-    qual = generate_qualitative(ctx, quant, raw_data=raw_data)
+
+    # Phase 3 — qualitative AI crew + strategic Perplexity research run in PARALLEL.
+    # The strategic call is independent (no quant/qual context fed in) and only matters
+    # for stocks. ETFs/crypto skip it (frameworks don't fit those asset classes well).
+    qual, strategic = _run_qualitative_and_strategic_in_parallel(ctx, quant, raw_data)
+    if strategic is not None:
+        qual = qual.model_copy(update={"strategic_analysis": strategic})
+
+    # Phase 4 synthesize — re-derives composite with the AI-rated strategic component.
     processing_time = time.time() - start
     sentiment_summary = _build_sentiment_summary(raw_data)
     enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
+    if strategic is not None and enriched.qualitative is not None and enriched.qualitative.strategic_analysis is not None:
+        result = _apply_strategic_recompute(result, enriched)
 
     logger.info(f"Pipeline complete for {ticker}: {processing_time:.1f}s")
     return result, enriched
+
+
+def _run_qualitative_and_strategic_in_parallel(
+    ctx: AnalysisContext,
+    quant: QuantitativeAnalysis,
+    raw_data: dict[str, Any],
+) -> tuple[QualitativeInsights, Any]:
+    """Run the qualitative crew and the strategic Perplexity research concurrently.
+
+    Strategic research is gated to stocks — PESTEL/SWOT/Porter were designed
+    for companies and adapt poorly to ETFs and crypto.
+    """
+    import concurrent.futures
+
+    do_strategic = ctx.asset_class == "stock"
+    sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
+    industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
+    description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        qual_future = pool.submit(generate_qualitative, ctx, quant, raw_data)
+        strategic_future = pool.submit(_safe_strategic, ctx.ticker, sector, industry, description) if do_strategic else None
+
+        try:
+            qual = qual_future.result()
+        except Exception as exc:
+            logger.error(f"Qualitative generation failed for {ctx.ticker}: {exc}")
+            qual = _create_fallback_qualitative(ctx, quant, str(exc))
+
+        if strategic_future is None:
+            return qual, None
+        try:
+            strategic = strategic_future.result()
+        except Exception as exc:
+            logger.warning(f"Strategic research failed for {ctx.ticker}: {exc}")
+            strategic = None
+        return qual, strategic
+
+
+def _safe_strategic(ticker: str, sector: str, industry: str, description: str) -> Any:
+    """Wrapper that swallows import-time/runtime issues with the strategic module."""
+    try:
+        from finwiz.analysis.strategic_research import gather_strategic_analysis_sync
+
+        return gather_strategic_analysis_sync(
+            ticker=ticker,
+            sector=sector,
+            industry=industry,
+            description=description,
+        )
+    except Exception as exc:
+        logger.warning(f"Strategic research skipped for {ticker}: {exc}")
+        return None
+
+
+def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAnalysis) -> DeepAnalysisResult:
+    """Re-derive composite/grade/recommendation using the AI-rated strategic score.
+
+    Mutates the cached :class:`DeepAnalysisResult` and aligns ``enriched`` so the
+    final report shows the recomputed values.
+    """
+    from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
+
+    qual = enriched.qualitative
+    if qual is None or qual.strategic_analysis is None:
+        return result
+    strategic_score = qual.strategic_analysis.composite_strategic_score
+    if strategic_score is None:
+        return result
+
+    quant = enriched.quantitative
+    fundamental = result.fundamental_score if result.fundamental_score is not None else (quant.fundamental_score if quant else 0.5)
+    technical = result.technical_score if result.technical_score is not None else (quant.technical_score if quant else 0.5)
+    raw_risk = result.risk_score if result.risk_score is not None else (quant.risk_score if quant else 2.5)
+    # Risk is stored on a 0-5 scale where lower = better; convert to 0-1 favorability.
+    risk_favorability = max(0.0, min(1.0, 1.0 - (raw_risk / 5.0)))
+
+    scorer = DeepAnalysisScorer()
+    new_composite, new_grade, new_recommendation = scorer.recompute_with_strategic(
+        fundamental_score=fundamental,
+        technical_score=technical,
+        risk_score=risk_favorability,
+        strategic_score=strategic_score,
+    )
+
+    logger.info(
+        f"Strategic recompute for {result.ticker}: "
+        f"{result.composite_score:.3f} ({result.grade}/{result.recommendation}) -> "
+        f"{new_composite:.3f} ({new_grade}/{new_recommendation}) "
+        f"[strategic={strategic_score:.2f}]"
+    )
+
+    enriched.final_score = new_composite
+    enriched.final_grade = new_grade
+    enriched.final_recommendation = new_recommendation
+    return result.model_copy(
+        update={
+            "composite_score": new_composite,
+            "grade": new_grade,
+            "recommendation": new_recommendation,
+        }
+    )
 
 
 # === Helper Functions ===
@@ -925,46 +1037,80 @@ def _compute_options_probabilities(raw_data: dict[str, Any]) -> ScenarioProbabil
 
 
 def _generate_executive_summary(quant: QuantitativeAnalysis, qual: QualitativeInsights) -> str:
-    """Generate executive summary combining both analyses."""
-    parts = [
-        f"Investment Grade: {quant.grade} with composite score {quant.composite_score:.2f}.",
-        f"Recommendation: {quant.preliminary_recommendation}.",
-        f"Quantitative: Fundamental {quant.fundamental_score:.2f}, Technical {quant.technical_score:.2f}, Risk {quant.risk_score:.2f}.",
-    ]
+    """Render the executive summary as a short HTML headline + 3-5 bullets.
 
-    if qual.sec_insights and qual.sec_insights.business_model:
-        model = qual.sec_insights.business_model[:200].strip()
-        if not model.endswith("."):
-            model += "..."
-        parts.append(f"Business: {model}")
+    The output is consumed by templates via ``{{ executive_summary | safe }}``. Long
+    qualitative content (industry analysis, competitive positioning, full thesis)
+    lives in its own sections later in the report — the summary is intentionally
+    short and structured, not a wall of prose.
+    """
+    from html import escape
 
-    if qual.sec_insights and qual.sec_insights.competitive_advantages:
-        advantages = qual.sec_insights.competitive_advantages[:3]
-        parts.append(f"Advantages: {', '.join(advantages)}.")
+    rec = quant.preliminary_recommendation
+    rec_emoji = "✅" if rec == "BUY" else ("❌" if rec == "SELL" else "⏸️")
+    conf_map = {"LOW": "FAIBLE", "MEDIUM": "MOYENNE", "HIGH": "ÉLEVÉE"}
+    confidence = conf_map.get(
+        qual.investment_synthesis.recommendation_confidence if qual.investment_synthesis else "MEDIUM",
+        "MOYENNE",
+    )
 
-    if qual.fundamental_context and qual.fundamental_context.industry_analysis:
-        industry = qual.fundamental_context.industry_analysis[:150].strip()
-        if not industry.endswith("."):
-            industry += "..."
-        parts.append(f"Industry: {industry}")
+    headline = f'<p class="exec-headline"><strong>Grade {escape(quant.grade)} ({quant.composite_score:.2f}) · {rec_emoji} {escape(rec)} · Confiance {confidence}</strong></p>'
 
+    bullets: list[str] = []
+
+    # Fundamentals — drivers from real metrics, not prose
+    fund_metrics = quant.fundamental_metrics or {}
+    fund_drivers: list[str] = []
+    if "roe" in fund_metrics:
+        fund_drivers.append(f"ROE {fund_metrics['roe'] * 100:.0f}%")
+    if "revenue_growth" in fund_metrics:
+        fund_drivers.append(f"croissance {fund_metrics['revenue_growth'] * 100:.0f}%")
+    if "debt_to_equity" in fund_metrics:
+        fund_drivers.append(f"D/E {fund_metrics['debt_to_equity']:.2f}")
+    if "expense_ratio" in fund_metrics:
+        fund_drivers.append(f"frais {fund_metrics['expense_ratio'] * 100:.2f}%")
+    fund_text = f"Fondamentaux {quant.fundamental_score * 100:.0f}%"
+    if fund_drivers:
+        fund_text += " — " + ", ".join(fund_drivers[:3])
+    bullets.append(fund_text)
+
+    # Technical — RSI + trend if available
+    tech_metrics = quant.technical_indicators or {}
+    tech_drivers: list[str] = []
+    if "rsi" in tech_metrics:
+        rsi = tech_metrics["rsi"]
+        rsi_label = "neutre" if 40 <= rsi <= 60 else ("suracheté" if rsi > 70 else ("survendu" if rsi < 30 else "tendanciel"))
+        tech_drivers.append(f"RSI {rsi:.0f} ({rsi_label})")
+    if "trend_strength" in tech_metrics:
+        tech_drivers.append(f"force tendance {tech_metrics['trend_strength']:.2f}")
+    tech_text = f"Technique {quant.technical_score * 100:.0f}%"
+    if tech_drivers:
+        tech_text += " — " + ", ".join(tech_drivers[:2])
+    bullets.append(tech_text)
+
+    # Risk — volatility + drawdown
+    risk_metrics = quant.risk_metrics or {}
+    risk_drivers: list[str] = []
+    if "volatility" in risk_metrics:
+        risk_drivers.append(f"vol {risk_metrics['volatility'] * 100:.0f}%")
+    if "max_drawdown" in risk_metrics:
+        risk_drivers.append(f"drawdown {risk_metrics['max_drawdown'] * 100:.0f}%")
+    if "beta" in risk_metrics:
+        risk_drivers.append(f"β {risk_metrics['beta']:.2f}")
+    risk_text = f"Risque {quant.risk_score:.1f}/5"
+    if risk_drivers:
+        risk_text += " — " + ", ".join(risk_drivers[:3])
+    bullets.append(risk_text)
+
+    # Thesis — first sentence only, never truncated mid-word
     if qual.investment_synthesis and qual.investment_synthesis.investment_thesis:
-        thesis = qual.investment_synthesis.investment_thesis[:300].strip()
-        if not thesis.endswith("."):
-            thesis += "..."
-        parts.append(f"Thesis: {thesis}")
+        thesis = qual.investment_synthesis.investment_thesis.strip()
+        first_sentence = thesis.split(".")[0].strip()
+        if first_sentence:
+            bullets.append(f"Thèse : {first_sentence}.")
 
-    summary = " ".join(parts)
-
-    # Ensure minimum 200 words
-    word_count = len(summary.split())
-    if word_count < 200:
-        summary += " " + quant.python_rationale
-        if qual.fundamental_context:
-            summary += " " + qual.fundamental_context.competitive_positioning
-            summary += " " + qual.fundamental_context.management_assessment
-
-    return summary
+    bullets_html = '<ul class="exec-bullets">' + "".join(f"<li>{escape(b)}</li>" for b in bullets) + "</ul>"
+    return headline + bullets_html
 
 
 def _get_investment_rationale(qual: QualitativeInsights) -> str:

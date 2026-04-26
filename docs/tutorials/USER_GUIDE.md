@@ -26,7 +26,6 @@ Complete guide for deploying, operating, and migrating FinWiz.
 
 - `OPENAI_API_KEY` - LLM operations ([Get key](https://platform.openai.com/api-keys))
 - `SERPER_API_KEY` - Web search ([Get key](https://serper.dev/))
-- `FIRECRAWL_API_KEY` - Web scraping ([Get key](https://firecrawl.dev/))
 - `ALPHA_VANTAGE_API_KEY` - Financial data ([Get key](https://www.alphavantage.co/support/#api-key))
 
 **Optional API Keys**:
@@ -62,7 +61,6 @@ Create `.env` file with required configuration:
 # Required API Keys
 OPENAI_API_KEY=your_openai_key
 SERPER_API_KEY=your_serper_key
-FIRECRAWL_API_KEY=your_firecrawl_key
 ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key
 
 # Validation Configuration
@@ -1427,7 +1425,6 @@ FinWiz uses **real-time information retrieval** instead of a static knowledge ba
 **Web Search**:
 
 - `SerperDevTool` - General web searches
-- `FirecrawlScrapeWebsiteTool` - Extract specific URLs
 - `YoutubeVideoSearchTool` - Video content
 
 **Financial Data**:
@@ -1654,7 +1651,6 @@ Configure required API keys:
 # Required keys
 OPENAI_API_KEY=sk-your-openai-key-here
 SERPER_API_KEY=your-serper-key-here
-FIRECRAWL_API_KEY=your-firecrawl-key-here
 ALPHA_VANTAGE_API_KEY=your-alpha-vantage-key-here
 
 # Optional keys (controlled by feature flags)

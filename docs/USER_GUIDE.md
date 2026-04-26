@@ -67,7 +67,6 @@ All FinWiz operations require these API keys:
 
 **Optional API Keys** (for enhanced features):
 
-- **FIRECRAWL_API_KEY**: Advanced web scraping ([Get key](https://firecrawl.dev/))
 - **ALPHA_VANTAGE_API_KEY**: Financial data ([Get key](https://www.alphavantage.co/support/#api-key))
 - **CHART_IMG_API_KEY**: Professional chart generation
 - **TWELVE_DATA_API_KEY**: Technical indicators and market data
@@ -937,7 +936,6 @@ TWELVE_DATA_API_KEY=...            # Technical indicators
 CHART_IMG_API_KEY=...              # Chart generation
 X-CMC_PRO_API_KEY=...          # Crypto data
 PPLX_API_KEY=...                   # Perplexity research
-FIRECRAWL_API_KEY=...              # Web scraping
 ```
 
 #### Validation Settings

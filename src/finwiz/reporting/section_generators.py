@@ -11,6 +11,56 @@ from typing import Any
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 
 
+def generate_strategic_posture_section(posture: dict | None) -> str:
+    """Render the portfolio-wide strategic posture (PESTEL/SWOT/Porter synthesis).
+
+    ``posture`` is a :class:`PortfolioStrategicPosture` model_dump. Returns "" when
+    no posture is available so the surrounding report stays clean.
+    """
+    if not posture or not isinstance(posture, dict):
+        return ""
+
+    def _list(items: list[str] | None, emoji: str) -> str:
+        if not items:
+            return ""
+        return "<ul>" + "".join(f"<li>{emoji} {escape(str(x))}</li>" for x in items) + "</ul>"
+
+    macro = escape(posture.get("macro_environment_summary") or "")
+    competitive = escape(posture.get("competitive_landscape_summary") or "")
+    overall = escape(posture.get("overall_assessment") or "")
+    score_pct = round((posture.get("strategic_score") or 0.5) * 100)
+    conf_pct = round((posture.get("confidence") or 0.5) * 100)
+    themes = posture.get("dominant_themes") or []
+    themes_html = "".join(f'<span class="badge">{escape(str(t))}</span>' for t in themes)
+
+    return f"""
+  <div class="section">
+    <h2>🎯 Posture Stratégique du Portefeuille</h2>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <h4>Score Stratégique Global</h4>
+        <p class="metric-value">{score_pct}%</p>
+        <small>Confiance : {conf_pct}%</small>
+      </div>
+    </div>
+
+    {f"<h3>🌍 Environnement Macro</h3><p>{macro}</p>" if macro else ""}
+    {f"<h3>⚔️ Paysage Concurrentiel</h3><p>{competitive}</p>" if competitive else ""}
+
+    <h3>📐 SWOT Agrégé</h3>
+    <div class="metrics-grid">
+      <div class="metric-card"><h4>💪 Forces du portefeuille</h4>{_list(posture.get("portfolio_strengths"), "✅")}</div>
+      <div class="metric-card"><h4>🪫 Faiblesses</h4>{_list(posture.get("portfolio_weaknesses"), "•")}</div>
+      <div class="metric-card"><h4>🚀 Opportunités</h4>{_list(posture.get("portfolio_opportunities"), "→")}</div>
+      <div class="metric-card"><h4>⚡ Menaces</h4>{_list(posture.get("portfolio_threats"), "⚠️")}</div>
+    </div>
+
+    {f"<h3>🧭 Thèmes Dominants</h3><div>{themes_html}</div>" if themes_html else ""}
+    {f"<h3>📝 Synthèse</h3><p>{overall}</p>" if overall else ""}
+  </div>
+"""
+
+
 def generate_executive_summary(portfolio_stats: dict[str, Any]) -> str:
     """Generate executive summary section."""
     grade_class = f"grade-{portfolio_stats['portfolio_grade'].lower().replace('+', '-plus')}"
