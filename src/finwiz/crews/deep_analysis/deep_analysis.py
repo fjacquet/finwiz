@@ -213,17 +213,21 @@ class DeepAnalysisCrew:
 
     @agent
     def asset_analyst(self) -> Agent:
-        """
-        Agent that formats Python calculation results.
+        """Qualitative analyst with bounded fact-verification access.
 
-        CRITICAL: NO TOOLS - Python orchestrator calls tools and calculates scores.
-        This agent only READS the Python results from input and formats them nicely.
+        Has access to PerplexitySearchTool ONLY — no other tools. Used to verify
+        current corporate structure (acquisitions, divestitures, partnerships)
+        before mentioning them in the narrative, since the model's training data
+        is often outdated for corporate facts. The tasks.yaml prompt caps usage
+        to 2-3 calls per holding to keep token cost bounded.
         """
+        from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
+
         return Agent(
             config=self.agents_config["asset_analyst"],
             verbose=True,
-            reasoning=False,  # No reasoning needed - just format Python results
-            tools=[],  # NO TOOLS - Python does all tool calling
+            reasoning=False,  # Plan tool calls via the prompt, not via reasoning loop (cheaper)
+            tools=[PerplexitySearchTool()],
             llm=self._get_configured_llm(),
         )
 
