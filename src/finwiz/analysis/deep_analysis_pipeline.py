@@ -14,14 +14,13 @@ Architecture:
 from __future__ import annotations
 
 import logging
-import time
 from dataclasses import dataclass
 from typing import Any
 
 from finwiz.analysis._helpers import (
-    _build_sentiment_summary,
     _get_analysis_crew,  # noqa: F401 — re-exported for test compatibility
 )
+from finwiz.analysis.stages import run_pipeline
 from finwiz.analysis.stages._synthesize_helpers import (  # noqa: F401
     _calculate_word_count,
     _count_unique_insights,
@@ -29,8 +28,8 @@ from finwiz.analysis.stages._synthesize_helpers import (  # noqa: F401
     _get_confidence,
     _get_investment_rationale,
 )
-from finwiz.analysis.stages.collect import collect_raw_data
-from finwiz.analysis.stages.emit import build_verdict
+from finwiz.analysis.stages.collect import collect_raw_data  # noqa: F401 — re-exported for callers/tests
+from finwiz.analysis.stages.emit import build_verdict  # noqa: F401
 from finwiz.analysis.stages.qualify import (  # noqa: F401
     _create_fallback_qualitative,
     _create_python_qualitative,
@@ -73,45 +72,11 @@ def analyze_holding(
     company_name: str = "",
     prefetched_data: dict[str, Any] | None = None,
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
+    """Backwards-compatible facade calling the new pipeline.
+
+    All orchestration lives in `finwiz.analysis.stages.run_pipeline`. This
+    facade is preserved for existing callers (tests, orchestrators) that
+    import `analyze_holding` from this module.
     """
-    Complete analysis pipeline for a single holding.
-
-    Composes:
-    1. collect_raw_data (Python tools)
-    2. calculate_quantitative (Python scorer - $0)
-    3. generate_qualitative (AI crew)
-    4. synthesize_enriched_analysis (Python)
-
-    Args:
-        ticker: Asset ticker symbol
-        asset_class: Asset class (stock, etf, crypto)
-        company_name: Optional company name
-        prefetched_data: Batch-prefetched data dict (from BatchDataPreFetcher)
-
-    Returns:
-        Tuple of (DeepAnalysisResult for caching, EnrichedAnalysis for HTML)
-    """
-    start = time.time()
     ctx = AnalysisContext(ticker=ticker, asset_class=asset_class, company_name=company_name)
-
-    logger.info(f"Starting analysis pipeline for {ticker} ({asset_class})")
-
-    # Pipeline composition
-    raw_data = collect_raw_data(ctx, prefetched_data=prefetched_data)
-    options_probs = _compute_options_probabilities(raw_data)  # None for crypto/niche ETFs
-    result, quant = calculate_quantitative(ctx, raw_data)
-
-    # Phase 3 — qualitative AI crew + strategic Perplexity research run in PARALLEL.
-    # The strategic call is independent (no quant/qual context fed in) and only matters
-    # for stocks. ETFs/crypto skip it (frameworks don't fit those asset classes well).
-    qual, strategic = _run_qualitative_and_strategic_in_parallel(ctx, quant, raw_data)
-    if strategic is not None:
-        qual = qual.model_copy(update={"strategic_analysis": strategic})
-
-    # Phase 4 synthesize — re-derives composite with the AI-rated strategic component.
-    processing_time = time.time() - start
-    sentiment_summary = _build_sentiment_summary(raw_data)
-    enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
-
-    # Phase 5 emit — final assembly: strategic recompute + return.
-    return build_verdict(ctx, result, enriched, strategic, processing_time)
+    return run_pipeline(ctx, prefetched_data=prefetched_data)

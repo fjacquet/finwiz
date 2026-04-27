@@ -449,12 +449,16 @@ class TestAnalyzeHolding:
         )
 
         mocker.patch(
-            "finwiz.analysis.deep_analysis_pipeline.collect_raw_data",
+            "finwiz.analysis.stages.collect_raw_data",
             return_value=mock_raw_data,
         )
         mocker.patch(
-            "finwiz.analysis.deep_analysis_pipeline.calculate_quantitative",
+            "finwiz.analysis.stages.calculate_quantitative",
             return_value=(mock_deep_analysis_result, mock_quant),
+        )
+        mocker.patch(
+            "finwiz.analysis.stages._compute_options_probabilities",
+            return_value=None,
         )
         mocker.patch(
             "finwiz.analysis.stages.qualify.generate_qualitative",
@@ -513,12 +517,16 @@ class TestAnalyzeHolding:
         )
 
         mocker.patch(
-            "finwiz.analysis.deep_analysis_pipeline.collect_raw_data",
+            "finwiz.analysis.stages.collect_raw_data",
             return_value={},
         )
         mocker.patch(
-            "finwiz.analysis.deep_analysis_pipeline.calculate_quantitative",
+            "finwiz.analysis.stages.calculate_quantitative",
             return_value=(mock_result, mock_quant),
+        )
+        mocker.patch(
+            "finwiz.analysis.stages._compute_options_probabilities",
+            return_value=None,
         )
         mocker.patch(
             "finwiz.analysis.stages.qualify.generate_qualitative",
