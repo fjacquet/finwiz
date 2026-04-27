@@ -5,26 +5,20 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+from finwiz.analysis.stages._resilience import StageContext, stage
+from finwiz.schemas.hybrid_analysis.collected import CollectedData
+
 if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
 
 logger = logging.getLogger(__name__)
 
 
-def collect_raw_data(
+def _collect_raw_data_inner(
     ctx: AnalysisContext,
     prefetched_data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """
-    Pure function: Collect raw financial data using Python tools.
-
-    Args:
-        ctx: Analysis context with ticker and asset class
-        prefetched_data: Batch-prefetched data dict (from BatchDataPreFetcher)
-
-    Returns:
-        Dictionary containing raw financial data from multiple sources
-    """
+    """The original collect_raw_data body — extracted for testability."""
     from datetime import datetime
     from types import SimpleNamespace
 
@@ -63,3 +57,24 @@ def collect_raw_data(
         logger.debug(f"v4 sentiment/macro collection skipped for {ctx.ticker}: {e}")
 
     return raw_data
+
+
+@stage(name="collect", timeout_s=120, retries=1)
+def collect(ctx: StageContext) -> CollectedData:
+    """Stage entry point: wraps the raw-data collector in a typed payload."""
+    # The orchestrator populates ctx.extras["analysis_ctx"] and optionally
+    # ctx.extras["prefetched_data"]. Use .get() so the mock boundary is at
+    # _collect_raw_data_inner — tests can patch that without needing extras.
+    analysis_ctx: AnalysisContext = ctx.extras.get("analysis_ctx")  # type: ignore[assignment]
+    prefetched: dict[str, Any] | None = ctx.extras.get("prefetched_data")
+    raw = _collect_raw_data_inner(analysis_ctx, prefetched)
+    return CollectedData(data=raw)
+
+
+# Backwards-compatible legacy entry point (callers/tests still use this)
+def collect_raw_data(
+    ctx: AnalysisContext,
+    prefetched_data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Legacy entry point used by the facade. Delegates to _collect_raw_data_inner."""
+    return _collect_raw_data_inner(ctx, prefetched_data)
