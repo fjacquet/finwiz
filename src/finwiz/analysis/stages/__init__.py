@@ -13,7 +13,8 @@ from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.analysis.stages._resilience import StageContext
 from finwiz.analysis.stages.collect import collect
 from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
-from finwiz.analysis.stages.emit import build_verdict
+from finwiz.analysis.stages.emit import _emit_pending, emit
+from finwiz.analysis.stages.emit import build_verdict as build_verdict
 from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel, qualify
 from finwiz.analysis.stages.quantify import calculate_quantitative, quantify
 from finwiz.analysis.stages.synthesize import _compute_options_probabilities, synthesize, synthesize_enriched_analysis
@@ -32,8 +33,9 @@ def run_pipeline(
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
     """Sequential orchestration of the five deep-analysis stages.
 
-    Phases 1-2 (collect, quantify) use the @stage decorator and StageResult contract.
-    Phases 3-5 use legacy entry points until D3-D5 migrate them.
+    All phases (collect, quantify, qualify, synthesize, emit) use the @stage
+    decorator and StageResult contract. Failed stages fall back to legacy helpers
+    or _emit_pending to keep the return type stable.
     """
     start = time.time()
 
@@ -109,5 +111,15 @@ def run_pipeline(
     else:
         enriched = sr4.payload
 
-    # Phase 5 emit — final assembly: strategic recompute + return.
-    return build_verdict(ctx, result, enriched, strategic, processing_time)
+    # Phase 5: Emit — final assembly: strategic recompute + return.
+    stage_ctx.extras["partial_result"] = result
+    stage_ctx.extras["strategic"] = strategic
+    er = emit(stage_ctx, enriched)
+    if er.payload is None:
+        # Emit stage failed — produce pending placeholder.
+        final_result = _emit_pending(stage_ctx, reason=er.provenance.reason)
+    else:
+        final_result = er.payload
+
+    # Return the (DeepAnalysisResult, EnrichedAnalysis) tuple to match the legacy contract.
+    return final_result, enriched
