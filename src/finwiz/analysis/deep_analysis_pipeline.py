@@ -13,14 +13,28 @@ Architecture:
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import Any
 
+from finwiz.analysis._helpers import (
+    _build_sentiment_summary,
+    _get_analysis_crew,  # noqa: F401 — re-exported for test compatibility
+)
+from finwiz.analysis.stages.collect import collect_raw_data
+from finwiz.analysis.stages.qualify import (  # noqa: F401
+    _create_fallback_qualitative,
+    _create_python_qualitative,
+    _extract_qualitative,
+    _has_qualitative_content,
+    _run_qualitative_and_strategic_in_parallel,
+    _safe_strategic,
+    generate_qualitative,
+)
+from finwiz.analysis.stages.quantify import _result_to_quantitative, calculate_quantitative  # noqa: F401
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.schemas.hybrid_analysis import (
     EnrichedAnalysis,
@@ -28,25 +42,8 @@ from finwiz.schemas.hybrid_analysis import (
     QuantitativeAnalysis,
 )
 from finwiz.schemas.hybrid_analysis.qualitative import (
-    ActionPlan,
-    ContextualRiskInsights,
-    FundamentalContextInsights,
-    InvestmentSynthesis,
     ScenarioProbabilities,
-    SecAnalysisInsights,
-    TechnicalStrategyInsights,
 )
-
-if TYPE_CHECKING:
-    from crewai import CrewOutput
-
-from finwiz.analysis._helpers import (
-    _build_crew_inputs,
-    _build_sentiment_summary,
-    _get_analysis_crew,
-)
-from finwiz.analysis.stages.collect import collect_raw_data
-from finwiz.analysis.stages.quantify import _result_to_quantitative, calculate_quantitative  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -58,67 +55,6 @@ class AnalysisContext:
     ticker: str
     asset_class: str
     company_name: str = ""
-
-
-# === STEP 3: Generate Qualitative Insights (AI Crew) ===
-def generate_qualitative(
-    ctx: AnalysisContext,
-    quant: QuantitativeAnalysis,
-    raw_data: dict[str, Any] | None = None,
-) -> QualitativeInsights:
-    """
-    Side effect: Calls AI crew for qualitative analysis.
-
-    The crew receives Python-calculated metrics as READ-ONLY context
-    and generates contextual qualitative insights.
-
-    In MAXIMUM_SPEED mode (DEEP_ANALYSIS_AI_SUMMARY=false), skips AI entirely
-    and returns Python-generated qualitative content to avoid slow free-tier models.
-
-    Args:
-        ctx: Analysis context
-        quant: Python-calculated quantitative analysis
-
-    Returns:
-        AI-generated qualitative insights (or Python fallback in fast mode)
-    """
-    from finwiz.config.performance.performance_config import is_maximum_speed_mode
-
-    # Skip AI in MAXIMUM_SPEED mode - use Python-generated content instead
-    if is_maximum_speed_mode():
-        logger.info(f"MAXIMUM_SPEED mode: Skipping AI crew for {ctx.ticker}, using Python qualitative")
-        return _create_python_qualitative(ctx, quant)
-
-    logger.info(f"Generating qualitative insights for {ctx.ticker}")
-
-    crew = _get_analysis_crew(ctx.asset_class)
-    crew_inputs = _build_crew_inputs(ctx, quant, raw_data)
-
-    try:
-        # Use wrapper with timeout and circuit breaker protection
-        import asyncio
-        import concurrent.futures
-
-        from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
-
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-        if loop and loop.is_running():
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
-                crew_result = future.result()
-        else:
-            crew_result = asyncio.run(execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
-        qual = _extract_qualitative(crew_result, quant)
-        logger.info(f"Qualitative insights generated for {ctx.ticker}")
-        return qual
-    except Exception as e:
-        import traceback
-
-        logger.error(f"AI analysis failed for {ctx.ticker}: {e}\nTraceback:\n{traceback.format_exc()}")
-        return _create_fallback_qualitative(ctx, quant, str(e))
 
 
 # === STEP 4: Synthesize Final Analysis (Python) ===
@@ -297,59 +233,6 @@ def analyze_holding(
     return result, enriched
 
 
-def _run_qualitative_and_strategic_in_parallel(
-    ctx: AnalysisContext,
-    quant: QuantitativeAnalysis,
-    raw_data: dict[str, Any],
-) -> tuple[QualitativeInsights, Any]:
-    """Run the qualitative crew and the strategic Perplexity research concurrently.
-
-    Strategic research is gated to stocks — PESTEL/SWOT/Porter were designed
-    for companies and adapt poorly to ETFs and crypto.
-    """
-    import concurrent.futures
-
-    do_strategic = ctx.asset_class == "stock"
-    sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
-    industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
-    description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
-        qual_future = pool.submit(generate_qualitative, ctx, quant, raw_data)
-        strategic_future = pool.submit(_safe_strategic, ctx.ticker, sector, industry, description) if do_strategic else None
-
-        try:
-            qual = qual_future.result()
-        except Exception as exc:
-            logger.error(f"Qualitative generation failed for {ctx.ticker}: {exc}")
-            qual = _create_fallback_qualitative(ctx, quant, str(exc))
-
-        if strategic_future is None:
-            return qual, None
-        try:
-            strategic = strategic_future.result()
-        except Exception as exc:
-            logger.warning(f"Strategic research failed for {ctx.ticker}: {exc}")
-            strategic = None
-        return qual, strategic
-
-
-def _safe_strategic(ticker: str, sector: str, industry: str, description: str) -> Any:
-    """Wrapper that swallows import-time/runtime issues with the strategic module."""
-    try:
-        from finwiz.analysis.strategic_research import gather_strategic_analysis_sync
-
-        return gather_strategic_analysis_sync(
-            ticker=ticker,
-            sector=sector,
-            industry=industry,
-            description=description,
-        )
-    except Exception as exc:
-        logger.warning(f"Strategic research skipped for {ticker}: {exc}")
-        return None
-
-
 def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAnalysis) -> DeepAnalysisResult:
     """Re-derive composite/grade/recommendation using the AI-rated strategic score.
 
@@ -396,285 +279,6 @@ def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAna
             "grade": new_grade,
             "recommendation": new_recommendation,
         }
-    )
-
-
-def _has_qualitative_content(qual: QualitativeInsights | None) -> bool:
-    """Check if QualitativeInsights has actual content (not just defaults)."""
-    if qual is None:
-        return False
-    # Check if any of the main sections have content
-    has_sec = qual.sec_insights is not None
-    has_fundamental = qual.fundamental_context is not None
-    has_technical = qual.technical_strategy is not None
-    has_risks = qual.contextual_risks is not None
-    has_synthesis = qual.investment_synthesis is not None
-    # Also check ai_confidence - 0.5 is the default (no AI analysis)
-    has_confidence = qual.ai_confidence != 0.5
-    return any([has_sec, has_fundamental, has_technical, has_risks, has_synthesis, has_confidence])
-
-
-def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -> QualitativeInsights:
-    """Extract QualitativeInsights from crew result."""
-    # Try to get pydantic model directly
-    if hasattr(crew_result, "pydantic") and crew_result.pydantic:
-        # Case 1: Direct QualitativeInsights
-        if isinstance(crew_result.pydantic, QualitativeInsights):
-            qual = crew_result.pydantic
-            if _has_qualitative_content(qual):
-                return qual
-            logger.warning("QualitativeInsights from pydantic has no content, trying fallback")
-
-        # Case 2: EnrichedAnalysis containing QualitativeInsights
-        if isinstance(crew_result.pydantic, EnrichedAnalysis):
-            enriched_qual = crew_result.pydantic.qualitative
-            if enriched_qual is not None and _has_qualitative_content(enriched_qual):
-                logger.info("Extracted QualitativeInsights from EnrichedAnalysis.qualitative")
-                return enriched_qual
-            logger.warning("EnrichedAnalysis.qualitative has no content, trying fallback")
-
-    # Try tasks_output first (more reliable than raw parsing)
-    if hasattr(crew_result, "tasks_output") and crew_result.tasks_output:
-        for task_output in crew_result.tasks_output:
-            if hasattr(task_output, "pydantic"):
-                # Check for direct QualitativeInsights
-                if isinstance(task_output.pydantic, QualitativeInsights):
-                    qual = task_output.pydantic
-                    if _has_qualitative_content(qual):
-                        logger.info("Extracted QualitativeInsights from tasks_output")
-                        return qual
-                # Check for EnrichedAnalysis containing qualitative
-                if isinstance(task_output.pydantic, EnrichedAnalysis) and task_output.pydantic.qualitative:
-                    qual = task_output.pydantic.qualitative
-                    if _has_qualitative_content(qual):
-                        logger.info("Extracted QualitativeInsights from tasks_output EnrichedAnalysis")
-                        return qual
-
-    # Try to parse from raw output
-    if hasattr(crew_result, "raw") and crew_result.raw:
-        try:
-            data = json.loads(crew_result.raw)
-            # Try to extract qualitative from EnrichedAnalysis-shaped JSON
-            if "qualitative" in data and isinstance(data["qualitative"], dict):
-                qual = QualitativeInsights(**data["qualitative"])
-                if _has_qualitative_content(qual):
-                    logger.info("Extracted QualitativeInsights from raw JSON qualitative field")
-                    return qual
-            # Try direct QualitativeInsights parse
-            qual = QualitativeInsights(**data)
-            if _has_qualitative_content(qual):
-                return qual
-            logger.warning("Parsed QualitativeInsights has no content, using fallback")
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
-            logger.warning(f"Failed to parse crew output as JSON: {e}")
-
-    # Fallback: Use validation with retry
-    from finwiz.validation.ai_output import validate_ai_output_with_retry
-
-    logger.warning("All extraction methods failed, falling back to validation with retry")
-    raw_output = crew_result.raw if hasattr(crew_result, "raw") else str(crew_result)
-    return validate_ai_output_with_retry(raw_output, quant, max_retries=2)
-
-
-def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> QualitativeInsights:
-    """Generate qualitative insights using Python templates (no AI).
-
-    This is used in MAXIMUM_SPEED mode to avoid slow AI calls.
-    Content is derived from quantitative metrics using rule-based templates.
-    """
-    ticker = ctx.ticker
-    grade = quant.grade
-    score = quant.composite_score
-    rec = quant.preliminary_recommendation
-    fund_score = quant.fundamental_score
-    tech_score = quant.technical_score
-    risk_score = quant.risk_score
-    rationale = quant.python_rationale
-
-    # Determine sentiment based on scores
-    is_strong = score >= 0.7
-    is_weak = score < 0.4
-    sentiment = "positif" if is_strong else ("négatif" if is_weak else "neutre")
-
-    # Build business model from metrics
-    fund_metrics = quant.fundamental_metrics
-    roe = fund_metrics.get("roe", 0)
-    debt_ratio = fund_metrics.get("debt_to_equity", 0)
-    revenue_growth = fund_metrics.get("revenue_growth", 0)
-
-    business_model = (
-        f"{ticker} présente un profil fondamental avec un score de {fund_score:.2f}. "
-        f"Le rendement sur capitaux propres (ROE) est de {roe:.1%}, "
-        f"avec un ratio dette/capitaux propres de {debt_ratio:.2f}. "
-        f"La croissance des revenus est de {revenue_growth:.1%}. "
-        f"Ces métriques suggèrent un modèle d'affaires {'solide' if fund_score >= 0.6 else 'modéré' if fund_score >= 0.4 else 'à surveiller'}. "
-        f"{rationale} "
-        f"L'analyse quantitative Python a attribué la note {grade} avec un score composite de {score:.2f}."
-    )
-
-    # Build technical analysis from indicators
-    tech_indicators = quant.technical_indicators
-    rsi = tech_indicators.get("rsi", 50)
-    macd = tech_indicators.get("macd", 0)
-
-    support_resistance = (
-        f"Analyse technique avec score {tech_score:.2f}. "
-        f"RSI actuel: {rsi:.1f} ({'suracheté' if rsi > 70 else 'survendu' if rsi < 30 else 'neutre'}). "
-        f"MACD: {macd:.3f} ({'signal haussier' if macd > 0 else 'signal baissier'}). "
-        f"Les niveaux de support et résistance sont déterminés par l'analyse des moyennes mobiles."
-    )
-
-    entry_exit = (
-        f"Stratégie d'entrée basée sur le score technique de {tech_score:.2f}. "
-        f"Recommandation: {rec}. "
-        f"{'Accumuler sur les replis' if rec == 'BUY' else 'Attendre confirmation' if rec == 'HOLD' else 'Réduire exposition'} "
-        f"avec gestion du risque appropriée. "
-        f"Le score de risque de {risk_score:.2f} suggère une volatilité {'élevée' if risk_score < 0.4 else 'modérée' if risk_score < 0.7 else 'faible'}."
-    )
-
-    # Build investment thesis
-    risk_metrics = quant.risk_metrics
-    volatility = risk_metrics.get("volatility", 0)
-    beta = risk_metrics.get("beta", 1)
-    max_drawdown = risk_metrics.get("max_drawdown", 0)
-
-    investment_thesis = (
-        f"Analyse quantitative complète pour {ticker} ({ctx.asset_class}). "
-        f"Note finale: {grade} avec score composite {score:.2f}. "
-        f"Recommandation Python: {rec}. "
-        f"Score fondamental: {fund_score:.2f} - ROE {roe:.1%}, ratio dette {debt_ratio:.2f}, croissance {revenue_growth:.1%}. "
-        f"Score technique: {tech_score:.2f} - RSI {rsi:.1f}, MACD {macd:.3f}. "
-        f"Score risque: {risk_score:.2f} - Volatilité {volatility:.1%}, Beta {beta:.2f}, Drawdown max {max_drawdown:.1%}. "
-        f"Justification: {rationale} "
-        f"Cette analyse est générée en mode MAXIMUM_SPEED sans appel AI pour optimiser les performances. "
-        f"Pour une analyse qualitative approfondie avec contexte sectoriel et analyse des filings SEC, "
-        f"désactivez le mode MAXIMUM_SPEED dans la configuration."
-    )
-
-    bull_case = (
-        f"Scénario haussier: Si les fondamentaux s'améliorent au-delà du score actuel de {fund_score:.2f}, "
-        f"et que les indicateurs techniques confirment avec RSI > 50 et MACD positif, "
-        f"{ticker} pourrait surperformer. Catalyseurs potentiels: amélioration du ROE, réduction de la dette, "
-        f"momentum technique positif. Probabilité estimée basée sur le grade {grade}."
-    )
-
-    base_case = (
-        f"Scénario de base: Maintien du profil actuel avec score {score:.2f} et grade {grade}. "
-        f"Les métriques fondamentales restent stables, les indicateurs techniques oscillent autour des niveaux actuels. "
-        f"Performance alignée avec le secteur. Recommandation {rec} reste appropriée."
-    )
-
-    bear_case = (
-        f"Scénario baissier: Détérioration des fondamentaux en dessous du score {fund_score:.2f}, "
-        f"signaux techniques négatifs avec RSI < 30 et MACD négatif, "
-        f"augmentation de la volatilité au-delà de {volatility:.1%}. "
-        f"Risque de drawdown supérieur à {max_drawdown:.1%}."
-    )
-
-    # Scenario probabilities based on score
-    if score >= 0.7:
-        probs = ScenarioProbabilities(bull=0.40, base=0.45, bear=0.15)
-    elif score >= 0.5:
-        probs = ScenarioProbabilities(bull=0.25, base=0.50, bear=0.25)
-    else:
-        probs = ScenarioProbabilities(bull=0.15, base=0.45, bear=0.40)
-
-    return QualitativeInsights(
-        sec_insights=SecAnalysisInsights(
-            business_model=business_model,
-            competitive_advantages=[f"Score fondamental {fund_score:.2f}", f"Grade {grade}"],
-            risk_factors=[f"Volatilité {volatility:.1%}", f"Beta {beta:.2f}", f"Drawdown max {max_drawdown:.1%}"],
-            strategic_initiatives=["Analyse Python MAXIMUM_SPEED mode"],
-        ),
-        fundamental_context=FundamentalContextInsights(
-            industry_analysis=f"Analyse sectorielle basée sur métriques quantitatives. Score fondamental: {fund_score:.2f}. {rationale}",
-            growth_drivers=[f"ROE: {roe:.1%}", f"Croissance revenus: {revenue_growth:.1%}"],
-            competitive_positioning=f"Position basée sur score {score:.2f} et grade {grade}. {sentiment.capitalize()} par rapport au marché.",
-            management_assessment=f"Évaluation basée sur métriques quantitatives: ratio dette {debt_ratio:.2f}, ROE {roe:.1%}.",
-        ),
-        technical_strategy=TechnicalStrategyInsights(
-            chart_patterns=[f"RSI: {rsi:.1f}", f"MACD: {macd:.3f}"],
-            support_resistance=support_resistance,
-            entry_exit_strategy=entry_exit,
-            timing_assessment=f"Score technique {tech_score:.2f}. {'Timing favorable' if tech_score >= 0.6 else 'Attendre confirmation'}.",
-        ),
-        contextual_risks=ContextualRiskInsights(
-            regulatory_risks=["Non évalué en mode MAXIMUM_SPEED"],
-            geopolitical_risks=["Non évalué en mode MAXIMUM_SPEED"],
-            competitive_risks=["Non évalué en mode MAXIMUM_SPEED"],
-            operational_risks=[f"Volatilité: {volatility:.1%}"],
-            stress_scenarios=[f"Drawdown max historique: {max_drawdown:.1%}"],
-        ),
-        investment_synthesis=InvestmentSynthesis(
-            investment_thesis=investment_thesis,
-            bull_case=bull_case,
-            base_case=base_case,
-            bear_case=bear_case,
-            scenario_probabilities=probs,
-            final_recommendation=cast(Literal["BUY", "HOLD", "SELL"], rec),
-            recommendation_confidence="MEDIUM",
-            action_plan=ActionPlan(
-                immediate_actions=[f"Suivre recommandation {rec}", "Surveiller indicateurs techniques"],
-                monitoring_points=["RSI", "MACD", "Volatilité"],
-                exit_triggers=[f"Drawdown > {abs(max_drawdown) * 1.5:.1%}", "RSI > 80 ou < 20"],
-            ),
-        ),
-        analysis_timestamp=datetime.now(),
-        ai_confidence=0.7,  # Python analysis confidence
-    )
-
-
-def _create_fallback_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis, error: str) -> QualitativeInsights:
-    """Create fallback QualitativeInsights when AI fails."""
-    fallback_text = f"Analysis unavailable due to AI failure: {error}. " * 5
-
-    return QualitativeInsights(
-        sec_insights=SecAnalysisInsights(
-            business_model=fallback_text,
-            competitive_advantages=["Unavailable due to AI failure"],
-            risk_factors=["AI analysis failed - rely on Python metrics"],
-            strategic_initiatives=[],
-        ),
-        fundamental_context=FundamentalContextInsights(
-            industry_analysis=fallback_text,
-            growth_drivers=["Unavailable"],
-            competitive_positioning=fallback_text,
-            management_assessment=fallback_text,
-        ),
-        technical_strategy=TechnicalStrategyInsights(
-            chart_patterns=["Unavailable"],
-            support_resistance=fallback_text,
-            entry_exit_strategy=fallback_text,
-            timing_assessment=fallback_text,
-        ),
-        contextual_risks=ContextualRiskInsights(
-            regulatory_risks=["Analyse indisponible (echec AI)"],
-            geopolitical_risks=["Analyse indisponible (echec AI)"],
-            competitive_risks=["Analyse indisponible (echec AI)"],
-            operational_risks=["Analyse indisponible (echec AI)"],
-            stress_scenarios=["Analyse indisponible (echec AI)"],
-        ),
-        investment_synthesis=InvestmentSynthesis(
-            investment_thesis=(
-                f"FALLBACK: AI analysis failed for {ctx.ticker}. "
-                f"Python analysis: Grade {quant.grade}, Score {quant.composite_score:.2f}, "
-                f"Recommendation {quant.preliminary_recommendation}. "
-                f"{quant.python_rationale} " * 3
-            ),
-            bull_case="Unavailable due to AI failure. " * 10,
-            base_case="Unavailable due to AI failure. " * 10,
-            bear_case="Unavailable due to AI failure. " * 10,
-            scenario_probabilities=ScenarioProbabilities(bull=0.0, base=1.0, bear=0.0),
-            final_recommendation=cast(Literal["BUY", "HOLD", "SELL"], quant.preliminary_recommendation),
-            recommendation_confidence="LOW",
-            action_plan=ActionPlan(
-                immediate_actions=["Review Python metrics manually"],
-                monitoring_points=["Re-run analysis when AI is available"],
-                exit_triggers=["Significant price movement"],
-            ),
-        ),
-        analysis_timestamp=datetime.now(),
-        ai_confidence=0.0,
     )
 
 
