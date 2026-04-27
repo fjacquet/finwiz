@@ -27,7 +27,6 @@ from finwiz.schemas.hybrid_analysis import (
     QualitativeInsights,
     QuantitativeAnalysis,
 )
-from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 from finwiz.schemas.hybrid_analysis.qualitative import (
     ActionPlan,
     ContextualRiskInsights,
@@ -44,10 +43,10 @@ if TYPE_CHECKING:
 from finwiz.analysis._helpers import (
     _build_crew_inputs,
     _build_sentiment_summary,
-    _filter_numeric_values,
     _get_analysis_crew,
 )
 from finwiz.analysis.stages.collect import collect_raw_data
+from finwiz.analysis.stages.quantify import _result_to_quantitative, calculate_quantitative  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -59,31 +58,6 @@ class AnalysisContext:
     ticker: str
     asset_class: str
     company_name: str = ""
-
-
-# === STEP 2: Calculate Quantitative Metrics ($0 Python) ===
-def calculate_quantitative(
-    ctx: AnalysisContext,
-    raw_data: dict[str, Any],
-) -> tuple[DeepAnalysisResult, QuantitativeAnalysis]:
-    """
-    Pure function: Deterministic Python scoring, $0 cost, ~100ms.
-
-    Args:
-        ctx: Analysis context
-        raw_data: Raw financial data from collect_raw_data
-
-    Returns:
-        Tuple of (DeepAnalysisResult for caching, QuantitativeAnalysis for AI context)
-    """
-    from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
-
-    logger.info(f"Calculating quantitative metrics for {ctx.ticker}")
-    scorer = DeepAnalysisScorer()
-    result = scorer.calculate_composite_score(ctx.ticker, ctx.asset_class, raw_data)
-    quant = _result_to_quantitative(result)
-    logger.info(f"Quantitative: {ctx.ticker} grade={quant.grade} score={quant.composite_score:.2f}")
-    return result, quant
 
 
 # === STEP 3: Generate Qualitative Insights (AI Crew) ===
@@ -422,37 +396,6 @@ def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAna
             "grade": new_grade,
             "recommendation": new_recommendation,
         }
-    )
-
-
-def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
-    """Convert DeepAnalysisResult to QuantitativeAnalysis schema."""
-    # Filter dicts to only include numeric values
-    # (the schema expects dict[str, float], not dict[str, Any])
-    fundamental_metrics = _filter_numeric_values(result.fundamental_details)
-    technical_indicators = _filter_numeric_values(result.technical_details)
-    risk_metrics = _filter_numeric_values(result.risk_details)
-
-    return QuantitativeAnalysis(
-        composite_score=result.composite_score,
-        fundamental_score=result.fundamental_score or 0.0,
-        technical_score=result.technical_score or 0.0,
-        risk_score=result.risk_score or 0.0,
-        grade=result.grade,
-        preliminary_recommendation=result.recommendation,
-        fundamental_metrics=fundamental_metrics,
-        technical_indicators=technical_indicators,
-        risk_metrics=risk_metrics,
-        calculation_timestamp=datetime.now(),
-        data_quality=DataQualityMetrics(
-            completeness_score=result.confidence_level,
-            freshness_score=1.0 if result.data_freshness_hours < 24 else 0.5,
-            accuracy_confidence=result.confidence_level,
-            source_reliability=0.85,
-            missing_fields=result.warnings if hasattr(result, "warnings") else [],
-        ),
-        confidence_level=result.confidence_level,
-        python_rationale=result.rationale,
     )
 
 
