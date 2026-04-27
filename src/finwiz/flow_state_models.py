@@ -6,7 +6,7 @@ Contains state containers for the CrewAI flow execution.
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -46,6 +46,9 @@ class DeepAnalysisResult(BaseModel):
 
     # Data lineage
     lineage: dict[str, Any] | None = Field(None, description="Complete data lineage from sources")
+
+    # Trust-spine confidence marker: 'low' when upstream qualify stage used a Python fallback (DEGRADED).
+    confidence: Literal["high", "low"] = Field(default="high", description="Pipeline confidence: 'low' when qualify stage degraded to Python fallback")
 
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")

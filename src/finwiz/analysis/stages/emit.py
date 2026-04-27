@@ -70,6 +70,7 @@ def _emit_pending(ctx: StageContext, reason: str | None = None) -> DeepAnalysisR
         technical_details={},
         data_freshness_hours=0.0,
         confidence_level=0.0,
+        confidence="low",
         warnings=["upstream stage failure — analysis incomplete"],
         data_quality=None,
         lineage=None,

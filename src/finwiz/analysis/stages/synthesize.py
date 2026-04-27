@@ -232,7 +232,22 @@ def synthesize(
     processing_time: float = ctx.extras.get("processing_time", 0.0)
     sentiment_summary: dict[str, Any] | None = ctx.extras.get("sentiment_summary")
     options_probs: ScenarioProbabilities | None = ctx.extras.get("options_probs")
-    return _synthesize_inner(analysis_ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
+    enriched = _synthesize_inner(analysis_ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
+
+    # Propagate DEGRADED qualify outcome as confidence="low" on the partial DeepAnalysisResult.
+    # The emit stage reads partial_result from ctx.extras — updating it here ensures the
+    # final DeepAnalysisResult written to flow state carries the low-confidence marker.
+    qualify_outcome = ctx.extras.get("qualify_outcome")
+    if qualify_outcome is not None:
+        from finwiz.schemas.stage_contract import StageOutcome
+
+        if qualify_outcome == StageOutcome.DEGRADED:
+            partial = ctx.extras.get("partial_result")
+            if partial is not None:
+                ctx.extras["partial_result"] = partial.model_copy(update={"confidence": "low"})
+                logger.info(f"Propagated DEGRADED qualify outcome to confidence='low' for {ctx.ticker}")
+
+    return enriched
 
 
 # Legacy shim — callers outside run_pipeline continue to work unchanged.

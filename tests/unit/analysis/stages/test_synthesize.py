@@ -52,3 +52,53 @@ def test_synthesize_failure_becomes_failed(tmp_path: Path, mocker: Any) -> None:
     result = synthesize(ctx, QuantitativeAnalysis.model_construct(), QualitativeInsights.model_construct(), {})
     assert result.payload is None
     assert result.provenance.outcome == StageOutcome.FAILED
+
+
+def test_synthesize_marks_low_confidence_when_qualify_degraded(tmp_path: Path, mocker: Any) -> None:
+    """When upstream qualify is DEGRADED, synthesize propagates confidence='low' onto partial_result."""
+    from finwiz.flow_state_models import DeepAnalysisResult
+
+    mocker.patch(
+        "finwiz.analysis.stages.synthesize._synthesize_inner",
+        return_value=EnrichedAnalysis.model_construct(),
+    )
+    partial = DeepAnalysisResult.model_construct(confidence="high")
+    ctx = StageContext(
+        ticker="AAPL",
+        run_id="r1",
+        ledger=RunLedger(run_id="r1", artifact_dir=tmp_path),
+        extras={
+            "analysis_ctx": mocker.MagicMock(),
+            "partial_result": partial,
+            "qualify_outcome": StageOutcome.DEGRADED,
+        },
+    )
+    result = synthesize(ctx, QuantitativeAnalysis.model_construct(), QualitativeInsights.model_construct(), {})
+    assert result.provenance.outcome == StageOutcome.OK
+    assert result.payload is not None
+    # The partial_result in ctx.extras should now carry confidence="low"
+    updated_partial = ctx.extras["partial_result"]
+    assert updated_partial.confidence == "low"
+
+
+def test_synthesize_keeps_high_confidence_when_qualify_ok(tmp_path: Path, mocker: Any) -> None:
+    """When qualify outcome is OK, synthesize leaves confidence='high' on partial_result."""
+    from finwiz.flow_state_models import DeepAnalysisResult
+
+    mocker.patch(
+        "finwiz.analysis.stages.synthesize._synthesize_inner",
+        return_value=EnrichedAnalysis.model_construct(),
+    )
+    partial = DeepAnalysisResult.model_construct(confidence="high")
+    ctx = StageContext(
+        ticker="AAPL",
+        run_id="r1",
+        ledger=RunLedger(run_id="r1", artifact_dir=tmp_path),
+        extras={
+            "analysis_ctx": mocker.MagicMock(),
+            "partial_result": partial,
+            "qualify_outcome": StageOutcome.OK,
+        },
+    )
+    synthesize(ctx, QuantitativeAnalysis.model_construct(), QualitativeInsights.model_construct(), {})
+    assert ctx.extras["partial_result"].confidence == "high"

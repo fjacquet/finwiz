@@ -104,6 +104,8 @@ def run_pipeline(
     stage_ctx.extras["processing_time"] = processing_time
     stage_ctx.extras["sentiment_summary"] = sentiment_summary
     stage_ctx.extras["options_probs"] = options_probs
+    # Thread qualify outcome so synthesize can propagate confidence="low" on DEGRADED.
+    stage_ctx.extras["qualify_outcome"] = qr3.provenance.outcome
     sr4 = synthesize(stage_ctx, quant, qual, raw_data)
     if sr4.payload is None:
         # Synthesize failed; fall back to legacy direct call.
