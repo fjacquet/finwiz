@@ -9,7 +9,15 @@ from .common import RiskAssessmentStandardized
 
 Decision = Literal["KEEP", "SELL"]
 AssetClass = Literal["stock", "etf", "crypto"]  # Added crypto support for A+ discoveries
-Grade = Literal["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]
+Grade = Literal["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "N/A"]
+"""Letter grade scale.
+
+`"N/A"` is reserved for holdings whose deep analysis did not run (or
+failed) for this kickoff. Renderers MUST display these as
+"⏳ Analyse en attente" rather than coloring them like a real low grade.
+The placeholder leak from `decisions.py` (default 0.6 / D) was the source
+of the DELL "B+ → D" panic — see merge.py for the explicit overwrite.
+"""
 ImprovementType = Literal["replacement", "addition", "rebalancing"]
 Priority = Literal["high", "medium", "low"]
 

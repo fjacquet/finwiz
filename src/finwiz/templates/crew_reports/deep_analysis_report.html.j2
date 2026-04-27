@@ -28,10 +28,16 @@
 <!-- Recommendation Section -->
 <div class="section recommendation {{ recommendation|lower }}">
     <h2>💡 Recommandation</h2>
+    {% if grade == "N/A" %}
+    <p class="grade-na" style="font-size: 1.5rem;">
+        ⏳ <strong>Analyse en attente</strong> — relancer l'analyse approfondie pour ce holding.
+    </p>
+    {% else %}
     <p class="grade-{{ grade|lower|replace('+', '-plus') }}" style="font-size: 1.5rem;">
         {% if recommendation == 'BUY' %}✅{% elif recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
         <strong>{{ recommendation }}</strong> - Grade {{ grade }}
     </p>
+    {% endif %}
     <div class="metrics-grid">
         <div class="metric-card">
             <h4>Score Composite</h4>

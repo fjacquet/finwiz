@@ -46,6 +46,25 @@ def merge_deep_analysis_from_flow_state(
 
                 holdings_with_deep_analysis += 1
                 logger.debug(f"Merged deep analysis for {ticker}: grade={deep_result.grade}")
+            else:
+                # No deep analysis ran for this holding (failure, timeout, or
+                # global abort). The placeholder grade="D" / score=0.6 from
+                # decisions.py would otherwise reach the report as if it were a
+                # real verdict — that's the bug that caused the DELL panic.
+                # Mark explicitly as N/A so the renderer can show "Analyse en
+                # attente" instead of a fake D badge.
+                decision.grade = "N/A"
+                decision.grade_description = "Analyse approfondie non disponible"
+                decision.recommended_action = "Analyse en attente — ne pas décider sur ce holding"
+                decision.rationale_bullets = [
+                    "Analyse approfondie non disponible pour ce holding lors de cette exécution.",
+                    "Aucun verdict d'investissement n'est rendu — relancer l'analyse pour obtenir un grade.",
+                ]
+                decision.data_freshness = "stale"
+                # crew_analysis_used / analysis_date stay None — already the
+                # canonical "did deep analysis run?" indicator used by counts
+                # and renderers.
+                logger.debug(f"Marked {ticker} as N/A (no deep analysis result)")
 
             if ticker in portfolio_alternatives:
                 alternatives_data = portfolio_alternatives[ticker]

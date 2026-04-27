@@ -68,14 +68,45 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
 
 def generate_executive_summary(portfolio_stats: dict[str, Any]) -> str:
     """Generate executive summary section."""
-    grade_class = f"grade-{portfolio_stats['portfolio_grade'].lower().replace('+', '-plus')}"
+    grade = portfolio_stats["portfolio_grade"]
+    grade_class = f"grade-{grade.lower().replace('+', '-plus').replace('/', '-')}" if grade != "N/A" else "grade-na"
+
+    # Coverage banner — truthful display of how many holdings actually got deep
+    # analysis vs. the "Analyse en attente" placeholder. Three states:
+    #   ✅ full coverage   — green, no warning
+    #   ⚠️ partial         — amber, encourage rerun
+    #   ❌ zero coverage   — red, explicit "ne pas décider sur ce rapport"
+    coverage = portfolio_stats.get("coverage") or {"analyzed": 0, "total": 0}
+    analyzed = coverage.get("analyzed", 0)
+    total = coverage.get("total", 0)
+    if total == 0:
+        coverage_html = ""
+    elif analyzed == total:
+        coverage_html = f'<div class="highlight success" style="margin-bottom:12px;">✅ <strong>{analyzed}/{total} holdings analysées</strong> — couverture complète.</div>'
+    elif analyzed == 0:
+        coverage_html = (
+            f'<div class="highlight" style="background:#fef2f2;border:2px solid #dc2626;color:#991b1b;margin-bottom:12px;">'
+            f"❌ <strong>0/{total} holdings analysées</strong> — données partielles. "
+            "<strong>NE PAS prendre de décisions sur ce rapport.</strong> Relancez l'analyse approfondie."
+            f"</div>"
+        )
+    else:
+        pending = total - analyzed
+        coverage_html = (
+            f'<div class="highlight" style="background:#fffbeb;border:2px solid #f59e0b;color:#92400e;margin-bottom:12px;">'
+            f"⚠️ <strong>{analyzed}/{total} holdings analysées</strong> — {pending} en attente. "
+            "Le score de portefeuille n'inclut pas les holdings sans analyse."
+            f"</div>"
+        )
 
     return f"""
   <div class="section">
     <h2>Executive Summary</h2>
 
+    {coverage_html}
+
     <div class="highlight success">
-      <h3>Portfolio Grade: <span class="{grade_class}">{portfolio_stats["portfolio_grade"]}</span></h3>
+      <h3>Portfolio Grade: <span class="{grade_class}">{grade}</span></h3>
       <p>Average score: <strong>{portfolio_stats["average_score"]:.3f}</strong> out of 1.000</p>
     </div>
 
@@ -204,20 +235,36 @@ def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
     holdings_rows = []
     for holding in sorted_holdings:
         grade = holding.grade or "N/A"
-        grade_class = f"grade-{grade.lower().replace('+', '-plus')}" if grade != "N/A" else "grade-f"
-        rec_badge = _get_recommendation_badge(grade, holding.recommended_action)
+        # Treat both explicit "N/A" grade AND missing crew_analysis_used as
+        # "deep analysis didn't run for this holding" — render an explicit
+        # pending state instead of a fake grade. This is the truthful
+        # rendering required after the DELL "B+ → D" placeholder leak.
+        is_pending = grade == "N/A" or holding.crew_analysis_used is None
 
         ticker = holding.ticker or "N/A"
         name = holding.name or "Unknown"
         asset_class = (holding.asset_class or "unknown").upper()
-        composite_score = holding.composite_score if holding.composite_score is not None else 0.0
-        rationale = holding.rationale_bullets[0] if holding.rationale_bullets else "Python analysis"
 
         # Generate deep analysis link
         deep_analysis_link = _get_deep_analysis_link(ticker, holding.asset_class or "stock")
         ticker_html = f'<a href="{deep_analysis_link}" class="ticker-link" title="View detailed analysis for {ticker}">{ticker}</a>'
 
-        holdings_rows.append(f"""
+        if is_pending:
+            holdings_rows.append(f"""
+        <tr class="row-pending">
+          <td><strong>{ticker_html}</strong><br><small>{name}</small></td>
+          <td>{asset_class}</td>
+          <td class="grade-na" title="Deep analysis did not run for this holding"><strong>⏳ Analyse en attente</strong></td>
+          <td class="muted">—</td>
+          <td class="muted">—</td>
+          <td><small class="muted">Analyse approfondie non disponible — relancer l'analyse pour obtenir un verdict.</small></td>
+        </tr>""")
+        else:
+            grade_class = f"grade-{grade.lower().replace('+', '-plus')}"
+            rec_badge = _get_recommendation_badge(grade, holding.recommended_action)
+            composite_score = holding.composite_score if holding.composite_score is not None else 0.0
+            rationale = holding.rationale_bullets[0] if holding.rationale_bullets else "Python analysis"
+            holdings_rows.append(f"""
         <tr>
           <td><strong>{ticker_html}</strong><br><small>{name}</small></td>
           <td>{asset_class}</td>
