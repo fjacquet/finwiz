@@ -114,4 +114,4 @@ def analyze_holding(
     enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
 
     # Phase 5 emit — final assembly: strategic recompute + return.
-    return build_verdict(ctx, result, enriched, strategic)
+    return build_verdict(ctx, result, enriched, strategic, processing_time)

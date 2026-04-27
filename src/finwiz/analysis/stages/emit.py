@@ -20,6 +20,7 @@ def build_verdict(
     result: DeepAnalysisResult,
     enriched: EnrichedAnalysis,
     strategic: object | None,
+    processing_time: float,
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
     """Build the user-visible verdict from the enriched analysis.
 
@@ -30,5 +31,5 @@ def build_verdict(
     if strategic is not None and enriched.qualitative is not None and enriched.qualitative.strategic_analysis is not None:
         result = _apply_strategic_recompute(result, enriched)
 
-    logger.info(f"Pipeline complete for {ctx.ticker}")
+    logger.info(f"Pipeline complete for {ctx.ticker}: {processing_time:.1f}s")
     return result, enriched
