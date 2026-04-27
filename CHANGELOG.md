@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-27
+
+### Fixed
+
+- **Phase 3 lost successfully-completed work** -- The 1800s aggregate timeout
+  (`GLOBAL_PHASE_TIMEOUT` / `FINWIZ_PHASE_TIMEOUT` env var) was wrapping the
+  per-holding `asyncio.gather` and discarding every already-completed future
+  when it fired. A run on 2026-04-27 had XRP-USD finish cleanly at 09:00:12
+  (grade=D, rec=SELL, 92.3s) but its result was thrown away when the
+  aggregate timeout fired 4½ minutes later. With 60+ holdings, an outer cap
+  is the wrong abstraction — it punishes work that already succeeded when
+  one slow ticker pushes total runtime over. **The aggregate timeout has
+  been removed entirely.** `PER_HOLDING_TIMEOUT` (600s default,
+  `FINWIZ_HOLDING_TIMEOUT`) remains the only safety cap; total runtime now
+  scales naturally with N. The gather now uses `return_exceptions=True` so
+  one holding's exception doesn't poison siblings.
+- **Phase 3 runner crashes were silent** -- Codex P1 catch on PR #22:
+  `run_deep_analysis_concurrent` exceptions (executor init, asyncio loop,
+  config errors) used to be caught, logged, and the orchestrator returned
+  `{"error": ...}` — letting the flow continue and report success. Now the
+  orchestrator updates state then re-raises so the failure can never go
+  silent. The `flows/orchestrator.py` try/except wrapper still ensures
+  cost/cache summaries fire on the failure path.
+- **Single source of truth for Phase 3 fail-loud** -- Removed the duplicate
+  fail-loud check in `flows/orchestrator.py:run_sequential_workflow` (the
+  v0.3.0 location wasn't on every flow code path). The orchestrator now
+  raises `RuntimeError` directly on 0 results — independent of which flow
+  path called it.
+
 ## [0.3.0] - 2026-04-27
 
 ### Fixed
