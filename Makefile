@@ -1,6 +1,6 @@
 # FinWiz Development Makefile
 
-.PHONY: help install test test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size cleanup mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci
+.PHONY: help install test test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci
 
 # Default target
 help:
@@ -124,7 +124,7 @@ format:
 	ruff check --fix .
 	ruff format .
 
-check: lint test check-unittest-mock check-file-size docs-validate
+check: lint test check-unittest-mock check-file-size docs-validate check-stage-contract
 	@echo "✅ All quality checks passed"
 
 # Full validation matching CI workflows (docs.yml + quality.yml). Use this
@@ -154,6 +154,11 @@ check-file-size:
 	@echo "🔍 Checking new file sizes..."
 	@uv run python scripts/check_new_file_size.py $$(git diff --cached --name-only --diff-filter=A -- '*.py' 2>/dev/null)
 	@echo "✅ No oversized new files"
+
+# Stage contract AST check
+.PHONY: check-stage-contract
+check-stage-contract:
+	uv run python -m scripts.check_stage_contract src/finwiz/analysis/stages
 
 # Cleanup
 clean:
