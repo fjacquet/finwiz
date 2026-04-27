@@ -2,7 +2,7 @@
 name = "finwiz"
 version = "0.3.1"
 description = "finwiz using crewAI"
-authors = [{ name = "Your Name", email = "fred.jacquet@gmail.com" }]
+authors = [{ name = "Frederic Jacquet", email = "fred.jacquet@gmail.com" }]
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "langchain-core>=0.3.65",
