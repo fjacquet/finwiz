@@ -66,38 +66,16 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
 """
 
 
-def generate_executive_summary(portfolio_stats: dict[str, Any]) -> str:
-    """Generate executive summary section."""
+def generate_executive_summary(portfolio_stats: dict[str, Any], trust_banner_html: str = "") -> str:
+    """Generate executive summary section.
+
+    ``trust_banner_html`` is the pre-rendered HTML produced by
+    :func:`finwiz.reporting.python_report_generator.render_trust_banner`.
+    When provided it replaces the former ad-hoc coverage-threshold logic entirely —
+    TrustBanner.from_coverage already encoded all the state rules.
+    """
     grade = portfolio_stats["portfolio_grade"]
     grade_class = f"grade-{grade.lower().replace('+', '-plus').replace('/', '-')}" if grade != "N/A" else "grade-na"
-
-    # Coverage banner — truthful display of how many holdings actually got deep
-    # analysis vs. the "Analyse en attente" placeholder. Three states:
-    #   ✅ full coverage   — green, no warning
-    #   ⚠️ partial         — amber, encourage rerun
-    #   ❌ zero coverage   — red, explicit "ne pas décider sur ce rapport"
-    coverage = portfolio_stats.get("coverage") or {"analyzed": 0, "total": 0}
-    analyzed = coverage.get("analyzed", 0)
-    total = coverage.get("total", 0)
-    if total == 0:
-        coverage_html = ""
-    elif analyzed == total:
-        coverage_html = f'<div class="highlight success" style="margin-bottom:12px;">✅ <strong>{analyzed}/{total} holdings analysées</strong> — couverture complète.</div>'
-    elif analyzed == 0:
-        coverage_html = (
-            f'<div class="highlight" style="background:#fef2f2;border:2px solid #dc2626;color:#991b1b;margin-bottom:12px;">'
-            f"❌ <strong>0/{total} holdings analysées</strong> — données partielles. "
-            "<strong>NE PAS prendre de décisions sur ce rapport.</strong> Relancez l'analyse approfondie."
-            f"</div>"
-        )
-    else:
-        pending = total - analyzed
-        coverage_html = (
-            f'<div class="highlight" style="background:#fffbeb;border:2px solid #f59e0b;color:#92400e;margin-bottom:12px;">'
-            f"⚠️ <strong>{analyzed}/{total} holdings analysées</strong> — {pending} en attente. "
-            "Le score de portefeuille n'inclut pas les holdings sans analyse."
-            f"</div>"
-        )
 
     # Don't wrap an N/A grade in a green "success" panel right under a red
     # coverage banner — pick a neutral "warning" wrapper to match the
@@ -108,7 +86,7 @@ def generate_executive_summary(portfolio_stats: dict[str, Any]) -> str:
   <div class="section">
     <h2>Executive Summary</h2>
 
-    {coverage_html}
+    {trust_banner_html}
 
     <div class="highlight {grade_panel_class}">
       <h3>Portfolio Grade: <span class="{grade_class}">{grade}</span></h3>
