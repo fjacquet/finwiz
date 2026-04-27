@@ -30,6 +30,7 @@ from finwiz.analysis.stages._synthesize_helpers import (  # noqa: F401
     _get_investment_rationale,
 )
 from finwiz.analysis.stages.collect import collect_raw_data
+from finwiz.analysis.stages.emit import build_verdict
 from finwiz.analysis.stages.qualify import (  # noqa: F401
     _create_fallback_qualitative,
     _create_python_qualitative,
@@ -111,8 +112,6 @@ def analyze_holding(
     processing_time = time.time() - start
     sentiment_summary = _build_sentiment_summary(raw_data)
     enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
-    if strategic is not None and enriched.qualitative is not None and enriched.qualitative.strategic_analysis is not None:
-        result = _apply_strategic_recompute(result, enriched)
 
-    logger.info(f"Pipeline complete for {ticker}: {processing_time:.1f}s")
-    return result, enriched
+    # Phase 5 emit — final assembly: strategic recompute + return.
+    return build_verdict(ctx, result, enriched, strategic)
