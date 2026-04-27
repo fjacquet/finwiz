@@ -200,6 +200,10 @@ class FinwizState(BaseModel):
     deep_analysis_success: bool = Field(default=False)
     deep_analysis_count: int = Field(default=0)
     deep_analysis_error: str | None = None
+    # Coverage tuple (analyzed, total) populated by DeepAnalysisOrchestrator so
+    # the reporting layer can render a truthful "X/Y holdings analyzed" banner
+    # and mark unanalyzed holdings as "Analyse en attente".
+    deep_analysis_coverage: tuple[int, int] | None = None
 
     # Alternative matching results
     portfolio_alternatives: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)

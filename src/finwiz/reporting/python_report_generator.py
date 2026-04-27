@@ -136,10 +136,29 @@ class PythonReportGenerator:
             if holding.grade in ["D", "F"]:
                 underperforming_holdings.append(holding)
 
-        avg_score = total_score / len(holdings) if holdings else 0.0
+        # Coverage = how many holdings actually got deep analysis vs. fell back
+        # to the "Analyse en attente" placeholder. Surfaced as a banner in the
+        # executive summary so users see the truth at a glance.
+        # Indicator is `grade != "N/A"` because both merge paths (merge.py and
+        # reporting_orchestrator._merge_deep_analysis_into_portfolio) set the
+        # grade authoritatively, while crew_analysis_used is only populated by
+        # one of them (PR #21 P1 fix).
+        def _is_analyzed(h: Any) -> bool:
+            g = getattr(h, "grade", None)
+            return g not in (None, "N/A")
+
+        analyzed = sum(1 for h in holdings if _is_analyzed(h))
+        total = len(holdings)
+        # Average score should ignore N/A / pending holdings so a kickoff that
+        # only analyzed 1/63 doesn't mask the gap with a fabricated portfolio score.
+        analyzed_holdings = [h for h in holdings if _is_analyzed(h)]
+        if analyzed_holdings:
+            avg_score = sum(h.composite_score for h in analyzed_holdings) / len(analyzed_holdings)
+        else:
+            avg_score = 0.0
 
         return {
-            "total_holdings": len(holdings),
+            "total_holdings": total,
             "asset_counts": asset_counts,
             "grade_counts": grade_counts,
             "recommendation_counts": recommendation_counts,
@@ -148,7 +167,8 @@ class PythonReportGenerator:
             "underperforming_count": len(underperforming_holdings),
             "a_plus_holdings": a_plus_holdings[:10],  # Top 10
             "underperforming_holdings": underperforming_holdings[:10],  # Bottom 10
-            "portfolio_grade": self._calculate_portfolio_grade(avg_score),
+            "portfolio_grade": self._calculate_portfolio_grade(avg_score) if analyzed_holdings else "N/A",
+            "coverage": {"analyzed": analyzed, "total": total},
         }
 
     def _calculate_portfolio_grade(self, avg_score: float) -> str:

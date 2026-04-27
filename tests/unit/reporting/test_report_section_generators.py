@@ -29,8 +29,14 @@ def _make_holding(
     composite_score: float = 0.7,
     recommended_action: str = "HOLD",
     rationale_bullets: list | None = None,
+    crew_analysis_used: str | None = "DeepAnalysisCrew",
 ) -> HoldingDecision:
-    """Create a valid HoldingDecision object for testing."""
+    """Create a valid HoldingDecision object for testing.
+
+    crew_analysis_used defaults to a non-None string so the renderer treats
+    the holding as 'analyzed' (regular grade row). Pass crew_analysis_used=None
+    to test the 'Analyse en attente' pending state.
+    """
     return HoldingDecision(
         ticker=ticker,
         name=name,
@@ -43,6 +49,7 @@ def _make_holding(
         recommended_action=recommended_action,
         risk=_make_risk(),
         rationale_bullets=rationale_bullets or [],
+        crew_analysis_used=crew_analysis_used,
     )
 
 

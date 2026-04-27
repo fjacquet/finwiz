@@ -78,7 +78,7 @@ class PortfolioHoldingsHTMLGenerator:
 
         # Count grade distribution
         grade_counts = {}
-        for grade in ["A+", "A", "B", "C", "D", "F"]:
+        for grade in ["A+", "A", "B", "C", "D", "F", "N/A"]:
             grade_counts[grade] = sum(1 for h in portfolio_review.holdings if h.grade == grade)
 
         # Count holdings with alternatives
@@ -103,7 +103,7 @@ class PortfolioHoldingsHTMLGenerator:
         # Build grade distribution bars
         grade_bars = []
         max_count = max(grade_counts.values()) if grade_counts.values() else 1
-        for grade in ["A+", "A", "B", "C", "D", "F"]:
+        for grade in ["A+", "A", "B", "C", "D", "F", "N/A"]:
             count = grade_counts[grade]
             percentage = (count / len(portfolio_review.holdings) * 100) if portfolio_review.holdings else 0
             color = self.GRADE_COLORS.get(grade, "#95a5a6")
