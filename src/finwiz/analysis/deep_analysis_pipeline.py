@@ -63,6 +63,11 @@ class AnalysisContext:
     ticker: str
     asset_class: str
     company_name: str = ""
+    # Optional ledger and run_id — populated by DeepAnalysisOrchestrator (D6).
+    # Legacy callers that construct AnalysisContext without these fields still work;
+    # run_pipeline falls back to creating an ad-hoc in-memory ledger.
+    ledger: Any = None
+    run_id: str | None = None
 
 
 # === COMPOSED PIPELINE (Main Entry Point) ===
@@ -71,12 +76,24 @@ def analyze_holding(
     asset_class: str,
     company_name: str = "",
     prefetched_data: dict[str, Any] | None = None,
+    ledger: Any = None,
+    run_id: str | None = None,
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
     """Backwards-compatible facade calling the new pipeline.
 
     All orchestration lives in `finwiz.analysis.stages.run_pipeline`. This
     facade is preserved for existing callers (tests, orchestrators) that
     import `analyze_holding` from this module.
+
+    Args:
+        ticker: Ticker symbol to analyze.
+        asset_class: Asset class (stock, etf, crypto).
+        company_name: Optional company name for display.
+        prefetched_data: Optional pre-fetched raw data (batch prefetch path).
+        ledger: Optional RunLedger from the orchestrator (D6). When supplied,
+            stage results are recorded into the shared ledger instead of a
+            per-call in-memory ledger. Legacy callers omit this parameter.
+        run_id: Optional run identifier to match the orchestrator's ledger.
     """
-    ctx = AnalysisContext(ticker=ticker, asset_class=asset_class, company_name=company_name)
+    ctx = AnalysisContext(ticker=ticker, asset_class=asset_class, company_name=company_name, ledger=ledger, run_id=run_id)
     return run_pipeline(ctx, prefetched_data=prefetched_data)
