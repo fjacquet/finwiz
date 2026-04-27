@@ -39,6 +39,11 @@ class DeepAnalysisOrchestrator:
         # Enriched analysis storage (populated during analysis)
         self._enriched_analyses: dict[str, Any] = {}
 
+        # Per-holding failure tracking (populated by analyze_single_sync, timeouts,
+        # and _store_enriched_analysis). Read by analyze_and_update_portfolio to
+        # set deep_analysis_success honestly and surface coverage in the report.
+        self._failed_holdings: list[str] = []
+
         # Initialize DataSourceOrchestrator for multi-source data acquisition
         from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
 
@@ -64,10 +69,15 @@ class DeepAnalysisOrchestrator:
         self.logger.info("Phase 3: Deep Analysis & Portfolio Update (Atomic Operation)")
         self.logger.info("=" * 80)
 
-        enabled = os.getenv("DEEP_PORTFOLIO_ANALYSIS", "false").lower() == "true"
-        if not enabled:
-            self.logger.info("Deep analysis disabled via DEEP_PORTFOLIO_ANALYSIS")
-            return {}
+        # Deep analysis ALWAYS runs — no env-var gate.
+        # Reason: this is a financial trust system. A "✅ completed" report on
+        # zero analyses is worse than a hard failure. The previous
+        # DEEP_PORTFOLIO_ANALYSIS kill switch defaulted to "false" and silently
+        # no-op'd the entire phase, producing reports with placeholder grades
+        # that users mistook for real verdicts.
+
+        # Reset per-run failure tracking
+        self._failed_holdings = []
 
         portfolio_review = self.state.portfolio_review
         if not portfolio_review or not portfolio_review.get("holdings"):
@@ -84,16 +94,35 @@ class DeepAnalysisOrchestrator:
 
         # Step 1: Run deep analysis on all holdings CONCURRENTLY
         try:
-            # Use concurrent execution for better performance
             deep_results = await self.run_deep_analysis_concurrent(holdings)
-            self.state.deep_analysis_results = deep_results
-            self.state.deep_analysis_success = True
-            self.logger.info(f"Deep analysis completed: {len(deep_results)}/{len(holdings)} holdings analyzed")
         except Exception as e:
             self.logger.error(f"Deep analysis failed: {e}", exc_info=True)
             self.state.deep_analysis_success = False
             self.state.deep_analysis_error = str(e)
+            self.state.deep_analysis_coverage = (0, len(holdings))
             return {"deep_analysis_results": {}, "error": str(e)}
+
+        # Honest success accounting — success only if we actually produced analyses.
+        # Coverage tuple (analyzed, total) is read by the reporting layer to
+        # render a banner showing how many holdings have real analysis.
+        analyzed = len(deep_results)
+        total = len(holdings)
+        self.state.deep_analysis_results = deep_results
+        self.state.deep_analysis_coverage = (analyzed, total)
+        self.state.deep_analysis_success = analyzed > 0
+
+        if analyzed == 0:
+            self.logger.critical(
+                f"❌ Deep analysis produced 0 results for {total} holdings. Failed tickers: {self._failed_holdings[:10]}{'...' if len(self._failed_holdings) > 10 else ''}"
+            )
+        elif analyzed < total:
+            missing = total - analyzed
+            self.logger.warning(
+                f"⚠️ Partial coverage: {analyzed}/{total} holdings analyzed, "
+                f"{missing} pending. Failed: {self._failed_holdings[:10]}{'...' if len(self._failed_holdings) > 10 else ''}"
+            )
+        else:
+            self.logger.info(f"✅ Deep analysis complete: {analyzed}/{total} holdings analyzed")
 
         # Step 2: Match alternatives for underperforming holdings
         alternatives_data = self._match_alternatives(deep_results)
@@ -192,8 +221,16 @@ class DeepAnalysisOrchestrator:
             html_path.write_text(html_content)
             self.logger.info(f"✅ Generated HTML: {html_path}")
 
+        except OSError as e:
+            # I/O error writing JSON or HTML to disk — track as a failure so the
+            # success accounting reflects reality (partial coverage warning).
+            self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}", exc_info=True)
+            if ticker not in self._failed_holdings:
+                self._failed_holdings.append(ticker)
         except Exception as e:
-            self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}")
+            self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}", exc_info=True)
+            if ticker not in self._failed_holdings:
+                self._failed_holdings.append(ticker)
 
     def get_enriched_analysis(self, ticker: str) -> Any | None:
         """Get stored enriched analysis for a ticker."""
@@ -250,7 +287,8 @@ class DeepAnalysisOrchestrator:
                 )
                 return (ticker, result, enriched)
             except Exception as e:
-                self.logger.error(f"Concurrent analysis failed for {ticker}: {e}")
+                self.logger.error(f"Concurrent analysis failed for {ticker}: {e}", exc_info=True)
+                self._failed_holdings.append(ticker)
                 return (ticker, None, None)
 
         # Use a semaphore to limit concurrency - this ensures timeout starts when work begins
@@ -280,9 +318,11 @@ class DeepAnalysisOrchestrator:
                     )
                 except TimeoutError:
                     self.logger.error(f"Analysis timed out for {ticker} after {PER_HOLDING_TIMEOUT}s")
+                    self._failed_holdings.append(ticker)
                     return (ticker, None, None)
                 except Exception as e:
-                    self.logger.error(f"Analysis failed for {ticker}: {e}")
+                    self.logger.error(f"Analysis failed for {ticker}: {e}", exc_info=True)
+                    self._failed_holdings.append(ticker)
                     return (ticker, None, None)
 
         # Use ThreadPoolExecutor with explicit cleanup to prevent deadlocks
@@ -300,10 +340,20 @@ class DeepAnalysisOrchestrator:
                     timeout=GLOBAL_PHASE_TIMEOUT,
                 )
             except TimeoutError:
-                self.logger.error(f"Global phase timeout after {GLOBAL_PHASE_TIMEOUT}s - aborting remaining analyses")
+                self.logger.critical(f"❌ Global phase timeout after {GLOBAL_PHASE_TIMEOUT}s - aborting remaining analyses. {len(holdings)} holdings will be marked as pending.")
+                # Mark every holding that hasn't been individually tracked as failed
+                # (they were in flight when the global timeout fired).
+                for h in holdings:
+                    t = h.get("ticker")
+                    if t and t not in self._failed_holdings:
+                        self._failed_holdings.append(t)
                 completed = []
             except Exception as e:
-                self.logger.error(f"Deep analysis gather failed: {e}")
+                self.logger.critical(f"❌ Deep analysis gather failed: {e}", exc_info=True)
+                for h in holdings:
+                    t = h.get("ticker")
+                    if t and t not in self._failed_holdings:
+                        self._failed_holdings.append(t)
                 completed = []
         finally:
             # CRITICAL: Don't wait for stuck threads - they may be deadlocked

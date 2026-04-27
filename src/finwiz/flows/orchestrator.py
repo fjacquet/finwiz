@@ -213,10 +213,24 @@ class FinwizFlow(Flow[FinwizState]):
         await self.validation_orch.check_portfolio()
 
         # Phase 3: Deep Analysis (analyzes the loaded holdings)
+        # Always runs — no env-var gate. See deep_analysis_orchestrator.py.
         logger.info("=" * 80)
         logger.info("PHASE 3: Deep Analysis")
         logger.info("=" * 80)
         await self.deep_analysis_orch.analyze_and_update_portfolio()
+
+        # FAIL LOUDLY: when we have holdings but produced 0 analyses, the report
+        # would otherwise show every holding as "pending" with placeholder
+        # grades. That's the silent-success antipattern that lost user trust.
+        # Better to abort with a clear error than ship a misleading report.
+        portfolio_holdings = (self.state.portfolio_review or {}).get("holdings") or []
+        analyzed_count = len(self.state.deep_analysis_results or {})
+        if portfolio_holdings and analyzed_count == 0:
+            raise RuntimeError(
+                f"Phase 3 produced 0 deep analyses for {len(portfolio_holdings)} holdings. "
+                "Refusing to generate a report based on placeholder data. "
+                "Check upstream data fetch / crew failures in the log."
+            )
 
         # Phase 3.5: Stress Testing (if deep analysis ran)
         if self.state.deep_analysis_success:
