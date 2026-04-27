@@ -48,7 +48,7 @@ def _check_call(file: Path, node: ast.Call, is_qualify: bool) -> Violation | Non
     fname = _fully_qualified(node.func)
     # asyncio.gather without return_exceptions=True
     if fname == "asyncio.gather":
-        kw = {k.arg: k.value for k in node.keywords if k.arg}
+        kw: dict[str, ast.expr] = {k.arg: k.value for k in node.keywords if k.arg is not None}
         ret_exc = kw.get("return_exceptions")
         if not (isinstance(ret_exc, ast.Constant) and ret_exc.value is True):
             return Violation(
@@ -58,8 +58,8 @@ def _check_call(file: Path, node: ast.Call, is_qualify: bool) -> Violation | Non
             )
     # @stage(allow_degrade=True) outside qualify.py
     if fname == "stage":
-        for kw in node.keywords:
-            if kw.arg == "allow_degrade" and isinstance(kw.value, ast.Constant) and kw.value.value is True:
+        for keyword_arg in node.keywords:
+            if keyword_arg.arg == "allow_degrade" and isinstance(keyword_arg.value, ast.Constant) and keyword_arg.value.value is True:
                 if not is_qualify:
                     return Violation(
                         str(file),
