@@ -15,7 +15,7 @@ from finwiz.analysis.stages.collect import collect
 from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
 from finwiz.analysis.stages.emit import build_verdict
 from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel
-from finwiz.analysis.stages.quantify import calculate_quantitative
+from finwiz.analysis.stages.quantify import calculate_quantitative, quantify
 from finwiz.analysis.stages.synthesize import _compute_options_probabilities, synthesize_enriched_analysis
 
 if TYPE_CHECKING:
@@ -32,8 +32,8 @@ def run_pipeline(
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
     """Sequential orchestration of the five deep-analysis stages.
 
-    Phase 1 (collect) uses the @stage decorator and StageResult contract.
-    Phases 2-5 use legacy entry points until D2-D5 migrate them.
+    Phases 1-2 (collect, quantify) use the @stage decorator and StageResult contract.
+    Phases 3-5 use legacy entry points until D3-D5 migrate them.
     """
     start = time.time()
 
@@ -64,9 +64,18 @@ def run_pipeline(
     else:
         raw_data = cr.payload.data
 
-    # Phases 2-5: legacy path (unchanged for D1, migrated in D2-D5).
+    # Phase 2: Quantify — typed StageResult contract via @stage decorator.
     options_probs = _compute_options_probabilities(raw_data)  # None for crypto/niche ETFs
-    result, quant = calculate_quantitative(ctx, raw_data)
+    qr = quantify(stage_ctx, raw_data)
+    if qr.payload is None:
+        # Scorer failed; fall through with a sentinel so downstream stages can still run.
+        quant = calculate_quantitative(ctx, raw_data)[1]
+    else:
+        quant = qr.payload
+    # Pull the partial result stashed by quantify (or recompute for fallback path).
+    result = stage_ctx.extras.get("partial_result") or calculate_quantitative(ctx, raw_data)[0]
+
+    # Phases 3-5: legacy path (unchanged for D2, migrated in D3-D5).
 
     # Phase 3 — qualitative AI crew + strategic Perplexity research run in PARALLEL.
     # The strategic call is independent (no quant/qual context fed in) and only matters

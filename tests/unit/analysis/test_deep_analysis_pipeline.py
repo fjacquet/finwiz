@@ -449,11 +449,11 @@ class TestAnalyzeHolding:
         )
 
         mocker.patch(
-            "finwiz.analysis.stages.collect_raw_data",
+            "finwiz.analysis.stages.collect._collect_raw_data_inner",
             return_value=mock_raw_data,
         )
         mocker.patch(
-            "finwiz.analysis.stages.calculate_quantitative",
+            "finwiz.analysis.stages.quantify._calculate_quantitative_inner",
             return_value=(mock_deep_analysis_result, mock_quant),
         )
         mocker.patch(

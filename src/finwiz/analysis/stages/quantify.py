@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+from finwiz.analysis.stages._resilience import StageContext, stage
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.schemas.hybrid_analysis import QuantitativeAnalysis
 
@@ -14,20 +15,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def calculate_quantitative(
+def _calculate_quantitative_inner(
     ctx: AnalysisContext,
     raw_data: dict[str, Any],
 ) -> tuple[DeepAnalysisResult, QuantitativeAnalysis]:
-    """
-    Pure function: Deterministic Python scoring, $0 cost, ~100ms.
-
-    Args:
-        ctx: Analysis context
-        raw_data: Raw financial data from collect_raw_data
-
-    Returns:
-        Tuple of (DeepAnalysisResult for caching, QuantitativeAnalysis for AI context)
-    """
+    """The original calculate_quantitative body — extracted for testability."""
     from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 
     logger.info(f"Calculating quantitative metrics for {ctx.ticker}")
@@ -36,6 +28,31 @@ def calculate_quantitative(
     quant = _result_to_quantitative(result)
     logger.info(f"Quantitative: {ctx.ticker} grade={quant.grade} score={quant.composite_score:.2f}")
     return result, quant
+
+
+@stage(name="quantify", timeout_s=30, retries=0)
+def quantify(ctx: StageContext, raw: dict[str, Any]) -> QuantitativeAnalysis:
+    """Stage entry point: returns the QuantitativeAnalysis payload only.
+
+    The DeepAnalysisResult that _calculate_quantitative_inner also produces is the
+    intermediate verdict that synthesize will extend. For the v5.1 contract,
+    that intermediate is stashed on ctx.extras["partial_result"] for the
+    downstream stages to pick up. (D5 will formalise the result-passing.)
+    """
+    analysis_ctx: AnalysisContext = ctx.extras["analysis_ctx"]
+    result, quant = _calculate_quantitative_inner(analysis_ctx, raw)
+    # Stash the partial result for downstream stages — they currently expect both.
+    ctx.extras["partial_result"] = result
+    return quant
+
+
+# Legacy shim — keep the existing signature for non-migrated callers
+def calculate_quantitative(
+    ctx: AnalysisContext,
+    raw_data: dict[str, Any],
+) -> tuple[DeepAnalysisResult, QuantitativeAnalysis]:
+    """Legacy entry point used by the facade. Delegates to _calculate_quantitative_inner."""
+    return _calculate_quantitative_inner(ctx, raw_data)
 
 
 def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
