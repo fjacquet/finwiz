@@ -1,9 +1,8 @@
 """Qualify stage: AI-generated qualitative insights for one holding.
 
 This stage is the only one allowed to emit a DEGRADED outcome — when the AI
-returns null/empty, a Python proxy fallback is used. The fallback is wired
-to be honest about being a fallback in Phase E (Task E1); for now the C-phase
-extraction preserves the existing silent fallback behaviour byte-for-byte.
+returns null/empty, a Python proxy fallback is used and the outcome is labelled
+DEGRADED with fallback_used="python_proxy_qualitative" (E1).
 """
 
 from __future__ import annotations
@@ -23,6 +22,7 @@ from finwiz.schemas.hybrid_analysis import (
     QualitativeInsights,
     QuantitativeAnalysis,
 )
+from finwiz.schemas.stage_contract import StageOutcome, StageProvenance, StageResult
 
 if TYPE_CHECKING:
     from crewai import CrewOutput
@@ -32,18 +32,21 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _generate_qualitative_inner(
+def _try_ai_qualify(
     ctx: AnalysisContext,
     quant: QuantitativeAnalysis,
     raw_data: dict[str, Any] | None = None,
-) -> QualitativeInsights:
-    """Original generate_qualitative body — extracted for testability."""
+) -> QualitativeInsights | None:
+    """Attempt AI-driven qualitative insights. Returns None when AI fails or returns empty.
+
+    Skips the AI call in MAXIMUM_SPEED mode and returns None so the caller can
+    take the DEGRADED branch.
+    """
     from finwiz.config.performance.performance_config import is_maximum_speed_mode
 
-    # Skip AI in MAXIMUM_SPEED mode - use Python-generated content instead
     if is_maximum_speed_mode():
-        logger.info(f"MAXIMUM_SPEED mode: Skipping AI crew for {ctx.ticker}, using Python qualitative")
-        return _create_python_qualitative(ctx, quant)
+        logger.info(f"MAXIMUM_SPEED mode: Skipping AI crew for {ctx.ticker}")
+        return None
 
     logger.info(f"Generating qualitative insights for {ctx.ticker}")
 
@@ -51,7 +54,6 @@ def _generate_qualitative_inner(
     crew_inputs = _build_crew_inputs(ctx, quant, raw_data)
 
     try:
-        # Use wrapper with timeout and circuit breaker protection
         import asyncio
         import concurrent.futures
 
@@ -68,24 +70,67 @@ def _generate_qualitative_inner(
         else:
             crew_result = asyncio.run(execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
         qual = _extract_qualitative(crew_result, quant)
-        logger.info(f"Qualitative insights generated for {ctx.ticker}")
-        return qual
+        if qual is not None and _has_qualitative_content(qual):
+            logger.info(f"Qualitative insights generated for {ctx.ticker}")
+            return qual
+        logger.warning(f"AI returned empty qualitative content for {ctx.ticker}")
+        return None
     except Exception as e:
         import traceback
 
         logger.error(f"AI analysis failed for {ctx.ticker}: {e}\nTraceback:\n{traceback.format_exc()}")
-        return _create_fallback_qualitative(ctx, quant, str(e))
+        return None
+
+
+def _python_proxy_qualify(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> QualitativeInsights:
+    """Return Python-template qualitative insights as a fallback proxy."""
+    return _create_python_qualitative(ctx, quant)
+
+
+def _generate_qualitative_inner(
+    ctx: AnalysisContext,
+    quant: QuantitativeAnalysis,
+    raw_data: dict[str, Any] | None = None,
+) -> QualitativeInsights:
+    """Silent-fallback path for legacy shim callers.
+
+    Non-stage callers (generate_qualitative shim, parallel runner) get the
+    traditional behaviour: AI on success, Python proxy on failure — no
+    StageResult envelope, no DEGRADED label.
+    """
+    ai = _try_ai_qualify(ctx, quant, raw_data)
+    if ai is not None:
+        return ai
+    return _python_proxy_qualify(ctx, quant)
 
 
 @stage(name="qualify", timeout_s=180, retries=2, allow_degrade=True)
 def qualify(ctx: StageContext, quant: QuantitativeAnalysis, raw: dict[str, Any]) -> QualitativeInsights:
-    """Qualitative stage. Returns OK on AI success, DEGRADED on Python fallback (E1).
-
-    For D3: still returns OK regardless (silent fallback preserved). E1 will flip
-    the Python-fallback branch to emit a labelled DEGRADED outcome.
-    """
+    """Qualitative stage. Returns OK on AI success, DEGRADED on Python fallback."""
     analysis_ctx: AnalysisContext = ctx.extras["analysis_ctx"]
-    return _generate_qualitative_inner(analysis_ctx, quant, raw)
+    ai = _try_ai_qualify(analysis_ctx, quant, raw)
+    if ai is not None:
+        result: Any = StageResult(
+            payload=ai,
+            provenance=StageProvenance(
+                stage="qualify",
+                outcome=StageOutcome.OK,
+                duration_ms=0,  # decorator backfills
+            ),
+        )
+        return result
+    proxy = _python_proxy_qualify(analysis_ctx, quant)
+    degraded: Any = StageResult(
+        payload=proxy,
+        provenance=StageProvenance(
+            stage="qualify",
+            outcome=StageOutcome.DEGRADED,
+            fallback_used="python_proxy_qualitative",
+            reason="AI provider returned null/empty after retries",
+            duration_ms=0,
+        ),
+    )
+    return degraded
 
 
 # Legacy shim — preserves existing call sites
@@ -94,7 +139,7 @@ def generate_qualitative(
     quant: QuantitativeAnalysis,
     raw_data: dict[str, Any] | None = None,
 ) -> QualitativeInsights:
-    """Legacy entry point. Delegates to _generate_qualitative_inner."""
+    """Legacy entry point. Uses silent fallback (no DEGRADED label)."""
     return _generate_qualitative_inner(ctx, quant, raw_data)
 
 
