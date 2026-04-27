@@ -213,31 +213,18 @@ class FinwizFlow(Flow[FinwizState]):
         await self.validation_orch.check_portfolio()
 
         # Phase 3: Deep Analysis (analyzes the loaded holdings)
-        # Always runs — no env-var gate. See deep_analysis_orchestrator.py.
-        # Wrapped in try/finally so post-flow cost/cache summaries fire even
-        # on the hard-fail path (Phase 3 is the largest LLM spend; operators
-        # need cost attribution exactly when something went wrong).
+        # Always runs — no env-var gate. The orchestrator raises RuntimeError
+        # directly when 0 analyses are produced (single source of truth for
+        # the fail-loud signal). The try/except here ensures the post-flow
+        # cost/cache summaries still fire on the failure path — Phase 3 is
+        # the largest LLM spend, and operators need cost attribution exactly
+        # when something went wrong.
         try:
             logger.info("=" * 80)
             logger.info("PHASE 3: Deep Analysis")
             logger.info("=" * 80)
             await self.deep_analysis_orch.analyze_and_update_portfolio()
-
-            # FAIL LOUDLY: when we have holdings but produced 0 analyses, the report
-            # would otherwise show every holding as "pending" with placeholder
-            # grades. That's the silent-success antipattern that lost user trust.
-            # Better to abort with a clear error than ship a misleading report.
-            portfolio_holdings = (self.state.portfolio_review or {}).get("holdings") or []
-            analyzed_count = len(self.state.deep_analysis_results or {})
-            if portfolio_holdings and analyzed_count == 0:
-                raise RuntimeError(
-                    f"Phase 3 produced 0 deep analyses for {len(portfolio_holdings)} holdings. "
-                    "Refusing to generate a report based on placeholder data. "
-                    "Check upstream data fetch / crew failures in the log."
-                )
         except Exception:
-            # Run cost/cache summary BEFORE re-raising so operators get token
-            # spend visibility on the failure mode they care about most.
             self._log_post_flow_summaries()
             raise
 

@@ -163,9 +163,16 @@ class TestOrchestratorStateIntegration:
 
     @pytest.mark.asyncio
     async def test_deep_analysis_sets_error_state_on_failure(self, state, mocker):
-        """Deep analysis failure sets deep_analysis_success=False and deep_analysis_error."""
-        mocker.patch("os.getenv", side_effect=lambda k, d="": "true" if k == "DEEP_PORTFOLIO_ANALYSIS" else d)
+        """Runner failure sets state AND re-raises so the flow can't report success.
 
+        Trust requirement: a Phase 3 runner crash (executor init error,
+        asyncio loop error, etc.) must propagate. Previously the
+        orchestrator swallowed the exception and returned an error dict,
+        which let the flow continue and report 'completed successfully'
+        despite zero analyses. Now the orchestrator updates state and
+        re-raises — flows/orchestrator.py's try/except still ensures
+        cost summaries fire on the failure path.
+        """
         orch = DeepAnalysisOrchestrator(
             state,
             crew_factory=mocker.Mock(),
@@ -180,11 +187,13 @@ class TestOrchestratorStateIntegration:
             side_effect=RuntimeError("Analysis timeout"),
         )
 
-        result = await orch.analyze_and_update_portfolio()
+        with pytest.raises(RuntimeError, match="Analysis timeout"):
+            await orch.analyze_and_update_portfolio()
 
+        # State was updated BEFORE the re-raise so observers see the failure
         assert state.deep_analysis_success is False
         assert "Analysis timeout" in state.deep_analysis_error
-        assert "error" in result
+        assert state.deep_analysis_coverage == (0, len(state.portfolio_review["holdings"]))
 
     # ---- Discovery consolidation ----
 

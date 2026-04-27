@@ -92,15 +92,21 @@ class DeepAnalysisOrchestrator:
 
         run_batch_prefetch(self.state, holdings, self.logger)
 
-        # Step 1: Run deep analysis on all holdings CONCURRENTLY
+        # Step 1: Run deep analysis on all holdings CONCURRENTLY.
+        # If the runner itself raises (executor init, asyncio loop, config
+        # error — NOT per-holding errors which are isolated by the gather's
+        # return_exceptions=True), re-raise so the flow can't continue and
+        # report success on a Phase 3 crash. State is updated first so the
+        # post-flow cost summary (in flows/orchestrator.py try/except) can
+        # still see the failure context.
         try:
             deep_results = await self.run_deep_analysis_concurrent(holdings)
         except Exception as e:
-            self.logger.error(f"Deep analysis failed: {e}", exc_info=True)
+            self.logger.critical(f"❌ Deep analysis runner crashed: {e}", exc_info=True)
             self.state.deep_analysis_success = False
             self.state.deep_analysis_error = str(e)
             self.state.deep_analysis_coverage = (0, len(holdings))
-            return {"deep_analysis_results": {}, "error": str(e)}
+            raise
 
         # Honest success accounting — success only if we actually produced analyses.
         # Coverage tuple (analyzed, total) is read by the reporting layer to
@@ -112,10 +118,17 @@ class DeepAnalysisOrchestrator:
         self.state.deep_analysis_success = analyzed > 0
 
         if analyzed == 0:
-            self.logger.critical(
-                f"❌ Deep analysis produced 0 results for {total} holdings. Failed tickers: {self._failed_holdings[:10]}{'...' if len(self._failed_holdings) > 10 else ''}"
-            )
-        elif analyzed < total:
+            # FAIL LOUDLY from the orchestrator. This is the single source of
+            # truth for "Phase 3 produced nothing" — fires regardless of which
+            # flow path called us (sequential body vs @listen callback). The
+            # flow-level wrapper (try/except: _log_post_flow_summaries; raise)
+            # ensures cost summary still fires before this propagates.
+            failed_preview = self._failed_holdings[:10]
+            ellipsis = "..." if len(self._failed_holdings) > 10 else ""
+            msg = f"Deep analysis produced 0 results for {total} holdings. Failed tickers: {failed_preview}{ellipsis}"
+            self.logger.critical(f"❌ {msg}")
+            raise RuntimeError(msg)
+        if analyzed < total:
             missing = total - analyzed
             self.logger.warning(
                 f"⚠️ Partial coverage: {analyzed}/{total} holdings analyzed, "
@@ -300,10 +313,6 @@ class DeepAnalysisOrchestrator:
         # Per-holding timeout - prevents one stuck ticker blocking all
         PER_HOLDING_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
 
-        # Global timeout for entire analysis phase (default: 30 minutes)
-        # Prevents the entire concurrent phase from hanging indefinitely
-        GLOBAL_PHASE_TIMEOUT = int(os.getenv("FINWIZ_PHASE_TIMEOUT", "1800"))
-
         async def analyze_with_timeout(holding: dict[str, Any], executor: Any) -> tuple[str, DeepAnalysisResult | None, Any | None]:
             """Wrap analysis with per-holding timeout that starts when work begins."""
             ticker = holding.get("ticker", "unknown")
@@ -325,38 +334,32 @@ class DeepAnalysisOrchestrator:
                     self._failed_holdings.append(ticker)
                     return (ticker, None, None)
 
-        # Use ThreadPoolExecutor with explicit cleanup to prevent deadlocks
-        # NOTE: When asyncio.wait_for times out, the underlying thread keeps running
-        # We must shutdown with wait=False to prevent hanging on stuck threads
+        # NO AGGREGATE TIMEOUT. Each holding has its own PER_HOLDING_TIMEOUT
+        # (analyze_with_timeout above). An aggregate cap would discard already
+        # completed work when one slow ticker pushes total runtime over —
+        # which is exactly what discarded XRP-USD's grade=D verdict on
+        # 2026-04-27 (XRP finished at 09:00:12, the 1800s aggregate timeout
+        # fired at 09:04:55 and threw the result away). With 60+ holdings,
+        # an outer cap is the wrong abstraction — let total runtime scale
+        # with N at the per-holding budget.
+        # See memory/feedback_no_aggregate_timeouts.md for the principle.
         executor = ThreadPoolExecutor(max_workers=max_workers * 2)
         try:
-            # Submit all holdings - semaphore ensures only max_workers run at a time
-            # and timeout starts when semaphore is acquired (work begins)
+            # Submit all holdings - semaphore ensures only max_workers run at a
+            # time and per-holding timeout starts when semaphore is acquired.
             futures = [analyze_with_timeout(holding, executor) for holding in holdings]
-            try:
-                # Global timeout prevents entire phase from hanging
-                completed = await asyncio.wait_for(
-                    asyncio.gather(*futures, return_exceptions=False),
-                    timeout=GLOBAL_PHASE_TIMEOUT,
-                )
-            except TimeoutError:
-                self.logger.critical(f"❌ Global phase timeout after {GLOBAL_PHASE_TIMEOUT}s - aborting remaining analyses. {len(holdings)} holdings will be marked as pending.")
-                # Mark every holding that hasn't been individually tracked as failed
-                # (they were in flight when the global timeout fired).
-                for h in holdings:
-                    t = h.get("ticker")
-                    if t and t not in self._failed_holdings:
-                        self._failed_holdings.append(t)
-                completed = []
-            except Exception as e:
-                self.logger.critical(f"❌ Deep analysis gather failed: {e}", exc_info=True)
-                for h in holdings:
-                    t = h.get("ticker")
-                    if t and t not in self._failed_holdings:
-                        self._failed_holdings.append(t)
-                completed = []
+            # return_exceptions=True so one holding's escaped exception doesn't
+            # cancel siblings. Per-holding handlers (analyze_with_timeout +
+            # analyze_single_sync) already log + track failures via
+            # _failed_holdings — this is defense-in-depth.
+            results_or_excs = await asyncio.gather(*futures, return_exceptions=True)
+            for item in results_or_excs:
+                if isinstance(item, BaseException):
+                    self.logger.error(f"Unhandled exception in gather: {item!r}", exc_info=item)
+                    continue
+                completed.append(item)
         finally:
-            # CRITICAL: Don't wait for stuck threads - they may be deadlocked
+            # CRITICAL: Don't wait for stuck threads - they may be deadlocked.
             # cancel_futures=True attempts to cancel pending futures (Python 3.9+)
             self.logger.info("Shutting down executor (not waiting for stuck threads)")
             executor.shutdown(wait=False, cancel_futures=True)
