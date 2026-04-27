@@ -13,6 +13,10 @@ from finwiz.analysis.stages._synthesize_helpers import (
     _get_confidence,
     _get_investment_rationale,
 )
+from finwiz.analysis.stages._synthesize_options import (  # noqa: F401
+    _bs_nd2,
+    _compute_options_probabilities,
+)
 from finwiz.schemas.hybrid_analysis import (
     EnrichedAnalysis,
     QualitativeInsights,
