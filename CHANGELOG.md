@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-27
+
 ### Fixed
 
+- **Deep analysis silent-failure → trust crisis (DELL B+ → D panic)** -- A portfolio kickoff produced 0 deep analyses for 62 of 63 holdings yet reported `"✅ FinWiz analysis workflow completed successfully"`. The hidden `DEEP_PORTFOLIO_ANALYSIS` env-var kill switch defaulted to `"false"` and silently no-op'd Phase 3, then the placeholder `grade="D"` / `composite_score=0.6` from `decisions.py` rendered as a real verdict in the report. Three layers of fixes: (1) DELETED the kill switch — deep analysis ALWAYS runs because financial trust requires it; (2) honest success accounting via `_failed_holdings` tracker + `deep_analysis_coverage` tuple on `FinwizState`, plus flow-level `RuntimeError` when 0 analyses produced for N>0 holdings; (3) reporting layer truthfully renders unanalyzed holdings as `⏳ Analyse en attente` (new `Grade="N/A"` literal) with `composite_score` reset to 0.0 so downstream consumers don't see fabricated 0.6.
+- **Coverage banner on the executive summary** -- New green/amber/red banner showing actual `analyzed/total` ratio. Red includes the explicit warning **"NE PAS prendre de décisions sur ce rapport"** when 0 holdings analyzed. Average portfolio score now ignores N/A holdings so a 1/63 kickoff can't fabricate a portfolio-wide score from placeholder noise.
 - **Date-anchored AI prompts** -- Every AI prompt (CrewAI deep_qualitative_analysis_task + the four Perplexity strategic prompts in `analysis/strategic_research.py`) now opens with the current date in long French form (e.g. `26 avril 2026`). The model is explicitly told that its training data may be outdated for corporate structure (acquisitions, divestitures, partnerships) and that "récent" means the 12 months preceding `{current_date}`. Resolves the DELL-still-owns-VMware class of hallucination (Dell sold VMware in November 2021).
 - **OpenRouter mid-stream drops** -- Set `litellm.num_retries=3` at module import time in `config/llm/llm_config.py`. CrewAI's `LLM(...)` constructor doesn't expose num_retries (verified), so the litellm module-level global is the only working hook. Catches `httpcore.RemoteProtocolError` / "incomplete chunked read" / `APIError` 502/503/504 with built-in exponential backoff. Tunable via `LLM_NUM_RETRIES` env var (default: 3, with defensive parse for empty/garbage values).
 
