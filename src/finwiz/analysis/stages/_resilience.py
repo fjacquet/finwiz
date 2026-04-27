@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -79,8 +80,37 @@ def stage(
         raise ValueError(f"allow_degrade=True is only valid for stage 'qualify', got '{name}'")
 
     def deco(fn: Callable[P, T | StageResult[T]]) -> Callable[P, StageResult[T]]:
+        if inspect.iscoroutinefunction(fn):
+
+            @wraps(fn)
+            async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> StageResult[T]:  # type: ignore[return-value]
+                ctx = _extract_context(args)
+                started = datetime.now(UTC)
+                t0 = time.perf_counter()
+                attempt = 0
+                while attempt <= retries:
+                    try:
+                        coro = fn(*args, **kwargs)
+                        raw = await asyncio.wait_for(coro, timeout=timeout_s)
+                        result = _coerce_to_stage_result(raw, name=name, t0=t0, attempt=attempt)
+                        if not allow_degrade and result.provenance.outcome == StageOutcome.DEGRADED:
+                            raise ValueError(f"stage '{name}' returned DEGRADED but allow_degrade=False")
+                        _record(ctx, result, started, name)
+                        return result
+                    except (ValidationError, AssertionError):
+                        raise
+                    except BaseException as exc:
+                        if not _is_transient(exc) or attempt == retries:
+                            result = _failed_result(name, t0, attempt, exc)
+                            _record(ctx, result, started, name)
+                            return result
+                        attempt += 1
+                raise RuntimeError("unreachable")  # pragma: no cover
+
+            return async_wrapper  # type: ignore[return-value]
+
         @wraps(fn)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> StageResult[T]:
+        def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> StageResult[T]:
             ctx = _extract_context(args)
             started = datetime.now(UTC)
             t0 = time.perf_counter()
@@ -109,7 +139,7 @@ def stage(
             assert last_exc is not None
             raise last_exc  # pragma: no cover
 
-        return wrapper
+        return sync_wrapper
 
     return deco
 

@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -87,3 +88,47 @@ def test_stage_validation_error_not_retried(tmp_path: Path, mocker: Any) -> None
     with pytest.raises(ValidationError):
         _validate(ctx)
     assert calls["n"] == 1  # no retry on ValidationError
+
+
+@pytest.mark.asyncio
+async def test_stage_async_ok(tmp_path: Path) -> None:
+    @stage(name="collect", timeout_s=1, retries=0)
+    async def _ac(ctx: StageContext) -> _Payload:
+        await asyncio.sleep(0)
+        return _Payload(value=99)
+
+    ctx = _ctx(tmp_path)
+    result = await _ac(ctx)
+    assert result.provenance.outcome == StageOutcome.OK
+    assert result.payload is not None and result.payload.value == 99
+
+
+@pytest.mark.asyncio
+async def test_stage_async_timeout_becomes_failed(tmp_path: Path) -> None:
+    @stage(name="collect", timeout_s=0.05, retries=0)
+    async def _slow(ctx: StageContext) -> _Payload:
+        await asyncio.sleep(1.0)
+        return _Payload(value=1)
+
+    ctx = _ctx(tmp_path)
+    result = await _slow(ctx)
+    assert result.provenance.outcome == StageOutcome.FAILED
+    assert "TimeoutError" in (result.provenance.reason or "")
+
+
+@pytest.mark.asyncio
+async def test_stage_async_retries_transient(tmp_path: Path) -> None:
+    calls = {"n": 0}
+
+    @stage(name="qualify", timeout_s=1, retries=2, allow_degrade=False)
+    async def _flaky(ctx: StageContext) -> _Payload:
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise OSError("transient")
+        return _Payload(value=7)
+
+    ctx = _ctx(tmp_path)
+    result = await _flaky(ctx)
+    assert calls["n"] == 3
+    assert result.provenance.outcome == StageOutcome.OK
+    assert result.provenance.retries_used == 2
