@@ -92,15 +92,21 @@ class DeepAnalysisOrchestrator:
 
         run_batch_prefetch(self.state, holdings, self.logger)
 
-        # Step 1: Run deep analysis on all holdings CONCURRENTLY
+        # Step 1: Run deep analysis on all holdings CONCURRENTLY.
+        # If the runner itself raises (executor init, asyncio loop, config
+        # error — NOT per-holding errors which are isolated by the gather's
+        # return_exceptions=True), re-raise so the flow can't continue and
+        # report success on a Phase 3 crash. State is updated first so the
+        # post-flow cost summary (in flows/orchestrator.py try/except) can
+        # still see the failure context.
         try:
             deep_results = await self.run_deep_analysis_concurrent(holdings)
         except Exception as e:
-            self.logger.error(f"Deep analysis failed: {e}", exc_info=True)
+            self.logger.critical(f"❌ Deep analysis runner crashed: {e}", exc_info=True)
             self.state.deep_analysis_success = False
             self.state.deep_analysis_error = str(e)
             self.state.deep_analysis_coverage = (0, len(holdings))
-            return {"deep_analysis_results": {}, "error": str(e)}
+            raise
 
         # Honest success accounting — success only if we actually produced analyses.
         # Coverage tuple (analyzed, total) is read by the reporting layer to
