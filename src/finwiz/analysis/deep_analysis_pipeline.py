@@ -13,6 +13,7 @@ Architecture:
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import time
@@ -563,8 +564,6 @@ def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -
     # Try to parse from raw output
     if hasattr(crew_result, "raw") and crew_result.raw:
         try:
-            import json
-
             data = json.loads(crew_result.raw)
             # Try to extract qualitative from EnrichedAnalysis-shaped JSON
             if "qualitative" in data and isinstance(data["qualitative"], dict):
