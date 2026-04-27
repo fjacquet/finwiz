@@ -16,7 +16,7 @@ from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
 from finwiz.analysis.stages.emit import build_verdict
 from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel, qualify
 from finwiz.analysis.stages.quantify import calculate_quantitative, quantify
-from finwiz.analysis.stages.synthesize import _compute_options_probabilities, synthesize_enriched_analysis
+from finwiz.analysis.stages.synthesize import _compute_options_probabilities, synthesize, synthesize_enriched_analysis
 
 if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
@@ -96,10 +96,18 @@ def run_pipeline(
     if strategic is not None:
         qual = qual.model_copy(update={"strategic_analysis": strategic})
 
-    # Phase 4 synthesize — re-derives composite with the AI-rated strategic component.
+    # Phase 4: Synthesize — typed StageResult contract via @stage decorator.
     processing_time = time.time() - start
     sentiment_summary = _build_sentiment_summary(raw_data)
-    enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
+    stage_ctx.extras["processing_time"] = processing_time
+    stage_ctx.extras["sentiment_summary"] = sentiment_summary
+    stage_ctx.extras["options_probs"] = options_probs
+    sr4 = synthesize(stage_ctx, quant, qual, raw_data)
+    if sr4.payload is None:
+        # Synthesize failed; fall back to legacy direct call.
+        enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
+    else:
+        enriched = sr4.payload
 
     # Phase 5 emit — final assembly: strategic recompute + return.
     return build_verdict(ctx, result, enriched, strategic, processing_time)

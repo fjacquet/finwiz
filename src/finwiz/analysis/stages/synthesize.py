@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from finwiz.analysis.stages._resilience import StageContext, stage
 from finwiz.analysis.stages._synthesize_helpers import (
     _calculate_word_count,
     _count_unique_insights,
@@ -109,7 +110,7 @@ def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAna
     )
 
 
-def synthesize_enriched_analysis(
+def _synthesize_inner(
     ctx: AnalysisContext,
     quant: QuantitativeAnalysis,
     qual: QualitativeInsights,
@@ -117,21 +118,7 @@ def synthesize_enriched_analysis(
     sentiment_summary: dict[str, Any] | None = None,
     options_probs: ScenarioProbabilities | None = None,
 ) -> EnrichedAnalysis:
-    """
-    Pure function: Combines quantitative + qualitative into EnrichedAnalysis.
-
-    Python wins on recommendation conflicts (AI may hallucinate).
-
-    Args:
-        ctx: Analysis context
-        quant: Python-calculated quantitative analysis
-        qual: AI-generated qualitative insights
-        processing_time: Total processing time in seconds
-        sentiment_summary: Optional sentiment summary with score, confidence, top headlines
-
-    Returns:
-        EnrichedAnalysis combining both analyses
-    """
+    """Original synthesize body — extracted for testability."""
     from finwiz.analysis.stages._qualify_fallbacks import _create_python_qualitative
 
     logger.info(f"Synthesizing enriched analysis for {ctx.ticker}")
@@ -231,3 +218,31 @@ def synthesize_enriched_analysis(
 
     logger.info(f"Synthesis complete: {ctx.ticker} grade={enriched.final_grade} rec={enriched.final_recommendation} words={enriched.report_word_count}")
     return enriched
+
+
+@stage(name="synthesize", timeout_s=30, retries=0)
+def synthesize(
+    ctx: StageContext,
+    quant: QuantitativeAnalysis,
+    qual: QualitativeInsights,
+    raw: dict[str, Any],
+) -> EnrichedAnalysis:
+    """Stage entry: combine quant+qual into EnrichedAnalysis."""
+    analysis_ctx = ctx.extras["analysis_ctx"]
+    processing_time: float = ctx.extras.get("processing_time", 0.0)
+    sentiment_summary: dict[str, Any] | None = ctx.extras.get("sentiment_summary")
+    options_probs: ScenarioProbabilities | None = ctx.extras.get("options_probs")
+    return _synthesize_inner(analysis_ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
+
+
+# Legacy shim — callers outside run_pipeline continue to work unchanged.
+def synthesize_enriched_analysis(
+    ctx: AnalysisContext,
+    quant: QuantitativeAnalysis,
+    qual: QualitativeInsights,
+    processing_time: float = 0.0,
+    sentiment_summary: dict[str, Any] | None = None,
+    options_probs: ScenarioProbabilities | None = None,
+) -> EnrichedAnalysis:
+    """Legacy entry point: delegates to _synthesize_inner."""
+    return _synthesize_inner(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
