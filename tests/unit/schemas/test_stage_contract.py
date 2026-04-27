@@ -1,8 +1,9 @@
 # tests/unit/schemas/test_stage_contract.py
 import pytest
+from pydantic import BaseModel as _PBM
 from pydantic import ValidationError
 
-from finwiz.schemas.stage_contract import StageOutcome, StageProvenance
+from finwiz.schemas.stage_contract import StageOutcome, StageProvenance, StageResult
 
 
 def test_stage_outcome_has_three_values() -> None:
@@ -66,3 +67,41 @@ def test_provenance_extra_fields_forbidden() -> None:
             duration_ms=1,
             unknown_field="boom",
         )
+
+
+class _Payload(_PBM):
+    value: int
+
+
+def test_result_ok_with_payload_is_valid() -> None:
+    r = StageResult[_Payload](
+        payload=_Payload(value=42),
+        provenance=StageProvenance(stage="collect", outcome=StageOutcome.OK, duration_ms=1),
+    )
+    assert r.payload is not None and r.payload.value == 42
+
+
+def test_result_failed_with_payload_raises() -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        StageResult[_Payload](
+            payload=_Payload(value=1),
+            provenance=StageProvenance(stage="collect", outcome=StageOutcome.FAILED, duration_ms=1, reason="boom"),
+        )
+    assert "FAILED" in str(excinfo.value)
+
+
+def test_result_ok_without_payload_raises() -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        StageResult[_Payload](
+            payload=None,
+            provenance=StageProvenance(stage="collect", outcome=StageOutcome.OK, duration_ms=1),
+        )
+    assert "payload" in str(excinfo.value)
+
+
+def test_result_failed_without_payload_is_valid() -> None:
+    r = StageResult[_Payload](
+        payload=None,
+        provenance=StageProvenance(stage="collect", outcome=StageOutcome.FAILED, duration_ms=1, reason="boom"),
+    )
+    assert r.payload is None
