@@ -14,7 +14,7 @@ from finwiz.analysis.stages._resilience import StageContext
 from finwiz.analysis.stages.collect import collect
 from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
 from finwiz.analysis.stages.emit import build_verdict
-from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel
+from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel, qualify
 from finwiz.analysis.stages.quantify import calculate_quantitative, quantify
 from finwiz.analysis.stages.synthesize import _compute_options_probabilities, synthesize_enriched_analysis
 
@@ -75,12 +75,24 @@ def run_pipeline(
     # Pull the partial result stashed by quantify (or recompute for fallback path).
     result = stage_ctx.extras.get("partial_result") or calculate_quantitative(ctx, raw_data)[0]
 
-    # Phases 3-5: legacy path (unchanged for D2, migrated in D3-D5).
+    # Phase 3: Qualify — typed StageResult contract via @stage decorator.
+    # Strategic Perplexity research still runs in parallel via the legacy parallel helper;
+    # only the qualitative crew call is migrated here. The parallel helper internally
+    # calls generate_qualitative (the legacy shim) so the strategic path is unaffected.
+    qr3 = qualify(stage_ctx, quant, raw_data)
+    if qr3.payload is None:
+        # Qualify failed; fall through using the parallel helper for both qual + strategic.
+        qual, strategic = _run_qualitative_and_strategic_in_parallel(ctx, quant, raw_data)
+    else:
+        qual = qr3.payload
+        # Run strategic research independently for stocks.
+        from finwiz.analysis.stages.qualify import _safe_strategic
 
-    # Phase 3 — qualitative AI crew + strategic Perplexity research run in PARALLEL.
-    # The strategic call is independent (no quant/qual context fed in) and only matters
-    # for stocks. ETFs/crypto skip it (frameworks don't fit those asset classes well).
-    qual, strategic = _run_qualitative_and_strategic_in_parallel(ctx, quant, raw_data)
+        do_strategic = ctx.asset_class == "stock"
+        sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
+        industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
+        description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
+        strategic = _safe_strategic(ctx.ticker, sector, industry, description) if do_strategic else None
     if strategic is not None:
         qual = qual.model_copy(update={"strategic_analysis": strategic})
 

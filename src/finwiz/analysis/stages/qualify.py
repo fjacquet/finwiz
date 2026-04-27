@@ -17,6 +17,7 @@ from finwiz.analysis.stages._qualify_fallbacks import (
     _create_fallback_qualitative,
     _create_python_qualitative,
 )
+from finwiz.analysis.stages._resilience import StageContext, stage
 from finwiz.schemas.hybrid_analysis import (
     EnrichedAnalysis,
     QualitativeInsights,
@@ -31,28 +32,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# === STEP 3: Generate Qualitative Insights (AI Crew) ===
-def generate_qualitative(
+def _generate_qualitative_inner(
     ctx: AnalysisContext,
     quant: QuantitativeAnalysis,
     raw_data: dict[str, Any] | None = None,
 ) -> QualitativeInsights:
-    """
-    Side effect: Calls AI crew for qualitative analysis.
-
-    The crew receives Python-calculated metrics as READ-ONLY context
-    and generates contextual qualitative insights.
-
-    In MAXIMUM_SPEED mode (DEEP_ANALYSIS_AI_SUMMARY=false), skips AI entirely
-    and returns Python-generated qualitative content to avoid slow free-tier models.
-
-    Args:
-        ctx: Analysis context
-        quant: Python-calculated quantitative analysis
-
-    Returns:
-        AI-generated qualitative insights (or Python fallback in fast mode)
-    """
+    """Original generate_qualitative body — extracted for testability."""
     from finwiz.config.performance.performance_config import is_maximum_speed_mode
 
     # Skip AI in MAXIMUM_SPEED mode - use Python-generated content instead
@@ -90,6 +75,27 @@ def generate_qualitative(
 
         logger.error(f"AI analysis failed for {ctx.ticker}: {e}\nTraceback:\n{traceback.format_exc()}")
         return _create_fallback_qualitative(ctx, quant, str(e))
+
+
+@stage(name="qualify", timeout_s=180, retries=2, allow_degrade=True)
+def qualify(ctx: StageContext, quant: QuantitativeAnalysis, raw: dict[str, Any]) -> QualitativeInsights:
+    """Qualitative stage. Returns OK on AI success, DEGRADED on Python fallback (E1).
+
+    For D3: still returns OK regardless (silent fallback preserved). E1 will flip
+    the Python-fallback branch to emit a labelled DEGRADED outcome.
+    """
+    analysis_ctx: AnalysisContext = ctx.extras["analysis_ctx"]
+    return _generate_qualitative_inner(analysis_ctx, quant, raw)
+
+
+# Legacy shim — preserves existing call sites
+def generate_qualitative(
+    ctx: AnalysisContext,
+    quant: QuantitativeAnalysis,
+    raw_data: dict[str, Any] | None = None,
+) -> QualitativeInsights:
+    """Legacy entry point. Delegates to _generate_qualitative_inner."""
+    return _generate_qualitative_inner(ctx, quant, raw_data)
 
 
 def _run_qualitative_and_strategic_in_parallel(
