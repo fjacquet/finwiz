@@ -29,7 +29,7 @@ class Alternative(BaseModel):
     name: str
     asset_class: AssetClass
     composite_score: float = Field(ge=0.0, le=1.0)
-    grade: Grade = Field(description="Letter grade (A+ to F)")
+    grade: Grade = Field(description="Letter grade (A+ to F, or N/A when deep analysis didn't run)")
     grade_description: str = Field(description="Human-readable grade description")
     recommended_action: str = Field(description="Recommended action based on grade")
     risk_score_standardized: float = Field(ge=0.0, le=5.0)
@@ -134,7 +134,7 @@ class HoldingDecision(BaseModel):
     currency: str
     decision: Decision
     composite_score: float = Field(ge=0.0, le=1.0)
-    grade: Grade = Field(description="Letter grade (A+ to F)")
+    grade: Grade = Field(description="Letter grade (A+ to F, or N/A when deep analysis didn't run)")
     grade_description: str = Field(description="Human-readable grade description")
     recommended_action: str = Field(description="Recommended action based on grade")
     risk: RiskAssessmentStandardized

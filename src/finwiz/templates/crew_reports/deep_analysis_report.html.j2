@@ -32,12 +32,14 @@
     <p class="grade-na" style="font-size: 1.5rem;">
         ⏳ <strong>Analyse en attente</strong> — relancer l'analyse approfondie pour ce holding.
     </p>
+    {# Skip the metrics-grid + justification entirely when no analysis ran —
+       rendering "Score: 0%" / "Confiance: 0%" alongside "Analyse en attente"
+       is a contradictory UX. The pending headline above is the whole story. #}
     {% else %}
     <p class="grade-{{ grade|lower|replace('+', '-plus') }}" style="font-size: 1.5rem;">
         {% if recommendation == 'BUY' %}✅{% elif recommendation == 'SELL' %}❌{% else %}⏸️{% endif %}
         <strong>{{ recommendation }}</strong> - Grade {{ grade }}
     </p>
-    {% endif %}
     <div class="metrics-grid">
         <div class="metric-card">
             <h4>Score Composite</h4>
@@ -61,6 +63,7 @@
         </div>
     </div>
     <p><strong>Justification:</strong> {{ rationale }}</p>
+    {% endif %}
 </div>
 
 <!-- Key Metrics Section -->

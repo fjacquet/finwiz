@@ -54,6 +54,11 @@ def merge_deep_analysis_from_flow_state(
                 # Mark explicitly as N/A so the renderer can show "Analyse en
                 # attente" instead of a fake D badge.
                 decision.grade = "N/A"
+                # Reset the placeholder composite_score=0.6 from decisions.py
+                # — that's the EXACT field that caused the DELL panic. Other
+                # consumers (sorts, JSON exports, future analytics) must not
+                # see a fabricated 0.6 as if it were a real signal.
+                decision.composite_score = 0.0
                 decision.grade_description = "Analyse approfondie non disponible"
                 decision.recommended_action = "Analyse en attente — ne pas décider sur ce holding"
                 decision.rationale_bullets = [

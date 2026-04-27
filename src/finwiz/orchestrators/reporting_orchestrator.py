@@ -483,6 +483,10 @@ class ReportingOrchestrator:
                 # instead of leaking decisions.py placeholder D as a real verdict.
                 # (PR #21 P1 fix — coverage banner depends on grade != "N/A")
                 holding.grade = "N/A"
+                # Mirror merge.py: reset the placeholder composite_score=0.6
+                # from decisions.py so downstream consumers (sorts, exports,
+                # analytics) never see a fabricated 0.6 as a real signal.
+                holding.composite_score = 0.0
                 holding.grade_description = "Analyse approfondie non disponible"
                 holding.recommended_action = "Analyse en attente — ne pas décider sur ce holding"
                 holding.rationale_bullets = [
