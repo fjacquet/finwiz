@@ -298,7 +298,7 @@ synthesize_enriched_analysis(ctx, quant, qual)
 
 - Approach: Environment-based toggles with circuit breakers
 - Implementation: `src/finwiz/config/features/flags.py`
-- Flags: DEEP_ANALYSIS_ENABLED, PERPLEXITY_RESEARCH_ENABLED, INVESTMENT_DISCOVERY_ENABLED, PORTFOLIO_REBALANCING_ENABLED
+- Flags: DEEP_ANALYSIS_ENABLED, PERPLEXITY_RESEARCH_ENABLED, PORTFOLIO_REBALANCING_ENABLED
 - Usage: is_feature_enabled(feature_name) returns bool
 
 ---

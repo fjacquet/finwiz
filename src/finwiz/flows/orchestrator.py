@@ -245,24 +245,21 @@ class FinwizFlow(Flow[FinwizState]):
                 self.state.stress_test_error = str(e)
                 logger.warning(f"Stress testing skipped: {e}")
 
-        # Phase 4: Discovery (if enabled)
-        # Toggle sources (either path works):
-        #   1. state.discovery_enabled — populated from flow.kickoff(inputs={"discovery_enabled": True})
-        #   2. INVESTMENT_DISCOVERY_ENABLED=true env var (forwarded by app_initializer.kickoff)
-        import os
-
-        discovery_data = {}
-        discovery_enabled = self.state.discovery_enabled or (os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true")
-        if discovery_enabled:
-            logger.info("=" * 80)
-            logger.info("PHASE 4: Investment Discovery")
-            logger.info("=" * 80)
-            self.discovery_orch.check_crypto()
-            self.discovery_orch.check_stock()
-            self.discovery_orch.check_etf()
-            discovery_result = self.discovery_orch.check_investment_discovery()
-            if discovery_result:
-                discovery_data = discovery_result
+        # Phase 4: Discovery — ALWAYS runs.
+        # The previous INVESTMENT_DISCOVERY_ENABLED kill switch was removed:
+        # without discovery, the alternatives-matching phase has no A+ candidates
+        # to suggest, which produced the "no alternatives found" warning class
+        # and meant downstream sell/keep recommendations had nothing to point at.
+        # Same philosophy as the v0.3.0 deep-analysis fix: financial trust
+        # requires unconditional execution of pipeline phases.
+        logger.info("=" * 80)
+        logger.info("PHASE 4: Investment Discovery")
+        logger.info("=" * 80)
+        self.discovery_orch.check_crypto()
+        self.discovery_orch.check_stock()
+        self.discovery_orch.check_etf()
+        discovery_result = self.discovery_orch.check_investment_discovery()
+        discovery_data = discovery_result if discovery_result else {}
 
         # Phase 5: Alternative Matching
         logger.info("=" * 80)
