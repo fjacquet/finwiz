@@ -139,11 +139,19 @@ class PythonReportGenerator:
         # Coverage = how many holdings actually got deep analysis vs. fell back
         # to the "Analyse en attente" placeholder. Surfaced as a banner in the
         # executive summary so users see the truth at a glance.
-        analyzed = sum(1 for h in holdings if getattr(h, "crew_analysis_used", None))
+        # Indicator is `grade != "N/A"` because both merge paths (merge.py and
+        # reporting_orchestrator._merge_deep_analysis_into_portfolio) set the
+        # grade authoritatively, while crew_analysis_used is only populated by
+        # one of them (PR #21 P1 fix).
+        def _is_analyzed(h: Any) -> bool:
+            g = getattr(h, "grade", None)
+            return g not in (None, "N/A")
+
+        analyzed = sum(1 for h in holdings if _is_analyzed(h))
         total = len(holdings)
         # Average score should ignore N/A / pending holdings so a kickoff that
         # only analyzed 1/63 doesn't mask the gap with a fabricated portfolio score.
-        analyzed_holdings = [h for h in holdings if getattr(h, "crew_analysis_used", None)]
+        analyzed_holdings = [h for h in holdings if _is_analyzed(h)]
         if analyzed_holdings:
             avg_score = sum(h.composite_score for h in analyzed_holdings) / len(analyzed_holdings)
         else:

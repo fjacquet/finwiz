@@ -235,11 +235,14 @@ def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
     holdings_rows = []
     for holding in sorted_holdings:
         grade = holding.grade or "N/A"
-        # Treat both explicit "N/A" grade AND missing crew_analysis_used as
-        # "deep analysis didn't run for this holding" — render an explicit
-        # pending state instead of a fake grade. This is the truthful
-        # rendering required after the DELL "B+ → D" placeholder leak.
-        is_pending = grade == "N/A" or holding.crew_analysis_used is None
+        # Pending = explicit "N/A" grade. Both merge paths (merge.py for
+        # FinwizFlow + reporting_orchestrator._merge_deep_analysis_into_portfolio
+        # for re-rendering from disk) explicitly set grade="N/A" for holdings
+        # without a deep analysis result, so this is the unambiguous indicator.
+        # (Earlier draft used crew_analysis_used is None, but the reporting-orch
+        # merge path doesn't populate that field — would have flagged real
+        # results as pending. See PR #21 P1 review.)
+        is_pending = grade == "N/A"
 
         ticker = holding.ticker or "N/A"
         name = holding.name or "Unknown"

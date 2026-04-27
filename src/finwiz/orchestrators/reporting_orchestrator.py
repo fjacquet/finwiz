@@ -471,8 +471,25 @@ class ReportingOrchestrator:
                     "✅ Analyse approfondie Python (déterministe)",
                     f"📈 Classe d'actif: {deep_result['asset_class']}",
                 ]
+                # Mirror merge.py: mark the holding as analyzed so coverage
+                # accounting and the renderer's pending-detection both see
+                # the same truth (grade != "N/A").
+                holding.crew_analysis_used = "DeepAnalysisOrchestrator"
 
                 merged_count += 1
+            else:
+                # Mirror merge.py: holdings without a deep-analysis result get
+                # explicit "N/A" so the renderer shows "Analyse en attente"
+                # instead of leaking decisions.py placeholder D as a real verdict.
+                # (PR #21 P1 fix — coverage banner depends on grade != "N/A")
+                holding.grade = "N/A"
+                holding.grade_description = "Analyse approfondie non disponible"
+                holding.recommended_action = "Analyse en attente — ne pas décider sur ce holding"
+                holding.rationale_bullets = [
+                    "Analyse approfondie non disponible pour ce holding lors de cette exécution.",
+                    "Aucun verdict d'investissement n'est rendu — relancer l'analyse pour obtenir un grade.",
+                ]
+                holding.data_freshness = "stale"
 
         self.logger.info(f"Merged {merged_count} deep analysis results into portfolio review")
 
