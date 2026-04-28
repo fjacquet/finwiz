@@ -5,7 +5,7 @@ Tests the functional pipeline for per-holding analysis.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -448,6 +448,19 @@ class TestAnalyzeHolding:
             python_rationale="Strong fundamentals.",
         )
 
+        from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+
+        _now = datetime.now(UTC)
+        _fake_fp = FactPack(
+            corporate_structure="Apple Inc. — independent public company",
+            recent_events=[],
+            leadership="Tim Cook (CEO)",
+            fetched_at=_now,
+            freshness=FactPack.derive_freshness(_now),
+            confidence=0.9,
+            source_citations=[],
+        )
+
         mocker.patch(
             "finwiz.analysis.stages.collect._collect_raw_data_inner",
             return_value=mock_raw_data,
@@ -459,6 +472,10 @@ class TestAnalyzeHolding:
         mocker.patch(
             "finwiz.analysis.stages._compute_options_probabilities",
             return_value=None,
+        )
+        mocker.patch(
+            "finwiz.analysis.stages.fact_pack._fact_pack_inner",
+            return_value=_fake_fp,
         )
         mocker.patch(
             "finwiz.analysis.stages.qualify._try_ai_qualify",
