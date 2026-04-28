@@ -7,6 +7,7 @@ both produce QualitativeInsights without calling the AI crew.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal, cast
 
@@ -23,6 +24,8 @@ from finwiz.schemas.hybrid_analysis.qualitative import (
 
 if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+
+logger = logging.getLogger(__name__)
 
 
 def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> QualitativeInsights:
@@ -174,24 +177,29 @@ def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis
 
 
 def _create_fallback_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis, error: str) -> QualitativeInsights:
-    """Create fallback QualitativeInsights when AI fails."""
-    fallback_text = f"Analysis unavailable due to AI failure: {error}. " * 5
+    """Create fallback QualitativeInsights when AI fails.
+
+    Raw exception details are logged internally but NOT embedded in the returned payload,
+    which is persisted to JSON output and rendered in HTML reports.
+    """
+    logger.warning("Qualitative AI crew failed for %s — using Python fallback. Error: %s", ctx.ticker, error)
+    fallback_text = "Analyse qualitative IA indisponible — proxy quantitatif Python utilisé."
 
     return QualitativeInsights(
         sec_insights=SecAnalysisInsights(
             business_model=fallback_text,
-            competitive_advantages=["Unavailable due to AI failure"],
-            risk_factors=["AI analysis failed - rely on Python metrics"],
+            competitive_advantages=["Analyse qualitative IA indisponible — proxy quantitatif Python utilisé"],
+            risk_factors=["Analyse qualitative IA indisponible — se référer aux métriques Python"],
             strategic_initiatives=[],
         ),
         fundamental_context=FundamentalContextInsights(
             industry_analysis=fallback_text,
-            growth_drivers=["Unavailable"],
+            growth_drivers=["Analyse qualitative IA indisponible — proxy quantitatif Python utilisé"],
             competitive_positioning=fallback_text,
             management_assessment=fallback_text,
         ),
         technical_strategy=TechnicalStrategyInsights(
-            chart_patterns=["Unavailable"],
+            chart_patterns=["Analyse qualitative IA indisponible — proxy quantitatif Python utilisé"],
             support_resistance=fallback_text,
             entry_exit_strategy=fallback_text,
             timing_assessment=fallback_text,
@@ -205,21 +213,21 @@ def _create_fallback_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalys
         ),
         investment_synthesis=InvestmentSynthesis(
             investment_thesis=(
-                f"FALLBACK: AI analysis failed for {ctx.ticker}. "
-                f"Python analysis: Grade {quant.grade}, Score {quant.composite_score:.2f}, "
-                f"Recommendation {quant.preliminary_recommendation}. "
-                f"{quant.python_rationale} " * 3
+                f"Analyse qualitative IA indisponible — proxy quantitatif Python utilisé. "
+                f"Analyse Python pour {ctx.ticker}: Grade {quant.grade}, Score {quant.composite_score:.2f}, "
+                f"Recommandation {quant.preliminary_recommendation}. "
+                f"{quant.python_rationale}"
             ),
-            bull_case="Unavailable due to AI failure. " * 10,
-            base_case="Unavailable due to AI failure. " * 10,
-            bear_case="Unavailable due to AI failure. " * 10,
+            bull_case="Analyse qualitative IA indisponible — proxy quantitatif Python utilisé.",
+            base_case="Analyse qualitative IA indisponible — proxy quantitatif Python utilisé.",
+            bear_case="Analyse qualitative IA indisponible — proxy quantitatif Python utilisé.",
             scenario_probabilities=ScenarioProbabilities(bull=0.0, base=1.0, bear=0.0),
             final_recommendation=cast(Literal["BUY", "HOLD", "SELL"], quant.preliminary_recommendation),
             recommendation_confidence="LOW",
             action_plan=ActionPlan(
-                immediate_actions=["Review Python metrics manually"],
-                monitoring_points=["Re-run analysis when AI is available"],
-                exit_triggers=["Significant price movement"],
+                immediate_actions=["Consulter les métriques Python", "Relancer l'analyse quand l'IA est disponible"],
+                monitoring_points=["Relancer l'analyse quand l'IA est disponible"],
+                exit_triggers=["Mouvement de prix significatif"],
             ),
         ),
         analysis_timestamp=datetime.now(),

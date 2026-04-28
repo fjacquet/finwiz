@@ -73,6 +73,10 @@ def stage(
 
     Stage bodies must be idempotent: retries re-execute the full body.
 
+    Note: timeout_s is enforced for async stages via asyncio.wait_for.  Sync stages should
+    be CPU-bound work that completes synchronously; the per-holding wait_for in the
+    orchestrator provides the outer cap for sync stages.
+
     Raises:
         ValueError at decoration time if allow_degrade=True for a non-qualify stage.
     """
@@ -111,6 +115,10 @@ def stage(
 
         @wraps(fn)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> StageResult[T]:
+            # timeout_s is NOT enforced here — threading-based interrupts are unsafe (GIL,
+            # signal restrictions on non-main threads, thread leaks on cancel).  Sync stages
+            # must be CPU-bound and short; the per-holding asyncio.wait_for in the orchestrator
+            # is the effective cap.
             ctx = _extract_context(args)
             started = datetime.now(UTC)
             t0 = time.perf_counter()

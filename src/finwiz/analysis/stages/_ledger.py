@@ -63,8 +63,8 @@ class RunLedger:
         degraded = sum(1 for ticker, terminal_outcome in terminal.items() if ticker in degraded_qualifies and terminal_outcome == StageOutcome.OK)
         analyzed_clean = analyzed - degraded
         attempted = self._all_tickers_attempted()
-        failed = len(attempted) - analyzed
         total = max(self._total, len(attempted))
+        failed = max(0, total - analyzed_clean - degraded)
         return CoverageSummary(
             analyzed=analyzed_clean,
             degraded=degraded,

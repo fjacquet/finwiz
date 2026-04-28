@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
 from finwiz.schemas.hybrid_analysis.qualitative import ScenarioProbabilities
+
+logger = logging.getLogger(__name__)
 
 
 def _bs_nd2(S: float, K: float, T: float, r: float, sigma: float) -> float:
@@ -23,27 +26,32 @@ def _bs_nd2(S: float, K: float, T: float, r: float, sigma: float) -> float:
 def _compute_options_probabilities(raw_data: dict[str, Any]) -> ScenarioProbabilities | None:
     """Compute options-implied scenario probabilities via Black-Scholes N(d₂).
 
-    Returns None when options IV data is unavailable (crypto, niche ETFs, etc.).
+    Returns None when options IV data is unavailable (crypto, niche ETFs, etc.) or when
+    the raw data contains non-numeric values (malformed yfinance response).
     Priority: options-implied > Python formula > AI guess.
     """
-    bull_iv_raw = raw_data.get("options_bull_iv")
-    bear_iv_raw = raw_data.get("options_bear_iv")
-    t_raw = raw_data.get("options_T")
-    s_raw = raw_data.get("current_price")
-    if bull_iv_raw is None or bear_iv_raw is None or t_raw is None or s_raw is None:
-        return None
+    try:
+        bull_iv_raw = raw_data.get("options_bull_iv")
+        bear_iv_raw = raw_data.get("options_bear_iv")
+        t_raw = raw_data.get("options_T")
+        s_raw = raw_data.get("current_price")
+        if bull_iv_raw is None or bear_iv_raw is None or t_raw is None or s_raw is None:
+            return None
 
-    s_val = float(s_raw)
-    t_val = float(t_raw)
-    bull_val = float(bull_iv_raw)
-    bear_val = float(bear_iv_raw)
-    r = float(os.getenv("RISK_FREE_RATE", "0.045"))
-    p_bull = _bs_nd2(s_val, s_val * 1.20, t_val, r, bull_val)
-    p_bear = 1.0 - _bs_nd2(s_val, s_val * 0.85, t_val, r, bear_val)
-    p_base = max(0.0, 1.0 - p_bull - p_bear)
-    total = p_bull + p_base + p_bear
-    return ScenarioProbabilities(
-        bull=round(p_bull / total, 2),
-        base=round(p_base / total, 2),
-        bear=round(p_bear / total, 2),
-    )
+        s_val = float(s_raw)
+        t_val = float(t_raw)
+        bull_val = float(bull_iv_raw)
+        bear_val = float(bear_iv_raw)
+        r = float(os.getenv("RISK_FREE_RATE", "0.045"))
+        p_bull = _bs_nd2(s_val, s_val * 1.20, t_val, r, bull_val)
+        p_bear = 1.0 - _bs_nd2(s_val, s_val * 0.85, t_val, r, bear_val)
+        p_base = max(0.0, 1.0 - p_bull - p_bear)
+        total = p_bull + p_base + p_bear
+        return ScenarioProbabilities(
+            bull=round(p_bull / total, 2),
+            base=round(p_base / total, 2),
+            bear=round(p_bear / total, 2),
+        )
+    except (ValueError, TypeError, KeyError, AttributeError) as exc:
+        logger.debug("Options parsing failed gracefully: %s", exc)
+        return None
