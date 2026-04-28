@@ -107,7 +107,7 @@ agentops.log
 output/
 output.old/
 /data/
-cache/
+/cache/
 db/
 search/indexed/
 search/results/
