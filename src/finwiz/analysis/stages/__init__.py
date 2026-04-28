@@ -15,6 +15,7 @@ from finwiz.analysis.stages.collect import collect
 from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
 from finwiz.analysis.stages.emit import _emit_pending, emit
 from finwiz.analysis.stages.emit import build_verdict as build_verdict
+from finwiz.analysis.stages.fact_pack import fact_pack
 from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel as _run_qualitative_and_strategic_in_parallel
 from finwiz.analysis.stages.qualify import qualify
 from finwiz.analysis.stages.quantify import calculate_quantitative as calculate_quantitative
@@ -77,6 +78,14 @@ def run_pipeline(
     result = stage_ctx.extras.get("partial_result")
     if result is None:
         return _emit_pending(stage_ctx, reason="quantify stage did not seed partial_result"), EnrichedAnalysis.model_construct()
+
+    # Phase 2c: fact_pack (v5.2)
+    fpr = fact_pack(stage_ctx, raw_data)
+    if fpr.payload is None:
+        # FAILED — no cache and Perplexity unavailable. Trust-spine policy:
+        # halt holding to AnalysePending rather than running ungrounded.
+        return _emit_pending(stage_ctx, reason=fpr.provenance.reason), EnrichedAnalysis.model_construct()
+    stage_ctx.extras["fact_pack"] = fpr.payload  # FactPack with freshness in {"fresh","recent","stale"}
 
     # Phase 3: Qualify — any FAILED result short-circuits to AnalysePending.
     # Strategic Perplexity research runs independently for stocks (not via the legacy

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -156,6 +156,11 @@ class HoldingDecision(BaseModel):
     rationale_bullets: list[str] = Field(default_factory=list, max_length=10)
     citations: list[str] = Field(default_factory=list, max_length=10)
     alternatives: list[Alternative] = Field(default_factory=list, max_length=3)
+
+    # v5.2 fact pack — verified corporate facts surfaced as a provenance footer
+    # in the HTML report. Populated by merge.py from DeepAnalysisResult.fact_pack.
+    # Type is `Any` to avoid a circular import with hybrid_analysis.fact_pack.FactPack.
+    fact_pack: Any = Field(default=None, description="Verified corporate facts (FactPack) from fact_pack stage; Any to avoid circular import")
 
     # NEW: Price targets and position sizing
     price_targets: PriceTargets | None = None

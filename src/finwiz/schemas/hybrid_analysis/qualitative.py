@@ -10,6 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis
 
 
@@ -222,6 +223,12 @@ class QualitativeInsights(BaseModel):
 
     # Strategic Analysis (PESTEL + SWOT + Porter's Five Forces, AI-generated via Perplexity)
     strategic_analysis: StrategicAnalysis | None = Field(default=None, description="Strategic frameworks (PESTEL/SWOT/Porter)")
+
+    # Fact Pack (v5.2 grounded qualitative)
+    fact_pack: FactPack | None = Field(
+        default=None,
+        description="Verified corporate facts (v5.2 fact pack). None when not yet fetched or pipeline pre-v5.2.",
+    )
 
     # Metadata
     analysis_timestamp: datetime | None = Field(default=None, description="When AI analysis was performed (UTC)")

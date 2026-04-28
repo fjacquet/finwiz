@@ -22,6 +22,7 @@ class CacheDataType(StrEnum):
     CREW_OUTPUT = "crew_output"  # AI crew analysis results
     ANALYSIS_RESULT = "analysis_result"  # Computed analysis/scoring
     VALIDATION = "validation"  # Ticker validation, data checks
+    FACT_PACK = "fact_pack"  # Verified corporate facts (v5.2), 7-day TTL
 
 
 # Default TTLs in seconds
@@ -32,6 +33,7 @@ _DEFAULT_TTLS: dict[CacheDataType, int] = {
     CacheDataType.CREW_OUTPUT: 86400,  # 24 hours
     CacheDataType.ANALYSIS_RESULT: 1800,  # 30 minutes
     CacheDataType.VALIDATION: 86400,  # 24 hours
+    CacheDataType.FACT_PACK: 604800,  # 7 days
 }
 
 # Key pattern heuristics for automatic classification
@@ -42,6 +44,7 @@ _KEY_PATTERNS: list[tuple[list[str], CacheDataType]] = [
     (["crew", "agent", "qualitative"], CacheDataType.CREW_OUTPUT),
     (["analysis", "scoring", "deep_analysis", "portfolio_analysis", "rebalancing"], CacheDataType.ANALYSIS_RESULT),
     (["validation", "ticker_validation", "check"], CacheDataType.VALIDATION),
+    (["fact_pack", "fact-pack"], CacheDataType.FACT_PACK),
 ]
 
 

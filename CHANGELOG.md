@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.2.0] - 2026-04-28
+
+### Added
+
+- **Grounded qualitative analysis (v5.2 trust spine extension)** -- New
+  `fact_pack` pipeline stage runs between quantify and qualify, fetches
+  verified corporate facts from Perplexity (one structured call per holding),
+  caches them for 7 days, and injects them into every qualitative prompt as
+  the authoritative source. The qualify task template treats the fact pack as
+  ground truth -- anti-hallucination is now structural, not advisory. The
+  DELL/VMware class is fixed at the root: a fact pack carrying "Divested
+  VMware November 2021" overrides the AI's stale training data.
+- **`FactPack` schema** at `src/finwiz/schemas/hybrid_analysis/fact_pack.py`
+  with Python-derived `freshness` field (AI cannot lie about staleness --
+  cross-checked by `model_validator`). Carries `corporate_structure`,
+  `recent_events` (last 12 months), `leadership`, `confidence` (AI-rated),
+  and `source_citations` (Perplexity URLs).
+- **Provenance footer in HTML reports** -- Pill (green/neutral/amber by
+  freshness) + numbered citation links rendered next to the rationale cell.
+  Stale (>7 days) entries show amber pill with confidence rating, prompting
+  the operator to refresh.
+- **`scripts/invalidate_fact_pack.py` CLI** for forced cache refresh on
+  real-world events (M&A, leadership change). Usage:
+  `uv run python -m scripts.invalidate_fact_pack DELL` or `--all`.
+- **Hardened DELL/VMware regression test** with 10-phrase forbidden library --
+  catches wishy-washy hallucination ("Dell's VMware unit", "owns VMware",
+  "VMware integration", etc.), not just literal matches.
+
+### Changed
+
+- **Version naming aligned with milestone codename.** This release jumps from
+  `0.4.0` to `5.2.0` so the SemVer tag matches the internal milestone
+  ("v5.2 -- Grounded Qualitative"). The `0.X` series ends with `0.4.0`. From
+  this release forward, every artifact (pyproject, git tags, GitHub releases,
+  ADRs, specs, plans) references `5.2.0`. The major jump is the deliberate
+  signal that the trust-spine + fact-pack lineage is the new generation.
+- **Per-task Perplexity verification budget reduced** in the qualitative
+  crew prompt (`tasks.yaml`) from "max 2" to "max 1" -- the fact pack
+  pre-loads the common verifications, so the per-task budget can shrink.
+- **`_build_crew_inputs` accepts an optional `fact_pack` parameter** and
+  injects 5 new keys into the prompt template (`corporate_structure`,
+  `recent_events`, `leadership`, `fact_pack_freshness`,
+  `fact_pack_confidence`).
+- **Trust-spine invariant preserved.** The DEGRADED outcome whitelist stays
+  `{"qualify"}` only -- the `fact_pack` stage emits OK or FAILED. Staleness
+  is a payload field on `FactPack`, not a stage outcome state. Same
+  user-visible signal (amber pill) without weakening the v5.1 structural
+  invariant.
+
+### Fixed
+
+- **DELL/VMware hallucination class fixed at root.** v0.3.0 patched the
+  symptom (date-anchored prompts + bounded Perplexity access). v5.2 fixes
+  the cause: every qualitative call now grounds against a Perplexity-verified
+  fact pack. Pinned by `tests/regression/test_dell_vmware.py` with a
+  10-phrase forbidden library.
+
+### Cost / latency note
+
+First-run cost: 60 holdings x ~5 s Perplexity p95 = ~300 s wall-time worst case.
+With existing parallelism (`FINWIZ_DEEP_ANALYSIS_PARALLEL_LIMIT=2`) net add is
+~2.5 minutes to the first kickoff. Subsequent kickoffs hit the 7-day cache and
+pay 0 s.
+
 ## [0.4.0] - 2026-04-28
 
 ### Added

@@ -31,6 +31,11 @@ def _build_verdict_inner(
     if strategic is not None and enriched.qualitative is not None and enriched.qualitative.strategic_analysis is not None:
         result = _apply_strategic_recompute(result, enriched)
 
+    # v5.2: copy fact_pack from enriched.qualitative onto the result so the merge
+    # layer can populate HoldingDecision.fact_pack for the report renderer.
+    if enriched.qualitative is not None and enriched.qualitative.fact_pack is not None:
+        result = result.model_copy(update={"fact_pack": enriched.qualitative.fact_pack})
+
     logger.info(f"Pipeline complete for {ctx.ticker}: {processing_time:.1f}s")
     return result, enriched
 

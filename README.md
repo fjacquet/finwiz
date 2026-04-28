@@ -33,12 +33,12 @@ Reports are written to `output/` as styled HTML files, one per phase.
 - [Tutorials](docs/tutorials/) — step-by-step: [first analysis](docs/tutorials/first_analysis.md), [portfolio analysis](docs/tutorials/portfolio_analysis.md), [getting started](docs/tutorials/getting_started.md)
 - [How-to guides](docs/how-to/) — focused recipes (API keys, deployment, batch processing)
 - [Reference](docs/reference/) — env vars, CLI flags, schema definitions
-- [CHANGELOG](CHANGELOG.md) — version history (current: **v0.4.0** — trust spine, honest degradation, discovery always runs)
+- [CHANGELOG](CHANGELOG.md) — version history (current: **v5.2.0** — grounded qualitative, fact pack injection, version alignment)
 
 **For contributors / extenders** — modifying FinWiz:
 
 - [Developer Guide](docs/DEVELOPER_GUIDE.md) — architecture, code organization, core patterns, custom crews, testing, performance, deployment, contributing
-- [Architecture Decision Records](docs/adr/) — ADR-001 through ADR-009 (latest: [ADR-009 Trust Spine](docs/adr/ADR-009-trust-spine.md))
+- [Architecture Decision Records](docs/adr/) — ADR-001 through ADR-010 (latest: [ADR-010 Fact Pack — Grounded Qualitative](docs/adr/ADR-010-fact-pack-grounded-qualitative.md))
 - [PRD](docs/PRD.md) — product requirements and scope boundaries
 - [CLAUDE.md](CLAUDE.md) — Claude Code conventions, MCP usage, coding standards
 

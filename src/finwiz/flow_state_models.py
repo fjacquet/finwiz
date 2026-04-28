@@ -53,6 +53,11 @@ class DeepAnalysisResult(BaseModel):
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")
 
+    # v5.2 fact pack — verified corporate facts injected into the qualify prompt.
+    # Carried here so the merge layer can populate HoldingDecision.fact_pack for
+    # the report renderer's provenance footer. Avoid circular import via late binding.
+    fact_pack: Any = Field(default=None, description="FactPack from v5.2 fact_pack stage (Any to avoid circular import)")
+
     # Sentiment scoring (Phase 14)
     sentiment_score: float | None = Field(None, ge=-1.0, le=1.0, description="Sentiment score from news analysis (-1 bearish to +1 bullish). None = no news data.")
     sentiment_confidence: float | None = Field(None, ge=0.0, le=1.0, description="Confidence in sentiment score. None = no news data.")
