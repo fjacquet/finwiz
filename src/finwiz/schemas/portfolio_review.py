@@ -1,14 +1,20 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .common import RiskAssessmentStandardized
 
 Decision = Literal["KEEP", "SELL"]
 AssetClass = Literal["stock", "etf", "crypto"]  # Added crypto support for A+ discoveries
+
+# Ticker validation: matches Yahoo / Kraken formats — uppercase alnum plus
+# `.` (BRK.B), `-` (BTC-USD), `:` (exchange:symbol), `^` (^GSPC), `=` (futures).
+# Constrained to defend HTML render sites against attribute / script injection.
+_TICKER_RE = re.compile(r"^[A-Z0-9:.\-^=]{1,15}$")
 Grade = Literal["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "N/A"]
 """Letter grade scale.
 
@@ -132,6 +138,15 @@ class HoldingDecision(BaseModel):
     name: str
     ticker: str
     currency: str
+
+    @field_validator("ticker")
+    @classmethod
+    def _validate_ticker(cls, v: str) -> str:
+        """Ticker must match the Yahoo / Kraken format (defense in depth for HTML renderers)."""
+        if not _TICKER_RE.match(v):
+            raise ValueError(f"ticker {v!r} contains characters outside [A-Z0-9:.\\-^=] or exceeds 15 chars")
+        return v
+
     decision: Decision
     composite_score: float = Field(ge=0.0, le=1.0)
     grade: Grade = Field(description="Letter grade (A+ to F, or N/A when deep analysis didn't run)")

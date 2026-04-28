@@ -62,3 +62,77 @@ def test_confidence_badge_returns_html_for_low() -> None:
     badge = _confidence_badge(holding)
     assert "badge-amber" in badge
     assert "Insight IA indisponible" in badge
+
+
+# ---------------------------------------------------------------------------
+# XSS hardening (v0.4.1) — defense in depth
+# ---------------------------------------------------------------------------
+
+
+def test_holding_row_escapes_script_tags_in_name() -> None:
+    """A name containing a <script> tag must not produce executable HTML."""
+    holding = _build_holding(grade="B", confidence="high")
+    holding.name = "<script>alert(1)</script>Evil"
+    html = _render_holding_row(holding)
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+
+
+def test_holding_row_escapes_quote_in_rationale() -> None:
+    """A rationale with quotes does not break out of a context — use the analyzed branch."""
+    holding = _build_holding(grade="B", confidence="high")
+    holding.rationale_bullets = ['He said "buy now" <img src=x onerror=alert(1)>']
+    html = _render_holding_row(holding)
+    assert "<img" not in html
+    assert "onerror" not in html or "&" in html  # only as escaped entity
+    assert "&lt;img" in html
+
+
+def test_holding_row_pending_branch_escapes_name() -> None:
+    """Pending (N/A) row must also escape the operator-supplied name."""
+    holding = _build_holding(grade="N/A", confidence="high")
+    holding.name = "<svg/onload=alert(1)>"
+    html = _render_holding_row(holding)
+    assert "<svg" not in html
+    assert "&lt;svg" in html
+
+
+def test_holding_decision_rejects_malicious_ticker() -> None:
+    """Schema field_validator rejects tickers with characters outside [A-Z0-9:.\\-^=]."""
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError) as excinfo:
+        HoldingDecision(
+            ticker='AAPL" onmouseover="alert(1)',
+            name="Apple",
+            asset_class="stock",
+            currency="USD",
+            decision="KEEP",
+            composite_score=0.7,
+            grade="A",
+            grade_description="A",
+            recommended_action="HOLD",
+            risk=_make_risk(),
+            confidence="high",
+        )
+    assert "ticker" in str(excinfo.value).lower()
+
+
+def test_holding_decision_accepts_typical_ticker_formats() -> None:
+    """Yahoo / Kraken format tickers must still validate (regression)."""
+    for ticker in ("AAPL", "BRK.B", "BTC-USD", "^GSPC", "ES=F", "VOO"):
+        h = HoldingDecision(
+            ticker=ticker,
+            name="Test",
+            asset_class="stock",
+            currency="USD",
+            decision="KEEP",
+            composite_score=0.7,
+            grade="A",
+            grade_description="A",
+            recommended_action="HOLD",
+            risk=_make_risk(),
+            confidence="high",
+        )
+        assert h.ticker == ticker
