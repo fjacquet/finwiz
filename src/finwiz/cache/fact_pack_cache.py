@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from finwiz.cache._paths import safe_ticker as _safe_ticker
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 
 if TYPE_CHECKING:
@@ -22,29 +22,6 @@ logger = logging.getLogger(__name__)
 
 _SCHEMA_VERSION = "5.2"
 _DEFAULT_DIR = Path("cache/fact_packs")
-# Mirrors HoldingDecision._TICKER_RE — defense-in-depth against path traversal
-# (e.g. "../../etc/passwd") in cache filenames. Tickers always reach this layer
-# upper-cased; the regex matches Yahoo / Kraken formats only.
-_TICKER_RE = re.compile(r"^[A-Z0-9:.\-^=]{1,15}$")
-
-
-def _safe_ticker(ticker: str) -> str:
-    """Upper-case the ticker and reject anything outside the allowed alphabet.
-
-    Pydantic already validates `HoldingDecision.ticker`, but the cache also
-    runs from contexts (manual CLI invocation, future callers) where the
-    ticker is a raw string. Validating here keeps the filesystem invariant
-    enforced no matter who reaches the cache.
-    """
-    upper = ticker.upper()
-    if not _TICKER_RE.match(upper):
-        raise ValueError(f"invalid ticker {ticker!r}: must match {_TICKER_RE.pattern}")
-    # `.` is in the allowed alphabet for tickers like BRK.B, but `..` is a
-    # path-traversal token even though it satisfies the alphabet — reject it
-    # explicitly. (`/` and `\` are already excluded by the alphabet.)
-    if ".." in upper:
-        raise ValueError(f"invalid ticker {ticker!r}: contains path-traversal sequence '..'")
-    return upper
 
 
 class FactPackCache:
