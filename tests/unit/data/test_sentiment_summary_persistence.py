@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from finwiz.analysis.deep_analysis_pipeline import _build_sentiment_summary
+from finwiz.analysis._helpers import _build_sentiment_summary
 from finwiz.flow_state_models import FinwizState
 
 

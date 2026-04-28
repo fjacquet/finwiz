@@ -43,6 +43,7 @@ def merge_deep_analysis_from_flow_state(
                 decision.recommended_action = grade_info.action
 
                 decision.data_freshness = "fresh" if not deep_result.cached else "recent"
+                decision.confidence = getattr(deep_result, "confidence", "high")
 
                 holdings_with_deep_analysis += 1
                 logger.debug(f"Merged deep analysis for {ticker}: grade={deep_result.grade}")

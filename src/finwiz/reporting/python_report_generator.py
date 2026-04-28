@@ -11,9 +11,32 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
+from finwiz.schemas.run_ledger import CoverageSummary, TrustBanner
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
+
+_BANNER_CSS_CLASS: dict[str, str] = {
+    "green": "trust-banner-green",
+    "amber": "trust-banner-amber",
+    "red": "trust-banner-red",
+    "blocked": "trust-banner-blocked",
+}
+
+
+def render_trust_banner(banner: TrustBanner) -> str:
+    """Render the trust banner verbatim from the TrustBanner Pydantic model.
+
+    No threshold logic here — TrustBanner.from_coverage already encoded it.
+    """
+    cls = _BANNER_CSS_CLASS[banner.state]
+    return (
+        f'<div class="{cls}" data-block-decisions="{str(banner.block_decisions).lower()}">'
+        f"<strong>Couverture:</strong> {banner.analyzed}/{banner.total} "
+        f"({banner.degraded} dégradés, {banner.failed} échoués). "
+        f"{banner.message}"
+        f"</div>"
+    )
 
 
 class PythonReportGenerator:
@@ -40,6 +63,8 @@ class PythonReportGenerator:
         macro_snapshot: dict | None = None,
         economic_calendar: dict | None = None,
         portfolio_strategic_posture: dict | None = None,
+        run_ledger: Any = None,
+        deep_analysis_coverage: tuple[int, int] | None = None,
     ) -> str:
         """
         Generate comprehensive family financial plan HTML report.
@@ -53,6 +78,8 @@ class PythonReportGenerator:
             holdings_sentiment: Per-holding sentiment data (if available)
             macro_snapshot: Portfolio-level macro snapshot (if available)
             economic_calendar: Economic calendar data (if available)
+            run_ledger: Active RunLedger instance (preferred source for trust banner)
+            deep_analysis_coverage: Legacy (analyzed, total) tuple for backwards compat
 
         Returns:
             Path to generated HTML report
@@ -81,6 +108,8 @@ class PythonReportGenerator:
             macro_snapshot=macro_snapshot,
             economic_calendar=economic_calendar,
             portfolio_strategic_posture=portfolio_strategic_posture,
+            run_ledger=run_ledger,
+            deep_analysis_coverage=deep_analysis_coverage,
         )
 
         # Write to file
@@ -198,10 +227,27 @@ class PythonReportGenerator:
         macro_snapshot: dict | None = None,
         economic_calendar: dict | None = None,
         portfolio_strategic_posture: dict | None = None,
+        run_ledger: Any = None,
+        deep_analysis_coverage: tuple[int, int] | None = None,
     ) -> str:
         """Generate complete HTML report."""
         # Generate timestamp
         timestamp = datetime.now().strftime("%d %B %Y à %H:%M")
+
+        # Build trust banner HTML from TrustBanner model (single source of truth).
+        # run_ledger takes precedence; fall back to legacy deep_analysis_coverage tuple.
+        trust_banner_html = ""
+        if run_ledger is not None:
+            trust_banner_html = render_trust_banner(run_ledger.to_banner())
+        elif deep_analysis_coverage is not None:
+            analyzed, total = deep_analysis_coverage
+            summary = CoverageSummary(
+                analyzed=analyzed,
+                degraded=0,
+                failed=max(total - analyzed, 0),
+                total=total,
+            )
+            trust_banner_html = render_trust_banner(TrustBanner.from_coverage(summary))
 
         # Build HTML content
         html = f"""<!doctype html>
@@ -221,7 +267,7 @@ class PythonReportGenerator:
     <div class="muted">Analyse Python ultra-rapide -- 0 appels LLM -- Cout: $0</div>
   </header>
 
-  {self._generate_executive_summary(portfolio_stats)}
+  {self._generate_executive_summary(portfolio_stats, trust_banner_html=trust_banner_html)}
 
   {self._generate_strategic_posture_section(portfolio_strategic_posture)}
 
@@ -260,11 +306,11 @@ class PythonReportGenerator:
 
         return get_report_css()
 
-    def _generate_executive_summary(self, portfolio_stats: dict[str, Any]) -> str:
+    def _generate_executive_summary(self, portfolio_stats: dict[str, Any], trust_banner_html: str = "") -> str:
         """Generate executive summary section (delegates to module)."""
         from finwiz.reporting.section_generators import generate_executive_summary
 
-        return generate_executive_summary(portfolio_stats)
+        return generate_executive_summary(portfolio_stats, trust_banner_html=trust_banner_html)
 
     def _generate_portfolio_overview(self, portfolio_review: PortfolioReview, portfolio_stats: dict[str, Any]) -> str:
         """Generate portfolio overview section (delegates to module)."""
@@ -365,6 +411,8 @@ def generate_python_report(
     macro_snapshot: dict | None = None,
     economic_calendar: dict | None = None,
     portfolio_strategic_posture: dict | None = None,
+    run_ledger: Any = None,
+    deep_analysis_coverage: tuple[int, int] | None = None,
 ) -> str:
     """
     Convenience function to generate Python-based report.
@@ -382,4 +430,6 @@ def generate_python_report(
         macro_snapshot=macro_snapshot,
         economic_calendar=economic_calendar,
         portfolio_strategic_posture=portfolio_strategic_posture,
+        run_ledger=run_ledger,
+        deep_analysis_coverage=deep_analysis_coverage,
     )

@@ -14,7 +14,9 @@ Architecture (Clean Functional Pipeline):
 import os
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
+from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
 from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
 from finwiz.tools.logger import get_logger
@@ -39,10 +41,15 @@ class DeepAnalysisOrchestrator:
         # Enriched analysis storage (populated during analysis)
         self._enriched_analyses: dict[str, Any] = {}
 
-        # Per-holding failure tracking (populated by analyze_single_sync, timeouts,
-        # and _store_enriched_analysis). Read by analyze_and_update_portfolio to
-        # set deep_analysis_success honestly and surface coverage in the report.
-        self._failed_holdings: list[str] = []
+        # Build the run ledger for this orchestrator instance and wire it to state.
+        # The ledger is the source of truth for failed/analyzed tickers — the old
+        # manual _failed_holdings list is now a read-only property derived from it.
+        run_id = getattr(state, "run_id", None) or uuid4().hex[:12]
+        self._ledger = RunLedger(
+            run_id=run_id,
+            artifact_dir=Path("output/run_ledger"),
+        )
+        self.state.run_ledger = self._ledger
 
         # Initialize DataSourceOrchestrator for multi-source data acquisition
         from finwiz.data.data_source_orchestrator import DataSourceOrchestrator
@@ -52,6 +59,16 @@ class DeepAnalysisOrchestrator:
             per_source_timeout=3.0,
             enable_validation=True,
         )
+
+    @property
+    def _failed_holdings(self) -> list[str]:
+        """Tickers without an OK terminal-stage outcome — derived from the ledger.
+
+        Replaces the old manual list. The @stage decorator on the `emit` stage
+        records FAILED entries automatically; this property surfaces them for
+        logging and coverage reporting without any manual append calls.
+        """
+        return self._ledger.failed_tickers()
 
     async def analyze_and_update_portfolio(self) -> dict[str, Any]:
         """
@@ -76,9 +93,6 @@ class DeepAnalysisOrchestrator:
         # no-op'd the entire phase, producing reports with placeholder grades
         # that users mistook for real verdicts.
 
-        # Reset per-run failure tracking
-        self._failed_holdings = []
-
         portfolio_review = self.state.portfolio_review
         if not portfolio_review or not portfolio_review.get("holdings"):
             self.logger.warning("No portfolio holdings available for deep analysis")
@@ -86,6 +100,10 @@ class DeepAnalysisOrchestrator:
 
         holdings = portfolio_review.get("holdings", [])
         self.logger.info(f"Starting deep analysis for {len(holdings)} holdings")
+
+        # Tell the ledger the expected total so coverage() can compute pending counts
+        # even before all emit stages have fired.
+        self._ledger.set_total(len(holdings))
 
         # Step 0: Batch prefetch data for all holdings
         from finwiz.orchestrators.batch_prefetch_runner import run_batch_prefetch
@@ -186,7 +204,7 @@ class DeepAnalysisOrchestrator:
 
             try:
                 # Functional pipeline - returns BOTH DeepAnalysisResult AND EnrichedAnalysis
-                result, enriched = analyze_holding(ticker, asset_class, company_name)
+                result, enriched = analyze_holding(ticker, asset_class, company_name, ledger=self._ledger, run_id=self._ledger.run_id)
                 results[ticker] = result
 
                 # Store enriched analysis for HTML generation
@@ -235,15 +253,11 @@ class DeepAnalysisOrchestrator:
             self.logger.info(f"✅ Generated HTML: {html_path}")
 
         except OSError as e:
-            # I/O error writing JSON or HTML to disk — track as a failure so the
-            # success accounting reflects reality (partial coverage warning).
+            # I/O error writing JSON or HTML to disk — logged only; the ledger
+            # already recorded the emit stage outcome for this ticker.
             self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}", exc_info=True)
-            if ticker not in self._failed_holdings:
-                self._failed_holdings.append(ticker)
         except Exception as e:
             self.logger.error(f"Failed to store enriched analysis for {ticker}: {e}", exc_info=True)
-            if ticker not in self._failed_holdings:
-                self._failed_holdings.append(ticker)
 
     def get_enriched_analysis(self, ticker: str) -> Any | None:
         """Get stored enriched analysis for a ticker."""
@@ -297,11 +311,13 @@ class DeepAnalysisOrchestrator:
                     asset_class,
                     company_name,
                     prefetched_data=self.state.prefetched_data if self.state.batch_prefetch_enabled else None,
+                    ledger=self._ledger,
+                    run_id=self._ledger.run_id,
                 )
                 return (ticker, result, enriched)
             except Exception as e:
                 self.logger.error(f"Concurrent analysis failed for {ticker}: {e}", exc_info=True)
-                self._failed_holdings.append(ticker)
+                # Failure is recorded by the @stage decorator on emit; no manual append needed.
                 return (ticker, None, None)
 
         # Use a semaphore to limit concurrency - this ensures timeout starts when work begins
@@ -327,11 +343,11 @@ class DeepAnalysisOrchestrator:
                     )
                 except TimeoutError:
                     self.logger.error(f"Analysis timed out for {ticker} after {PER_HOLDING_TIMEOUT}s")
-                    self._failed_holdings.append(ticker)
+                    # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
                     return (ticker, None, None)
                 except Exception as e:
                     self.logger.error(f"Analysis failed for {ticker}: {e}", exc_info=True)
-                    self._failed_holdings.append(ticker)
+                    # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
                     return (ticker, None, None)
 
         # NO AGGREGATE TIMEOUT. Each holding has its own PER_HOLDING_TIMEOUT
@@ -350,8 +366,7 @@ class DeepAnalysisOrchestrator:
             futures = [analyze_with_timeout(holding, executor) for holding in holdings]
             # return_exceptions=True so one holding's escaped exception doesn't
             # cancel siblings. Per-holding handlers (analyze_with_timeout +
-            # analyze_single_sync) already log + track failures via
-            # _failed_holdings — this is defense-in-depth.
+            # analyze_single_sync) already log failures — this is defense-in-depth.
             results_or_excs = await asyncio.gather(*futures, return_exceptions=True)
             for item in results_or_excs:
                 if isinstance(item, BaseException):
