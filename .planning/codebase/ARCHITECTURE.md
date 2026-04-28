@@ -107,7 +107,7 @@
    - Store DeepAnalysisResult in flow state
    - Merge with previous analysis if available
 
-5. **Phase 4: Discovery** (DiscoveryOrchestrator - optional)
+5. **Phase 4: Discovery** (DiscoveryOrchestrator)
    - Parallel execution: check_crypto(), check_stock(), check_etf()
    - Consolidate A+ investment opportunities
    - Store in flow state

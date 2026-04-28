@@ -190,7 +190,7 @@ class FinwizFlow(Flow[FinwizState]):
             1. Data validation
             2. Portfolio review (loads holdings from CSV)
             3. Deep analysis (analyzes the loaded holdings)
-            4. Discovery (if enabled)
+            4. Discovery (A+ investment discovery; always runs)
             5. Alternative matching
             6. Reporting
 
@@ -258,8 +258,7 @@ class FinwizFlow(Flow[FinwizState]):
         self.discovery_orch.check_crypto()
         self.discovery_orch.check_stock()
         self.discovery_orch.check_etf()
-        discovery_result = self.discovery_orch.check_investment_discovery()
-        discovery_data = discovery_result if discovery_result else {}
+        discovery_data = self.discovery_orch.check_investment_discovery() or {}
 
         # Phase 5: Alternative Matching
         logger.info("=" * 80)
