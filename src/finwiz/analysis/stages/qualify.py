@@ -120,6 +120,9 @@ def qualify(ctx: StageContext, quant: QuantitativeAnalysis, raw: dict[str, Any])
     fact_pack = ctx.extras.get("fact_pack")
     ai = _try_ai_qualify(analysis_ctx, quant, raw, fact_pack=fact_pack)
     if ai is not None:
+        # Attach the fact_pack used for grounding to the qualitative payload
+        if isinstance(ai, QualitativeInsights) and fact_pack is not None:
+            ai = ai.model_copy(update={"fact_pack": fact_pack})
         result: Any = StageResult(
             payload=ai,
             provenance=StageProvenance(

@@ -5,9 +5,13 @@ This module contains section generators extracted from PythonReportGenerator
 for the family financial plan HTML report.
 """
 
+from __future__ import annotations
+
+from datetime import datetime
 from html import escape
 from typing import Any
 
+from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 
 
@@ -263,6 +267,9 @@ def _render_holding_row(holding: HoldingDecision) -> str:
     rationale = holding.rationale_bullets[0] if holding.rationale_bullets else "Python analysis"
     rationale_safe = escape(rationale)
     badge = _confidence_badge(holding)
+    # Render fact pack provenance footer if the holding carries one (v5.2+)
+    fp = getattr(holding, "fact_pack", None)
+    fact_pack_footer = _fact_pack_provenance_footer(fp) if fp is not None else ""
     return f"""
         <tr>
           <td><strong>{ticker_html}</strong><br><small>{name_safe}</small></td>
@@ -270,7 +277,7 @@ def _render_holding_row(holding: HoldingDecision) -> str:
           <td class="{grade_class}"><strong>{grade}</strong>{badge}</td>
           <td>{composite_score:.3f}</td>
           <td>{rec_badge}</td>
-          <td><small>{rationale_safe}</small></td>
+          <td><small>{rationale_safe}</small>{fact_pack_footer}</td>
         </tr>"""
 
 
@@ -561,6 +568,58 @@ def generate_stress_test_section(stress_test_results: list[dict[str, Any]] | Non
     {cards_html}
   </div>
     """
+
+
+def _format_fetched_at_french(fetched_at: datetime) -> str:
+    """Format a datetime as e.g. '28 avril 2026'."""
+    months = {
+        1: "janvier",
+        2: "février",
+        3: "mars",
+        4: "avril",
+        5: "mai",
+        6: "juin",
+        7: "juillet",
+        8: "août",
+        9: "septembre",
+        10: "octobre",
+        11: "novembre",
+        12: "décembre",
+    }
+    return f"{fetched_at.day} {months[fetched_at.month]} {fetched_at.year}"
+
+
+def _fact_pack_provenance_footer(fact_pack: FactPack | None) -> str:
+    """Render fact pack provenance pill + citations footnote.
+
+    Maps freshness to a colored pill:
+      - fresh → green
+      - recent → neutral
+      - stale → amber (with confidence shown)
+      - None → muted "Faits non vérifiés" note (legacy callers only)
+    """
+    if fact_pack is None:
+        return '<small class="muted">Faits non vérifiés pour cette analyse.</small>'
+
+    fetched_french = _format_fetched_at_french(fact_pack.fetched_at)
+
+    if fact_pack.freshness == "fresh":
+        pill = f'<span class="pill pill-green" title="Sources Perplexity vérifiées">✓ Faits actuels: vérifiés via Perplexity le {escape(fetched_french)}</span>'
+    elif fact_pack.freshness == "recent":
+        pill = f'<span class="pill pill-neutral">Faits vérifiés via Perplexity le {escape(fetched_french)}</span>'
+    else:  # stale
+        pill = (
+            f'<span class="pill pill-amber" '
+            f'title="Confidence {fact_pack.confidence:.2f}">'
+            f"⚠️ Faits vérifiés il y a >7 jours — à actualiser "
+            f"(confidence {fact_pack.confidence:.2f})</span>"
+        )
+
+    if fact_pack.source_citations:
+        citations = " ".join(f'<a href="{escape(url, quote=True)}" rel="noopener" target="_blank">[{i + 1}]</a>' for i, url in enumerate(fact_pack.source_citations[:5]))
+        pill += f' <small class="muted">Sources: {citations}</small>'
+
+    return f'<div class="fact-pack-footer">{pill}</div>'
 
 
 _CONVICTION_GRADES: frozenset[str] = frozenset({"A+", "A"})
