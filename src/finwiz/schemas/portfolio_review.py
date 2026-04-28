@@ -156,6 +156,10 @@ class HoldingDecision(BaseModel):
     crew_analysis_used: str | None = Field(None, description="Which crew analysis was used (stock_crew/etf_crew/crypto_crew)")
     analysis_date: datetime | None = Field(None, description="When the analysis was performed")
 
+    # Trust-spine confidence marker — mirrors DeepAnalysisResult.confidence.
+    # 'low' when the upstream qualify stage degraded to a Python fallback (DEGRADED).
+    confidence: Literal["high", "low"] = Field(default="high", description="Pipeline confidence: 'low' when qualify stage degraded to Python fallback")
+
 
 class APlusOpportunitySection(BaseModel):
     """A+ opportunities section for portfolio review reports."""

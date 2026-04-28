@@ -6,7 +6,7 @@ Contains state containers for the CrewAI flow execution.
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -46,6 +46,9 @@ class DeepAnalysisResult(BaseModel):
 
     # Data lineage
     lineage: dict[str, Any] | None = Field(None, description="Complete data lineage from sources")
+
+    # Trust-spine confidence marker: 'low' when upstream qualify stage used a Python fallback (DEGRADED).
+    confidence: Literal["high", "low"] = Field(default="high", description="Pipeline confidence: 'low' when qualify stage degraded to Python fallback")
 
     # Cache metadata
     cached: bool = Field(default=False, description="Whether result came from cache")
@@ -266,8 +269,25 @@ class FinwizState(BaseModel):
     # Macro snapshot for report-time access (Phase 16)
     macro_snapshot: dict[str, Any] | None = Field(default=None, description="Session-level MacroSnapshot dict for report generation")
 
+    # Run ledger — populated by DeepAnalysisOrchestrator.__init__ at analysis time.
+    # Type is Any to avoid a circular import (RunLedger lives in analysis.stages._ledger).
+    # Readers that need ledger-derived views should use ledger_coverage or cast at point of use.
+    run_ledger: Any = Field(default=None, exclude=True, description="Active RunLedger instance for this analysis run")
+
     model_config = {
         "extra": "allow",
         "ser_json_timedelta": "iso8601",
         "ser_json_bytes": "base64",
     }
+
+    @property
+    def ledger_coverage(self) -> tuple[int, int]:
+        """Backwards-compatible (analyzed, total) view derived from the run ledger.
+
+        Falls back to (0, 0) if no ledger is attached (e.g. during tests that bypass
+        the orchestrator, or before Phase 3 runs).
+        """
+        if self.run_ledger is None:
+            return (0, 0)
+        summary = self.run_ledger.coverage()
+        return (summary.analyzed, summary.total)

@@ -122,8 +122,8 @@ OPENAI_API_KEY=...              # Required
 SERPER_API_KEY=...              # Required
 # Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, etc.
 # Feature flags: DEEP_ANALYSIS_ENABLED, PERPLEXITY_RESEARCH_ENABLED
-# Discovery toggle (opt-in, ~$0.50-1 extra LLM cost):
-#   INVESTMENT_DISCOVERY_ENABLED=true crewai flow kickoff
+# Investment Discovery (Phase 4) runs unconditionally; the
+# INVESTMENT_DISCOVERY_ENABLED kill switch was removed.
 # Validation: VALIDATION_STRICTNESS=off|warn|error
 # Scenario probabilities: RISK_FREE_RATE=0.045  (Black-Scholes risk-free rate for options-implied probabilities)
 ```
@@ -133,12 +133,10 @@ SERPER_API_KEY=...              # Required
 `crewai flow kickoff` is the sole production entry point. Flow parameters are
 passed via CrewAI-native mechanisms — not via argparse.
 
-- **Runtime (recommended):** export an env var before the command.
-  `app_initializer.kickoff()` reads `INVESTMENT_DISCOVERY_ENABLED` and forwards
-  it to the flow as an input.
-- **Programmatic:** call `FinwizFlow(state=FinwizState()).kickoff(inputs={"discovery_enabled": True})`.
+- **Programmatic:** call `FinwizFlow(state=FinwizState()).kickoff(inputs={...})`.
   Inputs populate the structured `FinwizState` Pydantic fields before any
-  `@start()` method runs.
+  `@start()` method runs. The `discovery_enabled` field is preserved for API
+  stability but Phase 4 runs unconditionally regardless of its value.
 
 
 ## grepai - Semantic Code Search

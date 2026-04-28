@@ -202,6 +202,7 @@ markers = [
     "core_analysis: marks tests as core analysis related",
     "crew: marks tests as crew-specific tests",
     "flow: marks tests as flow orchestration tests",
+    "regression: regression test guarding against a previously-shipped bug",
 ]
 
 filterwarnings = [

@@ -1,66 +1,56 @@
 """
-Tests for Fix 2: discovery toggle via CrewAI-native mechanisms.
+Tests guarding the always-runs invariant for Phase 4 (A+ Investment Discovery).
 
-Covers:
-- FinwizState.discovery_enabled field exists and defaults to False.
-- app_initializer.kickoff() forwards INVESTMENT_DISCOVERY_ENABLED env var
-  as a flow input (CrewAI canonical pattern), not via argparse.
+History:
+- v0.2.x had an `INVESTMENT_DISCOVERY_ENABLED` env-var kill switch that gated
+  Phase 4 behind an opt-in. Without discovery, alternatives matching produced
+  the "no alternatives found" warning class for every holding — same shape as
+  the v0.3.0 deep-analysis silent-success bug.
+- The kill switch was removed: discovery now ALWAYS runs.
+- The `discovery_enabled` field on `FinwizState` is preserved as legitimate
+  CrewAI flow-input API (callers may pass `flow.kickoff(inputs={...})`); it is
+  no longer consulted as a gate.
+
+These tests pin the invariants:
+1. The state field still exists for API stability.
+2. `app_initializer.kickoff()` does NOT read any env-var toggle and forwards
+   no kickoff inputs — discovery runs unconditionally.
 """
 
 from __future__ import annotations
-
-import pytest
 
 from finwiz.flow_state_models import FinwizState
 
 
 class TestDiscoveryStateField:
-    """FinwizState must carry a discovery_enabled boolean for CrewAI flow inputs."""
+    """`discovery_enabled` field exists on FinwizState for API stability."""
 
-    def test_default_is_false(self):
+    def test_default_is_false(self) -> None:
         state = FinwizState()
         assert state.discovery_enabled is False
 
-    def test_can_be_set_via_constructor(self):
+    def test_can_be_set_via_constructor(self) -> None:
+        # The field accepts the kwarg even though it no longer gates behavior.
         state = FinwizState(discovery_enabled=True)
         assert state.discovery_enabled is True
 
 
-class TestAppInitializerForwardsEnvVarAsFlowInput:
-    """app_initializer.kickoff() must forward env var to flow.kickoff(inputs=...)."""
+class TestAppInitializerDoesNotForwardKillSwitch:
+    """`app_initializer.kickoff()` runs discovery unconditionally — no inputs."""
 
-    @pytest.fixture
-    def patched_kickoff(self, mocker):
-        """Patch every expensive step in app_initializer.kickoff()."""
+    def test_kickoff_called_without_inputs(self, mocker) -> None:
+        """The kill switch was removed, so flow.kickoff() takes no inputs."""
         mocker.patch("finwiz.validation.validate_template_variables_at_startup")
         mocker.patch("finwiz.core.app_initializer.initialize_configuration")
         mocker.patch("finwiz.core.app_initializer.initialize_environment")
         mocker.patch("finwiz.core.app_initializer.logging.shutdown")
         mocker.patch("finwiz.core.app_initializer.os._exit")
         flow_cls_mock = mocker.patch("finwiz.core.app_initializer.FinwizFlow")
-        return flow_cls_mock.return_value
 
-    def test_forwards_true_when_env_var_set(self, mocker, patched_kickoff):
-        mocker.patch.dict("os.environ", {"INVESTMENT_DISCOVERY_ENABLED": "true"}, clear=False)
         from finwiz.core.app_initializer import kickoff
 
         kickoff()
 
-        patched_kickoff.kickoff.assert_called_once_with(inputs={"discovery_enabled": True})
-
-    def test_forwards_false_when_env_var_absent(self, mocker, patched_kickoff):
-        mocker.patch.dict("os.environ", {}, clear=False)
-        mocker.patch.dict("os.environ", {"INVESTMENT_DISCOVERY_ENABLED": ""}, clear=False)
-        from finwiz.core.app_initializer import kickoff
-
-        kickoff()
-
-        patched_kickoff.kickoff.assert_called_once_with(inputs={"discovery_enabled": False})
-
-    def test_env_var_is_case_insensitive(self, mocker, patched_kickoff):
-        mocker.patch.dict("os.environ", {"INVESTMENT_DISCOVERY_ENABLED": "TRUE"}, clear=False)
-        from finwiz.core.app_initializer import kickoff
-
-        kickoff()
-
-        patched_kickoff.kickoff.assert_called_once_with(inputs={"discovery_enabled": True})
+        # Asserts kickoff() was called with no positional args and no keyword args
+        # (discovery is always-on, so no inputs are forwarded).
+        flow_cls_mock.return_value.kickoff.assert_called_once_with()

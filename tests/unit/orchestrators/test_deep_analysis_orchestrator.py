@@ -189,7 +189,7 @@ class TestDeepAnalysisOrchestrator:
     def test_should_analyze_multiple_holdings(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
         """Test analysis of multiple holdings."""
 
-        def create_result(ticker, asset_class, company_name=""):
+        def create_result(ticker, asset_class, company_name="", **kwargs):
             result = DeepAnalysisResult(
                 ticker=ticker,
                 asset_class=asset_class,
@@ -231,7 +231,7 @@ class TestDeepAnalysisOrchestrator:
     def test_should_handle_analysis_failure_gracefully(self, mocker, orchestrator):
         """Test that analysis failures are handled gracefully."""
 
-        def failing_analysis(ticker, asset_class, company_name=""):
+        def failing_analysis(ticker, asset_class, company_name="", **kwargs):
             raise RuntimeError("Analysis failed")
 
         mocker.patch(
@@ -326,7 +326,7 @@ class TestDeepAnalysisOrchestrator:
 
         orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
 
-        def create_result(ticker, asset_class, company_name=""):
+        def create_result(ticker, asset_class, company_name="", **kwargs):
             result = DeepAnalysisResult(
                 ticker=ticker,
                 asset_class=asset_class,
@@ -403,7 +403,7 @@ class TestDeepAnalysisOrchestrator:
 
         orchestrator = DeepAnalysisOrchestrator(state, batch_prefetch_config=batch_config, cache_service=None, cache_enabled=False)
 
-        def create_result(ticker_arg, asset_class_arg, company_name=""):
+        def create_result(ticker_arg, asset_class_arg, company_name="", **kwargs):
             result = DeepAnalysisResult(
                 ticker=ticker_arg,
                 asset_class=asset_class_arg,
@@ -486,7 +486,7 @@ class TestDeepAnalysisOrchestrator:
         # Track calls to analyze_holding
         call_count = 0
 
-        def track_calls(ticker_arg, asset_class_arg, company_name=""):
+        def track_calls(ticker_arg, asset_class_arg, company_name="", **kwargs):
             nonlocal call_count
             call_count += 1
             result = DeepAnalysisResult(

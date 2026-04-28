@@ -20,8 +20,8 @@ from finwiz.flow_state import FinwizState
 from finwiz.flows.orchestrator import FinwizFlow
 from finwiz.tools.logger import get_logger, setup_logging
 
-# Load .env at module import so env-based toggles (e.g. INVESTMENT_DISCOVERY_ENABLED)
-# are available regardless of which crew modules get imported first.
+# Load .env at module import so configuration from .env is available regardless
+# of which crew modules get imported first.
 load_dotenv()
 
 # Setup logging configuration
@@ -62,15 +62,13 @@ def kickoff() -> None:
         finwiz_flow = FinwizFlow(state=flow_state)
         logger.debug("FinwizFlow instance created with FinwizState")
 
-        # Step 5: Resolve runtime toggles from env vars into CrewAI flow inputs.
-        # This is the canonical CrewAI pattern: flow.kickoff(inputs={...})
-        # populates structured state before any @start() method runs.
-        discovery_enabled = os.getenv("INVESTMENT_DISCOVERY_ENABLED", "false").lower() == "true"
-        flow_inputs: dict[str, object] = {"discovery_enabled": discovery_enabled}
-
-        # Step 6: Execute the flow
-        logger.info("🚀 Starting FinWiz analysis execution (discovery_enabled=%s)", discovery_enabled)
-        finwiz_flow.kickoff(inputs=flow_inputs)
+        # Step 5: Execute the flow. Phase 4 (Investment Discovery) ALWAYS runs —
+        # the INVESTMENT_DISCOVERY_ENABLED kill switch was removed because
+        # downstream alternatives-matching depends on discovery output and
+        # turning it off silently produced the "no alternatives found" warning
+        # class. Same philosophy as the v0.3.0 deep-analysis fix.
+        logger.info("🚀 Starting FinWiz analysis execution")
+        finwiz_flow.kickoff()
         logger.info("✅ FinWiz analysis workflow completed successfully")
 
         # Step 7: Force-exit the process so third-party thread pools

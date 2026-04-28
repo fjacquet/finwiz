@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-28
+
+### Added
+
+- **Trust spine (v5.1, PR #24)** -- Typed `StageResult[T]` contract (OK / DEGRADED / FAILED discriminated union) on every pipeline stage. Silent failure is now structurally impossible: the type system forces every caller to handle all three variants. A holding with any FAILED stage is marked `AnalysePending` — no partial result is ever presented as complete.
+- **`@stage` decorator** -- Wraps each stage function with per-unit timeout, configurable retry policy, and automatic `RunLedger` recording. Sync and async variants supported. Replaces the removed aggregate `asyncio.wait_for` pattern (which was the root cause of the v0.3.1 bug).
+- **`RunLedger` JSONL artifact** -- Written to `output/run_ledger/<run_id>.jsonl` with one entry per stage execution (ticker, stage name, status, duration_ms, error). Survives the process for replayable post-mortem analysis without re-running the flow.
+- **`TrustBanner`** -- Four-state (green / amber / red / blocked) banner derived deterministically from `RunLedger` coverage at report time. `blocked` state carries the explicit warning "NE PAS prendre de décisions sur ce rapport" when coverage falls below threshold. No AI involved in banner computation.
+- **AST static check** (`scripts/check_stage_contract.py`, `make check-stage-contract`) -- Parses source AST to forbid aggregate `asyncio.wait_for` patterns and flag stages returning bare values instead of `StageResult`. Wired into `make check`.
+- **v0.3.0 trust-crisis regression test** -- `tests/regression/test_v030_silent_success.py` pins the silent-success class (0 analyses, fake "completed successfully" banner). Guards against reintroduction.
+- **Hypothesis property tests** -- Invariant tests covering `StageResult` variance, `TrustBanner` derivation monotonicity, and `RunLedger` append-only semantics.
+
+### Changed
+
+- **`deep_analysis_pipeline.py` refactored from 1,209 → 99 lines** -- Stage logic extracted into 10 focused modules under `src/finwiz/analysis/stages/` (`collect`, `quantify`, `qualify`, `synthesize`, `emit`, plus private helpers `_ledger`, `_resilience`, `_qualify_fallbacks`, `_synthesize_helpers`, `_synthesize_options`). The pipeline file is now a thin orchestrator.
+- **`qualify` emits DEGRADED on Python fallback** -- Previously, when the AI crew returned `None`, qualify silently substituted Python-derived values and emitted status `OK`. Now it emits `StageResult.DEGRADED`. This fixes the "Python fallback masquerading as AI insight" class from v0.3.0. Confidence propagates as `'low'` through synthesize → emit → HTML amber badge.
+- **Orchestrator uses `RunLedger` view** -- The `DeepAnalysisOrchestrator` derives coverage counts and failure tracking from `RunLedger` data, replacing the manual `_failed_holdings` list. Single source of truth for what ran.
+- **Phase 4 Investment Discovery runs unconditionally (PR #23)** -- The `INVESTMENT_DISCOVERY_ENABLED` kill switch has been removed. Discovery always runs because it is a core deliverable; opt-out via kill switch created the same class of silent-omission trust bug as the v0.3.0 `DEEP_PORTFOLIO_ANALYSIS` switch.
+
+### Fixed
+
+- **Any-stage FAILED short-circuits to AnalysePending** -- Previously a holding could pass through a FAILED stage and continue to emit a synthetic result. Now the first FAILED stage aborts the holding's pipeline and marks it `AnalysePending` in the report (amber, not a fabricated grade).
+- **Per-unit timeouts only; aggregate `wait_for` banned** -- The `@stage` decorator applies timeouts at individual stage scope. The AST static check enforces this at CI time. Total runtime now scales naturally with N holdings (same fix as v0.3.1, now enforced structurally rather than just by removal).
+- **`confidence='low'` propagates end-to-end** -- When qualify emits DEGRADED, `confidence='low'` flows through synthesize, through emit, and into the HTML renderer which shows the amber "Insight IA indisponible" badge. No code path was passing `None`-qualified data through as full-confidence output.
+
+### Removed
+
+- **`INVESTMENT_DISCOVERY_ENABLED` env var kill switch** -- Setting this variable is now a no-op. Discovery runs as part of every standard flow execution. `app_initializer.py` no longer reads or forwards this variable.
+
 ## [0.3.1] - 2026-04-27
 
 ### Fixed
