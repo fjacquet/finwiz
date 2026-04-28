@@ -36,6 +36,7 @@ def _try_ai_qualify(
     ctx: AnalysisContext,
     quant: QuantitativeAnalysis,
     raw_data: dict[str, Any] | None = None,
+    fact_pack: Any = None,
 ) -> QualitativeInsights | None:
     """Attempt AI-driven qualitative insights. Returns None when AI fails or returns empty.
 
@@ -51,7 +52,7 @@ def _try_ai_qualify(
     logger.info(f"Generating qualitative insights for {ctx.ticker}")
 
     crew = _get_analysis_crew(ctx.asset_class)
-    crew_inputs = _build_crew_inputs(ctx, quant, raw_data)
+    crew_inputs = _build_crew_inputs(ctx, quant, raw_data, fact_pack=fact_pack)
 
     import asyncio
     import concurrent.futures
@@ -98,6 +99,7 @@ def _generate_qualitative_inner(
     ctx: AnalysisContext,
     quant: QuantitativeAnalysis,
     raw_data: dict[str, Any] | None = None,
+    fact_pack: Any = None,
 ) -> QualitativeInsights:
     """Silent-fallback path for legacy shim callers.
 
@@ -105,7 +107,7 @@ def _generate_qualitative_inner(
     traditional behaviour: AI on success, Python proxy on failure — no
     StageResult envelope, no DEGRADED label.
     """
-    ai = _try_ai_qualify(ctx, quant, raw_data)
+    ai = _try_ai_qualify(ctx, quant, raw_data, fact_pack=fact_pack)
     if ai is not None:
         return ai
     return _python_proxy_qualify(ctx, quant)
@@ -115,7 +117,8 @@ def _generate_qualitative_inner(
 def qualify(ctx: StageContext, quant: QuantitativeAnalysis, raw: dict[str, Any]) -> QualitativeInsights:
     """Qualitative stage. Returns OK on AI success, DEGRADED on Python fallback."""
     analysis_ctx: AnalysisContext = ctx.extras["analysis_ctx"]
-    ai = _try_ai_qualify(analysis_ctx, quant, raw)
+    fact_pack = ctx.extras.get("fact_pack")
+    ai = _try_ai_qualify(analysis_ctx, quant, raw, fact_pack=fact_pack)
     if ai is not None:
         result: Any = StageResult(
             payload=ai,

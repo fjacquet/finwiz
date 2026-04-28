@@ -72,7 +72,7 @@ def test_three_holding_pipeline_ok_degraded_failed(tmp_path: Path, mocker: Any) 
     fake_ai_qual = QualitativeInsights.model_construct()
     fake_proxy_qual = QualitativeInsights.model_construct()
 
-    def _ai_qualify(analysis_ctx: Any, quant: Any, raw_data: Any = None) -> QualitativeInsights | None:
+    def _ai_qualify(analysis_ctx: Any, quant: Any, raw_data: Any = None, fact_pack: Any = None) -> QualitativeInsights | None:
         return None if analysis_ctx.ticker == "DEGRADED_TKR" else fake_ai_qual
 
     mocker.patch("finwiz.analysis.stages.qualify._try_ai_qualify", side_effect=_ai_qualify)

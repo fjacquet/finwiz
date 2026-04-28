@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from finwiz.schemas.hybrid_analysis import QuantitativeAnalysis
+from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 
 if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
@@ -149,7 +150,7 @@ def _today_french() -> str:
     return f"{today.day} {_FR_MONTHS[today.month]} {today.year}"
 
 
-def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_data: dict[str, Any] | None = None) -> dict[str, Any]:
+def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_data: dict[str, Any] | None = None, *, fact_pack: FactPack | None = None) -> dict[str, Any]:
     """Build inputs dict for crew kickoff.
 
     IMPORTANT: We pass SUMMARIZED metrics, not full dictionaries.
@@ -197,6 +198,20 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_da
         inputs["sector"] = "Unknown"
         inputs["industry"] = "Unknown"
         inputs["company_description"] = "No company description available."
+
+    # Inject FactPack keys (v5.2 grounded qualitative)
+    if fact_pack is not None:
+        inputs["corporate_structure"] = fact_pack.corporate_structure
+        inputs["recent_events"] = "\n".join(f"- {e}" for e in fact_pack.recent_events) if fact_pack.recent_events else "Aucun événement matériel signalé."
+        inputs["leadership"] = fact_pack.leadership
+        inputs["fact_pack_freshness"] = fact_pack.freshness  # "fresh" / "recent" / "stale"
+        inputs["fact_pack_confidence"] = f"{fact_pack.confidence:.2f}"
+    else:
+        inputs["corporate_structure"] = "Données non disponibles"
+        inputs["recent_events"] = "Données non disponibles"
+        inputs["leadership"] = "Données non disponibles"
+        inputs["fact_pack_freshness"] = "unknown"
+        inputs["fact_pack_confidence"] = "unknown"
 
     # DIAGNOSTIC: Log sizes of each input field for debugging
     total_chars = sum(len(str(v)) for v in inputs.values() if v is not None)
