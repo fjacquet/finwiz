@@ -132,7 +132,7 @@ class APlusDiscoveryAccessor:
             results = self.load_discovery_results()
 
             if results is None:
-                return "A+ discovery not run - set INVESTMENT_DISCOVERY_ENABLED=true to identify investment opportunities"
+                return "A+ discovery produced no output for this run"
 
             total_opportunities = results.get("total_opportunities", 0)
 
