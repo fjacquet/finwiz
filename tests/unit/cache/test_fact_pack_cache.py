@@ -94,3 +94,23 @@ class TestFactPackCache:
         cache.put("MSFT", _build_fp())
         assert cache.invalidate_all() == 3
         assert cache.get("AAPL") is None
+
+    def test_get_rejects_path_traversal_ticker(self, tmp_path: Path) -> None:
+        """Path-traversal attempts must raise, not write outside the cache dir."""
+        import pytest
+
+        cache = FactPackCache(cache_dir=tmp_path)
+        for evil in ["../../etc/passwd", "..", "/", "../foo", "a/b", "a\\b"]:
+            with pytest.raises(ValueError, match="invalid ticker"):
+                cache.get(evil)
+            with pytest.raises(ValueError, match="invalid ticker"):
+                cache.put(evil, _build_fp())
+            with pytest.raises(ValueError, match="invalid ticker"):
+                cache.invalidate(evil)
+
+    def test_legitimate_ticker_formats_accepted(self, tmp_path: Path) -> None:
+        """Yahoo / Kraken formats with dots, dashes, colons all work."""
+        cache = FactPackCache(cache_dir=tmp_path)
+        for ok in ["AAPL", "BRK.B", "BTC-USD", "^GSPC", "DELL"]:
+            cache.put(ok, _build_fp())
+            assert cache.get(ok) is not None

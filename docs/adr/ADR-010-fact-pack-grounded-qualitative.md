@@ -48,8 +48,22 @@ structural, not advisory.
 **Cache** (`src/finwiz/cache/fact_pack_cache.py`):
 - Schema-version-tagged JSON envelopes (entries with mismatched version
   trigger silent re-fetch)
-- TTL via `CacheDataType.FACT_PACK = 604800` (7 days)
-- `invalidate(ticker)` and `invalidate_all()` methods
+- Two-band freshness model (NOT a hard TTL):
+  - <7d: cache hit (no Perplexity call). `fresh` (<3d) or `recent` (3-7d)
+    are both treated as hits at the stage layer.
+  - 7-14d: stale band — entry is still loaded so the stage can fall back
+    to it when Perplexity fails. `freshness="stale"` flows through to the
+    report renderer (amber pill).
+  - >14d: cache invalid. `FactPack.derive_freshness()` raises and
+    `FactPackCache.get()` returns None — caller treats it as a cache miss.
+- `CacheDataType.FACT_PACK = 604800` (7 days) is registered for any
+  consumer that wants the conventional TTL view, but `FactPackCache`
+  itself uses the freshness boundaries above; entries are NOT auto-evicted
+  at 7 days.
+- `invalidate(ticker)` and `invalidate_all()` methods for operator-driven
+  refresh on real-world events (M&A, leadership changes).
+- Filenames are validated against the Yahoo/Kraken ticker regex
+  (defense-in-depth path-traversal guard).
 
 **Stage** (`src/finwiz/analysis/stages/fact_pack.py`):
 - `@stage(name="fact_pack", timeout_s=60, retries=1)` -- NOT
@@ -120,9 +134,9 @@ structural, not advisory.
 
 ### Risks
 
-- Perplexity outages on first run for a ticker block that holding
-  (AnalysePending). With 60 holdings and a 0.1% per-call failure rate,
-  expected halt rate ~5-10% per kickoff. The trust-spine policy is
+- Perplexity outages on first run for a ticker block analysis for that
+  holding (AnalysePending). With 60 holdings and a 0.1% per-call failure
+  rate, expected halt rate ~5-10% per kickoff. The trust-spine policy is
   deliberate: silent failure is forbidden.
 - 14-day stale cap means even degraded answers stop being available
   after two weeks; force-refresh via the CLI script when needed.
