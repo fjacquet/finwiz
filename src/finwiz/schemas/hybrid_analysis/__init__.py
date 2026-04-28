@@ -7,6 +7,7 @@ where Python performs deterministic calculations and AI provides contextual insi
 
 from finwiz.schemas.hybrid_analysis.collected import CollectedData
 from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
+from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 from finwiz.schemas.hybrid_analysis.qualitative import (
     ActionPlan,
@@ -27,6 +28,8 @@ __all__ = [
     "DataQualityMetrics",
     # Quantitative
     "QuantitativeAnalysis",
+    # Fact Pack (v5.2)
+    "FactPack",
     # Qualitative
     "SecAnalysisInsights",
     "FundamentalContextInsights",

@@ -21,7 +21,7 @@ class StageOutcome(StrEnum):
     FAILED = "failed"
 
 
-StageName = Literal["collect", "quantify", "qualify", "synthesize", "emit"]
+StageName = Literal["collect", "quantify", "fact_pack", "qualify", "synthesize", "emit"]
 
 
 class StageProvenance(BaseModel):
